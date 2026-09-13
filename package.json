@@ -1,0 +1,14 @@
+{
+  "name": "ha-smart-home-cards",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "npm run build && npm run check"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

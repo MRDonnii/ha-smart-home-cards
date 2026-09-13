@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>pending</title></head>
+  <body>
+    <output id="result">pending</output>
+    <script>
+      window.addEventListener("error", (event) => {
+        document.title = "error";
+        document.querySelector("#result").textContent = event.error?.stack || event.message;
+      });
+    </script>
+    <script type="module">
+      import "../dist/ha-smart-home-cards.js";
+      const registrations = window.customCards || [];
+      const uniqueTypes = new Set(registrations.map((card) => card.type));
+      const result = `${registrations.length} registrations / ${uniqueTypes.size} unique types`;
+      document.title = registrations.length === uniqueTypes.size ? "ok" : "duplicate";
+      document.querySelector("#result").textContent = result;
+    </script>
+  </body>
+</html>

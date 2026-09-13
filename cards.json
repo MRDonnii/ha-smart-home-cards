@@ -1,0 +1,359 @@
+[
+  {
+    "slug": "ha-pool-card",
+    "name": "HA Pool Card",
+    "filename": "ha-pool-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-pool-card"
+  },
+  {
+    "slug": "ha-pool-settings-card",
+    "name": "HA Pool Settings Card",
+    "filename": "ha-pool-settings-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-pool-settings-card"
+  },
+  {
+    "slug": "ha-roborock-vacuum-card",
+    "name": "HA Roborock Vacuum Card",
+    "filename": "ha-roborock-vacuum-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-roborock-vacuum-card"
+  },
+  {
+    "slug": "ha-robot-fleet-card",
+    "name": "HA Robot Fleet Card",
+    "filename": "ha-robot-fleet-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-robot-fleet-card"
+  },
+  {
+    "slug": "ha-tesla-vehicle-card",
+    "name": "HA Tesla Vehicle Card",
+    "filename": "ha-tesla-vehicle-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-tesla-vehicle-card"
+  },
+  {
+    "slug": "ha-lawn-mower-card",
+    "name": "Lawn Mower Card",
+    "filename": "ha-lawn-mower-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-lawn-mower-card"
+  },
+  {
+    "slug": "ha-light-scene-card",
+    "name": "Light Scene Card",
+    "filename": "ha-light-scene-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-light-scene-card"
+  },
+  {
+    "slug": "ha-number-grid-card",
+    "name": "Number Grid Card",
+    "filename": "ha-number-grid-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-number-grid-card"
+  },
+  {
+    "slug": "pool-forecast-card",
+    "name": "Pool Forecast Card",
+    "filename": "pool-forecast-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/pool-forecast-card"
+  },
+  {
+    "slug": "pool-history-card",
+    "name": "Pool History Card",
+    "filename": "pool-history-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/pool-history-card"
+  },
+  {
+    "slug": "ha-simple-vacuum-card",
+    "name": "Simple Vacuum Card",
+    "filename": "ha-simple-vacuum-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-simple-vacuum-card"
+  },
+  {
+    "slug": "ha-toggle-grid-card",
+    "name": "Toggle Grid Card",
+    "filename": "ha-toggle-grid-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-toggle-grid-card"
+  },
+  {
+    "slug": "ha-ac-climate-card",
+    "name": "AC Climate Card",
+    "filename": "ha-ac-climate-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-ac-climate-card"
+  },
+  {
+    "slug": "ac-temperature-control-card",
+    "name": "AC Temperature Control Card",
+    "filename": "ac-temperature-control-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ac-temperature-control-card"
+  },
+  {
+    "slug": "calefa-number-control-card",
+    "name": "Calefa Number Control Card",
+    "filename": "calefa-number-control-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/calefa-number-control-card"
+  },
+  {
+    "slug": "ha-fjernvarme-card",
+    "name": "Fjernvarme Card",
+    "filename": "ha-fjernvarme-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-fjernvarme-card"
+  },
+  {
+    "slug": "ha-fjernvarme-house-card",
+    "name": "Fjernvarme House Card",
+    "filename": "ha-fjernvarme-house-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-fjernvarme-house-card"
+  },
+  {
+    "slug": "ha-electricity-price-card",
+    "name": "HA Electricity Price Card",
+    "filename": "ha-electricity-price-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-electricity-price-card"
+  },
+  {
+    "slug": "ha-ventilation-card",
+    "name": "HA Ventilation Card",
+    "filename": "ha-ventilation-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-ventilation-card"
+  },
+  {
+    "slug": "ha-heat-economy-card",
+    "name": "Heat Economy Card",
+    "filename": "ha-heat-economy-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-heat-economy-card"
+  },
+  {
+    "slug": "ha-heat-pump-overview-card",
+    "name": "Heat Pump Overview Card",
+    "filename": "ha-heat-pump-overview-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-heat-pump-overview-card"
+  },
+  {
+    "slug": "ha-heating-diagnostics-card",
+    "name": "Heating Diagnostics Card",
+    "filename": "ha-heating-diagnostics-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-heating-diagnostics-card"
+  },
+  {
+    "slug": "ha-hrv-card",
+    "name": "HRV Card",
+    "filename": "ha-hrv-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-hrv-card"
+  },
+  {
+    "slug": "ha-power-flow-card",
+    "name": "Power Flow Card",
+    "filename": "ha-power-flow-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-power-flow-card"
+  },
+  {
+    "slug": "ha-radiator-overview-card",
+    "name": "Radiator Overview Card",
+    "filename": "ha-radiator-overview-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-radiator-overview-card"
+  },
+  {
+    "slug": "ha-temperature-target-card",
+    "name": "Temperature Target Card",
+    "filename": "ha-temperature-target-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-temperature-target-card"
+  },
+  {
+    "slug": "ha-water-meter-card",
+    "name": "Water Meter Card",
+    "filename": "ha-water-meter-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-water-meter-card"
+  },
+  {
+    "slug": "ha-home-header-card",
+    "name": "HA Home Header Card",
+    "filename": "ha-home-header-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-home-header-card"
+  },
+  {
+    "slug": "ha-home-status-grid-card",
+    "name": "HA Home Status Grid Card",
+    "filename": "ha-home-status-grid-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-home-status-card"
+  },
+  {
+    "slug": "ha-person-overview-card",
+    "name": "HA Person Overview Card",
+    "filename": "ha-person-overview-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-person-overview-card"
+  },
+  {
+    "slug": "ha-pet-care-card",
+    "name": "HA Pet Care Card",
+    "filename": "ha-pet-care-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-pet-care-card"
+  },
+  {
+    "slug": "ha-weather-card",
+    "name": "HA Weather Card",
+    "filename": "ha-weather-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-weather-card"
+  },
+  {
+    "slug": "ha-home-room-overview-card",
+    "name": "Home Room Overview Card",
+    "filename": "ha-home-room-overview-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-home-room-overview-card"
+  },
+  {
+    "slug": "hourly-weather-scroll-card",
+    "name": "Hourly Weather Scroll Card",
+    "filename": "hourly-weather-scroll-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/hourly-weather-scroll-card"
+  },
+  {
+    "slug": "ha-house-mode-card",
+    "name": "House Mode Card",
+    "filename": "ha-house-mode-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-house-mode-card"
+  },
+  {
+    "slug": "ha-kid-tracker-card",
+    "name": "Kid Tracker Card",
+    "filename": "ha-kid-tracker-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-kid-tracker-card"
+  },
+  {
+    "slug": "smart-home-overview-card",
+    "name": "Smart Home Overview Card",
+    "filename": "smart-home-overview-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/smart-home-overview-card"
+  },
+  {
+    "slug": "ha-alarm-center-card",
+    "name": "HA Alarm Center Card",
+    "filename": "ha-alarm-center-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-alarm-center-card"
+  },
+  {
+    "slug": "ha-camera-hub-card",
+    "name": "HA Camera Hub Card",
+    "filename": "ha-camera-hub-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-camera-hub-card"
+  },
+  {
+    "slug": "ha-door-window-card",
+    "name": "HA Door/Window Card",
+    "filename": "ha-door-window-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-door-window-card"
+  },
+  {
+    "slug": "ha-home-camera-card",
+    "name": "HA Home Camera Card",
+    "filename": "ha-home-camera-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-home-camera-card"
+  },
+  {
+    "slug": "ha-license-plate-card",
+    "name": "HA License Plate Card",
+    "filename": "ha-license-plate-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-license-plate-card"
+  },
+  {
+    "slug": "ha-person-detection-card",
+    "name": "HA Person Detection Card",
+    "filename": "ha-person-detection-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-person-detection-card"
+  },
+  {
+    "slug": "locked-map-card",
+    "name": "Locked Map Card",
+    "filename": "locked-map-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/locked-map-card"
+  },
+  {
+    "slug": "ha-security-center-card",
+    "name": "Security Center Card",
+    "filename": "ha-security-center-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-security-center-card"
+  },
+  {
+    "slug": "ha-control-center-card",
+    "name": "Control Center Card",
+    "filename": "ha-control-center-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-control-center-card"
+  },
+  {
+    "slug": "ha-ai-usage-card",
+    "name": "HA AI Usage Card",
+    "filename": "ha-ai-usage-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-ai-usage-card"
+  },
+  {
+    "slug": "ha-settings-center-card",
+    "name": "HA Settings Center Card",
+    "filename": "ha-settings-center-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-settings-center-card"
+  },
+  {
+    "slug": "ha-kiosk-server-card",
+    "name": "Kiosk Server Card",
+    "filename": "ha-kiosk-server-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-kiosk-server-card"
+  },
+  {
+    "slug": "ha-ops-status-card",
+    "name": "Ops Status Card",
+    "filename": "ha-ops-status-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-ops-status-card"
+  },
+  {
+    "slug": "ha-unraid-server-card",
+    "name": "Unraid Server Card",
+    "filename": "ha-unraid-server-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-unraid-server-card"
+  }
+]
