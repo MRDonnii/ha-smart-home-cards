@@ -14,7 +14,7 @@ Rendered from the neutral demo dashboard used for compatibility testing — anim
 
 | Desktop | Mobile |
 |---|---|
-| ![Desktop dashboard preview](docs/screenshots/dashboard-pc.gif) | ![Mobile dashboard preview](docs/screenshots/dashboard-mobil.gif) |
+| ![Animated desktop dashboard preview](docs/screenshots/dashboard-pc-animated.gif) | ![Animated iPhone 17 Pro dashboard preview](docs/screenshots/dashboard-iphone-17-pro.gif) |
 
 ## Install with HACS
 
