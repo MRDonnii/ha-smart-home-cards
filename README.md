@@ -10,7 +10,7 @@ This repository is the migration target for the existing standalone card reposit
 
 ## Screenshots
 
-Rendered from the neutral demo dashboard used for compatibility testing — synthetic camera feeds and placeholder names only, no household data.
+Rendered from the neutral demo dashboard used for compatibility testing — animated synthetic camera feeds and placeholder names only, no household data. The mobile preview is captured at the iPhone 17 Pro logical viewport (402 × 874) with Home Assistant Companion page zoom set to 75%.
 
 | Desktop | Mobile |
 |---|---|
