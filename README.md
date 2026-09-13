@@ -8,6 +8,14 @@ The collection keeps every card as an independent source module, but publishes o
 
 This repository is the migration target for the existing standalone card repositories. The first releases are intentionally marked pre-release while compatibility is verified. Do not remove an existing standalone HACS installation until the corresponding card is confirmed here.
 
+## Screenshots
+
+Rendered from the neutral demo dashboard used for compatibility testing — synthetic camera feeds and placeholder names only, no household data.
+
+| Desktop | Mobile |
+|---|---|
+| ![Desktop dashboard preview](docs/screenshots/dashboard-pc.gif) | ![Mobile dashboard preview](docs/screenshots/dashboard-mobil.gif) |
+
 ## Install with HACS
 
 1. Open HACS.
