@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>pending</title>
+<script>customElements.define("ha-card",class extends HTMLElement{});customElements.define("ha-icon",class extends HTMLElement{});window.confirm=()=>true;</script>
+<script type="module" src="../src/cards/ha-bambulab-dashboard-card/ha-bambulab-dashboard-card.js"></script>
+<ha-bambulab-dashboard-card id="card"></ha-bambulab-dashboard-card><script type="module">
+const state=(value,unit="")=>({state:String(value),last_updated:"2026-09-14T18:00:00Z",attributes:{unit_of_measurement:unit}});
+const config={title:"Printer",camera:"camera.printer",power_switch:"switch.printer",power:"sensor.power",online:"binary_sensor.online",status:"sensor.status",task:"sensor.task",progress:"sensor.progress",current_layer:"sensor.layer",total_layers:"sensor.layers",nozzle_temperature:"sensor.nozzle",bed_temperature:"sensor.bed",ams_trays:[{name:"A1",entity:"sensor.tray"}],pause_button:"button.pause",resume_button:"button.resume",stop_button:"button.stop"};
+const states={"camera.printer":state("streaming"),"switch.printer":state("on"),"sensor.power":state(42,"W"),"binary_sensor.online":state("on"),"sensor.status":state("printing"),"sensor.task":state("Testdel"),"sensor.progress":state(42,"%"),"sensor.layer":state(21),"sensor.layers":state(50),"sensor.nozzle":state(220,"°C"),"sensor.bed":state(60,"°C"),"sensor.tray":state("PLA")};
+const calls=[];const card=document.querySelector("#card");card.setConfig(config);card.hass={states,hassUrl:(path)=>path,callService:(domain,service,data)=>calls.push({domain,service,data})};
+const shell=card.shadowRoot.querySelector("ha-card"),img=card.shadowRoot.querySelector("img"),progress=card.shadowRoot.querySelector(".progress i");
+if(!shell.classList.contains("printing")||img.getAttribute("src")!=="/api/camera_proxy_stream/camera.printer"||progress.style.getPropertyValue("--progress")!=="42%")throw Error("initial render failed");
+states["sensor.progress"]=state(51,"%");card.hass={states,hassUrl:(path)=>path,callService:(domain,service,data)=>calls.push({domain,service,data})};
+if(card.shadowRoot.querySelector("ha-card")!==shell||card.shadowRoot.querySelector("img")!==img||card.shadowRoot.querySelector(".progress i")!==progress||progress.style.getPropertyValue("--progress")!=="51%")throw Error("DOM stability failed");
+card.shadowRoot.querySelector('[data-action="power"]').click();
+if(calls.at(-1)?.domain!=="switch"||calls.at(-1)?.service!=="turn_off"||calls.at(-1)?.data?.entity_id!=="switch.printer")throw Error("power off failed");
+document.body.dataset.test="pass";document.title="pass";
+</script>
