@@ -1,4 +1,4 @@
-const VERSION = "0.6.0";
+const VERSION = "0.6.3";
 
 class HAElectricityPriceCardEditor extends HTMLElement {
   setConfig(config) {
@@ -7,7 +7,7 @@ class HAElectricityPriceCardEditor extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    this._render();
+    if (!this.childElementCount) this._render();
   }
   _change(key, value) {
     this._config = { ...this._config, [key]: value };
@@ -29,9 +29,15 @@ class HAElectricityPriceCardEditor extends HTMLElement {
       <div class="row"><label>Energi Data Service</label><input data-key="energidataservice"></div>
       <div class="row"><label>Desktophøjde (px)</label><input data-key="desktop_height" type="number" min="350" max="560" step="10"></div>
       <div class="row"><label>Vis titel og aktuel pris</label><input data-key="show_header" type="checkbox"></div>
-      <div class="row"><label>Udfyld tilgængelig højde</label><input data-key="fill_height" type="checkbox"></div>`;
+      <div class="row"><label>Udfyld tilgængelig højde</label><input data-key="fill_height" type="checkbox"></div>
+      <div class="row"><label>Animer priser over 6 kr</label><input data-key="high_price_animation" type="checkbox"></div>
+      <div class="row"><label>Ignorér reduceret bevægelse</label><input data-key="force_price_animation" type="checkbox"></div>`;
     this.querySelectorAll("select,input").forEach((el) => {
-      if (el.type === "checkbox") el.checked = Boolean(this._config[el.dataset.key]);
+      if (el.type === "checkbox")
+        el.checked =
+          el.dataset.key === "high_price_animation"
+            ? this._config.high_price_animation !== false
+            : Boolean(this._config[el.dataset.key]);
       else el.value = this._config[el.dataset.key] || (el.dataset.key === "source" ? "auto" : "");
       el.onchange = () => this._change(el.dataset.key, el.type === "checkbox" ? el.checked : el.value);
     });
@@ -58,6 +64,8 @@ class HAElectricityPriceCard extends HTMLElement {
       desktop_height: 350,
       show_header: true,
       fill_height: false,
+      high_price_animation: true,
+      force_price_animation: false,
     };
   }
   static getConfigElement() {
@@ -65,6 +73,7 @@ class HAElectricityPriceCard extends HTMLElement {
   }
   setConfig(config) {
     this._config = { ...HAElectricityPriceCard.getStubConfig(), ...config };
+    this.toggleAttribute("force-price-animation", this._config.force_price_animation === true);
     this._render();
   }
   set hass(hass) {
@@ -205,27 +214,40 @@ class HAElectricityPriceCard extends HTMLElement {
         })
       : "—";
   }
-  _color(value, low, high) {
-    if (![value, low, high].every(Number.isFinite))
+  _color(value) {
+    if (!Number.isFinite(value))
       return "var(--dashboard-border-neutral, var(--divider-color, #66778a))";
-    const span = Math.max(0.0001, high - low);
-    const t = Math.max(0, Math.min(1, (value - low) / span));
     const stops = [
-      [0, "var(--dashboard-success, var(--success-color, #50d6a0))"],
-      [0.34, "var(--yellow,#f6d365)"],
-      [0.67, "var(--dashboard-warning, var(--warning-color, #ffad42))"],
-      [1, "var(--dashboard-danger, var(--error-color, #ff6577))"],
+      [1, "var(--dashboard-success, var(--state-on-icon, var(--success-color, #50d6a0)))"],
+      [2, "var(--dashboard-yellow, var(--warning-color, #f6d365))"],
+      [4, "var(--dashboard-warning, var(--warning-color, #ffad42))"],
+      [5, "var(--dashboard-danger, var(--error-color, #ff6577))"],
+      [6, "var(--dashboard-danger-strong, var(--error-color, #991b1b))"],
     ];
+    const price = Math.max(stops[0][0], Math.min(stops.at(-1)[0], value));
     let a = stops[0],
       b = stops.at(-1);
     for (let i = 0; i < stops.length - 1; i++)
-      if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+      if (price >= stops[i][0] && price <= stops[i + 1][0]) {
         a = stops[i];
         b = stops[i + 1];
         break;
       }
-    const pct = Math.round(((t - a[0]) / Math.max(0.0001, b[0] - a[0])) * 100);
-    return `color-mix(in srgb,${b[1]} ${pct}%,${a[1]} ${100 - pct}%)`;
+    const pct = Math.round(((price - a[0]) / Math.max(0.0001, b[0] - a[0])) * 1000) / 10;
+    return `color-mix(in oklab,${a[1]} ${100 - pct}%,${b[1]} ${pct}%)`;
+  }
+  _pulse(value) {
+    return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
+  }
+  _setBarVisual(bar, price) {
+    const pulse = this._pulse(price);
+    bar.classList.toggle("price-alert", this._config.high_price_animation !== false && pulse > 0);
+    bar.style.setProperty("--price-color", this._color(price));
+    bar.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
+    bar.style.setProperty("--price-pulse-scale", (0.96 - pulse * 0.24).toFixed(2));
+    bar.style.setProperty("--price-pulse-opacity", (0.88 - pulse * 0.3).toFixed(2));
+    bar.style.setProperty("--price-pulse-brightness", (1.08 + pulse * 0.82).toFixed(2));
+    bar.style.setProperty("--price-pulse-glow", `${(3 + pulse * 15).toFixed(1)}px`);
   }
   _date(points) {
     if (!points.length) return "Ingen data";
@@ -263,8 +285,11 @@ class HAElectricityPriceCard extends HTMLElement {
           d = new Date(p.start),
           hour = String(d.getHours()).padStart(2, "0"),
           current = now >= p.start && now < p.start + 3600000,
-          extreme = p.price === min ? "min" : p.price === max ? "max" : "";
-        return `<button class="bar-wrap ${current ? "current" : ""} ${extreme}" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time"><span class="tip">${hour}:00<br><b>${this._fmt(p.price)} kr.</b></span>${extreme ? `<em>${extreme === "min" ? "LAV" : "HØJ"}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%;--ratio:${(p.price - min) / span}"></i><small>${Number(hour) % 3 === 0 ? hour : ""}</small></button>`;
+          extreme = p.price === min ? "min" : p.price === max ? "max" : "",
+          badgeText = current ? "NU" : extreme === "min" ? "LAV" : extreme === "max" ? "HØJ" : "",
+          pulse = this._pulse(p.price),
+          alert = this._config.high_price_animation !== false && pulse > 0;
+        return `<button class="bar-wrap ${current ? "current" : ""} ${extreme} ${alert ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time"><span class="tip">${hour}:00<br><b>${this._fmt(p.price)} kr.</b></span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i><small>${Number(hour) % 3 === 0 ? hour : ""}</small></button>`;
       })
       .join("")}</div>`;
   }
@@ -284,7 +309,7 @@ class HAElectricityPriceCard extends HTMLElement {
     if (day) day.textContent = this._date(points);
     this.shadowRoot.querySelectorAll(".stat").forEach((stat, index) => {
       const value = [min, avg, max][index];
-      stat.style.setProperty("--stat-color", this._color(value, min, max));
+      stat.style.setProperty("--stat-color", this._color(value));
       const label = stat.querySelector("b");
       if (label) label.textContent = this._fmt(value);
     });
@@ -301,11 +326,11 @@ class HAElectricityPriceCard extends HTMLElement {
       const current = now >= point.start && now < point.start + 3600000;
       const extreme = point.price === min ? "min" : point.price === max ? "max" : "";
       bar.className = `bar-wrap ${current ? "current" : ""} ${extreme}`;
+      this._setBarVisual(bar, point.price);
       bar.setAttribute("aria-label", `Klokken ${hour}, ${this._fmt(point.price)} kroner per kilowatt-time`);
       bar.querySelector(".tip").innerHTML = `${hour}:00<br><b>${this._fmt(point.price)} kr.</b>`;
       const column = bar.querySelector("i");
       column.style.setProperty("--h", `${height}%`);
-      column.style.setProperty("--ratio", ratio);
       bar.querySelector("small").textContent = Number(hour) % 3 === 0 ? hour : "";
       let marker = bar.querySelector("em");
       if (!extreme) marker?.remove();
@@ -348,7 +373,8 @@ class HAElectricityPriceCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:4px solid var(--accent);border-radius:18px;background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:29px minmax(0,1fr) 29px;align-items:stretch;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.arrow,.day-choice{position:relative;border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-top:3px solid var(--accent);background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 8%,transparent),transparent 60%),var(--surface-local);box-shadow:0 3px 10px rgba(0,0,0,.1);color:var(--secondary-text-color);cursor:pointer}.arrow{display:grid;place-items:center;padding:0;border-radius:10px}.arrow ha-icon{--mdc-icon-size:18px}.day-choice{min-width:0;padding:5px 2px;border-radius:9px}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:10px}.day-choice span{margin-top:2px;font-size:7px}.day-choice.active{border-color:var(--accent);background:var(--accent);color:var(--text-primary-color,#fff);box-shadow:0 3px 10px color-mix(in srgb,var(--accent) 28%,transparent)}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:13px;font-weight:800}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:164px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:124px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:2px solid var(--primary-text-color);outline-offset:2px}.bar-wrap small{height:12px;margin-top:4px;color:var(--secondary-text-color);font-size:7px}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--surface-local);box-shadow:0 5px 14px rgba(0,0,0,.2);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:10px}.chart{gap:2px}.bar-wrap small{font-size:6px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
       ha-card{height:382px}.tabs{display:flex;height:56px;gap:8px;margin:9px 0 7px;padding:0;border:0;background:transparent}.tabs button{flex:1;position:relative;display:grid;grid-template-columns:1fr auto;grid-template-rows:1fr 1fr;height:56px;overflow:hidden;padding:5px 8px;border:1px solid color-mix(in srgb,var(--accent) 18%,transparent);border-left:3px solid var(--accent);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%),var(--surface-local);box-shadow:0 4px 12px rgba(0,0,0,.1);text-align:left;cursor:pointer;color:var(--secondary-text-color)}.tabs button.active{border-color:color-mix(in srgb,var(--accent) 55%,transparent);border-left-color:var(--accent);background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 24%,transparent),color-mix(in srgb,var(--primary-text-color) 2%,transparent));box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 16px color-mix(in srgb,var(--accent) 14%,transparent)}.tab-copy{position:relative;z-index:3;align-self:center}.tab-copy b,.tab-copy small{display:block}.tab-copy b{color:var(--primary-text-color);font-size:17px;line-height:1.05}.tab-copy small{margin-top:2px;color:var(--secondary-text-color);font-size:11px;white-space:nowrap}.tabs button>ha-icon{position:absolute;right:-8px;bottom:-8px;color:var(--accent);opacity:.18;--mdc-icon-size:38px}.tabs button.active>ha-icon{animation:tabIconDrift 5s ease-in-out infinite;opacity:.22}.week-slot{height:43px;margin-bottom:7px}.week-nav{height:43px;margin:0}.day-choice{border-radius:12px}.stat{border:0;color:var(--state-badge-text,#fff);background:linear-gradient(135deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 78%,black 22%));box-shadow:var(--state-badge-shadow,0 3px 9px rgba(0,0,0,.18))}.stat span{color:inherit}.chart{height:151px;padding-top:34px}.bar-wrap{height:116px}@keyframes tabIconDrift{0%,100%{transform:translate(0,0) scale(1) rotate(0);opacity:.14}50%{transform:translate(-6px,-4px) scale(1.05) rotate(-4deg);opacity:.24}}@media(max-width:600px){ha-card{height:369px}.tabs{height:50px;gap:5px}.tabs button{height:50px;padding:4px 6px}.tab-copy b{font-size:13px}.tab-copy small{font-size:8px}.tabs button>ha-icon{--mdc-icon-size:30px}.week-slot,.week-nav{height:40px}.week-slot{margin-bottom:5px}.chart{height:148px;gap:5px;padding-top:33px}.bar-wrap{height:114px}.stat{height:27px}}
-    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><span class="eyebrow">ENERGI</span><strong>Strømpris</strong></div></div><div class="price"><div class="price-row"><b>${this._fmt(data.current)}</b><small>kr/kWh</small></div><span class="source">${data.source}</span></div></div>`}<div class="tabs">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "Næste døgn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</div>${dayPicker}<div class="summary"><div class="day">${this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min, min, max)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg, min, max)}"><span>SNIT</span><b>${this._fmt(avg)}</b></div><div class="stat" style="--stat-color:${this._color(max, min, max)}"><span>HØJ</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
+      .bar-wrap i{background:var(--price-color);transform-origin:center bottom;transition:background-color .9s ease,filter .15s,transform .15s}.bar-wrap.price-alert i{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.9;filter:brightness(1) drop-shadow(0 0 2px var(--price-color))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--price-color))}}@media(prefers-reduced-motion:reduce){:host(:not([force-price-animation])) .bar-wrap.price-alert i{animation:none}}
+    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><span class="eyebrow">ENERGI</span><strong>Strømpris</strong></div></div><div class="price"><div class="price-row"><b>${this._fmt(data.current)}</b><small>kr/kWh</small></div><span class="source">${data.source}</span></div></div>`}<div class="tabs">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "Næste døgn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</div>${dayPicker}<div class="summary"><div class="day">${this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>SNIT</span><b>${this._fmt(avg)}</b></div><div class="stat" style="--stat-color:${this._color(max)}"><span>HØJ</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
     const compactMobile = window.matchMedia("(max-width: 600px)").matches;
     const card = this.shadowRoot.querySelector("ha-card");
     const weekSlot = this.shadowRoot.querySelector(".week-slot");

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>pending</title>
+    <style>
+      :root { color-scheme: dark; --primary-text-color:#f5f7fb; --secondary-text-color:#8f9aac; --card-background-color:#121821; --divider-color:rgba(148,163,184,.2); --primary-color:#35b8ff; --success-color:#39d98a; --warning-color:#ffad42; --contrast1:rgba(255,255,255,.05); }
+      body { margin:0; padding:20px; background:radial-gradient(circle at 80% 0,#102a38 0,transparent 32%),#080b11; font-family:Inter,system-ui,sans-serif; }
+      ha-home-room-overview-card-v2 { max-width:1180px; margin:auto; }
+      #result { position:fixed; right:8px; bottom:8px; z-index:99; padding:5px 8px; border-radius:7px; background:#07120c; color:#6ff2a8; font:11px monospace; }
+    </style>
+  </head>
+  <body>
+    <ha-home-room-overview-card-v2 id="card"></ha-home-room-overview-card-v2>
+    <output id="result">pending</output>
+    <script>customElements.define("ha-icon", class extends HTMLElement { connectedCallback(){ this.textContent = "●"; } });</script>
+    <script type="module">
+      import "../dist/ha-smart-home-cards.js";
+      const names = ["Opholdsstue","Køkken","Spisestue","Garage","Værelse 1","Værelse 2","Soveværelse","Badeværelse","Terrasse","Bryggers","Kontor","Gæstetoilet"];
+      const icons = ["mdi:sofa-outline","mdi:countertop-outline","mdi:table-chair","mdi:garage","mdi:bed-outline","mdi:bed-outline","mdi:bed-king-outline","mdi:shower","mdi:flower-outline","mdi:washing-machine","mdi:desk","mdi:toilet"];
+      const states = {};
+      const rooms = names.map((name,index) => {
+        const slug = `room_${index+1}`;
+        states[`sensor.${slug}_temperature`] = { state:String(20.8 + (index % 5) * .5), attributes:{} };
+        states[`sensor.${slug}_humidity`] = { state:String(43 + index), attributes:{} };
+        states[`light.${slug}`] = { state:index === 1 || index === 9 ? "on" : "off", attributes:{ friendly_name:`${name} lys` } };
+        states[`binary_sensor.${slug}_presence`] = { state:index === 0 ? "on" : "off", attributes:{} };
+        states[`binary_sensor.${slug}_opening`] = { state:index === 8 ? "on" : "off", attributes:{} };
+        states[`climate.${slug}`] = { state:"heat", attributes:{ temperature:22, current_temperature:21.6, friendly_name:`${name} klima` } };
+        if (index === 0) states["cover.room_1"] = { state:"open", attributes:{ friendly_name:"Gardiner" } };
+        if (index === 0) states["media_player.room_1"] = { state:"playing", attributes:{ friendly_name:"Højttaler" } };
+        return { name, icon:icons[index], accent:["#49a7ff","#f0b84b","#46d49b","#9c83ff"][index%4], temperature:`sensor.${slug}_temperature`, humidity:`sensor.${slug}_humidity`, light:`light.${slug}`, presence:`binary_sensor.${slug}_presence`, opening:`binary_sensor.${slug}_opening`, climate:`climate.${slug}`, ...(index === 0 ? { cover:"cover.room_1", media_player:"media_player.room_1", extra_entities:"switch.room_1_air_cleaner", popup:"#room-1" } : {}) };
+      });
+      states["switch.room_1_air_cleaner"] = { state:"on", attributes:{ friendly_name:"Luftrenser", icon:"mdi:air-purifier" } };
+      const calls = [];
+      const card = document.querySelector("#card");
+      card.setConfig({ title:"Alle rum", desktop_columns:4, rooms });
+      card.hass = { states, locale:{ language:"da" }, callService:(domain,service,data) => calls.push({domain,service,data}) };
+      const root = card.shadowRoot;
+      const firstRoom = root.querySelector(".room"), firstTemperature = root.querySelector(".temperature > span"), quick = root.querySelector(".quick");
+      quick.click();
+      firstRoom.click();
+      const dialog = root.querySelector("dialog"), popupControl = dialog.querySelector(".control");
+      states["sensor.room_1_temperature"] = { state:"21.9", attributes:{} };
+      card.hass = { states, locale:{ language:"da" }, callService:(domain,service,data) => calls.push({domain,service,data}) };
+      const assertions = [
+        root.querySelectorAll(".room").length === 12,
+        root.querySelector(".room") === firstRoom,
+        root.querySelector(".temperature > span") === firstTemperature,
+        dialog.open,
+        dialog.querySelector(".control") === popupControl,
+        firstTemperature.textContent === "21,9",
+        calls[0]?.domain === "light" && calls[0]?.data?.entity_id === "light.room_1",
+        dialog.querySelectorAll(".control:not(.hidden)").length === 6,
+      ];
+      document.title = assertions.every(Boolean) ? "ok" : "error";
+      document.querySelector("#result").textContent = assertions.every(Boolean) ? "V2 DOM + popup: OK" : `Fejl: ${assertions.map((x,i)=>x?null:i+1).filter(Boolean).join(",")}`;
+      if (new URLSearchParams(location.search).has("overview")) dialog.close();
+    </script>
+  </body>
+</html>

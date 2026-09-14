@@ -1,6 +1,6 @@
 # Card catalog
 
-The suite currently contains **51 cards**. During migration, each entry links to its original repository for detailed configuration examples.
+The suite currently contains **52 cards**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 ## Devices and controls
 
@@ -49,6 +49,7 @@ The suite currently contains **51 cards**. During migration, each entry links to
 | HA Pet Care Card | `ha-pet-care-card.js` | [Documentation](https://github.com/MRDonnii/ha-pet-care-card) |
 | HA Weather Card | `ha-weather-card.js` | [Documentation](https://github.com/MRDonnii/ha-weather-card) |
 | Home Room Overview Card | `ha-home-room-overview-card.js` | [Documentation](https://github.com/MRDonnii/ha-home-room-overview-card) |
+| Home Room Overview Card V2 | `ha-home-room-overview-card-v2.js` | [Documentation](https://github.com/MRDonnii/ha-smart-home-cards#room-overview-v2) |
 | Hourly Weather Scroll Card | `hourly-weather-scroll-card.js` | [Documentation](https://github.com/MRDonnii/hourly-weather-scroll-card) |
 | House Mode Card | `ha-house-mode-card.js` | [Documentation](https://github.com/MRDonnii/ha-house-mode-card) |
 | Kid Tracker Card | `ha-kid-tracker-card.js` | [Documentation](https://github.com/MRDonnii/ha-kid-tracker-card) |
@@ -77,4 +78,3 @@ The suite currently contains **51 cards**. During migration, each entry links to
 | Kiosk Server Card | `ha-kiosk-server-card.js` | [Documentation](https://github.com/MRDonnii/ha-kiosk-server-card) |
 | Ops Status Card | `ha-ops-status-card.js` | [Documentation](https://github.com/MRDonnii/ha-ops-status-card) |
 | Unraid Server Card | `ha-unraid-server-card.js` | [Documentation](https://github.com/MRDonnii/ha-unraid-server-card) |
-
