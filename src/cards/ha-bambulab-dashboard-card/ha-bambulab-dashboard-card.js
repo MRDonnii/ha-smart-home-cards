@@ -180,7 +180,10 @@ class HABambuLabDashboardCard extends HTMLElement {
     this._metric("power",this._config.power,1); this._metric("daily",this._config.daily_energy,2); this._metric("monthly",this._config.monthly_energy,2); this._text("ams-energy",`${this._fmt(this._number(this._config.ams_power),1)} W / ${this._fmt(this._number(this._config.ams_energy),2)} kWh`);
     [["aux_fan",this._config.aux_fan],["chamber_fan",this._config.chamber_fan],["cooling_fan",this._config.cooling_fan]].forEach(([key,id]) => { const state = this._state(id); const value = this._value(id); this._text(key, value); this.shadowRoot.querySelector(`[data-entity="${id}"]`)?.classList.toggle("on", state?.state === "on" || Number(state?.attributes?.percentage) > 0); });
     const powerOn = this._state(this._config.power_switch)?.state === "on"; this._text("power-action", powerOn ? "Sluk strøm" : "Tænd strøm"); const powerIcon = this.shadowRoot.querySelector('[data-value="power-icon"]'); if (powerIcon) powerIcon.setAttribute("icon", powerOn ? "mdi:power-plug-off" : "mdi:power-plug");
-    this.shadowRoot.querySelector('[data-action="pause"]').disabled = !active; this.shadowRoot.querySelector('[data-action="resume"]').disabled = !["pause","paused"].includes(String(this._value(this._config.status)).toLowerCase());
+    const pauseButton = this.shadowRoot.querySelector('[data-action="pause"]');
+    const resumeButton = this.shadowRoot.querySelector('[data-action="resume"]');
+    if (pauseButton) pauseButton.disabled = !active;
+    if (resumeButton) resumeButton.disabled = !["pause", "paused"].includes(String(this._value(this._config.status)).toLowerCase());
   }
 
   async _call(entity, domain, service) { if (entity && this._hass) await this._hass.callService(domain, service, { entity_id: entity }); }
