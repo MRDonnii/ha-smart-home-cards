@@ -231,6 +231,13 @@
     "repository": "https://github.com/MRDonnii/ha-home-room-overview-card"
   },
   {
+    "slug": "ha-home-room-overview-card-v2",
+    "name": "Home Room Overview Card V2",
+    "filename": "ha-home-room-overview-card-v2.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "hourly-weather-scroll-card",
     "name": "Hourly Weather Scroll Card",
     "filename": "hourly-weather-scroll-card.js",
