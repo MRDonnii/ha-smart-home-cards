@@ -1,6 +1,6 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 
 class HABambuLabDashboardCard extends HTMLElement {
   constructor() {
@@ -81,6 +81,7 @@ class HABambuLabDashboardCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._built) this._build();
+    (this._embeddedCards || []).forEach((card) => { card.hass = hass; });
     const ids = this._entityIds();
     const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
     if (signature === this._signature) return;
@@ -109,7 +110,7 @@ class HABambuLabDashboardCard extends HTMLElement {
     const showAms = this._config.show_ams !== false;
     const trayHtml = (this._config.ams_trays || []).map((tray, index) => `<div class="tray" data-tray="${index}" style="--tray:${this._escape(tray.color || "var(--accent)")}"><i></i><span>${this._escape(tray.name || `Bakke ${index + 1}`)}</span><strong data-value="tray-${index}">—</strong></div>`).join("");
     const fanHtml = [["aux_fan","Hjælpeblæser"],["chamber_fan","Kammerblæser"],["cooling_fan","Køleblæser"]].filter(([key]) => this._config[key]).map(([key,label]) => `<button class="fan" data-entity="${this._escape(this._config[key])}"><ha-icon icon="mdi:fan"></ha-icon><span>${label}</span><strong data-value="${key}">—</strong></button>`).join("");
-    const visualHtml = showCamera ? `<section class="visual"><img alt="Printerkamera"><div class="camera-switch"><button class="active" data-camera="0"><ha-icon icon="mdi:camera-overhead"></ha-icon>Top</button><button data-camera="1"><ha-icon icon="mdi:camera-side"></ha-icon>Side</button></div><div class="visual-shade"><div class="task" data-value="task">—</div><div class="stage" data-value="stage">—</div><div class="progress-row"><div class="progress"><i></i></div><strong data-value="progress">—</strong></div></div></section>` : "";
+    const visualHtml = showCamera ? `<section class="visual"><div class="camera-host" style="min-height:330px;background:#080b0f"></div><div class="camera-switch"><button class="active" data-camera="0"><ha-icon icon="mdi:camera-overhead"></ha-icon>Top</button><button data-camera="1"><ha-icon icon="mdi:camera-side"></ha-icon>Side</button></div><div class="visual-shade"><div class="task" data-value="task">—</div><div class="stage" data-value="stage">—</div><div class="progress-row"><div class="progress"><i></i></div><strong data-value="progress">—</strong></div></div></section>` : "";
     const amsHtml = showAms ? `<section class="panel"><div class="panel-title"><ha-icon icon="mdi:tray-full"></ha-icon>AMS · <span data-value="ams-climate">—</span></div><div class="trays">${trayHtml || '<div class="stage">Tilføj AMS-bakker i editoren</div>'}</div></section>` : "";
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));--good:var(--dashboard-success,var(--success-color,#20e3a2));--warn:var(--dashboard-warning,var(--warning-color,#f59e0b));--danger:var(--dashboard-danger,var(--error-color,#ef4444));--muted:var(--secondary-text-color,#8b99aa);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.18)))}*{box-sizing:border-box}button{font:inherit;color:inherit}ha-card{overflow:hidden;border:1px solid var(--edge);border-left:4px solid var(--accent);border-radius:24px;background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 96%,var(--accent) 4%),var(--surface));color:var(--primary-text-color);box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow))}.shell{padding:20px}.head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:14px}.title{display:flex;align-items:center;gap:11px}.title-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.title-icon ha-icon{--mdc-icon-size:27px}.eyebrow{color:var(--accent);font-size:8px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}.title h2{margin:3px 0 0;font-size:22px}.title small{display:block;margin-top:2px;color:var(--muted);font-size:10px}.health{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:99px;background:color-mix(in srgb,var(--good) 12%,transparent);color:var(--good);font-size:10px;font-weight:850}.health i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}.health.active i{animation:pulse 1.4s ease-in-out infinite}.health.error{background:color-mix(in srgb,var(--danger) 13%,transparent);color:var(--danger)}
@@ -127,23 +128,33 @@ class HABambuLabDashboardCard extends HTMLElement {
       const panels = [...side.querySelectorAll(":scope > .panel")];
       panels.slice(0, 2).forEach((panel) => bambu.append(panel));
       panels.slice(2).forEach((panel) => amsSide.append(panel));
+      if (this._config.printer) { const host = document.createElement("div"); host.className = "embedded-card printer-card-host"; bambu.prepend(host); }
+      if (this._config.ams) { const host = document.createElement("div"); host.className = "embedded-card ams-card-host"; amsSide.prepend(host); }
       [this.shadowRoot.querySelector(".energy"), this.shadowRoot.querySelector(".controls")].filter(Boolean).forEach((node) => bambu.append(node));
       if (fanHtml) { const panel = document.createElement("section"); panel.className = "panel"; panel.innerHTML = `<div class="panel-title"><ha-icon icon="mdi:fan"></ha-icon>Blæsere</div><div class="fans">${fanHtml}</div>`; amsSide.append(panel); }
       workspace.append(bambu, amsSide); main.after(workspace); side.remove();
     }
     this.shadowRoot.addEventListener("click", (event) => this._click(event));
     this._built = true;
-    this._setMedia();
+    this._mountEmbeddedCards();
     if (this._hass) this._update();
   }
 
-  _setMedia() {
-    const img = this.shadowRoot?.querySelector(".visual img"); if (!img || !this._hass) return;
+  async _mountEmbeddedCards() {
+    const token = {}; this._mountToken = token; this._embeddedCards = [];
+    const helpers = await window.loadCardHelpers?.();
+    if (!helpers || this._mountToken !== token) return;
+    const mount = (host, config, className = "") => { if (!host || !config) return; const card = helpers.createCardElement(config); const wrap = document.createElement("div"); wrap.className = className; wrap.append(card); host.append(wrap); if (this._hass) card.hass = this._hass; this._embeddedCards.push(card); return wrap; };
+    const cameraHost = this.shadowRoot.querySelector(".camera-host");
     const cameras = [this._config.camera || this._config.image, this._config.secondary_camera].filter(Boolean);
-    const entity = cameras[Math.min(this._cameraIndex || 0, cameras.length - 1)]; if (!entity) return;
-    const path = entity.startsWith("camera.") ? `/api/camera_proxy_stream/${entity}` : `/api/image_proxy/${entity}`;
-    const url = this._hass.hassUrl ? this._hass.hassUrl(path) : path;
-    if (img.src !== url) img.src = url;
+    this._cameraViews = cameras.map((entity, index) => { const config = entity.startsWith("camera.") ? { type:"picture-glance", entities:[], camera_image:entity, camera_view:"live", show_state:false, show_name:false, aspect_ratio:"16:9", fit_mode:"cover" } : { type:"picture-entity", entity, show_state:false, show_name:false, camera_view:"auto", fit_mode:"cover" }; const view = mount(cameraHost, config, "camera-view"); if (view) view.hidden = index !== 0; return view; });
+    mount(this.shadowRoot.querySelector(".printer-card-host"), { type:"custom:ha-bambulab-print_status-card", printer:this._config.printer, style:"graphic" });
+    mount(this.shadowRoot.querySelector(".ams-card-host"), { type:"custom:ha-bambulab-ams-card", ams:this._config.ams, style:"vector", show_type:true, show_info_bar:true, spool_anim_reflection:true, spool_anim_wiggle:true });
+    this._setMedia();
+  }
+
+  _setMedia() {
+    (this._cameraViews || []).forEach((view, index) => { if (view) view.hidden = index !== (this._cameraIndex || 0); });
     this.shadowRoot.querySelectorAll("[data-camera]").forEach((button) => button.classList.toggle("active", Number(button.dataset.camera) === (this._cameraIndex || 0)));
   }
 
