@@ -1,5 +1,12 @@
 [
   {
+    "slug": "ha-bambulab-dashboard-card",
+    "name": "HA Bambu Lab Dashboard Card",
+    "filename": "ha-bambulab-dashboard-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-pool-card",
     "name": "HA Pool Card",
     "filename": "ha-pool-card.js",

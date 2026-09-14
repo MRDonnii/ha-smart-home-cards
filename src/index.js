@@ -1,3 +1,4 @@
+import "./cards/ha-bambulab-dashboard-card/ha-bambulab-dashboard-card.js";
 import "./cards/ha-pool-card/ha-pool-card.js";
 import "./cards/ha-pool-settings-card/ha-pool-settings-card.js";
 import "./cards/ha-roborock-vacuum-card/ha-roborock-vacuum-card.js";

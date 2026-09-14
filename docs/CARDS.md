@@ -1,11 +1,12 @@
 # Card catalog
 
-The suite currently contains **52 cards**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **53 cards**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 ## Devices and controls
 
 | Card | Custom resource source | Documentation |
 |---|---|---|
+| HA Bambu Lab Dashboard Card | `ha-bambulab-dashboard-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-bambulab-dashboard-card) |
 | HA Pool Card | `ha-pool-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-pool-card) |
 | HA Pool Settings Card | `ha-pool-settings-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-pool-settings-card) |
 | HA Roborock Vacuum Card | `ha-roborock-vacuum-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-roborock-vacuum-card) |
