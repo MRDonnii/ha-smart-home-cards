@@ -1,0 +1,46 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>pending</title>
+<style>html,body{margin:0;background:#080d14;color:#fff}ha-electricity-price-card{display:block;width:100%;height:430px}</style>
+<script src="../ha-electricity-price-card.js"></script>
+<ha-electricity-price-card id="compact"></ha-electricity-price-card>
+<script>
+  const points = Array.from({ length: 24 }, (_, hour) => ({
+    price: 1 + Math.sin(hour / 4) + hour / 20,
+    start: new Date(2026, 8, 13, hour).toISOString(),
+  }));
+  points[19].price = 7.48;
+  const entity = {
+    state: "1.75",
+    last_updated: "2026-09-13T14:00:00Z",
+    attributes: { raw_today: points, raw_tomorrow: points, forecast: points, tomorrow_valid: true },
+  };
+  const compact = document.querySelector("#compact");
+  compact.setConfig({ source: "energidataservice", energidataservice: "sensor.price", show_header: false, desktop_height: 430, force_price_animation: true });
+  compact.hass = { states: { "sensor.price": entity } };
+  const card = compact.shadowRoot.querySelector("ha-card");
+  const chart = compact.shadowRoot.querySelector(".chart");
+  const firstBar = compact.shadowRoot.querySelector(".bar-wrap");
+  const initialPrice = firstBar.getAttribute("aria-label");
+  entity.attributes.raw_today[0].price = 4.25;
+  entity.last_updated = "2026-09-13T14:05:00Z";
+  compact.hass = { states: { "sensor.price": entity, "sensor.unrelated": { state: "changed" } } };
+  const defaultCard = document.createElement("ha-electricity-price-card");
+  defaultCard.setConfig({ source: "energidataservice", energidataservice: "sensor.price" });
+  defaultCard.hass = { states: { "sensor.price": entity } };
+  document.body.append(defaultCard);
+  const mobile = matchMedia("(max-width: 600px)").matches;
+  const pass = !compact.shadowRoot.querySelector(".head")
+    && compact.shadowRoot.querySelectorAll(".tabs button").length === 3
+    && chart.getBoundingClientRect().height >= (mobile ? 180 : 220)
+    && (!mobile || card.style.height === "342px")
+    && compact.shadowRoot.querySelector("ha-card") === card
+    && compact.hasAttribute("force-price-animation")
+    && compact.shadowRoot.querySelector(".bar-wrap.price-alert")
+    && getComputedStyle(compact.shadowRoot.querySelector(".bar-wrap.price-alert i")).animationName === "priceDangerPulse"
+    && compact.shadowRoot.querySelector(".bar-wrap") === firstBar
+    && firstBar.getAttribute("aria-label") !== initialPrice
+    && defaultCard.shadowRoot.querySelector(".head");
+  document.title = pass ? "pass" : "fail";
+  document.body.dataset.test = pass ? "pass" : "fail";
+</script>

@@ -1,5 +1,5 @@
 import "./ha-home-status-assets.js";
-const VERSION = "0.8.33";
+const VERSION = "0.8.37";
 
 const PRESETS = {
   home_energy: {
@@ -32,6 +32,7 @@ const PRESETS = {
     phase_max_entity: "sensor.ev_charger_allocated_current",
     phase_max: 16,
     daily_entity: "sensor.ev_energy_today",
+    session_energy_entity: "sensor.ev_charger_session_energy",
     schedule_entity: "sensor.ev_charger_last_charge",
     charger_state_entity: "sensor.ev_charger_state",
     cable_entity: "binary_sensor.ev_charger_cable_plugged_in",
@@ -127,6 +128,17 @@ class HaHomeStatusCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._sig = "";
+    this._evCycle = 0;
+  }
+
+  connectedCallback() {
+    this._cycleTimer = setInterval(() => {
+      const type = this.config?.preset || this.config?.type_name;
+      if (type === "ev") {
+        this._evCycle = (this._evCycle + 1) % 2;
+        this.render();
+      }
+    }, 4000);
   }
 
   setConfig(config) {
@@ -147,6 +159,7 @@ class HaHomeStatusCard extends HTMLElement {
       cfg.power_entity,
       cfg.phase_max_entity,
       cfg.daily_entity,
+      cfg.session_energy_entity,
       cfg.schedule_entity,
       cfg.charger_state_entity,
       cfg.cable_entity,
@@ -208,6 +221,24 @@ class HaHomeStatusCard extends HTMLElement {
       : "—";
   }
 
+  priceColor(value) {
+    const price = Number.isFinite(value) ? value : 0;
+    const green = "var(--dashboard-success, var(--state-on-icon, var(--success-color, #20e3a2)))";
+    const yellow = "var(--dashboard-warning, var(--warning-color, #f59e0b))";
+    const orange = "var(--dashboard-orange, #f97316)";
+    const red = "var(--dashboard-danger, var(--error-color, #f43f5e))";
+    const darkRed = "var(--dashboard-danger-strong, var(--error-color, #991b1b))";
+    const mix = (from, to, amount) => {
+      const percent = Math.round(Math.max(0, Math.min(1, amount)) * 1000) / 10;
+      return `color-mix(in oklab, ${from} ${100 - percent}%, ${to} ${percent}%)`;
+    };
+    if (price <= 1) return green;
+    if (price <= 2) return mix(green, yellow, price - 1);
+    if (price <= 4) return mix(yellow, orange, (price - 2) / 2);
+    if (price <= 5) return mix(orange, red, price - 4);
+    return mix(red, darkRed, price - 5);
+  }
+
   view(item) {
     const type = item.type || "entity";
     const cfg = { ...(PRESETS[type] || {}), ...item };
@@ -217,6 +248,7 @@ class HaHomeStatusCard extends HTMLElement {
     let meter = 0;
     let color = cfg.color || "var(--state-info-icon, var(--info-color, #38bdf8))";
     let detail = "";
+    let pricePulse = 0;
 
     if (type === "home_energy") {
       const watts = this.number(cfg.entity);
@@ -231,13 +263,13 @@ class HaHomeStatusCard extends HTMLElement {
           : `${this.fmt(houseWatts / 1000, 2)} kW`;
       detail = `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
       meter =
-        houseWatts < 500
+        houseWatts < 3500
           ? 1
-          : houseWatts < 1200
+          : houseWatts < 7000
             ? 2
-            : houseWatts < 2500
+            : houseWatts < 10500
               ? 3
-              : houseWatts < 5000
+              : houseWatts < 14000
                 ? 4
                 : 5;
     } else if (type === "ev") {
@@ -250,8 +282,11 @@ class HaHomeStatusCard extends HTMLElement {
       ]
         .join(" ")
         .toLowerCase();
+      const sessionEnergy = this.number(cfg.session_energy_entity);
       detail = power > 0
-        ? `${this.fmt(power, 1)} kW lader`
+        ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0
+          ? `${this.fmt(sessionEnergy, 1)} kWh ladet`
+          : `${this.fmt(power, 1)} kW lader`
         : scheduleState.includes("scheduled")
           ? "Planlagt"
           : `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
@@ -261,15 +296,13 @@ class HaHomeStatusCard extends HTMLElement {
     } else if (type === "electricity_price") {
       const price = this.number(cfg.entity);
       value = `${this.fmt(price, 2)} kr`;
-      detail = price < 1 ? "Lav pris" : price < 2 ? "Normal pris" : "Høj pris";
+      detail = price < 1 ? "Lav pris" : price < 5 ? "Normal pris" : "Høj pris";
       meter =
-        price < 1 ? 1 : price < 1.5 ? 2 : price < 2 ? 3 : price < 2.5 ? 4 : 5;
-      color =
-        price < 1
-          ? "var(--state-on-icon, var(--success-color, #20e3a2))"
-          : price < 2
-            ? "var(--warning-color, #f59e0b)"
-            : "var(--error-color, #f43f5e)";
+        price < 1 ? 1 : price < 2 ? 2 : price < 3 ? 3 : price < 4 ? 4 : 5;
+      color = this.priceColor(price);
+      pricePulse = Number.isFinite(price) && price > 6
+        ? Math.min(1, (price - 6) / 6)
+        : 0;
     } else if (type === "pool") {
       const temp = this.number(cfg.entity);
       value = `${this.fmt(temp, 1)}°C`;
@@ -490,6 +523,7 @@ class HaHomeStatusCard extends HTMLElement {
       meter: Math.min(segments, Math.max(0, meter)),
       segments,
       color,
+      pricePulse,
     };
   }
 
@@ -500,8 +534,12 @@ class HaHomeStatusCard extends HTMLElement {
         Number.isFinite(maxFromEntity) && maxFromEntity > 0
           ? maxFromEntity
           : item.phase_max;
+      const vehiclePerPhaseW =
+        item.type === "home_energy"
+          ? Math.max(0, (this.number(item.vehicle_power_entity) || 0) * 1000) / 3
+          : 0;
       const values = (item.phase_entities || []).map((id) =>
-        Math.max(0, this.number(id) || 0),
+        Math.max(0, (this.number(id) || 0) - vehiclePerPhaseW),
       );
       const colors = values.map((value) => {
         const load = Math.min(1, value / maximum);
@@ -514,8 +552,12 @@ class HaHomeStatusCard extends HTMLElement {
       });
       const paths = values.map((value, phase) => {
         const load = Math.min(1, value / maximum);
+        // House consumption sits at a small fraction of the 17.5kW scale most of the
+        // time (EV charging is excluded), so a front-loaded curve keeps normal, everyday
+        // usage visibly present instead of flatlining until load nears the ceiling.
+        const shapedLoad = item.type === "home_energy" ? Math.pow(load, 0.42) : load;
         const amplitude =
-          item.type === "ev" ? 1 + Math.pow(load, 1.8) * 23 : 3 + load * 26;
+          item.type === "ev" ? 1 + Math.pow(load, 1.8) * 24.5 : 2 + shapedLoad * 23.5;
         const cycles = 1.1 + load * 1.9;
         const offset = (phase * Math.PI * 2) / 3;
         const points = [];
@@ -525,9 +567,16 @@ class HaHomeStatusCard extends HTMLElement {
             `${(progress * 300).toFixed(1)},${(42.5 + Math.sin(progress * Math.PI * 2 * cycles + offset) * amplitude).toFixed(1)}`,
           );
         }
-        const opacity = (0.22 + load * 0.45).toFixed(2);
-        const width = (1.3 + load * 1.2).toFixed(2);
-        return `<polyline class="phase phase-${phase + 1}" points="${points.join(" ")}" style="stroke:${colors[phase]};stroke-width:${width};opacity:${opacity}"/>`;
+        const opacity =
+          item.type === "home_energy"
+            ? (0.08 + shapedLoad * 0.15).toFixed(2)
+            : (0.05 + load * 0.08).toFixed(2);
+        const width =
+          item.type === "home_energy"
+            ? (0.9 + shapedLoad * 0.6).toFixed(2)
+            : (0.8 + load * 0.5).toFixed(2);
+        const stroke = `color-mix(in srgb, ${colors[phase]} 40%, var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 60%)`;
+        return `<polyline class="phase phase-${phase + 1}" points="${points.join(" ")}" style="stroke:${stroke};stroke-width:${width};opacity:${opacity}"/>`;
       });
       return `<svg class="phase-waves ${item.type}" viewBox="0 0 300 85" preserveAspectRatio="none"><line x1="0" y1="42.5" x2="300" y2="42.5"/>${paths.join("")}</svg>`;
     }
@@ -628,7 +677,11 @@ class HaHomeStatusCard extends HTMLElement {
     this._escHandler = null;
   }
 
-  disconnectedCallback() { this._closeEvPopup(); }
+  disconnectedCallback() {
+    this._closeEvPopup();
+    clearInterval(this._cycleTimer);
+    this._cycleTimer = null;
+  }
 
   render() {
     if (!this.config || !this._hass) return;
@@ -647,13 +700,13 @@ class HaHomeStatusCard extends HTMLElement {
     if (!this._rendered) {
       this.shadowRoot.innerHTML = `<style>
       :host{display:block}
-      .item{display:block;width:100%;min-width:0;max-width:100%;height:85px;box-sizing:border-box;position:relative;overflow:hidden;padding:10px 12px;border:0;border-left:3px solid color-mix(in srgb,var(--accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left;cursor:pointer}
-      .value{position:relative;z-index:2;font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meter{position:relative;z-index:2;display:flex;gap:4px;height:8px;margin:5px 0}.seg{width:14px;height:6px;border-radius:99px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 25%,transparent)}.seg.on{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 28%,transparent)}.seg.seg-locked{background:var(--state-on-icon, var(--success-color, #20e3a2));box-shadow:0 0 7px color-mix(in srgb,var(--state-on-icon, var(--success-color, #20e3a2)) 30%,transparent)}.seg.seg-unlocked{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-error{background:var(--error-color,#ef4444);animation:seg-error-pulse 1.8s ease-in-out infinite}@keyframes seg-error-pulse{0%,100%{opacity:.5;box-shadow:0 0 4px color-mix(in srgb,var(--error-color,#ef4444) 35%,transparent)}50%{opacity:1;box-shadow:0 0 11px color-mix(in srgb,var(--error-color,#ef4444) 75%,transparent)}}.item.has-error{animation:item-error-pulse 1.8s ease-in-out infinite}@keyframes item-error-pulse{0%,100%{box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--error-color,#ef4444) 22%,transparent),var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}}
-      .detail{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.label{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.source-row{display:flex;align-items:center;gap:5px;height:14px}.source-row ha-icon{position:static;width:13px;height:13px;--mdc-icon-size:13px;flex:0 0 13px}.source-row b{line-height:1}.item.security .detail{display:none}.item.security .label{position:absolute;left:12px;bottom:4px;width:80px;height:38px;padding:0;overflow:visible}.security-row{display:grid;grid-template-columns:repeat(2,38px);grid-template-rows:repeat(2,18px);gap:2px 4px;width:80px;height:38px;justify-content:start;align-content:start}.security-row>span{display:flex;align-items:center;justify-content:center;gap:1px;width:38px;height:18px;padding:0 2px;box-sizing:border-box;border-radius:6px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 9%,transparent);border:1px solid color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 18%,transparent)}.security-row img,.security-row ha-icon{position:static;width:12px;height:12px;--mdc-icon-size:12px;object-fit:contain}.security-row b{font-size:9px;line-height:1}
+      .item{display:block;width:100%;min-width:0;max-width:100%;height:85px;box-sizing:border-box;position:relative;overflow:hidden;padding:10px 12px;border:0;border-left:3px solid color-mix(in srgb,var(--accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left;cursor:pointer;transition:border-left-color .9s ease,box-shadow .9s ease}
+      .value{position:relative;z-index:2;font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meter{position:relative;z-index:2;display:flex;gap:4px;height:8px;margin:5px 0}.seg{width:14px;height:6px;border-radius:99px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 25%,transparent);transition:background-color .9s ease,box-shadow .9s ease}.seg.on{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 28%,transparent)}.seg.seg-locked{background:var(--state-on-icon, var(--success-color, #20e3a2));box-shadow:0 0 7px color-mix(in srgb,var(--state-on-icon, var(--success-color, #20e3a2)) 30%,transparent)}.seg.seg-unlocked{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-error{background:var(--error-color,#ef4444);animation:seg-error-pulse 1.8s ease-in-out infinite}@keyframes seg-error-pulse{0%,100%{opacity:.5;box-shadow:0 0 4px color-mix(in srgb,var(--error-color,#ef4444) 35%,transparent)}50%{opacity:1;box-shadow:0 0 11px color-mix(in srgb,var(--error-color,#ef4444) 75%,transparent)}}.item.has-error{animation:item-error-pulse 1.8s ease-in-out infinite}@keyframes item-error-pulse{0%,100%{box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--error-color,#ef4444) 22%,transparent),var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}}
+      .detail{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.label{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.source-row{display:flex;align-items:center;gap:5px;height:14px}.source-row ha-icon{position:static;width:13px;height:13px;--mdc-icon-size:13px;flex:0 0 13px}.source-row b{line-height:1}.item.ev .detail{padding-right:6px;z-index:3}.item.security .detail{display:none}.item.security .label{position:absolute;left:12px;bottom:4px;width:80px;height:38px;padding:0;overflow:visible}.security-row{display:grid;grid-template-columns:repeat(2,38px);grid-template-rows:repeat(2,18px);gap:2px 4px;width:80px;height:38px;justify-content:start;align-content:start}.security-row>span{display:flex;align-items:center;justify-content:center;gap:1px;width:38px;height:18px;padding:0 2px;box-sizing:border-box;border-radius:6px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 9%,transparent);border:1px solid color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 18%,transparent)}.security-row img,.security-row ha-icon{position:static;width:12px;height:12px;--mdc-icon-size:12px;object-fit:contain}.security-row b{font-size:9px;line-height:1}
       .item.security{padding:0 12px}.item.security .value{position:absolute;left:12px;top:7px;width:calc(100% - 50px);height:21px;line-height:21px;padding:0}.item.security .meter{position:absolute;left:12px;top:32px;height:8px;margin:0}.item.security .label{top:43px;bottom:auto}
       .bg-icon{position:absolute;right:-10px;bottom:-10px;width:58px;height:58px;--mdc-icon-size:58px;color:var(--accent);opacity:.12;animation:drift 5s ease-in-out infinite;z-index:1;pointer-events:none;filter:saturate(1.05) drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 10%,transparent))}@keyframes drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
-      .phase-waves,.pool-waves{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}.phase-waves .phase{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;animation:phaseBreathe 3s ease-in-out infinite}.phase-waves .phase-2{animation-delay:-1.4s}.phase-waves .phase-3{animation-delay:-2.8s}.phase-waves line{stroke:var(--secondary-text-color);stroke-width:1;stroke-dasharray:3 3;opacity:.16;vector-effect:non-scaling-stroke}@keyframes phaseBreathe{50%{filter:brightness(1.24) saturate(1.15)}}.pool-waves{opacity:.2}.pool-waves path{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;animation:linePulse 3s ease-in-out infinite}.pool-waves path+path{animation-delay:-1.4s;opacity:.65}@keyframes linePulse{50%{opacity:.35;transform:translateY(-2px)}}
-      .price-bars{position:absolute;inset:10px 42px 8px 12px;display:flex;align-items:flex-end;gap:5px;opacity:.42;z-index:0}.price-bars i{display:block;width:4px;border-radius:9px 9px 0 0;background:var(--accent);animation:barPulse 2.8s ease-in-out infinite}@keyframes barPulse{50%{transform:scaleY(.72);opacity:.6}}
+      .phase-waves,.pool-waves{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}.phase-waves .phase{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;animation:phaseBreathe 3s ease-in-out infinite}.phase-waves .phase-2{animation-delay:-1.4s}.phase-waves .phase-3{animation-delay:-2.8s}.phase-waves line{stroke:var(--secondary-text-color);stroke-width:1;stroke-dasharray:3 3;opacity:.16;vector-effect:non-scaling-stroke}@keyframes phaseBreathe{50%{filter:brightness(1.04) saturate(.85)}}.pool-waves{opacity:.2}.pool-waves path{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;animation:linePulse 3s ease-in-out infinite}.pool-waves path+path{animation-delay:-1.4s;opacity:.65}@keyframes linePulse{50%{opacity:.35;transform:translateY(-2px)}}
+      .price-bars{position:absolute;inset:10px 42px 8px 12px;display:flex;align-items:flex-end;gap:5px;opacity:.42;z-index:0}.price-bars i{display:block;width:4px;border-radius:9px 9px 0 0;background:var(--accent);transform-origin:center bottom;transition:background-color .9s ease,filter .9s ease}.item.price-alert .price-bars i,.item.price-alert .meter .seg.on{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite;transform-origin:center bottom}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.86;filter:brightness(1) drop-shadow(0 0 2px var(--accent))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--accent))}}
       .appliances{position:absolute;right:8px;top:4px;display:flex;gap:3px;z-index:3}.appliances img{width:24px;height:24px;object-fit:contain}.airflow{position:absolute;right:10px;top:8px;z-index:3;color:var(--accent)}.airflow i{display:block;border-top:2px solid currentColor;border-radius:50%;height:4px;margin:1px 0;animation:air 1.9s ease-in-out infinite}.airflow i:nth-child(1){width:11px}.airflow i:nth-child(2){width:17px;animation-delay:-.3s}.airflow i:nth-child(3){width:23px;animation-delay:-.6s}@keyframes air{50%{transform:translateX(-3px);opacity:.45}}
       @media(min-width:1101px) and (max-height:950px){.item{height:66px;padding:5px 10px}.value{font-size:16px;line-height:18px}.meter{margin:2px 0}.detail,.label{font-size:10px;line-height:11px}.bg-icon{width:48px;height:48px;--mdc-icon-size:48px}}
       @media(max-width:600px){.item{padding:9px 9px}.value{font-size:16px}.detail,.label{font-size:10px}.meter{gap:3px}.seg{width:12px}}
@@ -666,12 +719,25 @@ class HaHomeStatusCard extends HTMLElement {
 
     this._currentItem = item;
     const button = this.shadowRoot.querySelector(".item");
-    button.className = `item ${item.type}${item.hasError ? " has-error" : ""}`;
+    const pulse = Math.max(0, Math.min(1, item.pricePulse || 0));
+    button.className = `item ${item.type}${item.hasError ? " has-error" : ""}${pulse > 0 ? " price-alert" : ""}`;
     button.style.setProperty("--accent", item.color);
+    button.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
+    button.style.setProperty("--price-pulse-scale", (0.94 - pulse * 0.28).toFixed(2));
+    button.style.setProperty("--price-pulse-opacity", (0.82 - pulse * 0.32).toFixed(2));
+    button.style.setProperty("--price-pulse-brightness", (1.08 + pulse * 0.82).toFixed(2));
+    button.style.setProperty("--price-pulse-glow", `${(4 + pulse * 14).toFixed(1)}px`);
     button.setAttribute("aria-label", item.name || item.type);
-    this.shadowRoot.querySelector(".decoration").innerHTML = this.decoration(item);
+    const decoration = this.shadowRoot.querySelector(".decoration");
+    if (this._decorationType !== item.type || item.type !== "electricity_price") {
+      decoration.innerHTML = this.decoration(item);
+      this._decorationType = item.type;
+    }
     this.shadowRoot.querySelector(".value").textContent = item.value;
-    this.shadowRoot.querySelector(".meter").innerHTML = meterHtml;
+    const meter = this.shadowRoot.querySelector(".meter");
+    const segmentStates = item.segmentStates || Array.from({ length: item.segments || 5 }, (_, i) => (i + 1 <= item.meter ? "on" : ""));
+    if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
+    else segmentStates.forEach((state, index) => { meter.children[index].className = `seg ${segClass(state)}`; });
     this.shadowRoot.querySelector(".detail").textContent = item.detail || "\u00a0";
     this.shadowRoot.querySelector(".label").innerHTML = item.label;
     this.shadowRoot
@@ -744,12 +810,16 @@ const SUMMARY_DEFAULTS = {
   water_month_cost_entity: "sensor.vandmaler_manedens_pris",
   heat_month_entity: "sensor.kamstrup_multical_energi_maaned",
   heat_month_cost_entity: "sensor.kamstrup_multical_forbrug_denne_maaned",
+  electricity_path: "/lovelace/energy",
+  water_path: "/lovelace/water",
+  heat_path: "/lovelace/heating",
   co2_entity: "sensor.luftkvalitet_spisestuen_carbon_dioxide",
   air_quality_entity: "sensor.luftkvalitet_spisestuen_air_quality",
   water_flow_entity: "sensor.vandmaler_flow",
   storage_entity: "sensor.unifi_protect_storage_utilization",
   event_days: 14,
   max_events: 40,
+  robots: [],
   hdd_entities: ["binary_sensor.unifi_protect_hdd_1", "binary_sensor.unifi_protect_hdd_2"],
   rooms: [
     { name: "Stue", icon: "mdi:sofa-outline", temperature: "sensor.temp_fugtighed_stue_temperature", humidity: "sensor.temp_fugtighed_stue_humidity", climate: "climate.stue" },
@@ -781,6 +851,8 @@ class HaHomeSummaryCard extends HTMLElement {
     this._sig = "";
     this._events = [];
     this._eventsSig = "";
+    this._robotSig = "";
+    this._robotNodes = new Map();
   }
   setConfig(config) {
     this.config = { ...SUMMARY_DEFAULTS, ...config };
@@ -796,8 +868,9 @@ class HaHomeSummaryCard extends HTMLElement {
       this.config?.heat_month_cost_entity,
       this.config?.co2_entity, this.config?.air_quality_entity, this.config?.water_flow_entity,
       this.config?.storage_entity, ...(this.config?.hdd_entities || []),
-      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate]),
+      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence]),
       ...(this.config?.calendars || []).map((x) => x.entity)].filter(Boolean);
+    const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
     const sig = JSON.stringify(ids.map((id) => [id, hass.states?.[id]?.state,
       hass.states?.[id]?.last_changed, hass.states?.[id]?.attributes?.message,
       hass.states?.[id]?.attributes?.start_time]));
@@ -805,6 +878,11 @@ class HaHomeSummaryCard extends HTMLElement {
       this._sig = sig;
       this._render();
       this._loadEvents();
+    }
+    const robotSig = JSON.stringify(robotIds.map((id) => [id, hass.states?.[id]?.state, hass.states?.[id]?.last_changed]));
+    if (robotSig !== this._robotSig) {
+      this._robotSig = robotSig;
+      this._updateRobots();
     }
   }
   _state(id) { return id ? this._hass?.states?.[id] : undefined; }
@@ -817,6 +895,40 @@ class HaHomeSummaryCard extends HTMLElement {
   _fmt(value, digits = 1) { return Number.isFinite(value) ? value.toLocaleString("da-DK", { maximumFractionDigits: digits }) : "—"; }
   _esc(value) { return String(value ?? "").replace(/[&<>"']/g, (m) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[m]); }
   _label(value) { return String(value || "—").replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase()); }
+  _roomKey(value) { return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("da-DK"); }
+  _robotActive(robot) {
+    const state = String(this._state(robot.entity)?.state || "").toLowerCase();
+    const states = Array.isArray(robot.active_states) && robot.active_states.length ? robot.active_states
+      : (String(robot.entity || "").startsWith("lawn_mower.") ? ["mowing", "edgecut", "starting", "leaving"]
+        : ["cleaning", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping"]);
+    return states.map((value) => String(value).toLowerCase()).includes(state);
+  }
+  _robotRoom(robot) {
+    const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
+    if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
+    return this._roomKey(robot.room_map?.[raw] ?? robot.room_map?.[this._roomKey(raw)] ?? raw);
+  }
+  _updateRobots() {
+    const rooms = this.shadowRoot?.querySelector(".rooms"), panel = this.shadowRoot?.querySelector(".temperature-panel");
+    if (!rooms || !panel) return;
+    const configured = Array.isArray(this.config?.robots) ? this.config.robots : [], liveKeys = new Set();
+    configured.forEach((robot, index) => {
+      const key = String(robot.id || robot.name || robot.entity || index); liveKeys.add(key);
+      let node = this._robotNodes.get(key);
+      if (!node || !node.isConnected) { node = document.createElement("ha-icon"); node.className = "room-robot"; node.dataset.robot = key; this._robotNodes.set(key, node); }
+      node.setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
+      node.title = robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot";
+      node.style.setProperty("--robot-speed", `${Math.max(7, Math.min(90, Number(robot.speed_seconds) || 16))}s`);
+      node.style.setProperty("--robot-speed-y", `${Math.max(6, Math.min(75, (Number(robot.speed_seconds) || 16) * .72))}s`);
+      node.hidden = !this._robotActive(robot);
+      if (node.hidden) { if (!node.isConnected) panel.append(node); return; }
+      if (robot.outdoors) { node.classList.add("outdoors"); panel.append(node); return; }
+      node.classList.remove("outdoors");
+      const room = rooms.querySelector(`[data-room-key="${CSS.escape(this._robotRoom(robot))}"]`);
+      if (room) room.append(node); else node.hidden = true;
+    });
+    for (const [key, node] of this._robotNodes) if (!liveKeys.has(key)) { node.remove(); this._robotNodes.delete(key); }
+  }
   async _loadEvents() {
     if (!this._hass?.callApi || this._loadingEvents) return;
     const calendars = this.config.calendars || [];
@@ -866,15 +978,20 @@ class HaHomeSummaryCard extends HTMLElement {
       this.shadowRoot.innerHTML = `<style>
         :host{display:block;height:100%}.card{--summary-status:var(--success-color,#20e3a2);box-sizing:border-box;display:flex;flex-direction:column;height:100%;position:relative;overflow:hidden;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--primary-text-color,#fff)}
         header{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px}h2{font-size:20px;margin:0;display:flex;align-items:center;gap:9px}h2 ha-icon{color:var(--dashboard-accent,#38bdf8)}.health{font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:color-mix(in srgb,var(--success-color,#20e3a2) 14%,transparent);color:var(--success-color,#20e3a2)}
-        .utilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:13px}.utility{--accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;min-width:0;padding:13px 13px 12px 15px;border:0;border-left:3px solid var(--accent);border-radius:16px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden}.utility>*:not(.utility-bg){position:relative;z-index:1}.utility-head{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color,#a7b2c2);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.utility-head ha-icon{width:17px;height:17px;--mdc-icon-size:17px;color:var(--accent)}.utility-bg{position:absolute;right:-13px;bottom:-17px;z-index:0;width:76px;height:76px;--mdc-icon-size:76px;color:var(--accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.use{display:flex;align-items:baseline;gap:4px;margin-top:7px}.use b{font-size:22px;line-height:1}.use span{font-size:10px;color:var(--secondary-text-color,#a7b2c2)}.cost{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent);font-size:11px;color:var(--secondary-text-color,#a7b2c2)}.cost b{float:right;color:var(--primary-text-color,#fff);font-size:13px}.cost small{font-size:9px}
-        .body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(205px,.58fr);flex:1;min-height:0;gap:12px}.panel{padding:13px;border-radius:16px;background:color-mix(in srgb,var(--black,#000) 13%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 8%,transparent)}.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--secondary-text-color,#a7b2c2)}
-        .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(48px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:5px;min-width:0;padding:7px 8px;border:0;border-left:3px solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*:not(.room-bg){position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-9px;bottom:-12px;z-index:0;width:55px;height:55px;--mdc-icon-size:55px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-name{grid-column:1/3;min-width:0;padding-right:24px;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap}.room-temp{grid-row:2;grid-column:2;font-size:20px;font-weight:900;line-height:1}.room-target{grid-row:2;grid-column:1;font-size:10px;line-height:1.15;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}.room-target:empty{display:none}.room-target b{color:var(--room-accent);font-size:11px}
+        .utilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:13px}.utility{--accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;min-width:0;padding:13px 13px 12px 15px;border:0;border-left:3px solid var(--accent);border-radius:16px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.utility:hover{transform:translateY(-2px);box-shadow:var(--dashboard-shadow-deep,0 12px 26px rgba(0,0,0,.26))}.utility:active{transform:translateY(0)}.utility>*:not(.utility-bg){position:relative;z-index:1}.utility-head{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color,#a7b2c2);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.utility-head ha-icon{width:17px;height:17px;--mdc-icon-size:17px;color:var(--accent)}.utility-bg{position:absolute;right:-13px;bottom:-17px;z-index:0;width:76px;height:76px;--mdc-icon-size:76px;color:var(--accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.use{display:flex;align-items:baseline;gap:4px;margin-top:7px}.use b{font-size:22px;line-height:1}.use span{font-size:10px;color:var(--secondary-text-color,#a7b2c2)}.cost{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent);font-size:11px;color:var(--secondary-text-color,#a7b2c2)}.cost b{float:right;color:var(--primary-text-color,#fff);font-size:13px}.cost small{font-size:9px}
+        .body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(205px,.58fr);flex:1;min-height:0;gap:12px}.panel{padding:13px;border-radius:16px;background:color-mix(in srgb,var(--black,#000) 13%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 8%,transparent)}.temperature-panel{position:relative}.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--secondary-text-color,#a7b2c2)}
+        .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(64px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:5px;min-width:0;padding:9px 10px;border:0;border-left:3px solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*{position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-8px;bottom:-8px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.room-name{min-width:0;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-badges{display:flex;align-items:center;gap:4px;flex:0 0 auto}.room-status{display:none;flex:0 0 auto;align-items:center;color:#fb923c}.room-status.heating,.room-status.presence{display:flex;animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.presence{color:var(--dashboard-accent,var(--info-color,#38bdf8))}.room-status ha-icon{--mdc-icon-size:14px}.room-body{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}.room-temp{flex:0 0 auto;font-size:20px;font-weight:900;line-height:1}.room-target{min-width:0;font-size:10px;line-height:1.25;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-target:empty{display:none}.room-target b{color:var(--room-accent);font-size:11px}@keyframes roomHeatPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+        .room-robot{position:absolute!important;z-index:3!important;left:8%;top:24%;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor);pointer-events:none;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate,roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;color:var(--success-color,#20e3a2);offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{left:8%}to{left:calc(100% - 30px)}}@keyframes roomRobotY{from{top:24%}to{top:calc(100% - 29px)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
         @keyframes summaryIconDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-11deg);opacity:.22}}
-        @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg{animation:none}}
+        @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot{animation:none}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}}
         @media(max-width:700px){.utilities{grid-template-columns:1fr}.body{grid-template-columns:1fr}.card{padding:14px}}
-      </style><ha-card class="card"><header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header><div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><section class="panel"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></section><section class="panel agenda-panel"><h3>Næste i kalenderen</h3><div class="events"></div></section></div></ha-card>`;
+      </style><ha-card class="card"><header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header><div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><section class="panel temperature-panel"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></section><section class="panel agenda-panel"><h3>Næste i kalenderen</h3><div class="events"></div></section></div></ha-card>`;
+      const navigate=(path)=>{if(!path)return;history.pushState(null,"",path);window.dispatchEvent(new Event("location-changed"));};
+      this.shadowRoot.querySelector(".utility.electricity").onclick=()=>navigate(this.config.electricity_path);
+      this.shadowRoot.querySelector(".utility.water").onclick=()=>navigate(this.config.water_path);
+      this.shadowRoot.querySelector(".utility.heat").onclick=()=>navigate(this.config.heat_path);
       this._rendered = true;
     }
     if (!this._hass) return;
@@ -899,8 +1016,15 @@ class HaHomeSummaryCard extends HTMLElement {
       const icon=this._esc(room.icon||'mdi:thermometer');
       const targetText=Number.isFinite(target)?`Mål <b>${this._fmt(target,1)}°</b>`:"";
       const humidityText=Number.isFinite(humidity)?`<span class="room-humidity">${targetText?"· ":""}${this._fmt(humidity,0)}%</span>`:"";
-      return `<div class="room ${tone}"><ha-icon class="room-bg" icon="${icon}"></ha-icon><span class="room-name">${this._esc(room.name)}</span><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp,1)}°</strong></div>`;
+      const hvacAction=room.climate?this._state(room.climate)?.attributes?.hvac_action:undefined;
+      const heating=hvacAction==="heating";
+      const present=room.presence?this._state(room.presence)?.state==="on":false;
+      const heatBadge=heating?`<span class="room-status heating" title="Kalder på varme"><ha-icon icon="mdi:fire"></ha-icon></span>`:"";
+      const presenceBadge=present?`<span class="room-status presence" title="Der er nogen i rummet"><ha-icon icon="mdi:motion-sensor"></ha-icon></span>`:"";
+      return `<div class="room ${tone}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp,1)}°</strong></div></div>`;
     }).join("");
+    this._robotNodes.clear();
+    this._updateRobots();
     this._renderEvents();
   }
   getCardSize(){return 6;}
@@ -913,8 +1037,10 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   set hass(hass){this._hass=hass;}
   render(){
     const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["monthly_energy_entity","Strøm denne måned"],["electricity_price_entity","Aktuel elpris til estimat"],["electric_month_cost_entity","Eksakt månedlig elpris (valgfri)"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
-    this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:transparent;color:inherit}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}`;
+    const robots=JSON.stringify(this.config?.robots||[],null,2);
+    this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
+    this.querySelector("[data-robots]").addEventListener("change",(event)=>{try{const robots=JSON.parse(event.target.value);if(!Array.isArray(robots))throw new Error("Robotter skal være en liste");this.querySelector(".error").textContent="";this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,robots}}}));}catch(error){this.querySelector(".error").textContent=`Ugyldig robotopsætning: ${error.message}`;}});
   }
 }
 

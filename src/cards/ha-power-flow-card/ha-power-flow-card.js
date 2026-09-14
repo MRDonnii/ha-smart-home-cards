@@ -1,4 +1,16 @@
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
+
+class HAPowerFlowCardEditor extends HTMLElement {
+  setConfig(config) { this._config = config || {}; this._render(); }
+  set hass(hass) { this._hass = hass; if (!this.childElementCount) this._render(); }
+  _render() {
+    this.innerHTML = `<label style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 4px"><span>Animer priser over 6 kr</span><input type="checkbox" ${this._config.high_price_animation !== false ? "checked" : ""}></label>`;
+    this.querySelector("input").onchange = (event) => {
+      this._config = { ...this._config, high_price_animation: event.target.checked };
+      this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
+    };
+  }
+}
 
 class HAPowerFlowCard extends HTMLElement {
   constructor() {
@@ -20,11 +32,13 @@ class HAPowerFlowCard extends HTMLElement {
       daily_entity: "sensor.example_daily_usage",
       co2_entity: "sensor.example_co2_intensity",
       spot_entity: "sensor.example_spotprice",
+      high_price_animation: true,
     };
   }
+  static getConfigElement() { return document.createElement("ha-power-flow-card-editor"); }
   setConfig(config) {
     if (!config?.price_entity) throw new Error("Kortet kræver en price_entity");
-    this._config = { title: "Strømpris", ...config };
+    this._config = { title: "Strømpris", high_price_animation: true, ...config };
     this._render();
   }
   _watchedIds() {
@@ -87,13 +101,22 @@ class HAPowerFlowCard extends HTMLElement {
     const raw = this._e(this._config.price_entity)?.attributes?.prices;
     return Array.isArray(raw) ? raw.filter((p) => Number.isFinite(Number(p?.price))) : [];
   }
-  _tier(price, min, max) {
-    if (!Number.isFinite(price) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min)
-      return "mid";
-    const pct = (price - min) / (max - min);
-    if (pct < 0.34) return "low";
-    if (pct < 0.67) return "mid";
+  _tier(price) {
+    if (!Number.isFinite(price)) return "mid";
+    if (price < 1) return "low";
+    if (price < 5) return "mid";
     return "high";
+  }
+  _priceColor(value) {
+    if (!Number.isFinite(value)) return "var(--secondary-text-color, #66778a)";
+    const stops = [[1,"var(--dashboard-success,var(--state-on-icon,var(--success-color,#54d9aa)))"],[2,"var(--dashboard-yellow,var(--warning-color,#f6d365))"],[4,"var(--dashboard-warning,var(--warning-color,#ffad42))"],[5,"var(--dashboard-danger,var(--error-color,#ff667a))"],[6,"var(--dashboard-danger-strong,var(--error-color,#991b1b))"]];
+    const price=Math.max(1,Math.min(6,value)); let a=stops[0],b=stops.at(-1);
+    for(let i=0;i<stops.length-1;i++) if(price>=stops[i][0]&&price<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;}
+    const pct=Math.round(((price-a[0])/Math.max(.0001,b[0]-a[0]))*1000)/10;
+    return `color-mix(in oklab,${a[1]} ${100-pct}%,${b[1]} ${pct}%)`;
+  }
+  _pulse(value) {
+    return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
   }
   _co2Color(v) {
     if (!Number.isFinite(v)) return "var(--secondary-text-color)";
@@ -101,6 +124,7 @@ class HAPowerFlowCard extends HTMLElement {
   }
   _render() {
     if (!this.shadowRoot) return;
+    const preservedChart = this.shadowRoot.querySelector(".chart");
     const c = this._config;
     const current = this._num(c.price_entity);
     const prices = this._prices();
@@ -108,9 +132,9 @@ class HAPowerFlowCard extends HTMLElement {
     const min = values.length ? Math.min(...values) : undefined;
     const max = values.length ? Math.max(...values) : undefined;
     const mean = this._num(c.today_mean_entity);
-    const tier = this._tier(current, min, max);
+    const tier = this._tier(current);
     const tierLabel = { low: "Billig", mid: "Normal", high: "Dyr" }[tier];
-    const tierColor = { low: "var(--good)", mid: "var(--warn)", high: "var(--danger)" }[tier];
+    const tierColor = this._priceColor(current);
 
     const housePowerW = this._num(c.house_power_entity);
     const houseKw = Number.isFinite(housePowerW) ? housePowerW / 1000 : undefined;
@@ -203,10 +227,9 @@ class HAPowerFlowCard extends HTMLElement {
 
       .chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding:4px 2px}
       .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer}
-      .bar i{display:block;width:100%;border-radius:4px 4px 1px 1px;min-height:3px}
-      .bar.low i{background:var(--good)}
-      .bar.mid i{background:var(--warn)}
-      .bar.high i{background:var(--danger)}
+      .bar i{display:block;width:100%;border-radius:4px 4px 1px 1px;min-height:3px;background:var(--price-color);transform-origin:center bottom;transition:background-color .9s ease}
+      .bar.price-alert i{animation:price-danger-pulse var(--pulse-duration) ease-in-out infinite}
+      @keyframes price-danger-pulse{0%,100%{transform:scaleY(1);opacity:.9;filter:brightness(1) drop-shadow(0 0 2px var(--price-color))}50%{transform:scaleY(var(--pulse-scale));opacity:var(--pulse-opacity);filter:brightness(var(--pulse-brightness)) drop-shadow(0 0 var(--pulse-glow) var(--price-color))}}
       .bar.now i{box-shadow:0 0 0 2px var(--primary-text-color)}
       .bar.now{transform:translateY(-2px)}
       .axis{display:flex;justify-content:space-between;margin-top:4px;font-size:8px;color:var(--secondary-text-color)}
@@ -216,7 +239,7 @@ class HAPowerFlowCard extends HTMLElement {
       .stat span{display:block;font-size:9px;color:var(--secondary-text-color);text-transform:uppercase;font-weight:700;letter-spacing:.03em}
       .stat b{display:block;margin-top:4px;font-size:14px;font-weight:800}
       @media(max-width:420px){.price b{font-size:32px}.stats{grid-template-columns:1fr 1fr}.flow{height:164px}.node-badge,.node-icon{width:42px;height:42px}.node.home .node-badge,.node.home .node-icon{width:54px;height:54px}}
-      @media(prefers-reduced-motion:reduce){.cable,.ring,.flow:after{animation:none!important}.spark{display:none!important}}
+      @media(prefers-reduced-motion:reduce){.cable,.ring,.flow:after,.bar.price-alert i{animation:none!important}.spark{display:none!important}}
     </style>
     <ha-card>
       <div class="head">
@@ -284,12 +307,13 @@ class HAPowerFlowCard extends HTMLElement {
         ${prices
           .map((p, i) => {
             const price = Number(p.price);
-            const t = this._tier(price, min, max);
+            const t = this._tier(price);
+            const pulse = this._pulse(price);
             const h = Number.isFinite(min) && Number.isFinite(max) && max > min
               ? 8 + ((price - min) / (max - min)) * 92
               : 50;
             const hour = new Date(p.start).getHours();
-            return `<div class="bar ${t} ${hour === nowHour ? "now" : ""}" data-tip="${this._esc(this._fmt(price))} kr"><i style="height:${h}%"></i></div>`;
+            return `<div class="bar ${t} ${hour === nowHour ? "now" : ""} ${c.high_price_animation !== false && pulse > 0 ? "price-alert" : ""}" style="--price-color:${this._priceColor(price)};--pulse-duration:${(3.2-pulse*2).toFixed(2)}s;--pulse-scale:${(0.96-pulse*.24).toFixed(2)};--pulse-opacity:${(0.88-pulse*.3).toFixed(2)};--pulse-brightness:${(1.08+pulse*.82).toFixed(2)};--pulse-glow:${(3+pulse*15).toFixed(1)}px" data-tip="${this._esc(this._fmt(price))} kr"><i style="height:${h}%"></i></div>`;
           })
           .join("")}
       </div>
@@ -302,6 +326,17 @@ class HAPowerFlowCard extends HTMLElement {
       </div>
     </ha-card>`;
 
+    const renderedChart = this.shadowRoot.querySelector(".chart");
+    if (preservedChart && renderedChart && preservedChart.children.length === renderedChart.children.length) {
+      [...preservedChart.children].forEach((bar, index) => {
+        const fresh = renderedChart.children[index];
+        bar.className = fresh.className;
+        bar.style.cssText = fresh.style.cssText;
+        bar.dataset.tip = fresh.dataset.tip;
+        bar.querySelector("i").style.cssText = fresh.querySelector("i").style.cssText;
+      });
+      renderedChart.replaceWith(preservedChart);
+    }
     this.shadowRoot.querySelectorAll("[data-more]").forEach((el) => {
       el.addEventListener("click", () => {
         if (el.dataset.more) this._more(el.dataset.more);
@@ -316,6 +351,7 @@ class HAPowerFlowCard extends HTMLElement {
   }
 }
 
+if (!customElements.get("ha-power-flow-card-editor")) customElements.define("ha-power-flow-card-editor", HAPowerFlowCardEditor);
 if (!customElements.get("ha-power-flow-card"))
   customElements.define("ha-power-flow-card", HAPowerFlowCard);
 window.customCards = window.customCards || [];
