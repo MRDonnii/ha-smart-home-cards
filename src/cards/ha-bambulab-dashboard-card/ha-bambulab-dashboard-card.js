@@ -1,6 +1,6 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
 
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 
 class HABambuLabDashboardCard extends HTMLElement {
   constructor() {
@@ -72,7 +72,11 @@ class HABambuLabDashboardCard extends HTMLElement {
   }
 
   setConfig(config) {
-    this._config = { ...HABambuLabDashboardCard.getStubConfig(), ...config };
+    const nextConfig = { ...HABambuLabDashboardCard.getStubConfig(), ...config };
+    const nextSignature = JSON.stringify(nextConfig);
+    if (this._built && nextSignature === this._configSignature) { this._config = nextConfig; return; }
+    this._config = nextConfig;
+    this._configSignature = nextSignature;
     this._signature = "";
     this._built = false;
     this._build();
@@ -135,6 +139,7 @@ class HABambuLabDashboardCard extends HTMLElement {
       workspace.append(bambu, amsSide); main.after(workspace); side.remove();
     }
     this.shadowRoot.addEventListener("click", (event) => this._click(event));
+    this.shadowRoot.querySelectorAll("[data-camera]").forEach((button) => button.addEventListener("click", (event) => { event.preventDefault(); event.stopPropagation(); this._selectCamera(Number(button.dataset.camera) || 0); }));
     this._built = true;
     this._mountEmbeddedCards();
     if (this._hass) this._update();
@@ -147,16 +152,18 @@ class HABambuLabDashboardCard extends HTMLElement {
     const mount = (host, config, className = "") => { if (!host || !config) return; const card = helpers.createCardElement(config); const wrap = document.createElement("div"); wrap.className = className; wrap.append(card); host.append(wrap); if (this._hass) card.hass = this._hass; this._embeddedCards.push(card); return wrap; };
     const cameraHost = this.shadowRoot.querySelector(".camera-host");
     const cameras = [this._config.camera || this._config.image, this._config.secondary_camera].filter(Boolean);
-    this._cameraViews = cameras.map((entity, index) => { const config = entity.startsWith("camera.") ? { type:"picture-glance", entities:[], camera_image:entity, camera_view:"live", show_state:false, show_name:false, aspect_ratio:"16:9", fit_mode:"cover" } : { type:"picture-entity", entity, show_state:false, show_name:false, camera_view:"auto", fit_mode:"cover" }; const view = mount(cameraHost, config, "camera-view"); if (view) view.hidden = index !== 0; return view; });
+    this._cameraViews = cameras.map((entity, index) => { const config = entity.startsWith("camera.") ? { type:"picture-glance", entities:[], camera_image:entity, camera_view:"live", show_state:false, show_name:false, aspect_ratio:"16:9", fit_mode:"cover" } : { type:"picture-entity", entity, show_state:false, show_name:false, camera_view:"auto", fit_mode:"cover" }; const view = mount(cameraHost, config, "camera-view"); if (view) view.style.display = index === 0 ? "block" : "none"; return view; });
     mount(this.shadowRoot.querySelector(".printer-card-host"), { type:"custom:ha-bambulab-print_status-card", printer:this._config.printer, style:"graphic" });
     mount(this.shadowRoot.querySelector(".ams-card-host"), { type:"custom:ha-bambulab-ams-card", ams:this._config.ams, style:"vector", show_type:true, show_info_bar:true, spool_anim_reflection:true, spool_anim_wiggle:true });
     this._setMedia();
   }
 
   _setMedia() {
-    (this._cameraViews || []).forEach((view, index) => { if (view) view.hidden = index !== (this._cameraIndex || 0); });
+    (this._cameraViews || []).forEach((view, index) => { if (view) view.style.display = index === (this._cameraIndex || 0) ? "block" : "none"; });
     this.shadowRoot.querySelectorAll("[data-camera]").forEach((button) => button.classList.toggle("active", Number(button.dataset.camera) === (this._cameraIndex || 0)));
   }
+
+  _selectCamera(index) { this._cameraIndex = index; this._setMedia(); }
 
   _update() {
     if (!this._built || !this._hass) return; this._setMedia();
@@ -180,7 +187,7 @@ class HABambuLabDashboardCard extends HTMLElement {
   _more(entity) { if (!entity) return; this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: entity } })); }
   _click(event) {
     const camera = event.target.closest?.("[data-camera]");
-    if (camera) { this._cameraIndex = Number(camera.dataset.camera) || 0; this._setMedia(); return; }
+    if (camera) { this._selectCamera(Number(camera.dataset.camera) || 0); return; }
     const entityButton = event.target.closest?.("[data-entity]");
     if (entityButton) { this._more(entityButton.dataset.entity); return; }
     const button = event.target.closest?.("[data-action]"); if (!button || button.disabled) return;
