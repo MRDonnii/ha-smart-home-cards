@@ -1,5 +1,5 @@
 import "./ha-home-status-assets.js";
-const VERSION = "0.8.42";
+const VERSION = "0.8.43";
 
 const PRESETS = {
   home_energy: {
@@ -996,8 +996,8 @@ class HaHomeSummaryCard extends HTMLElement {
       this._rendered = true;
     }
     if (!this._hass) return;
-    const c=this.config, monthly=this._num(c.monthly_energy_entity), currentPrice=this._num(c.electricity_price_entity);
-    const exactElectricCost=this._num(c.electric_month_cost_entity), electricCost=Number.isFinite(exactElectricCost)?exactElectricCost:monthly*currentPrice;
+    const c=this.config, monthly=this._num(c.monthly_energy_entity);
+    const electricCost=this._num(c.electric_month_cost_entity);
     const water=this._num(c.water_month_entity), waterCost=this._num(c.water_month_cost_entity);
     const heat=this._num(c.heat_month_entity), heatCost=this._num(c.heat_month_cost_entity);
     const co2=this._num(c.co2_entity);
@@ -1006,8 +1006,8 @@ class HaHomeSummaryCard extends HTMLElement {
     this.shadowRoot.querySelector(".title").textContent=c.title;
     const card=this.shadowRoot.querySelector(".card"); card.style.setProperty("--summary-status",healthy?"var(--success-color,#20e3a2)":"var(--warning-color,#fb923c)");
     const health=this.shadowRoot.querySelector(".health"); health.textContent=healthy?"Alt ser normalt ud":"Kræver opmærksomhed"; health.style.color=healthy?"var(--success-color,#20e3a2)":"var(--warning-color,#fb923c)";
-    const utility=(sel,icon,label,value,unit,cost,valid,estimated=false)=>{const tile=this.shadowRoot.querySelector(sel);tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head"><ha-icon icon="${icon}"></ha-icon>${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">Månedspris ${estimated?'<small>(est.)</small>':''}<b>${cost} kr</b></div>`;};
-    utility(".electricity","mdi:lightning-bolt","Strøm",this._fmt(monthly,0),"kWh",this._fmt(electricCost,0),Number.isFinite(monthly)&&Number.isFinite(electricCost),!Number.isFinite(exactElectricCost));
+    const utility=(sel,icon,label,value,unit,cost,valid)=>{const tile=this.shadowRoot.querySelector(sel);tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head"><ha-icon icon="${icon}"></ha-icon>${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">Månedspris<b>${cost} kr</b></div>`;};
+    utility(".electricity","mdi:lightning-bolt","Strøm",this._fmt(monthly,0),"kWh",this._fmt(electricCost,0),Number.isFinite(monthly)&&Number.isFinite(electricCost));
     utility(".water","mdi:water","Vand",this._fmt(water,3),"m³",this._fmt(waterCost,0),Number.isFinite(water)&&Number.isFinite(waterCost));
     utility(".heat","mdi:radiator","Fjernvarme",this._fmt(heat,1),"kWh",this._fmt(heatCost,0),Number.isFinite(heat)&&Number.isFinite(heatCost));
     this.shadowRoot.querySelector(".rooms").innerHTML=(c.rooms||[]).map((room)=>{
@@ -1037,7 +1037,7 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["monthly_energy_entity","Strøm denne måned"],["electricity_price_entity","Aktuel elpris til estimat"],["electric_month_cost_entity","Eksakt månedlig elpris (valgfri)"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
