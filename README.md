@@ -29,6 +29,8 @@ HACS adds the bundled resource `ha-smart-home-cards.js`. Do not load a standalon
 
 The generated [catalog](docs/CARDS.md) groups all cards by purpose. Entries for cards migrated from standalone repositories still link to the archived original repositories for detailed configuration examples.
 
+Recent additions include the TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
+
 ### Room Overview V2
 
 `custom:ha-home-room-overview-card-v2` is the new compact room overview. Each room keeps only temperature, humidity, one status line and a single room-light action visible. Pressing the room opens a solid, lightly blurred control dialog for climate, covers, media, openings and optional extra entities. An existing Bubble Card room popup can remain linked as the advanced fallback.

@@ -1,6 +1,8 @@
 # Card catalog
 
-The suite currently contains **53 cards**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **58 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+
+`ha-home-status-grid-card.js` also provides `custom:ha-home-desktop-layout-card`, a responsive layout card for desktop, mobile and portrait screens. It shares the Home Status source module and therefore does not require a second resource file.
 
 ## Devices and controls
 
@@ -13,6 +15,7 @@ The suite currently contains **53 cards**. Entries for cards migrated from stand
 | HA Robot Fleet Card | `ha-robot-fleet-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-robot-fleet-card) |
 | HA Tesla Vehicle Card | `ha-tesla-vehicle-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-tesla-vehicle-card) |
 | Lawn Mower Card | `ha-lawn-mower-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-lawn-mower-card) |
+| HA Light Automation Card | `ha-light-automation-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-light-automation-card) |
 | Light Scene Card | `ha-light-scene-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-light-scene-card) |
 | Number Grid Card | `ha-number-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-number-grid-card) |
 | Pool Forecast Card | `pool-forecast-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/pool-forecast-card) |
@@ -45,6 +48,8 @@ The suite currently contains **53 cards**. Entries for cards migrated from stand
 | Card | Custom resource source | Documentation |
 |---|---|---|
 | HA Home Header Card | `ha-home-header-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-header-card) |
+| HA Family Calendar Card | `ha-family-calendar-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-family-calendar-card) |
+| HA Home Desktop Layout Card | `ha-home-status-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-status-grid-card) |
 | HA Home Status Grid Card | `ha-home-status-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-status-card) |
 | HA Person Overview Card | `ha-person-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-person-overview-card) |
 | HA Pet Care Card | `ha-pet-care-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-pet-care-card) |
@@ -55,6 +60,7 @@ The suite currently contains **53 cards**. Entries for cards migrated from stand
 | House Mode Card | `ha-house-mode-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-house-mode-card) |
 | Kid Tracker Card | `ha-kid-tracker-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-kid-tracker-card) |
 | Smart Home Overview Card | `smart-home-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/smart-home-overview-card) |
+| HA Waste Journey Card | `ha-waste-journey-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-waste-journey-card) |
 
 ## Security and cameras
 
@@ -75,7 +81,9 @@ The suite currently contains **53 cards**. Entries for cards migrated from stand
 |---|---|---|
 | Control Center Card | `ha-control-center-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-control-center-card) |
 | HA AI Usage Card | `ha-ai-usage-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ai-usage-card) |
+| HA Battery Status Card | `ha-battery-status-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-battery-status-card) |
 | HA Settings Center Card | `ha-settings-center-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-settings-center-card) |
 | Kiosk Server Card | `ha-kiosk-server-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-kiosk-server-card) |
 | Ops Status Card | `ha-ops-status-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ops-status-card) |
+| HA TTS Center Card | `ha-tts-center-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-tts-center-card) |
 | Unraid Server Card | `ha-unraid-server-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-unraid-server-card) |
