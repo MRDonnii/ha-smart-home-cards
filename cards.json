@@ -397,5 +397,12 @@
     "filename": "ha-family-calendar-card.js",
     "category": "People and home",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-waste-journey-card",
+    "name": "HA Waste Journey Card",
+    "filename": "ha-waste-journey-card.js",
+    "category": "People and home",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
