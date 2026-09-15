@@ -1,4 +1,4 @@
-const VERSION = "0.6.0";
+const VERSION = "0.6.1";
 
 const EVENTS_REFRESH_MS = 30 * 1000;
 const SYSTEM_TICK_MS = 30 * 1000;
@@ -53,6 +53,7 @@ class HACameraHubCard extends HTMLElement {
       title: "Overvågning",
       subtitle: "Live, hændelser og systemstatus",
       protect_ingress_path: "/hassio/ingress/local_unifi-protect-ingress",
+      quick_links: [],
       cameras: [
         { key: "fordor", name: "Fordør", icon: "mdi:doorbell-video", area: "udenfor", ai: true, res: "medium", doorbell: true },
       ],
@@ -74,7 +75,7 @@ class HACameraHubCard extends HTMLElement {
 
   setConfig(config) {
     const stub = HACameraHubCard.getStubConfig();
-    const nextConfig = { ...stub, ...config, nvr: { ...stub.nvr, ...(config?.nvr || {}) } };
+    const nextConfig = { ...stub, ...config, nvr: { ...stub.nvr, ...(config?.nvr || {}) }, quick_links: Array.isArray(config?.quick_links) ? structuredClone(config.quick_links) : [] };
     const signature = JSON.stringify(nextConfig);
     this._config = nextConfig;
     if (signature === this._configSignature) return;
@@ -963,6 +964,9 @@ class HACameraHubCard extends HTMLElement {
       .protect-btn ha-icon{--mdc-icon-size:20px;color:var(--accent)}
       .protect-btn small{display:block;color:var(--secondary-text-color);font-size:11px;margin-top:2px}
       .protect-btn+.protect-btn{margin-top:8px}
+      .quick-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;margin-top:14px;padding-top:14px;border-top:1px solid var(--edge)}
+      .quick-link{display:grid;grid-template-columns:38px minmax(0,1fr) 24px;align-items:center;gap:10px;min-width:0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--edge));border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 9%,transparent),transparent 70%);color:var(--primary-text-color);text-align:left;cursor:pointer}
+      .quick-link>.quick-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.quick-link>.quick-icon ha-icon{--mdc-icon-size:22px}.quick-link b{display:block;overflow:hidden;font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.quick-link small{display:block;margin-top:2px;color:var(--secondary-text-color);font-size:10.5px}.quick-link>.arrow{--mdc-icon-size:18px;color:var(--accent)}
       dialog[data-media-dialog]{width:min(94vw,560px);max-height:82vh;margin:auto;border:1px solid var(--edge);border-radius:18px;padding:0;background:var(--card-surface);color:var(--primary-text-color);box-shadow:0 18px 50px rgba(0,0,0,.35)}
       dialog[data-media-dialog]::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
       .sheet-head{display:flex;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--edge)}
@@ -1002,6 +1006,7 @@ class HACameraHubCard extends HTMLElement {
         .join("")}</div></div>
       <div class="panel" data-panel="events" ${this._tab === "events" ? "" : "hidden"}><div data-events-mount></div></div>
       <div class="panel" data-panel="system" ${this._tab === "system" ? "" : "hidden"}><div data-system-mount></div></div>
+      ${(c.quick_links || []).length ? `<div class="quick-links">${c.quick_links.map((link) => `<button class="quick-link" data-quick-link="${this._esc(link.navigation_path || "")}"><span class="quick-icon"><ha-icon icon="${this._esc(link.icon || "mdi:arrow-right-circle-outline")}"></ha-icon></span><span><b>${this._esc(link.name || "Åbn")}</b><small>${this._esc(link.subtitle || "Åbn oversigt")}</small></span><ha-icon class="arrow" icon="mdi:chevron-right"></ha-icon></button>`).join("")}</div>` : ""}
     </ha-card>
     <dialog data-media-dialog>
       <div class="sheet-head">
@@ -1037,6 +1042,7 @@ class HACameraHubCard extends HTMLElement {
         if (cam) this._more(cam.camera_entity);
       }),
     );
+    this.shadowRoot.querySelectorAll("[data-quick-link]").forEach((button) => button.addEventListener("click", () => this._navigate(button.dataset.quickLink)));
 
     const mediaDialog = this.shadowRoot.querySelector("[data-media-dialog]");
     this.shadowRoot.querySelector("[data-media-close]")?.addEventListener("click", () => this._closeMediaDialog());
