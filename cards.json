@@ -376,5 +376,12 @@
     "filename": "ha-unraid-server-card.js",
     "category": "System and utilities",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-tts-center-card",
+    "name": "HA TTS Center Card",
+    "filename": "ha-tts-center-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
