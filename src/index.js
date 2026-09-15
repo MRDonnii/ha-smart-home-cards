@@ -54,3 +54,4 @@ import "./cards/ha-ops-status-card/ha-ops-status-card.js";
 import "./cards/ha-unraid-server-card/ha-unraid-server-card.js";
 import "./cards/ha-tts-center-card/ha-tts-center-card.js";
 import "./cards/ha-light-automation-card/ha-light-automation-card.js";
+import "./cards/ha-family-calendar-card/ha-family-calendar-card.js";

@@ -390,5 +390,12 @@
     "filename": "ha-light-automation-card.js",
     "category": "Devices and controls",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-family-calendar-card",
+    "name": "HA Family Calendar Card",
+    "filename": "ha-family-calendar-card.js",
+    "category": "People and home",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
