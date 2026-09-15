@@ -1,5 +1,12 @@
 [
   {
+    "slug": "ha-battery-status-card",
+    "name": "HA Battery Status Card",
+    "filename": "ha-battery-status-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-bambulab-dashboard-card",
     "name": "HA Bambu Lab Dashboard Card",
     "filename": "ha-bambulab-dashboard-card.js",
