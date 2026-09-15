@@ -383,5 +383,12 @@
     "filename": "ha-tts-center-card.js",
     "category": "System and utilities",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-light-automation-card",
+    "name": "HA Light Automation Card",
+    "filename": "ha-light-automation-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
