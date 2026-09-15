@@ -1,5 +1,5 @@
 import "./ha-card-list-editor.js";
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 
 class HARadiatorOverviewCard extends HTMLElement {
   constructor() {
@@ -206,13 +206,13 @@ class HARadiatorOverviewCard extends HTMLElement {
     this._popupRoomIndex = index;
     const backdrop = document.createElement("div");
     backdrop.className = "ha-radiator-room-popup";
-    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,9,15,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)";
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:4px;background:rgba(5,9,15,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)";
     const panel = document.createElement("div");
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
     panel.setAttribute("aria-label", `${room.name || "Rum"} varmestyring`);
     panel.tabIndex = -1;
-    panel.style.cssText = "position:relative;width:min(100%,520px);max-height:min(86vh,760px);overflow:auto;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
+    panel.style.cssText = "position:relative;width:min(100%,900px);max-height:calc(100dvh - 8px);overflow:hidden;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
     const content = document.createElement("div");
     content.className = "room-popup-content";
     panel.appendChild(content);
@@ -254,16 +254,11 @@ class HARadiatorOverviewCard extends HTMLElement {
       <style>
         *{box-sizing:border-box}.popup{--accent:var(--dashboard-accent,var(--info-color,#38bdf8));--hot:#ff8a3d;--ok:var(--dashboard-success,var(--success-color,#5bc99a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.12)));position:relative;overflow:hidden;padding:22px;color:var(--primary-text-color);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 42%),var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--edge));border-radius:24px;font-family:var(--paper-font-body1_-_font-family,inherit)}
         .glow{position:absolute;width:240px;height:240px;right:-110px;top:-120px;border-radius:50%;background:var(--accent);opacity:.13;filter:blur(34px);pointer-events:none}.popup.heating .glow{background:var(--hot)}.top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.eyebrow{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px currentColor}.popup.heating .dot{background:var(--hot)}h2{margin:5px 0 0;font-size:25px;line-height:1.05;letter-spacing:-.03em}.close{min-width:42px;min-height:42px;border:1px solid var(--edge);border-radius:50%;background:rgba(0,0,0,.16);color:var(--primary-text-color);font-size:21px;cursor:pointer}.tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}.tab{min-height:42px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:800;cursor:pointer}.tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.panel[hidden]{display:none}.hero{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin:0 0 20px;padding:18px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-left:4px solid var(--accent);border-radius:18px;background:rgba(255,255,255,.035)}.popup.heating .hero{border-left-color:var(--hot)}.current span,.target-label{display:block;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.current strong{display:block;margin-top:3px;font-size:42px;line-height:1}.target{text-align:right}.target strong{display:block;margin-top:3px;font-size:24px}.adjust{display:grid;grid-template-columns:52px 1fr 52px;gap:9px;margin-bottom:12px}.adjust button,.preset,.mode,.details{min-height:46px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.045);color:var(--primary-text-color);font:inherit;font-weight:800;cursor:pointer}.adjust .value{display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--edge));border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:18px;font-weight:800}.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.preset.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}.metric{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.08)}.metric span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;overflow:hidden;margin-top:4px;font-size:13px;text-overflow:ellipsis;white-space:nowrap}.metric.warn strong{color:var(--error-color,#db4437)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode.on{border-color:color-mix(in srgb,var(--hot) 42%,var(--edge));background:color-mix(in srgb,var(--hot) 12%,transparent)}.details{border-color:color-mix(in srgb,var(--accent) 28%,var(--edge));color:var(--accent)}.empty{padding:30px 18px;text-align:center;border:1px dashed var(--edge);border-radius:16px;color:var(--secondary-text-color)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media(max-width:440px){.popup{padding:17px}.metrics{grid-template-columns:repeat(2,1fr)}.presets{grid-template-columns:repeat(2,1fr)}.tab{font-size:10px}}
-        .sensor-only .target,.sensor-only .adjust,.sensor-only .presets,.sensor-only .actions{display:none}.sensor-only .hero{grid-template-columns:1fr}
+        [data-card-host]{transform-origin:top center}.panel{min-height:0}@media(max-height:700px){.popup{padding:12px}.top h2{font-size:20px}.tabs{margin:8px 0}.tab{min-height:34px}[data-card-host]{zoom:.72}}@media(min-height:701px) and (max-height:820px){[data-card-host]{zoom:.86}}
       </style>
       <div class="popup"><div class="glow"></div><div class="top"><div><div class="eyebrow"><i class="dot"></i>Rumklima · <span data-value="mode-label"></span></div><h2>${this._escape(room.name)}</h2></div><button class="close" aria-label="Luk popup">×</button></div>
         <nav class="tabs" aria-label="Indhold for rummet"><button class="tab active" data-tab="temperature">Temperatur</button><button class="tab" data-tab="ac">AC</button><button class="tab" data-tab="optimization">Optimering</button></nav>
-        <section class="panel ${room.climate ? "" : "sensor-only"}" data-panel="temperature">
-        <div class="hero"><div class="current"><span>Temperatur nu</span><strong data-value="current"></strong></div><div class="target"><span class="target-label">Måltemperatur</span><strong data-value="target"></strong></div></div>
-        <div class="adjust"><button data-delta="-0.5" aria-label="Sænk temperaturen 0,5 grader">−</button><div class="value" data-value="target-control"></div><button data-delta="0.5" aria-label="Hæv temperaturen 0,5 grader">+</button></div>
-        <div class="presets">${[18,20,21,22].map((value) => `<button class="preset" data-target="${value}">${value}°</button>`).join("")}</div>
-        <div class="metrics"><div class="metric"><span>Luftfugtighed</span><strong data-value="humidity"></strong></div><div class="metric"><span>Ventil</span><strong data-value="valve"></strong></div><div class="metric" data-metric="window"><span>Vindue/dør</span><strong data-value="window"></strong></div><div class="metric"><span>Afvigelse</span><strong data-value="delta"></strong></div><div class="metric" data-metric="battery"><span>Batteri</span><strong data-value="battery"></strong></div><div class="metric"><span>Status</span><strong data-value="mode"></strong></div></div>
-        <div class="actions"><button class="mode" data-mode="heat">Tænd varme</button><button class="mode" data-mode="off">Sluk</button><button class="details" style="grid-column:1/-1">Flere termostatdetaljer</button></div></section>
+        <section class="panel" data-panel="temperature"><div data-card-host="temperature"></div></section>
         <section class="panel" data-panel="ac" hidden><div data-card-host="ac"></div></section>
         <section class="panel" data-panel="optimization" hidden><div data-card-host="optimization"></div></section>
       </div>`;
@@ -300,6 +295,7 @@ class HARadiatorOverviewCard extends HTMLElement {
 
   async _mountPopupCards(content, room) {
     const definitions = {
+      temperature: { type:"custom:ha-temperature-target-card", title:`Temperatur · ${room.name}`, hours:this._config.history_hours || 24, animation:this._config.animation, rooms:[{ name:room.name, icon:room.icon, temperature:room.temperature, climate:room.climate }] },
       ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
       optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
     };
