@@ -1,5 +1,5 @@
 import "./ha-home-status-assets.js";
-const VERSION = "0.8.41";
+const VERSION = "0.8.42";
 
 const PRESETS = {
   home_energy: {
@@ -1066,7 +1066,7 @@ class HaHomeDesktopLayoutCard extends HTMLElement {
     this.config.header_cards.forEach((cfg,i)=>make(cfg,header,i,this.config.header_cards.length));
     this.config.left_cards.forEach((cfg,i)=>make(cfg,left,i,this.config.left_cards.length,true));
     this.config.right_cards.forEach((cfg,i)=>make(cfg,right,i,this.config.right_cards.length,true));
-    this.config.mobile_cards.forEach((cfg,i)=>{make(cfg,mobile,i,this.config.mobile_cards.length);if(i===0)this.config.vertical_cards.forEach((verticalCfg,j)=>make(verticalCfg,mobile,j,this.config.vertical_cards.length,false,"vertical-only"));});
+    this.config.mobile_cards.forEach((cfg,i)=>{if(i===this.config.mobile_cards.length-1)this.config.vertical_cards.forEach((verticalCfg,j)=>make(verticalCfg,mobile,j,this.config.vertical_cards.length,false,"vertical-only"));make(cfg,mobile,i,this.config.mobile_cards.length);});
     if(!this.config.mobile_cards.length)this.config.vertical_cards.forEach((cfg,i)=>make(cfg,mobile,i,this.config.vertical_cards.length,false,"vertical-only"));
     const layout=this.shadowRoot.querySelector(".layout");layout.style.setProperty("--desktop-columns",this.config.columns||"minmax(0,.9fr) minmax(440px,1.1fr)");layout.style.setProperty("--desktop-gap",this.config.gap||"clamp(10px,.75vw,18px)");this._fitViewport();
   }
