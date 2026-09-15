@@ -1,5 +1,5 @@
 import "./ha-card-list-editor.js";
-const VERSION = "0.3.0";
+const VERSION = "0.5.0";
 
 class HARadiatorOverviewCard extends HTMLElement {
   constructor() {
@@ -9,8 +9,16 @@ class HARadiatorOverviewCard extends HTMLElement {
     this._hass = undefined;
     this._signature = "";
     this._history = {};
+    this._historyRevision = 0;
+    this._renderedHistoryRevision = -1;
+    this._rendered = false;
     this._historyLoading = false;
     this._historyTimer = undefined;
+    this._popupEl = undefined;
+    this._popupRoomIndex = undefined;
+    this._popupCards = [];
+    this._escapeHandler = undefined;
+    this._bodyOverflow = undefined;
   }
 
   static getStubConfig() {
@@ -22,6 +30,7 @@ class HARadiatorOverviewCard extends HTMLElement {
     if (!config || !Array.isArray(config.rooms)) throw new Error("Radiatoroverblik kræver en rooms-liste");
     this._config = { title: "Radiatoroverblik", animation: true, history_hours: 24, ...config };
     this._signature = "";
+    this._rendered = false;
     this._render();
     this._requestHistory();
   }
@@ -34,11 +43,17 @@ class HARadiatorOverviewCard extends HTMLElement {
   disconnectedCallback() {
     clearInterval(this._historyTimer);
     this._historyTimer = undefined;
+    this._closeRoomPopup();
   }
 
   set hass(hass) {
     this._hass = hass;
-    const ids = this._config.rooms?.flatMap((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort]).filter(Boolean) || [];
+    this._updateRoomPopup();
+    this._popupCards.forEach((card) => { card.hass = hass; });
+    const ids = this._config.rooms?.flatMap((room) => [
+      room.climate, room.temperature, room.humidity, room.window, room.comfort,
+      ...Object.values(room.ac || {}), ...Object.values(room.optimization || {}),
+    ]).filter((id) => typeof id === "string" && id.includes(".")) || [];
     const signature = JSON.stringify(ids.map((id) => {
       const entity = hass?.states?.[id];
       return [id, entity?.state, entity?.attributes?.current_temperature, entity?.attributes?.temperature, entity?.attributes?.hvac_action];
@@ -129,6 +144,7 @@ class HARadiatorOverviewCard extends HTMLElement {
         if (entityId) history[entityId] = series;
       }
       this._history = history;
+      this._historyRevision += 1;
       this._render();
     } catch (error) {
       console.warn("HA Radiator Overview Card: history could not be loaded", error);
@@ -164,6 +180,146 @@ class HARadiatorOverviewCard extends HTMLElement {
     return state.target !== undefined ? "På mål" : "Måling";
   }
 
+  _clampTarget(climate, value) {
+    const min = this._number(climate?.attributes?.min_temp) ?? 5;
+    const max = this._number(climate?.attributes?.max_temp) ?? 30;
+    const step = this._number(climate?.attributes?.target_temp_step) ?? 0.5;
+    return Math.min(max, Math.max(min, Math.round(value / step) * step));
+  }
+
+  async _setTarget(room, value) {
+    const climate = this._entity(room?.climate);
+    if (!room?.climate || !climate || !this._hass?.callService) return;
+    const temperature = this._clampTarget(climate, value);
+    await this._hass.callService("climate", "set_temperature", { entity_id: room.climate, temperature });
+  }
+
+  async _setHvac(room, hvacMode) {
+    if (!room?.climate || !this._hass?.callService) return;
+    await this._hass.callService("climate", "set_hvac_mode", { entity_id: room.climate, hvac_mode: hvacMode });
+  }
+
+  _openRoomPopup(index) {
+    const room = this._config.rooms?.[index];
+    if (!room) return;
+    this._closeRoomPopup();
+    this._popupRoomIndex = index;
+    const backdrop = document.createElement("div");
+    backdrop.className = "ha-radiator-room-popup";
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,9,15,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)";
+    const panel = document.createElement("div");
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-label", `${room.name || "Rum"} varmestyring`);
+    panel.tabIndex = -1;
+    panel.style.cssText = "position:relative;width:min(100%,520px);max-height:min(86vh,760px);overflow:auto;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
+    const content = document.createElement("div");
+    content.className = "room-popup-content";
+    panel.appendChild(content);
+    backdrop.appendChild(panel);
+    backdrop.addEventListener("click", (event) => { if (event.target === backdrop) this._closeRoomPopup(); });
+    this._escapeHandler = (event) => { if (event.key === "Escape") this._closeRoomPopup(); };
+    document.addEventListener("keydown", this._escapeHandler);
+    this._bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.body.appendChild(backdrop);
+    this._popupEl = backdrop;
+    this._updateRoomPopup();
+    panel.focus();
+  }
+
+  _closeRoomPopup() {
+    this._popupEl?.remove();
+    this._popupEl = undefined;
+    this._popupRoomIndex = undefined;
+    this._popupCards = [];
+    if (this._bodyOverflow !== undefined) document.body.style.overflow = this._bodyOverflow;
+    this._bodyOverflow = undefined;
+    if (this._escapeHandler) document.removeEventListener("keydown", this._escapeHandler);
+    this._escapeHandler = undefined;
+  }
+
+  _updateRoomPopup() {
+    const content = this._popupEl?.querySelector(".room-popup-content");
+    const room = this._config.rooms?.[this._popupRoomIndex];
+    if (!content || !room) return;
+    const state = this._roomState(room);
+    const modes = Array.isArray(state.climate?.attributes?.hvac_modes) ? state.climate.attributes.hvac_modes : [];
+    const target = state.target ?? state.current ?? 20;
+    const batteryLow = state.batteries.some((value) => value <= 20);
+    const modeText = !state.climate ? "Måling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
+    if (!content.dataset.ready) {
+      content.dataset.ready = "true";
+      content.innerHTML = `
+      <style>
+        *{box-sizing:border-box}.popup{--accent:var(--dashboard-accent,var(--info-color,#38bdf8));--hot:#ff8a3d;--ok:var(--dashboard-success,var(--success-color,#5bc99a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.12)));position:relative;overflow:hidden;padding:22px;color:var(--primary-text-color);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 42%),var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--edge));border-radius:24px;font-family:var(--paper-font-body1_-_font-family,inherit)}
+        .glow{position:absolute;width:240px;height:240px;right:-110px;top:-120px;border-radius:50%;background:var(--accent);opacity:.13;filter:blur(34px);pointer-events:none}.popup.heating .glow{background:var(--hot)}.top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.eyebrow{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px currentColor}.popup.heating .dot{background:var(--hot)}h2{margin:5px 0 0;font-size:25px;line-height:1.05;letter-spacing:-.03em}.close{min-width:42px;min-height:42px;border:1px solid var(--edge);border-radius:50%;background:rgba(0,0,0,.16);color:var(--primary-text-color);font-size:21px;cursor:pointer}.tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}.tab{min-height:42px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:800;cursor:pointer}.tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.panel[hidden]{display:none}.hero{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin:0 0 20px;padding:18px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-left:4px solid var(--accent);border-radius:18px;background:rgba(255,255,255,.035)}.popup.heating .hero{border-left-color:var(--hot)}.current span,.target-label{display:block;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.current strong{display:block;margin-top:3px;font-size:42px;line-height:1}.target{text-align:right}.target strong{display:block;margin-top:3px;font-size:24px}.adjust{display:grid;grid-template-columns:52px 1fr 52px;gap:9px;margin-bottom:12px}.adjust button,.preset,.mode,.details{min-height:46px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.045);color:var(--primary-text-color);font:inherit;font-weight:800;cursor:pointer}.adjust .value{display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--edge));border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:18px;font-weight:800}.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.preset.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}.metric{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.08)}.metric span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;overflow:hidden;margin-top:4px;font-size:13px;text-overflow:ellipsis;white-space:nowrap}.metric.warn strong{color:var(--error-color,#db4437)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode.on{border-color:color-mix(in srgb,var(--hot) 42%,var(--edge));background:color-mix(in srgb,var(--hot) 12%,transparent)}.details{border-color:color-mix(in srgb,var(--accent) 28%,var(--edge));color:var(--accent)}.empty{padding:30px 18px;text-align:center;border:1px dashed var(--edge);border-radius:16px;color:var(--secondary-text-color)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media(max-width:440px){.popup{padding:17px}.metrics{grid-template-columns:repeat(2,1fr)}.presets{grid-template-columns:repeat(2,1fr)}.tab{font-size:10px}}
+        .sensor-only .target,.sensor-only .adjust,.sensor-only .presets,.sensor-only .actions{display:none}.sensor-only .hero{grid-template-columns:1fr}
+      </style>
+      <div class="popup"><div class="glow"></div><div class="top"><div><div class="eyebrow"><i class="dot"></i>Rumklima · <span data-value="mode-label"></span></div><h2>${this._escape(room.name)}</h2></div><button class="close" aria-label="Luk popup">×</button></div>
+        <nav class="tabs" aria-label="Indhold for rummet"><button class="tab active" data-tab="temperature">Temperatur</button><button class="tab" data-tab="ac">AC</button><button class="tab" data-tab="optimization">Optimering</button></nav>
+        <section class="panel ${room.climate ? "" : "sensor-only"}" data-panel="temperature">
+        <div class="hero"><div class="current"><span>Temperatur nu</span><strong data-value="current"></strong></div><div class="target"><span class="target-label">Måltemperatur</span><strong data-value="target"></strong></div></div>
+        <div class="adjust"><button data-delta="-0.5" aria-label="Sænk temperaturen 0,5 grader">−</button><div class="value" data-value="target-control"></div><button data-delta="0.5" aria-label="Hæv temperaturen 0,5 grader">+</button></div>
+        <div class="presets">${[18,20,21,22].map((value) => `<button class="preset" data-target="${value}">${value}°</button>`).join("")}</div>
+        <div class="metrics"><div class="metric"><span>Luftfugtighed</span><strong data-value="humidity"></strong></div><div class="metric"><span>Ventil</span><strong data-value="valve"></strong></div><div class="metric" data-metric="window"><span>Vindue/dør</span><strong data-value="window"></strong></div><div class="metric"><span>Afvigelse</span><strong data-value="delta"></strong></div><div class="metric" data-metric="battery"><span>Batteri</span><strong data-value="battery"></strong></div><div class="metric"><span>Status</span><strong data-value="mode"></strong></div></div>
+        <div class="actions"><button class="mode" data-mode="heat">Tænd varme</button><button class="mode" data-mode="off">Sluk</button><button class="details" style="grid-column:1/-1">Flere termostatdetaljer</button></div></section>
+        <section class="panel" data-panel="ac" hidden><div data-card-host="ac"></div></section>
+        <section class="panel" data-panel="optimization" hidden><div data-card-host="optimization"></div></section>
+      </div>`;
+      content.querySelector(".close")?.addEventListener("click", () => this._closeRoomPopup());
+      content.querySelectorAll("[data-delta]").forEach((button) => button.addEventListener("click", () => {
+        const latest = this._roomState(room);
+        this._setTarget(room, (latest.target ?? latest.current ?? 20) + Number(button.dataset.delta));
+      }));
+      content.querySelectorAll("[data-target]").forEach((button) => button.addEventListener("click", () => this._setTarget(room, Number(button.dataset.target))));
+      content.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => this._setHvac(room, button.dataset.mode)));
+      content.querySelector(".details")?.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles:true, composed:true, detail:{ entityId:room.climate } })));
+      content.querySelectorAll("[data-tab]").forEach((button) => button.addEventListener("click", () => this._selectPopupTab(button.dataset.tab)));
+      this._mountPopupCards(content, room);
+    }
+    const setText = (name, value) => { const node = content.querySelector(`[data-value="${name}"]`); if (node && node.textContent !== value) node.textContent = value; };
+    const popup = content.querySelector(".popup");
+    popup?.classList.toggle("heating", state.heating);
+    setText("mode-label", modeText); setText("mode", modeText);
+    setText("current", `${this._format(state.current)}°`); setText("target", `${this._format(state.target)}°`); setText("target-control", `${this._format(target)} °C`);
+    setText("humidity", `${this._format(state.humidity,0)}%`); setText("valve", `${this._format(state.valve,0)}%`); setText("window", state.windowOpen ? "Åben" : "Lukket");
+    setText("delta", state.delta === undefined ? "—" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°`);
+    setText("battery", state.batteries.length ? state.batteries.map((value)=>`${this._format(value,0)}%`).join(" · ") : "—");
+    content.querySelector('[data-metric="window"]')?.classList.toggle("warn", state.windowOpen);
+    content.querySelector('[data-metric="battery"]')?.classList.toggle("warn", batteryLow);
+    content.querySelectorAll("[data-target]").forEach((button) => button.classList.toggle("active", Math.abs(target - Number(button.dataset.target)) < .1));
+    content.querySelectorAll("[data-mode]").forEach((button) => { button.disabled = !modes.includes(button.dataset.mode); button.classList.toggle("on", button.dataset.mode === "heat" && !state.off); });
+  }
+
+  _selectPopupTab(selected) {
+    const content = this._popupEl?.querySelector(".room-popup-content");
+    content?.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === selected));
+    content?.querySelectorAll("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== selected; });
+  }
+
+  async _mountPopupCards(content, room) {
+    const definitions = {
+      ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
+      optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
+    };
+    try {
+      const helpers = await window.loadCardHelpers();
+      if (!this._popupEl || this._config.rooms?.[this._popupRoomIndex] !== room) return;
+      for (const [key, definition] of Object.entries(definitions)) {
+        const host = content.querySelector(`[data-card-host="${key}"]`);
+        if (!host) continue;
+        if (!definition) { host.innerHTML = `<div class="empty">${key === "ac" ? "Ingen AC er tilknyttet dette rum" : "Ingen optimeringsdata er tilknyttet dette rum"}</div>`; continue; }
+        const card = helpers.createCardElement(definition);
+        card.hass = this._hass;
+        host.replaceChildren(card);
+        this._popupCards.push(card);
+      }
+    } catch (error) {
+      console.warn("HA Radiator Overview Card: popup cards could not be mounted", error);
+    }
+  }
+
   _roomMarkup(room, index) {
     const state = this._roomState(room);
     const target = state.target === undefined ? "" : `<div class="metric"><span>Mål</span><strong>${this._format(state.target)}°</strong></div>`;
@@ -176,7 +332,7 @@ class HARadiatorOverviewCard extends HTMLElement {
         <i></i><i></i><i></i><i></i><i></i>
       </div>` : `<ha-icon class="sensor-icon" icon="${this._escape(room.icon || "mdi:home-thermometer-outline")}"></ha-icon>`;
     return `
-      <button class="room ${state.tone} ${state.heating ? "radiator-heating" : ""}" data-index="${index}" ${room.climate ? "" : "disabled"}>
+      <button class="room ${state.tone} ${state.heating ? "radiator-heating" : ""}" data-index="${index}">
         <div class="room-glow"></div>
         ${this._backgroundGraph(room, state, index)}
         <div class="room-head">
@@ -188,6 +344,33 @@ class HARadiatorOverviewCard extends HTMLElement {
         </div>
         <div class="room-foot">${target}${humidity}${state.delta === undefined ? "" : `<div class="metric"><span>Afvigelse</span><strong>${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°</strong></div>`}${valve}${battery}</div>
       </button>`;
+  }
+
+  _updateMain(states, heating, open, average) {
+    const summary = this.shadowRoot.querySelectorAll(".summary-item strong");
+    const summaryValues = [`${heating} rum`, String(open), `${this._format(average)}°`];
+    summary.forEach((node, index) => { if (node.textContent !== summaryValues[index]) node.textContent = summaryValues[index]; });
+    const liveDot = this.shadowRoot.querySelector(".eyebrow b");
+    if (liveDot) liveDot.style.cssText = `background:${heating ? "var(--hot)" : "var(--ok)"};box-shadow:0 0 14px ${heating ? "var(--hot)" : "var(--ok)"}`;
+    const source = this.shadowRoot.querySelector(".hub.source strong");
+    const sourceText = heating ? "Leverer varme" : "I hvile";
+    if (source && source.textContent !== sourceText) source.textContent = sourceText;
+    const updateGraphs = this._renderedHistoryRevision !== this._historyRevision;
+    this.shadowRoot.querySelectorAll(".room[data-index]").forEach((button) => {
+      const index = Number(button.dataset.index), room = this._config.rooms[index], state = states[index];
+      if (!room || !state) return;
+      button.classList.toggle("cold", state.tone === "cold"); button.classList.toggle("warm", state.tone === "warm");
+      button.classList.toggle("warn", state.tone === "warn"); button.classList.toggle("neutral", state.tone === "neutral");
+      button.classList.toggle("ok", state.tone === "ok"); button.classList.toggle("radiator-heating", state.heating);
+      const status = button.querySelector(".room-status");
+      if (status?.lastChild && status.lastChild.nodeType === Node.TEXT_NODE && status.lastChild.nodeValue !== this._status(state)) status.lastChild.nodeValue = this._status(state);
+      const temperature = button.querySelector(".temperature strong");
+      const temperatureText = this._format(state.current); if (temperature && temperature.textContent !== temperatureText) temperature.textContent = temperatureText;
+      const values = { "Mål": `${this._format(state.target)}°`, "Fugt": `${this._format(state.humidity,0)}%`, "Afvigelse": state.delta === undefined ? "—" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°`, "Ventil": `${this._format(state.valve,0)}%` };
+      button.querySelectorAll(".metric").forEach((metric) => { const label = metric.querySelector("span")?.textContent; const strong = metric.querySelector("strong"); if (strong && values[label] !== undefined && strong.textContent !== values[label]) strong.textContent = values[label]; });
+      if (updateGraphs) { const chart = button.querySelector(".room-chart"); const markup = this._backgroundGraph(room,state,index); if (chart && markup) chart.outerHTML = markup; else if (!chart && markup) button.querySelector(".room-glow")?.insertAdjacentHTML("afterend",markup); }
+    });
+    this._renderedHistoryRevision = this._historyRevision;
   }
 
   _render() {
@@ -202,6 +385,10 @@ class HARadiatorOverviewCard extends HTMLElement {
       .filter((value) => value !== undefined);
     const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
     const animationClass = this._config.animation === false ? "no-animation" : "";
+    if (this._rendered && this.shadowRoot.querySelector("ha-card")) {
+      this._updateMain(states, heating, open, average);
+      return;
+    }
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -288,12 +475,13 @@ class HARadiatorOverviewCard extends HTMLElement {
           <div class="rooms">${rooms.map((room, index) => this._roomMarkup(room, index)).join("")}</div>
         </div>
       </ha-card>`;
+    this._rendered = true;
+    this._renderedHistoryRevision = this._historyRevision;
 
     this.shadowRoot.querySelectorAll(".room[data-index]").forEach((button) => {
       button.addEventListener("click", () => {
         const room = rooms[Number(button.dataset.index)];
-        if (!room?.climate) return;
-        this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: room.climate } }));
+        this._openRoomPopup(Number(button.dataset.index));
       });
     });
   }
