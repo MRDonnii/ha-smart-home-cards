@@ -1,6 +1,5 @@
 {
   "name": "MRDonnii Smart Home Cards",
-  "content_in_root": true,
   "filename": "ha-smart-home-cards.js",
   "hide_default_branch": true
 }
