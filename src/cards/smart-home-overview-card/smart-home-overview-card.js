@@ -1,4 +1,4 @@
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 
 const DEFAULT_ENTITIES = {
   houseMode: "input_select.house_mode",
@@ -149,7 +149,7 @@ class SmartHomeOverviewCard extends HTMLElement {
   getGridOptions() { return { columns: "full", rows: "auto", min_rows: 8 }; }
   _s(id) { return id ? this._hass?.states?.[id] : undefined; }
   _state(id, fallback = "–") { const value = this._s(id)?.state; return value == null || ["unknown", "unavailable"].includes(value) ? fallback : value; }
-  _num(id) { const value = Number(String(this._s(id)?.state ?? "").replace(",", ".")); return Number.isFinite(value) ? value : null; }
+  _num(id) { const state = this._s(id)?.state; if (state == null) return null; const value = Number(String(state).replace(",", ".")); return Number.isFinite(value) ? value : null; }
   _on(id) { return !!id && ["on", "open", "opening", "home", "playing", "cleaning", "running"].includes(this._s(id)?.state); }
   _esc(value) { return String(value ?? "").replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c])); }
   _fmt(value, digits = 1) { return value == null ? "–" : value.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits }); }
