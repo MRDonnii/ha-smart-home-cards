@@ -7,9 +7,10 @@ const cards = JSON.parse(await readFile(path.join(root, "cards.json"), "utf8"));
 const entry = cards.map((card) => `import ${JSON.stringify(`./cards/${card.slug}/${card.filename}`)};`).join("\n");
 await writeFile(path.join(root, "src", "index.js"), `${entry}\n`);
 
+const outfile = path.join(root, "dist", "ha-smart-home-cards.js");
 await build({
   entryPoints: [path.join(root, "src", "index.js")],
-  outfile: path.join(root, "dist", "ha-smart-home-cards.js"),
+  outfile,
   bundle: true,
   format: "esm",
   platform: "browser",
@@ -17,5 +18,8 @@ await build({
   legalComments: "eof",
   banner: { js: `/* MRDonnii Smart Home Cards v${JSON.parse(await readFile(path.join(root, "package.json"), "utf8")).version} */` }
 });
+
+const bundle = await readFile(outfile, "utf8");
+await writeFile(outfile, bundle.replace(/[ \t]+$/gm, ""));
 
 console.log(`Built ${cards.length} cards into dist/ha-smart-home-cards.js`);
