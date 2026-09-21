@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "test": "npm run build && npm run check"
+    "test": "npm run build && npm run check && node tests/smart-home-overview-num.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.9"
