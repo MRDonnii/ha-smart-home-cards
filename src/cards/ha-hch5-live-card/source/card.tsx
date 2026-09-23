@@ -14,7 +14,7 @@ type Hass = {
   states: Record<string, HAState | undefined>;
   callService: (domain: string, service: string, data: Record<string, unknown>) => Promise<unknown>;
 };
-type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: number };
+type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: number; variant?: "smartdash" };
 type AfterheatValue = number | "off";
 type Notice = { text: string; error: boolean };
 
@@ -63,6 +63,81 @@ function remaining(value: unknown) {
   if (seconds === null || seconds <= 0) return "Ikke aktiv";
   const minutes = Math.ceil(seconds / 60);
   return `${minutes} min tilbage`;
+}
+
+function SmartdashCompact({ hass, config }: { hass: Hass; config: Config }) {
+  const ids = config.entities;
+  const read = (key: string) => {
+    const item = hass.states[ids[key]];
+    return item && !["unknown", "unavailable"].includes(item.state) ? item : undefined;
+  };
+  const value = (key: string) => read(key)?.state ?? null;
+  const num = (key: string) => number(value(key));
+  const mode = String(value("mode_control") ?? "");
+  const bypassRaw = num("bypass_raw");
+  const moving = bypassRaw !== null && bypassRaw > 0 && bypassRaw < 255;
+  const [now, setNow] = useState(Date.now);
+  const [pending, setPending] = useState<{ key: string; value: string } | null>(null);
+  const [boostChoice, setBoostChoice] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!moving) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [moving]);
+  useEffect(() => {
+    if (!pending) return;
+    if (String(value(pending.key)).toLowerCase() === pending.value.toLowerCase()) { setPending(null); return; }
+    const timer = window.setTimeout(() => setPending(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [hass, pending]);
+  const selected = (key: string) => pending?.key === key ? pending.value : value(key);
+  const command = async (key: string, domain: string, service: string, data: Record<string, unknown>, target?: string) => {
+    const entity_id = ids[key];
+    if (!entity_id || !hass.states[entity_id] || hass.states[entity_id]?.state === "unavailable") { setNotice("Styring ikke tilgængelig"); return false; }
+    setBusy(true);
+    if (target !== undefined) setPending({ key, value: target });
+    try { await hass.callService(domain, service, { entity_id, ...data }); setNotice(""); return true; }
+    catch (error) { setPending(null); setNotice(`Kunne ikke gemme: ${errorText(error)}`); return false; }
+    finally { setBusy(false); }
+  };
+  const outdoor = num("outdoor_temperature"), extract = num("extract_temperature"), exhaust = num("exhaust_temperature");
+  const supply = num("afterheat_after") ?? num("supply_temperature");
+  const recovery = outdoor !== null && extract !== null && exhaust !== null && Math.abs(extract-outdoor) >= .5 && bypassRaw !== 255
+    ? Math.max(0, Math.min(100, Math.round((extract-exhaust)/(extract-outdoor)*100))) : null;
+  const elapsed = num("bypass_travel_seconds");
+  const changed = Date.parse(read("bypass_travel_seconds")?.last_changed ?? read("bypass_raw")?.last_changed ?? "");
+  const travelSeconds = moving && Number.isFinite(changed) ? (elapsed ?? 0) + Math.max(0, (now-changed)/1000) : elapsed;
+  const bypassRequest = String(value("bypass_request") ?? value("bypass_control") ?? "off");
+  const travel = bypassTravel({ raw: bypassRaw, requestOn: bypassRequest === "on", direction: value("bypass_travel_direction"), seconds: travelSeconds, total: num("bypass_travel_total") });
+  const bypassLabel = travel ? `${travel.direction === "opening" ? "Åbner" : travel.direction === "closing" ? "Lukker" : "Bevæger sig"}${travel.percent === null ? "" : ` ${travel.percent}%`}` : bypassRaw === 255 || value("bypass") === "on" ? "Åben" : bypassRaw === 0 ? "Lukket" : "—";
+  const chosenLevel = num(mode === "manual" ? "level_control" : "auto_normal");
+  const levelKey = mode === "manual" ? "level_control" : "auto_normal";
+  const boostRemaining = num("boost_remaining") ?? 0;
+  const boostEnd = Date.parse(read("boost_remaining")?.last_changed ?? "") + boostRemaining * 1000;
+  const activeBoost = boostRemaining > 0
+    ? [15, 30].find(minutes => Math.abs(Date.parse(read(`boost_${minutes}`)?.state ?? "") + minutes * 60000 - boostEnd) < 45000) ?? boostChoice
+    : boostChoice;
+  useEffect(() => {
+    if (boostRemaining > 0 || boostChoice === null) return;
+    const timer = window.setTimeout(() => setBoostChoice(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [boostRemaining, boostChoice]);
+  return <div className="hch-smartdash">
+    <div className="hch-smartdash-head"><strong>HCH5 <span>· {modeLabel(selected("mode_control"))}</span></strong><span className="hch-smartdash-state">{value("active_master") === "pi" ? "● Live" : "● " + masterLabel(value("active_master"))}</span></div>
+    <div className="hch-smartdash-body">
+      <div className="hch-smartdash-art"><Hch5UnitDiagram outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={num("afterheat_before") ?? num("supply_temperature")} afterHeater={supply} room={num("room_temperature")} frost={num("afterheat_frost")} flowWater={num("water_flow")} returnWater={num("water_return")} supplyRpm={num("supply_fan_rpm")} extractRpm={num("extract_fan_rpm")} supplyPercent={num("supply_fan_percent")} extractPercent={num("extract_fan_percent")} bypassActual={bypassRaw === 255 || value("bypass") === "on"} bypassRequest={bypassRequest} heating={value("afterheat_active") === "on"} recovery={recovery} busActive={value("rs485_healthy") === "on"} bypassRaw={bypassRaw} bypassTravelDirection={value("bypass_travel_direction")} bypassTravelSeconds={travelSeconds} bypassTravelTotal={num("bypass_travel_total")} afterheatLockout={value("afterheat_lockout") === "on"}/></div>
+      <div className="hch-smartdash-controls" onClick={event => event.stopPropagation()}>
+        <div className="hch-smartdash-readings"><span>Ude <b>{temp(outdoor)}</b></span><span>Ind <b>{temp(supply)}</b></span><span>Gen. <b>{recovery === null ? "—" : `${recovery}%`}</b></span><span>Bypass <b>{bypassLabel}</b></span></div>
+        <div className="hch-smartdash-control-row"><small>Drift</small><div>{(["local_auto", "smart_auto", "manual"] as const).map(option => <button key={option} type="button" aria-pressed={selected("mode_control") === option} disabled={busy} onClick={() => void command("mode_control", "select", "select_option", { option }, option)}>{option === "local_auto" ? "Auto" : option === "smart_auto" ? "Smart" : "Man."}</button>)}</div></div>
+        <div className="hch-smartdash-control-row"><small>Trin {num("effective_level") ?? "—"}</small><div>{[1,2,3,4,5,6].map(level => <button key={level} type="button" aria-pressed={Number(selected(levelKey) ?? chosenLevel) === level} disabled={busy} onClick={() => void command(levelKey, mode === "manual" ? "select" : "number", mode === "manual" ? "select_option" : "set_value", mode === "manual" ? { option: String(level) } : { value: level }, String(level))}>{level}</button>)}</div></div>
+        <div className="hch-smartdash-control-row"><small>Bypass</small><div>{["off", "on"].map(option => <button key={option} type="button" aria-pressed={selected("bypass_control") === option} disabled={busy || moving || (option === "on" && (num("fireplace_remaining") ?? 0) > 0)} onClick={() => void command("bypass_control", "select", "select_option", { option }, option)}>{option === "off" ? "Auto" : "Åbn"}</button>)}</div></div>
+        <div className="hch-smartdash-control-row"><small>{boostRemaining > 0 ? `Boost ${Math.ceil(boostRemaining / 60)}m` : "Boost"}</small><div>{[15,30].map(minutes => <button key={minutes} type="button" aria-pressed={activeBoost === minutes} disabled={busy || (num("fireplace_remaining") ?? 0) > 0} onClick={() => { setBoostChoice(minutes); void command(`boost_${minutes}`, "button", "press", {}).then(ok => { if (!ok) setBoostChoice(null); }); }}>{minutes} min</button>)}</div></div>
+        {notice && <span className="hch-smartdash-notice" role="status">{notice}</span>}
+      </div>
+    </div>
+  </div>;
 }
 function errorText(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -449,7 +524,7 @@ class Hch5LiveCard extends HTMLElement {
   getCardSize() { return 14; }
 
   private renderCard() {
-    if (this.root && this.hassValue && this.config) this.root.render(<Overview hass={this.hassValue} config={this.config}/>);
+    if (this.root && this.hassValue && this.config) this.root.render(this.config.variant === "smartdash" ? <SmartdashCompact hass={this.hassValue} config={this.config}/> : <Overview hass={this.hassValue} config={this.config}/>);
   }
 }
 
