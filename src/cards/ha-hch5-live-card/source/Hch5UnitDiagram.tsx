@@ -142,9 +142,9 @@ function drumSide(r: number, offset: Point) {
 }
 
 function Fan({ x, y, rpm, label, labelRight = false }: { x: number; y: number; rpm: Num; label: string; labelRight?: boolean }) {
-  // One revolution per 0.9-2.4 s reads as a spinning impeller without the
-  // blades strobing; the blur disc makes a running fan look like it moves.
-  const speed = rpm && rpm > 0 ? Math.max(0.9, 2.4 - rpm / 1000) : 0;
+  // Keep the animation duration stable across ordinary RPM telemetry changes.
+  // Changing a running CSS animation's duration shifts its current phase.
+  const speed = rpm && rpm > 0 ? 1.4 : 0;
   return <g className={`hch-fan${speed ? " running" : " stopped"}`} transform={`translate(${x} ${y})`}>
     <g transform={`translate(${FAN_DRUM[0]} ${FAN_DRUM[1]})`}><g transform={FAN_TILT}><circle className="hch-fan-back" r="42"/></g></g>
     <polygon className="hch-fan-drum" points={drumSide(42, FAN_DRUM)}/>
@@ -288,7 +288,9 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   // from the core to the bottom channel as it opens, and back as it closes.
   const coreRoute={opacity:1-bypassPosition} as CSSProperties; const bypassRoute={opacity:bypassPosition} as CSSProperties;
   const bladeAngle=Math.round(90*(1-bypassPosition)*10)/10;
-  const supplySpeed=supplyRpm&&supplyRpm>0?Math.max(8,11-supplyRpm/1400):0; const extractSpeed=extractRpm&&extractRpm>0?Math.max(8,11-extractRpm/1400):0;
+  // A stable period prevents airflow from jumping whenever the fan reports
+  // a slightly different RPM. The numeric RPM readback remains live.
+  const supplySpeed=supplyRpm&&supplyRpm>0?12:0; const extractSpeed=extractRpm&&extractRpm>0?12:0;
   // Fog fades in at the room-side readings and out where the far ducts end.
   const fadeSpan=REAR_FADE.to-VIEW.x; const fadeAt=(x:number)=>Math.round((x-VIEW.x)/fadeSpan*1000)/1000;
   // Back edges of the cabinet's floor and right-hand wall, one cabinet depth in.
@@ -310,7 +312,6 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <linearGradient id="supplyFlow" x1="1" x2="0"><stop offset="0" stopColor="#4abfff"/><stop offset=".55" stopColor="#6bd2bc"/><stop offset="1" stopColor="#59dfa1"/></linearGradient>
         <linearGradient id="extractFlow" x1="0" x2="1"><stop offset="0" stopColor="#ff7171"/><stop offset=".5" stopColor="#ffae5a"/><stop offset="1" stopColor="#ff9345"/></linearGradient>
         <filter id="fogBlur" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="11"/></filter>
-        <filter id="fogBlurSoft" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="20"/></filter>
         <filter id="unitShadow" x="-30%" y="-40%" width="170%" height="190%"><feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#000" floodOpacity=".42"/></filter>
         <pattern id="filterMesh" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#1a2d37"/><path d="M0 8L8 0M-2 2L2-2M6 10L10 6" stroke="#aab9c1" strokeWidth="1" opacity=".6"/></pattern>
         <linearGradient id="fogFadeGradient" gradientUnits="userSpaceOnUse" x1={VIEW.x} x2={REAR_FADE.to}><stop offset="0" stopColor="#fff" stopOpacity="0"/><stop offset={fadeAt(ROOM_SIDE_X+30)} stopColor="#fff" stopOpacity="1"/><stop offset={fadeAt(REAR_FADE.from)} stopColor="#fff" stopOpacity="1"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></linearGradient>
@@ -384,10 +385,6 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <g className="hch-fog-group" filter="url(#fogBlur)" mask="url(#fogFadeMask)">
         <path className="hch-fog hch-fog-supply hch-fog-a" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-supply hch-fog-b" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.35}s`:"0s"} as CSSProperties}/>
         {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog hch-fog-extract hch-fog-a" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-extract hch-fog-b" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.35}s`:"0s"} as CSSProperties}/></g>)}
-      </g>
-      <g className="hch-fog-group soft" filter="url(#fogBlurSoft)" mask="url(#fogFadeMask)">
-        <path className="hch-fog-wash hch-fog-supply" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.7}s`:"0s"} as CSSProperties}/>
-        {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog-wash hch-fog-extract" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.7}s`:"0s"} as CSSProperties}/></g>)}
       </g>
       <g className="hch-wisp-group" mask="url(#fogFadeMask)">
         <AirWisps path={NORMAL_SUPPLY} kind="supply" speed={supplySpeed}/>

@@ -105,26 +105,24 @@
 /* Diffuse fog/mist flow: one continuous, evenly solid blurred band the
    full length of the path — no dashes, so opacity/width never thins out
    partway along it, matching the density of the previous densest spots. */
-.hch-fog-group { mix-blend-mode: screen; }
+.hch-fog-group { pointer-events: none; }
 .hch-fog { fill: none; stroke-linecap: round; }
 .hch-fog-a { stroke-width: 38; opacity: .27; }
 .hch-fog-b { stroke-width: 24; opacity: .18; }
 .hch-fog-supply { stroke: url(#supplyFlow); }
 .hch-fog-extract { stroke: url(#extractFlow); }
-.hch-fog-wash { fill: none; stroke-linecap: round; stroke-width: 72; opacity: .11; }
 .hch-fog[style*="0s"], .hch-fog-a[style*="0s"] { opacity: .1; }
-.hch-fog-wash[style*="0s"] { opacity: .05; }
 
 /* Two softly blurred highlights travel down each path. The path data starts
    upstream for both air streams, so decreasing dashoffset moves the wisps in
    the physical flow direction. Different lengths and phases avoid a train of
    identical bright dots. The continuous fog beneath them keeps the air full. */
-.hch-wisp-group { mix-blend-mode: screen; pointer-events: none; }
+.hch-wisp-group { pointer-events: none; }
 .hch-air-wisp { fill: none; stroke: currentColor; stroke-linecap: round; }
 .hch-air-wisps.hch-fog-supply { color: #a1e7e0; }
 .hch-air-wisps.hch-fog-extract { color: #ffd1a1; }
-.hch-air-wisp-wide { stroke-width: 20; stroke-dasharray: 46 198; opacity: .34; filter: blur(5px); animation: pro-air-wisp-wide calc(var(--flow-speed) / 5) linear infinite; }
-.hch-air-wisp-fine { stroke-width: 7; stroke-dasharray: 17 121; opacity: .52; filter: blur(2px); animation: pro-air-wisp-fine calc(var(--flow-speed) / 9) linear infinite; animation-delay: -1.7s; }
+.hch-air-wisp-wide { stroke-width: 20; stroke-dasharray: 46 198; opacity: .2; animation: pro-air-wisp-wide calc(var(--flow-speed) / 5) linear infinite; }
+.hch-air-wisp-fine { stroke-width: 7; stroke-dasharray: 17 121; opacity: .42; animation: pro-air-wisp-fine calc(var(--flow-speed) / 9) linear infinite; animation-delay: -1.7s; }
 @keyframes pro-air-wisp-wide { to { stroke-dashoffset: -244; } }
 @keyframes pro-air-wisp-fine { to { stroke-dashoffset: -138; } }
 .hch-air-wisp[style*="0s"] { animation: none; opacity: .08; }
@@ -137,14 +135,12 @@
 /* A slow, uniform opacity breathe — never spatial, so the band never reads
    as thinner in one place than another — gives the fog a sense of life
    without touching the dash pattern (there isn't one) or its density. */
-.hch-fog-group { animation: pro-fog-breathe 9s ease-in-out infinite; }
-.hch-fog-group.soft { animation-duration: 12s; animation-delay: -4s; }
-@keyframes pro-fog-breathe { 0%, 100% { opacity: .92; } 50% { opacity: 1; } }
+.hch-fog-group { opacity: .96; }
 /* HA has no WebUI motion setting; the system preference turns the motion off. */
 @media (prefers-reduced-motion: reduce) {
   .hch-fog-group, .hch-air-wisp, .hch-airflow-guide, .hch-fan-rotor, .hch-bus-core,
   .hch-bypass.moving .bypass-actuator, .bypass-progress-fill, .bypass-progress-fill.indeterminate { animation: none !important; }
-  .hch-fog-a, .hch-fog-b, .hch-fog-wash { opacity: .09; }
+  .hch-fog-a, .hch-fog-b { opacity: .09; }
   .hch-air-wisp { opacity: .08; }
 }
 
