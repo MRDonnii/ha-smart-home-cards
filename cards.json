@@ -411,5 +411,12 @@
     "filename": "ha-waste-journey-card.js",
     "category": "People and home",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-calefa-flow-card",
+    "name": "HA Calefa Flow Card",
+    "filename": "ha-calefa-flow-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
