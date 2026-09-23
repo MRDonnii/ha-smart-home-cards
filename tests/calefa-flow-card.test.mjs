@@ -248,15 +248,27 @@ bridge._openLegacyPopup();
 assert.equal(legacyOpened, 1, "display button opens the existing Calefa popup owner");
 
 const speed = new Card();
-const props = new Map();
-const flowNode = { style: { getPropertyValue: (name) => props.get(name), setProperty: (name, value) => props.set(name, value) } };
-speed._setFlowDuration(flowNode, 20);
-const slow = props.get("--cf-flow-duration");
-speed._setFlowDuration(flowNode, 80);
-const fast = props.get("--cf-flow-duration");
-assert.ok(parseFloat(fast) < parseFloat(slow), "valid faster flow shortens CSS animation duration");
-speed._setFlowDuration(flowNode, null);
-assert.equal(props.get("--cf-flow-duration"), "1.10s");
+speed._build = () => {};
+speed.setConfig({});
+assert.equal(speed._flowLevel(null, "L/h"), null, "missing flow does not animate");
+assert.equal(speed._flowLevel(0, "L/h"), null, "zero flow does not animate");
+assert.equal(speed._flowLevel(60, "L/h"), 1);
+assert.equal(speed._flowLevel(300, "L/h"), 2);
+assert.equal(speed._flowLevel(600, "L/h"), 3);
+assert.equal(speed._flowLevel(1100, "L/h"), 4);
+assert.equal(speed._flowLevel(12, "L/min"), 3, "L/min is normalised separately");
+
+// Flow tracks are traced on the 775 x 1295 unit illustration and stay inside it.
+const geometry = vm.runInNewContext(`${source.slice(source.indexOf("const VIEW_W"), source.indexOf("function interpretActivity"))}; ({ VIEW_W, VIEW_H, TRACKS, ANCHORS, LAYOUT, pathLength })`);
+assert.equal(geometry.VIEW_W / geometry.VIEW_H, 775 / 1295, "overlay uses the illustration aspect ratio");
+for (const track of geometry.TRACKS) {
+  const numbers = track.d.match(/-?\d*\.?\d+/g).map(Number);
+  assert.ok(numbers.every((n) => n >= 0 && n <= geometry.VIEW_H), `${track.id} stays inside the drawing`);
+  assert.ok(geometry.pathLength(track.d) > 40, `${track.id} has a measurable length`);
+}
+assert.equal(Math.round(geometry.pathLength("M0 0 H30 V40")), 70);
+const laidOut = Object.values(geometry.LAYOUT).flat().flatMap((spec) => spec[0] === "pair" ? spec.slice(1, 3) : [spec[1]]);
+assert.ok(laidOut.every((id) => geometry.ANCHORS[id]), "every side tile has a callout anchor");
 
 const leds = new Card();
 leds._build = () => {};
