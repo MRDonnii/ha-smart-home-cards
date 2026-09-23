@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.72 */
+/* MRDonnii Smart Home Cards v0.3.73 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -32201,7 +32201,8 @@ var CALEFA_ALARM_KEYS = /* @__PURE__ */ new Set([
   "itc_hr_sensor_failure",
   "outdoor_sensor_failure",
   "itc_motor_failure",
-  "itc_htco_error"
+  "itc_htco_error",
+  "auto_standby_fault"
 ]);
 var CALEFA_REGISTRY_CACHE = /* @__PURE__ */ new WeakMap();
 function calefaRegistry(hass) {
@@ -32500,6 +32501,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._metricNodes = /* @__PURE__ */ new Map();
     this._seen = /* @__PURE__ */ new Map();
     this._displayOpen = false;
+    this._faultOpen = false;
+    this._popupCard = null;
     this._displayPage = 0;
     this._menuPath = [];
     this._menuIndex = 0;
@@ -32532,7 +32535,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       show_footer: config.show_footer !== false,
       animations: config.animations !== false,
       display_entities: config.display_entities && typeof config.display_entities === "object" && !Array.isArray(config.display_entities) ? { ...config.display_entities } : {},
-      alarm_entities: Array.isArray(config.alarm_entities) ? config.alarm_entities.filter((id) => typeof id === "string" && id.startsWith("binary_sensor.")) : []
+      alarm_entities: Array.isArray(config.alarm_entities) ? config.alarm_entities.filter((id) => typeof id === "string" && id.startsWith("binary_sensor.")) : [],
+      popup_card: config.popup_card && typeof config.popup_card === "object" && !Array.isArray(config.popup_card) ? config.popup_card : null
     };
     for (const key of ENTITY_KEYS) this._config[key] = text(config[key]);
     this._entityIds = [...new Set([...ENTITY_KEYS.map((key) => this._config[key]), ...Object.values(this._config.display_entities), ...this._config.alarm_entities].filter(Boolean))];
@@ -32546,6 +32550,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._resolveCalefa();
     if (!this._built) this._build();
     if (this._hasChanges(hass)) this._update();
+    if (this._popupCard) this._popupCard.hass = hass;
   }
   _resolveCalefa() {
     const connection = this._hass?.connection;
@@ -32627,6 +32632,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._resizeObserver?.disconnect();
     this._resizeObserver = null;
     this._closeDisplay();
+    this._closeFaults();
+    this._popupCard?._closeDetailsPopup?.();
   }
   _stateObj(key) {
     const id = this._config?.[key];
@@ -32780,6 +32787,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _build() {
     if (!this._config) return;
+    this._closeFaults();
+    this._popupCard?._closeDetailsPopup?.();
+    this._popupCard = null;
     this.shadowRoot.innerHTML = `<style>${CALEFA_STYLES}</style>${this._markup()}`;
     this._refs = {};
     this.shadowRoot.querySelectorAll("[data-ref]").forEach((el) => {
@@ -32884,7 +32894,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
         <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${callouts}</svg>
       </div>
       ${this._footerMarkup()}
-    </div>${this._modalMarkup()}</ha-card>`;
+    </div>${this._modalMarkup()}${this._faultModalMarkup()}</ha-card>`;
   }
   _footerMarkup() {
     if (!this._config.show_footer) return "";
@@ -32941,10 +32951,14 @@ var HaCalefaFlowCard = class extends HTMLElement {
       ${pump}
       <button class="cf-display-hit" type="button" data-action="open-display" aria-label="\xC5bn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button>
       <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct(PUMP.x - hit, VIEW_W)};top:${pct(PUMP.y - hit, VIEW_H)};width:${pct(2 * hit, VIEW_W)};height:${pct(2 * hit, VIEW_H)}"></button>
+      <button class="cf-fault" type="button" data-ref="fault-button" data-action="open-faults" aria-label="Vis aktive Calefa-fejl" hidden><ha-icon icon="mdi:alert-outline"></ha-icon><span>Fejl</span><b data-ref="fault-count"></b></button>
       <button class="cf-info" type="button" data-action="open-legacy-popup" aria-label="Info: Calefa styring og forbrug"><ha-icon icon="mdi:information-outline"></ha-icon><span>Info</span></button>`;
   }
   _modalMarkup() {
     return `<div class="cf-modal" data-ref="modal" hidden><div class="cf-modal-backdrop" data-action="close-display"></div><section class="cf-device" role="dialog" aria-modal="true" tabindex="-1" data-ref="device"><div class="cf-device-head"><div><strong>wavin</strong><small>Calefa II V \xB7 styring</small></div><button type="button" data-action="close-display" aria-label="Luk display"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="cf-device-face"><div class="cf-screen"><div class="cf-screen-head"><ha-icon data-ref="screen-icon" icon="mdi:water-thermometer"></ha-icon><strong data-ref="screen-title">BV</strong><span data-ref="screen-index">1/4</span></div><div class="cf-screen-body" data-ref="screen-body"></div><div class="cf-screen-hint" data-ref="screen-hint">Langt ENTER: menu</div></div><div class="cf-keys"><button type="button" data-action="display-down" aria-label="Ned"><ha-icon icon="mdi:chevron-down"></ha-icon><span>NED</span></button><button type="button" data-action="display-enter" aria-label="Enter"><ha-icon icon="mdi:keyboard-return"></ha-icon><span>ENTER</span></button><button type="button" data-action="display-up" aria-label="Op"><ha-icon icon="mdi:chevron-up"></ha-icon><span>OP</span></button></div><button class="cf-long-enter" type="button" data-action="display-long-enter" aria-label="Langt Enter">Hold ENTER \xB7 menu / tilbage</button></div></section></div>`;
+  }
+  _faultModalMarkup() {
+    return `<div class="cf-fault-modal" data-ref="fault-modal" hidden><div class="cf-fault-backdrop" data-action="close-faults"></div><section class="cf-fault-panel" role="dialog" aria-modal="true" aria-label="Aktive Calefa-fejl" tabindex="-1" data-ref="fault-panel"><header><ha-icon icon="mdi:alert-outline"></ha-icon><strong>Calefa-fejl</strong><button type="button" data-action="close-faults" aria-label="Luk fejl">\xD7</button></header><div class="cf-fault-list" data-ref="fault-list"></div></section></div>`;
   }
   _text(el, value2) {
     if (el && el.textContent !== value2) el.textContent = value2;
@@ -32961,6 +32975,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._applyDeltas(model);
     this._applyDiagram(model);
     this._applyFooter();
+    this._renderFaults();
     if (this._displayOpen) this._renderDisplay();
   }
   _metricValue(id, model) {
@@ -33315,6 +33330,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _openDisplay() {
     if (!this._refs.modal || this._displayOpen) return;
+    this._closeFaults();
     this._displayOpen = true;
     this._displayPage = 0;
     this._inMenu = false;
@@ -33331,10 +33347,84 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._displayOpen = false;
     this._edit = null;
     if (this._refs.modal) this._refs.modal.hidden = true;
-    window.removeEventListener("keydown", this._onKeydown);
+    if (!this._faultOpen) window.removeEventListener("keydown", this._onKeydown);
     this._syncAnimation();
   }
+  _activeFaults() {
+    return this._config.alarm_entities.flatMap((id) => {
+      const state = this._hass?.states?.[id];
+      if (interpretActivity(state) !== true) return [];
+      const label = state.attributes?.friendly_name || id.split(".")[1].replaceAll("_", " ");
+      const detail = ["message", "description", "problem", "reason", "error"].map((key) => state.attributes?.[key]).find((value2) => typeof value2 === "string" && value2.trim());
+      const critical = /fejl|error|failure|fault|critical|kritisk/i.test(`${id} ${label}`);
+      return [{ id, label, detail: detail || (critical ? "Aktiv fejl i Calefa-enheden" : "Aktiv advarsel fra Calefa-enheden"), critical }];
+    });
+  }
+  _renderFaults() {
+    const faults = this._activeFaults();
+    const button = this._refs["fault-button"];
+    if (button) {
+      button.hidden = faults.length === 0;
+      button.dataset.severity = faults.some((fault) => fault.critical) ? "error" : "warning";
+    }
+    this._text(this._refs["fault-count"], faults.length ? String(faults.length) : "");
+    if (!this._faultOpen) return;
+    const list = this._refs["fault-list"];
+    if (!list) return;
+    const signature = faults.map((fault) => fault.id).join("|");
+    if (list.dataset.ids !== signature) {
+      list.dataset.ids = signature;
+      list.replaceChildren();
+      if (!faults.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "Ingen aktive fejl eller advarsler.";
+        list.appendChild(empty);
+      } else for (const fault of faults) {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "cf-fault-row";
+        row.dataset.action = "fault-more-info";
+        row.dataset.entityId = fault.id;
+        row.innerHTML = '<ha-icon icon="mdi:alert-outline"></ha-icon><span><strong></strong><small></small></span><ha-icon icon="mdi:chevron-right"></ha-icon>';
+        list.appendChild(row);
+      }
+    }
+    faults.forEach((fault, index) => {
+      const row = list.children[index];
+      if (!row) return;
+      row.dataset.severity = fault.critical ? "error" : "warning";
+      this._text(row.querySelector("strong"), fault.label);
+      this._text(row.querySelector("small"), fault.detail);
+    });
+  }
+  _openFaults() {
+    if (!this._refs["fault-modal"] || !this._activeFaults().length) return;
+    this._closeDisplay();
+    this._faultOpen = true;
+    this._refs["fault-modal"].hidden = false;
+    this._renderFaults();
+    window.addEventListener("keydown", this._onKeydown);
+    this._refs["fault-panel"]?.focus({ preventScroll: true });
+  }
+  _closeFaults() {
+    this._faultOpen = false;
+    if (this._refs["fault-modal"]) this._refs["fault-modal"].hidden = true;
+    if (!this._displayOpen) window.removeEventListener("keydown", this._onKeydown);
+  }
   _openLegacyPopup() {
+    if (this._config?.popup_card && customElements.get("ha-fjernvarme-house-card-v2")) {
+      if (!this._popupCard) {
+        const owner = document.createElement("ha-fjernvarme-house-card-v2");
+        owner.style.display = "none";
+        owner.setConfig(this._config.popup_card);
+        owner.hass = this._hass;
+        this.shadowRoot.appendChild(owner);
+        this._popupCard = owner;
+      }
+      this._popupCard._openDetailsPopup();
+      this._decorateLegacyPopup(this._popupCard, "Styring");
+      return;
+    }
     const root = this.getRootNode?.() || document;
     const stack = [root, document];
     const seen = /* @__PURE__ */ new Set();
@@ -33382,7 +33472,11 @@ var HaCalefaFlowCard = class extends HTMLElement {
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
-    else if (action === "open-legacy-popup") this._openLegacyPopup();
+    else if (action === "open-faults") this._openFaults();
+    else if (action === "close-faults") this._closeFaults();
+    else if (action === "fault-more-info") {
+      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: target.dataset.entityId } }));
+    } else if (action === "open-legacy-popup") this._openLegacyPopup();
     else if (action === "close-display") this._closeDisplay();
     else if (action === "display-up") this._displayMove(-1);
     else if (action === "display-down") this._displayMove(1);
@@ -33390,6 +33484,13 @@ var HaCalefaFlowCard = class extends HTMLElement {
     else if (action === "display-long-enter") this._displayEnter(true);
   }
   _handleKeydown(event) {
+    if (this._faultOpen) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        this._closeFaults();
+      }
+      return;
+    }
     if (!this._displayOpen) return;
     if (event.key === "Escape") {
       event.preventDefault();
@@ -33532,6 +33633,8 @@ var CALEFA_STYLES = `
   /* Square info button centred between the display and the right edge of the black hood. */
   .cf-info{position:absolute;z-index:6;left:82.3%;top:10.8%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:max(44px,12.4%);aspect-ratio:1;padding:0;border:1px solid rgba(95,200,235,.55);border-radius:clamp(8px,1.1cqw,12px);background:linear-gradient(160deg,rgba(14,48,64,.94),rgba(5,22,32,.94));color:#9fe6ff;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);font-size:clamp(10px,2.1cqw,14px);font-weight:800;letter-spacing:.03em;transform:translate(-50%,-50%);cursor:pointer}
   .cf-info ha-icon{--mdc-icon-size:clamp(15px,3.6cqw,26px)}.cf-info:hover{background:linear-gradient(160deg,#124a61,#0a2c3d)}
+  .cf-fault{position:absolute;z-index:7;left:17.7%;top:10.8%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:max(44px,12.4%);aspect-ratio:1;padding:0;border:1px solid #f6b950;border-radius:clamp(8px,1.1cqw,12px);background:linear-gradient(160deg,#513612ef,#251b12f2);color:#ffd783;box-shadow:0 0 18px #ffb43b40,inset 0 1px 0 #fff3;font-size:clamp(10px,2.1cqw,14px);font-weight:800;transform:translate(-50%,-50%);cursor:pointer}.cf-fault[data-severity="error"]{border-color:#ff6b68;background:linear-gradient(160deg,#5c2424ed,#2b171af2);color:#ffb5b2;box-shadow:0 0 20px #ff534a55}.cf-fault ha-icon{--mdc-icon-size:clamp(17px,3.8cqw,28px)}.cf-fault b{position:absolute;right:2px;top:2px;display:grid;place-items:center;min-width:15px;height:15px;padding:0 3px;border-radius:50%;background:#f7c654;color:#261a10;font-size:9px}.cf-fault[data-severity="error"] b{background:#ff6963;color:#fff}.cf-fault:hover{filter:brightness(1.14)}
+  .cf-fault-modal{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top,0px)) 12px max(16px,env(safe-area-inset-bottom,0px))}.cf-fault-backdrop{position:absolute;inset:0;background:#071019c9;backdrop-filter:blur(5px)}.cf-fault-panel{position:relative;display:flex;flex-direction:column;width:min(100%,520px);max-height:100%;overflow:hidden;border:1px solid #b85b55;border-radius:18px;background:linear-gradient(145deg,#253441,#101d27);box-shadow:0 24px 65px #000a;color:#f3f7fa;outline:none}.cf-fault-panel header{display:flex;align-items:center;gap:10px;padding:15px 16px;border-bottom:1px solid #ffffff20}.cf-fault-panel header>ha-icon{--mdc-icon-size:26px;color:#ff8175}.cf-fault-panel header strong{flex:1;font-size:18px}.cf-fault-panel header button{width:36px;height:36px;border:1px solid #ffffff35;border-radius:50%;background:#ffffff12;color:#fff;font-size:24px;cursor:pointer}.cf-fault-list{display:grid;gap:8px;padding:14px;overflow:auto}.cf-fault-list p{margin:4px 0;color:#b8cbd4}.cf-fault-row{display:flex;align-items:center;gap:10px;width:100%;min-height:62px;padding:10px;border:1px solid #e4a75b80;border-radius:12px;background:#ffffff0b;color:#f2f7fa;text-align:left;cursor:pointer}.cf-fault-row[data-severity="error"]{border-color:#f46e6c99}.cf-fault-row>ha-icon:first-child{--mdc-icon-size:22px;color:#f4c568}.cf-fault-row[data-severity="error"]>ha-icon:first-child{color:#ff7773}.cf-fault-row span{display:flex;flex:1;flex-direction:column;min-width:0;gap:3px}.cf-fault-row strong{font-size:13px;line-height:1.25}.cf-fault-row small{color:#b6c9d1;font-size:11px;line-height:1.3}.cf-fault-row>ha-icon:last-child{--mdc-icon-size:17px;color:#9db4c1}
   .cf-ports{position:relative;height:clamp(14px,2cqw,22px);margin-top:-1.2%}
   .cf-ports span{position:absolute;top:0;color:var(--tone);font-size:clamp(10px,1.15cqw,13px);font-weight:800;letter-spacing:.04em;line-height:1;transform:translateX(-50%)}
 
