@@ -84,6 +84,11 @@ result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
 assert.equal(result.dhwBypass, true);
 assert.equal(result.dhwTap, false);
 assert.equal(result.dhwPrimary, true);
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
+  "sensor.d": state("Bypass"),
+  "sensor.dv": state(0, "%"),
+});
+assert.equal(result.dhwPrimary, true, "bypass heats the primary side even when the DHW valve reports zero");
 
 // A running pump keeps the heating loop moving even without heat demand.
 result = model({ heating_active: "sensor.h", pump: "sensor.p" }, {
