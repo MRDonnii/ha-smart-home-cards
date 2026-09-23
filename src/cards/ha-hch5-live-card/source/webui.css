@@ -1,0 +1,385 @@
+/* The drawing looks down on the unit (its top and afterheat end are visible),
+   so the vanishing point sits above it: the exhaust end turns away, gets
+   smaller and rises towards the horizon instead of pinching to the middle,
+   which read as seen from eye level. The padding keeps the raised top in the card. */
+.hch5-visual { flex: 1; display: flex; flex-direction: column; margin-top: 4px; padding-top: 16px; perspective: 1900px; perspective-origin: 25% -80%; }
+.hch5-visual .unit-readback-row { margin-top: auto; }
+/* Seen from the afterheat end: the left side stays put while the exhaust
+   end turns slightly away from the viewer. */
+.hch5-visual > svg { width: 100%; height: auto; display: block; transform: rotateY(9deg); transform-origin: 0 50%; }
+.hch-side-inset { fill: none; stroke: #8199a7; stroke-width: 1; opacity: .45; }
+.hch-floor-shadow { fill: rgb(0 0 0 / 32%); filter: blur(9px); }
+.hch-cabinet,.hch-top-panel,.hch-side-panel { stroke: #77909f; stroke-width: 1.4; }
+.hch-top-fold { fill: none; stroke: rgb(220 236 243 / 34%); stroke-width: 1.4; }
+.hch-side-seam { fill: none; stroke: rgb(10 24 33 / 55%); stroke-width: 1.5; }
+.hch-opening-gasket { fill: none; stroke: #0b1a22; stroke-width: 7; opacity: .85; }
+.hch-cabinet-fastener circle { fill: #273b46; stroke: #a1b5bf; stroke-width: 1; }
+.hch-cabinet-fastener path { stroke: #b3c7cf; stroke-width: 1; }
+.hch-cavity-rail { fill: none; stroke: rgb(138 165 179 / 20%); stroke-width: 3; }
+.hch-inner { fill: #08151d; stroke: #334d5c; stroke-width: 1.5; }
+.hch-filter rect { fill: url(#filterMesh); stroke: #95a9b5; stroke-width: 2; }
+.hch-filter path { stroke: #8499a5; stroke-width: 1.3; opacity: .7; }
+/* Every label in the drawing gets a dark halo so it stays legible over the fog. */
+.hch-part-label,.hch-channel-label,.hch-core-port,.hch-exchanger-title,.hch-bus-label { paint-order: stroke; stroke: #08141c; stroke-width: 4px; stroke-linejoin: round; }
+.hch-part-label { fill: #b3c6d1; font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+.hch-fan-ring { fill: #0b1821; stroke: #607887; stroke-width: 3; }
+.hch-fan-shroud { fill: none; stroke: #2c4452; stroke-width: 2; }
+/* Motion-blur disc: only visible while the impeller turns. */
+.hch-fan-blur { fill: url(#fanBlur); opacity: 0; transition: opacity .6s var(--ease); }
+.hch-fan.running .hch-fan-blur { opacity: 1; }
+.hch-fan-hub { fill: #17303d; stroke: #5f7a8a; stroke-width: 1; }
+.hch-fan-back { fill: #09141b; stroke: #4d6574; stroke-width: 2.4; }
+.hch-fan-drum { fill: url(#fanDrum); stroke: #4d6574; stroke-width: 1; stroke-linejoin: round; }
+.hch-fan-motor { fill: #29404d; stroke: #6f8b9b; stroke-width: .8; stroke-linejoin: round; }
+.hch-fan-cap { fill: url(#fanHub); stroke: #9fb9c7; stroke-width: 1; }
+.hch-fan-cap-centre { fill: #0e1d26; stroke: #7c99aa; stroke-width: 1; }
+.hch-fan-rotor { transform-box: view-box; transform-origin: 0 0; }
+.hch-fan.running .hch-fan-rotor { animation: pro-fan-spin var(--fan-speed) linear infinite; }
+.hch-fan-rotor path { fill: #68bcf0; stroke: #a8ddff; stroke-width: .7; stroke-linejoin: round; }
+.hch-fan.running .hch-fan-rotor path { opacity: .88; }
+.hch-fan.stopped .hch-fan-rotor { opacity: .45; }
+@keyframes pro-fan-spin { to { transform: rotate(360deg); } }
+.hch-exchanger polygon { stroke: #9aa9b1; stroke-width: 2; stroke-linejoin: round; }
+.hch-exchanger path { stroke: #c2ccd1; stroke-width: 1.3; opacity: .54; }
+.hch-exchanger.bypassed { opacity: .38; }
+.hch-exchanger .core-face-top { fill: #7d8d95; }
+.hch-exchanger .core-face-side { fill: #34464f; }
+.hch-exchanger .core-plate-edge { opacity: .42; }
+.hch-filter .filter-face-top { fill: #6f828c; stroke: #95a9b5; stroke-width: 1.4; stroke-linejoin: round; }
+.hch-filter .filter-face-side { fill: #354852; stroke: #95a9b5; stroke-width: 1.4; stroke-linejoin: round; }
+.hch-cavity-floor { fill: url(#cavityFloor); }
+.hch-cavity-wall { fill: url(#cavityWall); }
+.hch-cavity-edge { fill: none; stroke: #2b4555; stroke-width: 1.2; }
+.hch-exchanger-title { fill: #d3e0e6; font-size: 19px; font-weight: 750; }
+.hch-recovery { fill: #fff; font-size: 34px; font-weight: 850; text-shadow: 0 2px 8px #000; }
+.hch-bypass rect { fill: #0b1b25; stroke: #426074; }
+.hch-bypass text { fill: #a9beca; font-size: 10px; font-weight: 700; }
+/* The blade and the fog glide between the ~2 s updates of the damper's
+   time-based position (the real damper runs for about three minutes). */
+.bypass-blade { fill: #72c6f8; transform-box: fill-box; transform-origin: center; transition: transform 2.6s cubic-bezier(.45, 0, .2, 1), fill .6s; }
+.hch-bypass.open .bypass-blade { fill: #58dfa1; }
+/* Damper on the lower fan motor; the orange actuator matches the real unit. */
+.hch-bypass .damper-frame { fill: #0b1b25; stroke: #6f8591; stroke-width: 1.4; }
+.hch-bypass .bypass-blade { fill: #72c6f8; }
+.hch-bypass.open .bypass-blade { fill: #58dfa1; }
+.hch-bypass .bypass-actuator { fill: #e2711d; stroke: #ffae66; stroke-width: 1; }
+.hch-bypass-channel { fill: #0a1820; stroke: #2f4756; stroke-width: 1.4; stroke-dasharray: 5 5; }
+.hch-bypass-channel-glow { fill: rgb(255 159 90 / 7%); stroke: #ff9f5a; stroke-width: 1.4; transition: opacity 2.6s ease-in-out; }
+.hch-fog-route { transition: opacity 2.6s ease-in-out; }
+.hch-bypass.moving .bypass-actuator { animation: pro-actuator-run .7s ease-in-out infinite alternate; }
+@keyframes pro-actuator-run { to { fill: #ffb070; filter: drop-shadow(0 0 5px rgb(255 159 90 / 75%)); } }
+/* Damper travel in the core: direction, % open and a bar that follows the
+   reported position; the fill pulses while the actuator runs, because the
+   real damper can hold one reported step for a minute. */
+.hch-bypass-progress .hch-exchanger-title { fill: #ffd2a6; }
+.bypass-progress-track { fill: none; stroke: rgb(4 12 18 / 82%); stroke-width: 11; stroke-linecap: round; }
+.bypass-progress-fill { fill: none; stroke: #ffa45c; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 2.6s cubic-bezier(.45, 0, .2, 1); animation: pro-bypass-progress 1.4s ease-in-out infinite alternate; }
+@keyframes pro-bypass-progress { from { opacity: .55; } to { opacity: 1; } }
+/* Start of the travel not seen (e.g. after a gateway restart): no %, just a runner. */
+.bypass-progress-fill.indeterminate { stroke-dasharray: 22 78; animation: pro-bypass-runner 1.8s linear infinite; }
+@keyframes pro-bypass-runner { from { stroke-dashoffset: 22; } to { stroke-dashoffset: -100; } }
+.hch-bypass-countdown { fill: #d7c3ad; font-size: 14px; font-weight: 700; paint-order: stroke; stroke: #08141c; stroke-width: 4px; stroke-linejoin: round; }
+.hch-lockout-badge rect { fill: rgb(40 26 8 / 90%); stroke: #e9a54a; stroke-width: 1.2; }
+.hch-lockout-badge text { fill: #ffd08a; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; }
+.hch-channel-label { fill: #7f98a6; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+.hch-core-port { fill: #d3dde2; font-size: 16px; font-weight: 800; opacity: .9; }
+.hch-coil rect { fill: #112631; stroke: #506f80; stroke-width: 2; }
+.coil-pipe { fill: none; stroke: #956b47; stroke-width: 3.2; }
+.hch-coil.active .coil-pipe { stroke: #ff9b48; filter: url(#airGlow); }
+.water-port { fill: #72bde9; }
+.hch-service-box { fill: #0a1820; stroke: #3c5665; }
+.hch-port rect { fill: url(#metalEdge); stroke: #8ba0ac; stroke-width: 2.5; filter: drop-shadow(0 5px 5px rgb(0 0 0 / 32%)); }
+.hch-port path { fill: none; stroke-width: 9; stroke-linecap: round; filter: url(#airGlow); }
+.hch-port-outdoor path,.hch-port-supply path { stroke: #5fe0a0; }
+.hch-port-extract path,.hch-port-exhaust path { stroke: #ff8e46; }
+.hch-port-outdoor path { stroke: #4fbaff; }
+.hch-port-extract path { stroke: #ff6f6f; }
+.hch-rear-duct-body { fill: url(#rearDuctMetal); stroke: #6f8591; stroke-width: 1.4; }
+.hch-rear-duct-shine { fill: none; stroke: rgb(214 228 235 / 42%); stroke-width: 3; stroke-linecap: round; }
+.hch-rear-duct-shade { fill: none; stroke: rgb(0 0 0 / 32%); stroke-width: 5; stroke-linecap: round; }
+.hch-rear-duct-seam { fill: none; stroke: rgb(170 190 201 / 38%); stroke-width: 1.6; }
+.hch-rear-duct-flange { fill: url(#ductPipe); stroke: #8ba0ad; stroke-width: 1.4; }
+.hch-supply-flow { stroke: url(#supplyFlow); }
+.hch-extract-flow { stroke: url(#extractFlow); }
+
+/* Diffuse fog/mist flow: one continuous, evenly solid blurred band the
+   full length of the path — no dashes, so opacity/width never thins out
+   partway along it, matching the density of the previous densest spots. */
+.hch-fog-group { mix-blend-mode: screen; }
+.hch-fog { fill: none; stroke-linecap: round; }
+.hch-fog-a { stroke-width: 38; opacity: .27; }
+.hch-fog-b { stroke-width: 24; opacity: .18; }
+.hch-fog-supply { stroke: url(#supplyFlow); }
+.hch-fog-extract { stroke: url(#extractFlow); }
+.hch-fog-wash { fill: none; stroke-linecap: round; stroke-width: 72; opacity: .11; }
+.hch-fog[style*="0s"], .hch-fog-a[style*="0s"] { opacity: .1; }
+.hch-fog-wash[style*="0s"] { opacity: .05; }
+
+/* Two softly blurred highlights travel down each path. The path data starts
+   upstream for both air streams, so decreasing dashoffset moves the wisps in
+   the physical flow direction. Different lengths and phases avoid a train of
+   identical bright dots. The continuous fog beneath them keeps the air full. */
+.hch-wisp-group { mix-blend-mode: screen; pointer-events: none; }
+.hch-air-wisp { fill: none; stroke: currentColor; stroke-linecap: round; }
+.hch-air-wisps.hch-fog-supply { color: #a1e7e0; }
+.hch-air-wisps.hch-fog-extract { color: #ffd1a1; }
+.hch-air-wisp-wide { stroke-width: 20; stroke-dasharray: 46 198; opacity: .34; filter: blur(5px); animation: pro-air-wisp-wide calc(var(--flow-speed) / 5) linear infinite; }
+.hch-air-wisp-fine { stroke-width: 7; stroke-dasharray: 17 121; opacity: .52; filter: blur(2px); animation: pro-air-wisp-fine calc(var(--flow-speed) / 9) linear infinite; animation-delay: -1.7s; }
+@keyframes pro-air-wisp-wide { to { stroke-dashoffset: -244; } }
+@keyframes pro-air-wisp-fine { to { stroke-dashoffset: -138; } }
+.hch-air-wisp[style*="0s"] { animation: none; opacity: .08; }
+
+.hch-airflow-guide { fill: none; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 30; opacity: .48; animation: pro-airflow var(--flow-speed) linear infinite; }
+.hch-airflow-guide[style*="0s"] { animation: none; opacity: .16; }
+@keyframes pro-airflow { to { stroke-dashoffset: -54; } }
+
+/* A slow, uniform opacity breathe — never spatial, so the band never reads
+   as thinner in one place than another — gives the fog a sense of life
+   without touching the dash pattern (there isn't one) or its density. */
+.hch-fog-group { animation: pro-fog-breathe 9s ease-in-out infinite; }
+.hch-fog-group.soft { animation-duration: 12s; animation-delay: -4s; }
+@keyframes pro-fog-breathe { 0%, 100% { opacity: .92; } 50% { opacity: 1; } }
+/* HA has no WebUI motion setting; the system preference turns the motion off. */
+@media (prefers-reduced-motion: reduce) {
+  .hch-fog-group, .hch-air-wisp, .hch-airflow-guide, .hch-fan-rotor, .hch-bus-core,
+  .hch-bypass.moving .bypass-actuator, .bypass-progress-fill, .bypass-progress-fill.indeterminate { animation: none !important; }
+  .hch-fog-a, .hch-fog-b, .hch-fog-wash { opacity: .09; }
+  .hch-air-wisp { opacity: .08; }
+}
+
+/* Temperature ports double as the visual duct outlet/inlet caps: a
+   semi-transparent glass plate sitting directly on the flow centreline so
+   the fog is visible passing through/behind it, while the reading itself
+   stays fully legible via a solid backing chip plus text shadow. */
+.hch-temp-port-plate { fill: rgb(8 20 28 / 74%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }
+.hch-temp-port-title { fill: #b7cbd6; font-size: 15px; font-weight: 750; letter-spacing: .02em; paint-order: stroke; stroke: #08141c; stroke-width: 3px; stroke-linejoin: round; }
+.hch-temp-port-value { fill: #f5fafd; font-size: 28px; font-weight: 850; paint-order: stroke; stroke: #08141c; stroke-width: 3.5px; stroke-linejoin: round; }
+.hch-temp-port.tone-cold .hch-temp-port-value { fill: #7fd0ff; }
+.hch-temp-port.tone-warm .hch-temp-port-value { fill: #ffb066; }
+.hch-temp-port.tone-green .hch-temp-port-value { fill: #74ecab; }
+.hch-sensor-pin circle { fill: #70ccff; stroke: #d2f2ff; stroke-width: 1; }
+.hch-sensor-pin line { stroke: #688597; stroke-width: 1; }
+.hch-sensor-pin rect { fill: #0a1822; stroke: #284859; }
+.hch-sensor-pin text { fill: #a3b9c6; font-size: 13px; font-weight: 700; }
+.hch-sensor-pin .pin-value { fill: #e8f6fc; font-size: 16px; font-weight: 800; }
+.hch-water-callout rect,.hch-bypass-callout rect { fill: #0a1822; stroke: #25495c; }
+.hch-water-callout text,.hch-bypass-callout text { fill: #a3b9c6; font-size: 13.5px; font-weight: 650; }
+.hch-water-callout .water-value,.hch-bypass-callout .bypass-state { fill: #e8f7fd; font-size: 16px; font-weight: 800; }
+
+.unit-readback-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: -4px; }
+.unit-readback { min-height: 67px; display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 9px; padding: 9px 11px; border: 1px solid #1d3b4d; border-radius: 10px; background: #0a1922; }
+.unit-readback > div { min-width: 0; display: grid; gap: 2px; }
+.unit-readback small { color: #8aa2b1; font-size: 11px; }
+.unit-readback strong { color: #e9f6fb; font-size: 15px; white-space: nowrap; }
+.unit-readback em { color: #87a0af; font-size: 11px; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.readback-icon { width: 38px; height: 38px; border-radius: 50%; position: relative; display: block; background: #112a3a; border: 1px solid #2d5770; }
+.readback-icon.fan::before { content: "✤"; position: absolute; inset: 0; display: grid; place-items: center; color: #68c6ff; font-size: 22px; }
+.readback-icon.damper::before { content: "▤"; position: absolute; inset: 0; display: grid; place-items: center; color: #9bb4c2; font-size: 20px; }
+.readback-icon.damper.active::before { color: #63df9f; }
+.readback-icon.heater::before { content: "≋"; position: absolute; inset: 0; display: grid; place-items: center; color: #7893a3; font-size: 24px; transform: rotate(90deg); }
+.readback-icon.heater.active::before { color: #ffae5c; text-shadow: 0 0 10px #ff8b3d; }
+
+.pro-control-column { grid-area: controls; min-width: 0; display: grid; gap: 10px; }
+.pro-control-card { padding: 15px; border-radius: 13px; }
+.control-label { display: block; margin: 15px 0 7px; color: #93a9b6; font-size: 9px; font-weight: 700; }
+.pro-segment { display: grid; gap: 5px; padding: 4px; border: 1px solid #203d4e; border-radius: 10px; background: #0b1922; }
+.pro-segment.three { grid-template-columns: repeat(3,1fr); }
+.pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.fireplace-actions button { min-height: 38px; border: 1px solid #294658; border-radius: 8px; background: #0c1b25; color: #a9bdc9; font-size: 9px; font-weight: 750; cursor: pointer; transition: .18s var(--ease); }
+.pro-segment button:hover,.pro-levels button:hover,.mini-buttons button:hover,.setpoint-stepper button:hover,.fireplace-actions button:hover { border-color: #4e92bb; color: #dff5ff; background: #10283a; }
+.pro-segment button.active,.pro-levels button.active,.mini-buttons button.active { color: #fff; border-color: #3baeff; background: linear-gradient(145deg,#15538a,#1265ae); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%),0 0 14px rgb(44 165 255 / 26%); }
+.pro-segment button:disabled,.pro-levels button:disabled,.mini-buttons button:disabled,.setpoint-stepper button:disabled { opacity: .45; cursor: wait; }
+.pro-levels { display: grid; grid-template-columns: repeat(6,1fr); gap: 5px; }
+.active-decision { margin-top: 12px; padding: 10px 11px; display: grid; gap: 2px; border: 1px solid #1e3949; border-radius: 9px; background: #0a1821; }
+.active-decision span { color: #718a99; font-size: 7px; text-transform: uppercase; letter-spacing: .09em; }
+.active-decision strong { font-size: 10px; }
+.active-decision small { color: #78909f; font-size: 8px; line-height: 1.4; }
+.pro-control-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini-control { min-height: 108px; padding: 13px; border-radius: 12px; }
+.mini-control-title { display: flex; align-items: center; gap: 8px; color: #ddecf4; font-size: 11px; }
+.mini-control-title svg { color: #5ec3ff; }
+.mini-buttons { display: grid; gap: 5px; margin-top: 12px; }
+.mini-buttons.three { grid-template-columns: repeat(3,1fr); }
+.mini-buttons.two { grid-template-columns: repeat(2,1fr); }
+.control-footnote,.text-action { display: block; margin-top: 7px; color: #7891a0; font-size: 8px; }
+.text-action { padding: 0; border: 0; background: transparent; color: #73c8ff; cursor: pointer; }
+.status-action-card { min-height: 86px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 11px 12px; border-radius: 12px; }
+.status-action-icon { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 10px; background: #0c2c44; color: #5fc5ff; }
+.status-action-icon.flame { background: #352314; color: #ffad55; }
+.status-action-card > div:nth-child(2) { display: grid; gap: 2px; }
+.status-action-card span { color: #78919f; font-size: 8px; }
+.status-action-card strong { font-size: 10px; }
+.status-action-card small { color: #66808f; font-size: 7px; }
+.status-action-card > button,.fireplace-actions button { min-width: 34px; height: 32px; padding: 0 7px; border: 1px solid #284657; border-radius: 8px; background: #0c1d27; color: #a9c2ce; cursor: pointer; }
+.fireplace-actions { display: flex; gap: 4px; }
+.afterheat-setpoint-card { grid-area: afterheat; min-height: 84px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; align-content: center; padding: 13px 14px; border-radius: 12px; }
+.afterheat-copy { display: grid; gap: 2px; }
+.afterheat-copy span { color: #86a0af; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.afterheat-copy strong { font-size: 10px; }
+.afterheat-copy small { color: #698291; font-size: 7px; line-height: 1.35; }
+.setpoint-stepper { display: grid; grid-template-columns: 38px 68px 38px; align-items: center; border: 1px solid #274657; border-radius: 9px; overflow: hidden; }
+.setpoint-stepper button { border: 0; border-radius: 0; font-size: 19px; }
+.setpoint-stepper strong { height: 38px; display: grid; place-items: center; background: #0a1821; font-size: 12px; }
+.climate-panel { grid-area: climate; min-width: 0; padding: 12px 15px; border-radius: 13px; }
+.climate-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+.climate-metric { min-height: 90px; position: relative; display: grid; grid-template-columns: 24px 1fr; grid-template-rows: auto auto auto 6px; gap: 2px 8px; align-content: center; padding: 8px 12px; border: 1px solid #1e3a4a; border-radius: 10px; background: #0a1922; overflow: hidden; }
+.climate-metric > svg,.climate-metric > .metric-drop,.climate-metric > .metric-filter,.climate-metric > .metric-heat { grid-row: 1/4; align-self: start; color: #65d99a; font-size: 20px; }
+.climate-metric.blue > .metric-drop { color: #68bfff; }
+.climate-metric.cyan > .metric-filter { color: #70d8f5; }
+.climate-metric.neutral > .metric-heat { color: #a8c0cd; transform: rotate(90deg); }
+.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat) { color: #7992a1; font-size: 8px; }
+.climate-metric strong { font-size: 17px; }
+.climate-metric strong small { color: #78919f; font-size: 8px; }
+.climate-metric em { color: #77909f; font-size: 8px; font-style: normal; }
+.climate-metric > i { grid-column: 1/-1; display: block; height: 4px; margin-top: 7px; border-radius: 99px; background: linear-gradient(90deg,#52dc91,#69c6ff); box-shadow: 0 0 12px rgb(82 220 145 / 18%); }
+.climate-metric::after { content: ""; position: absolute; bottom: 10px; left: 12px; right: 12px; height: 4px; border-radius: 99px; background: #172b36; z-index: -1; }
+
+/* RS485/Modbus wiring between the unit, HAC1 and the Raspberry Pi. */
+.hch-bus-cable { fill: none; stroke: #2b3d48; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.hch-bus-core { fill: none; stroke: #e9b45f; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .5; }
+.hch-wiring.active .hch-bus-core { stroke-dasharray: 4 14; opacity: .95; animation: pro-bus-data 1.1s linear infinite; }
+@keyframes pro-bus-data { to { stroke-dashoffset: -36; } }
+.hch-bus-joint { fill: #e9b45f; }
+.hch-cable-gland { fill: #1a2a33; stroke: #6f8591; stroke-width: 1.2; }
+.hch-bus-label { fill: #d9b574; font-size: 15px; font-weight: 750; letter-spacing: .03em; }
+.hch-signal-wire { fill: none; stroke: #b98a5a; stroke-width: 1.3; stroke-dasharray: 3 3; stroke-linejoin: round; opacity: .8; }
+.hch-device .device-body { fill: #0a1822; stroke: #3d6275; stroke-width: 1.4; }
+.hch-device text { fill: #d9e6ec; font-size: 16px; font-weight: 750; }
+.hch-device .device-sub { fill: #a3b9c6; font-size: 13px; font-weight: 650; }
+.hch-pi .pi-board { fill: #123524; stroke: #3fae74; stroke-width: 1.4; }
+.hch-pi .pi-chip { fill: #1d2a30; stroke: #5d7885; }
+.hch-pi .pi-gpio { fill: #d9b574; }
+/* ---------------------------------------------------------------------------
+   Everything below: the WebUI overview around the drawing (frontend-v2
+   app.css, pro-dashboard.css and overview.css), scoped to the card. The
+   WebUI's screen-width media queries are container queries on the card's own
+   width, because an HA column is rarely as wide as the screen.
+   ------------------------------------------------------------------------ */
+:host { display: block; --surface-soft: #10222e; --border: #1d3442; --text: #eef7fb; --muted: #8da4b4; --blue: #58b9ff; --green: #52df92; --orange: #ffad55; --red: #ff7777; --ease: cubic-bezier(.2,.75,.25,1); }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+.hch-card { display: block; container: hch-card / inline-size; padding: 14px 16px 16px; border: 0; border-radius: var(--ha-card-border-radius, 12px); background: radial-gradient(circle at 55% -15%,rgb(41 97 132 / 13%),transparent 38%),linear-gradient(180deg,#08131c,#071018); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+.eyebrow { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+.live-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #57ca82; box-shadow: 0 0 0 4px rgb(87 202 130 / 10%), 0 0 14px rgb(87 202 130 / 40%); }
+.status-chip { display: inline-flex; align-items: center; gap: 7px; width: max-content; padding: 7px 10px; border: 1px solid #25404f; border-radius: 999px; background: #0d1d27; color: var(--text); font-size: 9px; font-weight: 750; }
+.status-chip.muted { color: var(--muted); background: var(--surface-soft); }
+.status-chip.muted .live-dot { background: var(--muted); box-shadow: none; }
+.surface { border: 1px solid #1d3544; border-radius: 14px; background: linear-gradient(145deg,#0d1d27,#0a1720); box-shadow: 0 13px 36px rgb(0 0 0 / 15%); }
+
+.dashboard-overview { display: grid; gap: 12px; }
+.overview-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 0 4px 10px; }
+.overview-heading-row h1 { margin: 4px 0 5px; font-size: clamp(27px,2.2vw,38px); letter-spacing: -.045em; }
+.overview-heading-row p { margin: 0; color: var(--muted); font-size: 11px; }
+.overview-status-pills { display: flex; gap: 10px; align-items: stretch; }
+.overview-status-pills > div { min-width: 130px; min-height: 60px; position: relative; display: grid; grid-template-columns: 18px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-content: center; padding: 9px 13px; border: 1px solid #1f3948; border-radius: 11px; background: linear-gradient(150deg,#0e202b,#0a1822); box-shadow: 0 10px 24px rgb(0 0 0 / 12%); }
+.overview-status-pills svg,.overview-status-pills .status-led { grid-row: 1/3; align-self: center; color: var(--green); }
+.overview-status-pills small { color: #7790a1; font-size: 8px; }
+.overview-status-pills strong { margin-top: 2px; font-size: 11px; color: #dff6ff; }
+.status-led { width: 10px; height: 10px; border-radius: 999px; background: #4fe18c; box-shadow: 0 0 0 4px rgb(79 225 140 / 9%),0 0 16px rgb(79 225 140 / 55%); }
+.status-led.warn { background: var(--orange); box-shadow: 0 0 0 4px rgb(255 173 85 / 9%),0 0 16px rgb(255 173 85 / 35%); }
+
+.dashboard-main-grid { display: grid; grid-template-columns: minmax(0,1.62fr) minmax(360px,.72fr); grid-template-areas: "unit controls" "climate afterheat"; gap: 12px; align-items: stretch; }
+.pro-air-card { grid-area: unit; min-width: 0; display: flex; flex-direction: column; padding: 15px 16px 13px; border-radius: 13px; overflow: hidden; }
+.pro-card-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.pro-card-head h2 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
+.pro-card-head p { margin: 3px 0 0; color: #7f96a6; font-size: 9px; }
+.pro-card-head.compact h2 { font-size: 15px; }
+.pro-card-head > svg { flex: 0 0 auto; color: #5ec3ff; }
+
+/* overview.css: the external afterheater's duct hardware and the summer-stop note. */
+.hch-duct-collar .hch-duct-pipe{fill:url(#ductPipe);stroke:#6f8591;stroke-width:1.4}.hch-duct-collar .hch-duct-rim{fill:url(#metalFace);stroke:#8ba0ad;stroke-width:2.4}.hch-duct-collar .hch-duct-inner{fill:#07131a;stroke:#3b5260;stroke-width:1.6}.hch-external-coil .coil-case{fill:#172a35;stroke:#607987;stroke-width:2}.hch-external-coil .coil-duct{fill:#0a1821;stroke:#3f5a69;stroke-width:2}.hch-external-coil .coil-pipe{fill:none;stroke:#80614a;stroke-width:3}.hch-external-coil.active .coil-pipe{stroke:#f1a15c;filter:drop-shadow(0 0 5px rgb(241 161 92 / 35%))}
+.afterheat-lockout{margin-top:3px;padding:5px 8px;border:1px solid #e9a54a;border-radius:7px;background:rgb(40 26 8 / 70%);color:#ffd08a;font-size:9px;font-weight:700;line-height:1.35}
+
+/* Save feedback; the WebUI shows it in its top bar. */
+.hch-notice { position: sticky; bottom: 10px; z-index: 2; justify-self: center; max-width: 100%; padding: 9px 14px; border: 1px solid #2f6a8c; border-radius: 10px; background: rgb(11 36 52 / 95%); color: #dff4ff; font-size: 11px; font-weight: 700; box-shadow: 0 10px 28px rgb(0 0 0 / 35%); }
+.hch-notice.error { border-color: #b35555; background: rgb(58 30 32 / 96%); color: #ffd6d6; }
+
+/* Compact drawing (narrow card): the SVG scales to the card width and keeps
+   the live motion; labels that would be too small to read are hidden and the
+   WebUI's mobile flow panel carries the readings. Never a sideways scroll. */
+.hch-mobile-flow { display: none; }
+.hch5-visual.compact { padding-top: 2px; perspective: none; }
+.hch5-visual.compact > svg { transform: none; }
+.hch5-visual.compact :is(.hch-part-label,.hch-channel-label,.hch-core-port,.hch-bus-label,.hch-device text,.hch-exchanger-title,.hch-bypass-countdown,.hch-lockout-badge) { display: none; }
+.hch5-visual.compact .hch-recovery { font-size: 58px; }
+.hch5-visual.compact .hch-device text.device-compact { display: inline; font-size: 34px; font-weight: 800; }
+.hch5-visual.compact .hch-mobile-flow { display: grid; gap: 8px; margin: 6px 0 12px; padding: 12px; border: 1px solid #28495a; border-radius: 12px; background: radial-gradient(circle at 50% 30%,#153448,#0a1922 72%); }
+.hch5-visual.compact .hch-mobile-flow-head { display: none; }
+.hch-mobile-lane { display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: center; gap: 6px; }
+.hch-mobile-reading { min-width: 0; display: grid; gap: 3px; padding: 10px; border: 1px solid #315269; border-radius: 9px; background: #0d2636; }
+.hch-mobile-lane.extract .hch-mobile-reading { border-color: #66503d; background: #2a211e; }
+.hch-mobile-reading small { color: #a6c1d0; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hch-mobile-reading strong { color: #eefaff; font-size: 18px; line-height: 1; }
+.hch-mobile-route { display: flex; align-items: center; color: var(--blue); font-size: 10px; }
+.hch-mobile-lane.extract .hch-mobile-route { color: var(--orange); }
+.hch-mobile-route i { height: 2px; flex: 1; background: currentColor; opacity: .6; }
+.hch-mobile-core { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 8px; padding: 8px 5px; border: 1px solid #315365; border-radius: 9px; background: #102a38; }
+.hch-mobile-core span { color: #9ab3c0; font-size: 8px; font-weight: 800; }
+.hch-mobile-core strong { color: var(--green); font-size: 16px; }
+.hch-mobile-core .bypass-open { color: var(--blue); }
+.hch-mobile-subreadings { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 10px; }
+.hch-mobile-subreadings span { display: grid; gap: 3px; color: #91aab8; font-size: 8px; }
+.hch-mobile-subreadings strong { color: #e1f0f6; font-size: 10px; }
+.hch5-visual.compact .unit-readback-row { grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 0; }
+.hch5-visual.compact .unit-readback { min-height: 56px; grid-template-columns: 30px minmax(0,1fr); gap: 7px; padding: 8px 9px; }
+.hch5-visual.compact .readback-icon { width: 30px; height: 30px; }
+.hch5-visual.compact .readback-icon::before { font-size: 16px !important; }
+.hch5-visual.compact .unit-readback small { font-size: 9px; }
+.hch5-visual.compact .unit-readback strong { font-size: 11px; white-space: normal; }
+.hch5-visual.compact .unit-readback em { font-size: 8px; white-space: normal; }
+
+/* HA only: where the fireplace card shares its row with the cooling card,
+   its two buttons left the title a few pixels ("Pejsefu…"), so there they
+   move under the text. Alone in a full-width row they stay on the right. */
+.pro-control-pair { container: control-pair / inline-size; }
+@container hch-card (min-width: 661px) {
+  @container control-pair (max-width: 420px) {
+    .status-action-card:has(.fireplace-actions) { grid-template-columns: 42px minmax(0,1fr); }
+    .status-action-card .fireplace-actions { grid-column: 2; }
+  }
+}
+
+/* WebUI @media (max-width: 1350px): content narrower than ~1080 px. */
+@container hch-card (max-width: 1080px) {
+  .dashboard-main-grid { grid-template-columns: minmax(0,1fr); grid-template-areas: "unit" "climate" "controls" "afterheat"; }
+  .pro-control-column { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pro-control-card { grid-column: 1/-1; }
+}
+/* WebUI @media (max-width: 980px). */
+@container hch-card (max-width: 960px) {
+  .overview-heading-row { align-items: flex-start; flex-direction: column; }
+  .overview-status-pills { width: 100%; }
+  .overview-status-pills > div { flex: 1; min-width: 0; }
+  .unit-readback-row,.climate-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+/* WebUI @media (max-width: 680px). */
+@container hch-card (max-width: 660px) {
+  .overview-heading-row { gap: 9px; padding-bottom: 0; }
+  .overview-heading-row h1 { font-size: clamp(23px,7cqi,28px); margin: 3px 0; }
+  .overview-heading-row p { display: none; }
+  .overview-status-pills { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .overview-status-pills > div { min-width: 0; min-height: 48px; padding: 6px 7px; grid-template-columns: 11px 1fr; column-gap: 5px; }
+  .overview-status-pills svg,.overview-status-pills .status-led { width: 8px; height: 8px; }
+  .overview-status-pills strong { font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pro-air-card { padding: 13px; }
+  .pro-air-card .pro-card-head p { display: none; }
+  .pro-control-column { grid-template-columns: minmax(0,1fr); }
+  .pro-control-card { grid-column: auto; }
+  .pro-control-pair { grid-template-columns: minmax(0,1fr); }
+  .climate-metrics { grid-template-columns: 1fr 1fr; }
+  .afterheat-setpoint-card { grid-template-columns: 1fr; }
+  .setpoint-stepper { justify-self: stretch; grid-template-columns: 42px 1fr 42px; }
+}
+@container hch-card (max-width: 560px) {
+  .hch-card { padding: 10px 8px 12px; }
+  .pro-air-card { padding: 11px 9px; }
+}
+/* WebUI @media (max-width: 360px). */
+@container hch-card (max-width: 340px) {
+  .hch5-visual.compact .hch-mobile-flow { padding: 9px; }
+  .hch-mobile-reading { padding: 8px 6px; }
+  .hch-mobile-reading small { font-size: 8px; }
+  .hch-mobile-reading strong { font-size: 16px; }
+  .hch-mobile-lane { grid-template-columns: minmax(0,1fr) 22px minmax(0,1fr); gap: 4px; }
+  .hch-mobile-core span { font-size: 7px; }
+}

@@ -147,6 +147,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-hch5-live-card",
+    "name": "HCH5 Live Control Card",
+    "filename": "ha-hch5-live-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-heat-economy-card",
     "name": "Heat Economy Card",
     "filename": "ha-heat-economy-card.js",
