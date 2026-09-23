@@ -21,6 +21,8 @@ const context = {
   window: { customCards: [], addEventListener() {}, removeEventListener() {} },
   console: { info() {}, warn() {} },
   Intl,
+  setTimeout,
+  clearTimeout,
 };
 
 vm.runInNewContext(source, context, { filename: filename.pathname });
@@ -151,99 +153,344 @@ assert.equal(ambiguous._config.fjv_supply, "", "multiple integrations require a 
 
 assert.throws(() => new Card().setConfig(null), /configuration object/);
 
-// The physical display is closed by default and navigation stays inside the menu tree.
-const display = new Card();
-display._build = () => {};
-display.setConfig({ display_entities: { parallel_shift: "number.calefa_shift", bypass_mode: "select.calefa_bypass" } });
-const calls = [];
-display._hass = { states: {
-  "number.calefa_shift": { state: "2", attributes: { min: -9, max: 9, step: 1 } },
-  "select.calefa_bypass": { state: "AUTO", attributes: { options: ["AUTO", "PLANLÆG", "KOMFORT", "ØKO"] } },
-}, callService: (...args) => calls.push(args) };
-display._renderDisplay = () => {};
-assert.equal(display._displayOpen, false);
-assert.match(display._modalMarkup(), /data-ref="modal" hidden/);
-display._displayEnter();
-assert.equal(display._displayPage, 1, "short Enter cycles front menus");
-display._displayMove(-1);
-assert.equal(display._edit.node.map, "parallel_shift");
-assert.equal(display._edit.value, "3");
-display._displayEnter();
-assert.equal(calls.length, 0, "first Enter only asks for confirmation");
-display._displayEnter();
-assert.equal(JSON.stringify(calls[0]), JSON.stringify(["number", "set_value", { entity_id: "number.calefa_shift", value: 3 }]));
-display._displayEnter(true);
-assert.equal(display._inMenu, true, "long Enter opens the current menu");
-display._displayEnter(true);
-assert.equal(display._inMenu, false);
-display._displayPage = 0;
-display._displayEnter(true);
-display._displayMove(1);
-display._displayMove(1);
-display._displayEnter(); // Bypass
-display._displayEnter(); // Mode
-assert.equal(display._edit.node.map, "bypass_mode");
-display._displayMove(1);
-display._displayEnter();
-display._displayEnter();
-assert.equal(JSON.stringify(calls[1]), JSON.stringify(["select", "select_option", { entity_id: "select.calefa_bypass", option: "PLANLÆG" }]));
-const mappedSwitch = new Card();
-mappedSwitch._build = () => {};
-mappedSwitch.setConfig({ display_entities: { auto_standby: "switch.calefa_auto_standby" } });
-mappedSwitch._hass = { states: { "switch.calefa_auto_standby": state("off") }, callService: (...args) => calls.push(args) };
-mappedSwitch._renderDisplay = () => {};
-mappedSwitch._displayPage = mappedSwitch._activeFronts().indexOf("settings");
-mappedSwitch._inMenu = true;
-mappedSwitch._menuPath = [];
-mappedSwitch._menuPath = [mappedSwitch._menuChildren(mappedSwitch._menuNode()).findIndex((item) => item.label === "ITC")];
-const standbyMenu = mappedSwitch._menuChildren(mappedSwitch._menuNode()).find((item) => item.label === "Automatisk standby");
-assert.equal(mappedSwitch._canEdit(standbyMenu), true);
-assert.equal(mappedSwitch._menuValue(standbyMenu), "Fra");
-mappedSwitch._edit = { node: standbyMenu, value: "Til", options: ["Fra", "Til"], confirm: true };
-mappedSwitch._displayEnter();
-assert.equal(JSON.stringify(calls.at(-1)), JSON.stringify(["switch", "turn_on", { entity_id: "switch.calefa_auto_standby" }]));
-display._displayEnter(true);
-assert.equal(display._menuPath.length, 0, "long Enter returns one level");
-const readOnly = new Card();
-readOnly._build = () => {};
-readOnly.setConfig({});
-readOnly._hass = { states: {}, callService: (...args) => calls.push(args) };
-readOnly._renderDisplay = () => {};
-assert.equal(readOnly._activeFronts().length, 0, "no unsupported menu fronts are shown");
-readOnly._displayEnter(true);
-readOnly._displayEnter();
-assert.equal(readOnly._edit, null, "unmapped menu values remain read-only");
-assert.equal(calls.length, 3);
-assert.equal(JSON.stringify(display._activeFronts()), JSON.stringify(["bv", "itc"]));
-assert.equal(display._menuChildren(display._menuNode()).some((item) => item.service), false, "service actions without HA data are hidden");
-const alarms = new Card();
-alarms._build = () => {};
-alarms.setConfig({ alarm_entities: ["binary_sensor.calefa_alarm", "sensor.not_an_alarm"] });
-alarms._hass = { states: { "binary_sensor.calefa_alarm": state("on") } };
-assert.equal(JSON.stringify(alarms._activeFronts()), JSON.stringify(["alarm"]));
-assert.equal(alarms._menuValue({ label: "Aktuelle alarmer" }), "1 aktiv");
+// ---- Controller popup ----------------------------------------------------------------------
+const controlStates = () => ({
+  "number.bv": { state: "52.0", attributes: { min: 45, max: 60, step: 0.5, unit_of_measurement: "°C" } },
+  "number.shift": { state: "0.0", attributes: { min: -9, max: 9, step: 1, unit_of_measurement: "°C" } },
+  "number.max_supply": { state: "55.0", attributes: { min: 30, max: 65, step: 1, unit_of_measurement: "°C" } },
+  "select.bypass": { state: "Adaptivt skema", attributes: { options: ["Skema", "Adaptivt skema", "Øko", "Komfort"] } },
+  "select.curve": { state: "manual", attributes: { options: ["manual", "floor_heating", "radiator"] } },
+  "switch.priority": state("on"),
+  "sensor.dhw_state": state("Standby"),
+  "sensor.dhw": state(34.2, "°C"),
+  "sensor.flow": state(0, "L/h"),
+});
+function controller(extra = {}, states = controlStates()) {
+  const card = new Card();
+  card._build = () => {};
+  card.setConfig({
+    dhw_temperature: "sensor.dhw", dhw_active: "sensor.dhw_state", water_flow: "sensor.flow",
+    display_entities: { dhw_setpoint: "number.bv", parallel_shift: "number.shift", heat_max_supply: "number.max_supply", bypass_mode: "select.bypass", heat_curve_type: "select.curve", return_priority: "switch.priority" },
+    ...extra,
+  });
+  const calls = [];
+  card._hass = { states, callService: (...args) => { calls.push(args); return Promise.resolve(); } };
+  card._refs = { modal: { hidden: true }, device: { focus() {} }, lcd: { innerHTML: "" } };
+  return { card, calls, lcd: () => card._refs.lcd.innerHTML };
+}
+const top = (card) => card._stack.at(-1);
+const selectRow = (card, label) => {
+  const frame = top(card);
+  const index = card._rows(frame).findIndex((row) => row.label === label);
+  assert.ok(index >= 0, `menu ${frame.node.label} has ${label}`);
+  while (frame.index < index) card._displayMove(-1);
+  while (frame.index > index) card._displayMove(1);
+};
+const json = (value) => JSON.stringify(value);
 
-const modal = new Card();
-modal._build = () => {};
-modal.setConfig({});
-modal._renderDisplay = () => {};
-modal._refs = { modal: { hidden: true }, device: { focus() {} } };
-modal._openDisplay();
-assert.equal(modal._displayOpen, true);
-assert.equal(modal._refs.modal.hidden, false);
-modal._handleClick({ composedPath: () => [{ dataset: { action: "close-display" } }] }); // X
-assert.equal(modal._refs.modal.hidden, true);
-modal._openDisplay();
-modal._handleClick({ composedPath: () => [{ dataset: { action: "close-display" } }] }); // backdrop
-assert.equal(modal._displayOpen, false);
-modal._openDisplay();
+// Closed by default, and the markup starts hidden.
+let ui = controller();
+assert.equal(ui.card._displayOpen, false, "popup is closed by default");
+assert.match(ui.card._modalMarkup(), /data-ref="modal" hidden/);
+assert.match(ui.card._modalMarkup(), /class="cf-modal-backdrop" data-action="close-display"/, "backdrop closes the popup");
+assert.match(ui.card._modalMarkup(), /data-ctl="down"[\s\S]*data-ctl="enter"[\s\S]*data-ctl="up"/, "DOWN / ENTER / UP touch strip in controller order");
+assert.equal((ui.card._modalMarkup().match(/data-ref="pled-/g) || []).length, 5, "five indicator positions");
+assert.match(ui.card._modalMarkup(), /class="ctl-usb"/, "USB flap");
+assert.match(ui.card._modalMarkup(), /class="ctl-logo"[^>]*>wavin</, "Wavin logo");
+
+// Open, close with X, backdrop, Escape and disconnect.
+ui.card._openDisplay();
+assert.equal(ui.card._displayOpen, true);
+assert.equal(ui.card._refs.modal.hidden, false);
+assert.match(ui.lcd(), /data-screen="front-bv"/, "opens on the BV front menu");
+assert.match(ui.lcd(), /52°/, "BV front shows the DHW setpoint");
+ui.card._handleClick({ composedPath: () => [{ dataset: { action: "close-display" } }] }); // X
+assert.equal(ui.card._displayOpen, false);
+assert.equal(ui.card._refs.modal.hidden, true);
+ui.card._openDisplay();
+ui.card._handleClick({ composedPath: () => [{ dataset: { action: "close-display" } }, { dataset: {} }] }); // backdrop
+assert.equal(ui.card._displayOpen, false, "backdrop closes");
+ui.card._openDisplay();
 let prevented = false;
-modal._handleKeydown({ key: "Escape", preventDefault() { prevented = true; } });
+ui.card._handleKeydown({ key: "Escape", preventDefault() { prevented = true; } });
 assert.equal(prevented, true);
-assert.equal(modal._displayOpen, false);
-modal._openDisplay();
-modal.disconnectedCallback();
-assert.equal(modal._displayOpen, false, "disconnect closes the modal and removes its key listener");
+assert.equal(ui.card._displayOpen, false, "Escape closes");
+ui.card._openDisplay();
+ui.card._displayEnter(true);
+ui.card.disconnectedCallback();
+assert.equal(ui.card._displayOpen, false, "disconnect closes the popup");
+ui.card._openDisplay();
+assert.equal(ui.card._stack.length, 0, "reopening starts on the front menu");
+assert.equal(ui.card._frontKey, "bv");
+
+// Short ENTER cycles the front menus; ALARM only joins while an alarm is active.
+ui.card._displayEnter();
+assert.equal(ui.card._frontKey, "varme");
+assert.match(ui.lcd(), /data-screen="front-varme"[\s\S]*\+0\.0°/);
+ui.card._displayEnter();
+assert.equal(ui.card._frontKey, "indstil");
+ui.card._displayEnter();
+assert.equal(ui.card._frontKey, "bv", "no ALARM front without alarms");
+const alarmed = controller({ alarm_entities: ["binary_sensor.low_pressure"] }, { ...controlStates(), "binary_sensor.low_pressure": { state: "on", attributes: { friendly_name: "Wavin Calefa 2 Tryk lav advarsel" } } });
+alarmed.card._openDisplay();
+assert.equal(json(alarmed.card._fronts()), json(["bv", "varme", "indstil", "alarm"]));
+alarmed.card._frontKey = "alarm";
+alarmed.card._displayEnter(true);
+assert.equal(json(alarmed.card._rows(top(alarmed.card)).map((row) => row.label)), json(["Tryk lav advarsel", "Exit"]), "alarm list is read from the alarm entities");
+alarmed.card._displayEnter();
+assert.equal(top(alarmed.card).kind, "info");
+assert.equal(alarmed.calls.length, 0, "alarms are read-only");
+
+// Long ENTER opens the current front's menu and steps back again.
+ui.card._displayEnter(true);
+assert.equal(top(ui.card).node.label, "BV");
+assert.match(ui.lcd(), /<b>BV<\/b><span>1\/5<\/span>/, "menu header shows title and position");
+assert.match(ui.lcd(), /lcd-row is-selected" data-row="Temperatur"/, "black bar marks the selected row");
+assert.match(ui.lcd(), /\[52\]/);
+ui.card._displayEnter(true);
+assert.equal(ui.card._stack.length, 0, "long ENTER returns to the front menu");
+
+// UP/DOWN move the selection bar and stop at the ends; Exit is the last row.
+ui.card._displayEnter(true);
+ui.card._displayMove(1);
+assert.equal(top(ui.card).index, 0, "UP stops at the first row");
+ui.card._displayMove(-1);
+assert.equal(top(ui.card).index, 1, "DOWN moves the bar down");
+assert.match(ui.lcd(), /is-selected" data-row="Status"/);
+for (let i = 0; i < 10; i += 1) ui.card._displayMove(-1);
+assert.equal(ui.card._rows(top(ui.card))[top(ui.card).index].label, "Exit", "DOWN stops on Exit");
+assert.match(ui.lcd(), /is-selected" data-row="Exit"/);
+ui.card._displayEnter();
+assert.equal(ui.card._stack.length, 0, "short ENTER on Exit goes back");
+
+// Status pages are read-only and paged with UP/DOWN.
+ui.card._displayEnter(true);
+selectRow(ui.card, "Status");
+ui.card._displayEnter();
+assert.equal(top(ui.card).kind, "pages");
+assert.match(ui.lcd(), /Status 1\/2[\s\S]*BV:<\/span><strong>34\.2[\s\S]*FLW:<\/span><strong>0</, "status grid uses controller abbreviations");
+ui.card._displayMove(-1);
+assert.equal(top(ui.card).page, 1);
+assert.match(ui.lcd(), /Status:<\/span><strong>STANDBY/);
+ui.card._displayMove(-1);
+assert.equal(top(ui.card).page, 1, "pages stop at the last page");
+ui.card._displayEnter();
+assert.equal(top(ui.card).node.label, "BV", "ENTER leaves the status pages");
+
+// Front value: UP/DOWN edit, short ENTER writes, long ENTER cancels.
+const front = controller();
+front.card._openDisplay();
+front.card._displayMove(1);
+assert.equal(front.card._frontEdit.value, 52.5, "UP raises by the entity step");
+assert.match(front.lcd(), /lcd-big is-pending">52\.5°/);
+front.card._displayEnter(true);
+assert.equal(front.card._frontEdit, null);
+assert.equal(front.calls.length, 0, "long ENTER cancels without writing");
+for (let i = 0; i < 40; i += 1) front.card._displayMove(1);
+assert.equal(front.card._frontEdit.value, 60, "value stops at the entity maximum");
+front.card._displayEnter();
+assert.equal(json(front.calls[0]), json(["number", "set_value", { entity_id: "number.bv", value: 60 }]));
+assert.equal(front.card._frontKey, "bv", "confirming a value does not switch front");
+front.card._displayMove(-1);
+front.card._displayMove(1);
+assert.equal(front.card._frontEdit, null, "returning to the current value clears the pending edit");
+front.card._displayEnter();
+assert.equal(front.card._frontKey, "varme");
+front.card._displayMove(-1);
+front.card._displayMove(-1);
+assert.match(front.lcd(), /−2\.0°/);
+front.card._displayEnter();
+assert.equal(json(front.calls[1]), json(["number", "set_value", { entity_id: "number.shift", value: -2 }]));
+
+// Numeric editor: Behold keeps the value, Sæt writes it.
+const editor = controller();
+editor.card._openDisplay();
+editor.card._displayEnter();
+editor.card._displayEnter(true);
+selectRow(editor.card, "Varmekurve");
+editor.card._displayEnter();
+selectRow(editor.card, "Maks. Varme F.");
+editor.card._displayEnter();
+assert.equal(top(editor.card).kind, "edit");
+assert.match(editor.lcd(), /Maks\. Varme F\.[\s\S]*55°C[\s\S]*<b>Behold<\/b>/);
+editor.card._displayEnter();
+assert.equal(editor.calls.length, 0, "Behold does not write");
+assert.equal(top(editor.card).node.label, "Varmekurve", "the editor returns to its menu");
+editor.card._displayEnter();
+editor.card._displayMove(1);
+assert.match(editor.lcd(), /56°C[\s\S]*<b>Sæt<\/b>/);
+editor.card._displayEnter();
+assert.equal(json(editor.calls[0]), json(["number", "set_value", { entity_id: "number.max_supply", value: 56 }]));
+
+// Select editor uses the controller's words and writes the entity's own option.
+selectRow(editor.card, "Type");
+assert.match(editor.lcd(), /data-row="Type"><span>Type<\/span><em>\[MANUEL\]/);
+editor.card._displayEnter();
+assert.match(editor.lcd(), /<span>1\/3<\/span>[\s\S]*Manuel[\s\S]*Behold/);
+editor.card._displayMove(1);
+assert.match(editor.lcd(), /2\/3[\s\S]*Gulvvarme[\s\S]*Sæt/);
+editor.card._displayEnter();
+assert.equal(json(editor.calls[1]), json(["select", "select_option", { entity_id: "select.curve", option: "floor_heating" }]));
+editor.card._displayEnter(true);
+editor.card._displayEnter(true);
+assert.equal(editor.card._stack.length, 0, "two long presses return from Varmekurve to the front");
+editor.card._frontKey = "bv";
+editor.card._displayEnter(true);
+selectRow(editor.card, "Bypass");
+editor.card._displayEnter();
+editor.card._displayEnter(); // Mode
+assert.match(editor.lcd(), /1\/4[\s\S]*Auto/, "Adaptivt skema is the controller's Auto");
+editor.card._displayMove(1);
+editor.card._displayEnter();
+assert.equal(json(editor.calls[2]), json(["select", "select_option", { entity_id: "select.bypass", option: "Skema" }]));
+
+// Switch editor.
+editor.card._stack = [];
+editor.card._frontKey = "varme";
+editor.card._displayEnter(true);
+selectRow(editor.card, "Returbegrænser");
+editor.card._displayEnter();
+selectRow(editor.card, "Prioritet");
+assert.match(editor.lcd(), /\[TIL\]/);
+editor.card._displayEnter();
+assert.match(editor.lcd(), /2\/2[\s\S]*Til/);
+editor.card._displayMove(-1);
+editor.card._displayEnter();
+assert.equal(json(editor.calls[3]), json(["switch", "turn_off", { entity_id: "switch.priority" }]));
+assert.equal(editor.calls.length, 4);
+
+// Read-only items: device-only functions, unbound and unavailable entities never open an editor.
+const readOnly = controller({}, { ...controlStates(), "number.max_supply": state("unavailable") });
+readOnly.card._openDisplay();
+readOnly.card._displayEnter(true);
+selectRow(readOnly.card, "Bypass");
+readOnly.card._displayEnter();
+selectRow(readOnly.card, "Se tidsplaner");
+assert.match(readOnly.lcd(), /data-row="Se tidsplaner" data-readonly=""/);
+readOnly.card._displayEnter();
+assert.equal(top(readOnly.card).kind, "info");
+assert.match(readOnly.lcd(), /Kun på enheden/);
+readOnly.card._displayMove(1);
+readOnly.card._displayEnter();
+assert.equal(top(readOnly.card).node.label, "Bypass", "ENTER leaves the read-only screen");
+selectRow(readOnly.card, "Temperatur");
+assert.match(readOnly.lcd(), /is-lock[\s\S]*\[--\]/, "unbound value is marked read-only");
+readOnly.card._displayEnter();
+assert.equal(top(readOnly.card).kind, "info");
+assert.match(readOnly.lcd(), /Ingen HA-entitet/);
+readOnly.card._stack = [];
+readOnly.card._frontKey = "varme";
+readOnly.card._displayEnter(true);
+selectRow(readOnly.card, "Varmekurve");
+readOnly.card._displayEnter();
+selectRow(readOnly.card, "Maks. Varme F.");
+readOnly.card._displayEnter();
+assert.match(readOnly.lcd(), /Værdien er ikke tilgængelig/, "unavailable entity is not editable");
+readOnly.card._stack = [];
+readOnly.card._frontKey = "indstil";
+readOnly.card._displayEnter(true);
+selectRow(readOnly.card, "Dato og tid");
+readOnly.card._displayEnter();
+assert.match(readOnly.lcd(), /Dato og tid[\s\S]*Kun på enheden/);
+assert.equal(readOnly.calls.length, 0, "read-only screens never call a service");
+const noBindings = controller({ display_entities: {} });
+noBindings.card._openDisplay();
+noBindings.card._displayMove(1);
+noBindings.card._displayEnter();
+assert.equal(noBindings.card._frontKey, "varme", "without a writable entity arrows do nothing on the front");
+assert.equal(noBindings.calls.length, 0);
+
+// Only services and values the entity really accepts are sent.
+const guard = controller({}, { ...controlStates(), "select.bypass": { state: "Skema", attributes: { options: ["Skema", "Adaptivt skema"] } } });
+assert.equal(json(guard.card._options({ type: "select", map: "bypass_mode" }, guard.card._hass.states["select.bypass"]).map((option) => option.label)), json(["Auto", "Planlæg"]), "options missing on the entity are not offered");
+guard.card._commit({ type: "number", map: "dhw_setpoint", title: "Temperatur" }, 70);
+guard.card._commit({ type: "select", map: "bypass_mode", title: "Mode" }, "Komfort");
+guard.card._commit({ type: "switch", map: "dhw_setpoint", title: "x" }, "on");
+assert.equal(guard.calls.length, 0, "out-of-range, unknown option and wrong domain are refused");
+
+// A rejected service call is shown on the LCD and dismissed with ENTER.
+const failing = controller();
+failing.card._hass.callService = () => Promise.reject(new Error("Modbus timeout"));
+failing.card._openDisplay();
+failing.card._displayMove(1);
+failing.card._displayEnter();
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.match(failing.lcd(), /Ikke gemt[\s\S]*Modbus timeout/);
+failing.card._displayMove(1);
+assert.match(failing.lcd(), /Ikke gemt/, "arrows do not act behind an error screen");
+failing.card._displayEnter();
+assert.match(failing.lcd(), /data-screen="front-bv"/);
+
+// Keyboard: arrows move, Enter is short, Shift+Enter and Backspace are long.
+const keys = controller();
+keys.card._openDisplay();
+const press = (key, shiftKey = false) => keys.card._handleKeydown({ key, shiftKey, preventDefault() {} });
+press("Enter");
+assert.equal(keys.card._frontKey, "varme");
+press("Enter", true);
+assert.equal(top(keys.card).node.label, "ITC");
+press("ArrowDown");
+assert.equal(top(keys.card).index, 1);
+press("ArrowUp");
+assert.equal(top(keys.card).index, 0);
+press("Backspace");
+assert.equal(keys.card._stack.length, 0);
+
+// Touch keys: a quick ENTER is short, a held ENTER fires one long press, held arrows repeat in editors.
+const touch = controller();
+touch.card._openDisplay();
+const fakeKey = (ctl) => ({ dataset: { ctl }, classList: { add() {}, remove() {} } });
+const pointer = (type, el) => touch.card._handlePointer({ type, button: 0, pointerId: 1, composedPath: () => [el], preventDefault() {} });
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const enterKey = fakeKey("enter");
+pointer("pointerdown", enterKey);
+pointer("pointerup", enterKey);
+assert.equal(touch.card._frontKey, "varme", "quick press is a short ENTER");
+touch.card._handleClick({ detail: 1, composedPath: () => [{ dataset: { action: "display-key", ctl: "enter" } }] });
+assert.equal(touch.card._frontKey, "varme", "the click after a pointer press is not counted twice");
+pointer("pointerdown", enterKey);
+await sleep(700);
+assert.equal(top(touch.card)?.node.label, "ITC", "holding ENTER opens the menu while still held");
+pointer("pointerup", enterKey);
+assert.equal(top(touch.card)?.node.label, "ITC", "releasing after a long press adds no short press");
+pointer("pointerdown", enterKey);
+pointer("pointercancel", enterKey);
+assert.equal(top(touch.card)?.node.label, "ITC", "a cancelled press does nothing");
+touch.card._handleClick({ detail: 0, composedPath: () => [{ dataset: { action: "display-key", ctl: "down" } }] });
+assert.equal(top(touch.card).index, 1, "keyboard-activated key click works");
+touch.card._stack = [];
+touch.card._frontKey = "bv";
+const upKey = fakeKey("up");
+pointer("pointerdown", upKey);
+await sleep(700);
+pointer("pointerup", upKey);
+assert.ok(touch.card._frontEdit.value >= 54, "held UP repeats while editing a value");
+assert.equal(touch.calls.length, 0, "repeating never writes by itself");
+touch.card._closeDisplay();
+
+// Popup LEDs mirror the controller status indicators.
+const fascia = controller({ fjv_supply: "sensor.supply" }, { ...controlStates(), "sensor.supply": state(58) });
+fascia.card._refs = Object.fromEntries(["power", "fault", "mode", "lan", "peripheral"].map((key) => [`pled-${key}`, { dataset: {}, getAttribute() { return null; }, setAttribute() {} }]));
+fascia.card._applyStatusLeds({ dhwTap: false, heatingActive: true, dhwBypass: false });
+assert.equal(fascia.card._refs["pled-power"].dataset.tone, "green");
+assert.equal(fascia.card._refs["pled-mode"].dataset.tone, "red");
+assert.equal(fascia.card._refs["pled-fault"].dataset.tone, "off");
+
+// The registry binds the popup's controls and status readouts from the same integration.
+const popupRows = [
+  ["one", "select.mode", "dhw_mode_control"], ["one", "switch.priority", "return_limiter_priority_over_supply"],
+  ["one", "sensor.bypass", "dhw_bypass_active"], ["one", "switch.vacation_ch", "vacation_for_ch"],
+].map(([config_entry_id, entity_id, key]) => ({ platform: "wavin_calefa", config_entry_id, entity_id, unique_id: `${config_entry_id}_${key}`, disabled_by: null }));
+const bound = new Card();
+bound._build = () => {};
+bound._update = () => {};
+bound.setConfig({});
+bound.hass = { states: {}, connection: { sendMessagePromise: async () => popupRows } };
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.equal(bound._config.display_entities.bypass_mode, "select.mode");
+assert.equal(bound._config.display_entities.return_priority, "switch.priority");
+assert.equal(bound._config.display_entities.bypass_state, "sensor.bypass");
+assert.equal(bound._config.display_entities.vacation_ch, "switch.vacation_ch");
 
 const stale = new Card();
 stale._build = () => {};
