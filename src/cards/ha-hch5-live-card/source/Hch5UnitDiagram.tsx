@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { bypassOpenShare, bypassTravel, formatRemaining, type BypassDirection } from "./bypass";
 
 type Num = number | null;
@@ -64,27 +64,8 @@ function int(value: Num) { return value === null ? "—" : Math.round(value).toL
 // Drawing area: from the room-side readings (T3/T2AH) on the left to where
 // the outdoor-air and exhaust ducts have faded out on the right.
 const VIEW = { x: -240, y: 40, width: 1446, height: 510 };
-// Keep the complete animated drawing at every size. At narrow widths the
-// labels move to the readable flow panel below, while the SVG fits the card.
-const COMPACT_BELOW = 640;
-
-// The card's width, not the viewport's, decides: an HA column is rarely as
-// wide as the screen. A hidden tab reports 0, so the last layout is kept.
-function useCompactDrawing() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [compact, setCompact] = useState(false);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const measure = (width: number) => { if (width > 0) setCompact(width < COMPACT_BELOW); };
-    measure(element.getBoundingClientRect().width);
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(entries => measure(entries[0]?.contentRect.width ?? 0));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return [ref, compact] as const;
-}
+// The WebUI keeps the complete labelled SVG on mobile. The HA card follows
+// the same drawing; container queries only arrange the readbacks underneath.
 
 // The exhaust end is turned away from the viewer, so its outdoor-air (T1)
 // and exhaust (T4) ducts run off backwards: each leaves the hidden end face,
@@ -312,9 +293,8 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   // Back edges of the cabinet's floor and right-hand wall, one cabinet depth in.
   const {x:ox,y:oy,width:ow,height:oh}=OPENING;
   const backX=ox+ow+CABINET_DEPTH[0], backY=oy+oh+CABINET_DEPTH[1];
-  const [visualRef,compact]=useCompactDrawing();
   const view=VIEW;
-  return <div ref={visualRef} className={`hch5-visual${bypassOpen?" is-bypass":" is-recovery"}${compact?" compact":""}`}>
+  return <div className={`hch5-visual${bypassOpen?" is-bypass":" is-recovery"}`}>
     <svg viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label="HCH5 luftstrøm med intern bypass og ekstern eftervarme">
       <defs>
         <linearGradient id="metalFace" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#596b76"/><stop offset=".4" stopColor="#263843"/><stop offset="1" stopColor="#14242e"/></linearGradient>
@@ -399,7 +379,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       </g>
       <DuctCollar x={164} y={205}/><DuctCollar x={164} y={365}/>
       <g className={`hch-external-coil${heating?" active":""}`} transform="translate(57 365)"><rect className="coil-case" x="-48" y="-68" width="96" height="136" rx="12"/><rect className="coil-duct" x="-61" y="-48" width="122" height="96" rx="20"/>{[-27,-14,-1,12,25].map(o=><path key={o} className="coil-pipe" d={`M${o} -42 C${o-12} -24 ${o+12} -8 ${o} 10 C${o-12} 27 ${o+12} 36 ${o} 43`}/>) }<circle className="water-port" cx="34" cy="-75" r="5"/><circle className="water-port" cx="-34" cy="75" r="5"/><text className="hch-part-label" x="0" y="93" textAnchor="middle">Ekstern eftervarme · HAC1</text>{afterheatLockout&&<g className="hch-lockout-badge"><rect x="-58" y="-25" width="116" height="50" rx="10"/><text x="0" y="-4" textAnchor="middle">Sommerstop</text><text x="0" y="15" textAnchor="middle">ude ≥ 15 °C</text></g>}</g>
-      <Rs485Wiring active={busActive} compact={compact}/>
+      <Rs485Wiring active={busActive}/>
       <g className="hch-fog-group" filter="url(#fogBlur)" mask="url(#fogFadeMask)">
         <path className="hch-fog hch-fog-supply hch-fog-a" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-supply hch-fog-b" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.35}s`:"0s"} as CSSProperties}/>
         {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog hch-fog-extract hch-fog-a" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-extract hch-fog-b" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.35}s`:"0s"} as CSSProperties}/></g>)}
@@ -416,8 +396,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <path className="hch-airflow-guide hch-supply-flow" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/>
         {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-airflow-guide hch-extract-flow" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/></g>)}
       </g>
-      {/* Compact: these readings are shown in the flow panel below instead. */}
-      {!compact&&<>
+      {/* Keep the physical readbacks on the unit at mobile sizes, as in WebUI. */}
       <TempPort cx={1112} cy={rearFarY(205)} title="Udeluft · T1" value={fmt(outdoor)} tone="cold"/>
       <TempPort cx={1112} cy={rearFarY(365)} title="Afkast · T4" value={fmt(exhaust)} tone="warm"/>
       <TempPort cx={-150} cy={205} title="Udsugning · T3" value={fmt(extract)} tone="warm"/>
@@ -425,7 +404,6 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <SensorPin x={144} y={365} label="T2 før flade" value={fmt(beforeHeater,"°")} width={112} lift={50}/><SensorPin x={-28} y={365} label="T2AH" value={fmt(afterHeater,"°")} width={74} lift={50}/><SensorPin x={57} y={292} label="Frost" value={fmt(frost,"°")}/><SensorPin x={502} y={126} label="T5 rum" value={fmt(room,"°")} width={90}/>
       <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">Eftervarmevand</text><text className="water-value" x="14" y="46">Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68">Retur {fmt(returnWater)}</text></g>
       <g className="hch-bypass-callout" transform="translate(806 448)"><rect width="240" height="62" rx="12"/><text x="120" y="23" textAnchor="middle">Bypass-spjæld · ønske {bypassWanted?"On":"Auto"}</text><text className="bypass-state" x="120" y="48" textAnchor="middle">{bypassLabel}{bypassRemaining===null?"":` · ${formatRemaining(bypassRemaining)}`}</text></g>
-      </>}
     </svg>
     <div className="hch-mobile-flow" role="img" aria-label="HCH5 luftstrømme og temperaturer">
       <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>HCH5</strong><span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span></div>
