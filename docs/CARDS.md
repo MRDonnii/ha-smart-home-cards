@@ -1,6 +1,6 @@
 # Card catalog
 
-The suite currently contains **58 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **59 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 `ha-home-status-grid-card.js` also provides `custom:ha-home-desktop-layout-card`, a responsive layout card for desktop, mobile and portrait screens. It shares the Home Status source module and therefore does not require a second resource file.
 
@@ -30,6 +30,7 @@ The suite currently contains **58 source modules**. Entries for cards migrated f
 | AC Climate Card | `ha-ac-climate-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ac-climate-card) |
 | AC Temperature Control Card | `ac-temperature-control-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ac-temperature-control-card) |
 | Calefa Number Control Card | `calefa-number-control-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/calefa-number-control-card) |
+| HA Calefa Flow Card | `ha-calefa-flow-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/docs/CALEFA_FLOW_CARD.md) |
 | Fjernvarme Card | `ha-fjernvarme-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-fjernvarme-card) |
 | Fjernvarme House Card | `ha-fjernvarme-house-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-fjernvarme-house-card) |
 | HA Electricity Price Card | `ha-electricity-price-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-electricity-price-card) |
