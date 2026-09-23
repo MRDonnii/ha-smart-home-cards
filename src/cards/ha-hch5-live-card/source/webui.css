@@ -56,7 +56,7 @@
 .hch-bypass text { fill: #a9beca; font-size: 10px; font-weight: 700; }
 /* The blade and the fog glide between the ~2 s updates of the damper's
    time-based position (the real damper runs for about three minutes). */
-.bypass-blade { fill: #72c6f8; transform-box: fill-box; transform-origin: center; transition: transform 2.6s cubic-bezier(.45, 0, .2, 1), fill .6s; }
+.bypass-blade { fill: #72c6f8; transform-box: fill-box; transform-origin: center; transition: transform 1s linear, fill .6s; }
 .hch-bypass.open .bypass-blade { fill: #58dfa1; }
 /* Damper on the lower fan motor; the orange actuator matches the real unit. */
 .hch-bypass .damper-frame { fill: #0b1b25; stroke: #6f8591; stroke-width: 1.4; }
@@ -65,7 +65,7 @@
 .hch-bypass .bypass-actuator { fill: #e2711d; stroke: #ffae66; stroke-width: 1; }
 .hch-bypass-channel { fill: #0a1820; stroke: #2f4756; stroke-width: 1.4; stroke-dasharray: 5 5; }
 .hch-bypass-channel-glow { fill: rgb(255 159 90 / 7%); stroke: #ff9f5a; stroke-width: 1.4; transition: opacity 2.6s ease-in-out; }
-.hch-fog-route { transition: opacity 2.6s ease-in-out; }
+.hch-fog-route { transition: opacity 1s linear; }
 .hch-bypass.moving .bypass-actuator { animation: pro-actuator-run .7s ease-in-out infinite alternate; }
 @keyframes pro-actuator-run { to { fill: #ffb070; filter: drop-shadow(0 0 5px rgb(255 159 90 / 75%)); } }
 /* Damper travel in the core: direction, % open and a bar that follows the
@@ -73,11 +73,11 @@
    real damper can hold one reported step for a minute. */
 .hch-bypass-progress .hch-exchanger-title { fill: #ffd2a6; }
 .bypass-progress-track { fill: none; stroke: rgb(4 12 18 / 82%); stroke-width: 11; stroke-linecap: round; }
-.bypass-progress-fill { fill: none; stroke: #ffa45c; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 2.6s cubic-bezier(.45, 0, .2, 1); animation: pro-bypass-progress 1.4s ease-in-out infinite alternate; }
+.bypass-progress-fill { fill: none; stroke: #ffa45c; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 1s linear; animation: pro-bypass-progress 1.4s ease-in-out infinite alternate; }
 @keyframes pro-bypass-progress { from { opacity: .55; } to { opacity: 1; } }
 /* Start of the travel not seen (e.g. after a gateway restart): no %, just a runner. */
 .bypass-progress-fill.indeterminate { stroke-dasharray: 22 78; animation: pro-bypass-runner 1.8s linear infinite; }
-@keyframes pro-bypass-runner { from { stroke-dashoffset: 22; } to { stroke-dashoffset: -100; } }
+@keyframes pro-bypass-runner { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
 .hch-bypass-countdown { fill: #d7c3ad; font-size: 14px; font-weight: 700; paint-order: stroke; stroke: #08141c; stroke-width: 4px; stroke-linejoin: round; }
 .hch-lockout-badge rect { fill: rgb(40 26 8 / 90%); stroke: #e9a54a; stroke-width: 1.2; }
 .hch-lockout-badge text { fill: #ffd08a; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; }
@@ -131,7 +131,8 @@
 
 .hch-airflow-guide { fill: none; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 30; opacity: .48; animation: pro-airflow var(--flow-speed) linear infinite; }
 .hch-airflow-guide[style*="0s"] { animation: none; opacity: .16; }
-@keyframes pro-airflow { to { stroke-dashoffset: -54; } }
+/* 1 + 30 dash units: two complete periods prevent a jump at each loop. */
+@keyframes pro-airflow { to { stroke-dashoffset: -62; } }
 
 /* A slow, uniform opacity breathe — never spatial, so the band never reads
    as thinner in one place than another — gives the fog a sense of life
