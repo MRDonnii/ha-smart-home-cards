@@ -59,8 +59,14 @@ const MENU_TREE = {
   ]),
   settings: menu("INDSTILLING", [
     menu("BV", [value("Status", "dhw_active", "text")]),
-    menu("ITC", [value("Status", "heating_active", "text")]),
-    menu("Rum", [value("Temperatur", "room_temperature")]),
+    menu("ITC", [value("Status", "heating_active", "text"), value("Automatisk standby", "", "switch", true), value("Returbegrænser aktiv", "", "switch", true), value("Calefa standby", "", "switch", true), value("Cirkulationspumpe", "", "switch", true)]),
+    menu("Rum", [
+      choice("Komfortprofil", ["Øko", "Komfort", "Ekstra komfort"], true),
+      value("Planlagt skema", "", "switch", true), value("Midlertidig tilstand", "", "switch", true),
+      value("Øko temperatur", "", "temperature", true), value("Komforttemperatur", "", "temperature", true),
+      value("Ekstra komfort", "", "temperature", true), value("Midlertidig temperatur", "", "temperature", true),
+      value("Varighed", "", "number", true),
+    ]),
     menu("Programmer", [menu("Temperaturer", [value("Udkobl. temp.", "", "temperature", true)])]),
     menu("Avanceret", [service("Komponenter", [service("Tilmeld", [service("Udendørsføler", [value("Status", "outdoor_temperature")]), service("Termostat", [])]), service("Fjern", []), menu("Exit", [])]), service("BV motorservice", [service("Luk for FJV fors.", []), service("Kør motor retur", []), service("Motor må afmonteres nu", []), service("Er motor genmonteret?", [])]), service("CV motorservice", [service("Luk for FJV fors.", []), service("Kør motor retur", []), service("Motor må afmonteres nu", []), service("Er motor genmonteret?", [])])]),
     menu("Dato og tid", ["År", "Måned", "Dag", "Timer", "Minutter", "Sekunder"].map((label) => value(label, "", "number"))),
@@ -86,6 +92,12 @@ MENU_TREE.itc.children[2].children[0].map = "return_limiter_mode";
 MENU_TREE.itc.children[2].children[1].map = "heat_max_return";
 MENU_TREE.itc.children[2].children[2].map = "return_limiter_gain";
 MENU_TREE.settings.children[3].children[0].children[0].map = "summer_shutdown";
+for (const [label, key] of [["Komfortprofil","room_profile"],["Planlagt skema","room_schedule"],["Midlertidig tilstand","room_temporary_mode"],["Øko temperatur","eco_temperature"],["Komforttemperatur","comfort_temperature"],["Ekstra komfort","extra_comfort_temperature"],["Midlertidig temperatur","temporary_temperature"],["Varighed","temporary_duration"]]) {
+  MENU_TREE.settings.children[2].children.find((item) => item.label === label).map = key;
+}
+for (const [label, key] of [["Automatisk standby","auto_standby"],["Returbegrænser aktiv","return_enabled"],["Calefa standby","standby"],["Cirkulationspumpe","circulation_pump"]]) {
+  MENU_TREE.settings.children[1].children.find((item) => item.label === label).map = key;
+}
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
@@ -153,6 +165,9 @@ class HaCalefaFlowCard extends HTMLElement {
       const match = ids.find((id) => id.endsWith(`_${ending}`));
       if (match) config[key] = match;
     }
+    for (const [key, id] of [["fjv_flow", "sensor.calefa_fjernvarme_flow_aktiv"], ["heating_flow", "sensor.calefa_radiator_flow_aktiv"]]) {
+      if (hass?.states?.[id]) config[key] = id;
+    }
     return config;
   }
 
@@ -168,6 +183,8 @@ class HaCalefaFlowCard extends HTMLElement {
       background_fit: config.background_fit === "cover" ? "cover" : "contain",
       flow_threshold: Math.max(0, toNumber(config.flow_threshold) ?? 0.05),
       valve_threshold: Math.max(0, toNumber(config.valve_threshold) ?? 1),
+      fjv_good_delta: Math.max(0, toNumber(config.fjv_good_delta) ?? 20),
+      heating_good_delta: Math.max(0, toNumber(config.heating_good_delta) ?? 5),
       show_footer: config.show_footer !== false,
       animations: config.animations !== false,
       display_entities: config.display_entities && typeof config.display_entities === "object" && !Array.isArray(config.display_entities) ? { ...config.display_entities } : {},
@@ -284,6 +301,7 @@ class HaCalefaFlowCard extends HTMLElement {
   }
 
   _computeModel() {
+    const primaryFlow = this._num("fjv_flow");
     const heatFlow = this._num("heating_flow");
     const waterFlow = this._num("water_flow");
     const heatValve = this._valvePosition("heating_valve");
@@ -334,6 +352,9 @@ class HaCalefaFlowCard extends HTMLElement {
       dhwValveOpen,
       dhwValve,
       primary: Boolean(heatPrimary || dhwPrimary),
+      primaryMoving: primaryFlow !== null && primaryFlow > this._config.flow_threshold,
+      heatMoving: heatFlow !== null && heatFlow > this._config.flow_threshold,
+      waterMoving: waterFlow !== null && waterFlow > this._config.flow_threshold,
       pumpActive: pumpActive ?? heatingActive,
       pumpSpeed,
       pumpText,
@@ -424,15 +445,14 @@ class HaCalefaFlowCard extends HTMLElement {
 
   _markup() {
     return `<ha-card><div class="cf ${this._config.animations ? "" : "no-anim"}" data-ref="root">
-      <header class="cf-top"><div class="cf-brand"><span class="cf-brand-mark">wavin</span><h2>${escapeHtml(this._config.title)}</h2><p>${escapeHtml(this._config.subtitle)}</p></div><div class="cf-statuses"><div class="cf-status cf-status-heating" data-ref="heat-status-card"><ha-icon icon="mdi:heat-wave"></ha-icon><span><small>Varmedrift</small><strong data-ref="heat-status-text">standby</strong><em>Leverer varme til boligen</em></span></div><div class="cf-status cf-status-water" data-ref="dhw-status-card"><ha-icon icon="mdi:water"></ha-icon><span><small>Brugsvand</small><strong data-ref="dhw-status-text">standby</strong><em>Ingen tapning lige nu</em></span></div></div></header>
       <div class="cf-mobile-pairs">${this._pairMarkup("fjv_supply", "fjv_return", "fjv", true)}${this._pairMarkup("heating_supply", "heating_return", "heating", true)}</div>
       <div class="cf-main" data-ref="main">
-        <aside class="cf-side cf-left">${this._pairMarkup("fjv_supply", "fjv_return", "fjv")}${this._componentMarkup("pump", "cf-side-component")}</aside>
-        <section class="cf-stage"><div class="cf-stage-box">${this._svgMarkup()}${this._waterMarkup("dhw_temperature", "cf-water-hot")}${this._waterMarkup("cold_water_temperature", "cf-water-cold")}${this._componentMarkup("dhw_valve", "cf-component-dhw")}${this._componentMarkup("heating_valve", "cf-component-heat")}${this._componentMarkup("pump", "cf-component-pump")}<button class="cf-display-hit" type="button" data-action="open-display" aria-label="Åbn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button></div></section>
-        <aside class="cf-side cf-right">${this._waterMarkup("dhw_temperature", "cf-side-water")}${this._componentMarkup("dhw_valve", "cf-side-component")}${this._pairMarkup("heating_supply", "heating_return", "heating")}${this._componentMarkup("heating_valve", "cf-side-component")}</aside>
-        <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${[["fjv_supply","supply"],["fjv_return","return"],["pump","component"],["dhw_temperature","dhw"],["dhw_valve","component"],["heating_supply","heat"],["heating_return","heat-return"],["heating_valve","component"]].map(([key,tone]) => `<g data-callout="${key}" data-tone="${tone}"><path/><circle r="5"/></g>`).join("")}</svg>
+        <aside class="cf-side cf-left">${this._pairMarkup("fjv_supply", "fjv_return", "fjv")}</aside>
+        <section class="cf-stage"><div class="cf-stage-box">${this._svgMarkup()}${this._waterMarkup("dhw_temperature", "cf-water-hot")}${this._waterMarkup("cold_water_temperature", "cf-water-cold")}${this._componentMarkup("dhw_valve", "cf-component-dhw")}${this._componentMarkup("heating_valve", "cf-component-heat")}<button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer"></button><button class="cf-legacy-hit" type="button" data-action="open-legacy-popup" aria-label="Åbn Calefa styring og forbrug"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>Styring · forbrug</span></button><button class="cf-display-hit" type="button" data-action="open-display" aria-label="Åbn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button></div></section>
+        <aside class="cf-side cf-right">${this._waterMarkup("dhw_temperature", "cf-side-water")}${this._pairMarkup("heating_supply", "heating_return", "heating")}</aside>
+        <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${[["fjv_supply","supply"],["fjv_return","return"],["dhw_temperature","dhw"],["heating_supply","heat"],["heating_return","heat-return"]].map(([key,tone]) => `<g data-callout="${key}" data-tone="${tone}"><path/><circle r="5"/></g>`).join("")}</svg>
       </div>
-      <div class="cf-mobile-components">${this._componentMarkup("pump", "cf-mobile-component")}${this._componentMarkup("heating_valve", "cf-mobile-component")}${this._componentMarkup("dhw_valve", "cf-mobile-component")}${this._waterMarkup("dhw_temperature", "cf-mobile-water")}${this._waterMarkup("cold_water_temperature", "cf-mobile-water")}</div>
+      <div class="cf-mobile-components">${this._waterMarkup("dhw_temperature", "cf-mobile-water")}${this._waterMarkup("cold_water_temperature", "cf-mobile-water")}</div>
       ${this._footerMarkup()}
     </div>${this._modalMarkup()}</ha-card>`;
   }
@@ -460,6 +480,8 @@ class HaCalefaFlowCard extends HTMLElement {
         <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-opacity=".5"/></filter>
         <filter id="hotGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="blueGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <linearGradient id="cfDhwThermal" x1="0" y1="0" x2="0" y2="1"><stop data-ref="dhw-in-color" offset="0" stop-color="#f47643"/><stop data-ref="dhw-out-color" offset="1" stop-color="#6c9cbe"/></linearGradient>
+        <linearGradient id="cfHeatThermal" x1="0" y1="0" x2="0" y2="1"><stop data-ref="heat-in-color" offset="0" stop-color="#f47643"/><stop data-ref="heat-out-color" offset="1" stop-color="#6c9cbe"/></linearGradient>
       </defs>
       ${photo}
       <g class="cf-unit ${photo ? "has-photo" : ""}" filter="url(#shadow)">
@@ -472,15 +494,17 @@ class HaCalefaFlowCard extends HTMLElement {
         <g class="cf-valve" data-ref="heat-valve"><path d="M388 560 L403 575 L388 590 M418 560 L403 575 L418 590" fill="url(#brass)"/><rect x="378" y="530" width="48" height="45" rx="9"/></g><g class="cf-valve" data-ref="dhw-valve"><path d="M438 433 L453 448 L438 463 M468 433 L453 448 L468 463" fill="url(#brass)"/><rect x="428" y="398" width="50" height="46" rx="9"/></g>
         <g class="cf-pump" data-ref="pump"><rect x="258" y="790" width="84" height="86" rx="26"/><circle cx="300" cy="833" r="31"/><path class="cf-pump-spin" d="M300 808 C326 812 332 833 318 852 C294 847 284 826 300 808Z"/></g>
         <g class="cf-flow cf-flow-primary" data-ref="flow-primary">${flowTrack("M75 900 V440 H445 V395", "supply")}${flowTrack("M440 515 H145 V900", "return")}</g><g class="cf-flow cf-flow-heat" data-ref="flow-heat">${flowTrack("M290 900 V735 H350 V675 H450", "heat")}${flowTrack("M505 650 V715 H365 V900", "return")}</g><g class="cf-flow cf-flow-dhw" data-ref="flow-dhw">${flowTrack("M530 900 V720 H470", "cold")}${flowTrack("M445 440 V515 H475 V900", "hot")}</g>
-        <g class="cf-exchanger-flow" data-ref="exchanger-flow"><path class="cf-exchanger-hot" d="M455 470 L495 490 L455 510 L495 530 L455 550 L495 570"/><path class="cf-exchanger-heat" d="M455 605 L495 625 L455 645 L495 665 L455 685"/><path class="cf-exchanger-cold" d="M455 710 L495 730 L455 750 L495 770"/></g>
-        <circle class="cf-pump-halo" data-ref="pump-halo" cx="290" cy="735" r="43"/>
+        <g class="cf-exchangers"><rect class="cf-exchanger cf-exchanger-dhw" data-ref="exchanger-dhw" x="463" y="385" width="75" height="173" rx="8" fill="url(#cfDhwThermal)"/><rect class="cf-exchanger cf-exchanger-heat" data-ref="exchanger-heat" x="463" y="560" width="75" height="192" rx="8" fill="url(#cfHeatThermal)"/></g>
+        <circle class="cf-pump-halo" data-ref="pump-halo" cx="300" cy="735" r="43"/>
+        <g class="cf-pump-indicator" data-ref="pump-indicator" transform="translate(300 735)"><circle class="cf-pump-indicator-ring" r="31"/><g class="cf-pump-indicator-fan"><path d="M0 -5 C-10 -30 8 -30 6 -10Z M4 2 C30 0 28 18 9 11Z M-4 2 C-16 27 -29 13 -10 4Z"/></g><circle r="5"/></g>
         <g class="cf-connections">${connections}</g>
       </g>
+      <g class="cf-display-status" aria-label="Statusdioder på Calefa display"><circle class="cf-display-led cf-led-heat" data-ref="led-heat" cx="289" cy="182" r="5"/><circle class="cf-display-led cf-led-dhw" data-ref="led-dhw" cx="313" cy="182" r="5"/></g>
     </svg>`;
   }
 
   _modalMarkup() {
-    return `<div class="cf-modal" data-ref="modal" hidden><div class="cf-modal-backdrop" data-action="close-display"></div><section class="cf-device" role="dialog" aria-modal="true" tabindex="-1" data-ref="device"><div class="cf-device-head"><div><strong>Calefa II V</strong><small>Virtuelt betjeningspanel</small></div><button type="button" data-action="close-display" aria-label="Luk display"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="cf-device-face"><div class="cf-screen"><div class="cf-screen-head"><ha-icon data-ref="screen-icon" icon="mdi:water-thermometer"></ha-icon><strong data-ref="screen-title">BV</strong><span data-ref="screen-index">1/4</span></div><div class="cf-screen-body" data-ref="screen-body"></div><div class="cf-screen-hint" data-ref="screen-hint">Langt ENTER: menu</div></div><div class="cf-keys"><button type="button" data-action="display-down" aria-label="Ned"><ha-icon icon="mdi:chevron-down"></ha-icon><span>NED</span></button><button type="button" data-action="display-enter" aria-label="Enter"><ha-icon icon="mdi:keyboard-return"></ha-icon><span>ENTER</span></button><button type="button" data-action="display-up" aria-label="Op"><ha-icon icon="mdi:chevron-up"></ha-icon><span>OP</span></button></div><button class="cf-long-enter" type="button" data-action="display-long-enter" aria-label="Langt Enter">Hold ENTER · menu / tilbage</button></div></section></div>`;
+    return `<div class="cf-modal" data-ref="modal" hidden><div class="cf-modal-backdrop" data-action="close-display"></div><section class="cf-device" role="dialog" aria-modal="true" tabindex="-1" data-ref="device"><div class="cf-device-head"><div><strong>wavin</strong><small>Calefa II V · styring</small></div><button type="button" data-action="close-display" aria-label="Luk display"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="cf-device-face"><div class="cf-screen"><div class="cf-screen-head"><ha-icon data-ref="screen-icon" icon="mdi:water-thermometer"></ha-icon><strong data-ref="screen-title">BV</strong><span data-ref="screen-index">1/4</span></div><div class="cf-screen-body" data-ref="screen-body"></div><div class="cf-screen-hint" data-ref="screen-hint">Langt ENTER: menu</div></div><div class="cf-keys"><button type="button" data-action="display-down" aria-label="Ned"><ha-icon icon="mdi:chevron-down"></ha-icon><span>NED</span></button><button type="button" data-action="display-enter" aria-label="Enter"><ha-icon icon="mdi:keyboard-return"></ha-icon><span>ENTER</span></button><button type="button" data-action="display-up" aria-label="Op"><ha-icon icon="mdi:chevron-up"></ha-icon><span>OP</span></button></div><button class="cf-long-enter" type="button" data-action="display-long-enter" aria-label="Langt Enter">Hold ENTER · menu / tilbage</button></div></section></div>`;
   }
 
   _text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
@@ -513,9 +537,9 @@ class HaCalefaFlowCard extends HTMLElement {
     }
     const parts = this._formatParts(id, metric.kind);
     let on = false;
-    if (id.startsWith("fjv_")) on = model.primary;
-    else if (id.startsWith("heating_")) on = model.heatLoop;
-    else if (id === "dhw_temperature" || id === "cold_water_temperature") on = model.dhwTap;
+    if (id.startsWith("fjv_")) on = model.primaryMoving;
+    else if (id.startsWith("heating_")) on = model.heatMoving;
+    else if (id === "dhw_temperature" || id === "cold_water_temperature") on = model.waterMoving;
     let sub = "";
     if (id === "dhw_temperature" && this._config.water_flow && this._available("water_flow")) sub = this._format("water_flow", "flow");
     if (id === "heating_supply" && this._config.heating_flow && this._available("heating_flow")) sub = this._format("heating_flow", "flow");
@@ -542,41 +566,68 @@ class HaCalefaFlowCard extends HTMLElement {
     }
   }
 
+  _deltaStatus(kind, value) {
+    if (!Number.isFinite(value)) return "unavailable";
+    return value >= this._config[kind === "fjv" ? "fjv_good_delta" : "heating_good_delta"] ? "good" : "bad";
+  }
+
   _applyDeltas(model) {
     const values = { fjv: model.cooling, heating: model.heatingDelta };
     this.shadowRoot.querySelectorAll("[data-delta]").forEach((node) => {
       const value = values[node.dataset.delta];
       this._text(node.querySelector("strong"), value === null ? "–" : `${this._formatNumber(value, 1)} °C`);
-      this._toggle(node, "is-muted", value === null);
+      const status = this._deltaStatus(node.dataset.delta, value);
+      this._toggle(node, "is-muted", status === "unavailable");
+      this._toggle(node, "is-good", status === "good");
+      this._toggle(node, "is-bad", status === "bad");
+      node.setAttribute("aria-label", `${node.dataset.delta === "fjv" ? "Fjernvarme" : "Varme"} afkøling ${value === null ? "ikke tilgængelig" : `${this._formatNumber(value, 1)} grader, ${status === "good" ? "god" : "lav"}`}`);
     });
   }
 
   _applyDiagram(model) {
-    this._setFlowDuration(this._refs["flow-primary"], model.pumpSpeed ?? model.heatingValve ?? model.dhwValve);
-    this._setFlowDuration(this._refs["flow-heat"], model.pumpSpeed ?? model.heatingValve);
+    this._setFlowDuration(this._refs["flow-primary"], this._num("fjv_flow"), this._unit("fjv_flow"));
+    this._setFlowDuration(this._refs["flow-heat"], this._num("heating_flow"), this._unit("heating_flow"));
     this._setFlowDuration(this._refs["flow-dhw"], this._num("water_flow"), this._unit("water_flow"));
-    this._toggle(this._refs["heat-status-card"], "is-active", model.heatingActive);
-    this._toggle(this._refs["dhw-status-card"], "is-active", model.dhwTap || model.dhwBypass);
-    this._text(this._refs["heat-status-text"], model.heatingActive ? "aktiv" : "standby");
-    this._text(this._refs["dhw-status-text"], model.dhwTap ? "aktiv" : model.dhwBypass ? "bypass" : "standby");
-    this._toggle(this._refs["flow-primary"], "is-on", model.primary);
-    this._toggle(this._refs["flow-heat"], "is-on", model.heatLoop);
-    this._toggle(this._refs["flow-dhw"], "is-on", model.dhwTap);
+    this._toggle(this._refs["flow-primary"], "is-on", model.primaryMoving);
+    this._toggle(this._refs["flow-heat"], "is-on", model.heatMoving);
+    this._toggle(this._refs["flow-dhw"], "is-on", model.waterMoving);
     this._toggle(this._refs.pump, "is-on", model.pumpActive);
     this._toggle(this._refs["heat-valve"], "is-on", Boolean(model.heatValveOpen ?? model.heatPrimary));
     this._toggle(this._refs["dhw-valve"], "is-on", Boolean(model.dhwValveOpen ?? model.dhwPrimary));
     this._toggle(this._refs["hx-heat"], "is-on", model.heatPrimary || model.heatLoop);
     this._toggle(this._refs["hx-dhw"], "is-on", model.dhwPrimary || model.dhwTap);
-    this._toggle(this._refs["exchanger-flow"], "is-on", model.primary || model.heatLoop || model.dhwTap);
-    this._toggle(this._refs["exchanger-flow"]?.querySelector(".cf-exchanger-hot"), "is-on", model.dhwPrimary || model.dhwTap);
-    this._toggle(this._refs["exchanger-flow"]?.querySelector(".cf-exchanger-heat"), "is-on", model.heatPrimary || model.heatLoop);
-    this._toggle(this._refs["exchanger-flow"]?.querySelector(".cf-exchanger-cold"), "is-on", model.heatPrimary || model.heatLoop);
+    this._setThermalGradient("dhw", this._num("fjv_supply"), this._num("fjv_return"), model.primaryMoving || model.waterMoving || model.dhwBypass);
+    this._setThermalGradient("heat", this._num("heating_supply"), this._num("heating_return"), model.heatMoving);
     this._toggle(this._refs["pump-halo"], "is-on", model.pumpActive);
+    this._toggle(this._refs["pump-indicator"], "is-on", model.pumpActive);
     this._toggle(this._refs["status-heat"], "active", model.heatingActive);
+    this._toggle(this._refs["led-heat"], "active", model.heatingActive);
+    this._toggle(this._refs["led-dhw"], "active", model.dhwTap || model.dhwBypass);
+    this._toggle(this._refs["led-dhw"], "is-bypass", model.dhwBypass);
+    this._refs["led-heat"]?.setAttribute("aria-label", model.heatingActive ? "Varme aktiv" : "Varme standby");
+    this._refs["led-dhw"]?.setAttribute("aria-label", model.dhwTap ? "Brugsvand aktiv" : model.dhwBypass ? "Brugsvand bypass" : "Brugsvand standby");
     this._toggle(this._refs["status-dhw"], "active", model.dhwTap || model.dhwBypass);
     const key = model.dhwTap && this._config.dhw_temperature ? "dhw_temperature" : this._config.heating_supply ? "heating_supply" : "fjv_supply";
     this._text(this._refs["mini-title"], model.dhwTap ? "BRUGSVAND" : model.heatingActive ? "VARME" : model.dhwBypass ? "BYPASS" : "STANDBY");
     this._text(this._refs["mini-value"], this._config[key] ? this._format(key, "temperature").replace(" °C", "°") : "–");
+  }
+
+  _thermalColor(value) {
+    if (!Number.isFinite(value)) return "#647f8b";
+    if (value >= 55) return "#ff563d";
+    if (value >= 35) return "#ff9d43";
+    return "#55baff";
+  }
+
+  _setThermalGradient(name, inlet, outlet, active) {
+    const layer = this._refs[`exchanger-${name}`];
+    this._toggle(layer, "is-active", active);
+    const start = this._refs[`${name}-in-color`];
+    const end = this._refs[`${name}-out-color`];
+    const hot = this._thermalColor(inlet);
+    const cool = this._thermalColor(outlet);
+    if (start?.getAttribute("stop-color") !== hot) start?.setAttribute("stop-color", hot);
+    if (end?.getAttribute("stop-color") !== cool) end?.setAttribute("stop-color", cool);
   }
 
   _setFlowDuration(node, raw, unit = "%") {
@@ -651,6 +702,7 @@ class HaCalefaFlowCard extends HTMLElement {
     if (mapped) {
       const state = mapped[1];
       if (UNAVAILABLE.has(String(state.state).toLowerCase())) return "–";
+      if (node.kind === "switch") return state.state === "on" ? "Til" : state.state === "off" ? "Fra" : "–";
       return node.kind === "temperature" && Number.isFinite(Number(state.state)) ? `${this._formatNumber(Number(state.state), 1)} °C` : String(state.state);
     }
     if (node.key?.startsWith("derived:")) return this._derived(node.key.slice(8));
@@ -671,6 +723,7 @@ class HaCalefaFlowCard extends HTMLElement {
     const [id, state] = mapped;
     if (id.startsWith("number.")) return !node.options && Number.isFinite(Number(state.state)) && Number.isFinite(Number(state.attributes?.min)) && Number.isFinite(Number(state.attributes?.max));
     if (id.startsWith("select.")) return Boolean(node.options && this._editOptions(node, state).length);
+    if (id.startsWith("switch.")) return node.kind === "switch" && ["on", "off"].includes(state.state);
     return false;
   }
 
@@ -692,8 +745,8 @@ class HaCalefaFlowCard extends HTMLElement {
       rows = `<div class="cf-screen-front"><div class="cf-screen-front-main"><small>${escapeHtml(main?.label || (front === "alarm" ? "ALARM" : "INDSTIL."))}</small><strong>${fronts.length ? main ? escapeHtml(this._menuValue(main)) : front === "alarm" ? "Ingen data" : "⚙" : "Ingen tilkoblede data"}</strong></div><div class="cf-screen-front-rail">${fronts.filter((item) => item !== front).map((item) => `<span>${labels[item]}</span>`).join("")}</div></div>`;
     } else {
       const children = this._menuChildren(node);
-      const start = Math.max(0, Math.min(this._menuIndex - 2, children.length - 5));
-      rows = children.length ? children.slice(start, start + 5).map((item, offset) => `<div class="cf-screen-row ${start + offset === this._menuIndex ? "selected" : ""}"><span>${escapeHtml(item.label)}${item.children ? " ›" : ""}</span><strong>${item.children ? "" : escapeHtml(this._menuValue(item))}</strong></div>`).join("") : `<div class="cf-screen-note">${node.service ? "Kun visning · ingen fysisk handling" : escapeHtml(this._menuValue(node))}</div>`;
+      const start = Math.max(0, Math.min(this._menuIndex - 1, children.length - 3));
+      rows = children.length ? children.slice(start, start + 3).map((item, offset) => `<div class="cf-screen-row ${start + offset === this._menuIndex ? "selected" : ""}"><span>${escapeHtml(item.label)}${item.children ? " ›" : ""}</span><strong>${item.children ? "" : escapeHtml(this._menuValue(item))}</strong></div>`).join("") : `<div class="cf-screen-note">${node.service ? "Kun visning · ingen fysisk handling" : escapeHtml(this._menuValue(node))}</div>`;
     }
     if (this._refs["screen-body"]?.innerHTML !== rows) this._refs["screen-body"].innerHTML = rows;
     this._text(this._refs["screen-hint"], this._edit ? (this._edit.confirm ? "Langt ENTER: annullér" : "ENTER: bekræft valg") : this._inMenu ? "Langt ENTER: tilbage" : "BV · VARME · INDST · ALARM");
@@ -743,8 +796,9 @@ class HaCalefaFlowCard extends HTMLElement {
       if (selected?.children) { this._menuPath.push(this._menuIndex); this._menuIndex = 0; }
       else if (selected && this._canEdit(selected)) {
         const [, state] = this._mappedState(selected);
-        const options = selected.options ? this._editOptions(selected, state) : null;
-        this._edit = { node: selected, value: options && !options.includes(state.state) ? options[0] : String(state.state), options, confirm: false };
+        const options = state.state === "on" || state.state === "off" ? ["Fra", "Til"] : selected.options ? this._editOptions(selected, state) : null;
+        const current = options && selected.kind === "switch" ? state.state === "on" ? "Til" : "Fra" : String(state.state);
+        this._edit = { node: selected, value: options && !options.includes(current) ? options[0] : current, options, confirm: false };
       }
     }
     this._renderDisplay();
@@ -759,6 +813,8 @@ class HaCalefaFlowCard extends HTMLElement {
       if (Number.isFinite(value) && value >= min && value <= max) this._hass.callService("number", "set_value", { entity_id: id, value });
     } else if (id.startsWith("select.") && edit.options.includes(edit.value)) {
       this._hass.callService("select", "select_option", { entity_id: id, option: edit.value });
+    } else if (id.startsWith("switch.") && ["Til", "Fra"].includes(edit.value)) {
+      this._hass.callService("switch", edit.value === "Til" ? "turn_on" : "turn_off", { entity_id: id });
     }
     this._edit = null;
   }
@@ -784,6 +840,45 @@ class HaCalefaFlowCard extends HTMLElement {
     window.removeEventListener("keydown", this._onKeydown);
   }
 
+  _openLegacyPopup() {
+    // The existing card owns and keeps its complete Styring and Forbrug popups.
+    // Traverse open dashboard shadow roots only when the button is pressed.
+    const root = this.getRootNode?.() || document;
+    const stack = [root, document];
+    const seen = new Set();
+    while (stack.length) {
+      const node = stack.pop();
+      if (!node || seen.has(node)) continue;
+      seen.add(node);
+      if (node !== this && node.localName === "ha-fjernvarme-house-card-v2" && node._config?.details_title === "Calefa styring" && typeof node._openDetailsPopup === "function") {
+        node._openDetailsPopup();
+        this._decorateLegacyPopup(node, "Styring");
+        return;
+      }
+      if (node.shadowRoot) stack.push(node.shadowRoot);
+      if (node.children) for (const child of node.children) stack.push(child);
+    }
+  }
+
+  _decorateLegacyPopup(card, active) {
+    const panel = card._detailsPopupEl?.querySelector?.('[role="dialog"]');
+    if (!panel || panel.querySelector(".cf-legacy-tabs")) return;
+    const bar = document.createElement("nav");
+    bar.className = "cf-legacy-tabs";
+    bar.setAttribute("aria-label", "Calefa visning");
+    bar.style.cssText = "display:flex;gap:6px;flex:0 0 auto;padding:8px 60px 8px 10px;background:var(--card-background-color,#1c2630);z-index:2";
+    for (const [label, open] of [["Styring", () => card._openDetailsPopup()], ["Forbrug", () => card._openCardsPopup(0)]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.setAttribute("aria-current", label === active ? "page" : "false");
+      button.style.cssText = `min-height:36px;padding:4px 14px;border:1px solid ${label === active ? "#5bc7e8" : "#526775"};border-radius:10px;background:${label === active ? "#23526a" : "#1b2b35"};color:#f0f8fb;font:700 13px system-ui;cursor:pointer`;
+      button.addEventListener("click", () => { open(); this._decorateLegacyPopup(card, label); });
+      bar.appendChild(button);
+    }
+    panel.insertBefore(bar, panel.lastElementChild);
+  }
+
   _handleClick(event) {
     const target = event.composedPath().find((node) => node?.dataset?.action);
     if (!target) return;
@@ -794,6 +889,7 @@ class HaCalefaFlowCard extends HTMLElement {
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
+    else if (action === "open-legacy-popup") this._openLegacyPopup();
     else if (action === "close-display") this._closeDisplay();
     else if (action === "display-up") this._displayMove(-1);
     else if (action === "display-down") this._displayMove(1);
@@ -814,7 +910,7 @@ class HaCalefaFlowCard extends HTMLElement {
 const CALEFA_STYLES = `
   :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#4096ff;--cf-heat:#ff9a3c;--cf-heat-return:#58b8ff;--cf-dhw:#ff5158;--cf-cold:#35cee5;--cf-ok:#35df9c;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
   *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}ha-card{position:relative;display:block;overflow:hidden;border:1px solid rgba(145,177,199,.16);border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(95% 55% at 50% 31%,rgba(43,95,125,.29),transparent 70%),linear-gradient(155deg,#0b1924,#102535 54%,#07121b);color:var(--cf-text);box-shadow:0 18px 52px rgba(0,0,0,.3)}.cf{padding:12px 16px 15px;min-width:0}.cf-main{position:relative;display:grid;grid-template-columns:minmax(160px,250px) minmax(330px,540px) minmax(160px,250px);align-items:center;justify-content:center;gap:18px;max-width:1180px;margin:0 auto}.cf-side{min-width:0}.cf-stage{min-width:0}.cf-stage-box{position:relative;width:100%;aspect-ratio:600/920;isolation:isolate}.cf-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.cf-photo{opacity:.84}.cf-unit.has-photo{opacity:.18}
-  .cf-grooves path{fill:none;stroke:#050607;stroke-width:3;opacity:.42}.cf-control{fill:#e8ecec;stroke:#a8b0b3;stroke-width:2}.cf-mini-title{fill:#243a44;font:800 11px system-ui,sans-serif;letter-spacing:.05em}.cf-mini-value{fill:#173442;font:850 26px system-ui,sans-serif}.cf-status-dot{fill:#9aa5a9;stroke:#738087;stroke-width:1.2}.cf-status-heat.active{fill:#ff3f4b;stroke:#ff8790;filter:drop-shadow(0 0 7px rgba(255,63,75,.95))}.cf-status-dhw.active{fill:#269dff;stroke:#8ccaff;filter:drop-shadow(0 0 7px rgba(38,157,255,.95))}.cf-small-led{fill:#39d77b;filter:drop-shadow(0 0 3px rgba(57,215,123,.7))}.cf-pipes-base path{fill:none;stroke:url(#steel);stroke-width:15;stroke-linecap:round;stroke-linejoin:round}.cf-pipe-shine path{fill:none;stroke:rgba(255,255,255,.5);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.cf-hx{filter:drop-shadow(0 6px 7px rgba(0,0,0,.45))}.cf-hx path{fill:none;stroke:#5f2b1c;stroke-width:2.5;opacity:.72}.cf-hx.is-on{filter:drop-shadow(0 0 12px rgba(255,131,70,.28)) drop-shadow(0 7px 7px rgba(0,0,0,.42))}.cf-hx-label text{fill:#fff;font:800 14px system-ui,sans-serif;letter-spacing:1px}.cf-valve rect{fill:#10181d;stroke:#52636c;stroke-width:2}.cf-valve.is-on rect{stroke:var(--cf-ok);filter:drop-shadow(0 0 6px rgba(53,223,156,.45))}.cf-pump>rect{fill:#202a30;stroke:#44535b;stroke-width:2}.cf-pump>circle{fill:#10181d;stroke:#39484f;stroke-width:3}.cf-pump-spin{fill:#54656e;transform-origin:300px 833px}.cf-pump.is-on .cf-pump-spin{fill:#76a8bf;animation:cf-spin 1.2s linear infinite} .cf-track.supply{color:var(--cf-supply)}.cf-track.return{color:var(--cf-return)}.cf-flow-heat .cf-track.return{color:var(--cf-heat-return)}.cf-track.heat{color:var(--cf-heat)}.cf-track.cold{color:var(--cf-cold)}.cf-track.hot{color:var(--cf-dhw)}.cf-track-glow,.cf-track-core,.cf-track-dash{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}.cf-track-glow{stroke-width:19;opacity:0;filter:blur(7px)}.cf-track-core{stroke-width:6;opacity:0;filter:drop-shadow(0 0 5px currentColor)}.cf-track-dash{stroke:#fff;stroke-width:2.5;stroke-dasharray:5 25;opacity:0}.cf-track-marker{fill:#fff;opacity:0;filter:drop-shadow(0 0 5px currentColor)}.cf-flow.is-on .cf-track-glow{opacity:.75}.cf-flow.is-on .cf-track-core{opacity:.9}.cf-flow.is-on .cf-track-dash{opacity:.9;animation:cf-flow var(--cf-flow-duration,1.1s) linear infinite}.cf-flow.is-on .cf-track-marker{opacity:.95}.cf-exchanger-flow path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:0}.cf-exchanger-flow.is-on path.is-on{opacity:.85;stroke-dasharray:12 9;animation:cf-flow 1s linear infinite}.cf-exchanger-hot{stroke:var(--cf-dhw);filter:drop-shadow(0 0 6px var(--cf-dhw))}.cf-exchanger-heat{stroke:var(--cf-heat);filter:drop-shadow(0 0 6px var(--cf-heat))}.cf-exchanger-cold{stroke:var(--cf-heat-return);filter:drop-shadow(0 0 6px var(--cf-heat-return))}.cf-pump-halo{fill:none;stroke:var(--cf-cold);stroke-width:4;stroke-dasharray:65 205;opacity:0;transform-origin:290px 735px}.cf-pump-halo.is-on{opacity:.85;filter:drop-shadow(0 0 6px var(--cf-cold));animation:cf-spin 1.8s linear infinite}.cf-callouts{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:5;pointer-events:none}.cf-callouts g{color:var(--cf-ok)}.cf-callouts g[data-tone="supply"]{color:var(--cf-supply)}.cf-callouts g[data-tone="return"]{color:var(--cf-return)}.cf-callouts g[data-tone="heat"]{color:var(--cf-heat)}.cf-callouts g[data-tone="heat-return"]{color:var(--cf-heat-return)}.cf-callouts g[data-tone="dhw"]{color:var(--cf-dhw)}.cf-callouts path{fill:none;stroke:currentColor;stroke-width:1.6;opacity:.8;filter:drop-shadow(0 0 5px currentColor)}.cf-callouts circle{fill:#071924;stroke:currentColor;stroke-width:2.5;filter:drop-shadow(0 0 5px currentColor)}.cf-pair{position:relative}.cf-pair:before{content:"";position:absolute;left:50%;top:40px;bottom:40px;width:1px;background:linear-gradient(var(--cf-supply),var(--cf-return));opacity:.7}.cf-right .cf-pair:before{background:linear-gradient(var(--cf-heat),var(--cf-heat-return))}.cf-delta:not(.is-muted){border-color:rgba(149,218,244,.55);box-shadow:0 0 13px rgba(63,162,224,.25)} .cf-connections circle{fill:#192228;stroke:#89969c;stroke-width:4}.cf-connections text{fill:#879aa6;font:750 18px system-ui,sans-serif}.cf-display-hit{position:absolute;z-index:8;left:32.3%;top:6.3%;width:35.4%;height:14.2%;border:0;background:transparent;cursor:pointer}.cf-display-hit ha-icon{position:absolute;right:-7px;top:-7px;--mdc-icon-size:18px;width:31px;height:31px;padding:7px;border:1px solid rgba(95,210,255,.58);border-radius:50%;background:#0a2939;color:#68d9ff;box-shadow:0 5px 16px rgba(0,0,0,.35)}
+  .cf-grooves path{fill:none;stroke:#050607;stroke-width:3;opacity:.42}.cf-control{fill:#e8ecec;stroke:#a8b0b3;stroke-width:2}.cf-mini-title{fill:#243a44;font:800 11px system-ui,sans-serif;letter-spacing:.05em}.cf-mini-value{fill:#173442;font:850 26px system-ui,sans-serif}.cf-status-dot{fill:#9aa5a9;stroke:#738087;stroke-width:1.2}.cf-status-heat.active{fill:#ff3f4b;stroke:#ff8790;filter:drop-shadow(0 0 7px rgba(255,63,75,.95))}.cf-status-dhw.active{fill:#269dff;stroke:#8ccaff;filter:drop-shadow(0 0 7px rgba(38,157,255,.95))}.cf-small-led{fill:#39d77b;filter:drop-shadow(0 0 3px rgba(57,215,123,.7))}.cf-pipes-base path{fill:none;stroke:url(#steel);stroke-width:15;stroke-linecap:round;stroke-linejoin:round}.cf-pipe-shine path{fill:none;stroke:rgba(255,255,255,.5);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.cf-hx{filter:drop-shadow(0 6px 7px rgba(0,0,0,.45))}.cf-hx path{fill:none;stroke:#5f2b1c;stroke-width:2.5;opacity:.72}.cf-hx.is-on{filter:drop-shadow(0 0 12px rgba(255,131,70,.28)) drop-shadow(0 7px 7px rgba(0,0,0,.42))}.cf-hx-label text{fill:#fff;font:800 14px system-ui,sans-serif;letter-spacing:1px}.cf-valve rect{fill:#10181d;stroke:#52636c;stroke-width:2}.cf-valve.is-on rect{stroke:var(--cf-ok);filter:drop-shadow(0 0 6px rgba(53,223,156,.45))}.cf-pump>rect{fill:#202a30;stroke:#44535b;stroke-width:2}.cf-pump>circle{fill:#10181d;stroke:#39484f;stroke-width:3}.cf-pump-spin{fill:#54656e;transform-origin:300px 833px}.cf-pump.is-on .cf-pump-spin{fill:#76a8bf;animation:cf-spin 1.2s linear infinite} .cf-track.supply{color:var(--cf-supply)}.cf-track.return{color:var(--cf-return)}.cf-flow-heat .cf-track.return{color:var(--cf-heat-return)}.cf-track.heat{color:var(--cf-heat)}.cf-track.cold{color:var(--cf-cold)}.cf-track.hot{color:var(--cf-dhw)}.cf-track-glow,.cf-track-core,.cf-track-dash{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}.cf-track-glow{stroke-width:19;opacity:0;filter:blur(7px)}.cf-track-core{stroke-width:6;opacity:0;filter:drop-shadow(0 0 5px currentColor)}.cf-track-dash{stroke:#fff;stroke-width:2.5;stroke-dasharray:5 25;opacity:0}.cf-track-marker{fill:#fff;opacity:0;filter:drop-shadow(0 0 5px currentColor)}.cf-flow.is-on .cf-track-glow{opacity:.75}.cf-flow.is-on .cf-track-core{opacity:.9}.cf-flow.is-on .cf-track-dash{opacity:.9;animation:cf-flow var(--cf-flow-duration,1.1s) linear infinite}.cf-flow.is-on .cf-track-marker{opacity:.95}.cf-flow:not(.is-on) .cf-track-marker{display:none}.cf-exchanger{mix-blend-mode:screen;opacity:.19;filter:blur(2px);transition:opacity .5s ease}.cf-exchanger.is-active{opacity:.62;animation:cf-exchanger-breathe 4s ease-in-out infinite}@keyframes cf-exchanger-breathe{50%{opacity:.43}}.cf-pump-halo{fill:none;stroke:var(--cf-cold);stroke-width:4;stroke-dasharray:65 205;opacity:0;transform-origin:290px 735px}.cf-pump-halo.is-on{opacity:.85;filter:drop-shadow(0 0 6px var(--cf-cold));animation:cf-spin 1.8s linear infinite}.cf-callouts{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:5;pointer-events:none}.cf-callouts g{color:var(--cf-ok)}.cf-callouts g[data-tone="supply"]{color:var(--cf-supply)}.cf-callouts g[data-tone="return"]{color:var(--cf-return)}.cf-callouts g[data-tone="heat"]{color:var(--cf-heat)}.cf-callouts g[data-tone="heat-return"]{color:var(--cf-heat-return)}.cf-callouts g[data-tone="dhw"]{color:var(--cf-dhw)}.cf-callouts path{fill:none;stroke:currentColor;stroke-width:1.6;opacity:.8;filter:drop-shadow(0 0 5px currentColor)}.cf-callouts circle{fill:#071924;stroke:currentColor;stroke-width:2.5;filter:drop-shadow(0 0 5px currentColor)}.cf-pair{position:relative}.cf-pair:before{content:"";position:absolute;left:50%;top:40px;bottom:40px;width:1px;background:linear-gradient(var(--cf-supply),var(--cf-return));opacity:.7}.cf-right .cf-pair:before{background:linear-gradient(var(--cf-heat),var(--cf-heat-return))}.cf-delta:not(.is-muted){border-color:rgba(149,218,244,.55);box-shadow:0 0 13px rgba(63,162,224,.25)} .cf-connections circle{fill:#192228;stroke:#89969c;stroke-width:4}.cf-connections text{fill:#879aa6;font:750 18px system-ui,sans-serif}.cf-display-hit{position:absolute;z-index:8;left:32.3%;top:6.3%;width:35.4%;height:14.2%;border:0;background:transparent;cursor:pointer}.cf-display-hit ha-icon{position:absolute;right:-7px;top:-7px;--mdc-icon-size:18px;width:31px;height:31px;padding:7px;border:1px solid rgba(95,210,255,.58);border-radius:50%;background:#0a2939;color:#68d9ff;box-shadow:0 5px 16px rgba(0,0,0,.35)}
   .cf-pair{display:grid;grid-template-columns:1fr;gap:3px}.cf-metric{--tone:#68808e;display:flex;align-items:center;gap:7px;min-width:0;min-height:58px;padding:7px 9px;border:1px solid color-mix(in srgb,var(--tone) 38%,transparent);border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 9%,transparent),rgba(5,13,20,.8) 72%);text-align:left;cursor:pointer}.cf-metric[data-tone="supply"]{--tone:var(--cf-supply)}.cf-metric[data-tone="return"]{--tone:var(--cf-return)}.cf-metric[data-tone="heat"]{--tone:var(--cf-heat)}.cf-metric[data-tone="heat-return"]{--tone:var(--cf-heat-return)}.cf-metric.is-on{border-color:color-mix(in srgb,var(--tone) 70%,transparent);box-shadow:0 0 17px color-mix(in srgb,var(--tone) 10%,transparent)}.cf-metric>ha-icon{--mdc-icon-size:22px;flex:0 0 25px;color:var(--tone)}.cf-metric>span{display:flex;flex-direction:column;min-width:0}.cf-metric small{font-size:10px;color:#dbe6ec}.cf-metric strong{display:flex;align-items:baseline;color:var(--tone);font-size:18px;line-height:1.05;white-space:nowrap}.cf-metric strong b{font-weight:850}.cf-metric strong em{margin-left:2px;color:var(--cf-muted);font-size:10px;font-style:normal;font-weight:500}.cf-metric i{margin-top:1px;overflow:hidden;color:var(--cf-muted);font-size:8px;font-style:normal;white-space:nowrap;text-overflow:ellipsis}.cf-metric.is-unavailable{opacity:.45}.cf-delta{justify-self:center;display:flex;align-items:center;gap:5px;min-height:23px;padding:2px 9px;border:1px solid rgba(147,210,239,.2);border-radius:999px;background:rgba(12,29,40,.9);color:#cfe8f4;box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:2}.cf-delta small{font-size:7px;font-weight:800;letter-spacing:.08em}.cf-delta strong{font-size:11px;font-variant-numeric:tabular-nums}.cf-delta.is-muted{opacity:.4}.cf-missing{display:block}
   .cf-water{--tone:#fff;position:absolute;z-index:6;display:flex;flex-direction:column;min-width:96px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--tone) 52%,transparent);border-radius:10px;background:rgba(5,14,21,.83);box-shadow:0 6px 15px rgba(0,0,0,.25);backdrop-filter:blur(4px);text-align:left;cursor:pointer}.cf-water[data-tone="dhw"]{--tone:var(--cf-dhw)}.cf-water[data-tone="cold"]{--tone:var(--cf-cold)}.cf-water-hot{right:1%;top:48%}.cf-water-cold{right:1%;top:75%}.cf-water small{font-size:8px;color:#dce6eb}.cf-water strong{display:flex;align-items:baseline;color:var(--tone);font-size:15px}.cf-water strong b{font-weight:850}.cf-water strong em{margin-left:2px;color:var(--cf-muted);font-size:8px;font-style:normal}.cf-water i{font-size:7px;color:var(--cf-muted);font-style:normal}
   .cf-component{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;max-width:94px;padding:4px 5px;border:1px solid rgba(53,223,156,.26);border-radius:8px;background:rgba(5,14,20,.79);box-shadow:0 5px 13px rgba(0,0,0,.25);backdrop-filter:blur(4px);color:#dce8ed;text-align:left;cursor:pointer}.cf-component>ha-icon{--mdc-icon-size:13px;color:var(--cf-ok)}.cf-component>span{display:flex;flex-direction:column;min-width:0}.cf-component small{font-size:7px;color:var(--cf-muted);white-space:nowrap}.cf-component strong{display:flex;align-items:baseline;font-size:10px;line-height:1.05;white-space:nowrap}.cf-component strong b{font-weight:800}.cf-component strong em{margin-left:2px;font-size:7px;color:var(--cf-muted);font-style:normal}.cf-component i{font-size:7px;color:var(--cf-muted);font-style:normal;white-space:nowrap}.cf-component.is-on{border-color:rgba(53,223,156,.58);box-shadow:0 0 14px rgba(53,223,156,.1)}.cf-component-dhw{right:12%;top:42%}.cf-component-heat{right:20%;top:59%}.cf-component-pump{left:35%;top:82%}
@@ -832,6 +928,33 @@ const CALEFA_STYLES = `
   @container calefa-card (max-width:899px){.cf-callouts{display:none}.cf-pair:before{left:20px;right:20px;top:50%;bottom:auto;width:auto;height:1px;background:linear-gradient(90deg,var(--cf-supply),var(--cf-return))}.cf-right .cf-pair:before{background:linear-gradient(90deg,var(--cf-heat),var(--cf-heat-return))}.cf-top{display:block;margin:6px 2px 12px}.cf-brand-mark{font-size:17px;border-width:3px;padding:0 8px}.cf-brand h2{margin-top:5px;font-size:24px}.cf-brand p{font-size:12px}.cf-statuses{margin-top:10px}.cf-status{flex:1;min-width:0;min-height:58px;padding:6px 8px;border-radius:12px}.cf-status ha-icon{--mdc-icon-size:25px}.cf-status small{font-size:10px}.cf-status strong{font-size:15px}.cf-status em{display:none}}
   @container calefa-card (min-width:521px) and (max-width:899px){.cf-main{grid-template-columns:1fr;gap:10px}.cf-stage{grid-row:1;justify-self:center;width:min(100%,420px)}.cf-left{grid-row:2}.cf-right{grid-row:3}.cf-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.cf-side .cf-pair{grid-column:1/-1;grid-template-columns:minmax(0,1fr) 45px minmax(0,1fr);align-items:center}.cf-side .cf-component{grid-column:1/-1}.cf-side .cf-water{grid-column:1/-1}.cf-side .cf-metric:before,.cf-side .cf-metric:after,.cf-side .cf-component:before,.cf-side .cf-component:after,.cf-side .cf-water:before{display:none}}
   @container calefa-card (max-width:520px){.cf-top{margin-bottom:9px}.cf-brand h2{font-size:21px}.cf-statuses{gap:5px}.cf-status{gap:5px}.cf-status ha-icon{--mdc-icon-size:21px}.cf-status small{font-size:9px}.cf-status strong{font-size:13px}.cf-stage .cf-water,.cf-stage .cf-component{display:none}.cf-mobile-components{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:5px}.cf-mobile-components .cf-component,.cf-mobile-components .cf-water{position:relative;inset:auto;max-width:none;min-width:0;min-height:45px;padding:6px 8px;transform:none}.cf-mobile-components .cf-component>ha-icon{display:block;--mdc-icon-size:19px}.cf-mobile-components .cf-component small,.cf-mobile-components .cf-water small{font-size:9px}.cf-mobile-components .cf-component strong,.cf-mobile-components .cf-water strong{font-size:16px}.cf-mobile-components .cf-component i,.cf-mobile-components .cf-water i{font-size:8px}.cf-footer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-top:10px}.cf-footer button{min-width:0}}
+
+  .cf{padding-top:8px}.cf-side{align-self:center;justify-content:center;gap:14px}.cf-side .cf-metric,.cf-side .cf-component,.cf-side .cf-water{min-height:0;padding:8px 10px}.cf-side .cf-component,.cf-side .cf-water{min-height:0}.cf-side .cf-pair{gap:5px}.cf-delta{min-height:22px;padding:2px 8px}.cf-main{margin-top:0}
+  .cf-display-led{fill:#3d575e;stroke:#c7d3d1;stroke-width:1.2;opacity:.92;filter:drop-shadow(0 0 2px #132d35)}.cf-led-heat.active{fill:#ff883d;stroke:#fff0cd;filter:drop-shadow(0 0 6px #ff641c)}.cf-led-dhw.active{fill:#54b8ff;stroke:#edf8ff;filter:drop-shadow(0 0 6px #34a4ff)}.cf-led-dhw.is-bypass{animation:cf-bypass-led 2.8s ease-in-out infinite}@keyframes cf-bypass-led{50%{opacity:.35}}
+  .cf-device{width:min(100%,350px);padding:11px;border:1px solid #adb9ba;border-radius:17px;background:linear-gradient(145deg,#e7ebeb,#bec7c9);box-shadow:0 28px 70px #0009}.cf-device-head{padding:0 5px}.cf-device-head strong{font-size:17px;letter-spacing:.08em}.cf-device-head small{font-size:9px}.cf-device-face{border:1px solid #b9c0c0;border-radius:9px;padding:12px 14px;background:linear-gradient(#e4e6e5,#cbd1d2)}.cf-screen{min-height:158px;border:3px solid #51605d;border-radius:3px;padding:6px;background:linear-gradient(145deg,#bfd6ce,#a3beb4);box-shadow:inset 0 3px 9px #3251444f;font-size:10px}.cf-screen-head{min-height:21px;padding:0 3px 3px;border-color:#4e685c}.cf-screen-head strong{font-size:11px}.cf-screen-front{min-height:105px;grid-template-columns:minmax(0,1fr) 56px;border-width:1px}.cf-screen-front-main{padding:7px}.cf-screen-front-main small{font-size:10px}.cf-screen-front-main strong{font-size:27px}.cf-screen-front-rail{border-left-width:1px}.cf-screen-front-rail span{border-bottom-width:1px;font-size:8px}.cf-screen-row{min-height:30px;padding:5px 4px;font-size:11px}.cf-screen-row.selected{background:#162c23;color:#e6f4e9}.cf-screen-hint{font-size:8px;margin-top:3px}.cf-keys{gap:10px;margin-top:10px}.cf-keys button{width:39px;height:39px}.cf-long-enter{min-height:35px;margin-top:8px;font-size:9px}
+  .cf.no-anim .cf-exchanger,.cf.is-offscreen .cf-exchanger,.cf.no-anim .cf-led-dhw,.cf.is-offscreen .cf-led-dhw{animation:none!important}
+  @media(prefers-reduced-motion:reduce){.cf-exchanger,.cf-display-led{animation:none!important}}
+  @container calefa-card (min-width:900px){.cf-side .cf-metric,.cf-side .cf-component,.cf-side .cf-water{min-height:0;padding:9px 11px}.cf-side .cf-metric strong{font-size:24px}.cf-side .cf-component strong{font-size:21px}.cf-side{gap:16px}}
+
+  .cf-stage .cf-component{display:flex;position:absolute;z-index:8;inset:auto;width:84px;max-width:84px;min-height:38px;padding:4px 5px;background:rgba(6,19,27,.86);border-color:rgba(69,227,161,.42);border-radius:9px}.cf-stage .cf-component>ha-icon{display:none}.cf-stage .cf-component small{font-size:8px}.cf-stage .cf-component strong{font-size:13px}.cf-stage .cf-component i{font-size:7px}.cf-stage .cf-component-dhw{left:48%;top:43%}.cf-stage .cf-component-heat{left:26%;top:65%}
+  .cf-pump-indicator{opacity:.75;color:#7c949f;filter:drop-shadow(0 0 4px #102e39)}.cf-pump-indicator-ring{fill:rgba(5,25,34,.48);stroke:currentColor;stroke-width:2;stroke-dasharray:17 10}.cf-pump-indicator-fan{fill:currentColor;transform-origin:center}.cf-pump-indicator>circle:last-child{fill:#d6e5e9}.cf-pump-indicator.is-on{opacity:1;color:#4ef0b1;filter:drop-shadow(0 0 8px #2cf0ad)}.cf-pump-indicator.is-on .cf-pump-indicator-fan{animation:cf-spin .92s linear infinite}.cf-pump-indicator.is-on .cf-pump-indicator-ring{animation:cf-spin 2.4s linear reverse infinite}.cf-pump-hit{position:absolute;z-index:9;left:43%;top:73%;width:16%;height:12%;border:0;background:transparent;cursor:pointer}.cf-pump-hit:focus-visible{outline:2px solid var(--cf-ok);border-radius:50%}
+  .cf-legacy-hit{position:absolute;z-index:9;left:71%;top:7.5%;display:flex;align-items:center;justify-content:center;gap:5px;width:24%;min-height:35px;padding:4px 6px;border:1px solid #3e94af;border-radius:9px;background:rgba(5,28,41,.92);color:#93e5ff;box-shadow:0 0 13px rgba(62,190,224,.15);font-size:9px;font-weight:750;cursor:pointer}.cf-legacy-hit ha-icon{--mdc-icon-size:17px}.cf-legacy-hit:hover{background:#0b384a}
+  .cf-side{gap:10px}.cf-left .cf-pair,.cf-right .cf-pair{margin:0}.cf-mobile-components{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @container calefa-card (max-width:899px){.cf-stage .cf-component{display:flex}.cf-stage .cf-component-dhw{left:47%;top:43%}.cf-stage .cf-component-heat{left:24%;top:65%}.cf-legacy-hit{left:72%;top:7%;width:21%;min-height:29px;padding:2px}.cf-legacy-hit span{display:none}}
+  @container calefa-card (max-width:520px){.cf-mobile-components .cf-water{min-height:38px;padding:5px 7px}.cf-stage .cf-component{width:57px;max-width:57px;min-height:27px;padding:3px}.cf-stage .cf-component small{font-size:6px}.cf-stage .cf-component strong{font-size:9px}.cf-stage .cf-component i{display:none}.cf-pump-hit{left:43%;top:74%;width:17%}.cf-legacy-hit{min-height:25px}}
+  .cf.no-anim .cf-pump-indicator *,.cf.is-offscreen .cf-pump-indicator *{animation:none!important}@media(prefers-reduced-motion:reduce){.cf-pump-indicator *{animation:none!important}}
+
+  .cf-pair{gap:0}.cf-delta{--cf-delta-tone:#7b99a8;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;width:56px;height:56px;min-height:56px;padding:3px;border:3px solid var(--cf-delta-tone);border-radius:50%;background:radial-gradient(circle,#15313d 0%,#0a1d29 74%);box-shadow:0 0 0 3px rgba(24,49,62,.75),0 0 14px color-mix(in srgb,var(--cf-delta-tone) 30%,transparent);color:#e7f7fa;text-align:center}.cf-delta.is-good{--cf-delta-tone:#3bdf9c}.cf-delta.is-bad{--cf-delta-tone:#ff685a}.cf-delta.is-muted{opacity:.55}.cf-delta small{font-size:9px;letter-spacing:.04em}.cf-delta strong{font-size:11px;line-height:1.05;white-space:nowrap}.cf-delta:not(.is-muted):after{content:"";position:absolute;inset:-6px;border:1px solid var(--cf-delta-tone);border-radius:50%;opacity:.35;animation:cf-delta-pulse 2.8s ease-in-out infinite}@keyframes cf-delta-pulse{50%{transform:scale(1.12);opacity:.1}}
+  .cf-mobile-pairs .cf-pair,.cf-side .cf-pair{grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);align-items:center;gap:4px}.cf-side .cf-pair{grid-template-columns:1fr;gap:0}.cf-mobile-pairs .cf-delta{width:48px;height:48px;min-height:48px;justify-self:center;padding:2px}.cf-mobile-pairs .cf-delta strong{font-size:9px}.cf-mobile-pairs .cf-delta small{font-size:8px}
+  .cf.no-anim .cf-delta:after,.cf.is-offscreen .cf-delta:after{animation:none!important}@media(prefers-reduced-motion:reduce){.cf-delta:after{animation:none!important}}
+  @container calefa-card (min-width:521px) and (max-width:899px){.cf-side .cf-pair{grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr)}}
+  @container calefa-card (max-width:380px){.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr)}.cf-mobile-pairs .cf-delta{width:43px;height:43px;min-height:43px}.cf-mobile-pairs .cf-delta strong{font-size:8px}}
+
+  .cf-delta.is-good{--cf-delta-tone:#3bdf9c}.cf-delta.is-bad{--cf-delta-tone:#ff685a}.cf-delta.is-muted{--cf-delta-tone:#7b99a8;opacity:.55}
+  .cf-pair .cf-metric{position:relative;overflow:visible}.cf-side .cf-delta{z-index:4;margin-block:-9px}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:2px}.cf-mobile-pairs .cf-delta{z-index:4;width:54px;height:54px;min-height:54px;margin-inline:-7px}.cf-mobile-pairs .cf-metric:first-child:after,.cf-mobile-pairs .cf-metric:last-child:before{content:"";position:absolute;top:50%;width:17px;height:38px;transform:translateY(-50%);border:1.5px solid var(--tone);pointer-events:none}.cf-mobile-pairs .cf-metric:first-child:after{right:-6px;border-left:0;border-radius:0 22px 22px 0}.cf-mobile-pairs .cf-metric:last-child:before{left:-6px;border-right:0;border-radius:22px 0 0 22px}.cf-side .cf-pair .cf-metric:first-child:after,.cf-side .cf-pair .cf-metric:last-child:before{content:"";position:absolute;left:50%;width:39px;height:17px;transform:translateX(-50%);border:1.5px solid var(--tone);pointer-events:none}.cf-side .cf-pair .cf-metric:first-child:after{bottom:-6px;border-top:0;border-radius:0 0 22px 22px}.cf-side .cf-pair .cf-metric:last-child:before{top:-6px;border-bottom:0;border-radius:22px 22px 0 0}
+  .cf-display-led{fill:#45d194;stroke:#e2fff0;filter:drop-shadow(0 0 4px #40db9b)}.cf-led-heat.active{fill:#ff5352;stroke:#fff0e9;filter:drop-shadow(0 0 6px #ff5352)}.cf-led-dhw.active{fill:#ff7252;stroke:#ffefe5;filter:drop-shadow(0 0 6px #ff7252)}.cf-led-dhw.is-bypass{fill:#ffbf4b;stroke:#fff4d5;filter:drop-shadow(0 0 6px #ffbf4b)}
+  @container calefa-card (max-width:899px){.cf-side .cf-pair{gap:2px}.cf-side .cf-delta{margin:0}.cf-side .cf-pair .cf-metric:first-child:after,.cf-side .cf-pair .cf-metric:last-child:before{display:none}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr)}}
+  @container calefa-card (max-width:380px){.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}.cf-mobile-pairs .cf-delta{width:49px;height:49px;min-height:49px;margin-inline:-6px}}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
