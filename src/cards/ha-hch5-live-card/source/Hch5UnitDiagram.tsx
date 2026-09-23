@@ -413,7 +413,6 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" value={fmt(afterHeater)} tone="green"/>
       <SensorPin x={144} y={365} label="T2 før flade" value={fmt(beforeHeater,"°")} width={112} lift={50}/><SensorPin x={-28} y={365} label="T2AH" value={fmt(afterHeater,"°")} width={74} lift={50}/><SensorPin x={57} y={292} label="Frost" value={fmt(frost,"°")}/><SensorPin x={502} y={126} label="T5 rum" value={fmt(room,"°")} width={90}/>
       <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">Eftervarmevand</text><text className="water-value" x="14" y="46">Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68">Retur {fmt(returnWater)}</text></g>
-      <g className="hch-bypass-callout" transform="translate(806 448)"><rect width="240" height="62" rx="12"/><text x="120" y="23" textAnchor="middle">Bypass-spjæld · ønske {bypassWanted?"On":"Auto"}</text><text className="bypass-state" x="120" y="48" textAnchor="middle">{bypassLabel}{bypassRemaining===null?"":` · ${formatRemaining(bypassRemaining)}`}</text></g>
     </svg>
     <div className="hch-mobile-flow" role="img" aria-label="HCH5 luftstrømme og temperaturer">
       <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>HCH5</strong><span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span></div>
