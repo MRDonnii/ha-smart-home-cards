@@ -195,4 +195,15 @@ assert.equal(stale._hasChanges(one), false, "same state objects do not trigger a
 assert.equal(stale._hasChanges({ ...one, states: { "sensor.p": one.states["sensor.p"] } }), false);
 assert.equal(stale._hasChanges({ ...one, states: { "sensor.p": state("Fra") } }), true);
 
+const speed = new Card();
+const props = new Map();
+const flowNode = { style: { getPropertyValue: (name) => props.get(name), setProperty: (name, value) => props.set(name, value) } };
+speed._setFlowDuration(flowNode, 20);
+const slow = props.get("--cf-flow-duration");
+speed._setFlowDuration(flowNode, 80);
+const fast = props.get("--cf-flow-duration");
+assert.ok(parseFloat(fast) < parseFloat(slow), "valid faster flow shortens CSS animation duration");
+speed._setFlowDuration(flowNode, null);
+assert.equal(props.get("--cf-flow-duration"), "1.10s");
+
 console.log("Validated Calefa flow card state handling");
