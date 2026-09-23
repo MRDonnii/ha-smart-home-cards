@@ -18,6 +18,8 @@ export interface Hch5UnitDiagramProps {
   extractRpm: Num;
   supplyPercent: Num;
   extractPercent: Num;
+  /** Effective controller level 1–6; changes animation speed without using noisy RPM telemetry. */
+  fanLevel?: Num;
   bypassActual: boolean;
   bypassRequest: string;
   heating: boolean;
@@ -267,7 +269,7 @@ function Rs485Wiring({ active, compact = false }: { active: boolean; compact?: b
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {outdoor,extract,exhaust,beforeHeater,afterHeater,room,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false}=props;
+  const {outdoor,extract,exhaust,beforeHeater,afterHeater,room,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false}=props;
   // The unit reports only closed/opening/closing/open and needs about three
   // minutes, so progress is the time since the damper left its end position;
   // the blade and the fog follow that estimate, and On counts as opening from
@@ -291,6 +293,16 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   // A stable period prevents airflow from jumping whenever the fan reports
   // a slightly different RPM. The numeric RPM readback remains live.
   const supplySpeed=supplyRpm&&supplyRpm>0?12:0; const extractSpeed=extractRpm&&extractRpm>0?12:0;
+  const svgRef=useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const level=fanLevel===null?4:Math.max(1,Math.min(6,Math.round(fanLevel)));
+    const rate=[0.65,0.8,0.95,1.1,1.25,1.4][level-1];
+    // Web Animations changes the playback rate without resetting currentTime.
+    // Small RPM changes never touch the animation clock.
+    svgRef.current?.querySelectorAll('.hch-fan-rotor, .hch-air-wisp, .hch-airflow-guide').forEach(node => {
+      node.getAnimations().forEach(animation => animation.updatePlaybackRate(rate));
+    });
+  }, [fanLevel,supplySpeed,extractSpeed]);
   // Fog fades in at the room-side readings and out where the far ducts end.
   const fadeSpan=REAR_FADE.to-VIEW.x; const fadeAt=(x:number)=>Math.round((x-VIEW.x)/fadeSpan*1000)/1000;
   // Back edges of the cabinet's floor and right-hand wall, one cabinet depth in.
@@ -298,7 +310,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   const backX=ox+ow+CABINET_DEPTH[0], backY=oy+oh+CABINET_DEPTH[1];
   const view=VIEW;
   return <div className={`hch5-visual${bypassOpen?" is-bypass":" is-recovery"}`}>
-    <svg viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label="HCH5 luftstrøm med intern bypass og ekstern eftervarme">
+    <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label="HCH5 luftstrøm med intern bypass og ekstern eftervarme">
       <defs>
         <linearGradient id="metalFace" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#596b76"/><stop offset=".4" stopColor="#263843"/><stop offset="1" stopColor="#14242e"/></linearGradient>
         <linearGradient id="metalTop" x1="0" x2="1"><stop offset="0" stopColor="#7b8991"/><stop offset=".48" stopColor="#40515b"/><stop offset="1" stopColor="#263640"/></linearGradient>
