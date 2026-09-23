@@ -124,19 +124,22 @@ const registryRows = [
   ["one", "sensor.renamed_supply", "source_inlet_temperature"],
   ["one", "sensor.renamed_valve", "cvv_valve_position"],
   ["one", "number.renamed_setpoint", "dhw_temperature_setpoint_control"],
+  ["one", "switch.one_extra", "custom_control"],
   ["one", "binary_sensor.renamed_alarm", "warning_pressure_low"],
   ["two", "sensor.other_supply", "source_inlet_temperature"],
 ].map(([config_entry_id, entity_id, key]) => ({ platform: "wavin_calefa", config_entry_id, entity_id, unique_id: `${config_entry_id}_${key}`, disabled_by: null }));
 const automatic = new Card();
 automatic._build = () => {};
 automatic._update = () => {};
-automatic.setConfig({ calefa_entry: "one", fjv_supply: "sensor.manual_override", display_entities: { standby: "switch.other_unit" } });
+automatic.setConfig({ calefa_entry: "one", fjv_supply: "sensor.manual_override", fjv_return: "sensor.other_unit", display_entities: { standby: "switch.other_unit", extra: "switch.one_extra" } });
 automatic.hass = { states: {}, connection: { sendMessagePromise: async () => registryRows } };
 await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(automatic._config.fjv_supply, "sensor.renamed_supply", "selected integration owns its native bindings");
+assert.equal(automatic._config.fjv_return, "", "old native binding from another unit is cleared");
 assert.equal(automatic._config.heating_valve, "sensor.renamed_valve");
 assert.equal(automatic._config.display_entities.dhw_setpoint, "number.renamed_setpoint");
 assert.equal(automatic._config.display_entities.standby, undefined, "a selected integration drops unrelated controls");
+assert.equal(automatic._config.display_entities.extra, "switch.one_extra", "verified same-integration controls remain available");
 assert.deepEqual([...automatic._config.alarm_entities], ["binary_sensor.renamed_alarm"]);
 const ambiguous = new Card();
 ambiguous._build = () => {};
