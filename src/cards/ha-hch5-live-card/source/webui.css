@@ -492,3 +492,20 @@ button { font: inherit; color: inherit; }
   .unit-readback strong { font-size: 11px; }
   .unit-readback em { font-size: 8px; }
 }
+
+/* Only the full HA card on a portrait-sized mobile viewport. Give the moving
+   unit more height and keep each sensor value in one readable place below it. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch5-visual > svg {
+      width: 90%; max-width: 90%; height: auto; margin: 24px auto;
+      transform: scaleY(1.42); transform-origin: center;
+    }
+    .dashboard-overview .hch5-visual :is(.hch-temp-port,.hch-sensor-pin,.hch-water-callout) { display: none; }
+    .dashboard-overview .hch-mobile-flow { gap: 8px; }
+    .dashboard-overview .hch-mobile-core { display: none; }
+    .dashboard-overview .hch-mobile-subreadings { display: grid; }
+    .dashboard-overview .hch-mobile-subreadings span { font-size: 9px; }
+    .dashboard-overview .hch-mobile-subreadings strong { font-size: 11px; }
+  }
+}
