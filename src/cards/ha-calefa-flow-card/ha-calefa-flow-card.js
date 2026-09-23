@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.6.0";
+const CALEFA_FLOW_CARD_VERSION = "0.7.0";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -34,6 +34,14 @@ const CALEFA_CONTROL_KEYS = {
   room_temporary_mode: "room_temporary_mode", eco_temperature: "room_eco_temperature",
   comfort_temperature: "room_comfort_temperature", extra_comfort_temperature: "room_extra_comfort_temperature",
   temporary_temperature: "room_temporary_temperature", temporary_duration: "room_temporary_duration",
+  bypass_mode: "dhw_mode_control", circulation_temperature: "circulation_temperature_control",
+  return_priority: "return_limiter_priority_over_supply", vacation: "vacation_control",
+  vacation_dhw: "vacation_for_dhw", vacation_ch: "vacation_for_ch",
+};
+// Read-only status values shown on the controller's status pages.
+const CALEFA_READOUT_KEYS = {
+  bypass_state: "dhw_bypass_active", dhw_blocking: "dhw_blocking_source", dhw_regulator: "dhw_regulator_state",
+  ch_blocking: "ch_blocking_source", ch_regulator: "ch_regulator_state", circulation_state: "circulation_state",
 };
 const CALEFA_ALARM_KEYS = new Set([
   "warning_low_energy", "warning_pressure_high", "error_pressure_critical_low", "warning_pressure_low",
@@ -65,8 +73,10 @@ function calefaBindings(rows, entryId) {
     .map((row) => [row.unique_id?.slice(entryId.length + 1), row.entity_id]));
   const entities = Object.fromEntries(Object.entries(CALEFA_SENSOR_KEYS)
     .map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor.")));
-  const controls = Object.fromEntries(Object.entries(CALEFA_CONTROL_KEYS)
-    .map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => /^(number|select|switch)\./.test(id || "")));
+  const controls = Object.fromEntries([
+    ...Object.entries(CALEFA_CONTROL_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => /^(number|select|switch)\./.test(id || "")),
+    ...Object.entries(CALEFA_READOUT_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor.")),
+  ]);
   const alarms = [...CALEFA_ALARM_KEYS].map((unique) => found.get(unique)).filter((id) => id?.startsWith("binary_sensor."));
   return { entities, controls, alarms };
 }
@@ -95,69 +105,96 @@ const METRICS = {
   dhw_valve: { label: "BV-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
 };
 
-// Menu paths and labels follow Wavin's Calefa II V installation guide, pp. 8-20.
-// Only explicitly mapped number/select entities can be written; service flows stay read-only.
-const DISPLAY_FRONTS = ["bv", "itc", "settings", "alarm"];
-const menu = (label, children) => ({ label, children });
-const value = (label, key, kind = "temperature", writable = false) => ({ label, key, kind, writable });
-const choice = (label, options, writable = false) => ({ label, options, writable });
-const service = (label, children) => ({ label, children, service: true });
-const dayMenu = () => menu("Planlæg", [
-  menu("Ugeplan", [menu("Se tidsplan", []), service("Tilføj periode", [value("Starttid", ""), value("Sluttid", "")]), service("Ryd periode", [value("Starttid", ""), value("Sluttid", "")])]),
-  ...["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"].map((day) => menu(day, [menu("Se tidsplan", []), service("Tilføj periode", [value("Starttid", ""), value("Sluttid", "")]), service("Ryd periode", [value("Starttid", ""), value("Sluttid", "")])])),
+// Controller popup. Menu paths, labels and screen layouts follow Wavin's Calefa II V installation guide
+// (pp. 10-24): a short ENTER selects or switches front menu, a held ENTER opens a menu or goes back, and
+// UP/DOWN move through menus or change values. Only entities bound from the wavin_calefa integration are
+// written; controller functions without a Home Assistant control are shown as display-only screens.
+const LONG_PRESS_MS = 600;
+const LCD_ROWS = 3;
+// Controller wording for each select, paired with the integration's Danish and English options.
+const OPTION_LABELS = {
+  bypass_mode: [["Auto", "Adaptivt skema", "adaptive_schedule"], ["Planlæg", "Skema", "schedule"], ["Komfort", "Komfort", "comfort"], ["Øko", "Øko", "eco"]],
+  heat_curve_type: [["Manuel", "Manuel", "manual"], ["Gulvvarme", "Gulvvarme", "floor_heating"], ["Radiator", "Radiator", "radiator"]],
+  return_limiter_mode: [["Fra", "Fra", "off"], ["Maksimum", "Maksimum", "maximum"]],
+  room_profile: [["Øko", "Øko", "eco"], ["Komfort", "Komfort", "comfort"], ["Ekstra komfort", "Ekstra komfort", "extra_comfort"]],
+};
+const SWITCH_OPTIONS = [["Fra", "off"], ["Til", "on"]];
+const numberItem = (label, map, title = label) => ({ type: "number", label, map, title });
+const selectItem = (label, map, title = label) => ({ type: "select", label, map, title });
+const switchItem = (label, map, title = label) => ({ type: "switch", label, map, title });
+const pagesItem = (label, source, status) => ({ type: "pages", label, source, status });
+const deviceItem = (label) => ({ type: "device", label });
+const menuItem = (label, children, status) => ({ type: "menu", label, children, status });
+const BV_MENU = menuItem("BV", [
+  numberItem("Temperatur", "dhw_setpoint"),
+  pagesItem("Status", "bv", "dhw_active"),
+  menuItem("Bypass", [selectItem("Mode", "bypass_mode"), deviceItem("Se tidsplaner"), numberItem("Temperatur", "bypass_temperature")]),
+  numberItem("Cirkulation", "circulation_temperature", "Cirk. temp."),
+], "dhw_active");
+const ITC_MENU = menuItem("ITC", [
+  pagesItem("Status", "itc", "heating_active"),
+  menuItem("Varmekurve", [
+    selectItem("Type", "heat_curve_type"), numberItem("Hældning", "heat_curve_slope"),
+    numberItem("Paral-forskyd", "parallel_shift"), numberItem("Min. Varme F.", "heat_min_supply"), numberItem("Maks. Varme F.", "heat_max_supply"),
+  ]),
+  menuItem("Returbegrænser", [
+    selectItem("Mode", "return_limiter_mode"), numberItem("Maks. retur", "heat_max_return"),
+    numberItem("Forstærkning", "return_limiter_gain"), switchItem("Prioritet", "return_priority"),
+  ]),
+], "heating_active");
+const SETTINGS_MENU = menuItem("INDSTIL.", [
+  BV_MENU,
+  ITC_MENU,
+  menuItem("Rum", [
+    selectItem("Komfortniveau", "room_profile"), numberItem("Øko", "eco_temperature"), numberItem("Komfort", "comfort_temperature"),
+    numberItem("Ekstra komfort", "extra_comfort_temperature"), switchItem("Skema", "room_schedule"), switchItem("Midl. mode", "room_temporary_mode"),
+    numberItem("Midl. temp.", "temporary_temperature"), numberItem("Midl. varighed", "temporary_duration"),
+  ], "room_profile"),
+  menuItem("Programmer", [
+    menuItem("Temperaturer", [numberItem("Udkobl. temp.", "summer_shutdown")]),
+    switchItem("Standby", "standby"), switchItem("Aut. standby", "auto_standby"),
+    switchItem("Ferie", "vacation"), switchItem("Ferie BV", "vacation_dhw"), switchItem("Ferie CV", "vacation_ch"),
+  ]),
+  menuItem("Avanceret", [deviceItem("CV manl. ventil"), deviceItem("BV motorservice"), deviceItem("CH motorservice"), deviceItem("Komponenter"), deviceItem("Kopier opsætning")]),
+  deviceItem("Dato og tid"),
+  pagesItem("Føler", "sensors"),
 ]);
-const MENU_TREE = {
-  bv: menu("BV · VARMT VAND", [
-    value("Temperatur", "dhw_setpoint", "temperature", true),
-    menu("Status", [value("BV føler", "dhw_temperature"), value("Koldtvandsføler", "cold_water_temperature"), value("Flow", "water_flow", "flow"), value("BV ventil", "dhw_valve", "valve")]),
-    menu("Bypass", [choice("Mode", ["AUTO", "PLANLÆG", "KOMFORT", "ØKO"], true), dayMenu(), menu("Temperatur", [choice("Type", ["Konstant", "Dynamisk"], true), value("Ønsket temperatur", "", "temperature", true)])]),
-  ]),
-  itc: menu("VARME · ITC", [
-    menu("Status", [value("Varme fremløb", "heating_supply"), value("Varme retur", "heating_return"), value("Pumpe", "pump", "text")]),
-    menu("Varmekurve", [menu("Type & værdi", [choice("Type", ["Manuel", "Gulvvarme", "Radiator"], true), value("Hældning", "", "number", true)]), value("Paral-forskyd", "", "temperature", true), value("Min Varme F.", "", "temperature", true), value("Maks Varme F.", "", "temperature", true)]),
-    menu("Returbegrænser", [choice("Mode", ["Fra", "Maksimum"], true), value("Maks. retur", "", "temperature", true), value("Forstærkning", "", "number", true)]),
-  ]),
-  settings: menu("INDSTILLING", [
-    menu("BV", [value("Status", "dhw_active", "text")]),
-    menu("ITC", [value("Status", "heating_active", "text"), value("Automatisk standby", "", "switch", true), value("Returbegrænser aktiv", "", "switch", true), value("Calefa standby", "", "switch", true), value("Cirkulationspumpe", "", "switch", true)]),
-    menu("Rum", [
-      choice("Komfortprofil", ["Øko", "Komfort", "Ekstra komfort"], true),
-      value("Planlagt skema", "", "switch", true), value("Midlertidig tilstand", "", "switch", true),
-      value("Øko temperatur", "", "temperature", true), value("Komforttemperatur", "", "temperature", true),
-      value("Ekstra komfort", "", "temperature", true), value("Midlertidig temperatur", "", "temperature", true),
-      value("Varighed", "", "number", true),
-    ]),
-    menu("Programmer", [menu("Temperaturer", [value("Udkobl. temp.", "", "temperature", true)])]),
-    menu("Avanceret", [service("Komponenter", [service("Tilmeld", [service("Udendørsføler", [value("Status", "outdoor_temperature")]), service("Termostat", [])]), service("Fjern", []), menu("Exit", [])]), service("BV motorservice", [service("Luk for FJV fors.", []), service("Kør motor retur", []), service("Motor må afmonteres nu", []), service("Er motor genmonteret?", [])]), service("CV motorservice", [service("Luk for FJV fors.", []), service("Kør motor retur", []), service("Motor må afmonteres nu", []), service("Er motor genmonteret?", [])])]),
-    menu("Dato og tid", ["År", "Måned", "Dag", "Timer", "Minutter", "Sekunder"].map((label) => value(label, "", "number"))),
-    menu("Føler", [value("FJV frem", "fjv_supply"), value("FJV retur", "fjv_return"), value("Varme frem", "heating_supply"), value("Varme retur", "heating_return"), value("BV", "dhw_temperature"), value("Koldt vand", "cold_water_temperature"), value("Ude", "outdoor_temperature"), value("Rum", "room_temperature"), value("Tryk / PRE", "pressure", "pressure")]),
-    menu("Exit", []),
-  ]),
-  alarm: menu("ALARM", [value("Aktuelle alarmer", "", "text")]),
+// Front menus cycled with short ENTER; ALARM only appears while an alarm is active.
+const FRONTS = {
+  bv: { label: "BV", value: numberItem("Temperatur", "dhw_setpoint"), menu: BV_MENU },
+  varme: { label: "VARME", value: numberItem("Paral-forskyd", "parallel_shift"), menu: ITC_MENU },
+  indstil: { label: "INDSTIL.", menu: SETTINGS_MENU },
+  alarm: { label: "ALARM" },
 };
-const FRONT_VALUES = {
-  bv: Object.assign(value("Varmt vand", "dhw_setpoint", "temperature", true), { map: "dhw_setpoint" }),
-  itc: Object.assign(value("Parallelforskydning", "", "temperature", true), { map: "parallel_shift" }),
+// Status and sensor pages use the controller's abbreviations (installation guide p. 24).
+const READOUTS = {
+  FJF: ["fjv_supply", "temperature"], FJR: ["fjv_return", "temperature"], PRE: ["pressure", "pressure"],
+  BV: ["dhw_temperature", "temperature"], KV: ["cold_water_temperature", "temperature"], FLW: ["water_flow", "flow"],
+  BVV: ["dhw_valve", "percent"], BYP: ["bypass_state", "binary"], VF: ["heating_supply", "temperature"],
+  VR: ["heating_return", "temperature"], UT: ["outdoor_temperature", "temperature"], PUM: ["pump", "binary"],
+  CVV: ["heating_valve", "percent"], "ØVF": ["heating_setpoint", "temperature"],
 };
-MENU_TREE.bv.children[0].map = "dhw_setpoint";
-MENU_TREE.bv.children[2].children[0].map = "bypass_mode";
-MENU_TREE.bv.children[2].children[2].children[0].map = "bypass_temperature_mode";
-MENU_TREE.bv.children[2].children[2].children[1].map = "bypass_temperature";
-MENU_TREE.itc.children[1].children[0].children[0].map = "heat_curve_type";
-MENU_TREE.itc.children[1].children[0].children[1].map = "heat_curve_slope";
-MENU_TREE.itc.children[1].children[1].map = "parallel_shift";
-MENU_TREE.itc.children[1].children[2].map = "heat_min_supply";
-MENU_TREE.itc.children[1].children[3].map = "heat_max_supply";
-MENU_TREE.itc.children[2].children[0].map = "return_limiter_mode";
-MENU_TREE.itc.children[2].children[1].map = "heat_max_return";
-MENU_TREE.itc.children[2].children[2].map = "return_limiter_gain";
-MENU_TREE.settings.children[3].children[0].children[0].map = "summer_shutdown";
-for (const [label, key] of [["Komfortprofil","room_profile"],["Planlagt skema","room_schedule"],["Midlertidig tilstand","room_temporary_mode"],["Øko temperatur","eco_temperature"],["Komforttemperatur","comfort_temperature"],["Ekstra komfort","extra_comfort_temperature"],["Midlertidig temperatur","temporary_temperature"],["Varighed","temporary_duration"]]) {
-  MENU_TREE.settings.children[2].children.find((item) => item.label === label).map = key;
-}
-for (const [label, key] of [["Automatisk standby","auto_standby"],["Returbegrænser aktiv","return_enabled"],["Calefa standby","standby"],["Cirkulationspumpe","circulation_pump"]]) {
-  MENU_TREE.settings.children[1].children.find((item) => item.label === label).map = key;
-}
+const STATUS_PAGES = {
+  bv: { grid: ["BV", "KV", "FJF", "FJR", "FLW", "BVV"], rows: [["Status", "dhw_active"], ["Bypass", "bypass_state"], ["Blokeret af", "dhw_blocking"], ["Regulator", "dhw_regulator"], ["Cirkulation", "circulation_state"]] },
+  itc: { grid: ["VF", "VR", "UT", "ØVF", "CVV", "PUM"], rows: [["Status", "heating_active"], ["Blokeret af", "ch_blocking"], ["Regulator", "ch_regulator"]] },
+  sensors: { grid: ["FJF", "BV", "FJR", "KV", "PRE", "FLW", "VF", "VR", "UT", "ØVF", "CVV", "BVV", "PUM", "BYP"], units: true },
+};
+const LCD_ICONS = {
+  bv: '<path d="M1 5.4h1.7v6.8H1z"/><path d="M2.4 7h13.1a4.2 4.2 0 0 1 4.2 4.2v1.7h-3.1v-1.6c0-.6-.4-1-1-1H2.4z"/><path d="M7.4 3h7v1.8h-2.6V7H10V4.8H7.4z"/><path d="M18.2 15.1s-1.9 2.3-1.9 3.5a1.9 1.9 0 0 0 3.8 0c0-1.2-1.9-3.5-1.9-3.5z"/>',
+  varme: '<path d="M2.5 11.5 12 3.5l9.5 8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 10.4V21h14V10.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.2 19.4v-6.2m-2.3 2.2 2.3-2.4 2.3 2.4M14.8 19.4v-6.2m-2.3 2.2 2.3-2.4 2.3 2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>',
+  gear: '<path d="M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01a.5.5 0 0 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64z"/>',
+  warning: '<path d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2v-4h2z"/>',
+  lock: '<path d="M7 10V7a5 5 0 0 1 10 0v3h1.5v11h-13V10zm2.4 0h5.2V7a2.6 2.6 0 0 0-5.2 0z"/>',
+};
+const lcdIcon = (name, cls = "") => `<svg class="lcd-icon ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${LCD_ICONS[name]}</svg>`;
+// Fascia symbols above the five status LEDs (installation guide p. 10).
+const CONTROLLER_LEDS = [
+  ["power", "Strøm", '<path d="M12 3v8"/><path d="M7.3 6.2a7.5 7.5 0 1 0 9.4 0"/>'],
+  ["fault", "Advarsel / alarm", '<path d="M12 3.5 2.5 20.5h19z"/><path d="M12 10v5"/><path d="M12 17.4v.4"/>'],
+  ["mode", "Mode", '<path d="M3 6.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0 3-1.4 4.5 0 3 1.4 4.5 0"/><path d="M3 12c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0 3-1.4 4.5 0 3 1.4 4.5 0"/><path d="M3 17.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0 3-1.4 4.5 0 3 1.4 4.5 0"/>'],
+  ["lan", "LAN", '<path d="M2.5 8.8a13.5 13.5 0 0 1 19 0"/><path d="M5.8 12.2a8.8 8.8 0 0 1 12.4 0"/><path d="M9 15.6a4.2 4.2 0 0 1 6 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/>'],
+  ["peripheral", "Perifer", '<circle cx="12" cy="12" r="8.5"/>'],
+];
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
@@ -309,14 +346,16 @@ class HaCalefaFlowCard extends HTMLElement {
     this._displayOpen = false;
     this._faultOpen = false;
     this._popupCard = null;
-    this._displayPage = 0;
-    this._menuPath = [];
-    this._menuIndex = 0;
-    this._edit = null;
+    this._resetDisplay();
     this._model = null;
     this._onClick = (event) => this._handleClick(event);
     this._onKeydown = (event) => this._handleKeydown(event);
+    this._onPointer = (event) => this._handlePointer(event);
     this.shadowRoot.addEventListener("click", this._onClick);
+    for (const type of ["pointerdown", "pointerup", "pointercancel"]) this.shadowRoot.addEventListener(type, this._onPointer);
+    this.shadowRoot.addEventListener("contextmenu", (event) => {
+      if (event.composedPath().some((node) => node?.dataset?.ctl)) event.preventDefault();
+    });
   }
 
   static getStubConfig(hass) {
@@ -767,7 +806,24 @@ class HaCalefaFlowCard extends HTMLElement {
   }
 
   _modalMarkup() {
-    return `<div class="cf-modal" data-ref="modal" hidden><div class="cf-modal-backdrop" data-action="close-display"></div><section class="cf-device" role="dialog" aria-modal="true" tabindex="-1" data-ref="device"><div class="cf-device-head"><div><strong>wavin</strong><small>Calefa II V · styring</small></div><button type="button" data-action="close-display" aria-label="Luk display"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="cf-device-face"><div class="cf-screen"><div class="cf-screen-head"><ha-icon data-ref="screen-icon" icon="mdi:water-thermometer"></ha-icon><strong data-ref="screen-title">BV</strong><span data-ref="screen-index">1/4</span></div><div class="cf-screen-body" data-ref="screen-body"></div><div class="cf-screen-hint" data-ref="screen-hint">Langt ENTER: menu</div></div><div class="cf-keys"><button type="button" data-action="display-down" aria-label="Ned"><ha-icon icon="mdi:chevron-down"></ha-icon><span>NED</span></button><button type="button" data-action="display-enter" aria-label="Enter"><ha-icon icon="mdi:keyboard-return"></ha-icon><span>ENTER</span></button><button type="button" data-action="display-up" aria-label="Op"><ha-icon icon="mdi:chevron-up"></ha-icon><span>OP</span></button></div><button class="cf-long-enter" type="button" data-action="display-long-enter" aria-label="Langt Enter">Hold ENTER · menu / tilbage</button></div></section></div>`;
+    const leds = CONTROLLER_LEDS.map(([key, label, path]) => `<span class="ctl-led" title="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg><i data-ref="pled-${key}" role="img" aria-label="${label}"></i></span>`).join("");
+    const key = (ctl, label, glyph) => `<button type="button" data-action="display-key" data-ctl="${ctl}" aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph}</svg></button>`;
+    return `<div class="cf-modal" data-ref="modal"${this._displayOpen ? "" : " hidden"}><div class="cf-modal-backdrop" data-action="close-display"></div>
+      <section class="ctl-wrap" role="dialog" aria-modal="true" aria-label="Calefa II V styring" tabindex="-1" data-ref="device">
+        <button class="ctl-close" type="button" data-action="close-display" aria-label="Luk styring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="ctl-device">
+          <div class="ctl-logo" aria-hidden="true">wavin</div>
+          <div class="ctl-lcd" data-ref="lcd" aria-live="polite"></div>
+          <div class="ctl-leds">${leds}</div>
+          <div class="ctl-usb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12h16"/><path d="M18.5 9.8 21.8 12l-3.3 2.2z" class="is-fill"/><circle cx="3.6" cy="12" r="1.5" class="is-fill"/><path d="M7.5 12 10.4 7.6h3.4"/><circle cx="14.9" cy="7.6" r="1.2" class="is-fill"/><path d="m10 12 2.9 4.4h2.5"/><path d="M15.4 15.3h2.2v2.2h-2.2z" class="is-fill"/></svg></div>
+          <div class="ctl-keys" role="group" aria-label="Touch-knapper">
+            ${key("down", "Pil ned", '<path d="M5 7h14l-7 11z" class="is-fill"/>')}
+            ${key("enter", "Enter – kort tryk vælger, hold for menu eller tilbage", '<path d="M19.5 5.5v6.8H6.2"/><path d="M9.6 8.6 5.6 12.3l4 3.7"/>')}
+            ${key("up", "Pil op", '<path d="M5 17h14L12 6z" class="is-fill"/>')}
+          </div>
+        </div>
+        <p class="ctl-hint" data-ref="display-hint"></p>
+      </section></div>`;
   }
 
   _faultModalMarkup() {
@@ -979,12 +1035,14 @@ class HaCalefaFlowCard extends HTMLElement {
       peripheral: [peripheralTone, outdoorError ? "Udendørsføler i alarm" : known(outdoor) ? "Udendørsføler tilsluttet" : "Udendørsfølerstatus ikke tilgængelig"],
     };
     for (const [key, [tone, label]] of Object.entries(leds)) {
-      const led = this._refs[`led-${key}`];
-      if (!led) continue;
       const [color, blink] = tone.split(" ");
-      if (led.dataset.tone !== color) led.dataset.tone = color;
-      if (led.dataset.blink !== (blink || "")) led.dataset.blink = blink || "";
-      if (led.getAttribute("aria-label") !== label) led.setAttribute("aria-label", label);
+      // The same indicator is drawn on the unit illustration and on the controller popup's fascia.
+      for (const led of [this._refs[`led-${key}`], this._refs[`pled-${key}`]]) {
+        if (!led) continue;
+        if (led.dataset.tone !== color) led.dataset.tone = color;
+        if (led.dataset.blink !== (blink || "")) led.dataset.blink = blink || "";
+        if (led.getAttribute("aria-label") !== label) led.setAttribute("aria-label", label);
+      }
     }
   }
 
@@ -996,187 +1054,338 @@ class HaCalefaFlowCard extends HTMLElement {
     });
   }
 
-  _derived(name) {
-    const model = this._model || this._computeModel();
-    if (name === "mode") return model.dhwTap && model.heatingActive ? "Varme + BV" : model.dhwTap ? "Brugsvand" : model.heatingActive ? "Varme" : model.dhwBypass ? "Bypass" : "Standby";
-    if (name === "heating") return model.heatingActive ? "Aktiv" : "Standby";
-    if (name === "dhw") return model.dhwTap ? "Aktiv" : model.dhwBypass ? "Bypass" : "Standby";
-    if (name === "pump") return model.pumpText;
-    if (name === "cooling") return model.cooling === null ? "–" : `${this._formatNumber(model.cooling, 1)} °C`;
-    if (name === "heatingDelta") return model.heatingDelta === null ? "–" : `${this._formatNumber(model.heatingDelta, 1)} °C`;
-    return "–";
+  // ---- Controller popup: state -------------------------------------------------------------
+
+  _resetDisplay() {
+    this._frontKey = "bv";
+    this._stack = [];
+    this._frontEdit = null;
+    this._notice = null;
   }
 
-  _menuNode() {
-    let node = MENU_TREE[this._activeFronts()[this._displayPage] || "bv"];
-    for (const index of this._menuPath) node = this._menuChildren(node)[index];
-    return node;
+  _entity(map) {
+    const id = this._config.display_entities[map] || (ENTITY_KEYS.includes(map) ? this._config[map] : "");
+    const state = id ? this._hass?.states?.[id] : null;
+    return state ? [id, state] : null;
   }
 
-  _nodeSupported(node) {
-    if (node.service) return false;
-    if (node.children) return node.children.some((child) => this._nodeSupported(child));
-    if (node.label === "Aktuelle alarmer") return this._config.alarm_entities.some((id) => this._hass?.states?.[id]);
-    return Boolean(this._mappedState(node) || (node.key && this._stateObj(node.key)));
-  }
-
-  _menuChildren(node) { return (node.children || []).filter((child) => this._nodeSupported(child)); }
-
-  _firstSupportedLeaf(node) {
-    if (!node.children) return this._nodeSupported(node) ? node : null;
-    for (const child of this._menuChildren(node)) {
-      const leaf = this._firstSupportedLeaf(child);
-      if (leaf) return leaf;
-    }
-    return null;
-  }
-
-  _activeFronts() {
-    return DISPLAY_FRONTS.filter((front) => this._nodeSupported(MENU_TREE[front]) || this._nodeSupported(FRONT_VALUES[front] || {}));
-  }
-
-  _mappedState(node) {
-    const id = node.map && this._config.display_entities[node.map];
-    return id && this._hass?.states?.[id] ? [id, this._hass.states[id]] : null;
-  }
-
-  _menuValue(node) {
-    if (node.label === "Aktuelle alarmer") {
-      const alarms = this._config.alarm_entities.map((id) => this._hass?.states?.[id]).filter(Boolean);
-      if (!alarms.length) return "–";
-      const active = alarms.filter((state) => interpretActivity(state) === true);
-      return active.length ? `${active.length} aktiv${active.length > 1 ? "e" : ""}` : "Ingen alarm";
-    }
-    const mapped = this._mappedState(node);
-    if (mapped) {
-      const state = mapped[1];
-      if (UNAVAILABLE.has(String(state.state).toLowerCase())) return "–";
-      if (node.kind === "switch") return state.state === "on" ? "Til" : state.state === "off" ? "Fra" : "–";
-      return node.kind === "temperature" && Number.isFinite(Number(state.state)) ? `${this._formatNumber(Number(state.state), 1)} °C` : String(state.state);
-    }
-    if (node.key?.startsWith("derived:")) return this._derived(node.key.slice(8));
-    if (node.key && this._config[node.key]) return this._format(node.key, node.kind);
-    return node.label === "Aktuelle alarmer" ? "Ingen data" : "–";
-  }
-
-  _editOptions(node, state) {
-    if (!node.options) return [];
-    const actual = state.attributes?.options;
-    return Array.isArray(actual) && node.options.every((option) => actual.includes(option)) ? node.options : [];
-  }
+  _live(state) { return Boolean(state) && !UNAVAILABLE.has(String(state.state ?? "").trim().toLowerCase()); }
 
   _canEdit(node) {
-    if (!node.writable || node.service) return false;
-    const mapped = this._mappedState(node);
-    if (!mapped) return false;
-    const [id, state] = mapped;
-    if (id.startsWith("number.")) return !node.options && Number.isFinite(Number(state.state)) && Number.isFinite(Number(state.attributes?.min)) && Number.isFinite(Number(state.attributes?.max));
-    if (id.startsWith("select.")) return Boolean(node.options && this._editOptions(node, state).length);
-    if (id.startsWith("switch.")) return node.kind === "switch" && ["on", "off"].includes(state.state);
+    const entity = node && this._entity(node.map);
+    if (!entity || !this._live(entity[1])) return false;
+    const [id, state] = entity;
+    if (node.type === "number") return id.startsWith("number.") && [state.state, state.attributes?.min, state.attributes?.max].every((value) => Number.isFinite(Number(value)));
+    if (node.type === "select") return id.startsWith("select.") && this._options(node, state).some((option) => option.value === state.state);
+    if (node.type === "switch") return id.startsWith("switch.") && ["on", "off"].includes(state.state);
     return false;
   }
 
-  _renderDisplay() {
-    const fronts = this._activeFronts();
-    if (this._displayPage >= fronts.length) this._displayPage = 0;
-    const front = fronts[this._displayPage] || "bv";
-    this._toggle(this._refs["screen-body"]?.parentElement, "is-front", !this._inMenu && !this._edit);
-    const node = this._inMenu ? this._menuNode() : MENU_TREE[front];
-    this._text(this._refs["screen-title"], node.label);
-    this._text(this._refs["screen-index"], this._inMenu ? `${this._menuPath.length + 1} · ${this._menuIndex + 1}/${Math.max(this._menuChildren(node).length, 1)}` : `${this._displayPage + 1}/${Math.max(fronts.length, 1)}`);
-    this._refs["screen-icon"]?.setAttribute("icon", { bv: "mdi:water-thermometer", itc: "mdi:radiator", settings: "mdi:cog-outline", alarm: "mdi:alert-circle-outline" }[front]);
-    let rows;
-    if (this._edit) {
-      rows = `<div class="cf-screen-row selected"><span>${escapeHtml(this._edit.node.label)}</span><strong>${escapeHtml(this._edit.value)}</strong></div><div class="cf-screen-note">${this._edit.confirm ? "ENTER bekræfter ændringen på unitten" : "OP/NED ændrer værdien"}</div>`;
-    } else if (!this._inMenu) {
-      const main = this._nodeSupported(FRONT_VALUES[front] || {}) ? FRONT_VALUES[front] : front === "settings" ? null : this._firstSupportedLeaf(MENU_TREE[front]);
-      const labels = { bv: "BV", itc: "VARME", settings: "INDST", alarm: "ALARM" };
-      rows = `<div class="cf-screen-front"><div class="cf-screen-front-main"><small>${escapeHtml(main?.label || (front === "alarm" ? "ALARM" : "INDSTIL."))}</small><strong>${fronts.length ? main ? escapeHtml(this._menuValue(main)) : front === "alarm" ? "Ingen data" : "⚙" : "Ingen tilkoblede data"}</strong></div><div class="cf-screen-front-rail">${fronts.filter((item) => item !== front).map((item) => `<span>${labels[item]}</span>`).join("")}</div></div>`;
-    } else {
-      const children = this._menuChildren(node);
-      const start = Math.max(0, Math.min(this._menuIndex - 1, children.length - 3));
-      rows = children.length ? children.slice(start, start + 3).map((item, offset) => `<div class="cf-screen-row ${start + offset === this._menuIndex ? "selected" : ""}"><span>${escapeHtml(item.label)}${item.children ? " ›" : ""}</span><strong>${item.children ? "" : escapeHtml(this._menuValue(item))}</strong></div>`).join("") : `<div class="cf-screen-note">${node.service ? "Kun visning · ingen fysisk handling" : escapeHtml(this._menuValue(node))}</div>`;
-    }
-    if (this._refs["screen-body"]?.innerHTML !== rows) this._refs["screen-body"].innerHTML = rows;
-    this._text(this._refs["screen-hint"], this._edit ? (this._edit.confirm ? "Langt ENTER: annullér" : "ENTER: bekræft valg") : this._inMenu ? "Langt ENTER: tilbage" : "BV · VARME · INDST · ALARM");
+  // Controller labels for the options the entity really offers, in the controller's order.
+  _options(node, state) {
+    if (node.type === "switch") return SWITCH_OPTIONS.map(([label, value]) => ({ label, value }));
+    const actual = Array.isArray(state?.attributes?.options) ? state.attributes.options : [];
+    const known = (OPTION_LABELS[node.map] || []).flatMap(([label, ...values]) => {
+      const value = values.find((candidate) => actual.includes(candidate));
+      return value ? [{ label, value }] : [];
+    });
+    return [...known, ...actual.filter((value) => !known.some((option) => option.value === value)).map((value) => ({ label: value, value }))];
   }
 
+  _activeAlarms() { return this._activeFaults(); }
+
+  _fronts() { return ["bv", "varme", "indstil", ...(this._activeAlarms().length ? ["alarm"] : [])]; }
+
+  _rows(frame) {
+    const node = frame.node;
+    const children = node.type === "alarms"
+      ? this._activeAlarms().map((fault) => ({ type: "alarm", label: fault.label.replace(/^Wavin Calefa\s*\d*\s*/i, ""), fault }))
+      : node.children;
+    return [...children, { type: "exit", label: "Exit" }];
+  }
+
+  _stepNumber(value, direction, attributes) {
+    const min = Number(attributes.min), max = Number(attributes.max), step = Number(attributes.step) || 1;
+    return Number(clamp(min + (Math.round((value - min) / step) + direction) * step, min, max).toFixed(6));
+  }
+
+  // ---- Controller popup: buttons -----------------------------------------------------------
+
+  // UP is +1 and DOWN is -1: UP raises values and moves the selection bar up.
   _displayMove(direction) {
-    if (this._edit) {
-      const edit = this._edit;
-      const [, state] = this._mappedState(edit.node) || [];
-      if (!state) return;
-      if (edit.options) {
-        const index = edit.options.indexOf(edit.value);
-        edit.value = edit.options[(index + direction + edit.options.length) % edit.options.length];
-      } else {
-        const min = Number(state.attributes.min), max = Number(state.attributes.max), step = Number(state.attributes.step) || 1;
-        edit.value = String(clamp(Math.round((Number(edit.value) - direction * step - min) / step) * step + min, min, max));
+    const frame = this._stack.at(-1);
+    if (this._notice) return;
+    if (!frame) {
+      const node = FRONTS[this._frontKey].value;
+      if (node && this._canEdit(node)) {
+        const [, state] = this._entity(node.map);
+        const current = Number(state.state);
+        const value = this._stepNumber(this._frontEdit?.value ?? current, direction, state.attributes);
+        this._frontEdit = value === current ? null : { node, value };
       }
-      edit.confirm = false;
-    } else if (this._inMenu) {
-      const length = this._menuChildren(this._menuNode()).length;
-      if (length) this._menuIndex = (this._menuIndex + direction + length) % length;
-    } else {
-      const front = FRONT_VALUES[this._activeFronts()[this._displayPage]];
-      if (front && this._canEdit(front)) {
-        const [, state] = this._mappedState(front);
-        this._edit = { node: front, value: String(state.state), options: null, confirm: false };
-        return this._displayMove(direction);
+    } else if (frame.kind === "menu") {
+      frame.index = clamp(frame.index - direction, 0, this._rows(frame).length - 1);
+    } else if (frame.kind === "pages") {
+      frame.page = clamp(frame.page - direction, 0, this._pages(frame.node.source).length - 1);
+    } else if (frame.kind === "edit") {
+      if (frame.options) frame.index = (frame.index + direction + frame.options.length) % frame.options.length;
+      else {
+        const [, state] = this._entity(frame.node.map) || [];
+        if (state) frame.value = this._stepNumber(frame.value, direction, state.attributes);
       }
     }
     this._renderDisplay();
   }
 
   _displayEnter(long = false) {
-    if (!this._activeFronts().length) return;
-    if (long) {
-      if (this._edit) this._edit = null;
-      else if (this._inMenu && this._menuPath.length) { this._menuIndex = this._menuPath.pop(); }
-      else if (this._inMenu) this._inMenu = false;
-      else { this._inMenu = true; this._menuPath = []; this._menuIndex = 0; }
-    } else if (this._edit) {
-      if (!this._edit.confirm) this._edit.confirm = true;
-      else this._commitEdit();
-    } else if (!this._inMenu) {
-      this._displayPage = (this._displayPage + 1) % Math.max(this._activeFronts().length, 1);
-    } else {
-      const selected = this._menuChildren(this._menuNode())[this._menuIndex];
-      if (selected?.children) { this._menuPath.push(this._menuIndex); this._menuIndex = 0; }
-      else if (selected && this._canEdit(selected)) {
-        const [, state] = this._mappedState(selected);
-        const options = state.state === "on" || state.state === "off" ? ["Fra", "Til"] : selected.options ? this._editOptions(selected, state) : null;
-        const current = options && selected.kind === "switch" ? state.state === "on" ? "Til" : "Fra" : String(state.state);
-        this._edit = { node: selected, value: options && !options.includes(current) ? options[0] : current, options, confirm: false };
+    const frame = this._stack.at(-1);
+    if (this._notice) {
+      this._notice = null;
+      this._renderDisplay();
+      return;
+    }
+    if (!frame) {
+      const front = FRONTS[this._frontKey];
+      if (this._frontEdit) {
+        if (!long) this._commit(this._frontEdit.node, this._frontEdit.value);
+        this._frontEdit = null;
+      } else if (long) {
+        this._stack.push({ kind: "menu", node: front.menu || { type: "alarms", label: "Alarmer" }, index: 0 });
+      } else {
+        const fronts = this._fronts();
+        this._frontKey = fronts[(fronts.indexOf(this._frontKey) + 1) % fronts.length];
       }
+    } else if (frame.kind === "menu" && !long) {
+      this._open(this._rows(frame)[frame.index]);
+    } else if (frame.kind === "edit" && !long) {
+      const value = frame.options ? frame.options[frame.index].value : frame.value;
+      if (value !== frame.original) this._commit(frame.node, value);
+      this._stack.pop();
+    } else {
+      this._stack.pop();
     }
     this._renderDisplay();
   }
 
-  _commitEdit() {
-    const edit = this._edit;
-    if (!edit || !this._canEdit(edit.node) || !this._hass?.callService) { this._edit = null; return; }
-    const [id, state] = this._mappedState(edit.node);
-    if (id.startsWith("number.")) {
-      const value = Number(edit.value), min = Number(state.attributes.min), max = Number(state.attributes.max);
-      if (Number.isFinite(value) && value >= min && value <= max) this._hass.callService("number", "set_value", { entity_id: id, value });
-    } else if (id.startsWith("select.") && edit.options.includes(edit.value)) {
-      this._hass.callService("select", "select_option", { entity_id: id, option: edit.value });
-    } else if (id.startsWith("switch.") && ["Til", "Fra"].includes(edit.value)) {
-      this._hass.callService("switch", edit.value === "Til" ? "turn_on" : "turn_off", { entity_id: id });
+  _open(item) {
+    if (!item || item.type === "exit") { this._stack.pop(); return; }
+    if (item.type === "menu") { this._stack.push({ kind: "menu", node: item, index: 0 }); return; }
+    if (item.type === "pages") { this._stack.push({ kind: "pages", node: item, page: 0 }); return; }
+    if (item.type === "alarm") { this._stack.push({ kind: "info", title: item.label, lines: [item.fault.critical ? "Enhedsfejl" : "Advarsel", item.fault.detail] }); return; }
+    if (item.type === "device") { this._stack.push({ kind: "info", title: item.label, lines: ["Kun på enheden", "Ingen styring fra HA"] }); return; }
+    if (!this._canEdit(item)) {
+      this._stack.push({ kind: "info", title: item.title, lines: ["Kun visning", this._entity(item.map) ? "Værdien er ikke tilgængelig" : "Ingen HA-entitet"] });
+      return;
     }
-    this._edit = null;
+    const [, state] = this._entity(item.map);
+    if (item.type === "number") {
+      this._stack.push({ kind: "edit", node: item, value: Number(state.state), original: Number(state.state) });
+      return;
+    }
+    const options = this._options(item, state);
+    const index = Math.max(0, options.findIndex((option) => option.value === state.state));
+    this._stack.push({ kind: "edit", node: item, options, index, original: state.state });
+  }
+
+  // Writes only through the entity's own domain service, and only values the entity accepts.
+  _commit(node, value) {
+    if (!this._canEdit(node) || !this._hass?.callService) return;
+    const [id, state] = this._entity(node.map);
+    let call = null;
+    if (node.type === "number") {
+      if (Number.isFinite(value) && value >= Number(state.attributes.min) && value <= Number(state.attributes.max)) call = ["number", "set_value", { entity_id: id, value }];
+    } else if (node.type === "select") {
+      if (state.attributes.options.includes(value)) call = ["select", "select_option", { entity_id: id, option: value }];
+    } else if (node.type === "switch" && ["on", "off"].includes(value)) {
+      call = ["switch", value === "on" ? "turn_on" : "turn_off", { entity_id: id }];
+    }
+    if (!call) return;
+    const title = node.title;
+    Promise.resolve(this._hass.callService(...call)).catch((error) => {
+      if (!this._displayOpen) return;
+      this._notice = { kind: "info", title, lines: ["Ikke gemt", String(error?.message || error || "Ukendt fejl").slice(0, 60)] };
+      this._renderDisplay();
+    });
+  }
+
+  // ---- Controller popup: LCD ---------------------------------------------------------------
+
+  _lcdNumber(value, step) {
+    const decimals = step && Number(step) < 0.5 ? 1 : Number.isInteger(value) ? 0 : 1;
+    return value.toFixed(decimals);
+  }
+
+  _lcdValue(node) {
+    const entity = this._entity(node.map);
+    if (!entity || !this._live(entity[1])) return "--";
+    const [, state] = entity;
+    if (node.type === "number") {
+      const value = Number(state.state);
+      return Number.isFinite(value) ? this._lcdNumber(value, state.attributes?.step) : "--";
+    }
+    const option = this._options(node, state).find((item) => item.value === state.state);
+    return (option?.label || state.state).toUpperCase();
+  }
+
+  _lcdStatus(key) {
+    const entity = this._entity(key);
+    return entity && this._live(entity[1]) ? String(entity[1].state).toUpperCase() : "--";
+  }
+
+  _readout(code, units) {
+    const [key, kind] = READOUTS[code];
+    const entity = this._entity(key);
+    if (!entity || !this._live(entity[1])) return "--";
+    const state = entity[1];
+    if (kind === "binary") return interpretActivity(state) ? "1" : "0";
+    const value = toNumber(state.state);
+    if (value === null) return String(state.state).toUpperCase();
+    const unit = state.attributes?.unit_of_measurement || "";
+    const decimals = kind === "percent" || (kind === "flow" && (Math.abs(value) >= 10 || Number.isInteger(value))) ? 0 : 1;
+    const text = value.toFixed(decimals);
+    if (!units) return text;
+    if (kind === "temperature") return `${text}°C`;
+    if (kind === "percent") return `${text}%`;
+    return unit ? `${text} ${unit.replace("L/", "l/")}` : text;
+  }
+
+  _pages(source) {
+    const spec = STATUS_PAGES[source];
+    const codes = spec.grid.filter((code) => this._entity(READOUTS[code][0]));
+    const pages = [];
+    for (let index = 0; index < codes.length; index += 6) pages.push({ grid: codes.slice(index, index + 6) });
+    const rows = (spec.rows || []).filter(([, key]) => this._entity(key));
+    for (let index = 0; index < rows.length; index += LCD_ROWS) pages.push({ rows: rows.slice(index, index + LCD_ROWS) });
+    return pages.length ? pages : [{ rows: [] }];
+  }
+
+  _lcdMarkup() {
+    const frame = this._notice || this._stack.at(-1);
+    if (!frame) return this._frontLcd();
+    if (frame.kind === "menu") return this._menuLcd(frame);
+    if (frame.kind === "pages") return this._pagesLcd(frame);
+    if (frame.kind === "edit") return this._editLcd(frame);
+    return this._infoLcd(frame);
+  }
+
+  _railCell(key) {
+    if (key === "bv") {
+      const entity = this._entity("dhw_setpoint");
+      const value = entity && this._live(entity[1]) ? toNumber(entity[1].state) : null;
+      return `<span>${value === null ? "--" : `${Math.round(value)}°`}</span>`;
+    }
+    if (key === "varme") return `<span>${escapeHtml(this._shiftText())}</span>`;
+    if (key === "indstil") return `<span>${lcdIcon("gear")}</span>`;
+    return `<span>${this._activeAlarms().length ? lcdIcon("warning") : ""}</span>`;
+  }
+
+  _shiftText(value) {
+    const entity = this._entity("parallel_shift");
+    const shift = value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
+    return shift === null ? "--" : `${shift > 0 ? "+" : shift < 0 ? "−" : "+"}${Math.abs(shift).toFixed(1)}°`;
+  }
+
+  _frontLcd() {
+    const key = this._frontKey;
+    const order = ["bv", "varme", "indstil", "alarm"];
+    const rail = [1, 2, 3].map((offset) => this._railCell(order[(order.indexOf(key) + offset) % order.length])).join("");
+    const pending = this._frontEdit ? " is-pending" : "";
+    let main;
+    if (key === "bv") {
+      const entity = this._entity("dhw_setpoint");
+      const value = this._frontEdit?.value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
+      main = `<div class="lcd-front-title">${lcdIcon("bv")}<b>BV</b></div><div class="lcd-front-value"><span>–</span><strong class="lcd-big${pending}">${value === null ? "--" : `${this._lcdNumber(value, entity?.[1]?.attributes?.step)}°`}</strong><span>+</span></div>`;
+    } else if (key === "varme") {
+      const entity = this._entity("parallel_shift");
+      const shift = this._frontEdit?.value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
+      const level = shift === null ? 50 : clamp(((shift + 9) / 18) * 100, 0, 100);
+      main = `<div class="lcd-front-title">${lcdIcon("varme")}<b>VARME</b></div><div class="lcd-front-value is-shift"><strong class="lcd-big${pending}">${escapeHtml(this._shiftText(shift))}</strong><span class="lcd-thermo" style="--level:${level.toFixed(0)}%"><i></i><b></b></span></div>`;
+    } else if (key === "indstil") {
+      main = `<div class="lcd-front-center"><b>INDSTIL.</b>${lcdIcon("gear", "is-large")}</div>`;
+    } else {
+      const count = this._activeAlarms().length;
+      main = `<div class="lcd-front-center"><b>ALARM</b>${lcdIcon("warning", "is-large")}<small>${count} aktiv${count === 1 ? "" : "e"}</small></div>`;
+    }
+    return `<div class="lcd-front" data-screen="front-${key}"><div class="lcd-front-main">${main}</div><div class="lcd-rail">${rail}</div></div>`;
+  }
+
+  _menuLcd(frame) {
+    const rows = this._rows(frame);
+    const start = clamp(frame.index - 1, 0, Math.max(0, rows.length - LCD_ROWS));
+    const visible = rows.slice(start, start + LCD_ROWS).map((item, offset) => {
+      let value = "";
+      if (["number", "select", "switch"].includes(item.type)) {
+        value = `[${escapeHtml(this._lcdValue(item))}]`;
+        if (!this._canEdit(item)) value = `${lcdIcon("lock", "is-lock")}${value}`;
+      } else if (item.status) value = `[${escapeHtml(this._lcdStatus(item.status))}]`;
+      else if (item.type === "device") value = lcdIcon("lock", "is-lock");
+      const selected = start + offset === frame.index;
+      return `<div class="lcd-row${selected ? " is-selected" : ""}" data-row="${escapeHtml(item.label)}"${item.type === "device" ? ' data-readonly=""' : ""}><span>${escapeHtml(item.label)}</span><em>${value}</em></div>`;
+    }).join("");
+    const thumb = 100 / Math.max(rows.length, 1);
+    return `<div class="lcd-menu" data-screen="menu"><header class="lcd-head"><b>${escapeHtml(frame.node.label)}</b><span>${frame.index + 1}/${rows.length}</span></header><div class="lcd-list"><div class="lcd-rows">${visible}</div><div class="lcd-scroll"><i class="is-up"></i><span><b style="top:${(frame.index * thumb).toFixed(2)}%;height:${thumb.toFixed(2)}%"></b></span><i class="is-down"></i></div></div></div>`;
+  }
+
+  _pagesLcd(frame) {
+    const source = frame.node.source;
+    const pages = this._pages(source);
+    frame.page = clamp(frame.page, 0, pages.length - 1);
+    const page = pages[frame.page];
+    const units = Boolean(STATUS_PAGES[source].units);
+    const title = `${frame.node.label} ${frame.page + 1}/${pages.length}`;
+    const cells = page.grid
+      ? `<div class="lcd-grid${units ? " has-divider" : ""}">${page.grid.map((code) => `<div><span>${code}${units ? "" : ":"}</span><strong>${escapeHtml(this._readout(code, units))}</strong></div>`).join("")}</div>`
+      : `<div class="lcd-lines">${page.rows.length ? page.rows.map(([label, key]) => `<div><span>${escapeHtml(label)}:</span><strong>${escapeHtml(this._lcdStatus(key))}</strong></div>`).join("") : "<p>Ingen data</p>"}</div>`;
+    const head = units
+      ? `<header class="lcd-head"><b>${escapeHtml(title)}</b></header>`
+      : `<header class="lcd-rule"><i></i><b>${escapeHtml(title)}</b><i></i></header>`;
+    const prev = frame.page > 0 ? '<i class="lcd-tri is-left"></i>' : "<i></i>";
+    const next = frame.page < pages.length - 1 ? '<i class="lcd-tri is-right"></i>' : "<i></i>";
+    return `<div class="lcd-pages${units ? " is-sensors" : ""}" data-screen="pages">${head}${cells}<footer class="lcd-exit">${prev}<b>Exit</b>${next}</footer></div>`;
+  }
+
+  _editLcd(frame) {
+    const [, state] = this._entity(frame.node.map) || [];
+    if (frame.options) {
+      const option = frame.options[frame.index];
+      const label = option.value === frame.original ? "Behold" : "Sæt";
+      return `<div class="lcd-edit is-options" data-screen="edit"><header class="lcd-head"><b>${escapeHtml(frame.node.title)}</b><span>${frame.index + 1}/${frame.options.length}</span></header><strong class="lcd-big">${escapeHtml(option.label)}</strong><footer class="lcd-bar"><i class="lcd-tri is-left"></i><b>${label}</b><i class="lcd-tri is-right"></i></footer></div>`;
+    }
+    const unit = state?.attributes?.unit_of_measurement || "";
+    const text = `${this._lcdNumber(frame.value, state?.attributes?.step)}${unit === "°C" ? "°C" : unit ? ` ${unit}` : ""}`;
+    return `<div class="lcd-edit" data-screen="edit"><header class="lcd-head"><b>${escapeHtml(frame.node.title)}</b></header><strong class="lcd-big">${escapeHtml(text)}</strong><footer class="lcd-bar"><span>–</span><b>${frame.value === frame.original ? "Behold" : "Sæt"}</b><span>+</span></footer></div>`;
+  }
+
+  _infoLcd(frame) {
+    return `<div class="lcd-info" data-screen="info"><header class="lcd-head"><b>${escapeHtml(frame.title)}</b></header><div class="lcd-message">${frame.lines.map((line, index) => `<${index ? "small" : "b"}>${escapeHtml(line)}</${index ? "small" : "b"}>`).join("")}</div><footer class="lcd-exit"><i></i><b>Exit</b><i></i></footer></div>`;
+  }
+
+  _displayHint() {
+    const frame = this._notice || this._stack.at(-1);
+    if (!frame) return this._frontEdit ? "ENTER: sæt værdi · hold ENTER: fortryd" : FRONTS[this._frontKey].value ? "▲▼ justér · ENTER: næste · hold ENTER: menu" : "ENTER: næste · hold ENTER: menu";
+    if (frame.kind === "menu") return "▲▼ vælg · ENTER: åbn · hold ENTER: tilbage";
+    if (frame.kind === "pages") return "▲▼ side · ENTER: exit";
+    if (frame.kind === "edit") return "▲▼ ændr · ENTER: sæt/behold · hold ENTER: fortryd";
+    return "ENTER: exit";
+  }
+
+  _renderDisplay() {
+    const lcd = this._refs.lcd;
+    if (!lcd) return;
+    const markup = this._lcdMarkup();
+    if (this._lcdHtml !== markup || this._lcdEl !== lcd) {
+      lcd.innerHTML = markup;
+      this._lcdHtml = markup;
+      this._lcdEl = lcd;
+    }
+    this._text(this._refs["display-hint"], this._displayHint());
   }
 
   _openDisplay() {
     if (!this._refs.modal || this._displayOpen) return;
     this._closeFaults();
+    this._resetDisplay();
     this._displayOpen = true;
-    this._displayPage = 0;
-    this._inMenu = false;
-    this._menuPath = [];
-    this._menuIndex = 0;
-    this._edit = null;
     this._refs.modal.hidden = false;
     this._renderDisplay();
     this._syncAnimation();
@@ -1185,11 +1394,60 @@ class HaCalefaFlowCard extends HTMLElement {
   }
 
   _closeDisplay() {
+    clearTimeout(this._pressTimer);
+    this._press = null;
     this._displayOpen = false;
-    this._edit = null;
+    this._resetDisplay();
     if (this._refs.modal) this._refs.modal.hidden = true;
     if (!this._faultOpen) window.removeEventListener("keydown", this._onKeydown);
     this._syncAnimation();
+  }
+
+  // Touch keys: a held ENTER becomes a long press once the threshold passes, like the controller;
+  // held UP/DOWN repeat while a value is being edited.
+  _handlePointer(event) {
+    if (event.type === "pointerdown") {
+      const key = event.composedPath().find((node) => node?.dataset?.ctl);
+      if (!key || !this._displayOpen || (event.button ?? 0) > 0) return;
+      event.preventDefault();
+      key.setPointerCapture?.(event.pointerId);
+      clearTimeout(this._pressTimer);
+      this._press = { ctl: key.dataset.ctl, el: key, long: false };
+      key.classList.add("is-pressed");
+      if (key.dataset.ctl === "enter") {
+        this._pressTimer = setTimeout(() => {
+          if (!this._press) return;
+          this._press.long = true;
+          this._displayEnter(true);
+        }, LONG_PRESS_MS);
+      } else {
+        const direction = key.dataset.ctl === "up" ? 1 : -1;
+        const repeat = (delay) => {
+          this._pressTimer = setTimeout(() => {
+            if (!this._press || !(this._frontEdit || this._stack.at(-1)?.kind === "edit")) return;
+            this._displayMove(direction);
+            repeat(110);
+          }, delay);
+        };
+        this._displayMove(direction);
+        repeat(450);
+      }
+      return;
+    }
+    const press = this._press;
+    if (!press) return;
+    clearTimeout(this._pressTimer);
+    this._press = null;
+    press.el.classList.remove("is-pressed");
+    this._pointerUpAt = Date.now();
+    if (event.type === "pointerup" && press.ctl === "enter" && !press.long) this._displayEnter(false);
+  }
+
+  // Keyboard or assistive activation of a touch key arrives as a plain click.
+  _pressKey(ctl, event) {
+    if (event?.detail > 0 && Date.now() - (this._pointerUpAt || 0) < 600) return;
+    if (ctl === "enter") this._displayEnter(false);
+    else this._displayMove(ctl === "up" ? 1 : -1);
   }
 
   _activeFaults() {
@@ -1328,10 +1586,7 @@ class HaCalefaFlowCard extends HTMLElement {
     }
     else if (action === "open-legacy-popup") this._openLegacyPopup();
     else if (action === "close-display") this._closeDisplay();
-    else if (action === "display-up") this._displayMove(-1);
-    else if (action === "display-down") this._displayMove(1);
-    else if (action === "display-enter") this._displayEnter();
-    else if (action === "display-long-enter") this._displayEnter(true);
+    else if (action === "display-key") this._pressKey(target.dataset.ctl, event);
   }
 
   _handleKeydown(event) {
@@ -1341,8 +1596,8 @@ class HaCalefaFlowCard extends HTMLElement {
     }
     if (!this._displayOpen) return;
     if (event.key === "Escape") { event.preventDefault(); this._closeDisplay(); }
-    if (event.key === "ArrowUp") { event.preventDefault(); this._displayMove(-1); }
-    if (event.key === "ArrowDown") { event.preventDefault(); this._displayMove(1); }
+    if (event.key === "ArrowUp") { event.preventDefault(); this._displayMove(1); }
+    if (event.key === "ArrowDown") { event.preventDefault(); this._displayMove(-1); }
     if (event.key === "Enter") { event.preventDefault(); this._displayEnter(event.shiftKey); }
     if (event.key === "Backspace") { event.preventDefault(); this._displayEnter(true); }
   }
@@ -1488,10 +1743,76 @@ const CALEFA_STYLES = `
   @container calefa-card (max-width:520px){.cf-tile>ha-icon{display:none}.cf-tile i{display:none}.cf-tile strong em{font-size:9px}.cf-delta small{display:none}.cf-delta strong em{display:none}.cf-footer button{gap:5px}.cf-footer ha-icon{display:none}}
   @container calefa-card (max-width:520px){.cf-main{grid-template-columns:minmax(0,20fr) minmax(0,60fr) minmax(0,20fr)}}
   @container calefa-card (max-width:360px){.cf-main{column-gap:6px}.cf-tile{padding:4px}}
-  .cf-modal{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto}.cf-modal-backdrop{position:absolute;inset:0;background:rgba(2,8,13,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.cf-device{position:relative;width:min(100%,450px);margin:auto;padding:12px;border-radius:24px;background:linear-gradient(155deg,#f0f2f1,#d9dedf 60%,#c5cbcd);color:#1d2b31;box-shadow:0 30px 80px rgba(0,0,0,.5)}.cf-device-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.cf-device-head strong,.cf-device-head small{display:block}.cf-device-head small{color:#607078;font-size:10px}.cf-device-head button{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:rgba(20,35,43,.08);color:#2c3f48}.cf-device-face{padding:9px;border-radius:14px;background:linear-gradient(#e7eae9,#d3d8d9)}.cf-screen{min-height:230px;padding:10px;border:2px solid #576a71;border-radius:7px;background:linear-gradient(#c5d9d3,#aec4bc);color:#142820}.cf-screen-head{display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:2px solid rgba(20,40,32,.5)}.cf-screen-head ha-icon{--mdc-icon-size:18px}.cf-screen-head strong{flex:1;letter-spacing:.07em}.cf-screen-head span{font-size:11px;font-weight:800}.cf-screen-body{padding-top:5px}.cf-screen-row{display:flex;justify-content:space-between;gap:10px;min-height:30px;padding:4px 5px;border-bottom:1px solid rgba(20,40,32,.15);font-size:12px}.cf-screen-row strong{max-width:55%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-keys{display:flex;justify-content:center;gap:15px;margin-top:9px}.cf-keys button{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(0,0,0,.13);border-radius:50%;background:linear-gradient(#fafafa,#dfe4e4);color:#2e4048}.cf-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:8px}.cf-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:47px;padding:4px 2px;border:1px solid rgba(0,0,0,.1);border-radius:10px;background:rgba(255,255,255,.52);color:#364a52;font-size:9px;font-weight:750}.cf-tabs button ha-icon{--mdc-icon-size:17px}.cf-tabs button span{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-tabs button.active{background:#1c3139;color:#eef6f7}
-  .cf-screen{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.cf-screen.is-front .cf-screen-head{display:none}.cf-screen-front{display:grid;grid-template-columns:minmax(0,1fr) 70px;min-height:170px;border:2px solid #1a302a}.cf-screen-front-main{display:flex;flex-direction:column;justify-content:space-between;padding:12px 8px}.cf-screen-front-main small{font-size:16px;font-weight:800}.cf-screen-front-main strong{font-size:35px;line-height:1.1}.cf-screen-front-rail{display:flex;flex-direction:column;border-left:2px solid #1a302a}.cf-screen-front-rail span{display:grid;place-items:center;flex:1;border-bottom:2px solid #1a302a;font-size:10px;font-weight:800}.cf-screen-front-rail span:last-child{border:0}.cf-screen-row.selected{background:#1b342d;color:#ddf6e6}.cf-screen-row.selected strong{color:#fff}.cf-screen-note{padding:12px 5px;font-size:11px}.cf-screen-hint{border-top:1px solid #6d857a;padding-top:5px;font-size:10px}.cf-keys button{display:flex;flex-direction:column;gap:0;font-size:9px;font-weight:800}.cf-keys button span{line-height:1}.cf-long-enter{display:block;width:100%;min-height:44px;margin-top:8px;border:1px solid #9daeb1;border-radius:9px;background:#e1e8e8;color:#24383d;font-size:11px;font-weight:700}button:focus-visible{outline:3px solid #49bdff;outline-offset:2px}
-  .cf-device{width:min(100%,350px);padding:11px;border:1px solid #adb9ba;border-radius:17px;background:linear-gradient(145deg,#e7ebeb,#bec7c9);box-shadow:0 28px 70px #0009}.cf-device-head{padding:0 5px}.cf-device-head strong{font-size:17px;letter-spacing:.08em}.cf-device-head small{font-size:9px}.cf-device-face{border:1px solid #b9c0c0;border-radius:9px;padding:12px 14px;background:linear-gradient(#e4e6e5,#cbd1d2)}.cf-screen{min-height:158px;border:3px solid #51605d;border-radius:3px;padding:6px;background:linear-gradient(145deg,#bfd6ce,#a3beb4);box-shadow:inset 0 3px 9px #3251444f;font-size:10px}.cf-screen-head{min-height:21px;padding:0 3px 3px;border-color:#4e685c}.cf-screen-head strong{font-size:11px}.cf-screen-front{min-height:105px;grid-template-columns:minmax(0,1fr) 56px;border-width:1px}.cf-screen-front-main{padding:7px}.cf-screen-front-main small{font-size:10px}.cf-screen-front-main strong{font-size:27px}.cf-screen-front-rail{border-left-width:1px}.cf-screen-front-rail span{border-bottom-width:1px;font-size:8px}.cf-screen-row{min-height:30px;padding:5px 4px;font-size:11px}.cf-screen-row.selected{background:#162c23;color:#e6f4e9}.cf-screen-hint{font-size:8px;margin-top:3px}.cf-keys{gap:10px;margin-top:10px}.cf-keys button{width:39px;height:39px}.cf-long-enter{min-height:35px;margin-top:8px;font-size:9px}
-  @container calefa-card (max-width:520px){.cf-modal{padding:7px 7px calc(10px + env(safe-area-inset-bottom,0px))}.cf-device{padding:9px;border-radius:18px}}
+  /* Controller popup: the Calefa II V / DHW 212 V ITC fascia, measured on the controller photo (672 x 480). */
+  .cf-modal{position:fixed;inset:0;z-index:999998;display:flex;align-items:center;justify-content:center;padding:max(14px,env(safe-area-inset-top,0px)) 12px max(14px,env(safe-area-inset-bottom,0px));overflow:auto}
+  .cf-modal-backdrop{position:fixed;inset:0;background:rgba(3,9,14,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .ctl-wrap{position:relative;width:min(100%,640px,calc((100vh - 120px) * 1.4));width:min(100%,640px,calc((100dvh - 120px) * 1.4));margin:auto;padding-top:50px;outline:none}
+  .ctl-close{position:absolute;top:0;right:0;display:grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(18,30,38,.9);color:#f2f6f8;cursor:pointer}.ctl-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}.ctl-close:hover{background:#243844}
+  .ctl-hint{margin:12px 0 0;color:#c2d0d7;font:600 12px/1.35 system-ui,sans-serif;text-align:center}
+  .ctl-device{position:relative;container:ctl / inline-size;aspect-ratio:672/480;border-radius:3.2% / 4.5%;background:radial-gradient(130% 100% at 28% 8%,#f5f6f5,#e6e8e7 52%,#d7dad9);box-shadow:0 26px 60px rgba(0,0,0,.55),0 5px 12px rgba(0,0,0,.3),inset 0 2px 0 rgba(255,255,255,.95),inset 0 -4px 7px rgba(0,0,0,.15),inset -3px 0 5px rgba(0,0,0,.06),inset 3px 0 4px rgba(255,255,255,.6);color:#2f3435;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .ctl-logo{position:absolute;left:81.4%;top:6.6%;display:grid;place-items:center;width:14.4%;height:5.2%;border:.42cqw solid #414647;border-radius:99px;color:#414647;font:900 3cqw/1 "Arial Rounded MT Bold","Helvetica Rounded","Nunito","Varela Round",Arial,sans-serif;letter-spacing:.03em}
+  .ctl-lcd{position:absolute;left:23.4%;top:12.3%;box-sizing:border-box;width:54%;height:42%;padding:1.3cqw 1.7cqw 1.1cqw;overflow:hidden;border:.3cqw solid #97a09e;border-radius:.5cqw;background:linear-gradient(172deg,#dbe2e0,#c5cecb 70%,#bec8c5);box-shadow:inset 0 .7cqw 1.4cqw rgba(38,55,50,.3),inset 0 -.2cqw .4cqw rgba(255,255,255,.35),0 0 0 .55cqw #d0d3d2,0 .25cqw 0 .6cqw rgba(255,255,255,.7);color:#131818;font-family:"Roboto Condensed","Arial Narrow","Liberation Sans Narrow","Nimbus Sans Narrow",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:4.2cqw;line-height:1.12;text-shadow:.1cqw .12cqw 0 rgba(19,24,24,.16)}
+  .ctl-lcd:before,.ctl-lcd:after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none}
+  .ctl-lcd:before{background:linear-gradient(158deg,rgba(255,255,255,.22),transparent 38%)}
+  .ctl-lcd:after{background-image:linear-gradient(rgba(214,223,220,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(214,223,220,.2) 1px,transparent 1px);background-size:3px 3px}
+  .ctl-lcd>div{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;min-height:0}
+  .lcd-icon{flex:none;width:1em;height:1em}.lcd-icon.is-lock{width:.78em;height:.78em;opacity:.85}.lcd-icon.is-large{width:12cqw;height:12cqw}
+  .lcd-head{display:flex;flex:none;align-items:baseline;justify-content:space-between;gap:1.2cqw;padding:0 .4cqw .5cqw;border-bottom:.32cqw solid currentColor;font-size:4.5cqw;font-weight:700}
+  .lcd-head b{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.lcd-head span{flex:none;font-size:4.1cqw}
+  .lcd-list{display:flex;flex:1;gap:1cqw;min-height:0;padding-top:.8cqw}
+  .lcd-rows{display:grid;flex:1;grid-template-rows:repeat(3,minmax(0,1fr));min-width:0}
+  .lcd-row{display:flex;align-items:center;justify-content:space-between;gap:1cqw;min-width:0;padding:0 .9cqw;font-weight:500}
+  .lcd-row span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.lcd-row em{display:flex;flex:none;align-items:center;gap:.5cqw;font-style:normal;white-space:nowrap}
+  .lcd-row.is-selected{background:#131818;color:#d3dbd8;text-shadow:none}
+  .lcd-scroll{display:flex;flex:none;flex-direction:column;align-items:center;gap:.5cqw;width:2.4cqw}
+  .lcd-scroll i{width:0;height:0;border-right:1.05cqw solid transparent;border-left:1.05cqw solid transparent}.lcd-scroll i.is-up{border-bottom:1.5cqw solid currentColor}.lcd-scroll i.is-down{border-top:1.5cqw solid currentColor}
+  .lcd-scroll span{position:relative;flex:1;box-sizing:border-box;width:1.9cqw;border:.28cqw solid currentColor}.lcd-scroll span b{position:absolute;right:0;left:0;min-height:1cqw;background:currentColor}
+  .lcd-rule{display:flex;flex:none;align-items:center;gap:1.4cqw;font-size:4.5cqw;font-weight:700}.lcd-rule b{white-space:nowrap}.lcd-rule i{flex:1;height:1.5cqw;background:repeating-linear-gradient(currentColor 0 .28cqw,transparent .28cqw .6cqw)}
+  .lcd-grid{display:grid;flex:1;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);column-gap:3cqw;min-height:0;padding:.5cqw .4cqw 0}
+  .lcd-grid div,.lcd-lines div{display:flex;align-items:center;justify-content:space-between;gap:1cqw;min-width:0;white-space:nowrap}.lcd-grid strong,.lcd-lines strong{overflow:hidden;font-weight:500;text-overflow:ellipsis}
+  .lcd-grid.has-divider{padding-top:.8cqw;background:linear-gradient(currentColor,currentColor) center / .28cqw 100% no-repeat}
+  .lcd-lines{display:grid;flex:1;grid-template-rows:repeat(3,minmax(0,1fr));min-height:0;padding:.3cqw .4cqw 0}.lcd-lines p{margin:auto}
+  .lcd-exit{display:grid;flex:none;grid-template-columns:3cqw 1fr 3cqw;align-items:center;justify-items:center;font-size:5cqw;font-weight:700;line-height:1.15}
+  .is-sensors .lcd-exit{grid-template-columns:0 1fr 3cqw;justify-items:start;padding:.3cqw .4cqw 0;border-top:.32cqw solid currentColor}
+  .lcd-tri{width:0;height:0;border-top:1.5cqw solid transparent;border-bottom:1.5cqw solid transparent}.lcd-tri.is-right{border-left:2cqw solid currentColor}.lcd-tri.is-left{border-right:2cqw solid currentColor}
+  .lcd-big{display:grid;flex:1;place-items:center;min-height:0;overflow:hidden;font-size:11cqw;font-weight:700;letter-spacing:-.02em;line-height:1;white-space:nowrap}
+  .is-options .lcd-big{font-size:7.6cqw}
+  .lcd-bar{display:grid;flex:none;grid-template-columns:1fr 2fr 1fr;align-items:center;justify-items:center;padding-top:.3cqw;border-top:.32cqw solid currentColor;font-size:4.8cqw;font-weight:700}
+  .lcd-bar b{width:100%;border-right:.32cqw solid currentColor;border-left:.32cqw solid currentColor;text-align:center}.lcd-bar span{font-size:6cqw;line-height:1}
+  .is-options .lcd-bar{border-top:0}.is-options .lcd-bar b{border:0}
+  .lcd-message{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:.8cqw;min-height:0;text-align:center}.lcd-message b{font-size:4.8cqw}.lcd-message small{max-width:100%;overflow:hidden;font-size:3.6cqw;text-overflow:ellipsis}
+  .ctl-lcd>.lcd-front{flex-direction:row;border:.32cqw solid currentColor}
+  .lcd-front-main{display:flex;flex:1;flex-direction:column;min-width:0}
+  .lcd-front-title{display:flex;align-items:center;gap:1.4cqw;padding:.8cqw 1.2cqw 0;font-size:5.2cqw}.lcd-front-title .lcd-icon{width:6.2cqw;height:6.2cqw}.lcd-front-title b{font-weight:600}
+  .lcd-front-value{display:flex;flex:1;align-items:center;justify-content:space-around;min-height:0;padding:0 1cqw}.lcd-front-value>span{font-size:6cqw;font-weight:500}.lcd-front-value .lcd-big{flex:none;padding:0 .8cqw}
+  .lcd-front-value.is-shift{justify-content:center;gap:3.5cqw}.lcd-front-value.is-shift .lcd-big{font-size:8.6cqw}
+  .lcd-big.is-pending{background:#131818;color:#d3dbd8;text-shadow:none;animation:lcd-blink 1.1s steps(1,end) infinite}
+  .lcd-thermo{position:relative;width:3cqw;height:12cqw;box-sizing:border-box;border:.4cqw solid currentColor;border-radius:1.5cqw 1.5cqw 2cqw 2cqw}.lcd-thermo b{position:absolute;right:.4cqw;bottom:.4cqw;left:.4cqw;height:max(1cqw,calc(var(--level) - .8cqw));border-radius:.6cqw;background:currentColor}
+  .lcd-thermo i{position:absolute;bottom:calc(var(--level) - 1.1cqw);left:calc(100% + .7cqw);width:0;height:0;border-top:1.1cqw solid transparent;border-right:1.6cqw solid currentColor;border-bottom:1.1cqw solid transparent}
+  .lcd-front-center{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:1cqw}.lcd-front-center b{font-size:5.4cqw;font-weight:600}.lcd-front-center small{font-size:4cqw}
+  .lcd-rail{display:grid;flex:none;grid-template-rows:repeat(3,minmax(0,1fr));width:12.5cqw;border-left:.32cqw solid currentColor}
+  .lcd-rail span{display:grid;place-items:center;font-size:4.4cqw;font-weight:600;white-space:nowrap}.lcd-rail span+span{border-top:.32cqw solid currentColor}.lcd-rail .lcd-icon{width:5cqw;height:5cqw}
+  .ctl-leds{position:absolute;left:22.15%;top:62.6%;display:grid;grid-template-columns:repeat(5,1fr);width:61.5%;height:12.5%}
+  .ctl-led{display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+  .ctl-led svg{width:4.4cqw;height:4.4cqw;fill:none;stroke:#34393a;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .ctl-led i{width:2.2cqw;height:2.2cqw;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8b9090,#4f5455 70%);box-shadow:inset 0 .15cqw .3cqw rgba(0,0,0,.45),0 .12cqw 0 rgba(255,255,255,.8);transition:background .3s,box-shadow .3s}
+  .ctl-led i[data-tone="green"]{background:radial-gradient(circle at 40% 35%,#e9ffe9,#3df06a 45%,#16b53f);box-shadow:0 0 .9cqw .25cqw rgba(61,240,106,.55),0 0 0 .3cqw rgba(61,240,106,.22)}
+  .ctl-led i[data-tone="red"]{background:radial-gradient(circle at 40% 35%,#ffe1e4,#ff2d44 45%,#c20a22);box-shadow:0 0 .9cqw .25cqw rgba(255,45,68,.55),0 0 0 .3cqw rgba(255,45,68,.2)}
+  .ctl-led i[data-tone="cyan"]{background:radial-gradient(circle at 40% 35%,#e6fbff,#3ad7ff 45%,#0a9ec4);box-shadow:0 0 .9cqw .25cqw rgba(58,215,255,.55),0 0 0 .3cqw rgba(58,215,255,.2)}
+  .ctl-led i[data-tone="yellow"]{background:radial-gradient(circle at 40% 35%,#fff9df,#ffd23d 45%,#d49a00);box-shadow:0 0 .9cqw .25cqw rgba(255,210,61,.55),0 0 0 .3cqw rgba(255,210,61,.2)}
+  .ctl-led i[data-blink="slow"]{animation:cf-led 2.5s steps(1,end) infinite}.ctl-led i[data-blink="fast"]{animation:cf-led .7s steps(1,end) infinite}
+  .ctl-usb{position:absolute;left:5%;top:76%;display:grid;place-items:center;width:14%;height:18%;border-radius:1.5cqw;background:linear-gradient(150deg,#eef0ef,#dcdfde);box-shadow:inset 0 0 0 .25cqw #b6bbba,inset .4cqw .5cqw .7cqw rgba(255,255,255,.85),inset -.3cqw -.4cqw .6cqw rgba(0,0,0,.08),0 .35cqw .7cqw rgba(0,0,0,.14)}
+  .ctl-usb:before{content:"";position:absolute;left:-.9cqw;top:24%;width:1.6cqw;height:52%;border-radius:.5cqw;background:linear-gradient(90deg,#d9dcdb,#eceeed);box-shadow:inset 0 0 0 .22cqw #b6bbba}
+  .ctl-usb svg{width:48%;fill:none;stroke:#a2a8a7;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}.ctl-usb .is-fill{fill:#a2a8a7;stroke:none}
+  .ctl-keys{position:absolute;left:23.8%;top:80.4%;display:grid;grid-template-columns:32.7fr 34.6fr 32.7fr;width:59.2%;height:12.2%;border-radius:99px;background:linear-gradient(#d4d7d6,#e2e4e3 70%);box-shadow:inset 0 .55cqw 1.1cqw rgba(0,0,0,.2),inset 0 -.25cqw .35cqw rgba(255,255,255,.75),0 .3cqw 0 rgba(255,255,255,.9),0 -.15cqw 0 rgba(0,0,0,.05)}
+  .ctl-keys button{position:relative;display:grid;place-items:center;min-width:0;height:100%;padding:0;border:0;border-radius:0;background:transparent;color:#2c3132;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;transition:background .12s}
+  .ctl-keys button:after{content:"";position:absolute;inset:-9px 0}.ctl-keys button:first-child{border-radius:99px 0 0 99px}.ctl-keys button:last-child{border-radius:0 99px 99px 0}
+  .ctl-keys button+button{box-shadow:inset .15cqw 0 0 rgba(0,0,0,.16),inset .32cqw 0 0 rgba(255,255,255,.55)}
+  .ctl-keys button svg{width:4.6cqw;height:4.6cqw;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.ctl-keys button .is-fill{fill:currentColor;stroke:none}
+  .ctl-keys button:hover{background:rgba(0,0,0,.035)}.ctl-keys button.is-pressed,.ctl-keys button:active{background:rgba(0,0,0,.1);box-shadow:inset 0 .4cqw .8cqw rgba(0,0,0,.18)}
+  .ctl-keys button:focus-visible{outline:.45cqw solid #1f8fd6;outline-offset:-.6cqw}
+  @keyframes lcd-blink{50%{background:transparent;color:inherit}}
+  @media(prefers-reduced-motion:reduce){.lcd-big.is-pending,.ctl-led i{animation:none!important}}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);

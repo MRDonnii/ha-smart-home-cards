@@ -4,7 +4,7 @@
 
 The five status LEDs below the LCD follow the [Calefa II V installation guide, page 11](https://mediahub.wavin.com/asset/e8a83f16-98ba-40d9-b1f7-36f48de9e858/Calefa-II-V-Installer-Guide-UK.pdf): power (green when unit data is available), fault (yellow warning or red error from configured alarm entities), mode (red heating, steady cyan hot water, slow cyan blink bypass), LAN, and peripheral. The peripheral LED uses the configured outdoor temperature sensor and its fault alarm: green when available and slow green blink on fault. LAN needs an optional `lan_status` entity; without a Calefa LAN/cloud entity it stays neutral. `peripheral_status` can override the outdoor sensor proxy. The card does not claim to read USB power, boot/update, or wireless enrollment directly from Modbus.
 
-The virtual controller follows the front-menu and submenu layout in [Wavin's Calefa II V installation guide, pages 8–20](https://promo.wavin.com/hubfs/Denmark/Download%20files/Calefa_II_V_Vejledning_Web_20230502.pdf). It opens only when the unit display is tapped. Escape, the backdrop and the close button dismiss it. Short ENTER cycles BV, VARME, INDSTIL. and ALARM on the front screen. Long ENTER opens a submenu or returns. OP/NED navigates; the controls are displayed in the physical order NED, ENTER, OP. Menu branches appear only when a configured Home Assistant state exists for a leaf or a verified writable entity is explicitly mapped. Unsupported schedule, registration, date/time and motorservice branches are hidden.
+Tapping the unit display opens a controller popup that reproduces the physical Wavin Calefa II V / DHW 212 V ITC controller: light-grey fascia, Wavin logo, USB flap, a monochrome pixel LCD, the five status indicators (mirroring the LEDs on the unit illustration) and the recessed DOWN / ENTER / UP touch strip. Screens and navigation follow [Wavin's Calefa II V installation guide, pages 10–24](https://promo.wavin.com/hubfs/Denmark/Download%20files/Calefa_II_V_Vejledning_Web_20230502.pdf): a short ENTER selects or switches front menu (BV, VARME, INDSTIL. and ALARM while an alarm is active), a held ENTER (0.6 s) opens the front's menu or goes back one level, and UP/DOWN move the black selection bar or change values. Menus end with an Exit row, show a position counter such as `2/5` and a scrollbar; values use the controller's numeric editor (`– Behold/Sæt +`) or option editor (`◀ Behold/Sæt ▶`). Escape, the backdrop and the close button dismiss the popup; on a keyboard, arrows move, Enter is a short press and Shift+Enter or Backspace a long press.
 
 ## Minimal YAML
 
@@ -40,7 +40,7 @@ heating_active: sensor.wavin_calefa_2_heating_state_ch
 dhw_active: sensor.wavin_calefa_2_brugsvand_status
 pressure: sensor.wavin_calefa_2_anlaegstryk
 outdoor_temperature: sensor.wavin_calefa_2_udetemperatur_ut
-# Optional, verified writable entities. Every actual change needs a second ENTER.
+# Optional. Normally bound automatically from the entity registry; only needed for manual cards.
 display_entities:
   dhw_setpoint: number.REPLACE_WITH_DHW_SETPOINT
   parallel_shift: number.REPLACE_WITH_PARALLEL_SHIFT
@@ -51,12 +51,16 @@ display_entities:
   heat_max_return: number.REPLACE_WITH_MAX_RETURN
   return_limiter_mode: select.REPLACE_WITH_RETURN_MODE
   return_limiter_gain: number.REPLACE_WITH_RETURN_GAIN
+  return_priority: switch.REPLACE_WITH_RETURN_PRIORITY
   summer_shutdown: number.REPLACE_WITH_SUMMER_SHUTDOWN
+  bypass_mode: select.REPLACE_WITH_BYPASS_MODE
   bypass_temperature: number.REPLACE_WITH_BYPASS_TEMPERATURE
+  circulation_temperature: number.REPLACE_WITH_CIRCULATION_TEMPERATURE
   auto_standby: switch.REPLACE_WITH_AUTO_STANDBY
-  return_enabled: switch.REPLACE_WITH_RETURN_ENABLED
   standby: switch.REPLACE_WITH_STANDBY
-  circulation_pump: switch.REPLACE_WITH_CIRCULATION_PUMP
+  vacation: switch.REPLACE_WITH_VACATION
+  vacation_dhw: switch.REPLACE_WITH_VACATION_DHW
+  vacation_ch: switch.REPLACE_WITH_VACATION_CH
   room_profile: select.REPLACE_WITH_ROOM_PROFILE
   room_schedule: switch.REPLACE_WITH_ROOM_SCHEDULE
   room_temporary_mode: switch.REPLACE_WITH_ROOM_TEMPORARY_MODE
@@ -71,26 +75,26 @@ All ordinary entity fields are optional: `fjv_supply`, `fjv_return`, `fjv_flow`,
 
 ## Controller menu specification
 
-| Parent | Child | Data / binding | Behavior |
-| --- | --- | --- | --- |
-| BV front | Temperature | `dhw_setpoint` / `display_entities.dhw_setpoint` | Live; writable only with a mapped `number` |
-| BV | Temperatur, Status, Bypass | BV temperatures, flow, valve | Status values read-only |
-| Bypass | Mode | AUTO, PLANLÆG, KOMFORT, ØKO | Read-only unless a select has exactly these options |
-| Bypass | Planlæg → Ugeplan / weekday | No HA mapping | Hidden |
-| Bypass | Temperatur → Type / Ønsket temperatur | `bypass_temperature_mode`, `bypass_temperature` | Number writable only when explicitly mapped; type requires matching select options |
-| VARME front | Parallelforskydning | `parallel_shift` | Validated `number`, if mapped |
-| ITC | Status, Varmekurve, Returbegrænser | Live heat data | Status read-only |
-| Varmekurve | Type & værdi, Paral-forskyd, Min Varme F., Maks Varme F. | `heat_curve_type`, `heat_curve_slope`, `parallel_shift`, `heat_min_supply`, `heat_max_supply` | Live or read-only unless mapped |
-| Returbegrænser | Mode, Maks. retur, Forstærkning | `return_limiter_mode`, `heat_max_return`, `return_limiter_gain` | Live or read-only unless mapped |
-| INDSTIL. | BV, ITC, Rum, Programmer, Avanceret, Dato og tid, Føler, Exit | Menu navigation | Read-only by default |
-| Programmer | Temperaturer → Udkobl. temp. | `summer_shutdown` | Number writable if mapped |
-| Avanceret | Komponenter → Tilmeld / Fjern → Udendørsføler / Termostat | No HA mapping | Hidden |
-| Avanceret | BV motorservice / CV motorservice | No HA mapping | Hidden |
-| Dato og tid | År, Måned, Dag, Timer, Minutter, Sekunder | No HA mapping | Hidden |
-| Føler | Available temperatures, flow and pressure | Configured sensor entities | Read-only |
-| ALARM | Aktuelle alarmer | `alarm_entities` with existing binary sensors | Hidden when no alarm entities are configured; no invented faults |
+`🔒` marks rows that are display-only: the controller function exists, but the `wavin_calefa` integration exposes no control for it. Opening one shows "Kun på enheden" and never calls a service. A writable row whose entity is missing or unavailable is shown as `[--]` with the same lock.
 
-The installed `wavin_calefa` integration exposes verified `number` and `select` controls. The card sends only `number.set_value`, `select.select_option`, or `switch.turn_on`/`turn_off`, after a separate confirmation, and only to an explicitly mapped entity of that domain. It checks the current number range or select options from Home Assistant state attributes. The INDSTIL. menus also expose the verified HA room profile, scheduled and temporary modes, Eco/Comfort temperatures, automatic standby, return limiter enablement, Calefa standby and circulation pump controls when their mapped entities exist. The integration's DHW mode (`Skema`, `Adaptivt skema`, `Øko`, `Komfort`) is **not** treated as the manual's bypass mode (`AUTO`, `PLANLÆG`, `KOMFORT`, `ØKO`), since those controls are not equivalent. There is no automatic component registration or motorservice action. The ALARM front is hidden until an actual configured `alarm_entities` state is available. Empty menu groups are pruned automatically.
+| Menu | Rows | Binding (integration unique ID) | Behaviour |
+| --- | --- | --- | --- |
+| BV front | `– 52° +` | `dhw_setpoint` (`dhw_temperature_setpoint_control`) | UP/DOWN edit, ENTER sets, held ENTER cancels |
+| VARME front | `+0.0°` with thermometer | `parallel_shift` (`heat_curve_parallel_shift`) | Same as BV front, ±9 °C |
+| INDSTIL. front | gear | – | Held ENTER opens INDSTIL. |
+| ALARM front | warning and count | `alarm_entities` | Only while an alarm is active; alarm list and details are read-only |
+| BV | Temperatur, Status, Bypass, Cirkulation, Exit | `dhw_setpoint`, `circulation_temperature` (`circulation_temperature_control`) | Status shows BV/KV/FJF/FJR/FLW/BVV, then status, bypass, blocking, regulator and circulation |
+| Bypass | Mode, Se tidsplaner 🔒, Temperatur | `bypass_mode` (`dhw_mode_control`), `bypass_temperature` (`dhw_bypass_temperature_control`) | Mode shows Auto / Planlæg / Komfort / Øko, written as the entity's own `Adaptivt skema` / `Skema` / `Komfort` / `Øko` |
+| ITC | Status, Varmekurve, Returbegrænser, Exit | `heating_active` | Status shows VF/VR/UT/ØVF/CVV/PUM, then status, blocking and regulator |
+| Varmekurve | Type, Hældning, Paral-forskyd, Min. Varme F., Maks. Varme F. | `heat_curve_type`, `heat_curve_slope`, `parallel_shift`, `heat_min_supply`, `heat_max_supply` | Manuel / Gulvvarme / Radiator |
+| Returbegrænser | Mode, Maks. retur, Forstærkning, Prioritet | `return_limiter_mode`, `heat_max_return`, `return_limiter_gain`, `return_priority` (`return_limiter_priority_over_supply`) | Fra / Maksimum |
+| INDSTIL. | BV, ITC, Rum, Programmer, Avanceret, Dato og tid 🔒, Føler, Exit | – | BV and ITC are shortcuts to the same menus |
+| Rum | Komfortniveau, Øko, Komfort, Ekstra komfort, Skema, Midl. mode, Midl. temp., Midl. varighed | `room_profile`, `eco_temperature`, `comfort_temperature`, `extra_comfort_temperature`, `room_schedule`, `room_temporary_mode`, `temporary_temperature`, `temporary_duration` | |
+| Programmer | Temperaturer → Udkobl. temp., Standby, Aut. standby, Ferie, Ferie BV, Ferie CV | `summer_shutdown`, `standby`, `auto_standby`, `vacation`, `vacation_dhw`, `vacation_ch` | |
+| Avanceret | CV manl. ventil, BV motorservice, CH motorservice, Komponenter, Kopier opsætning | – | All 🔒 |
+| Føler | FJF, BV, FJR, KV, PRE, FLW, VF, VR, UT, ØVF, CVV, BVV, PUM, BYP | Configured sensors | Read-only, six values per page |
+
+Writes use only `number.set_value`, `select.select_option` or `switch.turn_on`/`turn_off` on the bound entity of that domain. Numbers are stepped with the entity's own `step` and kept within its `min`/`max`; selects only offer options that the entity lists; a value is sent only when ENTER is pressed on `Sæt`. If Home Assistant rejects the call, the LCD shows "Ikke gemt" with the reason. The integration names the `dhw_mode_control` select "Bypass-mode" with the same four modes as the guide's bypass menu (Auto = adaptive schedule, Planlæg = fixed schedule, Komfort = always on, Øko = off), so the card binds it there. Older manual `display_entities` keys `return_enabled` and `circulation_pump` are no longer used; the registry binds `return_priority` and the vacation switches by unique ID instead.
 
 ## Appearance and activity
 
