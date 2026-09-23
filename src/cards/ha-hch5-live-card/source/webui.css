@@ -494,15 +494,32 @@ button { font: inherit; color: inherit; }
 }
 
 /* Only the full HA card on a portrait-sized mobile viewport. Give the moving
-   unit more height and keep each sensor value in one readable place below it. */
+   unit more height, with one readable T1-T4 badge beside each matching pipe. */
 @media (max-width: 660px) {
   @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch5-visual { position: relative; }
     .dashboard-overview .hch5-visual > svg {
       width: 90%; max-width: 90%; height: auto; margin: 24px auto;
       transform: scaleY(1.42); transform-origin: center;
     }
     .dashboard-overview .hch5-visual :is(.hch-temp-port,.hch-sensor-pin,.hch-water-callout) { display: none; }
-    .dashboard-overview .hch-mobile-flow { gap: 8px; }
+    .dashboard-overview .hch-mobile-flow { gap: 0; padding: 8px 2px; }
+    .dashboard-overview .hch-mobile-lane { display: contents; }
+    .dashboard-overview .hch-mobile-reading {
+      position: absolute; z-index: 1; width: clamp(68px, 24cqi, 90px);
+      display: grid; gap: 2px; padding: 4px 5px; border-radius: 8px;
+      background: rgb(10 27 38 / 90%); box-shadow: 0 3px 12px rgb(0 0 0 / 28%);
+    }
+    .dashboard-overview .hch-mobile-reading small { font-size: 8px; }
+    .dashboard-overview .hch-mobile-reading strong { font-size: 14px; }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:first-child { top: calc(6px + 6cqi); }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { top: calc(22px + 14cqi); }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { right: -4px; }
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child { left: -4px; }
     .dashboard-overview .hch-mobile-core { display: none; }
     .dashboard-overview .hch-mobile-subreadings { display: grid; }
     .dashboard-overview .hch-mobile-subreadings span { font-size: 9px; }
