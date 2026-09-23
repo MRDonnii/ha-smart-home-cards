@@ -32,7 +32,7 @@ const METRICS = {
   dhw_temperature: { label: "Varmt vand", icon: "mdi:water-thermometer", tone: "dhw", kind: "temperature" },
   cold_water_temperature: { label: "Koldt vand", icon: "mdi:water-outline", tone: "cold", kind: "temperature" },
   pump: { label: "Pumpe", icon: "mdi:fan", tone: "component", kind: "pump" },
-  heating_valve: { label: "Varmeventil", icon: "mdi:valve", tone: "component", kind: "valve" },
+  heating_valve: { label: "V-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
   dhw_valve: { label: "BV-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
 };
 
