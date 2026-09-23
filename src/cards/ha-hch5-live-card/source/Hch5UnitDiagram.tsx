@@ -419,7 +419,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <div className="hch-mobile-lane supply">
         <div className="hch-mobile-reading"><small>Udeluft · T1</small><strong>{fmt(outdoor)}</strong></div>
         <div className="hch-mobile-route"><span>→</span><i/><span>→</span></div>
-        <div className="hch-mobile-reading"><small>Tilluft · T2</small><strong>{fmt(afterHeater)}</strong></div>
+        <div className="hch-mobile-reading"><small>Ind · T2AH</small><strong>{fmt(afterHeater)}</strong></div>
       </div>
       <div className="hch-mobile-core"><span>VARMEGENVINDING</span><strong>{recovery === null ? "—" : `${recovery}%`}</strong><span className={bypassOpen ? "bypass-open" : ""}>{bypassPhase ? bypassLabel : bypassOpen ? "Bypass åben" : "Bypass lukket"}</span></div>
       <div className="hch-mobile-lane extract">
