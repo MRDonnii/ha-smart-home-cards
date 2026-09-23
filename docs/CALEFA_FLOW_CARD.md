@@ -119,7 +119,9 @@ Moving arrows run along active tracks; their speed follows the measured flow in 
 
 The pump has a thin rim on its housing edge and three long arrows with fading tails running in the bezel band of the pump head: blue and turning while the pump runs (faster with `pump_speed`), red and still when it is off. Each valve has a ring whose arc length is the opening in percent; while the valve is open a light dot travels through the open part of the ring, faster the more open the valve is, and the percentage is written next to it. A closed valve shows a grey ring, and callout lines to stopped components turn grey.
 
-The square **Info** button is centred in the black hood between the display and the hood's right edge. It opens the existing Fjernvarme card popup with Styring and Forbrug tabs. The display on the unit shows the live front temperature on its LCD and opens the virtual controller.
+The square **Info** button is centred in the black hood to the right of the display. The matching warning triangle appears to the left only while a configured Calefa fault or warning is active. It opens a popup listing the active alarm names and descriptions; tapping one opens its Home Assistant entity details. The display on the unit shows the live front temperature and opens the virtual controller.
+
+`popup_card` can hold the previous Fjernvarme card configuration as a hidden popup owner inside Calefa Flow. This keeps its full Styring and eight Forbrug cards available from Info after removing the old card from the dashboard view. The older card resource must remain registered while this popup configuration is used; the old card is created only when Info is opened and is not shown as a second dashboard card.
 
 The optional `unit_image` (or legacy `background_image`) accepts a Home Assistant-accessible URL. `background_fit: contain` is retained for compatibility. The bundled illustration is encoded in the HACS JavaScript bundle; no additional HACS resource is needed. If a custom image fails, the card falls back to its SVG unit. `animations: false` disables motion. CSS also respects `prefers-reduced-motion`, and an off-screen observer pauses animation.
 
