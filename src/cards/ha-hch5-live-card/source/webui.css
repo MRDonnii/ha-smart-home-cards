@@ -376,58 +376,59 @@ button { font: inherit; color: inherit; }
   .pro-air-card { padding: 11px 9px; }
 }
 
-/* The Smartdash front-page slot keeps the real HCH5 SVG and its React tree.
-   Only readbacks already repeated in the compact rail are hidden. */
-.hch-card:has(.hch-smartdash) { height: 100%; box-sizing: border-box; padding: 7px 9px; overflow: hidden; background: transparent; border-radius: 0; }
-.hch-smartdash { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--ink, #eef4fa); font-size: 11px; }
-.hch-smartdash-head { display: flex; justify-content: space-between; align-items: center; gap: 7px; min-height: 20px; white-space: nowrap; }
-.hch-smartdash-head strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
-.hch-smartdash-head strong span { font-weight: 500; color: var(--ink-muted, #a8b8c5); }
-.hch-smartdash-state { color: #69d9ab; font-size: 10px; }
-.hch-smartdash-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(125px, 1fr); gap: 7px; }
-.hch-smartdash-art { min-width: 0; min-height: 0; display: flex; align-items: center; overflow: hidden; }
-.hch-smartdash-art .hch5-visual { width: 100%; margin: 0; padding: 0; perspective: none; }
-.hch-smartdash-art .hch5-visual > svg { width: 100%; max-height: 158px; transform: none; }
+/* Smartdash keeps the real HCH5 SVG and puts its daily controls in one
+   clear dock. The dashboard panel supplies the only card background. */
+.hch-card:has(.hch-smartdash) { height: 100%; box-sizing: border-box; padding: 10px 12px; overflow: hidden; background: transparent; border-radius: 0; }
+.hch-smartdash { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--ink, #eef4fa); }
+.hch-smartdash-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; white-space: nowrap; }
+.hch-smartdash-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+.hch-smartdash-head strong span { color: var(--ink-muted, #a8b8c5); font-weight: 500; }
+.hch-smartdash-state { color: #69d9ab; font-size: 11px; }
+.hch-smartdash-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.hch-smartdash-art { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.hch-smartdash-art .hch5-visual { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; perspective: none; }
+.hch-smartdash-art .hch5-visual > svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-height: 0; flex: 1 1 auto; transform: none; }
 .hch-smartdash-art :is(.unit-readback-row,.hch-mobile-flow) { display: none; }
-.hch-smartdash-controls { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
-.hch-smartdash-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; color: var(--ink-muted,#9badbc); font-size: 9px; }
-.hch-smartdash-readings span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hch-smartdash-readings b { color: var(--ink,#eef4fa); font-size: 10px; }
-.hch-smartdash-control-row { display: flex; align-items: center; gap: 4px; min-height: 20px; }
-.hch-smartdash-control-row small { width: 39px; flex: none; color: var(--ink-muted,#9badbc); font-size: 9px; }
-.hch-smartdash-control-row > div { display: flex; min-width: 0; flex: 1; gap: 2px; }
-.hch-smartdash-control-row button { min-width: 0; min-height: 21px; flex: 1; padding: 1px 2px; border: 1px solid color-mix(in srgb,var(--ink,#eef4fa) 17%,transparent); border-radius: 6px; background: color-mix(in srgb,var(--ink,#eef4fa) 5%,transparent); color: var(--ink,#eef4fa); font: inherit; font-size: 9px; cursor: pointer; }
-.hch-smartdash-control-row button[aria-pressed="true"] { background: color-mix(in srgb,var(--accent-a,#38bdf8) 30%,transparent); border-color: var(--accent-a,#38bdf8); color: var(--ink,#fff); }
-.hch-smartdash-control-row button:disabled { opacity: .48; cursor: default; }
-.hch-smartdash-control-row button:focus-visible { outline: 2px solid var(--accent-a,#38bdf8); outline-offset: 1px; }
-.hch-smartdash-notice { position: absolute; right: 8px; bottom: 4px; max-width: 75%; padding: 3px 6px; border-radius: 5px; background: #783e42; color: white; font-size: 9px; }
-:host([mobile]) .hch-card:has(.hch-smartdash) { padding: 8px; }
-:host([mobile]) .hch-smartdash { height: auto; }
-:host([mobile]) .hch-smartdash-body { display: flex; flex-direction: column; gap: 4px; }
-:host([mobile]) .hch-smartdash-art .hch5-visual > svg { max-height: none; }
-:host([mobile]) .hch-smartdash-controls { gap: 5px; overflow: visible; }
-:host([mobile]) .hch-smartdash-readings { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
-:host([mobile]) .hch-smartdash-readings span { display: flex; flex-direction: column; padding: 4px 5px; background: color-mix(in srgb,var(--ink,#fff) 5%,transparent); border-radius: 7px; }
-:host([mobile]) .hch-smartdash-control-row { min-height: 27px; }
-:host([mobile]) .hch-smartdash-control-row small { width: 52px; font-size: 10px; }
-:host([mobile]) .hch-smartdash-control-row button { min-height: 27px; font-size: 10px; }
-.hch-smartdash-body { display: flex; flex-direction: column; gap: 1px; }
-.hch-smartdash-art { flex: 1; min-height: 0; justify-content: center; }
-.hch-smartdash-art .hch5-visual { height: 100%; display: flex; align-items: center; justify-content: center; }
-.hch-smartdash-art .hch5-visual > svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-height: 0; flex: 1 1 auto; }
-.hch-smartdash-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 5px; flex: none; }
+.hch-smartdash-controls { flex: none; min-width: 0; display: grid; grid-template-columns: 1fr 1.1fr .9fr; gap: 10px 12px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--ink,#eef4fa) 15%, transparent); }
 .hch-smartdash-readings { display: none; }
-.hch-smartdash-control-row { min-height: 20px; }
-.hch-smartdash-control-row small { width: 34px; }
-.hch-smartdash-control-row button { min-height: 20px; }
-:host([mobile]) .hch-card:has(.hch-smartdash) { height: auto; min-height: 0; overflow: visible; }
-:host([mobile]) .hch-smartdash-body { gap: 4px; }
+.hch-smartdash-control-row { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hch-smartdash-control-label { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; color: var(--ink,#eef4fa); font-size: 11px; font-weight: 700; }
+.hch-smartdash-control-label span,.hch-smartdash-control-label em { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hch-smartdash-control-label em { color: var(--ink-muted,#a8b8c5); font-size: 10px; font-style: normal; font-weight: 500; }
+.hch-smartdash-choice { min-width: 0; display: flex; gap: 4px; }
+.hch-smartdash-choice button { min-width: 0; min-height: 35px; flex: 1; padding: 4px 6px; border: 1px solid color-mix(in srgb, var(--ink,#eef4fa) 22%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--ink,#eef4fa) 7%, transparent); color: var(--ink,#eef4fa); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .16s ease,border-color .16s ease,box-shadow .16s ease; }
+.hch-smartdash-choice button:not(:disabled):hover { background: color-mix(in srgb, var(--hch-accent,#58b9ff) 16%, transparent); border-color: color-mix(in srgb, var(--hch-accent,#58b9ff) 55%, transparent); }
+.hch-smartdash-choice button[aria-pressed="true"] { background: color-mix(in srgb, var(--hch-accent,#58b9ff) 28%, transparent); border-color: var(--hch-accent,#58b9ff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hch-accent,#58b9ff) 28%, transparent); }
+.hch-smartdash-choice button:disabled { opacity: .45; cursor: default; }
+.hch-smartdash-choice button[aria-pressed="true"]:disabled { opacity: 1; }
+.hch-smartdash-choice button:focus-visible { outline: 2px solid var(--hch-accent,#58b9ff); outline-offset: 2px; }
+.hch-smartdash-boost { grid-column: 1; }
+.hch-smartdash-fireplace { grid-column: 2 / 4; }
+.hch-smartdash-notice { position: absolute; right: 12px; bottom: 12px; max-width: 75%; padding: 5px 8px; border-radius: 7px; background: #783e42; color: #fff; font-size: 10px; }
+@container hch-card (max-width: 650px) {
+  .hch-smartdash-controls { gap: 5px 7px; padding-top: 5px; }
+  .hch-smartdash-control-row { gap: 3px; }
+  .hch-smartdash-control-label { font-size: 9px; }
+  .hch-smartdash-control-label em { font-size: 8px; }
+  .hch-smartdash-choice { gap: 2px; }
+  .hch-smartdash-choice button { min-height: 28px; padding: 2px; border-radius: 6px; font-size: 9px; }
+}
+:host([mobile]) .hch-card:has(.hch-smartdash) { height: auto; min-height: 0; padding: 8px; overflow: visible; }
+:host([mobile]) .hch-smartdash { height: auto; }
+:host([mobile]) .hch-smartdash-body { gap: 5px; }
 :host([mobile]) .hch-smartdash-art { flex: none; }
 :host([mobile]) .hch-smartdash-art .hch5-visual { height: auto; display: block; }
 :host([mobile]) .hch-smartdash-art .hch5-visual > svg { height: auto; max-height: none; }
-:host([mobile]) .hch-smartdash-controls { display: flex; }
-:host([mobile]) .hch-smartdash-readings { display: grid; }
-
+:host([mobile]) .hch-smartdash-controls { grid-template-columns: 1fr 1fr; gap: 9px 7px; padding-top: 9px; }
+:host([mobile]) .hch-smartdash-readings { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
+:host([mobile]) .hch-smartdash-readings span { min-width: 0; display: flex; flex-direction: column; overflow: hidden; padding: 5px; border-radius: 7px; background: color-mix(in srgb,var(--ink,#fff) 5%,transparent); color: var(--ink-muted,#a8b8c5); font-size: 9px; white-space: nowrap; }
+:host([mobile]) .hch-smartdash-readings b { color: var(--ink,#eef4fa); font-size: 11px; }
+:host([mobile]) .hch-smartdash-mode,:host([mobile]) .hch-smartdash-level,:host([mobile]) .hch-smartdash-fireplace { grid-column: 1 / -1; }
+:host([mobile]) .hch-smartdash-bypass { grid-column: 1; }
+:host([mobile]) .hch-smartdash-boost { grid-column: 2; }
+:host([mobile]) .hch-smartdash-control-label { font-size: 10px; }
+:host([mobile]) .hch-smartdash-control-label em { font-size: 9px; }
+:host([mobile]) .hch-smartdash-choice button { min-height: 31px; font-size: 10px; }
 /* WebUI @media (max-width: 360px). */
 @container hch-card (max-width: 340px) {
   .hch5-visual.compact .hch-mobile-flow { padding: 9px; }
