@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.4.0";
+const CALEFA_FLOW_CARD_VERSION = "0.5.0";
 
 const ENTITY_KEYS = [
   "fjv_supply", "fjv_return", "fjv_flow",
@@ -20,39 +20,6 @@ const OFF_WORDS = new Set([
   "standby", "stand-by", "inactive", "inaktiv", "stop", "stopped", "stoppet",
   "fra", "slukket", "ingen", "sommer", "sommerstop", "summer",
 ]);
-
-const METRICS = {
-  fjv_supply: { label: "FJV frem", icon: "mdi:transmission-tower-import", tone: "supply", kind: "temperature" },
-  fjv_return: { label: "FJV retur", icon: "mdi:transmission-tower-export", tone: "return", kind: "temperature" },
-  heating_supply: { label: "Varme frem", icon: "mdi:radiator", tone: "heat", kind: "temperature" },
-  heating_return: { label: "Varme retur", icon: "mdi:radiator-disabled", tone: "heat-return", kind: "temperature" },
-  dhw_temperature: { label: "Varmt vand", icon: "mdi:water-thermometer", tone: "dhw", kind: "temperature" },
-  cold_water_temperature: { label: "Koldt vand", icon: "mdi:water-outline", tone: "cold", kind: "temperature" },
-  pump: { label: "Pumpe", icon: "mdi:pump", tone: "component", kind: "pump" },
-  heating_valve: { label: "Varmeventil", icon: "mdi:valve", tone: "component", kind: "valve" },
-  dhw_valve: { label: "BV-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
-};
-
-const DISPLAY_PAGES = [
-  { title: "STATUS", icon: "mdi:home-outline", rows: [
-    ["Drift", "derived:mode"], ["Varme", "derived:heating"], ["Brugsvand", "derived:dhw"],
-    ["FJV frem", "fjv_supply", "temperature"], ["FJV retur", "fjv_return", "temperature"],
-  ] },
-  { title: "VARME", icon: "mdi:radiator", rows: [
-    ["Fremløb", "heating_supply", "temperature"], ["Retur", "heating_return", "temperature"],
-    ["Delta T", "derived:heatingDelta"], ["Setpunkt", "heating_setpoint", "temperature"],
-    ["Ventil", "heating_valve", "valve"], ["Pumpe", "derived:pump"], ["Flow", "heating_flow", "flow"],
-  ] },
-  { title: "BRUGSVAND", icon: "mdi:water-thermometer", rows: [
-    ["Varmt vand", "dhw_temperature", "temperature"], ["Setpunkt", "dhw_setpoint", "temperature"],
-    ["Koldt vand", "cold_water_temperature", "temperature"], ["Flow", "water_flow", "flow"],
-    ["Ventil", "dhw_valve", "valve"], ["Status", "derived:dhw"],
-  ] },
-  { title: "ANLÆG", icon: "mdi:gauge", rows: [
-    ["Afkøling", "derived:cooling"], ["Effekt", "power", "power"], ["Tryk", "pressure", "pressure"],
-    ["Ude", "outdoor_temperature", "temperature"], ["Bolig", "room_temperature", "temperature"],
-  ] },
-];
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
@@ -76,6 +43,13 @@ function interpretActivity(stateObj, context = "generic") {
   return numeric === null ? null : numeric > 0;
 }
 
+const METRIC_META = {
+  fjv_supply: { label: "FJV frem", tone: "orange", icon: "mdi:transmission-tower-import" },
+  fjv_return: { label: "FJV retur", tone: "blue", icon: "mdi:transmission-tower-export" },
+  heating_supply: { label: "Varme frem", tone: "amber", icon: "mdi:radiator" },
+  heating_return: { label: "Varme retur", tone: "sky", icon: "mdi:radiator-disabled" },
+};
+
 class HaCalefaFlowCard extends HTMLElement {
   constructor() {
     super();
@@ -84,11 +58,9 @@ class HaCalefaFlowCard extends HTMLElement {
     this._hass = null;
     this._built = false;
     this._refs = {};
-    this._metricNodes = new Map();
     this._seen = new Map();
     this._displayOpen = false;
     this._displayPage = 0;
-    this._model = null;
     this._onClick = (event) => this._handleClick(event);
     this._onKeydown = (event) => this._handleKeydown(event);
     this.shadowRoot.addEventListener("click", this._onClick);
@@ -127,8 +99,6 @@ class HaCalefaFlowCard extends HTMLElement {
     this._config = {
       title: text(config.title, "Calefa II 40/40"),
       subtitle: text(config.subtitle, "Fjernvarmeunit"),
-      background_image: text(config.background_image),
-      background_fit: config.background_fit === "cover" ? "cover" : "contain",
       flow_threshold: Math.max(0, toNumber(config.flow_threshold) ?? 0.05),
       valve_threshold: Math.max(0, toNumber(config.valve_threshold) ?? 1),
       show_footer: config.show_footer !== false,
@@ -148,21 +118,10 @@ class HaCalefaFlowCard extends HTMLElement {
   }
 
   get hass() { return this._hass; }
-  getCardSize() { return 9; }
+  getCardSize() { return 8; }
   getGridOptions() { return { columns: 12, min_columns: 6, rows: "auto" }; }
 
-  connectedCallback() {
-    if (typeof IntersectionObserver === "undefined" || this._observer) return;
-    this._observer = new IntersectionObserver((entries) => {
-      const entry = entries[entries.length - 1];
-      this._refs.root?.classList.toggle("is-offscreen", entry ? !entry.isIntersecting : false);
-    }, { rootMargin: "100px" });
-    this._observer.observe(this);
-  }
-
   disconnectedCallback() {
-    this._observer?.disconnect();
-    this._observer = null;
     window.removeEventListener("keydown", this._onKeydown);
   }
 
@@ -194,9 +153,12 @@ class HaCalefaFlowCard extends HTMLElement {
   _formatNumber(value, decimals = 1) {
     const language = this._hass?.locale?.language || this._hass?.language || "da-DK";
     try {
-      return new Intl.NumberFormat(language, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
-    } catch (error) {
-      return new Intl.NumberFormat(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
+      return new Intl.NumberFormat(language, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(value);
+    } catch {
+      return Number(value).toFixed(decimals);
     }
   }
 
@@ -204,23 +166,22 @@ class HaCalefaFlowCard extends HTMLElement {
     if (!this._available(key)) return "–";
     const value = this._num(key);
     if (value === null) return String(this._stateObj(key).state);
-    const unit = this._unit(key);
+    const sourceUnit = this._unit(key);
     let decimals = 1;
-    let shownUnit = unit;
-    if (kind === "temperature") { decimals = 1; shownUnit = unit || "°C"; }
-    else if (kind === "valve" || kind === "percent") { decimals = 0; shownUnit = "%"; }
-    else if (kind === "flow") decimals = Math.abs(value) < 10 ? 1 : 0;
-    else if (kind === "power") decimals = Math.abs(value) >= 100 ? 0 : 1;
-    else if (kind === "pressure") decimals = 1;
-    const text = this._formatNumber(value, decimals);
-    return shownUnit ? `${text} ${shownUnit}` : text;
+    let unit = sourceUnit;
+    if (kind === "temperature") unit = sourceUnit || "°C";
+    if (kind === "percent" || kind === "valve") { decimals = 0; unit = "%"; }
+    if (kind === "flow") decimals = Math.abs(value) < 10 ? 1 : 0;
+    if (kind === "power") decimals = Math.abs(value) >= 100 ? 0 : 1;
+    if (kind === "pressure") decimals = 1;
+    return `${this._formatNumber(value, decimals)}${unit ? ` ${unit}` : ""}`;
   }
 
-  _formatParts(key, kind) {
-    const text = this._format(key, kind);
-    if (text === "–") return ["–", ""];
-    const match = text.match(/^(.+?)\s+(°C|%|bar|kW|W|L\/h|L\/min|m³\/h)$/i);
-    return match ? [match[1], match[2]] : [text, ""];
+  _formatTemp(key) {
+    if (!this._available(key)) return ["–", ""];
+    const value = this._num(key);
+    if (value === null) return [String(this._stateObj(key).state), ""];
+    return [this._formatNumber(value, 1), "°C"];
   }
 
   _hasChanges(hass) {
@@ -259,7 +220,7 @@ class HaCalefaFlowCard extends HTMLElement {
     else if (explicitDhw === true) dhwState = "active";
     else if (explicitDhw === false) dhwState = "idle";
     else if (waterFlow !== null) dhwState = waterFlow > this._config.flow_threshold ? "active" : "idle";
-    else if (dhwValveOpen) dhwState = "active";
+    else if (dhwValveOpen === true) dhwState = "active";
 
     const dhwTap = dhwState === "active";
     const dhwBypass = dhwState === "bypass";
@@ -276,14 +237,14 @@ class HaCalefaFlowCard extends HTMLElement {
 
     return {
       heatingActive,
-      heatLoop: heatingActive || pumpActive === true,
-      heatPrimary,
+      heatLoop: Boolean(heatingActive || pumpActive === true),
+      heatPrimary: Boolean(heatPrimary),
       heatValveOpen,
       heatingValve: heatValve,
       dhwState,
       dhwTap,
       dhwBypass,
-      dhwPrimary,
+      dhwPrimary: Boolean(dhwPrimary),
       dhwValveOpen,
       dhwValve,
       primary: Boolean(heatPrimary || dhwPrimary),
@@ -294,229 +255,359 @@ class HaCalefaFlowCard extends HTMLElement {
     };
   }
 
-  _configured(id) {
-    if (id === "pump") return Boolean(this._config.pump || this._config.pump_speed);
-    return Boolean(this._config[id]);
-  }
-
-  _metricMarkup(id, compact = false) {
-    if (!this._configured(id)) return '<span class="cf-missing"></span>';
-    const metric = METRICS[id];
-    return `<button class="cf-metric ${compact ? "is-compact" : ""}" type="button" data-metric="${id}" data-tone="${metric.tone}" data-action="more-info" data-key="${id}"><ha-icon icon="${metric.icon}"></ha-icon><span><small>${metric.label}</small><strong><b data-num>–</b><em data-unit></em></strong><i data-sub></i></span></button>`;
-  }
-
-  _pairMarkup(first, second, delta, compact = false) {
-    if (!this._configured(first) && !this._configured(second)) return "";
-    return `<div class="cf-pair ${compact ? "is-compact" : ""}">${this._metricMarkup(first, compact)}<div class="cf-delta" data-delta="${delta}"><small>ΔT</small><strong>–</strong></div>${this._metricMarkup(second, compact)}</div>`;
-  }
-
-  _componentMarkup(id, cls) {
-    if (!this._configured(id)) return "";
-    const metric = METRICS[id];
-    return `<button class="cf-component ${cls}" type="button" data-metric="${id}" data-tone="component" data-action="more-info" data-key="${id}"><ha-icon icon="${metric.icon}"></ha-icon><span><small>${metric.label}</small><strong><b data-num>–</b><em data-unit></em></strong><i data-sub></i></span></button>`;
-  }
-
-  _waterMarkup(id, cls) {
-    if (!this._configured(id)) return "";
-    const metric = METRICS[id];
-    return `<button class="cf-water ${cls}" type="button" data-metric="${id}" data-tone="${metric.tone}" data-action="more-info" data-key="${id}"><small>${metric.label}</small><strong><b data-num>–</b><em data-unit></em></strong><i data-sub></i></button>`;
-  }
-
   _build() {
     if (!this._config) return;
     this.shadowRoot.innerHTML = `<style>${CALEFA_STYLES}</style>${this._markup()}`;
     this._refs = {};
     this.shadowRoot.querySelectorAll("[data-ref]").forEach((el) => { this._refs[el.dataset.ref] = el; });
-    this._metricNodes = new Map();
-    this.shadowRoot.querySelectorAll("[data-metric]").forEach((el) => {
-      const id = el.dataset.metric;
-      if (!this._metricNodes.has(id)) this._metricNodes.set(id, []);
-      this._metricNodes.get(id).push({ el, num: el.querySelector("[data-num]"), unit: el.querySelector("[data-unit]"), sub: el.querySelector("[data-sub]") });
-    });
     this._built = true;
     this._seen.clear();
   }
 
   _markup() {
-    return `<ha-card><div class="cf ${this._config.animations ? "" : "no-anim"}" data-ref="root">
-      <div class="cf-mobile-pairs">${this._pairMarkup("fjv_supply", "fjv_return", "fjv", true)}${this._pairMarkup("heating_supply", "heating_return", "heating", true)}</div>
-      <div class="cf-main">
-        <aside class="cf-side cf-left">${this._pairMarkup("fjv_supply", "fjv_return", "fjv")}</aside>
-        <section class="cf-stage"><div class="cf-stage-box">${this._svgMarkup()}${this._waterMarkup("dhw_temperature", "cf-water-hot")}${this._waterMarkup("cold_water_temperature", "cf-water-cold")}${this._componentMarkup("dhw_valve", "cf-component-dhw")}${this._componentMarkup("heating_valve", "cf-component-heat")}${this._componentMarkup("pump", "cf-component-pump")}<button class="cf-display-hit" type="button" data-action="open-display" aria-label="Åbn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button></div></section>
-        <aside class="cf-side cf-right">${this._pairMarkup("heating_supply", "heating_return", "heating")}</aside>
+    return `<ha-card>
+      <div class="cf-shell ${this._config.animations ? "" : "no-anim"}">
+        <aside class="cf-rail cf-rail-left">${this._pair("fjv_supply", "fjv_return", "fjv")}</aside>
+        <section class="cf-unit-zone">
+          <div class="cf-unit-frame">
+            ${this._svg()}
+            ${this._miniBadge("dhw_temperature", "Varmt vand", "hot-water", "red")}
+            ${this._miniBadge("cold_water_temperature", "Koldt vand", "cold-water", "cyan")}
+            ${this._componentBadge("dhw_valve", "BV-ventil", "dhw-valve")}
+            ${this._componentBadge("heating_valve", "Varmeventil", "heat-valve")}
+            ${this._componentBadge("pump", "Pumpe", "pump")}
+            <button class="cf-display-hit" data-action="open-display" type="button" aria-label="Åbn Calefa display"></button>
+          </div>
+        </section>
+        <aside class="cf-rail cf-rail-right">${this._pair("heating_supply", "heating_return", "heat")}</aside>
+        <div class="cf-mobile-pairs">
+          ${this._pair("fjv_supply", "fjv_return", "fjv", true)}
+          ${this._pair("heating_supply", "heating_return", "heat", true)}
+        </div>
+        ${this._footer()}
       </div>
-      ${this._footerMarkup()}
-    </div>${this._modalMarkup()}</ha-card>`;
+      ${this._modal()}
+    </ha-card>`;
   }
 
-  _footerMarkup() {
+  _metric(key, compact = false) {
+    if (!this._config[key]) return `<div class="cf-metric cf-empty"></div>`;
+    const meta = METRIC_META[key];
+    return `<button type="button" class="cf-metric ${compact ? "compact" : ""}" data-action="more-info" data-key="${key}" data-tone="${meta.tone}">
+      <ha-icon icon="${meta.icon}"></ha-icon>
+      <span class="cf-metric-text">
+        <small>${meta.label}</small>
+        <strong><b data-value="${key}">–</b><em data-unit="${key}"></em></strong>
+        <i data-sub="${key}"></i>
+      </span>
+    </button>`;
+  }
+
+  _pair(first, second, deltaKey, compact = false) {
+    if (!this._config[first] && !this._config[second]) return "";
+    return `<div class="cf-pair ${compact ? "compact" : ""}">
+      ${this._metric(first, compact)}
+      <div class="cf-delta"><span>ΔT</span><strong data-delta="${deltaKey}">–</strong></div>
+      ${this._metric(second, compact)}
+    </div>`;
+  }
+
+  _miniBadge(key, label, cls, tone) {
+    if (!this._config[key]) return "";
+    return `<button type="button" class="cf-mini ${cls}" data-action="more-info" data-key="${key}" data-tone="${tone}">
+      <small>${label}</small>
+      <strong><b data-value="${key}">–</b><em data-unit="${key}"></em></strong>
+      <i data-sub="${key}"></i>
+    </button>`;
+  }
+
+  _componentBadge(key, label, cls) {
+    if (key === "pump" ? !(this._config.pump || this._config.pump_speed) : !this._config[key]) return "";
+    return `<button type="button" class="cf-component ${cls}" data-action="more-info" data-key="${key}">
+      <small>${label}</small><strong data-component="${key}">–</strong><i data-component-sub="${key}"></i>
+    </button>`;
+  }
+
+  _footer() {
     if (!this._config.show_footer) return "";
-    const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key]) => this._config[key]);
+    const items = [
+      ["outdoor_temperature", "Ude", "mdi:thermometer"],
+      ["room_temperature", "Bolig", "mdi:home-thermometer-outline"],
+      ["power", "Effekt", "mdi:flash-outline"],
+      ["pressure", "Tryk", "mdi:gauge"],
+    ].filter(([key]) => this._config[key]);
     if (!items.length) return "";
-    return `<footer class="cf-footer">${items.map(([key, label, icon]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon}"></ha-icon><span><small>${label}</small><strong>–</strong></span></button>`).join("")}</footer>`;
+    return `<footer class="cf-footer">${items.map(([key, label, icon]) =>
+      `<button type="button" data-action="more-info" data-key="${key}">
+        <ha-icon icon="${icon}"></ha-icon><span><small>${label}</small><strong data-footer="${key}">–</strong></span>
+      </button>`).join("")}</footer>`;
   }
 
-  _svgMarkup() {
-    const photo = this._config.background_image ? `<image class="cf-photo" href="${escapeHtml(this._config.background_image)}" x="0" y="0" width="600" height="920" preserveAspectRatio="xMidYMid ${this._config.background_fit === "cover" ? "slice" : "meet"}"/>` : "";
-    const grooves = Array.from({ length: 15 }, (_, i) => `<path d="M${92 + i * 28} 232 C${105 + i * 28} 280 ${82 + i * 28} 328 ${99 + i * 28} 380"/>`).join("");
-    const connections = [[105,"FF"],[165,"FR"],[300,"VR"],[370,"VF"],[465,"BV"],[535,"KV"]].map(([x,t]) => `<circle cx="${x}" cy="875" r="12"/><text x="${x}" y="914" text-anchor="middle">${t}</text>`).join("");
-    return `<svg class="cf-svg" viewBox="0 30 600 920" role="img" aria-label="Calefa II flowdiagram">
+  _svg() {
+    const grooves = Array.from({ length: 14 }, (_, i) =>
+      `<path d="M${144 + i * 24} 198 C${154 + i * 24} 226 ${137 + i * 24} 256 ${149 + i * 24} 286"/>`).join("");
+    return `<svg class="cf-svg" viewBox="0 0 620 760" role="img" aria-label="Calefa fjernvarmeunit">
       <defs>
-        <linearGradient id="hood" x1="0" x2="1"><stop stop-color="#141719"/><stop offset=".48" stop-color="#343a3f"/><stop offset="1" stop-color="#0f1214"/></linearGradient>
-        <linearGradient id="body" x1="0" x2="1"><stop stop-color="#080b0d"/><stop offset=".5" stop-color="#1a1f22"/><stop offset="1" stop-color="#060708"/></linearGradient>
-        <linearGradient id="steel" x1="0" x2="1"><stop stop-color="#59656a"/><stop offset=".18" stop-color="#edf3f4"/><stop offset=".5" stop-color="#89999f"/><stop offset=".76" stop-color="#f8fbfc"/><stop offset="1" stop-color="#68757b"/></linearGradient>
-        <linearGradient id="copper" x1="0" x2="1"><stop stop-color="#642e1d"/><stop offset=".16" stop-color="#d87943"/><stop offset=".5" stop-color="#854128"/><stop offset=".82" stop-color="#ea8f54"/><stop offset="1" stop-color="#69321f"/></linearGradient>
-        <linearGradient id="brass" x1="0" x2="1"><stop stop-color="#76500f"/><stop offset=".35" stop-color="#f2c14f"/><stop offset=".7" stop-color="#b47a1d"/><stop offset="1" stop-color="#68410d"/></linearGradient>
-        <linearGradient id="lcd" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d0e4e8"/><stop offset="1" stop-color="#9abac1"/></linearGradient>
-        <pattern id="epp" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#2a3034" opacity=".48"/><circle cx="8" cy="7" r=".8" fill="#050607" opacity=".7"/></pattern>
-        <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-opacity=".5"/></filter>
-        <filter id="hotGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="blueGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <linearGradient id="cf-hood" x1="0" x2="1"><stop stop-color="#06090b"/><stop offset=".22" stop-color="#24292d"/><stop offset=".53" stop-color="#101416"/><stop offset=".8" stop-color="#2a3034"/><stop offset="1" stop-color="#050709"/></linearGradient>
+        <linearGradient id="cf-body" x1="0" x2="1"><stop stop-color="#070a0c"/><stop offset=".48" stop-color="#171b1e"/><stop offset="1" stop-color="#050709"/></linearGradient>
+        <linearGradient id="cf-steel" x1="0" x2="1"><stop stop-color="#4a5358"/><stop offset=".2" stop-color="#dce3e6"/><stop offset=".42" stop-color="#7c888d"/><stop offset=".68" stop-color="#f4f8f9"/><stop offset="1" stop-color="#606b70"/></linearGradient>
+        <linearGradient id="cf-copper" x1="0" x2="1"><stop stop-color="#582715"/><stop offset=".13" stop-color="#d4773e"/><stop offset=".33" stop-color="#733319"/><stop offset=".58" stop-color="#e08a4d"/><stop offset=".82" stop-color="#7b381e"/><stop offset="1" stop-color="#4d2112"/></linearGradient>
+        <linearGradient id="cf-copper-front" x1="0" x2="1"><stop stop-color="#74361f"/><stop offset=".18" stop-color="#ee9252"/><stop offset=".48" stop-color="#8d4528"/><stop offset=".78" stop-color="#f1a064"/><stop offset="1" stop-color="#6a2f1b"/></linearGradient>
+        <linearGradient id="cf-brass" x1="0" x2="1"><stop stop-color="#684408"/><stop offset=".24" stop-color="#f6cb58"/><stop offset=".52" stop-color="#a46d14"/><stop offset=".78" stop-color="#efb83c"/><stop offset="1" stop-color="#5b3908"/></linearGradient>
+        <linearGradient id="cf-lcd" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d1e3e8"/><stop offset="1" stop-color="#9ab7bf"/></linearGradient>
+        <radialGradient id="cf-pump-face"><stop stop-color="#56656c"/><stop offset=".5" stop-color="#263238"/><stop offset="1" stop-color="#0c1215"/></radialGradient>
+        <pattern id="cf-epp" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".8" fill="#30363a" opacity=".7"/><circle cx="7" cy="6" r=".65" fill="#020304" opacity=".9"/></pattern>
+        <filter id="cf-shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="11" stdDeviation="11" flood-opacity=".55"/></filter>
+        <filter id="cf-hot" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="cf-blue" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      ${photo}
-      <g class="cf-unit ${photo ? "has-photo" : ""}" filter="url(#shadow)">
-        <rect x="75" y="215" width="450" height="675" rx="30" fill="url(#body)" stroke="#20272b" stroke-width="2"/><rect x="75" y="215" width="450" height="675" rx="30" fill="url(#epp)" opacity=".82"/><g class="cf-grooves">${grooves}</g>
-        <rect x="58" y="44" width="484" height="210" rx="42" fill="url(#hood)" stroke="#292e32" stroke-width="2"/><rect x="58" y="44" width="484" height="210" rx="42" fill="url(#epp)" opacity=".58"/>
-        <rect class="cf-control" x="194" y="88" width="212" height="126" rx="10"/><rect x="242" y="105" width="116" height="58" rx="4" fill="url(#lcd)" stroke="#68838c" stroke-width="2"/><text class="cf-mini-title" x="300" y="124" text-anchor="middle" data-ref="mini-title">STANDBY</text><text class="cf-mini-value" x="300" y="154" text-anchor="middle" data-ref="mini-value">–</text>
-        <circle class="cf-status-dot cf-status-heat" data-ref="status-heat" cx="287" cy="184" r="6"/><circle class="cf-status-dot cf-status-dhw" data-ref="status-dhw" cx="313" cy="184" r="6"/><circle class="cf-small-led" cx="257" cy="184" r="3.7"/><circle class="cf-small-led" cx="343" cy="184" r="3.7"/>
-        <g class="cf-pipes-base"><path d="M105 875 V360 H454 V432"/><path d="M165 875 V408 H404 V492"/><path d="M300 875 V760 H445 V690"/><path d="M370 875 V780 H480 V690"/><path d="M465 875 V790 H520 V748"/><path d="M535 875 V748"/></g><g class="cf-pipe-shine"><path d="M105 875 V360 H454 V432"/><path d="M165 875 V408 H404 V492"/><path d="M300 875 V760 H445 V690"/><path d="M370 875 V780 H480 V690"/><path d="M465 875 V790 H520 V748"/><path d="M535 875 V748"/></g>
-        <g class="cf-hx" data-ref="hx-heat"><rect x="420" y="430" width="82" height="302" rx="13" fill="url(#copper)"/><path d="M438 448 V714 M451 448 V714 M464 448 V714 M477 448 V714 M490 448 V714"/></g><g class="cf-hx" data-ref="hx-dhw"><rect x="475" y="482" width="84" height="316" rx="13" fill="url(#copper)"/><path d="M492 500 V780 M505 500 V780 M518 500 V780 M531 500 V780 M544 500 V780"/></g><g class="cf-hx-label"><text x="458" y="610" transform="rotate(-90 458 610)">VARME</text><text x="517" y="650" transform="rotate(-90 517 650)">BRUGSVAND</text></g>
-        <g class="cf-valve" data-ref="heat-valve"><path d="M388 560 L403 575 L388 590 M418 560 L403 575 L418 590" fill="url(#brass)"/><rect x="378" y="530" width="48" height="45" rx="9"/></g><g class="cf-valve" data-ref="dhw-valve"><path d="M438 433 L453 448 L438 463 M468 433 L453 448 L468 463" fill="url(#brass)"/><rect x="428" y="398" width="50" height="46" rx="9"/></g>
-        <g class="cf-pump" data-ref="pump"><rect x="258" y="790" width="84" height="86" rx="26"/><circle cx="300" cy="833" r="31"/><path class="cf-pump-spin" d="M300 808 C326 812 332 833 318 852 C294 847 284 826 300 808Z"/></g>
-        <g class="cf-flow cf-flow-primary" data-ref="flow-primary"><path d="M105 875 V360 H454 V432"/><path class="return" d="M404 492 H165 V875"/></g><g class="cf-flow cf-flow-heat" data-ref="flow-heat"><path d="M300 875 V760 H445 V690"/><path class="return" d="M480 690 V780 H370 V875"/></g><g class="cf-flow cf-flow-dhw" data-ref="flow-dhw"><path d="M535 875 V748"/><path class="hot" d="M520 748 V790 H465 V875"/></g>
-        <g class="cf-connections">${connections}</g>
+
+      <ellipse cx="310" cy="720" rx="218" ry="19" fill="rgba(0,0,0,.34)"/>
+
+      <g filter="url(#cf-shadow)">
+        <rect x="115" y="160" width="390" height="545" rx="27" fill="url(#cf-body)" stroke="#263036" stroke-width="2"/>
+        <rect x="115" y="160" width="390" height="545" rx="27" fill="url(#cf-epp)" opacity=".75"/>
+        <g class="cf-grooves">${grooves}</g>
+
+        <rect x="91" y="44" width="438" height="174" rx="42" fill="url(#cf-hood)" stroke="#2c3337" stroke-width="2"/>
+        <rect x="91" y="44" width="438" height="174" rx="42" fill="url(#cf-epp)" opacity=".62"/>
+        <path d="M111 187 Q310 214 509 187" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="3"/>
+
+        <g class="cf-controller">
+          <rect x="205" y="79" width="210" height="112" rx="11" fill="#e8ecec" stroke="#aeb6b8" stroke-width="2"/>
+          <rect x="248" y="95" width="124" height="54" rx="4" fill="url(#cf-lcd)" stroke="#607e88" stroke-width="2"/>
+          <text x="310" y="112" text-anchor="middle" class="cf-lcd-title" data-ref="lcd-title">STANDBY</text>
+          <text x="310" y="141" text-anchor="middle" class="cf-lcd-value" data-ref="lcd-value">–</text>
+          <circle cx="294" cy="168" r="6" class="cf-led heat" data-ref="heat-led"/>
+          <circle cx="326" cy="168" r="6" class="cf-led dhw" data-ref="dhw-led"/>
+          <circle cx="265" cy="168" r="3.5" fill="#39d779"/>
+          <circle cx="355" cy="168" r="3.5" fill="#39d779"/>
+        </g>
+
+        <g class="cf-pipe-base">
+          <path d="M150 686 V292 H258"/>
+          <path d="M199 686 V345 H289"/>
+          <path d="M315 686 V620 H402 V537"/>
+          <path d="M365 686 V646 H438 V404"/>
+          <path d="M454 686 V629 H477 V471"/>
+          <path d="M493 686 V601 H505 V487"/>
+          <path d="M258 292 H468 V390"/>
+          <path d="M289 345 H432 V427"/>
+          <path d="M402 537 V395 H428"/>
+          <path d="M438 404 H447"/>
+          <path d="M477 471 H491"/>
+          <path d="M505 487 H491"/>
+        </g>
+        <g class="cf-pipe-shine">
+          <path d="M150 686 V292 H258"/>
+          <path d="M199 686 V345 H289"/>
+          <path d="M315 686 V620 H402 V537"/>
+          <path d="M365 686 V646 H438 V404"/>
+          <path d="M454 686 V629 H477 V471"/>
+          <path d="M493 686 V601 H505 V487"/>
+          <path d="M258 292 H468 V390"/>
+          <path d="M289 345 H432 V427"/>
+          <path d="M402 537 V395 H428"/>
+          <path d="M438 404 H447"/>
+          <path d="M477 471 H491"/>
+          <path d="M505 487 H491"/>
+        </g>
+
+        <g class="cf-brass">
+          <rect x="139" y="389" width="22" height="31" rx="5"/>
+          <rect x="188" y="515" width="22" height="27" rx="5"/>
+          <rect x="389" y="610" width="26" height="18" rx="5"/>
+          <rect x="425" y="390" width="24" height="22" rx="4"/>
+          <rect x="465" y="459" width="23" height="22" rx="4"/>
+          <rect x="493" y="475" width="23" height="22" rx="4"/>
+          <rect x="457" y="279" width="22" height="18" rx="3"/>
+          <rect x="280" y="334" width="20" height="18" rx="3"/>
+        </g>
+
+        <g class="cf-hx heat" data-ref="hx-heat">
+          <rect x="425" y="350" width="66" height="245" rx="11" fill="url(#cf-copper)" stroke="#7f3e23" stroke-width="2"/>
+          <path d="M437 368 L479 382 L437 397 L479 412 L437 427 L479 442 L437 457 L479 472 L437 487 L479 502 L437 517 L479 532 L437 547 L479 562 L437 577"/>
+          <rect x="431" y="446" width="54" height="52" rx="9" fill="rgba(9,13,15,.74)"/>
+          <text x="458" y="476" text-anchor="middle">VARME</text>
+        </g>
+        <g class="cf-hx dhw" data-ref="hx-dhw">
+          <rect x="474" y="382" width="67" height="233" rx="11" fill="url(#cf-copper-front)" stroke="#8e4528" stroke-width="2"/>
+          <path d="M486 399 L529 414 L486 429 L529 444 L486 459 L529 474 L486 489 L529 504 L486 519 L529 534 L486 549 L529 564 L486 579 L529 594"/>
+          <rect x="480" y="455" width="55" height="74" rx="9" fill="rgba(9,13,15,.74)"/>
+          <text x="507" y="486" text-anchor="middle">BRUGS</text>
+          <text x="507" y="506" text-anchor="middle">VAND</text>
+        </g>
+
+        <g class="cf-valve" data-ref="dhw-valve-unit">
+          <rect x="432" y="318" width="45" height="44" rx="8"/>
+          <circle cx="454" cy="340" r="8"/>
+          <path d="M454 362 V379"/>
+          <path d="M443 373 L454 383 L465 373" fill="url(#cf-brass)"/>
+        </g>
+        <g class="cf-valve" data-ref="heat-valve-unit">
+          <rect x="386" y="422" width="46" height="44" rx="8"/>
+          <circle cx="409" cy="444" r="8"/>
+          <path d="M432 444 H447"/>
+          <path d="M441 433 L451 444 L441 455" fill="url(#cf-brass)"/>
+        </g>
+
+        <g class="cf-pump-unit" data-ref="pump-unit">
+          <rect x="274" y="571" width="84" height="92" rx="22"/>
+          <circle cx="316" cy="617" r="36" fill="url(#cf-pump-face)"/>
+          <path class="cf-pump-rotor" d="M315 587 C340 593 346 611 334 631 C320 649 291 645 285 623 C281 604 292 591 315 587Z"/>
+          <circle cx="316" cy="617" r="6" fill="#0b1215"/>
+        </g>
+
+        <g class="cf-meter">
+          <circle cx="454" cy="657" r="22" fill="#d9dede" stroke="#858e91" stroke-width="3"/>
+          <circle cx="454" cy="657" r="9" fill="#fafcfc" stroke="#778286" stroke-width="2"/>
+        </g>
+
+        <g class="cf-connections">
+          ${[[150,"FF"],[199,"FR"],[315,"VR"],[365,"VF"],[454,"BV"],[493,"KV"]].map(([x, t]) =>
+            `<circle cx="${x}" cy="689" r="12"/><text x="${x}" y="726" text-anchor="middle">${t}</text>`).join("")}
+        </g>
+
+        <g class="cf-flow primary" data-ref="flow-primary">
+          <path d="M150 685 V292 H468 V390"/>
+          <path class="return" d="M432 427 H289 H199 V685"/>
+        </g>
+        <g class="cf-flow heat-flow" data-ref="flow-heat">
+          <path d="M438 404 V646 H365 V685"/>
+          <path class="return" d="M315 685 V620 H402 V537"/>
+        </g>
+        <g class="cf-flow dhw-flow" data-ref="flow-dhw">
+          <path d="M493 685 V601 H505 V487"/>
+          <path class="hot" d="M477 471 V629 H454 V685"/>
+        </g>
       </g>
     </svg>`;
   }
 
-  _modalMarkup() {
-    return `<div class="cf-modal" data-ref="modal" hidden><div class="cf-modal-backdrop" data-action="close-display"></div><section class="cf-device" role="dialog" aria-modal="true" tabindex="-1" data-ref="device"><div class="cf-device-head"><div><strong>Betjeningspanel</strong><small>Virtuelt display · kun visning</small></div><button type="button" data-action="close-display" aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="cf-device-face"><div class="cf-screen"><div class="cf-screen-head"><ha-icon data-ref="screen-icon" icon="mdi:home-outline"></ha-icon><strong data-ref="screen-title">STATUS</strong><span data-ref="screen-index">1/4</span></div><div class="cf-screen-body" data-ref="screen-body"></div></div><div class="cf-keys"><button type="button" data-action="display-prev"><ha-icon icon="mdi:chevron-left"></ha-icon></button><button type="button" data-action="display-next"><ha-icon icon="mdi:chevron-right"></ha-icon></button></div></div><div class="cf-tabs">${DISPLAY_PAGES.map((page, index) => `<button type="button" data-action="display-page" data-page="${index}"><ha-icon icon="${page.icon}"></ha-icon><span>${page.title}</span></button>`).join("")}</div></section></div>`;
+  _modal() {
+    return `<div class="cf-modal" data-ref="modal" hidden>
+      <button class="cf-backdrop" data-action="close-display" type="button" aria-label="Luk"></button>
+      <section class="cf-device" data-ref="device" tabindex="-1">
+        <header><div><strong>CALEFA</strong><small>Live display · read-only</small></div><button type="button" data-action="close-display">×</button></header>
+        <div class="cf-screen">
+          <div class="cf-screen-top"><span data-ref="screen-title">STATUS</span><b data-ref="screen-index">1/4</b></div>
+          <div class="cf-screen-body" data-ref="screen-body"></div>
+        </div>
+        <div class="cf-screen-keys"><button type="button" data-action="display-prev">◀</button><button type="button" data-action="display-next">▶</button></div>
+      </section>
+    </div>`;
   }
 
-  _text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  _toggle(el, cls, on) { if (el && el.classList.contains(cls) !== on) el.classList.toggle(cls, on); }
-
   _update() {
-    if (!this._built || !this._hass) return;
-    this._remember(this._hass);
+    if (!this._hass || !this._config || !this._built) return;
     const model = this._computeModel();
     this._model = model;
-    this._applyMetrics(model);
-    this._applyDeltas(model);
-    this._applyDiagram(model);
-    this._applyFooter();
+    this._remember(this._hass);
+
+    for (const key of ["fjv_supply", "fjv_return", "heating_supply", "heating_return", "dhw_temperature", "cold_water_temperature"]) {
+      const nodes = this.shadowRoot.querySelectorAll(`[data-value="${key}"]`);
+      const [value, unit] = this._formatTemp(key);
+      nodes.forEach((node) => { if (node.textContent !== value) node.textContent = value; });
+      this.shadowRoot.querySelectorAll(`[data-unit="${key}"]`).forEach((node) => { node.textContent = unit ? ` ${unit}` : ""; });
+    }
+
+    const flowSubs = {
+      fjv_supply: this._config.fjv_flow ? this._format("fjv_flow", "flow") : "",
+      heating_supply: this._config.heating_flow ? this._format("heating_flow", "flow") : "",
+      dhw_temperature: this._config.water_flow ? this._format("water_flow", "flow") : "",
+    };
+    for (const [key, value] of Object.entries(flowSubs)) {
+      this.shadowRoot.querySelectorAll(`[data-sub="${key}"]`).forEach((node) => { node.textContent = value === "–" ? "" : value; });
+    }
+
+    this.shadowRoot.querySelectorAll('[data-delta="fjv"]').forEach((node) => {
+      node.textContent = model.cooling === null ? "–" : `${this._formatNumber(model.cooling, 1)}°`;
+    });
+    this.shadowRoot.querySelectorAll('[data-delta="heat"]').forEach((node) => {
+      node.textContent = model.heatingDelta === null ? "–" : `${this._formatNumber(model.heatingDelta, 1)}°`;
+    });
+
+    const heatValve = model.heatingValve;
+    const dhwValve = model.dhwValve;
+    const pumpValue = model.pumpText;
+    this.shadowRoot.querySelectorAll('[data-component="heating_valve"]').forEach((n) => n.textContent = heatValve === null ? "–" : `${this._formatNumber(heatValve, 0)}%`);
+    this.shadowRoot.querySelectorAll('[data-component="dhw_valve"]').forEach((n) => n.textContent = dhwValve === null ? "–" : `${this._formatNumber(dhwValve, 0)}%`);
+    this.shadowRoot.querySelectorAll('[data-component="pump"]').forEach((n) => n.textContent = pumpValue);
+    this.shadowRoot.querySelectorAll('[data-component-sub="heating_valve"]').forEach((n) => n.textContent = heatValve !== null && heatValve > this._config.valve_threshold ? "Regulerer" : "Lukket");
+    this.shadowRoot.querySelectorAll('[data-component-sub="dhw_valve"]').forEach((n) => n.textContent = dhwValve !== null && dhwValve > this._config.valve_threshold ? "Regulerer" : "Lukket");
+    this.shadowRoot.querySelectorAll('[data-component-sub="pump"]').forEach((n) => n.textContent = model.pumpActive ? "Drift" : "Stop");
+
+    this._toggle("flow-primary", model.primary);
+    this._toggle("flow-heat", model.heatLoop);
+    this._toggle("flow-dhw", model.dhwTap);
+    this._toggle("pump-unit", model.pumpActive);
+    this._toggle("heat-valve-unit", Boolean(model.heatValveOpen ?? model.heatPrimary));
+    this._toggle("dhw-valve-unit", Boolean(model.dhwValveOpen ?? model.dhwPrimary));
+    this._toggle("hx-heat", model.heatPrimary || model.heatLoop);
+    this._toggle("hx-dhw", model.dhwPrimary || model.dhwTap);
+    this._refs["heat-led"]?.classList.toggle("active", model.heatingActive);
+    this._refs["dhw-led"]?.classList.toggle("active", model.dhwTap || model.dhwBypass);
+
+    const displayKey = model.dhwTap && this._config.dhw_temperature
+      ? "dhw_temperature"
+      : this._config.heating_supply ? "heating_supply" : "fjv_supply";
+    const title = model.dhwTap ? "BRUGSVAND" : model.heatingActive ? "VARME" : model.dhwBypass ? "BYPASS" : "STANDBY";
+    if (this._refs["lcd-title"]) this._refs["lcd-title"].textContent = title;
+    if (this._refs["lcd-value"]) this._refs["lcd-value"].textContent = this._config[displayKey] ? this._format(displayKey, "temperature").replace(" °C", "°") : "–";
+
+    for (const key of ["outdoor_temperature", "room_temperature", "power", "pressure"]) {
+      const node = this.shadowRoot.querySelector(`[data-footer="${key}"]`);
+      if (!node) continue;
+      const kind = key === "power" ? "power" : key === "pressure" ? "pressure" : "temperature";
+      node.textContent = this._format(key, kind);
+    }
     if (this._displayOpen) this._renderDisplay();
   }
 
-  _metricValue(id, model) {
-    const metric = METRICS[id];
-    if (metric.kind === "pump") {
-      const text = this._config.pump_speed && this._num("pump_speed") !== null ? this._format("pump_speed", "percent") : model.pumpText;
-      return { parts: this._split(text), sub: model.pumpActive ? "Kører" : "Stop", on: model.pumpActive, available: text !== "–" };
-    }
-    if (metric.kind === "valve") {
-      const position = this._valvePosition(id);
-      const fallback = id === "heating_valve" ? Boolean(model.heatValveOpen ?? model.heatPrimary) : Boolean(model.dhwValveOpen ?? model.dhwPrimary);
-      const on = position !== null ? position > this._config.valve_threshold : fallback;
-      const text = this._format(id, "valve");
-      return { parts: this._split(text), sub: on ? (position !== null && position >= 99 ? "Åben" : "Regulerer") : "Lukket", on, available: this._available(id) };
-    }
-    const parts = this._formatParts(id, metric.kind);
-    let on = false;
-    if (id.startsWith("fjv_")) on = model.primary;
-    else if (id.startsWith("heating_")) on = model.heatLoop;
-    else if (id === "dhw_temperature" || id === "cold_water_temperature") on = model.dhwTap;
-    let sub = "";
-    if (id === "dhw_temperature" && this._config.water_flow && this._available("water_flow")) sub = this._format("water_flow", "flow");
-    if (id === "heating_supply" && this._config.heating_flow && this._available("heating_flow")) sub = this._format("heating_flow", "flow");
-    return { parts, sub, on, available: this._available(id) };
-  }
-
-  _split(text) {
-    const match = String(text).match(/^(.+?)\s+(%|°C|bar|kW|W)$/);
-    return match ? [match[1], match[2]] : [text, ""];
-  }
-
-  _applyMetrics(model) {
-    for (const id of Object.keys(METRICS)) {
-      const nodes = this._metricNodes.get(id) || [];
-      if (!nodes.length) continue;
-      const value = this._metricValue(id, model);
-      for (const node of nodes) {
-        this._text(node.num, value.parts[0]);
-        this._text(node.unit, value.parts[1] ? ` ${value.parts[1]}` : "");
-        this._text(node.sub, value.sub);
-        this._toggle(node.el, "is-on", value.on);
-        this._toggle(node.el, "is-unavailable", !value.available);
-      }
-    }
-  }
-
-  _applyDeltas(model) {
-    const values = { fjv: model.cooling, heating: model.heatingDelta };
-    this.shadowRoot.querySelectorAll("[data-delta]").forEach((node) => {
-      const value = values[node.dataset.delta];
-      this._text(node.querySelector("strong"), value === null ? "–" : `${this._formatNumber(value, 1)}°`);
-      this._toggle(node, "is-muted", value === null);
-    });
-  }
-
-  _applyDiagram(model) {
-    this._toggle(this._refs["flow-primary"], "is-on", model.primary);
-    this._toggle(this._refs["flow-heat"], "is-on", model.heatLoop);
-    this._toggle(this._refs["flow-dhw"], "is-on", model.dhwTap);
-    this._toggle(this._refs.pump, "is-on", model.pumpActive);
-    this._toggle(this._refs["heat-valve"], "is-on", Boolean(model.heatValveOpen ?? model.heatPrimary));
-    this._toggle(this._refs["dhw-valve"], "is-on", Boolean(model.dhwValveOpen ?? model.dhwPrimary));
-    this._toggle(this._refs["hx-heat"], "is-on", model.heatPrimary || model.heatLoop);
-    this._toggle(this._refs["hx-dhw"], "is-on", model.dhwPrimary || model.dhwTap);
-    this._toggle(this._refs["status-heat"], "active", model.heatingActive);
-    this._toggle(this._refs["status-dhw"], "active", model.dhwTap || model.dhwBypass);
-    const key = model.dhwTap && this._config.dhw_temperature ? "dhw_temperature" : this._config.heating_supply ? "heating_supply" : "fjv_supply";
-    this._text(this._refs["mini-title"], model.dhwTap ? "BRUGSVAND" : model.heatingActive ? "VARME" : model.dhwBypass ? "BYPASS" : "STANDBY");
-    this._text(this._refs["mini-value"], this._config[key] ? this._format(key, "temperature").replace(" °C", "°") : "–");
-  }
-
-  _applyFooter() {
-    this.shadowRoot.querySelectorAll("[data-footer]").forEach((el) => {
-      const key = el.dataset.footer;
-      const kind = key === "power" ? "power" : key === "pressure" ? "pressure" : "temperature";
-      this._text(el.querySelector("strong"), this._format(key, kind));
-    });
+  _toggle(ref, on) {
+    const node = this._refs[ref];
+    if (node) node.classList.toggle("active", Boolean(on));
   }
 
   _derived(name) {
     const model = this._model || this._computeModel();
-    if (name === "mode") return model.dhwTap && model.heatingActive ? "Varme + BV" : model.dhwTap ? "Brugsvand" : model.heatingActive ? "Varme" : model.dhwBypass ? "Bypass" : "Standby";
-    if (name === "heating") return model.heatingActive ? "Aktiv" : "Standby";
+    if (name === "mode") return model.dhwTap ? "Brugsvand" : model.heatingActive ? "Varme" : model.dhwBypass ? "Bypass" : "Standby";
+    if (name === "heat") return model.heatingActive ? "Aktiv" : "Standby";
     if (name === "dhw") return model.dhwTap ? "Aktiv" : model.dhwBypass ? "Bypass" : "Standby";
     if (name === "pump") return model.pumpText;
-    if (name === "cooling") return model.cooling === null ? "–" : `${this._formatNumber(model.cooling, 1)} °C`;
-    if (name === "heatingDelta") return model.heatingDelta === null ? "–" : `${this._formatNumber(model.heatingDelta, 1)} °C`;
+    if (name === "fjvDelta") return model.cooling === null ? "–" : `${this._formatNumber(model.cooling, 1)} °C`;
+    if (name === "heatDelta") return model.heatingDelta === null ? "–" : `${this._formatNumber(model.heatingDelta, 1)} °C`;
     return "–";
   }
 
+  _displayPages() {
+    return [
+      ["STATUS", [["Drift", "derived:mode"], ["Varme", "derived:heat"], ["Brugsvand", "derived:dhw"], ["FJV ΔT", "derived:fjvDelta"]]],
+      ["VARME", [["Frem", "heating_supply", "temperature"], ["Retur", "heating_return", "temperature"], ["ΔT", "derived:heatDelta"], ["Pumpe", "derived:pump"]]],
+      ["BRUGSVAND", [["Varmt vand", "dhw_temperature", "temperature"], ["Koldt vand", "cold_water_temperature", "temperature"], ["Flow", "water_flow", "flow"], ["Ventil", "dhw_valve", "valve"]]],
+      ["ANLÆG", [["Ude", "outdoor_temperature", "temperature"], ["Bolig", "room_temperature", "temperature"], ["Effekt", "power", "power"], ["Tryk", "pressure", "pressure"]]],
+    ];
+  }
+
   _renderDisplay() {
-    const page = DISPLAY_PAGES[this._displayPage] || DISPLAY_PAGES[0];
-    this._text(this._refs["screen-title"], page.title);
-    this._text(this._refs["screen-index"], `${this._displayPage + 1}/${DISPLAY_PAGES.length}`);
-    this._refs["screen-icon"]?.setAttribute("icon", page.icon);
-    const rows = page.rows.map(([label, key, kind]) => {
+    const pages = this._displayPages();
+    const [title, rows] = pages[this._displayPage] || pages[0];
+    if (this._refs["screen-title"]) this._refs["screen-title"].textContent = title;
+    if (this._refs["screen-index"]) this._refs["screen-index"].textContent = `${this._displayPage + 1}/${pages.length}`;
+    const html = rows.map(([label, key, kind]) => {
       const value = key.startsWith("derived:") ? this._derived(key.slice(8)) : this._format(key, kind || "number");
-      return `<div class="cf-screen-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+      return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
     }).join("");
-    if (this._refs["screen-body"]?.innerHTML !== rows) this._refs["screen-body"].innerHTML = rows;
-    this.shadowRoot.querySelectorAll(".cf-tabs button").forEach((button, index) => button.classList.toggle("active", index === this._displayPage));
+    if (this._refs["screen-body"]) this._refs["screen-body"].innerHTML = html;
   }
 
   _openDisplay() {
-    if (!this._refs.modal || this._displayOpen) return;
+    if (!this._refs.modal) return;
     this._displayOpen = true;
-    this._displayPage = 0;
     this._refs.modal.hidden = false;
     this._renderDisplay();
     window.addEventListener("keydown", this._onKeydown);
-    this._refs.device?.focus({ preventScroll: true });
+    this._refs.device?.focus?.({ preventScroll: true });
   }
 
   _closeDisplay() {
@@ -531,45 +622,189 @@ class HaCalefaFlowCard extends HTMLElement {
     const action = target.dataset.action;
     if (action === "more-info") {
       const key = target.dataset.key;
-      const id = key === "pump" ? (this._config.pump || this._config.pump_speed) : this._config?.[key];
-      if (!id || !this._hass?.states?.[id]) return;
-      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      const id = key === "pump" ? (this._config.pump || this._config.pump_speed) : this._config[key];
+      if (id && this._hass?.states?.[id]) {
+        this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      }
     } else if (action === "open-display") this._openDisplay();
     else if (action === "close-display") this._closeDisplay();
-    else if (action === "display-page") { this._displayPage = Number(target.dataset.page) || 0; this._renderDisplay(); }
-    else if (action === "display-next") { this._displayPage = (this._displayPage + 1) % DISPLAY_PAGES.length; this._renderDisplay(); }
-    else if (action === "display-prev") { this._displayPage = (this._displayPage - 1 + DISPLAY_PAGES.length) % DISPLAY_PAGES.length; this._renderDisplay(); }
+    else if (action === "display-next") {
+      this._displayPage = (this._displayPage + 1) % 4;
+      this._renderDisplay();
+    } else if (action === "display-prev") {
+      this._displayPage = (this._displayPage + 3) % 4;
+      this._renderDisplay();
+    }
   }
 
   _handleKeydown(event) {
     if (!this._displayOpen) return;
-    if (event.key === "Escape") { event.preventDefault(); this._closeDisplay(); }
-    if (event.key === "ArrowRight") { event.preventDefault(); this._displayPage = (this._displayPage + 1) % DISPLAY_PAGES.length; this._renderDisplay(); }
-    if (event.key === "ArrowLeft") { event.preventDefault(); this._displayPage = (this._displayPage - 1 + DISPLAY_PAGES.length) % DISPLAY_PAGES.length; this._renderDisplay(); }
+    if (event.key === "Escape") this._closeDisplay();
+    if (event.key === "ArrowRight") { this._displayPage = (this._displayPage + 1) % 4; this._renderDisplay(); }
+    if (event.key === "ArrowLeft") { this._displayPage = (this._displayPage + 3) % 4; this._renderDisplay(); }
   }
 }
 
 const CALEFA_STYLES = `
-  :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#4096ff;--cf-heat:#ff9a3c;--cf-heat-return:#58b8ff;--cf-dhw:#ff5158;--cf-cold:#35cee5;--cf-ok:#35df9c;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
-  *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}ha-card{position:relative;display:block;overflow:hidden;border:1px solid rgba(145,177,199,.16);border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(95% 55% at 50% 31%,rgba(43,95,125,.29),transparent 70%),linear-gradient(155deg,#0b1924,#102535 54%,#07121b);color:var(--cf-text);box-shadow:0 18px 52px rgba(0,0,0,.3)}.cf{padding:12px 16px 15px;min-width:0}.cf-main{display:grid;grid-template-columns:minmax(160px,250px) minmax(330px,540px) minmax(160px,250px);align-items:center;justify-content:center;gap:18px;max-width:1180px;margin:0 auto}.cf-side{min-width:0}.cf-stage{min-width:0}.cf-stage-box{position:relative;width:100%;aspect-ratio:600/920;isolation:isolate}.cf-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.cf-photo{opacity:.84}.cf-unit.has-photo{opacity:.18}
-  .cf-grooves path{fill:none;stroke:#050607;stroke-width:3;opacity:.42}.cf-control{fill:#e8ecec;stroke:#a8b0b3;stroke-width:2}.cf-mini-title{fill:#243a44;font:800 11px system-ui,sans-serif;letter-spacing:.05em}.cf-mini-value{fill:#173442;font:850 26px system-ui,sans-serif}.cf-status-dot{fill:#9aa5a9;stroke:#738087;stroke-width:1.2}.cf-status-heat.active{fill:#ff3f4b;stroke:#ff8790;filter:drop-shadow(0 0 7px rgba(255,63,75,.95))}.cf-status-dhw.active{fill:#269dff;stroke:#8ccaff;filter:drop-shadow(0 0 7px rgba(38,157,255,.95))}.cf-small-led{fill:#39d77b;filter:drop-shadow(0 0 3px rgba(57,215,123,.7))}.cf-pipes-base path{fill:none;stroke:url(#steel);stroke-width:15;stroke-linecap:round;stroke-linejoin:round}.cf-pipe-shine path{fill:none;stroke:rgba(255,255,255,.5);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.cf-hx{filter:drop-shadow(0 6px 7px rgba(0,0,0,.45))}.cf-hx path{fill:none;stroke:#5f2b1c;stroke-width:2.5;opacity:.72}.cf-hx.is-on{filter:drop-shadow(0 0 12px rgba(255,131,70,.28)) drop-shadow(0 7px 7px rgba(0,0,0,.42))}.cf-hx-label text{fill:#fff;font:800 14px system-ui,sans-serif;letter-spacing:1px}.cf-valve rect{fill:#10181d;stroke:#52636c;stroke-width:2}.cf-valve.is-on rect{stroke:var(--cf-ok);filter:drop-shadow(0 0 6px rgba(53,223,156,.45))}.cf-pump>rect{fill:#202a30;stroke:#44535b;stroke-width:2}.cf-pump>circle{fill:#10181d;stroke:#39484f;stroke-width:3}.cf-pump-spin{fill:#54656e;transform-origin:300px 833px}.cf-pump.is-on .cf-pump-spin{fill:#76a8bf;animation:cf-spin 1.2s linear infinite}.cf-flow path{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2 18;opacity:0}.cf-flow.is-on path{opacity:1;animation:cf-flow 1.1s linear infinite}.cf-flow-primary path{stroke:var(--cf-supply);filter:url(#hotGlow)}.cf-flow-primary .return{stroke:var(--cf-return);filter:url(#blueGlow)}.cf-flow-heat path{stroke:var(--cf-heat);filter:url(#hotGlow)}.cf-flow-heat .return{stroke:var(--cf-heat-return);filter:url(#blueGlow)}.cf-flow-dhw path{stroke:var(--cf-cold);filter:url(#blueGlow)}.cf-flow-dhw .hot{stroke:var(--cf-dhw);filter:url(#hotGlow)}.cf-connections circle{fill:#192228;stroke:#89969c;stroke-width:4}.cf-connections text{fill:#879aa6;font:750 18px system-ui,sans-serif}.cf-display-hit{position:absolute;z-index:8;left:32.3%;top:6.3%;width:35.4%;height:14.2%;border:0;background:transparent;cursor:pointer}.cf-display-hit ha-icon{position:absolute;right:-7px;top:-7px;--mdc-icon-size:18px;width:31px;height:31px;padding:7px;border:1px solid rgba(95,210,255,.58);border-radius:50%;background:#0a2939;color:#68d9ff;box-shadow:0 5px 16px rgba(0,0,0,.35)}
-  .cf-pair{display:grid;grid-template-columns:1fr;gap:3px}.cf-metric{--tone:#68808e;display:flex;align-items:center;gap:7px;min-width:0;min-height:58px;padding:7px 9px;border:1px solid color-mix(in srgb,var(--tone) 38%,transparent);border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 9%,transparent),rgba(5,13,20,.8) 72%);text-align:left;cursor:pointer}.cf-metric[data-tone="supply"]{--tone:var(--cf-supply)}.cf-metric[data-tone="return"]{--tone:var(--cf-return)}.cf-metric[data-tone="heat"]{--tone:var(--cf-heat)}.cf-metric[data-tone="heat-return"]{--tone:var(--cf-heat-return)}.cf-metric.is-on{border-color:color-mix(in srgb,var(--tone) 70%,transparent);box-shadow:0 0 17px color-mix(in srgb,var(--tone) 10%,transparent)}.cf-metric>ha-icon{--mdc-icon-size:22px;flex:0 0 25px;color:var(--tone)}.cf-metric>span{display:flex;flex-direction:column;min-width:0}.cf-metric small{font-size:10px;color:#dbe6ec}.cf-metric strong{display:flex;align-items:baseline;color:var(--tone);font-size:18px;line-height:1.05;white-space:nowrap}.cf-metric strong b{font-weight:850}.cf-metric strong em{margin-left:2px;color:var(--cf-muted);font-size:10px;font-style:normal;font-weight:500}.cf-metric i{margin-top:1px;overflow:hidden;color:var(--cf-muted);font-size:8px;font-style:normal;white-space:nowrap;text-overflow:ellipsis}.cf-metric.is-unavailable{opacity:.45}.cf-delta{justify-self:center;display:flex;align-items:center;gap:5px;min-height:23px;padding:2px 9px;border:1px solid rgba(147,210,239,.2);border-radius:999px;background:rgba(12,29,40,.9);color:#cfe8f4;box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:2}.cf-delta small{font-size:7px;font-weight:800;letter-spacing:.08em}.cf-delta strong{font-size:11px;font-variant-numeric:tabular-nums}.cf-delta.is-muted{opacity:.4}.cf-missing{display:block}
-  .cf-water{--tone:#fff;position:absolute;z-index:6;display:flex;flex-direction:column;min-width:96px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--tone) 52%,transparent);border-radius:10px;background:rgba(5,14,21,.83);box-shadow:0 6px 15px rgba(0,0,0,.25);backdrop-filter:blur(4px);text-align:left;cursor:pointer}.cf-water[data-tone="dhw"]{--tone:var(--cf-dhw)}.cf-water[data-tone="cold"]{--tone:var(--cf-cold)}.cf-water-hot{right:1%;top:48%}.cf-water-cold{right:1%;top:75%}.cf-water small{font-size:8px;color:#dce6eb}.cf-water strong{display:flex;align-items:baseline;color:var(--tone);font-size:15px}.cf-water strong b{font-weight:850}.cf-water strong em{margin-left:2px;color:var(--cf-muted);font-size:8px;font-style:normal}.cf-water i{font-size:7px;color:var(--cf-muted);font-style:normal}
-  .cf-component{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;max-width:94px;padding:4px 5px;border:1px solid rgba(53,223,156,.26);border-radius:8px;background:rgba(5,14,20,.79);box-shadow:0 5px 13px rgba(0,0,0,.25);backdrop-filter:blur(4px);color:#dce8ed;text-align:left;cursor:pointer}.cf-component>ha-icon{--mdc-icon-size:13px;color:var(--cf-ok)}.cf-component>span{display:flex;flex-direction:column;min-width:0}.cf-component small{font-size:7px;color:var(--cf-muted);white-space:nowrap}.cf-component strong{display:flex;align-items:baseline;font-size:10px;line-height:1.05;white-space:nowrap}.cf-component strong b{font-weight:800}.cf-component strong em{margin-left:2px;font-size:7px;color:var(--cf-muted);font-style:normal}.cf-component i{font-size:7px;color:var(--cf-muted);font-style:normal;white-space:nowrap}.cf-component.is-on{border-color:rgba(53,223,156,.58);box-shadow:0 0 14px rgba(53,223,156,.1)}.cf-component-dhw{right:12%;top:42%}.cf-component-heat{right:20%;top:59%}.cf-component-pump{left:35%;top:82%}
-  .cf-mobile-pairs{display:none}.cf-footer{display:flex;gap:0;max-width:1180px;margin:8px auto 0;padding-top:10px;border-top:1px solid var(--cf-line)}.cf-footer button{display:flex;align-items:center;gap:7px;flex:1 1 0;min-width:0;padding:5px 9px;border:0;border-left:1px solid var(--cf-line);background:none;text-align:left;cursor:pointer}.cf-footer button:first-child{border-left:0}.cf-footer ha-icon{--mdc-icon-size:19px;color:#b8ccd8}.cf-footer small,.cf-footer strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-footer small{color:var(--cf-muted);font-size:8px}.cf-footer strong{font-size:12px}
-  .cf-modal{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto}.cf-modal-backdrop{position:absolute;inset:0;background:rgba(2,8,13,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.cf-device{position:relative;width:min(100%,450px);margin:auto;padding:12px;border-radius:24px;background:linear-gradient(155deg,#f0f2f1,#d9dedf 60%,#c5cbcd);color:#1d2b31;box-shadow:0 30px 80px rgba(0,0,0,.5)}.cf-device-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.cf-device-head strong,.cf-device-head small{display:block}.cf-device-head small{color:#607078;font-size:10px}.cf-device-head button{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:rgba(20,35,43,.08);color:#2c3f48}.cf-device-face{padding:9px;border-radius:14px;background:linear-gradient(#e7eae9,#d3d8d9)}.cf-screen{min-height:230px;padding:10px;border:2px solid #576a71;border-radius:7px;background:linear-gradient(#c5d9d3,#aec4bc);color:#142820}.cf-screen-head{display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:2px solid rgba(20,40,32,.5)}.cf-screen-head ha-icon{--mdc-icon-size:18px}.cf-screen-head strong{flex:1;letter-spacing:.07em}.cf-screen-head span{font-size:11px;font-weight:800}.cf-screen-body{padding-top:5px}.cf-screen-row{display:flex;justify-content:space-between;gap:10px;min-height:30px;padding:4px 5px;border-bottom:1px solid rgba(20,40,32,.15);font-size:12px}.cf-screen-row strong{max-width:55%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-keys{display:flex;justify-content:center;gap:15px;margin-top:9px}.cf-keys button{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(0,0,0,.13);border-radius:50%;background:linear-gradient(#fafafa,#dfe4e4);color:#2e4048}.cf-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:8px}.cf-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:47px;padding:4px 2px;border:1px solid rgba(0,0,0,.1);border-radius:10px;background:rgba(255,255,255,.52);color:#364a52;font-size:9px;font-weight:750}.cf-tabs button ha-icon{--mdc-icon-size:17px}.cf-tabs button span{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-tabs button.active{background:#1c3139;color:#eef6f7}
-  @keyframes cf-flow{to{stroke-dashoffset:-40}}@keyframes cf-spin{to{transform:rotate(360deg)}}.cf.no-anim .cf-svg *,.cf.is-offscreen .cf-svg *{animation:none!important}@media(prefers-reduced-motion:reduce){.cf-svg *,.cf-modal *{animation:none!important;transition:none!important}}
-  @container calefa-card (max-width:520px){
-    ha-card{border-radius:20px}.cf{padding:6px 7px calc(14px + env(safe-area-inset-bottom,0px))}.cf-main{display:block}.cf-side{display:none}.cf-mobile-pairs{display:grid;gap:5px;margin-bottom:3px}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 39px minmax(0,1fr);align-items:center;gap:3px}.cf-mobile-pairs .cf-delta{justify-self:stretch;flex-direction:column;justify-content:center;gap:0;min-height:38px;padding:2px}.cf-mobile-pairs .cf-metric{min-height:46px;padding:5px 6px;border-radius:11px;gap:4px}.cf-mobile-pairs .cf-metric>ha-icon{--mdc-icon-size:17px;flex-basis:18px}.cf-mobile-pairs .cf-metric small{font-size:8px}.cf-mobile-pairs .cf-metric strong{font-size:15px}.cf-mobile-pairs .cf-metric strong em{font-size:8px}.cf-mobile-pairs .cf-metric i{display:none}.cf-stage{width:100%;max-width:300px;margin:0 auto}.cf-stage-box{aspect-ratio:600/920}.cf-water{min-width:80px;padding:4px 5px}.cf-water small{font-size:7px}.cf-water strong{font-size:13px}.cf-water strong em{font-size:7px}.cf-water i{display:none}.cf-water-hot{right:-1%;top:48%}.cf-water-cold{right:-1%;top:75%}.cf-component{max-width:76px;padding:3px 4px}.cf-component>ha-icon{display:none}.cf-component small{font-size:6px}.cf-component strong{font-size:9px}.cf-component i{font-size:6px}.cf-component-dhw{right:12%;top:42%}.cf-component-heat{right:20%;top:59%}.cf-component-pump{left:35%;top:82%}.cf-footer{display:none}.cf-modal{padding:7px 7px calc(10px + env(safe-area-inset-bottom,0px))}.cf-device{padding:9px;border-radius:18px}.cf-screen{min-height:205px}.cf-screen-row{min-height:28px;font-size:11px}
-  }
-  @container calefa-card (max-width:380px){.cf{padding-left:5px;padding-right:5px}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 35px minmax(0,1fr)}.cf-mobile-pairs .cf-metric>ha-icon{display:none}.cf-stage{max-width:286px}.cf-water{min-width:74px}.cf-component{max-width:70px}}
-  @container calefa-card (min-width:521px) and (max-width:899px){.cf-main{grid-template-columns:minmax(150px,210px) minmax(315px,1fr) minmax(150px,210px);gap:12px}.cf-stage{max-width:450px}.cf-metric{min-height:52px;padding:6px 8px}.cf-metric>ha-icon{--mdc-icon-size:19px;flex-basis:21px}.cf-metric strong{font-size:16px}.cf-delta{min-height:21px}.cf-water{transform:scale(.9);transform-origin:right center}.cf-component{transform:scale(.86);transform-origin:center}}
-  @container calefa-card (min-width:900px){.cf{padding:10px 22px 16px}.cf-main{gap:24px}.cf-stage{max-width:520px}.cf-metric{min-height:64px;padding:8px 10px}.cf-metric>ha-icon{--mdc-icon-size:24px;flex-basis:28px}.cf-metric small{font-size:11px}.cf-metric strong{font-size:20px}.cf-delta{min-height:25px}.cf-water{min-width:104px}.cf-water strong{font-size:16px}.cf-component{max-width:100px}}
+:host{
+  display:block;
+  container:calefa-card / inline-size;
+  --orange:#ff7a2f; --blue:#3f9aff; --amber:#ff9d3e; --sky:#55bfff;
+  --red:#ff4f5a; --cyan:#37cce5; --green:#39d99d; --text:#eef6fb; --muted:#8fa6b6;
+}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+ha-card{
+  position:relative; overflow:hidden; color:var(--text);
+  border:1px solid rgba(134,168,190,.16); border-radius:var(--ha-card-border-radius,24px);
+  background:
+    radial-gradient(70% 58% at 50% 34%,rgba(53,112,145,.24),transparent 72%),
+    linear-gradient(155deg,#0a1721,#102635 58%,#07131c);
+  box-shadow:0 20px 56px rgba(0,0,0,.28);
+}
+.cf-shell{
+  display:grid; grid-template-columns:minmax(150px,220px) minmax(330px,520px) minmax(150px,220px);
+  grid-template-areas:"left unit right" "footer footer footer";
+  gap:18px 24px; align-items:center; justify-content:center; min-width:0;
+  max-width:1120px; margin:0 auto; padding:14px 18px 12px;
+}
+.cf-rail-left{grid-area:left}.cf-unit-zone{grid-area:unit}.cf-rail-right{grid-area:right}
+.cf-unit-zone{min-width:0}
+.cf-unit-frame{position:relative;width:100%;aspect-ratio:620/760;margin:auto;isolation:isolate}
+.cf-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cf-grooves path{fill:none;stroke:#050607;stroke-width:3;opacity:.48}
+.cf-lcd-title{fill:#263c46;font:800 11px system-ui,sans-serif;letter-spacing:.055em}
+.cf-lcd-value{fill:#173643;font:850 27px system-ui,sans-serif}
+.cf-led{fill:#97a3a8;stroke:#6e7b81;stroke-width:1.2}
+.cf-led.heat.active{fill:#ff3f4d;stroke:#ff8f97;filter:drop-shadow(0 0 7px #ff3f4d)}
+.cf-led.dhw.active{fill:#2f9fff;stroke:#96ceff;filter:drop-shadow(0 0 7px #2f9fff)}
+.cf-pipe-base path{fill:none;stroke:url(#cf-steel);stroke-width:14;stroke-linecap:round;stroke-linejoin:round}
+.cf-pipe-shine path{fill:none;stroke:rgba(255,255,255,.52);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.cf-brass rect{fill:url(#cf-brass);stroke:#785213;stroke-width:1}
+.cf-hx path{fill:none;stroke:#552715;stroke-width:2.3;opacity:.72}
+.cf-hx text{fill:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.07em}
+.cf-hx.active{filter:drop-shadow(0 0 12px rgba(255,132,67,.3))}
+.cf-valve rect{fill:#10181d;stroke:#596970;stroke-width:2}
+.cf-valve circle{fill:#0a1114;stroke:#75848b;stroke-width:2}
+.cf-valve.active rect{stroke:var(--green);filter:drop-shadow(0 0 6px rgba(57,217,157,.5))}
+.cf-pump-unit>rect{fill:#202b31;stroke:#4c5c64;stroke-width:2}
+.cf-pump-rotor{fill:#62737b;transform-origin:316px 617px}
+.cf-pump-unit.active .cf-pump-rotor{fill:#7ba6b9;animation:cf-spin 1.3s linear infinite}
+.cf-connections circle{fill:#182228;stroke:#94a0a5;stroke-width:4}
+.cf-connections text{fill:#8599a5;font:800 16px system-ui,sans-serif}
+.cf-flow path{fill:none;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2 17;opacity:0}
+.cf-flow.active path{opacity:1;animation:cf-flow 1.1s linear infinite}
+.cf-flow.primary path{stroke:var(--orange);filter:url(#cf-hot)}
+.cf-flow.primary .return{stroke:var(--blue);filter:url(#cf-blue)}
+.cf-flow.heat-flow path{stroke:var(--amber);filter:url(#cf-hot)}
+.cf-flow.heat-flow .return{stroke:var(--sky);filter:url(#cf-blue)}
+.cf-flow.dhw-flow path{stroke:var(--cyan);filter:url(#cf-blue)}
+.cf-flow.dhw-flow .hot{stroke:var(--red);filter:url(#cf-hot)}
+.cf-display-hit{position:absolute;z-index:10;left:33%;top:10%;width:34%;height:14%;border:0;background:transparent;cursor:pointer}
+
+.cf-pair{display:grid;grid-template-columns:1fr;gap:4px;min-width:0}
+.cf-metric{
+  --tone:#718897;display:flex;align-items:center;gap:8px;min-width:0;min-height:62px;padding:8px 10px;
+  border:1px solid color-mix(in srgb,var(--tone) 48%,transparent);border-radius:14px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 8%,transparent),rgba(4,12,18,.88) 70%);
+  box-shadow:0 8px 22px rgba(0,0,0,.16);text-align:left;cursor:pointer;
+}
+.cf-metric[data-tone="orange"]{--tone:var(--orange)}.cf-metric[data-tone="blue"]{--tone:var(--blue)}
+.cf-metric[data-tone="amber"]{--tone:var(--amber)}.cf-metric[data-tone="sky"]{--tone:var(--sky)}
+.cf-metric>ha-icon{--mdc-icon-size:22px;flex:0 0 24px;color:var(--tone)}
+.cf-metric-text{display:flex;flex-direction:column;min-width:0}
+.cf-metric small{color:#c8d5dd;font-size:10px}
+.cf-metric strong{display:flex;align-items:baseline;line-height:1.05;color:var(--tone);white-space:nowrap}
+.cf-metric strong b{font-size:20px;font-weight:850}.cf-metric strong em{margin-left:2px;color:#9cafbb;font-size:10px;font-style:normal}
+.cf-metric i{height:10px;margin-top:2px;color:#8095a2;font-size:8px;font-style:normal}
+.cf-delta{
+  justify-self:center;display:flex;align-items:center;gap:5px;min-height:25px;padding:3px 10px;margin:-1px 0;
+  border:1px solid rgba(138,194,223,.22);border-radius:999px;background:rgba(10,27,38,.94);
+  box-shadow:0 4px 12px rgba(0,0,0,.22);z-index:2;
+}
+.cf-delta span{font-size:7px;font-weight:850;letter-spacing:.07em;color:#b9d3df}.cf-delta strong{font-size:11px}
+.cf-empty{visibility:hidden}
+
+.cf-mini{
+  --tone:#fff;position:absolute;z-index:8;display:flex;flex-direction:column;min-width:92px;padding:6px 8px;
+  border:1px solid color-mix(in srgb,var(--tone) 55%,transparent);border-radius:10px;
+  background:rgba(5,13,19,.88);box-shadow:0 7px 17px rgba(0,0,0,.28);backdrop-filter:blur(5px);
+  text-align:left;cursor:pointer;
+}
+.cf-mini[data-tone="red"]{--tone:var(--red)}.cf-mini[data-tone="cyan"]{--tone:var(--cyan)}
+.cf-mini small{font-size:8px;color:#c9d4da}.cf-mini strong{display:flex;align-items:baseline;color:var(--tone)}
+.cf-mini strong b{font-size:15px}.cf-mini strong em{margin-left:2px;color:#9cafb9;font-size:8px;font-style:normal}.cf-mini i{font-size:7px;color:#8295a0;font-style:normal}
+.hot-water{right:0;top:53%}.cold-water{right:0;top:75%}
+
+.cf-component{
+  position:absolute;z-index:9;display:flex;flex-direction:column;min-width:64px;padding:4px 6px;
+  border:1px solid rgba(57,217,157,.34);border-radius:8px;background:rgba(4,13,18,.86);
+  box-shadow:0 5px 14px rgba(0,0,0,.26);text-align:left;cursor:pointer;
+}
+.cf-component small{font-size:6px;color:#8fa5b1}.cf-component strong{font-size:10px;color:#eef7f7}.cf-component i{font-size:6px;color:#729088;font-style:normal}
+.dhw-valve{right:13%;top:42%}.heat-valve{right:23%;top:57%}.pump{left:34%;top:80%}
+
+.cf-mobile-pairs{display:none}
+.cf-footer{grid-area:footer;display:flex;justify-content:center;gap:0;border-top:1px solid rgba(255,255,255,.08);padding-top:8px}
+.cf-footer button{display:flex;align-items:center;gap:6px;min-width:0;padding:4px 14px;border:0;border-left:1px solid rgba(255,255,255,.07);background:none;text-align:left;cursor:pointer}
+.cf-footer button:first-child{border-left:0}.cf-footer ha-icon{--mdc-icon-size:16px;color:#a9bdc8}
+.cf-footer small,.cf-footer strong{display:block;white-space:nowrap}.cf-footer small{font-size:7px;color:#7f96a5}.cf-footer strong{font-size:10px}
+
+.cf-modal{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:14px}
+.cf-backdrop{position:absolute;inset:0;border:0;background:rgba(1,6,10,.78);backdrop-filter:blur(8px)}
+.cf-device{position:relative;width:min(94%,430px);padding:12px;border-radius:22px;background:linear-gradient(155deg,#f3f5f4,#d1d7d8);color:#19303a;box-shadow:0 28px 80px rgba(0,0,0,.55)}
+.cf-device header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.cf-device header strong,.cf-device header small{display:block}.cf-device header small{font-size:9px;color:#65767d}
+.cf-device header button{width:44px;height:44px;border:0;border-radius:50%;background:rgba(20,34,42,.08);font-size:24px}
+.cf-screen{padding:10px;border:2px solid #667b83;border-radius:8px;background:linear-gradient(#c5dad5,#a9c1ba);color:#132b25}
+.cf-screen-top{display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:2px solid rgba(18,42,34,.4);font-size:12px;font-weight:850;letter-spacing:.05em}
+.cf-screen-body>div{display:flex;justify-content:space-between;gap:10px;min-height:30px;padding:6px 4px;border-bottom:1px solid rgba(18,42,34,.13);font-size:12px}
+.cf-screen-body strong{white-space:nowrap}.cf-screen-keys{display:flex;justify-content:center;gap:14px;margin-top:9px}.cf-screen-keys button{width:48px;height:44px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:#edf1f0}
+
+@keyframes cf-flow{to{stroke-dashoffset:-38}}@keyframes cf-spin{to{transform:rotate(360deg)}}
+.no-anim .cf-flow.active path,.no-anim .cf-pump-unit.active .cf-pump-rotor{animation:none}
+@media(prefers-reduced-motion:reduce){.cf-svg *{animation:none!important}}
+
+@container calefa-card (max-width:720px){
+  .cf-shell{display:block;padding:8px 8px calc(14px + env(safe-area-inset-bottom,0px))}
+  .cf-rail{display:none}.cf-unit-zone{width:100%;max-width:390px;margin:0 auto}
+  .cf-unit-frame{aspect-ratio:620/760}
+  .cf-mobile-pairs{display:grid;gap:7px;max-width:520px;margin:4px auto 0}
+  .cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);align-items:center;gap:4px}
+  .cf-mobile-pairs .cf-metric{min-height:50px;padding:6px 7px;border-radius:11px}
+  .cf-mobile-pairs .cf-metric>ha-icon{--mdc-icon-size:18px;flex-basis:19px}
+  .cf-mobile-pairs .cf-metric small{font-size:8px}.cf-mobile-pairs .cf-metric strong b{font-size:16px}.cf-mobile-pairs .cf-metric strong em{font-size:8px}.cf-mobile-pairs .cf-metric i{display:none}
+  .cf-mobile-pairs .cf-delta{align-self:stretch;display:flex;flex-direction:column;justify-content:center;gap:0;padding:2px 3px}
+  .cf-footer{display:none}
+  .cf-mini{min-width:78px;padding:4px 5px}.cf-mini small{font-size:7px}.cf-mini strong b{font-size:13px}.cf-mini i{display:none}
+  .cf-component{min-width:57px;padding:3px 4px}.cf-component small{font-size:5.5px}.cf-component strong{font-size:9px}.cf-component i{font-size:5.5px}
+  .hot-water{right:-1%;top:53%}.cold-water{right:-1%;top:75%}
+  .dhw-valve{right:12%;top:42%}.heat-valve{right:22%;top:57%}.pump{left:33%;top:80%}
+}
+@container calefa-card (max-width:390px){
+  .cf-shell{padding-left:5px;padding-right:5px}.cf-unit-zone{max-width:350px}
+  .cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)}
+  .cf-mobile-pairs .cf-metric>ha-icon{display:none}.cf-mobile-pairs .cf-metric{min-height:46px}
+  .cf-mini{min-width:72px}.cf-component{min-width:52px}
+}
+@container calefa-card (min-width:721px) and (max-width:960px){
+  .cf-shell{grid-template-columns:minmax(135px,180px) minmax(330px,440px) minmax(135px,180px);gap:14px}
+  .cf-metric{min-height:56px;padding:7px 8px}.cf-metric strong b{font-size:17px}.cf-metric>ha-icon{--mdc-icon-size:19px}
+}
+@container calefa-card (min-width:1100px){
+  .cf-shell{grid-template-columns:minmax(170px,230px) minmax(390px,520px) minmax(170px,230px);gap:26px}
+}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
-  window.customCards.push({ type: "ha-calefa-flow-card", name: "HA Calefa Flow Card", description: "Responsive animated Calefa II flow card", preview: false, documentationURL: "https://github.com/MRDonnii/ha-smart-home-cards/blob/main/docs/CALEFA_FLOW_CARD.md" });
+  window.customCards.push({
+    type: "ha-calefa-flow-card",
+    name: "HA Calefa Flow Card",
+    description: "Responsive animated Calefa II flow card",
+    preview: false,
+    documentationURL: "https://github.com/MRDonnii/ha-smart-home-cards/blob/main/docs/CALEFA_FLOW_CARD.md",
+  });
 }
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
