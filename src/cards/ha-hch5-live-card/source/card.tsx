@@ -87,6 +87,8 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
   };
 
   const [busy, setBusy] = useState<string | null>(null);
+  const [pendingChoice, setPendingChoice] = useState<{ key: string; target: string } | null>(null);
+  const pendingTimer = useRef<number | null>(null);
   const [notice, setNoticeState] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
   const setNotice = useCallback((message: string, error = false) => {
@@ -96,7 +98,7 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
   }, []);
   useEffect(() => () => { if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current); }, []);
 
-  const command = useCallback(async (name: string, key: string, domain: string, service: string, data: Record<string, unknown>, success: string) => {
+  const command = useCallback(async (name: string, key: string, domain: string, service: string, data: Record<string, unknown>, success: string, target?: string) => {
     const current = hassRef.current;
     const entity_id = ids[key];
     if (!entity_id || !current.states[entity_id] || current.states[entity_id]?.state === "unavailable") {
@@ -104,18 +106,34 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
       return false;
     }
     setBusy(name);
+    if (target !== undefined) {
+      if (pendingTimer.current !== null) window.clearTimeout(pendingTimer.current);
+      setPendingChoice({ key, target });
+      pendingTimer.current = window.setTimeout(() => setPendingChoice(null), 8000);
+    }
     setNotice("Gemmer…");
     try {
       await current.callService(domain, service, { entity_id, ...data });
       setNotice(success);
       return true;
     } catch (error) {
+      if (target !== undefined) {
+        if (pendingTimer.current !== null) window.clearTimeout(pendingTimer.current);
+        setPendingChoice(null);
+      }
       setNotice(`Kunne ikke gemme: ${errorText(error)}`, true);
       return false;
     } finally {
       setBusy(null);
     }
   }, [ids, setNotice]);
+  useEffect(() => () => { if (pendingTimer.current !== null) window.clearTimeout(pendingTimer.current); }, []);
+  useEffect(() => {
+    if (pendingChoice && hass.states[ids[pendingChoice.key]]?.state.toLowerCase() === pendingChoice.target.toLowerCase()) {
+      if (pendingTimer.current !== null) window.clearTimeout(pendingTimer.current);
+      setPendingChoice(null);
+    }
+  }, [pendingChoice, hass, ids]);
 
   // Timestamps from HA are compared with a clock that only ticks while
   // something counts down, so idle renders stay cheap.
@@ -176,8 +194,10 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
   const afterheatStatus = heating ? "Aktiv" : afterheatLockout ? "Spærret af sommerstop" : "Inaktiv";
   const fireplaceRemaining = num("fireplace_remaining");
   const fireplace = (fireplaceRemaining ?? 0) > 0 || isOn("fireplace_active");
-  const mode = String(value("mode_control") ?? "local_auto");
+  const mode = String(value("mode_control") ?? "");
   const level = num("effective_level") ?? 3;
+  const chosenLevel = num(mode === "manual" ? "level_control" : "auto_normal");
+  const chosen = (key: string) => pendingChoice?.key === key ? pendingChoice.target : value(key);
   const climate = entity("afterheat_climate");
   const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
   const afterheatEnabled = climate ? climate.state !== "off" : true;
@@ -194,6 +214,7 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
   // Without the switch entity the controller's cooling state still tells
   // whether the automation is enabled.
   const coolingEnabled = value("cooling_control") !== null ? isOn("cooling_control") : coolingState !== null && coolingState !== "disabled";
+  const shownCoolingEnabled = pendingChoice?.key === "cooling_control" ? pendingChoice.target === "on" : coolingEnabled;
   const boostRemaining = num("boost_remaining") ?? 0;
   const quickBoostActive = boostRemaining > 0;
   // HA has no readback of which boost runs. A button's state is the time it
@@ -266,8 +287,8 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
   // Manual sets the manual level; the auto modes move their normal level,
   // exactly like the WebUI's manual_level / local_normal_level.
   const setLevel = (target: number) => mode === "manual"
-    ? command(`level-${target}`, "level_control", "select", "select_option", { option: String(target) }, `Ventilation sat til trin ${target}.`)
-    : command(`level-${target}`, "auto_normal", "number", "set_value", { value: target }, `Ventilation sat til trin ${target}.`);
+    ? command(`level-${target}`, "level_control", "select", "select_option", { option: String(target) }, `Ventilation sat til trin ${target}.`, String(target))
+    : command(`level-${target}`, "auto_normal", "number", "set_value", { value: target }, `Ventilation sat til trin ${target}.`, String(target));
 
   return (
     <section className="dashboard-overview">
@@ -306,12 +327,12 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
             <label className="control-label">Ventilationstilstand</label>
             <div className="pro-segment three">
               {["local_auto", "smart_auto", "manual"].map(option => (
-                <button key={option} className={mode === option ? "active" : ""} disabled={busy !== null} onClick={() => void command(`mode-${option}`, "mode_control", "select", "select_option", { option }, `${modeLabel(option)} valgt.`)}>{modeLabel(option)}</button>
+                <button key={option} className={chosen("mode_control") === option ? "active" : ""} aria-pressed={chosen("mode_control") === option} disabled={busy !== null} onClick={() => void command(`mode-${option}`, "mode_control", "select", "select_option", { option }, `${modeLabel(option)} valgt.`, option)}>{modeLabel(option)}</button>
               ))}
             </div>
             <label className="control-label">Ventilatorniveau</label>
             <div className="pro-levels">
-              {[1,2,3,4,5,6].map(target => <button key={target} className={level === target ? "active" : ""} disabled={busy !== null} onClick={() => void setLevel(target)}>{target}</button>)}
+              {[1,2,3,4,5,6].map(target => <button key={target} className={Number(chosen(mode === "manual" ? "level_control" : "auto_normal") ?? chosenLevel) === target ? "active" : ""} aria-pressed={Number(chosen(mode === "manual" ? "level_control" : "auto_normal") ?? chosenLevel) === target} disabled={busy !== null} onClick={() => void setLevel(target)}>{target}</button>)}
             </div>
             <div className="active-decision"><span>Aktiv beslutning</span><strong>Trin {whole(level)} · {text(value("effective_source")).replaceAll("_", " ")}</strong><small>{text(value("effective_reason"), "Afventer controllerens beslutning")}</small></div>
           </article>
@@ -320,7 +341,7 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
             <article className="surface mini-control">
               <div className="mini-control-title"><Wind size={20}/><strong>Hurtig boost</strong></div>
               <div className="mini-buttons three">
-                {BOOST_MINUTES.map(minutes => <button key={minutes} className={activeBoost === minutes ? "active" : ""} disabled={busy !== null || fireplace} onClick={() => void command(`boost-${minutes}`, `boost_${minutes}`, "button", "press", {}, `Quick Boost ${minutes} min startet.`)}>{minutes} min</button>)}
+                {BOOST_MINUTES.map(minutes => <button key={minutes} className={activeBoost === minutes || busy === `boost-${minutes}` ? "active" : ""} aria-pressed={activeBoost === minutes} disabled={busy !== null || fireplace} onClick={() => void command(`boost-${minutes}`, `boost_${minutes}`, "button", "press", {}, `Quick Boost ${minutes} min startet.`)}>{minutes} min</button>)}
               </div>
               {quickBoostActive && <button className="text-action" onClick={() => void command("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet.")}>{remaining(boostRemaining)} · stop</button>}
             </article>
@@ -328,8 +349,8 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
             <article className="surface mini-control">
               <div className="mini-control-title"><ArrowRight size={20}/><strong>Bypass-styring</strong></div>
               <div className="mini-buttons two">
-                <button className={String(value("bypass_control") ?? "off") === "off" ? "active" : ""} disabled={busy !== null || bypassMoving} onClick={() => void command("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.")}>Auto</button>
-                <button className={value("bypass_control") === "on" ? "active" : ""} disabled={busy !== null || fireplace || bypassMoving} onClick={() => void command("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass ønskes åben.")}>On</button>
+                <button className={chosen("bypass_control") === "off" ? "active" : ""} aria-pressed={chosen("bypass_control") === "off"} disabled={busy !== null || bypassMoving} onClick={() => void command("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.", "off")}>Auto</button>
+                <button className={chosen("bypass_control") === "on" ? "active" : ""} aria-pressed={chosen("bypass_control") === "on"} disabled={busy !== null || fireplace || bypassMoving} onClick={() => void command("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass ønskes åben.", "on")}>On</button>
               </div>
               <small className="control-footnote">Faktisk: {bypassActualLabel}</small>
             </article>
@@ -338,16 +359,16 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
           <div className="pro-control-pair">
             <article className="surface status-action-card">
               <div className="status-action-icon"><Snowflake size={24}/></div>
-              <div><span>Frikøling</span><strong>{coolingLabel(coolingState)}</strong><small>{coolingEnabled ? "Automatik aktiv" : "Deaktiveret"}</small></div>
-              <button disabled={busy !== null} aria-label={coolingEnabled ? "Deaktiver frikøling" : "Aktiver frikøling"} onClick={() => void command("cooling", "cooling_control", "switch", coolingEnabled ? "turn_off" : "turn_on", {}, coolingEnabled ? "Frikøling deaktiveret." : "Frikøling aktiveret.")}><ArrowRight size={17}/></button>
+              <div><span>Frikøling</span><strong>{coolingLabel(coolingState)}</strong><small>{shownCoolingEnabled ? "Automatik aktiv" : "Deaktiveret"}</small></div>
+              <button className={shownCoolingEnabled ? "active" : ""} aria-pressed={shownCoolingEnabled} disabled={busy !== null} aria-label={shownCoolingEnabled ? "Deaktiver frikøling" : "Aktiver frikøling"} onClick={() => void command("cooling", "cooling_control", "switch", shownCoolingEnabled ? "turn_off" : "turn_on", {}, shownCoolingEnabled ? "Frikøling deaktiveret." : "Frikøling aktiveret.", shownCoolingEnabled ? "off" : "on")}><ArrowRight size={17}/></button>
             </article>
             <article className="surface status-action-card">
               <div className="status-action-icon flame"><Flame size={24}/></div>
               <div><span>Pejsefunktion</span><strong>{fireplace ? "Aktiv" : "Ikke aktiv"}</strong><small>{fireplace ? remaining(fireplaceRemaining) : "15 eller 30 min"}</small></div>
               <div className="fireplace-actions">
                 {fireplace
-                  ? <button disabled={busy !== null} onClick={() => void command("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.")}>Stop</button>
-                  : <><button disabled={busy !== null} onClick={() => void command("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.")}>15</button><button disabled={busy !== null} onClick={() => void command("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.")}>30</button></>}
+                  ? <button disabled={busy !== null} onClick={() => void command("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket")}>Stop</button>
+                  : <><button className={chosen("fireplace_control") === "15 min" ? "active" : ""} aria-pressed={chosen("fireplace_control") === "15 min"} disabled={busy !== null} onClick={() => void command("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.", "15 min")}>15</button><button className={chosen("fireplace_control") === "30 min" ? "active" : ""} aria-pressed={chosen("fireplace_control") === "30 min"} disabled={busy !== null} onClick={() => void command("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.", "30 min")}>30</button></>}
               </div>
             </article>
           </div>
