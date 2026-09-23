@@ -89,6 +89,20 @@ result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
   "sensor.dv": state(0, "%"),
 });
 assert.equal(result.dhwPrimary, true, "bypass heats the primary side even when the DHW valve reports zero");
+assert.equal(result.primaryMoving, false, "bypass status without measured flow must not animate fjernvarme");
+result = model({ fjv_flow: "sensor.ff", heating_flow: "sensor.hf", water_flow: "sensor.wf", heating_active: "sensor.h", dhw_active: "sensor.d" }, {
+  "sensor.ff": state(0, "L/h"), "sensor.hf": state(0, "L/h"), "sensor.wf": state(0, "L/h"),
+  "sensor.h": state("Opvarmning"), "sensor.d": state("Bypass"),
+});
+assert.equal(result.primaryMoving, false);
+assert.equal(result.heatMoving, false);
+assert.equal(result.waterMoving, false);
+result = model({ fjv_flow: "sensor.ff", heating_flow: "sensor.hf", water_flow: "sensor.wf" }, {
+  "sensor.ff": state(120, "L/h"), "sensor.hf": state(90, "L/h"), "sensor.wf": state(8, "L/h"),
+});
+assert.equal(result.primaryMoving, true);
+assert.equal(result.heatMoving, true);
+assert.equal(result.waterMoving, true);
 
 // A running pump keeps the heating loop moving even without heat demand.
 result = model({ heating_active: "sensor.h", pump: "sensor.p" }, {
@@ -147,6 +161,21 @@ display._displayMove(1);
 display._displayEnter();
 display._displayEnter();
 assert.equal(JSON.stringify(calls[1]), JSON.stringify(["select", "select_option", { entity_id: "select.calefa_bypass", option: "PLANLÆG" }]));
+const mappedSwitch = new Card();
+mappedSwitch._build = () => {};
+mappedSwitch.setConfig({ display_entities: { auto_standby: "switch.calefa_auto_standby" } });
+mappedSwitch._hass = { states: { "switch.calefa_auto_standby": state("off") }, callService: (...args) => calls.push(args) };
+mappedSwitch._renderDisplay = () => {};
+mappedSwitch._displayPage = mappedSwitch._activeFronts().indexOf("settings");
+mappedSwitch._inMenu = true;
+mappedSwitch._menuPath = [];
+mappedSwitch._menuPath = [mappedSwitch._menuChildren(mappedSwitch._menuNode()).findIndex((item) => item.label === "ITC")];
+const standbyMenu = mappedSwitch._menuChildren(mappedSwitch._menuNode()).find((item) => item.label === "Automatisk standby");
+assert.equal(mappedSwitch._canEdit(standbyMenu), true);
+assert.equal(mappedSwitch._menuValue(standbyMenu), "Fra");
+mappedSwitch._edit = { node: standbyMenu, value: "Til", options: ["Fra", "Til"], confirm: true };
+mappedSwitch._displayEnter();
+assert.equal(JSON.stringify(calls.at(-1)), JSON.stringify(["switch", "turn_on", { entity_id: "switch.calefa_auto_standby" }]));
 display._displayEnter(true);
 assert.equal(display._menuPath.length, 0, "long Enter returns one level");
 const readOnly = new Card();
@@ -158,7 +187,7 @@ assert.equal(readOnly._activeFronts().length, 0, "no unsupported menu fronts are
 readOnly._displayEnter(true);
 readOnly._displayEnter();
 assert.equal(readOnly._edit, null, "unmapped menu values remain read-only");
-assert.equal(calls.length, 2);
+assert.equal(calls.length, 3);
 assert.equal(JSON.stringify(display._activeFronts()), JSON.stringify(["bv", "itc"]));
 assert.equal(display._menuChildren(display._menuNode()).some((item) => item.service), false, "service actions without HA data are hidden");
 const alarms = new Card();
@@ -199,6 +228,24 @@ stale._remember(one);
 assert.equal(stale._hasChanges(one), false, "same state objects do not trigger a rebuild");
 assert.equal(stale._hasChanges({ ...one, states: { "sensor.p": one.states["sensor.p"] } }), false);
 assert.equal(stale._hasChanges({ ...one, states: { "sensor.p": state("Fra") } }), true);
+
+const deltaCard = new Card();
+deltaCard._build = () => {};
+deltaCard.setConfig({ fjv_good_delta: 20, heating_good_delta: 5 });
+assert.equal(deltaCard._deltaStatus("fjv", 19.9), "bad");
+assert.equal(deltaCard._deltaStatus("fjv", 20), "good");
+assert.equal(deltaCard._deltaStatus("heating", 5), "good");
+assert.equal(deltaCard._deltaStatus("heating", null), "unavailable");
+
+let legacyOpened = 0;
+const legacy = { localName: "ha-fjernvarme-house-card-v2", _config: { details_title: "Calefa styring" }, _openDetailsPopup() { legacyOpened += 1; } };
+const legacyRoot = { children: [legacy] };
+const bridge = new Card();
+bridge.getRootNode = () => legacyRoot;
+bridge._decorateLegacyPopup = () => {};
+context.document = { children: [] };
+bridge._openLegacyPopup();
+assert.equal(legacyOpened, 1, "display button opens the existing Calefa popup owner");
 
 const speed = new Card();
 const props = new Map();
