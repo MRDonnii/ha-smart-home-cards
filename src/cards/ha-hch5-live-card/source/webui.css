@@ -383,3 +383,35 @@ button { font: inherit; color: inherit; }
   .hch-mobile-lane { grid-template-columns: minmax(0,1fr) 22px minmax(0,1fr); gap: 4px; }
   .hch-mobile-core span { font-size: 7px; }
 }
+
+/* HA theme surfaces and a tighter card layout. The diagram keeps its full
+   viewBox; only the surrounding spacing changes. */
+:host { --hch-base: var(--surface, var(--ha-card-background, var(--card-background-color, #0c1822))); --hch-accent: var(--dashboard-accent, var(--primary-color, #58b9ff)); --hch-border: var(--dashboard-border-neutral, var(--divider-color, #294658)); }
+.hch-card { padding: 10px 12px 12px; background: var(--hch-base); color: var(--primary-text-color, var(--text)); }
+.surface { border-color: color-mix(in srgb, var(--hch-border) 78%, transparent); background: var(--hch-base); box-shadow: var(--dashboard-shadow-soft, var(--ha-card-box-shadow, 0 6px 18px rgb(0 0 0 / 14%))); }
+.overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow { background: color-mix(in srgb, var(--hch-base) 88%, var(--hch-accent) 12%); border-color: color-mix(in srgb, var(--hch-border) 76%, transparent); }
+.pro-segment,.pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.setpoint-stepper strong,.status-action-card > button,.fireplace-actions button { background: var(--dashboard-button-neutral-bg, color-mix(in srgb, var(--hch-base) 93%, var(--primary-text-color, #fff) 7%)); border-color: var(--dashboard-button-neutral-border, var(--hch-border)); color: var(--primary-text-color, var(--text)); }
+.pro-segment button.active,.pro-levels button.active,.mini-buttons button.active,.status-action-card > button.active,.fireplace-actions button.active { background: var(--dashboard-button-active-bg, color-mix(in srgb, var(--hch-accent) 24%, var(--hch-base))); border-color: var(--dashboard-button-active-border, var(--hch-accent)); color: var(--primary-text-color, #fff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hch-accent) 32%, transparent), 0 0 12px color-mix(in srgb, var(--hch-accent) 22%, transparent); }
+.pro-segment button:disabled.active,.pro-levels button:disabled.active,.mini-buttons button:disabled.active,.status-action-card > button:disabled.active,.fireplace-actions button:disabled.active { opacity: 1; }
+.hch-card button:focus-visible { outline: 2px solid var(--hch-accent); outline-offset: 2px; }
+.dashboard-overview,.dashboard-main-grid { gap: 8px; }
+.overview-heading-row { gap: 12px; padding-bottom: 4px; }
+.overview-heading-row h1 { font-size: clamp(21px, 2vw, 30px); }
+.overview-status-pills { gap: 6px; }
+.overview-status-pills > div { min-height: 48px; padding: 6px 9px; }
+.pro-air-card,.pro-control-card { padding: 11px 12px; }
+.pro-control-column,.pro-control-pair { gap: 8px; }
+.mini-control { min-height: 90px; padding: 10px; }
+.mini-buttons { margin-top: 8px; }
+.control-label { margin: 10px 0 5px; }
+.active-decision { margin-top: 8px; padding: 7px 9px; }
+.status-action-card { min-height: 70px; padding: 8px 10px; }
+.climate-panel { padding: 10px 12px; }
+.climate-metric { min-height: 74px; padding: 7px 10px; }
+.afterheat-setpoint-card { min-height: 72px; padding: 9px 12px; }
+@container hch-card (max-width: 560px) {
+  .hch-card { padding: 8px; }
+  .pro-air-card { padding: 9px 8px; }
+  .overview-status-pills > div { min-height: 42px; }
+  .hch5-visual.compact .hch-mobile-flow { margin: 4px 0 8px; padding: 9px; }
+}
