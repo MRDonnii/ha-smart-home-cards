@@ -32246,16 +32246,18 @@ var toNumber = (value2) => {
 var VIEW_W = 775;
 var VIEW_H = 1295;
 var TRACKS = [
-  // Heating circuit: VR through the pump into the heating exchanger, VF out past the air vent and safety valve.
+  // Heating circuit: VR through the pump into the heating exchanger, VF from the upper port down the
+  // riser that carries the air vent (49) and safety valve (25).
   { id: "vr", circuit: "heat", speed: "heat", tone: "heat-return", d: "M378 1238 V866 H552" },
-  { id: "vf", circuit: "heat", speed: "heat", tone: "heat", d: "M584 736 H500 V1238" },
+  { id: "vf", circuit: "heat", speed: "heat", tone: "heat", d: "M566 575 H514 Q500 575 500 589 V1238" },
   // Domestic hot water: KV in, BV out.
   { id: "kv", circuit: "dhw", speed: "dhw", tone: "cold", d: "M678 1238 V1128" },
   { id: "bv", circuit: "dhw", speed: "dhw", tone: "dhw", d: "M552 1072 Q580 1076 580 1108 V1238" },
   // District heating (Wavin connection order, left-handed): FF is the outer left riser, FR the second one.
   { id: "ff", circuit: "primary", speed: "primary", tone: "supply", d: "M98 1238 V684 Q98 668 114 668 H426 Q458 668 458 700 V908 Q458 938 486 938 H560" },
   { id: "fr", circuit: "primary", speed: "primary", tone: "return", d: "M420 572 H201 Q187 572 187 586 V1238" },
-  { id: "fr-heat", circuit: "heat-primary", speed: "primary", tone: "return", d: "M566 575 H420" },
+  // Heating primary return through the heating valve (22) into the return manifold.
+  { id: "fr-heat", circuit: "heat-primary", speed: "primary", tone: "return", d: "M256 706 V586" },
   // The DHW return passes the motor valve (37) on its way back to the return manifold.
   { id: "fr-dhw", circuit: "dhw-primary", speed: "primary", tone: "return", d: "M566 498 Q500 498 478 506 Q428 528 405 566" }
 ];
@@ -32272,9 +32274,9 @@ var ANCHORS = {
   fjv_return: [187, 800],
   dhw_valve: [345, 505],
   heating_valve: [255, 762],
-  pump: [378, 988],
+  pump: [274, 988],
   dhw_temperature: [635, 590],
-  heating_supply: [540, 736],
+  heating_supply: [500, 780],
   heating_return: [430, 866],
   cold_water_temperature: [678, 1180]
 };

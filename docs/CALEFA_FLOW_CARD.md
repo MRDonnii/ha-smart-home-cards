@@ -103,10 +103,10 @@ Component positions follow Wavin's component drawing for the Calefa II V: 37 DHW
 | --- | --- | --- |
 | FF: outer left riser, supply line and U-bend to the exchangers | orange | `fjv_flow` above the threshold |
 | FR: return manifold and second riser | blue | `fjv_flow` above the threshold |
-| Heating exchanger → return manifold | blue | FJV flow and heating valve open (or heating active) |
+| Heating valve (22) → return manifold | blue | FJV flow and heating valve open (or heating active) |
 | DHW exchanger → 37 motor valve → return manifold | blue | FJV flow and DHW valve open, tapping or bypass |
 | VR through the pump into the heating exchanger | light blue | `heating_flow` above the threshold |
-| VF from the heating exchanger | orange | `heating_flow` above the threshold |
+| VF from the upper exchanger port down the riser with air vent (49) and safety valve (25) | orange | `heating_flow` above the threshold |
 | KV / BV | cyan / red | `water_flow` above the threshold |
 
 Moving arrows run along active tracks; their speed follows the measured flow in four steps. The exchanger faces show a zigzag: red at the top (hot water) while tapping, dimmed during bypass, and orange to blue at the bottom (heating) while heating flows.
