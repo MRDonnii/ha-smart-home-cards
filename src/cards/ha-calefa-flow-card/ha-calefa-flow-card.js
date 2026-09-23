@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.5.0";
+const CALEFA_FLOW_CARD_VERSION = "0.6.0";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -113,38 +113,56 @@ const toNumber = (value) => {
 // its own pixel coordinates (775 x 1295), so the overlay never stretches the picture.
 const VIEW_W = 775;
 const VIEW_H = 1295;
+// Hydraulics follow Wavin's principle diagram for the Calefa II V 40/40 (installation guide, Oct. 2025):
+// two plate exchangers sit one behind the other. The rear one, whose top shows above the front one,
+// is the heating exchanger (02, air vent 49 on its upper port); the large front face is the domestic
+// hot water exchanger (01). Where a pipe passes behind another part, `hide` lists the rectangles
+// ({x, y, w, h}) or circles ({x, y, r}) that cover it, so glow and arrows disappear behind it.
+// Holes of one track must not overlap.
 const TRACKS = [
-  // Heating circuit: VR through the pump into the heating exchanger, VF from the upper port down the
-  // riser that carries the air vent (49) and safety valve (25).
-  { id: "vr", circuit: "heat", speed: "heat", tone: "heat-return", d: "M378 1238 V866 H552" },
-  { id: "vf", circuit: "heat", speed: "heat", tone: "heat", d: "M566 575 H514 Q500 575 500 589 V1238" },
-  // Domestic hot water: KV in, BV out.
-  { id: "kv", circuit: "dhw", speed: "dhw", tone: "cold", d: "M678 1238 V1128" },
-  { id: "bv", circuit: "dhw", speed: "dhw", tone: "dhw", d: "M552 1072 Q580 1076 580 1108 V1238" },
-  // District heating (Wavin connection order, left-handed): FF is the outer left riser, FR the second one.
-  { id: "ff", circuit: "primary", speed: "primary", tone: "supply", d: "M98 1238 V684 Q98 668 114 668 H426 Q458 668 458 700 V908 Q458 938 486 938 H560" },
-  { id: "fr", circuit: "primary", speed: "primary", tone: "return", d: "M420 572 H201 Q187 572 187 586 V1238" },
-  // Heating primary return through the heating valve (22) into the return manifold.
-  { id: "fr-heat", circuit: "heat-primary", speed: "primary", tone: "return", d: "M256 706 V586" },
-  // The DHW return passes the motor valve (37) on its way back to the return manifold.
-  { id: "fr-dhw", circuit: "dhw-primary", speed: "primary", tone: "return", d: "M566 498 Q500 498 478 506 Q428 528 405 566" },
+  // District heating supply: FF riser, strainer (53) and the supply tee that feeds both exchangers.
+  { id: "ff", circuit: "primary", speed: "primary", tone: "supply", d: "M98.5 1238 V684 Q98.5 668.5 114 668.5 H352" },
+  // Supply branch up behind the return manifold and down the diagonal into the heating exchanger's upper port.
+  { id: "ff-heat", circuit: "heat-primary", speed: "primary", tone: "supply", d: "M350 646 Q353 610 375 592 L405 563.5 L478 513.8 Q497 500.8 518 499 H537", hide: [{ x: 360, y: 548, w: 56, h: 42 }] },
+  // Supply branch over the outer U-bend into the DHW exchanger's lower port.
+  { id: "ff-dhw", circuit: "dhw-primary", speed: "primary", tone: "supply", d: "M352 669 Q370 674 390 674 H432 Q455 674 455 697 V915 Q455 938.5 478 938.5 H548" },
+  // Heating exchanger return: lower port, behind the U-bends, through the heating valve (22) into the manifold.
+  { id: "fr-heat", circuit: "heat-primary", speed: "primary", tone: "return", d: "M442 863.5 H271 Q256 863.5 256 848 V575", hide: [{ x: 242, y: 656, w: 30, h: 26 }] },
+  // DHW exchanger return: upper port through the DHW control valve (37) into the manifold.
+  { id: "fr-dhw", circuit: "dhw-primary", speed: "primary", tone: "return", d: "M490 574.5 H256" },
+  // Return manifold, sensor cross (52) and FR riser, which runs behind the supply line.
+  { id: "fr", circuit: "primary", speed: "primary", tone: "return", d: "M256 574.5 H201 Q186.5 574.5 186.5 589 V1238", hide: [{ x: 172, y: 656, w: 30, h: 26 }] },
+  // Heating return: VR through the pump (40) and strainer (53), over the inner U-bend, behind the outer
+  // one and into the heating exchanger's lower port.
+  { id: "vr", circuit: "heat", speed: "heat", tone: "heat-return", d: "M380 1238 V1076 L384 900 L388 830 V719 Q388 704 403 704 H440 Q452 704 452 716 V864 Q452 876 464 876 H548", hide: [{ x: 378.4, y: 987.4, r: 88 }, { x: 370, y: 852, w: 30, h: 22 }, { x: 441, y: 690, w: 29, h: 195 }] },
+  // Heating supply: leaves the heating exchanger's upper port behind the valves, crosses behind the inner
+  // U-bend, the valve return and the outer U-bend, then drops through the safety valve (25) to VF.
+  { id: "vf", circuit: "heat", speed: "heat", tone: "heat", d: "M357 688 L437 858 L472 945 Q489 968 489 1000 V1058 L496 1090 V1238", hide: [{ x: 374, y: 722, w: 27, h: 62 }, { x: 425, y: 852, w: 16, h: 22 }, { x: 441, y: 845, w: 30, h: 55 }, { x: 441, y: 900, w: 60, h: 53 }] },
+  // Cold water: KV up to the check valve (28A) below the pressure equaliser (07); it continues behind
+  // the exchangers and comes up the flow meter (36) riser into the DHW exchanger's upper port.
+  { id: "kv", circuit: "dhw", speed: "dhw", tone: "cold", d: "M679 1238 V1146" },
+  { id: "kv-up", circuit: "dhw", speed: "dhw", tone: "cold", d: "M502 914 V590 Q502 574.5 517.5 574.5 H548" },
+  // Hot water: DHW exchanger's lower port, down and round to BV.
+  { id: "bv", circuit: "dhw", speed: "dhw", tone: "dhw", d: "M510 950 V1058 Q510 1076 530 1076 Q581 1076 581 1112 V1238" },
 ];
-// Exchanger faces: domestic hot water (02) above, heating (01) below, as in Wavin's component drawing.
-const HX_ZONES = {
-  dhw: { x1: 598, x2: 672, y1: 494, y2: 714, top: "#ff4a4a", bottom: "#ff9a3c" },
-  heat: { x1: 598, x2: 672, y1: 750, y2: 966, top: "#ff9a3c", bottom: "#3d95ff" },
+// Visible copper faces measured on the illustration: the top strip of the rear heating exchanger and the
+// whole front DHW exchanger. The fog on a face runs from its hot end to its cold end.
+const HX = {
+  heat: { x: 584, y: 468.5, w: 102.5, h: 64.5, r: 7, top: true },
+  dhw: { x: 591.5, y: 533, w: 96, h: 452.5, r: 8 },
 };
-const PUMP = { x: 378, y: 988, r: 104 };
+// The pump head: flat face edge, the bezel band the arrows run in, and the outer housing edge.
+const PUMP = { x: 378.4, y: 987.4, face: 68, rail: 77.3, rim: 86.5, box: 100 };
 // 22/34 heating valve (centre left) and 37 DHW motor valve (top centre).
 const VALVES = { heating_valve: { x: 255, y: 762, r: 46 }, dhw_valve: { x: 345, y: 505, r: 44 } };
-const PORTS = [["FF", 98, "supply", "Fjernvarme frem"], ["FR", 187, "return", "Fjernvarme retur"], ["VR", 378, "heat-return", "Varme retur"], ["VF", 500, "heat", "Varme frem"], ["BV", 580, "dhw", "Brugsvand varmt"], ["KV", 678, "cold", "Koldt vand"]];
+const PORTS = [["FF", 98, "supply", "Fjernvarme frem"], ["FR", 187, "return", "Fjernvarme retur"], ["VR", 380, "heat-return", "Varme retur"], ["VF", 496, "heat", "Varme frem"], ["BV", 581, "dhw", "Brugsvand varmt"], ["KV", 679, "cold", "Koldt vand"]];
 const LED_POSITIONS = [["power", 347, "Strøm"], ["fault", 367, "Fejl"], ["mode", 387, "Driftstilstand"], ["lan", 406, "LAN"], ["peripheral", 426, "Ekstern enhed"]];
 // Callout targets on the drawing, and the side each tile sits on.
 const ANCHORS = {
   fjv_supply: [160, 668], fjv_return: [187, 800],
-  dhw_valve: [345, 505], heating_valve: [255, 762], pump: [274, 988],
-  dhw_temperature: [635, 590], heating_supply: [500, 780], heating_return: [430, 866],
-  cold_water_temperature: [678, 1180],
+  dhw_valve: [345, 505], heating_valve: [255, 762], pump: [291.9, 987.4],
+  heating_supply: [636, 500], heating_return: [486, 876],
+  dhw_temperature: [640, 950], cold_water_temperature: [679, 1180],
 };
 const LAYOUT = {
   left: [["tile", "dhw_valve"], ["pair", "fjv_supply", "fjv_return", "fjv"], ["tile", "heating_valve"], ["tile", "pump"]],
@@ -184,14 +202,23 @@ const polar = (r, degrees) => {
   return [Math.round(r * Math.cos(a) * 10) / 10, Math.round(r * Math.sin(a) * 10) / 10];
 };
 
-function zigzag({ x1, x2, y1, y2 }) {
-  const points = [`M${x1} ${y1}`];
-  let right = true;
-  for (let y = y1 + 13; y <= y2; y += 13) {
-    points.push(`L${right ? x2 : x1} ${y}`);
-    right = !right;
-  }
-  return points.join(" ");
+// Clip path that keeps the whole drawing except the holes a track passes behind.
+function hideClip(id, holes) {
+  const shape = (h) => h.r
+    ? `M${h.x - h.r} ${h.y}a${h.r} ${h.r} 0 1 0 ${2 * h.r} 0a${h.r} ${h.r} 0 1 0 ${-2 * h.r} 0Z`
+    : `M${h.x} ${h.y}h${h.w}v${h.h}h${-h.w}Z`;
+  return `<clipPath id="${id}" clipPathUnits="userSpaceOnUse"><path clip-rule="evenodd" d="M0 0H${VIEW_W}V${VIEW_H}H0Z${holes.map(shape).join("")}"/></clipPath>`;
+}
+
+// Fog colour for a water temperature: blue when cold, pale in between, orange to red when hot.
+const FOG_STOPS = [[5, [47, 107, 255]], [15, [54, 180, 255]], [25, [127, 214, 255]], [35, [255, 200, 87]], [45, [255, 154, 60]], [55, [255, 106, 54]], [65, [255, 61, 79]]];
+function fogColor(celsius) {
+  const t = clamp(Number(celsius), FOG_STOPS[0][0], FOG_STOPS[FOG_STOPS.length - 1][0]);
+  const upper = FOG_STOPS.findIndex(([at]) => at >= t);
+  const [a, from] = FOG_STOPS[Math.max(0, upper - 1)];
+  const [b, to] = FOG_STOPS[upper];
+  const k = b === a ? 0 : (t - a) / (b - a);
+  return `rgb(${from.map((c, i) => Math.round(c + (to[i] - c) * k)).join(",")})`;
 }
 
 function interpretActivity(stateObj, context = "generic") {
@@ -596,39 +623,49 @@ class HaCalefaFlowCard extends HTMLElement {
   }
 
   _stageMarkup() {
-    const tracks = TRACKS.map((track) => `<g class="cf-track" data-circuit="${track.circuit}" data-tone="${track.tone}"><path class="cf-track-halo" d="${track.d}"/><path class="cf-track-core" d="${track.d}"/><path class="cf-track-hot" d="${track.d}"/></g>`).join("");
-    const markers = TRACKS.map((track) => `<g class="cf-markers" data-circuit="${track.circuit}" data-track="${track.id}">${this._markersMarkup(track, 2)}</g>`).join("");
-    const zones = Object.entries(HX_ZONES).map(([key, zone]) => {
-      const d = zigzag(zone);
-      return `<linearGradient id="cf-zig-${key}" gradientUnits="userSpaceOnUse" x1="0" y1="${zone.y1}" x2="0" y2="${zone.y2}"><stop offset="0" stop-color="${zone.top}"/><stop offset="1" stop-color="${zone.bottom}"/></linearGradient>`
-        + `<g class="cf-hx" data-ref="hx-${key}"><path class="cf-hx-etch" d="${d}"/><path class="cf-hx-halo" d="${d}" stroke="url(#cf-zig-${key})"/><path class="cf-hx-line" d="${d}" stroke="url(#cf-zig-${key})"/></g>`;
+    const clip = (layer, track) => track.hide ? ` clip-path="url(#cf-hide-${layer}-${track.id})"` : "";
+    const clips = (layer) => TRACKS.filter((track) => track.hide).map((track) => hideClip(`cf-hide-${layer}-${track.id}`, track.hide)).join("");
+    const tracks = TRACKS.map((track) => `<g class="cf-track" data-circuit="${track.circuit}" data-tone="${track.tone}"${clip("g", track)}><path class="cf-track-halo" d="${track.d}"/><path class="cf-track-core" d="${track.d}"/><path class="cf-track-hot" d="${track.d}"/></g>`).join("");
+    const markers = TRACKS.map((track) => `<g class="cf-markers" data-circuit="${track.circuit}" data-track="${track.id}"${clip("a", track)}>${this._markersMarkup(track, 2)}</g>`).join("");
+    const pct = (value, total) => `${((value / total) * 100).toFixed(3)}%`;
+    const fogs = Object.entries(HX).map(([key, face]) => {
+      const rx = pct(face.r, face.w), ry = pct(face.r, face.h);
+      const radius = face.top ? `${rx} ${rx} 0 0 / ${ry} ${ry} 0 0` : `${rx} / ${ry}`;
+      return `<div class="cf-fog" data-ref="fog-${key}" data-fog="${key}" style="left:${pct(face.x, VIEW_W)};top:${pct(face.y, VIEW_H)};width:${pct(face.w, VIEW_W)};height:${pct(face.h, VIEW_H)};border-radius:${radius}"><i></i><i></i></div>`;
     }).join("");
-    const arrows = [0, 120, 240].map((rotation) => {
-      const [sx, sy] = polar(PUMP.r, 14);
-      const [ex, ey] = polar(PUMP.r, 94);
-      const [tx, ty] = polar(PUMP.r, 106);
-      const [ax, ay] = polar(PUMP.r - 11, 93);
-      const [bx, by] = polar(PUMP.r + 11, 93);
-      return `<g transform="rotate(${rotation})"><path class="cf-pump-arc" d="M${sx} ${sy} A${PUMP.r} ${PUMP.r} 0 0 1 ${ex} ${ey}"/><path class="cf-pump-head" d="M${ax} ${ay} L${tx} ${ty} L${bx} ${by} Z"/></g>`;
-    }).join("");
+    // Three arrows in the pump's bezel band: a tail that fades in and a head that spans the band.
+    const [tx, ty] = polar(PUMP.rail, -84);
+    const [ex, ey] = polar(PUMP.rail, -6);
+    const [ix, iy] = polar(PUMP.face + 1.5, -6);
+    const [ox, oy] = polar(PUMP.rim - 1.5, -6);
+    const [hx, hy] = polar(PUMP.rail, 8);
+    const arc = `M${tx} ${ty} A${PUMP.rail} ${PUMP.rail} 0 0 1 ${ex} ${ey}`;
+    const blades = [0, 120, 240].map((rotation) => `<g transform="rotate(${rotation})"><path class="cf-pump-glow" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-arc" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-head" d="M${ix} ${iy} L${hx} ${hy} L${ox} ${oy} Z"/></g>`).join("");
+    const box = PUMP.box;
+    const pump = `<div class="cf-pump" data-ref="pump" style="left:${pct(PUMP.x - box, VIEW_W)};top:${pct(PUMP.y - box, VIEW_H)};width:${pct(2 * box, VIEW_W)};height:${pct(2 * box, VIEW_H)}">
+        <svg class="cf-pump-ring" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><circle class="cf-pump-rail" r="${PUMP.rail}"/><circle class="cf-pump-face" r="${PUMP.face}"/><circle class="cf-pump-rim" r="${PUMP.rim}"/></svg>
+        <svg class="cf-pump-rotor" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><defs><linearGradient id="cf-pump-tail" gradientUnits="userSpaceOnUse" x1="${tx}" y1="${ty}" x2="${ex}" y2="${ey}"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset=".6" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>${blades}</svg>
+      </div>`;
     const valves = Object.entries(VALVES).filter(([id]) => this._config[id]).map(([id, v]) => `<g class="cf-valve" data-ref="valve-${id}" transform="translate(${v.x} ${v.y})"><circle class="cf-valve-track" r="${v.r}"/><circle class="cf-valve-level" r="${v.r}" pathLength="100" transform="rotate(-90)"/><g class="cf-valve-runner"><circle r="${v.r + 6}" fill="none" stroke="none"/><circle class="cf-valve-dot" cx="0" cy="${-v.r}" r="6"/></g><text class="cf-valve-pct cf-minor" x="${v.r + 9}" y="7" data-ref="valve-${id}-text">–</text></g>`).join("");
     const leds = LED_POSITIONS.map(([key, x, label]) => `<circle class="cf-display-led" data-ref="led-${key}" cx="${x}" cy="164" r="4.4" aria-label="${label}"/>`).join("");
     const photo = this._config.background_image ? `<img class="cf-photo" data-ref="photo" alt="" decoding="async" style="object-fit:${this._config.background_fit === "cover" ? "cover" : "contain"}">` : "";
+    const hit = PUMP.rim + 2;
     return `${photo}
+      <div class="cf-fogs" aria-hidden="true">${fogs}</div>
       <svg class="cf-layer cf-glow" viewBox="0 0 ${VIEW_W} ${VIEW_H}" aria-hidden="true">
-        <defs><linearGradient id="cf-lcd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9cdd8"/><stop offset="1" stop-color="#a3bac7"/></linearGradient>${zones.match(/<linearGradient[\s\S]*?<\/linearGradient>/g).join("")}</defs>
+        <defs><linearGradient id="cf-lcd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9cdd8"/><stop offset="1" stop-color="#a3bac7"/></linearGradient>${clips("g")}</defs>
         <g class="cf-lcd"><rect x="346" y="102" width="58" height="42" rx="2" fill="url(#cf-lcd)"/><text class="cf-lcd-title" x="350" y="114" data-ref="mini-title">STANDBY</text><text class="cf-lcd-value" x="375" y="139" text-anchor="middle" data-ref="mini-value">–</text></g>
-        ${zones.replace(/<linearGradient[\s\S]*?<\/linearGradient>/g, "")}
         ${tracks}
       </svg>
       <svg class="cf-layer cf-anim" data-ref="anim" viewBox="0 0 ${VIEW_W} ${VIEW_H}" role="img" aria-label="Calefa flowdiagram">
+        <defs>${clips("a")}</defs>
         ${markers}
-        <g class="cf-pump" data-ref="pump" transform="translate(${PUMP.x} ${PUMP.y})"><circle class="cf-pump-track" r="${PUMP.r}"/><g class="cf-pump-rotor"><circle r="${PUMP.r + 14}" fill="none" stroke="none"/><g class="cf-pump-glow">${arrows}</g>${arrows}</g></g>
         ${valves}
         <g class="cf-display-status">${leds}</g>
       </svg>
+      ${pump}
       <button class="cf-display-hit" type="button" data-action="open-display" aria-label="Åbn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button>
-      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer"></button>
+      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct(PUMP.x - hit, VIEW_W)};top:${pct(PUMP.y - hit, VIEW_H)};width:${pct(2 * hit, VIEW_W)};height:${pct(2 * hit, VIEW_H)}"></button>
       <button class="cf-info" type="button" data-action="open-legacy-popup" aria-label="Info: Calefa styring og forbrug"><ha-icon icon="mdi:information-outline"></ha-icon><span>Info</span></button>`;
   }
 
@@ -729,6 +766,12 @@ class HaCalefaFlowCard extends HTMLElement {
     for (const node of this._circuitNodes?.get(circuit) || []) this._toggle(node, "is-on", Boolean(on));
   }
 
+  _setFog(node, hot, cold) {
+    if (!node) return;
+    const values = { "--fog-hot": fogColor(hot), "--fog-mid": fogColor((hot + cold) / 2), "--fog-cold": fogColor(cold) };
+    for (const [name, value] of Object.entries(values)) if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value);
+  }
+
   _setMarkerSpeed(speed, level) {
     if (!level || this._markerLevels?.[speed] === level) return;
     this._markerLevels[speed] = level;
@@ -752,9 +795,15 @@ class HaCalefaFlowCard extends HTMLElement {
     this._setCircuit("dhw-primary", model.primaryMoving && Boolean(model.dhwPrimary));
     this._setCircuit("heat", model.heatMoving);
     this._setCircuit("dhw", model.waterMoving);
-    this._toggle(this._refs["hx-heat"], "is-on", model.heatMoving || (model.primaryMoving && Boolean(model.heatPrimary)));
-    this._toggle(this._refs["hx-dhw"], "is-on", model.waterMoving);
-    this._toggle(this._refs["hx-dhw"], "is-warm", !model.waterMoving && model.dhwBypass);
+    // Exchanger fog: the heating exchanger is hot at the top, the DHW exchanger at the bottom.
+    const heatFog = this._refs["fog-heat"];
+    const dhwFog = this._refs["fog-dhw"];
+    this._toggle(heatFog, "is-on", model.heatMoving || (model.primaryMoving && Boolean(model.heatPrimary)));
+    this._toggle(dhwFog, "is-on", model.waterMoving);
+    this._toggle(dhwFog, "is-warm", !model.waterMoving && model.dhwBypass);
+    const first = (...keys) => keys.map((key) => this._num(key)).find((value) => value !== null) ?? null;
+    this._setFog(heatFog, first("fjv_supply", "heating_supply") ?? 60, first("fjv_return", "heating_supply") ?? 35);
+    this._setFog(dhwFog, first("dhw_temperature", "fjv_supply") ?? 55, first("cold_water_temperature") ?? 10);
 
     const pump = this._refs.pump;
     const hasPump = this._configured("pump");
@@ -1147,16 +1196,31 @@ const CALEFA_STYLES = `
   .cf-glow{filter:drop-shadow(0 0 6px rgba(255,140,70,.12))}
   .cf-markers{display:none}.cf-markers.is-on{display:inline}.cf-marker{fill:#fff;opacity:.92}
 
-  /* Plate heat exchanger faces */
-  .cf-hx path{fill:none;stroke-linejoin:round;stroke-linecap:round}.cf-hx-etch{stroke:rgba(60,26,12,.55);stroke-width:4}.cf-hx-halo{stroke-width:15;opacity:0;transition:opacity .6s}.cf-hx-line{stroke-width:4.5;opacity:0;transition:opacity .6s}
-  .cf-hx.is-on .cf-hx-halo{opacity:.32}.cf-hx.is-on .cf-hx-line{opacity:1}.cf-hx.is-warm .cf-hx-halo{opacity:.14}.cf-hx.is-warm .cf-hx-line{opacity:.45}
+  /* Exchanger fog: a soft coloured layer on the copper from the hot end to the cooled end, with slow wisps
+     moving the way the district heating water flows (up through the DHW exchanger, down through the heating one). */
+  .cf-fogs{position:absolute;inset:0;pointer-events:none}
+  .cf-fog{position:absolute;overflow:hidden;opacity:0;transition:opacity 1.1s ease;--fog-hot:#ff6a36;--fog-mid:#ffc857;--fog-cold:#36b4ff;--fog-dir:to top}
+  .cf-fog[data-fog="heat"]{--fog-dir:to bottom}
+  .cf-fog:before{content:"";position:absolute;inset:0;background:linear-gradient(var(--fog-dir),var(--fog-hot) 4%,var(--fog-mid) 52%,var(--fog-cold) 98%);opacity:.5}
+  .cf-fog i{position:absolute;left:-30%;top:0;width:160%;height:200%;background-repeat:repeat-y;background-size:100% 50%;animation:cf-fog-drift 18s linear infinite paused}
+  .cf-fog i:first-of-type{background-image:radial-gradient(34% 9% at 30% 16%,rgba(255,255,255,.34),transparent 72%),radial-gradient(28% 7% at 70% 38%,rgba(255,255,255,.26),transparent 72%),radial-gradient(38% 10% at 42% 62%,rgba(255,255,255,.3),transparent 72%),radial-gradient(26% 7% at 76% 84%,rgba(255,255,255,.22),transparent 72%)}
+  .cf-fog i:last-of-type{animation-duration:29s;opacity:.75;background-image:radial-gradient(30% 8% at 64% 12%,rgba(255,255,255,.24),transparent 72%),radial-gradient(40% 11% at 26% 44%,rgba(255,255,255,.28),transparent 72%),radial-gradient(30% 8% at 70% 76%,rgba(255,255,255,.22),transparent 72%)}
+  .cf-fog[data-fog="heat"] i{animation-direction:reverse;animation-duration:9s}
+  .cf-fog[data-fog="heat"] i:first-of-type{background-image:radial-gradient(34% 30% at 32% 32%,rgba(255,255,255,.34),transparent 72%),radial-gradient(28% 26% at 72% 68%,rgba(255,255,255,.26),transparent 72%)}
+  .cf-fog[data-fog="heat"] i:last-of-type{animation-duration:15s;background-image:radial-gradient(40% 32% at 62% 40%,rgba(255,255,255,.26),transparent 72%)}
+  .cf-fog.is-on,.cf-fog.is-warm{opacity:1}.cf-fog.is-on i,.cf-fog.is-warm i{animation-play-state:running}
+  .cf-fog.is-warm:before{background:linear-gradient(var(--fog-dir),var(--fog-hot),transparent 70%);opacity:.42}.cf-fog.is-warm i{opacity:.4;animation-duration:32s}
 
-  /* Pump ring: three arrows, blue and turning when on, red and still when off. */
-  .cf-pump{color:#7d909b}.cf-pump.is-on{color:#3aa8ff}.cf-pump.is-off{color:var(--cf-off)}
-  .cf-pump-track{fill:none;stroke:currentColor;stroke-width:2;opacity:.28}
-  .cf-pump-rotor{transform-box:fill-box;transform-origin:center}.cf-pump.is-on .cf-pump-rotor{animation:cf-spin var(--cf-pump-duration,2.2s) linear infinite}
-  .cf-pump-arc{fill:none;stroke:currentColor;stroke-width:6.5;stroke-linecap:round}.cf-pump-head{fill:currentColor}
-  .cf-pump-glow .cf-pump-arc{stroke-width:18;opacity:.22}.cf-pump-glow .cf-pump-head{opacity:.22}.cf-pump:not(.is-on) .cf-pump-glow{display:none}
+  /* Pump: three arrows running in the bezel band of the pump head, blue and turning when on, red and still when off. */
+  .cf-pump{position:absolute;z-index:5;pointer-events:none;color:#7d909b}.cf-pump.is-on{color:#3aa8ff}.cf-pump.is-off{color:var(--cf-off)}
+  .cf-pump svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .cf-pump-rail{fill:none;stroke:currentColor;stroke-width:7.5;opacity:.13}
+  .cf-pump-face{fill:none;stroke:currentColor;stroke-width:.9;opacity:.3}
+  .cf-pump-rim{fill:none;stroke:currentColor;stroke-width:1.4;opacity:.55;transition:opacity .4s}.cf-pump.is-on .cf-pump-rim{opacity:.85}
+  .cf-pump-arc{fill:none;stroke-width:6.5;stroke-linecap:round}.cf-pump-glow{fill:none;stroke-width:15;stroke-linecap:round;opacity:.28}
+  .cf-pump-head{fill:currentColor;stroke:currentColor;stroke-width:1.2;stroke-linejoin:round}
+  .cf-pump:not(.is-on) .cf-pump-glow{display:none}
+  .cf-pump.is-on .cf-pump-rotor{animation:cf-spin var(--cf-pump-duration,2.2s) linear infinite}
 
   /* Valve rings: arc length is the opening, the dot travels through the open part. */
   .cf-valve-track{fill:rgba(4,14,20,.35);stroke:rgba(190,210,220,.28);stroke-width:5}
@@ -1172,7 +1236,7 @@ const CALEFA_STYLES = `
 
   .cf-display-hit{position:absolute;z-index:6;left:32.9%;top:4.6%;width:34.2%;height:14.4%;border:0;border-radius:10px;background:transparent;cursor:pointer}
   .cf-display-hit ha-icon{position:absolute;right:-8px;top:-8px;display:grid;place-items:center;--mdc-icon-size:clamp(12px,1.6cqw,18px);width:clamp(22px,3cqw,32px);height:clamp(22px,3cqw,32px);border:1px solid rgba(95,210,255,.6);border-radius:50%;background:#0a2939;color:#68d9ff;box-shadow:0 5px 16px rgba(0,0,0,.35)}
-  .cf-pump-hit{position:absolute;z-index:6;left:35.4%;top:68.3%;width:26.8%;height:16%;border:0;border-radius:50%;background:transparent;cursor:pointer}
+  .cf-pump-hit{position:absolute;z-index:6;border:0;border-radius:50%;background:transparent;cursor:pointer}
   /* Square info button centred between the display and the right edge of the black hood. */
   .cf-info{position:absolute;z-index:6;left:82.3%;top:10.8%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:max(44px,12.4%);aspect-ratio:1;padding:0;border:1px solid rgba(95,200,235,.55);border-radius:clamp(8px,1.1cqw,12px);background:linear-gradient(160deg,rgba(14,48,64,.94),rgba(5,22,32,.94));color:#9fe6ff;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);font-size:clamp(10px,2.1cqw,14px);font-weight:800;letter-spacing:.03em;transform:translate(-50%,-50%);cursor:pointer}
   .cf-info ha-icon{--mdc-icon-size:clamp(15px,3.6cqw,26px)}.cf-info:hover{background:linear-gradient(160deg,#124a61,#0a2c3d)}
@@ -1184,12 +1248,13 @@ const CALEFA_STYLES = `
   .cf-footer ha-icon{--mdc-icon-size:clamp(16px,2cqw,22px);color:#b8ccd8}.cf-footer span{min-width:0}.cf-footer small,.cf-footer strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cf-footer small{color:var(--cf-muted);font-size:clamp(10px,1.1cqw,12px)}.cf-footer strong{font-size:clamp(12px,1.4cqw,16px)}
 
   @keyframes cf-spin{to{transform:rotate(360deg)}}
+  @keyframes cf-fog-drift{to{transform:translate3d(0,-50%,0)}}
   @keyframes cf-pulse{50%{transform:scale(1.12);opacity:.1}}
   @keyframes cf-led{50%{opacity:.12}}
   @keyframes cf-valve-run{0%{transform:rotate(0deg);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:rotate(var(--cf-valve-sweep,0deg));opacity:0}}
-  .cf.is-paused .cf-anim *,.cf.is-paused .cf-delta:after{animation-play-state:paused!important}
-  .cf.no-anim .cf-anim *,.cf.no-anim .cf-delta:after{animation:none!important}
-  @media(prefers-reduced-motion:reduce){.cf-anim *,.cf-delta:after,.cf-modal *{animation:none!important;transition:none!important}}
+  .cf.is-paused .cf-anim *,.cf.is-paused .cf-delta:after,.cf.is-paused .cf-pump-rotor,.cf.is-paused .cf-fog i{animation-play-state:paused!important}
+  .cf.no-anim .cf-anim *,.cf.no-anim .cf-delta:after,.cf.no-anim .cf-pump-rotor,.cf.no-anim .cf-fog i{animation:none!important}
+  @media(prefers-reduced-motion:reduce){.cf-anim *,.cf-delta:after,.cf-modal *,.cf-pump-rotor,.cf-fog i{animation:none!important;transition:none!important}}
 
   @container cf-stage (max-width:360px){.cf-minor{display:none}}
   @container calefa-card (max-width:520px){.cf-tile>ha-icon{display:none}.cf-tile i{display:none}.cf-tile strong em{font-size:9px}.cf-delta small{display:none}.cf-delta strong em{display:none}.cf-footer button{gap:5px}.cf-footer ha-icon{display:none}}
