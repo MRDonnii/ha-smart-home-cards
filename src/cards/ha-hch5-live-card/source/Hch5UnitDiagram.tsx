@@ -282,6 +282,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   const bypassOpen=bypassPosition>=.5;
   const bypassPercent=travel?.percent??null;
   const bypassRemaining=travel?.remainingSeconds??null;
+  const bypassAwaitingEnd=travel?.awaitingEnd??false;
   const bypassLabel=bypassPhase?`${BYPASS_PHASE_LABEL[bypassPhase]}${bypassPercent===null?"":` ${bypassPercent} %`}`:bypassOpen?"Åben":"Lukket";
   // Extract is drawn on both routes; the damper position cross-fades the fog
   // from the core to the bottom channel as it opens, and back as it closes.
@@ -363,7 +364,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
                 {bypassPercent===null
                   ? <path className="bypass-progress-fill indeterminate" d={BYPASS_PROGRESS} pathLength={100}/>
                   : <path className="bypass-progress-fill" d={BYPASS_PROGRESS} pathLength={100} style={{strokeDasharray:`${bypassPercent} 100`}}/>}
-                <text className="hch-bypass-countdown" x="520" y="315" textAnchor="middle">{bypassRemaining===null?"Spjældet kører ca. 3 min":`ca. ${formatRemaining(bypassRemaining)} tilbage`}</text>
+                <text className="hch-bypass-countdown" x="520" y="315" textAnchor="middle">{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?"Spjældet kører ca. 3 min":`ca. ${formatRemaining(bypassRemaining)} tilbage`}</text>
               </g>
             : <><text className="hch-exchanger-title" x="520" y="255" textAnchor="middle">Varmeveksler</text><text className="hch-recovery" x="520" y="293" textAnchor="middle">{bypassOpen?"BYPASS":recovery===null?"—":`${recovery}%`}</text></>}
           {[["P3",438,204],["P1",602,204],["P2",438,334],["P4",602,334]].map(([port,x,y])=><text key={port} className="hch-core-port" x={x} y={y} textAnchor="middle">{port}</text>)}
@@ -420,6 +421,6 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       </div>
       <div className="hch-mobile-subreadings"><span>Før eftervarme <strong>{fmt(beforeHeater)}</strong></span><span>Vand frem/retur <strong>{fmt(flowWater)} / {fmt(returnWater)}</strong></span><span>T5 rum <strong>{fmt(room)}</strong></span><span>Frost <strong>{fmt(frost)}</strong></span></div>
     </div>
-    <div className="unit-readback-row"><div className="unit-readback"><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{int(supplyRpm)} RPM</strong><em>{int(supplyPercent)}%</em></div></div><div className="unit-readback"><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{int(extractRpm)} RPM</strong><em>{int(extractPercent)}%</em></div></div><div className="unit-readback"><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div><div className="unit-readback"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div></div>
+    <div className="unit-readback-row"><div className="unit-readback"><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{int(supplyRpm)} RPM</strong><em>{int(supplyPercent)}%</em></div></div><div className="unit-readback"><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{int(extractRpm)} RPM</strong><em>{int(extractPercent)}%</em></div></div><div className="unit-readback"><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div><div className="unit-readback"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div></div>
   </div>;
 }

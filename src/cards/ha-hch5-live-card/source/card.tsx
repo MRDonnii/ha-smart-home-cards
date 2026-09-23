@@ -184,6 +184,7 @@ function Overview({ hass, config }: { hass: Hass; config: Config }) {
     ? [
         bypassRun.direction === "opening" ? "åbner" : bypassRun.direction === "closing" ? "lukker" : "bevæger sig",
         bypassRun.percent === null ? null : `${bypassRun.percent} %`,
+        bypassRun.awaitingEnd ? "afventer endestilling" : null,
         bypassRun.remainingSeconds === null ? null : `${formatRemaining(bypassRun.remainingSeconds)} tilbage`,
       ].filter(Boolean).join(" · ")
     : bypassActual ? "åben" : "lukket";
