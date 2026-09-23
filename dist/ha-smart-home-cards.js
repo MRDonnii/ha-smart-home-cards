@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.69 */
+/* MRDonnii Smart Home Cards v0.3.70 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -32198,7 +32198,7 @@ var METRICS = {
   dhw_temperature: { label: "Varmt vand", icon: "mdi:water-thermometer", tone: "dhw", kind: "temperature" },
   cold_water_temperature: { label: "Koldt vand", icon: "mdi:water-outline", tone: "cold", kind: "temperature" },
   pump: { label: "Pumpe", icon: "mdi:fan", tone: "component", kind: "pump" },
-  heating_valve: { label: "Varmeventil", icon: "mdi:valve", tone: "component", kind: "valve" },
+  heating_valve: { label: "V-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
   dhw_valve: { label: "BV-ventil", icon: "mdi:valve", tone: "component", kind: "valve" }
 };
 var DISPLAY_FRONTS = ["bv", "itc", "settings", "alarm"];
