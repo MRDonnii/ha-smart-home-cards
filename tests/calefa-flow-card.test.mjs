@@ -273,6 +273,36 @@ context.document = { children: [] };
 bridge._openLegacyPopup();
 assert.equal(legacyOpened, 1, "display button opens the existing Calefa popup owner");
 
+const faultCard = new Card();
+faultCard._build = () => {};
+faultCard.setConfig({ alarm_entities: ["binary_sensor.calefa_motor_failure", "binary_sensor.calefa_warning", "binary_sensor.calefa_idle"] });
+faultCard._hass = { states: {
+  "binary_sensor.calefa_motor_failure": { state: "on", attributes: { friendly_name: "Motorfejl", description: "Ventilen svarer ikke" } },
+  "binary_sensor.calefa_warning": { state: "on", attributes: { friendly_name: "Lavt tryk" } },
+  "binary_sensor.calefa_idle": { state: "off", attributes: { friendly_name: "Ingen fejl" } },
+} };
+assert.deepEqual(faultCard._activeFaults().map((fault) => fault.label), ["Motorfejl", "Lavt tryk"]);
+assert.equal(faultCard._activeFaults()[0].detail, "Ventilen svarer ikke");
+assert.equal(faultCard._activeFaults()[0].critical, true);
+assert.equal(faultCard._activeFaults()[1].critical, false);
+
+let popupOpened = 0;
+let popupConfig;
+registry.set("ha-fjernvarme-house-card-v2", class {});
+const popupOwner = { style: {}, setConfig(config) { popupConfig = config; }, _openDetailsPopup() { popupOpened += 1; } };
+context.document.createElement = () => popupOwner;
+const integrated = new Card();
+integrated._build = () => {};
+integrated.setConfig({ popup_card: { details_entities: { standby: "switch.calefa_standby" }, extra_popups: [{ title: "Forbrug", cards: [{}] }] } });
+integrated._hass = { states: {} };
+integrated.shadowRoot.appendChild = () => {};
+integrated._decorateLegacyPopup = () => {};
+integrated._openLegacyPopup();
+integrated._openLegacyPopup();
+assert.equal(popupOpened, 2, "Info keeps both tabs available after the old dashboard card is removed");
+assert.equal(popupConfig.extra_popups[0].cards.length, 1);
+assert.equal(integrated._popupCard, popupOwner, "popup owner is reused rather than rebuilt");
+
 const speed = new Card();
 speed._build = () => {};
 speed.setConfig({});
