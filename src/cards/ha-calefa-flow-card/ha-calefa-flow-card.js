@@ -9,6 +9,7 @@ const ENTITY_KEYS = [
   "pump", "pump_speed", "heating_valve", "dhw_valve",
   "heating_active", "dhw_active", "power", "pressure",
   "room_temperature", "outdoor_temperature",
+  "lan_status", "peripheral_status",
 ];
 
 const UNAVAILABLE = new Set(["", "unknown", "unavailable", "none", "null"]);
@@ -488,18 +489,17 @@ class HaCalefaFlowCard extends HTMLElement {
         <rect x="75" y="215" width="450" height="675" rx="30" fill="url(#body)" stroke="#20272b" stroke-width="2"/><rect x="75" y="215" width="450" height="675" rx="30" fill="url(#epp)" opacity=".82"/><g class="cf-grooves">${grooves}</g>
         <rect x="58" y="44" width="484" height="210" rx="42" fill="url(#hood)" stroke="#292e32" stroke-width="2"/><rect x="58" y="44" width="484" height="210" rx="42" fill="url(#epp)" opacity=".58"/>
         <rect class="cf-control" x="194" y="88" width="212" height="126" rx="10"/><rect x="242" y="105" width="116" height="58" rx="4" fill="url(#lcd)" stroke="#68838c" stroke-width="2"/><text class="cf-mini-title" x="300" y="124" text-anchor="middle" data-ref="mini-title">STANDBY</text><text class="cf-mini-value" x="300" y="154" text-anchor="middle" data-ref="mini-value">–</text>
-        <circle class="cf-status-dot cf-status-heat" data-ref="status-heat" cx="287" cy="184" r="6"/><circle class="cf-status-dot cf-status-dhw" data-ref="status-dhw" cx="313" cy="184" r="6"/><circle class="cf-small-led" cx="257" cy="184" r="3.7"/><circle class="cf-small-led" cx="343" cy="184" r="3.7"/>
         <g class="cf-pipes-base"><path d="M105 875 V360 H454 V432"/><path d="M165 875 V408 H404 V492"/><path d="M300 875 V760 H445 V690"/><path d="M370 875 V780 H480 V690"/><path d="M465 875 V790 H520 V748"/><path d="M535 875 V748"/></g><g class="cf-pipe-shine"><path d="M105 875 V360 H454 V432"/><path d="M165 875 V408 H404 V492"/><path d="M300 875 V760 H445 V690"/><path d="M370 875 V780 H480 V690"/><path d="M465 875 V790 H520 V748"/><path d="M535 875 V748"/></g>
         <g class="cf-hx" data-ref="hx-heat"><rect x="420" y="590" width="82" height="194" rx="13" fill="url(#copper)"/><path d="M438 608 V766 M451 608 V766 M464 608 V766 M477 608 V766 M490 608 V766"/></g><g class="cf-hx" data-ref="hx-dhw"><rect x="420" y="430" width="82" height="153" rx="13" fill="url(#copper)"/><path d="M438 448 V565 M451 448 V565 M464 448 V565 M477 448 V565 M490 448 V565"/></g><g class="cf-hx-label"><text x="458" y="540" transform="rotate(-90 458 540)">BRUGSVAND</text><text x="458" y="720" transform="rotate(-90 458 720)">VARME</text></g>
         <g class="cf-valve" data-ref="heat-valve"><path d="M388 560 L403 575 L388 590 M418 560 L403 575 L418 590" fill="url(#brass)"/><rect x="378" y="530" width="48" height="45" rx="9"/></g><g class="cf-valve" data-ref="dhw-valve"><path d="M438 433 L453 448 L438 463 M468 433 L453 448 L468 463" fill="url(#brass)"/><rect x="428" y="398" width="50" height="46" rx="9"/></g>
         <g class="cf-pump" data-ref="pump"><rect x="258" y="790" width="84" height="86" rx="26"/><circle cx="300" cy="833" r="31"/><path class="cf-pump-spin" d="M300 808 C326 812 332 833 318 852 C294 847 284 826 300 808Z"/></g>
         <g class="cf-flow cf-flow-primary" data-ref="flow-primary">${flowTrack("M75 900 V440 H445 V395", "supply")}${flowTrack("M440 515 H145 V900", "return")}</g><g class="cf-flow cf-flow-heat" data-ref="flow-heat">${flowTrack("M290 900 V735 H350 V675 H450", "heat")}${flowTrack("M505 650 V715 H365 V900", "return")}</g><g class="cf-flow cf-flow-dhw" data-ref="flow-dhw">${flowTrack("M530 900 V720 H470", "cold")}${flowTrack("M445 440 V515 H475 V900", "hot")}</g>
         <g class="cf-exchangers"><rect class="cf-exchanger cf-exchanger-dhw" data-ref="exchanger-dhw" x="463" y="385" width="75" height="173" rx="8" fill="url(#cfDhwThermal)"/><rect class="cf-exchanger cf-exchanger-heat" data-ref="exchanger-heat" x="463" y="560" width="75" height="192" rx="8" fill="url(#cfHeatThermal)"/></g>
-        <circle class="cf-pump-halo" data-ref="pump-halo" cx="300" cy="735" r="43"/>
-        <g class="cf-pump-indicator" data-ref="pump-indicator" transform="translate(300 735)"><circle class="cf-pump-indicator-ring" r="31"/><g class="cf-pump-indicator-fan"><path d="M0 -5 C-10 -30 8 -30 6 -10Z M4 2 C30 0 28 18 9 11Z M-4 2 C-16 27 -29 13 -10 4Z"/></g><circle r="5"/></g>
+        <circle class="cf-pump-halo" data-ref="pump-halo" cx="300" cy="735" r="74"/>
+        <g class="cf-pump-indicator" data-ref="pump-indicator" transform="translate(300 735)"><circle class="cf-pump-indicator-ring" r="70"/><g transform="scale(2.15)"><g class="cf-pump-indicator-fan"><path d="M0 -5 C-10 -30 8 -30 6 -10Z M4 2 C30 0 28 18 9 11Z M-4 2 C-16 27 -29 13 -10 4Z"/></g></g><circle r="6"/></g>
         <g class="cf-connections">${connections}</g>
       </g>
-      <g class="cf-display-status" aria-label="Statusdioder på Calefa display"><circle class="cf-display-led cf-led-heat" data-ref="led-heat" cx="289" cy="182" r="5"/><circle class="cf-display-led cf-led-dhw" data-ref="led-dhw" cx="313" cy="182" r="5"/></g>
+      <g class="cf-display-status" aria-label="Statusdioder under Calefa displayet">${[["power",270,"Strøm"],["fault",285,"Fejl"],["mode",300,"Driftstilstand"],["lan",315,"LAN"],["peripheral",330,"Ekstern enhed"]].map(([key,x,label]) => `<circle class="cf-display-led" data-ref="led-${key}" cx="${x}" cy="148" r="2.7" aria-label="${label}"/>`).join("")}</g>
     </svg>`;
   }
 
@@ -600,16 +600,49 @@ class HaCalefaFlowCard extends HTMLElement {
     this._setThermalGradient("heat", this._num("heating_supply"), this._num("heating_return"), model.heatMoving);
     this._toggle(this._refs["pump-halo"], "is-on", model.pumpActive);
     this._toggle(this._refs["pump-indicator"], "is-on", model.pumpActive);
-    this._toggle(this._refs["status-heat"], "active", model.heatingActive);
-    this._toggle(this._refs["led-heat"], "active", model.heatingActive);
-    this._toggle(this._refs["led-dhw"], "active", model.dhwTap || model.dhwBypass);
-    this._toggle(this._refs["led-dhw"], "is-bypass", model.dhwBypass);
-    this._refs["led-heat"]?.setAttribute("aria-label", model.heatingActive ? "Varme aktiv" : "Varme standby");
-    this._refs["led-dhw"]?.setAttribute("aria-label", model.dhwTap ? "Brugsvand aktiv" : model.dhwBypass ? "Brugsvand bypass" : "Brugsvand standby");
-    this._toggle(this._refs["status-dhw"], "active", model.dhwTap || model.dhwBypass);
+    this._applyStatusLeds(model);
     const key = model.dhwTap && this._config.dhw_temperature ? "dhw_temperature" : this._config.heating_supply ? "heating_supply" : "fjv_supply";
     this._text(this._refs["mini-title"], model.dhwTap ? "BRUGSVAND" : model.heatingActive ? "VARME" : model.dhwBypass ? "BYPASS" : "STANDBY");
     this._text(this._refs["mini-value"], this._config[key] ? this._format(key, "temperature").replace(" °C", "°") : "–");
+  }
+
+  _applyStatusLeds(model) {
+    const state = (key) => this._config[key] ? this._hass?.states?.[this._config[key]] : null;
+    const known = (entity) => entity && !UNAVAILABLE.has(String(entity.state).toLowerCase());
+    const live = ["fjv_supply", "dhw_temperature", "heating_supply"].some((key) => known(state(key)));
+    const alarms = this._config.alarm_entities
+      .map((id) => [id, this._hass?.states?.[id]])
+      .filter(([, entity]) => entity && interpretActivity(entity) === true);
+    const hasError = alarms.some(([id, entity]) => /fejl|error|failure|critical|kritisk/i.test(id + " " + (entity.attributes?.friendly_name || "")));
+    const mode = model.dhwTap ? ["cyan", "Varmt vand aktivt"] :
+      model.heatingActive ? ["red", "Varme aktiv"] :
+      model.dhwBypass ? ["cyan slow", "Bypass aktiv"] : ["off", "Ingen varme eller varmt vand"];
+    const lan = state("lan_status");
+    const lanText = String(lan?.state || "").toLowerCase();
+    const lanTone = !known(lan) ? "unknown" :
+      ["on", "online", "connected", "forbundet"].includes(lanText) ? "green" :
+      ["connecting", "opretter forbindelse"].includes(lanText) ? "green fast" : "off";
+    const peripheral = state("peripheral_status");
+    const outdoor = state("outdoor_temperature");
+    const outdoorError = this._config.alarm_entities.some((id) => /outdoor_sensor_failure|udef.*fejl|udetemperatur.*fejl/i.test(id) && interpretActivity(this._hass?.states?.[id]) === true);
+    const peripheralTone = known(peripheral)
+      ? (interpretActivity(peripheral) === true ? "green" : "off")
+      : outdoorError ? "green slow" : known(outdoor) ? "green" : "unknown";
+    const leds = {
+      power: [live ? "green" : "unknown", live ? "Enhedens data er tilgængelige" : "Strømstatus ikke tilgængelig"],
+      fault: [hasError ? "red" : alarms.length ? "yellow" : "off", hasError ? "Enhedsfejl" : alarms.length ? "Advarsel" : "Ingen registreret fejl"],
+      mode,
+      lan: [lanTone, known(lan) ? "LAN: " + lan.state : "LAN-status ikke tilgængelig"],
+      peripheral: [peripheralTone, outdoorError ? "Udendørsføler i alarm" : known(outdoor) ? "Udendørsføler tilsluttet" : "Udendørsfølerstatus ikke tilgængelig"],
+    };
+    for (const [key, [tone, label]] of Object.entries(leds)) {
+      const led = this._refs[`led-${key}`];
+      if (!led) continue;
+      const [color, blink] = tone.split(" ");
+      if (led.dataset.tone !== color) led.dataset.tone = color;
+      if (led.dataset.blink !== (blink || "")) led.dataset.blink = blink || "";
+      if (led.getAttribute("aria-label") !== label) led.setAttribute("aria-label", label);
+    }
   }
 
   _thermalColor(value) {
@@ -930,7 +963,7 @@ const CALEFA_STYLES = `
   @container calefa-card (max-width:520px){.cf-top{margin-bottom:9px}.cf-brand h2{font-size:21px}.cf-statuses{gap:5px}.cf-status{gap:5px}.cf-status ha-icon{--mdc-icon-size:21px}.cf-status small{font-size:9px}.cf-status strong{font-size:13px}.cf-stage .cf-water,.cf-stage .cf-component{display:none}.cf-mobile-components{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:5px}.cf-mobile-components .cf-component,.cf-mobile-components .cf-water{position:relative;inset:auto;max-width:none;min-width:0;min-height:45px;padding:6px 8px;transform:none}.cf-mobile-components .cf-component>ha-icon{display:block;--mdc-icon-size:19px}.cf-mobile-components .cf-component small,.cf-mobile-components .cf-water small{font-size:9px}.cf-mobile-components .cf-component strong,.cf-mobile-components .cf-water strong{font-size:16px}.cf-mobile-components .cf-component i,.cf-mobile-components .cf-water i{font-size:8px}.cf-footer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-top:10px}.cf-footer button{min-width:0}}
 
   .cf{padding-top:8px}.cf-side{align-self:center;justify-content:center;gap:14px}.cf-side .cf-metric,.cf-side .cf-component,.cf-side .cf-water{min-height:0;padding:8px 10px}.cf-side .cf-component,.cf-side .cf-water{min-height:0}.cf-side .cf-pair{gap:5px}.cf-delta{min-height:22px;padding:2px 8px}.cf-main{margin-top:0}
-  .cf-display-led{fill:#3d575e;stroke:#c7d3d1;stroke-width:1.2;opacity:.92;filter:drop-shadow(0 0 2px #132d35)}.cf-led-heat.active{fill:#ff883d;stroke:#fff0cd;filter:drop-shadow(0 0 6px #ff641c)}.cf-led-dhw.active{fill:#54b8ff;stroke:#edf8ff;filter:drop-shadow(0 0 6px #34a4ff)}.cf-led-dhw.is-bypass{animation:cf-bypass-led 2.8s ease-in-out infinite}@keyframes cf-bypass-led{50%{opacity:.35}}
+  .cf-display-led{fill:#6f8288;stroke:#b9c4c6;stroke-width:.55;opacity:.5;filter:none}.cf-display-led[data-tone="green"]{fill:#27f05b;stroke:#caffd5;opacity:1;filter:drop-shadow(0 0 3px #28ef61)}.cf-display-led[data-tone="red"]{fill:#fb2558;stroke:#ffd8e1;opacity:1;filter:drop-shadow(0 0 3px #ff315b)}.cf-display-led[data-tone="cyan"]{fill:#52dcff;stroke:#e2faff;opacity:1;filter:drop-shadow(0 0 3px #42cbf4)}.cf-display-led[data-tone="yellow"]{fill:#ffd24d;stroke:#fff4cb;opacity:1;filter:drop-shadow(0 0 3px #ffd45b)}.cf-display-led[data-tone="unknown"]{opacity:.18}.cf-display-led[data-blink="slow"]{animation:cf-led-slow 2.5s steps(1,end) infinite}.cf-display-led[data-blink="fast"]{animation:cf-led-slow .7s steps(1,end) infinite}@keyframes cf-led-slow{50%{opacity:.12}}
   .cf-device{width:min(100%,350px);padding:11px;border:1px solid #adb9ba;border-radius:17px;background:linear-gradient(145deg,#e7ebeb,#bec7c9);box-shadow:0 28px 70px #0009}.cf-device-head{padding:0 5px}.cf-device-head strong{font-size:17px;letter-spacing:.08em}.cf-device-head small{font-size:9px}.cf-device-face{border:1px solid #b9c0c0;border-radius:9px;padding:12px 14px;background:linear-gradient(#e4e6e5,#cbd1d2)}.cf-screen{min-height:158px;border:3px solid #51605d;border-radius:3px;padding:6px;background:linear-gradient(145deg,#bfd6ce,#a3beb4);box-shadow:inset 0 3px 9px #3251444f;font-size:10px}.cf-screen-head{min-height:21px;padding:0 3px 3px;border-color:#4e685c}.cf-screen-head strong{font-size:11px}.cf-screen-front{min-height:105px;grid-template-columns:minmax(0,1fr) 56px;border-width:1px}.cf-screen-front-main{padding:7px}.cf-screen-front-main small{font-size:10px}.cf-screen-front-main strong{font-size:27px}.cf-screen-front-rail{border-left-width:1px}.cf-screen-front-rail span{border-bottom-width:1px;font-size:8px}.cf-screen-row{min-height:30px;padding:5px 4px;font-size:11px}.cf-screen-row.selected{background:#162c23;color:#e6f4e9}.cf-screen-hint{font-size:8px;margin-top:3px}.cf-keys{gap:10px;margin-top:10px}.cf-keys button{width:39px;height:39px}.cf-long-enter{min-height:35px;margin-top:8px;font-size:9px}
   .cf.no-anim .cf-exchanger,.cf.is-offscreen .cf-exchanger,.cf.no-anim .cf-led-dhw,.cf.is-offscreen .cf-led-dhw{animation:none!important}
   @media(prefers-reduced-motion:reduce){.cf-exchanger,.cf-display-led{animation:none!important}}
@@ -952,7 +985,6 @@ const CALEFA_STYLES = `
 
   .cf-delta.is-good{--cf-delta-tone:#3bdf9c}.cf-delta.is-bad{--cf-delta-tone:#ff685a}.cf-delta.is-muted{--cf-delta-tone:#7b99a8;opacity:.55}
   .cf-pair .cf-metric{position:relative;overflow:visible}.cf-side .cf-delta{z-index:4;margin-block:-9px}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:2px}.cf-mobile-pairs .cf-delta{z-index:4;width:54px;height:54px;min-height:54px;margin-inline:-7px}.cf-mobile-pairs .cf-metric:first-child:after,.cf-mobile-pairs .cf-metric:last-child:before{content:"";position:absolute;top:50%;width:17px;height:38px;transform:translateY(-50%);border:1.5px solid var(--tone);pointer-events:none}.cf-mobile-pairs .cf-metric:first-child:after{right:-6px;border-left:0;border-radius:0 22px 22px 0}.cf-mobile-pairs .cf-metric:last-child:before{left:-6px;border-right:0;border-radius:22px 0 0 22px}.cf-side .cf-pair .cf-metric:first-child:after,.cf-side .cf-pair .cf-metric:last-child:before{content:"";position:absolute;left:50%;width:39px;height:17px;transform:translateX(-50%);border:1.5px solid var(--tone);pointer-events:none}.cf-side .cf-pair .cf-metric:first-child:after{bottom:-6px;border-top:0;border-radius:0 0 22px 22px}.cf-side .cf-pair .cf-metric:last-child:before{top:-6px;border-bottom:0;border-radius:22px 22px 0 0}
-  .cf-display-led{fill:#45d194;stroke:#e2fff0;filter:drop-shadow(0 0 4px #40db9b)}.cf-led-heat.active{fill:#ff5352;stroke:#fff0e9;filter:drop-shadow(0 0 6px #ff5352)}.cf-led-dhw.active{fill:#ff7252;stroke:#ffefe5;filter:drop-shadow(0 0 6px #ff7252)}.cf-led-dhw.is-bypass{fill:#ffbf4b;stroke:#fff4d5;filter:drop-shadow(0 0 6px #ffbf4b)}
   @container calefa-card (max-width:899px){.cf-side .cf-pair{gap:2px}.cf-side .cf-delta{margin:0}.cf-side .cf-pair .cf-metric:first-child:after,.cf-side .cf-pair .cf-metric:last-child:before{display:none}.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr)}}
   @container calefa-card (max-width:380px){.cf-mobile-pairs .cf-pair{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}.cf-mobile-pairs .cf-delta{width:49px;height:49px;min-height:49px;margin-inline:-6px}}
 `;
