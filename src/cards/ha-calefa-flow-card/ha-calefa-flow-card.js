@@ -371,12 +371,17 @@ class HaCalefaFlowCard extends HTMLElement {
       const { entities, controls, alarms } = calefaBindings(rows, entry);
       const selected = Boolean(source.calefa_entry);
       let changed = false;
-      for (const [key, id] of Object.entries(entities)) {
-        if ((selected || !source[key]) && this._config[key] !== id) { this._config[key] = id; changed = true; }
+      for (const key of Object.keys(CALEFA_SENSOR_KEYS)) {
+        const id = entities[key] || "";
+        if ((selected || (!source[key] && id)) && this._config[key] !== id) { this._config[key] = id; changed = true; }
       }
       if (selected) {
-        if (JSON.stringify(this._config.display_entities) !== JSON.stringify(controls)) {
-          this._config.display_entities = controls; changed = true;
+        const selectedIds = new Set(rows.filter((row) => row.config_entry_id === entry).map((row) => row.entity_id));
+        const verifiedControls = Object.fromEntries(Object.entries(source.display_entities || {})
+          .filter(([, id]) => selectedIds.has(id)));
+        const bindings = { ...verifiedControls, ...controls };
+        if (JSON.stringify(this._config.display_entities) !== JSON.stringify(bindings)) {
+          this._config.display_entities = bindings; changed = true;
         }
       } else {
         for (const [key, id] of Object.entries(controls)) {
