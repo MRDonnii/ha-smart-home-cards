@@ -376,6 +376,56 @@ button { font: inherit; color: inherit; }
   .pro-air-card { padding: 11px 9px; }
 }
 
+/* The Smartdash front-page slot keeps the real HCH5 SVG and its React tree.
+   Only readbacks already repeated in the compact rail are hidden. */
+.hch-card:has(.hch-smartdash) { height: 100%; box-sizing: border-box; padding: 7px 9px; overflow: hidden; background: transparent; border-radius: 0; }
+.hch-smartdash { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--ink, #eef4fa); font-size: 11px; }
+.hch-smartdash-head { display: flex; justify-content: space-between; align-items: center; gap: 7px; min-height: 20px; white-space: nowrap; }
+.hch-smartdash-head strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.hch-smartdash-head strong span { font-weight: 500; color: var(--ink-muted, #a8b8c5); }
+.hch-smartdash-state { color: #69d9ab; font-size: 10px; }
+.hch-smartdash-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(125px, 1fr); gap: 7px; }
+.hch-smartdash-art { min-width: 0; min-height: 0; display: flex; align-items: center; overflow: hidden; }
+.hch-smartdash-art .hch5-visual { width: 100%; margin: 0; padding: 0; perspective: none; }
+.hch-smartdash-art .hch5-visual > svg { width: 100%; max-height: 158px; transform: none; }
+.hch-smartdash-art :is(.unit-readback-row,.hch-mobile-flow) { display: none; }
+.hch-smartdash-controls { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
+.hch-smartdash-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; color: var(--ink-muted,#9badbc); font-size: 9px; }
+.hch-smartdash-readings span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hch-smartdash-readings b { color: var(--ink,#eef4fa); font-size: 10px; }
+.hch-smartdash-control-row { display: flex; align-items: center; gap: 4px; min-height: 20px; }
+.hch-smartdash-control-row small { width: 39px; flex: none; color: var(--ink-muted,#9badbc); font-size: 9px; }
+.hch-smartdash-control-row > div { display: flex; min-width: 0; flex: 1; gap: 2px; }
+.hch-smartdash-control-row button { min-width: 0; min-height: 21px; flex: 1; padding: 1px 2px; border: 1px solid color-mix(in srgb,var(--ink,#eef4fa) 17%,transparent); border-radius: 6px; background: color-mix(in srgb,var(--ink,#eef4fa) 5%,transparent); color: var(--ink,#eef4fa); font: inherit; font-size: 9px; cursor: pointer; }
+.hch-smartdash-control-row button[aria-pressed="true"] { background: color-mix(in srgb,var(--accent-a,#38bdf8) 30%,transparent); border-color: var(--accent-a,#38bdf8); color: var(--ink,#fff); }
+.hch-smartdash-control-row button:disabled { opacity: .48; cursor: default; }
+.hch-smartdash-control-row button:focus-visible { outline: 2px solid var(--accent-a,#38bdf8); outline-offset: 1px; }
+.hch-smartdash-notice { position: absolute; right: 8px; bottom: 4px; max-width: 75%; padding: 3px 6px; border-radius: 5px; background: #783e42; color: white; font-size: 9px; }
+:host([mobile]) .hch-card:has(.hch-smartdash) { padding: 8px; }
+:host([mobile]) .hch-smartdash { height: auto; }
+:host([mobile]) .hch-smartdash-body { display: flex; flex-direction: column; gap: 4px; }
+:host([mobile]) .hch-smartdash-art .hch5-visual > svg { max-height: none; }
+:host([mobile]) .hch-smartdash-controls { gap: 5px; overflow: visible; }
+:host([mobile]) .hch-smartdash-readings { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
+:host([mobile]) .hch-smartdash-readings span { display: flex; flex-direction: column; padding: 4px 5px; background: color-mix(in srgb,var(--ink,#fff) 5%,transparent); border-radius: 7px; }
+:host([mobile]) .hch-smartdash-control-row { min-height: 27px; }
+:host([mobile]) .hch-smartdash-control-row small { width: 52px; font-size: 10px; }
+:host([mobile]) .hch-smartdash-control-row button { min-height: 27px; font-size: 10px; }
+.hch-smartdash-body { display: flex; flex-direction: column; gap: 1px; }
+.hch-smartdash-art { flex: 1; min-height: 0; justify-content: center; }
+.hch-smartdash-art .hch5-visual > svg { max-height: 120px; }
+.hch-smartdash-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 5px; flex: none; }
+.hch-smartdash-readings { display: none; }
+.hch-smartdash-control-row { min-height: 20px; }
+.hch-smartdash-control-row small { width: 34px; }
+.hch-smartdash-control-row button { min-height: 20px; }
+:host([mobile]) .hch-card:has(.hch-smartdash) { height: auto; min-height: 0; overflow: visible; }
+:host([mobile]) .hch-smartdash-body { gap: 4px; }
+:host([mobile]) .hch-smartdash-art { flex: none; }
+:host([mobile]) .hch-smartdash-art .hch5-visual > svg { max-height: none; }
+:host([mobile]) .hch-smartdash-controls { display: flex; }
+:host([mobile]) .hch-smartdash-readings { display: grid; }
+
 /* WebUI @media (max-width: 360px). */
 @container hch-card (max-width: 340px) {
   .hch5-visual.compact .hch-mobile-flow { padding: 9px; }
