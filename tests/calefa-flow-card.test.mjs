@@ -258,4 +258,31 @@ assert.ok(parseFloat(fast) < parseFloat(slow), "valid faster flow shortens CSS a
 speed._setFlowDuration(flowNode, null);
 assert.equal(props.get("--cf-flow-duration"), "1.10s");
 
+const leds = new Card();
+leds._build = () => {};
+leds.setConfig({
+  fjv_supply: "sensor.supply", outdoor_temperature: "sensor.outdoor",
+  alarm_entities: ["binary_sensor.warning", "binary_sensor.outdoor_sensor_failure"],
+});
+leds._hass = { states: {
+  "sensor.supply": state(50), "sensor.outdoor": state(4),
+  "binary_sensor.warning": state("on"),
+  "binary_sensor.outdoor_sensor_failure": state("off"),
+} };
+leds._refs = Object.fromEntries(["power", "fault", "mode", "lan", "peripheral"].map((key) => [
+  `led-${key}`, { dataset: {}, getAttribute() { return null; }, setAttribute() {} },
+]));
+leds._applyStatusLeds({ dhwTap: false, heatingActive: false, dhwBypass: true });
+assert.equal(leds._refs["led-power"].dataset.tone, "green");
+assert.equal(leds._refs["led-fault"].dataset.tone, "yellow");
+assert.equal(leds._refs["led-mode"].dataset.tone, "cyan");
+assert.equal(leds._refs["led-mode"].dataset.blink, "slow");
+assert.equal(leds._refs["led-lan"].dataset.tone, "unknown", "LAN must not be inferred from HA connection");
+assert.equal(leds._refs["led-peripheral"].dataset.tone, "green", "available outdoor sensor lights peripheral LED");
+leds._hass.states["binary_sensor.outdoor_sensor_failure"] = state("on");
+leds._applyStatusLeds({ dhwTap: false, heatingActive: true, dhwBypass: false });
+assert.equal(leds._refs["led-fault"].dataset.tone, "red");
+assert.equal(leds._refs["led-mode"].dataset.tone, "red");
+assert.equal(leds._refs["led-peripheral"].dataset.blink, "slow");
+
 console.log("Validated Calefa flow card state handling");
