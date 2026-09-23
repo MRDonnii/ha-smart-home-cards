@@ -424,3 +424,21 @@ button { font: inherit; color: inherit; }
 .overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { background: transparent; box-shadow: none; }
 .overview-status-pills > div { border: 0; border-left: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); border-radius: 0; }
 .unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+
+/* Match WebUI mobile: retain the labelled unit and place four large air
+   readings directly below it. The SVG still scales inside the HA column. */
+@container hch-card (max-width: 660px) {
+  .hch5-visual { overflow: visible; padding-top: 0; perspective: none; }
+  .hch5-visual > svg { display: block; width: 100%; max-width: 100%; height: auto; transform: none; }
+  .hch-mobile-flow { display: grid; gap: 5px; margin: 0 0 9px; padding: 8px; border: 1px solid color-mix(in srgb, var(--hch-border) 48%, transparent); border-radius: 12px; background: transparent; }
+  .hch-mobile-flow-head,.hch-mobile-route,.hch-mobile-subreadings { display: none; }
+  .hch-mobile-lane { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; }
+  .hch-mobile-reading { padding: 7px 8px; background: transparent; border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+  .hch-mobile-reading strong { font-size: 15px; }
+  .hch-mobile-core { padding: 5px; background: transparent; border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+  .unit-readback-row { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+  .unit-readback { min-height: 56px; }
+  .unit-readback small { font-size: 9px; }
+  .unit-readback strong { font-size: 11px; }
+  .unit-readback em { font-size: 8px; }
+}
