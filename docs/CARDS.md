@@ -1,6 +1,6 @@
 # Card catalog
 
-The suite currently contains **58 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **59 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 `ha-home-status-grid-card.js` also provides `custom:ha-home-desktop-layout-card`, a responsive layout card for desktop, mobile and portrait screens. It shares the Home Status source module and therefore does not require a second resource file.
 
@@ -33,6 +33,7 @@ The suite currently contains **58 source modules**. Entries for cards migrated f
 | Fjernvarme Card | `ha-fjernvarme-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-fjernvarme-card) |
 | Fjernvarme House Card | `ha-fjernvarme-house-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-fjernvarme-house-card) |
 | HA Electricity Price Card | `ha-electricity-price-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-electricity-price-card) |
+| HCH5 Live Control Card | `ha-hch5-live-card.js` | HCH5 ventilation overview with animated unit, readbacks and HA controls |
 | HA Ventilation Card | `ha-ventilation-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ventilation-card) |
 | Heat Economy Card | `ha-heat-economy-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-economy-card) |
 | Heat Pump Overview Card | `ha-heat-pump-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-pump-overview-card) |

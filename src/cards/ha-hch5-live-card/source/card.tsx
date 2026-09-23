@@ -1,0 +1,440 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
+import { bypassTravel, formatRemaining } from "./bypass";
+import { ArrowRight, Flame, Gauge, Leaf, Snowflake, Wind } from "./icons";
+import css from "./webui.css";
+
+// The HCH5 Control WebUI overview (frontend-v2 OverviewPage) as a Home
+// Assistant card. The Pi stays source of truth: every button calls the
+// hch_passivelink entity that sends the same controller command as the WebUI.
+
+type HAState = { state: string; attributes: Record<string, unknown>; last_changed: string };
+type Hass = {
+  states: Record<string, HAState | undefined>;
+  callService: (domain: string, service: string, data: Record<string, unknown>) => Promise<unknown>;
+};
+type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: number };
+type AfterheatValue = number | "off";
+type Notice = { text: string; error: boolean };
+
+// Same pause as the WebUI: +/- only move a local draft, and one command is
+// sent once the user has stopped pressing.
+const AFTERHEAT_SEND_DELAY_MS = 1200;
+// HA reports the new setpoint a moment after the service call returns; the
+// draft stays shown until then so the value does not jump back and forth.
+const AFTERHEAT_SETTLE_MS = 5000;
+const BOOST_MINUTES = [15, 30, 60] as const;
+
+function number(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+function text(value: unknown, fallback = "—") {
+  return value === null || value === undefined || value === "" ? fallback : String(value);
+}
+function temp(value: number | null) {
+  // Non-breaking space keeps the value and its unit on one line.
+  return value === null ? "—" : `${value.toLocaleString("da-DK", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} °C`;
+}
+function whole(value: number | null) {
+  return value === null ? "—" : Math.round(value).toLocaleString("da-DK");
+}
+function modeLabel(value: unknown) {
+  return ({ local_auto: "Local Auto", smart_auto: "Smart Auto", manual: "Manuel" } as Record<string, string>)[String(value)] ?? text(value);
+}
+function masterLabel(value: unknown) {
+  if (value === "pi") return "Raspberry Pi";
+  if (value === "hcp4") return "HCP4";
+  return "Afventer";
+}
+function coolingLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    disabled: "Standby", standby: "Standby", qualifying: "Kvalificerer", opening: "Åbner bypass",
+    active: "Aktiv", minimum_on_hold: "Minimum køretid", minimum_off_hold: "Minimum pause",
+    outdoor_too_cold: "Ude for kold", not_cooler_outside: "Ude ikke koldere", room_below_start: "Rum under start",
+    room_satisfied: "Rumtemperatur nået", sensor_missing: "Mangler sensor", manual_mode: "Manuel mode", vacation: "Ferie",
+  };
+  return labels[String(value)] ?? text(value).replaceAll("_", " ");
+}
+function remaining(value: unknown) {
+  const seconds = number(value);
+  if (seconds === null || seconds <= 0) return "Ikke aktiv";
+  const minutes = Math.ceil(seconds / 60);
+  return `${minutes} min tilbage`;
+}
+function errorText(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) return String((error as { message: unknown }).message);
+  return "ukendt fejl";
+}
+
+function Overview({ hass, config }: { hass: Hass; config: Config }) {
+  const ids = config.entities;
+  const hassRef = useRef(hass);
+  hassRef.current = hass;
+  // Unavailable and unknown count as missing, like a failed WebUI request.
+  const entity = (key: string) => {
+    const state = ids[key] ? hass.states[ids[key]] : undefined;
+    return state && state.state !== "unavailable" && state.state !== "unknown" ? state : undefined;
+  };
+  const value = (key: string) => entity(key)?.state ?? null;
+  const num = (key: string) => number(value(key));
+  const isOn = (key: string) => {
+    const state = value(key)?.toLowerCase();
+    return state === "on" || state === "true";
+  };
+
+  const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNoticeState] = useState<Notice | null>(null);
+  const noticeTimer = useRef<number | null>(null);
+  const setNotice = useCallback((message: string, error = false) => {
+    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+    setNoticeState({ text: message, error });
+    noticeTimer.current = window.setTimeout(() => setNoticeState(null), error ? 9000 : 4500);
+  }, []);
+  useEffect(() => () => { if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current); }, []);
+
+  const command = useCallback(async (name: string, key: string, domain: string, service: string, data: Record<string, unknown>, success: string) => {
+    const current = hassRef.current;
+    const entity_id = ids[key];
+    if (!entity_id || !current.states[entity_id] || current.states[entity_id]?.state === "unavailable") {
+      setNotice("Betjeningen er ikke tilgængelig i Home Assistant lige nu.", true);
+      return false;
+    }
+    setBusy(name);
+    setNotice("Gemmer…");
+    try {
+      await current.callService(domain, service, { entity_id, ...data });
+      setNotice(success);
+      return true;
+    } catch (error) {
+      setNotice(`Kunne ikke gemme: ${errorText(error)}`, true);
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }, [ids, setNotice]);
+
+  // Timestamps from HA are compared with a clock that only ticks while
+  // something counts down, so idle renders stay cheap.
+  const [now, setNow] = useState(() => Date.now());
+  const bypassRaw = num("bypass_raw");
+  const bypassMoving = bypassRaw !== null && bypassRaw !== 0 && bypassRaw !== 255;
+  useEffect(() => {
+    if (!bypassMoving) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [bypassMoving]);
+  const secondsSince = (key: string) => {
+    const changed = Date.parse(entity(key)?.last_changed ?? "");
+    return Number.isFinite(changed) ? Math.max(0, (now - changed) / 1000) : null;
+  };
+
+  const outdoor = num("outdoor_temperature");
+  const extract = num("extract_temperature");
+  const exhaust = num("exhaust_temperature");
+  const beforeHeater = num("afterheat_before") ?? num("supply_temperature");
+  const afterHeater = num("afterheat_after") ?? num("supply_temperature");
+  const room = num("room_temperature");
+  const frost = num("afterheat_frost");
+  const flowWater = num("water_flow");
+  const returnWater = num("water_return");
+  const supplyRpm = num("supply_fan_rpm");
+  const extractRpm = num("extract_fan_rpm");
+  const supplyPercent = num("supply_fan_percent");
+  const extractPercent = num("extract_fan_percent");
+  const humidity = num("humidity");
+  const co2 = num("co2");
+  const filterLife = num("filter_life");
+  const bypassActual = isOn("bypass");
+  const bypassRequest = String(value("bypass_request") ?? value("bypass_control") ?? "off");
+  // The damper takes about three minutes: say which way it runs, how far
+  // along it is and how long is left. HA gets the controller's travel time on
+  // each poll, so it is counted on between polls to run as smoothly as in the
+  // WebUI; without it, the time since the damper code changed is the estimate.
+  const bypassTravelDirection = value("bypass_travel_direction");
+  const reportedTravel = num("bypass_travel_seconds");
+  const bypassTravelSeconds = !bypassMoving ? reportedTravel
+    : reportedTravel !== null ? reportedTravel + (secondsSince("bypass_travel_seconds") ?? 0)
+    : secondsSince("bypass_raw");
+  const bypassTravelTotal = num("bypass_travel_total");
+  const bypassRun = bypassTravel({ raw: bypassRaw, requestOn: bypassRequest.toLowerCase() === "on", direction: bypassTravelDirection, seconds: bypassTravelSeconds, total: bypassTravelTotal });
+  const bypassActualLabel = bypassRun
+    ? [
+        bypassRun.direction === "opening" ? "åbner" : bypassRun.direction === "closing" ? "lukker" : "bevæger sig",
+        bypassRun.percent === null ? null : `${bypassRun.percent} %`,
+        bypassRun.remainingSeconds === null ? null : `${formatRemaining(bypassRun.remainingSeconds)} tilbage`,
+      ].filter(Boolean).join(" · ")
+    : bypassActual ? "åben" : "lukket";
+  const heating = isOn("afterheat_active");
+  // HAC1 never heats at 15 C outdoor or above; say so instead of just "Inaktiv".
+  const afterheatLockout = isOn("afterheat_lockout");
+  const afterheatCutoff = number(config.afterheat_outdoor_cutoff) ?? 15;
+  const afterheatStatus = heating ? "Aktiv" : afterheatLockout ? "Spærret af sommerstop" : "Inaktiv";
+  const fireplaceRemaining = num("fireplace_remaining");
+  const fireplace = (fireplaceRemaining ?? 0) > 0 || isOn("fireplace_active");
+  const mode = String(value("mode_control") ?? "local_auto");
+  const level = num("effective_level") ?? 3;
+  const climate = entity("afterheat_climate");
+  const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
+  const afterheatEnabled = climate ? climate.state !== "off" : true;
+  const actualAfterheat: AfterheatValue = afterheatEnabled ? afterheatSetpoint : "off";
+  const selection = value("afterheat_selection");
+  const selectionNumber = number(selection);
+  const actualAfterheatSelection = selection?.toLowerCase() === "off"
+    ? "OFF"
+    : selectionNumber !== null
+      ? `${whole(selectionNumber)} °C`
+      : "Afventer";
+  const busHealthy = isOn("rs485_healthy");
+  const coolingState = value("cooling_state");
+  // Without the switch entity the controller's cooling state still tells
+  // whether the automation is enabled.
+  const coolingEnabled = value("cooling_control") !== null ? isOn("cooling_control") : coolingState !== null && coolingState !== "disabled";
+  const boostRemaining = num("boost_remaining") ?? 0;
+  const quickBoostActive = boostRemaining > 0;
+  // HA has no readback of which boost runs. A button's state is the time it
+  // was last pressed, so the running boost is the one whose press time plus
+  // its length matches the end the controller reports.
+  const boostEnd = Date.parse(entity("boost_remaining")?.last_changed ?? "") + boostRemaining * 1000;
+  const activeBoost = quickBoostActive
+    ? BOOST_MINUTES.find(minutes => Math.abs(Date.parse(value(`boost_${minutes}`) ?? "") + minutes * 60000 - boostEnd) < 45000) ?? null
+    : null;
+  const online = entity("active_master") !== undefined && entity("outdoor_temperature") !== undefined;
+
+  const recovery = useMemo(() => {
+    if (bypassActual || outdoor === null || extract === null || exhaust === null || Math.abs(extract - outdoor) < .5) return null;
+    const result = ((extract - exhaust) / (extract - outdoor)) * 100;
+    return result >= 0 && result <= 105 ? Math.round(result) : null;
+  }, [bypassActual, outdoor, extract, exhaust]);
+
+  const [afterheatDraft, setAfterheatDraft] = useState<AfterheatValue | null>(null);
+  const afterheatTimer = useRef<number | null>(null);
+  const settleTimer = useRef<number | null>(null);
+  const afterheatPending = useRef<{ target: AfterheatValue; seq: number } | null>(null);
+  const afterheatSeq = useRef(0);
+  const shownAfterheat: AfterheatValue = afterheatDraft ?? actualAfterheat;
+
+  const sendAfterheat = useCallback(async (target: AfterheatValue, seq: number) => {
+    const saved = target === "off"
+      ? await command("afterheat", "afterheat_climate", "climate", "set_hvac_mode", { hvac_mode: "off" }, "Eftervarmen er sat til OFF.")
+      // A setpoint also switches the afterheat on again in the controller.
+      : await command("afterheat", "afterheat_climate", "climate", "set_temperature", { temperature: target }, `Eftervarmen er sat til ${target} °C.`);
+    // A newer press may have started another draft while this one was saving.
+    if (afterheatSeq.current !== seq) return;
+    if (!saved) { setAfterheatDraft(null); return; }
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => { if (afterheatSeq.current === seq) setAfterheatDraft(null); }, AFTERHEAT_SETTLE_MS);
+  }, [command]);
+
+  // The draft is dropped as soon as HA shows the value that was sent.
+  useEffect(() => {
+    if (afterheatDraft !== null && afterheatPending.current === null && busy !== "afterheat" && afterheatDraft === actualAfterheat) setAfterheatDraft(null);
+  }, [afterheatDraft, actualAfterheat, busy]);
+
+  const flushAfterheat = useCallback(() => {
+    if (afterheatTimer.current !== null) window.clearTimeout(afterheatTimer.current);
+    afterheatTimer.current = null;
+    const pending = afterheatPending.current;
+    afterheatPending.current = null;
+    if (pending) void sendAfterheat(pending.target, pending.seq);
+  }, [sendAfterheat]);
+
+  // Leaving the dashboard must not drop a change that is still waiting to be sent.
+  const flushAfterheatRef = useRef(flushAfterheat);
+  flushAfterheatRef.current = flushAfterheat;
+  useEffect(() => () => {
+    flushAfterheatRef.current();
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+  }, []);
+
+  // Remote-style range: OFF - 10 - 11 ... 35. Minus below 10 selects OFF.
+  const stepAfterheat = (direction: 1 | -1) => {
+    const next: AfterheatValue = direction > 0
+      ? shownAfterheat === "off" ? 10 : Math.min(35, shownAfterheat + 1)
+      : shownAfterheat === "off" || shownAfterheat <= 10 ? "off" : shownAfterheat - 1;
+    const seq = ++afterheatSeq.current;
+    setAfterheatDraft(next);
+    afterheatPending.current = { target: next, seq };
+    if (afterheatTimer.current !== null) window.clearTimeout(afterheatTimer.current);
+    afterheatTimer.current = window.setTimeout(flushAfterheat, AFTERHEAT_SEND_DELAY_MS);
+  };
+
+  // Manual sets the manual level; the auto modes move their normal level,
+  // exactly like the WebUI's manual_level / local_normal_level.
+  const setLevel = (target: number) => mode === "manual"
+    ? command(`level-${target}`, "level_control", "select", "select_option", { option: String(target) }, `Ventilation sat til trin ${target}.`)
+    : command(`level-${target}`, "auto_normal", "number", "set_value", { value: target }, `Ventilation sat til trin ${target}.`);
+
+  return (
+    <section className="dashboard-overview">
+      <header className="overview-heading-row">
+        <div>
+          <span className="eyebrow">OVERBLIK</span>
+          <h1>Aktuel drift og status</h1>
+          <p>Live visning af HCH5, luftveje, sensorer og den styring der er aktiv lige nu.</p>
+        </div>
+        <div className="overview-status-pills">
+          <div><span className="status-led"/><small>Master</small><strong>{masterLabel(value("active_master"))}</strong></div>
+          <div><span className={`status-led ${busHealthy ? "" : "warn"}`}/><small>Bus</small><strong>{busHealthy ? "Sund" : "Afventer"}</strong></div>
+          <div><Leaf size={18}/><small>Driftstilstand</small><strong>{modeLabel(value("mode_control"))}</strong></div>
+        </div>
+      </header>
+
+      <div className="dashboard-main-grid">
+        <article className="surface pro-air-card">
+          <div className="pro-card-head">
+            <div><h2>Luftstrømme og temperaturer</h2><p>Live luftveje gennem HCH5 med aktuelle temperaturer og fysisk status.</p></div>
+            <span className={`status-chip${online ? "" : " muted"}`}><span className="live-dot"/>{online ? "Live" : "Afventer"}</span>
+          </div>
+          <Hch5UnitDiagram
+            outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={beforeHeater} afterHeater={afterHeater}
+            room={room} frost={frost} flowWater={flowWater} returnWater={returnWater}
+            supplyRpm={supplyRpm} extractRpm={extractRpm} supplyPercent={supplyPercent} extractPercent={extractPercent}
+            bypassActual={bypassActual} bypassRequest={bypassRequest} heating={heating} recovery={recovery}
+            busActive={busHealthy} bypassRaw={bypassRaw} afterheatLockout={afterheatLockout}
+            bypassTravelDirection={bypassTravelDirection} bypassTravelSeconds={bypassTravelSeconds} bypassTravelTotal={bypassTravelTotal}
+          />
+        </article>
+
+        <aside className="pro-control-column">
+          <article className="surface pro-control-card">
+            <div className="pro-card-head compact"><div><h2>Drift og styring</h2><p>Daglige funktioner</p></div><Gauge size={22}/></div>
+            <label className="control-label">Ventilationstilstand</label>
+            <div className="pro-segment three">
+              {["local_auto", "smart_auto", "manual"].map(option => (
+                <button key={option} className={mode === option ? "active" : ""} disabled={busy !== null} onClick={() => void command(`mode-${option}`, "mode_control", "select", "select_option", { option }, `${modeLabel(option)} valgt.`)}>{modeLabel(option)}</button>
+              ))}
+            </div>
+            <label className="control-label">Ventilatorniveau</label>
+            <div className="pro-levels">
+              {[1,2,3,4,5,6].map(target => <button key={target} className={level === target ? "active" : ""} disabled={busy !== null} onClick={() => void setLevel(target)}>{target}</button>)}
+            </div>
+            <div className="active-decision"><span>Aktiv beslutning</span><strong>Trin {whole(level)} · {text(value("effective_source")).replaceAll("_", " ")}</strong><small>{text(value("effective_reason"), "Afventer controllerens beslutning")}</small></div>
+          </article>
+
+          <div className="pro-control-pair">
+            <article className="surface mini-control">
+              <div className="mini-control-title"><Wind size={20}/><strong>Hurtig boost</strong></div>
+              <div className="mini-buttons three">
+                {BOOST_MINUTES.map(minutes => <button key={minutes} className={activeBoost === minutes ? "active" : ""} disabled={busy !== null || fireplace} onClick={() => void command(`boost-${minutes}`, `boost_${minutes}`, "button", "press", {}, `Quick Boost ${minutes} min startet.`)}>{minutes} min</button>)}
+              </div>
+              {quickBoostActive && <button className="text-action" onClick={() => void command("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet.")}>{remaining(boostRemaining)} · stop</button>}
+            </article>
+
+            <article className="surface mini-control">
+              <div className="mini-control-title"><ArrowRight size={20}/><strong>Bypass-styring</strong></div>
+              <div className="mini-buttons two">
+                <button className={String(value("bypass_control") ?? "off") === "off" ? "active" : ""} disabled={busy !== null || bypassMoving} onClick={() => void command("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.")}>Auto</button>
+                <button className={value("bypass_control") === "on" ? "active" : ""} disabled={busy !== null || fireplace || bypassMoving} onClick={() => void command("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass ønskes åben.")}>On</button>
+              </div>
+              <small className="control-footnote">Faktisk: {bypassActualLabel}</small>
+            </article>
+          </div>
+
+          <div className="pro-control-pair">
+            <article className="surface status-action-card">
+              <div className="status-action-icon"><Snowflake size={24}/></div>
+              <div><span>Frikøling</span><strong>{coolingLabel(coolingState)}</strong><small>{coolingEnabled ? "Automatik aktiv" : "Deaktiveret"}</small></div>
+              <button disabled={busy !== null} aria-label={coolingEnabled ? "Deaktiver frikøling" : "Aktiver frikøling"} onClick={() => void command("cooling", "cooling_control", "switch", coolingEnabled ? "turn_off" : "turn_on", {}, coolingEnabled ? "Frikøling deaktiveret." : "Frikøling aktiveret.")}><ArrowRight size={17}/></button>
+            </article>
+            <article className="surface status-action-card">
+              <div className="status-action-icon flame"><Flame size={24}/></div>
+              <div><span>Pejsefunktion</span><strong>{fireplace ? "Aktiv" : "Ikke aktiv"}</strong><small>{fireplace ? remaining(fireplaceRemaining) : "15 eller 30 min"}</small></div>
+              <div className="fireplace-actions">
+                {fireplace
+                  ? <button disabled={busy !== null} onClick={() => void command("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.")}>Stop</button>
+                  : <><button disabled={busy !== null} onClick={() => void command("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.")}>15</button><button disabled={busy !== null} onClick={() => void command("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.")}>30</button></>}
+              </div>
+            </article>
+          </div>
+        </aside>
+
+        <article className="surface climate-panel">
+          <div className="pro-card-head compact"><div><h2>Indeklimadata</h2><p>Aktuelle værdier</p></div></div>
+          <div className="climate-metrics">
+            <div className="climate-metric green"><Leaf size={21}/><span>CO₂</span><strong>{whole(co2)} <small>ppm</small></strong><em>{co2 === null ? "Ukendt" : co2 < 800 ? "God" : co2 < 1200 ? "Moderat" : "Høj"}</em><i style={{ width: `${co2 === null ? 0 : Math.min(100, Math.max(5, co2 / 16))}%` }}/></div>
+            <div className="climate-metric blue"><span className="metric-drop">●</span><span>Luftfugtighed</span><strong>{whole(humidity)} <small>%</small></strong><em>{humidity === null ? "Ukendt" : humidity < 60 ? "Normal" : "Høj"}</em><i style={{ width: `${humidity ?? 0}%` }}/></div>
+            <div className="climate-metric cyan"><span className="metric-filter">▧</span><span>Filter</span><strong>{whole(filterLife)} <small>%</small></strong><em>{filterLife === null ? "Ukendt" : filterLife > 40 ? "OK" : filterLife > 15 ? "Snart skift" : "Skift filter"}</em><i style={{ width: `${Math.max(0, Math.min(100, filterLife ?? 0))}%` }}/></div>
+            <div className="climate-metric neutral"><span className="metric-heat">≋</span><span>Eftervarme setpunkt</span><strong>{shownAfterheat === "off" ? "OFF" : temp(shownAfterheat)}</strong><em>{afterheatStatus}</em><i style={{ width: `${shownAfterheat === "off" ? 0 : ((shownAfterheat - 10) / 25) * 100}%` }}/></div>
+          </div>
+        </article>
+
+        <article className="surface afterheat-setpoint-card">
+          <div className="afterheat-copy"><span>Eftervarme setpunkt</span>{afterheatLockout
+            // The summer stop replaces the RS485 details so the card stays compact.
+            ? <div className="afterheat-lockout">Spærret af HAC1: udetemperaturen er {temp(outdoor)}. Eftervarmen tænder først, når det er under {whole(afterheatCutoff)}{" "}°C ude.</div>
+            : <><strong>RS485: {actualAfterheatSelection}</strong><small>Ønsket: {shownAfterheat === "off" ? "OFF" : `${whole(shownAfterheat)} °C`} · Varmekald: {afterheatStatus}. HAC1 regulerer selv varmefladen.</small></>}</div>
+          <div className="setpoint-stepper">
+            <button disabled={shownAfterheat === "off"} aria-label="Sænk eftervarme" onClick={() => stepAfterheat(-1)}>−</button>
+            <strong>{shownAfterheat === "off" ? "OFF" : `${whole(shownAfterheat)} °C`}</strong>
+            <button disabled={shownAfterheat === 35} aria-label="Hæv eftervarme" onClick={() => stepAfterheat(1)}>+</button>
+          </div>
+        </article>
+      </div>
+      {notice && <div className={`hch-notice${notice.error ? " error" : ""}`} role="status">{notice.text}</div>}
+    </section>
+  );
+}
+
+class Hch5LiveCard extends HTMLElement {
+  private config: Config | null = null;
+  private hassValue: Hass | null = null;
+  private root: Root | null = null;
+  private signature = "";
+
+  static getStubConfig() { return { entities: {} }; }
+
+  setConfig(config: Config) {
+    if (!config || typeof config.entities !== "object" || config.entities === null) throw new Error("HCH5-kortet kræver en entities-konfiguration.");
+    this.config = config;
+    this.signature = "";
+    this.renderCard();
+  }
+
+  set hass(hass: Hass) {
+    this.hassValue = hass;
+    if (!this.config) return;
+    // HA sets hass on every state change in the house; only re-render when
+    // one of this card's own entities changed.
+    const signature = Object.values(this.config.entities).map(id => {
+      const state = hass.states[id];
+      return state ? `${state.state}|${state.last_changed}|${String(state.attributes?.temperature ?? "")}` : "-";
+    }).join(";");
+    if (signature === this.signature) return;
+    this.signature = signature;
+    this.renderCard();
+  }
+
+  connectedCallback() {
+    if (!this.root) {
+      const shadow = this.attachShadow({ mode: "open" });
+      const style = document.createElement("style");
+      style.textContent = css;
+      const card = document.createElement("ha-card");
+      card.className = "hch-card";
+      shadow.append(style, card);
+      this.root = createRoot(card);
+    }
+    this.renderCard();
+  }
+
+  // The React tree is kept while HA hides the tab, so the animations and a
+  // pending afterheat change survive switching between Temperatur/Luft/Fjernvarme.
+  getCardSize() { return 14; }
+
+  private renderCard() {
+    if (this.root && this.hassValue && this.config) this.root.render(<Overview hass={this.hassValue} config={this.config}/>);
+  }
+}
+
+if (!customElements.get("ha-hch5-live-card")) customElements.define("ha-hch5-live-card", Hch5LiveCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some(card => card.type === "ha-hch5-live-card")) {
+  window.customCards.push({ type: "ha-hch5-live-card", name: "HCH5 Live Control", description: "HCH5 Control WebUI-overblikket med animeret unit og HA-betjening", preview: false });
+}
+
+declare global { interface Window { customCards: Array<Record<string, unknown>> } }
