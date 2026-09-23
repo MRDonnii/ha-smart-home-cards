@@ -112,16 +112,39 @@ result = model({ heating_active: "sensor.h", pump: "sensor.p" }, {
 assert.equal(result.heatingActive, false);
 assert.equal(result.heatLoop, true);
 
-// Stub config only uses entities that exist.
+// New cards resolve the registry instead of guessing similarly named entities.
 assert.deepEqual(Object.keys(Card.getStubConfig()).sort(), ["subtitle", "title"]);
 const stub = Card.getStubConfig({ states: {
   "sensor.unit_calefa_fjernvarme_fremlob_temperatur": state(60, "°C"),
   "sensor.unit_calefa_cvv_ventilposition": state(0, "%"),
   "sensor.other_fjernvarme_retur_temperatur": state(30, "°C"),
 } });
-assert.equal(stub.fjv_supply, "sensor.unit_calefa_fjernvarme_fremlob_temperatur");
-assert.equal(stub.heating_valve, "sensor.unit_calefa_cvv_ventilposition");
-assert.equal(stub.fjv_return, undefined, "non-Calefa entities are not guessed");
+assert.equal(stub.fjv_supply, undefined);
+const registryRows = [
+  ["one", "sensor.renamed_supply", "source_inlet_temperature"],
+  ["one", "sensor.renamed_valve", "cvv_valve_position"],
+  ["one", "number.renamed_setpoint", "dhw_temperature_setpoint_control"],
+  ["one", "binary_sensor.renamed_alarm", "warning_pressure_low"],
+  ["two", "sensor.other_supply", "source_inlet_temperature"],
+].map(([config_entry_id, entity_id, key]) => ({ platform: "wavin_calefa", config_entry_id, entity_id, unique_id: `${config_entry_id}_${key}`, disabled_by: null }));
+const automatic = new Card();
+automatic._build = () => {};
+automatic._update = () => {};
+automatic.setConfig({ calefa_entry: "one", fjv_supply: "sensor.manual_override", display_entities: { standby: "switch.other_unit" } });
+automatic.hass = { states: {}, connection: { sendMessagePromise: async () => registryRows } };
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.equal(automatic._config.fjv_supply, "sensor.renamed_supply", "selected integration owns its native bindings");
+assert.equal(automatic._config.heating_valve, "sensor.renamed_valve");
+assert.equal(automatic._config.display_entities.dhw_setpoint, "number.renamed_setpoint");
+assert.equal(automatic._config.display_entities.standby, undefined, "a selected integration drops unrelated controls");
+assert.deepEqual([...automatic._config.alarm_entities], ["binary_sensor.renamed_alarm"]);
+const ambiguous = new Card();
+ambiguous._build = () => {};
+ambiguous._update = () => {};
+ambiguous.setConfig({});
+ambiguous.hass = { states: {}, connection: { sendMessagePromise: async () => registryRows } };
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.equal(ambiguous._config.fjv_supply, "", "multiple integrations require a choice");
 
 assert.throws(() => new Card().setConfig(null), /configuration object/);
 

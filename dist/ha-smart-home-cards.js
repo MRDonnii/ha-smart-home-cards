@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.70 */
+/* MRDonnii Smart Home Cards v0.3.71 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -32142,6 +32142,92 @@ var ENTITY_KEYS = [
   "lan_status",
   "peripheral_status"
 ];
+var CALEFA_SENSOR_KEYS = {
+  fjv_supply: "source_inlet_temperature",
+  fjv_return: "source_return_temperature",
+  heating_supply: "cvv_supply_temperature",
+  heating_return: "cvv_return_temperature",
+  heating_setpoint: "cvv_desired_supply_temperature",
+  dhw_temperature: "dhw_out_temperature",
+  dhw_setpoint: "dhw_temperature_setpoint",
+  cold_water_temperature: "dcw_sensor_temperature",
+  water_flow: "domestic_cold_water_flow",
+  pump: "itc_pump_status",
+  heating_valve: "cvv_valve_position",
+  dhw_valve: "valve_position",
+  heating_active: "ch_state",
+  dhw_active: "dhw_state",
+  pressure: "system_pressure",
+  outdoor_temperature: "outdoor_temperature"
+};
+var CALEFA_CONTROL_KEYS = {
+  dhw_setpoint: "dhw_temperature_setpoint_control",
+  parallel_shift: "heat_curve_parallel_shift",
+  heat_curve_type: "heat_curve_type",
+  heat_curve_slope: "heat_curve_manual_slope",
+  heat_min_supply: "heat_curve_min_supply_temperature",
+  heat_max_supply: "heat_curve_max_supply_temperature",
+  heat_max_return: "return_limiter_max_temperature",
+  return_limiter_mode: "return_limiter_mode",
+  return_limiter_gain: "return_limiter_max_gain",
+  summer_shutdown: "summer_shutdown_temperature",
+  bypass_temperature: "dhw_bypass_temperature_control",
+  auto_standby: "auto_standby_enabled",
+  standby: "standby_control",
+  room_profile: "room_mode",
+  room_schedule: "room_schedule",
+  room_temporary_mode: "room_temporary_mode",
+  eco_temperature: "room_eco_temperature",
+  comfort_temperature: "room_comfort_temperature",
+  extra_comfort_temperature: "room_extra_comfort_temperature",
+  temporary_temperature: "room_temporary_temperature",
+  temporary_duration: "room_temporary_duration"
+};
+var CALEFA_ALARM_KEYS = /* @__PURE__ */ new Set([
+  "warning_low_energy",
+  "warning_pressure_high",
+  "error_pressure_critical_low",
+  "warning_pressure_low",
+  "dhi_sensor_failure",
+  "dho_sensor_failure",
+  "dhw_motor_failure",
+  "dhw_motor_stuck",
+  "dhw_sensor_failure",
+  "dcw_sensor_failure",
+  "no_secondary_pressure",
+  "pressure_sensor_failure",
+  "flow_sensor_failure",
+  "itc_hs_sensor_failure",
+  "itc_hr_sensor_failure",
+  "outdoor_sensor_failure",
+  "itc_motor_failure",
+  "itc_htco_error"
+]);
+var CALEFA_REGISTRY_CACHE = /* @__PURE__ */ new WeakMap();
+function calefaRegistry(hass) {
+  const visible = Object.values(hass?.entities || {}).filter((row) => row.platform === "wavin_calefa" && !row.disabled_by);
+  const connection = hass?.connection;
+  if (!connection?.sendMessagePromise) return Promise.resolve(visible);
+  if (!CALEFA_REGISTRY_CACHE.has(connection)) {
+    const request = connection.sendMessagePromise({ type: "config/entity_registry/list" }).then((rows) => rows.filter((row) => row.platform === "wavin_calefa" && !row.disabled_by)).catch((error) => {
+      CALEFA_REGISTRY_CACHE.delete(connection);
+      if (visible.length) return visible;
+      throw error;
+    });
+    CALEFA_REGISTRY_CACHE.set(connection, request);
+  }
+  return CALEFA_REGISTRY_CACHE.get(connection);
+}
+function calefaEntries(rows) {
+  return [...new Set(rows.map((row) => row.config_entry_id).filter(Boolean))];
+}
+function calefaBindings(rows, entryId) {
+  const found = new Map(rows.filter((row) => row.config_entry_id === entryId).map((row) => [row.unique_id?.slice(entryId.length + 1), row.entity_id]));
+  const entities = Object.fromEntries(Object.entries(CALEFA_SENSOR_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor.")));
+  const controls = Object.fromEntries(Object.entries(CALEFA_CONTROL_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => /^(number|select|switch)\./.test(id || "")));
+  const alarms = [...CALEFA_ALARM_KEYS].map((unique) => found.get(unique)).filter((id) => id?.startsWith("binary_sensor."));
+  return { entities, controls, alarms };
+}
 var UNAVAILABLE = /* @__PURE__ */ new Set(["", "unknown", "unavailable", "none", "null"]);
 var ON_WORDS = /* @__PURE__ */ new Set([
   "on",
@@ -32399,10 +32485,15 @@ function interpretActivity(stateObj, context = "generic") {
   return numeric === null ? null : numeric > 0;
 }
 var HaCalefaFlowCard = class extends HTMLElement {
+  static getConfigElement() {
+    return document.createElement("ha-calefa-flow-card-editor");
+  }
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this._config = null;
+    this._sourceConfig = null;
+    this._registryConnection = null;
     this._hass = null;
     this._built = false;
     this._refs = {};
@@ -32419,38 +32510,17 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this.shadowRoot.addEventListener("click", this._onClick);
   }
   static getStubConfig(hass) {
-    const config = { title: "Calefa II 40/40", subtitle: "Fjernvarmeunit" };
-    const endings = {
-      fjv_supply: "fjernvarme_fremlob_temperatur",
-      fjv_return: "fjernvarme_retur_temperatur",
-      heating_supply: "cvv_fremlob_temperatur",
-      heating_return: "cvv_retur_temperatur",
-      dhw_temperature: "brugsvand_ud_temperatur",
-      cold_water_temperature: "koldtvandsfoler_ved_veksler",
-      water_flow: "brugsvandsflow",
-      heating_valve: "cvv_ventilposition",
-      pump: "heating_pump_status_itc",
-      heating_active: "heating_state_ch",
-      dhw_active: "brugsvand_status",
-      pressure: "anlaegstryk",
-      outdoor_temperature: "udetemperatur_ut"
-    };
-    const ids = Object.keys(hass?.states || {}).filter((id) => id.startsWith("sensor.") && id.includes("calefa"));
-    for (const [key, ending] of Object.entries(endings)) {
-      const match = ids.find((id) => id.endsWith(`_${ending}`));
-      if (match) config[key] = match;
-    }
-    for (const [key, id] of [["fjv_flow", "sensor.calefa_fjernvarme_flow_aktiv"], ["heating_flow", "sensor.calefa_radiator_flow_aktiv"]]) {
-      if (hass?.states?.[id]) config[key] = id;
-    }
-    return config;
+    return { title: "Calefa II 40/40", subtitle: "Fjernvarmeunit" };
   }
   setConfig(config) {
     if (!config || typeof config !== "object" || Array.isArray(config)) {
       throw new Error("ha-calefa-flow-card requires a configuration object");
     }
     const text = (value2, fallback = "") => typeof value2 === "string" && value2.trim() ? value2.trim() : fallback;
+    this._sourceConfig = config;
+    this._registryConnection = null;
     this._config = {
+      calefa_entry: text(config.calefa_entry),
       title: text(config.title, "Calefa II 40/40"),
       subtitle: text(config.subtitle, "Fjernvarmeunit"),
       background_image: text(config.unit_image || config.background_image, CALEFA_DEFAULT_UNIT_IMAGE),
@@ -32468,12 +32538,63 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._entityIds = [...new Set([...ENTITY_KEYS.map((key) => this._config[key]), ...Object.values(this._config.display_entities), ...this._config.alarm_entities].filter(Boolean))];
     this._build();
     if (this._hass) this._update();
+    this._resolveCalefa();
   }
   set hass(hass) {
     this._hass = hass;
     if (!this._config || !hass) return;
+    this._resolveCalefa();
     if (!this._built) this._build();
     if (this._hasChanges(hass)) this._update();
+  }
+  _resolveCalefa() {
+    const connection = this._hass?.connection;
+    if (!connection?.sendMessagePromise || connection === this._registryConnection) return;
+    this._registryConnection = connection;
+    const source = this._sourceConfig;
+    calefaRegistry(this._hass).then((rows) => {
+      if (this._sourceConfig !== source || this._hass?.connection !== connection) return;
+      const entries = calefaEntries(rows);
+      const entry = source.calefa_entry || (entries.length === 1 ? entries[0] : "");
+      if (!entry || !entries.includes(entry)) return;
+      const { entities, controls, alarms } = calefaBindings(rows, entry);
+      const selected = Boolean(source.calefa_entry);
+      let changed = false;
+      for (const [key, id] of Object.entries(entities)) {
+        if ((selected || !source[key]) && this._config[key] !== id) {
+          this._config[key] = id;
+          changed = true;
+        }
+      }
+      if (selected) {
+        if (JSON.stringify(this._config.display_entities) !== JSON.stringify(controls)) {
+          this._config.display_entities = controls;
+          changed = true;
+        }
+      } else {
+        for (const [key, id] of Object.entries(controls)) {
+          if (!source.display_entities?.[key] && this._config.display_entities[key] !== id) {
+            this._config.display_entities[key] = id;
+            changed = true;
+          }
+        }
+      }
+      if ((selected || !source.alarm_entities) && JSON.stringify(this._config.alarm_entities) !== JSON.stringify(alarms)) {
+        this._config.alarm_entities = alarms;
+        changed = true;
+      }
+      if (changed) {
+        this._entityIds = [...new Set([
+          ...ENTITY_KEYS.map((key) => this._config[key]),
+          ...Object.values(this._config.display_entities),
+          ...this._config.alarm_entities
+        ].filter(Boolean))];
+        this._build();
+        this._update();
+      }
+    }).catch(() => {
+      if (this._hass?.connection === connection) this._registryConnection = null;
+    });
   }
   get hass() {
     return this._hass;
@@ -33288,6 +33409,41 @@ var HaCalefaFlowCard = class extends HTMLElement {
     }
   }
 };
+var HaCalefaFlowCardEditor = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `<style>:host{display:block;padding:12px 0;color:var(--primary-text-color)}label{display:block;margin-bottom:6px;font-weight:600}select{box-sizing:border-box;width:100%;min-height:40px;padding:7px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:inherit}p{margin:7px 0;color:var(--secondary-text-color);font-size:12px}</style><label for="integration">Calefa-integration</label><select id="integration"><option value="">S\xF8g automatisk</option></select><p>Ved \xE9n integration forbindes kortet automatisk. V\xE6lg her, hvis du har flere.</p>`;
+    this._select = this.shadowRoot.querySelector("select");
+    this._select.addEventListener("change", () => {
+      const config = { ...this._config };
+      if (this._select.value) config.calefa_entry = this._select.value;
+      else delete config.calefa_entry;
+      this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
+    });
+  }
+  setConfig(config) {
+    this._config = config;
+    this._select.value = config.calefa_entry || "";
+  }
+  set hass(hass) {
+    if (!hass?.connection || this._connection === hass.connection) return;
+    this._connection = hass.connection;
+    calefaRegistry(hass).then((rows) => {
+      if (this._connection !== hass.connection) return;
+      const entries = calefaEntries(rows);
+      this._select.replaceChildren(new Option("S\xF8g automatisk", ""), ...entries.map((id) => {
+        const first = rows.find((row) => row.config_entry_id === id && row.entity_id?.startsWith("sensor."));
+        return new Option(`${first?.entity_id?.split(".")[1]?.split("_").slice(0, 3).join(" ") || "Calefa"} (${id.slice(0, 8)})`, id);
+      }));
+      this._select.value = this._config?.calefa_entry || "";
+      this.shadowRoot.querySelector("p").textContent = entries.length > 1 ? "Flere Calefa-integrationer fundet. V\xE6lg den, som kortet skal vise." : entries.length === 1 ? "\xC9n Calefa-integration fundet. Kortet forbinder automatisk." : "Ingen Calefa-integration fundet endnu.";
+    }).catch(() => {
+      this.shadowRoot.querySelector("p").textContent = "Integrationslisten kunne ikke indl\xE6ses.";
+    });
+  }
+};
+if (!customElements.get("ha-calefa-flow-card-editor")) customElements.define("ha-calefa-flow-card-editor", HaCalefaFlowCardEditor);
 var CALEFA_STYLES = `
   :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#3f95ff;--cf-heat:#ff9a3c;--cf-heat-return:#5cb8ff;--cf-dhw:#ff4f5a;--cf-cold:#35d3ea;--cf-ok:#35df9c;--cf-off:#ff5463;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
   *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid #49bdff;outline-offset:2px}
@@ -33299,7 +33455,7 @@ var CALEFA_STYLES = `
   .cf-main{position:relative;display:grid;grid-template-columns:minmax(0,18fr) minmax(0,64fr) minmax(0,18fr);column-gap:clamp(8px,2.4cqw,30px);align-items:stretch;max-width:980px;margin:0 auto}
   .cf-stage{min-width:0}.cf-stage-box{position:relative;width:100%;aspect-ratio:775/1295;container:cf-stage / inline-size}
   .cf-photo,.cf-layer{position:absolute;inset:0;width:100%;height:100%}.cf-photo{display:block;object-position:center}.cf-layer{overflow:visible;pointer-events:none}
-  .cf-side{position:relative;min-width:0;z-index:4}.cf-block{position:absolute;top:var(--y);width:max-content;max-width:100%;transform:translateY(-50%)}.cf-left .cf-block{right:0}.cf-right .cf-block{left:0}.cf-side.is-placed .cf-block{transform:none}
+  .cf-side{position:relative;min-width:0;z-index:4}.cf-block{position:absolute;top:var(--y);width:100%;max-width:100%;transform:translateY(-50%)}.cf-left .cf-block{right:0}.cf-right .cf-block{left:0}.cf-side.is-placed .cf-block{transform:none}
 
   .cf-tile:not([data-tone]){--tone:#6f8795}.cf-tile{display:flex;align-items:center;gap:clamp(4px,.7cqw,8px);width:100%;min-width:0;min-height:44px;padding:clamp(4px,.55cqw,7px) clamp(6px,.85cqw,10px);border:1px solid color-mix(in srgb,var(--tone) 42%,transparent);border-radius:clamp(9px,1.3cqw,15px);background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 11%,transparent),rgba(5,13,20,.86) 72%);box-shadow:0 8px 20px rgba(0,0,0,.22);text-align:left;cursor:pointer;transition:border-color .4s,box-shadow .4s}
   .cf-tile.is-on{border-color:color-mix(in srgb,var(--tone) 78%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--tone) 18%,transparent),0 8px 20px rgba(0,0,0,.22)}
