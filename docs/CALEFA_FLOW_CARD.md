@@ -14,6 +14,10 @@ type: custom:ha-calefa-flow-card
 
 ## Example for the current Wavin integration
 
+For a new card, only `type: custom:ha-calefa-flow-card` is required. The card reads Home Assistant's entity registry and binds the sensors, supported controls and alarms belonging to the single Wavin Calefa integration automatically. If several Calefa integrations exist, select the desired one in the card editor; the choice is stored as `calefa_entry`. The selected integration's native bindings replace old manual bindings, so switching units cannot keep controls from the previous unit. Entity renames are supported because discovery uses registry unique IDs rather than visible entity IDs. Existing manually configured cards keep their explicit bindings until an integration is selected.
+
+`fjv_flow`, `heating_flow`, `power` and `room_temperature` may come from separate helpers or other integrations and are still optional manual bindings. The card does not guess writable controls whose meaning cannot be verified from the Calefa registry. All side tiles use the same width on both sides, including the `V-ventil` and `BV-ventil` tiles.
+
 Sensor names follow a verified Wavin integration instance; entity IDs vary by installation. The `number`/`select` IDs below are explicit placeholders and must be replaced with your own verified entities.
 
 ```yaml
