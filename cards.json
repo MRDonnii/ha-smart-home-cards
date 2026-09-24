@@ -49,6 +49,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "th-tesla-dashboard-card",
+    "name": "TH Tesla Dashboard Card",
+    "filename": "th-tesla-dashboard-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-lawn-mower-card",
     "name": "Lawn Mower Card",
     "filename": "ha-lawn-mower-card.js",
