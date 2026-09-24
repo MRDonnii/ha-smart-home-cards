@@ -9,7 +9,9 @@ seneste opladning og en let graf over dagligt forbrug.
   opdateres derefter målrettet, når en overvåget entity ændrer sig.
 - Ingen polling. Grafens statistik hentes via `recorder/statistics_during_period`,
   kun når kortet er synligt, og caches i 15 minutter.
-- Kortet over placeringen er HA's indbyggede `map`-kort via `loadCardHelpers()`.
+- Kortet over placeringen er HA's indbyggede `map`-kort via `loadCardHelpers()`. Med
+  `map.style: satellite` (eller knappen i kortets hoved) lægges Esri-satellitfotos ind i
+  HA's eget kort, så markør, rute, zoom og more-info virker som før.
 - Alle entities er valgfrie. Manglende eller utilgængelige værdier vises som `—`.
   En kontrol uden en fungerende entity skjules helt.
 - Enheder kommer fra `unit_of_measurement`. Dæktryk omregnes kun, når sensorens
@@ -68,15 +70,18 @@ entities:
   monta_charge_energy: sensor.monta_charger_charge_energy
   monta_cable_connected: binary_sensor.monta_charger_cable_plugged_in
 controls:
-  start_charge: { entity: switch.monta_charger_start_stop }
-  stop_charge: { entity: switch.monta_charger_start_stop }
+  start_charge: { entity: script.charger_start }   # eller switch/button
+  stop_charge: { entity: script.charger_stop }
   target_soc: { entity: input_number.tesla_target_soc }
   deadline: { entity: input_datetime.tesla_ready_by_time }
 tpms:
   unit: bar            # visningsenhed; omregnes fra sensorens egen enhed
 map:
   theme_mode: dark     # auto | light | dark
+  style: satellite     # default | satellite
   hours_to_show: 6
+refresh_entities:      # bedes opdatere, når kortet vises (højst én gang i minuttet)
+  - sensor.monta_charger_state
 chart:
   energy_entity: sensor.monta_charger_charge_energy
 ```
@@ -88,6 +93,11 @@ chart:
 | `map.hours_to_show` | `6` | Rute der vises fra start. Knapperne `Nu/1t/6t/12t/24t` skifter den. |
 | `map.ranges` | `[0, 1, 6, 12, 24]` | Tilgængelige ruteintervaller i timer. |
 | `map.default_zoom`, `map.auto_fit` | `14`, – | Sendes videre til HA's map-kort. |
+| `map.style` | `default` | `satellite` viser satellitfotos; kan skiftes med knappen i kortets hoved. |
+| `map.satellite_url`, `map.satellite_attribution`, `map.satellite_labels` | Esri World Imagery | Egen rasterkilde for satellit og om stednavne vises ovenpå. |
+| `layout` | `full` | `charge` viser kun status, opladning og ladeplan – beregnet til en popup. |
+| `navigation_path` | – | Viser knappen "Åbn hele Tesla-oversigten" (lukker også en omgivende popup via `tesla-popup-close`). |
+| `refresh_entities` | – | Entities der opdateres med `homeassistant.update_entity`, når kortet bliver synligt og efter start/stop. |
 | `chart.range` | `today` | `today`, `7d` eller `30d`. |
 | `chart.distance_entity` | `entities.odometer` | Stigende km-tæller (`total_increasing`) til kørsels-søjlerne. |
 | `chart.energy_entity` | – | Stigende kWh-tæller til opladnings-søjlerne. |
@@ -108,7 +118,10 @@ chart:
 | `deadline` | `input_datetime`, `time` | Tidsvælger "Klar senest". |
 
 Start, stop og ladeplan kræver to tryk (bekræftelse inden for fire sekunder).
-Alle handlinger er almindelige Home Assistant-servicekald.
+Alle handlinger er almindelige Home Assistant-servicekald. Start vises, så snart ét af
+signalerne (Zaptec-tilstand, bilens stik eller Montas kabel) melder tilsluttet. Et script
+som kontrol viser "Starter …"/"Stopper …", mens det kører; andre domæner viser det i
+otte sekunder og beder derefter `refresh_entities` om ny status.
 
 ## Attributter der bruges
 
