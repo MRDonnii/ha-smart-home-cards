@@ -278,7 +278,7 @@ class HADoorWindowCard extends HTMLElement {
       .head strong{display:block;font-size:16px}
       .head span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
       .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
-      .summary .stat{padding:12px 14px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:3px solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 14px rgba(0,0,0,.1);text-align:center}
+      .summary .stat{padding:12px 14px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 14px rgba(0,0,0,.1);text-align:center}
       .summary .stat.warn{border-left-color:var(--warn)}
       .summary .stat span{display:block;font-size:10px;color:var(--secondary-text-color);text-transform:uppercase;font-weight:800;letter-spacing:.04em}
       .summary .stat b{display:block;margin-top:5px;font-size:19px;font-weight:800}
@@ -287,7 +287,7 @@ class HADoorWindowCard extends HTMLElement {
       .section-heading:first-of-type{margin-top:0}
       .section-heading ha-icon{--mdc-icon-size:16px;color:var(--accent)}
       .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-      .tile{position:relative;padding:14px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:4px solid var(--accent);border-radius:16px;cursor:pointer;overflow:hidden;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),var(--ha-card-background,var(--card-background-color));box-shadow:0 6px 18px rgba(0,0,0,.12);transition:border-color .25s ease,background .25s ease,box-shadow .25s ease}
+      .tile{position:relative;padding:14px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:16px;cursor:pointer;overflow:hidden;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),var(--ha-card-background,var(--card-background-color));box-shadow:0 6px 18px rgba(0,0,0,.12);transition:border-color .25s ease,background .25s ease,box-shadow .25s ease}
       .tile.open{border-color:color-mix(in srgb,var(--warn) 35%,transparent);border-left-color:var(--warn);background:linear-gradient(145deg,color-mix(in srgb,var(--warn) 13%,transparent),transparent 55%),var(--ha-card-background,var(--card-background-color))}
       .tile.long-open{border-left-color:var(--danger);animation:long-open-pulse 2.4s ease-in-out infinite}
       @keyframes long-open-pulse{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.12),0 0 0 0 color-mix(in srgb,var(--danger) 0%,transparent)}50%{box-shadow:0 6px 18px rgba(0,0,0,.12),0 0 0 4px color-mix(in srgb,var(--danger) 25%,transparent)}}

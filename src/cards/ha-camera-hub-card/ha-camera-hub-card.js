@@ -903,7 +903,7 @@ class HACameraHubCard extends HTMLElement {
       .panel[hidden]{display:none}
       .empty{padding:34px 16px;text-align:center;color:var(--secondary-text-color);font-size:12.5px}
       .live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
-      .cam-tile{position:relative;border:1px solid color-mix(in srgb,var(--good) 18%,transparent);border-left:4px solid var(--good);border-radius:14px;overflow:hidden;background:linear-gradient(145deg,color-mix(in srgb,var(--good) 6%,transparent),transparent 55%),var(--card-surface);box-shadow:0 6px 16px rgba(0,0,0,.12);transition:border-color .25s ease,background .25s ease}
+      .cam-tile{position:relative;border:1px solid color-mix(in srgb,var(--good) 18%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--good);border-radius:14px;overflow:hidden;background:linear-gradient(145deg,color-mix(in srgb,var(--good) 6%,transparent),transparent 55%),var(--card-surface);box-shadow:0 6px 16px rgba(0,0,0,.12);transition:border-color .25s ease,background .25s ease}
       .cam-tile.person{border-color:color-mix(in srgb,var(--danger) 30%,transparent);border-left-color:var(--danger);background:linear-gradient(145deg,color-mix(in srgb,var(--danger) 10%,transparent),transparent 55%),var(--card-surface)}
       .cam-tile.animal{border-color:color-mix(in srgb,var(--animal) 30%,transparent);border-left-color:var(--animal);background:linear-gradient(145deg,color-mix(in srgb,var(--animal) 10%,transparent),transparent 55%),var(--card-surface)}
       .cam-tile.vehicle{border-color:color-mix(in srgb,var(--accent) 30%,transparent);border-left-color:var(--accent);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 55%),var(--card-surface)}
@@ -931,7 +931,7 @@ class HACameraHubCard extends HTMLElement {
       .filter-chip ha-icon{--mdc-icon-size:14px}
       .filter-chip.active{color:#fff;background:var(--accent);border-color:var(--accent)}
       .event-list{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding:2px}
-      .event-row{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--muted) 16%,transparent);border-left:3px solid var(--muted);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--muted) 6%,transparent),transparent 60%),var(--card-surface);box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer}
+      .event-row{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--muted) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--muted);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--muted) 6%,transparent),transparent 60%),var(--card-surface);box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer}
       .event-row.person{border-color:color-mix(in srgb,var(--danger) 28%,transparent);border-left-color:var(--danger);background:linear-gradient(145deg,color-mix(in srgb,var(--danger) 9%,transparent),transparent 60%),var(--card-surface)}
       .event-row.animal{border-color:color-mix(in srgb,var(--animal) 28%,transparent);border-left-color:var(--animal);background:linear-gradient(145deg,color-mix(in srgb,var(--animal) 9%,transparent),transparent 60%),var(--card-surface)}
       .event-row.vehicle{border-color:color-mix(in srgb,var(--accent) 28%,transparent);border-left-color:var(--accent);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 9%,transparent),transparent 60%),var(--card-surface)}
@@ -953,7 +953,7 @@ class HACameraHubCard extends HTMLElement {
       .event-open{flex:0 0 auto;width:32px;height:32px;border-radius:10px;border:1px solid var(--edge);background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center}
       .event-open ha-icon{--mdc-icon-size:16px}
       .row-list{display:flex;flex-direction:column;gap:8px}
-      .row{position:relative;display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:3px solid var(--accent);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%),var(--card-surface);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+      .row{position:relative;display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%),var(--card-surface);box-shadow:0 4px 12px rgba(0,0,0,.1)}
       .row.warn{border-color:color-mix(in srgb,var(--danger) 30%,transparent);border-left-color:var(--danger);background:linear-gradient(145deg,color-mix(in srgb,var(--danger) 10%,transparent),transparent 60%),var(--card-surface)}
       .row ha-icon{--mdc-icon-size:17px;color:var(--accent);flex:0 0 auto}
       .row.warn ha-icon{color:var(--danger)}

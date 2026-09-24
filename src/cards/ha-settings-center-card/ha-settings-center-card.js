@@ -1,4 +1,4 @@
-const VERSION = "0.5.0";
+const VERSION = "0.6.4";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -6,6 +6,26 @@ const TABS = [
   ["routines", "Rutiner", "mdi:calendar-sync-outline"],
   ["equipment", "Udstyr", "mdi:tools"],
   ["system", "Drift", "mdi:server-security"],
+  ["cards", "Dashboard", "mdi:view-dashboard-edit"],
+];
+
+// Registry over kort med en delt, fil-baseret opsaetning der redigeres her
+// i stedet for i det enkelte kort. Hvert omraade genbruger kortets EGEN
+// editor-webkomponent (den samme som "rediger kort" i Lovelace bruger), saa
+// felterne aldrig kan gaa ud af trit med kortet selv. Nyt kort med samme
+// moenster: tilfoej blot et objekt her - resten (fane, kort, hent/gem) er
+// generisk og kraever ingen aendringer andre steder.
+const DELT_KORT_OMRAADER = [
+  {
+    id: "navbar",
+    titel: "Navbar",
+    ikon: "mdi:dock-bottom",
+    beskrivelse: "Den faelles navigationsbar (navbar.json) som alle dashboards laeser fra.",
+    editorTag: "ha-navbar-card-editor",
+    hentUrl: "/local/ha-navbar-card/navbar.json",
+    gemService: "shell_command.save_navbar_config",
+  },
+  // Flere kort med en delt fil tilfoejes som nye objekter her.
 ];
 
 class HASettingsCenterCard extends HTMLElement {
@@ -18,7 +38,9 @@ class HASettingsCenterCard extends HTMLElement {
     this._configSig = "";
     this._stateSig = "";
     this._seen = new Set();
+    this._delteVaerdier = {};
     this.shadowRoot.addEventListener("click", (e) => this._click(e));
+    this.shadowRoot.addEventListener("change", (e) => this._change(e));
   }
 
   static getStubConfig() {
@@ -59,6 +81,21 @@ class HASettingsCenterCard extends HTMLElement {
     return { columns: 12, min_columns: 6, rows: "auto" };
   }
 
+  connectedCallback() {
+    // Timerens "remaining"-attribut fastfryses ved start/pause og taeller
+    // ikke selv ned - kun finishes_at aendrer sig ikke, saa nedtaellingen skal
+    // regnes ud lokalt og opdateres med et interval, ellers staar teksten
+    // stille selvom overstyringen rent faktisk loeber.
+    this._tickTimer = setInterval(() => {
+      this.shadowRoot.querySelectorAll('[data-view="profile"]').forEach((n) => this._renderOverrideStatus(n));
+    }, 1000);
+  }
+
+  disconnectedCallback() {
+    this._closeStatusPopup();
+    if (this._tickTimer) clearInterval(this._tickTimer);
+  }
+
   _e(id) {
     return this._hass?.states?.[id];
   }
@@ -88,7 +125,7 @@ class HASettingsCenterCard extends HTMLElement {
     return JSON.stringify(
       [...ids].sort().map((id) => {
         const e = h.states[id];
-        return [id, e.state, e.last_updated, e.attributes?.unit_of_measurement, e.attributes?.friendly_name];
+        return [id, e.state, e.last_updated, e.attributes?.unit_of_measurement, e.attributes?.friendly_name, e.attributes?.options, e.attributes?.finishes_at];
       }),
     );
   }
@@ -182,10 +219,42 @@ class HASettingsCenterCard extends HTMLElement {
     );
   }
 
+  // Profilvaelger + nulstil-knap for rum med en lysprofil (input_select).
+  // Genbruger samme underliggende mekanik som rum-popuppernes "Nulstil": et
+  // kald til script.rum_nulstil_automatisk med rummets noegle. Status-linjen
+  // viser om den valgte profil faktisk er en manuel overstyring, og - hvis
+  // rummet har en override-timer - hvor lang tid der er tilbage foer den
+  // automatisk springer tilbage.
+  //
+  // Hvilken profilvaerdi der taeller som "automatisk drift" varierer fra rum
+  // til rum - de fleste bruger "Automatisk", badevaerelset "Normal", og
+  // garagen "Adaptiv". auto_value kommer derfor fra rummets egen config i
+  // stedet for at blive gaettet ud fra en fast liste af ord.
+  _profileControl(r) {
+    return this._once(
+      r.profile,
+      `<div class="row profile-row" data-view="profile" data-entity="${this._esc(r.profile)}" data-timer="${this._esc(r.timer || "")}" data-auto-value="${this._esc(r.auto_value || "Automatisk")}">
+        <span class="row-icon">${this._icon("mdi:theme-light-dark")}</span>
+        <div class="row-text">
+          <b>Lysprofil</b>
+          <select class="profile-select" data-action="set-profile" data-entity="${this._esc(r.profile)}"></select>
+          <small data-override-status>—</small>
+        </div>
+      </div>`,
+    );
+  }
+
+  _resetButton(r) {
+    return `<button class="row interactive reset-row" data-action="rum-nulstil" data-room="${this._esc(r.reset_room_key)}">
+      <span class="row-icon">${this._icon("mdi:restore")}</span>
+      <span class="row-text"><b>Nulstil til automatisk</b><small>Fjerner manuel override i ${this._esc(r.name)}</small></span>
+    </button>`;
+  }
+
   _panelHead(icon, title, subtitle) {
     return `<div class="panel-head">
       <ha-icon icon="${this._esc(icon || "mdi:cog-outline")}"></ha-icon>
-      <div><b>${this._esc(title)}</b>${subtitle ? `<small>${this._esc(subtitle)}</small>` : ""}</div>
+      <div><b>${this._esc(title)}</b>${subtitle ? `<small>${subtitle}</small>` : ""}</div>
     </div>`;
   }
 
@@ -211,11 +280,6 @@ class HASettingsCenterCard extends HTMLElement {
             )
             .join("")}</div>
         </div>
-        <div class="section">
-          ${this._panelHead("mdi:monitor-dashboard", "Dashboard", "Visning og betjening på vægpaneler")}
-          <div class="toggle-grid">${(o.dashboard_items || []).map((i) => this._toggleTile(i)).join("")}</div>
-          ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
-        </div>
       </div>
     </div>`;
   }
@@ -231,18 +295,25 @@ class HASettingsCenterCard extends HTMLElement {
     if (r.timeout) numbers.push(this._number({ entity: r.timeout }, "Sluk efter"));
     if (r.lux_threshold) numbers.push(this._number({ entity: r.lux_threshold, sensor_entity: r.lux_sensor, sensor_unit: " lx" }, "Lux-grænse"));
     if (r.delay) numbers.push(this._number({ entity: r.delay }, "Tænd efter"));
+    const profileHtml = r.profile ? this._profileControl(r) : "";
+    const resetHtml = r.reset_room_key ? this._resetButton(r) : "";
     return `<div class="subcard">
       ${this._panelHead(r.icon || "mdi:floor-plan", r.name, `${toggles.length + numbers.length} indstillinger`)}
       ${toggles.length ? `<div class="toggle-grid">${toggles.join("")}</div>` : ""}
       ${numbers.length ? `<div class="row-list" ${toggles.length ? 'style="margin-top:8px"' : ""}>${numbers.join("")}</div>` : ""}
+      ${profileHtml || resetHtml ? `<div class="row-list" style="margin-top:8px">${profileHtml}${resetHtml}</div>` : ""}
     </div>`;
   }
 
   _lighting() {
+    const resetDelay = this._config.reset_delay_entity
+      ? `<div class="row-list" style="margin-bottom:10px">${this._number({ entity: this._config.reset_delay_entity }, "Nulstil manuel override efter tomt rum (Køkken, Spisestue, Stue)")}</div>`
+      : "";
     return `<div class="page" data-page="lighting" hidden>
       <div class="page-panel">
         <div class="section">
-          ${this._panelHead("mdi:motion-sensor", "Rum", "Presence, lux og timing pr. rum")}
+          ${this._panelHead("mdi:motion-sensor", "Rum", "Presence, lux, lysprofil og nulstilling pr. rum")}
+          ${resetDelay}
           <div class="subgrid">${(this._config.rooms || []).map((r) => this._room(r)).join("")}</div>
         </div>
         <div class="section">
@@ -342,6 +413,34 @@ class HASettingsCenterCard extends HTMLElement {
     </div>`;
   }
 
+  _cards() {
+    const o = this._config.overview || {};
+    return `<div class="page" data-page="cards" hidden>
+      <div class="page-panel">
+        <div class="section">
+          ${this._panelHead("mdi:monitor-dashboard", "Dashboard", "Visning og betjening på vægpaneler")}
+          <div class="toggle-grid">${(o.dashboard_items || []).map((i) => this._toggleTile(i)).join("")}</div>
+          ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
+        </div>
+        <div class="section">
+          ${this._panelHead("mdi:view-dashboard-edit", "Dashboard", "Redigér den faelles opsaetning her - gemmes for alle dashboards paa een gang")}
+          <div class="delt-omraader">
+            ${DELT_KORT_OMRAADER.map(
+              (omr) => `<div class="delt-omraade">
+                ${this._panelHead(omr.ikon, omr.titel, omr.beskrivelse)}
+                <div class="delt-editor-holder" data-omraade-holder="${omr.id}"><p class="delt-status">Henter…</p></div>
+                <div class="delt-vaerktoej">
+                  <button class="knap" data-action="gem-delt" data-omraade="${omr.id}">Gem globalt</button>
+                  <small class="delt-status" data-omraade-gemstatus="${omr.id}"></small>
+                </div>
+              </div>`,
+            ).join("")}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   // ---- shell ----
 
   _render() {
@@ -355,9 +454,77 @@ class HASettingsCenterCard extends HTMLElement {
         <div class="head-badge"><b data-health-summary>Kontrollerer…</b><small data-health-detail>—</small></div>
       </div>
       <div class="tabs">${TABS.map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
-      ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}
+      ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}${this._cards()}
     </ha-card>`;
     this._select(this._tab);
+    this._monterDelteEditorer();
+  }
+
+  // Monterer den REELLE editor-webkomponent fra hvert kort (fx
+  // ha-navbar-card-editor) inde i "Dashboard"-fanen, i stedet for at genopfinde
+  // dens felter her. Kortets config-changed-hændelse holder blot vaerdien i
+  // hukommelsen, indtil "Gem globalt" rent faktisk skriver den til filen.
+  _monterDelteEditorer() {
+    DELT_KORT_OMRAADER.forEach((o) => {
+      const holder = this.shadowRoot.querySelector(`[data-omraade-holder="${o.id}"]`);
+      if (!holder || holder.dataset.monteret) return;
+      holder.dataset.monteret = "1";
+      customElements.whenDefined(o.editorTag).then(() => {
+        fetch(o.hentUrl, { cache: "no-cache" })
+          .then((svar) => {
+            if (!svar.ok) throw new Error("HTTP " + svar.status);
+            return svar.json();
+          })
+          .then((data) => {
+            this._delteVaerdier[o.id] = data;
+            const el = document.createElement(o.editorTag);
+            el.setConfig(data);
+            if (this._hass) el.hass = this._hass;
+            el.addEventListener("config-changed", (e) => { this._delteVaerdier[o.id] = e.detail.config; });
+            holder.innerHTML = "";
+            holder.appendChild(el);
+          })
+          .catch((e) => {
+            holder.innerHTML = `<p class="delt-status">Kunne ikke hente ${this._esc(o.hentUrl)}: ${this._esc(e.message)}</p>`;
+          });
+      });
+    });
+  }
+
+  async _gemDeltOmraade(id) {
+    const omraade = DELT_KORT_OMRAADER.find((o) => o.id === id);
+    const status = this.shadowRoot.querySelector(`[data-omraade-gemstatus="${id}"]`);
+    const data = this._delteVaerdier[id];
+    if (!omraade || !data) { if (status) status.textContent = "Intet at gemme endnu."; return; }
+    if (status) status.textContent = "Gemmer…";
+    try {
+      const payload_b64 = this._utf8ToB64(JSON.stringify(data));
+      // Payloaden sendes som et enkelt kommandolinje-argument, og Linux
+      // afviser argumenter over 128 KB. Fang det her med en forstaaelig
+      // besked i stedet for en kryptisk fejl fra containeren.
+      if (payload_b64.length > 120000) {
+        throw new Error(`opsaetningen er for stor (${Math.round(payload_b64.length / 1024)} KB)`);
+      }
+      const [domain, service] = omraade.gemService.split(".");
+      // returnResponse er noedvendig: shell_command melder "udfoert" til
+      // frontenden selv naar scriptet fejler. Uden svaret viste kortet
+      // "Gemt" uanset om filen rent faktisk blev skrevet.
+      const svar = await this._hass.callService(domain, service, { payload_b64 }, undefined, false, true);
+      const res = svar && svar.response;
+      if (res && res.returncode !== 0) {
+        throw new Error((res.stderr || res.stdout || `kode ${res.returncode}`).trim());
+      }
+      if (status) status.textContent = "Gemt " + new Date().toLocaleTimeString("da-DK") + " — genindlæs for at se ændringen";
+    } catch (e) {
+      if (status) status.textContent = "Fejl: " + (e && e.message ? e.message : e);
+    }
+  }
+
+  _utf8ToB64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin);
   }
 
   _find(id) {
@@ -374,8 +541,42 @@ class HASettingsCenterCard extends HTMLElement {
     return out;
   }
 
+  // Regner overstyringsstatus for et rums lysprofil ud fra profil-vaerdien og
+  // (hvis rummet har en) override-timerens finishes_at. Kaldes baade fra
+  // _patch() ved enhver hass-opdatering og hvert sekund fra _tickTimer, saa
+  // nedtaellingen ikke staar stille selvom ingen entitet lige har aendret sig.
+  _renderOverrideStatus(n) {
+    const small = n.querySelector("[data-override-status]");
+    if (!small) return;
+    const profileEntity = n.dataset.entity;
+    const timerEntity = n.dataset.timer;
+    const autoValue = n.dataset.autoValue || "Automatisk";
+    if (!this._available(profileEntity)) { small.textContent = "Ikke tilgængelig"; n.classList.remove("override-active"); return; }
+    const profileState = this._state(profileEntity);
+    if (profileState === autoValue) {
+      small.textContent = "Automatisk styring aktiv";
+      n.classList.remove("override-active");
+      return;
+    }
+    n.classList.add("override-active");
+    let text = `Manuel: ${profileState}`;
+    const timer = timerEntity ? this._e(timerEntity) : null;
+    if (timer && timer.state === "active" && timer.attributes?.finishes_at) {
+      const remainMs = new Date(timer.attributes.finishes_at).getTime() - Date.now();
+      if (remainMs > 0) {
+        const mins = Math.floor(remainMs / 60000);
+        const secs = Math.floor((remainMs % 60000) / 1000);
+        text += ` · ${mins}:${String(secs).padStart(2, "0")} tilbage`;
+      }
+    }
+    small.textContent = text;
+  }
+
   _patch() {
     if (!this._hass || !this.shadowRoot.querySelector("ha-card")) return;
+    this.shadowRoot.querySelectorAll("[data-omraade-holder] > *").forEach((el) => {
+      if (el && "hass" in el) el.hass = this._hass;
+    });
     const statuses = [...this.shadowRoot.querySelectorAll('[data-view="status"]')];
     let problems = 0;
     statuses.forEach((n) => {
@@ -417,6 +618,21 @@ class HASettingsCenterCard extends HTMLElement {
       n.querySelector("[data-state]").textContent = `${this._state(n.dataset.entity)}${i?.unit || ""}`;
     });
     this.shadowRoot.querySelectorAll('[data-view="inline"]').forEach((n) => (n.textContent = this._friendly(n.dataset.entity)));
+
+    this.shadowRoot.querySelectorAll('[data-view="profile"]').forEach((n) => {
+      const entity = n.dataset.entity;
+      const e = this._e(entity);
+      const sel = n.querySelector("select");
+      const opts = e?.attributes?.options || [];
+      const optSig = opts.join("|");
+      if (sel.dataset.optSig !== optSig) {
+        sel.innerHTML = opts.map((o) => `<option value="${this._esc(o)}">${this._esc(o)}</option>`).join("");
+        sel.dataset.optSig = optSig;
+      }
+      if (e && sel.value !== e.state) sel.value = e.state;
+      n.classList.toggle("missing", !this._available(entity));
+      this._renderOverrideStatus(n);
+    });
 
     const mode = this._config.overview?.mode?.entity;
     const state = mode ? this._state(mode) : "—";
@@ -498,8 +714,10 @@ class HASettingsCenterCard extends HTMLElement {
     this._statusEscHandler = null;
   }
 
-  disconnectedCallback() {
-    this._closeStatusPopup();
+  _change(e) {
+    const el = e.target.closest?.("[data-action='set-profile']");
+    if (!el) return;
+    this._call("input_select.select_option", { option: el.value }, { entity_id: el.dataset.entity });
   }
 
   _click(e) {
@@ -511,9 +729,11 @@ class HASettingsCenterCard extends HTMLElement {
     else if (a === "status-popup") this._openStatusPopup(b.dataset.entity);
     else if (a === "more") this._more(b.dataset.moreEntity || b.dataset.entity);
     else if (a === "mode") this._call("input_select.select_option", { option: b.dataset.option }, { entity_id: b.dataset.entity });
+    else if (a === "rum-nulstil") this._call("script.rum_nulstil_automatisk", { room: b.dataset.room });
     else if (a === "step")
       this._call(`input_number.${b.dataset.direction === "+" ? "increment" : "decrement"}`, {}, { entity_id: b.closest("[data-entity]").dataset.entity });
     else if (a === "nav") this._nav(b.dataset.path);
+    else if (a === "gem-delt") this._gemDeltOmraade(b.dataset.omraade);
     else if (a === "service") {
       const i = JSON.parse(b.dataset.payload);
       if (i.confirm && !confirm(i.confirm)) return;
@@ -605,6 +825,21 @@ class HASettingsCenterCard extends HTMLElement {
       .back-btn ha-icon:last-child{--mdc-icon-size:16px;color:var(--muted)}
       button:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--edge))}
       button:active{transform:translateY(1px)}
+      .delt-omraader{display:grid;gap:14px}
+      .delt-omraade{border:1px solid color-mix(in srgb,var(--accent) 14%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:13px;padding:12px;background:var(--settings-neutral)}
+      .delt-editor-holder{margin-top:8px}
+      .delt-vaerktoej{display:flex;align-items:center;gap:12px;margin-top:12px}
+      .delt-status{color:var(--secondary-text-color);font-size:11.5px}
+      .knap{min-height:38px;padding:0 14px;border:1px solid var(--accent);border-radius:10px;background:transparent;color:var(--accent);font:inherit;font-weight:800;cursor:pointer}
+      .knap:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+      .profile-row{align-items:flex-start}
+      .profile-row .row-text{display:flex;flex-direction:column;gap:4px}
+      .profile-select{margin-top:2px;width:100%;min-height:34px;padding:5px 8px;border:1px solid var(--edge);border-radius:8px;background:var(--settings-solid);color:var(--primary-text-color);font:inherit;font-size:11.5px}
+      .profile-row[data-view="profile"] small{white-space:normal}
+      .profile-row.override-active{border-left-color:var(--warn);background:var(--settings-warning)}
+      .profile-row.override-active [data-override-status]{color:var(--warn);font-weight:700}
+      .reset-row .row-icon{color:var(--accent)}
+      .reset-row:hover .row-icon{color:var(--warn)}
       @media(max-width:650px){.tab span{display:none}.tab{padding:10px 4px}.subgrid{grid-template-columns:1fr}}
       @media(prefers-reduced-motion:reduce){*{transition:none!important}}
     `;

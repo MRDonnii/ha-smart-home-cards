@@ -1,5 +1,5 @@
 import "./ha-card-list-editor.js";
-const ROOM_OVERVIEW_VERSION = "0.4.0";
+const ROOM_OVERVIEW_VERSION = "0.5.1";
 
 class HaHomeRoomOverviewCard extends HTMLElement {
   static getStubConfig() {
@@ -17,7 +17,36 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     this._history = new Map();
     this._historyLoading = false;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    this._roomMessages = new Map();
+    this._roomCycleIndex = new Map();
     this._render();
+  }
+
+  connectedCallback() {
+    if (!this._cycleTimer) this._cycleTimer = setInterval(() => this._cycleStatuses(), 3800);
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._cycleTimer);
+    this._cycleTimer = null;
+  }
+
+  _cycleStatuses() {
+    if (!this.shadowRoot || !this._roomMessages) return;
+    this.shadowRoot.querySelectorAll(".room-note[data-room]").forEach((el) => {
+      const messages = this._roomMessages.get(el.dataset.room);
+      if (!messages || messages.length < 2) return;
+      const nextIndex = (Number(el.dataset.idx) + 1) % messages.length;
+      const next = messages[nextIndex];
+      this._roomCycleIndex.set(el.dataset.room, nextIndex);
+      el.style.opacity = "0";
+      setTimeout(() => {
+        el.dataset.idx = nextIndex;
+        el.className = `room-note ${next.warn ? "warn" : ""}`;
+        el.innerHTML = `<ha-icon icon="${next.icon}"></ha-icon>${next.text}`;
+        el.style.opacity = "1";
+      }, 350);
+    });
   }
 
   set hass(hass) {
@@ -137,15 +166,26 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     });
   }
 
+  _statusMessages(room, s) {
+    const messages = [];
+    if (room.alert && s.alert) messages.push({ icon: room.alert.icon, text: room.alert.active, warn: true });
+    if (room.opening) messages.push(s.open ? { icon: "mdi:door-open", text: "Åben", warn: true } : { icon: "mdi:door-closed", text: "Lukket", warn: false });
+    if (!messages.length) messages.push({ icon: "mdi:check-circle-outline", text: room.alert ? room.alert.idle : "Normal", warn: false });
+    return messages;
+  }
+
   _renderRoom(room, s) {
     const line = this._sparkline(room.temperature);
     const status = s.presence ? "Aktivitet i rummet" : s.open ? "Åbning registreret" : "Roligt i rummet";
-    const secondary = room.alert ? (s.alert ? room.alert.active : room.alert.idle) : (s.open ? "Åben" : room.opening ? "Lukket" : "Normal");
-    const secondaryIcon = room.alert?.icon || (room.opening ? "mdi:door-closed" : "mdi:check-circle-outline");
+    const messages = this._statusMessages(room, s);
+    this._roomMessages.set(room.popup, messages);
+    const preservedIndex = (this._roomCycleIndex.get(room.popup) || 0) % messages.length;
+    this._roomCycleIndex.set(room.popup, preservedIndex);
+    const first = messages[preservedIndex];
     return `<article class="room ${s.light ? "on" : ""} ${s.alert ? "alert" : ""} ${s.open ? "opening" : ""}" data-popup="${room.popup}" style="--accent:${room.accent || "var(--dashboard-accent,var(--primary-color,#58aeff))"}">
       ${line ? `<svg class="graph" width="100%" height="100%" viewBox="0 0 100 45" preserveAspectRatio="none"><defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".3"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><polyline points="${line}"/></svg>` : ""}
       <div class="top"><div class="identity"><div class="icon"><ha-icon icon="${room.icon}"></ha-icon></div><div><div class="name">${room.name}</div><div class="status" style="opacity:0"><i class="dot ${s.presence ? "present" : ""}"></i>${status}</div></div></div><div class="temp">${this._fmt(s.temp)}<small>°C</small><div class="humidity ${s.humidityCritical ? "critical" : ""}">${this._fmt(s.humidity,0)}%</div></div></div>
-      <div class="foot"><div class="room-note ${s.alert || s.open ? "warn" : ""}" style="opacity:0"><ha-icon icon="${secondaryIcon}"></ha-icon>${secondary}</div><div class="actions"><div class="button ${s.light ? "light-on" : ""}" data-light="${room.light}" title="Skift lys"><ha-icon icon="${s.light ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon></div><div class="button arrow"><ha-icon icon="mdi:chevron-right"></ha-icon></div></div></div>
+      <div class="foot"><div class="room-note ${first.warn ? "warn" : ""}" data-room="${room.popup}" data-idx="${preservedIndex}" style="opacity:0"><ha-icon icon="${first.icon}"></ha-icon>${first.text}</div><div class="actions"><div class="button ${s.light ? "light-on" : ""}" data-light="${room.light}" title="Skift lys"><ha-icon icon="${s.light ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon></div><div class="button arrow"><ha-icon icon="mdi:chevron-right"></ha-icon></div></div></div>
     </article>`;
   }
 }

@@ -1,5 +1,3 @@
-import "./hourly-weather-scroll-card-assets.js";
-
 class HourlyWeatherScrollCard extends HTMLElement {
   constructor() {
     super();
@@ -162,8 +160,7 @@ class HourlyWeatherScrollCard extends HTMLElement {
     const temperature = Number.isFinite(Number(row.temperature)) ? `${Math.round(Number(row.temperature))}\u00b0` : "-";
     const rain = Number.isFinite(Number(row.precipitation_probability)) ? `${Math.round(Number(row.precipitation_probability))}%` : "-";
     const wind = Number.isFinite(Number(row.wind_speed)) ? `${(Number(row.wind_speed) / 3.6).toFixed(1)} m/s` : "-";
-    const icon = window.HAHourlyWeatherAssets?.weather?.[condition] || window.HAHourlyWeatherAssets?.weather?.["not-available"] || "";
-    return `<div class="hour"><div class="time">${time}</div><img src="${icon}" alt=""><div class="temp">${temperature}</div><div class="rain">&#128167; ${rain}</div><div class="wind">${wind}</div></div>`;
+    return `<div class="hour"><div class="time">${time}</div><img src="/local/weathericon/${condition}.svg" alt=""><div class="temp">${temperature}</div><div class="rain">&#128167; ${rain}</div><div class="wind">${wind}</div></div>`;
   }
 }
 

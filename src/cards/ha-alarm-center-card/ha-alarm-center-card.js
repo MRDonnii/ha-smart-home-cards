@@ -240,7 +240,7 @@ class HAAlarmCenterCard extends HTMLElement {
       .section-title:first-of-type{margin-top:0}
       .empty{padding:22px 10px;text-align:center;color:var(--secondary-text-color);font-size:13px}
       .rows{display:flex;flex-direction:column;gap:8px}
-      .row{--tone:var(--edge);display:flex;align-items:center;gap:8px;border:1px solid color-mix(in srgb,var(--tone) 22%,var(--edge));border-radius:14px;padding:6px;border-left:3px solid var(--tone);background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+      .row{--tone:var(--edge);display:flex;align-items:center;gap:8px;border:1px solid color-mix(in srgb,var(--tone) 22%,var(--edge));border-radius:14px;padding:6px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
       .row.priority-1{--tone:var(--warn)}
       .row.priority-2,.row.priority-3{--tone:var(--danger)}
       .row.snoozed{opacity:.6}

@@ -140,7 +140,7 @@ class HAOpsStatusCard extends HTMLElement {
       .head{margin-bottom:14px}
       .head strong{font-size:16px}
       .statuses{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-      .stile{--tone:var(--good);display:flex;align-items:center;gap:10px;padding:12px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+      .stile{--tone:var(--good);display:flex;align-items:center;gap:10px;padding:12px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
       .stile.bad{--tone:var(--danger)}
       .stile-icon{--mdc-icon-size:22px;color:var(--tone);flex:0 0 auto}
       .stile-text{min-width:0;display:flex;flex-direction:column}
@@ -153,7 +153,7 @@ class HAOpsStatusCard extends HTMLElement {
       .action-btn ha-icon{--mdc-icon-size:20px}
       .action-btn span{font-size:10px;font-weight:700}
       .health{display:grid;grid-template-columns:repeat(${Math.max(healthItems.length, 1)},1fr);gap:8px;margin-top:8px}
-      .htile{--tone:var(--good);display:flex;align-items:center;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);color:var(--primary-text-color);cursor:pointer;text-align:left}
+      .htile{--tone:var(--good);display:flex;align-items:center;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);color:var(--primary-text-color);cursor:pointer;text-align:left}
       .htile ha-icon{--mdc-icon-size:18px;color:var(--tone)}
       .htile.warn{--tone:var(--warn)}
       .htile.bad{--tone:var(--danger)}

@@ -137,7 +137,7 @@ class HALightSceneCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
-      ha-card{position:relative;overflow:hidden;padding:18px;border-radius:22px;border-left:4px solid ${heroColor};background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow);transition:border-color .4s}
+      ha-card{position:relative;overflow:hidden;padding:18px;border-radius:22px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid ${heroColor};background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow);transition:border-color .4s}
       ha-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 100% 0%,color-mix(in srgb,${heroColor} ${on ? "16%" : "6%"},transparent),transparent 60%);pointer-events:none;transition:background .4s}
       .head{position:relative;display:flex;align-items:center;gap:12px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--edge)}
       .head-icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 auto;border-radius:14px;background:color-mix(in srgb,${heroColor} 20%,transparent);color:${heroColor};transition:background .4s,color .4s}
@@ -148,7 +148,7 @@ class HALightSceneCard extends HTMLElement {
       .switch i{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
       .switch.on i{transform:translateX(17px)}
       .lights{position:relative;display:flex;flex-direction:column;gap:18px;transition:opacity .3s;opacity:${on ? "1" : ".4"}}
-      .light-block{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:color-mix(in srgb,var(--lc) 6%,transparent);border:1px solid color-mix(in srgb,var(--lc) 22%,var(--edge));border-left:3px solid var(--lc);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+      .light-block{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:color-mix(in srgb,var(--lc) 6%,transparent);border:1px solid color-mix(in srgb,var(--lc) 22%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--lc);box-shadow:0 4px 12px rgba(0,0,0,.08)}
       .light-head{display:flex;align-items:center;gap:8px}
       .light-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:9px;background:color-mix(in srgb,var(--lc) 24%,transparent);color:var(--lc);flex:0 0 auto}
       .light-icon ha-icon{--mdc-icon-size:15px}

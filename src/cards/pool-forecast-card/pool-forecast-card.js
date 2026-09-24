@@ -240,7 +240,7 @@ class PoolForecastCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host{display:block;--pool-estimate:#f59e0b;--pool-high:#ef4444;--pool-low:#3b82f6;--pool-accent:${accent}}
-        ha-card{position:relative;overflow:hidden;border-radius:18px;border-left:4px solid var(--pool-accent);background:var(--surface);box-shadow:var(--dashboard-shadow-soft);padding:16px 18px 14px;box-sizing:border-box}
+        ha-card{position:relative;overflow:hidden;border-radius:18px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--pool-accent);background:var(--surface);box-shadow:var(--dashboard-shadow-soft);padding:16px 18px 14px;box-sizing:border-box}
         .bg-icon{position:absolute;right:-34px;bottom:-34px;width:178px;height:178px;opacity:.18;color:var(--pool-accent);pointer-events:none;z-index:0}
         .bg-icon-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;width:100%;height:100%;animation:poolForecastIconFloat 6s ease-in-out infinite;transform-origin:center;will-change:transform}
         .bg-icon-inner ha-icon{display:block;width:178px!important;height:178px!important;--mdc-icon-size:178px;animation:poolForecastIconPulse 3.2s ease-in-out infinite;transform-origin:center;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--dashboard-icon-muted) 22%,transparent));will-change:transform,opacity}

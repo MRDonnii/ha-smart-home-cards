@@ -453,5 +453,33 @@
     "filename": "ha-home-front-layout-card.js",
     "category": "Home and rooms",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-navbar-card",
+    "name": "HA Navbar Card",
+    "filename": "ha-navbar-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-roborock-room-map-card",
+    "name": "HA Roborock Room Map Card",
+    "filename": "ha-roborock-room-map-card.js",
+    "category": "Robots",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ai-usage-dashboard-card",
+    "name": "AI Usage Dashboard Card",
+    "filename": "ai-usage-dashboard-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-electricity-dashboard-card",
+    "name": "HA Electricity Dashboard Card",
+    "filename": "ha-electricity-dashboard-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]

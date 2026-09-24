@@ -137,7 +137,7 @@ class HAWaterMeterCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #2196f3));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
-      ha-card{position:relative;overflow:hidden;padding:18px;border-left:4px solid var(--accent);border-radius:20px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 45%),var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
+      ha-card{position:relative;overflow:hidden;padding:18px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:20px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 45%),var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
       .head{display:flex;align-items:center;justify-content:space-between;gap:14px}
       .identity{display:flex;align-items:center;gap:11px;min-width:0}
       .icon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
@@ -170,7 +170,7 @@ class HAWaterMeterCard extends HTMLElement {
       .hero-info .flow-note{margin-top:6px;font-size:11px;color:var(--secondary-text-color);line-height:1.4}
       .section-title{margin:16px 0 8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
       .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-      .stat{padding:9px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:3px solid var(--accent);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
+      .stat{padding:9px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:12px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
       .stat span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase;font-weight:700}
       .stat b{display:block;margin-top:4px;font-size:13px}
       .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
