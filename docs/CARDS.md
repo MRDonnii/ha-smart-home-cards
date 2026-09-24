@@ -36,6 +36,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | HA Electricity Price Card | `ha-electricity-price-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-electricity-price-card) |
 | HCH5 Live Control Card | `ha-hch5-live-card.js` | HCH5 ventilation overview with animated unit, readbacks and HA controls |
 | HA Ventilation Card | `ha-ventilation-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ventilation-card) |
+| Heat Center Header Card | `ha-heat-center-header-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-center-header-card) |
 | Heat Economy Card | `ha-heat-economy-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-economy-card) |
 | Heat Pump Overview Card | `ha-heat-pump-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-pump-overview-card) |
 | Heating Diagnostics Card | `ha-heating-diagnostics-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heating-diagnostics-card) |
