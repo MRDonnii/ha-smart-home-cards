@@ -350,6 +350,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ai-usage-dashboard-card",
+    "name": "AI Usage Dashboard Card",
+    "filename": "ai-usage-dashboard-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-settings-center-card",
     "name": "HA Settings Center Card",
     "filename": "ha-settings-center-card.js",
