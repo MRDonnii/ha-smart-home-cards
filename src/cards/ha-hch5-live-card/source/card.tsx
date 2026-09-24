@@ -14,7 +14,7 @@ type Hass = {
   states: Record<string, HAState | undefined>;
   callService: (domain: string, service: string, data: Record<string, unknown>) => Promise<unknown>;
 };
-type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: number; variant?: "smartdash" };
+type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: number; variant?: "smartdash"; embedded?: boolean };
 type AfterheatValue = number | "off";
 type Notice = { text: string; error: boolean };
 
@@ -495,6 +495,7 @@ class Hch5LiveCard extends HTMLElement {
 
   setConfig(config: Config) {
     if (!config || typeof config.entities !== "object" || config.entities === null) throw new Error("HCH5-kortet kræver en entities-konfiguration.");
+    this.toggleAttribute("embedded", config.embedded === true && config.variant !== "smartdash");
     this.config = config;
     this.signature = "";
     this.renderCard();
