@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.92 */
+/* MRDonnii Smart Home Cards v0.3.93 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
