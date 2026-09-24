@@ -210,7 +210,7 @@ class CalefaNumberControlCard extends HTMLElement {
           --control-accent: ${accent};
           overflow: hidden;
           border: 0;
-          border-left: 3px solid var(--control-accent);
+          border-left: calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--control-accent);
           border-radius: 17px;
           background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.025)), var(--surface, var(--card-background-color));
           box-shadow: var(--dashboard-shadow-soft, var(--ha-card-box-shadow));
