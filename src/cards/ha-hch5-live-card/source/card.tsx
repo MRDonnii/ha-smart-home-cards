@@ -232,7 +232,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
 
   const showHistory = (key: string) => {
     const entityId = ids[key];
-    if (entityId && hass.states[entityId]) host.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    if (entityId) host.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
   };
   const outdoor = num("outdoor_temperature");
   const extract = num("extract_temperature");
