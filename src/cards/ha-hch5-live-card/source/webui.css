@@ -475,6 +475,7 @@ button { font: inherit; color: inherit; }
 /* One HA card, one surface: sections are separated by space and fine rules
    instead of a stack of differently colored cards. */
 .surface { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:host([embedded]) .hch-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .dashboard-main-grid > .surface,.pro-control-column > .surface,.pro-control-pair > .surface { border-top: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); }
 .overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { background: transparent; box-shadow: none; }
 .overview-status-pills > div { border: 0; border-left: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); border-radius: 0; }
