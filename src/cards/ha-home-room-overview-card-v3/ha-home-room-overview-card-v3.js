@@ -3,7 +3,7 @@ import "./ha-card-list-editor.js";
 // 3.0.0 – rumoversigt med levende rumstatus, status-chips,
 // hurtigknapper (tryk = skift, hold = detaljer), lysfarve-glød, filtre og animationer.
 // Et tryk på selve kortet åbner fortsat rummets popup via popup-hashen.
-const ROOM_OVERVIEW_VERSION = "3.0.1";
+const ROOM_OVERVIEW_VERSION = "3.0.2";
 
 const OPEN_STATES = new Set(["on", "open", "opening"]);
 const PRESENT_STATES = new Set(["on", "home", "detected"]);
@@ -182,7 +182,7 @@ h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1
 .btn.on.anim-wiggle ha-icon{animation:wiggle 1.4s ease-in-out infinite}
 @container roomcard (max-width:1240px){.grid{grid-template-columns:repeat(min(var(--cols,4),3),minmax(0,1fr))}}
 @container roomcard (max-width:900px){.top{flex-direction:column;align-items:stretch;gap:16px}.pills{justify-content:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@container roomcard (max-width:620px){.shell{padding:14px;border-radius:22px}.top{margin-bottom:14px}h1{font-size:28px}.sub{font-size:12.5px}.pills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pill{flex-direction:column;align-items:center;gap:5px;min-width:0;padding:9px 4px 8px;border-radius:15px;text-align:center}.pill .pi{flex:0 0 auto;width:28px;height:28px;border-radius:9px}.pill .pi ha-icon{--mdc-icon-size:16px}.pill b{font-size:15px}.pill small{margin-top:1px;font-size:8.5px;letter-spacing:.05em}.pill small em{display:none}.grid{grid-template-columns:1fr;gap:9px}}
+@container roomcard (max-width:620px){.shell{padding:14px;border-radius:22px}.top{margin-bottom:14px}h1{font-size:28px}.sub{font-size:12.5px}.pills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pill{flex-direction:column;align-items:center;gap:5px;min-width:0;padding:9px 4px 8px;border-radius:15px;text-align:center}.pill .pi{flex:0 0 auto;width:28px;height:28px;border-radius:9px}.pill .pi ha-icon{--mdc-icon-size:16px}.pill b{font-size:15px}.pill small{margin-top:1px;font-size:8.5px;letter-spacing:.05em}.pill small em{display:none}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}}
 @container roomcard (max-width:300px){.grid{grid-template-columns:1fr}}
 @container tile (max-width:250px){.in{gap:9px;min-height:214px;padding:12px}.head{grid-template-columns:auto minmax(0,1fr);gap:9px}.badge{width:36px;height:36px;border-radius:12px}.badge ha-icon{--mdc-icon-size:20px}.name{font-size:14.5px}.line{gap:5px;margin-top:3px;font-size:10.5px}.clim{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:6px;text-align:left}.temp{font-size:27px}.tu{font-size:13px}.meta{gap:6px;margin-top:0;font-size:10.5px}.chip{height:24px;gap:5px;padding:0 8px 0 6px;font-size:10px}.chips .chip:nth-child(n+3){display:none}.acts{gap:6px}.btn{width:34px;height:34px;border-radius:11px}.btn ha-icon{--mdc-icon-size:18px}.btn.light{min-width:34px;gap:6px;padding:0 9px 0 7px}.btn.light .ll{display:none}.lv{font-size:11px}.btn.opt{display:none}.btn.off{margin-left:-6px}.btn.off.show{width:34px;margin-left:0}.btn.armed{padding:0 9px}.btn .arm{font-size:10px}.spark{bottom:50px;height:60px}.glow{width:120%;top:-40%;right:-55%}}
 @container tile (max-width:170px){.btn.light .lv{display:none}.btn.light{flex:0 0 34px;justify-content:center;padding:0}}
