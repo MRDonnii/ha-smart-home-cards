@@ -766,9 +766,21 @@ class HaCalefaFlowCard extends HTMLElement {
     const bounds = main.getBoundingClientRect();
     const picture = stage.getBoundingClientRect();
     if (!picture.height) return;
+    // The right column mirrors the left one row for row (tile, pair, tile, tile), so the
+    // two sides line up; the callouts still run to each part's own anchor.
+    let leftTops = null;
     for (const side of [this._refs.left, this._refs.right]) {
       if (!side) continue;
       const box = side.getBoundingClientRect();
+      const blocks = [...side.querySelectorAll(":scope > .cf-block")];
+      if (side === this._refs.right && leftTops && leftTops.length === blocks.length && this._config.align_sides !== false) {
+        blocks.forEach((el, index) => {
+          const top = `${Math.round(leftTops[index])}px`;
+          if (el.style.top !== top) el.style.top = top;
+        });
+        this._toggle(side, "is-placed", true);
+        continue;
+      }
       const gap = clamp(picture.width * 0.016, 5, 12);
       const items = [...side.querySelectorAll(":scope > .cf-block")]
         .map((el) => ({ el, height: el.offsetHeight, want: picture.top - box.top + (Number(el.dataset.y) / VIEW_H) * picture.height }))
@@ -788,6 +800,7 @@ class HaCalefaFlowCard extends HTMLElement {
         const top = `${Math.round(item.top)}px`;
         if (item.el.style.top !== top) item.el.style.top = top;
       }
+      if (side === this._refs.left) leftTops = blocks.map((el) => items.find((item) => item.el === el)?.top ?? 0);
       this._toggle(side, "is-placed", true);
     }
     callouts.setAttribute("viewBox", `0 0 ${Math.round(bounds.width)} ${Math.round(bounds.height)}`);
