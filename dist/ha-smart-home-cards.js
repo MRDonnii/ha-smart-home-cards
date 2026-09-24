@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.83 */
+/* MRDonnii Smart Home Cards v0.3.84 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -19003,6 +19003,117 @@ customElements.get("ha-hch5-live-card") || customElements.define("ha-hch5-live-c
 window.customCards = window.customCards || [];
 window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customCards.push({ type: "ha-hch5-live-card", name: "HCH5 Live Control", description: "HCH5 Control WebUI-overblikket med animeret unit og HA-betjening", preview: false });
 
+// src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
+(() => {
+  const VERSION47 = "0.3.2";
+  const STORAGE_KEY = "ha-heat-center-header-card:tab";
+  const TAB_TTL_MS = 5 * 60 * 1e3;
+  const TABS2 = [
+    { key: "temperature", label: "Temperatur", icon: "mdi:thermometer", conditional: "radiator" },
+    { key: "air", label: "Luft", icon: "mdi:hvac", conditional: "dantherm" },
+    { key: "district", label: "Fjernvarme", icon: "mdi:radiator", conditional: "fjernvarme" }
+  ];
+  const escapeHtml2 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  class HAHeatCenterHeaderCard extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this._config = {};
+      this._active = "temperature";
+      this._hass = null;
+      this._restoreTimers = [];
+      this.shadowRoot.addEventListener("click", (event) => {
+        const button = event.target.closest?.("[data-tab]");
+        if (button) this.switchTab(button.dataset.tab);
+      });
+    }
+    static getStubConfig() {
+      return { title: "Varme Center" };
+    }
+    setConfig(config) {
+      const next = { title: "Varme Center", subtitle: "Temperatur, luft og fjernvarme samlet \xE9t sted", show_stats: false, ...config };
+      const signature = JSON.stringify(next);
+      if (signature === this._signature) return;
+      this._config = next;
+      this._signature = signature;
+      this._active = this._readTab() || "temperature";
+      this._render();
+    }
+    set hass(hass) {
+      this._hass = hass;
+      this._updateStats();
+    }
+    connectedCallback() {
+      this._restoreTimers.forEach(clearTimeout);
+      this._restoreTimers = [];
+      const saved = this._readTab();
+      if (saved && saved !== "temperature") for (const delay of [80, 700]) this._restoreTimers.push(setTimeout(() => {
+        if (!this.isConnected || this._userSwitched) return;
+        this._dispatchTab(saved);
+      }, delay));
+    }
+    disconnectedCallback() {
+      this._restoreTimers.forEach(clearTimeout);
+      this._restoreTimers = [];
+    }
+    getCardSize() {
+      return this._config.show_stats ? 3 : 1;
+    }
+    _readTab() {
+      try {
+        const item2 = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+        if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && TABS2.some((t) => t.key === item2.key)) return item2.key;
+      } catch {
+      }
+      return null;
+    }
+    _writeTab(key) {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ key, at: Date.now() }));
+      } catch {
+      }
+    }
+    _dispatchTab(key) {
+      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: TABS2.map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
+    }
+    switchTab(key) {
+      if (!TABS2.some((t) => t.key === key)) return;
+      this._userSwitched = true;
+      this._active = key;
+      this._writeTab(key);
+      this._syncTabs();
+      this._dispatchTab(key);
+    }
+    _syncTabs() {
+      for (const button of this.shadowRoot.querySelectorAll("[data-tab]")) {
+        const active = button.dataset.tab === this._active;
+        button.classList.toggle("on", active);
+        button.setAttribute("aria-selected", String(active));
+      }
+    }
+    _render() {
+      const c = this._config;
+      this.shadowRoot.innerHTML = `<style>
+    :host{display:block;--hc-text:var(--primary-text-color);--hc-muted:var(--secondary-text-color);--hc-faint:var(--disabled-text-color);--hc-surface:var(--ha-card-background,var(--card-background-color));--hc-surface-2:var(--contrast1,color-mix(in srgb,var(--hc-text) 4%,transparent));--hc-border:var(--divider-color);--hc-accent:var(--dashboard-accent,var(--primary-color));--hc-shadow:var(--ha-card-box-shadow,none);font-family:var(--primary-font-family,inherit);color:var(--hc-text)}*{box-sizing:border-box}ha-card{background:transparent;border:0;box-shadow:none;padding:18px 20px 0;color:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--hc-accent);background:color-mix(in srgb,var(--hc-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--hc-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--hc-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--hc-surface);border:1px solid var(--hc-border);box-shadow:var(--hc-shadow);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border:0;border-radius:10px;background:transparent;color:var(--hc-muted);font:inherit;font-size:14px;font-weight:550;white-space:nowrap;cursor:pointer;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--hc-faint)}.tab:hover{color:var(--hc-text);background:var(--hc-surface-2)}.tab.on{color:var(--hc-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--hc-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--hc-accent)),0 0 18px -8px var(--hc-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--hc-accent))}.tab:focus-visible{outline:2px solid var(--hc-accent);outline-offset:2px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.stat{padding:14px;border:1px solid var(--hc-border);border-radius:var(--ha-card-border-radius,18px);background:var(--hc-surface)}.stat span{display:block;color:var(--hc-muted);font-size:11px}.stat strong{display:block;font-size:18px;margin-top:4px}@media(max-width:680px){ha-card{padding:14px 14px 0}.top{align-items:flex-start}.tabs{width:100%}.tab{flex:1 1 0;min-width:0;justify-content:center;gap:4px;padding:8px 4px;font-size:12.5px}.stats{grid-template-columns:1fr}}
+  </style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h1>${escapeHtml2(c.title)}</h1><p>${escapeHtml2(c.subtitle)}</p></div></div><nav class="tabs" role="tablist" aria-label="Varme Center">${TABS2.map((tab) => `<button type="button" role="tab" class="tab" data-tab="${tab.key}"><ha-icon icon="${tab.icon}"></ha-icon><span>${tab.label}</span></button>`).join("")}</nav></header>${c.show_stats ? '<div class="stats"><div class="stat"><span>Fjernvarme</span><strong data-value="district">\u2014</strong></div><div class="stat"><span>Ventilation</span><strong data-value="ventilation">\u2014</strong></div><div class="stat"><span>Pris i dag</span><strong data-value="cost">\u2014</strong></div></div>' : ""}</ha-card>`;
+      this._syncTabs();
+      this._updateStats();
+    }
+    _updateStats() {
+      if (!this._config.show_stats || !this._hass) return;
+      const values = { district: this._hass.states[this._config.district_power]?.state, ventilation: this._hass.states[this._config.ventilation_level]?.state, cost: this._hass.states[this._config.cost_today]?.state };
+      for (const [key, value] of Object.entries(values)) {
+        const node = this.shadowRoot.querySelector(`[data-value="${key}"]`);
+        if (node) node.textContent = value && !["unknown", "unavailable"].includes(value) ? value : "\u2014";
+      }
+    }
+  }
+  if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION47}`);
+})();
+
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
 var VERSION17 = "0.2.0";
 var HAHeatEconomyCard = class extends HTMLElement {
@@ -36835,6 +36946,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!config || typeof config !== "object" || Array.isArray(config)) {
       throw new Error("ha-calefa-flow-card requires a configuration object");
     }
+    this.toggleAttribute?.("embedded", config.embedded === true);
     const text = (value, fallback = "") => typeof value === "string" && value.trim() ? value.trim() : fallback;
     this._sourceConfig = config;
     this._registryConnection = null;
@@ -38283,6 +38395,7 @@ var CALEFA_STYLES = `
   :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#3f95ff;--cf-heat:#ff9a3c;--cf-heat-return:#5cb8ff;--cf-dhw:#ff4f5a;--cf-cold:#35d3ea;--cf-bypass:#b88cff;--cf-ok:#35df9c;--cf-off:#ff5463;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
   *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid #49bdff;outline-offset:2px}
   ha-card{position:relative;display:block;overflow:hidden;border:1px solid rgba(145,177,199,.16);border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(90% 55% at 50% 40%,rgba(43,95,125,.26),transparent 70%),linear-gradient(155deg,#0b1924,#102535 54%,#07121b);color:var(--cf-text);box-shadow:0 18px 52px rgba(0,0,0,.3)}
+  :host([embedded]) ha-card{background:transparent;border:0;border-radius:0;box-shadow:none}
   .cf{padding:clamp(8px,1.8cqw,22px) clamp(6px,1.8cqw,22px) calc(clamp(8px,1.4cqw,16px) + env(safe-area-inset-bottom,0px));min-width:0}
   [data-tone="supply"]{--tone:var(--cf-supply)}[data-tone="return"]{--tone:var(--cf-return)}[data-tone="heat"]{--tone:var(--cf-heat)}[data-tone="heat-return"]{--tone:var(--cf-heat-return)}[data-tone="dhw"]{--tone:var(--cf-dhw)}[data-tone="cold"]{--tone:var(--cf-cold)}[data-tone="bypass"]{--tone:var(--cf-bypass)}[data-tone="component"]{--tone:var(--cf-ok)}
 

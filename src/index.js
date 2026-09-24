@@ -21,6 +21,7 @@ import "./cards/ha-fjernvarme-house-card/ha-fjernvarme-house-card.js";
 import "./cards/ha-electricity-price-card/ha-electricity-price-card.js";
 import "./cards/ha-ventilation-card/ha-ventilation-card.js";
 import "./cards/ha-hch5-live-card/ha-hch5-live-card.js";
+import "./cards/ha-heat-center-header-card/ha-heat-center-header-card.js";
 import "./cards/ha-heat-economy-card/ha-heat-economy-card.js";
 import "./cards/ha-heat-pump-overview-card/ha-heat-pump-overview-card.js";
 import "./cards/ha-heating-diagnostics-card/ha-heating-diagnostics-card.js";

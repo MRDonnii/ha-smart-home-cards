@@ -412,6 +412,9 @@ class HaCalefaFlowCard extends HTMLElement {
     if (!config || typeof config !== "object" || Array.isArray(config)) {
       throw new Error("ha-calefa-flow-card requires a configuration object");
     }
+    // A surrounding stack owns the surface in embedded layouts. Apply this
+    // before the first build so the standalone blue surface cannot flash.
+    this.toggleAttribute?.("embedded", config.embedded === true);
     const text = (value, fallback = "") => typeof value === "string" && value.trim() ? value.trim() : fallback;
     this._sourceConfig = config;
     this._registryConnection = null;
@@ -1930,6 +1933,7 @@ const CALEFA_STYLES = `
   :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#3f95ff;--cf-heat:#ff9a3c;--cf-heat-return:#5cb8ff;--cf-dhw:#ff4f5a;--cf-cold:#35d3ea;--cf-bypass:#b88cff;--cf-ok:#35df9c;--cf-off:#ff5463;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
   *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid #49bdff;outline-offset:2px}
   ha-card{position:relative;display:block;overflow:hidden;border:1px solid rgba(145,177,199,.16);border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(90% 55% at 50% 40%,rgba(43,95,125,.26),transparent 70%),linear-gradient(155deg,#0b1924,#102535 54%,#07121b);color:var(--cf-text);box-shadow:0 18px 52px rgba(0,0,0,.3)}
+  :host([embedded]) ha-card{background:transparent;border:0;border-radius:0;box-shadow:none}
   .cf{padding:clamp(8px,1.8cqw,22px) clamp(6px,1.8cqw,22px) calc(clamp(8px,1.4cqw,16px) + env(safe-area-inset-bottom,0px));min-width:0}
   [data-tone="supply"]{--tone:var(--cf-supply)}[data-tone="return"]{--tone:var(--cf-return)}[data-tone="heat"]{--tone:var(--cf-heat)}[data-tone="heat-return"]{--tone:var(--cf-heat-return)}[data-tone="dhw"]{--tone:var(--cf-dhw)}[data-tone="cold"]{--tone:var(--cf-cold)}[data-tone="bypass"]{--tone:var(--cf-bypass)}[data-tone="component"]{--tone:var(--cf-ok)}
 
