@@ -8568,7 +8568,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION14} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION15 = "0.7.7";
+var VERSION15 = "0.7.8";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -8981,7 +8981,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
           bar.style.height = `${165 + Math.round(headerGain * 0.72)}px`;
         });
       }
-      chart.style.transform = compactMobile ? "translateY(10px)" : "translateY(8px)";
+      chart.style.transform = compactMobile ? "translateY(20px)" : "translateY(8px)";
     }
     this.shadowRoot.querySelectorAll("[data-tab]").forEach(
       (button) => button.onclick = () => {
@@ -38905,7 +38905,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION47 = "0.1.4";
+var VERSION47 = "0.1.5";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -39039,7 +39039,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     this._mobileBreakpoint = mobileBreakpoint;
     this._phoneBreakpoint = phoneBreakpoint;
     this._bindBreakpoints(mobileBreakpoint, phoneBreakpoint);
-    this.shadowRoot.innerHTML = `<style>:host{display:block}.surface.unified{padding:10px 14px 18px;border:0;border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:8px;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--ha-card-border-width:0px;--ha-card-border-color:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}.surface.unified{padding-bottom:8px;margin-bottom:12px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
+    this.shadowRoot.innerHTML = `<style>:host{display:block}.surface.unified{padding:10px 14px 18px;border:0;border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:8px;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--ha-card-border-width:0px;--ha-card-border-color:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}.surface.unified{padding-bottom:4px;margin-bottom:12px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
     const make = (cfg, parent, index, total, growLast = false, extraClass = "", sideKey) => {
       const card = helpers.createCardElement(cfg);
       const slot = document.createElement("div");
