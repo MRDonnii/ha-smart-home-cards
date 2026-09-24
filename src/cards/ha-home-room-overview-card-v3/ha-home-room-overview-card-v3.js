@@ -3,7 +3,7 @@ import "./ha-card-list-editor.js";
 // 3.0.0 – rumoversigt med levende rumstatus, status-chips,
 // hurtigknapper (tryk = skift, hold = detaljer), lysfarve-glød, filtre og animationer.
 // Et tryk på selve kortet åbner fortsat rummets popup via popup-hashen.
-const ROOM_OVERVIEW_VERSION = "3.0.0";
+const ROOM_OVERVIEW_VERSION = "3.0.1";
 
 const OPEN_STATES = new Set(["on", "open", "opening"]);
 const PRESENT_STATES = new Set(["on", "home", "detected"]);
@@ -145,11 +145,11 @@ h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1
 .eq i{flex:1;height:100%;border-radius:1px;background:currentColor;transform-origin:bottom;animation:eq 1s ease-in-out infinite}
 .eq i:nth-child(2){animation-delay:-.45s}.eq i:nth-child(3){animation-delay:-.2s}.eq i:nth-child(4){animation-delay:-.7s}
 .chip.eqon .eq{display:flex}.chip.eqon .ci ha-icon{display:none}
-.anim-pulse ha-icon{animation:blink 1.5s ease-in-out infinite}
-.anim-spin ha-icon{animation:spin 1.6s linear infinite}
-.anim-wiggle ha-icon{animation:wiggle 1.2s ease-in-out infinite}
-.anim-flame ha-icon{animation:flame 1.3s ease-in-out infinite}
-.anim-bob ha-icon{animation:bob 1.6s ease-in-out infinite}
+.chip.anim-pulse ha-icon{animation:blink 1.5s ease-in-out infinite}
+.chip.anim-spin ha-icon{animation:spin 1.6s linear infinite}
+.chip.anim-wiggle ha-icon{animation:wiggle 1.2s ease-in-out infinite}
+.chip.anim-flame ha-icon{animation:flame 1.3s ease-in-out infinite}
+.chip.anim-bob ha-icon{animation:bob 1.6s ease-in-out infinite}
 .acts{position:relative;display:flex;align-items:center;gap:8px;min-width:0}
 .btn{--bc:var(--accent);position:relative;display:grid;place-items:center;flex:0 0 auto;width:42px;height:42px;padding:0;border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);color:var(--muted);cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s var(--ease),background .35s,border-color .35s,color .35s,box-shadow .35s,opacity .3s}
 .btn ha-icon{--mdc-icon-size:20px;pointer-events:none;transition:color .35s}
