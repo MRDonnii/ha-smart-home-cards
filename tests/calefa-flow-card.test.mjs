@@ -78,20 +78,67 @@ result = model({ heating_valve: "sensor.v", water_flow: "sensor.w", dhw_valve: "
 assert.equal(result.heatingActive, true, "open heating valve means heating");
 assert.equal(result.dhwTap, false, "zero water flow means no tapping");
 
-// Bypass keeps the DHW primary side warm without tapping.
-result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
+// The electronic bypass is valve 37 held slightly open without tapping: only then does district heating
+// water pass the DHW exchanger's primary side (Calefa II V ITC principle diagram, no separate bypass pipe).
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv", water_flow: "sensor.w", fjv_flow: "sensor.ff" }, {
   "sensor.d": state("Bypass"),
   "sensor.dv": state(4, "%"),
+  "sensor.w": state(0, "L/h"),
+  "sensor.ff": state(0, "L/h"),
 });
 assert.equal(result.dhwBypass, true);
 assert.equal(result.dhwTap, false);
+assert.equal(result.bypassFlow, true, "an open valve 37 in bypass state is a bypass flow");
+assert.equal(result.bypassArmed, false);
 assert.equal(result.dhwPrimary, true);
-result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
+assert.equal(result.primaryMoving, true, "the late heat meter reading must not hide an open bypass");
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv", fjv_flow: "sensor.ff" }, {
   "sensor.d": state("Bypass"),
   "sensor.dv": state(0, "%"),
+  "sensor.ff": state(150, "L/h"),
 });
-assert.equal(result.dhwPrimary, true, "bypass heats the primary side even when the DHW valve reports zero");
+assert.equal(result.bypassFlow, false, "the bypass state alone is not a flow");
+assert.equal(result.bypassArmed, true);
+assert.equal(result.dhwPrimary, false, "a closed valve 37 carries no bypass water");
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv", heating_valve: "sensor.hv", fjv_flow: "sensor.ff" }, {
+  "sensor.d": state("Bypass"),
+  "sensor.dv": state(0, "%"),
+  "sensor.hv": state(0, "%"),
+  "sensor.ff": state(150, "L/h"),
+});
+assert.equal(result.primaryMoving, false, "closed valves stop the primary side even while the meter still reports flow");
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
+  "sensor.d": state("Bypass"),
+  "sensor.dv": state(0.89, "%"),
+});
+assert.equal(result.bypassFlow, false, "an opening at or below valve_threshold is not shown as flow");
+// Heating while the bypass is armed: only the heating branch carries water.
+result = model({ heating_active: "sensor.h", heating_valve: "sensor.hv", pump: "sensor.p", dhw_active: "sensor.d", dhw_valve: "sensor.dv" }, {
+  "sensor.h": state("Opvarmning"), "sensor.hv": state(20, "%"), "sensor.p": state("Til"),
+  "sensor.d": state("Bypass"), "sensor.dv": state(0, "%"),
+});
+assert.equal(result.heatPrimary, true);
+assert.equal(result.dhwPrimary, false, "an armed bypass must not animate the DHW branch during heating");
+assert.equal(result.bypassArmed, true);
+assert.equal(result.primaryMoving, true);
+// Tapping outranks a bypass state read a few seconds apart.
+result = model({ dhw_active: "sensor.d", dhw_valve: "sensor.dv", water_flow: "sensor.w" }, {
+  "sensor.d": state("Bypass"), "sensor.dv": state(12, "%"), "sensor.w": state(270, "L/h"),
+});
+assert.equal(result.dhwTap, true);
+assert.equal(result.bypassFlow, false);
+assert.equal(result.dhwPrimary, true);
+// Without a valve reading a bypass cannot be shown as moving.
+result = model({ dhw_active: "sensor.d", fjv_flow: "sensor.ff" }, { "sensor.d": state("Bypass"), "sensor.ff": state(0, "L/h") });
+assert.equal(result.bypassFlow, false);
+assert.equal(result.bypassArmed, true);
 assert.equal(result.primaryMoving, false, "bypass status without measured flow must not animate fjernvarme");
+// A running pump circulates the closed heating circuit even with the heating valve closed.
+result = model({ pump: "sensor.p", heating_valve: "sensor.hv", heating_flow: "sensor.hf" }, {
+  "sensor.p": state("Til"), "sensor.hv": state(0, "%"), "sensor.hf": state(0, "L/h"),
+});
+assert.equal(result.heatMoving, true);
+assert.equal(result.heatPrimary, false);
 result = model({ fjv_flow: "sensor.ff", heating_flow: "sensor.hf", water_flow: "sensor.wf", heating_active: "sensor.h", dhw_active: "sensor.d" }, {
   "sensor.ff": state(0, "L/h"), "sensor.hf": state(0, "L/h"), "sensor.wf": state(0, "L/h"),
   "sensor.h": state("Opvarmning"), "sensor.d": state("Bypass"),
