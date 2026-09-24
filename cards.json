@@ -488,12 +488,5 @@
     "filename": "ha-energy-center-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
-  },
-  {
-    "slug": "ha-home-status-card",
-    "name": "HA Home Status Card",
-    "filename": "ha-home-status-card.js",
-    "category": "Home and rooms",
-    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]

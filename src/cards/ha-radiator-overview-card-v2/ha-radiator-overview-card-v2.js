@@ -17,7 +17,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 
-const VERSION = "2.0.3";
+const VERSION = "2.0.4";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -337,7 +337,9 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const heating = climate?.attributes?.hvac_action === "heating" && !windowOpen && (valve === undefined || valve > 0);
     const batteryValues = Object.entries(this._object(climate?.attributes?.batteries))
       .filter(([entityId]) => entityId.startsWith("climate."))
-      .map(([, entry]) => this._number(entry?.battery))
+      // Better Thermostat's copy of a TRV battery is often "unavailable"; the TRV's own
+      // battery sensor (battery_id) is the reliable source, so fall back to it.
+      .map(([, entry]) => this._number(entry?.battery) ?? this._number(this._entity(entry?.battery_id)?.state))
       .filter((value) => value !== undefined);
     const batteries = batteryValues.length ? batteryValues : [];
     const ac = room.ac ? this._acState(room) : undefined;
