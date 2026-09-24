@@ -73,6 +73,24 @@ display_entities:
 
 All ordinary entity fields are optional: `fjv_supply`, `fjv_return`, `fjv_flow`, `heating_supply`, `heating_return`, `heating_setpoint`, `heating_flow`, `dhw_temperature`, `dhw_setpoint`, `cold_water_temperature`, `water_flow`, `pump`, `pump_speed`, `heating_valve`, `dhw_valve`, `heating_active`, `dhw_active`, `power`, `pressure`, `room_temperature`, `outdoor_temperature`. `alarm_entities` accepts a list of existing `binary_sensor` entities. Missing, unknown and unavailable entities show a dash or hide an optional metric; no service is called by tapping an unavailable metric.
 
+## Consumption today
+
+At the bottom of the card an **I dag** section shows today's consumption, today's price and an hourly chart for the current day (00–24). It appears when `energy_today` (or the Calefa split below) is configured and can be hidden with `show_today: false`.
+
+```yaml
+energy_meter: sensor.fjernvarme_total_energy_consumption_2  # billing heat meter (e.g. MQTT), running kWh total
+# energy_today: sensor.heat_meter_energy_today              # alternative: a daily counter that resets at midnight
+cost_today: sensor.heat_cost_today                         # optional, kr since midnight
+energy_price: sensor.heat_price_per_kwh                   # kr/kWh from the utility
+heating_energy_today: sensor.calefa_radiator_energi_dag    # optional Calefa estimate
+dhw_energy_today: sensor.calefa_varmtvand_energi_dag       # optional Calefa estimate
+```
+
+- **Forbrug i dag** and the hourly bars come from the billing meter, because that is what the utility bills. With `energy_meter` (a running total such as the MQTT heat meter) the card subtracts the meter reading at local midnight, taken from Home Assistant statistics; with `energy_today` it uses a daily counter directly. The meter needs a `state_class` so Home Assistant keeps statistics for it.
+- **Pris i dag** uses `cost_today`; without it the card multiplies today's kWh by `energy_price`. The yellow line is the accumulated price through the day (meter kWh × price per kWh).
+- **Fordeling · Calefa-estimat** shows the heating / hot water split from the Calefa counters as information only. Without a meter entity the chart falls back to stacked Calefa bars.
+- Hour values come from Home Assistant's 5-minute statistics for today. They are requested only while the card is visible and at most every five minutes; the current hour follows the live counter in between. Hover a bar for its hour value.
+
 ## Controller menu specification
 
 `🔒` marks rows that are display-only: the controller function exists, but the `wavin_calefa` integration exposes no control for it. Opening one shows "Kun på enheden" and never calls a service. A writable row whose entity is missing or unavailable is shown as `[--]` with the same lock.

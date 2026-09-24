@@ -600,4 +600,37 @@ assert.equal(leds._refs["led-fault"].dataset.tone, "red");
 assert.equal(leds._refs["led-mode"].dataset.tone, "red");
 assert.equal(leds._refs["led-peripheral"].dataset.blink, "slow");
 
+// "I dag": statistics rows are grouped per local hour and the live counter fills the current hour.
+const today = vm.runInNewContext(`const clamp = (v, a, b) => Math.min(b, Math.max(a, v)); ${source.slice(source.indexOf("function buildTodaySeries"), source.indexOf("function interpretActivity"))}; buildTodaySeries`);
+const midnightMs = Date.UTC(2026, 8, 24, 0, 0, 0);
+const hourMs = 3600000;
+const rows = [
+  { start: midnightMs, change: 1.2 },
+  { start: midnightMs + 5 * 60000, change: 0.3 },
+  { start: new Date(midnightMs + hourMs).toISOString(), change: 2 },
+  { start: midnightMs + 2 * hourMs, change: null },
+  { start: midnightMs - hourMs, change: 9 },
+];
+const hours = today(rows, 5, midnightMs, midnightMs + 2 * hourMs + 20 * 60000);
+assert.equal(hours.length, 24);
+assert.equal(hours[0], 1.5, "5-minute rows are summed per hour");
+assert.equal(hours[1], 2, "ISO timestamps are accepted");
+assert.equal(hours[2], 1.5, "live counter fills the current hour");
+assert.equal(hours.slice(3).reduce((a, b) => a + b, 0), 0, "future hours stay empty");
+assert.equal(today([], null, midnightMs, midnightMs + hourMs).reduce((a, b) => a + b, 0), 0, "missing data stays empty");
+const meterBase = vm.runInNewContext(`${source.slice(source.indexOf("function todayMeterBase"), source.indexOf("function buildTodaySeries"))}; todayMeterBase`);
+assert.equal(meterBase([{ start: midnightMs + 300000, state: 4250, change: 0 }, { start: midnightMs, state: 4250, change: 0 }]), 4250, "midnight reading of a running meter");
+assert.equal(meterBase([{ start: midnightMs, state: 4251, change: 1 }]), 4250, "first row's own change is removed");
+assert.equal(meterBase([]), null);
+const todayCard = new Card();
+todayCard._build = () => {};
+todayCard.setConfig({});
+assert.equal(todayCard._todayEnabled(), false, "section is hidden without energy entities");
+todayCard.setConfig({ energy_today: "sensor.energy_today" });
+assert.equal(todayCard._todayEnabled(), true);
+todayCard.setConfig({ energy_meter: "sensor.heat_meter_total" });
+assert.equal(todayCard._todayMeterKey(), "energy_meter", "running meter has priority");
+todayCard.setConfig({ energy_today: "sensor.energy_today", show_today: false });
+assert.equal(todayCard._todayEnabled(), false);
+
 console.log("Validated Calefa flow card state handling");
