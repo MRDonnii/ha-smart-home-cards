@@ -53,6 +53,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 |---|---|---|
 | HA Home Header Card | `ha-home-header-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-header-card) |
 | HA Family Calendar Card | `ha-family-calendar-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-family-calendar-card) |
+| HA Home Front Layout Card | `ha-home-front-layout-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-front-layout-card) |
 | HA Home Desktop Layout Card | `ha-home-status-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-status-grid-card) |
 | HA Home Status Grid Card | `ha-home-status-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-status-card) |
 | HA Person Overview Card | `ha-person-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-person-overview-card) |

@@ -446,5 +446,12 @@
     "filename": "ha-calefa-flow-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-home-front-layout-card",
+    "name": "HA Home Front Layout Card",
+    "filename": "ha-home-front-layout-card.js",
+    "category": "Home and rooms",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]
