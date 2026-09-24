@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.1";
+const CALEFA_FLOW_CARD_VERSION = "0.9.2";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -773,11 +773,23 @@ class HaCalefaFlowCard extends HTMLElement {
       if (!side) continue;
       const box = side.getBoundingClientRect();
       const blocks = [...side.querySelectorAll(":scope > .cf-block")];
-      if (side === this._refs.right && leftTops && leftTops.length === blocks.length && this._config.align_sides !== false) {
-        blocks.forEach((el, index) => {
-          const top = `${Math.round(leftTops[index])}px`;
-          if (el.style.top !== top) el.style.top = top;
+      if (side === this._refs.right && leftTops && leftTops.length && this._config.align_sides !== false) {
+        const gapR = clamp(picture.width * 0.016, 5, 12);
+        const rows = blocks.map((el) => ({ el, height: el.offsetHeight, want: Number(el.dataset.y) })).sort((a, b) => a.want - b.want);
+        let cursorR = 0;
+        rows.forEach((row, index) => {
+          row.top = Math.max(leftTops[Math.min(index, leftTops.length - 1)] ?? 0, cursorR);
+          cursorR = row.top + row.height + gapR;
         });
+        let limitR = box.height;
+        for (let index = rows.length - 1; index >= 0; index -= 1) {
+          if (rows[index].top + rows[index].height > limitR) rows[index].top = Math.max(0, limitR - rows[index].height);
+          limitR = rows[index].top - gapR;
+        }
+        for (const row of rows) {
+          const top = `${Math.round(row.top)}px`;
+          if (row.el.style.top !== top) row.el.style.top = top;
+        }
         this._toggle(side, "is-placed", true);
         continue;
       }
@@ -800,7 +812,7 @@ class HaCalefaFlowCard extends HTMLElement {
         const top = `${Math.round(item.top)}px`;
         if (item.el.style.top !== top) item.el.style.top = top;
       }
-      if (side === this._refs.left) leftTops = blocks.map((el) => items.find((item) => item.el === el)?.top ?? 0);
+      if (side === this._refs.left) leftTops = items.map((item) => item.top).sort((a, b) => a - b);
       this._toggle(side, "is-placed", true);
     }
     callouts.setAttribute("viewBox", `0 0 ${Math.round(bounds.width)} ${Math.round(bounds.height)}`);
@@ -1861,13 +1873,13 @@ class HaCalefaFlowCard extends HTMLElement {
     const bar = document.createElement("nav");
     bar.className = "cf-legacy-tabs";
     bar.setAttribute("aria-label", "Calefa visning");
-    bar.style.cssText = "display:flex;gap:6px;flex:0 0 auto;padding:8px 60px 8px 10px;background:var(--card-background-color,#1c2630);z-index:2";
+    bar.style.cssText = "display:flex;gap:6px;flex:0 0 auto;padding:8px 60px 8px 10px;background:var(--card-background-color,#1c2630);border-bottom:1px solid var(--divider-color,transparent);z-index:2";
     for (const [label, open] of [["Styring", () => card._openDetailsPopup()], ["Forbrug", () => card._openCardsPopup(0)]]) {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = label;
       button.setAttribute("aria-current", label === active ? "page" : "false");
-      button.style.cssText = `min-height:36px;padding:4px 14px;border:1px solid ${label === active ? "#5bc7e8" : "#526775"};border-radius:10px;background:${label === active ? "#23526a" : "#1b2b35"};color:#f0f8fb;font:700 13px system-ui;cursor:pointer`;
+      button.style.cssText = `min-height:36px;padding:4px 14px;border:1px solid ${label === active ? "var(--dashboard-tab-selected-border,var(--primary-color,#5bc7e8))" : "var(--divider-color,#526775)"};border-radius:10px;background:${label === active ? "var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--primary-color,#5bc7e8) 16%,transparent))" : "color-mix(in srgb,var(--primary-text-color,#f0f8fb) 5%,transparent)"};color:var(--primary-text-color,#f0f8fb);font:700 13px var(--primary-font-family,system-ui);cursor:pointer`;
       button.addEventListener("click", () => { open(); this._decorateLegacyPopup(card, label); });
       bar.appendChild(button);
     }
@@ -2162,6 +2174,15 @@ const CALEFA_STYLES = `
   .cf-fault-panel header button{border-color:var(--cf-line);background:color-mix(in srgb,var(--cf-text) 7%,transparent);color:var(--cf-text)}
   .cf-fault-list p,.cf-fault-row small,.cf-fault-row>ha-icon:last-child{color:var(--cf-muted)}
   .cf-fault-row{background:color-mix(in srgb,var(--cf-text) 4%,transparent);color:var(--cf-text)}
+  /* Chart and today's figures use the theme's own colours so they read in light and dark. */
+  :host{--cf-chart-heat:var(--dashboard-warning,var(--warning-color,#ff8a00));--cf-chart-dhw:var(--dashboard-danger,var(--error-color,#ff4f5a));--cf-chart-cost:var(--dashboard-accent,var(--primary-color,#3aa8ff))}
+  .cf-bar-heat{fill:var(--cf-chart-heat)}.cf-bar-dhw{fill:var(--cf-chart-dhw)}
+  .cf-cost-line{stroke:var(--cf-chart-cost)}.cf-cost-area{fill:color-mix(in srgb,var(--cf-chart-cost) 12%,transparent)}
+  .cf-chart-r{color:var(--cf-chart-cost)}.cf-chart-y{color:var(--cf-muted)}
+  .cf-key{background:var(--cf-chart-heat)}.cf-key-dhw{background:var(--cf-chart-dhw)}.cf-key-cost{background:var(--cf-chart-cost)}
+  .cf-stat:nth-child(1) strong b{color:var(--cf-chart-heat)}.cf-stat:nth-child(2) strong b{color:var(--cf-chart-cost)}
+  .cf-hour.is-now .cf-bar-slot{fill:color-mix(in srgb,var(--cf-chart-cost) 12%,transparent)}
+  .cf-now-line{stroke:color-mix(in srgb,var(--cf-chart-cost) 60%,transparent)}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
