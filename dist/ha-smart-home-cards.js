@@ -549,7 +549,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION49 = "0.4.5";
+  const VERSION51 = "0.4.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -716,8 +716,8 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       this.signatures.set(id, html);
       el.innerHTML = html;
     }
-    kpi(icon2, label, value, detail, tone2 = "") {
-      return `<article class="kpi ${tone2}">${this.icon(icon2)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
+    kpi(icon3, label, value, detail, tone2 = "") {
+      return `<article class="kpi ${tone2}">${this.icon(icon3)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
     }
     update() {
       if (!this.shadowRoot.getElementById("kpis") || !this.ha) return;
@@ -774,7 +774,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     }
     adviceView() {
       const rows = [["filter", "Filtreringsfremdrift", "progress-check"], ["warning", "Statusadvarsel", "alert-circle-outline"], ["next", "N\xE6ste handling", "calendar-check"], ["swim", "Bedste badetid", "weather-sunny"], ["cover", "Coverstatus", "pool"], ["maintenance", "Vedligeholdelse", "wrench"]];
-      return `<div class="advice-grid">${rows.map(([key, label, icon2]) => `<div class="advice-row">${this.icon(icon2)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
+      return `<div class="advice-grid">${rows.map(([key, label, icon3]) => `<div class="advice-row">${this.icon(icon3)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
     }
     winterView() {
       const s = this.state("winter");
@@ -931,12 +931,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION49}`);
+  console.info(`HA POOL CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION49 = "0.3.4";
+  const VERSION51 = "0.3.4";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -997,7 +997,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       ["Override timer", "timer.pool_vinterblokering_override"]
     ] }
   ];
-  const escapeHtml3 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+  const escapeHtml4 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   const available = (value) => value != null && !["unknown", "unavailable", "none", ""].includes(String(value).toLowerCase());
   class HAPoolSettingsCard extends HTMLElement {
     constructor() {
@@ -1037,11 +1037,11 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     }
     text(id) {
       const s = this.state(id);
-      return available(s?.state) ? `${escapeHtml3(s.state)}${s.attributes?.unit_of_measurement ? ` ${escapeHtml3(s.attributes.unit_of_measurement)}` : ""}` : "Ikke tilg\xE6ngelig";
+      return available(s?.state) ? `${escapeHtml4(s.state)}${s.attributes?.unit_of_measurement ? ` ${escapeHtml4(s.attributes.unit_of_measurement)}` : ""}` : "Ikke tilg\xE6ngelig";
     }
     mount() {
       if (!this.isConnected) return;
-      this.shadowRoot.innerHTML = `<style>${HAPoolSettingsCard.css}</style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:pool"></ha-icon></span><div><h1>Pool</h1><p>Drift, historik og indstillinger samlet \xE9t sted</p></div></div><nav class="tabs" role="tablist" aria-label="Pool"><a class="tab" role="tab" aria-selected="false" href="${escapeHtml3(this.backPath())}" data-pool-tab="pool"><ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Pool</span></a><a class="tab on" role="tab" aria-selected="true" href="${escapeHtml3(this.settingsPath())}" data-pool-tab="settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span>Indstillinger</span></a></nav></header><div class="sections">${SECTION_DATA.map((section) => `<section class="panel ${section.id}" id="${section.id}"><header><ha-icon icon="mdi:${section.icon}"></ha-icon><div><h2>${section.title}</h2><p>${section.subtitle}</p></div></header><div class="rows">${section.rows.map(([label, id]) => `<div class="row" data-row="${escapeHtml3(id)}"><label>${escapeHtml3(label)}</label><div data-control="${escapeHtml3(id)}"></div></div>`).join("")}</div>${section.id === "filter" ? '<div class="extras"><button class="danger" data-off><ha-icon icon="mdi:power"></ha-icon>Sluk helt \u2014 forbliv slukket</button><p>Bruges ved service, vinterlukning eller l\xE6ngere frav\xE6r.</p></div>' : ""}${section.id === "comfort" ? '<p class="hint">Poolen betragtes som badeklar ved eller over den valgte temperatur.</p>' : ""}${section.id === "water" ? '<div class="maintenance-actions"><button data-press="input_button.pool_registrer_klor_tilsat">Registrer klor</button><button data-press="input_button.pool_registrer_returskyl">Registrer backwash</button><button data-press="input_button.pool_registrer_filterrens">Registrer filterrens</button></div>' : ""}${section.id === "winter" ? '<div class="winter-actions"><button data-override="15">Override 15 min</button><button data-override="30">Override 30 min</button><button data-override="60">Override 1 time</button><button data-override-stop>Afslut override</button></div><p class="hint">N\xE5r vinterblokering er aktiv i den valgte periode, og vandet er under gr\xE6nsen, kan pumpen ikke starte automatisk. Override udl\xF8ber af sig selv.</p>' : ""}</section>`).join("")}</div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></ha-card>`;
+      this.shadowRoot.innerHTML = `<style>${HAPoolSettingsCard.css}</style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:pool"></ha-icon></span><div><h1>Pool</h1><p>Drift, historik og indstillinger samlet \xE9t sted</p></div></div><nav class="tabs" role="tablist" aria-label="Pool"><a class="tab" role="tab" aria-selected="false" href="${escapeHtml4(this.backPath())}" data-pool-tab="pool"><ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Pool</span></a><a class="tab on" role="tab" aria-selected="true" href="${escapeHtml4(this.settingsPath())}" data-pool-tab="settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span>Indstillinger</span></a></nav></header><div class="sections">${SECTION_DATA.map((section) => `<section class="panel ${section.id}" id="${section.id}"><header><ha-icon icon="mdi:${section.icon}"></ha-icon><div><h2>${section.title}</h2><p>${section.subtitle}</p></div></header><div class="rows">${section.rows.map(([label, id]) => `<div class="row" data-row="${escapeHtml4(id)}"><label>${escapeHtml4(label)}</label><div data-control="${escapeHtml4(id)}"></div></div>`).join("")}</div>${section.id === "filter" ? '<div class="extras"><button class="danger" data-off><ha-icon icon="mdi:power"></ha-icon>Sluk helt \u2014 forbliv slukket</button><p>Bruges ved service, vinterlukning eller l\xE6ngere frav\xE6r.</p></div>' : ""}${section.id === "comfort" ? '<p class="hint">Poolen betragtes som badeklar ved eller over den valgte temperatur.</p>' : ""}${section.id === "water" ? '<div class="maintenance-actions"><button data-press="input_button.pool_registrer_klor_tilsat">Registrer klor</button><button data-press="input_button.pool_registrer_returskyl">Registrer backwash</button><button data-press="input_button.pool_registrer_filterrens">Registrer filterrens</button></div>' : ""}${section.id === "winter" ? '<div class="winter-actions"><button data-override="15">Override 15 min</button><button data-override="30">Override 30 min</button><button data-override="60">Override 1 time</button><button data-override-stop>Afslut override</button></div><p class="hint">N\xE5r vinterblokering er aktiv i den valgte periode, og vandet er under gr\xE6nsen, kan pumpen ikke starte automatisk. Override udl\xF8ber af sig selv.</p>' : ""}</section>`).join("")}</div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></ha-card>`;
       this.signatures.clear();
       this.update();
     }
@@ -1049,18 +1049,18 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       const s = this.state(id);
       if (!s) return '<span class="unavailable">Ikke tilg\xE6ngelig</span>';
       const domain = id.split(".")[0], state = s.state;
-      if (domain === "input_boolean") return `<button class="toggle ${state === "on" ? "on" : ""}" data-toggle="${escapeHtml3(id)}" aria-label="${state === "on" ? "Sl\xE5 fra" : "Sl\xE5 til"}" aria-pressed="${state === "on"}"><i></i></button>`;
-      if (domain === "input_select") return `<select data-select="${escapeHtml3(id)}">${(s.attributes?.options || []).map((v) => `<option value="${escapeHtml3(v)}" ${v === state ? "selected" : ""}>${escapeHtml3(v)}</option>`).join("")}</select>`;
+      if (domain === "input_boolean") return `<button class="toggle ${state === "on" ? "on" : ""}" data-toggle="${escapeHtml4(id)}" aria-label="${state === "on" ? "Sl\xE5 fra" : "Sl\xE5 til"}" aria-pressed="${state === "on"}"><i></i></button>`;
+      if (domain === "input_select") return `<select data-select="${escapeHtml4(id)}">${(s.attributes?.options || []).map((v) => `<option value="${escapeHtml4(v)}" ${v === state ? "selected" : ""}>${escapeHtml4(v)}</option>`).join("")}</select>`;
       if (domain === "input_number") {
         const value = Number(state), min = Number(s.attributes?.min ?? 0), max = Number(s.attributes?.max ?? 100), step = Number(s.attributes?.step ?? 1), unit = s.attributes?.unit_of_measurement || "";
-        return `<div class="number"><button data-step="${escapeHtml3(id)}" data-delta="${-step}" aria-label="Reducer">\u2212</button><span>${Number.isFinite(value) ? escapeHtml3(value) : "\u2014"} ${escapeHtml3(unit)}</span><button data-step="${escapeHtml3(id)}" data-delta="${step}" aria-label="\xD8g">+</button><input type="range" data-range="${escapeHtml3(id)}" min="${min}" max="${max}" step="${step}" value="${Number.isFinite(value) ? value : min}" aria-label="Juster v\xE6rdi"></div>`;
+        return `<div class="number"><button data-step="${escapeHtml4(id)}" data-delta="${-step}" aria-label="Reducer">\u2212</button><span>${Number.isFinite(value) ? escapeHtml4(value) : "\u2014"} ${escapeHtml4(unit)}</span><button data-step="${escapeHtml4(id)}" data-delta="${step}" aria-label="\xD8g">+</button><input type="range" data-range="${escapeHtml4(id)}" min="${min}" max="${max}" step="${step}" value="${Number.isFinite(value) ? value : min}" aria-label="Juster v\xE6rdi"></div>`;
       }
       if (domain === "input_datetime" && ["input_datetime.pool_vinter_start", "input_datetime.pool_vinter_slut"].includes(id)) {
         const date2 = /^\d{4}-\d{2}-\d{2}$/.test(state) ? state : "";
-        return `<input type="date" data-date="${escapeHtml3(id)}" value="${escapeHtml3(date2)}" aria-label="V\xE6lg dato">`;
+        return `<input type="date" data-date="${escapeHtml4(id)}" value="${escapeHtml4(date2)}" aria-label="V\xE6lg dato">`;
       }
       if (domain === "binary_sensor") return `<span class="badge ${state === "on" ? "on" : ""}">${state === "on" ? "Aktiv" : state === "off" ? "Ikke aktiv" : "Ikke tilg\xE6ngelig"}</span>`;
-      if (domain === "timer") return `<span class="badge ${state === "active" ? "on" : ""}">${state === "active" ? "Aktiv" : state === "idle" ? "Inaktiv" : escapeHtml3(state)}</span>`;
+      if (domain === "timer") return `<span class="badge ${state === "active" ? "on" : ""}">${state === "active" ? "Aktiv" : state === "idle" ? "Inaktiv" : escapeHtml4(state)}</span>`;
       return `<span class="value">${this.text(id)}</span>`;
     }
     update() {
@@ -1148,7 +1148,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION49}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-roborock-vacuum-card/ha-roborock-vacuum-card.js
@@ -1331,10 +1331,10 @@ var HARoborockVacuumCard = class extends HTMLElement {
       <div class="track"><i style="width:${pct2}%"></i></div>
     </div>`;
   }
-  _switchChip(id, label, icon2) {
+  _switchChip(id, label, icon3) {
     if (!id) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon2}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon3}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _call(service, data = {}) {
     if (!this._config.vacuum) return;
@@ -1838,7 +1838,7 @@ var HaTeslaVehicleCard = class extends HTMLElement {
       <ha-card><ha-icon class="watermark" icon="mdi:car-sports"></ha-icon>
         <header><div class="title"><span class="eyebrow">TESLA \xB7 SAMLET BILCENTER</span><h1>${this.config.title}</h1><div class="headline" data-v="headline"></div></div>
           <div class="battery"><div class="battery-value" data-v="battery">\u2014</div><div class="battery-track"><i data-v="batteryBar"></i></div><small data-v="rangeHeader">\u2014</small></div></header>
-        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon2]) => `<button data-tab="${id}"><ha-icon icon="${icon2}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
+        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon3]) => `<button data-tab="${id}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
         <main>
           <section data-panel="overview">${this._overviewHtml()}</section>
           <section data-panel="vehicle">${this._vehicleInfoHtml()}</section>
@@ -1875,8 +1875,8 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   _historyHtml() {
     return `<div class="history-grid"><article><div class="list-head"><div><small>LADNINGER</small><h2>Ladehistorik</h2></div><div class="pager"><button data-page="charge-prev">\u2039</button><span data-v="chargePage"></span><button data-page="charge-next">\u203A</button></div></div><div class="record" data-v="chargeRecord"></div></article><article><div class="section-head"><div><small>\xD8KONOMI</small><h2>Samlet status</h2></div><ha-icon icon="mdi:chart-donut"></ha-icon></div><div class="history-stats">${this._fact("chargesTotal", "Ladninger")}${this._fact("kwhTotal", "Energi")}${this._fact("priceTotalHistory", "Pris")}${this._fact("lastCharge", "Seneste")}</div><div class="months" data-v="months"></div></article></div>`;
   }
-  _metric(id, icon2, label) {
-    return `<article class="metric"><ha-icon icon="${icon2}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
+  _metric(id, icon3, label) {
+    return `<article class="metric"><ha-icon icon="${icon3}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
   }
   _fact(id, label) {
     return `<div class="fact"><small>${label}</small><strong data-v="${id}">\u2014</strong></div>`;
@@ -2536,17 +2536,17 @@ function ttdPressure(stateObj, options, format) {
   }
   return { text: ttdJoin(format.number(shown, digits), displayUnit), tone: tone2, status, bar };
 }
-function ttdIcon(icon2, cls = "") {
-  return `<ha-icon icon="${icon2}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
+function ttdIcon(icon3, cls = "") {
+  return `<ha-icon icon="${icon3}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 }
 function ttdTemplate(cfg) {
   const e = ttdEsc;
-  const stat = (key, icon2, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon2)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
+  const stat = (key, icon3, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon3)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
   const kpi = (key, ref, label) => `<button class="kpi" data-more="${key}"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
-  const cell = (key, icon2, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon2, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
+  const cell = (key, icon3, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon3, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
   const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
-  const item2 = (key, icon2, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon2)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
+  const item2 = (key, icon3, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon3)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
@@ -4131,10 +4131,10 @@ var HALawnMowerCard = class extends HTMLElement {
     const s = this._s(id);
     return s !== void 0 && !["unknown", "unavailable", ""].includes(s);
   }
-  _switchChip(id, label, icon2) {
+  _switchChip(id, label, icon3) {
     if (!this._hasData(id)) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon2}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon3}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _select(id, label) {
     if (!this._hasData(id)) return "";
@@ -4297,7 +4297,7 @@ var HALawnMowerCard = class extends HTMLElement {
       ${selectFields.length ? `<div class="section-title">Indstillinger</div><div class="fields">${selectFields.join("")}</div>` : ""}
       ${numberFields.length ? `<div class="section-title">Justeringer</div><div class="fields">${numberFields.join("")}</div>` : ""}
       ${systemChips.length ? `<div class="section-title">System</div><div class="chips">${systemChips.join("")}</div>` : ""}
-      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon2]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon2}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
+      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon3]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
       <div class="controls">
         <button data-action="start_mowing" ${canStart ? "" : "disabled"}><ha-icon icon="mdi:play"></ha-icon>Start</button>
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
@@ -4854,12 +4854,12 @@ var PoolForecastCard = class extends HTMLElement {
     const days = points.filter((point) => Number.isFinite(point.high)).slice(0, 5);
     if (!days.length) return "";
     return `<div class="weather-days">${days.map((point) => {
-      const icon2 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
+      const icon3 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
       const wind = Number.isFinite(point.wind) ? `<span>${this._fmt(point.wind)} m/s</span>` : "";
       return `
         <div class="weather-day">
           <div class="weather-day-name">${this._escape(this._label(point.ts, true))}</div>
-          ${icon2}
+          ${icon3}
           <div class="weather-range-text"><b>${this._fmt(point.high, 0)}&deg;</b><span>${this._fmt(point.low, 0)}&deg;</span></div>
           <div class="weather-meta"><span>${this._fmt(point.rain, 1)} mm</span>${wind}</div>
           <div class="weather-condition">${this._escape(point.condition)}</div>
@@ -6270,8 +6270,8 @@ var HAACClimateCard = class extends HTMLElement {
     const problem = active && (input !== void 0 && input < 1 || output !== void 0 && output < 1);
     return { climate, mode, current, target, fan, swing, output, input, cop, daily, dailyCost, heatPrice, hourCost, active, tone: tone2, problem, status: problem ? "Kontroll\xE9r drift" : status, detail: problem ? "Anl\xE6gget er aktivt uden m\xE5lbar effekt" : detail };
   }
-  _metric(label, value, icon2) {
-    return `<div class="metric"><ha-icon icon="${icon2}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon3) {
+    return `<div class="metric"><ha-icon icon="${icon3}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _unit(unit, index) {
     const s = this._state(unit);
@@ -7000,10 +7000,10 @@ var HACalefaDetailsCard = class extends HTMLElement {
   }
   _renderStructure() {
     if (!this.shadowRoot) return;
-    const number2 = (key, label, icon2) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon2}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
-    const toggle = (key, label, description, icon2) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon2}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
-    const select = (key, label, icon2) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon2}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
-    const metric = (key, label, icon2, tone2) => `<button class="data-metric ${tone2}" data-more="${key}"><ha-icon icon="${icon2}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+    const number2 = (key, label, icon3) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
+    const toggle = (key, label, description, icon3) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon3}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
+    const select = (key, label, icon3) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
+    const metric = (key, label, icon3, tone2) => `<button class="data-metric ${tone2}" data-more="${key}"><ha-icon icon="${icon3}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card>
       <header><div><small>WAVIN CALEFA</small><h2>${this._escape(this._config.title)}</h2><p>Styring, m\xE5lerdata og historik samlet</p></div><div class="status" data-summary>Indl\xE6ser\u2026</div></header>
       <nav class="category-tabs" aria-label="Detaljekategori"><button class="active" data-tab="control"><ha-icon icon="mdi:tune-variant"></ha-icon>Styring</button><button data-tab="meter"><ha-icon icon="mdi:meter-gas"></ha-icon>M\xE5lerdata</button><button data-tab="history"><ha-icon icon="mdi:chart-line"></ha-icon>Historik</button></nav>
@@ -8141,7 +8141,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     }).join(
       ""
     )}</div></div>` : ""}</div>`;
-    const tab = (id, name, label, icon2) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon2}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
+    const tab = (id, name, label, icon3) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:20px;background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:2px solid var(--primary-text-color);outline-offset:2px}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:#161d28;color:#fff;box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
@@ -9167,16 +9167,16 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   _esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
-  _metric(key, label, icon2) {
-    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon2}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon2}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+  _metric(key, label, icon3) {
+    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon3}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon3}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
   }
-  _section(title, subtitle, icon2, content) {
-    return `<section><div class="section-title"><ha-icon icon="${icon2}"></ha-icon><div><h3>${title}</h3><p>${subtitle}</p></div></div>${content}</section>`;
+  _section(title, subtitle, icon3, content) {
+    return `<section><div class="section-title"><ha-icon icon="${icon3}"></ha-icon><div><h3>${title}</h3><p>${subtitle}</p></div></div>${content}</section>`;
   }
   _render() {
     const m2 = (...args) => this._metric(...args);
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card><header><div><small>DANTHERM HCH</small><h2>${this._esc(this._config.title)}</h2><p>Drift, ydelse, eftervarme og diagnose samlet</p></div><span class="health" data-health>Indl\xE6ser\u2026</span></header>
-      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon2, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon2}"></ha-icon>${label}</button>`).join("")}</nav>
+      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon3, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`).join("")}</nav>
       <div class="panel active" data-panel="overview"><div class="sections two">${this._section("Luft og temperatur", "Indeklima og temperaturbalance", "mdi:home-thermometer-outline", `<div class="metrics">${m2("house_temperature", "Hustemperatur", "mdi:home-thermometer-outline")}${m2("temperature_delta", "Ind/ud delta", "mdi:swap-vertical")}${m2("heat_recovery_status", "Varmegenvinding", "mdi:heat-wave")}${m2("heat_recovery_trend", "Udvikling", "mdi:chart-timeline-variant")}</div>`)}${this._section("Balance og filter", "Ydelse og vedligeholdelse", "mdi:air-filter", `<div class="metrics">${m2("fan_control_balance", "Styringsbalance", "mdi:fan-chevron-down")}${m2("fan_speed_balance", "Omdrejningsbalance", "mdi:fan-speed-2")}${m2("last_filter_change", "Seneste filterskift", "mdi:air-filter")}${m2("filter_changes", "Filterhistorik", "mdi:history")}</div>`)}</div></div>
       <div class="panel" data-panel="fans"><div class="sections two">${this._section("Ventilatorer", "Styring og aktuelle omdrejninger", "mdi:fan", `<div class="metrics">${m2("extract_control", "Udsugning styring", "mdi:gauge")}${m2("supply_control", "Indbl\xE6sning styring", "mdi:gauge")}${m2("extract_speed", "Udsugning RPM", "mdi:fan-speed-2")}${m2("supply_speed", "Indbl\xE6sning RPM", "mdi:fan-speed-2")}</div>`)}${this._section("Driftstilstand", "Aktive specialfunktioner", "mdi:hvac", `<div class="metrics">${m2("night_mode", "Natdrift", "mdi:weather-night")}${m2("fireplace_mode", "Pejsefunktion", "mdi:fireplace")}${m2("standby", "Standby", "mdi:power-sleep")}</div>`)}</div></div>
       <div class="panel" data-panel="heat"><div class="sections two">${this._section("Setpunkter", "M\xE5l for luft og rum", "mdi:thermostat", `<div class="metrics">${m2("afterheat_setpoint", "Indbl\xE6sning", "mdi:thermostat")}${m2("room_setpoint", "Rum", "mdi:home-thermometer-outline")}${m2("extract_setpoint", "Udsugning", "mdi:thermometer-off")}${m2("afterheat_active", "Eftervarme", "mdi:radiator")}</div>`)}${this._section("Varmeflade", "Aktuelle luft- og vandtemperaturer", "mdi:heating-coil", `<div class="metrics">${m2("air_before_coil", "Luft f\xF8r", "mdi:thermometer-low")}${m2("air_after_coil", "Luft efter", "mdi:thermometer-high")}${m2("air_delta", "Luft delta-T", "mdi:delta")}${m2("water_flow", "Vand freml\xF8b", "mdi:thermometer-chevron-up")}${m2("water_return", "Vand retur", "mdi:thermometer-chevron-down")}${m2("water_delta", "Vand delta-T", "mdi:delta")}</div>`)}</div></div>
@@ -9214,9 +9214,9 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   _update() {
     if (!this._hass || !this.shadowRoot.querySelector("ha-card")) return;
     for (const [key] of DETAIL_FIELDS) {
-      const state = this._state(key), node = this.shadowRoot.querySelector(`[data-value="${key}"]`), tile = this.shadowRoot.querySelector(`[data-more="${key}"]`);
+      const state = this._state(key), node = this.shadowRoot.querySelector(`[data-value="${key}"]`), tile2 = this.shadowRoot.querySelector(`[data-more="${key}"]`);
       if (node) node.textContent = this._format(state, key);
-      if (tile) tile.dataset.tone = this._tone(key, state);
+      if (tile2) tile2.dataset.tone = this._tone(key, state);
     }
     const alarm = ["hac1_connection", "rs485_traffic"].some((k) => this._tone(k, this._state(k)) === "bad");
     const h = this.shadowRoot.querySelector("[data-health]");
@@ -18573,15 +18573,15 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION49 = "0.3.2";
+  const VERSION51 = "0.3.2";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
-  const TABS2 = [
+  const TABS3 = [
     { key: "temperature", label: "Temperatur", icon: "mdi:thermometer", conditional: "radiator" },
     { key: "air", label: "Luft", icon: "mdi:hvac", conditional: "dantherm" },
     { key: "district", label: "Fjernvarme", icon: "mdi:radiator", conditional: "fjernvarme" }
   ];
-  const escapeHtml3 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  const escapeHtml4 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
   class HAHeatCenterHeaderCard extends HTMLElement {
     constructor() {
       super();
@@ -18630,7 +18630,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
     _readTab() {
       try {
         const item2 = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-        if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && TABS2.some((t) => t.key === item2.key)) return item2.key;
+        if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && TABS3.some((t) => t.key === item2.key)) return item2.key;
       } catch {
       }
       return null;
@@ -18642,10 +18642,10 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
       }
     }
     _dispatchTab(key) {
-      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: TABS2.map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
+      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: TABS3.map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
     }
     switchTab(key) {
-      if (!TABS2.some((t) => t.key === key)) return;
+      if (!TABS3.some((t) => t.key === key)) return;
       this._userSwitched = true;
       this._active = key;
       this._writeTab(key);
@@ -18663,7 +18663,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
       const c = this._config;
       this.shadowRoot.innerHTML = `<style>
     :host{display:block;--hc-text:var(--primary-text-color);--hc-muted:var(--secondary-text-color);--hc-faint:var(--disabled-text-color);--hc-surface:var(--ha-card-background,var(--card-background-color));--hc-surface-2:var(--contrast1,color-mix(in srgb,var(--hc-text) 4%,transparent));--hc-border:var(--divider-color);--hc-accent:var(--dashboard-accent,var(--primary-color));--hc-shadow:var(--ha-card-box-shadow,none);font-family:var(--primary-font-family,inherit);color:var(--hc-text)}*{box-sizing:border-box}ha-card{background:transparent;border:0;box-shadow:none;padding:18px 20px 0;color:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--hc-accent);background:color-mix(in srgb,var(--hc-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--hc-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--hc-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--hc-surface);border:1px solid var(--hc-border);box-shadow:var(--hc-shadow);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border:0;border-radius:10px;background:transparent;color:var(--hc-muted);font:inherit;font-size:14px;font-weight:550;white-space:nowrap;cursor:pointer;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--hc-faint)}.tab:hover{color:var(--hc-text);background:var(--hc-surface-2)}.tab.on{color:var(--hc-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--hc-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--hc-accent)),0 0 18px -8px var(--hc-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--hc-accent))}.tab:focus-visible{outline:2px solid var(--hc-accent);outline-offset:2px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.stat{padding:14px;border:1px solid var(--hc-border);border-radius:var(--ha-card-border-radius,18px);background:var(--hc-surface)}.stat span{display:block;color:var(--hc-muted);font-size:11px}.stat strong{display:block;font-size:18px;margin-top:4px}@media(max-width:680px){ha-card{padding:14px 14px 0}.top{align-items:flex-start}.tabs{width:100%}.tab{flex:1 1 0;min-width:0;justify-content:center;gap:4px;padding:8px 4px;font-size:12.5px}.stats{grid-template-columns:1fr}}
-  </style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h1>${escapeHtml3(c.title)}</h1><p>${escapeHtml3(c.subtitle)}</p></div></div><nav class="tabs" role="tablist" aria-label="Varme Center">${TABS2.map((tab) => `<button type="button" role="tab" class="tab" data-tab="${tab.key}"><ha-icon icon="${tab.icon}"></ha-icon><span>${tab.label}</span></button>`).join("")}</nav></header>${c.show_stats ? '<div class="stats"><div class="stat"><span>Fjernvarme</span><strong data-value="district">\u2014</strong></div><div class="stat"><span>Ventilation</span><strong data-value="ventilation">\u2014</strong></div><div class="stat"><span>Pris i dag</span><strong data-value="cost">\u2014</strong></div></div>' : ""}</ha-card>`;
+  </style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h1>${escapeHtml4(c.title)}</h1><p>${escapeHtml4(c.subtitle)}</p></div></div><nav class="tabs" role="tablist" aria-label="Varme Center">${TABS3.map((tab) => `<button type="button" role="tab" class="tab" data-tab="${tab.key}"><ha-icon icon="${tab.icon}"></ha-icon><span>${tab.label}</span></button>`).join("")}</nav></header>${c.show_stats ? '<div class="stats"><div class="stat"><span>Fjernvarme</span><strong data-value="district">\u2014</strong></div><div class="stat"><span>Ventilation</span><strong data-value="ventilation">\u2014</strong></div><div class="stat"><span>Pris i dag</span><strong data-value="cost">\u2014</strong></div></div>' : ""}</ha-card>`;
       this._syncTabs();
       this._updateStats();
     }
@@ -18679,7 +18679,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION49}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -19061,8 +19061,8 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const efficiency = input && output !== void 0 ? output / input : cop;
     return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current, target, level, title, detail };
   }
-  _metric(label, value, icon2) {
-    return `<div class="metric"><ha-icon icon="${icon2}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon3) {
+    return `<div class="metric"><ha-icon icon="${icon3}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _pump(pump, index) {
     const s = this._state(pump);
@@ -19333,8 +19333,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const active = (valve || 0) > 1 || (output || 0) > 1;
     return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, title, detail, active };
   }
-  _metric(label, value, icon2 = "") {
-    return `<div class="metric">${icon2 ? `<ha-icon icon="${icon2}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon3 = "") {
+    return `<div class="metric">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _room(room, index, compact) {
     const s = this._state(room);
@@ -25135,12 +25135,12 @@ var HAHomeHeaderCard = class extends HTMLElement {
       this._runwaySig = sig;
       el.innerHTML = activity.map((a, i) => a.error ? `<ha-icon class="error" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="left:${8 + i * 22}%;top:${35 + i * 10}%"></ha-icon>` : `<ha-icon class="roaming" data-index="${i}" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="animation-delay:${i * -5}s,${i * -3}s"></ha-icon>`).join("");
     }
-    el.querySelectorAll(".roaming").forEach((icon2) => {
-      const i = Number(icon2.dataset.index);
-      icon2.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
-      icon2.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
-      icon2.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
-      icon2.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
+    el.querySelectorAll(".roaming").forEach((icon3) => {
+      const i = Number(icon3.dataset.index);
+      icon3.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
+      icon3.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
+      icon3.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
+      icon3.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
     });
   }
   _updateStatusGroup() {
@@ -25151,8 +25151,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._currentActiveAlert = activeAlert;
     const v3Class = this._config.weather_style_v3 === true ? " v3-active" : "";
     sg.className = `status-group${v3Class} ${activeAlert ? `has-alert priority-${activeAlert.priority}` : ""}`;
-    const icon2 = sg.querySelector("ha-icon");
-    if (icon2) icon2.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
+    const icon3 = sg.querySelector("ha-icon");
+    if (icon3) icon3.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
     const textWrap = sg.querySelector(":scope>div");
     const span = textWrap?.querySelector("span");
     if (span) span.textContent = activeAlert ? "Alarm" : this._config.title;
@@ -26252,10 +26252,10 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const health = this.shadowRoot.querySelector(".health");
     health.textContent = healthy ? "Alt ser normalt ud" : "Kr\xE6ver opm\xE6rksomhed";
     health.style.color = healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)";
-    const utility = (sel, icon2, label, value, unit, cost, valid2) => {
-      const tile = this.shadowRoot.querySelector(sel);
-      tile.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
-      tile.innerHTML = `<ha-icon class="utility-bg" icon="${icon2}"></ha-icon><div class="utility-head"><ha-icon icon="${icon2}"></ha-icon>${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>`;
+    const utility = (sel, icon3, label, value, unit, cost, valid2) => {
+      const tile2 = this.shadowRoot.querySelector(sel);
+      tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
+      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head"><ha-icon icon="${icon3}"></ha-icon>${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>`;
     };
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
@@ -26264,7 +26264,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       const temp = this._num(room.temperature), humidity = this._num(room.humidity), target = Number(this._state(room.climate)?.attributes?.temperature);
       const delta = Number.isFinite(temp) && Number.isFinite(target) ? temp - target : Number.NaN;
       const tone2 = !Number.isFinite(temp) ? "unavailable" : delta > 0.7 ? "warm" : delta < -0.7 ? "cold" : "";
-      const icon2 = this._esc(room.icon || "mdi:thermometer");
+      const icon3 = this._esc(room.icon || "mdi:thermometer");
       const targetText = Number.isFinite(target) ? `M\xE5l <b>${this._fmt(target, 1)}\xB0</b>` : "";
       const humidityText = Number.isFinite(humidity) ? `<span class="room-humidity">${targetText ? "\xB7 " : ""}${this._fmt(humidity, 0)}%</span>` : "";
       const hvacAction = room.climate ? this._state(room.climate)?.attributes?.hvac_action : void 0;
@@ -26272,7 +26272,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       const present = room.presence ? this._state(room.presence)?.state === "on" : false;
       const heatBadge = heating ? `<span class="room-status heating" title="Kalder p\xE5 varme"><ha-icon icon="mdi:fire"></ha-icon></span>` : "";
       const presenceBadge = present ? `<span class="room-status presence" title="Der er nogen i rummet"><ha-icon icon="mdi:motion-sensor"></ha-icon></span>` : "";
-      return `<div class="room ${tone2}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon2}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp, 1)}\xB0</strong></div></div>`;
+      return `<div class="room ${tone2}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp, 1)}\xB0</strong></div></div>`;
     }).join("");
     this._robotNodes.clear();
     this._updateRobots();
@@ -27154,7 +27154,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const t = this._heroTile();
     if (t.empty) return `<div class="hero-empty">Henter vejrdata\u2026</div>`;
     const isDay = t.now ? this._isDaytimeNow() : true;
-    const icon2 = this._iconPath(t.condition, isDay);
+    const icon3 = this._iconPath(t.condition, isDay);
     const meta = [];
     if (Number.isFinite(t.windSpeed)) {
       meta.push(
@@ -27174,7 +27174,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
         <button class="pill ${!t.now ? "active" : ""}" data-hero="today">I dag</button>
       </div>
       <div class="hero-body">
-        <img class="hero-icon" src="${icon2}" width="108" height="108" alt="">
+        <img class="hero-icon" src="${icon3}" width="108" height="108" alt="">
         <div class="hero-figures">
           <div class="hero-temp">${this._fmt(t.temp, 1)}\xB0${!t.now && Number.isFinite(t.templow) ? `<span class="hero-low">${this._fmt(t.templow, 1)}\xB0</span>` : ""}${Number.isFinite(t.feels) ? `<span class="hero-feels">F\xF8les som ${this._fmt(t.feels, 1)}\xB0</span>` : ""}</div>
           <div class="hero-condition">${this._esc(this._conditionLabel(t.condition))}</div>
@@ -27264,8 +27264,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
         </div>`
     ).join("")}</div>`;
   }
-  _sectionHeading(icon2, title) {
-    return `<div class="section-heading"><ha-icon icon="${icon2}"></ha-icon><span>${this._esc(title)}</span></div>`;
+  _sectionHeading(icon3, title) {
+    return `<div class="section-heading"><ha-icon icon="${icon3}"></ha-icon><span>${this._esc(title)}</span></div>`;
   }
   _render() {
     if (!this.shadowRoot) return;
@@ -28267,9 +28267,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const out = [];
     if (ctx.open.length) {
       const first = ctx.open[0];
-      const icon2 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
+      const icon3 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
       const text = ctx.open.length > 1 ? `${ctx.open.length} \xE5bninger` : `${first.label} \xE5ben`;
-      out.push({ key: "open", tone: "danger", icon: icon2, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
+      out.push({ key: "open", tone: "danger", icon: icon3, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
     }
     if (room.temperature && ctx.tempDead) out.push({ key: "offline", tone: "warn", icon: "mdi:thermometer-off", text: "Sensor offline" });
     if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "H\xF8j fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
@@ -28548,8 +28548,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     el.style.setProperty("--level", String(m2.level / 100));
     if (room.weather) {
       const w = this._state(room.weather);
-      const icon2 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
-      if (t.badgeIcon.getAttribute("icon") !== icon2) t.badgeIcon.setAttribute("icon", icon2);
+      const icon3 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
+      if (t.badgeIcon.getAttribute("icon") !== icon3) t.badgeIcon.setAttribute("icon", icon3);
     }
     t.line.className = `line ${m2.line.cls}`;
     this._setText(t.lt, m2.line.text);
@@ -28601,8 +28601,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       el.title = chip.tap ? `${chip.text} \u2013 tryk for at nulstille` : [chip.text, chip.meta].filter(Boolean).join(" \xB7 ");
       if (chip.progress != null) el.style.setProperty("--p", `${chip.progress}%`);
       else el.style.removeProperty("--p");
-      const icon2 = el.querySelector("ha-icon");
-      if (icon2.getAttribute("icon") !== chip.icon) icon2.setAttribute("icon", chip.icon);
+      const icon3 = el.querySelector("ha-icon");
+      if (icon3.getAttribute("icon") !== chip.icon) icon3.setAttribute("icon", chip.icon);
       this._setText(el.querySelector(".ct"), chip.text);
       this._setText(el.querySelector(".cm"), chip.meta || "");
       const at = container.children[index];
@@ -28617,8 +28617,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       t.light.classList.toggle("unavail", dead);
       t.light.classList.toggle("pending", this._isPending(room.light));
       t.light.setAttribute("aria-pressed", String(m2.lightOn));
-      const icon2 = m2.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
-      if (t.lightIcon.getAttribute("icon") !== icon2) t.lightIcon.setAttribute("icon", icon2);
+      const icon3 = m2.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
+      if (t.lightIcon.getAttribute("icon") !== icon3) t.lightIcon.setAttribute("icon", icon3);
       this._setText(t.lv, m2.lightOn ? `${m2.level}%` : dead ? "Offline" : "Fra");
       const members = Array.isArray(m2.light?.attributes?.entity_id) ? m2.light.attributes.entity_id : [];
       const onCount = members.filter((id) => this._state(id)?.state === "on").length;
@@ -28643,9 +28643,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       else button.style.removeProperty("--bc");
       const anim = cfg.animation || (domain === "fan" ? "spin" : domain === "valve" ? "bob" : domain === "media_player" ? "glow" : "");
       ["spin", "flame", "bob", "glow", "wiggle"].forEach((name2) => button.classList.toggle(`anim-${name2}`, anim === name2));
-      const icon2 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON[domain] || "mdi:gesture-tap";
+      const icon3 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON[domain] || "mdi:gesture-tap";
       const iconEl = button.querySelector("ha-icon");
-      if (iconEl.getAttribute("icon") !== icon2) iconEl.setAttribute("icon", icon2);
+      if (iconEl.getAttribute("icon") !== icon3) iconEl.setAttribute("icon", icon3);
       this._setText(button.querySelector(".arm"), armed ? this._armed.label : "");
       const name = cfg.name || (cfg.entity ? this._name(cfg.entity) : "Handling");
       const stateText = dead ? "ikke tilg\xE6ngelig" : lock ? st.state === "locked" ? "l\xE5st" : st.state === "unlocked" ? "ul\xE5st" : st.state : on ? "til" : "fra";
@@ -29739,7 +29739,7 @@ var HAKidTrackerCard = class extends HTMLElement {
       ...Array.isArray(this._config.details) ? this._config.details.map((item2) => [item2.entity, item2.label || "Status", item2.icon || "mdi:information-outline", item2.format]) : []
     ].filter(([id]) => this._hasData(id));
     const deviceDetailsHtml = deviceDetails.map(
-      ([id, label, icon2, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon2)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
+      ([id, label, icon3, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
     ).join("");
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:${color};--good:var(--dashboard-success,var(--success-color,#54d9aa));--warn:var(--dashboard-warning,var(--warning-color,#ffbd59));--danger:var(--dashboard-danger,var(--error-color,#ff667a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.2)));--panel:var(--surface,var(--ha-card-background,var(--card-background-color,#1c1f26)));--text:var(--primary-text-color,#f5f7fb);--muted:var(--secondary-text-color,#aeb7c4);--shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}
@@ -30043,13 +30043,13 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const e = this.config.entities;
     const result = [];
     for (const alert2 of this.config.alerts || []) {
-      const { entity, kind, title, detail, icon: icon2, action } = alert2;
+      const { entity, kind, title, detail, icon: icon3, action } = alert2;
       const state = this._s(entity)?.state;
       let active = false;
       if (kind === "on") active = state === "on";
       if (kind === "battery") active = Number(state) < action && Number.isFinite(Number(state));
       if (kind === "not-clear") active = state != null && !["none", "no_error", "unknown", "unavailable", "ok", "idle"].includes(String(state).toLowerCase());
-      if (active) result.push({ entity, title, detail, icon: icon2, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
+      if (active) result.push({ entity, title, detail, icon: icon3, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
     }
     for (const state of Object.values(this._hass?.states || {})) {
       const id = state?.entity_id || "";
@@ -30750,11 +30750,11 @@ var HAAlarmCenterCard = class extends HTMLElement {
     return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   _row(a, snoozed, until) {
-    const icon2 = a.icon?.startsWith("mdi:") ? a.icon : null;
-    const emoji = !icon2 ? a.icon || "\u26A0\uFE0F" : null;
+    const icon3 = a.icon?.startsWith("mdi:") ? a.icon : null;
+    const emoji = !icon3 ? a.icon || "\u26A0\uFE0F" : null;
     return `<div class="row priority-${a.priority} ${snoozed ? "snoozed" : ""}" data-entity="${this._esc(a.entity)}">
       <button class="row-main" data-tap>
-        <span class="row-icon">${icon2 ? `<ha-icon icon="${this._esc(icon2)}"></ha-icon>` : this._esc(emoji)}</span>
+        <span class="row-icon">${icon3 ? `<ha-icon icon="${this._esc(icon3)}"></ha-icon>` : this._esc(emoji)}</span>
         <span class="row-text">
           <strong>${this._esc(a.name)}</strong>
           ${a.secondary_text ? `<span class="sub">${this._esc(a.secondary_text)}</span>` : ""}
@@ -31110,11 +31110,11 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     if (!this._hass || this._tab !== "live") return;
     (this._cameras || []).forEach((cam) => {
       this._setLiveFeed(cam);
-      const tile = this.shadowRoot.querySelector(`[data-cam-tile="${cam.key}"]`);
+      const tile2 = this.shadowRoot.querySelector(`[data-cam-tile="${cam.key}"]`);
       const badge = this.shadowRoot.querySelector(`[data-cam-badge="${cam.key}"]`);
-      if (tile && badge) {
+      if (tile2 && badge) {
         const activity = this._liveActivity(cam);
-        tile.className = `cam-tile ${activity.cls}`;
+        tile2.className = `cam-tile ${activity.cls}`;
         badge.querySelector("ha-icon")?.setAttribute("icon", activity.icon);
         const label = badge.querySelector("span");
         if (label && label.textContent !== activity.text) label.textContent = activity.text;
@@ -31592,7 +31592,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     }
     this._eventsRenderSig = signature;
     mount.innerHTML = `<div class="filters">${FILTERS.map(
-      ([key, label, icon2]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon2}"></ha-icon>${label}</button>`
+      ([key, label, icon3]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`
     ).join("")}</div>${this._eventsHtml()}`;
     if (!mount.dataset.bound) {
       mount.dataset.bound = "true";
@@ -31632,7 +31632,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     const hddIssues = (c.hdd_entities || []).filter((id) => this._s(id)?.state === "on").length;
     const online = (this._cameras || []).filter((cam) => this._s(cam.camera_entity) && this._s(cam.camera_entity)?.state !== "unavailable").length;
     const total = (this._cameras || []).length;
-    const row = (icon2, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon2}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
+    const row = (icon3, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
     const html = `
       <div class="row-list">
         ${row("mdi:cctv", "Kameraer online", `${online} / ${total}`, online < total)}
@@ -31811,7 +31811,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         <ha-icon icon="mdi:cctv"></ha-icon>
         <div><strong>${this._esc(c.title)}</strong><span>${this._esc(c.subtitle)}</span></div>
       </div>
-      <div class="tabs">${tabs.map(([key, label, icon2]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon2}"></ha-icon><span>${label}</span></button>`).join("")}</div>
+      <div class="tabs">${tabs.map(([key, label, icon3]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`).join("")}</div>
       <div class="panel" data-panel="live" ${this._tab === "live" ? "" : "hidden"}><div class="live-grid">${(this._cameras || []).map(
       (cam) => `<section class="cam-tile" data-cam-tile="${this._esc(cam.key)}">
             <div class="cam-bar">
@@ -32237,14 +32237,14 @@ var HADoorWindowCard = class extends HTMLElement {
   }
   _tile(item2) {
     const stats = this._statsFor(item2);
-    const icon2 = this._iconFor(item2, stats.isOpen);
+    const icon3 = this._iconFor(item2, stats.isOpen);
     const longThreshold = (this._config.long_open_minutes ?? 30) * 6e4;
     const isLongOpen = stats.isOpen && Number.isFinite(stats.openSinceMs) && stats.openSinceMs >= longThreshold;
     const battery = this._num(this._s(item2.battery_entity)?.state);
     const batteryChip = Number.isFinite(battery) ? `<span class="chip"><ha-icon icon="${battery <= 20 ? "mdi:battery-alert-variant-outline" : "mdi:battery"}"></ha-icon>${battery}%</span>` : "";
     return `<div class="tile ${stats.isOpen ? "open" : "closed"} ${isLongOpen ? "long-open" : ""}" data-more="${this._esc(item2.entity)}">
       <div class="tile-top">
-        <div class="tile-icon"><ha-icon icon="${icon2}"></ha-icon></div>
+        <div class="tile-icon"><ha-icon icon="${icon3}"></ha-icon></div>
         <div class="tile-name">
           <b>${this._esc(item2.name)}</b>
           <span class="state-pill">${stats.isOpen ? "\xC5ben" : "Lukket"}</span>
@@ -32258,7 +32258,7 @@ var HADoorWindowCard = class extends HTMLElement {
       ${batteryChip ? `<div class="tile-foot">${batteryChip}</div>` : ""}
     </div>`;
   }
-  _section(title, icon2, items) {
+  _section(title, icon3, items) {
     if (!items.length) return "";
     const sorted = [...items].sort((a, b) => {
       const sa = this._statsFor(a);
@@ -32267,7 +32267,7 @@ var HADoorWindowCard = class extends HTMLElement {
       if (sa.isOpen && sb.isOpen) return (sb.openSinceMs ?? 0) - (sa.openSinceMs ?? 0);
       return (sb.lastOpenedTs ?? 0) - (sa.lastOpenedTs ?? 0);
     });
-    return `<div class="section-heading"><ha-icon icon="${icon2}"></ha-icon><span>${this._esc(title)}</span></div>
+    return `<div class="section-heading"><ha-icon icon="${icon3}"></ha-icon><span>${this._esc(title)}</span></div>
       <div class="grid">${sorted.map((item2) => this._tile(item2)).join("")}</div>`;
   }
   _render() {
@@ -34255,7 +34255,7 @@ var HAAIUsageCard = class extends HTMLElement {
       <div class="account-foot"><div><span>Senest opdateret</span><strong>${this._age(account.last_update)}</strong></div><div><span>Ekstra kapacitet</span><strong>${this._escape(secondary)}</strong></div><button data-refresh="${this._escape(account.refresh)}" aria-label="Genopfrisk ${this._escape(account.name)}"><ha-icon icon="mdi:refresh"></ha-icon><span>Opdat\xE9r</span></button></div>
     </article>`;
   }
-  _window(label, icon2, remaining, reset, tone2, unit, max) {
+  _window(label, icon3, remaining, reset, tone2, unit, max) {
     const unitLabel = this._unitLabel(unit);
     const digits = this._unitDigits(unit);
     let value;
@@ -34269,7 +34269,7 @@ var HAAIUsageCard = class extends HTMLElement {
     const display = unit ? `${this._format(remaining, digits)}` : this._format(remaining);
     return `<div class="window ${tone2}" style="--value:${value}">
       <div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"></circle><circle class="progress" cx="22" cy="22" r="18"></circle></svg><strong>${display}<small>${unitLabel}</small></strong></div>
-      <div class="window-copy"><span><ha-icon icon="${icon2}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
+      <div class="window-copy"><span><ha-icon icon="${icon3}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
     </div>`;
   }
   async _refresh(entityId, button) {
@@ -34547,9 +34547,9 @@ var HASettingsCenterCard = class extends HTMLElement {
       <span class="row-text"><b>Nulstil til automatisk</b><small>Fjerner manuel override i ${this._esc(r2.name)}</small></span>
     </button>`;
   }
-  _panelHead(icon2, title, subtitle) {
+  _panelHead(icon3, title, subtitle) {
     return `<div class="panel-head">
-      <ha-icon icon="${this._esc(icon2 || "mdi:cog-outline")}"></ha-icon>
+      <ha-icon icon="${this._esc(icon3 || "mdi:cog-outline")}"></ha-icon>
       <div><b>${this._esc(title)}</b>${subtitle ? `<small>${subtitle}</small>` : ""}</div>
     </div>`;
   }
@@ -34954,9 +34954,9 @@ var HASettingsCenterCard = class extends HTMLElement {
     close.setAttribute("aria-label", "Luk problemoversigt");
     close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,12,18,.92);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const title = this._esc(item2.name || "Systemstatus");
-    const icon2 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
+    const icon3 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem ? `<div style="display:grid;gap:8px;margin-top:16px">${details.map((value) => `<div style="padding:11px 12px;border:1px solid color-mix(in srgb,var(--error-color,#ef4444) 28%,transparent);border-radius:12px;background:color-mix(in srgb,var(--error-color,#ef4444) 9%,transparent);font-size:13px;line-height:1.45">${this._esc(value)}</div>`).join("")}</div>` : `<div style="margin-top:16px;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--success-color,#20e3a2) 10%,transparent);color:var(--success-color,#20e3a2);font-weight:800">Ingen aktive problemer.</div>`;
-    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon2}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
+    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon3}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
     panel.appendChild(close);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => {
@@ -35306,8 +35306,8 @@ var HAKioskServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
     return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon2) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon2)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon3) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -35331,12 +35331,12 @@ var HAKioskServerCard = class extends HTMLElement {
       <span>${this._esc(action.name)}</span>
     </button>`;
   }
-  _selectRow(label, id, icon2) {
+  _selectRow(label, id, icon3) {
     const e = this._e(id);
     const options = e?.attributes?.options || [];
     if (!options.length) return "";
     return `<div class="select-row">
-      <ha-icon icon="${this._esc(icon2)}"></ha-icon>
+      <ha-icon icon="${this._esc(icon3)}"></ha-icon>
       <span class="select-label">${this._esc(label)}</span>
       <select data-select="${this._esc(id)}">${options.map((o) => `<option value="${this._esc(o)}" ${o === e?.state ? "selected" : ""}>${this._esc(o)}</option>`).join("")}</select>
     </div>`;
@@ -35630,10 +35630,10 @@ var HAOpsStatusCard = class extends HTMLElement {
   _healthTile(item2) {
     const e = this._e(item2.entity);
     const level = this._healthState(e);
-    const icon2 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
+    const icon3 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
     const label = item2.state_labels?.[e?.state] || e?.state || "\u2014";
     return `<button class="htile ${level}" data-entity="${this._esc(item2.entity)}">
-      <ha-icon icon="${this._esc(item2.icon || icon2)}"></ha-icon>
+      <ha-icon icon="${this._esc(item2.icon || icon3)}"></ha-icon>
       <span class="htile-text"><b>${this._esc(item2.name)}</b><span>${this._esc(label)}</span></span>
     </button>`;
   }
@@ -35840,8 +35840,8 @@ var HAUnraidServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
     return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon2) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon2)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon3) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -36248,17 +36248,17 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
       ["vacuum_exception_entity", "mdi:robot-vacuum-variant-off", "Undtag ved st\xF8vsugning"]
     ].filter(([key]) => room[key]);
     return `<section class="room ${index === this._activeRoom ? "active" : ""}" data-room="${index}">
-      <div class="switches">${switches.map(([key, icon2, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon2}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>
+      <div class="switches">${switches.map(([key, icon3, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon3}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>
       <div class="settings">
         ${this._slider(room.delay_entity, "mdi:timer-outline", "T\xE6nd-forsinkelse", "sek")}
         ${this._slider(room.lux_threshold_entity, "mdi:brightness-5", "Lux-t\xE6rskel", "lx")}
       </div>
     </section>`;
   }
-  _slider(entity, icon2, label, unit) {
+  _slider(entity, icon3, label, unit) {
     if (!entity) return "";
     const state = this._state(entity), min = state?.attributes?.min ?? 0, max = state?.attributes?.max ?? 100, step = state?.attributes?.step ?? 1;
-    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon2}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
+    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon3}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
   }
   _build() {
     if (!this._config) return;
@@ -36542,10 +36542,10 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   _syncHeader() {
     if (!this._config || !this.shadowRoot) return;
     const state = this._hass?.states?.[this._config.weather_entity], temperature = state?.attributes?.temperature, unit = state?.attributes?.temperature_unit || "\xB0C";
-    const temp = this.shadowRoot.querySelector("[data-temperature]"), text = this.shadowRoot.querySelector("[data-weather-text]"), icon2 = this.shadowRoot.querySelector("[data-weather-icon]");
+    const temp = this.shadowRoot.querySelector("[data-temperature]"), text = this.shadowRoot.querySelector("[data-weather-text]"), icon3 = this.shadowRoot.querySelector("[data-weather-icon]");
     if (temp) temp.textContent = temperature == null ? "\u2014" : `${Math.round(Number(temperature))}${unit}`;
     if (text) text.textContent = state?.attributes?.friendly_name || state?.state || "Vejr";
-    if (icon2) icon2.setAttribute("icon", state?.attributes?.icon || this._weatherIcon(state?.state));
+    if (icon3) icon3.setAttribute("icon", state?.attributes?.icon || this._weatherIcon(state?.state));
   }
   _weatherIcon(state) {
     return { sunny: "mdi:weather-sunny", cloudy: "mdi:weather-cloudy", rainy: "mdi:weather-rainy", pouring: "mdi:weather-pouring", snowy: "mdi:weather-snowy", fog: "mdi:weather-fog", windy: "mdi:weather-windy", "partlycloudy": "mdi:weather-partly-cloudy" }[state] || "mdi:weather-cloudy";
@@ -37429,8 +37429,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const ring = tiles.length === 2 ? `<div class="cf-delta" data-delta="${delta}" role="status" aria-label="Temperaturforskel mellem frem og retur"><small>\u0394T</small><strong><b>\u2013</b><em>\xB0C</em></strong></div>` : "";
       return `<div class="cf-block cf-pair ${tiles.length === 2 ? "" : "is-single"}" ${place(anchorY([first, second]))}>${tiles.join("")}${ring}</div>`;
     }
-    const tile = this._tileMarkup(spec[1]);
-    return tile ? `<div class="cf-block" ${place(PLACE_Y[spec[1]] ?? ANCHORS[spec[1]][1])}>${tile}</div>` : "";
+    const tile2 = this._tileMarkup(spec[1]);
+    return tile2 ? `<div class="cf-block" ${place(PLACE_Y[spec[1]] ?? ANCHORS[spec[1]][1])}>${tile2}</div>` : "";
   }
   _build() {
     if (!this._config) return;
@@ -37512,14 +37512,14 @@ var HaCalefaFlowCard = class extends HTMLElement {
     callouts.setAttribute("viewBox", `0 0 ${Math.round(bounds.width)} ${Math.round(bounds.height)}`);
     for (const group of callouts.querySelectorAll("[data-callout]")) {
       const id = group.dataset.callout;
-      const tile = main.querySelector(`.cf-tile[data-metric="${id}"]`);
-      if (!tile || !tile.offsetParent) {
+      const tile2 = main.querySelector(`.cf-tile[data-metric="${id}"]`);
+      if (!tile2 || !tile2.offsetParent) {
         group.setAttribute("visibility", "hidden");
         continue;
       }
       group.removeAttribute("visibility");
-      const box = tile.getBoundingClientRect();
-      const left = tile.closest(".cf-left") !== null;
+      const box = tile2.getBoundingClientRect();
+      const left = tile2.closest(".cf-left") !== null;
       const sx = (left ? box.right : box.left) - bounds.left;
       const sy2 = box.top + box.height / 2 - bounds.top;
       const tx = picture.left - bounds.left + ANCHORS[id][0] / VIEW_W * picture.width;
@@ -37552,7 +37552,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!this._config.show_footer) return "";
     const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key]) => this._config[key]);
     if (!items.length) return "";
-    return `<footer class="cf-footer">${items.map(([key, label, icon2]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon2}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
+    return `<footer class="cf-footer">${items.map(([key, label, icon3]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon3}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
   }
   // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
   _markersMarkup(track, level, variant = "") {
@@ -41568,8 +41568,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   }
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
-      const [label, icon2] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc2(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon2 ? `<ha-icon icon="${icon2}"></ha-icon>` : ""}<span>${esc2(label)}</span></button>`;
+      const [label, icon3] = labels[o] || [human(o)];
+      return `<button data-a="${action}" data-v="${esc2(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc2(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -41635,7 +41635,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon2, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc2(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon2}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc2(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused),
       this._supports(FEATURE.PAUSE) && (paused ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -41661,8 +41661,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
       <div class="status"><i class="dot ${dot}"></i><b>${esc2(STATUS_LABELS[key] || human(key))}</b>${detail ? `<span>${esc2(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon2, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon2}"></ha-icon><div><b>${esc2(t)}</b>${s ? `<span>${esc2(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon2, l, v, x]) => `<div><ha-icon icon="${icon2}"></ha-icon><span>${esc2(l)}</span><b>${esc2(v)}</b>${x ? `<small>${esc2(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc2(t)}</b>${s ? `<span>${esc2(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc2(l)}</span><b>${esc2(v)}</b>${x ? `<small>${esc2(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
@@ -42086,13 +42086,13 @@ var pad2 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt = numberFormats.get(digits);
-  if (!fmt) {
-    fmt = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt);
+  let fmt2 = numberFormats.get(digits);
+  if (!fmt2) {
+    fmt2 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt2);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt.format(rounded === 0 ? 0 : rounded);
+  return fmt2.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -43774,6 +43774,3622 @@ if (!window.customCards.some((c) => c.type === CARD_TAG)) {
   });
 }
 console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION48} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
+
+// src/cards/ha-energy-center-card/defaults.js
+var DEFAULT_ENTITIES2 = {
+  grid_power: "sensor.grid_power",
+  grid_energy: "sensor.grid_energy",
+  grid_cost: "sensor.grid_cost",
+  grid_price: "sensor.grid_price",
+  grid_returned: "sensor.grid_returned",
+  grid_apparent: "sensor.grid_apparent",
+  meter_temperature: "sensor.meter_temperature",
+  measured_power: "sensor.measured_power",
+  unmeasured_power: "sensor.unmeasured_power",
+  heat_power: "sensor.heat_power",
+  heat_energy: "sensor.heat_energy",
+  heat_cost: "sensor.heat_cost",
+  heat_price: "sensor.heat_price",
+  heat_flow: "sensor.heat_flow",
+  heat_supply: "sensor.heat_supply",
+  heat_return: "sensor.heat_return",
+  heat_cooling: "sensor.heat_cooling",
+  water_flow: "sensor.water_flow",
+  water_total: "sensor.water_total",
+  water_cost_today: "sensor.water_cost_today",
+  water_price: "sensor.water_price",
+  ev_power: "sensor.ev_power",
+  ev_energy_today: "sensor.ev_energy_today",
+  ev_energy_month: "sensor.ev_energy_month",
+  ev_energy_total: "sensor.ev_energy_total",
+  ev_session: "sensor.ev_session",
+  ev_cost_today: "sensor.ev_cost_today",
+  ev_mode: "sensor.ev_mode"
+};
+var DEFAULT_PHASES = ["a", "b", "c"].map((p) => ({
+  name: p.toUpperCase(),
+  power: `sensor.phase_${p}_power`,
+  apparent: `sensor.phase_${p}_apparent_power`,
+  power_factor: `sensor.phase_${p}_power_factor`,
+  current: `sensor.phase_${p}_current`,
+  voltage: `sensor.phase_${p}_voltage`,
+  frequency: `sensor.phase_${p}_frequency`
+}));
+var DEFAULT_GROUPS = [];
+var DEFAULT_CONFIG2 = {
+  title: "Energi",
+  subtitle: "Hjemmets energioverblik",
+  default_tab: "overview",
+  log_prefix: "energy-center",
+  // Strømregnskab: advar når kortlagt forbrug og hovedmåler afviger mere end dette.
+  accounting_tolerance_w: 25,
+  // Fasebalance: afvigelse fra gennemsnitsstrømmen i ampere.
+  phase_moderate_a: 3,
+  phase_high_a: 6,
+  // Vandflow-klassifikation i L/min (ingen lækagealarm — kun visning).
+  water_high_flow_lpm: 15,
+  // Billader: effekt over denne værdi (W) regnes som "oplader".
+  ev_charging_threshold_w: 0
+};
+
+// src/cards/ha-energy-center-card/styles.js
+var STYLE4 = `
+:host{
+  /* Alt hentes fra de aktive thtema-*-temaer; hex-v\xE6rdierne er kun fallback uden tema. */
+  --ec-text:var(--primary-text-color,#e8eef8);
+  --ec-muted:var(--secondary-text-color,#8e9cb4);
+  --ec-faint:color-mix(in srgb,var(--ec-muted) 78%,transparent);
+  --ec-surface:var(--ha-card-background,var(--card-background-color,#161f33));
+  --ec-surface-2:var(--contrast1,color-mix(in srgb,var(--ec-text) 4%,transparent));
+  --ec-surface-3:var(--contrast4,color-mix(in srgb,var(--ec-text) 10%,transparent));
+  --ec-popup:var(--popupBG,var(--ha-dialog-surface-background,var(--card-background-color,#0f1726)));
+  --ec-border:var(--divider-color,rgba(148,163,194,.14));
+  --ec-border-strong:var(--ha-card-border-color,var(--outline,rgba(148,163,194,.26)));
+  --ec-line:color-mix(in srgb,var(--ec-text) 9%,transparent);
+  --ec-accent:var(--dashboard-accent,var(--primary-color,#4f8cff));
+  --ec-shadow:var(--ha-card-box-shadow,0 8px 24px -12px rgba(0,0,0,.5));
+  --c-el:var(--energy-grid-consumption-color,var(--blue-dark,#4f8cff));
+  --c-heat:var(--orange,#ff8a3d);
+  --c-water:var(--energy-water-color,#26c6da);
+  --c-ev:var(--energy-ev-charging,var(--green,#2fd3a0));
+  --c-warn:var(--dashboard-warning,var(--warning-color,#f4b740));
+  --c-bad:var(--dashboard-danger,var(--error-color,#ff5d6c));
+  --c-ok:var(--dashboard-success,var(--success-color,#34d399));
+  --c-price:var(--yellow,#ffd400);
+  --r:var(--ha-card-border-radius,18px);
+  --r-sm:12px;
+  --gap:var(--grid-card-gap,14px);
+  display:block;
+  container-type:inline-size;
+  color:var(--ec-text);
+  font-family:var(--primary-font-family,var(--ha-font-family-body,system-ui,sans-serif));
+  -webkit-tap-highlight-color:transparent;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:inherit;cursor:pointer}
+.ic{--mdc-icon-size:20px;display:inline-flex;flex:none}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.num b{display:inline-block}
+.tone-el{--tone:var(--c-el)}.tone-heat{--tone:var(--c-heat)}.tone-water{--tone:var(--c-water)}.tone-ev{--tone:var(--c-ev)}
+.tone-warn{--tone:var(--c-warn)}.tone-bad{--tone:var(--c-bad)}.tone-ok{--tone:var(--c-ok)}
+.tone-home{--tone:var(--ec-text)}.tone-muted{--tone:var(--ec-muted)}
+
+/* ---------- ramme ---------- */
+.shell{position:relative;display:flex;flex-direction:column;gap:18px;min-width:0;padding:16px;border-radius:var(--r);background:var(--dashboard-card-bg,var(--ec-surface));border:var(--ha-card-border-width,1px) solid var(--ec-border);box-shadow:var(--ec-shadow)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--ec-accent);background:color-mix(in srgb,var(--ec-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--ec-accent) 32%,transparent)}
+.brand-mark .ic{--mdc-icon-size:26px}
+.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}
+.brand p{margin:3px 0 0;font-size:13.5px;color:var(--ec-muted)}
+
+.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--ec-surface);border:1px solid var(--ec-border);box-shadow:var(--ec-shadow);overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;font-size:14px;font-weight:550;color:var(--ec-muted);white-space:nowrap;transition:color .18s ease,background-color .18s ease}
+.tab .ic{--mdc-icon-size:18px;color:var(--ec-faint);transition:color .18s ease}
+.tab:hover{color:var(--ec-text);background:var(--ec-surface-2)}
+.tab.on{color:var(--ec-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--ec-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--ec-accent)),0 0 18px -8px var(--ec-accent)}
+.tab.on .ic{color:var(--dashboard-icon-active,var(--ec-accent))}
+.tab:focus-visible,.clickable:focus-visible,.seg button:focus-visible{outline:2px solid var(--ec-accent);outline-offset:2px}
+
+.panel.enter{animation:enter .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- grid ---------- */
+.layout{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap)}
+.a-full{grid-column:span 12}.a-half{grid-column:span 6}.a-third{grid-column:span 4}
+
+/* ---------- kort ---------- */
+.card{position:relative;min-width:0;padding:18px;border-radius:var(--r);background:transparent;border:0;box-shadow:none}
+.clickable{cursor:pointer;transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
+.card.clickable:hover{background:var(--ec-surface-2)}
+.card-head{display:flex;align-items:center;gap:10px;min-width:0}
+.card-head .ic{color:var(--tone,var(--ec-muted))}
+.card-head h3{margin:0;font-size:15px;font-weight:600;line-height:1.25}
+.card-head small{display:block;margin-top:2px;font-size:12px;color:var(--ec-muted)}
+.hero-head,.sect-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hint{font-size:12px;color:var(--ec-faint)}
+.badge{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;flex:none;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 26%,transparent)}
+.badge.sm{width:32px;height:32px;border-radius:10px}.badge.sm .ic{--mdc-icon-size:18px}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ec-muted);letter-spacing:.02em}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--c-ok);animation:live 2.4s ease-in-out infinite}
+@keyframes live{0%,100%{opacity:.35}50%{opacity:1}}
+.chip{display:inline-flex;align-items:center;padding:6px 11px;border-radius:9px;font-size:12px;font-weight:650;letter-spacing:.03em;color:var(--tone,var(--ec-muted));background:color-mix(in srgb,var(--tone,var(--ec-muted)) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone,var(--ec-muted)) 30%,transparent)}
+.status{font-size:12.5px;font-weight:600;color:var(--tone,var(--ec-muted))}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--tone)}
+.dot.el{--tone:var(--c-el)}.dot.muted{--tone:var(--ec-faint)}
+
+/* ---------- oversigt: live hero ---------- */
+.hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hero-item{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"b l" "v v" "s s";align-items:center;gap:6px 12px;padding:14px 16px;border-radius:14px;background:transparent;border:0;position:relative;overflow:hidden}
+.hero-item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tone);opacity:.85}
+.hero-item:hover{background:color-mix(in srgb,var(--tone) 5%,transparent)}
+.hero-item .badge{grid-area:b}
+.hi-label{grid-area:l;font-size:13px;font-weight:600;color:var(--ec-muted);text-transform:uppercase;letter-spacing:.06em}
+.hi-val{grid-area:v;display:flex;align-items:baseline;gap:6px;margin-top:6px}
+.hi-val b{font-size:34px;font-weight:700;line-height:1}
+.hi-val small{font-size:16px;font-weight:600;color:var(--ec-muted)}
+.hi-sub{grid-area:s;font-size:12.5px;color:var(--tone,var(--ec-muted));min-height:1.2em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-item .hi-sub{--tone:var(--ec-muted)}
+.hero-item .hi-sub.tone-ok{--tone:var(--c-ok)}.hero-item .hi-sub.tone-warn{--tone:var(--c-warn)}.hero-item .hi-sub.tone-water{--tone:var(--c-water)}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.kpi{display:flex;flex-direction:column;gap:10px;text-align:left}
+.kpi-top{display:flex;align-items:center;gap:10px}
+.kpi-label{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--ec-muted)}
+.kpi .chev{margin-left:auto;color:var(--ec-faint);--mdc-icon-size:18px;transition:transform .16s ease,color .16s ease}
+.kpi:hover .chev{transform:translateX(2px);color:var(--tone)}
+.kpi-val{display:flex;align-items:baseline;gap:6px}
+.kpi-val b{font-size:30px;font-weight:700;line-height:1}
+.kpi-val small{font-size:15px;font-weight:600;color:var(--ec-muted)}
+.kpi-foot{display:flex;align-items:baseline;gap:6px;padding-top:10px;border-top:1px solid var(--ec-border);font-size:12.5px;color:var(--ec-muted)}
+.kpi-foot .num{font-size:15px;font-weight:650;color:var(--ec-text)}
+
+/* ---------- flow ---------- */
+.flow{position:relative;height:300px;margin-top:6px}
+.flow-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.flow .track{fill:none;stroke:var(--ec-line);stroke-width:2}
+.flow .dash{fill:none;stroke:var(--tone);stroke-width:3;stroke-linecap:round;stroke-dasharray:.1 14;opacity:0;transition:opacity .3s ease}
+.flow .dash.on{opacity:.95;animation:dash var(--dur,2s) linear infinite}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.fnode{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;width:104px;margin-left:-52px;margin-top:-23px;text-align:center;border-radius:14px}
+.fnode.big{margin-top:-32px}
+.fbubble{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;color:var(--tone);background:var(--ec-popup);border:1.5px solid color-mix(in srgb,var(--tone) 55%,transparent);transition:border-color .16s ease,transform .16s ease}
+.fnode.big .fbubble{width:64px;height:64px}
+.fnode.big .fbubble .ic{--mdc-icon-size:28px}
+.fnode.clickable:hover .fbubble{transform:scale(1.05);border-color:var(--tone)}
+.fval{display:flex;align-items:baseline;gap:3px;margin-top:3px}
+.fval b{font-size:15px;font-weight:650}
+.fval small{font-size:11.5px;color:var(--ec-muted)}
+.flabel{font-size:11.5px;color:var(--ec-muted);line-height:1.2}
+
+/* ---------- grafer ---------- */
+.chart-card{display:flex;flex-direction:column;gap:10px}
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--ec-surface-2);border:1px solid var(--ec-border)}
+.seg button{padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;color:var(--ec-muted);transition:color .15s ease,background-color .15s ease}
+.seg button:hover{color:var(--ec-text)}
+.seg button.on{color:var(--ec-text);background:color-mix(in srgb,var(--tone) 24%,transparent)}
+.chart-sum{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ec-muted)}
+.chart-sum [data-total]{font-size:22px;font-weight:700;color:var(--ec-text)}
+.sum-cost{font-size:14px;font-weight:600;color:var(--ec-muted)}
+.legend-line{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.legend-line::before{content:"";width:14px;height:2px;border-radius:2px;background:var(--c-price)}
+.chart{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:8px}
+.y-axis{grid-row:1;grid-column:1;position:relative;width:30px}
+.y-axis.right{grid-column:3;width:34px}
+.y-axis span{position:absolute;right:0;transform:translateY(-50%);font-size:11px;color:var(--ec-faint);white-space:nowrap}
+.y-axis.right span{right:auto;left:0;color:color-mix(in srgb,var(--c-price) 70%,var(--ec-faint))}
+.plot{grid-row:1;grid-column:2;position:relative;height:var(--chart-h,190px);touch-action:pan-y}
+.tall .plot{--chart-h:260px}
+.grid i{position:absolute;left:0;right:0;border-top:1px solid var(--ec-line)}
+.bars{position:absolute;inset:0;display:flex;align-items:stretch;gap:3px}
+.bars i{flex:1;min-width:0;height:100%;border-radius:4px 4px 1px 1px;transform-origin:50% 100%;transform:scaleY(0);background:linear-gradient(180deg,var(--tone),color-mix(in srgb,var(--tone) 40%,transparent));opacity:.82;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .15s ease}
+.bars i.partial{opacity:.45}
+.bars i.hover{opacity:1}
+.line{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.line path{fill:none;stroke:var(--c-price);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.x-axis{grid-row:2;grid-column:2;position:relative;height:18px;margin-top:6px}
+.x-axis span{position:absolute;transform:translateX(-50%);font-size:11px;color:var(--ec-faint);white-space:nowrap}
+.chart-msg{grid-row:1;grid-column:1/-1;place-self:center;font-size:13px;color:var(--ec-muted);padding:20px 0}
+.chart.is-empty .plot{visibility:hidden}
+.hover-line{position:absolute;top:0;bottom:0;border-left:1px dashed var(--ec-border-strong);pointer-events:none}
+.tip{position:absolute;top:-6px;z-index:2;transform:translate(-50%,-100%);display:flex;flex-direction:column;gap:2px;min-width:120px;padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.35;white-space:nowrap;background:var(--ec-popup);border:1px solid var(--ec-border-strong);box-shadow:0 10px 24px rgba(0,0,0,.35);pointer-events:none}
+.tip b{font-size:12.5px;font-weight:650}
+.tip em{font-style:normal;font-weight:700;color:var(--tone);font-size:14px}
+.tip small{color:var(--ec-faint)}
+.tip .tip-line{color:var(--c-price)}
+
+/* ---------- str\xF8m ---------- */
+.hero-main{display:flex;flex-direction:column}
+.mega{display:flex;align-items:baseline;gap:8px;margin:4px 0 18px}
+.mega b{font-size:60px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.mega small{font-size:22px;font-weight:600;color:var(--ec-muted)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:auto}
+.facts > div,.subtile,.tile{padding:10px 12px;border-radius:var(--r-sm);background:var(--ec-surface-2);border:1px solid var(--ec-border);min-width:0}
+.facts small,.subtile small,.tile small{display:block;font-size:11.5px;color:var(--ec-muted);margin-bottom:3px}
+.facts b,.subtile b{font-size:15px;font-weight:650;white-space:nowrap}
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap)}
+.mini{display:flex;flex-direction:column;gap:10px;padding:16px}
+.mini-val{display:flex;align-items:baseline;gap:5px}
+.mini-val b{font-size:28px;font-weight:700;line-height:1}
+.mini-val small{font-size:14px;color:var(--ec-muted);font-weight:600}
+.mini-sub{display:flex;gap:6px;align-items:baseline;margin-top:auto;font-size:12px;color:var(--ec-muted)}
+.mini-sub .num{font-size:14px;font-weight:650;color:var(--ec-text)}
+.acct{--tone:var(--c-el)}
+.acct.tone-warn{background:var(--dashboard-surface-warn-dark,linear-gradient(180deg,color-mix(in srgb,var(--c-warn) 10%,transparent),transparent)),var(--ec-surface)}
+.stack{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--ec-surface-3)}
+.stack i{height:100%;flex:none;width:calc(var(--p,0) * 100%);transition:width .6s ease}
+.stack .s-meas{background:var(--c-el)}
+.stack .s-unm{background:var(--ec-faint)}
+.acct-rows{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ec-muted)}
+.acct-rows span{display:inline-flex;align-items:center;gap:6px}
+.acct-rows b{color:var(--ec-text);font-weight:650}
+.acct-msg{margin-top:auto;font-size:12px;color:var(--ec-muted)}
+.acct.tone-warn .acct-msg{color:var(--c-warn)}
+
+.groups{display:flex;flex-direction:column;gap:6px}
+.grow{display:grid;grid-template-columns:auto minmax(110px,190px) minmax(0,1fr) 76px 48px;align-items:center;gap:14px;padding:8px 12px 8px 8px;border-radius:12px;border:1px solid transparent;--tone:var(--c-el)}
+.grow:hover{background:var(--ec-surface-2);border-color:var(--ec-border)}
+.gname{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gwarn{width:7px;height:7px;border-radius:50%;background:var(--c-warn);flex:none}
+.gbar,.meter{position:relative;height:8px;border-radius:99px;background:var(--ec-surface-3);overflow:hidden}
+.gbar i,.meter i{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 55%,transparent),var(--tone));transform-origin:left;transform:scaleX(var(--p,0));transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.gval{text-align:right;font-size:14px;font-weight:650;white-space:nowrap}
+.gshare{text-align:right;font-size:12.5px;color:var(--ec-muted)}
+
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.phase{padding:14px;border-radius:14px;background:var(--ec-surface-2);border:1px solid var(--ec-border);--tone:var(--c-el)}
+.phase.tone-warn,.phase.tone-bad{border-color:color-mix(in srgb,var(--tone) 45%,transparent)}
+.phase:hover{border-color:var(--ec-border-strong)}
+.ph-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ph-name{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--ec-muted)}
+.ph-flag{font-size:11px;font-weight:650;color:var(--tone)}
+.ph-val{display:flex;align-items:baseline;gap:5px;margin:8px 0 10px}
+.ph-val b{font-size:28px;font-weight:700;line-height:1}
+.ph-val small{font-size:14px;color:var(--ec-muted);font-weight:600}
+.phase dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin:12px 0 0}
+.phase dl div{min-width:0}
+.phase dt{font-size:11px;color:var(--ec-faint)}
+.phase dd{margin:1px 0 0;font-size:13.5px;font-weight:600;white-space:nowrap}
+
+/* ---------- fjernvarme / vand / billader ---------- */
+.util-body{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(0,1.6fr);gap:var(--gap);align-items:stretch}
+.util-main{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;border-radius:14px;background:var(--ec-surface-2);border:1px solid var(--ec-border)}
+.util-main:hover{border-color:color-mix(in srgb,var(--tone) 40%,transparent)}
+.util-main > small{font-size:12px;color:var(--ec-muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.util-main .mega{margin:8px 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tiles.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tile{display:flex;flex-direction:column;justify-content:center;padding:14px 16px}
+.tile.clickable:hover{border-color:var(--ec-border-strong)}
+.tile b{font-size:24px;font-weight:700;white-space:nowrap}
+.tile .u{font-size:14px;font-weight:600;color:var(--ec-muted)}
+.subtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:12px}
+
+/* ---------- popup ---------- */
+dialog.detail{width:min(560px,calc(100vw - 24px));max-height:min(80vh,720px);padding:0;border-radius:20px;border:1px solid var(--ec-border-strong);background:var(--ec-popup);color:var(--ec-text);box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+dialog.detail[open]{display:flex;flex-direction:column;animation:pop .2s cubic-bezier(.2,.8,.2,1)}
+dialog.detail::backdrop{background:rgba(4,8,16,.62)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.dlg-head{display:flex;align-items:center;gap:12px;padding:18px 18px 14px;border-bottom:1px solid var(--ec-border)}
+.dlg-head h3{margin:0;font-size:17px;font-weight:650}
+.dlg-head small{display:block;margin-top:2px;font-size:12.5px;color:var(--ec-muted)}
+.dlg-close{margin-left:auto;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;color:var(--ec-muted)}
+.dlg-close:hover{background:var(--ec-surface-2);color:var(--ec-text)}
+.dlg-rows{display:flex;flex-direction:column;gap:4px;padding:10px;overflow-y:auto}
+.drow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"i n v" "i b s";align-items:center;gap:4px 12px;padding:10px 12px;border-radius:12px;border:1px solid transparent;--tone:var(--c-el)}
+.drow:hover{background:var(--ec-surface-2);border-color:var(--ec-border)}
+.drow .badge{grid-area:i}
+.drow .dn{grid-area:n;font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow .dv{grid-area:v;font-size:14px;font-weight:650;text-align:right;white-space:nowrap}
+.drow .gbar{grid-area:b;height:6px}
+.drow .ds{grid-area:s;font-size:12px;color:var(--ec-muted);text-align:right}
+.drow.off .dv{color:var(--ec-faint)}
+
+/* ---------- bev\xE6gelse ---------- */
+:host([paused]) *,:host([paused]) *::before,:host([paused]) *::after{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- tablet ---------- */
+@container (max-width:1100px){
+  .a-third{grid-column:span 6}
+  .a-third:last-child{grid-column:span 12}
+  .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .util-body{grid-template-columns:1fr}
+}
+@container (max-width:860px){
+  .a-half{grid-column:span 12}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phases{grid-template-columns:1fr}
+  .phase dl{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+
+/* ---------- mobil ---------- */
+@container (max-width:600px){
+  .shell{gap:12px}
+  :host{--gap:10px}
+  .layout > *{grid-column:1/-1!important}
+  .top{flex-direction:column;align-items:stretch;gap:12px}
+  .brand h1{font-size:22px}.brand-mark{width:40px;height:40px}
+  .tabs{margin:0 -2px}
+  .tab{padding:8px 12px;font-size:13px}
+  .card{padding:14px}
+  .hero-grid{gap:8px}
+  .hero-item{padding:12px;gap:4px 10px}
+  .hero-item .badge{width:32px;height:32px;border-radius:10px}
+  .hi-val b{font-size:26px}.hi-val small{font-size:13px}
+  .hi-label{font-size:11.5px}
+  .kpis{gap:8px}
+  .kpi-val b{font-size:24px}
+  .kpi-label{font-size:11px}
+  .mega b{font-size:46px}
+  .quad{gap:8px}
+  .mini-val b{font-size:22px}
+  .grow{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"i n v" "i b s";gap:4px 10px;padding:8px}
+  .grow .badge{grid-area:i}.grow .gname{grid-area:n}.grow .gbar{grid-area:b}.grow .gval{grid-area:v}.grow .gshare{grid-area:s}
+  .phase dl{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tiles > :first-child:nth-last-child(3){grid-column:span 2}
+  .x-axis span.minor{display:none}
+  .flow{height:280px}
+  .fnode{width:84px;margin-left:-42px}
+  .fbubble{width:40px;height:40px}
+  .fnode{margin-top:-20px}
+  .fnode.big{margin-top:-28px}
+  .fnode.big .fbubble{width:56px;height:56px}
+  .fval b{font-size:13.5px}
+  .flabel{font-size:10.5px}
+}
+@container (max-width:360px){
+  .kpis{grid-template-columns:1fr}
+}
+`;
+
+// src/cards/ha-energy-center-card/utils/format.js
+var MINUTE_MS2 = 60 * 1e3;
+var HOUR_MS2 = 60 * MINUTE_MS2;
+var DAY_MS2 = 24 * HOUR_MS2;
+var INVALID_STATES2 = /* @__PURE__ */ new Set(["unknown", "unavailable", "none", "null", "undefined", ""]);
+var isValidState2 = (state) => state != null && !INVALID_STATES2.has(String(state).trim().toLowerCase());
+function toNumber3(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : void 0;
+  if (!isValidState2(value)) return void 0;
+  const n = Number(String(value).trim().replace(",", "."));
+  return Number.isFinite(n) ? n : void 0;
+}
+var UNIT_TABLES = {
+  power: { w: 1, kw: 1e3, mw: 1e6 },
+  // → W
+  energy: { wh: 1e-3, kwh: 1, mwh: 1e3 },
+  // → kWh
+  volume: { "m\xB3": 1, m3: 1, l: 1e-3, liter: 1e-3 },
+  // → m³
+  flow: { "l/min": 1, "l/h": 1 / 60, "m\xB3/h": 1e3 / 60, "m3/h": 1e3 / 60 }
+  // → L/min
+};
+function normalize(stateObj, kind) {
+  if (!stateObj) return { value: void 0, known: true };
+  const n = toNumber3(stateObj.state);
+  const unit = String(stateObj.attributes?.unit_of_measurement ?? "").trim().toLowerCase();
+  const table = UNIT_TABLES[kind];
+  if (!table) return { value: n, known: true };
+  const factor = unit ? table[unit] : 1;
+  if (factor === void 0) return { value: void 0, known: false, unit };
+  return { value: n === void 0 ? void 0 : n * factor, known: true };
+}
+var numberFormats2 = /* @__PURE__ */ new Map();
+function fmt(value, digits = 1) {
+  if (!Number.isFinite(value)) return "\u2014";
+  let f = numberFormats2.get(digits);
+  if (!f) {
+    f = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats2.set(digits, f);
+  }
+  const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
+  return f.format(rounded === 0 ? 0 : rounded);
+}
+function fmtPower2(watts) {
+  if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
+  const abs = Math.abs(watts);
+  if (abs >= 1e3) return { v: fmt(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
+  return { v: fmt(watts, abs < 10 ? 1 : 0), u: "W" };
+}
+function fmtEnergy2(kwh) {
+  if (!Number.isFinite(kwh)) return { v: "\u2014", u: "kWh" };
+  const abs = Math.abs(kwh);
+  if (abs >= 1e4) return { v: fmt(kwh / 1e3, 1), u: "MWh" };
+  if (abs < 1 && abs > 0) return { v: fmt(kwh * 1e3, 0), u: "Wh" };
+  return { v: fmt(kwh, abs >= 100 ? 0 : 1), u: "kWh" };
+}
+function fmtVolume(m3) {
+  if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
+  if (Math.abs(m3) < 10) return { v: fmt(m3 * 1e3, 0), u: "L" };
+  return { v: fmt(m3, 1), u: "m\xB3" };
+}
+var fmtKr = (v) => Number.isFinite(v) ? `${fmt(v, 2)} kr` : "\u2014";
+function escapeHtml3(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+var icon2 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
+var pad22 = (n) => String(n).padStart(2, "0");
+function startOfDay(ms = Date.now()) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+function addDays(ms, days) {
+  const d = new Date(ms);
+  d.setDate(d.getDate() + days);
+  return d.getTime();
+}
+function startOfMonth(ms = Date.now()) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(1);
+  return d.getTime();
+}
+function addMonths(ms, months) {
+  const d = new Date(ms);
+  d.setMonth(d.getMonth() + months);
+  return d.getTime();
+}
+var hourKey = (ms = Date.now()) => Math.floor(ms / HOUR_MS2);
+var timeFmt = new Intl.DateTimeFormat("da-DK", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+var dayFmt = new Intl.DateTimeFormat("da-DK", { weekday: "short", day: "numeric", month: "short" });
+var dateFmt = new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short" });
+var monthFmt = new Intl.DateTimeFormat("da-DK", { month: "long", year: "numeric" });
+var monthShortFmt = new Intl.DateTimeFormat("da-DK", { month: "short" });
+var fmtDay = (ms) => dayFmt.format(ms);
+var fmtMonth = (ms) => {
+  const s = monthFmt.format(ms);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+var fmtMonthShort = (ms) => monthShortFmt.format(ms).replace(".", "");
+var statTime2 = (value) => typeof value === "number" ? value : Date.parse(value);
+
+// src/cards/ha-energy-center-card/utils/stats.js
+var COMPILE_GRACE_MS = 3 * MINUTE_MS2;
+var UNITS = { energy: "kWh", volume: "m\xB3" };
+function openExpiry(now) {
+  const hourStart = Math.floor(now / HOUR_MS2) * HOUR_MS2;
+  const thisHour = hourStart + COMPILE_GRACE_MS;
+  return now < thisHour ? thisHour : thisHour + HOUR_MS2;
+}
+var StatsStore = class {
+  constructor(getHass, onWarn) {
+    this._getHass = getHass;
+    this._warn = onWarn;
+    this._cache = /* @__PURE__ */ new Map();
+    this._inflight = /* @__PURE__ */ new Map();
+    this._queue = /* @__PURE__ */ new Map();
+    this._flushTimer = void 0;
+    this.requestCount = 0;
+  }
+  /** Henter rækker for flere ids. Resolver til Map<id, rows[]> med { start, end, change, state }. */
+  async get(ids, period, start, end) {
+    const now = Date.now();
+    const result = /* @__PURE__ */ new Map();
+    const waits = [];
+    for (const id of new Set(ids.filter(Boolean))) {
+      const key = `${id}|${period}|${start}|${end}`;
+      const cached = this._cache.get(key);
+      if (cached && (cached.expires === Infinity || cached.expires > now)) {
+        result.set(id, cached.rows);
+        continue;
+      }
+      let p = this._inflight.get(key);
+      if (!p) {
+        p = this._enqueue(id, period, start, end).finally(() => this._inflight.delete(key));
+        this._inflight.set(key, p);
+      }
+      waits.push(p.then((rows) => result.set(id, rows)));
+    }
+    await Promise.all(waits);
+    return result;
+  }
+  _enqueue(id, period, start, end) {
+    return new Promise((resolve) => {
+      const qk = `${period}|${start}|${end}`;
+      let batch = this._queue.get(qk);
+      if (!batch) {
+        batch = { period, start, end, ids: /* @__PURE__ */ new Map() };
+        this._queue.set(qk, batch);
+      }
+      batch.ids.set(id, resolve);
+      if (!this._flushTimer) this._flushTimer = setTimeout(() => this._flush(), 0);
+    });
+  }
+  _flush() {
+    this._flushTimer = void 0;
+    const batches = [...this._queue.values()];
+    this._queue.clear();
+    for (const batch of batches) this._run(batch);
+  }
+  async _run({ period, start, end, ids }) {
+    const hass = this._getHass();
+    const idList = [...ids.keys()];
+    let data;
+    let ok = false;
+    if (hass?.callWS) {
+      try {
+        this.requestCount += 1;
+        data = await hass.callWS({
+          type: "recorder/statistics_during_period",
+          start_time: new Date(start).toISOString(),
+          end_time: new Date(end).toISOString(),
+          statistic_ids: idList,
+          period,
+          types: ["change", "state"],
+          units: UNITS
+        });
+        ok = true;
+      } catch (err) {
+        this._warn?.("stats", "Statistik kunne ikke hentes \u2013 graferne viser 'Ingen data'", err?.message || err);
+      }
+    }
+    const now = Date.now();
+    const expires = end <= now - COMPILE_GRACE_MS ? Infinity : openExpiry(now);
+    for (const [id, resolve] of ids) {
+      const rows = (data?.[id] || []).map((r2) => ({ start: statTime2(r2.start), end: statTime2(r2.end), change: r2.change, state: r2.state })).filter((r2) => Number.isFinite(r2.start));
+      if (ok) this._cache.set(`${id}|${period}|${start}|${end}`, { rows, expires });
+      resolve(rows);
+    }
+  }
+  clear() {
+    this._cache.clear();
+  }
+};
+function liveTail(rows, live) {
+  if (!Number.isFinite(live) || !rows?.length) return 0;
+  const last = rows[rows.length - 1];
+  if (!Number.isFinite(last.state)) return 0;
+  const diff = live - last.state;
+  if (diff >= 0) return diff;
+  return live < last.state * 0.5 ? live : 0;
+}
+function sumSince(rows, from, live) {
+  if (!rows?.length) return void 0;
+  let sum = 0;
+  for (const r2 of rows) if (r2.start >= from && Number.isFinite(r2.change)) sum += r2.change;
+  return sum + liveTail(rows, live);
+}
+
+// src/cards/ha-energy-center-card/components/chart.js
+var TARGET_TICKS = 4;
+function niceMax(max) {
+  if (!(max > 0)) return { hi: 1, step: 0.25 };
+  const raw = max * 1.08 / TARGET_TICKS;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m2) => m2 * mag).find((s) => s >= raw) || 10 * mag;
+  return { hi: Math.ceil(max * 1.08 / step) * step, step };
+}
+var decimalsFor = (step) => step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+var BarChart = class {
+  /**
+   * @param {HTMLElement} host
+   * @param {{ describe:(i:number)=>string, lineColor?:string }} opts
+   */
+  constructor(host, opts = {}) {
+    this.host = host;
+    this.opts = opts;
+    this.values = [];
+    this.hi = 1;
+    this._sig = "";
+    host.classList.add("chart");
+    host.innerHTML = `
+      <div class="y-axis" data-y></div>
+      <div class="plot" data-plot>
+        <div class="grid" data-grid></div>
+        <div class="bars" data-bars></div>
+        <svg class="line" data-line viewBox="0 0 100 100" preserveAspectRatio="none" hidden><path/></svg>
+        <div class="hover-line" hidden></div>
+        <div class="tip" hidden></div>
+      </div>
+      <div class="y-axis right" data-y2 hidden></div>
+      <div class="x-axis" data-x></div>
+      <div class="chart-msg" data-msg hidden></div>`;
+    this.$ = (s) => host.querySelector(`[data-${s}]`);
+    this.plot = this.$("plot");
+    this.barsEl = this.$("bars");
+    this.tipEl = host.querySelector(".tip");
+    this.hoverEl = host.querySelector(".hover-line");
+    this._bindTooltip();
+  }
+  /** Viser en besked i stedet for data ("Henter…", "Ingen data"). */
+  message(text) {
+    const msg = this.$("msg");
+    msg.textContent = text || "";
+    msg.hidden = !text;
+    this.host.classList.toggle("is-empty", Boolean(text));
+  }
+  /**
+   * @param {{ values:(number|undefined)[], labels:string[], partial?:number, line?:{ values:(number|undefined)[], format:(v:number)=>string } }} data
+   */
+  setData(data) {
+    const sig = JSON.stringify([data.values, data.labels, data.partial, data.line?.values]);
+    if (sig === this._sig) return;
+    this._sig = sig;
+    this.values = data.values.slice();
+    this.labels = data.labels;
+    this.partial = data.partial;
+    this.line = data.line;
+    const finite = this.values.filter(Number.isFinite);
+    if (!finite.length) {
+      this.barsEl.textContent = "";
+      this.$("y").textContent = "";
+      this.$("x").textContent = "";
+      this.$("grid").textContent = "";
+      this.$("line").setAttribute("hidden", "");
+      this.$("y2").hidden = true;
+      this.message("Ingen data for perioden");
+      return;
+    }
+    this.message("");
+    const { hi, step } = niceMax(Math.max(...finite, 0));
+    this.hi = hi;
+    this._renderAxis(hi, step);
+    this._renderBars();
+    this._renderLine();
+  }
+  /** Opdaterer én søjle (live-halen for igangværende time/dag) uden at gentegne resten. */
+  setBar(i, value) {
+    if (!this.barsEl.children[i] || this.values[i] === value) return;
+    this.values[i] = value;
+    this._sig = "";
+    if (Number.isFinite(value) && value > this.hi) {
+      const { hi, step } = niceMax(value);
+      this.hi = hi;
+      this._renderAxis(hi, step);
+      this._renderBars();
+      return;
+    }
+    this._styleBar(this.barsEl.children[i], value);
+  }
+  _renderAxis(hi, step) {
+    const d = decimalsFor(step);
+    let y = "";
+    let grid = "";
+    for (let v = 0; v <= hi + step / 2; v += step) {
+      const pct2 = 100 - v / hi * 100;
+      y += `<span style="top:${pct2}%">${fmt(v, d)}</span>`;
+      grid += `<i style="top:${pct2}%"></i>`;
+    }
+    this.$("y").innerHTML = y;
+    this.$("grid").innerHTML = grid;
+    const n = this.labels.length;
+    const every = n > 24 ? 5 : n > 12 ? 3 : n > 8 ? 2 : 1;
+    let x = "";
+    this.labels.forEach((label, i) => {
+      if (i % every !== 0) return;
+      x += `<span class="${i % (every * 2) ? "minor" : ""}" style="left:${(i + 0.5) / n * 100}%">${escapeHtml3(label)}</span>`;
+    });
+    this.$("x").innerHTML = x;
+  }
+  _renderBars() {
+    const n = this.values.length;
+    if (this.barsEl.children.length !== n) {
+      this.barsEl.innerHTML = "<i></i>".repeat(n);
+    }
+    [...this.barsEl.children].forEach((el, i) => {
+      el.classList.toggle("partial", i === this.partial);
+      this._styleBar(el, this.values[i]);
+    });
+  }
+  _styleBar(el, v) {
+    const s = Number.isFinite(v) && v > 0 ? Math.max(v / this.hi, 0.012) : 0;
+    el.style.transform = `scaleY(${s.toFixed(4)})`;
+  }
+  _renderLine() {
+    const svg = this.$("line");
+    const y2 = this.$("y2");
+    const vals = this.line?.values || [];
+    const finite = vals.filter(Number.isFinite);
+    if (finite.length < 2) {
+      svg.setAttribute("hidden", "");
+      y2.hidden = true;
+      this.host.classList.remove("has-line");
+      return;
+    }
+    const lo = Math.min(0, ...finite);
+    const { hi, step } = niceMax(Math.max(...finite));
+    const n = vals.length;
+    const pt = (v, i) => `${((i + 0.5) / n * 100).toFixed(2)},${(100 - (v - lo) / (hi - lo) * 100).toFixed(2)}`;
+    let d = "";
+    let pen = false;
+    vals.forEach((v, i) => {
+      if (!Number.isFinite(v)) {
+        pen = false;
+        return;
+      }
+      d += `${pen ? "L" : "M"}${pt(v, i)}`;
+      pen = true;
+    });
+    svg.firstElementChild.setAttribute("d", d);
+    svg.removeAttribute("hidden");
+    const dec = decimalsFor(step);
+    let labels = "";
+    for (let v = lo; v <= hi + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi - lo) * 100}%">${fmt(v, dec)}</span>`;
+    y2.innerHTML = labels;
+    y2.hidden = false;
+    this.host.classList.add("has-line");
+  }
+  _bindTooltip() {
+    const show = (ev) => {
+      const n = this.values.length;
+      if (!n || this.host.classList.contains("is-empty")) return;
+      const rect = this.plot.getBoundingClientRect();
+      const x = Math.min(Math.max(ev.clientX - rect.left, 0), rect.width - 1);
+      const i = Math.floor(x / rect.width * n);
+      const html = this.opts.describe?.(i);
+      if (!html) return hide();
+      const cx = (i + 0.5) / n * 100;
+      this.tipEl.innerHTML = html;
+      this.tipEl.style.left = `${Math.min(Math.max(cx, 14), 86)}%`;
+      this.hoverEl.style.left = `${cx}%`;
+      this.tipEl.hidden = false;
+      this.hoverEl.hidden = false;
+      [...this.barsEl.children].forEach((el, j) => el.classList.toggle("hover", j === i));
+    };
+    const hide = () => {
+      this.tipEl.hidden = true;
+      this.hoverEl.hidden = true;
+      this.barsEl.querySelector(".hover")?.classList.remove("hover");
+    };
+    this.plot.addEventListener("pointermove", show);
+    this.plot.addEventListener("pointerdown", show);
+    this.plot.addEventListener("pointerleave", hide);
+  }
+};
+
+// src/cards/ha-energy-center-card/components/history.js
+var PERIOD_LABELS = { day: "Dag", week: "Uge", month: "M\xE5ned", year: "\xC5r" };
+function periodRange(key, now = Date.now()) {
+  const sod = startOfDay(now);
+  const buckets = [];
+  if (key === "day") {
+    const end = addDays(sod, 1);
+    for (let t = sod; t < end; t += HOUR_MS2) {
+      const h = new Date(t).getHours();
+      buckets.push({ start: t, end: t + HOUR_MS2, label: pad22(h), tip: `I dag kl. ${pad22(h)}\u2013${pad22((h + 1) % 24)}` });
+    }
+    return { stat: "hour", fetchStart: sod - HOUR_MS2, end, buckets, caption: "I dag, pr. time" };
+  }
+  if (key === "week" || key === "month") {
+    const days = key === "week" ? 7 : 30;
+    for (let i = days - 1; i >= 0; i--) {
+      const t = addDays(sod, -i);
+      const label = key === "week" ? fmtDay(t).split(" ")[0].replace(".", "") : String(new Date(t).getDate());
+      buckets.push({ start: t, end: addDays(t, 1), label, tip: i === 0 ? "I dag" : fmtDay(t) });
+    }
+    return { stat: "day", fetchStart: buckets[0].start, end: addDays(sod, 1), buckets, caption: `Seneste ${days} dage` };
+  }
+  const som = startOfMonth(now);
+  for (let i = 11; i >= 0; i--) {
+    const t = addMonths(som, -i);
+    buckets.push({ start: t, end: addMonths(t, 1), label: fmtMonthShort(t), tip: fmtMonth(t) });
+  }
+  return { stat: "month", fetchStart: buckets[0].start, end: addMonths(som, 1), buckets, caption: "Seneste 12 m\xE5neder" };
+}
+function bucketValues(rows, buckets, reset = false) {
+  const values = new Array(buckets.length).fill(void 0);
+  let j = 0;
+  for (const r2 of rows || []) {
+    const v = reset ? r2.state : r2.change;
+    if (!Number.isFinite(v)) continue;
+    while (j < buckets.length && r2.start >= buckets[j].end) j++;
+    if (j >= buckets.length) break;
+    if (r2.start < buckets[j].start) continue;
+    values[j] = reset ? Math.max(values[j] || 0, v) : (values[j] || 0) + v;
+  }
+  return values;
+}
+var HistoryPanel = class {
+  /**
+   * @param card  kortet (stats, ids, live-værdier, lazy-observer)
+   * @param o     { key, title, icon, tone, stat, cost?, kind: "energy"|"volume", periods, period, delta?: "reset",
+   *                captions?, line?: { key, values(range) → number[], format(v) → string, label } }
+   */
+  constructor(card, o) {
+    this.card = card;
+    this.o = o;
+    this.period = o.period || o.periods[0];
+    this.token = 0;
+    this.loaded = false;
+    this.data = void 0;
+  }
+  html(extraClass = "") {
+    const o = this.o;
+    const seg = o.periods.length > 1 ? `<div class="seg" role="tablist">${o.periods.map((p) => `<button type="button" data-period="${p}" class="${p === this.period ? "on" : ""}">${PERIOD_LABELS[p]}</button>`).join("")}</div>` : "";
+    return `
+<div class="card chart-card tone-${o.tone} ${extraClass}" data-panel="${o.key}">
+  <div class="chart-head">
+    <div class="card-head">${icon2(o.icon)}<div><h3>${escapeHtml3(o.title)}</h3><small data-cap>\u2014</small></div></div>
+    ${seg}
+  </div>
+  <div class="chart-sum"><span class="num" data-total>\u2014</span><span class="sum-cost" data-cost></span>${o.line ? `<span class="legend-line">${escapeHtml3(o.line.label)}</span>` : ""}</div>
+  <div data-chart></div>
+</div>`;
+  }
+  mount(root) {
+    this.el = root.querySelector(`[data-panel="${this.o.key}"]`);
+    if (!this.el) return;
+    this.capEl = this.el.querySelector("[data-cap]");
+    this.totalEl = this.el.querySelector("[data-total]");
+    this.costEl = this.el.querySelector("[data-cost]");
+    this.chart = new BarChart(this.el.querySelector("[data-chart]"), { describe: (i) => this._describe(i) });
+    this.chart.message("Henter historik\u2026");
+    this.el.querySelector(".seg")?.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-period]");
+      if (!btn || btn.dataset.period === this.period) return;
+      this.period = btn.dataset.period;
+      this.el.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b === btn));
+      this.load();
+    });
+  }
+  observe() {
+    if (this.el && !this.loaded) this.card.observeLazy(this.el, () => this.load());
+  }
+  refresh() {
+    if (this.loaded) this.load();
+  }
+  _ids() {
+    return { stat: this.card.id(this.o.stat), cost: this.o.cost ? this.card.id(this.o.cost) : void 0 };
+  }
+  async load() {
+    const token = ++this.token;
+    this.loaded = true;
+    const range = periodRange(this.period);
+    const caption = this.o.captions?.[this.period] || range.caption;
+    this.capEl.textContent = caption;
+    const { stat, cost } = this._ids();
+    if (!stat) {
+      this.chart.message("Ingen sensor konfigureret");
+      return;
+    }
+    if (!this.data) this.chart.message("Henter historik\u2026");
+    const rows = await this.card.stats.get([stat, cost], range.stat, range.fetchStart, range.end);
+    if (token !== this.token || !this.el.isConnected) return;
+    this.data = { range, rows: rows.get(stat) || [], costRows: cost ? rows.get(cost) || [] : void 0 };
+    this.data.base = bucketValues(this.data.rows, range.buckets, this.o.delta === "reset");
+    this.data.costBase = this.data.costRows ? bucketValues(this.data.costRows, range.buckets) : void 0;
+    this._render();
+  }
+  /** Indeks for den bucket "nu" ligger i (eller -1). */
+  _nowIndex() {
+    const now = Date.now();
+    return this.data.range.buckets.findIndex((b) => now >= b.start && now < b.end);
+  }
+  _scale() {
+    return this.o.kind === "volume" && (this.period === "day" || this.period === "week") ? 1e3 : 1;
+  }
+  _unit() {
+    if (this.o.kind === "volume") return this._scale() === 1e3 ? "L" : "m\xB3";
+    return "kWh";
+  }
+  _withTail() {
+    const d = this.data;
+    const values = d.base.slice();
+    const cost = d.costBase?.slice();
+    const i = this._nowIndex();
+    if (i >= 0) {
+      const live = this.card.statLive(this.o.stat, this.o.kind);
+      if (this.o.delta === "reset") {
+        if (Number.isFinite(live)) values[i] = live;
+      } else if (d.rows.length) values[i] = (values[i] || 0) + liveTail(d.rows, live);
+      if (cost && d.costRows.length) cost[i] = (cost[i] || 0) + liveTail(d.costRows, this.card.statLive(this.o.cost, "monetary"));
+    }
+    const scale = this._scale();
+    return { values: values.map((v) => Number.isFinite(v) ? Math.max(v, 0) * scale : v), cost, now: i };
+  }
+  _render() {
+    const { values, cost, now } = this._withTail();
+    this.current = { values, cost };
+    const line = this.o.line ? { values: this.o.line.values(this.data.range), format: this.o.line.format } : void 0;
+    this.current.line = line;
+    this.chart.setData({ values, labels: this.data.range.buckets.map((b) => b.label), partial: now, line });
+    this._renderTotals();
+  }
+  _renderTotals() {
+    const { values, cost } = this.current;
+    const has = values.some(Number.isFinite);
+    const total = values.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    const unit = this._unit();
+    this.totalEl.textContent = has ? `${fmt(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
+    const costTotal = cost?.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    this.costEl.textContent = cost && cost.some(Number.isFinite) ? fmtKr(costTotal) : "";
+  }
+  /** Live-state ændret: opdater kun den igangværende søjle + totaler. */
+  onLive(changed) {
+    if (!this.data) return;
+    const { stat, cost } = this._ids();
+    const lineId = this.o.line ? this.card.id(this.o.line.key) : void 0;
+    if (lineId && changed.has(lineId)) return this._render();
+    if (!changed.has(stat) && !(cost && changed.has(cost))) return;
+    const { values, cost: c, now } = this._withTail();
+    if (now < 0) return;
+    this.current.values = values;
+    this.current.cost = c;
+    this.chart.setBar(now, values[now]);
+    this._renderTotals();
+  }
+  _describe(i) {
+    const b = this.data?.range.buckets[i];
+    if (!b) return "";
+    const v = this.current.values[i];
+    const c = this.current.cost?.[i];
+    const unit = this._unit();
+    const digits = unit === "L" ? 0 : v >= 100 ? 0 : v >= 10 ? 1 : 2;
+    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt(v, digits) : "\u2014"}</em> ${unit}</span>`;
+    if (Number.isFinite(c)) html += `<span>${fmtKr(c)}</span>`;
+    const lv = this.current.line?.values[i];
+    if (Number.isFinite(lv)) html += `<span class="tip-line">${escapeHtml3(this.o.line.format(lv))}</span>`;
+    if (i === this.chart.partial) html += `<small>Igangv\xE6rende</small>`;
+    return html;
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/base.js
+var Section = class {
+  constructor(card) {
+    this.card = card;
+    this.refs = {};
+    this.panels = [];
+  }
+  html() {
+    return "";
+  }
+  mount(root) {
+    this.root = root;
+    root.querySelectorAll("[data-ref]").forEach((el) => {
+      this.refs[el.dataset.ref] = el;
+    });
+    for (const p of this.panels) p.mount(root);
+  }
+  ids() {
+    return [];
+  }
+  update() {
+  }
+  shown() {
+    for (const p of this.panels) p.observe();
+  }
+  hourTick() {
+    for (const p of this.panels) p.refresh();
+  }
+  onLive(changed) {
+    for (const p of this.panels) p.onLive(changed);
+  }
+  /* ---------- DOM-hjælpere: skriv kun når værdien faktisk ændrer sig ---------- */
+  text(ref, value, pulse = false) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    if (!el || el.__v === value) return;
+    const first = el.__v === void 0;
+    el.__v = value;
+    el.textContent = value;
+    if (pulse && !first) this.card.pulse(el);
+  }
+  /** Sætter { v, u } fra fmtPower/fmtEnergy på et .v/.u-par. */
+  value(prefix, pair, pulse = false) {
+    this.text(`${prefix}V`, pair.v, pulse);
+    this.text(`${prefix}U`, pair.u);
+  }
+  show(ref, visible) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    if (el && el.hidden === visible) el.hidden = !visible;
+  }
+  tone(ref, tone2) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    if (!el || el.__tone === tone2) return;
+    if (el.__tone) el.classList.remove(`tone-${el.__tone}`);
+    if (tone2) el.classList.add(`tone-${tone2}`);
+    el.__tone = tone2;
+  }
+  style(ref, prop, value) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    const key = `__s_${prop}`;
+    if (!el || el[key] === value) return;
+    el[key] = value;
+    el.style.setProperty(prop, value);
+  }
+  /** Bar-fyld via transform: scaleX (0–1). */
+  bar(ref, fraction) {
+    const f = Number.isFinite(fraction) ? Math.min(Math.max(fraction, 0), 1) : 0;
+    this.style(ref, "--p", f.toFixed(3));
+  }
+  setIcon(ref, name) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    if (el && el.__icon !== name) {
+      el.__icon = name;
+      el.setAttribute("icon", name);
+    }
+  }
+};
+
+// src/cards/ha-energy-center-card/components/flow.js
+var ACTIVE_W = 5;
+var NODES = [
+  { key: "grid", x: 13, y: 26, label: "El-net", icon: "mdi:transmission-tower", tone: "el" },
+  { key: "heat", x: 13, y: 70, label: "Fjernvarme", icon: "mdi:radiator", tone: "heat" },
+  { key: "home", x: 50, y: 46, label: "Hjem", icon: "mdi:home-lightning-bolt-outline", tone: "home", big: true },
+  { key: "measured", x: 87, y: 13, label: "M\xE5lte grupper", icon: "mdi:chart-donut", tone: "el" },
+  { key: "ev", x: 87, y: 46, label: "Billader", icon: "mdi:car-electric", tone: "ev" },
+  { key: "unmeasured", x: 87, y: 79, label: "Um\xE5lt", icon: "mdi:help-circle-outline", tone: "muted" }
+];
+var LINKS = [
+  ["grid", "home"],
+  ["heat", "home"],
+  ["home", "measured"],
+  ["home", "ev"],
+  ["home", "unmeasured"]
+];
+var toneOf = (key) => NODES.find((n) => n.key === key).tone;
+var EnergyFlow = class {
+  /** @param entities { key → entity-id } til more-info på noderne */
+  constructor(host, entities = {}) {
+    this.host = host;
+    this.size = { w: 0, h: 0 };
+    host.classList.add("flow");
+    host.innerHTML = `
+      <svg class="flow-lines" aria-hidden="true">${LINKS.map(
+      ([a, b]) => `<path class="track" data-l="${a}-${b}"/><path class="dash tone-${toneOf(a === "home" ? b : a)}" data-d="${a}-${b}"/>`
+    ).join("")}</svg>
+      ${NODES.map(
+      (n) => `<div class="fnode tone-${n.tone} ${n.big ? "big" : ""} ${entities[n.key] ? "clickable" : ""}" ${entities[n.key] ? `data-entity="${escapeHtml3(entities[n.key])}" tabindex="0" role="button"` : ""} style="left:${n.x}%;top:${n.y}%">
+        <span class="fbubble">${icon2(n.icon)}</span>
+        <span class="fval num"><b data-v="${n.key}">\u2014</b><small data-u="${n.key}">W</small></span>
+        <span class="flabel">${n.label}</span>
+      </div>`
+    ).join("")}`;
+    this.svg = host.querySelector("svg");
+    this.paths = {};
+    this.dashes = {};
+    host.querySelectorAll("path[data-l]").forEach((p) => this.paths[p.dataset.l] = p);
+    host.querySelectorAll("path[data-d]").forEach((p) => this.dashes[p.dataset.d] = p);
+    this.vEls = {};
+    this.uEls = {};
+    host.querySelectorAll("[data-v]").forEach((el) => this.vEls[el.dataset.v] = el);
+    host.querySelectorAll("[data-u]").forEach((el) => this.uEls[el.dataset.u] = el);
+    this.values = {};
+  }
+  connect() {
+    if (this.ro || typeof ResizeObserver !== "function") return;
+    this.ro = new ResizeObserver(() => {
+      if (this.frame) return;
+      this.frame = requestAnimationFrame(() => {
+        this.frame = void 0;
+        this._layout();
+      });
+    });
+    this.ro.observe(this.host);
+  }
+  disconnect() {
+    this.ro?.disconnect();
+    this.ro = void 0;
+    cancelAnimationFrame(this.frame);
+    this.frame = void 0;
+  }
+  _layout() {
+    const w = Math.round(this.host.clientWidth);
+    const h = Math.round(this.host.clientHeight);
+    if (!w || !h || w === this.size.w && h === this.size.h) return;
+    this.size = { w, h };
+    this.svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const pos = Object.fromEntries(NODES.map((n) => [n.key, [n.x / 100 * w, n.y / 100 * h]]));
+    for (const [a, b] of LINKS) {
+      const [x1, y1] = pos[a];
+      const [x2, y2] = pos[b];
+      const dx = (x2 - x1) * 0.55;
+      const d = `M${x1.toFixed(1)},${y1.toFixed(1)} C${(x1 + dx).toFixed(1)},${y1.toFixed(1)} ${(x2 - dx).toFixed(1)},${y2.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+      this.paths[`${a}-${b}`].setAttribute("d", d);
+      this.dashes[`${a}-${b}`].setAttribute("d", d);
+    }
+  }
+  /** @param v { grid, heat, home, measured, ev, unmeasured } i watt (undefined = mangler) */
+  update(v) {
+    for (const n of NODES) {
+      const val = v[n.key];
+      if (this.values[n.key] === val) continue;
+      this.values[n.key] = val;
+      const p = fmtPower2(val);
+      this.vEls[n.key].textContent = p.v;
+      this.uEls[n.key].textContent = p.u;
+    }
+    for (const [a, b] of LINKS) {
+      const w = v[a === "home" ? b : a];
+      const active = Number.isFinite(w) && w > ACTIVE_W;
+      const dash = this.dashes[`${a}-${b}`];
+      const dur = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
+      if (dash.__dur === dur) continue;
+      dash.__dur = dur;
+      dash.classList.toggle("on", active);
+      if (active) dash.style.setProperty("--dur", `${dur}s`);
+    }
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/overview.js
+var TODAY_KEYS = [
+  ["grid_energy", "energy"],
+  ["grid_cost", "monetary"],
+  ["heat_energy", "energy"],
+  ["heat_cost", "monetary"],
+  ["water_total", "volume"]
+];
+function hourlyPrices(stateObj, buckets) {
+  const raw = stateObj?.attributes?.prices;
+  if (!Array.isArray(raw)) return buckets.map(() => void 0);
+  const entries = [];
+  for (const p of raw) {
+    const price = toNumber3(p?.price);
+    const start = Date.parse(p?.start);
+    if (price !== void 0 && Number.isFinite(start)) entries.push({ start, price });
+  }
+  return buckets.map((b) => {
+    let sum = 0;
+    let n = 0;
+    for (const e of entries) {
+      if (e.start >= b.start && e.start < b.end) {
+        sum += e.price;
+        n += 1;
+      }
+    }
+    return n ? sum / n : void 0;
+  });
+}
+var OverviewSection = class extends Section {
+  constructor(card) {
+    super(card);
+    this.panels = [
+      new HistoryPanel(card, {
+        key: "ov-price",
+        title: "Dagspris & elforbrug",
+        icon: "mdi:chart-timeline-variant",
+        tone: "el",
+        stat: "grid_energy",
+        cost: "grid_cost",
+        kind: "energy",
+        periods: ["day"],
+        captions: { day: "Forbrug pr. time og timepris i dag" },
+        line: {
+          key: "grid_price",
+          label: "Timepris (kr/kWh)",
+          values: (range) => hourlyPrices(card.stateObj("grid_price"), range.buckets),
+          format: (v) => `${fmt(v, 2)} kr/kWh`
+        }
+      }),
+      new HistoryPanel(card, { key: "ov-el", title: "Elforbrug", icon: "mdi:flash", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" }),
+      new HistoryPanel(card, { key: "ov-heat", title: "Fjernvarme", icon: "mdi:radiator", tone: "heat", stat: "heat_energy", cost: "heat_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" }),
+      new HistoryPanel(card, { key: "ov-water", title: "Vand", icon: "mdi:water", tone: "water", stat: "water_total", kind: "volume", periods: ["day", "week", "month", "year"], period: "week" })
+    ];
+  }
+  ids() {
+    return [
+      "grid_power",
+      "heat_power",
+      "water_flow",
+      "ev_power",
+      "grid_price",
+      "heat_supply",
+      "heat_return",
+      "measured_power",
+      "unmeasured_power",
+      "ev_mode",
+      "water_cost_today",
+      "ev_energy_today",
+      "ev_cost_today",
+      ...TODAY_KEYS.map(([k]) => k)
+    ].map((k) => this.card.id(k)).filter(Boolean);
+  }
+  html() {
+    const c = this.card;
+    const heroItem = (ref, tone2, ic, label, key) => `
+      <button type="button" class="hero-item tone-${tone2} clickable" data-entity="${escapeHtml3(c.id(key) || "")}">
+        <span class="badge">${icon2(ic)}</span>
+        <span class="hi-label">${label}</span>
+        <span class="hi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
+        <span class="hi-sub" data-ref="${ref}Sub">\u2014</span>
+      </button>`;
+    const kpi = (ref, tone2, ic, label, tab) => `
+      <button type="button" class="card kpi tone-${tone2} clickable" data-goto="${tab}">
+        <span class="kpi-top"><span class="badge sm">${icon2(ic)}</span><span class="kpi-label">${label}</span>${icon2("mdi:chevron-right", "chev")}</span>
+        <span class="kpi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
+        <span class="kpi-foot"><span class="num" data-ref="${ref}Cost">\u2014</span><span data-ref="${ref}Note">i dag</span></span>
+      </button>`;
+    return `
+<div class="layout ov">
+  <section class="card hero a-full">
+    <div class="hero-head"><div class="card-head">${icon2("mdi:pulse")}<h3>Aktuel status lige nu</h3></div><span class="live"><i></i>Live</span></div>
+    <div class="hero-grid">
+      ${heroItem("hEl", "el", "mdi:flash", "Str\xF8m", "grid_power")}
+      ${heroItem("hHeat", "heat", "mdi:radiator", "Fjernvarme", "heat_power")}
+      ${heroItem("hWater", "water", "mdi:water", "Vand", "water_flow")}
+      ${heroItem("hEv", "ev", "mdi:car-electric", "Billader", "ev_power")}
+    </div>
+  </section>
+  <div class="kpis a-full">
+    ${kpi("kEl", "el", "mdi:flash", "Str\xF8m i dag", "power")}
+    ${kpi("kHeat", "heat", "mdi:radiator", "Varme i dag", "heat")}
+    ${kpi("kWater", "water", "mdi:water", "Vand i dag", "water")}
+    ${kpi("kEv", "ev", "mdi:car-electric", "Billader i dag", "ev")}
+  </div>
+  <section class="card a-half">
+    <div class="card-head">${icon2("mdi:transit-connection-variant")}<div><h3>Energiflow</h3><small>Live effekt gennem huset</small></div></div>
+    <div data-ref="flow"></div>
+  </section>
+  ${this.panels[0].html("a-half")}
+  ${this.panels[1].html("a-third")}
+  ${this.panels[2].html("a-third")}
+  ${this.panels[3].html("a-third")}
+</div>`;
+  }
+  mount(root) {
+    super.mount(root);
+    const c = this.card;
+    this.flow = new EnergyFlow(this.refs.flow, {
+      grid: c.id("grid_power"),
+      heat: c.id("heat_power"),
+      home: c.id("grid_power"),
+      measured: c.id("measured_power"),
+      ev: c.id("ev_power"),
+      unmeasured: c.id("unmeasured_power")
+    });
+    this.flow.connect();
+  }
+  shown() {
+    super.shown();
+    this.flow?.connect();
+    this.card.loadToday(TODAY_KEYS, () => this._updateToday());
+  }
+  hidden() {
+    this.flow?.disconnect();
+  }
+  hourTick() {
+    super.hourTick();
+    this.card.loadToday(TODAY_KEYS, () => this._updateToday());
+  }
+  update() {
+    const c = this.card;
+    const grid = c.watts("grid_power");
+    const heat = c.watts("heat_power");
+    const ev = c.watts("ev_power");
+    const flowLpm = c.flowLpm("water_flow");
+    this.value("hEl", fmtPower2(grid), true);
+    this.value("hHeat", fmtPower2(heat), true);
+    this.value("hEv", fmtPower2(ev), true);
+    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("hWaterU", "L/min");
+    const price = c.num("grid_price");
+    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt(price, 2)} kr/kWh` : "Ingen prisdata");
+    const sup = c.num("heat_supply");
+    const ret = c.num("heat_return");
+    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt(sup, 0)}\xB0 \xB7 retur ${fmt(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
+    const wf = c.waterFlowState(flowLpm);
+    this.text("hWaterSub", wf.label);
+    this.tone(this.refs.hWaterSub, wf.tone);
+    const evs = c.evStatus();
+    this.text("hEvSub", evs.label);
+    this.tone(this.refs.hEvSub, evs.charging ? "ok" : "");
+    const measured = c.watts("measured_power");
+    this.flow?.update({
+      grid,
+      heat,
+      home: grid,
+      measured: Number.isFinite(measured) ? Math.max(measured - (ev || 0), 0) : void 0,
+      ev,
+      unmeasured: c.watts("unmeasured_power")
+    });
+    this._updateToday();
+  }
+  _updateToday() {
+    const c = this.card;
+    const el = c.today("grid_energy", "energy");
+    const elCost = c.today("grid_cost", "monetary");
+    const heatE = c.today("heat_energy", "energy");
+    const heatCost = c.today("heat_cost", "monetary");
+    const water = c.today("water_total", "volume");
+    this.value("kEl", fmtEnergy2(el));
+    this.text("kElCost", fmtKr(elCost));
+    this.value("kHeat", fmtEnergy2(heatE));
+    this.text("kHeatCost", fmtKr(heatCost));
+    this.value("kWater", fmtVolume(water));
+    this.text("kWaterCost", fmtKr(c.num("water_cost_today")));
+    this.value("kEv", fmtEnergy2(c.kwh("ev_energy_today")));
+    this.text("kEvCost", fmtKr(c.num("ev_cost_today")));
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/power.js
+var TODAY_KEYS2 = [
+  ["grid_energy", "energy"],
+  ["grid_cost", "monetary"]
+];
+function groupSum(card, group) {
+  let sum = 0;
+  let valid2 = 0;
+  let missing = 0;
+  for (const m2 of group.entities) {
+    const w = card.wattsOf(m2.entity);
+    if (Number.isFinite(w)) {
+      sum += Math.max(w, 0);
+      valid2 += 1;
+    } else missing += 1;
+  }
+  return { sum: valid2 ? sum : void 0, missing, total: group.entities.length };
+}
+function phaseBalance(currents, moderateA, highA) {
+  const vals = currents.filter(Number.isFinite);
+  if (vals.length < 2) return { label: "Ingen data", tone: "", flagged: [] };
+  const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+  const devs = currents.map((v) => Number.isFinite(v) ? v - mean : 0);
+  const worst = Math.max(...devs.map(Math.abs));
+  const flagged = devs.map((d) => Math.abs(d) >= moderateA && Math.abs(d) === worst);
+  if (worst >= highA) return { label: "Sk\xE6v", tone: "bad", flagged, worst };
+  if (worst >= moderateA) return { label: "Moderat", tone: "warn", flagged, worst };
+  return { label: "God", tone: "ok", flagged: flagged.map(() => false), worst };
+}
+var PowerSection = class extends Section {
+  constructor(card) {
+    super(card);
+    this.panels = [
+      new HistoryPanel(card, { key: "pw-hist", title: "Historik \u2013 elforbrug", icon: "mdi:chart-bar", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "day" })
+    ];
+  }
+  ids() {
+    const c = this.card;
+    const keys = ["grid_power", "grid_apparent", "meter_temperature", "grid_price", "grid_returned", "measured_power", "unmeasured_power", ...TODAY_KEYS2.map(([k]) => k)];
+    const ids = keys.map((k) => c.id(k));
+    for (const g of c.config.groups) for (const m2 of g.entities) ids.push(m2.entity);
+    for (const p of c.config.phases) ids.push(p.power, p.apparent, p.power_factor, p.current, p.voltage, p.frequency);
+    return ids.filter(Boolean);
+  }
+  html() {
+    const c = this.card;
+    const ent = (k) => escapeHtml3(c.id(k) || "");
+    const groups = c.config.groups.map(
+      (g, i) => `
+      <button type="button" class="grow clickable" data-group="${i}" data-ref="g${i}">
+        <span class="badge sm">${icon2(g.icon || "mdi:flash")}</span>
+        <span class="gname">${escapeHtml3(g.name)}<i class="gwarn" data-ref="g${i}Warn" hidden></i></span>
+        <span class="gbar"><i data-ref="g${i}Bar"></i></span>
+        <span class="gval num" data-ref="g${i}Val">\u2014</span>
+        <span class="gshare num" data-ref="g${i}Share">\u2014</span>
+      </button>`
+    ).join("");
+    const phases = c.config.phases.map(
+      (p, i) => `
+      <div class="phase clickable" data-ref="ph${i}" data-entity="${escapeHtml3(p.power || p.current || "")}" tabindex="0" role="button">
+        <div class="ph-head"><span class="ph-name">Fase ${escapeHtml3(p.name)}</span><span class="ph-flag" data-ref="ph${i}Flag" hidden>Afviger</span></div>
+        <div class="ph-val num"><b data-ref="ph${i}V">\u2014</b><small data-ref="ph${i}U">W</small></div>
+        <div class="meter"><i data-ref="ph${i}Bar"></i></div>
+        <dl>
+          <div><dt>Str\xF8m</dt><dd class="num" data-ref="ph${i}A">\u2014</dd></div>
+          <div><dt>Sp\xE6nding</dt><dd class="num" data-ref="ph${i}Vo">\u2014</dd></div>
+          <div><dt>Frekvens</dt><dd class="num" data-ref="ph${i}Hz">\u2014</dd></div>
+          <div><dt>PF</dt><dd class="num" data-ref="ph${i}Pf">\u2014</dd></div>
+          <div><dt>Tilsyneladende</dt><dd class="num" data-ref="ph${i}Va">\u2014</dd></div>
+        </dl>
+      </div>`
+    ).join("");
+    const mini = (ref, label, ic, key, extra = "") => `
+      <div class="card mini tone-el ${key ? "clickable" : ""}" ${key ? `data-entity="${ent(key)}" tabindex="0" role="button"` : ""}>
+        <div class="card-head">${icon2(ic)}<h3>${label}</h3></div>
+        <div class="mini-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></div>
+        ${extra}
+      </div>`;
+    return `
+<div class="layout pw">
+  <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button">
+    <div class="hero-head"><div class="card-head">${icon2("mdi:flash")}<h3>Str\xF8m lige nu</h3></div><span class="live"><i></i>Live</span></div>
+    <div class="mega num"><b data-ref="mainV">\u2014</b><small data-ref="mainU">W</small></div>
+    <div class="facts">
+      <div><small>Tilsyneladende</small><b class="num" data-ref="mainVa">\u2014</b></div>
+      <div><small>Pris nu</small><b class="num" data-ref="mainPrice">\u2014</b></div>
+      <div><small>M\xE5lertemperatur</small><b class="num" data-ref="mainTemp">\u2014</b></div>
+      <div><small>Returneret i alt</small><b class="num" data-ref="mainRet">\u2014</b></div>
+    </div>
+  </section>
+  <div class="quad a-half">
+    ${mini("mMain", "Hovedm\xE5ler", "mdi:meter-electric-outline", "grid_energy", `<div class="mini-sub"><span class="num" data-ref="mMainCost">\u2014</span><span>i dag</span></div>`)}
+    ${mini("mMeas", "M\xE5lt total", "mdi:chart-donut", "measured_power", `<div class="mini-sub"><span class="num" data-ref="mMeasPct">\u2014</span><span>af hovedm\xE5ler</span></div>`)}
+    ${mini("mUnm", "Um\xE5lt", "mdi:help-circle-outline", "unmeasured_power", `<div class="mini-sub"><span class="num" data-ref="mUnmPct">\u2014</span><span>af hovedm\xE5ler</span></div>`)}
+    <div class="card mini acct" data-ref="acct">
+      <div class="card-head">${icon2("mdi:scale-balance")}<h3>Str\xF8mregnskab</h3></div>
+      <div class="stack"><i class="s-meas" data-ref="acctMeas"></i><i class="s-unm" data-ref="acctUnm"></i></div>
+      <div class="acct-rows">
+        <span><i class="dot el"></i>M\xE5lt <b class="num" data-ref="acctMeasPct">\u2014</b></span>
+        <span><i class="dot muted"></i>Um\xE5lt <b class="num" data-ref="acctUnmPct">\u2014</b></span>
+        <span>Difference <b class="num" data-ref="acctDiff">\u2014</b></span>
+      </div>
+      <div class="acct-msg" data-ref="acctMsg">\u2014</div>
+    </div>
+  </div>
+  <section class="card a-full">
+    <div class="sect-head">
+      <div class="card-head">${icon2("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">\u2014</small></div></div>
+      <span class="hint">Tryk p\xE5 en gruppe for detaljer</span>
+    </div>
+    <div class="groups">${groups}</div>
+  </section>
+  <section class="card a-full">
+    <div class="sect-head">
+      <div class="card-head">${icon2("mdi:sine-wave")}<div><h3>3-faset m\xE5ling</h3><small>Effekt, str\xF8m, sp\xE6nding og frekvens pr. fase</small></div></div>
+      <span class="chip" data-ref="bal">Balance \u2014</span>
+    </div>
+    <div class="phases">${phases}</div>
+  </section>
+  ${this.panels[0].html("a-full")}
+</div>`;
+  }
+  mount(root) {
+    super.mount(root);
+    this.groupState = this.card.config.groups.map(() => ({}));
+  }
+  shown() {
+    super.shown();
+    this.card.loadToday(TODAY_KEYS2, () => this._updateToday());
+  }
+  hourTick() {
+    super.hourTick();
+    this.card.loadToday(TODAY_KEYS2, () => this._updateToday());
+  }
+  update() {
+    const c = this.card;
+    const grid = c.watts("grid_power");
+    const meas = c.watts("measured_power");
+    const unm = c.watts("unmeasured_power");
+    this.value("main", fmtPower2(grid), true);
+    const va = c.num("grid_apparent");
+    this.text("mainVa", Number.isFinite(va) ? `${fmt(va, 0)} VA` : "\u2014");
+    const price = c.num("grid_price");
+    this.text("mainPrice", Number.isFinite(price) ? `${fmt(price, 2)} kr/kWh` : "\u2014");
+    const temp = c.num("meter_temperature");
+    this.text("mainTemp", Number.isFinite(temp) ? `${fmt(temp, 1)} \xB0C` : "\u2014");
+    const ret = fmtEnergy2(c.kwh("grid_returned"));
+    this.text("mainRet", `${ret.v} ${ret.u}`);
+    this.value("mMeas", fmtPower2(meas));
+    this.value("mUnm", fmtPower2(unm));
+    const pct2 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
+    const measPct = pct2(meas);
+    const unmPct = pct2(unm);
+    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt(measPct, 0)} %` : "\u2014");
+    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt(unmPct, 0)} %` : "\u2014");
+    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt(measPct, 0)} %` : "\u2014");
+    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt(unmPct, 0)} %` : "\u2014");
+    this.bar("acctMeas", grid > 0 && Number.isFinite(meas) ? Math.min(meas / grid, 1) : 0);
+    this.bar("acctUnm", grid > 0 && Number.isFinite(unm) ? Math.min(unm / grid, 1) : 0);
+    const tol = c.config.accounting_tolerance_w;
+    if (Number.isFinite(grid) && Number.isFinite(meas)) {
+      const diff = meas + (Number.isFinite(unm) ? unm : 0) - grid;
+      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt(diff, 0)} W`);
+      const off = meas - grid > tol;
+      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
+      this.tone("acct", off ? "warn" : "");
+    } else {
+      this.text("acctDiff", "\u2014");
+      this.text("acctMsg", "Kan ikke kontrollere: mangler data");
+      this.tone("acct", "");
+    }
+    this._updateGroups(grid);
+    this._updatePhases();
+    this._updateToday();
+  }
+  _updateToday() {
+    const c = this.card;
+    this.value("mMain", fmtEnergy2(c.today("grid_energy", "energy")));
+    this.text("mMainCost", fmtKr(c.today("grid_cost", "monetary")));
+  }
+  _updateGroups(grid) {
+    const c = this.card;
+    const sums = c.config.groups.map((g) => groupSum(c, g));
+    const max = Math.max(1, ...sums.map((s) => s.sum || 0));
+    const order = sums.map((s, i) => [s.sum ?? -1, i]).sort((a, b) => b[0] - a[0]);
+    order.forEach(([, i], rank) => this.style(`g${i}`, "order", String(rank)));
+    let total = 0;
+    sums.forEach((s, i) => {
+      total += s.sum || 0;
+      const p2 = fmtPower2(s.sum);
+      this.text(`g${i}Val`, `${p2.v} ${p2.u}`);
+      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt(s.sum / grid * 100, 0)} %` : "\u2014");
+      this.bar(`g${i}Bar`, (s.sum || 0) / max);
+      const warn = this.refs[`g${i}Warn`];
+      this.show(warn, s.missing > 0);
+      if (s.missing > 0 && warn.__t !== s.missing) {
+        warn.__t = s.missing;
+        warn.title = `${s.missing} af ${s.total} sensorer mangler data`;
+      }
+    });
+    const p = fmtPower2(total);
+    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
+  }
+  _updatePhases() {
+    const c = this.card;
+    const phases = c.config.phases;
+    const currents = phases.map((p) => c.numOf(p.current));
+    const maxI = Math.max(1, ...currents.filter(Number.isFinite));
+    const bal = phaseBalance(currents, c.config.phase_moderate_a, c.config.phase_high_a);
+    this.text("bal", `Balance: ${bal.label}`);
+    this.tone("bal", bal.tone);
+    phases.forEach((p, i) => {
+      this.value(`ph${i}`, fmtPower2(c.wattsOf(p.power)), true);
+      const cur = currents[i];
+      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt(cur, 2)} A` : "\u2014");
+      const v = c.numOf(p.voltage);
+      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt(v, 1)} V` : "\u2014");
+      const hz = c.numOf(p.frequency);
+      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt(hz, 2)} Hz` : "\u2014");
+      const pf = c.numOf(p.power_factor);
+      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt(pf, 2) : "\u2014");
+      const va = c.numOf(p.apparent);
+      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt(va, 0)} VA` : "\u2014");
+      this.bar(`ph${i}Bar`, Number.isFinite(cur) ? cur / maxI : 0);
+      this.show(`ph${i}Flag`, Boolean(bal.flagged[i]));
+      this.tone(`ph${i}`, bal.flagged[i] ? bal.tone : "");
+    });
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/heat.js
+var TODAY_KEYS3 = [
+  ["heat_energy", "energy"],
+  ["heat_cost", "monetary"]
+];
+var tile = (ref, label, entity = "") => `
+  <div class="tile ${entity ? "clickable" : ""}" ${entity ? `data-entity="${escapeHtml3(entity)}" tabindex="0" role="button"` : ""} data-ref="${ref}Tile">
+    <small>${label}</small><b class="num"><span data-ref="${ref}V">\u2014</span> <span class="u" data-ref="${ref}U"></span></b>
+  </div>`;
+var HeatSection = class extends Section {
+  constructor(card) {
+    super(card);
+    this.panels = [
+      new HistoryPanel(card, { key: "ht-hist", title: "Fjernvarmeforbrug", icon: "mdi:chart-bar", tone: "heat", stat: "heat_energy", cost: "heat_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" })
+    ];
+  }
+  ids() {
+    return ["heat_power", "heat_price", "heat_flow", "heat_supply", "heat_return", "heat_cooling", ...TODAY_KEYS3.map(([k]) => k)].map((k) => this.card.id(k)).filter(Boolean);
+  }
+  html() {
+    const c = this.card;
+    const opt = (k) => c.stateObj(k) ? "" : "hidden";
+    return `
+<div class="layout">
+  <section class="card utility tone-heat a-full">
+    <div class="hero-head"><div class="card-head">${icon2("mdi:radiator")}<div><h3>Fjernvarme</h3><small>Kamstrup MULTICAL \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
+    <div class="util-body">
+      <div class="util-main clickable" data-entity="${escapeHtml3(c.id("heat_power") || "")}" tabindex="0" role="button">
+        <small>Aktuel effekt</small>
+        <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
+        <span class="status" data-ref="status">\u2014</span>
+      </div>
+      <div class="tiles">
+        ${tile("today", "Forbrug i dag", c.id("heat_energy"))}
+        ${tile("cost", "Pris i dag", c.id("heat_cost"))}
+        ${tile("price", "Aktuel pris", c.id("heat_price"))}
+      </div>
+    </div>
+    <div class="subtiles">
+      <div class="subtile" ${opt("heat_supply")}><small>Freml\xF8b</small><b class="num" data-ref="sup">\u2014</b></div>
+      <div class="subtile" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">\u2014</b></div>
+      <div class="subtile" ${opt("heat_cooling")}><small>Afk\xF8ling (\u0394T)</small><b class="num" data-ref="cool">\u2014</b></div>
+      <div class="subtile" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">\u2014</b></div>
+    </div>
+  </section>
+  ${this.panels[0].html("a-full tall")}
+</div>`;
+  }
+  shown() {
+    super.shown();
+    this.card.loadToday(TODAY_KEYS3, () => this._updateToday());
+  }
+  hourTick() {
+    super.hourTick();
+    this.card.loadToday(TODAY_KEYS3, () => this._updateToday());
+  }
+  update() {
+    const c = this.card;
+    const w = c.watts("heat_power");
+    this.value("pow", fmtPower2(w), true);
+    this.text("status", !Number.isFinite(w) ? "Ingen data" : w > 0 ? "Varmer" : "Ingen varmeeffekt");
+    this.tone("status", w > 0 ? "heat" : "");
+    const price = c.num("heat_price");
+    this.text("priceV", Number.isFinite(price) ? fmt(price, 2) : "\u2014");
+    this.text("priceU", "kr/kWh");
+    const deg = (k) => Number.isFinite(c.num(k)) ? `${fmt(c.num(k), 1)} \xB0C` : "\u2014";
+    this.text("sup", deg("heat_supply"));
+    this.text("ret", deg("heat_return"));
+    this.text("cool", deg("heat_cooling"));
+    const flow = c.num("heat_flow");
+    const unit = c.stateObj("heat_flow")?.attributes?.unit_of_measurement || "";
+    this.text("flow", Number.isFinite(flow) ? `${fmt(flow, 0)} ${unit}` : "\u2014");
+    this._updateToday();
+  }
+  _updateToday() {
+    const c = this.card;
+    this.value("today", fmtEnergy2(c.today("heat_energy", "energy")));
+    const cost = c.today("heat_cost", "monetary");
+    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costU", "kr");
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/water.js
+var TODAY_KEYS4 = [["water_total", "volume"]];
+var WaterSection = class extends Section {
+  constructor(card) {
+    super(card);
+    this.panels = [
+      new HistoryPanel(card, { key: "wt-hist", title: "Vandforbrug", icon: "mdi:chart-bar", tone: "water", stat: "water_total", kind: "volume", periods: ["day", "week", "month", "year"], period: "day" })
+    ];
+  }
+  ids() {
+    return ["water_flow", "water_price", "water_cost_today", ...TODAY_KEYS4.map(([k]) => k)].map((k) => this.card.id(k)).filter(Boolean);
+  }
+  html() {
+    const c = this.card;
+    return `
+<div class="layout">
+  <section class="card utility tone-water a-full">
+    <div class="hero-head"><div class="card-head">${icon2("mdi:water")}<div><h3>Vand</h3><small>Vandm\xE5ler \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
+    <div class="util-body">
+      <div class="util-main clickable" data-entity="${escapeHtml3(c.id("water_flow") || "")}" tabindex="0" role="button">
+        <small>Flow lige nu</small>
+        <div class="mega num"><b data-ref="flowV">\u2014</b><small>L/min</small></div>
+        <span class="status" data-ref="status">\u2014</span>
+      </div>
+      <div class="tiles">
+        ${tile("today", "Forbrug i dag", c.id("water_total"))}
+        ${tile("cost", "Pris i dag", c.id("water_cost_today"))}
+        ${tile("price", "Pris pr. m\xB3", c.id("water_price"))}
+      </div>
+    </div>
+  </section>
+  ${this.panels[0].html("a-full tall")}
+</div>`;
+  }
+  shown() {
+    super.shown();
+    this.card.loadToday(TODAY_KEYS4, () => this._updateToday());
+  }
+  hourTick() {
+    super.hourTick();
+    this.card.loadToday(TODAY_KEYS4, () => this._updateToday());
+  }
+  update() {
+    const c = this.card;
+    const lpm = c.flowLpm("water_flow");
+    this.text("flowV", Number.isFinite(lpm) ? fmt(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
+    const st = c.waterFlowState(lpm);
+    this.text("status", st.label);
+    this.tone("status", st.tone);
+    const cost = c.num("water_cost_today");
+    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costU", "kr");
+    const price = c.num("water_price");
+    this.text("priceV", Number.isFinite(price) ? fmt(price, 2) : "\u2014");
+    this.text("priceU", "kr/m\xB3");
+    this._updateToday();
+  }
+  _updateToday() {
+    this.value("today", fmtVolume(this.card.today("water_total", "volume")));
+  }
+};
+
+// src/cards/ha-energy-center-card/sections/ev.js
+var EvSection = class extends Section {
+  constructor(card) {
+    super(card);
+    const base = { tone: "ev", kind: "energy", icon: "mdi:chart-bar", delta: "reset" };
+    this.panels = [
+      new HistoryPanel(card, { ...base, key: "ev-day", stat: "ev_energy_today", title: "Billader pr. dag", periods: ["month"], captions: { month: "Seneste 30 dage" } }),
+      new HistoryPanel(card, { ...base, key: "ev-month", stat: "ev_energy_month", title: "Billader pr. m\xE5ned", periods: ["year"], captions: { year: "Seneste 12 m\xE5neder" } })
+    ];
+  }
+  ids() {
+    return ["ev_power", "ev_energy_today", "ev_energy_month", "ev_energy_total", "ev_session", "ev_cost_today", "ev_mode"].map((k) => this.card.id(k)).filter(Boolean);
+  }
+  html() {
+    const c = this.card;
+    return `
+<div class="layout">
+  <section class="card utility tone-ev a-full">
+    <div class="hero-head"><div class="card-head">${icon2("mdi:ev-station")}<div><h3>Billader</h3><small>Ladeboks \xB7 live</small></div></div><span class="chip" data-ref="chip">\u2014</span></div>
+    <div class="util-body">
+      <div class="util-main clickable" data-entity="${escapeHtml3(c.id("ev_power") || "")}" tabindex="0" role="button">
+        <small>Aktuel ladeeffekt</small>
+        <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
+        <span class="status" data-ref="status">\u2014</span>
+      </div>
+      <div class="tiles four">
+        ${tile("today", "Energi i dag", c.id("ev_energy_today"))}
+        ${tile("month", "Energi denne m\xE5ned", c.id("ev_energy_month"))}
+        ${tile("cost", "Pris i dag", c.id("ev_cost_today"))}
+        ${tile("session", "Seneste session", c.id("ev_session"))}
+      </div>
+    </div>
+  </section>
+  ${this.panels[0].html("a-half tall")}
+  ${this.panels[1].html("a-half tall")}
+</div>`;
+  }
+  update() {
+    const c = this.card;
+    const w = c.watts("ev_power");
+    this.value("pow", fmtPower2(w), true);
+    const st = c.evStatus();
+    this.text("chip", st.charging ? "OPLADER" : "KLAR / IKKE AKTIV");
+    this.tone("chip", st.charging ? "ok" : "");
+    this.text("status", st.label);
+    this.tone("status", st.charging ? "ok" : "");
+    this.value("today", fmtEnergy2(c.kwh("ev_energy_today")));
+    this.value("month", fmtEnergy2(c.kwh("ev_energy_month")));
+    this.value("session", fmtEnergy2(c.kwh("ev_session")));
+    const cost = c.num("ev_cost_today");
+    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costU", "kr");
+  }
+};
+
+// src/cards/ha-energy-center-card/ha-energy-center-card.js
+var VERSION49 = "0.2.0";
+var CARD_TAG2 = "ha-energy-center-card";
+var TABS2 = [
+  { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
+  { key: "power", label: "Str\xF8m", icon: "mdi:flash", tone: "el", Section: PowerSection },
+  { key: "heat", label: "Fjernvarme", icon: "mdi:radiator", tone: "heat", Section: HeatSection },
+  { key: "water", label: "Vand", icon: "mdi:water", tone: "water", Section: WaterSection },
+  { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection }
+];
+var EV_MODES = {
+  disconnected: "Ikke tilsluttet",
+  connected_requesting: "Tilsluttet \u2013 venter",
+  connected_charging: "Lader",
+  connected_finished: "F\xE6rdig"
+};
+var PULSE_MIN_MS = 1500;
+var HaEnergyCenterCard = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._hass = void 0;
+    this.config = void 0;
+    this._sections = /* @__PURE__ */ new Map();
+    this._today = /* @__PURE__ */ new Map();
+    this._lazy = /* @__PURE__ */ new Map();
+    this._warned = /* @__PURE__ */ new Set();
+    this._visible = true;
+    this._connected = false;
+    this._frame = 0;
+    this._reducedMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.stats = new StatsStore(() => this._hass, (k, ...a) => this.warnOnce(k, ...a));
+    this._onVisibility = () => this._updateActivity();
+    this.metrics = { flushes: 0, sectionUpdates: 0, lastUpdateMs: 0 };
+  }
+  /* ---------- Lovelace API ---------- */
+  static getStubConfig() {
+    return { title: DEFAULT_CONFIG2.title };
+  }
+  setConfig(config) {
+    if (config && typeof config !== "object") throw new Error("Ugyldig konfiguration");
+    const c = config || {};
+    this.config = {
+      ...DEFAULT_CONFIG2,
+      ...c,
+      entities: { ...DEFAULT_ENTITIES2, ...c.entities || {} },
+      groups: Array.isArray(c.groups) ? c.groups.filter((g) => g && Array.isArray(g.entities)) : DEFAULT_GROUPS,
+      phases: Array.isArray(c.phases) ? c.phases : DEFAULT_PHASES
+    };
+    this._buildShell();
+    if (this._hass) this._schedule();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    if (this.config) this._schedule();
+  }
+  get hass() {
+    return this._hass;
+  }
+  getCardSize() {
+    return 14;
+  }
+  getGridOptions() {
+    return { columns: "full" };
+  }
+  connectedCallback() {
+    this._connected = true;
+    document.addEventListener("visibilitychange", this._onVisibility);
+    if (typeof IntersectionObserver === "function") {
+      this._io = new IntersectionObserver((entries) => {
+        this._visible = entries.some((e) => e.isIntersecting);
+        this._updateActivity();
+      });
+      this._io.observe(this);
+      this._lazyIo = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const cb = this._lazy.get(e.target);
+            this._lazyIo.unobserve(e.target);
+            this._lazy.delete(e.target);
+            cb?.();
+          }
+        },
+        { rootMargin: "200px 0px" }
+      );
+      for (const el of this._lazy.keys()) this._lazyIo.observe(el);
+    }
+    this._current()?.section.flow?.connect();
+    this._updateActivity();
+  }
+  disconnectedCallback() {
+    this._connected = false;
+    document.removeEventListener("visibilitychange", this._onVisibility);
+    this._io?.disconnect();
+    this._io = void 0;
+    this._lazyIo?.disconnect();
+    this._lazyIo = void 0;
+    cancelAnimationFrame(this._frame);
+    this._frame = 0;
+    clearTimeout(this._hourTimer);
+    this._hourTimer = void 0;
+    for (const s of this._sections.values()) s.section.hidden?.();
+    if (this._dlg?.open) this._dlg.close();
+  }
+  /* ---------- aktivitet ---------- */
+  get active() {
+    return this._connected && this._visible && document.visibilityState !== "hidden";
+  }
+  _updateActivity() {
+    const active = this.active;
+    this.toggleAttribute("paused", !active);
+    if (!active) {
+      clearTimeout(this._hourTimer);
+      this._hourTimer = void 0;
+      return;
+    }
+    this._scheduleHourTick();
+    if (this._stale) this._schedule();
+    this._checkHour(this._current());
+  }
+  _scheduleHourTick() {
+    if (this._hourTimer) return;
+    const now = Date.now();
+    const next = Math.floor(now / HOUR_MS2) * HOUR_MS2 + HOUR_MS2 + 3 * MINUTE_MS2 + Math.random() * 3e4;
+    this._hourTimer = setTimeout(() => {
+      this._hourTimer = void 0;
+      if (!this.active) return;
+      this._checkHour(this._current());
+      this._scheduleHourTick();
+    }, next - now);
+  }
+  _checkHour(entry) {
+    if (!entry?.built || !this._hass) return;
+    const hk = hourKey(Date.now() - 3 * MINUTE_MS2);
+    if (entry.hour === hk) return;
+    const first = entry.hour === void 0;
+    entry.hour = hk;
+    if (!first) this._safe(`${entry.key}-hour`, () => entry.section.hourTick());
+  }
+  /* ---------- opdateringsløkke ---------- */
+  _schedule() {
+    if (this._frame) return;
+    this._frame = requestAnimationFrame(() => {
+      this._frame = 0;
+      this._flush();
+    });
+  }
+  _flush() {
+    if (!this._hass || !this.config) return;
+    if (!this.active && this._everFlushed) {
+      this._stale = true;
+      return;
+    }
+    this._stale = false;
+    this._everFlushed = true;
+    const t0 = performance.now();
+    this.metrics.flushes += 1;
+    const entry = this._ensureSection(this._tab);
+    if (entry) this._updateSection(entry, false);
+    if (this._dlg?.open) this._updateDialog();
+    this.metrics.lastUpdateMs = performance.now() - t0;
+  }
+  _updateSection(entry, force) {
+    const states = this._hass.states;
+    const changed = /* @__PURE__ */ new Set();
+    for (const id of entry.ids) {
+      const obj = states[id];
+      if (entry.seen.get(id) !== obj) {
+        entry.seen.set(id, obj);
+        changed.add(id);
+      }
+    }
+    if (!force && !changed.size) return;
+    this.metrics.sectionUpdates += 1;
+    this._safe(entry.key, () => entry.section.update(force ? null : changed));
+    if (changed.size) this._safe(`${entry.key}-live`, () => entry.section.onLive(changed));
+  }
+  _ensureSection(key) {
+    const entry = this._sections.get(key);
+    if (!entry || entry.built || !this._hass) return entry;
+    this._safe(`${key}-build`, () => {
+      entry.el.innerHTML = entry.section.html();
+      entry.section.mount(entry.el);
+      entry.ids = [...new Set(entry.section.ids())];
+      entry.built = true;
+      this._updateSection(entry, true);
+      entry.section.shown();
+      this._checkHour(entry);
+    });
+    return entry;
+  }
+  _current() {
+    return this._sections.get(this._tab);
+  }
+  /* ---------- shell ---------- */
+  _buildShell() {
+    const c = this.config;
+    const saved = this._readTab();
+    this._tab = TABS2.some((t) => t.key === saved) ? saved : TABS2.some((t) => t.key === c.default_tab) ? c.default_tab : "overview";
+    this._lazy.clear();
+    this._lazyIo?.disconnect();
+    for (const s of this._sections.values()) s.section.hidden?.();
+    this._sections.clear();
+    this._today.clear();
+    this.shadowRoot.innerHTML = `
+<style>${STYLE4}</style>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark">${icon2("mdi:lightning-bolt-circle")}</span>
+      <div><h1>${escapeHtml3(c.title)}</h1><p>${escapeHtml3(c.subtitle)}</p></div>
+    </div>
+    <nav class="tabs" role="tablist">${TABS2.map(
+      (t) => `<button type="button" role="tab" class="tab tone-${t.tone} ${t.key === this._tab ? "on" : ""}" data-tab="${t.key}" aria-selected="${t.key === this._tab}">${icon2(t.icon)}<span>${t.label}</span></button>`
+    ).join("")}</nav>
+  </header>
+  <main>${TABS2.map((t) => `<div class="panel" data-sec="${t.key}" role="tabpanel" ${t.key === this._tab ? "" : "hidden"}></div>`).join("")}</main>
+</div>
+<dialog class="detail">
+  <div class="dlg-head"><span class="badge tone-el" data-dlg-icon></span><div><h3 data-dlg-title>\u2014</h3><small data-dlg-sum>\u2014</small></div>
+    <button type="button" class="dlg-close" data-close aria-label="Luk">${icon2("mdi:close")}</button></div>
+  <div class="dlg-rows" data-dlg-rows></div>
+</dialog>`;
+    const root = this.shadowRoot;
+    for (const t of TABS2) {
+      this._sections.set(t.key, { key: t.key, section: new t.Section(this), el: root.querySelector(`[data-sec="${t.key}"]`), seen: /* @__PURE__ */ new Map(), ids: [], built: false });
+    }
+    this._dlg = root.querySelector("dialog");
+    this._bindEvents();
+  }
+  _bindEvents() {
+    const root = this.shadowRoot;
+    root.addEventListener("click", (ev) => {
+      const t = ev.target;
+      if (t === this._dlg) return this._dlg.close();
+      const tab = t.closest?.("[data-tab]");
+      if (tab) return this.switchTab(tab.dataset.tab);
+      const go = t.closest?.("[data-goto]");
+      if (go) return this.switchTab(go.dataset.goto);
+      const grp = t.closest?.("[data-group]");
+      if (grp) return this.openGroup(Number(grp.dataset.group));
+      if (t.closest?.("[data-close]")) return this._dlg.close();
+      if (t.closest?.(".seg, .plot")) return;
+      const ent = t.closest?.("[data-entity]");
+      if (ent?.dataset.entity) this.moreInfo(ent.dataset.entity);
+    });
+    root.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      const el = ev.target.closest?.("[data-entity][tabindex]");
+      if (el && el.tagName !== "BUTTON") {
+        ev.preventDefault();
+        this.moreInfo(el.dataset.entity);
+      }
+    });
+    this._dlg.addEventListener("close", () => {
+      this._dlgGroup = void 0;
+    });
+  }
+  switchTab(key) {
+    if (key === this._tab || !this._sections.has(key)) return;
+    const prev = this._current();
+    prev?.section.hidden?.();
+    if (prev) prev.el.hidden = true;
+    this._tab = key;
+    this._writeTab(key);
+    this.shadowRoot.querySelectorAll(".tab").forEach((b) => {
+      const on = b.dataset.tab === key;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", String(on));
+    });
+    const entry = this._sections.get(key);
+    entry.el.hidden = false;
+    if (!this._reducedMotion) {
+      entry.el.classList.remove("enter");
+      void entry.el.offsetWidth;
+      entry.el.classList.add("enter");
+    }
+    if (entry.built) {
+      this._updateSection(entry, false);
+      entry.section.shown();
+      this._checkHour(entry);
+    } else this._ensureSection(key);
+  }
+  _readTab() {
+    try {
+      return sessionStorage.getItem(`${CARD_TAG2}:tab`);
+    } catch {
+      return void 0;
+    }
+  }
+  _writeTab(key) {
+    try {
+      sessionStorage.setItem(`${CARD_TAG2}:tab`, key);
+    } catch {
+    }
+  }
+  /* ---------- gruppe-popup ---------- */
+  openGroup(index) {
+    const g = this.config.groups[index];
+    if (!g || !this._dlg) return;
+    this._dlgGroup = index;
+    const root = this._dlg;
+    root.querySelector("[data-dlg-icon]").innerHTML = icon2(g.icon || "mdi:flash");
+    root.querySelector("[data-dlg-title]").textContent = g.name;
+    root.querySelector("[data-dlg-rows]").innerHTML = g.entities.map(
+      (m2, i) => `
+      <button type="button" class="drow" data-entity="${escapeHtml3(m2.entity)}" data-i="${i}">
+        <span class="badge sm">${icon2(m2.icon || this._hass?.states[m2.entity]?.attributes?.icon || "mdi:flash")}</span>
+        <span class="dn">${escapeHtml3(m2.name || this._hass?.states[m2.entity]?.attributes?.friendly_name || m2.entity)}</span>
+        <span class="dv num">\u2014</span>
+        <span class="gbar"><i></i></span>
+        <span class="ds num">\u2014</span>
+      </button>`
+    ).join("");
+    this._dlgRows = [...root.querySelectorAll(".drow")].map((el) => ({
+      el,
+      v: el.querySelector(".dv"),
+      s: el.querySelector(".ds"),
+      bar: el.querySelector(".gbar i")
+    }));
+    this._dlgSum = root.querySelector("[data-dlg-sum]");
+    this._dlgSeen = /* @__PURE__ */ new Map();
+    this._updateDialog(true);
+    if (!root.open) root.showModal();
+  }
+  _updateDialog(force = false) {
+    const g = this.config.groups[this._dlgGroup];
+    if (!g) return;
+    let changed = force;
+    for (const m2 of g.entities) {
+      const obj = this._hass.states[m2.entity];
+      if (this._dlgSeen.get(m2.entity) !== obj) {
+        this._dlgSeen.set(m2.entity, obj);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    const sum = groupSum(this, g);
+    const vals = g.entities.map((m2) => this.wattsOf(m2.entity));
+    const max = Math.max(1, ...vals.filter(Number.isFinite));
+    vals.forEach((w, i) => {
+      const row = this._dlgRows[i];
+      const p2 = fmtPower2(w);
+      row.v.textContent = Number.isFinite(w) ? `${p2.v} ${p2.u}` : "Ingen data";
+      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
+      row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
+      row.el.classList.toggle("off", !Number.isFinite(w));
+      row.el.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);
+    });
+    const p = fmtPower2(sum.sum);
+    this._dlgSum.textContent = `${p.v} ${p.u} i alt \xB7 ${g.entities.length} enheder${sum.missing ? ` \xB7 ${sum.missing} uden data` : ""}`;
+  }
+  /* ---------- HA-integration ---------- */
+  moreInfo(entityId) {
+    if (!entityId) return;
+    if (this._dlg?.open) this._dlg.close();
+    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+  }
+  observeLazy(el, cb) {
+    if (!this._lazyIo) {
+      if (typeof IntersectionObserver !== "function") return cb();
+      this._lazy.set(el, cb);
+      return;
+    }
+    this._lazy.set(el, cb);
+    this._lazyIo.observe(el);
+  }
+  /** Diskret fade/slide når en live-værdi skifter (throttlet, kun når kortet ses). */
+  pulse(el) {
+    if (this._reducedMotion || !this.active || typeof el.animate !== "function") return;
+    const now = performance.now();
+    if (el.__pulse && now - el.__pulse < PULSE_MIN_MS) return;
+    el.__pulse = now;
+    el.animate([{ opacity: 0.45, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }], { duration: 280, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }
+  /* ---------- dataadgang ---------- */
+  id(key) {
+    return this.config?.entities?.[key] || void 0;
+  }
+  stateObj(key) {
+    const id = this.id(key);
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  num(key) {
+    return toNumber3(this.stateObj(key)?.state);
+  }
+  numOf(entityId) {
+    return entityId ? toNumber3(this._hass?.states?.[entityId]?.state) : void 0;
+  }
+  _norm(stateObj, kind, label) {
+    const r2 = normalize(stateObj, kind);
+    if (!r2.known) this.warnOnce(`unit-${stateObj.entity_id}`, `Ukendt enhed "${r2.unit}" p\xE5 ${stateObj.entity_id} (${label}) \u2013 v\xE6rdien vises ikke`);
+    return r2.value;
+  }
+  wattsOf(entityId) {
+    const s = entityId ? this._hass?.states?.[entityId] : void 0;
+    return s ? this._norm(s, "power", "effekt") : void 0;
+  }
+  watts(key) {
+    return this.wattsOf(this.id(key));
+  }
+  kwh(key) {
+    const s = this.stateObj(key);
+    return s ? this._norm(s, "energy", "energi") : void 0;
+  }
+  flowLpm(key) {
+    const s = this.stateObj(key);
+    return s ? this._norm(s, "flow", "flow") : void 0;
+  }
+  /** Live-værdi i statistikkens enhed (kWh / m³ / valuta). */
+  statLive(key, kind) {
+    const s = this.stateObj(key);
+    if (!s) return void 0;
+    if (kind === "energy") return this._norm(s, "energy", "energi");
+    if (kind === "volume") return this._norm(s, "volume", "volumen");
+    return toNumber3(s.state);
+  }
+  /** Henter timestatistik for i dag (deles med "Dag"-graferne via cachen). */
+  loadToday(pairs, done) {
+    const ids = pairs.map(([k]) => this.id(k)).filter(Boolean);
+    if (!ids.length || !this._hass) return;
+    const sod = startOfDay();
+    const range = periodRange("day");
+    this.stats.get(ids, range.stat, range.fetchStart, range.end).then((map) => {
+      if (sod !== startOfDay()) return;
+      for (const id of ids) this._today.set(id, { sod, rows: map.get(id) || [] });
+      this._safe("today", done);
+    });
+  }
+  today(key, kind) {
+    const t = this._today.get(this.id(key));
+    if (!t || t.sod !== startOfDay()) return void 0;
+    return sumSince(t.rows, t.sod, this.statLive(key, kind));
+  }
+  waterFlowState(lpm) {
+    if (!Number.isFinite(lpm)) return { label: "Ingen data", tone: "" };
+    if (lpm <= 0.05) return { label: "Ingen flow", tone: "" };
+    if (lpm >= this.config.water_high_flow_lpm) return { label: "H\xF8jt flow", tone: "warn" };
+    return { label: "Normalt flow", tone: "water" };
+  }
+  evStatus() {
+    const w = this.watts("ev_power");
+    const charging = Number.isFinite(w) && w > this.config.ev_charging_threshold_w;
+    const mode = this.stateObj("ev_mode")?.state;
+    if (charging) return { charging, label: `Lader med ${fmtPower2(w).v} ${fmtPower2(w).u}` };
+    if (!Number.isFinite(w)) return { charging, label: "Ingen data" };
+    return { charging, label: EV_MODES[mode] || "Klar" };
+  }
+  /* ---------- robusthed ---------- */
+  _safe(name, fn) {
+    try {
+      fn();
+    } catch (err) {
+      this.warnOnce(`section-${name}`, `Fejl i "${name}" \u2013 resten af kortet opdateres fortsat`, err);
+    }
+  }
+  warnOnce(key, ...args) {
+    if (this._warned.has(key)) return;
+    this._warned.add(key);
+    console.warn(`[${this.config?.log_prefix || DEFAULT_CONFIG2.log_prefix}]`, ...args);
+  }
+};
+if (!customElements.get(CARD_TAG2)) customElements.define(CARD_TAG2, HaEnergyCenterCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c) => c.type === CARD_TAG2)) {
+  window.customCards.push({
+    type: CARD_TAG2,
+    name: "HA Energy Center Card",
+    description: "Energioverblik med faner for str\xF8m, fjernvarme, vand og billader \u2013 live, historik og gruppefordeling",
+    preview: false
+  });
+}
+console.info(`%c ENERGY CENTER %c v${VERSION49} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+
+// src/cards/ha-home-status-card/ha-home-status-card.js
+var VERSION50 = "0.8.63";
+var PRESETS2 = {
+  "home_energy": {
+    "name": "Hus",
+    "icon": "mdi:home-lightning-bolt-outline",
+    "color": "var(--state-info-icon, var(--info-color, #38bdf8))",
+    "entity": "sensor.home_energy_entity",
+    "vehicle_power_entity": "sensor.home_energy_vehicle_power",
+    "phase_entities": [
+      "sensor.home_energy_phase_1",
+      "sensor.home_energy_phase_2",
+      "sensor.home_energy_phase_3"
+    ],
+    "phase_max": 5833,
+    "daily_entity": "sensor.home_energy_daily",
+    "navigation_path": "/energi-overblik/energy",
+    "value_unit": "kW"
+  },
+  "ev": {
+    "name": "Bil",
+    "icon": "mdi:car-electric-outline",
+    "color": "var(--state-on-icon, var(--success-color, #20e3a2))",
+    "entity": "sensor.ev_entity",
+    "power_entity": "sensor.ev_power",
+    "phase_entities": [
+      "sensor.ev_phase_1",
+      "sensor.ev_phase_2",
+      "sensor.ev_phase_3"
+    ],
+    "phase_max_entity": "sensor.ev_phase_max",
+    "phase_max": 15.94,
+    "daily_entity": "sensor.ev_daily",
+    "session_energy_entity": "sensor.ev_session_energy",
+    "schedule_entity": "sensor.ev_schedule",
+    "charger_state_entity": "sensor.ev_charger_state",
+    "cable_entity": "binary_sensor.ev_cable",
+    "plug_mode_entity": "sensor.ev_plug_mode",
+    "vehicle_plug_entity": "binary_sensor.ev_vehicle_plug",
+    "navigation_path": "/teknik-overblik/tesla",
+    "popup": {
+      "name": "Bil",
+      "vehicle": {
+        "model": "Tesla Model 3 RWD",
+        "image": "/local/tesla/dashboard/model-3-rwd-charcoal.webp"
+      },
+      "entities": {
+        "battery": "sensor.ev_popup_entities_battery",
+        "range": "sensor.ev_popup_entities_range",
+        "odometer": "sensor.ev_popup_entities_odometer",
+        "temperature_inside": "sensor.ev_popup_entities_temperature_inside",
+        "temperature_outside": "sensor.ev_popup_entities_temperature_outside",
+        "last_update": "sensor.ev_popup_entities_last_update",
+        "online": "binary_sensor.ev_popup_entities_online",
+        "asleep": "binary_sensor.ev_popup_entities_asleep",
+        "charger": "binary_sensor.ev_popup_entities_charger",
+        "charging": "binary_sensor.ev_popup_entities_charging",
+        "charging_rate": "sensor.ev_popup_entities_charging_rate",
+        "charging_finish_time": "sensor.ev_popup_entities_charging_finish_time",
+        "charging_time_remaining": "sensor.ev_popup_entities_charging_time_remaining",
+        "charging_price_estimate": "sensor.ev_popup_entities_charging_price_estimate",
+        "charger_power": "sensor.ev_popup_entities_charger_power",
+        "charger_mode": "sensor.ev_popup_entities_charger_mode",
+        "best_charge_start": "sensor.ev_popup_entities_best_charge_start",
+        "best_charge_end": "sensor.ev_popup_entities_best_charge_end",
+        "best_charge_price": "sensor.ev_popup_entities_best_charge_price",
+        "charge_minutes_needed": "sensor.ev_popup_entities_charge_minutes_needed",
+        "missing_wall_kwh": "sensor.ev_popup_entities_missing_wall_kwh",
+        "monta_state": "sensor.ev_popup_entities_monta_state",
+        "monta_last_charge": "sensor.ev_popup_entities_monta_last_charge",
+        "monta_charge_energy": "sensor.ev_popup_entities_monta_charge_energy",
+        "monta_cable_connected": "binary_sensor.ev_popup_entities_monta_cable_connected"
+      },
+      "controls": {
+        "start_charge": {
+          "entity": "script.ev_popup_controls_start_charge_entity"
+        },
+        "stop_charge": {
+          "entity": "script.ev_popup_controls_stop_charge_entity"
+        },
+        "target_soc": {
+          "entity": "input_number.ev_popup_controls_target_soc_entity"
+        },
+        "deadline": {
+          "entity": "input_datetime.tesla_ready_by_time"
+        }
+      },
+      "layout": "charge",
+      "navigation_path": "/teknik-overblik/tesla",
+      "refresh_entities": [
+        "sensor.ev_popup_refresh_1"
+      ]
+    },
+    "value_unit": "%"
+  },
+  "electricity_price": {
+    "name": "Str\xF8mpris",
+    "icon": "mdi:cash-multiple",
+    "color": "var(--state-on-icon, var(--success-color, #20e3a2))",
+    "entity": "sensor.electricity_price_entity",
+    "navigation_path": "/energi-overblik/pris-eksempler",
+    "value_unit": "kr"
+  },
+  "pool": {
+    "name": "Pool",
+    "icon": "mdi:pool",
+    "color": "var(--state-info-icon, var(--info-color, #38bdf8))",
+    "entity": "sensor.pool_entity",
+    "status_entity": "sensor.pool_status",
+    "active_entity": "binary_sensor.pool_active",
+    "daily_entity": "sensor.pool_daily",
+    "navigation_path": "/hjem-overblik/pool",
+    "value_unit": "\xB0C"
+  },
+  "pet": {
+    "name": "Foder",
+    "icon": "mdi:dog",
+    "color": "var(--state-on-icon, var(--success-color, #20e3a2))",
+    "entity": "select.pet_entity",
+    "error_entity": "binary_sensor.pet_error",
+    "status_entities": [
+      "input_select.pet_status_1",
+      "input_select.pet_status_2",
+      "input_select.pet_status_3"
+    ],
+    "navigation_path": "pet_navigation_path"
+  },
+  "security": {
+    "name": "Sikkerhed",
+    "icon": "mdi:shield-home",
+    "color": "var(--state-on-icon, var(--success-color, #20e3a2))",
+    "entity": "lock.security_entity",
+    "lock_entities": [
+      "lock.security_lock_1",
+      "lock.security_lock_2",
+      "lock.security_lock_3"
+    ],
+    "terrace_lock_entity": "binary_sensor.security_terrace_lock",
+    "gate_lock_entity": "binary_sensor.security_gate_lock",
+    "gate_lock_inverted": true,
+    "open_count_entity": "sensor.security_open_count",
+    "alarm_entity": "alarm_control_panel.security_alarm",
+    "secondary_alarm_entity": "alarm_control_panel.security_secondary_alarm",
+    "door_entities": [
+      "binary_sensor.security_door_1",
+      "binary_sensor.security_door_2",
+      "binary_sensor.security_door_3",
+      "binary_sensor.security_door_4",
+      "binary_sensor.security_door_5",
+      "binary_sensor.security_door_6",
+      "binary_sensor.security_door_7"
+    ],
+    "navigation_path": "/hjem-overblik/sikkerhed"
+  },
+  "heating": {
+    "name": "Varme",
+    "icon": "mdi:radiator",
+    "color": "var(--state-info-icon, var(--info-color, #38bdf8))",
+    "entity": "sensor.heating_entity",
+    "heating_entity": "sensor.heating_heating",
+    "pressure_entity": "sensor.heating_pressure",
+    "source_entity": "sensor.heating_source",
+    "daily_entity": "sensor.heating_daily",
+    "water_regulator_entity": "sensor.heating_water_regulator",
+    "blocked_by_entity": "sensor.heating_blocked_by",
+    "valve_entity": "sensor.heating_valve",
+    "navigation_path": "/energi-overblik/varme-center"
+  },
+  "settings": {
+    "name": "Indstillinger",
+    "icon": "mdi:cog",
+    "color": "var(--state-info-icon, var(--info-color, #38bdf8))",
+    "entity": "input_boolean.settings_entity",
+    "off_count_entity": "sensor.settings_off_count",
+    "appliance_entities": [
+      "binary_sensor.settings_appliance_1",
+      "binary_sensor.settings_appliance_2",
+      "binary_sensor.settings_appliance_3"
+    ],
+    "navigation_path": "/hjem-overblik/indstillinger"
+  }
+};
+var HaHomeStatusCard2 = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._sig = "";
+    this._evCycle = 0;
+  }
+  connectedCallback() {
+    this._cycleTimer = setInterval(() => {
+      const type = this.config?.preset || this.config?.type_name;
+      if (type === "ev") {
+        this._evCycle = (this._evCycle + 1) % 2;
+        this.render();
+      }
+    }, 4e3);
+  }
+  setConfig(config) {
+    if (!config.preset && !config.entity)
+      throw new Error("V\xE6lg preset eller entity");
+    this.config = { ...config };
+    this._sig = "";
+    this._rendered = false;
+    this.render();
+  }
+  _watchedIds() {
+    const type = this.config?.preset || this.config?.type_name || "entity";
+    const cfg = { ...PRESETS2[type] || {}, ...this.config };
+    return [
+      cfg.entity,
+      cfg.vehicle_power_entity,
+      cfg.power_entity,
+      cfg.phase_max_entity,
+      cfg.daily_entity,
+      cfg.session_energy_entity,
+      cfg.schedule_entity,
+      cfg.charger_state_entity,
+      cfg.cable_entity,
+      cfg.fallback_daily_entity,
+      cfg.status_entity,
+      cfg.active_entity,
+      cfg.error_entity,
+      cfg.terrace_lock_entity,
+      cfg.gate_lock_entity,
+      cfg.open_count_entity,
+      cfg.alarm_entity,
+      cfg.secondary_alarm_entity,
+      cfg.heating_entity,
+      cfg.pressure_entity,
+      cfg.source_entity,
+      cfg.water_regulator_entity,
+      cfg.blocked_by_entity,
+      cfg.off_count_entity,
+      cfg.secondary_entity,
+      ...cfg.phase_entities || [],
+      ...cfg.status_entities || [],
+      ...cfg.lock_entities || [],
+      ...cfg.door_entities || [],
+      ...cfg.appliance_entities || [],
+      "binary_sensor.pool_person_i_vandet",
+      "sensor.ac_combined_state"
+    ].filter(Boolean);
+  }
+  set hass(hass) {
+    this._hass = hass;
+    if (this._popupCard) this._popupCard.hass = hass;
+    const ids = this._watchedIds();
+    const sig = JSON.stringify(
+      ids.map((id) => [id, hass?.states?.[id]?.state])
+    );
+    if (sig !== this._sig) {
+      this._sig = sig;
+      this.render();
+    }
+  }
+  state(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  text(id, fallback = "\u2014") {
+    const s = this.state(id)?.state;
+    return !s || ["unknown", "unavailable"].includes(s) ? fallback : s;
+  }
+  number(id) {
+    return Number(String(this.state(id)?.state ?? "").replace(",", "."));
+  }
+  on(id) {
+    return this.state(id)?.state === "on";
+  }
+  fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toLocaleString("da-DK", { maximumFractionDigits: digits }) : "\u2014";
+  }
+  priceColor(value) {
+    const price = Number.isFinite(value) ? value : 0;
+    const green = "var(--dashboard-success, var(--state-on-icon, var(--success-color, #20e3a2)))";
+    const yellow = "var(--dashboard-warning, var(--warning-color, #f59e0b))";
+    const orange = "var(--dashboard-orange, #f97316)";
+    const red = "var(--dashboard-danger, var(--error-color, #f43f5e))";
+    const darkRed = "var(--dashboard-danger-strong, var(--error-color, #991b1b))";
+    const mix = (from, to, amount) => {
+      const percent2 = Math.round(Math.max(0, Math.min(1, amount)) * 1e3) / 10;
+      return `color-mix(in oklab, ${from} ${100 - percent2}%, ${to} ${percent2}%)`;
+    };
+    if (price <= 1) return green;
+    if (price <= 2) return mix(green, yellow, price - 1);
+    if (price <= 4) return mix(yellow, orange, (price - 2) / 2);
+    if (price <= 5) return mix(orange, red, price - 4);
+    return mix(red, darkRed, price - 5);
+  }
+  view(item2) {
+    const type = item2.type || "entity";
+    const cfg = { ...PRESETS2[type] || {}, ...item2 };
+    let value = this.text(cfg.entity);
+    let label = cfg.name || this.state(cfg.entity)?.attributes?.friendly_name || "Status";
+    let meter = 0;
+    let color = cfg.color || "var(--state-info-icon, var(--info-color, #38bdf8))";
+    let detail = "";
+    let pricePulse = 0;
+    if (type === "home_energy") {
+      const watts = this.number(cfg.entity);
+      const vehicleKw = this.number(cfg.vehicle_power_entity);
+      const houseWatts = Math.max(
+        0,
+        watts - (Number.isFinite(vehicleKw) ? vehicleKw * 1e3 : 0)
+      );
+      value = houseWatts < 1e3 ? `${this.fmt(houseWatts, 0)} W` : `${this.fmt(houseWatts / 1e3, 2)} kW`;
+      detail = `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
+      meter = houseWatts < 3500 ? 1 : houseWatts < 7e3 ? 2 : houseWatts < 10500 ? 3 : houseWatts < 14e3 ? 4 : 5;
+    } else if (type === "ev") {
+      const battery = this.number(cfg.entity);
+      value = `${this.fmt(battery, 0)}%`;
+      const power = this.number(cfg.power_entity);
+      const scheduleState = [
+        this.text(cfg.schedule_entity, ""),
+        this.text(cfg.charger_state_entity, "")
+      ].join(" ").toLowerCase();
+      const sessionEnergy = this.number(cfg.session_energy_entity);
+      detail = power > 0 ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0 ? `${this.fmt(sessionEnergy, 1)} kWh ladet` : `${this.fmt(power, 1)} kW lader` : scheduleState.includes("scheduled") ? "Planlagt" : `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
+      meter = Math.ceil((battery || 0) / 20);
+      if (battery < 20) color = "var(--error-color, #f43f5e)";
+      else if (battery < 45) color = "var(--warning-color, #f59e0b)";
+    } else if (type === "electricity_price") {
+      const price = this.number(cfg.entity);
+      value = `${this.fmt(price, 2)} kr`;
+      detail = price < 1 ? "Lav pris" : price < 5 ? "Normal pris" : "H\xF8j pris";
+      meter = price < 1 ? 1 : price < 2 ? 2 : price < 3 ? 3 : price < 4 ? 4 : 5;
+      color = this.priceColor(price);
+      pricePulse = Number.isFinite(price) && price > 6 ? Math.min(1, (price - 6) / 6) : 0;
+    } else if (type === "pool") {
+      const temp = this.number(cfg.entity);
+      value = `${this.fmt(temp, 1)}\xB0C`;
+      const active = this.on(cfg.active_entity);
+      detail = active ? "Pumpen k\xF8rer" : this.text(cfg.status_entity, "Pumpen st\xE5r");
+      if (Number.isFinite(temp)) {
+        meter = Math.max(1, Math.min(5, Math.round((temp - 10) / 20 * 5)));
+        color = temp < 18 ? "var(--dashboard-danger, var(--error-color, #ef4444))" : temp < 23 ? "var(--dashboard-warning, var(--warning-color, #f59e0b))" : "var(--dashboard-success, var(--success-color, #20e3a2))";
+      } else {
+        meter = 0;
+        color = "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
+      }
+      cfg.icon = this.on("binary_sensor.pool_person_i_vandet") ? "mdi:account-swim" : "mdi:pool";
+    } else if (type === "pet") {
+      const statuses = (cfg.status_entities || []).map(
+        (id) => this.text(id, "").toLowerCase()
+      );
+      const done = statuses.filter((s) => /givet|færdig|done/.test(s)).length;
+      const error = this.on(cfg.error_entity);
+      const mode = this.text(cfg.entity, "Auto");
+      value = error ? "Fejl" : mode === "schedule" ? "Auto" : mode;
+      detail = `${done}/${statuses.length} m\xE5ltider`;
+      meter = done;
+      cfg.segments = statuses.length || 5;
+      color = error ? "var(--error-color, #f43f5e)" : "var(--state-on-icon, var(--success-color, #20e3a2))";
+      cfg.icon = error ? "mdi:dog-side-off" : mode === "manual" ? "mdi:dog-side" : "mdi:dog";
+    } else if (type === "security") {
+      const ERROR_RAW = ["unavailable", "unknown", "jammed", ""];
+      const lockSegState = (id) => {
+        const s = this.state(id)?.state;
+        if (s === void 0 || ERROR_RAW.includes(s)) return "error";
+        return s === "locked" ? "locked" : "unlocked";
+      };
+      const boolSegState = (id, inverted = false) => {
+        const raw = this.text(id, "");
+        const low = raw.toLowerCase();
+        if (!raw || ["unavailable", "unknown"].includes(low)) return "error";
+        const active = ["on", "open", "true", "1"].includes(low);
+        return active === inverted ? "locked" : "unlocked";
+      };
+      const segStates = (cfg.lock_entities || []).map((id) => lockSegState(id));
+      segStates.push(boolSegState(cfg.terrace_lock_entity, !!cfg.terrace_lock_inverted));
+      segStates.push(boolSegState(cfg.gate_lock_entity, !!cfg.gate_lock_inverted));
+      const locked = segStates.filter((s) => s === "locked").length;
+      const hasError = segStates.includes("error");
+      const open = this.number(cfg.open_count_entity);
+      const alarmIcon = (id) => {
+        const state = this.text(id, "unknown");
+        if (state === "armed_away")
+          return ["mdi:shield-lock-outline", "var(--state-on-icon, var(--success-color))"];
+        if (["armed_home", "armed_night"].includes(state))
+          return ["mdi:shield-home-outline", "var(--state-warn-icon, var(--warning-color))"];
+        if (state === "triggered")
+          return ["mdi:shield-alert-outline", "var(--error-color, #ef4444)"];
+        if (state === "disarmed")
+          return ["mdi:shield-off-outline", "var(--state-alert-icon, var(--error-color))"];
+        return ["mdi:shield-question-outline", "var(--dashboard-icon-muted, var(--disabled-text-color))"];
+      };
+      const [vIcon, vColor] = alarmIcon(cfg.alarm_entity);
+      const [aIcon, aColor] = alarmIcon(cfg.secondary_alarm_entity);
+      const triggered = this.text(cfg.alarm_entity) === "triggered" || this.text(cfg.secondary_alarm_entity) === "triggered";
+      value = triggered ? "Alarm" : hasError ? "Fejl" : locked === segStates.length ? "L\xE5st" : "\xC5ben";
+      detail = "";
+      meter = locked;
+      cfg.segments = segStates.length;
+      cfg.segmentStates = segStates;
+      cfg.hasError = hasError && !triggered;
+      color = triggered || hasError ? "var(--error-color, #ef4444)" : value === "L\xE5st" ? "var(--state-on-icon, var(--success-color, #20e3a2))" : "var(--warning-color, #f59e0b)";
+      cfg.icon = hasError ? "mdi:lock-alert-outline" : value === "L\xE5st" ? "mdi:home-lock" : "mdi:home-lock-open";
+      const doors = (cfg.door_entities || []).filter(
+        (id) => this.on(id)
+      ).length;
+      const windows = Number.isFinite(open) ? open : 0;
+      const windowColor = windows ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
+      const doorColor = doors ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
+      label = `<span class="security-row"><span><img src="/local/billeder/security-status/verisure-brand-icon.png"><ha-icon icon="${vIcon}" style="color:${vColor}"></ha-icon></span><span><img src="/local/billeder/security-status/ajax-brand-icon.png"><ha-icon icon="${aIcon}" style="color:${aColor}"></ha-icon></span><span><ha-icon icon="${windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}" style="color:${windowColor}"></ha-icon><b style="color:${windowColor}">${windows}</b></span><span><ha-icon icon="${doors ? "mdi:door-open" : "mdi:door-closed"}" style="color:${doorColor}"></ha-icon><b style="color:${doorColor}">${doors}</b></span></span>`;
+    } else if (type === "heating") {
+      const heating = /opvarm|til|heat/.test(
+        this.text(cfg.heating_entity, "").toLowerCase()
+      );
+      value = heating ? "Varmer" : this.text(cfg.entity, "Klar");
+      const pressure = this.number(cfg.pressure_entity);
+      const heatDayPrimary = this.number(cfg.daily_entity);
+      const heatDayFallback = this.number(cfg.fallback_daily_entity);
+      const heatDay = Number.isFinite(heatDayPrimary) ? heatDayPrimary : heatDayFallback;
+      detail = Number.isFinite(heatDay) ? heatDay >= 100 ? `${this.fmt(heatDay / 1e3, 1)} MWh` : `${this.fmt(heatDay, 0)} kWh` : Number.isFinite(pressure) ? `${this.fmt(pressure, 1)} bar` : "Afventer";
+      const cheapest = this.text(cfg.source_entity, "").toLowerCase();
+      let sourceIcon = "mdi:help-circle-outline";
+      let sourceText = "?";
+      let sourceColor = "var(--secondary-text-color)";
+      if (cheapest.includes("mix") || cheapest.includes("begge")) {
+        sourceIcon = "mdi:shuffle-variant";
+        sourceText = "Mix";
+        sourceColor = "var(--state-on-icon, var(--success-color))";
+      } else if (cheapest.includes("varmepumpe") || cheapest.includes("ac") || cheapest === "vp") {
+        sourceIcon = "mdi:air-conditioner";
+        sourceText = "VP";
+        sourceColor = "var(--state-info-icon, var(--info-color))";
+      } else if (cheapest.includes("fjernvarme") || cheapest === "fj") {
+        sourceIcon = "mdi:pipe-valve";
+        sourceText = "FJ";
+        sourceColor = "var(--warning-color)";
+      }
+      const waterState = this.text(cfg.entity, "").toLowerCase();
+      const regulator = this.text(cfg.water_regulator_entity, "").toLowerCase();
+      const blockedBy = this.text(cfg.blocked_by_entity, "").toLowerCase();
+      const bypass = waterState.includes("bypass") || regulator.includes("bypass");
+      const water = waterState.includes("opvarm") || waterState.includes("varmt") || regulator.includes("varm");
+      const blocked = waterState.includes("blokeret") || blockedBy && !["ingen", "0", "unknown", "unavailable"].includes(blockedBy);
+      const waterIcon = blocked ? "mdi:water-off" : bypass ? "mdi:water-sync" : water ? "mdi:water" : "mdi:water-outline";
+      const waterColor = blocked ? "var(--warning-color)" : bypass || water ? "var(--state-info-icon, var(--info-color))" : "var(--dashboard-icon-muted, var(--disabled-text-color))";
+      label = `<span class="source-row"><ha-icon icon="${sourceIcon}" style="color:${sourceColor}"></ha-icon><b>${sourceText}</b><ha-icon icon="${waterIcon}" style="color:${waterColor}"></ha-icon></span>`;
+      const valvePct = this.number(cfg.valve_entity);
+      meter = Number.isFinite(valvePct) ? Math.max(1, Math.ceil(Math.min(100, Math.max(0, valvePct)) / 20)) : heating ? 4 : 1;
+      color = heating ? "var(--error-color, #f43f5e)" : "var(--state-info-icon, var(--info-color, #38bdf8))";
+      cfg.icon = heating ? "mdi:radiator" : "mdi:radiator-off";
+    } else if (type === "settings") {
+      const editing = this.on(cfg.entity);
+      const off = this.number(cfg.off_count_entity);
+      const active = (cfg.appliance_entities || []).filter(
+        (id) => this.on(id)
+      ).length;
+      value = editing ? "Edit" : "Klar";
+      detail = active ? `${active} maskiner k\xF8rer` : Number.isFinite(off) && off > 0 ? `${off} autom. slukket` : "Indstillinger";
+      meter = Math.min(5, Number.isFinite(off) ? off : 0);
+      color = editing ? "var(--state-off-icon, var(--disabled-text-color, #f59e0b))" : "var(--state-info-icon, var(--info-color, #38bdf8))";
+    } else {
+      const numeric = this.number(cfg.entity);
+      value = `${Number.isFinite(numeric) ? this.fmt(numeric, cfg.decimals ?? 1) : this.text(cfg.entity)}${cfg.unit ? ` ${cfg.unit}` : ""}`;
+      detail = cfg.secondary_entity ? this.text(cfg.secondary_entity) : cfg.label || "";
+      meter = cfg.meter ?? 0;
+    }
+    const segments = cfg.segments || 5;
+    return {
+      ...cfg,
+      type,
+      value,
+      label,
+      detail,
+      meter: Math.min(segments, Math.max(0, meter)),
+      segments,
+      color,
+      pricePulse
+    };
+  }
+  decoration(item2) {
+    if (item2.type === "home_energy" || item2.type === "ev") {
+      const maxFromEntity = this.number(item2.phase_max_entity);
+      const maximum = Number.isFinite(maxFromEntity) && maxFromEntity > 0 ? maxFromEntity : item2.phase_max;
+      const vehiclePerPhaseW = item2.type === "home_energy" ? Math.max(0, (this.number(item2.vehicle_power_entity) || 0) * 1e3) / 3 : 0;
+      const values = (item2.phase_entities || []).map(
+        (id) => Math.max(0, (this.number(id) || 0) - vehiclePerPhaseW)
+      );
+      const colors = values.map((value) => {
+        const load = Math.min(1, value / maximum);
+        if (load < 0.08) return "var(--state-cool-icon, var(--info-color))";
+        if (load < 0.22) return "var(--state-info-icon, var(--info-color))";
+        if (load < 0.48) return "var(--state-success-icon, var(--success-color))";
+        if (load < 0.72) return "var(--state-warning-icon, var(--warning-color))";
+        if (load < 0.88) return "var(--state-heat-icon, var(--error-color))";
+        return "var(--state-error-icon, var(--error-color))";
+      });
+      const paths = values.map((value, phase) => {
+        const load = Math.min(1, value / maximum);
+        const shapedLoad = item2.type === "home_energy" ? Math.pow(load, 0.42) : load;
+        const amplitude = item2.type === "ev" ? 1 + Math.pow(load, 1.8) * 24.5 : 2 + shapedLoad * 23.5;
+        const cycles = 1.1 + load * 1.9;
+        const offset = phase * Math.PI * 2 / 3;
+        const points = [];
+        for (let step = 0; step <= 120; step += 1) {
+          const progress = step / 120;
+          points.push(
+            `${(progress * 300).toFixed(1)},${(42.5 + Math.sin(progress * Math.PI * 2 * cycles + offset) * amplitude).toFixed(1)}`
+          );
+        }
+        const opacity = item2.type === "home_energy" ? (0.08 + shapedLoad * 0.15).toFixed(2) : (0.05 + load * 0.08).toFixed(2);
+        const width = item2.type === "home_energy" ? (0.9 + shapedLoad * 0.6).toFixed(2) : (0.8 + load * 0.5).toFixed(2);
+        const stroke = `color-mix(in srgb, ${colors[phase]} 40%, var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 60%)`;
+        return `<polyline class="phase phase-${phase + 1}" points="${points.join(" ")}" style="stroke:${stroke};stroke-width:${width};opacity:${opacity}"/>`;
+      });
+      return `<svg class="phase-waves ${item2.type}" viewBox="0 0 300 85" preserveAspectRatio="none"><line x1="0" y1="42.5" x2="300" y2="42.5"/>${paths.join("")}</svg>`;
+    }
+    if (item2.type === "electricity_price") {
+      return `<div class="price-bars">${[32, 46, 25, 58, 38, 65, 29].map((h, i) => `<i style="height:${h}%;animation-delay:-${i * 0.25}s"></i>`).join("")}</div>`;
+    }
+    if (item2.type === "pool") {
+      return `<svg class="pool-waves" viewBox="0 0 220 85" preserveAspectRatio="none"><path d="M0 55 Q22 40 44 55 T88 55 T132 55 T176 55 T220 55"/><path d="M0 68 Q22 53 44 68 T88 68 T132 68 T176 68 T220 68"/></svg>`;
+    }
+    if (item2.type === "settings") {
+      const icons = [
+        [
+          "binary_sensor.vaskemaskine_korer",
+          "/local/hvidevarer/vaskemaskine2_running.png"
+        ],
+        [
+          "binary_sensor.torretumbler_korer",
+          "/local/hvidevarer/toerretumbler2_running.png"
+        ],
+        [
+          "binary_sensor.opvaskemaskine_korer",
+          "/local/hvidevarer/opvaskemaskine2_running.png"
+        ]
+      ].filter(([id]) => this.on(id));
+      return icons.length ? `<div class="appliances">${icons.map(([, src]) => `<img src="${src}">`).join("")}</div>` : "";
+    }
+    if (item2.type === "heating" && /cool|heat|fan/.test(
+      this.text("sensor.ac_combined_state", "").toLowerCase()
+    )) {
+      return `<div class="airflow"><i></i><i></i><i></i></div>`;
+    }
+    return "";
+  }
+  action(item2) {
+    if (item2.type === "ev" && this._evPlugged(item2)) {
+      this._openEvPopup(item2);
+      return;
+    }
+    if (item2.navigation_path) {
+      history.pushState(null, "", item2.navigation_path);
+      window.dispatchEvent(new Event("location-changed"));
+    } else if (item2.entity) {
+      this.dispatchEvent(
+        new CustomEvent("hass-more-info", {
+          bubbles: true,
+          composed: true,
+          detail: { entityId: item2.entity }
+        })
+      );
+    }
+  }
+  _evPlugged(item2) {
+    return this.on(item2.cable_entity) || this.on(item2.vehicle_plug_entity) || String(this.state(item2.plug_mode_entity)?.state || "").startsWith("connected_");
+  }
+  _openEvPopup(item2) {
+    if (this._popupEl) return;
+    const Dashboard = item2.popup ? customElements.get("th-tesla-dashboard-card") : null;
+    const PopupCard = Dashboard || customElements.get("ha-tesla-charge-popup-card");
+    if (!PopupCard) {
+      history.pushState(null, "", item2.navigation_path);
+      window.dispatchEvent(new Event("location-changed"));
+      return;
+    }
+    const backdrop = document.createElement("div");
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;background:rgba(8,12,18,.68);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))";
+    const panel = document.createElement("div");
+    panel.style.cssText = "position:relative;width:100%;max-width:" + (Dashboard ? "680px" : "520px") + ";display:flex;flex-direction:column;max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:visible;border-radius:20px";
+    const close = document.createElement("button");
+    close.textContent = "Luk \u2715";
+    close.setAttribute("aria-label", "Luk lade-popup");
+    close.style.cssText = "align-self:flex-end;flex:none;margin:0 4px 8px 0;min-height:44px;padding:10px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(8,12,18,.92);box-shadow:0 8px 20px rgba(0,0,0,.38);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer";
+    const card = new PopupCard();
+    card.setConfig(Dashboard ? item2.popup : { navigation_path: item2.navigation_path });
+    card.hass = this._hass;
+    const scroller = document.createElement("div");
+    scroller.style.cssText = "flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.5)" + (Dashboard ? ";padding:12px;background:var(--primary-background-color,#0b0f16)" : "");
+    scroller.appendChild(card);
+    panel.append(close, scroller);
+    backdrop.appendChild(panel);
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) this._closeEvPopup();
+    });
+    card.addEventListener("tesla-popup-close", () => this._closeEvPopup());
+    close.addEventListener("click", () => this._closeEvPopup());
+    this._escHandler = (event) => {
+      if (event.key === "Escape") this._closeEvPopup();
+    };
+    document.addEventListener("keydown", this._escHandler);
+    document.body.appendChild(backdrop);
+    this._popupEl = backdrop;
+    this._popupCard = card;
+  }
+  _closeEvPopup() {
+    this._popupEl?.remove();
+    this._popupEl = null;
+    this._popupCard = null;
+    if (this._escHandler) document.removeEventListener("keydown", this._escHandler);
+    this._escHandler = null;
+  }
+  disconnectedCallback() {
+    this._closeEvPopup();
+    clearInterval(this._cycleTimer);
+    this._cycleTimer = null;
+  }
+  render() {
+    if (!this.config || !this._hass) return;
+    const item2 = this.view({
+      ...this.config,
+      type: this.config.preset || this.config.type_name || "entity"
+    });
+    const segClass = (s) => s === "locked" ? "seg-locked" : s === "unlocked" ? "seg-unlocked" : s === "error" ? "seg-error" : s === "on" ? "on" : "";
+    const meterHtml = (item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "")).map((s) => `<i class="seg ${segClass(s)}"></i>`).join("");
+    if (!this._rendered) {
+      this.shadowRoot.innerHTML = `<style>
+      :host{display:block}
+      .item{display:block;width:100%;min-width:0;max-width:100%;height:85px;box-sizing:border-box;position:relative;overflow:hidden;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left;cursor:pointer;transition:border-left-color .9s ease,box-shadow .15s ease,transform .15s ease}/* Samme loeft-hover som resten af forsidens knapper. Rod-elementet her er <button class="item">, ikke <ha-card> - derfor kunne den tidligere ha-card-baserede regel aldrig ramme noget. */.item:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22))),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.item:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.item{transition:border-left-color .9s ease,box-shadow .15s ease}.item:hover{transform:none}}
+      .value{position:relative;z-index:2;font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meter{position:relative;z-index:2;display:flex;gap:4px;height:8px;margin:5px 0}.seg{width:14px;height:6px;border-radius:99px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 25%,transparent);transition:background-color .9s ease,box-shadow .9s ease}.seg.on{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 28%,transparent)}.seg.seg-locked{background:var(--state-on-icon, var(--success-color, #20e3a2));box-shadow:0 0 7px color-mix(in srgb,var(--state-on-icon, var(--success-color, #20e3a2)) 30%,transparent)}.seg.seg-unlocked{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-error{background:var(--error-color,#ef4444);animation:seg-error-pulse 1.8s ease-in-out infinite}@keyframes seg-error-pulse{0%,100%{opacity:.5;box-shadow:0 0 4px color-mix(in srgb,var(--error-color,#ef4444) 35%,transparent)}50%{opacity:1;box-shadow:0 0 11px color-mix(in srgb,var(--error-color,#ef4444) 75%,transparent)}}.item.has-error{animation:item-error-pulse 1.8s ease-in-out infinite}@keyframes item-error-pulse{0%,100%{box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--error-color,#ef4444) 22%,transparent),var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}}
+      .detail{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.label{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.source-row{display:flex;align-items:center;gap:5px;height:14px}.source-row ha-icon{position:static;width:13px;height:13px;--mdc-icon-size:13px;flex:0 0 13px}.source-row b{line-height:1}.item.ev .detail{padding-right:6px;z-index:3}.item.security .detail{display:none}.item.security .label{position:absolute;left:12px;bottom:4px;width:80px;height:38px;padding:0;overflow:visible}.security-row{display:grid;grid-template-columns:repeat(2,38px);grid-template-rows:repeat(2,18px);gap:2px 4px;width:80px;height:38px;justify-content:start;align-content:start}.security-row>span{display:flex;align-items:center;justify-content:center;gap:1px;width:38px;height:18px;padding:0 2px;box-sizing:border-box;border-radius:6px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 9%,transparent);border:1px solid color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 18%,transparent)}.security-row img,.security-row ha-icon{position:static;width:12px;height:12px;--mdc-icon-size:12px;object-fit:contain}.security-row b{font-size:9px;line-height:1}
+      .item.security{padding:0 12px}.item.security .value{position:absolute;left:12px;top:4px;width:calc(100% - 50px);height:25px;line-height:25px;padding:1px 0 0;overflow:visible}.item.security .meter{position:absolute;left:12px;top:32px;height:8px;margin:0}.item.security .label{top:43px;bottom:auto}
+      .bg-icon{position:absolute;right:-10px;bottom:-10px;width:58px;height:58px;--mdc-icon-size:58px;color:var(--accent);opacity:.12;animation:drift 5s ease-in-out infinite;z-index:1;pointer-events:none;filter:saturate(1.05) drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 10%,transparent))}@keyframes drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      .phase-waves,.pool-waves{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}.phase-waves .phase{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;animation:phaseBreathe 3s ease-in-out infinite}.phase-waves .phase-2{animation-delay:-1.4s}.phase-waves .phase-3{animation-delay:-2.8s}.phase-waves line{stroke:var(--secondary-text-color);stroke-width:1;stroke-dasharray:3 3;opacity:.16;vector-effect:non-scaling-stroke}@keyframes phaseBreathe{50%{filter:brightness(1.04) saturate(.85)}}.pool-waves{opacity:.2}.pool-waves path{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;animation:linePulse 3s ease-in-out infinite}.pool-waves path+path{animation-delay:-1.4s;opacity:.65}@keyframes linePulse{50%{opacity:.35;transform:translateY(-2px)}}
+      .price-bars{position:absolute;inset:10px 42px 8px 12px;display:flex;align-items:flex-end;gap:5px;opacity:.42;z-index:0}.price-bars i{display:block;width:4px;border-radius:9px 9px 0 0;background:var(--accent);transform-origin:center bottom;transition:background-color .9s ease,filter .9s ease}.item.price-alert .price-bars i,.item.price-alert .meter .seg.on{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite;transform-origin:center bottom}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.86;filter:brightness(1) drop-shadow(0 0 2px var(--accent))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--accent))}}
+      .appliances{position:absolute;right:8px;top:4px;display:flex;gap:3px;z-index:3}.appliances img{width:24px;height:24px;object-fit:contain}.airflow{position:absolute;right:10px;top:8px;z-index:3;color:var(--accent)}.airflow i{display:block;border-top:2px solid currentColor;border-radius:50%;height:4px;margin:1px 0;animation:air 1.9s ease-in-out infinite}.airflow i:nth-child(1){width:11px}.airflow i:nth-child(2){width:17px;animation-delay:-.3s}.airflow i:nth-child(3){width:23px;animation-delay:-.6s}@keyframes air{50%{transform:translateX(-3px);opacity:.45}}
+      @media(min-width:1101px) and (max-height:950px){.item{height:66px;padding:5px 10px}.value{font-size:16px;line-height:18px}.meter{margin:2px 0}.detail,.label{font-size:10px;line-height:11px}.bg-icon{width:48px;height:48px;--mdc-icon-size:48px}.security-row{grid-template-columns:repeat(4,38px);grid-template-rows:repeat(1,18px);width:164px;height:18px}.item.security .label{width:164px;height:18px}}
+      @media(max-width:600px){.item{padding:9px 9px}.value{font-size:16px}.detail,.label{font-size:10px}.meter{gap:3px}.seg{width:12px}}
+    </style><button class="item"><span class="decoration"></span><div class="value"></div><div class="meter"></div><div class="detail"></div><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
+      const tile2 = this.shadowRoot.querySelector(".item");
+      tile2.addEventListener("click", () => {
+        if (this._heldOpen) {
+          this._heldOpen = false;
+          return;
+        }
+        this.action(this._currentItem);
+      });
+      const cancelHold = () => {
+        clearTimeout(this._holdTimer);
+        this._holdTimer = null;
+      };
+      tile2.addEventListener("pointerdown", () => {
+        if (this._currentItem?.type !== "ev" || !this._currentItem.popup) return;
+        cancelHold();
+        this._heldOpen = false;
+        this._holdTimer = setTimeout(() => {
+          this._holdTimer = null;
+          this._heldOpen = true;
+          this._openEvPopup(this._currentItem);
+        }, 550);
+      });
+      for (const type of ["pointerup", "pointerleave", "pointercancel"]) tile2.addEventListener(type, cancelHold);
+      tile2.addEventListener("contextmenu", (event) => {
+        if (this._currentItem?.type === "ev") event.preventDefault();
+      });
+      this._rendered = true;
+    }
+    this._currentItem = item2;
+    const button = this.shadowRoot.querySelector(".item");
+    const pulse = Math.max(0, Math.min(1, item2.pricePulse || 0));
+    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${pulse > 0 ? " price-alert" : ""}`;
+    button.style.setProperty("--accent", item2.color);
+    button.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
+    button.style.setProperty("--price-pulse-scale", (0.94 - pulse * 0.28).toFixed(2));
+    button.style.setProperty("--price-pulse-opacity", (0.82 - pulse * 0.32).toFixed(2));
+    button.style.setProperty("--price-pulse-brightness", (1.08 + pulse * 0.82).toFixed(2));
+    button.style.setProperty("--price-pulse-glow", `${(4 + pulse * 14).toFixed(1)}px`);
+    button.setAttribute("aria-label", item2.name || item2.type);
+    const decoration = this.shadowRoot.querySelector(".decoration");
+    if (this._decorationType !== item2.type || item2.type !== "electricity_price") {
+      decoration.innerHTML = this.decoration(item2);
+      this._decorationType = item2.type;
+    }
+    this.shadowRoot.querySelector(".value").textContent = item2.value;
+    const meter = this.shadowRoot.querySelector(".meter");
+    const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
+    if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
+    else segmentStates.forEach((state, index) => {
+      meter.children[index].className = `seg ${segClass(state)}`;
+    });
+    this.shadowRoot.querySelector(".detail").textContent = item2.detail || " ";
+    this.shadowRoot.querySelector(".label").innerHTML = item2.label;
+    this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
+  }
+  getCardSize() {
+    return 2;
+  }
+  static getConfigElement() {
+    return document.createElement("ha-home-status-card-editor");
+  }
+  static getStubConfig() {
+    return { preset: "home_energy" };
+  }
+};
+var HaHomeStatusCardEditor2 = class extends HTMLElement {
+  setConfig(config) {
+    this.config = structuredClone(config);
+    this.render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+  }
+  render() {
+    const options = Object.keys(PRESETS2).map(
+      (key) => `<option value="${key}" ${this.config?.preset === key ? "selected" : ""}>${PRESETS2[key].name}</option>`
+    ).join("");
+    const inversion = this.config?.preset === "security" ? `<label class="check"><input id="gate-lock-inverted" type="checkbox" ${this.config.gate_lock_inverted !== false ? "checked" : ""}>Portkontakt er omvendt (\xE5ben = l\xE5st)</label>` : "";
+    this.innerHTML = `<style>select{box-sizing:border-box;width:100%;padding:10px}label{display:block;margin:8px 0 4px}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;height:18px}</style><label>Kortfunktion</label><select>${options}</select>${inversion}`;
+    this.querySelector("select").addEventListener(
+      "change",
+      (event) => this.dispatchEvent(
+        new CustomEvent("config-changed", {
+          bubbles: true,
+          composed: true,
+          detail: { config: { ...this.config, preset: event.target.value } }
+        })
+      )
+    );
+    this.querySelector("#gate-lock-inverted")?.addEventListener(
+      "change",
+      (event) => this.dispatchEvent(
+        new CustomEvent("config-changed", {
+          bubbles: true,
+          composed: true,
+          detail: { config: { ...this.config, gate_lock_inverted: event.target.checked } }
+        })
+      )
+    );
+  }
+};
+if (!customElements.get("ha-home-status-card"))
+  customElements.define("ha-home-status-card", HaHomeStatusCard2);
+if (!customElements.get("ha-home-status-card-editor"))
+  customElements.define("ha-home-status-card-editor", HaHomeStatusCardEditor2);
+var SUMMARY_DEFAULTS2 = {
+  "title": "Husets overblik",
+  "monthly_energy_entity": "sensor.summary_monthly_energy",
+  "electricity_price_entity": "sensor.summary_electricity_price",
+  "electric_month_cost_entity": "",
+  "water_month_entity": "sensor.summary_water_month",
+  "water_month_cost_entity": "sensor.summary_water_month_cost",
+  "heat_month_entity": "sensor.summary_heat_month",
+  "heat_month_cost_entity": "sensor.summary_heat_month_cost",
+  "electricity_path": "/energi-overblik/energy",
+  "water_path": "/energi-overblik/vand",
+  "heat_path": "/energi-overblik/varme-center",
+  "co2_entity": "sensor.summary_co2",
+  "air_quality_entity": "sensor.summary_air_quality",
+  "water_flow_entity": "sensor.summary_water_flow",
+  "storage_entity": "sensor.summary_storage",
+  "event_days": 14,
+  "max_events": 40,
+  "robots": [],
+  "hdd_entities": [
+    "binary_sensor.summary_hdd_1",
+    "binary_sensor.summary_hdd_2"
+  ],
+  "rooms": [],
+  "calendars": []
+};
+var HaHomeSummaryCard2 = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._sig = "";
+    this._events = [];
+    this._eventsSig = "";
+    this._robotSig = "";
+    this._robotNodes = /* @__PURE__ */ new Map();
+  }
+  setConfig(config) {
+    this.config = { ...SUMMARY_DEFAULTS2, ...config };
+    this._sig = "";
+    this._rendered = false;
+    this._render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    const ids = [
+      this.config?.monthly_energy_entity,
+      this.config?.electricity_price_entity,
+      this.config?.electric_month_cost_entity,
+      this.config?.water_month_entity,
+      this.config?.water_month_cost_entity,
+      this.config?.heat_month_entity,
+      this.config?.heat_month_cost_entity,
+      this.config?.co2_entity,
+      this.config?.air_quality_entity,
+      this.config?.water_flow_entity,
+      this.config?.storage_entity,
+      ...this.config?.hdd_entities || [],
+      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence]),
+      ...(this.config?.calendars || []).map((x) => x.entity)
+    ].filter(Boolean);
+    const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
+    const sig = JSON.stringify(ids.map((id) => [
+      id,
+      hass.states?.[id]?.state,
+      hass.states?.[id]?.last_changed,
+      hass.states?.[id]?.attributes?.message,
+      hass.states?.[id]?.attributes?.start_time
+    ]));
+    if (sig !== this._sig) {
+      this._sig = sig;
+      this._render();
+      this._loadEvents();
+    }
+    const robotSig = JSON.stringify(robotIds.map((id) => [id, hass.states?.[id]?.state, hass.states?.[id]?.last_changed]));
+    if (robotSig !== this._robotSig) {
+      this._robotSig = robotSig;
+      this._updateRobots();
+    }
+  }
+  _state(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _num(id) {
+    const raw = this._state(id)?.state;
+    if (raw == null || raw === "" || ["unknown", "unavailable"].includes(raw)) return Number.NaN;
+    const value = Number(String(raw).replace(",", "."));
+    return Number.isFinite(value) ? value : Number.NaN;
+  }
+  _fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toLocaleString("da-DK", { maximumFractionDigits: digits }) : "\u2014";
+  }
+  _esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (m2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m2]);
+  }
+  _label(value) {
+    return String(value || "\u2014").replaceAll("_", " ").replace(/\b\w/g, (x) => x.toUpperCase());
+  }
+  _roomKey(value) {
+    return String(value || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLocaleLowerCase("da-DK");
+  }
+  _robotActive(robot) {
+    const state = String(this._state(robot.entity)?.state || "").toLowerCase();
+    const states = Array.isArray(robot.active_states) && robot.active_states.length ? robot.active_states : String(robot.entity || "").startsWith("lawn_mower.") ? ["mowing", "edgecut", "starting", "leaving"] : ["cleaning", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping"];
+    return states.map((value) => String(value).toLowerCase()).includes(state);
+  }
+  _robotRoom(robot) {
+    const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
+    if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
+    return this._roomKey(robot.room_map?.[raw] ?? robot.room_map?.[this._roomKey(raw)] ?? raw);
+  }
+  _updateRobots() {
+    const rooms = this.shadowRoot?.querySelector(".rooms"), panel = this.shadowRoot?.querySelector(".temperature-panel");
+    if (!rooms || !panel) return;
+    const configured = Array.isArray(this.config?.robots) ? this.config.robots : [], liveKeys = /* @__PURE__ */ new Set();
+    configured.forEach((robot, index) => {
+      const key = String(robot.id || robot.name || robot.entity || index);
+      liveKeys.add(key);
+      let node = this._robotNodes.get(key);
+      if (!node || !node.isConnected) {
+        node = document.createElement("ha-icon");
+        node.className = "room-robot";
+        node.dataset.robot = key;
+        this._robotNodes.set(key, node);
+      }
+      node.setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
+      node.title = robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot";
+      node.style.setProperty("--robot-speed", `${Math.max(7, Math.min(90, Number(robot.speed_seconds) || 16))}s`);
+      node.style.setProperty("--robot-speed-y", `${Math.max(6, Math.min(75, (Number(robot.speed_seconds) || 16) * 0.72))}s`);
+      node.hidden = !this._robotActive(robot);
+      if (node.hidden) {
+        if (!node.isConnected) panel.append(node);
+        return;
+      }
+      if (robot.outdoors) {
+        node.classList.add("outdoors");
+        panel.append(node);
+        return;
+      }
+      node.classList.remove("outdoors");
+      const room = rooms.querySelector(`[data-room-key="${CSS.escape(this._robotRoom(robot))}"]`);
+      if (room) room.append(node);
+      else node.hidden = true;
+    });
+    for (const [key, node] of this._robotNodes) if (!liveKeys.has(key)) {
+      node.remove();
+      this._robotNodes.delete(key);
+    }
+  }
+  async _loadEvents() {
+    if (!this._hass?.callApi || this._loadingEvents) return;
+    const calendars = this.config.calendars || [];
+    const key = JSON.stringify([calendars.map((x) => x.entity), this.config.event_days, this.config.max_events]);
+    if (key === this._eventsKey && Date.now() - (this._eventsAt || 0) < 3e5) return;
+    this._loadingEvents = true;
+    try {
+      const start = /* @__PURE__ */ new Date();
+      const days = Math.min(31, Math.max(1, Number(this.config.event_days) || 14));
+      const end = new Date(start.getTime() + days * 864e5);
+      const events = [];
+      const lists = await Promise.all(calendars.map((cal) => this._hass.callApi("GET", `calendars/${encodeURIComponent(cal.entity)}?start=${encodeURIComponent(start.toISOString())}&end=${encodeURIComponent(end.toISOString())}`)));
+      calendars.forEach((cal, index) => (lists[index] || []).forEach((event) => events.push({ ...event, calendar: cal })));
+      const limit = Math.min(100, Math.max(1, Number(this.config.max_events) || 40));
+      this._events = events.sort((a, b) => new Date(a.start?.dateTime || a.start?.date) - new Date(b.start?.dateTime || b.start?.date)).slice(0, limit);
+      this._eventsKey = key;
+      this._eventsAt = Date.now();
+      this._renderEvents();
+    } catch (_) {
+      this._events = this._fallbackEvents();
+      this._renderEvents();
+    } finally {
+      this._loadingEvents = false;
+    }
+  }
+  _fallbackEvents() {
+    return (this.config.calendars || []).map((calendar) => {
+      const a = this._state(calendar.entity)?.attributes || {};
+      return a.message && a.start_time ? { summary: a.message, start: { dateTime: a.start_time }, calendar } : null;
+    }).filter(Boolean).sort((a, b) => new Date(a.start.dateTime) - new Date(b.start.dateTime)).slice(0, Math.min(100, Math.max(1, Number(this.config.max_events) || 40)));
+  }
+  _eventTime(event) {
+    const raw = event.start?.dateTime || event.start?.date;
+    if (!raw) return "";
+    const date2 = new Date(raw);
+    const allDay = Boolean(event.start?.date && !event.start?.dateTime);
+    const day = date2.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+    return allDay ? day : `${day} \xB7 ${date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+  _renderEvents() {
+    const host = this.shadowRoot?.querySelector(".events");
+    if (!host) return;
+    const events = this._events.length ? this._events : this._fallbackEvents();
+    const sig = JSON.stringify(events.map((e) => [e.summary, e.start, e.calendar?.entity]));
+    if (sig === this._eventsSig) return;
+    this._eventsSig = sig;
+    host.innerHTML = events.length ? events.map((event) => {
+      const raw = event.start?.dateTime || event.start?.date, date2 = raw ? new Date(raw) : /* @__PURE__ */ new Date();
+      const day = date2.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "");
+      const number2 = date2.toLocaleDateString("da-DK", { day: "numeric" });
+      return `<div class="event" style="--event:${this._esc(event.calendar?.color || "var(--dashboard-accent,#38bdf8)")}"><div class="date"><span>${this._esc(day)}</span><b>${this._esc(number2)}</b></div><i></i><div class="event-copy"><b>${this._esc(event.summary || "Aftale")}</b><span>${this._esc(this._eventTime(event))} \xB7 ${this._esc(event.calendar?.name || "Kalender")}</span></div></div>`;
+    }).join("") : `<div class="empty">Ingen aftaler de n\xE6ste 7 dage</div>`;
+  }
+  _render() {
+    if (!this.config) return;
+    if (!this._rendered) {
+      this.shadowRoot.innerHTML = `<style>
+        :host{display:block;height:100%}.card{--summary-status:var(--success-color,#20e3a2);box-sizing:border-box;display:flex;flex-direction:column;height:100%;position:relative;overflow:hidden;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--primary-text-color,#fff)}
+        header{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px}h2{font-size:20px;margin:0;display:flex;align-items:center;gap:9px}h2 ha-icon{color:var(--dashboard-accent,#38bdf8)}.health{font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;background:color-mix(in srgb,var(--success-color,#20e3a2) 14%,transparent);color:var(--success-color,#20e3a2)}
+        .utilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:13px}.utility{--accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;min-width:0;padding:13px 13px 12px 15px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:16px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.utility:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.utility:active{transform:translateY(0)}.utility>*:not(.utility-bg){position:relative;z-index:1}.utility-head{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color,#a7b2c2);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.utility-head ha-icon{width:17px;height:17px;--mdc-icon-size:17px;color:var(--accent)}.utility-bg{position:absolute;right:-13px;bottom:-17px;z-index:0;width:76px;height:76px;--mdc-icon-size:76px;color:var(--accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.use{display:flex;align-items:baseline;gap:4px;margin-top:7px}.use b{font-size:22px;line-height:1}.use span{font-size:10px;color:var(--secondary-text-color,#a7b2c2)}.cost{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent);font-size:11px;color:var(--secondary-text-color,#a7b2c2)}.cost b{float:right;color:var(--primary-text-color,#fff);font-size:13px}.cost small{font-size:9px}
+        .body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(205px,.58fr);flex:1;min-height:0;gap:12px}.panel{--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));position:relative;isolation:isolate;padding:13px 13px 13px 15px;border-radius:16px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden}a.panel{color:inherit;text-decoration:none;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}a.panel:focus-visible{border-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 48%,transparent);outline:none}a.panel:hover,a.panel:focus-visible{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}a.panel:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){a.panel:hover,a.panel:focus-visible{transform:none}}a.panel:active{transform:scale(.995)}.temperature-panel{position:relative}.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--secondary-text-color,#a7b2c2)}
+        .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(64px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:5px;min-width:0;padding:9px 10px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*{position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-8px;bottom:-8px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.room-name{min-width:0;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-badges{display:flex;align-items:center;gap:4px;flex:0 0 auto}.room-status{display:none;flex:0 0 auto;align-items:center;color:#fb923c}.room-status.heating,.room-status.presence{display:flex;animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.presence{color:var(--dashboard-accent,var(--info-color,#38bdf8))}.room-status ha-icon{--mdc-icon-size:14px}.room-body{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}.room-temp{flex:0 0 auto;margin-left:auto;font-size:20px;font-weight:900;line-height:1}.room-target{min-width:0;font-size:10px;line-height:1.25;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-target:empty{display:none}.room-target b{color:var(--room-accent);font-size:11px}@keyframes roomHeatPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+        .room-robot{position:absolute!important;z-index:3!important;left:8%;top:24%;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor);pointer-events:none;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate,roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;color:var(--success-color,#20e3a2);offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{left:8%}to{left:calc(100% - 30px)}}@keyframes roomRobotY{from{top:24%}to{top:calc(100% - 29px)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
+        @keyframes summaryIconDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-11deg);opacity:.22}}
+        @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot{animation:none}}
+        .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
+        .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
+        @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}.card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}.card.portrait .event{padding:5px 0}}
+        @media(max-width:700px){.utilities{grid-template-columns:1fr}.body{grid-template-columns:1fr}.card{padding:14px}}
+      </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}"><header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header><div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
+      const navigate = (path) => {
+        if (!path) return;
+        history.pushState(null, "", path);
+        window.dispatchEvent(new Event("location-changed"));
+      };
+      this.shadowRoot.querySelector(".utility.electricity").onclick = () => navigate(this.config.electricity_path);
+      this.shadowRoot.querySelector(".utility.water").onclick = () => navigate(this.config.water_path);
+      this.shadowRoot.querySelector(".utility.heat").onclick = () => navigate(this.config.heat_path);
+      this._rendered = true;
+    }
+    if (!this._hass) return;
+    const c = this.config, monthly = this._num(c.monthly_energy_entity);
+    const electricCost = this._num(c.electric_month_cost_entity);
+    const water = this._num(c.water_month_entity), waterCost = this._num(c.water_month_cost_entity);
+    const heat = this._num(c.heat_month_entity), heatCost = this._num(c.heat_month_cost_entity);
+    const co2 = this._num(c.co2_entity);
+    const diskProblem = (c.hdd_entities || []).some((id) => this._state(id)?.state === "on");
+    const healthy = !diskProblem && (!Number.isFinite(co2) || co2 < 1e3);
+    this.shadowRoot.querySelector(".title").textContent = c.title;
+    const card = this.shadowRoot.querySelector(".card");
+    card.style.setProperty("--summary-status", healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)");
+    const health = this.shadowRoot.querySelector(".health");
+    health.textContent = healthy ? "Alt ser normalt ud" : "Kr\xE6ver opm\xE6rksomhed";
+    health.style.color = healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)";
+    const utility = (sel, icon3, label, value, unit, cost, valid2) => {
+      const tile2 = this.shadowRoot.querySelector(sel);
+      tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
+      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>`;
+    };
+    utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
+    utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
+    utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
+    this.shadowRoot.querySelector(".rooms").innerHTML = (c.rooms || []).map((room) => {
+      const temp = this._num(room.temperature), humidity = this._num(room.humidity), target = Number(this._state(room.climate)?.attributes?.temperature);
+      const delta = Number.isFinite(temp) && Number.isFinite(target) ? temp - target : Number.NaN;
+      const tone2 = !Number.isFinite(temp) ? "unavailable" : delta > 0.7 ? "warm" : delta < -0.7 ? "cold" : "";
+      const icon3 = this._esc(room.icon || "mdi:thermometer");
+      const targetText = Number.isFinite(target) ? `M\xE5l <b>${this._fmt(target, 1)}\xB0</b>` : "";
+      const humidityText = Number.isFinite(humidity) ? `<span class="room-humidity">${targetText ? "\xB7 " : ""}${this._fmt(humidity, 0)}%</span>` : "";
+      const hvacAction = room.climate ? this._state(room.climate)?.attributes?.hvac_action : void 0;
+      const heating = hvacAction === "heating";
+      const present = room.presence ? this._state(room.presence)?.state === "on" : false;
+      const heatBadge = heating ? `<span class="room-status heating" title="Kalder p\xE5 varme"><ha-icon icon="mdi:fire"></ha-icon></span>` : "";
+      const presenceBadge = present ? `<span class="room-status presence" title="Der er nogen i rummet"><ha-icon icon="mdi:motion-sensor"></ha-icon></span>` : "";
+      return `<div class="room ${tone2}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp, 1)}\xB0</strong></div></div>`;
+    }).join("");
+    this._robotNodes.clear();
+    this._updateRobots();
+    this._renderEvents();
+  }
+  getCardSize() {
+    return 6;
+  }
+  static getConfigElement() {
+    return document.createElement("ha-home-summary-card-editor");
+  }
+  static getStubConfig() {
+    return { title: "Husets overblik" };
+  }
+};
+var HaHomeSummaryCardEditor2 = class extends HTMLElement {
+  setConfig(config) {
+    this.config = structuredClone(config);
+    this.render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+  }
+  render() {
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const robots = JSON.stringify(this.config?.robots || [], null, 2);
+    this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS2[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
+    this.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
+    this.querySelector("[data-robots]").addEventListener("change", (event) => {
+      try {
+        const robots2 = JSON.parse(event.target.value);
+        if (!Array.isArray(robots2)) throw new Error("Robotter skal v\xE6re en liste");
+        this.querySelector(".error").textContent = "";
+        this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, robots: robots2 } } }));
+      } catch (error) {
+        this.querySelector(".error").textContent = `Ugyldig robotops\xE6tning: ${error.message}`;
+      }
+    });
+  }
+};
+var HaHomeDesktopLayoutCard3 = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._children = [];
+    this._headerChildren = [];
+    this._desktopChildren = [];
+    this._mobileChildren = [];
+    this._verticalChildren = [];
+    this._mqList = [];
+    this._resize = () => requestAnimationFrame(() => this._fitViewport());
+    this._onBreakpoint = () => this._flushActive();
+    this._slots = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
+    this._slotSig = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
+  }
+  connectedCallback() {
+    window.addEventListener("resize", this._resize);
+    window.visualViewport?.addEventListener("resize", this._resize);
+    this._resize();
+    this._flushActive();
+  }
+  disconnectedCallback() {
+    window.removeEventListener("resize", this._resize);
+    window.visualViewport?.removeEventListener("resize", this._resize);
+    this._unbindBreakpoints();
+  }
+  // This card builds all three layouts up front (desktop columns, the mobile
+  // column, and the vertical-only extras) and lets CSS show one set. Without the
+  // split below, `set hass` fed every state tick to all ~29 card instances, so
+  // roughly half of them re-rendered continuously while permanently invisible --
+  // including a camera card. Only the set the current breakpoint actually shows
+  // receives updates now; the others are refreshed by _flushActive() the moment
+  // a breakpoint change makes them visible.
+  _activeChildren() {
+    const mb = this._mobileBreakpoint || 1100, pb = this._phoneBreakpoint || 700;
+    const desktopMq = this._mqList[0] || window.matchMedia(`(min-width:${mb + 1}px)`);
+    const tabletMq = this._mqList[1] || window.matchMedia(`(min-width:${pb + 1}px)`);
+    if (desktopMq.matches) return this._headerChildren.concat(this._desktopChildren);
+    if (tabletMq.matches) return this._headerChildren.concat(this._mobileChildren, this._verticalChildren);
+    return this._headerChildren.concat(this._mobileChildren);
+  }
+  _flushActive() {
+    if (this._hass) this._activeChildren().forEach((card) => {
+      card.hass = this._hass;
+    });
+  }
+  _unbindBreakpoints() {
+    this._mqList.forEach((mq) => mq.removeEventListener?.("change", this._onBreakpoint));
+    this._mqList = [];
+  }
+  _bindBreakpoints(mobileBreakpoint, phoneBreakpoint) {
+    this._unbindBreakpoints();
+    this._mqList = [window.matchMedia(`(min-width:${mobileBreakpoint + 1}px)`), window.matchMedia(`(min-width:${phoneBreakpoint + 1}px)`)];
+    this._mqList.forEach((mq) => mq.addEventListener?.("change", this._onBreakpoint));
+  }
+  setConfig(config) {
+    if (!Array.isArray(config.left_cards) || !Array.isArray(config.right_cards)) throw new Error("Angiv left_cards og right_cards");
+    const next = structuredClone(config);
+    next.header_cards = Array.isArray(config.header_cards) ? structuredClone(config.header_cards) : [];
+    next.mobile_cards = Array.isArray(config.mobile_cards) ? structuredClone(config.mobile_cards) : [];
+    next.vertical_cards = Array.isArray(config.vertical_cards) ? structuredClone(config.vertical_cards) : [];
+    const newKey = this._structureKey(next);
+    const oldKey = this.config ? this._structureKey(this.config) : null;
+    this.config = next;
+    if (oldKey !== null && oldKey === newKey) {
+      this._applyLayoutVars();
+      this._updateExistingCards();
+      return;
+    }
+    this._build();
+  }
+  // Kun kort-TYPERNE pr. side + de to breakpoints (som begge er bagt ind i
+  // <style>-strengen i _build()) taeller som "strukturel". Aendrer denne
+  // noegle sig IKKE, er det kun indhold i EKSISTERENDE kort eller rene
+  // CSS-variable (kolonner/afstand/bottom_gap) der er aendret - saa opdateres
+  // det billigt i stedet for at bygge alle ~20-29 kort (inkl. kameraer)
+  // forfra igen. Foer kaldte setConfig() ALTID _build() ubetinget, saa hvert
+  // eneste tastatur/pil-tryk i wrapperens egen editor genopbyggede HELE
+  // forsidens kortsaet asynkront fra bunden - flere overlappende genopbygninger
+  // i rap kunne let overbelaste fanen nok til at hele siden frøs/crashede.
+  _structureKey(config) {
+    const sides = ["header_cards", "left_cards", "right_cards", "mobile_cards", "vertical_cards"];
+    return JSON.stringify([sides.map((side) => (config[side] || []).map((c) => c?.type || "")), Number(config.mobile_breakpoint) || 1100, Number(config.phone_breakpoint) || 700]);
+  }
+  _applyLayoutVars() {
+    const layout = this.shadowRoot?.querySelector(".layout");
+    if (!layout) return;
+    layout.style.setProperty("--desktop-columns", this.config.columns || "minmax(0,.9fr) minmax(440px,1.1fr)");
+    layout.style.setProperty("--desktop-gap", this.config.gap || "clamp(10px,.75vw,18px)");
+    this._fitViewport();
+  }
+  _updateExistingCards() {
+    ["header_cards", "left_cards", "right_cards", "mobile_cards", "vertical_cards"].forEach((side) => {
+      const cfgs = this.config[side] || [], slots = this._slots[side] || [], sigs = this._slotSig[side];
+      cfgs.forEach((cfg, i) => {
+        if (!slots[i]) return;
+        const sig = JSON.stringify(cfg);
+        if (sigs[i] === sig) return;
+        sigs[i] = sig;
+        slots[i].setConfig(cfg);
+      });
+    });
+  }
+  set hass(hass) {
+    this._hass = hass;
+    this._activeChildren().forEach((card) => {
+      card.hass = hass;
+    });
+  }
+  async _build() {
+    const token = {};
+    this._buildToken = token;
+    const helpers = await window.loadCardHelpers();
+    if (this._buildToken !== token) return;
+    const mobileBreakpoint = Math.min(2400, Math.max(600, Number(this.config.mobile_breakpoint) || 1100));
+    const phoneBreakpoint = Math.min(mobileBreakpoint - 1, Math.max(360, Number(this.config.phone_breakpoint) || 700));
+    this._mobileBreakpoint = mobileBreakpoint;
+    this._phoneBreakpoint = phoneBreakpoint;
+    this._bindBreakpoints(mobileBreakpoint, phoneBreakpoint);
+    this.shadowRoot.innerHTML = `<style>:host{display:block}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="header"></div><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div>`;
+    const make = (cfg, parent, index, total, growLast = false, extraClass = "", sideKey) => {
+      const card = helpers.createCardElement(cfg);
+      const slot = document.createElement("div");
+      slot.className = `slot${growLast && index === total - 1 ? " grow" : ""}${extraClass ? ` ${extraClass}` : ""}`;
+      slot.append(card);
+      parent.append(slot);
+      this._children.push(card);
+      (extraClass === "vertical-only" ? this._verticalChildren : parent === header ? this._headerChildren : parent === mobile ? this._mobileChildren : this._desktopChildren).push(card);
+      if (sideKey) {
+        this._slots[sideKey].push(card);
+        this._slotSig[sideKey].push(JSON.stringify(cfg));
+      }
+    };
+    this._children = [];
+    this._headerChildren = [];
+    this._desktopChildren = [];
+    this._mobileChildren = [];
+    this._verticalChildren = [];
+    this._slots = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
+    this._slotSig = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
+    const header = this.shadowRoot.querySelector(".header"), left = this.shadowRoot.querySelector(".left"), right = this.shadowRoot.querySelector(".right"), mobile = this.shadowRoot.querySelector(".mobile");
+    this.config.header_cards.forEach((cfg, i) => make(cfg, header, i, this.config.header_cards.length, false, "", "header_cards"));
+    this.config.left_cards.forEach((cfg, i) => make(cfg, left, i, this.config.left_cards.length, true, "", "left_cards"));
+    this.config.right_cards.forEach((cfg, i) => make(cfg, right, i, this.config.right_cards.length, true, "", "right_cards"));
+    this.config.mobile_cards.forEach((cfg, i) => {
+      if (i === this.config.mobile_cards.length - 1) this.config.vertical_cards.forEach((verticalCfg, j) => make(verticalCfg, mobile, j, this.config.vertical_cards.length, false, "vertical-only", "vertical_cards"));
+      make(cfg, mobile, i, this.config.mobile_cards.length, false, "", "mobile_cards");
+    });
+    if (!this.config.mobile_cards.length) this.config.vertical_cards.forEach((cfg, i) => make(cfg, mobile, i, this.config.vertical_cards.length, false, "vertical-only", "vertical_cards"));
+    this._applyLayoutVars();
+    this._flushActive();
+    this._fitViewport();
+  }
+  _fitViewport() {
+    const layout = this.shadowRoot?.querySelector(".layout");
+    if (!layout || !window.matchMedia(`(min-width:${(this._mobileBreakpoint || 1100) + 1}px)`).matches) return;
+    const top = layout.getBoundingClientRect().top;
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const bottomGap = Math.max(90, Number(this.config?.bottom_gap) || 110);
+    layout.style.setProperty("--desktop-height", `${Math.max(0, viewportHeight - top - bottomGap)}px`);
+  }
+  getCardSize() {
+    return 12;
+  }
+  static getConfigElement() {
+    return document.createElement("ha-home-desktop-layout-card-editor");
+  }
+  static getStubConfig() {
+    return { columns: "minmax(0,.9fr) minmax(440px,1.1fr)", gap: "clamp(10px,.75vw,18px)", bottom_gap: 110, mobile_breakpoint: 1100, phone_breakpoint: 700, header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
+  }
+};
+var HaHomeDesktopLayoutCardEditor3 = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._nestedEditors = /* @__PURE__ */ new Set();
+    this._configSig = "";
+    this._listKey = "";
+  }
+  // HA's vaert normaliserer/geninstantierer configen paa vejen tilbage (websocket-
+  // roundtrip), saa noegle-raekkefoelgen kan skifte selv naar INGEN vaerdi rent
+  // faktisk er aendret. Almindelig JSON.stringify er raekkefoelge-foelsom og
+  // ville derfor fejlagtigt opfatte det som en aegte aendring hver gang -
+  // hvilket udloeser render() og lukker den indlejrede kort-editor igen (den
+  // "blinker og kan ikke redigeres"-fejl). _sig() sorterer noegler paa alle
+  // niveauer foerst, saa signaturen kun aendrer sig ved en AEGTE vaerdi-aendring.
+  _sig(value) {
+    if (Array.isArray(value)) return `[${value.map((item2) => this._sig(item2)).join(",")}]`;
+    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this._sig(value[key])}`).join(",")}}`;
+    return JSON.stringify(value);
+  }
+  // HA's dashboard-editor sender configen tilbage igen (config-changed-roundtrip)
+  // hver gang et NESTED kort-editor (fx header-kortets egne felter) aendrer noget.
+  // Foer kaldte det ubetinget render() her, som tomte .nested-beholderen og lukkede
+  // den aabne under-editor efter hver eneste tastatur-aendring. Er configen uaendret
+  // siden vi selv sendte den (aekko), springes genopbygningen over.
+  setConfig(config) {
+    const sig = this._sig(config);
+    this.config = structuredClone(config);
+    if (sig === this._configSig) return;
+    this._configSig = sig;
+    const listKey = this._computeListKey();
+    if (this._listKey && listKey === this._listKey) {
+      this._syncSettings();
+      return;
+    }
+    this.render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    this._nestedEditors.forEach((item2) => item2.hass = hass);
+  }
+  set lovelace(lovelace) {
+    this._lovelace = lovelace;
+    this._nestedEditors.forEach((item2) => item2.lovelace = lovelace);
+  }
+  _escape(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  }
+  _emit(config) {
+    this.config = structuredClone(config);
+    this._configSig = this._sig(this.config);
+    this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: this.config } }));
+  }
+  _cards(side) {
+    return Array.isArray(this.config?.[side]) ? this.config[side] : [];
+  }
+  _title(config, index) {
+    const type = String(config?.type || "Kort").replace(/^custom:/, "");
+    return `${index + 1}. ${type}`;
+  }
+  _changeSetting(input) {
+    this._emit({ ...this.config, [input.dataset.key]: input.type === "number" ? Number(input.value) : input.value });
+  }
+  _move(side, index, direction) {
+    const cards = structuredClone(this._cards(side));
+    const target = index + direction;
+    if (target < 0 || target >= cards.length) return;
+    [cards[index], cards[target]] = [cards[target], cards[index]];
+    this._emit({ ...this.config, [side]: cards });
+  }
+  _remove(side, index) {
+    const cards = structuredClone(this._cards(side));
+    cards.splice(index, 1);
+    this._emit({ ...this.config, [side]: cards });
+  }
+  _toggleEditor(side, index, row) {
+    const host = row.querySelector(".nested");
+    const button = row.querySelector(".edit");
+    if (host.childElementCount) {
+      host.replaceChildren();
+      button.classList.remove("active");
+      return;
+    }
+    const editor = document.createElement("hui-card-element-editor");
+    editor.hass = this._hass;
+    editor.lovelace = this._lovelace;
+    editor.value = structuredClone(this._cards(side)[index]);
+    editor.addEventListener("config-changed", (event) => {
+      event.stopPropagation();
+      if (!event.detail?.config) return;
+      const cards = structuredClone(this._cards(side));
+      cards[index] = structuredClone(event.detail.config);
+      this._emit({ ...this.config, [side]: cards });
+    });
+    this._nestedEditors.add(editor);
+    host.append(editor);
+    button.classList.add("active");
+  }
+  _showPicker(side) {
+    const host = this.shadowRoot.querySelector(`.picker[data-side="${side}"]`);
+    if (host.childElementCount) {
+      host.replaceChildren();
+      return;
+    }
+    const picker = document.createElement("hui-card-picker");
+    picker.hass = this._hass;
+    picker.lovelace = this._lovelace;
+    let handled = false;
+    const accept = (event) => {
+      event.stopPropagation();
+      const picked = event.detail?.config || event.detail?.cardConfig;
+      if (handled || !picked) return;
+      handled = true;
+      const cards = [...structuredClone(this._cards(side)), structuredClone(picked)];
+      this._emit({ ...this.config, [side]: cards });
+    };
+    picker.addEventListener("config-changed", accept);
+    picker.addEventListener("card-picked", accept);
+    this._nestedEditors.add(picker);
+    host.append(picker);
+  }
+  _column(side, label) {
+    const cards = this._cards(side);
+    return `<section><div class="section-head"><div><h3>${label}</h3><small>${cards.length} kort</small></div><button class="add" data-add="${side}" type="button"><ha-icon icon="mdi:plus"></ha-icon> Tilf\xF8j kort</button></div><div class="list">${cards.map((config, index) => `<article class="row" data-side="${side}" data-index="${index}"><div class="row-head"><strong>${this._escape(this._title(config, index))}</strong><div class="actions"><button data-move="-1" title="Flyt op" ${index === 0 ? "disabled" : ""}><ha-icon icon="mdi:arrow-up"></ha-icon></button><button data-move="1" title="Flyt ned" ${index === cards.length - 1 ? "disabled" : ""}><ha-icon icon="mdi:arrow-down"></ha-icon></button><button class="edit" title="Rediger kort"><ha-icon icon="mdi:pencil"></ha-icon><span>Rediger</span></button><button class="delete" title="Fjern kort"><ha-icon icon="mdi:delete-outline"></ha-icon></button></div></div><div class="nested"></div></article>`).join("")}</div><div class="picker" data-side="${side}"></div></section>`;
+  }
+  render() {
+    if (!this.config) return;
+    this._nestedEditors.clear();
+    this.shadowRoot.innerHTML = `<style>*{box-sizing:border-box}:host{display:block;color:var(--primary-text-color)}.settings,section{margin-bottom:14px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}.settings{display:grid;grid-template-columns:2fr 1.3fr 1fr 1fr 1fr;gap:10px}.field span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:12px;font-weight:600}.field input{width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}.section-head,.row-head,.actions{display:flex;align-items:center}.section-head,.row-head{justify-content:space-between;gap:10px}.section-head{margin-bottom:10px}.section-head h3{margin:0;font-size:16px}.section-head small{color:var(--secondary-text-color)}.list{display:grid;gap:8px}.row{overflow:hidden;border:1px solid var(--divider-color);border-radius:11px;background:var(--secondary-background-color,var(--card-background-color))}.row-head{min-height:48px;padding:7px 9px 7px 12px}.row-head strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.actions{gap:5px}button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:6px 9px;border:1px solid var(--divider-color);border-radius:9px;background:var(--card-background-color);color:inherit;cursor:pointer}button:hover,.edit.active{border-color:var(--primary-color);color:var(--primary-color)}button:disabled{cursor:default;opacity:.3}.delete:hover{border-color:var(--error-color);color:var(--error-color)}ha-icon{width:18px;height:18px;--mdc-icon-size:18px}.nested:not(:empty),.picker:not(:empty){padding:12px;border-top:1px solid var(--divider-color)}.picker:empty{display:none}.add{color:var(--primary-color)}@media(max-width:650px){.settings{grid-template-columns:1fr}.edit span{display:none}.actions{gap:3px}button{padding:6px}}</style><div class="settings"><label class="field"><span>PC-kolonner</span><input data-key="columns" value="${this._escape(this.config.columns || "")}"></label><label class="field"><span>Responsiv afstand</span><input data-key="gap" value="${this._escape(this.config.gap || "")}"></label><label class="field"><span>Skift til mobil ved (px)</span><input data-key="mobile_breakpoint" type="number" min="600" max="2400" step="10" value="${Number(this.config.mobile_breakpoint) || 1100}"></label><label class="field"><span>Telefonvisning til (px)</span><input data-key="phone_breakpoint" type="number" min="360" max="1400" step="10" value="${Number(this.config.phone_breakpoint) || 700}"></label><label class="field"><span>Afstand over navbar (px)</span><input data-key="bottom_gap" type="number" min="90" max="180" value="${Number(this.config.bottom_gap) || 110}"></label></div>${this._column("header_cards", "Top i fuld bredde")}${this._column("left_cards", "Venstre PC-kolonne")}${this._column("right_cards", "H\xF8jre PC-kolonne")}${this._column("mobile_cards", "Mobilkort")}${this._column("vertical_cards", "Ekstra kort p\xE5 lodret sk\xE6rm")}`;
+    this.shadowRoot.querySelectorAll(".settings input").forEach((input) => input.addEventListener("change", () => this._changeSetting(input)));
+    this.shadowRoot.querySelectorAll(".row").forEach((row) => {
+      const side = row.dataset.side, index = Number(row.dataset.index);
+      row.querySelectorAll("[data-move]").forEach((button) => button.addEventListener("click", () => this._move(side, index, Number(button.dataset.move))));
+      row.querySelector(".edit").addEventListener("click", () => this._toggleEditor(side, index, row));
+      row.querySelector(".delete").addEventListener("click", () => this._remove(side, index));
+    });
+    this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => this._showPicker(button.dataset.add)));
+    this._listKey = this._computeListKey();
+  }
+  _computeListKey() {
+    return JSON.stringify(["header_cards", "left_cards", "right_cards", "mobile_cards", "vertical_cards"].map((side) => this._cards(side).map((c) => c?.type || "")));
+  }
+  // Opdaterer kun de 5 rod-indstillingsfelter (kolonner/afstand/breakpoints) uden
+  // at roere resten af DOM'en - saa et aabent "Rediger"-panel for et kort forbliver
+  // aabent. Springer et felt over mens man rent faktisk sidder og skriver i det.
+  _syncSettings() {
+    const map = { columns: this.config.columns || "", gap: this.config.gap || "", mobile_breakpoint: Number(this.config.mobile_breakpoint) || 1100, phone_breakpoint: Number(this.config.phone_breakpoint) || 700, bottom_gap: Number(this.config.bottom_gap) || 110 };
+    this.shadowRoot.querySelectorAll(".settings input").forEach((input) => {
+      if (this.shadowRoot.activeElement === input) return;
+      const key = input.dataset.key;
+      if (key in map) input.value = map[key];
+    });
+  }
+};
+if (!customElements.get("ha-home-summary-card")) customElements.define("ha-home-summary-card", HaHomeSummaryCard2);
+if (!customElements.get("ha-home-summary-card-editor")) customElements.define("ha-home-summary-card-editor", HaHomeSummaryCardEditor2);
+if (!customElements.get("ha-home-desktop-layout-card")) customElements.define("ha-home-desktop-layout-card", HaHomeDesktopLayoutCard3);
+if (!customElements.get("ha-home-desktop-layout-card-editor")) customElements.define("ha-home-desktop-layout-card-editor", HaHomeDesktopLayoutCardEditor3);
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "ha-home-status-card",
+  name: "HA Home Status Card",
+  description: "Knapkort med valgfri specialfunktion",
+  preview: true
+});
+window.customCards.push({ type: "ha-home-summary-card", name: "HA Home Summary Card", description: "Samlet husstatus, forbrug, kalender og kameraoverblik", preview: true });
+window.customCards.push({ type: "ha-home-desktop-layout-card", name: "HA Home Desktop Layout", description: "Balancerede responsive kolonner til PC-forsiden", preview: false });
+console.info(
+  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION50} `,
+  "color:#fff;background:#38bdf8;font-weight:700",
+  "color:#38bdf8;background:#102030"
+);
 /*! Bundled license information:
 
 react/cjs/react.production.js:
