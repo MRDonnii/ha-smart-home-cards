@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.85 */
+/* MRDonnii Smart Home Cards v0.3.86 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -18742,6 +18742,7 @@ button { font: inherit; color: inherit; }
 /* One HA card, one surface: sections are separated by space and fine rules
    instead of a stack of differently colored cards. */
 .surface { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:host([embedded]) .hch-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .dashboard-main-grid > .surface,.pro-control-column > .surface,.pro-control-pair > .surface { border-top: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); }
 .overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { background: transparent; box-shadow: none; }
 .overview-status-pills > div { border: 0; border-left: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); border-radius: 0; }
@@ -18973,7 +18974,7 @@ var hf = class extends HTMLElement {
   }
   setConfig(e) {
     if (!e || typeof e.entities != "object" || e.entities === null) throw new Error("HCH5-kortet kr\xE6ver en entities-konfiguration.");
-    this.config = e, this.signature = "", this.renderCard();
+    this.toggleAttribute("embedded", e.embedded === true && e.variant !== "smartdash"), this.config = e, this.signature = "", this.renderCard();
   }
   set hass(e) {
     if (this.hassValue = e, !this.config) return;
@@ -23368,7 +23369,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION22 = "2.0.1";
+var VERSION22 = "2.0.2";
 var TAG = "ha-radiator-overview-card-v2";
 var DASH = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -23403,7 +23404,7 @@ var STYLE = `
 *{box-sizing:border-box}
 ha-card{position:relative;overflow:hidden;background:none;border:0;border-radius:0;box-shadow:none;color:var(--primary-text-color);font-family:var(--primary-font-family,var(--paper-font-body1_-_font-family,inherit))}
 .shell{position:relative;padding:22px;isolation:isolate;container-type:inline-size}
-.ambient{position:absolute;left:-10%;right:-10%;top:-160px;height:420px;z-index:-1;opacity:.55;background:radial-gradient(38% 55% at 12% 30%,color-mix(in srgb,var(--rc-hot) 15%,transparent),transparent 70%),radial-gradient(38% 55% at 90% 35%,color-mix(in srgb,var(--rc-cool) 13%,transparent),transparent 70%);pointer-events:none}
+.ambient{position:absolute;left:-10%;right:-10%;top:-160px;height:420px;z-index:-1;opacity:.55;background:radial-gradient(38% 55% at 90% 35%,color-mix(in srgb,var(--rc-cool) 13%,transparent),transparent 70%);pointer-events:none}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
 .eyebrow{display:flex;align-items:center;gap:8px;color:var(--rc-muted);font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
 .live{width:7px;height:7px;border-radius:50%;background:var(--rc-ok);animation:live 2.6s ease-out infinite}
