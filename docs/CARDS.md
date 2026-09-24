@@ -1,6 +1,6 @@
 # Card catalog
 
-The suite currently contains **59 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **60 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 `ha-home-status-grid-card.js` also provides `custom:ha-home-desktop-layout-card`, a responsive layout card for desktop, mobile and portrait screens. It shares the Home Status source module and therefore does not require a second resource file.
 
@@ -14,6 +14,7 @@ The suite currently contains **59 source modules**. Entries for cards migrated f
 | HA Roborock Vacuum Card | `ha-roborock-vacuum-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-roborock-vacuum-card) |
 | HA Robot Fleet Card | `ha-robot-fleet-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-robot-fleet-card) |
 | HA Tesla Vehicle Card | `ha-tesla-vehicle-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-tesla-vehicle-card) |
+| TH Tesla Dashboard Card | `th-tesla-dashboard-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-tesla-dashboard-card) |
 | Lawn Mower Card | `ha-lawn-mower-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-lawn-mower-card) |
 | HA Light Automation Card | `ha-light-automation-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-light-automation-card) |
 | Light Scene Card | `ha-light-scene-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-light-scene-card) |
