@@ -235,7 +235,7 @@ class HAPowerFlowCard extends HTMLElement {
       .axis{display:flex;justify-content:space-between;margin-top:4px;font-size:8px;color:var(--secondary-text-color)}
 
       .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
-      .stat{padding:11px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:3px solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
+      .stat{padding:11px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
       .stat span{display:block;font-size:9px;color:var(--secondary-text-color);text-transform:uppercase;font-weight:700;letter-spacing:.03em}
       .stat b{display:block;margin-top:4px;font-size:14px;font-weight:800}
       @media(max-width:420px){.price b{font-size:32px}.stats{grid-template-columns:1fr 1fr}.flow{height:164px}.node-badge,.node-icon{width:42px;height:42px}.node.home .node-badge,.node.home .node-icon{width:54px;height:54px}}

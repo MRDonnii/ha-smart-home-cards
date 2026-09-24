@@ -97,14 +97,14 @@ class HAHouseModeCard extends HTMLElement {
       .current{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800;background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
       .current ha-icon{--mdc-icon-size:14px}
       .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-      .mode-tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center}
+      .mode-tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center}
       .mode-tile:hover{border-color:var(--primary-text-color)}
       .mode-tile.active{--tone:var(--good);background:linear-gradient(145deg,color-mix(in srgb,var(--good) 12%,transparent),transparent 55%)}
       .mode-tile ha-icon{--mdc-icon-size:22px;color:var(--secondary-text-color)}
       .mode-tile.active ha-icon{color:var(--good)}
       .mode-tile span{font-size:10px;font-weight:700}
       .section-title{margin:16px 0 8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-      .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 14%,var(--edge));border-left:3px solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}
+      .row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 14%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);cursor:pointer}
       .row ha-icon{--mdc-icon-size:20px;color:var(--secondary-text-color);flex:0 0 auto}
       .row .row-text{min-width:0;flex:1;display:flex;flex-direction:column}
       .row .row-text b{font-size:12px}
@@ -115,7 +115,7 @@ class HAHouseModeCard extends HTMLElement {
       .switch i{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
       .switch.on i{transform:translateX(16px)}
       .overrides{display:grid;grid-template-columns:repeat(${Math.max(overrides.length, 1)},1fr);gap:8px;margin-top:8px}
-      .ov-tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);color:var(--primary-text-color);cursor:pointer}
+      .ov-tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);color:var(--primary-text-color);cursor:pointer}
       .ov-tile.on{--tone:var(--warn);background:linear-gradient(145deg,color-mix(in srgb,var(--warn) 12%,transparent),transparent 55%)}
       .ov-tile ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color)}
       .ov-tile.on ha-icon{color:var(--warn)}

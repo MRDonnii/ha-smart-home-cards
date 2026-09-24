@@ -133,7 +133,7 @@ class HAToggleGridCard extends HTMLElement {
       .switch i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .2s}
       .switch.on i{transform:translateX(13px)}
       .tiles{display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px}
-      .tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 10px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center;min-height:96px}
+      .tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 10px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center;min-height:96px}
       .tile:hover{border-color:var(--primary-text-color)}
       .tile.on{--tone:var(--good);background:linear-gradient(145deg,color-mix(in srgb,var(--good) 12%,transparent),transparent 55%)}
       .tile.unavailable{opacity:.4;pointer-events:none}

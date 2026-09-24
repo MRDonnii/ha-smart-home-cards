@@ -1,5 +1,6 @@
 import "./ha-card-list-editor.js";
-const VERSION = "0.5.1";
+import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
+const VERSION = "0.6.1";
 
 class HARadiatorOverviewCard extends HTMLElement {
   constructor() {
@@ -14,6 +15,7 @@ class HARadiatorOverviewCard extends HTMLElement {
     this._rendered = false;
     this._historyLoading = false;
     this._historyTimer = undefined;
+    this._detachedSignature = undefined;
     this._popupEl = undefined;
     this._popupRoomIndex = undefined;
     this._popupCards = [];
@@ -36,6 +38,12 @@ class HARadiatorOverviewCard extends HTMLElement {
   }
 
   connectedCallback() {
+    // Catch up on state that arrived while this tab was unselected.
+    if (this._detachedSignature !== undefined) {
+      this._signature = this._detachedSignature;
+      this._detachedSignature = undefined;
+      this._render();
+    }
     this._requestHistory();
     if (!this._historyTimer) this._historyTimer = setInterval(() => this._fetchHistory(), 300000);
   }
@@ -47,6 +55,7 @@ class HARadiatorOverviewCard extends HTMLElement {
   }
 
   set hass(hass) {
+    const firstHass = !this._hass;
     this._hass = hass;
     this._updateRoomPopup();
     this._popupCards.forEach((card) => { card.hass = hass; });
@@ -59,8 +68,17 @@ class HARadiatorOverviewCard extends HTMLElement {
       return [id, entity?.state, entity?.attributes?.current_temperature, entity?.attributes?.temperature, entity?.attributes?.hvac_action];
     }));
     if (signature !== this._signature) {
-      this._signature = signature;
-      this._render();
+      // Detached behind an unselected tab: the wrapper still forwards every hass
+      // tick, but rendering would rebuild all the room cards for a tree that is
+      // not in the document. Defer to connectedCallback().
+      if (!this.isConnected) {
+        this._detachedSignature = signature;
+        if (firstHass) this._rendered = false;
+      } else {
+        this._signature = signature;
+        if (firstHass) this._rendered = false;
+        this._render();
+      }
     }
     this._requestHistory();
   }
@@ -82,6 +100,15 @@ class HARadiatorOverviewCard extends HTMLElement {
     if (value && typeof value === "object") return value;
     if (typeof value !== "string" || !value.trim()) return {};
     try { return JSON.parse(value); } catch { return {}; }
+  }
+
+  _acState(room) {
+    const climate = this._entity(room?.ac?.climate);
+    const mode = String(climate?.state || "off").toLowerCase();
+    const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
+    const tone = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
+    const label = mode === "cool" ? "Køler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
+    return { climate, mode, active, tone, label };
   }
 
   _roomState(room) {
@@ -106,13 +133,14 @@ class HARadiatorOverviewCard extends HTMLElement {
       .map(([, entry]) => this._number(entry?.battery))
       .filter((value) => value !== undefined);
     const batteries = batteryValues.length ? batteryValues : [];
+    const ac = room.ac ? this._acState(room) : undefined;
     let tone = "neutral";
     if (delta !== undefined && delta < -0.4) tone = "cold";
     else if (delta !== undefined && delta > 0.7) tone = "warm";
     else if (target !== undefined && current !== undefined) tone = "ok";
     else if (comfortable === false) tone = "warn";
     else if (current !== undefined) tone = "ok";
-    return { climate, current, target, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone };
+    return { climate, current, target, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone, ac };
   }
 
   _format(value, digits = 1) {
@@ -174,10 +202,22 @@ class HARadiatorOverviewCard extends HTMLElement {
   }
 
   _status(state) {
+    if (state.ac?.active) return state.ac.label || "Kører via AC";
     if (state.tone === "cold") return "Under mål";
     if (state.tone === "warm") return "Over mål";
     if (state.current === undefined) return "Ingen data";
     return state.target !== undefined ? "På mål" : "Måling";
+  }
+
+  _acMiniLabel(state) {
+    const climate = state.ac?.climate;
+    const temp = climate?.attributes?.temperature ?? climate?.attributes?.current_temperature;
+    return Number.isFinite(Number(temp)) ? `${Math.round(Number(temp))}°` : "AC";
+  }
+
+  _acMiniMarkup(state) {
+    // Same indoor-unit + airflow visual as the AC card, shrunk to tile size.
+    return `<div class="ac-mini" aria-hidden="true" style="--tone:var(--room-color)">${acUnitVisualMarkup(this._escape(this._acMiniLabel(state)), true)}</div>`;
   }
 
   _clampTarget(climate, value) {
@@ -247,20 +287,26 @@ class HARadiatorOverviewCard extends HTMLElement {
     const modes = Array.isArray(state.climate?.attributes?.hvac_modes) ? state.climate.attributes.hvac_modes : [];
     const target = state.target ?? state.current ?? 20;
     const batteryLow = state.batteries.some((value) => value <= 20);
-    const modeText = !state.climate ? "Måling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
+    const acActive = !!state.ac?.active;
+    const modeText = acActive ? state.ac.label : !state.climate ? "Måling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
+    const tabs = [{ id: "temperature", label: "Temperatur" }];
+    if (room.ac) tabs.push({ id: "ac", label: "AC" });
+    if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
+      // When AC is running it also switches the radiator off, so lead with the
+      // AC tab instead of a temperature panel showing a dead radiator.
+      content.dataset.defaultTab = acActive ? "ac" : "temperature";
+      const defaultTab = content.dataset.defaultTab;
       content.innerHTML = `
       <style>
-        *{box-sizing:border-box}.popup{--accent:var(--dashboard-accent,var(--info-color,#38bdf8));--hot:#ff8a3d;--ok:var(--dashboard-success,var(--success-color,#5bc99a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.12)));position:relative;overflow:hidden;padding:22px;color:var(--primary-text-color);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 42%),var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--edge));border-radius:24px;font-family:var(--paper-font-body1_-_font-family,inherit)}
-        .glow{position:absolute;width:240px;height:240px;right:-110px;top:-120px;border-radius:50%;background:var(--accent);opacity:.13;filter:blur(34px);pointer-events:none}.popup.heating .glow{background:var(--hot)}.top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.eyebrow{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px currentColor}.popup.heating .dot{background:var(--hot)}h2{margin:5px 0 0;font-size:25px;line-height:1.05;letter-spacing:-.03em}.close{min-width:42px;min-height:42px;border:1px solid var(--edge);border-radius:50%;background:rgba(0,0,0,.16);color:var(--primary-text-color);font-size:21px;cursor:pointer}.tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}.tab{min-height:42px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:800;cursor:pointer}.tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.panel[hidden]{display:none}.hero{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin:0 0 20px;padding:18px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-left:4px solid var(--accent);border-radius:18px;background:rgba(255,255,255,.035)}.popup.heating .hero{border-left-color:var(--hot)}.current span,.target-label{display:block;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.current strong{display:block;margin-top:3px;font-size:42px;line-height:1}.target{text-align:right}.target strong{display:block;margin-top:3px;font-size:24px}.adjust{display:grid;grid-template-columns:52px 1fr 52px;gap:9px;margin-bottom:12px}.adjust button,.preset,.mode,.details{min-height:46px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.045);color:var(--primary-text-color);font:inherit;font-weight:800;cursor:pointer}.adjust .value{display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--edge));border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:18px;font-weight:800}.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.preset.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}.metric{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.08)}.metric span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;overflow:hidden;margin-top:4px;font-size:13px;text-overflow:ellipsis;white-space:nowrap}.metric.warn strong{color:var(--error-color,#db4437)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode.on{border-color:color-mix(in srgb,var(--hot) 42%,var(--edge));background:color-mix(in srgb,var(--hot) 12%,transparent)}.details{border-color:color-mix(in srgb,var(--accent) 28%,var(--edge));color:var(--accent)}.empty{padding:30px 18px;text-align:center;border:1px dashed var(--edge);border-radius:16px;color:var(--secondary-text-color)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media(max-width:440px){.popup{padding:17px}.metrics{grid-template-columns:repeat(2,1fr)}.presets{grid-template-columns:repeat(2,1fr)}.tab{font-size:10px}}
+        *{box-sizing:border-box}.popup{--accent:var(--dashboard-accent,var(--info-color,#38bdf8));--hot:#ff8a3d;--cool:var(--state-cool-icon, var(--info-color, #58aaf8));--ok:var(--dashboard-success,var(--success-color,#5bc99a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.12)));position:relative;overflow:hidden;padding:22px;color:var(--primary-text-color);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),transparent 42%),var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--edge));border-radius:24px;font-family:var(--paper-font-body1_-_font-family,inherit)}
+        .glow{position:absolute;width:240px;height:240px;right:-110px;top:-120px;border-radius:50%;background:var(--accent);opacity:.13;filter:blur(34px);pointer-events:none}.popup.heating .glow{background:var(--hot)}.popup.ac-cool .glow{background:var(--cool)}.popup.ac-hot .glow{background:var(--hot)}.top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.eyebrow{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px currentColor}.popup.heating .dot{background:var(--hot)}.popup.ac-cool .dot{background:var(--cool)}.popup.ac-hot .dot{background:var(--hot)}h2{margin:5px 0 0;font-size:25px;line-height:1.05;letter-spacing:-.03em}.close{min-width:42px;min-height:42px;border:1px solid var(--edge);border-radius:50%;background:rgba(0,0,0,.16);color:var(--primary-text-color);font-size:21px;cursor:pointer}.tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}.tab{min-height:42px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:800;cursor:pointer}.tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.panel[hidden]{display:none}.hero{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin:0 0 20px;padding:18px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:rgba(255,255,255,.035)}.popup.heating .hero{border-left-color:var(--hot)}.current span,.target-label{display:block;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.current strong{display:block;margin-top:3px;font-size:42px;line-height:1}.target{text-align:right}.target strong{display:block;margin-top:3px;font-size:24px}.adjust{display:grid;grid-template-columns:52px 1fr 52px;gap:9px;margin-bottom:12px}.adjust button,.preset,.mode,.details{min-height:46px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.045);color:var(--primary-text-color);font:inherit;font-weight:800;cursor:pointer}.adjust .value{display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--edge));border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:18px;font-weight:800}.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.preset.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}.metric{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.08)}.metric span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;overflow:hidden;margin-top:4px;font-size:13px;text-overflow:ellipsis;white-space:nowrap}.metric.warn strong{color:var(--error-color,#db4437)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode.on{border-color:color-mix(in srgb,var(--hot) 42%,var(--edge));background:color-mix(in srgb,var(--hot) 12%,transparent)}.details{border-color:color-mix(in srgb,var(--accent) 28%,var(--edge));color:var(--accent)}.empty{padding:30px 18px;text-align:center;border:1px dashed var(--edge);border-radius:16px;color:var(--secondary-text-color)}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media(max-width:440px){.popup{padding:17px}.metrics{grid-template-columns:repeat(2,1fr)}.presets{grid-template-columns:repeat(2,1fr)}.tab{font-size:10px}}
         [data-card-host]{transform-origin:top center}.panel{min-height:0}@media(max-height:700px){.popup{padding:12px}.top h2{font-size:20px}.tabs{margin:8px 0}.tab{min-height:34px}[data-card-host]{zoom:.72}}@media(min-height:701px) and (max-height:820px){[data-card-host]{zoom:.86}}
       </style>
       <div class="popup"><div class="glow"></div><div class="top"><div><div class="eyebrow"><i class="dot"></i>Rumklima · <span data-value="mode-label"></span></div><h2>${this._escape(room.name)}</h2></div><button class="close" aria-label="Luk popup">×</button></div>
-        <nav class="tabs" aria-label="Indhold for rummet"><button class="tab active" data-tab="temperature">Temperatur</button><button class="tab" data-tab="ac">AC</button><button class="tab" data-tab="optimization">Optimering</button></nav>
-        <section class="panel" data-panel="temperature"><div data-card-host="temperature"></div></section>
-        <section class="panel" data-panel="ac" hidden><div data-card-host="ac"></div></section>
-        <section class="panel" data-panel="optimization" hidden><div data-card-host="optimization"></div></section>
+        ${tabs.length > 1 ? `<nav class="tabs" aria-label="Indhold for rummet" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map((tab) => `<button class="tab${tab.id === defaultTab ? " active" : ""}" data-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>` : ""}
+        ${tabs.map((tab) => `<section class="panel" data-panel="${tab.id}"${tab.id === defaultTab ? "" : " hidden"}><div data-card-host="${tab.id}"></div></section>`).join("")}
       </div>`;
       content.querySelector(".close")?.addEventListener("click", () => this._closeRoomPopup());
       content.querySelectorAll("[data-delta]").forEach((button) => button.addEventListener("click", () => {
@@ -275,7 +321,9 @@ class HARadiatorOverviewCard extends HTMLElement {
     }
     const setText = (name, value) => { const node = content.querySelector(`[data-value="${name}"]`); if (node && node.textContent !== value) node.textContent = value; };
     const popup = content.querySelector(".popup");
-    popup?.classList.toggle("heating", state.heating);
+    popup?.classList.toggle("heating", state.heating && !acActive);
+    popup?.classList.toggle("ac-cool", acActive && state.ac.tone === "cool");
+    popup?.classList.toggle("ac-hot", acActive && state.ac.tone === "hot");
     setText("mode-label", modeText); setText("mode", modeText);
     setText("current", `${this._format(state.current)}°`); setText("target", `${this._format(state.target)}°`); setText("target-control", `${this._format(target)} °C`);
     setText("humidity", `${this._format(state.humidity,0)}%`); setText("valve", `${this._format(state.valve,0)}%`); setText("window", state.windowOpen ? "Åben" : "Lukket");
@@ -316,29 +364,46 @@ class HARadiatorOverviewCard extends HTMLElement {
     }
   }
 
+  _metricText(value, unit, digits = 1) {
+    return value === undefined ? "—" : `${this._format(value, digits)}${unit}`;
+  }
+
+  _metricOrders(emptyFlags) {
+    let visible = 0, hidden = 0;
+    return emptyFlags.map((isEmpty) => (isEmpty ? 10 + hidden++ : visible++));
+  }
+
   _roomMarkup(room, index) {
     const state = this._roomState(room);
-    const target = state.target === undefined ? "" : `<div class="metric"><span>Mål</span><strong>${this._format(state.target)}°</strong></div>`;
-    const humidity = state.humidity === undefined ? "" : `<div class="metric"><span>Fugt</span><strong>${this._format(state.humidity, 0)}%</strong></div>`;
-    const valve = state.valve === undefined ? "" : `<div class="metric equipment valve"><span>Ventil</span><strong>${this._format(state.valve, 0)}%</strong></div>`;
     const batteryLow = state.batteries.some((value) => value <= 20);
-    const battery = !state.batteries.length ? "" : `<div class="metric equipment battery ${batteryLow ? "low" : ""}"><span>${state.batteries.length > 1 ? "Batterier" : "Batteri"}</span><strong>${state.batteries.map((value) => `${this._format(value, 0)}%`).join(" · ")}</strong></div>`;
-    const radiator = room.climate ? `
+    const batteryEmpty = !state.batteries.length;
+    const [targetOrder, humidityOrder, deltaOrder, valveOrder, batteryOrder] = this._metricOrders([
+      state.target === undefined, state.humidity === undefined, state.delta === undefined, state.valve === undefined, batteryEmpty,
+    ]);
+    const target = `<div class="metric${state.target === undefined ? " empty" : ""}" style="order:${targetOrder}"><span>Mål</span><strong>${this._metricText(state.target, "°")}</strong></div>`;
+    const humidity = `<div class="metric${state.humidity === undefined ? " empty" : ""}" style="order:${humidityOrder}"><span>Fugt</span><strong>${this._metricText(state.humidity, "%", 0)}</strong></div>`;
+    const delta = `<div class="metric${state.delta === undefined ? " empty" : ""}" style="order:${deltaOrder}"><span>Afvigelse</span><strong>${state.delta === undefined ? "—" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°`}</strong></div>`;
+    const valve = `<div class="metric equipment valve${state.valve === undefined ? " empty" : ""}" style="order:${valveOrder}"><span>Ventil</span><strong>${this._metricText(state.valve, "%", 0)}</strong></div>`;
+    const battery = `<div class="metric equipment battery ${batteryLow ? "low" : ""}${batteryEmpty ? " empty" : ""}" style="order:${batteryOrder}"><span>${state.batteries.length > 1 ? "Batterier" : "Batteri"}</span><strong>${batteryEmpty ? "—" : state.batteries.map((value) => `${this._format(value, 0)}%`).join(" · ")}</strong></div>`;
+    const acActive = !!state.ac?.active;
+    const radiator = acActive ? this._acMiniMarkup(state) : room.climate ? `
       <div class="radiator" aria-hidden="true">
         <i></i><i></i><i></i><i></i><i></i>
       </div>` : `<ha-icon class="sensor-icon" icon="${this._escape(room.icon || "mdi:home-thermometer-outline")}"></ha-icon>`;
+    const badges = `${room.ac ? `<ha-icon class="cap-badge ac-badge${acActive ? " active" : ""}" icon="mdi:air-conditioner" aria-label="AC tilknyttet"></ha-icon>` : ""}${room.optimization ? `<ha-icon class="cap-badge" icon="mdi:chart-timeline-variant" aria-label="Optimering tilknyttet"></ha-icon>` : ""}`;
     return `
-      <button class="room ${state.tone} ${state.heating ? "radiator-heating" : ""}" data-index="${index}">
+      <button class="room ${state.tone} ${state.heating && !acActive ? "radiator-heating" : ""} ${acActive ? `ac-active ac-${state.ac.tone}` : ""}" data-index="${index}">
         <div class="room-glow"></div>
         ${this._backgroundGraph(room, state, index)}
         <div class="room-head">
-          <div><span class="room-name">${this._escape(room.name)}</span><span class="room-status"><b></b>${this._status(state)}</span></div>
+          <div class="room-title"><span class="room-name">${this._escape(room.name)}</span><span class="room-status"><b></b>${this._status(state)}</span></div>
+          <div class="room-badges">${badges}<ha-icon class="room-expand" icon="mdi:chevron-right" aria-hidden="true"></ha-icon></div>
         </div>
         <div class="room-body">
           ${radiator}
           <div class="temperature"><strong>${this._format(state.current)}</strong><span>°C</span></div>
         </div>
-        <div class="room-foot">${target}${humidity}${state.delta === undefined ? "" : `<div class="metric"><span>Afvigelse</span><strong>${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°</strong></div>`}${valve}${battery}</div>
+        <div class="room-foot">${target}${humidity}${delta}${valve}${battery}</div>
       </button>`;
   }
 
@@ -355,15 +420,41 @@ class HARadiatorOverviewCard extends HTMLElement {
     this.shadowRoot.querySelectorAll(".room[data-index]").forEach((button) => {
       const index = Number(button.dataset.index), room = this._config.rooms[index], state = states[index];
       if (!room || !state) return;
-      button.classList.toggle("cold", state.tone === "cold"); button.classList.toggle("warm", state.tone === "warm");
-      button.classList.toggle("warn", state.tone === "warn"); button.classList.toggle("neutral", state.tone === "neutral");
-      button.classList.toggle("ok", state.tone === "ok"); button.classList.toggle("radiator-heating", state.heating);
+      const acActive = !!state.ac?.active;
+      const wasAcActive = button.classList.contains("ac-active");
+      button.className = `room ${state.tone} ${state.heating && !acActive ? "radiator-heating" : ""} ${acActive ? `ac-active ac-${state.ac.tone}` : ""}`;
       const status = button.querySelector(".room-status");
       if (status?.lastChild && status.lastChild.nodeType === Node.TEXT_NODE && status.lastChild.nodeValue !== this._status(state)) status.lastChild.nodeValue = this._status(state);
+      if (acActive !== wasAcActive) {
+        const body = button.querySelector(".room-body");
+        const visual = body?.querySelector(".ac-mini, .radiator, .sensor-icon");
+        if (body && visual) {
+          const markup = acActive ? this._acMiniMarkup(state) : room.climate ? `<div class="radiator" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>` : `<ha-icon class="sensor-icon" icon="${this._escape(room.icon || "mdi:home-thermometer-outline")}"></ha-icon>`;
+          visual.outerHTML = markup;
+        }
+      } else if (acActive) {
+        const tempNode = button.querySelector('[data-role="ac-unit-display"]');
+        const label = this._acMiniLabel(state);
+        if (tempNode && tempNode.textContent !== label) tempNode.textContent = label;
+      }
+      const badge = button.querySelector(".ac-badge");
+      badge?.classList.toggle("active", acActive);
       const temperature = button.querySelector(".temperature strong");
       const temperatureText = this._format(state.current); if (temperature && temperature.textContent !== temperatureText) temperature.textContent = temperatureText;
-      const values = { "Mål": `${this._format(state.target)}°`, "Fugt": `${this._format(state.humidity,0)}%`, "Afvigelse": state.delta === undefined ? "—" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°`, "Ventil": `${this._format(state.valve,0)}%` };
-      button.querySelectorAll(".metric").forEach((metric) => { const label = metric.querySelector("span")?.textContent; const strong = metric.querySelector("strong"); if (strong && values[label] !== undefined && strong.textContent !== values[label]) strong.textContent = values[label]; });
+      const batteryText = state.batteries.length ? state.batteries.map((value) => `${this._format(value, 0)}%`).join(" · ") : "—";
+      const values = { "Mål": this._metricText(state.target, "°"), "Fugt": this._metricText(state.humidity, "%", 0), "Afvigelse": state.delta === undefined ? "—" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}°`, "Ventil": this._metricText(state.valve, "%", 0), "Batteri": batteryText, "Batterier": batteryText };
+      const empty = { "Mål": state.target === undefined, "Fugt": state.humidity === undefined, "Afvigelse": state.delta === undefined, "Ventil": state.valve === undefined, "Batteri": !state.batteries.length, "Batterier": !state.batteries.length };
+      const [targetOrder, humidityOrder, deltaOrder, valveOrder, batteryOrder] = this._metricOrders([
+        empty["Mål"], empty["Fugt"], empty["Afvigelse"], empty["Ventil"], empty["Batteri"],
+      ]);
+      const orders = { "Mål": targetOrder, "Fugt": humidityOrder, "Afvigelse": deltaOrder, "Ventil": valveOrder, "Batteri": batteryOrder, "Batterier": batteryOrder };
+      button.querySelectorAll(".metric").forEach((metric) => {
+        const label = metric.querySelector("span")?.textContent;
+        const strong = metric.querySelector("strong");
+        if (strong && values[label] !== undefined && strong.textContent !== values[label]) strong.textContent = values[label];
+        if (empty[label] !== undefined) metric.classList.toggle("empty", empty[label]);
+        if (orders[label] !== undefined) metric.style.order = orders[label];
+      });
       if (updateGraphs) { const chart = button.querySelector(".room-chart"); const markup = this._backgroundGraph(room,state,index); if (chart && markup) chart.outerHTML = markup; else if (!chart && markup) button.querySelector(".room-glow")?.insertAdjacentHTML("afterend",markup); }
     });
     this._renderedHistoryRevision = this._historyRevision;
@@ -390,7 +481,7 @@ class HARadiatorOverviewCard extends HTMLElement {
       <style>
         :host { display:block; --hot:#ff8a3d; --hot2:#ffca62; --cool:var(--state-cool-icon, var(--info-color, #58aaf8)); --ok:var(--dashboard-success, var(--success-color, #5bc99a)); --accent:var(--dashboard-accent, var(--info-color, #38bdf8)); --edge:var(--dashboard-border-neutral, var(--divider-color, rgba(255,255,255,.11))); }
         * { box-sizing:border-box; }
-        ha-card { position:relative; overflow:hidden; border-radius:24px; background:var(--dashboard-card-bg, var(--surface, var(--ha-card-background, var(--card-background-color, #111820)))); box-shadow:var(--ha-card-box-shadow); color:var(--primary-text-color); }
+        ha-card { position:relative; overflow:hidden; /* Ingen egen flade, radius eller skygge: kortet bruges kun inde i en stack-in-card, som alligevel slaar dem fra - men foerst EFTER kortet har tegnet sig selv. Det var det glimt af en kant man kunne se ved indlaesning, og den kom igen hver gang kortet byggede sig selv om. */ background:none; border:0; border-radius:0; box-shadow:none; color:var(--primary-text-color); }
         .shell { position:relative; padding:22px; isolation:isolate; }
         .ambient { position:absolute; inset:-30%; z-index:-1; opacity:.28; background:radial-gradient(circle at 18% 2%,rgba(255,138,61,.35),transparent 27%),radial-gradient(circle at 90% 22%,rgba(88,170,248,.2),transparent 24%); pointer-events:none; }
         header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:18px; }
@@ -398,7 +489,7 @@ class HARadiatorOverviewCard extends HTMLElement {
         .eyebrow b { width:7px; height:7px; border-radius:50%; background:${heating ? "var(--hot)" : "var(--ok)"}; box-shadow:0 0 14px ${heating ? "var(--hot)" : "var(--ok)"}; }
         h2 { margin:5px 0 0; font-size:25px; line-height:1.08; letter-spacing:-.035em; }
         .summary { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-        .summary-item { min-width:84px; padding:9px 12px; border:1px solid color-mix(in srgb,var(--accent) 16%,transparent); border-left:3px solid var(--accent); border-radius:14px; background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),rgba(0,0,0,.08); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+        .summary-item { min-width:84px; padding:9px 12px; border:1px solid color-mix(in srgb,var(--accent) 16%,transparent); border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent); border-radius:14px; background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),rgba(0,0,0,.08); box-shadow:0 4px 12px rgba(0,0,0,.1); }
         .summary-item span { display:block; color:var(--secondary-text-color); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
         .summary-item strong { display:block; margin-top:3px; font-size:17px; }
         .system { position:relative; height:86px; margin:4px 0 20px; border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge)); border-radius:19px; background:linear-gradient(90deg,rgba(255,138,61,.08),rgba(255,255,255,.025),rgba(88,170,248,.07)); overflow:hidden; }
@@ -412,17 +503,24 @@ class HARadiatorOverviewCard extends HTMLElement {
         .hub.source { left:3%; } .hub.house { left:50%; transform:translate(-50%,-50%); } .hub.return { right:3%; }
         .hub.return ha-icon { color:var(--cool); }
         .rooms { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:12px; }
-        .room { position:relative; min-width:0; min-height:206px; padding:15px; overflow:hidden; border:1px solid color-mix(in srgb,var(--room-color) 22%,var(--edge)); border-left:4px solid var(--room-color); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(0,0,0,.04)); color:inherit; font:inherit; text-align:left; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.08); transition:transform .2s ease,border-color .25s ease,box-shadow .25s ease; }
+        .room { position:relative; min-width:0; min-height:206px; padding:15px; overflow:hidden; border:1px solid color-mix(in srgb,var(--room-color) 22%,var(--edge)); border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--room-color); border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(0,0,0,.04)); color:inherit; font:inherit; text-align:left; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.08); transition:transform .2s ease,border-color .25s ease,box-shadow .25s ease; }
         .room > *:not(.room-chart):not(.room-glow) { position:relative; z-index:2; }
         .room:hover { transform:translateY(-2px); border-color:color-mix(in srgb,var(--room-color) 48%,transparent); box-shadow:0 12px 30px rgba(0,0,0,.15),0 0 0 1px color-mix(in srgb,var(--room-color) 12%,transparent); }
         .room:disabled { cursor:default; opacity:1; } .room:disabled:hover { transform:none; }
         .room { --room-color:var(--ok); } .room.cold { --room-color:var(--cool); } .room.warm,.room.warn { --room-color:var(--hot2); } .room.neutral { --room-color:var(--secondary-text-color); }
+        .room.ac-active.ac-cool { --room-color:var(--cool); } .room.ac-active.ac-hot { --room-color:var(--hot); } .room.ac-active.ac-dry { --room-color:#a68cff; } .room.ac-active.ac-fan { --room-color:#63d4c1; }
         .room-glow { position:absolute; width:150px; height:150px; right:-60px; bottom:-70px; border-radius:50%; background:var(--room-color); opacity:.10; filter:blur(28px); pointer-events:none; }
+        .room.ac-active .room-glow { animation:breathe 2.3s ease-in-out infinite; }
         .room-chart { position:absolute; z-index:0; left:0; right:0; top:47px; bottom:8px; color:var(--room-color); opacity:.14; pointer-events:none; mask-image:linear-gradient(to bottom,transparent 0,#000 28%,#000 72%,transparent 100%); }
         .room-chart svg { display:block; width:100%; height:100%; }
         .room-chart polyline { stroke:currentColor; stroke-width:1.35; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 3px currentColor); }
         .room-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
         .room-head > div { min-width:0; }
+        .room-badges { display:flex; align-items:center; gap:9px; flex-shrink:0; }
+        .cap-badge { width:15px; height:15px; --mdc-icon-size:15px; color:var(--room-color); opacity:.6; }
+        .cap-badge.ac-badge.active { opacity:1; color:var(--room-color); animation:pulse 2s ease-in-out infinite; }
+        .room-expand { width:16px; height:16px; --mdc-icon-size:16px; color:var(--secondary-text-color); opacity:.32; transition:opacity .2s ease,transform .2s ease; }
+        .room:hover .room-expand { opacity:.7; transform:translateX(2px); }
         .room-name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:800; }
         .room-status { display:flex; align-items:center; gap:6px; margin-top:4px; color:var(--secondary-text-color); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; }
         .room-status b { width:6px; height:6px; border-radius:50%; background:var(--room-color); box-shadow:0 0 8px var(--room-color); }
@@ -438,14 +536,19 @@ class HARadiatorOverviewCard extends HTMLElement {
         .room.radiator-heating .radiator::after { display:block; animation:radiatorFlow 1.25s linear infinite; }
         .room.radiator-heating .radiator i { background:linear-gradient(180deg,rgba(255,202,98,.72),rgba(255,138,61,.12) 46%,rgba(255,138,61,.03) 72%); background-size:100% 230%; animation:radiatorFill 1.35s ease-in-out infinite; box-shadow:inset 0 0 7px rgba(255,202,98,.45),0 0 7px rgba(255,138,61,.22); }
         .room.radiator-heating .radiator i:nth-child(2){animation-delay:.12s}.room.radiator-heating .radiator i:nth-child(3){animation-delay:.24s}.room.radiator-heating .radiator i:nth-child(4){animation-delay:.36s}.room.radiator-heating .radiator i:nth-child(5){animation-delay:.48s}
+        .ac-mini { position:relative; width:67px; height:50px; overflow:hidden; }
+        .ac-mini .ac-unit-visual { transform:scale(.5); transform-origin:top left; }
+        ${AC_UNIT_VISUAL_STYLE}
         .sensor-icon { width:38px; height:38px; color:var(--room-color); opacity:.8; }
         .room-foot { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 12px; padding-top:10px; border-top:1px solid var(--edge); }
         .metric { min-width:0; } .metric span { display:block; color:var(--secondary-text-color); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; } .metric strong { display:block; margin-top:2px; font-size:12px; white-space:nowrap; }
+        .metric.empty { visibility:hidden; }
         .metric.equipment strong { color:var(--primary-text-color); }
         .metric.battery.low strong { color:var(--error-color,#db4437); }
         .no-animation * { animation:none!important; }
         @keyframes flow { from{transform:translateX(-60px)} to{transform:translateX(calc(100vw - 30px))} }
         @keyframes pulse { 0%,100%{transform:scale(.9);opacity:.15} 50%{transform:scale(1.15);opacity:.28} }
+        @keyframes breathe { 50%{opacity:.18;transform:scale(1.15)} }
         @keyframes radiatorFlow { from{transform:translateX(-13px)} to{transform:translateX(43px)} }
         @keyframes radiatorFill { 0%,100%{background-position:0 100%;opacity:.62} 50%{background-position:0 0;opacity:1} }
         @media (max-width:760px) { .shell{padding:15px} header{display:block}.summary{justify-content:flex-start;margin-top:13px}.summary-item{flex:1}.rooms{grid-template-columns:repeat(2,1fr);gap:9px}.system{height:76px}.hub{padding:7px}.hub span{display:none}.room{min-height:196px;padding:13px} }
