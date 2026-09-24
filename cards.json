@@ -161,6 +161,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-heat-center-header-card",
+    "name": "HA Heat Center Header Card",
+    "filename": "ha-heat-center-header-card.js",
+    "category": "Heating and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-heat-economy-card",
     "name": "Heat Economy Card",
     "filename": "ha-heat-economy-card.js",
