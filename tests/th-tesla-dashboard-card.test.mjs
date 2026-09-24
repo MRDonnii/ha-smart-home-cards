@@ -199,7 +199,29 @@ assert.equal(model(states).status.label, "Klar til opladning");
 states["sensor.monta"] = s("busy-scheduled");
 result = model(states);
 assert.equal(result.status.label, "Venter på opladning");
-assert.equal(result.charge.stopVisible, false, "switch already off: stop would change nothing");
+assert.equal(result.charge.stopVisible, true, "a scheduled Monta charge can be stopped");
+assert.equal(result.charge.startVisible, true, "start overrides the schedule");
+
+// Plugged per Zaptec before Monta notices: start is offered from the fastest signal.
+states = baseStates();
+states["sensor.mode"] = s("connected_requesting");
+result = model(states);
+assert.equal(result.charge.startVisible, true, "Zaptec plug signal is enough");
+assert.match(result.charge.sub, /^Kabel tilsluttet/, "stale Monta cable sensor does not override Zaptec");
+
+// Monta reports the switch as on while idle-plugged ("busy"): start must still be offered.
+states["sensor.monta"] = s("busy-non-charging");
+states["switch.start_stop"] = s("on");
+assert.equal(model(states).charge.startVisible, true);
+
+// Script controls: busy while the script runs.
+const scriptConfig = { ...config, controls: { ...config.controls, start_charge: { entity: "script.start" }, stop_charge: { entity: "script.stop" } } };
+states["script.start"] = s("on");
+states["script.stop"] = s("off");
+result = model(states, scriptConfig);
+assert.equal(result.charge.startVisible, true);
+assert.equal(result.charge.startBusy, true, "running start script shows progress");
+assert.equal(result.charge.stopBusy, false);
 
 // Active charging.
 states = baseStates();
@@ -323,6 +345,15 @@ assert.equal(result.plan.soc, null);
 assert.equal(result.plan.deadline.editable, false);
 states["switch.start_stop"] = s("unavailable");
 assert.equal(model(states).charge.startVisible, false, "unavailable control is hidden");
+
+// Popup layout and refresh configuration.
+let popup = card(baseStates(), { ...config, layout: "charge", navigation_path: "/tesla/view", refresh_entities: ["sensor.monta", 42, "bad"] });
+assert.equal(popup._cfg.layout, "charge");
+assert.equal(popup._cfg.navigation_path, "/tesla/view");
+assert.deepEqual([...popup._cfg.refresh], ["sensor.monta"]);
+assert.equal(card(baseStates(), { ...config, layout: "weird", navigation_path: "javascript:alert(1)" })._cfg.navigation_path, null);
+assert.equal(card(baseStates(), { ...config, map: { style: "satellite" } })._cfg.map.style, "satellite");
+assert.equal(card(baseStates(), { ...config, map: { style: "x" } })._cfg.map.style, "default");
 
 // Empty configuration renders dashes only.
 result = model({}, {});

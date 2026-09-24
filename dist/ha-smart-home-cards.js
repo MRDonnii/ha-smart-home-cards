@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.79 */
+/* MRDonnii Smart Home Cards v0.3.80 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -2742,7 +2742,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.0.0";
+var TTD_VERSION = "1.1.1";
 var TTD_TAG = "th-tesla-dashboard-card";
 var TTD_DASH = "\u2014";
 var TTD_EMPTY_STATES = /* @__PURE__ */ new Set(["", "unknown", "unavailable", "none", "null", "undefined", "nan"]);
@@ -2755,6 +2755,14 @@ var TTD_CHART_RANGES = {
 };
 var TTD_STATS_TTL = 15 * 60 * 1e3;
 var TTD_ARM_MS = 4e3;
+var TTD_PENDING_MS = 8e3;
+var TTD_REFRESH_MS = 60 * 1e3;
+var TTD_SATELLITE = {
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  labels: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+  attribution: "Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics"
+};
+var ttdLastRefresh = 0;
 var TTD_MONTA_PLUGGED = /* @__PURE__ */ new Set(["busy", "busy-blocked", "busy-charging", "busy-non-charging", "busy-non-released", "busy-scheduled"]);
 var TTD_UNIT_LABELS = { DKK: "kr.", kr: "kr.", "DKK/km": "kr/km", "DKK/kWh": "kr/kWh", "km/h": "km/t", h: "t" };
 var TTD_PRESSURE_TO_BAR = { bar: 1, psi: 0.0689476, kpa: 0.01, pa: 1e-5, hpa: 1e-3, mbar: 1e-3 };
@@ -3019,7 +3027,8 @@ function ttdNormalizeConfig(raw) {
     const entity = typeof value === "string" ? value : value?.entity;
     if (typeof entity === "string" && entity.includes(".")) controls[key] = { ...typeof value === "object" ? value : {}, entity: entity.trim() };
   }
-  const map = { hours_to_show: 6, theme_mode: "auto", default_zoom: 14, ...config.map || {} };
+  const map = { hours_to_show: 6, theme_mode: "auto", default_zoom: 14, style: "default", satellite_labels: true, ...config.map || {} };
+  map.style = map.style === "satellite" ? "satellite" : "default";
   map.ranges = Array.isArray(map.ranges) && map.ranges.length ? map.ranges.map(Number).filter((hours) => Number.isFinite(hours) && hours >= 0) : TTD_MAP_RANGES;
   map.hours_to_show = Number.isFinite(Number(map.hours_to_show)) ? Number(map.hours_to_show) : 6;
   const chart = { range: "today", ...config.chart || {} };
@@ -3040,7 +3049,11 @@ function ttdNormalizeConfig(raw) {
     chart,
     tpms,
     battery,
-    precision
+    precision,
+    layout: config.layout === "charge" ? "charge" : "full",
+    navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
+    // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
+    refresh: (Array.isArray(config.refresh_entities) ? config.refresh_entities : []).filter((id) => typeof id === "string" && id.includes("."))
   };
 }
 function ttdDeriveStatus(snapshot) {
@@ -3107,7 +3120,8 @@ function ttdTemplate(cfg) {
   const item = (key, icon, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
-  return `<div class="wrap" data-r="wrap"><div class="dash">
+  const full = cfg.layout !== "charge";
+  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
@@ -3119,7 +3133,7 @@ function ttdTemplate(cfg) {
     <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" data-r="ringFill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100"/></svg>
     <span class="ring-t"><span class="soc"><b data-r="soc">${TTD_DASH}</b><small data-r="socUnit">%</small>${ttdIcon("mdi:lightning-bolt", "bolt")}</span><span class="range" data-r="range">${TTD_DASH}</span><span class="muted">r\xE6kkevidde</span></span>
   </button>
-  <div class="hero-stats">${stat("odometer", "mdi:speedometer", "odometer", "Kilometerstand")}${stat("temperature_inside", "mdi:thermometer", "inside", "Indetemperatur")}${stat("temperature_outside", "mdi:thermometer", "outside", "Udetemperatur")}${stat("last_update", "mdi:refresh", "updatedShort", "Sidst opdateret")}</div>
+  ${full ? `<div class="hero-stats">${stat("odometer", "mdi:speedometer", "odometer", "Kilometerstand")}${stat("temperature_inside", "mdi:thermometer", "inside", "Indetemperatur")}${stat("temperature_outside", "mdi:thermometer", "outside", "Udetemperatur")}${stat("last_update", "mdi:refresh", "updatedShort", "Sidst opdateret")}</div>` : ""}
 </section>
 <section class="panel charge" data-r="charge" aria-label="Opladning">
   <header class="ph">${ttdIcon("mdi:lightning-bolt", "ph-i green")}<div class="ph-t"><h3>Opladning</h3><p data-r="chargeSub">${TTD_DASH}</p></div><span class="badge" data-r="chargeBadge">${ttdIcon("mdi:power-plug", "")}<span data-r="chargeBadgeText">${TTD_DASH}</span></span></header>
@@ -3143,8 +3157,8 @@ function ttdTemplate(cfg) {
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
 </section>
-<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
-  <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
+${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
+  <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
 </section>
 <section class="panel tpms" data-r="tpms" aria-label="D\xE6ktryk">
@@ -3173,7 +3187,8 @@ function ttdTemplate(cfg) {
     <div class="tip" data-r="tip" hidden><span class="tip-l" data-r="tipL"></span><span class="tip-r" data-r="tipDRow"><i class="key key-d"></i><b data-r="tipD"></b></span><span class="tip-r" data-r="tipERow"><i class="key key-e"></i><b data-r="tipE"></b></span></div>
     <p class="chart-empty" data-r="chartEmpty" hidden></p>
   </div>
-</section>
+</section>` : ""}
+${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>\xC5bn hele Tesla-oversigten</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
 </div></div>`;
 }
 var TTD_STYLES = `
@@ -3312,7 +3327,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .map-host{position:absolute;inset:0}
 .map-host>*{display:block;height:100%;--ha-card-border-radius:0;--ha-card-border-width:0;--ha-card-box-shadow:none}
 .map-empty{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-size:14px;color:var(--tdc-muted)}
-.seg{position:absolute;left:12px;bottom:12px;z-index:3;display:flex;gap:2px;padding:4px;border-radius:12px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-panel) 92%,transparent)}
+.seg{position:absolute;left:12px;bottom:12px;z-index:3;display:flex;gap:2px;padding:4px;border-radius:12px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--primary-background-color,#0b0f16) 88%,transparent);color:var(--primary-text-color,#eef2f7)}
 .seg button{min-width:48px;height:36px;padding:0 10px;border-radius:9px;font-size:15px;text-align:center}
 .seg button:hover{background:var(--tdc-hover)}
 .seg button[aria-pressed=true]{background:var(--tdc-blue);color:var(--text-primary-color,#fff)}
@@ -3413,6 +3428,21 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
   .plan-top .cell{flex-direction:column;gap:6px;padding:12px 10px}
   .plan-top .cell small{white-space:normal}
 }
+/* popup layout (layout: charge): status, charging and plan only */
+.dash.charge-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "plan" "nav"}
+.charge-layout .hero{grid-template-rows:auto minmax(120px,1fr)}
+.charge-layout .hero-car img{max-height:200px}
+@container panel (min-width:540px){
+  .charge-layout .hero-car{grid-area:1/1/3/2;height:auto;padding:30px 0 0 24%}
+  .charge-layout .ring-wrap{grid-area:1/2/3/3;align-self:center;--ring:172px;--soc-size:40px}
+  .charge-layout .range{font-size:17px;margin-top:4px}
+  .charge-layout .ring-t .muted{font-size:12px}
+}
+.navlink{grid-area:nav;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 16px;font-size:15px;font-weight:600}
+.navlink:hover{background:var(--tdc-hover)}
+.icon-btn[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 50%,transparent)}
+.icon-btn[aria-pressed=true] ha-icon{color:var(--tdc-text)}
+.btn[data-busy]{opacity:.7;cursor:progress}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 `;
 var ThTeslaDashboardCard = class extends HTMLElement {
@@ -3458,6 +3488,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._cfg = ttdNormalizeConfig(config);
     this._mapHours = this._cfg.map.hours_to_show;
     this._chartRange = this._cfg.chart.range;
+    this._mapStyle = this._cfg.map.style;
     this._built = false;
     this._stats = {};
     this._map = null;
@@ -3489,6 +3520,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._tick = null;
     this._io?.disconnect();
     this._io = null;
+    clearTimeout(this._styleTimer);
+    this._styleTimer = null;
+    clearTimeout(this._pendingTimer);
     this._disarm(false);
   }
   /* ------------------------------------------------------ update loop */
@@ -3510,6 +3544,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (this._map) this._map.hass = this._hass;
     this._apply(this._model());
     this._renderChart(false);
+    if (this._map && !this._satMap && !this._styleTimer && Date.now() - (this._styleGaveUp || 0) > 3e4) this._applyMapStyle(0);
   }
   _statesChanged() {
     const states = this._hass.states || {};
@@ -3551,6 +3586,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (!this._built) return;
     this._ensureMap();
     this._loadStats(this._chartRange, false);
+    this._refresh(false);
+  }
+  /** Ask cloud-polled integrations for fresh data (at most once a minute across all card instances). */
+  _refresh(force) {
+    const ids = this._cfg.refresh.filter((id) => this._hass?.states?.[id]);
+    if (!ids.length || !force && Date.now() - ttdLastRefresh < TTD_REFRESH_MS) return;
+    ttdLastRefresh = Date.now();
+    this._hass.callService("homeassistant", "update_entity", { entity_id: ids }).catch(() => {
+    });
   }
   _format() {
     if (!this._fmt) this._fmt = new TtdFormat(this._hass);
@@ -3669,7 +3713,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const montaLabel = montaKey ? TTD_TEXT.monta[montaKey] ?? ttdHumanize(montaKey) : montaConfigured ? TTD_TEXT.unavailable : null;
     const mode = this._text("charger_mode");
     const known = cable != null || plug != null || !!montaKey || !!mode;
-    const cableText = cable === true || cable == null && plug === true ? "Kabel tilsluttet" : cable === false || cable == null && plug === false ? "Kabel ikke tilsluttet" : null;
+    const cableText = status.plugged || cable === true || plug === true ? "Kabel tilsluttet" : cable === false || plug === false ? "Kabel ikke tilsluttet" : null;
     let activity = null;
     if (status.charging) activity = montaKey === "busy-charging" ? "Lader via Monta" : this._attr("charger", "fast_charger_present") === true ? "Lader p\xE5 hurtiglader" : "Lader";
     else if (montaLabel) activity = `Monta ${montaLabel.toLowerCase()}`;
@@ -3709,11 +3753,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       monta: montaLabel ?? TTD_DASH,
       montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : "muted",
       mode: mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : this._id("charger_mode") ? TTD_TEXT.unavailable : TTD_DASH,
-      startVisible: !!start && status.plugged && !status.charging && ttdControlReady(start, "on"),
-      stopVisible: !!stop && (status.charging || scheduled) && ttdControlReady(stop, "off"),
+      // Offered on the fastest plug signal (Zaptec/Tesla/Monta) instead of waiting for a single, possibly stale, source.
+      startVisible: !!start && status.plugged && !status.charging,
+      stopVisible: !!stop && (status.charging || scheduled),
+      startBusy: this._busy("start_charge", start),
+      stopBusy: this._busy("stop_charge", stop),
       modeOptions: this._modeOptions(),
       estimate: estimateText
     };
+  }
+  /** A control is busy while its script runs, or for a few seconds after a direct command. */
+  _busy(name, control) {
+    if (control?.domain === "script" && control.stateObj.state === "on") return true;
+    return this._pending?.name === name && Date.now() < this._pending.until;
   }
   _modeOptions() {
     const control = this._control("charger_mode");
@@ -3914,11 +3966,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       }
     });
     img.src = cfg.image || TTD_FALLBACK_CAR;
-    this._r.rangeSelect.value = this._chartRange;
     const chart = this._r.chart;
-    chart.addEventListener("pointermove", (event) => this._onChartPointer(event));
-    chart.addEventListener("pointerleave", () => this._showTip(-1));
-    chart.addEventListener("blur", () => this._showTip(-1));
+    if (chart) {
+      this._r.rangeSelect.value = this._chartRange;
+      chart.addEventListener("pointermove", (event) => this._onChartPointer(event));
+      chart.addEventListener("pointerleave", () => this._showTip(-1));
+      chart.addEventListener("blur", () => this._showTip(-1));
+    }
     if (this._visible || typeof IntersectionObserver === "undefined") this._onVisible();
   }
   _t(ref, value) {
@@ -3984,8 +4038,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._renderModeSelect(c.modeOptions);
     this._hide("startBtn", !c.startVisible);
     this._hide("stopBtn", !c.stopVisible);
-    this._t("startBtn", this._armed === "start_charge" ? "Bekr\xE6ft: lad nu" : "Lad nu");
-    this._t("stopBtn", this._armed === "stop_charge" ? "Bekr\xE6ft: stop" : "Stop");
+    this._t("startBtn", c.startBusy ? "Starter \u2026" : this._armed === "start_charge" ? "Bekr\xE6ft: lad nu" : "Lad nu");
+    this._t("stopBtn", c.stopBusy ? "Stopper \u2026" : this._armed === "stop_charge" ? "Bekr\xE6ft: stop" : "Stop");
+    this._attrSet("startBtn", "data-busy", c.startBusy);
+    this._attrSet("stopBtn", "data-busy", c.stopBusy);
+    this._attrSet("startBtn", "aria-busy", c.startBusy ? "true" : null);
+    this._attrSet("stopBtn", "aria-busy", c.stopBusy ? "true" : null);
     this._attrSet("startBtn", "data-armed", this._armed === "start_charge");
     this._attrSet("stopBtn", "data-armed", this._armed === "stop_charge");
     this._hide("estimate", !c.estimate);
@@ -4032,7 +4090,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet(`w${key}`, "data-tone", tire.tone);
       this._t(`t${key}V`, tire.text);
       this._t(`t${key}S`, tire.tone === "ok" ? "" : tire.status);
-      this._attrSet(`t${key}`, "aria-label", `${r2[`t${key}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
+      if (r2[`t${key}`]) this._attrSet(`t${key}`, "aria-label", `${r2[`t${key}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
     }
     this._t("tpmsTime", m2.tpms.measured);
     this._t("month", m2.drive.month);
@@ -4043,10 +4101,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const e = m2.econ;
     this._t("costKm", e.costKm);
     this._t("effScore", e.effScore);
-    this._attrSet(r2.effScore.parentElement, "data-tone", e.effTone);
+    if (r2.effScore) this._attrSet(r2.effScore.parentElement, "data-tone", e.effTone);
     this._t("monthly", e.monthly);
     this._attrSet("monthlyBox", "data-tone", e.monthlyTone);
-    this._attrSet(r2.monthlyBox.querySelector(".trend"), "icon", e.monthlyIcon);
+    if (r2.monthlyBox) this._attrSet(r2.monthlyBox.querySelector(".trend"), "icon", e.monthlyIcon);
     this._t("chargeCount", e.charges);
     this._t("noPrice", e.noPrice);
     this._attrSet("noPriceBox", "data-tone", e.noPriceTone);
@@ -4066,6 +4124,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("mapHost", !!m2.map.empty);
     this._hide("mapSeg", !!m2.map.empty);
     for (const el of this._rangeEls) this._attrSet(el, "aria-pressed", String(Number(el.dataset.range) === this._mapHours));
+    this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
   }
   _renderModeSelect(model) {
@@ -4119,6 +4178,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (host.isConnected && this._r.mapHost === host) {
         host.replaceChildren(card);
         this._map = card;
+        this._applyMapStyle(0);
       }
     } catch (err) {
       this._mapError = true;
@@ -4131,12 +4191,71 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (!Number.isFinite(hours) || hours === this._mapHours) return;
     this._mapHours = hours;
     this._map?.setConfig?.(this._mapConfig());
+    this._applyMapStyle(0);
     this._queue(true);
+  }
+  _toggleMapStyle() {
+    this._mapStyle = this._mapStyle === "satellite" ? "default" : "satellite";
+    this._applyMapStyle(0);
+    this._queue(true);
+  }
+  /**
+   * Satellite imagery on top of Home Assistant's own (Leaflet based) map, so markers, route, zoom and
+   * more-info keep working. Uses frontend internals defensively: when they are missing, the toggle stays
+   * hidden and the normal map is shown.
+   */
+  _applyMapStyle(attempt) {
+    clearTimeout(this._styleTimer);
+    this._styleTimer = null;
+    try {
+      this._applyMapStyleNow(attempt);
+    } catch (err) {
+      this._styleErr = err;
+      if (attempt < 30) this._styleTimer = setTimeout(() => this._applyMapStyle(attempt + 1), 1e3);
+    }
+  }
+  _applyMapStyleNow(attempt) {
+    const haMap = ttdFindDeep(this._map, "ha-map");
+    const L = haMap?.Leaflet;
+    const map = haMap?.leafletMap;
+    if (!L?.tileLayer || !map?.addLayer) {
+      if (this._map && attempt < 30) this._styleTimer = setTimeout(() => this._applyMapStyle(attempt + 1), 1e3);
+      else this._styleGaveUp = Date.now();
+      this._hide("styleBtn", true);
+      return;
+    }
+    this._hide("styleBtn", false);
+    if (this._satMap !== map) {
+      const options = { maxZoom: 20, maxNativeZoom: 19 };
+      const layers = [L.tileLayer(this._cfg.map.satellite_url || TTD_SATELLITE.url, { ...options, attribution: this._cfg.map.satellite_attribution || TTD_SATELLITE.attribution })];
+      if (this._cfg.map.satellite_labels !== false && !this._cfg.map.satellite_url) layers.push(L.tileLayer(TTD_SATELLITE.labels, options));
+      for (const layer of layers) layer.on("tileload", (event) => event.tile.style.setProperty("filter", "none", "important"));
+      this._sat = L.layerGroup(layers);
+      this._satLayers = layers;
+      this._satMap = map;
+      map.on("layeradd", () => this._syncBaseLayers(map));
+    }
+    const satellite = this._mapStyle === "satellite";
+    if (satellite && !map.hasLayer(this._sat)) this._sat.addTo(map);
+    if (!satellite && map.hasLayer(this._sat)) map.removeLayer(this._sat);
+    this._syncBaseLayers(map);
+  }
+  /** Hides (never removes) Home Assistant's own base map below the satellite layers, so its theme handling keeps working. */
+  _syncBaseLayers(map) {
+    const pane = map.getPane?.("tilePane");
+    if (!pane) return;
+    const ours = new Set((this._satLayers || []).map((layer) => layer.getContainer?.()).filter(Boolean));
+    const hide = this._mapStyle === "satellite";
+    for (const el of pane.children) {
+      if (ours.has(el)) continue;
+      const value = hide ? "hidden" : "";
+      if (el.style.visibility !== value) el.style.visibility = value;
+    }
   }
   /* ------------------------------------------------------ chart */
   async _loadStats(range, force) {
     const ids = [this._cfg.chart.distance_entity, this._cfg.chart.energy_entity].filter((id) => id && this._hass?.states?.[id]);
-    if (!ids.length || typeof this._hass?.callWS !== "function" || this._loading[range]) return;
+    if (!this._r.chart || !ids.length || typeof this._hass?.callWS !== "function" || this._loading[range]) return;
     const cached = this._stats[range];
     if (!force && cached && Date.now() - cached.at < TTD_STATS_TTL) return;
     this._loading[range] = true;
@@ -4320,9 +4439,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle]");
     if (!target) return;
-    if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));
+    if (target.dataset.nav != null) this._navigate();
+    else if (target.dataset.mapstyle != null) this._toggleMapStyle();
+    else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));
     else if (target.dataset.action) this._action(target.dataset.action);
     else if (target.dataset.more) {
       const entityId = this._moreId(target.dataset.more);
@@ -4330,6 +4451,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId } }));
       }
     }
+  }
+  _navigate() {
+    const path = this._cfg.navigation_path;
+    if (!path) return;
+    history.pushState(null, "", path);
+    window.dispatchEvent(new CustomEvent("location-changed"));
+    this.dispatchEvent(new CustomEvent("tesla-popup-close", { bubbles: true, composed: true }));
   }
   _onChange(event) {
     const el = event.target;
@@ -4366,7 +4494,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   _action(name) {
     const control = this._control(name);
-    if (!control) return;
+    if (!control || this._busy(name, control)) return;
     if (this._armed !== name) {
       this._disarm(false);
       this._armed = name;
@@ -4376,6 +4504,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     this._disarm(true);
     const { id, domain } = control;
+    if (domain !== "script") {
+      this._pending = { name, until: Date.now() + TTD_PENDING_MS };
+      clearTimeout(this._pendingTimer);
+      this._pendingTimer = setTimeout(() => {
+        this._refresh(true);
+        this._queue(true);
+      }, 4e3);
+      setTimeout(() => this._queue(true), TTD_PENDING_MS + 50);
+    }
     if (domain === "button" || domain === "input_button") this._call(domain, "press", { entity_id: id });
     else if (domain === "switch" || domain === "input_boolean") this._call(domain, name === "stop_charge" ? "turn_off" : "turn_on", { entity_id: id });
     else if (domain === "script" || domain === "scene") this._call(domain, "turn_on", { entity_id: id });
@@ -4423,9 +4560,18 @@ var ThTeslaDashboardCard = class extends HTMLElement {
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
 }
-function ttdControlReady(control, wanted) {
-  if (!["switch", "input_boolean"].includes(control.domain)) return true;
-  return wanted === "on" ? control.stateObj.state === "off" : control.stateObj.state === "on";
+function ttdFindDeep(root, tag, depth = 0) {
+  if (!root || depth > 6) return null;
+  const scope = root.shadowRoot || root;
+  const direct = scope.querySelector?.(tag);
+  if (direct) return direct;
+  for (const el of scope.querySelectorAll?.("*") || []) {
+    if (el.shadowRoot) {
+      const found = ttdFindDeep(el, tag, depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
 }
 if (!customElements.get(TTD_TAG)) customElements.define(TTD_TAG, ThTeslaDashboardCard);
 window.customCards = window.customCards || [];
