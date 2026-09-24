@@ -96,7 +96,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:
 /* ---------- oversigt: live hero ---------- */
 .hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .hero-item{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"b l" "v v" "s s";align-items:center;gap:6px 12px;padding:14px 16px;border-radius:14px;background:transparent;border:0;position:relative;overflow:hidden}
-.hero-item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tone);opacity:.85}
+.hero-item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:calc(var(--dashboard-left-accent-width,1) * 3px);border-radius:0 3px 3px 0;background:var(--tone);opacity:.85}
 .hero-item:hover{background:color-mix(in srgb,var(--tone) 5%,transparent)}
 .hero-item .badge{grid-area:b}
 .hi-label{grid-area:l;font-size:13px;font-weight:600;color:var(--ec-muted);text-transform:uppercase;letter-spacing:.06em}
