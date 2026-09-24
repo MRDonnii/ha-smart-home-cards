@@ -166,7 +166,7 @@ class HAFjernvarmeHouseCard extends HTMLElement {
     const closeBtn = document.createElement("button");
     closeBtn.setAttribute("aria-label", "Luk popup");
     closeBtn.textContent = "×";
-    closeBtn.style.cssText = "position:absolute;top:12px;right:12px;z-index:20;min-width:40px;min-height:40px;border:1px solid rgba(255,255,255,.22);border-radius:50%;background:rgba(10,14,20,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.45)";
+    closeBtn.style.cssText = "position:absolute;top:12px;right:12px;z-index:20;min-width:40px;min-height:40px;border:1px solid var(--divider-color,rgba(255,255,255,.22));border-radius:50%;background:var(--card-background-color,rgba(10,14,20,.72));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:var(--primary-text-color,#fff);font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)";
     closeBtn.addEventListener("click", () => this._closeDetailsPopup());
     const host = document.createElement("div");
     host.style.cssText = "flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch";
@@ -200,7 +200,7 @@ class HAFjernvarmeHouseCard extends HTMLElement {
     } catch (error) {
       console.error("HA Fjernvarme House Card: kunne ikke bygge popup-kort", cfg?.type, error);
       const boks = document.createElement("div");
-      boks.style.cssText = "padding:14px;border-radius:12px;color:#fca5a5;background:#3a1416;font:12px/1.5 -apple-system,sans-serif;white-space:pre-wrap";
+      boks.style.cssText = "padding:14px;border-radius:12px;color:var(--error-color,#fca5a5);background:color-mix(in srgb,var(--error-color,#ef4444) 12%,transparent);font:12px/1.5 -apple-system,sans-serif;white-space:pre-wrap";
       boks.textContent = `Kunne ikke vise kortet "${cfg?.type || "?"}": ${error?.message || error}`;
       return boks;
     }
@@ -277,7 +277,7 @@ class HAFjernvarmeHouseCard extends HTMLElement {
   async _mountDetailsCard(host, backdrop) {
     const tag = "ha-calefa-details-card";
     const showError = message => {
-      host.innerHTML = `<div style="padding:22px;color:#fca5a5;background:#3a1416;border-radius:16px;font:13px/1.5 -apple-system,sans-serif;white-space:pre-wrap">${this._esc(message)}</div>`;
+      host.innerHTML = `<div style="padding:22px;color:var(--error-color,#fca5a5);background:color-mix(in srgb,var(--error-color,#ef4444) 12%,transparent);border-radius:16px;font:13px/1.5 -apple-system,sans-serif;white-space:pre-wrap">${this._esc(message)}</div>`;
     };
     // The details card ships in a separate dashboard resource, so at click
     // time it may not have finished evaluating yet (slow network, a resource
