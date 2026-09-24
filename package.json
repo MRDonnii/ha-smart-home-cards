@@ -1,13 +1,13 @@
 {
   "name": "ha-smart-home-cards",
-  "version": "0.3.78",
+  "version": "0.3.79",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "typecheck:hch5": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --jsx react-jsx --skipLibCheck src/cards/ha-hch5-live-card/source/card.tsx src/cards/ha-hch5-live-card/source/webui-css.d.ts",
-    "test": "npm run build && npm run check && node tests/smart-home-overview-num.test.mjs && node tests/hch5-bypass.test.mjs && node tests/calefa-flow-card.test.mjs"
+    "test": "npm run build && npm run check && node tests/smart-home-overview-num.test.mjs && node tests/hch5-bypass.test.mjs && node tests/calefa-flow-card.test.mjs && node tests/th-tesla-dashboard-card.test.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
