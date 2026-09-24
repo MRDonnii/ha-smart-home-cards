@@ -38905,7 +38905,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION47 = "0.1.0";
+var VERSION47 = "0.1.1";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -38920,33 +38920,13 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     this._onBreakpoint = () => this._flushActive();
     this._slots = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
     this._slotSig = { header_cards: [], left_cards: [], right_cards: [], mobile_cards: [], vertical_cards: [] };
-    this._mode = this._initialMode();
-  }
-  _initialMode() {
-    try {
-      return localStorage.getItem("ha-home-front-surface-mode") === "unified" ? "unified" : "cards";
-    } catch {
-      return "cards";
-    }
-  }
-  _setMode(mode) {
-    this._mode = mode === "unified" ? "unified" : "cards";
-    try {
-      localStorage.setItem("ha-home-front-surface-mode", this._mode);
-    } catch {
-    }
-    this._applyMode();
+    this._mode = "cards";
   }
   _applyMode() {
     const surface = this.shadowRoot?.querySelector(".surface");
     if (!surface) return;
     const unified = this._mode === "unified";
     surface.classList.toggle("unified", unified);
-    this.shadowRoot.querySelectorAll(".modebar button").forEach((button) => {
-      const active = button.dataset.mode === this._mode;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
     this._headerChildren.forEach((card) => card.toggleAttribute("home-unified", unified));
     this._fitViewport();
   }
@@ -39040,6 +39020,11 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
+    const mode = hass?.states?.["input_boolean.dashboard_samlet_forside"]?.state === "on" ? "unified" : "cards";
+    if (mode !== this._mode) {
+      this._mode = mode;
+      this._applyMode();
+    }
     this._activeChildren().forEach((card) => {
       card.hass = hass;
     });
@@ -39054,8 +39039,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     this._mobileBreakpoint = mobileBreakpoint;
     this._phoneBreakpoint = phoneBreakpoint;
     this._bindBreakpoints(mobileBreakpoint, phoneBreakpoint);
-    this.shadowRoot.innerHTML = `<style>:host{display:block}.modebar{display:flex;justify-content:flex-end;margin:0 0 7px}.modebar .choices{display:flex;gap:3px;padding:3px;border:1px solid var(--divider-color,rgba(255,255,255,.18));border-radius:12px;background:var(--ha-card-background,var(--card-background-color));box-shadow:var(--dashboard-shadow-soft,none)}.modebar button{min-height:32px;padding:5px 11px;border:0;border-radius:9px;background:transparent;color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:600;cursor:pointer}.modebar button.active{background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--dashboard-accent,var(--primary-color)) 16%,transparent));color:var(--primary-text-color);box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--dashboard-accent,var(--primary-color)))}.modebar button:focus-visible{outline:2px solid var(--dashboard-accent,var(--primary-color));outline-offset:2px}.surface.unified{padding:10px 14px 18px;border:1px solid var(--dashboard-border-neutral,var(--divider-color));border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:8px;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="modebar" role="group" aria-label="Forsidens kortvisning"><div class="choices"><button type="button" data-mode="cards">Kort</button><button type="button" data-mode="unified">Samlet flade</button></div></div><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
-    this.shadowRoot.querySelectorAll(".modebar button").forEach((button) => button.addEventListener("click", () => this._setMode(button.dataset.mode)));
+    this.shadowRoot.innerHTML = `<style>:host{display:block}.surface.unified{padding:10px 14px 18px;border:1px solid var(--dashboard-border-neutral,var(--divider-color));border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:8px;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
     const make = (cfg, parent, index, total, growLast = false, extraClass = "", sideKey) => {
       const card = helpers.createCardElement(cfg);
       const slot = document.createElement("div");
