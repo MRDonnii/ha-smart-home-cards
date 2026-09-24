@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.7.0";
+const CALEFA_FLOW_CARD_VERSION = "0.8.0";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -10,6 +10,7 @@ const ENTITY_KEYS = [
   "heating_active", "dhw_active", "power", "pressure",
   "room_temperature", "outdoor_temperature",
   "lan_status", "peripheral_status",
+  "energy_meter", "energy_today", "cost_today", "energy_price", "heating_energy_today", "dhw_energy_today",
 ];
 
 // Registry unique IDs are stable when users rename Home Assistant entities.
@@ -317,6 +318,40 @@ function fogColor(celsius) {
   return `rgb(${from.map((c, i) => Math.round(c + (to[i] - c) * k)).join(",")})`;
 }
 
+// "I dag" section: hourly consumption for the current local day from Home Assistant statistics.
+const TODAY_KEYS = ["energy_meter", "energy_today", "cost_today", "energy_price", "heating_energy_today", "dhw_energy_today"];
+const TODAY_REFETCH_MS = 5 * 60 * 1000;
+
+// Groups 5-minute (or hourly) statistic "change" rows into 24 local hours. The part of the current
+// hour that is not in the statistics yet is the difference between the live daily counter and the
+// summed statistics, so the chart always ends at the counter's current value.
+// Meter reading at local midnight for an ever-increasing meter (e.g. the MQTT heat meter): the first
+// statistics row of the day minus its own change.
+function todayMeterBase(rows) {
+  const first = (rows || [])
+    .map((row) => ({ start: typeof row.start === "number" ? row.start : Date.parse(row.start), state: Number(row.state), change: Number(row.change) }))
+    .filter((row) => Number.isFinite(row.start) && Number.isFinite(row.state))
+    .sort((a, b) => a.start - b.start)[0];
+  return first ? first.state - (Number.isFinite(first.change) ? first.change : 0) : null;
+}
+
+function buildTodaySeries(rows, liveTotal, midnight, now) {
+  const hours = Array(24).fill(0);
+  let sum = 0;
+  for (const row of rows || []) {
+    const start = typeof row.start === "number" ? row.start : Date.parse(row.start);
+    const change = Number(row.change);
+    if (!Number.isFinite(start) || !Number.isFinite(change) || change <= 0) continue;
+    const index = Math.floor((start - midnight) / 3600000);
+    if (index < 0 || index > 23) continue;
+    hours[index] += change;
+    sum += change;
+  }
+  const current = clamp(Math.floor((now - midnight) / 3600000), 0, 23);
+  if (Number.isFinite(liveTotal) && liveTotal > sum) hours[current] += liveTotal - sum;
+  return hours.map((value) => Math.round(value * 1000) / 1000);
+}
+
 function interpretActivity(stateObj, context = "generic") {
   if (!stateObj) return null;
   const raw = String(stateObj.state ?? "").trim().toLowerCase();
@@ -380,6 +415,7 @@ class HaCalefaFlowCard extends HTMLElement {
       fjv_good_delta: Math.max(0, toNumber(config.fjv_good_delta) ?? 20),
       heating_good_delta: Math.max(0, toNumber(config.heating_good_delta) ?? 5),
       show_footer: config.show_footer !== false,
+      show_today: config.show_today !== false,
       animations: config.animations !== false,
       display_entities: config.display_entities && typeof config.display_entities === "object" && !Array.isArray(config.display_entities) ? { ...config.display_entities } : {},
       alarm_entities: Array.isArray(config.alarm_entities) ? config.alarm_entities.filter((id) => typeof id === "string" && id.startsWith("binary_sensor.")) : [],
@@ -455,6 +491,7 @@ class HaCalefaFlowCard extends HTMLElement {
         const entry = entries[entries.length - 1];
         this._offscreen = entry ? !entry.isIntersecting : false;
         this._syncAnimation();
+        if (!this._offscreen && this._todayPending) this._maybeFetchToday();
       }, { rootMargin: "100px" });
       this._observer.observe(this);
     }
@@ -740,6 +777,7 @@ class HaCalefaFlowCard extends HTMLElement {
         <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${callouts}</svg>
       </div>
       ${this._footerMarkup()}
+      ${this._todayMarkup()}
     </div>${this._modalMarkup()}${this._faultModalMarkup()}</ha-card>`;
   }
 
@@ -842,6 +880,7 @@ class HaCalefaFlowCard extends HTMLElement {
     this._applyDeltas(model);
     this._applyDiagram(model);
     this._applyFooter();
+    this._applyToday();
     this._renderFaults();
     if (this._displayOpen) this._renderDisplay();
   }
@@ -1052,6 +1091,167 @@ class HaCalefaFlowCard extends HTMLElement {
       const kind = key === "power" ? "power" : key === "pressure" ? "pressure" : "temperature";
       this._text(el.querySelector("strong"), this._format(key, kind));
     });
+  }
+
+  // ---- "I dag": consumption, price and hourly chart ---------------------------------------------
+
+  _todayEnabled() {
+    return this._config.show_today !== false && ["energy_meter", "energy_today", "heating_energy_today", "dhw_energy_today"].some((key) => this._config[key]);
+  }
+
+  _todayMeterKey() {
+    return this._config.energy_meter ? "energy_meter" : this._config.energy_today ? "energy_today" : null;
+  }
+
+  _todayMarkup() {
+    if (!this._todayEnabled()) return "";
+    // The billing meter (Kamstrup) drives the chart; the Calefa split is shown as an estimate only.
+    const meterKey = this._todayMeterKey();
+    const meter = Boolean(meterKey);
+    const split = this._config.heating_energy_today || this._config.dhw_energy_today;
+    const stacked = !meter && split;
+    const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><title></title><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
+    const stat = (key, label, ref, unit, sub = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">–</b><em>${unit}</em></strong>${sub}</button>`;
+    return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
+      <div class="cf-today-stats">
+        ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>Målt · Kamstrup</i>` : "")}
+        ${stat(this._config.cost_today ? "cost_today" : "energy_price", "Pris i dag", "today-cost", "kr", `<i data-ref="today-price"></i>`)}
+        ${split ? `<div class="cf-stat cf-stat-split"><small>Fordeling · Calefa-estimat</small><span><i class="cf-key cf-key-heat"></i>Varme <b data-ref="today-heat">–</b></span><span><i class="cf-key cf-key-dhw"></i>Varmt vand <b data-ref="today-dhw">–</b></span></div>` : ""}
+      </div>
+      <div class="cf-chart" role="img" data-ref="today-chart" aria-label="Forbrug pr. time i dag">
+        <span class="cf-chart-y" data-ref="today-ymax"></span><span class="cf-chart-r" data-ref="today-cmax"></span>
+        <svg viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="cf-chart-grid" d="M0 6 H240 M0 53 H240 M0 100 H240"/>
+          ${slots}
+          <path class="cf-cost-area" data-ref="today-area" d=""/>
+          <path class="cf-cost-line" data-ref="today-line" d=""/>
+          <path class="cf-now-line" data-ref="today-now" d=""/>
+        </svg>
+        <div class="cf-chart-x">${["00", "06", "12", "18", "24"].map((label, index) => `<span style="left:${index * 25}%">${label}</span>`).join("")}</div>
+      </div>
+      <div class="cf-chart-legend">${stacked ? `<span><i class="cf-key cf-key-heat"></i>Varme</span><span><i class="cf-key cf-key-dhw"></i>Varmt vand</span>` : `<span><i class="cf-key cf-key-heat"></i>Forbrug pr. time${meter ? " (Kamstrup)" : ""}</span>`}<span><i class="cf-key cf-key-cost"></i>Pris, akkumuleret</span></div>
+    </section>`;
+  }
+
+  _todayDay(now = Date.now()) {
+    const midnight = new Date(now);
+    midnight.setHours(0, 0, 0, 0);
+    return midnight.getTime();
+  }
+
+  _applyToday() {
+    const section = this._refs.today;
+    if (!section) return;
+    const now = Date.now();
+    const midnight = this._todayDay(now);
+    if (this._todayMidnight !== midnight) {
+      this._todayMidnight = midnight;
+      this._todayRows = {};
+      this._todayFetched = 0;
+    }
+    const live = (key) => this._config[key] ? this._num(key) : null;
+    const heat = live("heating_energy_today");
+    const dhw = live("dhw_energy_today");
+    // A running meter (energy_meter) is turned into today's kWh by subtracting its midnight reading.
+    const meterKey = this._todayMeterKey();
+    let meter = live("energy_today");
+    if (meterKey === "energy_meter") {
+      const reading = live("energy_meter");
+      const base = todayMeterBase(this._todayRows[this._config.energy_meter]);
+      meter = reading !== null && base !== null ? Math.max(0, reading - base) : meter;
+    }
+    const splitTotal = heat !== null || dhw !== null ? (heat ?? 0) + (dhw ?? 0) : null;
+    const total = meter ?? splitTotal;
+    const price = live("energy_price");
+    const cost = live("cost_today") ?? (total !== null && price !== null ? total * price : null);
+    const perKwh = price ?? (cost !== null && total ? cost / total : null);
+    this._text(this._refs["today-energy"], total === null ? "–" : this._formatNumber(total, 1));
+    this._text(this._refs["today-cost"], cost === null ? "–" : this._formatNumber(cost, 2));
+    this._text(this._refs["today-price"], perKwh === null ? "" : `${this._formatNumber(perKwh, 2)} kr/kWh`);
+    this._text(this._refs["today-heat"], heat === null ? "–" : `${this._formatNumber(heat, 1)} kWh`);
+    this._text(this._refs["today-dhw"], dhw === null ? "–" : `${this._formatNumber(dhw, 1)} kWh`);
+
+    const series = (key, liveTotal) => this._config[key] ? buildTodaySeries(this._todayRows[this._config[key]], liveTotal, midnight, now) : null;
+    const meterHours = meterKey ? series(meterKey, meter) : null;
+    const heatHours = meterHours ? null : series("heating_energy_today", heat);
+    const dhwHours = meterHours ? null : series("dhw_energy_today", dhw);
+    const split = !meterHours && Boolean(heatHours || dhwHours);
+    const lower = meterHours || heatHours || Array(24).fill(0);
+    const upper = split && dhwHours ? dhwHours : Array(24).fill(0);
+    const basis = meterHours || lower.map((value, hour) => value + upper[hour]);
+    this._renderTodayChart({ lower, upper, basis, perKwh, split, now, midnight });
+    this._maybeFetchToday(now);
+  }
+
+  _renderTodayChart({ lower, upper, basis, perKwh, split, now, midnight }) {
+    const current = clamp(Math.floor((now - midnight) / 3600000), 0, 23);
+    const nice = (value) => {
+      if (!(value > 0)) return 1;
+      const step = 10 ** Math.floor(Math.log10(value));
+      return [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map((factor) => factor * step).find((candidate) => candidate >= value) || value;
+    };
+    const kwhMax = nice(Math.max(...lower.map((value, hour) => value + upper[hour]), 0.1) * 1.1);
+    const scale = (value) => (value / kwhMax) * 94;
+    const hours = this._refs["today-chart"].querySelectorAll(".cf-hour");
+    hours.forEach((group, hour) => {
+      const [title, , heatBar, dhwBar] = group.children;
+      const heatHeight = hour > current ? 0 : scale(lower[hour]);
+      const dhwHeight = hour > current ? 0 : scale(upper[hour]);
+      const set = (bar, y, height) => {
+        const values = [y.toFixed(2), height.toFixed(2)];
+        if (bar.getAttribute("y") !== values[0]) bar.setAttribute("y", values[0]);
+        if (bar.getAttribute("height") !== values[1]) bar.setAttribute("height", values[1]);
+      };
+      set(heatBar, 100 - heatHeight, heatHeight);
+      set(dhwBar, 100 - heatHeight - dhwHeight, dhwHeight);
+      this._toggle(group, "is-now", hour === current);
+      this._toggle(group, "is-future", hour > current);
+      const kwh = lower[hour] + upper[hour];
+      const text = hour > current ? "" : `Kl. ${String(hour).padStart(2, "0")}–${String(hour + 1).padStart(2, "0")}: ${this._formatNumber(kwh, 2)} kWh${split ? ` (varme ${this._formatNumber(lower[hour], 2)}, varmt vand ${this._formatNumber(upper[hour], 2)})` : ""}${perKwh !== null ? ` · ${this._formatNumber(kwh * perKwh, 2)} kr` : ""}`;
+      this._text(title, text);
+    });
+    const fraction = clamp((now - midnight) / 3600000 - current, 0, 1);
+    let cumulative = 0;
+    const points = [[0, 0]];
+    for (let hour = 0; hour <= current; hour += 1) {
+      cumulative += basis[hour];
+      points.push([hour === current ? (hour + fraction) * 10 : (hour + 1) * 10, cumulative]);
+    }
+    const costMax = perKwh !== null ? nice(cumulative * perKwh * 1.1) : 0;
+    const y = (kwh) => (perKwh !== null && costMax ? 100 - ((kwh * perKwh) / costMax) * 94 : 100);
+    const line = perKwh !== null ? points.map(([x, kwh], index) => `${index ? "L" : "M"}${x.toFixed(2)} ${y(kwh).toFixed(2)}`).join(" ") : "";
+    const area = line ? `${line} L${points[points.length - 1][0].toFixed(2)} 100 L0 100 Z` : "";
+    for (const [ref, d] of [["today-line", line], ["today-area", area], ["today-now", `M${((current + fraction) * 10).toFixed(2)} 0 V100`]]) {
+      if (this._refs[ref] && this._refs[ref].getAttribute("d") !== d) this._refs[ref].setAttribute("d", d);
+    }
+    this._text(this._refs["today-ymax"], `${this._formatNumber(kwhMax, kwhMax < 10 ? 1 : 0)} kWh`);
+    this._text(this._refs["today-cmax"], perKwh !== null ? `${this._formatNumber(costMax, costMax < 10 ? 1 : 0)} kr` : "");
+    const total = basis.reduce((sum, value) => sum + value, 0);
+    const label = `Forbrug pr. time i dag, i alt ${this._formatNumber(total, 1)} kWh${perKwh !== null ? `, ${this._formatNumber(total * perKwh, 2)} kr` : ""}`;
+    if (this._refs["today-chart"].getAttribute("aria-label") !== label) this._refs["today-chart"].setAttribute("aria-label", label);
+  }
+
+  // Statistics are only requested while the card is visible and at most every five minutes; the
+  // current hour follows the live daily counters in between.
+  _maybeFetchToday(now = Date.now()) {
+    if (!this._refs.today || !this._hass?.callWS || this._todayLoading) return;
+    if (this._offscreen) { this._todayPending = true; return; }
+    if (this._todayFetched && now - this._todayFetched < TODAY_REFETCH_MS) return;
+    const meterKey = this._todayMeterKey();
+    const ids = (meterKey ? [meterKey] : ["heating_energy_today", "dhw_energy_today"]).map((key) => this._config[key]).filter(Boolean);
+    if (!ids.length) return;
+    const midnight = this._todayMidnight;
+    this._todayLoading = true;
+    this._todayPending = false;
+    this._hass.callWS({ type: "recorder/statistics_during_period", start_time: new Date(midnight).toISOString(), end_time: new Date(now).toISOString(), statistic_ids: ids, period: "5minute", types: ["change", "state"] })
+      .then((result) => {
+        if (this._todayMidnight !== midnight) return;
+        this._todayRows = Object.fromEntries(ids.map((id) => [id, Array.isArray(result?.[id]) ? result[id] : []]));
+        this._todayFetched = Date.now();
+        this._applyToday();
+      })
+      .catch(() => { this._todayFetched = Date.now(); })
+      .finally(() => { this._todayLoading = false; });
   }
 
   // ---- Controller popup: state -------------------------------------------------------------
@@ -1813,6 +2013,29 @@ const CALEFA_STYLES = `
   .ctl-keys button:focus-visible{outline:.45cqw solid #1f8fd6;outline-offset:-.6cqw}
   @keyframes lcd-blink{50%{background:transparent;color:inherit}}
   @media(prefers-reduced-motion:reduce){.lcd-big.is-pending,.ctl-led i{animation:none!important}}
+
+  /* "I dag": consumption, price and an hourly chart at the bottom of the card. */
+  .cf-today{max-width:980px;margin:clamp(8px,1.4cqw,16px) auto 0;padding-top:clamp(8px,1.2cqw,14px);border-top:1px solid var(--cf-line)}
+  .cf-today-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:clamp(6px,1cqw,12px)}
+  .cf-stat{display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:44px;padding:clamp(5px,.8cqw,9px) clamp(7px,1cqw,12px);border:1px solid var(--cf-line);border-radius:clamp(9px,1.2cqw,13px);background:rgba(5,13,20,.55);color:var(--cf-text);text-align:left;cursor:pointer}
+  .cf-stat:disabled{cursor:default}.cf-stat small{overflow:hidden;color:var(--cf-muted);font-size:clamp(10px,1.1cqw,12px);white-space:nowrap;text-overflow:ellipsis}
+  .cf-stat strong{display:flex;align-items:baseline;gap:3px;font-size:clamp(16px,2.1cqw,24px);line-height:1.1;white-space:nowrap}.cf-stat strong b{font-weight:850;font-variant-numeric:tabular-nums}.cf-stat strong em{color:var(--cf-muted);font-size:clamp(10px,1.1cqw,13px);font-style:normal;font-weight:600}
+  .cf-stat>i{color:var(--cf-muted);font-size:clamp(10px,1cqw,11px);font-style:normal}.cf-stat>i:empty{display:none}
+  .cf-stat:nth-child(1) strong b{color:#ffb070}.cf-stat:nth-child(2) strong b{color:#f5c451}
+  .cf-stat-split{cursor:default;gap:2px}.cf-stat-split span{display:flex;align-items:center;gap:5px;overflow:hidden;font-size:clamp(11px,1.15cqw,13px);white-space:nowrap}.cf-stat-split b{margin-left:auto;font-variant-numeric:tabular-nums}
+  .cf-key{display:inline-block;flex:0 0 auto;width:9px;height:9px;border-radius:3px;background:#ff9a3c}.cf-key-dhw{background:#ff4f5a}.cf-key-cost{width:14px;height:3px;border-radius:2px;background:#f5c451}
+  .cf-chart{position:relative;height:clamp(96px,17cqw,160px);margin:clamp(10px,1.4cqw,16px) 0 18px;padding:0 clamp(34px,4.6cqw,48px)}
+  .cf-chart svg{display:block;width:100%;height:100%;overflow:visible}
+  .cf-chart-grid{fill:none;stroke:rgba(255,255,255,.08);stroke-width:1;vector-effect:non-scaling-stroke}
+  .cf-bar-slot{fill:rgba(255,255,255,.028)}.cf-bar{transition:y .5s ease,height .5s ease}.cf-bar-heat{fill:#ff9a3c}.cf-bar-dhw{fill:#ff4f5a}
+  .cf-hour.is-now .cf-bar{opacity:.72}.cf-hour.is-now .cf-bar-slot{fill:rgba(111,214,255,.1)}.cf-hour.is-future .cf-bar-slot{fill:rgba(255,255,255,.015)}
+  .cf-cost-line{fill:none;stroke:#f5c451;stroke-width:2.2;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(245,196,81,.55))}.cf-cost-area{fill:rgba(245,196,81,.09)}
+  .cf-now-line{fill:none;stroke:rgba(111,214,255,.55);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+  .cf-chart-y,.cf-chart-r{position:absolute;top:0;color:var(--cf-muted);font-size:clamp(10px,1cqw,11px);line-height:1;white-space:nowrap}.cf-chart-y{left:0}.cf-chart-r{right:0;color:#f5c451}
+  .cf-chart-x{position:absolute;left:clamp(34px,4.6cqw,48px);right:clamp(34px,4.6cqw,48px);bottom:-17px;height:14px}.cf-chart-x span{position:absolute;color:var(--cf-muted);font-size:clamp(10px,1cqw,11px);line-height:1;transform:translateX(-50%)}
+  .cf-chart-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;color:var(--cf-muted);font-size:clamp(10px,1cqw,12px)}.cf-chart-legend span{display:flex;align-items:center;gap:5px}
+  @container calefa-card (max-width:520px){.cf-today-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-stat-split{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:2px 14px}.cf-stat-split small{flex:1 0 100%}.cf-stat-split span{font-size:12px}.cf-stat-split b{margin-left:4px}.cf-stat strong{font-size:17px}}
+  @media(prefers-reduced-motion:reduce){.cf-bar{transition:none}}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
