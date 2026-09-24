@@ -62,3 +62,4 @@ import "./cards/ha-light-automation-card/ha-light-automation-card.js";
 import "./cards/ha-family-calendar-card/ha-family-calendar-card.js";
 import "./cards/ha-waste-journey-card/ha-waste-journey-card.js";
 import "./cards/ha-calefa-flow-card/ha-calefa-flow-card.js";
+import "./cards/ha-home-front-layout-card/ha-home-front-layout-card.js";
