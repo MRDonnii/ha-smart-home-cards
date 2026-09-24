@@ -254,7 +254,7 @@ class HARoborockVacuumCard extends HTMLElement {
       .map{margin-top:12px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15);height:350px;display:flex;align-items:center;justify-content:center}
       .map img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;transform:scale(1.12)}
       .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
-      .stat{padding:8px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:3px solid var(--accent);border-radius:10px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
+      .stat{padding:8px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:10px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);text-align:center}
       .stat span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase;font-weight:700}
       .stat b{display:block;margin-top:3px;font-size:13px}
       .last-clean{margin-top:8px;display:flex;justify-content:space-between;gap:8px;color:var(--secondary-text-color);font-size:9px}

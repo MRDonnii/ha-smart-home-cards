@@ -129,12 +129,12 @@ class HAControlCenterCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
-      ha-card{position:relative;overflow:hidden;padding:18px;border-left:4px solid ${openCount ? "var(--danger)" : "var(--good)"};border-radius:20px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
+      ha-card{position:relative;overflow:hidden;padding:18px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid ${openCount ? "var(--danger)" : "var(--good)"};border-radius:20px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
       .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
       .head strong{font-size:18px}
       .pill{padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800;background:color-mix(in srgb,${openCount ? "var(--danger)" : "var(--good)"} 16%,transparent);color:${openCount ? "var(--danger)" : "var(--good)"}}
       .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-      .tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:3px solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center;position:relative}
+      .tile{--tone:var(--accent);display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 6%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08);color:var(--primary-text-color);cursor:pointer;text-align:center;position:relative}
       .tile:hover{border-color:var(--primary-text-color)}
       .tile.issue{--tone:var(--danger)}
       .tile-icon{--mdc-icon-size:22px;color:var(--secondary-text-color)}
@@ -145,7 +145,7 @@ class HAControlCenterCard extends HTMLElement {
       .tile-badge ha-icon{--mdc-icon-size:11px}
       .tile-detail{display:none}
       .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-      .card2{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 14%,var(--edge));border-left:3px solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+      .card2{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 14%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 55%);box-shadow:0 4px 12px rgba(0,0,0,.08)}
       .card2 ha-icon{--mdc-icon-size:20px;color:var(--secondary-text-color);flex:0 0 auto}
       .card2 .c2-text{min-width:0;display:flex;flex-direction:column}
       .card2 .c2-text b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
