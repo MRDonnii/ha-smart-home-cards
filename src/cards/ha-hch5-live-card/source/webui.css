@@ -526,3 +526,7 @@ button { font: inherit; color: inherit; }
     .dashboard-overview .hch-mobile-subreadings strong { font-size: 11px; }
   }
 }
+
+/* Sensor readbacks open the matching Home Assistant history dialog. */
+.dashboard-overview .hch-temp-port[role="button"], .dashboard-overview .hch-sensor-pin[role="button"], .dashboard-overview .hch-water-callout [role="button"], .dashboard-overview .hch-mobile-flow [data-sensor], .dashboard-overview .unit-readback[data-sensor], .dashboard-overview .climate-metric[data-sensor] { cursor: pointer; }
+.dashboard-overview .hch-temp-port:focus-visible, .dashboard-overview .hch-sensor-pin:focus-visible, .dashboard-overview .hch-water-callout [role="button"]:focus-visible { outline: 3px solid #70ccff; outline-offset: 3px; }
