@@ -203,6 +203,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-radiator-overview-card-v2",
+    "name": "HA Radiator Overview Card V2",
+    "filename": "ha-radiator-overview-card-v2.js",
+    "category": "Heating and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-temperature-target-card",
     "name": "Temperature Target Card",
     "filename": "ha-temperature-target-card.js",
