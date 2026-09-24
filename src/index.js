@@ -48,6 +48,7 @@ import "./cards/locked-map-card/locked-map-card.js";
 import "./cards/ha-security-center-card/ha-security-center-card.js";
 import "./cards/ha-control-center-card/ha-control-center-card.js";
 import "./cards/ha-ai-usage-card/ha-ai-usage-card.js";
+import "./cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js";
 import "./cards/ha-settings-center-card/ha-settings-center-card.js";
 import "./cards/ha-kiosk-server-card/ha-kiosk-server-card.js";
 import "./cards/ha-ops-status-card/ha-ops-status-card.js";
