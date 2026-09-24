@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.8.0";
+const CALEFA_FLOW_CARD_VERSION = "0.9.0";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -104,6 +104,7 @@ const METRICS = {
   pump: { label: "Pumpe", icon: "mdi:fan", tone: "component", kind: "pump" },
   heating_valve: { label: "V-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
   dhw_valve: { label: "BV-ventil", icon: "mdi:valve", tone: "component", kind: "valve" },
+  bypass: { label: "Bypass", icon: "mdi:pipe-valve", tone: "bypass", kind: "bypass" },
 };
 
 // Controller popup. Menu paths, labels and screen layouts follow Wavin's Calefa II V installation guide
@@ -210,25 +211,29 @@ const toNumber = (value) => {
 // its own pixel coordinates (775 x 1295), so the overlay never stretches the picture.
 const VIEW_W = 775;
 const VIEW_H = 1295;
-// Hydraulics follow Wavin's principle diagram for the Calefa II V 40/40 (installation guide, Oct. 2025):
+// Hydraulics follow Wavin's principle diagram for the Calefa II V ITC (installation guide, Oct. 2025, p. 5):
 // two plate exchangers sit one behind the other. The rear one, whose top shows above the front one,
 // is the heating exchanger (02, air vent 49 on its upper port); the large front face is the domestic
 // hot water exchanger (01). Where a pipe passes behind another part, `hide` lists the rectangles
 // ({x, y, w, h}) or circles ({x, y, r}) that cover it, so glow and arrows disappear behind it.
 // Holes of one track must not overlap.
+// The diagram has no separate bypass pipe or thermostatic bypass valve: the electronic bypass is the DHW
+// branch itself (FF, supply tee with 51 FJF, 01 primary from the bottom up, 51 FJR, valve 37 held slightly
+// open, return tee downstream of 22/34, FR). The return from 37 crosses the supply line without a joint.
+// Tracks marked `bypass` form that route.
 const TRACKS = [
-  // District heating supply: FF riser, strainer (53) and the supply tee that feeds both exchangers.
-  { id: "ff", circuit: "primary", speed: "primary", tone: "supply", d: "M98.5 1238 V684 Q98.5 668.5 114 668.5 H352" },
+  // District heating supply: FF riser (90, 59, strainer 53) and the supply tee with 51 FJF that feeds both exchangers.
+  { id: "ff", circuit: "primary", speed: "primary", tone: "supply", bypass: true, d: "M98.5 1238 V684 Q98.5 668.5 114 668.5 H352" },
   // Supply branch up behind the return manifold and down the diagonal into the heating exchanger's upper port.
-  { id: "ff-heat", circuit: "heat-primary", speed: "primary", tone: "supply", d: "M350 646 Q353 610 375 592 L405 563.5 L478 513.8 Q497 500.8 518 499 H537", hide: [{ x: 360, y: 548, w: 56, h: 42 }] },
+  { id: "ff-heat", circuit: "heat-primary", speed: "heat-primary", tone: "supply", d: "M350 646 Q353 610 375 592 L405 563.5 L478 513.8 Q497 500.8 518 499 H537", hide: [{ x: 360, y: 548, w: 56, h: 42 }] },
   // Supply branch over the outer U-bend into the DHW exchanger's lower port.
-  { id: "ff-dhw", circuit: "dhw-primary", speed: "primary", tone: "supply", d: "M352 669 Q370 674 390 674 H432 Q455 674 455 697 V915 Q455 938.5 478 938.5 H548" },
-  // Heating exchanger return: lower port, behind the U-bends, through the heating valve (22) into the manifold.
-  { id: "fr-heat", circuit: "heat-primary", speed: "primary", tone: "return", d: "M442 863.5 H271 Q256 863.5 256 848 V575", hide: [{ x: 242, y: 656, w: 30, h: 26 }] },
-  // DHW exchanger return: upper port through the DHW control valve (37) into the manifold.
-  { id: "fr-dhw", circuit: "dhw-primary", speed: "primary", tone: "return", d: "M490 574.5 H256" },
-  // Return manifold, sensor cross (52) and FR riser, which runs behind the supply line.
-  { id: "fr", circuit: "primary", speed: "primary", tone: "return", d: "M256 574.5 H201 Q186.5 574.5 186.5 589 V1238", hide: [{ x: 172, y: 656, w: 30, h: 26 }] },
+  { id: "ff-dhw", circuit: "dhw-primary", speed: "dhw-primary", tone: "supply", bypass: true, d: "M352 669 Q370 674 390 674 H432 Q455 674 455 697 V915 Q455 938.5 478 938.5 H548" },
+  // Heating exchanger return: lower port, behind the U-bends, through the heating valve (22/34) into the manifold.
+  { id: "fr-heat", circuit: "heat-primary", speed: "heat-primary", tone: "return", d: "M442 863.5 H271 Q256 863.5 256 848 V575", hide: [{ x: 242, y: 656, w: 30, h: 26 }] },
+  // DHW exchanger return: upper port past 51 FJR through the DHW control valve (37/34) into the manifold.
+  { id: "fr-dhw", circuit: "dhw-primary", speed: "dhw-primary", tone: "return", bypass: true, d: "M490 574.5 H256" },
+  // Return manifold (joins downstream of 22/34), sensor cross (52) and FR riser, which runs behind the supply line.
+  { id: "fr", circuit: "primary", speed: "primary", tone: "return", bypass: true, d: "M256 574.5 H201 Q186.5 574.5 186.5 589 V1238", hide: [{ x: 172, y: 656, w: 30, h: 26 }] },
   // Heating return: VR through the pump (40) and strainer (53), over the inner U-bend, behind the outer
   // one and into the heating exchanger's lower port.
   { id: "vr", circuit: "heat", speed: "heat", tone: "heat-return", d: "M380 1238 V1076 L384 900 L388 830 V719 Q388 704 403 704 H440 Q452 704 452 716 V864 Q452 876 464 876 H548", hide: [{ x: 378.4, y: 987.4, r: 88 }, { x: 370, y: 852, w: 30, h: 22 }, { x: 441, y: 690, w: 29, h: 195 }] },
@@ -254,16 +259,22 @@ const PUMP = { x: 378.4, y: 987.4, face: 68, rail: 77.3, rim: 86.5, box: 100 };
 const VALVES = { heating_valve: { x: 255, y: 762, r: 46 }, dhw_valve: { x: 345, y: 505, r: 44 } };
 const PORTS = [["FF", 98, "supply", "Fjernvarme frem"], ["FR", 187, "return", "Fjernvarme retur"], ["VR", 380, "heat-return", "Varme retur"], ["VF", 496, "heat", "Varme frem"], ["BV", 581, "dhw", "Brugsvand varmt"], ["KV", 679, "cold", "Koldt vand"]];
 const LED_POSITIONS = [["power", 347, "Strøm"], ["fault", 367, "Fejl"], ["mode", 387, "Driftstilstand"], ["lan", 406, "LAN"], ["peripheral", 426, "Ekstern enhed"]];
-// Callout targets on the drawing, and the side each tile sits on.
+// Callout targets on the drawing, and the side each tile sits on. FJF (51, red) sits in the supply tee,
+// so its callout stays on the supply line into the tee; FJR (51, dark blue) sits on the DHW exchanger's
+// primary outlet before valve 37, not on the common return (principle diagram p. 5, sensor colours p. 4).
+// The bypass tile points at the outer U-bend that carries the bypass only: supply tee to the DHW
+// exchanger's lower primary port.
 const ANCHORS = {
-  fjv_supply: [160, 668], fjv_return: [187, 800],
+  fjv_supply: [160, 668], fjv_return: [437, 575],
   dhw_valve: [345, 505], heating_valve: [255, 762], pump: [291.9, 987.4],
   heating_supply: [636, 500], heating_return: [486, 876],
-  dhw_temperature: [640, 950], cold_water_temperature: [679, 1180],
+  dhw_temperature: [640, 950], cold_water_temperature: [679, 1180], bypass: [455, 790],
 };
+// Tiles whose height on the side differs from their callout target, so the side layout stays unchanged.
+const PLACE_Y = { fjv_return: 800 };
 const LAYOUT = {
   left: [["tile", "dhw_valve"], ["pair", "fjv_supply", "fjv_return", "fjv"], ["tile", "heating_valve"], ["tile", "pump"]],
-  right: [["tile", "dhw_temperature"], ["pair", "heating_supply", "heating_return", "heating"], ["tile", "cold_water_temperature"]],
+  right: [["tile", "dhw_temperature"], ["pair", "heating_supply", "heating_return", "heating"], ["tile", "bypass"], ["tile", "cold_water_temperature"]],
 };
 // Marker speed in drawing pixels per second for flow levels 1-4.
 const FLOW_SPEEDS = [0, 42, 62, 88, 118];
@@ -593,6 +604,8 @@ class HaCalefaFlowCard extends HTMLElement {
     const heatValveOpen = heatValve === null ? null : heatValve > this._config.valve_threshold;
     const dhwValveOpen = dhwValve === null ? null : dhwValve > this._config.valve_threshold;
     const pumpActive = typeof pumpState === "boolean" ? pumpState : pumpSpeed !== null ? pumpSpeed > 0 : null;
+    const measuredPrimary = primaryFlow !== null && primaryFlow > this._config.flow_threshold;
+    const waterMoving = waterFlow !== null && waterFlow > this._config.flow_threshold;
 
     const heatingActive = typeof explicitHeat === "boolean"
       ? explicitHeat
@@ -602,13 +615,23 @@ class HaCalefaFlowCard extends HTMLElement {
     if (explicitDhw === "bypass") dhwState = "bypass";
     else if (explicitDhw === true) dhwState = "active";
     else if (explicitDhw === false) dhwState = "idle";
-    else if (waterFlow !== null) dhwState = waterFlow > this._config.flow_threshold ? "active" : "idle";
+    else if (waterFlow !== null) dhwState = waterMoving ? "active" : "idle";
     else if (dhwValveOpen) dhwState = "active";
 
-    const dhwTap = dhwState === "active";
-    const dhwBypass = dhwState === "bypass";
-    const heatPrimary = heatValveOpen ?? heatingActive;
-    const dhwPrimary = dhwBypass || (dhwValveOpen ?? dhwTap);
+    // Measured tapping wins over a DHW state that is read a few seconds apart from the flow meter.
+    const dhwTap = dhwState === "active" || waterMoving;
+    // The controller's bypass state only arms the function; the unit has no separate bypass pipe. Water
+    // passes through the DHW exchanger's primary side only while valve 37 is open, so each primary branch
+    // moves exactly while its own valve is open. Without a valve reading, tapping or measured heating flow
+    // stands in, and a bypass is never drawn as moving because its flow cannot be shown.
+    const dhwBypass = dhwState === "bypass" && !dhwTap;
+    const dhwPrimary = dhwValveOpen ?? dhwTap;
+    const bypassFlow = dhwBypass && dhwValveOpen === true;
+    const heatPrimary = heatValveOpen ?? (heatingActive && measuredPrimary);
+    const valvesKnown = heatValve !== null && dhwValve !== null;
+    const primaryMoving = Boolean(dhwPrimary || heatPrimary || (!valvesKnown && measuredPrimary));
+    // The pump drives the closed heating circuit; the configured heating flow is only used without a pump.
+    const heatMoving = typeof pumpActive === "boolean" ? pumpActive : heatFlow !== null && heatFlow > this._config.flow_threshold;
     const supply = this._num("fjv_supply");
     const ret = this._num("fjv_return");
     const heatSupply = this._num("heating_supply");
@@ -627,13 +650,16 @@ class HaCalefaFlowCard extends HTMLElement {
       dhwState,
       dhwTap,
       dhwBypass,
+      bypassFlow,
+      bypassArmed: dhwBypass && !bypassFlow,
       dhwPrimary,
       dhwValveOpen,
       dhwValve,
-      primary: Boolean(heatPrimary || dhwPrimary),
-      primaryMoving: primaryFlow !== null && primaryFlow > this._config.flow_threshold,
-      heatMoving: heatFlow !== null && heatFlow > this._config.flow_threshold,
-      waterMoving: waterFlow !== null && waterFlow > this._config.flow_threshold,
+      primary: primaryMoving,
+      primaryMoving,
+      measuredPrimary,
+      heatMoving,
+      waterMoving,
       pumpActive: pumpActive ?? heatingActive,
       pumpSpeed,
       pumpText,
@@ -644,7 +670,19 @@ class HaCalefaFlowCard extends HTMLElement {
 
   _configured(id) {
     if (id === "pump") return Boolean(this._config.pump || this._config.pump_speed);
+    if (id === "bypass") return Boolean(this._config.dhw_active);
     return Boolean(this._config[id]);
+  }
+
+  // Bypass mode in the controller's own words (Auto / Planlæg / Komfort / Øko) and its temperature.
+  _bypassSettings() {
+    const entity = (key) => this._hass?.states?.[this._config.display_entities?.[key]];
+    const mode = entity("bypass_mode");
+    const raw = String(mode?.state ?? "").trim().toLowerCase();
+    const label = UNAVAILABLE.has(raw) ? "" : (OPTION_LABELS.bypass_mode.find((row) => row.some((text) => text.toLowerCase() === raw))?.[0] ?? mode.state);
+    const temperature = toNumber(entity("bypass_temperature")?.state);
+    const degrees = temperature === null ? "" : `${this._formatNumber(temperature, Number.isInteger(temperature) ? 0 : 1)} °C`;
+    return [label, degrees].filter(Boolean).join(" · ");
   }
 
   _tileMarkup(id) {
@@ -655,7 +693,7 @@ class HaCalefaFlowCard extends HTMLElement {
 
   _blockMarkup(spec) {
     const anchorY = (ids) => {
-      const ys = ids.filter((id) => this._configured(id)).map((id) => ANCHORS[id][1]);
+      const ys = ids.filter((id) => this._configured(id)).map((id) => PLACE_Y[id] ?? ANCHORS[id][1]);
       return ys.length ? ys.reduce((sum, y) => sum + y, 0) / ys.length : 0;
     };
     const place = (y) => `data-y="${Math.round(y)}" style="--y:${((y / VIEW_H) * 100).toFixed(2)}%"`;
@@ -667,7 +705,7 @@ class HaCalefaFlowCard extends HTMLElement {
       return `<div class="cf-block cf-pair ${tiles.length === 2 ? "" : "is-single"}" ${place(anchorY([first, second]))}>${tiles.join("")}${ring}</div>`;
     }
     const tile = this._tileMarkup(spec[1]);
-    return tile ? `<div class="cf-block" ${place(ANCHORS[spec[1]][1])}>${tile}</div>` : "";
+    return tile ? `<div class="cf-block" ${place(PLACE_Y[spec[1]] ?? ANCHORS[spec[1]][1])}>${tile}</div>` : "";
   }
 
   _build() {
@@ -685,10 +723,14 @@ class HaCalefaFlowCard extends HTMLElement {
       this._metricNodes.get(id).push({ el, num: el.querySelector("[data-num]"), unit: el.querySelector("[data-unit]"), sub: el.querySelector("[data-sub]") });
     });
     this._circuitNodes = new Map();
+    this._trackNodes = new Map();
     this.shadowRoot.querySelectorAll("[data-circuit]").forEach((el) => {
       const key = el.dataset.circuit;
       if (!this._circuitNodes.has(key)) this._circuitNodes.set(key, []);
       this._circuitNodes.get(key).push(el);
+      const id = el.dataset.id || el.dataset.track;
+      if (!this._trackNodes.has(id)) this._trackNodes.set(id, []);
+      this._trackNodes.get(id).push(el);
     });
     this._markerLevels = {};
     const photo = this._refs.photo;
@@ -788,17 +830,20 @@ class HaCalefaFlowCard extends HTMLElement {
     return `<footer class="cf-footer">${items.map(([key, label, icon]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon}"></ha-icon><span><small>${label}</small><strong>–</strong></span></button>`).join("")}</footer>`;
   }
 
-  _markersMarkup(track, level) {
+  // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
+  _markersMarkup(track, level, variant = "") {
+    const bypass = variant === "bypass";
     const length = pathLength(track.d);
-    const count = Math.max(1, Math.round(length / 54));
+    const count = Math.max(1, Math.round(length / (bypass ? 78 : 54)));
     const duration = length / FLOW_SPEEDS[level];
-    return Array.from({ length: count }, (_, index) => `<path class="cf-marker" d="M-7 -6.5 L5 0 L-7 6.5 L-3.5 0 Z"><animateMotion path="${track.d}" dur="${duration.toFixed(2)}s" begin="-${((index * duration) / count).toFixed(2)}s" repeatCount="indefinite" rotate="auto"/></path>`).join("");
+    const shape = bypass ? "M-5 -4.5 L3.5 0 L-5 4.5 L-2.5 0 Z" : "M-7 -6.5 L5 0 L-7 6.5 L-3.5 0 Z";
+    return Array.from({ length: count }, (_, index) => `<path class="cf-marker" d="${shape}"><animateMotion path="${track.d}" dur="${duration.toFixed(2)}s" begin="-${((index * duration) / count).toFixed(2)}s" repeatCount="indefinite" rotate="auto"/></path>`).join("");
   }
 
   _stageMarkup() {
     const clip = (layer, track) => track.hide ? ` clip-path="url(#cf-hide-${layer}-${track.id})"` : "";
     const clips = (layer) => TRACKS.filter((track) => track.hide).map((track) => hideClip(`cf-hide-${layer}-${track.id}`, track.hide)).join("");
-    const tracks = TRACKS.map((track) => `<g class="cf-track" data-circuit="${track.circuit}" data-tone="${track.tone}"${clip("g", track)}><path class="cf-track-halo" d="${track.d}"/><path class="cf-track-core" d="${track.d}"/><path class="cf-track-hot" d="${track.d}"/></g>`).join("");
+    const tracks = TRACKS.map((track) => `<g class="cf-track" data-circuit="${track.circuit}" data-id="${track.id}" data-tone="${track.tone}"${clip("g", track)}><path class="cf-track-halo" d="${track.d}"/><path class="cf-track-core" d="${track.d}"/><path class="cf-track-hot" d="${track.d}"/></g>`).join("");
     const markers = TRACKS.map((track) => `<g class="cf-markers" data-circuit="${track.circuit}" data-track="${track.id}"${clip("a", track)}>${this._markersMarkup(track, 2)}</g>`).join("");
     const pct = (value, total) => `${((value / total) * 100).toFixed(3)}%`;
     const fogs = Object.entries(HX).map(([key, face]) => {
@@ -887,6 +932,12 @@ class HaCalefaFlowCard extends HTMLElement {
 
   _metricValue(id, model) {
     const metric = METRICS[id];
+    if (metric.kind === "bypass") {
+      // Kører only while valve 37 is open in bypass state; Klar while the controller has armed it.
+      const available = this._available("dhw_active");
+      const text = !available ? "–" : model.bypassFlow ? "Kører" : model.bypassArmed ? "Klar" : "Fra";
+      return { parts: [text, ""], sub: this._bypassSettings(), on: model.bypassFlow, armed: model.bypassArmed, available };
+    }
     if (metric.kind === "pump") {
       const text = this._config.pump_speed && this._num("pump_speed") !== null ? this._format("pump_speed", "percent") : model.pumpText;
       const speed = this._config.pump_speed && this._num("pump_speed") !== null;
@@ -897,7 +948,11 @@ class HaCalefaFlowCard extends HTMLElement {
       const fallback = id === "heating_valve" ? Boolean(model.heatValveOpen ?? model.heatPrimary) : Boolean(model.dhwValveOpen ?? model.dhwPrimary);
       const on = position !== null ? position > this._config.valve_threshold : fallback;
       const text = this._format(id, "valve");
-      return { parts: this._split(text), sub: on ? (position !== null && position >= 99 ? "Åben" : "Regulerer") : "Lukket", on, available: this._available(id) };
+      let sub = on ? (position !== null && position >= 99 ? "Åben" : "Regulerer") : "Lukket";
+      // Valve 37 is the electronic bypass: armed without an opening means no bypass flow yet.
+      if (id === "dhw_valve" && model.bypassFlow) sub = "Bypass";
+      else if (id === "dhw_valve" && model.bypassArmed) sub = "Bypass klar";
+      return { parts: this._split(text), sub, on, available: this._available(id) };
     }
     const parts = this._formatParts(id, metric.kind);
     let on = false;
@@ -920,12 +975,14 @@ class HaCalefaFlowCard extends HTMLElement {
       const nodes = this._metricNodes.get(id) || [];
       if (!nodes.length) continue;
       const value = this._metricValue(id, model);
-      this._toggle(this._refs.callouts?.querySelector(`[data-callout="${id}"]`), "is-idle", METRICS[id].tone === "component" && !value.on);
+      const idle = METRICS[id].tone === "component" ? !value.on : METRICS[id].tone === "bypass" ? !value.on && !value.armed : false;
+      this._toggle(this._refs.callouts?.querySelector(`[data-callout="${id}"]`), "is-idle", idle);
       for (const node of nodes) {
         this._text(node.num, value.parts[0]);
         this._text(node.unit, value.parts[1] ? ` ${value.parts[1]}` : "");
         this._text(node.sub, value.sub);
         this._toggle(node.el, "is-on", value.on);
+        this._toggle(node.el, "is-armed", Boolean(value.armed));
         this._toggle(node.el, "is-unavailable", !value.available);
       }
     }
@@ -969,35 +1026,67 @@ class HaCalefaFlowCard extends HTMLElement {
     for (const [name, value] of Object.entries(values)) if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value);
   }
 
-  _setMarkerSpeed(speed, level) {
-    if (!level || this._markerLevels?.[speed] === level) return;
-    this._markerLevels[speed] = level;
+  _setMarkerSpeed(speed, level, variant = "") {
+    const key = `${level}:${variant}`;
+    if (!level || this._markerLevels?.[speed] === key) return;
+    this._markerLevels[speed] = key;
     for (const track of TRACKS.filter((entry) => entry.speed === speed)) {
       const group = this.shadowRoot.querySelector(`[data-track="${track.id}"]`);
-      if (group) group.innerHTML = this._markersMarkup(track, level);
+      if (group) group.innerHTML = this._markersMarkup(track, level, variant);
     }
   }
 
+  // Marker level of a primary branch from its valve opening (the PICV sets the flow).
+  _valveLevel(position) {
+    if (position === null || position === undefined) return null;
+    return position <= 15 ? 1 : position <= 35 ? 2 : position <= 70 ? 3 : 4;
+  }
+
   _applyDiagram(model) {
-    const levels = {
-      primary: this._flowLevel(this._num("fjv_flow"), this._unit("fjv_flow")),
-      heat: this._flowLevel(this._num("heating_flow"), this._unit("heating_flow")),
-      dhw: this._flowLevel(this._num("water_flow"), this._unit("water_flow")),
-    };
-    this._setMarkerSpeed("primary", levels.primary);
-    this._setMarkerSpeed("heat", levels.heat);
-    this._setMarkerSpeed("dhw", levels.dhw);
+    const measured = this._flowLevel(this._num("fjv_flow"), this._unit("fjv_flow"));
+    const water = this._flowLevel(this._num("water_flow"), this._unit("water_flow"));
+    // A bypass trickle (valve 37 at a few per cent, measured 3-30 L/h) runs slowest; its short kick of
+    // about 8 % moved some 160 L/h through the Kamstrup meter.
+    const dhwPrimaryLevel = model.bypassFlow ? (model.dhwValve > 5 ? 2 : 1)
+      : model.dhwTap ? water ?? this._valveLevel(model.dhwValve) ?? measured ?? 2
+      : this._valveLevel(model.dhwValve) ?? measured ?? 1;
+    const heatPrimaryLevel = this._valveLevel(model.heatingValve) ?? measured ?? 1;
+    const valveKnown = model.heatingValve !== null && model.dhwValve !== null;
+    // The trunk carries the sum of both branches; the meter's own reading is late, so it only decides
+    // the speed when a valve reading is missing.
+    const trunkLevel = Math.max(model.dhwPrimary ? dhwPrimaryLevel : 0, model.heatPrimary ? heatPrimaryLevel : 0, valveKnown ? 0 : measured ?? 0) || 1;
+    const heatSecondary = this._flowLevel(this._num("heating_flow"), this._unit("heating_flow"));
+    const heatLevel = typeof model.pumpActive === "boolean" && this._configured("pump")
+      ? this._valveLevel(model.pumpSpeed) ?? 2
+      : heatSecondary;
+    const bypassOnly = model.bypassFlow && !model.heatPrimary;
+    this._setMarkerSpeed("primary", trunkLevel, bypassOnly ? "bypass" : "");
+    this._setMarkerSpeed("heat-primary", heatPrimaryLevel);
+    this._setMarkerSpeed("dhw-primary", dhwPrimaryLevel, model.bypassFlow ? "bypass" : "");
+    this._setMarkerSpeed("heat", heatLevel);
+    this._setMarkerSpeed("dhw", water);
     this._setCircuit("primary", model.primaryMoving);
-    this._setCircuit("heat-primary", model.primaryMoving && Boolean(model.heatPrimary));
-    this._setCircuit("dhw-primary", model.primaryMoving && Boolean(model.dhwPrimary));
+    this._setCircuit("heat-primary", Boolean(model.heatPrimary));
+    this._setCircuit("dhw-primary", Boolean(model.dhwPrimary));
     this._setCircuit("heat", model.heatMoving);
     this._setCircuit("dhw", model.waterMoving);
-    // Exchanger fog: the heating exchanger is hot at the top, the DHW exchanger at the bottom.
+    // The bypass route (FF, supply tee, 01 primary, 37, FR): thin and slow while valve 37 holds a trickle,
+    // dotted and still while the controller has armed the bypass but the valve is closed.
+    for (const track of TRACKS.filter((entry) => entry.bypass)) {
+      const trunk = track.circuit === "primary";
+      const moving = trunk ? model.primaryMoving : Boolean(model.dhwPrimary);
+      for (const node of this._trackNodes?.get(track.id) || []) {
+        this._toggle(node, "is-bypass", trunk ? bypassOnly : model.bypassFlow);
+        this._toggle(node, "is-armed", model.bypassArmed && !moving);
+      }
+    }
+    // Exchanger fog shows heat moving through a face: the heating exchanger while its primary branch is
+    // open (hot at the top), the DHW exchanger while tapping or during a bypass flow (hot at the bottom).
     const heatFog = this._refs["fog-heat"];
     const dhwFog = this._refs["fog-dhw"];
-    this._toggle(heatFog, "is-on", model.heatMoving || (model.primaryMoving && Boolean(model.heatPrimary)));
+    this._toggle(heatFog, "is-on", Boolean(model.heatPrimary));
     this._toggle(dhwFog, "is-on", model.waterMoving);
-    this._toggle(dhwFog, "is-warm", !model.waterMoving && model.dhwBypass);
+    this._toggle(dhwFog, "is-warm", !model.waterMoving && model.bypassFlow);
     const first = (...keys) => keys.map((key) => this._num(key)).find((value) => value !== null) ?? null;
     this._setFog(heatFog, first("fjv_supply", "heating_supply") ?? 60, first("fjv_return", "heating_supply") ?? 35);
     this._setFog(dhwFog, first("dhw_temperature", "fjv_supply") ?? 55, first("cold_water_temperature") ?? 10);
@@ -1775,7 +1864,7 @@ class HaCalefaFlowCard extends HTMLElement {
     const action = target.dataset.action;
     if (action === "more-info") {
       const key = target.dataset.key;
-      const id = key === "pump" ? (this._config.pump || this._config.pump_speed) : this._config?.[key];
+      const id = key === "pump" ? (this._config.pump || this._config.pump_speed) : key === "bypass" ? this._config.dhw_active : this._config?.[key];
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
@@ -1838,11 +1927,11 @@ class HaCalefaFlowCardEditor extends HTMLElement {
 if (!customElements.get("ha-calefa-flow-card-editor")) customElements.define("ha-calefa-flow-card-editor", HaCalefaFlowCardEditor);
 
 const CALEFA_STYLES = `
-  :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#3f95ff;--cf-heat:#ff9a3c;--cf-heat-return:#5cb8ff;--cf-dhw:#ff4f5a;--cf-cold:#35d3ea;--cf-ok:#35df9c;--cf-off:#ff5463;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
+  :host{display:block;container:calefa-card / inline-size;--cf-supply:#ff7a2f;--cf-return:#3f95ff;--cf-heat:#ff9a3c;--cf-heat-return:#5cb8ff;--cf-dhw:#ff4f5a;--cf-cold:#35d3ea;--cf-bypass:#b88cff;--cf-ok:#35df9c;--cf-off:#ff5463;--cf-muted:rgba(191,211,226,.72);--cf-text:#f2f7fa;--cf-line:rgba(255,255,255,.09)}
   *{box-sizing:border-box}[hidden]{display:none!important}button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}button:focus-visible{outline:2px solid #49bdff;outline-offset:2px}
   ha-card{position:relative;display:block;overflow:hidden;border:1px solid rgba(145,177,199,.16);border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(90% 55% at 50% 40%,rgba(43,95,125,.26),transparent 70%),linear-gradient(155deg,#0b1924,#102535 54%,#07121b);color:var(--cf-text);box-shadow:0 18px 52px rgba(0,0,0,.3)}
   .cf{padding:clamp(8px,1.8cqw,22px) clamp(6px,1.8cqw,22px) calc(clamp(8px,1.4cqw,16px) + env(safe-area-inset-bottom,0px));min-width:0}
-  [data-tone="supply"]{--tone:var(--cf-supply)}[data-tone="return"]{--tone:var(--cf-return)}[data-tone="heat"]{--tone:var(--cf-heat)}[data-tone="heat-return"]{--tone:var(--cf-heat-return)}[data-tone="dhw"]{--tone:var(--cf-dhw)}[data-tone="cold"]{--tone:var(--cf-cold)}[data-tone="component"]{--tone:var(--cf-ok)}
+  [data-tone="supply"]{--tone:var(--cf-supply)}[data-tone="return"]{--tone:var(--cf-return)}[data-tone="heat"]{--tone:var(--cf-heat)}[data-tone="heat-return"]{--tone:var(--cf-heat-return)}[data-tone="dhw"]{--tone:var(--cf-dhw)}[data-tone="cold"]{--tone:var(--cf-cold)}[data-tone="bypass"]{--tone:var(--cf-bypass)}[data-tone="component"]{--tone:var(--cf-ok)}
 
   /* One composition for every width: tiles | unit | tiles, scaled with the card. */
   .cf-main{position:relative;display:grid;grid-template-columns:minmax(0,18fr) minmax(0,64fr) minmax(0,18fr);column-gap:clamp(8px,2.4cqw,30px);align-items:stretch;max-width:980px;margin:0 auto}
@@ -1857,7 +1946,7 @@ const CALEFA_STYLES = `
   .cf-tile small{overflow:hidden;color:#dbe6ec;font-size:clamp(10px,1.15cqw,13px);line-height:1.2;white-space:nowrap;text-overflow:ellipsis}
   .cf-tile strong{display:flex;align-items:baseline;color:var(--tone);font-size:clamp(15px,2cqw,22px);line-height:1.08;white-space:nowrap}.cf-tile strong b{font-weight:850;font-variant-numeric:tabular-nums}.cf-tile strong em{margin-left:2px;color:var(--cf-muted);font-size:clamp(9px,1cqw,12px);font-style:normal;font-weight:500}
   .cf-tile i{overflow:hidden;color:var(--cf-muted);font-size:clamp(10px,1cqw,11px);font-style:normal;line-height:1.2;white-space:nowrap;text-overflow:ellipsis}.cf-tile i:empty{display:none}
-  .cf-tile[data-tone="component"]:not(.is-on){--tone:#7e8f99}.cf-tile[data-tone="component"] strong{color:#f2f7fa}.cf-tile.is-unavailable{opacity:.5}
+  .cf-tile[data-tone="component"]:not(.is-on){--tone:#7e8f99}.cf-tile[data-tone="bypass"]:not(.is-on):not(.is-armed){--tone:#7e8f99}.cf-tile[data-tone="component"] strong{color:#f2f7fa}.cf-tile.is-unavailable{opacity:.5}
   .cf-pair{--ring:clamp(40px,4.8cqw,54px);display:grid;grid-template-rows:1fr 1fr;row-gap:calc(var(--ring) * .78)}.cf-pair.is-single{grid-template-rows:1fr;row-gap:0}.cf-pair .cf-tile{position:relative;z-index:1}.cf-pair:not(.is-single):before{content:"";position:absolute;left:50%;top:20%;bottom:20%;width:2px;transform:translateX(-50%);background:linear-gradient(var(--cf-supply),var(--cf-return));opacity:.7}.cf-right .cf-pair:not(.is-single):before{background:linear-gradient(var(--cf-heat),var(--cf-heat-return))}
 
   /* ΔT ring on the seam between supply and return. */
@@ -1874,6 +1963,9 @@ const CALEFA_STYLES = `
   .cf-track path{fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .45s ease}
   .cf-track{color:var(--tone)}.cf-track-halo{stroke:currentColor;stroke-width:26}.cf-track-core{stroke:currentColor;stroke-width:9}.cf-track-hot{stroke:#fff6ec;stroke-width:2.6}
   .cf-glow .cf-track.is-on .cf-track-halo{opacity:.3}.cf-glow .cf-track.is-on .cf-track-core{opacity:.95}.cf-glow .cf-track.is-on .cf-track-hot{opacity:.55}
+  /* Bypass: a thin trickle while valve 37 is slightly open; dotted and still while only armed. */
+  .cf-glow .cf-track.is-on.is-bypass .cf-track-halo{opacity:.14}.cf-glow .cf-track.is-on.is-bypass .cf-track-core{opacity:.72;stroke-width:5}.cf-glow .cf-track.is-on.is-bypass .cf-track-hot{opacity:.5;stroke-width:1.8;stroke-dasharray:3 11}
+  .cf-glow .cf-track.is-armed .cf-track-core{opacity:.9;stroke-width:4.6;stroke-dasharray:.1 12}
   .cf-glow{filter:drop-shadow(0 0 6px rgba(255,140,70,.12))}
   .cf-markers{display:none}.cf-markers.is-on{display:inline}.cf-marker{fill:#fff;opacity:.92}
 
