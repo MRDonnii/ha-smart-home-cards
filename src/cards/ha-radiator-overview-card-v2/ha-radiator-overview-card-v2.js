@@ -17,7 +17,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 
-const VERSION = "2.0.2";
+const VERSION = "2.0.3";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -56,7 +56,6 @@ const STYLE = `
 *{box-sizing:border-box}
 ha-card{position:relative;overflow:hidden;background:none;border:0;border-radius:0;box-shadow:none;color:var(--primary-text-color);font-family:var(--primary-font-family,var(--paper-font-body1_-_font-family,inherit))}
 .shell{position:relative;padding:22px;isolation:isolate;container-type:inline-size}
-.ambient{position:absolute;left:-10%;right:-10%;top:-160px;height:420px;z-index:-1;opacity:.55;background:radial-gradient(38% 55% at 90% 35%,color-mix(in srgb,var(--rc-cool) 13%,transparent),transparent 70%);pointer-events:none}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
 .eyebrow{display:flex;align-items:center;gap:8px;color:var(--rc-muted);font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
 .live{width:7px;height:7px;border-radius:50%;background:var(--rc-ok);animation:live 2.6s ease-out infinite}
@@ -557,7 +556,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLE}${AC_UNIT_VISUAL_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
-        <div class="shell"><div class="ambient"></div>
+        <div class="shell">
           <header class="head">
             <div>
               <div class="eyebrow"><i class="live"></i>Rumklima · live</div>
