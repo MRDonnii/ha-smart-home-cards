@@ -36,6 +36,7 @@ import "./cards/ha-person-overview-card/ha-person-overview-card.js";
 import "./cards/ha-pet-care-card/ha-pet-care-card.js";
 import "./cards/ha-weather-card/ha-weather-card.js";
 import "./cards/ha-home-room-overview-card/ha-home-room-overview-card.js";
+import "./cards/ha-home-room-overview-card-v3/ha-home-room-overview-card-v3.js";
 import "./cards/ha-home-room-overview-card-v2/ha-home-room-overview-card-v2.js";
 import "./cards/hourly-weather-scroll-card/hourly-weather-scroll-card.js";
 import "./cards/ha-house-mode-card/ha-house-mode-card.js";

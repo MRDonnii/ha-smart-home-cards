@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.3.82 */
+/* MRDonnii Smart Home Cards v0.3.83 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -55,7 +55,7 @@ var HACardListEditor = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -63,7 +63,7 @@ var HACardListEditor = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -109,19 +109,19 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const batteries = this._batteries();
-    const entitySignature = batteries.map((item) => item.id).join("|");
+    const entitySignature = batteries.map((item2) => item2.id).join("|");
     if (entitySignature !== this._entitySignature) {
       this._entitySignature = entitySignature;
       this._buildGrid(batteries);
     }
-    const valueSignature = JSON.stringify(batteries.map((item) => [item.id, item.value, item.raw, item.changed]));
+    const valueSignature = JSON.stringify(batteries.map((item2) => [item2.id, item2.value, item2.raw, item2.changed]));
     if (valueSignature !== this._valueSignature) {
       this._valueSignature = valueSignature;
       this._update(batteries);
     }
   }
   _excluded() {
-    return new Set((this._config.excluded_entities || []).map((item) => typeof item === "string" ? item : item?.entity).filter(Boolean));
+    return new Set((this._config.excluded_entities || []).map((item2) => typeof item2 === "string" ? item2 : item2?.entity).filter(Boolean));
   }
   _batteries() {
     if (!this._hass) return [];
@@ -166,7 +166,7 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   </style><ha-card class="${noAnimation.trim()}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>Energi & vedligehold</div><h2>${this._esc(this._config.title)}</h2><div class="subtitle">${this._esc(this._config.subtitle)}</div></div><div class="health"><div><span>Enheder</span><strong data-count="all">0</strong></div><div class="warning"><span>Opm\xE6rksomhed</span><strong data-count="warning">0</strong></div><div class="critical"><span>Kritiske</span><strong data-count="critical">0</strong></div></div></header><nav class="toolbar"><button class="filter active" data-filter="all">Alle</button><button class="filter" data-filter="attention">Opm\xE6rksomhed</button><button class="filter" data-filter="critical">Kritiske</button></nav><div class="grid"></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
       this._filter = button.dataset.filter;
-      this.shadowRoot.querySelectorAll("[data-filter]").forEach((item) => item.classList.toggle("active", item === button));
+      this.shadowRoot.querySelectorAll("[data-filter]").forEach((item2) => item2.classList.toggle("active", item2 === button));
       this._applyFilter();
     }));
     this._buildGrid(this._batteries());
@@ -174,24 +174,24 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   _buildGrid(batteries) {
     const grid = this.shadowRoot?.querySelector(".grid");
     if (!grid) return;
-    grid.innerHTML = batteries.length ? batteries.map((item) => `<button class="battery" data-entity="${this._esc(item.id)}"><span class="device-icon"><ha-icon icon="${this._esc(item.icon)}"></ha-icon></span><span class="copy"><b>${this._esc(item.name)}</b><small>${this._config.show_entity_id ? this._esc(item.id) : "Tryk for detaljer"}</small></span><span class="level"><strong data-value>\u2014</strong><small data-status>\u2014</small></span><i class="meter"><i class="fill"></i></i></button>`).join("") : `<div class="empty">Ingen batterisensorer fundet</div>`;
+    grid.innerHTML = batteries.length ? batteries.map((item2) => `<button class="battery" data-entity="${this._esc(item2.id)}"><span class="device-icon"><ha-icon icon="${this._esc(item2.icon)}"></ha-icon></span><span class="copy"><b>${this._esc(item2.name)}</b><small>${this._config.show_entity_id ? this._esc(item2.id) : "Tryk for detaljer"}</small></span><span class="level"><strong data-value>\u2014</strong><small data-status>\u2014</small></span><i class="meter"><i class="fill"></i></i></button>`).join("") : `<div class="empty">Ingen batterisensorer fundet</div>`;
     grid.querySelectorAll("[data-entity]").forEach((button) => button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: button.dataset.entity }, bubbles: true, composed: true }))));
     this._update(batteries);
   }
   _update(batteries) {
     const critical = Number(this._config.critical_threshold) || 20, warning = Math.max(critical + 1, Number(this._config.warning_threshold) || 50);
     let criticalCount = 0, warningCount = 0;
-    batteries.forEach((item) => {
-      const tone = this._tone(item.value);
+    batteries.forEach((item2) => {
+      const tone = this._tone(item2.value);
       if (tone === "critical") criticalCount += 1;
       if (tone === "critical" || tone === "warning") warningCount += 1;
-      const node = this.shadowRoot?.querySelector(`[data-entity="${CSS.escape(item.id)}"]`);
+      const node = this.shadowRoot?.querySelector(`[data-entity="${CSS.escape(item2.id)}"]`);
       if (!node) return;
       node.className = `battery ${tone}`;
       node.dataset.tone = tone;
-      node.querySelector("[data-value]").textContent = item.value === null ? "\u2014" : `${Math.round(item.value)}%`;
+      node.querySelector("[data-value]").textContent = item2.value === null ? "\u2014" : `${Math.round(item2.value)}%`;
       node.querySelector("[data-status]").textContent = tone === "critical" ? "Kritisk" : tone === "warning" ? "Lav" : tone === "offline" ? "Ingen data" : "God";
-      node.style.setProperty("--level", `${item.value ?? 0}%`);
+      node.style.setProperty("--level", `${item2.value ?? 0}%`);
     });
     this.shadowRoot?.querySelector('[data-count="all"]')?.replaceChildren(String(batteries.length));
     this.shadowRoot?.querySelector('[data-count="warning"]')?.replaceChildren(String(warningCount));
@@ -2942,7 +2942,7 @@ var TtdFormat = class {
       hour12: this.hour12,
       timeZone: this.timeZone
     })).formatToParts(date);
-    const part = (type) => parts.find((item) => item.type === type)?.value;
+    const part = (type) => parts.find((item2) => item2.type === type)?.value;
     const period = part("dayPeriod");
     return `${part("hour")}:${part("minute")}${period ? ` ${period}` : ""}`;
   }
@@ -3117,7 +3117,7 @@ function ttdTemplate(cfg) {
   const cell = (key, icon, tone, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon, `ic ${tone}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
   const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
-  const item = (key, icon, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
+  const item2 = (key, icon, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
@@ -3175,7 +3175,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 </section>
 <section class="panel last" data-r="last" aria-label="Seneste opladning">
   <header class="ph">${ttdIcon("mdi:ev-station", "ph-i")}<div class="ph-t"><h3>Seneste opladning</h3></div><button class="icon-btn" data-more="last_charge" data-r="lastMore" aria-label="\xC5bn seneste opladning">${ttdIcon("mdi:chevron-right")}</button></header>
-  <div class="lc-grid">${item("", "mdi:battery-charging-medium", "lcKwh", "Opladet energi")}${item("", "mdi:cash", "lcPrice", "Total pris")}${item("", "mdi:calendar-month-outline", "lcStart", "Starttidspunkt")}${item("", "mdi:clock-outline", "lcDuration", "Varighed")}</div>
+  <div class="lc-grid">${item2("", "mdi:battery-charging-medium", "lcKwh", "Opladet energi")}${item2("", "mdi:cash", "lcPrice", "Total pris")}${item2("", "mdi:calendar-month-outline", "lcStart", "Starttidspunkt")}${item2("", "mdi:clock-outline", "lcDuration", "Varighed")}</div>
   <p class="lc-foot" data-r="lcFoot"></p><p class="lc-foot" data-r="lcMonta"></p>
 </section>
 <section class="panel daily" data-r="daily" aria-label="Dagligt forbrug">
@@ -3848,7 +3848,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     let month = TTD_DASH;
     if (Array.isArray(months) && ttdHasValue(this._so("monthly_performance"))) {
       const current = f.dayKey(/* @__PURE__ */ new Date(), f.serverTz).slice(0, 7);
-      const entry = months.find((item) => item?.month === current);
+      const entry = months.find((item2) => item2?.month === current);
       month = entry ? ttdJoin(f.number(ttdToNumber(entry.distance_km), 0), "km") : ttdJoin(f.number(0, 0), "km");
     }
     const tripAttrs = this._so("last_trip")?.attributes || {};
@@ -5180,17 +5180,17 @@ var HANumberGridCard = class extends HTMLElement {
       new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true })
     );
   }
-  _row(item) {
-    const e = this._e(item.entity);
+  _row(item2) {
+    const e = this._e(item2.entity);
     const value = Number(e?.state);
-    const unit = item.unit || e?.attributes?.unit_of_measurement || "";
-    const sensorVal = item.sensor_entity ? Number(this._e(item.sensor_entity)?.state) : void 0;
+    const unit = item2.unit || e?.attributes?.unit_of_measurement || "";
+    const sensorVal = item2.sensor_entity ? Number(this._e(item2.sensor_entity)?.state) : void 0;
     return `<div class="row">
-      <span class="row-name" data-more="${this._esc(item.entity)}">${this._esc(item.name || e?.attributes?.friendly_name || item.entity)}${Number.isFinite(sensorVal) ? `<small>Nu: ${this._fmt(sensorVal)}${this._esc(item.sensor_unit || "")}</small>` : ""}</span>
+      <span class="row-name" data-more="${this._esc(item2.entity)}">${this._esc(item2.name || e?.attributes?.friendly_name || item2.entity)}${Number.isFinite(sensorVal) ? `<small>Nu: ${this._fmt(sensorVal)}${this._esc(item2.sensor_unit || "")}</small>` : ""}</span>
       <div class="stepper">
-        <button class="step-btn" data-step="-1" data-entity="${this._esc(item.entity)}"><ha-icon icon="mdi:minus"></ha-icon></button>
+        <button class="step-btn" data-step="-1" data-entity="${this._esc(item2.entity)}"><ha-icon icon="mdi:minus"></ha-icon></button>
         <span class="row-value">${this._fmt(value)}<small>${this._esc(unit)}</small></span>
-        <button class="step-btn" data-step="1" data-entity="${this._esc(item.entity)}"><ha-icon icon="mdi:plus"></ha-icon></button>
+        <button class="step-btn" data-step="1" data-entity="${this._esc(item2.entity)}"><ha-icon icon="mdi:plus"></ha-icon></button>
       </div>
     </div>`;
   }
@@ -5349,7 +5349,7 @@ var PoolForecastCard = class extends HTMLElement {
     return short ? names[date.getDay()] : `${names[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
   }
   _mergePoints() {
-    const weatherByDay = new Map(this._weatherPoints().map((item) => [this._dayKey(item.ts), item]));
+    const weatherByDay = new Map(this._weatherPoints().map((item2) => [this._dayKey(item2.ts), item2]));
     return this._parsePoints().map((point, index) => ({
       ...point,
       label: index === 0 ? "I dag" : this._label(point.ts),
@@ -6115,9 +6115,9 @@ var PoolWaterQualityCard = class extends HTMLElement {
     }
     const measurements = /* @__PURE__ */ new Map();
     const addSeries = (series, key) => {
-      for (const item of series) {
-        const ts = Date.parse(item.last_updated || item.last_changed || "");
-        const value = Number(item.state);
+      for (const item2 of series) {
+        const ts = Date.parse(item2.last_updated || item2.last_changed || "");
+        const value = Number(item2.state);
         if (!Number.isFinite(ts) || !Number.isFinite(value)) continue;
         const second = Math.round(ts / 1e3);
         const point = measurements.get(second) || { ts, ph: null, chlorine: null };
@@ -6128,23 +6128,23 @@ var PoolWaterQualityCard = class extends HTMLElement {
     };
     addSeries(byEntity.get(this.config.ph_history_entity) || [], "ph");
     addSeries(byEntity.get(this.config.chlorine_history_entity) || [], "chlorine");
-    const numericHistory = (entityId) => (byEntity.get(entityId) || []).map((item) => ({
-      ts: Date.parse(item.last_updated || item.last_changed || ""),
-      value: Number(item.state)
-    })).filter((item) => Number.isFinite(item.ts) && Number.isFinite(item.value)).sort((a, b) => a.ts - b.ts);
+    const numericHistory = (entityId) => (byEntity.get(entityId) || []).map((item2) => ({
+      ts: Date.parse(item2.last_updated || item2.last_changed || ""),
+      value: Number(item2.state)
+    })).filter((item2) => Number.isFinite(item2.ts) && Number.isFinite(item2.value)).sort((a, b) => a.ts - b.ts);
     const valueAt = (series, ts) => {
       let result = null;
-      for (const item of series) {
-        if (item.ts > ts + 2e3) break;
-        result = item.value;
+      for (const item2 of series) {
+        if (item2.ts > ts + 2e3) break;
+        result = item2.value;
       }
       return result;
     };
     const phLegacy = numericHistory(this.config.ph_entity);
     const chlorineLegacy = numericHistory(this.config.chlorine_entity);
     const savedTimes = /* @__PURE__ */ new Set();
-    for (const item of byEntity.get(this.config.legacy_measured_entity) || []) {
-      const ts = Date.parse(item.state || "");
+    for (const item2 of byEntity.get(this.config.legacy_measured_entity) || []) {
+      const ts = Date.parse(item2.state || "");
       if (!Number.isFinite(ts) || new Date(ts).getFullYear() < 2020 || savedTimes.has(ts)) continue;
       savedTimes.add(ts);
       const ph = valueAt(phLegacy, ts);
@@ -6158,11 +6158,11 @@ var PoolWaterQualityCard = class extends HTMLElement {
       point.ts = Math.min(point.ts, ts);
       measurements.set(second, point);
     }
-    for (const item of this.config.imported_measurements || []) {
-      const ts = Date.parse(`${item.date}T12:00:00`);
+    for (const item2 of this.config.imported_measurements || []) {
+      const ts = Date.parse(`${item2.date}T12:00:00`);
       if (!Number.isFinite(ts)) continue;
-      const ph = Number(item.ph);
-      const chlorine = Number(item.chlorine);
+      const ph = Number(item2.ph);
+      const chlorine = Number(item2.chlorine);
       measurements.set(Math.round(ts / 1e3), {
         ts,
         ph: Number.isFinite(ph) ? ph : null,
@@ -6546,24 +6546,24 @@ var HAToggleGridCard = class extends HTMLElement {
     if (domain === "automation") return on ? "Aktiveret" : "Deaktiveret";
     return on ? "Til" : "Fra";
   }
-  _row(item) {
-    const e = this._e(item.entity);
+  _row(item2) {
+    const e = this._e(item2.entity);
     const on = e ? ACTIVE_STATES.includes(e.state) : false;
     const unavailable = !e || e.state === "unavailable";
-    return `<div class="row ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item.entity)}">
-      <ha-icon class="row-icon" icon="${this._esc(item.icon || e?.attributes?.icon || "mdi:toggle-switch-outline")}"></ha-icon>
-      <span class="row-name">${this._esc(item.name || e?.attributes?.friendly_name || item.entity)}</span>
+    return `<div class="row ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item2.entity)}">
+      <ha-icon class="row-icon" icon="${this._esc(item2.icon || e?.attributes?.icon || "mdi:toggle-switch-outline")}"></ha-icon>
+      <span class="row-name">${this._esc(item2.name || e?.attributes?.friendly_name || item2.entity)}</span>
       <span class="row-state">${this._esc(unavailable ? "\u2014" : this._label(e, on))}</span>
       <span class="switch ${on ? "on" : ""}"><i></i></span>
     </div>`;
   }
-  _tile(item) {
-    const e = this._e(item.entity);
+  _tile(item2) {
+    const e = this._e(item2.entity);
     const on = e ? ACTIVE_STATES.includes(e.state) : false;
     const unavailable = !e || e.state === "unavailable";
-    return `<button class="tile ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item.entity)}">
-      <ha-icon class="tile-icon" icon="${this._esc(item.icon || e?.attributes?.icon || "mdi:toggle-switch-outline")}"></ha-icon>
-      <span class="tile-name">${this._esc(item.name || e?.attributes?.friendly_name || item.entity)}</span>
+    return `<button class="tile ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item2.entity)}">
+      <ha-icon class="tile-icon" icon="${this._esc(item2.icon || e?.attributes?.icon || "mdi:toggle-switch-outline")}"></ha-icon>
+      <span class="tile-name">${this._esc(item2.name || e?.attributes?.friendly_name || item2.entity)}</span>
       <span class="tile-state">${this._esc(unavailable ? "\u2014" : this._label(e, on))}</span>
     </button>`;
   }
@@ -6690,7 +6690,7 @@ var HACardListEditor2 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -6698,7 +6698,7 @@ var HACardListEditor2 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -6920,7 +6920,7 @@ var AcTemperatureControlCard = class extends HTMLElement {
     this._confirmTimer = null;
     this._activeButton = null;
     this.shadowRoot.addEventListener("pointerdown", (event) => {
-      const button = event.composedPath().find((item) => item?.dataset?.direction);
+      const button = event.composedPath().find((item2) => item2?.dataset?.direction);
       if (!button || button.disabled) return;
       event.preventDefault();
       button.setPointerCapture?.(event.pointerId);
@@ -6930,7 +6930,7 @@ var AcTemperatureControlCard = class extends HTMLElement {
       this.shadowRoot.addEventListener(eventName, () => this._finishChange());
     }
     this.shadowRoot.addEventListener("keydown", (event) => {
-      const button = event.composedPath().find((item) => item?.dataset?.direction);
+      const button = event.composedPath().find((item2) => item2?.dataset?.direction);
       if (!button || button.disabled || !["Enter", " "].includes(event.key)) return;
       event.preventDefault();
       if (!event.repeat) this._activeButton = button;
@@ -6940,7 +6940,7 @@ var AcTemperatureControlCard = class extends HTMLElement {
       if (["Enter", " "].includes(event.key)) this._finishChange();
     });
     this.shadowRoot.addEventListener("click", (event) => {
-      const value = event.composedPath().find((item) => item?.dataset?.action === "more-info");
+      const value = event.composedPath().find((item2) => item2?.dataset?.action === "more-info");
       if (value) this._moreInfo();
     });
   }
@@ -8099,7 +8099,7 @@ var HACalefaDetailsCard = class extends HTMLElement {
     for (const [name, series] of Object.entries(definitions)) {
       const target = this.shadowRoot.querySelector(`[data-history="${name}"]`);
       if (!target) continue;
-      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item) => item.entity);
+      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
       if (!entities.length) {
         target.textContent = "Ingen historik-entiteter valgt";
         continue;
@@ -8678,9 +8678,9 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       return "stromligning";
     return "energidataservice";
   }
-  _point(item, fallbackHour = 0, dayOffset = 0) {
-    const price = Number(item?.price ?? item);
-    const raw = item?.start ?? item?.hour;
+  _point(item2, fallbackHour = 0, dayOffset = 0) {
+    const price = Number(item2?.price ?? item2);
+    const raw = item2?.start ?? item2?.hour;
     const start = raw ? Date.parse(raw) : new Date(
       (/* @__PURE__ */ new Date()).setHours(fallbackHour, 0, 0, 0) + dayOffset * 864e5
     ).getTime();
@@ -9254,7 +9254,7 @@ var HAVentilationCard = class extends HTMLElement {
       return `rgb(${palette[index].map((channel, channelIndex) => Math.round(channel + (palette[index + 1][channelIndex] - channel) * amount)).join(",")})`;
     };
     return Object.fromEntries(keys.map((key) => {
-      const sample = samples.find((item) => item.key === key);
+      const sample = samples.find((item2) => item2.key === key);
       return [key, sample ? colorFor(sample.value) : this._temperatureColor(key)];
     }));
   }
@@ -9333,7 +9333,7 @@ var HAVentilationCard = class extends HTMLElement {
     for (const [name, series] of Object.entries(definitions)) {
       if (mountId !== this._historyMountId) return;
       const target = this.shadowRoot.querySelector(`[data-overview-history="${name}"]`);
-      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item) => item.entity);
+      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
       if (!target || !entities.length) continue;
       const compact = name !== "temperatures";
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", name: name === "temperatures" ? "Temperaturer" : name === "co2" ? "CO\u2082" : "Varmegenvinding", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, height: compact ? 122 : 165, font_size: 68, animate: false, hour24: true, show: { icon: false, name: true, state: true, legend: !compact, labels: false, points: false, fill: compact ? true : "fade" } });
@@ -19252,7 +19252,7 @@ var HACardListEditor3 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -19260,7 +19260,7 @@ var HACardListEditor3 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -19499,7 +19499,7 @@ var HACardListEditor4 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -19507,7 +19507,7 @@ var HACardListEditor4 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -22613,7 +22613,7 @@ var HACardListEditor5 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -22621,7 +22621,7 @@ var HACardListEditor5 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -23200,7 +23200,7 @@ var HACardListEditor6 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -23208,7 +23208,7 @@ var HACardListEditor6 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -24340,7 +24340,7 @@ var HACardListEditor7 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -24348,7 +24348,7 @@ var HACardListEditor7 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -24896,7 +24896,7 @@ var HACardListEditor8 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -24904,7 +24904,7 @@ var HACardListEditor8 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -25512,9 +25512,9 @@ var HaHomeStatusCard = class extends HTMLElement {
     if (price <= 5) return mix(orange, red, price - 4);
     return mix(red, darkRed, price - 5);
   }
-  view(item) {
-    const type = item.type || "entity";
-    const cfg = { ...PRESETS[type] || {}, ...item };
+  view(item2) {
+    const type = item2.type || "entity";
+    const cfg = { ...PRESETS[type] || {}, ...item2 };
     let value = this.text(cfg.entity);
     let label = cfg.name || this.state(cfg.entity)?.attributes?.friendly_name || "Status";
     let meter = 0;
@@ -25696,12 +25696,12 @@ var HaHomeStatusCard = class extends HTMLElement {
       pricePulse
     };
   }
-  decoration(item) {
-    if (item.type === "home_energy" || item.type === "ev") {
-      const maxFromEntity = this.number(item.phase_max_entity);
-      const maximum = Number.isFinite(maxFromEntity) && maxFromEntity > 0 ? maxFromEntity : item.phase_max;
-      const vehiclePerPhaseW = item.type === "home_energy" ? Math.max(0, (this.number(item.vehicle_power_entity) || 0) * 1e3) / 3 : 0;
-      const values = (item.phase_entities || []).map(
+  decoration(item2) {
+    if (item2.type === "home_energy" || item2.type === "ev") {
+      const maxFromEntity = this.number(item2.phase_max_entity);
+      const maximum = Number.isFinite(maxFromEntity) && maxFromEntity > 0 ? maxFromEntity : item2.phase_max;
+      const vehiclePerPhaseW = item2.type === "home_energy" ? Math.max(0, (this.number(item2.vehicle_power_entity) || 0) * 1e3) / 3 : 0;
+      const values = (item2.phase_entities || []).map(
         (id) => Math.max(0, (this.number(id) || 0) - vehiclePerPhaseW)
       );
       const colors = values.map((value) => {
@@ -25715,8 +25715,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       });
       const paths = values.map((value, phase) => {
         const load = Math.min(1, value / maximum);
-        const shapedLoad = item.type === "home_energy" ? Math.pow(load, 0.42) : load;
-        const amplitude = item.type === "ev" ? 1 + Math.pow(load, 1.8) * 24.5 : 2 + shapedLoad * 23.5;
+        const shapedLoad = item2.type === "home_energy" ? Math.pow(load, 0.42) : load;
+        const amplitude = item2.type === "ev" ? 1 + Math.pow(load, 1.8) * 24.5 : 2 + shapedLoad * 23.5;
         const cycles = 1.1 + load * 1.9;
         const offset = phase * Math.PI * 2 / 3;
         const points = [];
@@ -25726,20 +25726,20 @@ var HaHomeStatusCard = class extends HTMLElement {
             `${(progress * 300).toFixed(1)},${(42.5 + Math.sin(progress * Math.PI * 2 * cycles + offset) * amplitude).toFixed(1)}`
           );
         }
-        const opacity = item.type === "home_energy" ? (0.08 + shapedLoad * 0.15).toFixed(2) : (0.05 + load * 0.08).toFixed(2);
-        const width = item.type === "home_energy" ? (0.9 + shapedLoad * 0.6).toFixed(2) : (0.8 + load * 0.5).toFixed(2);
+        const opacity = item2.type === "home_energy" ? (0.08 + shapedLoad * 0.15).toFixed(2) : (0.05 + load * 0.08).toFixed(2);
+        const width = item2.type === "home_energy" ? (0.9 + shapedLoad * 0.6).toFixed(2) : (0.8 + load * 0.5).toFixed(2);
         const stroke = `color-mix(in srgb, ${colors[phase]} 40%, var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 60%)`;
         return `<polyline class="phase phase-${phase + 1}" points="${points.join(" ")}" style="stroke:${stroke};stroke-width:${width};opacity:${opacity}"/>`;
       });
-      return `<svg class="phase-waves ${item.type}" viewBox="0 0 300 85" preserveAspectRatio="none"><line x1="0" y1="42.5" x2="300" y2="42.5"/>${paths.join("")}</svg>`;
+      return `<svg class="phase-waves ${item2.type}" viewBox="0 0 300 85" preserveAspectRatio="none"><line x1="0" y1="42.5" x2="300" y2="42.5"/>${paths.join("")}</svg>`;
     }
-    if (item.type === "electricity_price") {
+    if (item2.type === "electricity_price") {
       return `<div class="price-bars">${[32, 46, 25, 58, 38, 65, 29].map((h, i) => `<i style="height:${h}%;animation-delay:-${i * 0.25}s"></i>`).join("")}</div>`;
     }
-    if (item.type === "pool") {
+    if (item2.type === "pool") {
       return `<svg class="pool-waves" viewBox="0 0 220 85" preserveAspectRatio="none"><path d="M0 55 Q22 40 44 55 T88 55 T132 55 T176 55 T220 55"/><path d="M0 68 Q22 53 44 68 T88 68 T132 68 T176 68 T220 68"/></svg>`;
     }
-    if (item.type === "settings") {
+    if (item2.type === "settings") {
       const icons = [
         [
           "binary_sensor.vaskemaskine_korer",
@@ -25756,36 +25756,36 @@ var HaHomeStatusCard = class extends HTMLElement {
       ].filter(([id]) => this.on(id));
       return icons.length ? `<div class="appliances">${icons.map(([, src]) => `<img src="${src}">`).join("")}</div>` : "";
     }
-    if (item.type === "heating" && /cool|heat|fan/.test(
+    if (item2.type === "heating" && /cool|heat|fan/.test(
       this.text("sensor.ac_combined_state", "").toLowerCase()
     )) {
       return `<div class="airflow"><i></i><i></i><i></i></div>`;
     }
     return "";
   }
-  action(item) {
-    if (item.type === "ev" && this.on(item.cable_entity)) {
-      this._openEvPopup(item);
+  action(item2) {
+    if (item2.type === "ev" && this.on(item2.cable_entity)) {
+      this._openEvPopup(item2);
       return;
     }
-    if (item.navigation_path) {
-      history.pushState(null, "", item.navigation_path);
+    if (item2.navigation_path) {
+      history.pushState(null, "", item2.navigation_path);
       window.dispatchEvent(new Event("location-changed"));
-    } else if (item.entity) {
+    } else if (item2.entity) {
       this.dispatchEvent(
         new CustomEvent("hass-more-info", {
           bubbles: true,
           composed: true,
-          detail: { entityId: item.entity }
+          detail: { entityId: item2.entity }
         })
       );
     }
   }
-  _openEvPopup(item) {
+  _openEvPopup(item2) {
     if (this._popupEl) return;
     const PopupCard = customElements.get("ha-tesla-charge-popup-card");
     if (!PopupCard) {
-      history.pushState(null, "", item.navigation_path);
+      history.pushState(null, "", item2.navigation_path);
       window.dispatchEvent(new Event("location-changed"));
       return;
     }
@@ -25798,7 +25798,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     close.setAttribute("aria-label", "Luk lade-popup");
     close.style.cssText = "position:absolute;top:-22px;right:10px;z-index:4;min-height:42px;padding:10px 16px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,12,18,.92);box-shadow:0 8px 20px rgba(0,0,0,.38);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const card = new PopupCard();
-    card.setConfig({ navigation_path: item.navigation_path });
+    card.setConfig({ navigation_path: item2.navigation_path });
     card.hass = this._hass;
     const scroller = document.createElement("div");
     scroller.style.cssText = "max-height:92vh;overflow:auto;border-radius:20px";
@@ -25832,12 +25832,12 @@ var HaHomeStatusCard = class extends HTMLElement {
   }
   render() {
     if (!this.config || !this._hass) return;
-    const item = this.view({
+    const item2 = this.view({
       ...this.config,
       type: this.config.preset || this.config.type_name || "entity"
     });
     const segClass = (s) => s === "locked" ? "seg-locked" : s === "unlocked" ? "seg-unlocked" : s === "error" ? "seg-error" : s === "on" ? "on" : "";
-    const meterHtml = (item.segmentStates || Array.from({ length: item.segments || 5 }, (_, i) => i + 1 <= item.meter ? "on" : "")).map((s) => `<i class="seg ${segClass(s)}"></i>`).join("");
+    const meterHtml = (item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "")).map((s) => `<i class="seg ${segClass(s)}"></i>`).join("");
     if (!this._rendered) {
       this.shadowRoot.innerHTML = `<style>
       :host{display:block}
@@ -25855,32 +25855,32 @@ var HaHomeStatusCard = class extends HTMLElement {
       this.shadowRoot.querySelector(".item").addEventListener("click", () => this.action(this._currentItem));
       this._rendered = true;
     }
-    this._currentItem = item;
+    this._currentItem = item2;
     const button = this.shadowRoot.querySelector(".item");
-    const pulse = Math.max(0, Math.min(1, item.pricePulse || 0));
-    button.className = `item ${item.type}${item.hasError ? " has-error" : ""}${pulse > 0 ? " price-alert" : ""}`;
-    button.style.setProperty("--accent", item.color);
+    const pulse = Math.max(0, Math.min(1, item2.pricePulse || 0));
+    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${pulse > 0 ? " price-alert" : ""}`;
+    button.style.setProperty("--accent", item2.color);
     button.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
     button.style.setProperty("--price-pulse-scale", (0.94 - pulse * 0.28).toFixed(2));
     button.style.setProperty("--price-pulse-opacity", (0.82 - pulse * 0.32).toFixed(2));
     button.style.setProperty("--price-pulse-brightness", (1.08 + pulse * 0.82).toFixed(2));
     button.style.setProperty("--price-pulse-glow", `${(4 + pulse * 14).toFixed(1)}px`);
-    button.setAttribute("aria-label", item.name || item.type);
+    button.setAttribute("aria-label", item2.name || item2.type);
     const decoration = this.shadowRoot.querySelector(".decoration");
-    if (this._decorationType !== item.type || item.type !== "electricity_price") {
-      decoration.innerHTML = this.decoration(item);
-      this._decorationType = item.type;
+    if (this._decorationType !== item2.type || item2.type !== "electricity_price") {
+      decoration.innerHTML = this.decoration(item2);
+      this._decorationType = item2.type;
     }
-    this.shadowRoot.querySelector(".value").textContent = item.value;
+    this.shadowRoot.querySelector(".value").textContent = item2.value;
     const meter = this.shadowRoot.querySelector(".meter");
-    const segmentStates = item.segmentStates || Array.from({ length: item.segments || 5 }, (_, i) => i + 1 <= item.meter ? "on" : "");
+    const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    this.shadowRoot.querySelector(".detail").textContent = item.detail || "\xA0";
-    this.shadowRoot.querySelector(".label").innerHTML = item.label;
-    this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item.icon || "mdi:information-outline");
+    this.shadowRoot.querySelector(".detail").textContent = item2.detail || "\xA0";
+    this.shadowRoot.querySelector(".label").innerHTML = item2.label;
+    this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
   }
   getCardSize() {
     return 2;
@@ -26342,11 +26342,11 @@ var HaHomeDesktopLayoutCardEditor = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    this._nestedEditors.forEach((item) => item.hass = hass);
+    this._nestedEditors.forEach((item2) => item2.hass = hass);
   }
   set lovelace(lovelace) {
     this._lovelace = lovelace;
-    this._nestedEditors.forEach((item) => item.lovelace = lovelace);
+    this._nestedEditors.forEach((item2) => item2.lovelace = lovelace);
   }
   _escape(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -26658,7 +26658,7 @@ var HACardListEditor9 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -26666,7 +26666,7 @@ var HACardListEditor9 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -27384,7 +27384,7 @@ var HACardListEditor10 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -27392,7 +27392,7 @@ var HACardListEditor10 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -27580,6 +27580,1220 @@ var HaHomeRoomOverviewCard = class extends HTMLElement {
 if (!customElements.get("ha-home-room-overview-card")) customElements.define("ha-home-room-overview-card", HaHomeRoomOverviewCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-room-overview-card", name: "HA Home Room Overview", description: `Room overview ${ROOM_OVERVIEW_VERSION}` });
+
+// src/cards/ha-home-room-overview-card-v3/ha-card-list-editor.js
+var HACardListEditor11 = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = void 0;
+    this._definition = { roots: [], collections: [] };
+  }
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+  setConfig(config) {
+    this._config = structuredClone(config || {});
+    this._render();
+  }
+  set definition(value) {
+    this._definition = value || { roots: [], collections: [] };
+    this._render();
+  }
+  _get(path, source = this._config) {
+    return path.split(".").reduce((value, key) => value?.[key], source);
+  }
+  _set(path, value, source = this._config) {
+    const parts = path.split(".");
+    let target = source;
+    parts.slice(0, -1).forEach((key) => {
+      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
+      target = target[key];
+    });
+    if (value === "" || value === void 0) delete target[parts.at(-1)];
+    else target[parts.at(-1)] = value;
+  }
+  _emit() {
+    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
+  }
+  _control(field, value, scope, index = -1) {
+    const common = `data-scope="${scope}" data-index="${index}" data-key="${field.key}"`;
+    if (field.type === "entity") return `<label><span>${field.label}</span><ha-entity-picker ${common} value="${this._escape(value || "")}" allow-custom-entity></ha-entity-picker></label>`;
+    if (field.type === "boolean") return `<label class="check"><input ${common} type="checkbox" ${value !== false ? "checked" : ""}><span>${field.label}</span></label>`;
+    if (field.type === "number") return `<label><span>${field.label}</span><input ${common} type="number" value="${this._escape(value ?? "")}" min="${field.min ?? ""}" max="${field.max ?? ""}"></label>`;
+    return `<label><span>${field.label}</span><input ${common} type="text" value="${this._escape(value || "")}" placeholder="${this._escape(field.placeholder || "")}"></label>`;
+  }
+  _escape(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  _render() {
+    if (!this.shadowRoot) return;
+    const roots = this._definition.roots || [];
+    const collections = this._definition.collections || [];
+    this.shadowRoot.innerHTML = `<style>
+      *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
+    </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
+      const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+    }).join("")}</div>`;
+    this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
+      control.hass = this._hass;
+      control.addEventListener("value-changed", (event) => this._change(control, event.detail.value));
+    });
+    this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
+    this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
+      this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
+      this._emit();
+      this._render();
+    }));
+    this.shadowRoot.querySelectorAll("[data-remove]").forEach((button) => button.addEventListener("click", () => {
+      this._config[button.dataset.remove].splice(Number(button.dataset.index), 1);
+      this._emit();
+      this._render();
+    }));
+  }
+  _change(control, value) {
+    if (control.dataset.scope === "root") this._set(control.dataset.key, value);
+    else this._set(control.dataset.key, value, this._config[control.dataset.scope][Number(control.dataset.index)]);
+    this._emit();
+  }
+};
+if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor11);
+
+// src/cards/ha-home-room-overview-card-v3/ha-home-room-overview-card-v3.js
+var ROOM_OVERVIEW_VERSION2 = "3.0.0";
+var OPEN_STATES = /* @__PURE__ */ new Set(["on", "open", "opening"]);
+var PRESENT_STATES = /* @__PURE__ */ new Set(["on", "home", "detected"]);
+var MEDIA_OFF = /* @__PURE__ */ new Set(["off", "standby", "unavailable", "unknown"]);
+var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
+var TONE_RANK = { critical: 0, danger: 1, warn: 2, active: 3, info: 4 };
+var OPENING_LABEL = { door: "D\xF8r", window: "Vindue", garage_door: "Port", garage: "Port", gate: "L\xE5ge", opening: "\xC5bning" };
+var WEATHER = {
+  "clear-night": ["Klart", "mdi:weather-night"],
+  cloudy: ["Overskyet", "mdi:weather-cloudy"],
+  exceptional: ["Us\xE6dvanligt vejr", "mdi:alert-circle-outline"],
+  fog: ["T\xE5ge", "mdi:weather-fog"],
+  hail: ["Hagl", "mdi:weather-hail"],
+  lightning: ["Lyn", "mdi:weather-lightning"],
+  "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"],
+  partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"],
+  pouring: ["Skybrud", "mdi:weather-pouring"],
+  rainy: ["Regn", "mdi:weather-rainy"],
+  snowy: ["Sne", "mdi:weather-snowy"],
+  "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"],
+  sunny: ["Sol", "mdi:weather-sunny"],
+  windy: ["Bl\xE6sende", "mdi:weather-windy"],
+  "windy-variant": ["Bl\xE6sende", "mdi:weather-windy-variant"]
+};
+var DOMAIN_ICON = { light: "mdi:lightbulb-outline", switch: "mdi:power-socket-eu", fan: "mdi:fan", media_player: "mdi:television", lock: "mdi:lock", valve: "mdi:valve", cover: "mdi:blinds", script: "mdi:script-text-play-outline", scene: "mdi:palette-outline", input_boolean: "mdi:toggle-switch-outline", vacuum: "mdi:robot-vacuum", climate: "mdi:thermostat" };
+var PILLS = [
+  { key: "temp", icon: "mdi:home-thermometer-outline", label: "Inde" },
+  { key: "occupied", icon: "mdi:account-multiple-outline", label: "Aktivitet", filter: true },
+  { key: "lit", icon: "mdi:lightbulb-group-outline", label: "Lys t\xE6ndt", filter: true },
+  { key: "open", icon: "mdi:window-open-variant", label: "\xC5bninger", filter: true },
+  { key: "running", icon: "mdi:play-circle-outline", label: "I gang", filter: true }
+];
+try {
+  CSS.registerProperty({ name: "--hro-a", syntax: "<angle>", inherits: false, initialValue: "0deg" });
+} catch (_) {
+}
+var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
+var esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
+function kelvinRgb(kelvin) {
+  const t = kelvin / 100;
+  const r2 = t <= 66 ? 255 : 329.698727446 * Math.pow(t - 60, -0.1332047592);
+  const g = t <= 66 ? 99.4708025861 * Math.log(t) - 161.1195681661 : 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+  return [r2, g, b].map((v) => clamp(Math.round(v), 0, 255));
+}
+function hsRgb(h, s) {
+  const f = (n) => {
+    const k = (n + h / 60) % 6;
+    return 255 * (1 - s / 100 * Math.max(0, Math.min(k, 4 - k, 1)));
+  };
+  return [f(5), f(3), f(1)].map((v) => Math.round(v));
+}
+var STYLE2 = `
+:host{display:block;container:roomcard / inline-size;color:var(--primary-text-color);font-family:var(--paper-font-body1_-_font-family,Inter,system-ui,sans-serif);--ok:var(--dashboard-success,var(--success-color,#00e676));--warn:var(--dashboard-warning,var(--warning-color,#ff8a00));--bad:var(--dashboard-danger,var(--error-color,#ff365e));--line:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.2)));--muted:var(--secondary-text-color,#8898ad);--brand:var(--dashboard-accent,var(--primary-color,#00b8ff));--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box}button{font:inherit;color:inherit;margin:0}
+.shell{position:relative;overflow:hidden;padding:26px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-radius:30px;background:radial-gradient(110% 80% at 100% 0%,color-mix(in srgb,var(--brand) 11%,transparent),transparent 45%),radial-gradient(70% 60% at 0% 100%,color-mix(in srgb,var(--brand) 5%,transparent),transparent 60%),var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#14171c)));box-shadow:var(--dashboard-shadow-deep,0 20px 50px rgba(0,0,0,.3))}
+.shell::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:42px 42px;-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%);mask-image:linear-gradient(180deg,#000,transparent 70%)}
+.top{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px;animation:fadeUp .7s var(--ease) backwards}
+.eyebrow{display:flex;align-items:center;gap:10px;color:var(--brand);font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+.live{position:relative;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.live::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--ok);animation:ping 2.4s cubic-bezier(0,0,.2,1) infinite}
+h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1.02;letter-spacing:-.045em}
+.sub{min-height:1.35em;color:var(--muted);font-size:14px;font-weight:500;transition:opacity .3s}
+.pills{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.pill{position:relative;display:flex;align-items:center;gap:10px;min-width:122px;padding:9px 14px 9px 9px;border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:17px;background:var(--contrast1,rgba(255,255,255,.04));text-align:left;cursor:default;transition:border-color .3s,background .3s,box-shadow .3s,transform .2s var(--ease),opacity .3s}
+.pill[data-filter]{cursor:pointer}
+.pill[data-filter]:hover{border-color:color-mix(in srgb,var(--pc,var(--brand)) 55%,transparent)}
+.pill[data-filter]:active{transform:scale(.96)}
+.pill .pi{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--pc,var(--brand)) 15%,transparent);color:var(--pc,var(--brand));transition:background .3s,color .3s}
+.pill .pi ha-icon{--mdc-icon-size:19px}
+.pill b{display:block;font-size:18px;font-weight:800;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pill small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.pill small em{font-style:normal;letter-spacing:.02em;text-transform:none;font-weight:700;opacity:.85}
+.pill.zero{opacity:.62}
+.pill.hot{--pc:var(--warn)}
+.pill.hot b{color:var(--warn)}
+.pill.sel{border-color:var(--pc,var(--brand));background:color-mix(in srgb,var(--pc,var(--brand)) 12%,transparent);box-shadow:0 10px 26px color-mix(in srgb,var(--pc,var(--brand)) 20%,transparent)}
+.pill.sel .pi{background:var(--pc,var(--brand));color:#fff}
+.bump{animation:bump .5s var(--ease)}
+.grid{position:relative;display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:14px}
+.tile{--accent:var(--brand);--bc:var(--accent);--lrgb:255,190,110;--level:0;position:relative;isolation:isolate;min-width:0;container:tile / inline-size;border:1px solid color-mix(in srgb,var(--line) 52%,transparent);border-radius:24px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 11%,transparent) 0%,transparent 46%),var(--surface-soft-gradient,rgba(255,255,255,.03));overflow:hidden;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent;transition:transform .35s var(--ease),border-color .35s,box-shadow .35s,opacity .35s,filter .35s;animation:tileIn .75s var(--ease) backwards;animation-delay:calc(var(--i) * 55ms + 80ms)}
+.tile::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:radial-gradient(320px circle at var(--mx,50%) var(--my,-30%),color-mix(in srgb,var(--accent) 17%,transparent),transparent 62%);opacity:0;transition:opacity .45s;pointer-events:none}
+.tile:focus-visible{box-shadow:0 0 0 2px var(--brand)}
+.tile.press{transform:scale(.985)}
+@media (hover:hover){.tile:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}.tile:hover::after{opacity:1}.tile:hover .spark{opacity:.5}}
+.tile.lit{border-color:color-mix(in srgb,rgb(var(--lrgb)) calc(18% + var(--level) * 30%),color-mix(in srgb,var(--line) 52%,transparent))}
+.tile.alarm{border-color:color-mix(in srgb,var(--bad) 58%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 22%,transparent),0 0 34px color-mix(in srgb,var(--bad) 13%,transparent)}
+.tile.critical{animation:tileIn .75s var(--ease) backwards,alarm 1.6s ease-in-out infinite}
+.grid[data-filter] .tile:not(.match){opacity:.24;filter:saturate(.25);transform:scale(.97)}
+.grid[data-filter] .tile.match{border-color:color-mix(in srgb,var(--accent) 60%,transparent)}
+.glow{position:absolute;z-index:-1;top:-44%;right:-30%;width:84%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(var(--lrgb),.5) 0%,rgba(var(--lrgb),.16) 36%,transparent 66%);opacity:0;scale:.55;transition:opacity 1s ease,scale 1s var(--ease),background 1s;pointer-events:none}
+.tile.lit .glow{opacity:calc(.3 + var(--level) * .7);scale:1;animation:breathe 7s ease-in-out infinite}
+.spark{position:absolute;left:0;right:0;bottom:64px;z-index:-1;width:100%;height:76px;opacity:.3;pointer-events:none;transition:opacity .45s;overflow:visible}
+.spark .stroke{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px var(--accent))}
+.spark .s0{stop-color:var(--accent);stop-opacity:.34}.spark .s1{stop-color:var(--accent);stop-opacity:0}
+.spark.draw{animation:draw 1.8s cubic-bezier(.45,0,.2,1) backwards;animation-delay:calc(var(--i) * 55ms + 250ms)}
+.in{position:relative;display:grid;grid-template-rows:auto 1fr auto;gap:12px;min-height:238px;height:100%;padding:18px}
+.head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:12px}
+.badge{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 24%,transparent);transition:background .4s,color .4s}
+.badge ha-icon{--mdc-icon-size:24px}
+.rings i{position:absolute;inset:0;border:1.5px solid var(--ok);border-radius:inherit;opacity:0;pointer-events:none}
+.tile.occupied .rings i{animation:ring 2.8s cubic-bezier(.2,.6,.3,1) infinite}
+.tile.occupied .rings i:nth-child(2){animation-delay:1.4s}
+.tile.occupied .badge{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 45%,transparent)}
+.ident{min-width:0;padding-top:1px}
+.name{overflow:hidden;font-size:18px;font-weight:800;line-height:1.2;letter-spacing:-.025em;white-space:nowrap;text-overflow:ellipsis}
+.line{display:flex;align-items:center;gap:7px;min-width:0;margin-top:5px;color:var(--muted);font-size:11.5px;font-weight:650;white-space:nowrap}
+.line .lt{overflow:hidden;text-overflow:ellipsis}
+.dot{position:relative;flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:color-mix(in srgb,var(--muted) 55%,transparent);transition:background .4s}
+.line.live{color:color-mix(in srgb,var(--ok) 82%,var(--primary-text-color))}
+.line.live .dot{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.line.live .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--ok);animation:ping 2s cubic-bezier(0,0,.2,1) infinite}
+.line.weather .dot{background:var(--accent)}
+.line.off .dot{background:var(--warn)}
+.clim{text-align:right}
+.temp{display:flex;align-items:flex-start;justify-content:flex-end;font-size:32px;font-weight:800;line-height:.95;letter-spacing:-.05em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tv{display:inline-block;transition:color .4s}
+.tv.bump{animation:bump .6s var(--ease)}
+.tu{margin:2px 0 0 1px;color:var(--muted);font-size:15px;font-weight:650;letter-spacing:0}
+.trend{display:none;--mdc-icon-size:15px;margin:2px 0 0 1px}
+.trend.up,.trend.down{display:inline-flex}
+.trend.up{color:var(--warn)}.trend.down{color:#5fb8ff}
+.meta{display:flex;justify-content:flex-end;gap:9px;margin-top:7px;color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap}
+.meta>span{display:inline-flex;align-items:center;gap:3px;transition:color .3s}
+.meta ha-icon{--mdc-icon-size:13px;opacity:.85}
+.meta .hide{display:none}
+.hum.crit{color:var(--bad)}
+.tgt.heat{color:var(--warn)}
+.tgt.heat ha-icon{opacity:1;animation:flame 1.3s ease-in-out infinite}
+.chips{position:relative;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;min-width:0}
+.chip{--cc:var(--accent);position:relative;display:inline-flex;align-items:center;gap:6px;max-width:100%;height:27px;padding:0 10px 0 8px;overflow:hidden;border:1px solid color-mix(in srgb,var(--cc) 32%,transparent);border-radius:999px;background:color-mix(in srgb,var(--cc) 13%,transparent);color:color-mix(in srgb,var(--cc) 72%,var(--primary-text-color));font-size:11px;font-weight:750;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:chipIn .5s var(--ease) backwards}
+.chip.danger,.chip.critical{--cc:var(--bad)}.chip.warn{--cc:var(--warn)}.chip.info{--cc:var(--muted)}
+.chip.critical{animation:chipIn .5s var(--ease) backwards,alarm 1.4s ease-in-out infinite}
+.chip.out{animation:chipOut .32s ease forwards;pointer-events:none}
+.chip.tap{cursor:pointer;transition:transform .18s var(--ease),background .3s}
+.chip.tap:hover{background:color-mix(in srgb,var(--cc) 22%,transparent)}
+.chip.tap:active{transform:scale(.94)}
+.chip.tap .ct::after{content:" \u21BA";opacity:.7}
+.ci{position:relative;display:grid;place-items:center;flex:0 0 15px;width:15px;height:15px}
+.ci ha-icon{--mdc-icon-size:15px}
+.ct{position:relative;overflow:hidden;text-overflow:ellipsis}
+.cm{position:relative;flex:0 0 auto;font-weight:650;opacity:.72}
+.cm:empty{display:none}
+.chip.prog{background:linear-gradient(90deg,color-mix(in srgb,var(--cc) 30%,transparent) 0 var(--p,0%),color-mix(in srgb,var(--cc) 10%,transparent) var(--p,0%) 100%)}
+.chip.prog::before{content:"";position:absolute;inset:0;width:var(--p,0%);background:repeating-linear-gradient(115deg,rgba(255,255,255,.13) 0 6px,transparent 6px 12px);background-size:24px 100%;animation:stripes 1.2s linear infinite;transition:width .8s var(--ease)}
+.eq{display:none;align-items:flex-end;gap:1.5px;width:13px;height:12px}
+.eq i{flex:1;height:100%;border-radius:1px;background:currentColor;transform-origin:bottom;animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:-.45s}.eq i:nth-child(3){animation-delay:-.2s}.eq i:nth-child(4){animation-delay:-.7s}
+.chip.eqon .eq{display:flex}.chip.eqon .ci ha-icon{display:none}
+.anim-pulse ha-icon{animation:blink 1.5s ease-in-out infinite}
+.anim-spin ha-icon{animation:spin 1.6s linear infinite}
+.anim-wiggle ha-icon{animation:wiggle 1.2s ease-in-out infinite}
+.anim-flame ha-icon{animation:flame 1.3s ease-in-out infinite}
+.anim-bob ha-icon{animation:bob 1.6s ease-in-out infinite}
+.acts{position:relative;display:flex;align-items:center;gap:8px;min-width:0}
+.btn{--bc:var(--accent);position:relative;display:grid;place-items:center;flex:0 0 auto;width:42px;height:42px;padding:0;border:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);color:var(--muted);cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .2s var(--ease),background .35s,border-color .35s,color .35s,box-shadow .35s,opacity .3s}
+.btn ha-icon{--mdc-icon-size:20px;pointer-events:none;transition:color .35s}
+@media (hover:hover){.btn:hover{border-color:color-mix(in srgb,var(--bc) 50%,transparent);color:var(--primary-text-color)}}
+.btn:active{transform:scale(.9)}
+.btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.btn.on{color:color-mix(in srgb,var(--bc) 78%,#fff);border-color:color-mix(in srgb,var(--bc) 55%,transparent);background:color-mix(in srgb,var(--bc) 19%,transparent);box-shadow:0 0 22px color-mix(in srgb,var(--bc) 24%,transparent),inset 0 0 0 1px color-mix(in srgb,var(--bc) 16%,transparent)}
+.btn.secure{color:color-mix(in srgb,var(--ok) 80%,var(--primary-text-color))}
+.btn.unavail{opacity:.38}
+.btn.pending::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;background:conic-gradient(from var(--hro-a),transparent 0 62%,var(--bc) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:orbit .9s linear infinite;pointer-events:none}
+.btn.err{animation:shake .45s;border-color:var(--bad);color:var(--bad)}
+.btn .arm{display:none;font-size:11px;font-weight:800;white-space:nowrap}
+.btn.armed{--bc:var(--warn);display:flex;gap:6px;width:auto;padding:0 12px;color:var(--warn);border-color:color-mix(in srgb,var(--warn) 65%,transparent);background:color-mix(in srgb,var(--warn) 16%,transparent);animation:armed 1s ease-in-out infinite}
+.btn.armed .arm{display:inline}
+.btn.light{display:flex;align-items:center;justify-content:flex-start;gap:9px;flex:1 1 auto;width:auto;min-width:42px;padding:0 13px 0 11px;overflow:hidden}
+.lf{position:absolute;inset:0;width:calc(var(--level) * 100%);background:linear-gradient(90deg,rgba(var(--lrgb),.1),rgba(var(--lrgb),.36));opacity:0;transition:width .7s var(--ease),opacity .45s,background .6s;pointer-events:none}
+.btn.light ha-icon,.btn.light .ll,.btn.light .lv{position:relative}
+.ll{overflow:hidden;color:var(--primary-text-color);font-size:12px;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
+.lv{margin-left:auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn.light.on{color:color-mix(in srgb,rgb(var(--lrgb)) 62%,#fff);border-color:rgba(var(--lrgb),.55);background:rgba(var(--lrgb),.08);box-shadow:0 0 26px rgba(var(--lrgb),.22),inset 0 0 0 1px rgba(var(--lrgb),.14)}
+.btn.light.on .lf{opacity:1}
+.btn.light.on ha-icon{filter:drop-shadow(0 0 6px rgba(var(--lrgb),.9))}
+.btn.off{--bc:var(--bad);width:0;margin-left:-8px;border-width:0;opacity:0;overflow:hidden;pointer-events:none;transition:width .4s var(--ease),margin .4s var(--ease),opacity .3s,border-color .3s,color .3s,background .3s}
+.btn.off.show{width:42px;margin-left:0;border-width:1px;opacity:1;pointer-events:auto}
+@media (hover:hover){.btn.off:hover{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}}
+.btn.on.anim-spin ha-icon{animation:spin 1.4s linear infinite}
+.btn.on.anim-flame ha-icon{animation:flame 1.3s ease-in-out infinite}
+.btn.on.anim-bob ha-icon{animation:bob 1.6s ease-in-out infinite}
+.btn.on.anim-glow ha-icon{animation:glow 2.6s ease-in-out infinite}
+.btn.on.anim-wiggle ha-icon{animation:wiggle 1.4s ease-in-out infinite}
+@container roomcard (max-width:1240px){.grid{grid-template-columns:repeat(min(var(--cols,4),3),minmax(0,1fr))}}
+@container roomcard (max-width:900px){.top{flex-direction:column;align-items:stretch;gap:16px}.pills{justify-content:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container roomcard (max-width:620px){.shell{padding:14px;border-radius:22px}.top{margin-bottom:14px}h1{font-size:28px}.sub{font-size:12.5px}.pills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pill{flex-direction:column;align-items:center;gap:5px;min-width:0;padding:9px 4px 8px;border-radius:15px;text-align:center}.pill .pi{flex:0 0 auto;width:28px;height:28px;border-radius:9px}.pill .pi ha-icon{--mdc-icon-size:16px}.pill b{font-size:15px}.pill small{margin-top:1px;font-size:8.5px;letter-spacing:.05em}.pill small em{display:none}.grid{grid-template-columns:1fr;gap:9px}}
+@container roomcard (max-width:300px){.grid{grid-template-columns:1fr}}
+@container tile (max-width:250px){.in{gap:9px;min-height:214px;padding:12px}.head{grid-template-columns:auto minmax(0,1fr);gap:9px}.badge{width:36px;height:36px;border-radius:12px}.badge ha-icon{--mdc-icon-size:20px}.name{font-size:14.5px}.line{gap:5px;margin-top:3px;font-size:10.5px}.clim{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:6px;text-align:left}.temp{font-size:27px}.tu{font-size:13px}.meta{gap:6px;margin-top:0;font-size:10.5px}.chip{height:24px;gap:5px;padding:0 8px 0 6px;font-size:10px}.chips .chip:nth-child(n+3){display:none}.acts{gap:6px}.btn{width:34px;height:34px;border-radius:11px}.btn ha-icon{--mdc-icon-size:18px}.btn.light{min-width:34px;gap:6px;padding:0 9px 0 7px}.btn.light .ll{display:none}.lv{font-size:11px}.btn.opt{display:none}.btn.off{margin-left:-6px}.btn.off.show{width:34px;margin-left:0}.btn.armed{padding:0 9px}.btn .arm{font-size:10px}.spark{bottom:50px;height:60px}.glow{width:120%;top:-40%;right:-55%}}
+@container tile (max-width:170px){.btn.light .lv{display:none}.btn.light{flex:0 0 34px;justify-content:center;padding:0}}
+@keyframes tileIn{from{opacity:0;transform:translateY(18px) scale(.97)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
+@keyframes chipIn{from{opacity:0;transform:translateY(5px) scale(.88)}}
+@keyframes chipOut{to{opacity:0;transform:scale(.85)}}
+@keyframes ping{0%{transform:scale(1);opacity:.75}80%,100%{transform:scale(2.6);opacity:0}}
+@keyframes ring{0%{transform:scale(1);opacity:.75}100%{transform:scale(1.6);opacity:0}}
+@keyframes breathe{0%,100%{scale:1}50%{scale:1.1}}
+@keyframes draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes bump{0%{transform:none}35%{transform:translateY(-3px) scale(1.06)}100%{transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes orbit{to{--hro-a:360deg}}
+@keyframes eq{0%,100%{transform:scaleY(.28)}50%{transform:scaleY(1)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes flame{0%,100%{transform:scale(1) rotate(-3deg)}25%{transform:scale(1.08,1.14) rotate(2deg)}50%{transform:scale(.95,1.03) rotate(-1deg)}75%{transform:scale(1.05,.97) rotate(2deg)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 6px currentColor)}}
+@keyframes stripes{to{background-position:24px 0}}
+@keyframes alarm{0%,100%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 25%,transparent),0 0 0 0 color-mix(in srgb,var(--bad) 0%,transparent)}50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 60%,transparent),0 0 26px 2px color-mix(in srgb,var(--bad) 28%,transparent)}}
+@keyframes armed{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 40%,transparent)}50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--warn) 0%,transparent)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-3px)}40%,80%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.001ms!important}}
+`;
+var HaHomeRoomOverviewCard2 = class extends HTMLElement {
+  static getStubConfig() {
+    return {
+      title: "Alle rum",
+      rooms: [{
+        name: "Stue",
+        icon: "mdi:sofa-outline",
+        popup: "#stue",
+        temperature: "sensor.living_room_temperature",
+        humidity: "sensor.living_room_humidity",
+        light: "light.living_room",
+        presence: "binary_sensor.living_room_presence",
+        actions: [{ entity: "media_player.living_room_tv", name: "TV", icon: "mdi:television" }]
+      }]
+    };
+  }
+  static getConfigElement() {
+    const editor = document.createElement("ha-card-list-editor");
+    editor.definition = {
+      roots: [{ key: "title", label: "Titel" }, { key: "desktop_columns", label: "PC-kolonner", type: "number" }],
+      collections: [{
+        key: "rooms",
+        label: "Rum (hurtigknapper og status redigeres i YAML: actions / status / openings)",
+        itemLabel: "rum",
+        defaults: { name: "Nyt rum", icon: "mdi:home-outline" },
+        fields: [
+          { key: "name", label: "Navn" },
+          { key: "icon", label: "Ikon" },
+          { key: "accent", label: "Accentfarve" },
+          { key: "popup", label: "Popup-id" },
+          { key: "temperature", label: "Temperatur", type: "entity" },
+          { key: "humidity", label: "Luftfugtighed", type: "entity" },
+          { key: "light", label: "Lys", type: "entity" },
+          { key: "light_name", label: "Lysknap-tekst" },
+          { key: "presence", label: "Tilstedev\xE6relse", type: "entity" },
+          { key: "opening", label: "Vindue/d\xF8r", type: "entity" },
+          { key: "climate", label: "Termostat", type: "entity" },
+          { key: "co2", label: "CO\u2082", type: "entity" },
+          { key: "weather", label: "Vejr (udend\xF8rs)", type: "entity" },
+          { key: "info", label: "Info-sensor (vises uden presence)", type: "entity" },
+          { key: "info_name", label: "Info-tekst" }
+        ]
+      }]
+    };
+    return editor;
+  }
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._history = /* @__PURE__ */ new Map();
+    this._pending = /* @__PURE__ */ new Map();
+    this._seen = /* @__PURE__ */ new Map();
+    this._batteryCache = /* @__PURE__ */ new Map();
+    this._filter = null;
+    this._armed = null;
+  }
+  setConfig(config) {
+    if (!config || !Array.isArray(config.rooms) || !config.rooms.length) throw new Error("rooms is required");
+    this.config = config;
+    this._rooms = config.rooms.map((room, index) => this._normalize(room, index));
+    this._watch = this._watchList();
+    this._seen = /* @__PURE__ */ new Map();
+    this._filter = null;
+    this._built = false;
+    this._build();
+    if (this._hass) this._update();
+  }
+  set hass(hass) {
+    const first = !this._hass;
+    this._hass = hass;
+    if (!this._built) return;
+    if (this._changed(hass) || first) this._schedule();
+    this._loadHistory();
+  }
+  getCardSize() {
+    return 12;
+  }
+  connectedCallback() {
+    if (!this._tick) this._tick = setInterval(() => {
+      this._update();
+      this._loadHistory();
+    }, 3e4);
+    if (this._built && this._hass) this._schedule();
+  }
+  disconnectedCallback() {
+    clearInterval(this._tick);
+    this._tick = null;
+  }
+  _normalize(room, index) {
+    const status = arr(room.status).map(item).filter((x) => x.entity);
+    if (room.alert?.entity) status.unshift({ entity: room.alert.entity, text: room.alert.active, icon: room.alert.icon, above: room.alert.above });
+    const openings = [...arr(room.opening), ...arr(room.openings)].map(item).filter((x) => x.entity);
+    const actions = arr(room.actions).map(item).filter((x) => x.entity || x.tap_action).slice(0, 3);
+    return { ...room, index, status, openings, actions };
+  }
+  _watchList() {
+    const ids = /* @__PURE__ */ new Set();
+    const add = (id) => {
+      if (typeof id === "string" && id.includes(".")) ids.add(id);
+    };
+    for (const room of this._rooms) {
+      [room.temperature, room.humidity, room.light, room.presence, room.climate, room.co2, room.weather, room.info].forEach(add);
+      arr(room.batteries).forEach(add);
+      room.openings.forEach((x) => add(x.entity));
+      room.status.forEach((x) => {
+        add(x.entity);
+        add(x.progress);
+        add(x.remaining);
+      });
+      room.actions.forEach((x) => add(x.entity));
+    }
+    return [...ids];
+  }
+  _changed(hass) {
+    let changed = false;
+    const check = (id) => {
+      const st = hass.states[id];
+      if (this._seen.get(id) !== st) {
+        this._seen.set(id, st);
+        changed = true;
+      }
+    };
+    this._watch.forEach(check);
+    for (const room of this._rooms) {
+      for (const opening of room.openings) {
+        const members = hass.states[opening.entity]?.attributes?.entity_id;
+        if (Array.isArray(members)) members.forEach(check);
+      }
+    }
+    const lang = hass.locale?.language || hass.language;
+    if (lang !== this._lang) {
+      this._lang = lang;
+      changed = true;
+    }
+    return changed;
+  }
+  _schedule() {
+    if (this._raf) return;
+    this._raf = requestAnimationFrame(() => {
+      this._raf = null;
+      this._update();
+    });
+  }
+  _state(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _num(id) {
+    const st = typeof id === "string" ? this._state(id) : id;
+    if (!st || DEAD.has(st.state)) return null;
+    const value = Number(st.state);
+    return Number.isFinite(value) ? value : null;
+  }
+  _fmt(value, digits = 1) {
+    if (value == null || !Number.isFinite(value)) return "\u2013";
+    return value.toLocaleString(this._lang || "da", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  }
+  _dur(minutes) {
+    if (minutes == null || !Number.isFinite(minutes)) return "";
+    const m2 = Math.max(0, Math.round(minutes));
+    if (m2 < 60) return `${m2} min`;
+    const h = Math.floor(m2 / 60), rest = m2 % 60;
+    if (h < 24) return rest && h < 10 ? `${h} t ${rest} min` : `${h} t`;
+    const d = Math.floor(h / 24);
+    return d < 3 && h % 24 ? `${d} d ${h % 24} t` : `${d} d`;
+  }
+  _since(st) {
+    const time = Date.parse(st?.last_changed);
+    return Number.isFinite(time) ? (Date.now() - time) / 6e4 : null;
+  }
+  _minutes(st) {
+    if (!st || DEAD.has(st.state)) return null;
+    if (st.attributes?.device_class === "timestamp") {
+      const end = Date.parse(st.state);
+      return Number.isFinite(end) ? Math.max(0, (end - Date.now()) / 6e4) : null;
+    }
+    const value = Number(st.state);
+    if (!Number.isFinite(value)) return null;
+    const unit = st.attributes?.unit_of_measurement;
+    return unit === "h" ? value * 60 : unit === "s" ? value / 60 : unit === "d" ? value * 1440 : value;
+  }
+  _name(id) {
+    return this._state(id)?.attributes?.friendly_name || id;
+  }
+  _isOn(id) {
+    const st = this._state(id);
+    if (!st) return false;
+    const domain = id.split(".")[0];
+    if (domain === "media_player") return !MEDIA_OFF.has(st.state);
+    if (domain === "lock") return st.state !== "locked";
+    if (domain === "climate") return st.state !== "off" && !DEAD.has(st.state);
+    if (domain === "vacuum") return ["cleaning", "returning"].includes(st.state);
+    return ["on", "open", "opening", "playing", "home", "active"].includes(st.state);
+  }
+  _lightRgb(st) {
+    const a = st?.attributes || {};
+    let rgb = Array.isArray(a.rgb_color) ? a.rgb_color : a.color_temp_kelvin ? kelvinRgb(a.color_temp_kelvin) : Array.isArray(a.hs_color) ? hsRgb(a.hs_color[0], a.hs_color[1]) : [255, 190, 110];
+    const max = Math.max(...rgb);
+    if (max > 0 && max < 200) rgb = rgb.map((v) => Math.round(v * 200 / max));
+    return rgb.map((v) => clamp(Math.round(v), 0, 255));
+  }
+  _openParts(room) {
+    const parts = [];
+    for (const opening of room.openings) {
+      const st = this._state(opening.entity);
+      if (!st) continue;
+      const members = Array.isArray(st.attributes?.entity_id) ? st.attributes.entity_id.map((id) => this._state(id)).filter(Boolean) : [];
+      const open = members.filter((m2) => OPEN_STATES.has(m2.state));
+      const list = open.length ? open : OPEN_STATES.has(st.state) ? [st] : [];
+      for (const part of list) {
+        const dc = part.attributes?.device_class;
+        const label = members.length && opening.names?.[part.entity_id] ? opening.names[part.entity_id] : !members.length && opening.name ? opening.name : OPENING_LABEL[dc] || opening.name || "\xC5bning";
+        parts.push({ st: part, dc, label });
+      }
+    }
+    return parts;
+  }
+  _lowBattery(room, climate) {
+    const values = [];
+    const raw = climate?.attributes?.batteries;
+    if (raw) {
+      let parsed = this._batteryCache.get(raw);
+      if (parsed === void 0) {
+        try {
+          parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        } catch (_) {
+          parsed = null;
+        }
+        this._batteryCache.set(raw, parsed);
+        if (this._batteryCache.size > 64) this._batteryCache.delete(this._batteryCache.keys().next().value);
+      }
+      if (parsed && typeof parsed === "object") Object.values(parsed).forEach((x) => values.push(Number(x?.battery)));
+    }
+    arr(room.batteries).forEach((id) => values.push(this._num(id)));
+    const valid = values.filter((v) => Number.isFinite(v));
+    if (!valid.length) return null;
+    const min = Math.min(...valid);
+    return min <= (room.battery_low ?? this.config.battery_low ?? 15) ? Math.round(min) : null;
+  }
+  _statusChip(cfg, index) {
+    const st = this._state(cfg.entity);
+    if (!st || DEAD.has(st.state)) return null;
+    const domain = cfg.entity.split(".")[0];
+    const dc = st.attributes?.device_class;
+    const name = cfg.name || st.attributes?.friendly_name || cfg.entity;
+    const chip = { key: `s${index}`, tone: cfg.tone || "active", icon: cfg.icon || st.attributes?.icon || DOMAIN_ICON[domain] || "mdi:information-outline", text: cfg.text || name, meta: "", anim: cfg.animation, tap: cfg.tap_action, entity: cfg.entity, running: true };
+    const kind = cfg.kind || (domain === "lock" ? "lock" : domain === "media_player" ? "media" : domain === "vacuum" ? "vacuum" : ["moisture", "smoke", "gas", "carbon_monoxide", "safety"].includes(dc) ? "alarm" : cfg.progress || cfg.remaining ? "task" : "state");
+    if (kind === "lock") {
+      if (st.state === "locked") return null;
+      chip.running = false;
+      if (st.state === "jammed") return { ...chip, tone: "danger", icon: "mdi:lock-alert", text: `${name} blokeret` };
+      if (["locking", "unlocking", "opening"].includes(st.state)) return { ...chip, tone: "active", icon: "mdi:lock-clock", text: st.state === "locking" ? `${name} l\xE5ser` : `${name} l\xE5ser op` };
+      return { ...chip, tone: cfg.tone || "warn", icon: cfg.icon || "mdi:lock-open-variant", text: cfg.text || `${name} ul\xE5st`, meta: this._dur(this._since(st)) };
+    }
+    if (kind === "media") {
+      if (st.state !== "playing" && !(cfg.show_paused && st.state === "paused")) return null;
+      const a = st.attributes || {};
+      const what = cfg.text || a.app_name || a.media_title || a.source || name;
+      return { ...chip, text: what, meta: cfg.text ? "" : a.app_name && a.media_title ? "" : "", eq: st.state === "playing", icon: st.state === "paused" ? "mdi:pause" : chip.icon };
+    }
+    if (kind === "vacuum") {
+      if (st.state === "error") return { ...chip, tone: "danger", icon: "mdi:robot-vacuum-alert", text: `${name} fejl`, running: false };
+      if (st.state === "cleaning") return { ...chip, icon: cfg.icon || "mdi:robot-vacuum", text: `${name} st\xF8vsuger`, anim: cfg.animation || "wiggle" };
+      if (st.state === "returning") return { ...chip, icon: cfg.icon || "mdi:home-import-outline", text: `${name} k\xF8rer hjem` };
+      return null;
+    }
+    if (kind === "alarm") {
+      if (!OPEN_STATES.has(st.state)) return null;
+      return { ...chip, tone: "critical", icon: cfg.icon || "mdi:water-alert", text: cfg.text || `${name}!`, anim: "pulse", running: false };
+    }
+    let active;
+    if (cfg.above != null) active = (this._num(st) ?? -Infinity) > Number(cfg.above);
+    else if (cfg.active_states) active = arr(cfg.active_states).includes(st.state);
+    else if (cfg.hide_states) active = !arr(cfg.hide_states).includes(st.state);
+    else active = ["on", "open", "playing", "running", "true", "active", "home"].includes(st.state);
+    if (!active) return null;
+    if (kind === "task") {
+      const progress = this._num(cfg.progress);
+      const remaining = this._minutes(this._state(cfg.remaining));
+      chip.progress = progress == null ? null : clamp(progress, 0, 100);
+      chip.meta = remaining != null && remaining > 0 ? this._dur(remaining) : progress != null ? `${Math.round(progress)}%` : "";
+      return chip;
+    }
+    if (cfg.show_state) chip.meta = domain === "sensor" && this._num(st) != null ? `${this._fmt(this._num(st), cfg.digits ?? 0)} ${st.attributes?.unit_of_measurement || ""}`.trim() : st.state;
+    if (chip.tone !== "active") chip.running = false;
+    return chip;
+  }
+  _chips(room, ctx) {
+    const out = [];
+    if (ctx.open.length) {
+      const first = ctx.open[0];
+      const icon = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
+      const text = ctx.open.length > 1 ? `${ctx.open.length} \xE5bninger` : `${first.label} \xE5ben`;
+      out.push({ key: "open", tone: "danger", icon, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
+    }
+    if (room.temperature && ctx.tempDead) out.push({ key: "offline", tone: "warn", icon: "mdi:thermometer-off", text: "Sensor offline" });
+    if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "H\xF8j fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
+    const co2 = this._num(room.co2);
+    if (co2 != null && co2 >= (room.co2_warning ?? 1e3)) out.push({ key: "co2", tone: co2 >= (room.co2_critical ?? 1400) ? "danger" : "warn", icon: "mdi:molecule-co2", text: "Luft ud", meta: `${this._fmt(co2, 0)} ppm` });
+    const battery = this._lowBattery(room, ctx.climate);
+    if (battery != null) out.push({ key: "bat", tone: "warn", icon: "mdi:battery-alert-variant-outline", text: "Lavt batteri", meta: `${battery}%` });
+    room.status.forEach((cfg, index) => {
+      const chip = this._statusChip(cfg, index);
+      if (chip) out.push(chip);
+    });
+    return out.map((chip, order) => ({ ...chip, order })).sort((a, b) => (TONE_RANK[a.tone] ?? 9) - (TONE_RANK[b.tone] ?? 9) || a.order - b.order);
+  }
+  _line(room, ctx) {
+    if (room.weather) {
+      const w = this._state(room.weather);
+      if (w && !DEAD.has(w.state)) {
+        const label = WEATHER[w.state]?.[0] || w.state;
+        const wind = Number(w.attributes?.wind_speed);
+        const unit = String(w.attributes?.wind_speed_unit || "km/h").replace("km/h", "km/t");
+        return { text: `${label}${Number.isFinite(wind) ? ` \xB7 ${this._fmt(wind, 0)} ${unit}` : ""}`, cls: "weather" };
+      }
+    }
+    const presence = this._state(room.presence);
+    if (presence) {
+      if (DEAD.has(presence.state)) return { text: "Sensor offline", cls: "off" };
+      const motion = presence.attributes?.device_class === "motion";
+      if (ctx.present) return { text: motion ? "Bev\xE6gelse nu" : "Aktivitet nu", cls: "live" };
+      const since = this._since(presence);
+      if (since != null && since < 2) return { text: motion ? "Stille lige nu" : "Lige forladt", cls: "" };
+      return { text: since == null ? motion ? "Stille" : "Tomt" : `${motion ? "Stille" : "Tomt"} i ${this._dur(since)}`, cls: "" };
+    }
+    const info = this._state(room.info);
+    if (info && !DEAD.has(info.state)) {
+      const unit = info.attributes?.unit_of_measurement;
+      const value = ["h", "min", "s", "d"].includes(unit) ? this._dur(this._minutes(info)) : `${info.state}${unit ? ` ${unit}` : ""}`;
+      return { text: `${room.info_name || info.attributes?.friendly_name || ""} ${value}`.trim(), cls: "" };
+    }
+    return { text: ctx.lightOn ? "Lys t\xE6ndt" : "Alt slukket", cls: "" };
+  }
+  _model(room) {
+    const tempState = this._state(room.temperature);
+    const temp = this._num(tempState);
+    const humidity = this._num(room.humidity);
+    const light = this._state(room.light);
+    const lightOn = light?.state === "on";
+    const level = lightOn ? clamp(Math.round((light.attributes?.brightness ?? 255) / 2.55), 1, 100) : 0;
+    const presence = this._state(room.presence);
+    const present = !!presence && PRESENT_STATES.has(presence.state);
+    const climate = this._state(room.climate);
+    const target = Number(climate?.attributes?.temperature);
+    const open = this._openParts(room);
+    const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD.has(tempState.state) };
+    const chips = this._chips(room, ctx);
+    const mediaOn = [...room.actions, ...room.status].some((x) => x.entity?.startsWith("media_player.") && this._isOn(x.entity));
+    return {
+      room,
+      temp,
+      humidity,
+      light,
+      lightOn,
+      level,
+      present,
+      climate,
+      open,
+      chips,
+      mediaOn,
+      rgb: lightOn ? this._lightRgb(light) : null,
+      target: Number.isFinite(target) ? target : null,
+      heating: climate?.attributes?.hvac_action === "heating",
+      climateOff: climate?.state === "off",
+      running: chips.some((c) => c.running && c.tone === "active"),
+      alarm: chips.some((c) => c.tone === "danger" || c.tone === "critical"),
+      critical: chips.some((c) => c.tone === "critical"),
+      line: this._line(room, { ...ctx })
+    };
+  }
+  _build() {
+    const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
+    this.shadowRoot.innerHTML = `<style>${STYLE2}</style><section class="shell" style="--cols:${cols}">
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
+      <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
+    const root = this.shadowRoot;
+    this._grid = root.querySelector(".grid");
+    this._sub = root.querySelector(".sub");
+    this._pills = Object.fromEntries([...root.querySelectorAll(".pill")].map((el) => [el.dataset.pill, el]));
+    this._tiles = [...root.querySelectorAll(".tile")].map((el, index) => this._refs(el, this._rooms[index]));
+    Object.values(this._pills).forEach((el) => {
+      if (!el.dataset.filter) return;
+      el.addEventListener("click", () => {
+        this._filter = this._filter === el.dataset.filter ? null : el.dataset.filter;
+        this._update();
+      });
+    });
+    this._tiles.forEach((t) => this._bindTile(t));
+    this._built = true;
+  }
+  _tileHtml(room) {
+    const id = `hro-g${room.index}`;
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc(`\xC5bn ${room.name || "rum"}`)}">
+      <div class="glow"></div>
+      <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
+      <div class="in">
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+          <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
+        <div class="chips"></div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+      </div></article>`;
+  }
+  _refs(el, room) {
+    const q = (selector) => el.querySelector(selector);
+    return {
+      el,
+      room,
+      glow: q(".glow"),
+      spark: q(".spark"),
+      area: q(".area"),
+      stroke: q(".stroke"),
+      badgeIcon: q(".badge > ha-icon"),
+      line: q(".line"),
+      lt: q(".lt"),
+      tv: q(".tv"),
+      tu: q(".tu"),
+      trend: q(".trend"),
+      hum: q(".hum"),
+      humB: q(".hum b"),
+      tgt: q(".tgt"),
+      tgtB: q(".tgt b"),
+      tgtIcon: q(".tgt ha-icon"),
+      chips: q(".chips"),
+      light: q(".btn.light"),
+      lightIcon: q(".btn.light ha-icon"),
+      lv: q(".lv"),
+      acts: [...el.querySelectorAll(".btn.act")],
+      off: q(".btn.off")
+    };
+  }
+  _bindTile(t) {
+    const { el, room } = t;
+    el.addEventListener("click", () => this._navigate(room.popup));
+    el.addEventListener("keydown", (event) => {
+      if ((event.key === "Enter" || event.key === " ") && event.target === el) {
+        event.preventDefault();
+        this._navigate(room.popup);
+      }
+    });
+    el.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+      el.style.setProperty("--my", `${event.clientY - rect.top}px`);
+    });
+    el.addEventListener("pointerdown", (event) => {
+      if (!event.target.closest?.(".btn,.chip.tap")) el.classList.add("press");
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((type) => el.addEventListener(type, () => el.classList.remove("press")));
+    if (t.light) this._press(t.light, () => this._tapLight(t), () => this._moreInfo(room.light));
+    t.acts.forEach((button, index) => this._press(button, () => this._tapAction(t, index), () => this._holdAction(t, index)));
+    if (t.off) this._press(t.off, () => this._roomOff(t), null);
+  }
+  _press(el, onTap, onHold) {
+    let timer = null, held = false, x = 0, y = 0;
+    const cancel = () => {
+      clearTimeout(timer);
+      timer = null;
+    };
+    el.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      if (event.button > 0) return;
+      held = false;
+      x = event.clientX;
+      y = event.clientY;
+      cancel();
+      if (onHold) timer = setTimeout(() => {
+        timer = null;
+        held = true;
+        navigator.vibrate?.(12);
+        onHold();
+      }, 520);
+    });
+    el.addEventListener("pointermove", (event) => {
+      if (timer && Math.hypot(event.clientX - x, event.clientY - y) > 10) cancel();
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((type) => el.addEventListener(type, cancel));
+    el.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (held) {
+        held = false;
+        return;
+      }
+      onTap(event);
+    });
+    el.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") event.stopPropagation();
+    });
+    el.addEventListener("contextmenu", (event) => {
+      if (onHold) event.preventDefault();
+    });
+  }
+  _update() {
+    if (!this._built || !this._hass) return;
+    const models = this._rooms.map((room) => {
+      try {
+        return this._model(room);
+      } catch (err) {
+        console.warn("Room overview:", room.name, err);
+        return null;
+      }
+    });
+    try {
+      this._patchHeader(models.filter(Boolean));
+    } catch (err) {
+      console.warn("Room overview header:", err);
+    }
+    models.forEach((model, index) => {
+      if (!model) return;
+      try {
+        this._patchTile(this._tiles[index], model);
+      } catch (err) {
+        console.warn("Room overview:", model.room.name, err);
+      }
+    });
+  }
+  _setText(el, text, bump = false) {
+    if (!el || el.textContent === text) return;
+    const had = el.textContent !== "" && el.textContent !== "\u2013";
+    el.textContent = text;
+    if (bump && had) {
+      el.classList.remove("bump");
+      void el.offsetWidth;
+      el.classList.add("bump");
+    }
+  }
+  _patchHeader(models) {
+    const indoor = models.filter((m2) => !m2.room.outdoor && m2.temp != null).map((m2) => m2.temp);
+    const avg = indoor.length ? indoor.reduce((a, b) => a + b, 0) / indoor.length : null;
+    const outdoor = models.find((m2) => m2.room.outdoor && m2.temp != null)?.temp ?? null;
+    const counts = {
+      occupied: models.filter((m2) => m2.present).length,
+      lit: models.filter((m2) => m2.lightOn).length,
+      open: models.reduce((n, m2) => n + m2.open.length, 0),
+      running: models.filter((m2) => m2.running).length
+    };
+    this._setText(this._pills.temp.querySelector("b"), `${this._fmt(avg)}\xB0`, true);
+    this._setText(this._pills.temp.querySelector("em"), outdoor == null ? "" : ` \xB7 ude ${this._fmt(outdoor, 0)}\xB0`);
+    for (const key of ["occupied", "lit", "open", "running"]) {
+      const pill = this._pills[key];
+      this._setText(pill.querySelector("b"), String(counts[key]), true);
+      pill.classList.toggle("zero", counts[key] === 0);
+      pill.classList.toggle("hot", key === "open" && counts[key] > 0);
+      pill.classList.toggle("sel", this._filter === key);
+      pill.setAttribute("aria-pressed", String(this._filter === key));
+    }
+    const parts = [];
+    if (counts.occupied) parts.push(`aktivitet i ${counts.occupied} rum`);
+    if (counts.lit) parts.push(`lys t\xE6ndt i ${counts.lit} rum`);
+    if (counts.open) parts.push(counts.open === 1 ? "1 \xE5bning st\xE5r \xE5ben" : `${counts.open} \xE5bninger st\xE5r \xE5bne`);
+    if (counts.running) parts.push(`${counts.running} ${counts.running === 1 ? "rum" : "rum"} med noget i gang`);
+    const sentence = parts.length ? parts.join(" \xB7 ") : "alt er roligt i huset";
+    this._setText(this._sub, sentence.charAt(0).toUpperCase() + sentence.slice(1));
+    if (this._filter) this._grid.dataset.filter = this._filter;
+    else delete this._grid.dataset.filter;
+  }
+  _patchTile(t, m2) {
+    const { el, room } = t;
+    const match = this._filter === "occupied" ? m2.present : this._filter === "lit" ? m2.lightOn : this._filter === "open" ? m2.open.length > 0 : this._filter === "running" ? m2.running : false;
+    el.classList.toggle("match", !!match);
+    el.classList.toggle("lit", m2.lightOn);
+    el.classList.toggle("occupied", m2.present);
+    el.classList.toggle("alarm", m2.alarm);
+    el.classList.toggle("critical", m2.critical);
+    if (m2.rgb) el.style.setProperty("--lrgb", m2.rgb.join(","));
+    el.style.setProperty("--level", String(m2.level / 100));
+    if (room.weather) {
+      const w = this._state(room.weather);
+      const icon = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
+      if (t.badgeIcon.getAttribute("icon") !== icon) t.badgeIcon.setAttribute("icon", icon);
+    }
+    t.line.className = `line ${m2.line.cls}`;
+    this._setText(t.lt, m2.line.text);
+    this._setText(t.tv, this._fmt(m2.temp), true);
+    const trend = this._trend(room, m2.temp);
+    t.trend.className = `trend ${trend || ""}`;
+    if (trend) t.trend.setAttribute("icon", trend === "up" ? "mdi:arrow-top-right" : "mdi:arrow-bottom-right");
+    t.trend.title = trend === "up" ? "Stigende den seneste time" : trend === "down" ? "Faldende den seneste time" : "";
+    t.hum.classList.toggle("hide", m2.humidity == null);
+    t.hum.classList.toggle("crit", !room.outdoor && m2.humidity != null && m2.humidity >= (room.humidity_critical ?? 70));
+    this._setText(t.humB, `${this._fmt(m2.humidity, 0)}%`);
+    const showTarget = !!room.climate && (m2.target != null || m2.climateOff);
+    t.tgt.classList.toggle("hide", !showTarget);
+    t.tgt.classList.toggle("heat", m2.heating);
+    t.tgt.title = m2.heating ? "Varmer op mod m\xE5ltemperaturen" : m2.climateOff ? "Varme slukket" : "M\xE5ltemperatur";
+    const tgtIcon = m2.heating ? "mdi:fire" : m2.climateOff ? "mdi:thermostat-off" : "mdi:thermostat";
+    if (t.tgtIcon.getAttribute("icon") !== tgtIcon) t.tgtIcon.setAttribute("icon", tgtIcon);
+    this._setText(t.tgtB, m2.climateOff ? "Fra" : `${this._fmt(m2.target, m2.target != null && m2.target % 1 ? 1 : 0)}\xB0`);
+    this._syncChips(t, m2.chips);
+    this._patchActions(t, m2);
+    this._patchSpark(t, room);
+  }
+  _syncChips(t, chips) {
+    const container = t.chips;
+    const visible = chips.slice(0, 3);
+    const current = new Map([...container.children].filter((el) => !el.classList.contains("out")).map((el) => [el.dataset.key, el]));
+    const keep = new Set(visible.map((c) => c.key));
+    current.forEach((el, key) => {
+      if (keep.has(key)) return;
+      el.classList.add("out");
+      container.append(el);
+      setTimeout(() => el.remove(), 340);
+    });
+    visible.forEach((chip, index) => {
+      let el = current.get(chip.key);
+      if (!el) {
+        el = document.createElement("div");
+        el.dataset.key = chip.key;
+        el.innerHTML = `<span class="ci"><ha-icon></ha-icon><span class="eq"><i></i><i></i><i></i><i></i></span></span><span class="ct"></span><span class="cm"></span>`;
+        el.addEventListener("click", (event) => {
+          if (!el._tap) return;
+          event.stopPropagation();
+          this._runAction(el._tap, el._entity);
+        });
+      }
+      el.className = `chip ${chip.tone}${chip.anim ? ` anim-${chip.anim}` : ""}${chip.progress != null ? " prog" : ""}${chip.tap ? " tap" : ""}${chip.eq ? " eqon" : ""}`;
+      el._tap = chip.tap || null;
+      el._entity = chip.entity;
+      el.title = chip.tap ? `${chip.text} \u2013 tryk for at nulstille` : [chip.text, chip.meta].filter(Boolean).join(" \xB7 ");
+      if (chip.progress != null) el.style.setProperty("--p", `${chip.progress}%`);
+      else el.style.removeProperty("--p");
+      const icon = el.querySelector("ha-icon");
+      if (icon.getAttribute("icon") !== chip.icon) icon.setAttribute("icon", chip.icon);
+      this._setText(el.querySelector(".ct"), chip.text);
+      this._setText(el.querySelector(".cm"), chip.meta || "");
+      const at = container.children[index];
+      if (at !== el) container.insertBefore(el, at || null);
+    });
+  }
+  _patchActions(t, m2) {
+    const { room } = t;
+    if (t.light) {
+      const dead = !m2.light || DEAD.has(m2.light.state);
+      t.light.classList.toggle("on", m2.lightOn);
+      t.light.classList.toggle("unavail", dead);
+      t.light.classList.toggle("pending", this._isPending(room.light));
+      t.light.setAttribute("aria-pressed", String(m2.lightOn));
+      const icon = m2.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
+      if (t.lightIcon.getAttribute("icon") !== icon) t.lightIcon.setAttribute("icon", icon);
+      this._setText(t.lv, m2.lightOn ? `${m2.level}%` : dead ? "Offline" : "Fra");
+      const members = Array.isArray(m2.light?.attributes?.entity_id) ? m2.light.attributes.entity_id : [];
+      const onCount = members.filter((id) => this._state(id)?.state === "on").length;
+      t.light.title = `${room.light_name || "Lys"}: ${m2.lightOn ? `t\xE6ndt ${m2.level}%` : "slukket"}${members.length ? ` (${onCount} af ${members.length} t\xE6ndt)` : ""} \u2013 hold for detaljer`;
+    }
+    t.acts.forEach((button, index) => {
+      const cfg = room.actions[index];
+      const st = this._state(cfg.entity);
+      const domain = cfg.entity?.split(".")[0];
+      const dead = !!cfg.entity && (!st || DEAD.has(st.state));
+      const on = cfg.entity ? this._isOn(cfg.entity) : false;
+      const lock = domain === "lock";
+      const armed = this._armed?.key === `${room.index}:${index}`;
+      button.classList.toggle("on", lock ? on : on);
+      button.classList.toggle("secure", lock && st?.state === "locked");
+      button.classList.toggle("unavail", dead);
+      button.classList.toggle("pending", !!cfg.entity && this._isPending(cfg.entity));
+      button.classList.toggle("armed", armed);
+      if (lock) button.style.setProperty("--bc", "var(--warn)");
+      else if (domain === "light" && on) button.style.setProperty("--bc", `rgb(${this._lightRgb(st).join(",")})`);
+      else if (cfg.color) button.style.setProperty("--bc", cfg.color);
+      else button.style.removeProperty("--bc");
+      const anim = cfg.animation || (domain === "fan" ? "spin" : domain === "valve" ? "bob" : domain === "media_player" ? "glow" : "");
+      ["spin", "flame", "bob", "glow", "wiggle"].forEach((name2) => button.classList.toggle(`anim-${name2}`, anim === name2));
+      const icon = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON[domain] || "mdi:gesture-tap";
+      const iconEl = button.querySelector("ha-icon");
+      if (iconEl.getAttribute("icon") !== icon) iconEl.setAttribute("icon", icon);
+      this._setText(button.querySelector(".arm"), armed ? this._armed.label : "");
+      const name = cfg.name || (cfg.entity ? this._name(cfg.entity) : "Handling");
+      const stateText = dead ? "ikke tilg\xE6ngelig" : lock ? st.state === "locked" ? "l\xE5st" : st.state === "unlocked" ? "ul\xE5st" : st.state : on ? "til" : "fra";
+      button.title = `${name}: ${stateText}${cfg.entity ? " \u2013 hold for detaljer" : ""}`;
+      button.setAttribute("aria-label", `${name}: ${stateText}`);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    if (t.off) {
+      const show = m2.lightOn || m2.mediaOn;
+      t.off.classList.toggle("show", show);
+      t.off.classList.toggle("pending", !!room.light && this._isPending(`off:${room.index}`));
+    }
+  }
+  _trend(room, current) {
+    const points = this._history.get(room.temperature);
+    if (!points?.length || current == null) return null;
+    const cutoff = Date.now() - 36e5;
+    let past = null;
+    for (const point of points) {
+      if (point.t <= cutoff) past = point.v;
+      else break;
+    }
+    if (past == null) return null;
+    const diff = current - past;
+    return diff >= (room.trend_threshold ?? 0.3) ? "up" : diff <= -(room.trend_threshold ?? 0.3) ? "down" : null;
+  }
+  _patchSpark(t, room) {
+    const points = this._history.get(room.temperature);
+    const signature = points?.length ? `${this._historyVersion}:${points.length}` : "";
+    if (t.sparkSig === signature) return;
+    t.sparkSig = signature;
+    if (!points || points.length < 2) {
+      t.spark.style.display = "none";
+      return;
+    }
+    const start = this._historyStart, end = this._historyEnd;
+    const values = points.map((p) => p.v);
+    let min = Math.min(...values), max = Math.max(...values);
+    if (max - min < 0.8) {
+      const mid = (max + min) / 2;
+      min = mid - 0.4;
+      max = mid + 0.4;
+    }
+    const coords = points.map((p) => [clamp((p.t - start) / (end - start) * 100, 0, 100), 37 - (p.v - min) / (max - min) * 30]);
+    coords.push([100, coords[coords.length - 1][1]]);
+    const line = coords.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+    t.stroke.setAttribute("points", line);
+    t.area.setAttribute("d", `M${coords[0][0].toFixed(2)},40 L${line.replace(/ /g, " L")} L100,40 Z`);
+    t.spark.style.display = "";
+    if (!t.sparkDrawn) {
+      t.sparkDrawn = true;
+      t.spark.classList.add("draw");
+    }
+  }
+  async _loadHistory() {
+    if (!this._hass || this._historyLoading || !this.isConnected) return;
+    if (this._historyAt && Date.now() - this._historyAt < 6e5) return;
+    const ids = [...new Set(this._rooms.map((r2) => r2.temperature).filter(Boolean))];
+    if (!ids.length) return;
+    this._historyLoading = true;
+    const end = Date.now(), start = end - 24 * 36e5;
+    try {
+      let series;
+      try {
+        const result = await this._hass.callWS({ type: "history/history_during_period", start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString(), entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: true });
+        series = Object.entries(result || {}).map(([id, rows]) => [id, rows.map((r2) => ({ v: Number(r2.s), t: (r2.lu ?? r2.lc) * 1e3 }))]);
+      } catch (_) {
+        const data = await this._hass.callApi("GET", `history/period/${new Date(start).toISOString()}?filter_entity_id=${encodeURIComponent(ids.join(","))}&minimal_response&no_attributes&significant_changes_only`);
+        series = (data || []).filter((rows) => rows?.length).map((rows) => [rows[0].entity_id, rows.map((r2) => ({ v: Number(r2.state), t: Date.parse(r2.last_changed || r2.last_updated) }))]);
+      }
+      for (const [id, rows] of series) {
+        const points = rows.filter((p) => Number.isFinite(p.v) && Number.isFinite(p.t)).sort((a, b) => a.t - b.t);
+        const step = Math.max(1, Math.ceil(points.length / 90));
+        this._history.set(id, points.filter((_, i) => i % step === 0 || i === points.length - 1));
+      }
+      this._historyStart = start;
+      this._historyEnd = end;
+      this._historyVersion = (this._historyVersion || 0) + 1;
+    } catch (err) {
+      console.warn("Room overview history", err);
+    } finally {
+      this._historyLoading = false;
+      this._historyAt = Date.now();
+      this._schedule();
+    }
+  }
+  _isPending(id) {
+    const pending = this._pending.get(id);
+    if (!pending) return false;
+    const st = this._state(pending.entity || id);
+    if (Date.now() > pending.until || st?.state !== pending.state) {
+      this._pending.delete(id);
+      return false;
+    }
+    return true;
+  }
+  _setPending(id, entity = id) {
+    this._pending.set(id, { entity, state: this._state(entity)?.state, until: Date.now() + 8e3 });
+    clearTimeout(this._pendingTimer);
+    this._pendingTimer = setTimeout(() => this._schedule(), 8100);
+    this._schedule();
+  }
+  _flash(el) {
+    if (!el) return;
+    el.classList.remove("err");
+    void el.offsetWidth;
+    el.classList.add("err");
+    setTimeout(() => el.classList.remove("err"), 600);
+  }
+  _call(domain, service, data, target, pendingId, pendingEntity, el) {
+    if (pendingId) this._setPending(pendingId, pendingEntity);
+    return this._hass.callService(domain, service, data, target).catch((err) => {
+      console.warn("Room overview action failed", `${domain}.${service}`, err);
+      if (pendingId) this._pending.delete(pendingId);
+      this._flash(el);
+      this._schedule();
+    });
+  }
+  _toggle(entity, el) {
+    const st = this._state(entity);
+    if (!st) return;
+    const domain = entity.split(".")[0];
+    const call = (service, svcDomain = domain) => this._call(svcDomain, service, { entity_id: entity }, void 0, entity, entity, el);
+    if (DEAD.has(st.state)) return this._moreInfo(entity);
+    switch (domain) {
+      case "lock":
+        return call(st.state === "locked" ? "unlock" : "lock");
+      case "media_player":
+        return call(MEDIA_OFF.has(st.state) ? "turn_on" : "turn_off");
+      case "cover":
+      case "valve":
+      case "light":
+      case "switch":
+      case "fan":
+      case "input_boolean":
+      case "automation":
+      case "siren":
+      case "humidifier":
+        return call("toggle");
+      case "vacuum":
+        return call(st.state === "cleaning" ? "return_to_base" : "start");
+      case "script":
+      case "scene":
+        return call("turn_on");
+      case "button":
+      case "input_button":
+        return call("press");
+      case "climate":
+      case "sensor":
+      case "binary_sensor":
+        return this._moreInfo(entity);
+      default:
+        return call("toggle", "homeassistant");
+    }
+  }
+  _runAction(cfg, entity, el) {
+    const type = cfg?.action || "toggle";
+    if (type === "none") return;
+    if (type === "more-info") return this._moreInfo(cfg.entity || entity);
+    if (type === "navigate") {
+      const path = cfg.navigation_path;
+      if (!path) return;
+      if (path.startsWith("#")) return this._navigate(path);
+      history.pushState(null, "", path);
+      window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+      return;
+    }
+    if (type === "url") {
+      if (cfg.url_path) window.open(cfg.url_path, cfg.new_tab === false ? "_self" : "_blank");
+      return;
+    }
+    if (type === "perform-action" || type === "call-service") {
+      const service = cfg.perform_action || cfg.service;
+      if (!service?.includes(".")) return;
+      const [domain, name] = service.split(".");
+      return this._call(domain, name, cfg.data || cfg.service_data || {}, cfg.target, entity, entity, el);
+    }
+    if (entity) return this._toggle(entity, el);
+  }
+  _needsConfirm(cfg) {
+    if (cfg.confirm === "always" || cfg.tap_action?.confirmation) return true;
+    if (!cfg.confirm || !cfg.entity) return false;
+    const st = this._state(cfg.entity);
+    if (cfg.entity.startsWith("lock.")) return st?.state === "locked";
+    return this._isOn(cfg.entity);
+  }
+  _tapAction(t, index) {
+    const cfg = t.room.actions[index];
+    const button = t.acts[index];
+    const key = `${t.room.index}:${index}`;
+    if (cfg.entity && DEAD.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
+    if (this._needsConfirm(cfg) && this._armed?.key !== key) {
+      const label = cfg.entity?.startsWith("lock.") ? "L\xE5s op?" : cfg.confirm_text || "Sluk?";
+      this._armed = { key, label };
+      clearTimeout(this._armTimer);
+      this._armTimer = setTimeout(() => {
+        this._armed = null;
+        this._schedule();
+      }, 3200);
+      navigator.vibrate?.(8);
+      this._update();
+      return;
+    }
+    if (this._armed?.key === key) {
+      this._armed = null;
+      clearTimeout(this._armTimer);
+    }
+    this._runAction(cfg.tap_action || { action: "toggle" }, cfg.entity, button);
+    this._update();
+  }
+  _holdAction(t, index) {
+    const cfg = t.room.actions[index];
+    if (cfg.hold_action) return this._runAction(cfg.hold_action, cfg.entity, t.acts[index]);
+    if (cfg.entity) this._moreInfo(cfg.entity);
+  }
+  _tapLight(t) {
+    const st = this._state(t.room.light);
+    if (!st || DEAD.has(st.state)) return this._moreInfo(t.room.light);
+    this._call("light", "toggle", { entity_id: t.room.light }, void 0, t.room.light, t.room.light, t.light);
+    this._update();
+  }
+  _roomOff(t) {
+    const cfg = t.room.room_off;
+    const action = typeof cfg === "string" ? { action: "perform-action", perform_action: "script.rum_sluk_midlertidigt", data: { room: cfg } } : cfg;
+    if (!action) return;
+    const service = action.perform_action || action.service;
+    if (!service?.includes(".")) return;
+    const [domain, name] = service.split(".");
+    this._call(domain, name, action.data || action.service_data || {}, action.target, `off:${t.room.index}`, t.room.light, t.off);
+    this._update();
+  }
+  _moreInfo(entityId) {
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId } }));
+  }
+  _navigate(path) {
+    if (!path) return;
+    const hash = path.startsWith("#") ? path : `#${path}`;
+    const sameHash = window.location.hash === hash;
+    if (!sameHash) history.pushState(null, "", hash);
+    window.dispatchEvent(new CustomEvent("location-changed", { detail: { source: "bubble-popup-add-hash", sameHash, replace: false } }));
+  }
+};
+if (!customElements.get("ha-home-room-overview-card-v3")) customElements.define("ha-home-room-overview-card-v3", HaHomeRoomOverviewCard2);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-home-room-overview-card-v3", name: "HA Home Room Overview", description: `Room overview ${ROOM_OVERVIEW_VERSION2}` });
 
 // src/cards/ha-home-room-overview-card-v2/ha-home-room-overview-card-v2.js
 var ROOM_V2_VERSION = "2.0.0";
@@ -28428,7 +29642,7 @@ var HAKidTrackerCard = class extends HTMLElement {
       [this._config.last_update, "Seneste opdatering", "mdi:update", null],
       [this._config.app_version, "App-version", "mdi:cellphone-cog", null],
       [this._config.storage, "Ledig lagerplads", "mdi:database", null],
-      ...Array.isArray(this._config.details) ? this._config.details.map((item) => [item.entity, item.label || "Status", item.icon || "mdi:information-outline", item.format]) : []
+      ...Array.isArray(this._config.details) ? this._config.details.map((item2) => [item2.entity, item2.label || "Status", item2.icon || "mdi:information-outline", item2.format]) : []
     ].filter(([id]) => this._hasData(id));
     const deviceDetailsHtml = deviceDetails.map(
       ([id, label, icon, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
@@ -30178,7 +31392,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         ts: this._parseMediaTimestamp(child.title),
         eventId: String(child.media_content_id || "").match(/:event:([^:]+)$/)?.[1],
         thumbnail: this._mediaUrl(child.thumbnail)
-      })).filter((item) => Number.isFinite(item.ts));
+      })).filter((item2) => Number.isFinite(item2.ts));
       this._camThumbs[camKey] = { fetchedAt: now, items };
       return items;
     } catch (error) {
@@ -30201,17 +31415,17 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   }
   _closestThumbUrl(items, targetTs, eventId, toleranceMs = 90 * 1e3) {
     if (eventId) {
-      const exact = items.find((item) => item.eventId === eventId);
+      const exact = items.find((item2) => item2.eventId === eventId);
       if (exact) return exact.thumbnail;
     }
     const targetWallTs = this._wallTimestamp(targetTs);
     let best = null;
     let bestDiff = Infinity;
-    for (const item of items) {
-      const diff = Math.abs(item.ts - targetWallTs);
+    for (const item2 of items) {
+      const diff = Math.abs(item2.ts - targetWallTs);
       if (diff < bestDiff) {
         bestDiff = diff;
-        best = item;
+        best = item2;
       }
     }
     return bestDiff <= toleranceMs ? best?.thumbnail : null;
@@ -30790,12 +32004,12 @@ var HADoorWindowCard = class extends HTMLElement {
     this._tickTimer = void 0;
   }
   _tick() {
-    const anyOpen = (this._config.items || []).some((item) => this._s(item.entity)?.state === "on");
+    const anyOpen = (this._config.items || []).some((item2) => this._s(item2.entity)?.state === "on");
     if (anyOpen) this._render();
   }
   _watchedIds() {
     const c = this._config;
-    return (c.items || []).flatMap((item) => [item.entity, item.battery_entity]).filter(Boolean);
+    return (c.items || []).flatMap((item2) => [item2.entity, item2.battery_entity]).filter(Boolean);
   }
   set hass(hass) {
     this._hass = hass;
@@ -30809,7 +32023,7 @@ var HADoorWindowCard = class extends HTMLElement {
     if (today !== this._historyDay) this._fetchHistory();
   }
   async _fetchHistory() {
-    const ids = (this._config.items || []).map((item) => item.entity).filter(Boolean);
+    const ids = (this._config.items || []).map((item2) => item2.entity).filter(Boolean);
     if (!ids.length || !this._hass?.callApi || this._fetching) return;
     this._fetching = true;
     const today = (/* @__PURE__ */ new Date()).toDateString();
@@ -30861,13 +32075,13 @@ var HADoorWindowCard = class extends HTMLElement {
     if (!Number.isFinite(ts)) return "\u2014";
     return new Date(ts).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
   }
-  _statsFor(item) {
+  _statsFor(item2) {
     const now = Date.now();
     const todayStart = /* @__PURE__ */ new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayStartMs = todayStart.getTime();
-    const series = this._history[item.entity] || [];
-    const live = this._s(item.entity);
+    const series = this._history[item2.entity] || [];
+    const live = this._s(item2.entity);
     const isOpen = live?.state === "on";
     let openSinceTs;
     const trippedRaw = live?.attributes?.last_tripped_time;
@@ -30914,9 +32128,9 @@ var HADoorWindowCard = class extends HTMLElement {
     const openSinceMs = isOpen && Number.isFinite(openSinceTs) ? now - openSinceTs : void 0;
     return { isOpen, openCount, lastOpenedTs, totalOpenMs, openSinceMs, hasHistory: series.length > 0 };
   }
-  _iconFor(item, isOpen) {
-    if (isOpen && item.icon_open) return item.icon_open;
-    if (!isOpen && item.icon_closed) return item.icon_closed;
+  _iconFor(item2, isOpen) {
+    if (isOpen && item2.icon_open) return item2.icon_open;
+    if (!isOpen && item2.icon_closed) return item2.icon_closed;
     const defaults = {
       door: ["mdi:door-closed", "mdi:door-open"],
       sliding: ["mdi:door-sliding", "mdi:door-sliding-open"],
@@ -30924,21 +32138,21 @@ var HADoorWindowCard = class extends HTMLElement {
       lock: ["mdi:lock", "mdi:lock-open-variant"],
       window: ["mdi:window-closed-variant", "mdi:window-open-variant"]
     };
-    const pair = defaults[item.icon_set || item.type] || defaults.window;
+    const pair = defaults[item2.icon_set || item2.type] || defaults.window;
     return isOpen ? pair[1] : pair[0];
   }
-  _tile(item) {
-    const stats = this._statsFor(item);
-    const icon = this._iconFor(item, stats.isOpen);
+  _tile(item2) {
+    const stats = this._statsFor(item2);
+    const icon = this._iconFor(item2, stats.isOpen);
     const longThreshold = (this._config.long_open_minutes ?? 30) * 6e4;
     const isLongOpen = stats.isOpen && Number.isFinite(stats.openSinceMs) && stats.openSinceMs >= longThreshold;
-    const battery = this._num(this._s(item.battery_entity)?.state);
+    const battery = this._num(this._s(item2.battery_entity)?.state);
     const batteryChip = Number.isFinite(battery) ? `<span class="chip"><ha-icon icon="${battery <= 20 ? "mdi:battery-alert-variant-outline" : "mdi:battery"}"></ha-icon>${battery}%</span>` : "";
-    return `<div class="tile ${stats.isOpen ? "open" : "closed"} ${isLongOpen ? "long-open" : ""}" data-more="${this._esc(item.entity)}">
+    return `<div class="tile ${stats.isOpen ? "open" : "closed"} ${isLongOpen ? "long-open" : ""}" data-more="${this._esc(item2.entity)}">
       <div class="tile-top">
         <div class="tile-icon"><ha-icon icon="${icon}"></ha-icon></div>
         <div class="tile-name">
-          <b>${this._esc(item.name)}</b>
+          <b>${this._esc(item2.name)}</b>
           <span class="state-pill">${stats.isOpen ? "\xC5ben" : "Lukket"}</span>
         </div>
       </div>
@@ -30960,7 +32174,7 @@ var HADoorWindowCard = class extends HTMLElement {
       return (sb.lastOpenedTs ?? 0) - (sa.lastOpenedTs ?? 0);
     });
     return `<div class="section-heading"><ha-icon icon="${icon}"></ha-icon><span>${this._esc(title)}</span></div>
-      <div class="grid">${sorted.map((item) => this._tile(item)).join("")}</div>`;
+      <div class="grid">${sorted.map((item2) => this._tile(item2)).join("")}</div>`;
   }
   _render() {
     if (!this.shadowRoot) return;
@@ -30968,7 +32182,7 @@ var HADoorWindowCard = class extends HTMLElement {
     const items = c.items || [];
     const doors = items.filter((i) => i.type !== "window");
     const windows = items.filter((i) => i.type === "window");
-    const allStats = items.map((item) => this._statsFor(item));
+    const allStats = items.map((item2) => this._statsFor(item2));
     const openNow = allStats.filter((s) => s.isOpen).length;
     const totalOpensToday = allStats.reduce((sum, s) => sum + s.openCount, 0);
     const longestOpenMs = allStats.reduce((max, s) => s.isOpen && Number.isFinite(s.openSinceMs) ? Math.max(max, s.openSinceMs) : max, 0);
@@ -31206,7 +32420,7 @@ var HaHomeCameraCard = class extends HTMLElement {
     const allowed = this._groupCameras(group);
     const autoKeys = this._getAutoCameraKeys(group);
     const cameras = allowed.filter((camera) => autoKeys.has(camera.key));
-    const active = cameras.map((camera) => ({ camera, changed: this._activityTimestamp(camera) })).filter((item) => item.changed > 0).sort((a, b) => b.changed - a.changed);
+    const active = cameras.map((camera) => ({ camera, changed: this._activityTimestamp(camera) })).filter((item2) => item2.changed > 0).sort((a, b) => b.changed - a.changed);
     const selected = this._state(group.selector_entity)?.state;
     return active[0]?.camera || cameras.find((camera) => camera.key === selected);
   }
@@ -31626,16 +32840,16 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const discovered = this._discoverDetections(camera);
       if (!discovered.length) continue;
       const next = { ...camera.detections || {} };
-      for (const item of discovered) {
-        const value = item.event_type ? { entity_id: item.entity_id, event_type: item.event_type } : item.entity_id;
-        if (JSON.stringify(next[item.key]) !== JSON.stringify(value)) {
-          next[item.key] = value;
+      for (const item2 of discovered) {
+        const value = item2.event_type ? { entity_id: item2.entity_id, event_type: item2.event_type } : item2.entity_id;
+        if (JSON.stringify(next[item2.key]) !== JSON.stringify(value)) {
+          next[item2.key] = value;
           changed = true;
         }
       }
       camera.detections = next;
       if (!Array.isArray(camera.enabled_detections)) {
-        camera.enabled_detections = discovered.map((item) => item.key);
+        camera.enabled_detections = discovered.map((item2) => item2.key);
         changed = true;
       }
     }
@@ -31684,7 +32898,7 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
     const detections = this._discoverDetections(camera);
     if (!detections.length) return `<div class="detection-box"><b>Smart-detektioner</b><small>Ingen aktive detektionsentiteter fundet p\xE5 samme kameraenhed.</small></div>`;
     const enabled = Array.isArray(camera.enabled_detections) ? new Set(camera.enabled_detections) : null;
-    return `<div class="detection-box"><div class="detection-title"><b>Advarsler og automatisk kameraskift</b><small>Fundet automatisk p\xE5 samme UniFi Protect-kamera</small></div><div class="detection-grid">${detections.map((item) => `<label class="detection-option"><input type="checkbox" data-detection-toggle="${this._escape(item.key)}" data-detection-entity="${this._escape(item.entity_id)}" data-detection-event-type="${this._escape(item.event_type || "")}" data-group="${groupIndex}" data-camera="${cameraIndex}" ${!enabled || enabled.has(item.key) ? "checked" : ""}><ha-icon icon="${item.icon}"></ha-icon><span><b>${item.label}</b><small>${this._escape(item.entity_id)}</small></span></label>`).join("")}</div></div>`;
+    return `<div class="detection-box"><div class="detection-title"><b>Advarsler og automatisk kameraskift</b><small>Fundet automatisk p\xE5 samme UniFi Protect-kamera</small></div><div class="detection-grid">${detections.map((item2) => `<label class="detection-option"><input type="checkbox" data-detection-toggle="${this._escape(item2.key)}" data-detection-entity="${this._escape(item2.entity_id)}" data-detection-event-type="${this._escape(item2.event_type || "")}" data-group="${groupIndex}" data-camera="${cameraIndex}" ${!enabled || enabled.has(item2.key) ? "checked" : ""}><ha-icon icon="${item2.icon}"></ha-icon><span><b>${item2.label}</b><small>${this._escape(item2.entity_id)}</small></span></label>`).join("")}</div></div>`;
   }
   _catalogMarkup() {
     return `<section class="catalog"><div class="section-head"><div><b>1. Kameraer og smart-detektioner</b><small>Tilf\xF8j hvert kamera \xE9n gang. Mulighederne findes automatisk via kameraets Home Assistant-enhed.</small></div></div>${this.config.cameras.map((camera, ci) => `<div class="camera"><div class="head"><b>${this._escape(camera.name || camera.key || `Kamera ${ci + 1}`)}</b><button class="remove" data-remove-catalog-camera="${ci}">Fjern</button></div><div class="fields"><label><span>N\xF8gle</span><input data-catalog-field="key" data-camera="${ci}" value="${this._escape(camera.key || "")}"></label><label><span>Navn</span><input data-catalog-field="name" data-camera="${ci}" value="${this._escape(camera.name || "")}"></label><label><span>Kamera</span><ha-entity-picker data-catalog-picker="entity" data-camera="${ci}" value="${this._escape(camera.entity || "")}" include-domains='["camera"]' allow-custom-entity></ha-entity-picker></label><label><span>Billedzoom (1 = ingen)</span><input type="number" min="1" max="3" step="0.01" data-catalog-field="fit_scale" data-camera="${ci}" value="${this._escape(camera.fit_scale || 1)}"></label><label><span>Sti ved tryk (valgfri)</span><input data-catalog-field="navigation_path" data-camera="${ci}" value="${this._escape(camera.navigation_path || "")}"></label>${this._detectionEditor(camera, -1, ci)}</div></div>`).join("")}<button class="add" data-add-catalog-camera>+ Tilf\xF8j kamera</button></section>`;
@@ -31806,8 +33020,8 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
     } else if (input.dataset.detectionToggle) {
       const camera = this.config.cameras[Number(input.dataset.camera)];
       const discovered = this._discoverDetections(camera);
-      camera.detections = Object.fromEntries(discovered.map((item) => [item.key, item.event_type ? { entity_id: item.entity_id, event_type: item.event_type } : item.entity_id]));
-      const enabled = new Set(Array.isArray(camera.enabled_detections) ? camera.enabled_detections : discovered.map((item) => item.key));
+      camera.detections = Object.fromEntries(discovered.map((item2) => [item2.key, item2.event_type ? { entity_id: item2.entity_id, event_type: item2.event_type } : item2.entity_id]));
+      const enabled = new Set(Array.isArray(camera.enabled_detections) ? camera.enabled_detections : discovered.map((item2) => item2.key));
       if (input.checked) enabled.add(input.dataset.detectionToggle);
       else enabled.delete(input.dataset.detectionToggle);
       camera.enabled_detections = DETECTION_TYPES.map((type) => type.key).filter((key) => enabled.has(key));
@@ -31918,13 +33132,13 @@ var HaLicensePlateCard = class extends HTMLElement {
     this.shadowRoot.querySelector("[data-media]")?.append(close);
   }
   async _playEvent() {
-    const item = (this._events || []).find((event) => event.event_id === this._selected);
-    if (!item || !this._hass?.callWS) return;
+    const item2 = (this._events || []).find((event) => event.event_id === this._selected);
+    if (!item2 || !this._hass?.callWS) return;
     const media = this.shadowRoot.querySelector("[data-media]");
     this._closeVideo();
     media.classList.add("loading");
     try {
-      const resolved = await this._hass.callWS({ type: "media_source/resolve_media", media_content_id: `media-source://unifiprotect/${item.camera_device_id}:event:${item.event_id}` });
+      const resolved = await this._hass.callWS({ type: "media_source/resolve_media", media_content_id: `media-source://unifiprotect/${item2.camera_device_id}:event:${item2.event_id}` });
       const video = document.createElement("video");
       video.src = resolved.url;
       video.controls = true;
@@ -32286,7 +33500,7 @@ if (!customElements.get("locked-map-card")) {
 }
 
 // src/cards/ha-security-center-card/ha-card-list-editor.js
-var HACardListEditor11 = class extends HTMLElement {
+var HACardListEditor12 = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -32340,7 +33554,7 @@ var HACardListEditor11 = class extends HTMLElement {
       *{box-sizing:border-box}.editor{display:grid;gap:14px;padding:8px 0;color:var(--primary-text-color)}.section{display:grid;gap:10px;padding:14px;border:1px solid var(--divider-color);border-radius:14px;background:var(--card-background-color)}h3{margin:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label>span{display:block;margin-bottom:5px;color:var(--secondary-text-color);font-size:11px}input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:9px;background:var(--input-fill-color,rgba(0,0,0,.05));color:var(--primary-text-color);font:inherit}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;min-height:18px}.check span{margin:0}.item{display:grid;gap:10px;padding:11px;border:1px solid var(--divider-color);border-radius:11px}.item-head{display:flex;align-items:center;justify-content:space-between}.item-head strong{font-size:12px}.remove,.add{min-height:36px;border:1px solid var(--primary-color);border-radius:9px;background:transparent;color:var(--primary-color);font:inherit;font-weight:700;cursor:pointer}.remove{padding:0 10px;border-color:var(--error-color);color:var(--error-color)}ha-entity-picker{display:block}@media(max-width:600px){.fields{grid-template-columns:1fr}}
     </style><div class="editor">${roots.length ? `<section class="section"><h3>Generelt</h3><div class="fields">${roots.map((field) => this._control(field, this._get(field.key), "root")).join("")}</div></section>` : ""}${collections.map((collection) => {
       const items = Array.isArray(this._config[collection.key]) ? this._config[collection.key] : [];
-      return `<section class="section"><h3>${collection.label}</h3>${items.map((item, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
+      return `<section class="section"><h3>${collection.label}</h3>${items.map((item2, index) => `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></div><div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div></div>`).join("")}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((control) => {
       control.hass = this._hass;
@@ -32348,7 +33562,7 @@ var HACardListEditor11 = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll("input").forEach((control) => control.addEventListener("change", () => this._change(control, control.type === "checkbox" ? control.checked : control.type === "number" ? Number(control.value) : control.value)));
     this.shadowRoot.querySelectorAll("[data-add]").forEach((button) => button.addEventListener("click", () => {
-      const collection = collections.find((item) => item.key === button.dataset.add);
+      const collection = collections.find((item2) => item2.key === button.dataset.add);
       this._config[collection.key] = [...this._config[collection.key] || [], structuredClone(collection.defaults || {})];
       this._emit();
       this._render();
@@ -32365,7 +33579,7 @@ var HACardListEditor11 = class extends HTMLElement {
     this._emit();
   }
 };
-if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor11);
+if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor12);
 
 // src/cards/ha-security-center-card/ha-security-center-card.js
 var SECURITY_CENTER_VERSION = "0.3.3";
@@ -32642,24 +33856,24 @@ var HAControlCenterCard = class extends HTMLElement {
     history.pushState(null, "", path);
     window.dispatchEvent(new CustomEvent("location-changed", { bubbles: true, composed: true }));
   }
-  _statusEval(item) {
-    const e = this._e(item.entity);
+  _statusEval(item2) {
+    const e = this._e(item2.entity);
     if (!e) return { ok: true, count: 0, detail: "" };
-    if (item.binary) {
+    if (item2.binary) {
       const on = e.state === "on";
-      return { ok: !on, count: on ? 1 : 0, detail: on ? item.on_text || "Registreret" : "" };
+      return { ok: !on, count: on ? 1 : 0, detail: on ? item2.on_text || "Registreret" : "" };
     }
     const n = Number(e.state);
     const count = Number.isFinite(n) ? n : 0;
-    const raw = item.detail_attribute ? e.attributes?.[item.detail_attribute] : "";
+    const raw = item2.detail_attribute ? e.attributes?.[item2.detail_attribute] : "";
     const detail = raw && raw !== "Ingen" ? raw : "";
     return { ok: count === 0, count, detail };
   }
-  _tile(item) {
-    const s = this._statusEval(item);
-    return `<button class="tile ${s.ok ? "ok" : "issue"}" data-entity="${this._esc(item.entity)}">
-      <span class="tile-icon"><ha-icon icon="${this._esc(item.icon || "mdi:information-outline")}"></ha-icon></span>
-      <span class="tile-name">${this._esc(item.name)}</span>
+  _tile(item2) {
+    const s = this._statusEval(item2);
+    return `<button class="tile ${s.ok ? "ok" : "issue"}" data-entity="${this._esc(item2.entity)}">
+      <span class="tile-icon"><ha-icon icon="${this._esc(item2.icon || "mdi:information-outline")}"></ha-icon></span>
+      <span class="tile-name">${this._esc(item2.name)}</span>
       <span class="tile-badge">${s.ok ? `<ha-icon icon="mdi:check"></ha-icon>` : this._esc(s.count) || "!"}</span>
       ${s.detail ? `<span class="tile-detail">${this._esc(s.detail)}</span>` : ""}
     </button>`;
@@ -33428,32 +34642,32 @@ var HASettingsCenterCard = class extends HTMLElement {
   }
   _openStatusPopup(entityId) {
     this._closeStatusPopup();
-    const item = this._find(entityId) || { entity: entityId, name: "Systemstatus" };
+    const item2 = this._find(entityId) || { entity: entityId, name: "Systemstatus" };
     const entity = this._e(entityId);
-    const problem = this._problem(item);
-    const raw = item.detail_attribute ? entity?.attributes?.[item.detail_attribute] : null;
+    const problem = this._problem(item2);
+    const raw = item2.detail_attribute ? entity?.attributes?.[item2.detail_attribute] : null;
     let details = Array.isArray(raw) ? raw : String(raw ?? "").split(/\n|,\s*/);
     details = details.map((value) => String(value).trim()).filter((value) => value && value.toLowerCase() !== "ingen");
     if (!details.length && problem) {
-      details = [item.binary ? "Sensoren har registreret en aktiv alarm." : `Statuskilden melder ${this._state(entityId)}.`];
+      details = [item2.binary ? "Sensoren har registreret en aktiv alarm." : `Statuskilden melder ${this._state(entityId)}.`];
     }
-    const count = problem ? item.binary ? 1 : Math.max(Number(this._state(entityId)) || 0, details.length) : 0;
+    const count = problem ? item2.binary ? 1 : Math.max(Number(this._state(entityId)) || 0, details.length) : 0;
     const backdrop = document.createElement("div");
     backdrop.className = "ha-settings-status-backdrop";
     backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;background:rgba(8,12,18,.68);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:16px";
     const panel = document.createElement("section");
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
-    panel.setAttribute("aria-label", `${item.name || "Systemstatus"} detaljer`);
+    panel.setAttribute("aria-label", `${item2.name || "Systemstatus"} detaljer`);
     panel.style.cssText = "position:relative;width:min(100%,560px);max-height:92vh;overflow:auto;padding:22px;border:1px solid var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.24)));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--dashboard-danger,var(--error-color,#ef4444));border-radius:20px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#111820)));box-shadow:0 28px 70px rgba(0,0,0,.5);color:var(--primary-text-color,#fff)";
     const close = document.createElement("button");
     close.textContent = "Luk \u2715";
     close.setAttribute("aria-label", "Luk problemoversigt");
     close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,12,18,.92);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
-    const title = this._esc(item.name || "Systemstatus");
-    const icon = this._esc(item.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
+    const title = this._esc(item2.name || "Systemstatus");
+    const icon = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem ? `<div style="display:grid;gap:8px;margin-top:16px">${details.map((value) => `<div style="padding:11px 12px;border:1px solid color-mix(in srgb,var(--error-color,#ef4444) 28%,transparent);border-radius:12px;background:color-mix(in srgb,var(--error-color,#ef4444) 9%,transparent);font-size:13px;line-height:1.45">${this._esc(value)}</div>`).join("")}</div>` : `<div style="margin-top:16px;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--success-color,#20e3a2) 10%,transparent);color:var(--success-color,#20e3a2);font-weight:800">Ingen aktive problemer.</div>`;
-    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
+    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
     panel.appendChild(close);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => {
@@ -34105,14 +35319,14 @@ var HAOpsStatusCard = class extends HTMLElement {
     if (WARN_STATES.includes(s)) return "warn";
     return "good";
   }
-  _healthTile(item) {
-    const e = this._e(item.entity);
+  _healthTile(item2) {
+    const e = this._e(item2.entity);
     const level = this._healthState(e);
     const icon = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
-    const label = item.state_labels?.[e?.state] || e?.state || "\u2014";
-    return `<button class="htile ${level}" data-entity="${this._esc(item.entity)}">
-      <ha-icon icon="${this._esc(item.icon || icon)}"></ha-icon>
-      <span class="htile-text"><b>${this._esc(item.name)}</b><span>${this._esc(label)}</span></span>
+    const label = item2.state_labels?.[e?.state] || e?.state || "\u2014";
+    return `<button class="htile ${level}" data-entity="${this._esc(item2.entity)}">
+      <ha-icon icon="${this._esc(item2.icon || icon)}"></ha-icon>
+      <span class="htile-text"><b>${this._esc(item2.name)}</b><span>${this._esc(label)}</span></span>
     </button>`;
   }
   _render() {
@@ -34343,12 +35557,12 @@ var HAUnraidServerCard = class extends HTMLElement {
       ${healthy !== void 0 ? `<ha-icon class="disk-health ${healthy ? "ok" : "bad"}" icon="${healthy ? "mdi:check-circle" : "mdi:alert-circle"}"></ha-icon>` : ""}
     </div>`;
   }
-  _toggleRow(item) {
-    const on = this._on(item.entity);
-    const unavailable = this._s(item.entity) === "unavailable" || this._s(item.entity) === void 0;
-    return `<div class="toggle-row ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item.entity)}">
-      <ha-icon class="toggle-icon" icon="${this._esc(item.icon || "mdi:docker")}"></ha-icon>
-      <span class="toggle-name">${this._esc(item.name)}</span>
+  _toggleRow(item2) {
+    const on = this._on(item2.entity);
+    const unavailable = this._s(item2.entity) === "unavailable" || this._s(item2.entity) === void 0;
+    return `<div class="toggle-row ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}" data-entity="${this._esc(item2.entity)}">
+      <ha-icon class="toggle-icon" icon="${this._esc(item2.icon || "mdi:docker")}"></ha-icon>
+      <span class="toggle-name">${this._esc(item2.name)}</span>
       <span class="switch ${on ? "on" : ""}"><i></i></span>
     </div>`;
   }
@@ -35060,7 +36274,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this.shadowRoot?.querySelector("ha-card")) this._build();
-    const signature = JSON.stringify([this._config?.next_entity, ...(this._config?.waste_types || []).map((item) => [item.entity, this._value(item.entity), this._state(item.entity)?.attributes?.date])]);
+    const signature = JSON.stringify([this._config?.next_entity, ...(this._config?.waste_types || []).map((item2) => [item2.entity, this._value(item2.entity), this._state(item2.entity)?.attributes?.date])]);
     if (signature !== this._signature) {
       this._signature = signature;
       this._render();
@@ -35111,12 +36325,12 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     root.querySelector("[data-distance]").textContent = days == null ? "Ruten er ikke beregnet" : days === 0 ? "Skraldebilen kommer i dag" : days === 1 ? "Skraldebilen er n\xE6sten fremme" : `${days} dage tilbage p\xE5 ruten`;
     root.querySelector("[data-message]").textContent = days === 0 ? "Beholderen skal st\xE5 klar i dag" : days === 1 ? "Husk at stille beholderen ud i aften" : days <= 3 ? "G\xF8r beholderen klar \u2013 afhentning er t\xE6t p\xE5" : "Du beh\xF8ver ikke g\xF8re noget endnu";
     const types = root.querySelector(".types");
-    types.innerHTML = this._config.waste_types.map((item) => this._type(item)).join("");
+    types.innerHTML = this._config.waste_types.map((item2) => this._type(item2)).join("");
     types.querySelectorAll("[data-entity]").forEach((button) => button.addEventListener("click", () => this._more(button.dataset.entity)));
   }
-  _type(item) {
-    const state = this._state(item.entity), days = this._days(item.entity), level = days == null ? 0 : Math.max(7, Math.min(100, 100 - Math.min(days, 35) / 35 * 100));
-    return `<button class="waste" data-entity="${this._esc(item.entity)}" style="--c:${this._esc(item.color || "#22c55e")};--level:${level}%"><span class="waste-icon"><ha-icon icon="${this._esc(item.icon || state?.attributes?.icon || "mdi:trash-can-outline")}"></ha-icon></span><span class="waste-copy"><b>${this._esc(item.name || state?.attributes?.name || "Affald")}</b><small>${this._esc(state?.attributes?.date_short || "Dato ukendt")} \xB7 ${this._esc(state?.attributes?.description || "Planlagt afhentning")}</small></span><span class="waste-days"><b>${days ?? "\u2014"}</b><span>${days === 1 ? "dag" : "dage"}</span></span><span class="bar"><i></i></span></button>`;
+  _type(item2) {
+    const state = this._state(item2.entity), days = this._days(item2.entity), level = days == null ? 0 : Math.max(7, Math.min(100, 100 - Math.min(days, 35) / 35 * 100));
+    return `<button class="waste" data-entity="${this._esc(item2.entity)}" style="--c:${this._esc(item2.color || "#22c55e")};--level:${level}%"><span class="waste-icon"><ha-icon icon="${this._esc(item2.icon || state?.attributes?.icon || "mdi:trash-can-outline")}"></ha-icon></span><span class="waste-copy"><b>${this._esc(item2.name || state?.attributes?.name || "Affald")}</b><small>${this._esc(state?.attributes?.date_short || "Dato ukendt")} \xB7 ${this._esc(state?.attributes?.description || "Planlagt afhentning")}</small></span><span class="waste-days"><b>${days ?? "\u2014"}</b><span>${days === 1 ? "dag" : "dage"}</span></span><span class="bar"><i></i></span></button>`;
   }
   getCardSize() {
     return 7;
@@ -35436,7 +36650,7 @@ var escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
   '"': "&quot;",
   "'": "&#039;"
 })[c]);
-var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+var clamp2 = (value, min, max) => Math.min(max, Math.max(min, value));
 var toNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -35545,7 +36759,7 @@ function hideClip(id, holes) {
 }
 var FOG_STOPS = [[5, [47, 107, 255]], [15, [54, 180, 255]], [25, [127, 214, 255]], [35, [255, 200, 87]], [45, [255, 154, 60]], [55, [255, 106, 54]], [65, [255, 61, 79]]];
 function fogColor(celsius) {
-  const t = clamp(Number(celsius), FOG_STOPS[0][0], FOG_STOPS[FOG_STOPS.length - 1][0]);
+  const t = clamp2(Number(celsius), FOG_STOPS[0][0], FOG_STOPS[FOG_STOPS.length - 1][0]);
   const upper = FOG_STOPS.findIndex(([at]) => at >= t);
   const [a, from] = FOG_STOPS[Math.max(0, upper - 1)];
   const [b, to] = FOG_STOPS[upper];
@@ -35569,7 +36783,7 @@ function buildTodaySeries(rows, liveTotal, midnight, now) {
     hours[index] += change;
     sum += change;
   }
-  const current = clamp(Math.floor((now - midnight) / 36e5), 0, 23);
+  const current = clamp2(Math.floor((now - midnight) / 36e5), 0, 23);
   if (Number.isFinite(liveTotal) && liveTotal > sum) hours[current] += liveTotal - sum;
   return hours.map((value) => Math.round(value * 1e3) / 1e3);
 }
@@ -35760,9 +36974,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const state = this._stateObj(key);
     if (!state || !this._available(key)) return null;
     const direct = toNumber(state.state);
-    if (direct !== null) return clamp(direct, 0, 100);
+    if (direct !== null) return clamp2(direct, 0, 100);
     const attr = toNumber(state.attributes?.current_position ?? state.attributes?.position);
-    if (attr !== null) return clamp(attr, 0, 100);
+    if (attr !== null) return clamp2(attr, 0, 100);
     const activity = interpretActivity(state, "valve");
     return activity === true ? 100 : activity === false ? 0 : null;
   }
@@ -35967,22 +37181,22 @@ var HaCalefaFlowCard = class extends HTMLElement {
     for (const side of [this._refs.left, this._refs.right]) {
       if (!side) continue;
       const box = side.getBoundingClientRect();
-      const gap = clamp(picture.width * 0.016, 5, 12);
+      const gap = clamp2(picture.width * 0.016, 5, 12);
       const items = [...side.querySelectorAll(":scope > .cf-block")].map((el) => ({ el, height: el.offsetHeight, want: picture.top - box.top + Number(el.dataset.y) / VIEW_H * picture.height })).sort((a, b) => a.want - b.want);
       let cursor = 0;
-      for (const item of items) {
-        item.top = Math.max(item.want - item.height / 2, cursor);
-        cursor = item.top + item.height + gap;
+      for (const item2 of items) {
+        item2.top = Math.max(item2.want - item2.height / 2, cursor);
+        cursor = item2.top + item2.height + gap;
       }
       let limit = box.height;
       for (let index = items.length - 1; index >= 0; index -= 1) {
-        const item = items[index];
-        if (item.top + item.height > limit) item.top = Math.max(0, limit - item.height);
-        limit = item.top - gap;
+        const item2 = items[index];
+        if (item2.top + item2.height > limit) item2.top = Math.max(0, limit - item2.height);
+        limit = item2.top - gap;
       }
-      for (const item of items) {
-        const top = `${Math.round(item.top)}px`;
-        if (item.el.style.top !== top) item.el.style.top = top;
+      for (const item2 of items) {
+        const top = `${Math.round(item2.top)}px`;
+        if (item2.el.style.top !== top) item2.el.style.top = top;
       }
       this._toggle(side, "is-placed", true);
     }
@@ -36001,7 +37215,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const sy2 = box.top + box.height / 2 - bounds.top;
       const tx = picture.left - bounds.left + ANCHORS[id][0] / VIEW_W * picture.width;
       const ty = picture.top - bounds.top + ANCHORS[id][1] / VIEW_H * picture.height;
-      const kx = sx + (left ? 1 : -1) * clamp(Math.abs(tx - sx) * 0.25, 6, 18);
+      const kx = sx + (left ? 1 : -1) * clamp2(Math.abs(tx - sx) * 0.25, 6, 18);
       const d = `M${sx.toFixed(1)} ${sy2.toFixed(1)} H${kx.toFixed(1)} L${tx.toFixed(1)} ${ty.toFixed(1)}`;
       const [path, ring, dot] = group.children;
       if (path.getAttribute("d") !== d) path.setAttribute("d", d);
@@ -36268,7 +37482,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const hasPump = this._configured("pump");
     this._toggle(pump, "is-on", hasPump && Boolean(model.pumpActive));
     this._toggle(pump, "is-off", hasPump && !model.pumpActive);
-    const pumpDuration = model.pumpSpeed !== null && model.pumpSpeed > 0 ? `${(3.2 - 2.1 * clamp(model.pumpSpeed / 100, 0, 1)).toFixed(2)}s` : "2.2s";
+    const pumpDuration = model.pumpSpeed !== null && model.pumpSpeed > 0 ? `${(3.2 - 2.1 * clamp2(model.pumpSpeed / 100, 0, 1)).toFixed(2)}s` : "2.2s";
     if (pump && pump.style.getPropertyValue("--cf-pump-duration") !== pumpDuration) pump.style.setProperty("--cf-pump-duration", pumpDuration);
     for (const id of Object.keys(VALVES)) {
       const node = this._refs[`valve-${id}`];
@@ -36276,7 +37490,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const position = this._valvePosition(id);
       const open = position !== null && position > this._config.valve_threshold;
       const pos = position === null ? 0 : Math.round(position);
-      const values = { "--cf-valve-pos": String(pos), "--cf-valve-sweep": `${Math.round(pos * 3.6)}deg`, "--cf-valve-duration": `${(2.8 - 1.8 * clamp(pos / 100, 0, 1)).toFixed(2)}s` };
+      const values = { "--cf-valve-pos": String(pos), "--cf-valve-sweep": `${Math.round(pos * 3.6)}deg`, "--cf-valve-duration": `${(2.8 - 1.8 * clamp2(pos / 100, 0, 1)).toFixed(2)}s` };
       for (const [name, value] of Object.entries(values)) if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value);
       this._toggle(node, "is-open", open);
       this._toggle(node, "is-unknown", position === null);
@@ -36421,7 +37635,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._maybeFetchToday(now);
   }
   _renderTodayChart({ lower, upper, basis, perKwh, split, now, midnight }) {
-    const current = clamp(Math.floor((now - midnight) / 36e5), 0, 23);
+    const current = clamp2(Math.floor((now - midnight) / 36e5), 0, 23);
     const nice = (value) => {
       if (!(value > 0)) return 1;
       const step = 10 ** Math.floor(Math.log10(value));
@@ -36447,7 +37661,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const text = hour > current ? "" : `Kl. ${String(hour).padStart(2, "0")}\u2013${String(hour + 1).padStart(2, "0")}: ${this._formatNumber(kwh, 2)} kWh${split ? ` (varme ${this._formatNumber(lower[hour], 2)}, varmt vand ${this._formatNumber(upper[hour], 2)})` : ""}${perKwh !== null ? ` \xB7 ${this._formatNumber(kwh * perKwh, 2)} kr` : ""}`;
       this._text(title, text);
     });
-    const fraction = clamp((now - midnight) / 36e5 - current, 0, 1);
+    const fraction = clamp2((now - midnight) / 36e5 - current, 0, 1);
     let cumulative = 0;
     const points = [[0, 0]];
     for (let hour = 0; hour <= current; hour += 1) {
@@ -36540,7 +37754,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _stepNumber(value, direction, attributes) {
     const min = Number(attributes.min), max = Number(attributes.max), step = Number(attributes.step) || 1;
-    return Number(clamp(min + (Math.round((value - min) / step) + direction) * step, min, max).toFixed(6));
+    return Number(clamp2(min + (Math.round((value - min) / step) + direction) * step, min, max).toFixed(6));
   }
   // ---- Controller popup: buttons -----------------------------------------------------------
   // UP is +1 and DOWN is -1: UP raises values and moves the selection bar up.
@@ -36556,9 +37770,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
         this._frontEdit = value === current ? null : { node, value };
       }
     } else if (frame.kind === "menu") {
-      frame.index = clamp(frame.index - direction, 0, this._rows(frame).length - 1);
+      frame.index = clamp2(frame.index - direction, 0, this._rows(frame).length - 1);
     } else if (frame.kind === "pages") {
-      frame.page = clamp(frame.page - direction, 0, this._pages(frame.node.source).length - 1);
+      frame.page = clamp2(frame.page - direction, 0, this._pages(frame.node.source).length - 1);
     } else if (frame.kind === "edit") {
       if (frame.options) frame.index = (frame.index + direction + frame.options.length) % frame.options.length;
       else {
@@ -36597,39 +37811,39 @@ var HaCalefaFlowCard = class extends HTMLElement {
     }
     this._renderDisplay();
   }
-  _open(item) {
-    if (!item || item.type === "exit") {
+  _open(item2) {
+    if (!item2 || item2.type === "exit") {
       this._stack.pop();
       return;
     }
-    if (item.type === "menu") {
-      this._stack.push({ kind: "menu", node: item, index: 0 });
+    if (item2.type === "menu") {
+      this._stack.push({ kind: "menu", node: item2, index: 0 });
       return;
     }
-    if (item.type === "pages") {
-      this._stack.push({ kind: "pages", node: item, page: 0 });
+    if (item2.type === "pages") {
+      this._stack.push({ kind: "pages", node: item2, page: 0 });
       return;
     }
-    if (item.type === "alarm") {
-      this._stack.push({ kind: "info", title: item.label, lines: [item.fault.critical ? "Enhedsfejl" : "Advarsel", item.fault.detail] });
+    if (item2.type === "alarm") {
+      this._stack.push({ kind: "info", title: item2.label, lines: [item2.fault.critical ? "Enhedsfejl" : "Advarsel", item2.fault.detail] });
       return;
     }
-    if (item.type === "device") {
-      this._stack.push({ kind: "info", title: item.label, lines: ["Kun p\xE5 enheden", "Ingen styring fra HA"] });
+    if (item2.type === "device") {
+      this._stack.push({ kind: "info", title: item2.label, lines: ["Kun p\xE5 enheden", "Ingen styring fra HA"] });
       return;
     }
-    if (!this._canEdit(item)) {
-      this._stack.push({ kind: "info", title: item.title, lines: ["Kun visning", this._entity(item.map) ? "V\xE6rdien er ikke tilg\xE6ngelig" : "Ingen HA-entitet"] });
+    if (!this._canEdit(item2)) {
+      this._stack.push({ kind: "info", title: item2.title, lines: ["Kun visning", this._entity(item2.map) ? "V\xE6rdien er ikke tilg\xE6ngelig" : "Ingen HA-entitet"] });
       return;
     }
-    const [, state] = this._entity(item.map);
-    if (item.type === "number") {
-      this._stack.push({ kind: "edit", node: item, value: Number(state.state), original: Number(state.state) });
+    const [, state] = this._entity(item2.map);
+    if (item2.type === "number") {
+      this._stack.push({ kind: "edit", node: item2, value: Number(state.state), original: Number(state.state) });
       return;
     }
-    const options = this._options(item, state);
+    const options = this._options(item2, state);
     const index = Math.max(0, options.findIndex((option) => option.value === state.state));
-    this._stack.push({ kind: "edit", node: item, options, index, original: state.state });
+    this._stack.push({ kind: "edit", node: item2, options, index, original: state.state });
   }
   // Writes only through the entity's own domain service, and only values the entity accepts.
   _commit(node, value) {
@@ -36664,7 +37878,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const value = Number(state.state);
       return Number.isFinite(value) ? this._lcdNumber(value, state.attributes?.step) : "--";
     }
-    const option = this._options(node, state).find((item) => item.value === state.state);
+    const option = this._options(node, state).find((item2) => item2.value === state.state);
     return (option?.label || state.state).toUpperCase();
   }
   _lcdStatus(key) {
@@ -36732,7 +37946,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     } else if (key === "varme") {
       const entity = this._entity("parallel_shift");
       const shift = this._frontEdit?.value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
-      const level = shift === null ? 50 : clamp((shift + 9) / 18 * 100, 0, 100);
+      const level = shift === null ? 50 : clamp2((shift + 9) / 18 * 100, 0, 100);
       main = `<div class="lcd-front-title">${lcdIcon("varme")}<b>VARME</b></div><div class="lcd-front-value is-shift"><strong class="lcd-big${pending}">${escapeHtml(this._shiftText(shift))}</strong><span class="lcd-thermo" style="--level:${level.toFixed(0)}%"><i></i><b></b></span></div>`;
     } else if (key === "indstil") {
       main = `<div class="lcd-front-center"><b>INDSTIL.</b>${lcdIcon("gear", "is-large")}</div>`;
@@ -36744,16 +37958,16 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _menuLcd(frame) {
     const rows = this._rows(frame);
-    const start = clamp(frame.index - 1, 0, Math.max(0, rows.length - LCD_ROWS));
-    const visible = rows.slice(start, start + LCD_ROWS).map((item, offset) => {
+    const start = clamp2(frame.index - 1, 0, Math.max(0, rows.length - LCD_ROWS));
+    const visible = rows.slice(start, start + LCD_ROWS).map((item2, offset) => {
       let value = "";
-      if (["number", "select", "switch"].includes(item.type)) {
-        value = `[${escapeHtml(this._lcdValue(item))}]`;
-        if (!this._canEdit(item)) value = `${lcdIcon("lock", "is-lock")}${value}`;
-      } else if (item.status) value = `[${escapeHtml(this._lcdStatus(item.status))}]`;
-      else if (item.type === "device") value = lcdIcon("lock", "is-lock");
+      if (["number", "select", "switch"].includes(item2.type)) {
+        value = `[${escapeHtml(this._lcdValue(item2))}]`;
+        if (!this._canEdit(item2)) value = `${lcdIcon("lock", "is-lock")}${value}`;
+      } else if (item2.status) value = `[${escapeHtml(this._lcdStatus(item2.status))}]`;
+      else if (item2.type === "device") value = lcdIcon("lock", "is-lock");
       const selected = start + offset === frame.index;
-      return `<div class="lcd-row${selected ? " is-selected" : ""}" data-row="${escapeHtml(item.label)}"${item.type === "device" ? ' data-readonly=""' : ""}><span>${escapeHtml(item.label)}</span><em>${value}</em></div>`;
+      return `<div class="lcd-row${selected ? " is-selected" : ""}" data-row="${escapeHtml(item2.label)}"${item2.type === "device" ? ' data-readonly=""' : ""}><span>${escapeHtml(item2.label)}</span><em>${value}</em></div>`;
     }).join("");
     const thumb = 100 / Math.max(rows.length, 1);
     return `<div class="lcd-menu" data-screen="menu"><header class="lcd-head"><b>${escapeHtml(frame.node.label)}</b><span>${frame.index + 1}/${rows.length}</span></header><div class="lcd-list"><div class="lcd-rows">${visible}</div><div class="lcd-scroll"><i class="is-up"></i><span><b style="top:${(frame.index * thumb).toFixed(2)}%;height:${thumb.toFixed(2)}%"></b></span><i class="is-down"></i></div></div></div>`;
@@ -36761,7 +37975,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
   _pagesLcd(frame) {
     const source = frame.node.source;
     const pages = this._pages(source);
-    frame.page = clamp(frame.page, 0, pages.length - 1);
+    frame.page = clamp2(frame.page, 0, pages.length - 1);
     const page = pages[frame.page];
     const units = Boolean(STATUS_PAGES[source].units);
     const title = `${frame.node.label} ${frame.page + 1}/${pages.length}`;
