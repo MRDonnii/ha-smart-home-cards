@@ -7802,7 +7802,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.7.9";
+var VERSION13 = "0.7.10";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -8165,6 +8165,10 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       card.style.flexDirection = "column";
       card.style.minHeight = compactDesktop ? "250px" : "350px";
     }
+    if (compactMobile) {
+      card.style.display = "flex";
+      card.style.flexDirection = "column";
+    }
     if (this._tab === "forecast") {
       this.shadowRoot.querySelector(".summary").style.display = "none";
       weekSlot.style.height = compactMobile ? "40px" : "43px";
@@ -8208,14 +8212,16 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
           bar.style.height = `${148 + Math.round(headerGain * 0.72)}px`;
         });
-      } else if (compactMobile && headerGain) {
-        chart.style.height = `calc(${188 + headerGain}px + var(--front-mobile-fill, 0px))`;
+      } else if (compactMobile) {
+        chart.style.flex = "1 1 0";
+        chart.style.height = "auto";
+        chart.style.minHeight = "150px";
         chart.style.paddingTop = `${22 + Math.round(headerGain * 0.28)}px`;
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
-          bar.style.height = `calc(${165 + Math.round(headerGain * 0.72)}px + var(--front-mobile-fill, 0px))`;
+          bar.style.height = "100%";
         });
       }
-      chart.style.transform = compactMobile ? "translateY(20px)" : "translateY(8px)";
+      chart.style.transform = compactMobile ? "none" : "translateY(8px)";
     }
     this.shadowRoot.querySelectorAll("[data-tab]").forEach(
       (button) => button.onclick = () => {
@@ -24707,7 +24713,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION23 = "0.8.55";
+var VERSION23 = "0.8.56";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -25329,7 +25335,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
 };
 if (!customElements.get("ha-home-header-card")) customElements.define("ha-home-header-card", HAHomeHeaderCard);
-if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-home-header-card-front", HAHomeHeaderCard);
+if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-home-header-card-front", class HAHomeHeaderCardFront extends HAHomeHeaderCard {
+});
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Card", description: "Samlet statusheader med vejr, alarmer og lokale vejreffekter", preview: true });
 console.info(`%c HA HOME HEADER CARD %c v${VERSION23} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
@@ -27755,7 +27762,7 @@ var HACardListEditor11 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor11);
 
 // src/cards/ha-home-room-overview-card-v3/ha-home-room-overview-card-v3.js
-var ROOM_OVERVIEW_VERSION2 = "3.0.1";
+var ROOM_OVERVIEW_VERSION2 = "3.0.2";
 var OPEN_STATES = /* @__PURE__ */ new Set(["on", "open", "opening"]);
 var PRESENT_STATES = /* @__PURE__ */ new Set(["on", "home", "detected"]);
 var MEDIA_OFF = /* @__PURE__ */ new Set(["off", "standby", "unavailable", "unknown"]);
@@ -27943,7 +27950,7 @@ h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1
 .btn.on.anim-wiggle ha-icon{animation:wiggle 1.4s ease-in-out infinite}
 @container roomcard (max-width:1240px){.grid{grid-template-columns:repeat(min(var(--cols,4),3),minmax(0,1fr))}}
 @container roomcard (max-width:900px){.top{flex-direction:column;align-items:stretch;gap:16px}.pills{justify-content:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@container roomcard (max-width:620px){.shell{padding:14px;border-radius:22px}.top{margin-bottom:14px}h1{font-size:28px}.sub{font-size:12.5px}.pills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pill{flex-direction:column;align-items:center;gap:5px;min-width:0;padding:9px 4px 8px;border-radius:15px;text-align:center}.pill .pi{flex:0 0 auto;width:28px;height:28px;border-radius:9px}.pill .pi ha-icon{--mdc-icon-size:16px}.pill b{font-size:15px}.pill small{margin-top:1px;font-size:8.5px;letter-spacing:.05em}.pill small em{display:none}.grid{grid-template-columns:1fr;gap:9px}}
+@container roomcard (max-width:620px){.shell{padding:14px;border-radius:22px}.top{margin-bottom:14px}h1{font-size:28px}.sub{font-size:12.5px}.pills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pill{flex-direction:column;align-items:center;gap:5px;min-width:0;padding:9px 4px 8px;border-radius:15px;text-align:center}.pill .pi{flex:0 0 auto;width:28px;height:28px;border-radius:9px}.pill .pi ha-icon{--mdc-icon-size:16px}.pill b{font-size:15px}.pill small{margin-top:1px;font-size:8.5px;letter-spacing:.05em}.pill small em{display:none}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}}
 @container roomcard (max-width:300px){.grid{grid-template-columns:1fr}}
 @container tile (max-width:250px){.in{gap:9px;min-height:214px;padding:12px}.head{grid-template-columns:auto minmax(0,1fr);gap:9px}.badge{width:36px;height:36px;border-radius:12px}.badge ha-icon{--mdc-icon-size:20px}.name{font-size:14.5px}.line{gap:5px;margin-top:3px;font-size:10.5px}.clim{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:6px;text-align:left}.temp{font-size:27px}.tu{font-size:13px}.meta{gap:6px;margin-top:0;font-size:10.5px}.chip{height:24px;gap:5px;padding:0 8px 0 6px;font-size:10px}.chips .chip:nth-child(n+3){display:none}.acts{gap:6px}.btn{width:34px;height:34px;border-radius:11px}.btn ha-icon{--mdc-icon-size:18px}.btn.light{min-width:34px;gap:6px;padding:0 9px 0 7px}.btn.light .ll{display:none}.lv{font-size:11px}.btn.opt{display:none}.btn.off{margin-left:-6px}.btn.off.show{width:34px;margin-left:0}.btn.armed{padding:0 9px}.btn .arm{font-size:10px}.spark{bottom:50px;height:60px}.glow{width:120%;top:-40%;right:-55%}}
 @container tile (max-width:170px){.btn.light .lv{display:none}.btn.light{flex:0 0 34px;justify-content:center;padding:0}}
@@ -38810,7 +38817,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION45 = "0.1.8";
+var VERSION45 = "0.1.9";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -38952,7 +38959,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     this._mobileBreakpoint = mobileBreakpoint;
     this._phoneBreakpoint = phoneBreakpoint;
     this._bindBreakpoints(mobileBreakpoint, phoneBreakpoint);
-    this.shadowRoot.innerHTML = `<style>:host{display:block}.surface.unified{padding:0;border:0;border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:0;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--ha-card-border-width:0px;--ha-card-border-color:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}.surface.unified{margin-bottom:12px}.surface.unified .mobile>.slot:last-child{margin-bottom:-17px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
+    this.shadowRoot.innerHTML = `<style>:host{display:block}.surface.unified{padding:0;border:0;border-radius:24px;background:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,none));overflow:hidden}.surface.unified .header:not(:empty){margin-bottom:0}.surface.unified .body-cards{padding-top:0;--surface:transparent;--dashboard-card-bg:transparent;--ha-card-background:transparent;--ha-card-border-width:0px;--ha-card-border-color:transparent;--card-surface:transparent;--dashboard-shadow-strong:none;--dashboard-shadow-deep:none;--dashboard-card-shadow:none;--state-card-shadow:none;--ha-card-box-shadow:none;--dashboard-left-accent-width:0}.header,.mobile{display:flex;flex-direction:column;min-width:0;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.header:not(:empty){margin-bottom:var(--desktop-gap,clamp(10px,.75vw,18px))}.layout{display:grid;grid-template-columns:var(--desktop-columns,minmax(0,.9fr) minmax(440px,1.1fr));align-items:stretch;height:var(--desktop-height,auto);min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.column{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:var(--desktop-gap,clamp(10px,.75vw,18px))}.slot{min-width:0;flex:0 0 auto}.slot.grow{display:flex;flex:1 1 0;min-height:0;overflow:hidden}.slot.grow>*{flex:1;min-width:0;min-height:0}.mobile,.vertical-only{display:none}@media(max-width:1399px) and (min-width:${mobileBreakpoint + 1}px){.layout{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}}@media(max-width:${mobileBreakpoint}px){.header:not(:empty){margin-bottom:8px}.layout{display:none}.mobile{display:flex;gap:8px}.surface.unified{margin-bottom:12px}}@media(min-width:${phoneBreakpoint + 1}px) and (max-width:${mobileBreakpoint}px){.vertical-only{display:block}}</style><div class="surface"><div class="header"></div><div class="body-cards"><div class="layout"><div class="column left"></div><div class="column right"></div></div><div class="mobile"></div></div></div>`;
     const make = (cfg, parent, index, total, growLast = false, extraClass = "", sideKey) => {
       const card = helpers.createCardElement(cfg);
       const slot = document.createElement("div");
@@ -38992,12 +38999,16 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   // Mobil: lader sidste kort (strømprisgrafen) vokse via --front-mobile-fill, så
   // afstanden fra fladens bund til den faste navbar svarer til afstanden i toppen.
   // Kun når siden i forvejen er kortere end skærmen; ellers er fyldet 0.
+  // ResizeObserver-kaldet kører før næste paint, så fyldet sættes i samme frame
+  // som indholdet ændrer højde - grafen tilpasser sig uden synligt hop. Kun
+  // header og kortene over det sidste observeres, så fyldet ikke udløser sig selv.
   _observeMobile() {
-    const mobile = this.shadowRoot?.querySelector(".mobile");
+    const mobile = this.shadowRoot?.querySelector(".mobile"), header = this.shadowRoot?.querySelector(".header");
     if (!mobile || !window.ResizeObserver) return;
     this._ro?.disconnect();
-    this._ro = new ResizeObserver(() => this._scheduleFill());
-    this._ro.observe(mobile);
+    this._ro = new ResizeObserver(() => this._fitMobile());
+    if (header) this._ro.observe(header);
+    [...mobile.children].slice(0, -1).forEach((slot) => this._ro.observe(slot));
   }
   _scheduleFill() {
     cancelAnimationFrame(this._fillRaf);
@@ -39032,7 +39043,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
       const bottom = surface.getBoundingClientRect().bottom + window.scrollY - this._fill;
       next = Math.max(0, Math.min(400, Math.round(navTop - gap - bottom)));
     }
-    if (Math.abs(next - this._fill) < 2) return;
+    if (Math.abs(next - this._fill) < 3) return;
     this._fill = next;
     if (next) last.style.setProperty("--front-mobile-fill", `${next}px`);
     else last.style.removeProperty("--front-mobile-fill");

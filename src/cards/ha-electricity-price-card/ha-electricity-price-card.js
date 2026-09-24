@@ -1,4 +1,4 @@
-const VERSION = "0.7.9";
+const VERSION = "0.7.10";
 
 class HAElectricityPriceCardEditor extends HTMLElement {
   setConfig(config) {
@@ -424,6 +424,7 @@ class HAElectricityPriceCard extends HTMLElement {
     this.style.height = fillHeight ? "100%" : "";
     card.style.height = compactMobile ? "calc(330px + var(--front-mobile-fill, 0px))" : fillHeight ? "100%" : `${desktopHeight}px`;
     if (fillHeight) { card.style.display = "flex"; card.style.flexDirection = "column"; card.style.minHeight = compactDesktop ? "250px" : "350px"; }
+    if (compactMobile) { card.style.display = "flex"; card.style.flexDirection = "column"; }
     if (this._tab === "forecast") {
       this.shadowRoot.querySelector(".summary").style.display = "none";
       weekSlot.style.height = compactMobile ? "40px" : "43px";
@@ -461,14 +462,14 @@ class HAElectricityPriceCard extends HTMLElement {
         chart.style.height = `${183 + headerGain}px`;
         chart.style.paddingTop = `${34 + Math.round(headerGain * 0.28)}px`;
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = `${148 + Math.round(headerGain * 0.72)}px`; });
-      } else if (compactMobile && headerGain) {
-        chart.style.height = `calc(${188 + headerGain}px + var(--front-mobile-fill, 0px))`;
+      } else if (compactMobile) {
+        // Phone: the chart takes whatever height the card has left, so the bars
+        // end at the card's bottom padding and follow the surrounding edge.
+        chart.style.flex = "1 1 0"; chart.style.height = "auto"; chart.style.minHeight = "150px";
         chart.style.paddingTop = `${22 + Math.round(headerGain * 0.28)}px`;
-        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = `calc(${165 + Math.round(headerGain * 0.72)}px + var(--front-mobile-fill, 0px))`; });
+        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = "100%"; });
       }
-      chart.style.transform = compactMobile
-        ? "translateY(20px)"
-        : "translateY(8px)";
+      chart.style.transform = compactMobile ? "none" : "translateY(8px)";
     }
     this.shadowRoot.querySelectorAll("[data-tab]").forEach(
       (button) =>
