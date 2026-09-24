@@ -539,3 +539,32 @@ button { font: inherit; color: inherit; }
 
 .dashboard-overview .hch-mobile-flow button:focus-visible { outline: 2px solid var(--hch-accent, #58b9ff); outline-offset: 2px; }
 .dashboard-overview .hch-mobile-flow button { touch-action: manipulation; }
+
+/* Theme-aware text and tiles. The panels around the unit follow the active HA
+   theme (light and dark); the drawing itself keeps its own dark palette. */
+:host { --text: var(--primary-text-color, #eef7fb); --muted: var(--secondary-text-color, #8da4b4); --surface-soft: color-mix(in srgb, var(--primary-text-color, #fff) 5%, transparent); --border: var(--hch-border); --hch-tile: color-mix(in srgb, var(--primary-text-color, #fff) 4%, transparent); }
+.hch5-visual > svg { --text: #eef7fb; --muted: #8da4b4; --surface-soft: #10222e; --border: #1d3442; }
+.status-chip { border-color: var(--hch-border); background: var(--hch-tile); }
+.overview-status-pills small,.control-label,.active-decision span,.active-decision small,.control-footnote,.status-action-card span,.status-action-card small,.afterheat-copy span,.afterheat-copy small,.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat),.climate-metric strong small,.climate-metric em,.pro-card-head p { color: var(--muted); }
+.overview-status-pills strong,.mini-control-title,.unit-readback strong { color: var(--text); }
+.unit-readback small,.unit-readback em { color: var(--muted); }
+.readback-icon { background: color-mix(in srgb, var(--hch-accent) 12%, transparent); border-color: color-mix(in srgb, var(--hch-accent) 30%, transparent); }
+.readback-icon.damper::before,.readback-icon.heater::before,.climate-metric.neutral > .metric-heat { color: var(--muted); }
+.text-action { color: var(--hch-accent); }
+.status-action-icon { background: color-mix(in srgb, var(--hch-accent) 14%, transparent); color: var(--hch-accent); }
+.status-action-icon.flame { background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); }
+.setpoint-stepper { border-color: var(--hch-border); }
+.climate-metric::after { background: color-mix(in srgb, var(--primary-text-color, #fff) 10%, transparent); }
+.pro-segment button:hover,.pro-levels button:hover,.mini-buttons button:hover,.setpoint-stepper button:hover,.status-action-card > button:hover,.fireplace-actions button:hover { border-color: var(--hch-accent); color: var(--text); background: color-mix(in srgb, var(--hch-accent) 10%, transparent); }
+.afterheat-lockout { background: color-mix(in srgb, var(--orange) 12%, transparent); color: var(--text); }
+@container hch-card (max-width: 660px) {
+  .hch-mobile-reading small { color: var(--muted); }
+  .hch-mobile-reading strong { color: var(--text); }
+}
+/* Portrait phones float the readings over the drawing on a dark plate. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-mobile-reading small { color: #a6c1d0; }
+    .dashboard-overview .hch-mobile-reading strong { color: #eefaff; }
+  }
+}

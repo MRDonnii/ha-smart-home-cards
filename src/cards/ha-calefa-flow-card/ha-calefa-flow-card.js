@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.0";
+const CALEFA_FLOW_CARD_VERSION = "0.9.1";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -2132,6 +2132,23 @@ const CALEFA_STYLES = `
   .cf-chart-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;color:var(--cf-muted);font-size:clamp(10px,1cqw,12px)}.cf-chart-legend span{display:flex;align-items:center;gap:5px}
   @container calefa-card (max-width:520px){.cf-today-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-stat-split{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:2px 14px}.cf-stat-split small{flex:1 0 100%}.cf-stat-split span{font-size:12px}.cf-stat-split b{margin-left:4px}.cf-stat strong{font-size:17px}}
   @media(prefers-reduced-motion:reduce){.cf-bar{transition:none}}
+
+  /* Theme-aware surroundings (light and dark themes). The unit photo and the
+     controller replica keep their own palette. */
+  :host{--cf-text:var(--primary-text-color,#f2f7fa);--cf-muted:var(--secondary-text-color,rgba(191,211,226,.72));--cf-line:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)));--cf-panel:var(--card-background-color,#0b1924)}
+  ha-card{border-color:var(--cf-line);background:var(--dashboard-card-bg,var(--ha-card-background,var(--cf-panel)));box-shadow:var(--dashboard-card-shadow,var(--ha-card-box-shadow,0 18px 52px rgba(0,0,0,.3)))}
+  .cf-tile{background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 11%,transparent),color-mix(in srgb,var(--cf-panel) 90%,transparent) 72%)}
+  .cf-tile small,.cf-tile[data-tone="component"] strong{color:var(--cf-text)}
+  .cf-delta{background:var(--cf-panel);box-shadow:0 0 0 3px color-mix(in srgb,var(--cf-panel) 90%,transparent),0 0 14px color-mix(in srgb,var(--cf-delta-tone) 35%,transparent);color:var(--cf-text)}
+  .cf-footer ha-icon{color:var(--cf-muted)}
+  .cf-stat{background:color-mix(in srgb,var(--cf-text) 5%,transparent)}
+  .cf-chart-grid{stroke:color-mix(in srgb,var(--cf-text) 10%,transparent)}
+  .cf-bar-slot{fill:color-mix(in srgb,var(--cf-text) 4%,transparent)}
+  .cf-hour.is-future .cf-bar-slot{fill:color-mix(in srgb,var(--cf-text) 2%,transparent)}
+  .cf-fault-panel{background:var(--cf-panel);color:var(--cf-text)}
+  .cf-fault-panel header button{border-color:var(--cf-line);background:color-mix(in srgb,var(--cf-text) 7%,transparent);color:var(--cf-text)}
+  .cf-fault-list p,.cf-fault-row small,.cf-fault-row>ha-icon:last-child{color:var(--cf-muted)}
+  .cf-fault-row{background:color-mix(in srgb,var(--cf-text) 4%,transparent);color:var(--cf-text)}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
