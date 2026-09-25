@@ -39328,7 +39328,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION45 = "0.1.10";
+var VERSION45 = "0.1.11";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -39572,7 +39572,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
         }
         return;
       }
-      const gap = Math.max(0, Number(this.config?.mobile_nav_gap ?? 8));
+      const gap = Math.max(0, Number(this.config?.mobile_nav_gap ?? 14));
       const natural = surface.offsetHeight - this._fill;
       next = Math.max(0, Math.min(600, Math.round(window.innerHeight - nav - gap - this._staticTop(surface) - natural)));
     }
