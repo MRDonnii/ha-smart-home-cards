@@ -18535,23 +18535,25 @@ button { font: inherit; color: inherit; }
 :host([light]) svg stop[stop-color="#40515b" i]{stop-color:#a5b5be}
 :host([light]) svg stop[stop-color="#455760" i]{stop-color:#a0b1b9}
 :host([light]) svg stop[stop-color="#4a5d68" i]{stop-color:#99aab3}
-:host([light]) svg stop[stop-color="#4abfff" i]{stop-color:#0d9ff0}
 :host([light]) svg stop[stop-color="#596b76" i]{stop-color:#8a9ba5}
-:host([light]) svg stop[stop-color="#59dfa1" i]{stop-color:#31cb84}
 :host([light]) svg stop[stop-color="#5f7a8a" i]{stop-color:#778f9e}
 :host([light]) svg stop[stop-color="#68bcf0" i]{stop-color:#2194db}
 :host([light]) svg stop[stop-color="#6b7d88" i]{stop-color:#788993}
-:host([light]) svg stop[stop-color="#6bd2bc" i]{stop-color:#42bba1}
 :host([light]) svg stop[stop-color="#7b8991" i]{stop-color:#6f7c83}
 :host([light]) svg stop[stop-color="#8a99a2" i]{stop-color:#5e6c74}
 :host([light]) svg stop[stop-color="#8e9aa1" i]{stop-color:#5f6a70}
 :host([light]) svg stop[stop-color="#a8ddff" i]{stop-color:#043453}
 :host([light]) svg stop[stop-color="#c9d8e0" i]{stop-color:#202e35}
-:host([light]) svg stop[stop-color="#ff7171" i]{stop-color:#f00d0d}
-:host([light]) svg stop[stop-color="#ff9345" i]{stop-color:#f06c0d}
-:host([light]) svg stop[stop-color="#ffae5a" i]{stop-color:#f0800d}
-:host([light]) svg stop[stop-color="#fff" i]{stop-color:#212121}
 :host([light]) svg *[stroke="#aab9c1" i]{stroke:#3f4d54}
+/* Light theme air flow: the fog keeps its own colours (masks and flow gradients are not
+   remapped) and gets more cover so it reads on the light cabinet. */
+:host([light]) .hch-fog-a { opacity: .5; }
+:host([light]) .hch-fog-b { opacity: .36; }
+:host([light]) .hch-fog[style*="0s"], :host([light]) .hch-fog-a[style*="0s"] { opacity: .18; }
+:host([light]) .hch-air-wisps.hch-fog-supply { color: #1f9e8f; }
+:host([light]) .hch-air-wisps.hch-fog-extract { color: #e0762a; }
+:host([light]) .hch-air-wisp-wide { opacity: .35; }
+:host([light]) .hch-air-wisp-fine { opacity: .6; }
 @media (max-width: 660px) {
   @container hch-card (max-width: 660px) {
     :host([light]) .dashboard-overview .hch-mobile-reading { background: rgb(240 246 249 / 92%); box-shadow: 0 3px 12px rgb(0 0 0 / 14%); }
