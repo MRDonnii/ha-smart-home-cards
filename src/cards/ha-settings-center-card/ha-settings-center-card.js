@@ -689,7 +689,7 @@ class HASettingsCenterCard extends HTMLElement {
     const close = document.createElement("button");
     close.textContent = "Luk ✕";
     close.setAttribute("aria-label", "Luk problemoversigt");
-    close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,12,18,.92);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
+    close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:var(--card-background-color,rgba(8,12,18,.92));color:var(--primary-text-color,#fff);font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const title = this._esc(item.name || "Systemstatus");
     const icon = this._esc(item.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem
