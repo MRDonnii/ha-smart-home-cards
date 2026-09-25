@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.8 */
+/* MRDonnii Smart Home Cards v0.4.9 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -19602,7 +19602,7 @@ var HACardListEditor4 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor4);
 
 // src/cards/ha-heating-diagnostics-card/ha-heating-diagnostics-card.js
-var VERSION17 = "0.4.5";
+var VERSION17 = "0.4.6";
 var HAHeatingDiagnosticsCard = class extends HTMLElement {
   constructor() {
     super();
@@ -19610,6 +19610,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     this._config = {};
     this._hass = void 0;
     this._signature = "";
+    this._openRooms = /* @__PURE__ */ new Set();
+    this._history = {};
   }
   static getStubConfig() {
     return { title: "Varmeoptimering", rooms: [] };
@@ -19623,12 +19625,17 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     if (!config || !Array.isArray(config.rooms)) throw new Error("Varmeoptimering kr\xE6ver en rooms-liste");
     this._config = { title: "Varmeoptimering", animation: true, learning_hours: 48, ...config };
     this._signature = "";
+    this._openRooms = /* @__PURE__ */ new Set();
+    this._history = {};
     this._render();
   }
   set hass(hass) {
     this._hass = hass;
     const ids = [this._config.total_demand, this._config.data_problem];
-    for (const room of this._config.rooms || []) ids.push(...Object.values(room));
+    for (const room of this._config.rooms || []) {
+      const linked = this._linked(room);
+      ids.push(...Object.values(room), ...linked.openings, linked.externalHeat);
+    }
     const signature = JSON.stringify(ids.filter((id) => typeof id === "string" && id.includes(".")).map((id) => {
       const entity = hass?.states?.[id];
       return [
@@ -19639,7 +19646,10 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
         entity?.attributes?.hvac_action,
         entity?.attributes?.baseline_learning_hours,
         entity?.attributes?.baseline_ready,
-        entity?.attributes?.deviation_percent
+        entity?.attributes?.deviation_percent,
+        entity?.attributes?.current_w_per_degree,
+        entity?.attributes?.learned_baseline_w_per_degree,
+        entity?.attributes?.recent_observation_hours
       ];
     }));
     if (signature === this._signature) return;
@@ -19696,38 +19706,192 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const noData = [valve, output, utilisation, loss].some((value) => value === void 0) || !climate || !demand;
     const coldUnderLoad = delta !== void 0 && delta < -0.7 && valve !== void 0 && valve >= 65;
     const notResponding = heatingPower !== void 0 && loss !== void 0 && valve !== void 0 && valve >= 65 && heatingPower <= loss * 1.05;
-    let level = "ok", title = "Ser normal ud", detail = "Ingen tydelige varmeproblemer";
+    let level = "ok", reason = "ok", title = "Ser normal ud", detail = "Ingen tydelige varmeproblemer";
     if (noData) {
       level = "problem";
+      reason = "no-data";
       title = "Manglende data";
       detail = "En eller flere diagnosem\xE5linger er utilg\xE6ngelige";
     } else if (open) {
       level = "info";
+      reason = "open";
       title = "\xC5bning registreret";
       detail = "L\xE6ring er normalt sat p\xE5 pause, mens vindue eller d\xF8r er \xE5ben";
     } else if (stressed) {
       level = "problem";
+      reason = "stressed";
       title = "Radiator belastet";
       detail = "Ventilen st\xE5r fuldt \xE5ben, men rummet n\xE5r ikke sit m\xE5l. Tjek om radiatoren er luftet, eller om den er for lille til rummet.";
     } else if (coldUnderLoad) {
       level = "problem";
+      reason = "cold";
       title = "Koldt trods \xE5ben ventil";
       detail = "Rummet er koldere end m\xE5let, selv om ventilen er h\xF8jt \xE5ben. Tjek for kuldetr\xE6k fra vindue/d\xF8r, eller om ventilen sidder fast.";
     } else if (notResponding) {
       level = "problem";
+      reason = "no-effect";
       title = "Ingen effekt fra varmen";
       detail = "L\xE6rt varmeeffekt matcher n\xE6sten rummets varmetab - radiatoren giver muligvis ikke reel varme. Tjek freml\xF8bet til rummet, og om ventilen faktisk \xE5bner.";
     } else if (demandStatus === "deviating" && baselineReady) {
       level = "warn";
+      reason = "deviating";
       title = "Afviger fra normalen";
       detail = deviation === void 0 ? "Vejrkorrigeret varmebehov ligger uden for rummets l\xE6rte m\xF8nster" : deviation > 0 ? `Bruger ${this._format(deviation, 0)}% mere varme end vejrkorrigeret normalt` : `Bruger ${this._format(Math.abs(deviation), 0)}% mindre varme end vejrkorrigeret normalt`;
     } else if (!baselineReady || demandStatus === "learning") {
       level = "learning";
+      reason = "learning";
       title = "Indl\xE6rer rummet";
       detail = `${this._format(Math.min(learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer indsamlet`;
     }
     const active = (valve || 0) > 1 || (output || 0) > 1;
-    return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, title, detail, active };
+    return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active };
+  }
+  // Dør/vindue- og ekstra-varme-sensorer, som Better Thermostat selv peger på fra rummets termostat.
+  _linked(room) {
+    const attributes = this._hass?.states?.[room.climate]?.attributes || {};
+    const openings = [attributes.window_sensor_entity_id, attributes.door_sensor_entity_id].filter((id, index, list) => typeof id === "string" && id.includes(".") && list.indexOf(id) === index);
+    const externalHeat = typeof attributes.external_heat_entity_id === "string" && attributes.external_heat_entity_id.includes(".") ? attributes.external_heat_entity_id : void 0;
+    return { openings, externalHeat };
+  }
+  _historyHours(room) {
+    const observed = Number(this._entity(room.demand_status)?.attributes?.recent_observation_hours);
+    const hours = Number.isFinite(observed) && observed > 0 ? observed : Number(this._config.learning_hours) || 48;
+    return Math.min(240, Math.max(6, hours));
+  }
+  _duration(ms) {
+    const minutes = Math.round(ms / 6e4);
+    if (minutes < 1) return "under 1 min";
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60), rest = minutes % 60;
+    return rest ? `${hours} t ${rest} min` : `${hours} t`;
+  }
+  // Tæller perioder med tilstanden "on" i historikken og deres samlede varighed inden for vinduet.
+  _onPeriods(states, start, end) {
+    let count = 0, onMs = 0, since;
+    states.forEach((item2, index) => {
+      const at = Math.min(end, Math.max(start, (Number(item2.lc ?? item2.lu) || 0) * 1e3));
+      if (item2.s === "on" && since === void 0) {
+        since = at;
+        if (index > 0) count += 1;
+      } else if (item2.s !== "on" && since !== void 0) {
+        onMs += at - since;
+        since = void 0;
+      }
+    });
+    if (since !== void 0) onMs += end - since;
+    return { count, onMs };
+  }
+  async _loadHistory(index) {
+    const room = this._config.rooms?.[index];
+    if (!room || !this._hass?.callWS) return;
+    const linked = this._linked(room);
+    const ids = [...linked.openings, linked.externalHeat].filter(Boolean);
+    const cached = this._history[index];
+    if (!ids.length || cached?.loading || cached && Date.now() - cached.at < 3e5) return;
+    const hours = this._historyHours(room);
+    const end = Date.now(), start = end - hours * 36e5;
+    this._history[index] = { loading: true, at: end, hours };
+    try {
+      const result = await this._hass.callWS({ type: "history/history_during_period", start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString(), entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+      const rows = {};
+      for (const id of ids) rows[id] = this._onPeriods(Array.isArray(result?.[id]) ? result[id] : [], start, end);
+      this._history[index] = { at: Date.now(), hours, rows };
+    } catch (error) {
+      this._history[index] = { at: Date.now(), hours, failed: true };
+    }
+    if (this._openRooms.has(index)) this._render();
+  }
+  // Forklaringen bag diagnosen: tallene den bygger på, hvad der kan ses lige nu, og hvad man kan tjekke.
+  _explain(room, s, index) {
+    const demand = s.demand?.attributes || {};
+    const climate = s.climate?.attributes || {};
+    const name = this._escape(room.name);
+    const perDegree = Number(demand.current_w_per_degree);
+    const baseline = Number(demand.learned_baseline_w_per_degree);
+    const observed = Number(demand.recent_observation_hours);
+    const history2 = this._history[index];
+    const hoursLabel = `${this._format(history2?.hours ?? this._historyHours(room), 0)} t`;
+    const facts = [], checks = [];
+    let lead = this._escape(s.detail), note = "", tips = [];
+    const temperature = () => facts.push(["Temperatur", `${this._format(s.current, 1)}\xB0 \xB7 m\xE5l ${this._format(s.target, 1)}\xB0`]);
+    const valve = () => facts.push(["Ventil", `${this._format(s.valve)} %`]);
+    const perDegreeFacts = () => {
+      if (Number.isFinite(perDegree)) facts.push(["Varmebehov nu", `${this._format(perDegree, 1)} W/\xB0C`]);
+      if (Number.isFinite(baseline)) facts.push(["Normalt for rummet", `${this._format(baseline, 1)} W/\xB0C`]);
+    };
+    if (s.reason === "deviating") {
+      const more = s.deviation === void 0 || s.deviation > 0;
+      if (s.deviation !== void 0) lead = `${name} bruger ${this._format(Math.abs(s.deviation), 0)} % ${more ? "mere" : "mindre"} varme, end rummet plejer, n\xE5r der tages h\xF8jde for udetemperaturen.`;
+      perDegreeFacts();
+      if (s.deviation !== void 0) facts.push(["Afvigelse", `${s.deviation > 0 ? "+" : "\u2212"}${this._format(Math.abs(s.deviation), 0)} %`]);
+      if (Number.isFinite(observed)) facts.push(["M\xE5lt over", `${this._format(observed, 1)} timer`]);
+      note = "W/\xB0C er den varme, rummet bruger for hver grad, det er koldere ude end inde. Tallet for de seneste timer sammenlignes med det m\xF8nster, rummet har l\xE6rt.";
+      tips = more ? ["Har port, d\xF8r eller vindue st\xE5et \xE5ben l\xE6nge eller v\xE6ret \xE5bnet tit?", "Er m\xE5ltemperaturen h\xE6vet, eller har rummet v\xE6ret holdt varmere end normalt?", "Er der kommet tr\xE6k, udluftning eller ventilation, som rummet ikke plejer at have?", "Har en anden varmekilde, fx AC eller elvarme, v\xE6ret slukket, s\xE5 radiatoren skulle levere mere?"] : ["Har en anden varmekilde, fx AC, sol eller maskiner, varmet rummet?", "Er m\xE5ltemperaturen s\xE6nket, eller har varmen v\xE6ret slukket en del af tiden?", "\xC5bner ventilen, n\xE5r termostaten kalder p\xE5 varme?"];
+    } else if (s.reason === "stressed") {
+      const stress = this._entity(room.stressed)?.attributes || {};
+      lead = "Ventilen st\xE5r helt \xE5ben, men rummet n\xE5r ikke sit m\xE5l.";
+      valve();
+      temperature();
+      if (Number.isFinite(Number(stress.temperature_deficit))) facts.push(["Mangler", `${this._format(Number(stress.temperature_deficit), 1)}\xB0`]);
+      if (Number.isFinite(Number(stress.flow_temperature))) facts.push(["Freml\xF8b", `${this._format(Number(stress.flow_temperature), 1)}\xB0`]);
+      tips = ["Luft radiatoren.", "Tjek at ventilen \xE5bner helt, n\xE5r termostaten kalder p\xE5 varme.", "Tjek at freml\xF8bet er varmt nok.", "Radiatoren kan v\xE6re for lille til rummet."];
+    } else if (s.reason === "cold") {
+      lead = `Rummet er ${this._format(Math.abs(s.delta), 1)}\xB0 under m\xE5let, selv om ventilen er ${this._format(s.valve)} % \xE5ben.`;
+      temperature();
+      valve();
+      tips = ["Tjek for kuldetr\xE6k fra vindue, d\xF8r eller port.", "Tjek om ventilen sidder fast.", "Luft radiatoren."];
+    } else if (s.reason === "no-effect") {
+      lead = `Radiatoren varmer n\xE6sten ikke mere, end rummet taber, selv om ventilen er ${this._format(s.valve)} % \xE5ben. Den giver muligvis ikke reel varme.`;
+      facts.push(["Varmeevne", `${this._format(s.heatingPower, 4)} K/min`], ["Varmetab", `${this._format(s.loss, 4)} K/min`]);
+      valve();
+      tips = ["Tjek freml\xF8bet til rummet.", "Tjek om ventilen faktisk \xE5bner.", "Luft radiatoren."];
+    } else if (s.reason === "no-data") {
+      lead = "Diagnosen kan ikke beregnes, fordi en eller flere m\xE5linger mangler.";
+      for (const [key, label] of [["climate", "Termostat"], ["demand_status", "Behovsstatus"], ["valve", "Ventil\xE5bning"], ["output", "Varmeafgivelse"], ["utilisation", "Kapacitetsudnyttelse"], ["loss", "L\xE6rt varmetab"]]) {
+        const id = room[key];
+        const raw = id ? this._hass?.states?.[id] : void 0;
+        const problem = !id ? "Ikke sat op" : !raw ? "Findes ikke" : raw.state === "unavailable" ? "Utilg\xE6ngelig" : ["unknown", ""].includes(raw.state) ? "Ukendt" : "";
+        if (problem) checks.push({ flag: true, icon: "mdi:alert-circle-outline", label, value: problem, sub: id || "" });
+      }
+      tips = ["Tjek at enhederne er online og har batteri.", "Genindl\xE6s integrationen, hvis m\xE5lingerne bliver ved med at mangle."];
+    } else if (s.reason === "open") {
+      lead = "Et vindue eller en d\xF8r st\xE5r \xE5ben, s\xE5 l\xE6ringen holder pause, indtil den lukkes igen.";
+      temperature();
+    } else if (s.reason === "learning") {
+      lead = `Rummet er ved at blive l\xE6rt at kende: ${this._format(Math.min(s.learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer er samlet. Derefter sammenligner diagnosen varmebehovet med rummets normale m\xF8nster.`;
+    } else {
+      lead = "Rummets varmebehov ligger inden for det m\xF8nster, det har l\xE6rt, og der er ingen tegn p\xE5 problemer.";
+      perDegreeFacts();
+    }
+    for (const id of this._linked(room).openings) {
+      const entity = this._hass?.states?.[id];
+      if (!entity) continue;
+      const open = entity.state === "on";
+      const row = history2?.rows?.[id];
+      const sub = row ? row.count ? `\xC5bnet ${row.count} ${row.count === 1 ? "gang" : "gange"} de seneste ${hoursLabel} \xB7 \xE5ben i alt ${this._duration(row.onMs)}` : row.onMs ? `\xC5ben i ${this._duration(row.onMs)} de seneste ${hoursLabel}` : `Ikke \xE5bnet de seneste ${hoursLabel}` : history2?.loading ? "Henter historik \u2026" : "";
+      checks.push({ flag: open, hint: !!row?.count, icon: open ? "mdi:door-open" : "mdi:door-closed", label: entity.attributes?.friendly_name || id, value: open ? "\xC5ben nu" : "Lukket nu", sub });
+    }
+    const externalHeat = this._linked(room).externalHeat;
+    const heatEntity = externalHeat ? this._hass?.states?.[externalHeat] : void 0;
+    if (heatEntity) {
+      const row = history2?.rows?.[externalHeat];
+      const sub = row ? row.onMs ? `Aktiv i ${this._duration(row.onMs)} de seneste ${hoursLabel}` : `Ikke aktiv de seneste ${hoursLabel}` : history2?.loading ? "Henter historik \u2026" : "";
+      checks.push({ flag: heatEntity.state === "on", hint: !!row?.onMs, icon: "mdi:heat-wave", label: "Anden varmekilde", value: heatEntity.state === "on" ? "Aktiv nu" : "Ikke aktiv nu", sub });
+    }
+    if (s.climate && !["no-data"].includes(s.reason)) checks.push({ flag: false, icon: "mdi:radiator", label: "Radiator", value: climate.hvac_action === "heating" ? "Varmer nu" : "Varmer ikke nu", sub: `Ventil ${this._format(s.valve)} %` });
+    if (climate.thermal_learning_paused === true) checks.push({ flag: true, icon: "mdi:pause-circle-outline", label: "L\xE6ring", value: "P\xE5 pause", sub: "" });
+    if (Array.isArray(climate.unavailable_sensors) && climate.unavailable_sensors.length) checks.push({ flag: true, icon: "mdi:lan-disconnect", label: "Utilg\xE6ngelige sensorer", value: String(climate.unavailable_sensors.length), sub: climate.unavailable_sensors.join(", ") });
+    if (history2?.failed) checks.push({ flag: false, icon: "mdi:history", label: "Historik", value: "Kunne ikke hentes", sub: "" });
+    const actions = [room.demand_status ? `<button type="button" data-more-info="${this._escape(room.demand_status)}"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon>Vis historik</button>` : "", room.climate ? `<button type="button" data-more-info="${this._escape(room.climate)}"><ha-icon icon="mdi:thermostat"></ha-icon>\xC5bn termostat</button>` : ""].join("");
+    return `<section class="explain" id="explain-${index}">
+      <h4><ha-icon icon="mdi:stethoscope"></ha-icon>Hvorfor: ${this._escape(s.title)}</h4>
+      <p>${lead}</p>
+      ${facts.length ? `<div class="explain-facts">${facts.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join("")}</div>` : ""}
+      ${note ? `<p class="explain-note">${note}</p>` : ""}
+      ${checks.length ? `<div class="explain-checks"><b>Lige nu</b>${checks.map((check) => `<div class="explain-check${check.flag ? " flag" : check.hint ? " hint" : ""}"><ha-icon icon="${check.icon}"></ha-icon><div><span>${this._escape(check.label)}</span>${check.sub ? `<small>${this._escape(check.sub)}</small>` : ""}</div><strong>${this._escape(check.value)}</strong></div>`).join("")}</div>` : ""}
+      ${tips.length ? `<div class="explain-tips"><b>Det kan du tjekke</b><ul>${tips.map((tip) => `<li>${tip}</li>`).join("")}</ul></div>` : ""}
+      ${actions ? `<div class="explain-actions">${actions}</div>` : ""}
+    </section>`;
   }
   _metric(label, value, icon3 = "") {
     return `<div class="metric">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
@@ -19740,14 +19904,16 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const balanceMax = Math.max(s.heatingPower || 0, s.loss || 0, 1e-3);
     const gainWidth = Math.min(100, (s.heatingPower || 0) / balanceMax * 100);
     const lossWidth = Math.min(100, (s.loss || 0) / balanceMax * 100);
-    const diagnosticEntity = room.demand_status || room.climate;
-    return `<article class="room ${compact ? "compact" : ""} ${s.level} ${s.active ? "active" : ""}" data-index="${index}" tabindex="0" role="button" aria-label="Diagnose for ${this._escape(room.name)}">
+    const open = this._openRooms.has(index);
+    const flagged = s.level === "problem" || s.level === "warn";
+    return `<article class="room ${compact ? "compact" : ""} ${s.level} ${s.active ? "active" : ""} ${open ? "open" : ""}" data-index="${index}">
       <div class="room-ambient"></div>
       <div class="room-header">
         <div class="identity"><ha-icon icon="${this._escape(room.icon || "mdi:radiator")}"></ha-icon><div><h3>${this._escape(room.name)}</h3><span class="diagnosis"><i></i>${s.title}</span>${room.loop_note ? `<span class="loop-note"><ha-icon icon="mdi:pipe"></ha-icon>${this._escape(room.loop_note)}</span>` : ""}</div></div>
         <div class="temp"><strong>${this._format(s.current, 1)}\xB0</strong><span>M\xE5l ${this._format(s.target, 1)}\xB0</span></div>
       </div>
-      <div class="diagnostic-note"><ha-icon icon="${s.level === "problem" ? "mdi:alert-circle" : s.level === "warn" ? "mdi:alert" : s.level === "learning" ? "mdi:brain" : s.level === "info" ? "mdi:information" : "mdi:check-decagram"}"></ha-icon><span>${s.detail}</span></div>
+      <div class="diagnostic-note"><ha-icon icon="${s.level === "problem" ? "mdi:alert-circle" : s.level === "warn" ? "mdi:alert" : s.level === "learning" ? "mdi:brain" : s.level === "info" ? "mdi:information" : "mdi:check-decagram"}"></ha-icon><span>${s.detail}</span>${flagged ? `<span class="why">${open ? "Skjul" : "Se hvorfor"}<ha-icon icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></span>` : ""}</div>
+      ${open ? this._explain(room, s, index) : ""}
       <div class="live-panel">
         <div class="valve-wrap">
           <div class="valve-gauge" style="--valve:${valve * 3.6}deg"><div><strong>${this._format(s.valve)}%</strong><span>Ventil</span></div></div>
@@ -19770,8 +19936,19 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
         ${this._metric("Rumareal", `${this._format(s.area, 1)} m\xB2`, "mdi:set-square")}
       </div>
       <div class="deviation ${s.deviation === void 0 ? "empty" : s.deviation > 0 ? "over" : "under"}"><span>Afvigelse fra l\xE6rt normal</span><strong>${s.deviation === void 0 ? "Afventer data" : `<ha-icon icon="${s.deviation > 0 ? "mdi:arrow-up-bold" : "mdi:arrow-down-bold"}"></ha-icon>${s.deviation > 0 ? "+" : ""}${this._format(s.deviation, 0)}%`}</strong></div>
-      <button class="details" data-entity="${this._escape(diagnosticEntity)}">Se diagnosedata <ha-icon icon="mdi:chevron-right"></ha-icon></button>
+      <button type="button" class="details" data-index="${index}" aria-expanded="${open}" aria-controls="explain-${index}">${open ? "Skjul diagnosedata" : "Se diagnosedata"} <ha-icon icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></button>
     </article>`;
+  }
+  _toggle(index, open = !this._openRooms.has(index)) {
+    if (!Number.isInteger(index) || !this._config.rooms?.[index]) return;
+    if (open) this._openRooms.add(index);
+    else this._openRooms.delete(index);
+    this._render();
+    if (!open) return;
+    this._loadHistory(index);
+    const explain = this.shadowRoot.getElementById(`explain-${index}`);
+    explain?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    explain?.animate([{ boxShadow: "0 0 0 3px var(--tone)" }, { boxShadow: "0 0 0 0 transparent" }], { duration: 1100, easing: "ease-out" });
   }
   _open(entityId) {
     if (!entityId) return;
@@ -19806,6 +19983,12 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       .capacity,.learning-bar{margin-top:12px}.capacity>div:first-child,.learning-bar>div:first-child{display:flex;justify-content:space-between;margin-bottom:5px;color:var(--secondary-text-color);font-size:10px}.capacity strong,.learning-bar strong{color:var(--primary-text-color)}.capacity .track i{background:linear-gradient(90deg,var(--good),var(--heat))}.learning-bar .track i{background:linear-gradient(90deg,#6967ff,var(--learn));position:relative}.learning-bar .track i:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:scan 2s linear infinite}
       .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:13px}.metric{position:relative;display:flex;align-items:center;gap:9px;min-width:0;min-height:54px;padding:9px 10px;border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:10px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 8%,transparent),rgba(0,0,0,.03));box-shadow:0 3px 10px rgba(0,0,0,.08)}.metric ha-icon{flex:0 0 21px;width:21px;height:21px;--mdc-icon-size:21px;color:var(--tone)}.metric>div{min-width:0}.metric span{display:block;overflow:hidden;text-overflow:ellipsis;color:var(--secondary-text-color);font-size:9px;text-transform:uppercase;white-space:nowrap}.metric strong{display:block;margin-top:3px;font-size:12px;line-height:1.1;white-space:nowrap}.deviation{display:flex;justify-content:space-between;gap:12px;margin-top:11px;padding:9px 11px;border-radius:9px;background:color-mix(in srgb,var(--tone) 9%,transparent);font-size:10px}.deviation strong{display:flex;align-items:center;gap:4px;color:var(--tone);white-space:nowrap}.deviation strong ha-icon{width:13px;height:13px;--mdc-icon-size:13px}.deviation.empty strong{color:var(--secondary-text-color);font-weight:600}.deviation.over strong{color:var(--bad)}.deviation.under strong{color:var(--accent)}
       .details{display:flex;align-items:center;justify-content:flex-end;width:100%;margin-top:auto;padding:14px 0 1px;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:10px;cursor:pointer}.details:hover{color:var(--tone)}.details ha-icon{flex:0 0 17px;width:17px;height:17px;--mdc-icon-size:17px;margin-left:5px}.no-animation *{animation:none!important}
+      .room{cursor:pointer}.why{display:inline-flex;align-items:center;gap:2px;margin-left:auto;padding-left:8px;color:var(--tone);font-size:10px;font-weight:800;white-space:nowrap}.why ha-icon{flex:0 0 16px;width:16px;height:16px;--mdc-icon-size:16px}.diagnostic-note span:not(.why){flex:1}
+      .attention-list{cursor:pointer}.attention-chip{flex-direction:row;align-items:center;gap:8px;color:var(--primary-text-color)}.attention-chip .chip-text{display:flex;flex-direction:column;gap:1px;font-size:inherit;color:inherit;white-space:normal}.attention-chip>ha-icon{flex:0 0 16px;width:16px;height:16px;--mdc-icon-size:16px;color:var(--secondary-text-color)}
+      .explain{margin:0 0 12px;padding:13px 14px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--edge));border-radius:14px;background:color-mix(in srgb,var(--tone) 7%,transparent);cursor:auto;font-size:11px;line-height:1.45}.explain h4{display:flex;align-items:center;gap:7px;margin:0 0 6px;color:var(--tone);font-size:12px}.explain h4 ha-icon{flex:0 0 17px;width:17px;height:17px;--mdc-icon-size:17px}.explain p{margin:0 0 10px}.explain .explain-note{color:var(--secondary-text-color);font-size:10px}
+      .explain-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px;margin-bottom:10px}.explain-facts div{padding:7px 9px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-radius:10px}.explain-facts span{display:block;color:var(--secondary-text-color);font-size:9px;text-transform:uppercase;letter-spacing:.06em}.explain-facts strong{display:block;margin-top:2px;font-size:13px;white-space:nowrap}
+      .explain-checks,.explain-tips{margin-bottom:10px}.explain-checks>b,.explain-tips>b{display:block;margin-bottom:4px;color:var(--secondary-text-color);font-size:9px;text-transform:uppercase;letter-spacing:.08em}.explain-check{display:flex;align-items:center;gap:9px;padding:6px 0;border-top:1px solid var(--edge)}.explain-check:first-of-type{border-top:0}.explain-check ha-icon{flex:0 0 18px;width:18px;height:18px;--mdc-icon-size:18px;color:var(--secondary-text-color)}.explain-check.flag ha-icon,.explain-check.flag strong,.explain-check.hint ha-icon{color:var(--tone)}.explain-check>div{flex:1;min-width:0}.explain-check span,.explain-check small{display:block}.explain-check small{color:var(--secondary-text-color);font-size:10px}.explain-check strong{font-size:11px;white-space:nowrap}
+      .explain-tips ul{margin:0;padding-left:17px}.explain-tips li{margin:2px 0}.explain-actions{display:flex;flex-wrap:wrap;gap:6px}.explain-actions button{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--edge));border-radius:10px;background:transparent;color:var(--primary-text-color);font:inherit;font-size:10px;font-weight:700;cursor:pointer}.explain-actions button:hover{border-color:var(--tone)}.explain-actions ha-icon{flex:0 0 16px;width:16px;height:16px;--mdc-icon-size:16px;color:var(--tone)}
       @keyframes pulse{50%{opacity:.35;transform:scale(1.5)}}@keyframes flow{to{transform:translateX(calc(100vw + 80px))}}@keyframes breathe{50%{opacity:.17;transform:scale(1.15)}}@keyframes particle{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:.9}100%{opacity:0;transform:translateY(-70px) translateX(10px) scale(1.6)}}@keyframes scan{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
       @media(max-width:760px){.shell{padding:15px}header{display:block}.overview{justify-content:flex-start;margin-top:12px}.overview>div{flex:1}.room-grid{grid-template-columns:1fr}.flow-node small{display:none}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
       @media(max-width:420px){.flow-node.model{display:none}.live-panel{grid-template-columns:82px 1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -19819,31 +20002,31 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       </div></header>
       ${attentionRooms.length ? `<div class="attention-list">
         <div class="attention-label"><ha-icon icon="mdi:alert-decagram-outline"></ha-icon>Kr\xE6ver et kig</div>
-        <div class="attention-items">${attentionRooms.map(({ room, state }) => `<button class="attention-chip ${state.level}" data-jump="${rooms.indexOf(room)}"><strong>${this._escape(room.name)}</strong><span>${state.title}</span></button>`).join("")}</div>
+        <div class="attention-items">${attentionRooms.map(({ room, state }) => `<button type="button" class="attention-chip ${state.level}" data-jump="${rooms.indexOf(room)}"><span class="chip-text"><strong>${this._escape(room.name)}</strong><span>${state.title}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button>`).join("")}</div>
       </div>` : ""}
       <div class="flow"><div class="flow-line"></div><div class="flow-node source"><ha-icon icon="mdi:radiator"></ha-icon><div><small>M\xE5linger</small><strong>${active} aktive</strong></div></div><div class="flow-node model"><ha-icon icon="mdi:brain"></ha-icon><div><small>L\xE6ringsmodel</small><strong>${learning} l\xE6rer</strong></div></div><div class="flow-node rooms"><ha-icon icon="mdi:shield-check"></ha-icon><div><small>Diagnose</small><strong>${problems || globalProblem ? "Kr\xE6ver blik" : "Overv\xE5ger"}</strong></div></div></div>
       <div class="room-grid ${compact ? "compact" : ""}" style="${compact ? `--compact-cols:${compactCols}` : ""}">${rooms.map((room, index) => this._room(room, index, compact)).join("")}</div>
     </div></ha-card>`;
     this.shadowRoot.querySelectorAll(".details").forEach((button) => button.addEventListener("click", (event) => {
       event.stopPropagation();
-      this._open(button.dataset.entity);
+      this._toggle(Number(button.dataset.index));
     }));
-    this.shadowRoot.querySelectorAll(".attention-chip").forEach((button) => button.addEventListener("click", () => {
-      const target = this.shadowRoot.querySelector(`article.room[data-index="${button.dataset.jump}"]`);
-      if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.animate([{ boxShadow: "0 0 0 3px var(--tone)" }, { boxShadow: "0 0 0 0 transparent" }], { duration: 1100, easing: "ease-out" });
+    this.shadowRoot.querySelectorAll("[data-more-info]").forEach((button) => button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this._open(button.dataset.moreInfo);
     }));
-    this.shadowRoot.querySelectorAll("article.room").forEach((article) => {
-      const open = () => this._open(rooms[Number(article.dataset.index)]?.climate);
-      article.addEventListener("click", open);
-      article.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          open();
-        }
-      });
+    this.shadowRoot.querySelectorAll(".attention-chip").forEach((button) => button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this._toggle(Number(button.dataset.jump), true);
+    }));
+    this.shadowRoot.querySelector(".attention-list")?.addEventListener("click", () => {
+      if (attentionRooms.length) this._toggle(rooms.indexOf(attentionRooms[0].room), true);
     });
+    this.shadowRoot.querySelectorAll("article.room").forEach((article) => article.addEventListener("click", (event) => {
+      if (event.composedPath().some((node) => node.classList?.contains("explain"))) return;
+      this._toggle(Number(article.dataset.index));
+    }));
+    for (const index of this._openRooms) if (!this._history[index]) this._loadHistory(index);
   }
 };
 if (!customElements.get("ha-heating-diagnostics-card")) customElements.define("ha-heating-diagnostics-card", HAHeatingDiagnosticsCard);
@@ -23443,7 +23626,7 @@ function acUnitVisualMarkup2(label, active) {
 }
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION20 = "2.0.4";
+var VERSION20 = "2.0.5";
 var TAG = "ha-radiator-overview-card-v2";
 var DASH = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -24337,7 +24520,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     panel.setAttribute("aria-modal", "true");
     panel.setAttribute("aria-label", `${room.name || "Rum"} varmestyring`);
     panel.tabIndex = -1;
-    panel.style.cssText = "position:relative;width:min(100%,900px);max-height:calc(100dvh - 8px);overflow:hidden;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
+    panel.style.cssText = "position:relative;width:min(100%,900px);max-height:calc(100dvh - 8px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
     const content = document.createElement("div");
     content.className = "room-popup-content";
     panel.appendChild(content);
@@ -24345,8 +24528,14 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     backdrop.addEventListener("click", (event) => {
       if (event.target === backdrop) this._closeRoomPopup();
     });
+    backdrop.addEventListener("hass-more-info", (event) => {
+      const app = document.querySelector("home-assistant");
+      if (!app) return;
+      event.stopPropagation();
+      app.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: event.detail }));
+    });
     this._escapeHandler = (event) => {
-      if (event.key === "Escape") this._closeRoomPopup();
+      if (event.key === "Escape" && !document.querySelector("home-assistant")?.contains(event.target)) this._closeRoomPopup();
     };
     document.addEventListener("keydown", this._escapeHandler);
     this._bodyOverflow = document.body.style.overflow;

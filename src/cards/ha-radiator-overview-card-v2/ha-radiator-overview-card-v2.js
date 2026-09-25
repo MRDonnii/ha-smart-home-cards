@@ -17,7 +17,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 
-const VERSION = "2.0.4";
+const VERSION = "2.0.5";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -928,13 +928,22 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     panel.setAttribute("aria-modal", "true");
     panel.setAttribute("aria-label", `${room.name || "Rum"} varmestyring`);
     panel.tabIndex = -1;
-    panel.style.cssText = "position:relative;width:min(100%,900px);max-height:calc(100dvh - 8px);overflow:hidden;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
+    // Popuppen ruller selv, så indhold under skærmkanten (fx Optimering på en telefon) kan nås.
+    panel.style.cssText = "position:relative;width:min(100%,900px);max-height:calc(100dvh - 8px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.58);outline:none";
     const content = document.createElement("div");
     content.className = "room-popup-content";
     panel.appendChild(content);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => { if (event.target === backdrop) this._closeRoomPopup(); });
-    this._escapeHandler = (event) => { if (event.key === "Escape") this._closeRoomPopup(); };
+    // Popuppen ligger uden for Home Assistants app-element, så kortenes more-info-events sendes videre til appen.
+    backdrop.addEventListener("hass-more-info", (event) => {
+      const app = document.querySelector("home-assistant");
+      if (!app) return;
+      event.stopPropagation();
+      app.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: event.detail }));
+    });
+    // Escape i Home Assistants egen dialog (fx more-info oven på popuppen) må ikke også lukke popuppen.
+    this._escapeHandler = (event) => { if (event.key === "Escape" && !document.querySelector("home-assistant")?.contains(event.target)) this._closeRoomPopup(); };
     document.addEventListener("keydown", this._escapeHandler);
     this._bodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
