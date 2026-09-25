@@ -1,8 +1,9 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { build } from "esbuild";
 
 const output = await build({
-  entryPoints: [new URL("../src/cards/ha-hch5-live-card/source/bypass.ts", import.meta.url).pathname],
+  entryPoints: [fileURLToPath(new URL("../src/cards/ha-hch5-live-card/source/bypass.ts", import.meta.url))],
   bundle: true,
   platform: "node",
   format: "esm",

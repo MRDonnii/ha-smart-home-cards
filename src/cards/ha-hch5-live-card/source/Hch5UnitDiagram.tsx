@@ -35,7 +35,10 @@ export interface Hch5UnitDiagramProps {
   bypassTravelTotal?: number | null;
   /** HAC1 outdoor lockout: afterheat never runs at 15 C outdoor or above. */
   afterheatLockout?: boolean;
+  /** Afterheater drawn after the unit: an electric element (default) or a water coil fed with flow/return water. */
+  afterheatCoil?: AfterheatCoil;
 }
+export type AfterheatCoil = "electric" | "water";
 
 // What the exchanger shows while the damper is not at rest. "moving" is a
 // damper seen part-way with no known direction.
@@ -245,21 +248,35 @@ function AirWisps({ path, kind, speed }: { path: string; kind: "supply" | "extra
   </g>;
 }
 
+// The afterheat coil hangs on the supply duct outside the unit.
+const COIL_AT: Point = [57, 365];
+// HAC1 is a loose box on the RS485 line between the unit and the Pi, set
+// apart from the coil so the water pipes have room beneath it.
+const HAC1_BOX = { x: 108, y: 470, width: 140, height: 52 };
+// The water pipes end at the Fremløb and Retur lines of the water readings;
+// HAC1's water valve sits on the return.
+const WATER_SUPPLY_TO: Point = [-70, 465];
+const WATER_RETURN_TO: Point = [-70, 487];
+const WATER_VALVE_AT: Point = [5, 487];
+
 // Wiring view: the unit's control board, the HAC1 afterheat controller and
 // the Raspberry Pi share one RS485/Modbus RTU cable (unit = slave 1, HAC1 =
 // slave 0x40, Pi = gateway). HAC1 wires its own T2AH and frost sensors and
-// the water valve actuator.
-function Rs485Wiring({ active, compact = false }: { active: boolean; compact?: boolean }) {
-  const bus = "M254 410 V496 M142 496 H600";
+// the water valve actuator; with the water coil the T2AH lead is left out
+// because it would have to cross the water pipes.
+function Rs485Wiring({ active, compact = false, water = false }: { active: boolean; compact?: boolean; water?: boolean }) {
+  const { x, y, width, height } = HAC1_BOX, cx = x + width / 2;
+  const valve: Point = water ? [WATER_VALVE_AT[0], WATER_VALVE_AT[1] + 14] : [23, 446];
+  const bus = `M254 410 V496 M${x + width} 496 H600`;
   return <g className={`hch-wiring${active ? " active" : ""}`}>
-    <path className="hch-signal-wire" d="M2 474 V420 H-28 V371"/>
-    <path className="hch-signal-wire" d="M112 474 V292 H63"/>
-    <path className="hch-signal-wire" d="M23 474 V446"/>
+    {!water && <path className="hch-signal-wire" d={`M${x} ${y + 20} H2 V420 H-28 V371`}/>}
+    <path className="hch-signal-wire" d={`M${x + 8} ${y} V292 H63`}/>
+    <path className="hch-signal-wire" d={`M${x} ${y + 36} H${valve[0]} V${valve[1]}`}/>
     <path className="hch-bus-cable" d={bus}/><path className="hch-bus-core" d={bus}/>
     <rect className="hch-cable-gland" x="246" y="428" width="16" height="12" rx="3"/>
     <circle className="hch-bus-joint" cx="254" cy="496" r="4"/>
     <text className="hch-bus-label" x="425" y="486" textAnchor="middle">RS485 · Modbus RTU</text>
-    <g className="hch-device hch-hac1-box"><rect className="device-body" x="-28" y="474" width="170" height="52" rx="10"/><text x="57" y="496" textAnchor="middle">HAC1 styring</text><text className="device-sub" x="57" y="515" textAnchor="middle">Modbus-slave 0x40</text>{compact&&<text className="device-compact" x="57" y="512" textAnchor="middle">HAC1</text>}</g>
+    <g className="hch-device hch-hac1-box"><rect className="device-body" x={x} y={y} width={width} height={height} rx="10"/><text x={cx} y={y + 22} textAnchor="middle">HAC1 styring</text><text className="device-sub" x={cx} y={y + 41} textAnchor="middle">Modbus-slave 0x40</text>{compact&&<text className="device-compact" x={cx} y={y + 38} textAnchor="middle">HAC1</text>}</g>
     <g className="hch-device hch-pi">
       <rect className="pi-board" x="600" y="468" width="180" height="72" rx="8"/>
       {[0,1,2,3,4,5,6,7,8,9].map(i => <rect key={i} className="pi-gpio" x={628 + i * 14} y="473" width="6" height="6" rx="1"/>)}
@@ -269,8 +286,51 @@ function Rs485Wiring({ active, compact = false }: { active: boolean; compact?: b
   </g>;
 }
 
+function LockoutBadge() {
+  return <g className="hch-lockout-badge"><rect x="-58" y="-25" width="116" height="50" rx="10"/><text x="0" y="-4" textAnchor="middle">Sommerstop</text><text x="0" y="15" textAnchor="middle">ude ≥ 15 °C</text></g>;
+}
+
+// Electric afterheater: heating elements across the duct that glow while it heats.
+function ElectricCoil({ heating, lockout }: { heating: boolean; lockout: boolean }) {
+  return <g className={`hch-external-coil${heating?" active":""}`} transform={`translate(${COIL_AT[0]} ${COIL_AT[1]})`}><rect className="coil-case" x="-48" y="-68" width="96" height="136" rx="12"/><rect className="coil-duct" x="-61" y="-48" width="122" height="96" rx="20"/>{[-27,-14,-1,12,25].map(o=><path key={o} className="coil-pipe" d={`M${o} -42 C${o-12} -24 ${o+12} -8 ${o} 10 C${o-12} 27 ${o+12} 36 ${o} 43`}/>) }<circle className="water-port" cx="34" cy="-75" r="5"/><circle className="water-port" cx="-34" cy="75" r="5"/><text className="hch-part-label" x="0" y="93" textAnchor="middle">Ekstern eftervarme · HAC1</text>{lockout&&<LockoutBadge/>}</g>;
+}
+
+// Water afterheat coil: a copper serpentine through aluminium fins. Flow water
+// enters the left pass and leaves the right one, so the tube is tinted from
+// the flow to the return temperature; the pipes run to those readings, and
+// the water only moves while the afterheat is active.
+const WATER_TUBE = "M-30 68 V-52 A6 6 0 0 1 -18 -52 V52 A6 6 0 0 0 -6 52 V-52 A6 6 0 0 1 6 -52 V52 A6 6 0 0 0 18 52 V-52 A6 6 0 0 1 30 -52 V68";
+const WATER_FINS = [-42, -34, -26, -18, -10, -2, 6, 14, 22, 30, 38];
+// Blue when cold, teal around room temperature, amber and red as it gets hot.
+const WATER_SCALE: readonly (readonly [number, number, number, number])[] = [[15, 74, 163, 230], [25, 79, 204, 206], [35, 240, 180, 84], [45, 245, 124, 66], [60, 226, 70, 60]];
+export function waterColour(t: Num) {
+  if (t === null || !Number.isFinite(t)) return "rgb(111 135 150)";
+  const i = WATER_SCALE.findIndex(([at]) => t <= at);
+  if (i === 0 || i < 0) return `rgb(${WATER_SCALE[i === 0 ? 0 : WATER_SCALE.length - 1].slice(1).join(" ")})`;
+  const [t0, ...a] = WATER_SCALE[i - 1], [t1, ...b] = WATER_SCALE[i], k = (t - t0) / (t1 - t0);
+  return `rgb(${a.map((c, j) => Math.round(c + (b[j] - c) * k)).join(" ")})`;
+}
+function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: boolean; lockout: boolean; flowWater: Num; returnWater: Num }) {
+  const local = ([x, y]: Point): Point => [x - COIL_AT[0], y - COIL_AT[1]];
+  const [sx, sy] = local(WATER_SUPPLY_TO), [rx, ry] = local(WATER_RETURN_TO), [vx, vy] = local(WATER_VALVE_AT);
+  const pipes = [
+    ["supply", `M${sx} ${sy} H-38 Q-30 ${sy} -30 ${sy - 8} V68`, waterColour(flowWater)],
+    ["return", `M30 68 V${ry - 8} Q30 ${ry} 22 ${ry} H${rx}`, waterColour(returnWater ?? flowWater)],
+  ] as const;
+  return <g className={`hch-external-coil hch-water-coil${heating ? " active" : ""}`} transform={`translate(${COIL_AT[0]} ${COIL_AT[1]})`}>
+    <defs><linearGradient id="waterCoilTint" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="30" y2="0"><stop offset="0" stopColor={pipes[0][2]}/><stop offset="1" stopColor={pipes[1][2]}/></linearGradient></defs>
+    {pipes.map(([kind, d, colour]) => <g key={kind} className={`water-pipe ${kind}`}><path className="water-pipe-shell" d={d}/><path className="water-pipe-core" d={d} style={{ stroke: colour }}/><path className="water-flow" d={d}/></g>)}
+    <g className="water-valve" transform={`translate(${vx} ${vy})`}><path className="valve-body" d="M-8 -6 L8 6 V-6 L-8 6 Z"/><rect className="valve-actuator" x="-5" y="7" width="10" height="7" rx="2"/></g>
+    <rect className="coil-case" x="-48" y="-68" width="96" height="136" rx="12"/><rect className="coil-duct" x="-61" y="-48" width="122" height="96" rx="20"/>
+    {WATER_FINS.map(y => <path key={y} className="coil-fin" d={`M-44 ${y} H44`}/>)}
+    <path className="water-tube-shell" d={WATER_TUBE}/><path className="water-tube-core" d={WATER_TUBE} stroke="url(#waterCoilTint)"/><path className="water-flow" d={WATER_TUBE}/>
+    {lockout && <LockoutBadge/>}
+  </g>;
+}
+
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,beforeHeater,afterHeater,room,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false}=props;
+  const {onSensor,outdoor,extract,exhaust,beforeHeater,afterHeater,room,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric"}=props;
+  const water = afterheatCoil === "water";
   // The unit reports only closed/opening/closing/open and needs about three
   // minutes, so progress is the time since the damper left its end position;
   // the blade and the fog follow that estimate, and On counts as opening from
@@ -393,8 +453,8 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         </g>
       </g>
       <DuctCollar x={164} y={205}/><DuctCollar x={164} y={365}/>
-      <g className={`hch-external-coil${heating?" active":""}`} transform="translate(57 365)"><rect className="coil-case" x="-48" y="-68" width="96" height="136" rx="12"/><rect className="coil-duct" x="-61" y="-48" width="122" height="96" rx="20"/>{[-27,-14,-1,12,25].map(o=><path key={o} className="coil-pipe" d={`M${o} -42 C${o-12} -24 ${o+12} -8 ${o} 10 C${o-12} 27 ${o+12} 36 ${o} 43`}/>) }<circle className="water-port" cx="34" cy="-75" r="5"/><circle className="water-port" cx="-34" cy="75" r="5"/><text className="hch-part-label" x="0" y="93" textAnchor="middle">Ekstern eftervarme · HAC1</text>{afterheatLockout&&<g className="hch-lockout-badge"><rect x="-58" y="-25" width="116" height="50" rx="10"/><text x="0" y="-4" textAnchor="middle">Sommerstop</text><text x="0" y="15" textAnchor="middle">ude ≥ 15 °C</text></g>}</g>
-      <Rs485Wiring active={busActive}/>
+      {water ? <WaterCoil heating={heating} lockout={afterheatLockout} flowWater={flowWater} returnWater={returnWater}/> : <ElectricCoil heating={heating} lockout={afterheatLockout}/>}
+      <Rs485Wiring active={busActive} water={water}/>
       <g className="hch-fog-group" filter="url(#fogBlur)" mask="url(#fogFadeMask)">
         <path className="hch-fog hch-fog-supply hch-fog-a" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-supply hch-fog-b" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.35}s`:"0s"} as CSSProperties}/>
         {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog hch-fog-extract hch-fog-a" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-extract hch-fog-b" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.35}s`:"0s"} as CSSProperties}/></g>)}
@@ -413,7 +473,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <TempPort cx={-150} cy={205} title="Udsugning · T3" sensor="extract_temperature" onSensor={onSensor} value={fmt(extract)} tone="warm"/>
       <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>
       <SensorPin x={144} y={365} label="T2 før flade" sensor="afterheat_before" onSensor={onSensor} value={fmt(beforeHeater,"°")} width={112} lift={50}/><SensorPin x={-28} y={365} label="T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater,"°")} width={74} lift={50}/><SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/><SensorPin x={502} y={126} label="T5 rum" sensor="room_temperature" onSensor={onSensor} value={fmt(room,"°")} width={90}/>
-      <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">Eftervarmevand</text><text className="water-value" x="14" y="46" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text></g>
+      <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="46" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text></g>
     </svg>
     <div className="hch-mobile-flow" aria-label="HCH5 luftstrømme og temperaturer">
       <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>HCH5</strong><span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span></div>
