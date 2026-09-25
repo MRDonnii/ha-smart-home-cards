@@ -262,9 +262,9 @@ const COIL_AT: Point = [57, 365];
 const HAC1_BOX = { x: 108, y: 470, width: 140, height: 52 };
 // The water pipes end at the Fremløb and Retur lines of the water readings;
 // HAC1's water valve sits on the return.
-const WATER_SUPPLY_TO: Point = [-70, 465];
-const WATER_RETURN_TO: Point = [-70, 487];
-const WATER_VALVE_AT: Point = [5, 487];
+const WATER_SUPPLY_TO: Point = [-70, 459];
+const WATER_RETURN_TO: Point = [-70, 479];
+const WATER_VALVE_AT: Point = [5, 479];
 
 // Wiring view: the unit's control board, the HAC1 afterheat controller and
 // the Raspberry Pi share one RS485/Modbus RTU cable (unit = slave 1, HAC1 =
@@ -359,6 +359,8 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   const {onSensor,outdoor,extract,exhaust,afterHeater,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false}=props;
   const water = afterheatCoil === "water";
+  // Afkøl: how much the water cools across the coil, as in the WebUI.
+  const waterDelta = flowWater === null || returnWater === null ? null : flowWater - returnWater;
   // The unit reports only closed/opening/closing/open and needs about three
   // minutes, so progress is the time since the damper left its end position;
   // the blade and the fog follow that estimate, and On counts as opening from
@@ -502,7 +504,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>
       <SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/>
       {control && <ControlPanel control={control} compact={controlCompact}/>}
-      <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="46" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text></g>
+      <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="90" rx="12"/><text x="14" y="20">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="40" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="60" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text><text className="water-value water-delta" x="14" y="80">Afkøl {fmt(waterDelta)}</text></g>
     </svg>
     <div className="hch-mobile-flow" aria-label="HCH5 luftstrømme og temperaturer">
       <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>HCH5</strong><span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span></div>
@@ -520,6 +522,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <div className="hch-mobile-subreadings">
         <div className="hch-mobile-water"><span>Vand frem / retur</span><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater)}</button><span> / </span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong></div>
         <button type="button" onClick={() => onSensor?.("afterheat_frost")}>Frost <strong>{fmt(frost)}</strong></button>
+        <div className="hch-mobile-water hch-mobile-water-delta"><span>Afkøl</span><strong>{fmt(waterDelta)}</strong></div>
       </div>
     </div>
     <div className="unit-readback-row" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) onSensor?.(key); }}><div className="unit-readback" data-sensor="supply_fan_rpm"><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{int(supplyRpm)} RPM</strong><em data-sensor="supply_fan_percent">{int(supplyPercent)}%</em></div></div><div className="unit-readback" data-sensor="extract_fan_rpm"><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{int(extractRpm)} RPM</strong><em data-sensor="extract_fan_percent">{int(extractPercent)}%</em></div></div><div className="unit-readback" data-sensor="bypass_raw"><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div><div className="unit-readback" data-sensor="afterheat_active"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div></div>
