@@ -14,7 +14,7 @@ const bundle = await readFile(path.join(root, "dist", "ha-smart-home-cards.js"),
 if (!bundle.includes("MRDonnii Smart Home Cards")) throw new Error("Bundle banner missing");
 
 const forbidden = [
-  ["known address or household name", /hyacintvej|mådde|\bmadde\b|\bmette\b|\bmads\b|\bviggo\b|\bfie\b|leonora|gunner_ren|energitte|th_poul|jt_net_protect|dinsikring|verisure_alarm|th_faelles|th_charger/i],
+  ["known address or household name", /hyacintvej|mådde|\bmadde\b|\bmette\b|\bmads\b|\bviggo\b|\bfie\b|leonora|gunner_ren|energitte|th_poul|jt_?net|\bmols\b|_mols_|dinsikring|verisure_alarm|th_faelles|th_charger/i],
   ["private IPv4 address", /\b(?:10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})\b/],
   ["email address", /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i],
   ["credential-like value", /\b(?:api[_-]?key|access[_-]?token|bearer|password)\s*[:=]\s*["'][^"'\n]{8,}["']/i]

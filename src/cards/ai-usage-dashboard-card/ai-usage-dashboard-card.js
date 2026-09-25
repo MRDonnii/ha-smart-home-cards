@@ -1,3 +1,4 @@
+// Generic placeholders only; real account names and entity prefixes belong in the dashboard config (`accounts`).
 const ACCOUNTS = [
   { name: 'ChatGPT · Konto 1', kind: 'chatgpt', prefix: 'chatgpt_usage_', refresh: 'button.chatgpt_usage_refresh_usage' },
   { name: 'ChatGPT · Konto 2', kind: 'chatgpt', prefix: 'chatgpt_usage_2_', refresh: 'button.chatgpt_usage_2_refresh_usage' },
