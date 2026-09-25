@@ -503,6 +503,9 @@ class Hch5LiveCard extends HTMLElement {
 
   set hass(hass: Hass) {
     this.hassValue = hass;
+    // The drawing has a light palette; follow HA's light/dark mode before the
+    // entity signature check so a theme switch shows at once.
+    this.toggleAttribute("light", (hass as { themes?: { darkMode?: boolean } }).themes?.darkMode === false);
     if (!this.config) return;
     // HA sets hass on every state change in the house; only re-render when
     // one of this card's own entities changed.
