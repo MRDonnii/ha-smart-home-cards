@@ -798,3 +798,6 @@ button { font: inherit; color: inherit; }
 :host([light]) .hch-control-panel.tone-boost .hch-control-title em{color:#d06d0b}
 :host([light]) .hch-control-panel.tone-reduced .hch-control-title em{color:#0d7fc4}
 :host([light]) .hch-control-reason{color:#2b3d46}
+.pro-levels button.is-normal { border-color: #3baeff; border-style: dashed; color: #dff5ff; }
+.hch-smartdash-choice button.is-normal { border-color: var(--hch-accent,#58b9ff); border-style: dashed; }
+:host([light]) .pro-levels button.is-normal { border-color: #1f7fc4; color: #0d2635; }
