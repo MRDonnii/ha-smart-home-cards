@@ -568,3 +568,189 @@ button { font: inherit; color: inherit; }
     .dashboard-overview .hch-mobile-reading strong { color: #eefaff; }
   }
 }
+
+/* Light theme: the drawing gets a light palette derived from the dark one (same hues,
+   inverted lightness); shadows stay dark. Set by the card when HA is in light mode. */
+:host([light]) .hch-side-inset{stroke:#5a707c}
+:host([light]) .hch-floor-shadow{fill:rgb(0 0 0 / 16%)}
+:host([light]) .hch-cabinet,:host([light]) .hch-top-panel,:host([light]) .hch-side-panel{stroke:#627886}
+:host([light]) .hch-top-fold{stroke:rgb(19 39 48 / 34%)}
+:host([light]) .hch-side-seam{stroke:rgb(223 236 244 / 55%)}
+:host([light]) .hch-opening-gasket{stroke:#deecf3}
+:host([light]) .hch-cabinet-fastener circle{fill:#bbcdd6;stroke:#42545d}
+:host([light]) .hch-cabinet-fastener path{stroke:#31434b}
+:host([light]) .hch-cavity-rail{stroke:rgb(78 102 115 / 20%)}
+:host([light]) .hch-inner{fill:#f0f6fa;stroke:#a5bcca}
+:host([light]) .hch-filter rect{stroke:#4c5e68}
+:host([light]) .hch-filter path{stroke:#5c6f79}
+:host([light]) .hch-part-label,:host([light]) .hch-channel-label,:host([light]) .hch-core-port,:host([light]) .hch-exchanger-title,:host([light]) .hch-bus-label{stroke:#e4eff6}
+:host([light]) .hch-part-label{fill:#30414a}
+:host([light]) .hch-fan-ring{fill:#f0f6f9;stroke:#7a909d}
+:host([light]) .hch-fan-shroud{stroke:#afc4d1}
+:host([light]) .hch-fan-hub{fill:#f1f6f9;stroke:#778f9e}
+:host([light]) .hch-fan-back{fill:#f0f6f9;stroke:#8da3b0}
+:host([light]) .hch-fan-drum{stroke:#8da3b0}
+:host([light]) .hch-fan-motor{fill:#b4c8d4;stroke:#667f8e}
+:host([light]) .hch-fan-cap{stroke:#3a515e}
+:host([light]) .hch-fan-cap-centre{fill:#f1f6f9;stroke:#577181}
+:host([light]) .hch-fan-rotor path{fill:#2194db;stroke:#043453}
+:host([light]) .hch-exchanger polygon{stroke:#4f5d64}
+:host([light]) .hch-exchanger path{stroke:#2f383c}
+:host([light]) .hch-exchanger .core-face-top{fill:#6b7a81}
+:host([light]) .hch-exchanger .core-face-side{fill:#b1c2ca}
+:host([light]) .hch-filter .filter-face-top{fill:#74868f;stroke:#4c5e68}
+:host([light]) .hch-filter .filter-face-side{fill:#aec0c9;stroke:#4c5e68}
+:host([light]) .hch-cavity-edge{stroke:#acc3d2}
+:host([light]) .hch-exchanger-title{fill:#1a262b}
+:host([light]) .hch-recovery{fill:#212121;text-shadow:0 2px 8px #f7f7f7}
+:host([light]) .hch-bypass rect{fill:#f0f6fa;stroke:#8da8ba}
+:host([light]) .hch-bypass text{fill:#374a54}
+:host([light]) .bypass-blade{fill:#1798e5}
+:host([light]) .hch-bypass.open .bypass-blade{fill:#31cb85}
+:host([light]) .hch-bypass .damper-frame{fill:#f0f6fa;stroke:#70848e}
+:host([light]) .hch-bypass .bypass-blade{fill:#1798e5}
+:host([light]) .hch-bypass.open .bypass-blade{fill:#31cb85}
+:host([light]) .hch-bypass .bypass-actuator{fill:#d67126;stroke:#f0780d}
+:host([light]) .hch-bypass-channel{fill:#f0f6fa;stroke:#abc1ce}
+:host([light]) .hch-bypass-channel-glow{fill:rgb(240 108 13 / 7%);stroke:#f06c0d}
+:host([light]) to{fill:#f0720d;filter:drop-shadow(0 0 5px rgb(255 159 90 / 38%))}
+:host([light]) .hch-bypass-progress .hch-exchanger-title{fill:#552c04}
+:host([light]) .bypass-progress-track{stroke:rgb(238 245 250 / 82%)}
+:host([light]) .bypass-progress-fill{stroke:#f0710d}
+:host([light]) .hch-bypass-countdown{fill:#503e2a;stroke:#e4eff6}
+:host([light]) .hch-lockout-badge rect{fill:rgb(251 246 239 / 90%);stroke:#d78b25}
+:host([light]) .hch-lockout-badge text{fill:#f0950d}
+:host([light]) .hch-channel-label{fill:#5b717e}
+:host([light]) .hch-core-port{fill:#1e272b}
+:host([light]) .hch-coil rect{fill:#f0f6f9;stroke:#819dad}
+:host([light]) .coil-pipe{stroke:#b48e6e}
+:host([light]) .hch-coil.active .coil-pipe{stroke:#f0740d}
+:host([light]) .water-port{fill:#2b94d1}
+:host([light]) .hch-service-box{fill:#f0f6fa;stroke:#9cb3c1}
+:host([light]) .hch-port rect{stroke:#556872;filter:drop-shadow(0 5px 5px rgb(0 0 0 / 16%))}
+:host([light]) .hch-port-outdoor path,:host([light]) .hch-port-supply path{stroke:#31cb7f}
+:host([light]) .hch-port-extract path,:host([light]) .hch-port-exhaust path{stroke:#f0650d}
+:host([light]) .hch-port-outdoor path{stroke:#0d97f0}
+:host([light]) .hch-port-extract path{stroke:#f00d0d}
+:host([light]) .hch-rear-duct-body{stroke:#70848e}
+:host([light]) .hch-rear-duct-shine{stroke:rgb(23 37 43 / 42%)}
+:host([light]) .hch-rear-duct-shade{stroke:rgb(247 247 247 / 32%)}
+:host([light]) .hch-rear-duct-seam{stroke:rgb(56 74 83 / 38%)}
+:host([light]) .hch-rear-duct-flange{stroke:#546772}
+:host([light]) .hch-air-wisps.hch-fog-supply{color:#3bc2b4}
+:host([light]) .hch-air-wisps.hch-fog-extract{color:#593005}
+:host([light]) .hch-temp-port-plate{fill:rgb(240 246 250 / 90%);stroke:#92afc2;filter:drop-shadow(0 6px 14px rgb(0 0 0 / 18%))}
+:host([light]) .hch-temp-port-title{fill:#2b3d46;stroke:#e4eff6}
+:host([light]) .hch-temp-port-value{fill:#0d2635;stroke:#e4eff6}
+:host([light]) .hch-temp-port.tone-cold .hch-temp-port-value{fill:#0d9cf0}
+:host([light]) .hch-temp-port.tone-warm .hch-temp-port-value{fill:#f07b0d}
+:host([light]) .hch-temp-port.tone-green .hch-temp-port-value{fill:#28d577}
+:host([light]) .hch-sensor-pin circle{fill:#0d9ff0;stroke:#032e3f}
+:host([light]) .hch-sensor-pin line{stroke:#6a8495}
+:host([light]) .hch-sensor-pin rect{fill:#f0f6fa;stroke:#a8c5d5}
+:host([light]) .hch-sensor-pin text{fill:#3b4f5a}
+:host([light]) .hch-sensor-pin .pin-value{fill:#0a2a38}
+:host([light]) .hch-water-callout rect{fill:#f0f6fa;stroke:#a6c6d7}
+:host([light]) .hch-water-callout text{fill:#3b4f5a}
+:host([light]) .hch-water-callout .water-value{fill:#082c3a}
+:host([light]) .unit-readback{border:1px solid #b4cfe0;background:#f0f6fa}
+:host([light]) .unit-readback small{color:#506673}
+:host([light]) .unit-readback strong{color:#0c2a36}
+:host([light]) .unit-readback em{color:#526876}
+:host([light]) .readback-icon{background:#f0f6fa;border:1px solid #92b8cf}
+:host([light]) .readback-icon.fan::before{color:#0d9af0}
+:host([light]) .readback-icon.damper::before{color:#3f5562}
+:host([light]) .readback-icon.damper.active::before{color:#33c97c}
+:host([light]) .readback-icon.heater::before{color:#5e7685}
+:host([light]) .readback-icon.heater.active::before{color:#f07f0d;text-shadow:0 0 10px #f0680d}
+:host([light]) .control-label{color:#4b5f6a}
+:host([light]) .pro-segment{border:1px solid #b3cddd;background:#f0f6f9}
+:host([light]) .pro-segment button,:host([light]) .pro-levels button,:host([light]) .mini-buttons button,:host([light]) .setpoint-stepper button,:host([light]) .fireplace-actions button{border:1px solid #a9c3d4;background:#f0f6f9;color:#384a54}
+:host([light]) .pro-segment button:hover,:host([light]) .pro-levels button:hover,:host([light]) .mini-buttons button:hover,:host([light]) .setpoint-stepper button:hover,:host([light]) .fireplace-actions button:hover{border-color:#4987ac;color:#032c3f;background:#f0f6fa}
+:host([light]) .pro-segment button.active,:host([light]) .pro-levels button.active,:host([light]) .mini-buttons button.active{color:#212121;border-color:#0d92f0;background:linear-gradient(145deg,#1b5486,#1a65a7);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 4%),0 0 14px rgb(44 165 255 / 13%)}
+:host([light]) .active-decision{border:1px solid #b8d0df;background:#f0f6fa}
+:host([light]) .active-decision span{color:#687e8c}
+:host([light]) .active-decision small{color:#627885}
+:host([light]) .mini-control-title{color:#122630}
+:host([light]) .mini-control-title svg{color:#0d9bf0}
+:host([light]) .control-footnote,:host([light]) .text-action{color:#617785}
+:host([light]) .text-action{color:#0d97f0}
+:host([light]) .status-action-icon{background:#eef6fb;color:#0d9df0}
+:host([light]) .status-action-icon.flame{background:#f9f4f1;color:#f0820d}
+:host([light]) .status-action-card span{color:#627885}
+:host([light]) .status-action-card small{color:#728997}
+:host([light]) .status-action-card > button,:host([light]) .fireplace-actions button{border:1px solid #aac5d5;background:#f0f6fa;color:#334954}
+:host([light]) .afterheat-copy span{color:#526977}
+:host([light]) .afterheat-copy small{color:#708694}
+:host([light]) .setpoint-stepper{border:1px solid #aac6d6}
+:host([light]) .setpoint-stepper strong{background:#f0f6fa}
+:host([light]) .climate-metric{border:1px solid #b7d0df;background:#f0f6fa}
+:host([light]) .climate-metric > svg,:host([light]) .climate-metric > .metric-drop,:host([light]) .climate-metric > .metric-filter,:host([light]) .climate-metric > .metric-heat{color:#3ac378}
+:host([light]) .climate-metric.blue > .metric-drop{color:#0d90f0}
+:host([light]) .climate-metric.cyan > .metric-filter{color:#1bb6e1}
+:host([light]) .climate-metric.neutral > .metric-heat{color:#344955}
+:host([light]) .climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat){color:#607684}
+:host([light]) .climate-metric strong small{color:#627885}
+:host([light]) .climate-metric em{color:#627886}
+:host([light]) .climate-metric > i{background:linear-gradient(90deg,#33ca78,#0d99f0);box-shadow:0 0 12px rgb(82 220 145 / 9%)}
+:host([light]) .climate-metric::after{background:#f1f6f8}
+:host([light]) .hch-bus-cable{stroke:#b8c9d3}
+:host([light]) .hch-bus-core{stroke:#d49228}
+:host([light]) .hch-bus-joint{fill:#d49228}
+:host([light]) .hch-cable-gland{fill:#f2f6f8;stroke:#70848e}
+:host([light]) .hch-bus-label{fill:#bf913d}
+:host([light]) .hch-signal-wire{stroke:#a0764b}
+:host([light]) .hch-device .device-body{fill:#f0f6fa;stroke:#8daebf}
+:host([light]) .hch-device text{fill:#17252b}
+:host([light]) .hch-device .device-sub{fill:#3b4f5a}
+:host([light]) .hch-pi .pi-board{fill:#f0f9f5;stroke:#44a773}
+:host([light]) .hch-pi .pi-chip{fill:#f3f6f7;stroke:#7c94a0}
+:host([light]) .hch-pi .pi-gpio{fill:#bf913d}
+:host([light]) svg *[fill="#1a2d37" i]{fill:#c9dbe4}
+:host([light]) svg stop[stop-color="#0a1a24" i]{stop-color:#dcebf4}
+:host([light]) svg stop[stop-color="#0b1a23" i]{stop-color:#ddebf3}
+:host([light]) svg stop[stop-color="#0c1a22" i]{stop-color:#deebf2}
+:host([light]) svg stop[stop-color="#14242e" i]{stop-color:#d2e1ea}
+:host([light]) svg stop[stop-color="#15242d" i]{stop-color:#d3e1e9}
+:host([light]) svg stop[stop-color="#173041" i]{stop-color:#c0d7e6}
+:host([light]) svg stop[stop-color="#1a2a33" i]{stop-color:#cddce4}
+:host([light]) svg stop[stop-color="#1b3445" i]{stop-color:#bcd3e2}
+:host([light]) svg stop[stop-color="#1d303b" i]{stop-color:#c5d7e0}
+:host([light]) svg stop[stop-color="#223440" i]{stop-color:#c1d1db}
+:host([light]) svg stop[stop-color="#25353e" i]{stop-color:#c2d1d9}
+:host([light]) svg stop[stop-color="#263640" i]{stop-color:#c0cfd8}
+:host([light]) svg stop[stop-color="#263843" i]{stop-color:#bdced8}
+:host([light]) svg stop[stop-color="#2c4452" i]{stop-color:#afc4d1}
+:host([light]) svg stop[stop-color="#3a4c57" i]{stop-color:#a9bac4}
+:host([light]) svg stop[stop-color="#40515b" i]{stop-color:#a5b5be}
+:host([light]) svg stop[stop-color="#455760" i]{stop-color:#a0b1b9}
+:host([light]) svg stop[stop-color="#4a5d68" i]{stop-color:#99aab3}
+:host([light]) svg stop[stop-color="#4abfff" i]{stop-color:#0d9ff0}
+:host([light]) svg stop[stop-color="#596b76" i]{stop-color:#8a9ba5}
+:host([light]) svg stop[stop-color="#59dfa1" i]{stop-color:#31cb84}
+:host([light]) svg stop[stop-color="#5f7a8a" i]{stop-color:#778f9e}
+:host([light]) svg stop[stop-color="#68bcf0" i]{stop-color:#2194db}
+:host([light]) svg stop[stop-color="#6b7d88" i]{stop-color:#788993}
+:host([light]) svg stop[stop-color="#6bd2bc" i]{stop-color:#42bba1}
+:host([light]) svg stop[stop-color="#7b8991" i]{stop-color:#6f7c83}
+:host([light]) svg stop[stop-color="#8a99a2" i]{stop-color:#5e6c74}
+:host([light]) svg stop[stop-color="#8e9aa1" i]{stop-color:#5f6a70}
+:host([light]) svg stop[stop-color="#a8ddff" i]{stop-color:#043453}
+:host([light]) svg stop[stop-color="#c9d8e0" i]{stop-color:#202e35}
+:host([light]) svg stop[stop-color="#ff7171" i]{stop-color:#f00d0d}
+:host([light]) svg stop[stop-color="#ff9345" i]{stop-color:#f06c0d}
+:host([light]) svg stop[stop-color="#ffae5a" i]{stop-color:#f0800d}
+:host([light]) svg stop[stop-color="#fff" i]{stop-color:#212121}
+:host([light]) svg *[stroke="#aab9c1" i]{stroke:#3f4d54}
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    :host([light]) .dashboard-overview .hch-mobile-reading { background: rgb(240 246 249 / 92%); box-shadow: 0 3px 12px rgb(0 0 0 / 14%); }
+    :host([light]) .dashboard-overview .hch-mobile-reading small { color: #52636d; }
+    :host([light]) .dashboard-overview .hch-mobile-reading strong { color: #14222a; }
+  }
+}
+
+/* Mobile sub-readings follow the theme text colour. */
+.hch-mobile-subreadings strong,.hch-mobile-water strong,.hch-mobile-water strong button { color: var(--text); }
+.hch-mobile-subreadings > button,.hch-mobile-water { color: var(--muted); }
+.hch-mobile-water > span,.hch-mobile-water strong span { color: var(--muted); }
