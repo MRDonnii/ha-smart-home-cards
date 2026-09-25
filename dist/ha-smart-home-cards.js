@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.2 */
+/* MRDonnii Smart Home Cards v0.4.3 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -7802,7 +7802,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.7.11";
+var VERSION13 = "0.7.12";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -8154,6 +8154,10 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       .tabs{padding:4px;gap:4px;border:1px solid var(--divider-color,var(--edge));border-radius:14px;background:var(--front-theme-surface,var(--ha-card-background,var(--card-background-color,var(--surface-local))));box-shadow:var(--front-theme-shadow,var(--ha-card-box-shadow,none))}.tabs button{border:0;border-radius:10px;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}.tabs button:hover{color:var(--primary-text-color);background:var(--contrast1,color-mix(in srgb,var(--primary-text-color) 4%,transparent))}.tabs button.active{border:0;color:var(--primary-text-color);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--accent)),0 0 18px -8px var(--accent)}
       /* Telefon: s\xF8jlerne g\xE5r helt ned til kortets kant, s\xE5 de yderste f\xF8lger hj\xF8rnernes bue. */
       @media(max-width:600px){ha-card{padding-bottom:0}.chart{border-bottom:0}.bar-wrap i{margin-bottom:0;border-radius:5px 5px 0 0}}
+      /* Mobil: rammen slutter t\xE6t om periodeknapperne uden luft, baggrund eller skygge, og den valgte knaps kant ligger oven p\xE5 rammen. */
+      @media(max-width:700px){.tabs{gap:0;padding:0;overflow:hidden;border:0;background:transparent;box-shadow:inset 0 0 0 1px var(--divider-color,var(--edge))}.tabs button{border-radius:0}.tabs button:first-child{border-radius:14px 0 0 14px}.tabs button:last-child{border-radius:0 14px 14px 0}}
+      /* Telefon: fanerne rykker op, s\xE5 der er lige langt fra rammen til kortets top og sider. */
+      @media(max-width:600px){ha-card{padding-top:8px}}
     </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong>` : this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>SNIT</span><b>${this._fmt(avg)}</b></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xD8J</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
     const compactMobile = window.matchMedia("(max-width: 600px)").matches;
     const card = this.shadowRoot.querySelector("ha-card");
