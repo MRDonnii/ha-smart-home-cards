@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.7 */
+/* MRDonnii Smart Home Cards v0.4.8 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -18670,82 +18670,102 @@ button { font: inherit; color: inherit; }
 
 /* Claude AI 2026-09-25: st\xF8rre tekst og v\xE6rdier p\xE5 mobil (kortbredde <= 660px). */
 @container hch-card (max-width: 660px) {
-  .hch-part-label { font-size: 16.5px; }
+  .hch-part-label { font-size: 18px; }
   .hch-exchanger-title { font-size: 20.5px; }
-  .hch-bypass text { font-size: 12.5px; }
-  .hch-bypass-countdown { font-size: 15.5px; }
-  .hch-lockout-badge text { font-size: 15px; }
-  .hch-channel-label { font-size: 15.5px; }
-  .hch-core-port { font-size: 17.5px; }
-  .hch-temp-port-title { font-size: 16.5px; }
-  .hch-sensor-pin text { font-size: 14.5px; }
-  .hch-sensor-pin .pin-value { font-size: 17.5px; }
-  .hch-water-callout text { font-size: 15px; }
-  .hch-water-callout .water-value { font-size: 17.5px; }
-  .unit-readback small { font-size: 13.5px; }
-  .unit-readback strong { font-size: 16.5px; }
-  .unit-readback em { font-size: 13.5px; }
-  .control-label { font-size: 11.5px; }
-  .pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.fireplace-actions button { font-size: 11.5px; }
-  .active-decision span { font-size: 10px; }
-  .active-decision strong { font-size: 12.5px; }
-  .active-decision small { font-size: 11px; }
-  .mini-control-title { font-size: 13.5px; }
-  .control-footnote,.text-action { font-size: 11px; }
-  .status-action-card span { font-size: 11px; }
-  .status-action-card strong { font-size: 12.5px; }
-  .status-action-card small { font-size: 10px; }
-  .afterheat-copy span { font-size: 11px; }
-  .afterheat-copy strong { font-size: 12.5px; }
-  .afterheat-copy small { font-size: 10px; }
+  .hch-bypass text { font-size: 14px; }
+  .hch-bypass-countdown { font-size: 17px; }
+  .hch-lockout-badge text { font-size: 16.5px; }
+  .hch-channel-label { font-size: 17px; }
+  .hch-core-port { font-size: 19px; }
+  .hch-temp-port-title { font-size: 18px; }
+  .hch-sensor-pin text { font-size: 16px; }
+  .hch-sensor-pin .pin-value { font-size: 19px; }
+  .hch-water-callout text { font-size: 16.5px; }
+  .hch-water-callout .water-value { font-size: 19px; }
+  .unit-readback small { font-size: 15px; }
+  .unit-readback strong { font-size: 18px; }
+  .unit-readback em { font-size: 15px; }
+  .control-label { font-size: 13px; }
+  .pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.fireplace-actions button { font-size: 13px; }
+  .active-decision span { font-size: 11.5px; }
+  .active-decision strong { font-size: 14px; }
+  .active-decision small { font-size: 12.5px; }
+  .mini-control-title { font-size: 15px; }
+  .control-footnote,.text-action { font-size: 12.5px; }
+  .status-action-card span { font-size: 12.5px; }
+  .status-action-card strong { font-size: 14px; }
+  .status-action-card small { font-size: 11.5px; }
+  .afterheat-copy span { font-size: 12.5px; }
+  .afterheat-copy strong { font-size: 14px; }
+  .afterheat-copy small { font-size: 11.5px; }
   .setpoint-stepper button { font-size: 20.5px; }
-  .setpoint-stepper strong { font-size: 14.5px; }
-  .climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat) { font-size: 11px; }
-  .climate-metric strong { font-size: 18.5px; }
-  .climate-metric strong small { font-size: 11px; }
-  .climate-metric em { font-size: 11px; }
-  .hch-bus-label { font-size: 16.5px; }
-  .hch-device text { font-size: 17.5px; }
-  .hch-device .device-sub { font-size: 14.5px; }
-  .eyebrow { font-size: 11px; }
-  .status-chip { font-size: 11.5px; }
-  .overview-heading-row p { font-size: 13.5px; }
-  .overview-status-pills small { font-size: 11px; }
-  .overview-status-pills strong { font-size: 13.5px; }
-  .pro-card-head h2 { font-size: 17.5px; }
-  .pro-card-head p { font-size: 11.5px; }
-  .pro-card-head.compact h2 { font-size: 16.5px; }
-  .afterheat-lockout { font-size: 11.5px; }
-  .hch-notice { font-size: 13.5px; }
-  .hch-mobile-reading small { font-size: 11.5px; }
-  .hch-mobile-reading strong { font-size: 19.5px; }
-  .hch-mobile-route { font-size: 12.5px; }
-  .hch-mobile-core span { font-size: 11px; }
-  .hch-mobile-core strong { font-size: 17.5px; }
-  .hch-mobile-subreadings > button,.hch-mobile-water { font-size: 11.5px; }
-  .hch-mobile-subreadings strong { font-size: 14.5px; }
-  .hch5-visual.compact .readback-icon::before { font-size: 17.5px; }
-  .hch5-visual.compact .unit-readback small { font-size: 11.5px; }
-  .hch5-visual.compact .unit-readback strong { font-size: 13.5px; }
-  .hch5-visual.compact .unit-readback em { font-size: 11px; }
-  .dashboard-overview .hch-mobile-reading small { font-size: 11px; }
-  .dashboard-overview .hch-mobile-reading strong { font-size: 15.5px; }
-  .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 11.5px; }
-  .dashboard-overview .hch-mobile-subreadings strong { font-size: 14.5px; }
-  .hch-control-eyebrow { font-size: 14px; }
+  .setpoint-stepper strong { font-size: 16px; }
+  .climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat) { font-size: 12.5px; }
+  .climate-metric strong { font-size: 20px; }
+  .climate-metric strong small { font-size: 12.5px; }
+  .climate-metric em { font-size: 12.5px; }
+  .hch-bus-label { font-size: 18px; }
+  .hch-device text { font-size: 19px; }
+  .hch-device .device-sub { font-size: 16px; }
+  .eyebrow { font-size: 12.5px; }
+  .status-chip { font-size: 13px; }
+  .overview-heading-row p { font-size: 15px; }
+  .overview-status-pills small { font-size: 12.5px; }
+  .overview-status-pills strong { font-size: 15px; }
+  .pro-card-head h2 { font-size: 19px; }
+  .pro-card-head p { font-size: 13px; }
+  .pro-card-head.compact h2 { font-size: 18px; }
+  .afterheat-lockout { font-size: 13px; }
+  .hch-notice { font-size: 15px; }
+  .hch-mobile-reading small { font-size: 13px; }
+  .hch-mobile-reading strong { font-size: 21px; }
+  .hch-mobile-route { font-size: 14px; }
+  .hch-mobile-core span { font-size: 12.5px; }
+  .hch-mobile-core strong { font-size: 19px; }
+  .hch-mobile-subreadings > button,.hch-mobile-water { font-size: 13px; }
+  .hch-mobile-subreadings strong { font-size: 16px; }
+  .hch5-visual.compact .readback-icon::before { font-size: 19px; }
+  .hch5-visual.compact .unit-readback small { font-size: 13px; }
+  .hch5-visual.compact .unit-readback strong { font-size: 15px; }
+  .hch5-visual.compact .unit-readback em { font-size: 12.5px; }
+  .dashboard-overview .hch-mobile-reading small { font-size: 12.5px; }
+  .dashboard-overview .hch-mobile-reading strong { font-size: 17px; }
+  .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 13px; }
+  .dashboard-overview .hch-mobile-subreadings strong { font-size: 16px; }
+  .hch-control-eyebrow { font-size: 15.5px; }
   .hch-control-title { font-size: 20.5px; }
-  .hch-control-title em { font-size: 16.5px; }
-  .hch-control-reason { font-size: 14.5px; }
-  .hch-control-footer { font-size: 14px; }
+  .hch-control-title em { font-size: 18px; }
+  .hch-control-reason { font-size: 16px; }
+  .hch-control-footer { font-size: 15.5px; }
 }
-@container hch-card (max-width: 660px) { .overview-status-pills strong { font-size: 11.5px; } }
-@container hch-card (max-width: 340px) { .hch-mobile-reading small { font-size: 11px; } }
-@container hch-card (max-width: 340px) { .hch-mobile-reading strong { font-size: 17.5px; } }
-@container hch-card (max-width: 340px) { .hch-mobile-core span { font-size: 10px; } }
-@container hch-card (max-width: 660px) { .hch-mobile-reading strong { font-size: 16.5px; } }
-@container hch-card (max-width: 660px) { .unit-readback small { font-size: 11.5px; } }
-@container hch-card (max-width: 660px) { .unit-readback strong { font-size: 13.5px; } }
-@container hch-card (max-width: 660px) { .unit-readback em { font-size: 11px; white-space: normal; overflow: visible; text-overflow: clip; } }
+@container hch-card (max-width: 660px) { .overview-status-pills strong { font-size: 13px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-reading small { font-size: 12.5px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-reading strong { font-size: 19px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-core span { font-size: 11.5px; } }
+@container hch-card (max-width: 660px) { .hch-mobile-reading strong { font-size: 18px; } }
+@container hch-card (max-width: 660px) { .unit-readback small { font-size: 13px; } }
+@container hch-card (max-width: 660px) { .unit-readback strong { font-size: 15px; } }
+@container hch-card (max-width: 660px) { .unit-readback em { font-size: 12.5px; white-space: normal; overflow: visible; text-overflow: clip; } }
+
+/* Claude AI 2026-09-25: p\xE5 mobil er T1-T4-boksene kun s\xE5 brede som indholdet,
+   s\xE5 anl\xE6gstegningen kan fylde hele bredden, og styringspanelet f\xE5r st\xF8rre tekst. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch5-visual > svg { width: 100%; max-width: 100%; }
+    .dashboard-overview .hch-mobile-reading { width: max-content; max-width: 30cqi; height: auto; gap: 1px; padding: 3px 7px; }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { top: calc(30px + 14cqi); }
+    .dashboard-overview .hch-mobile-reading small { font-size: 11px; }
+    .dashboard-overview .hch-mobile-reading strong { font-size: 16.5px; }
+    .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 13px; }
+    .dashboard-overview .hch-mobile-subreadings strong { font-size: 16px; }
+    .hch-control-eyebrow { display: none; }
+    .hch-control-title { font-size: 28px; }
+    .hch-control-title em { font-size: 20px; }
+    .hch-control-reason { font-size: 20px; line-height: 1.2; }
+    .hch-control-footer { font-size: 17px; }
+  }
+}
 `;
 var p = al(Aa(), 1);
 var Ly = 1200;
