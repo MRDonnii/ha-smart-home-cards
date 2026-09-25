@@ -714,7 +714,7 @@ class HaHomeStatusCard extends HTMLElement {
     const close = document.createElement("button");
     close.textContent = "Luk ✕";
     close.setAttribute("aria-label", "Luk lade-popup");
-    close.style.cssText = "align-self:flex-end;flex:none;margin:0 4px 8px 0;min-height:44px;padding:10px 18px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(8,12,18,.92);box-shadow:0 8px 20px rgba(0,0,0,.38);color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer";
+    close.style.cssText = "align-self:flex-end;flex:none;margin:0 4px 8px 0;min-height:44px;padding:10px 18px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:var(--card-background-color,rgba(8,12,18,.92));box-shadow:0 8px 20px rgba(0,0,0,.25);color:var(--primary-text-color,#fff);font:inherit;font-size:14px;font-weight:800;cursor:pointer";
     const card = new PopupCard();
     card.setConfig(Dashboard ? item.popup : { navigation_path: item.navigation_path });
     card.hass = this._hass;
