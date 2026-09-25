@@ -777,3 +777,24 @@ button { font: inherit; color: inherit; }
 :host([light]) .hch-water-coil .water-pipe-shell { stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-body { fill: #f0f6fa; stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-actuator { stroke: #52697a; }
+.hch-control-panel .control-body { fill: rgb(8 20 28 / 82%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }
+.hch-control-panel.tone-boost .control-body { stroke: #c9894a; }
+.hch-control-panel.tone-reduced .control-body { stroke: #4f86b0; }
+.hch-control-panel.tone-paused .control-body { stroke: #8a6a3a; stroke-dasharray: 6 5; }
+.hch-control-text { display: flex; flex-direction: column; gap: 3px; height: 100%; overflow: hidden; color: #a3b9c6; font-family: inherit; }
+.hch-control-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #7fa3b8; }
+.hch-control-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: #f5fafd; font-size: 19px; font-weight: 850; line-height: 1.15; }
+.hch-control-title em { flex: none; font-style: normal; font-size: 15px; font-weight: 800; color: #74ecab; }
+.hch-control-panel.tone-boost .hch-control-title em { color: #ffb066; }
+.hch-control-panel.tone-reduced .hch-control-title em { color: #7fd0ff; }
+.hch-control-reason { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 650; line-height: 1.3; color: #c8dbe5; }
+.hch-control-footer { margin-top: auto; font-size: 11.5px; font-weight: 700; color: #7fa3b8; }
+:host([light]) .hch-control-panel .control-body{fill:rgb(240 246 250 / 92%);stroke:#92afc2;filter:drop-shadow(0 6px 14px rgb(0 0 0 / 18%))}
+:host([light]) .hch-control-panel.tone-boost .control-body{stroke:#e0a060}
+:host([light]) .hch-control-panel.tone-reduced .control-body{stroke:#5f9cc8}
+:host([light]) .hch-control-eyebrow,:host([light]) .hch-control-footer{color:#4f6b7c}
+:host([light]) .hch-control-title{color:#0d2635}
+:host([light]) .hch-control-title em{color:#1f9d57}
+:host([light]) .hch-control-panel.tone-boost .hch-control-title em{color:#d06d0b}
+:host([light]) .hch-control-panel.tone-reduced .hch-control-title em{color:#0d7fc4}
+:host([light]) .hch-control-reason{color:#2b3d46}

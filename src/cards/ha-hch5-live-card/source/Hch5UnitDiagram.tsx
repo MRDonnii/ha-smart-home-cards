@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type { ControlSummary } from "./control";
 import { bypassOpenShare, bypassTravel, formatRemaining, type BypassDirection } from "./bypass";
 
 type Num = number | null;
@@ -9,9 +10,11 @@ export interface Hch5UnitDiagramProps {
   outdoor: Num;
   extract: Num;
   exhaust: Num;
-  beforeHeater: Num;
+  /** Kept for callers; T2 before the coil is not drawn while it is unreliable. */
+  beforeHeater?: Num;
   afterHeater: Num;
-  room: Num;
+  /** Kept for callers; the HRC2 T5 room sensor is not drawn while it is unreliable. */
+  room?: Num;
   frost: Num;
   flowWater: Num;
   returnWater: Num;
@@ -37,6 +40,10 @@ export interface Hch5UnitDiagramProps {
   afterheatLockout?: boolean;
   /** Afterheater drawn after the unit: an electric element (default) or a water coil fed with flow/return water. */
   afterheatCoil?: AfterheatCoil;
+  /** What currently decides the ventilation, shown bottom-right below T4. */
+  control?: ControlSummary | null;
+  /** Smartdash crops the bottom of the drawing; place the panel higher, without footer. */
+  controlCompact?: boolean;
 }
 export type AfterheatCoil = "electric" | "water";
 
@@ -286,6 +293,27 @@ function Rs485Wiring({ active, compact = false, water = false }: { active: boole
   </g>;
 }
 
+// "Styring nu": source, level and reason of the controller's current decision,
+// placed in the free corner right of the Raspberry Pi and below T4.
+// Smartdash stretches the drawing vertically and crops its bottom edge, so the
+// compact panel sits higher and leaves out the footer the Smartdash head shows.
+const CONTROL_BOX = { x: 930, y: 420, width: 272, height: 126 };
+const CONTROL_BOX_COMPACT = { x: 930, y: 386, width: 272, height: 104 };
+function ControlPanel({ control, compact = false }: { control: ControlSummary; compact?: boolean }) {
+  const { x, y, width, height } = compact ? CONTROL_BOX_COMPACT : CONTROL_BOX;
+  return <g className={`hch-control-panel tone-${control.tone}`} aria-label={`Styring nu: ${control.title}${control.level ? `, trin ${control.level}` : ""}. ${control.reason}`}>
+    <rect className="control-body" x={x} y={y} width={width} height={height} rx="12"/>
+    <foreignObject x={x + 12} y={y + 8} width={width - 24} height={height - 16}>
+      <div className="hch-control-text">
+        <span className="hch-control-eyebrow">Styring nu</span>
+        <strong className="hch-control-title">{control.title}{control.level ? <em>Trin {control.level}</em> : null}</strong>
+        <span className="hch-control-reason">{control.reason}</span>
+        {!compact && <span className="hch-control-footer">{control.footer}</span>}
+      </div>
+    </foreignObject>
+  </g>;
+}
+
 function LockoutBadge() {
   return <g className="hch-lockout-badge"><rect x="-58" y="-25" width="116" height="50" rx="10"/><text x="0" y="-4" textAnchor="middle">Sommerstop</text><text x="0" y="15" textAnchor="middle">ude ≥ 15 °C</text></g>;
 }
@@ -329,7 +357,7 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,beforeHeater,afterHeater,room,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric"}=props;
+  const {onSensor,outdoor,extract,exhaust,afterHeater,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false}=props;
   const water = afterheatCoil === "water";
   // The unit reports only closed/opening/closing/open and needs about three
   // minutes, so progress is the time since the damper left its end position;
@@ -472,7 +500,8 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <TempPort cx={1112} cy={rearFarY(365)} title="Afkast · T4" sensor="exhaust_temperature" onSensor={onSensor} value={fmt(exhaust)} tone="warm"/>
       <TempPort cx={-150} cy={205} title="Udsugning · T3" sensor="extract_temperature" onSensor={onSensor} value={fmt(extract)} tone="warm"/>
       <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>
-      <SensorPin x={144} y={365} label="T2 før flade" sensor="afterheat_before" onSensor={onSensor} value={fmt(beforeHeater,"°")} width={112} lift={50}/><SensorPin x={-28} y={365} label="T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater,"°")} width={74} lift={50}/><SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/><SensorPin x={502} y={126} label="T5 rum" sensor="room_temperature" onSensor={onSensor} value={fmt(room,"°")} width={90}/>
+      <SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/>
+      {control && <ControlPanel control={control} compact={controlCompact}/>}
       <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="80" rx="12"/><text x="14" y="22">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="46" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="68" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text></g>
     </svg>
     <div className="hch-mobile-flow" aria-label="HCH5 luftstrømme og temperaturer">
@@ -489,9 +518,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("exhaust_temperature")} aria-label="Vis historik for afkast T4"><small>Afkast · T4</small><strong>{fmt(exhaust)}</strong></button>
       </div>
       <div className="hch-mobile-subreadings">
-        <button type="button" onClick={() => onSensor?.("afterheat_before")}>Før eftervarme <strong>{fmt(beforeHeater)}</strong></button>
         <div className="hch-mobile-water"><span>Vand frem / retur</span><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater)}</button><span> / </span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong></div>
-        <button type="button" onClick={() => onSensor?.("room_temperature")}>T5 rum <strong>{fmt(room)}</strong></button>
         <button type="button" onClick={() => onSensor?.("afterheat_frost")}>Frost <strong>{fmt(frost)}</strong></button>
       </div>
     </div>

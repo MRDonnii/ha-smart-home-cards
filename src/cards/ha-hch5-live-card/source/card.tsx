@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
+import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
 import { ArrowRight, Flame, Gauge, Leaf, Snowflake, Wind } from "./icons";
 import css from "./webui.css";
@@ -131,7 +132,7 @@ function SmartdashCompact({ hass, config }: { hass: Hass; config: Config }) {
   return <div className="hch-smartdash">
     <div className="hch-smartdash-head"><strong>HCH5 <span>· {modeLabel(selected("mode_control"))}</span></strong><span className="hch-smartdash-state">{value("active_master") === "pi" ? "● Live" : "● " + masterLabel(value("active_master"))}</span></div>
     <div className="hch-smartdash-body">
-      <div className="hch-smartdash-art"><Hch5UnitDiagram outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={num("afterheat_before") ?? num("supply_temperature")} afterHeater={supply} room={num("room_temperature")} frost={num("afterheat_frost")} flowWater={num("water_flow")} returnWater={num("water_return")} supplyRpm={num("supply_fan_rpm")} extractRpm={num("extract_fan_rpm")} supplyPercent={num("supply_fan_percent")} extractPercent={num("extract_fan_percent")} fanLevel={num("effective_level")} bypassActual={bypassRaw === 255 || value("bypass") === "on"} bypassRequest={bypassRequest} heating={value("afterheat_active") === "on"} recovery={recovery} busActive={value("rs485_healthy") === "on"} bypassRaw={bypassRaw} bypassTravelDirection={value("bypass_travel_direction")} bypassTravelSeconds={travelSeconds} bypassTravelTotal={num("bypass_travel_total")} afterheatLockout={value("afterheat_lockout") === "on"} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"}/></div>
+      <div className="hch-smartdash-art"><Hch5UnitDiagram outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={num("afterheat_before") ?? num("supply_temperature")} afterHeater={supply} room={num("room_temperature")} frost={num("afterheat_frost")} flowWater={num("water_flow")} returnWater={num("water_return")} supplyRpm={num("supply_fan_rpm")} extractRpm={num("extract_fan_rpm")} supplyPercent={num("supply_fan_percent")} extractPercent={num("extract_fan_percent")} fanLevel={num("effective_level")} bypassActual={bypassRaw === 255 || value("bypass") === "on"} bypassRequest={bypassRequest} heating={value("afterheat_active") === "on"} recovery={recovery} busActive={value("rs485_healthy") === "on"} bypassRaw={bypassRaw} bypassTravelDirection={value("bypass_travel_direction")} bypassTravelSeconds={travelSeconds} bypassTravelTotal={num("bypass_travel_total")} afterheatLockout={value("afterheat_lockout") === "on"} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"} control={value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace: fireplaceActive })} controlCompact/></div>
       <div className="hch-smartdash-controls" onClick={event => event.stopPropagation()}>
         <div className="hch-smartdash-readings"><span>Ude <b>{temp(outdoor)}</b></span><span>Ind <b>{temp(supply)}</b></span><span>Gen. <b>{recovery === null ? "—" : `${recovery}%`}</b></span><span>Bypass <b>{bypassLabel}</b></span></div>
         <div className="hch-smartdash-control-row hch-smartdash-mode"><div className="hch-smartdash-control-label"><span>Driftstilstand</span><em>{modeLabel(selected("mode_control"))}</em></div><div className="hch-smartdash-choice">{(["local_auto", "smart_auto", "manual"] as const).map(option => <button key={option} type="button" aria-pressed={selected("mode_control") === option} disabled={busy} onClick={() => void command("mode_control", "select", "select_option", { option }, option)}>{option === "local_auto" ? "Auto" : option === "smart_auto" ? "Smart" : "Manuel"}</button>)}</div></div>
@@ -403,6 +404,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             bypassActual={bypassActual} bypassRequest={bypassRequest} heating={heating} recovery={recovery}
             busActive={busHealthy} bypassRaw={bypassRaw} afterheatLockout={afterheatLockout} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"}
             bypassTravelDirection={bypassTravelDirection} bypassTravelSeconds={bypassTravelSeconds} bypassTravelTotal={bypassTravelTotal}
+            control={!online || value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace })}
           />
         </article>
 
