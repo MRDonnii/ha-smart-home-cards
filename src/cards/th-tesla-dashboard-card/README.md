@@ -86,6 +86,25 @@ chart:
   energy_entity: sensor.monta_charger_charge_energy
 ```
 
+## Smart ladeplan
+
+Panelet "Smart ladeplan" læser **dine egne sensorer**. Hverken Tesla-integrationen,
+EV Ledger eller Monta/Zaptec leverer dem, så navnene i eksemplet ovenfor er kun
+pladsholdere. Byg dem fx som template-sensorer ud fra din elpris og din egen bils
+batteri, mål-SOC og deadline – og brug ikke en anden bils sensorer, for så viser
+kortet den bils beregninger.
+
+| Nøgle | Forventet tilstand |
+|---|---|
+| `best_charge_start` | Starttid som tekst `HH:MM` (anden tekst vises som "Ingen gyldig plan"). |
+| `best_charge_end` | Forventet sluttid som `HH:MM`. |
+| `best_charge_price` | Samlet pris for opladningen, fx i `kr.`. |
+| `missing_wall_kwh` | kWh fra væggen, der mangler for at nå målet (≤ 0,05 = "Mål nået"). |
+| `charge_minutes_needed` | Ladetid i minutter (eller timer med enheden `h`). |
+
+Er ingen af de fem sensorer eller kontrollerne `apply_plan`, `target_soc` og
+`deadline` sat, udelades panelet helt, og opladningspanelet fylder dets plads.
+
 ## Øvrige indstillinger
 
 | Nøgle | Standard | Betydning |
