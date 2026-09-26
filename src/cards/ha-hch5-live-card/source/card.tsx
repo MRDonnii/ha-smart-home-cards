@@ -497,19 +497,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             <div className="climate-metric cyan" data-sensor="filter_life"><span className="metric-filter">▧</span><span>Filter</span><strong>{whole(filterLife)} <small>%</small></strong><em>{filterLife === null ? "Ukendt" : filterLife > 40 ? "OK" : filterLife > 15 ? "Snart skift" : "Skift filter"}</em><i style={{ width: `${Math.max(0, Math.min(100, filterLife ?? 0))}%` }}/></div>
             <div className="climate-metric neutral" data-sensor="afterheat_selection"><span className="metric-heat">≋</span><span>Eftervarme setpunkt</span><strong>{shownAfterheat === "off" ? "OFF" : temp(shownAfterheat)}</strong><em>{afterheatStatus}</em><i style={{ width: `${shownAfterheat === "off" ? 0 : ((shownAfterheat - 10) / 25) * 100}%` }}/></div>
           </div>
-          {/* Values the Pi computes from a measured T2 before the afterheat coil, as in the WebUI. */}
-          {num("supply_recovery") !== null || num("afterheat_lift") !== null ? <>
-            <div className="pro-card-head compact air-calc-head"><div><h2>Beregnet fra målt T2</h2><p>Luftmængde anslået for aktuelt trin{num("supply_airflow") === null ? "" : ` · ${whole(num("supply_airflow"))} m³/h`}</p></div></div>
-            <div className="climate-metrics" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
-              <div className="climate-metric green" data-sensor="supply_recovery"><Leaf size={21}/><span>Genvinding · indblæsning</span><strong>{whole(num("supply_recovery"))} <small>%</small></strong><em>(T2 − T1) / (T3 − T1)</em><i style={{ width: `${Math.max(0, Math.min(100, num("supply_recovery") ?? 0))}%` }}/></div>
-              <div className="climate-metric cyan" data-sensor="recovered_heat"><Wind size={21}/><span>Genvundet varme</span><strong>{whole(num("recovered_heat"))} <small>W</small></strong><em>Veksler → indblæsning</em><i style={{ width: `${Math.min(100, (num("recovered_heat") ?? 0) / 30)}%` }}/></div>
-              <div className="climate-metric neutral" data-sensor="afterheat_lift"><span className="metric-heat">≋</span><span>Eftervarme løft</span><strong>{temp(num("afterheat_lift"))}</strong><em>T2AH − T2</em><i style={{ width: `${Math.max(0, Math.min(100, (num("afterheat_lift") ?? 0) * 10))}%` }}/></div>
-              <div className="climate-metric neutral" data-sensor="afterheat_power"><Flame size={21}/><span>Eftervarme effekt</span><strong>{whole(num("afterheat_power"))} <small>W</small></strong><em>Varme tilført luften</em><i style={{ width: `${Math.min(100, (num("afterheat_power") ?? 0) / 20)}%` }}/></div>
-            </div>
-          </> : null}
           {(config.entities.frost_state || config.entities.recovered_today) && <>
             <div className="pro-card-head compact air-calc-head"><div><h2>Diagnose og energi i dag</h2><p>{!value("diagnostics_status") || value("diagnostics_status") === "ok" ? "Ingen advarsler" : text(value("diagnostics_alarm_text"))}</p></div></div>
-            <div className="climate-metrics" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
+            <div className="climate-metrics metrics-5" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
               <div className="climate-metric cyan" data-sensor="frost_state"><Snowflake size={21}/><span>Frost i veksler</span><strong>{({ ok: "OK", watch: "Hold øje", risk: "Risiko" } as Record<string, string>)[String(value("frost_state"))] ?? "—"}</strong><em>Afkast T4 {temp(num("exhaust_temperature"))}</em><i style={{ width: value("frost_state") === "risk" ? "100%" : value("frost_state") === "watch" ? "50%" : "5%" }}/></div>
               <div className="climate-metric neutral" data-sensor="filter_power"><Gauge size={21}/><span>Filter · strøm</span><strong>{num("filter_power") === null ? "—" : `${Math.round((num("filter_power")! - 1) * 100)} %`}</strong><em>{num("sfp") === null ? "Lærer rent filter" : `SFP ${whole(num("sfp"))} W/(m³/s)`}</em><i style={{ width: `${Math.min(100, Math.max(0, ((num("filter_power") ?? 1) - 1) * 400))}%` }}/></div>
               <div className="climate-metric green" data-sensor="recovered_today"><Leaf size={21}/><span>Genvundet i dag · anslået</span><strong>{kwh(num("recovered_today"))} <small>kWh</small></strong><em>Teoretisk varmeværdi ca. {cost(num("recovered_today"), num("heat_price"))}</em><i style={{ width: `${Math.min(100, (num("recovered_today") ?? 0) * 5)}%` }}/></div>
@@ -523,6 +513,16 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           <AfterheatThermostat value={shownAfterheat} onChange={setAfterheatTarget} heating={heating} lockout={afterheatLockout}
             cutoff={afterheatCutoff} outdoor={outdoor} airBefore={beforeHeater} airAfter={afterHeater}
             registered={actualAfterheatSelection} lastOn={afterheatSetpoint}/>
+          {/* Values the Pi computes from a measured T2 before the afterheat coil, as in the WebUI. */}
+          {num("supply_recovery") !== null || num("afterheat_lift") !== null ? <>
+            <div className="pro-card-head compact air-calc-head"><div><h2>Beregnet fra målt T2</h2><p>Luftmængde anslået for aktuelt trin{num("supply_airflow") === null ? "" : ` · ${whole(num("supply_airflow"))} m³/h`}</p></div></div>
+            <div className="climate-metrics metrics-2" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
+              <div className="climate-metric green" data-sensor="supply_recovery"><Leaf size={21}/><span>Genvinding · indblæsning</span><strong>{whole(num("supply_recovery"))} <small>%</small></strong><em>(T2 − T1) / (T3 − T1)</em><i style={{ width: `${Math.max(0, Math.min(100, num("supply_recovery") ?? 0))}%` }}/></div>
+              <div className="climate-metric cyan" data-sensor="recovered_heat"><Wind size={21}/><span>Genvundet varme</span><strong>{whole(num("recovered_heat"))} <small>W</small></strong><em>Veksler → indblæsning</em><i style={{ width: `${Math.min(100, (num("recovered_heat") ?? 0) / 30)}%` }}/></div>
+              <div className="climate-metric neutral" data-sensor="afterheat_lift"><span className="metric-heat">≋</span><span>Eftervarme løft</span><strong>{temp(num("afterheat_lift"))}</strong><em>T2AH − T2</em><i style={{ width: `${Math.max(0, Math.min(100, (num("afterheat_lift") ?? 0) * 10))}%` }}/></div>
+              <div className="climate-metric neutral" data-sensor="afterheat_power"><Flame size={21}/><span>Eftervarme effekt</span><strong>{whole(num("afterheat_power"))} <small>W</small></strong><em>Varme tilført luften</em><i style={{ width: `${Math.min(100, (num("afterheat_power") ?? 0) / 20)}%` }}/></div>
+            </div>
+          </> : null}
         </article>
       </div>
       {notice && <div className={`hch-notice${notice.error ? " error" : ""}`} role="status">{notice.text}</div>}

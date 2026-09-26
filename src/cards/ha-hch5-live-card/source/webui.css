@@ -214,7 +214,7 @@
 .status-action-card small { color: #66808f; font-size: 7px; }
 .status-action-card > button,.fireplace-actions button { min-width: 34px; height: 32px; padding: 0 7px; border: 1px solid #284657; border-radius: 8px; background: #0c1d27; color: #a9c2ce; cursor: pointer; }
 .fireplace-actions { display: flex; gap: 4px; }
-.afterheat-setpoint-card { grid-area: afterheat; min-height: 84px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; align-content: center; padding: 13px 14px; border-radius: 12px; }
+.afterheat-setpoint-card { grid-area: afterheat; min-height: 84px; display: grid; gap: 10px; align-content: center; padding: 13px 14px; border-radius: 12px; }
 .afterheat-copy { display: grid; gap: 2px; }
 .afterheat-copy span { color: #86a0af; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
 .afterheat-copy strong { font-size: 10px; }
@@ -224,6 +224,13 @@
 .setpoint-stepper strong { height: 38px; display: grid; place-items: center; background: #0a1821; font-size: 12px; }
 .climate-panel { grid-area: climate; min-width: 0; padding: 12px 15px; border-radius: 13px; }
 .climate-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+.climate-metrics.metrics-5 { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.climate-metrics.metrics-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.afterheat-setpoint-card .air-calc-head { margin-top: 4px; }
+.afterheat-setpoint-card .climate-metric { min-height: 66px; padding: 6px 10px; }
+/* Let the left panel's tile rows share the height of the taller right column. */
+.climate-panel { display: flex; flex-direction: column; }
+.climate-panel > .climate-metrics { flex: 1 1 auto; }
 .climate-metric { min-height: 90px; position: relative; display: grid; grid-template-columns: 24px 1fr; grid-template-rows: auto auto auto 6px; gap: 2px 8px; align-content: center; padding: 8px 12px; border: 1px solid #1e3a4a; border-radius: 10px; background: #0a1922; overflow: hidden; }
 .climate-metric > svg,.climate-metric > .metric-drop,.climate-metric > .metric-filter,.climate-metric > .metric-heat { grid-row: 1/4; align-self: start; color: #65d99a; font-size: 20px; }
 .climate-metric.blue > .metric-drop { color: #68bfff; }
@@ -360,7 +367,7 @@ button { font: inherit; color: inherit; }
   .overview-heading-row { align-items: flex-start; flex-direction: column; }
   .overview-status-pills { width: 100%; }
   .overview-status-pills > div { flex: 1; min-width: 0; }
-  .unit-readback-row,.climate-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .unit-readback-row,.climate-metrics,.climate-metrics.metrics-5 { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 /* WebUI @media (max-width: 680px). */
 @container hch-card (max-width: 660px) {
@@ -376,8 +383,7 @@ button { font: inherit; color: inherit; }
   .pro-control-column { grid-template-columns: minmax(0,1fr); }
   .pro-control-card { grid-column: auto; }
   .pro-control-pair { grid-template-columns: minmax(0,1fr); }
-  .climate-metrics { grid-template-columns: 1fr 1fr; }
-  .afterheat-setpoint-card { grid-template-columns: 1fr; }
+  .climate-metrics,.climate-metrics.metrics-5 { grid-template-columns: 1fr 1fr; }
   .setpoint-stepper { justify-self: stretch; grid-template-columns: 42px 1fr 42px; }
 }
 @container hch-card (max-width: 560px) {
@@ -960,11 +966,11 @@ button { font: inherit; color: inherit; }
 
 /* Same afterheat thermostat as the controller WebUI, adapted to this card. */
 .afterheat-setpoint-card { align-content: stretch; }
-.afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(220px, 1fr); grid-template-areas: "readings dial"; gap: 18px; align-items: center; --tone: #58b9ff; }
+.afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); grid-template-areas: "dial readings"; gap: 14px; align-items: center; --tone: #58b9ff; }
 .afterheat-thermostat.tone-heating { --tone: #ff8a47; }
 .afterheat-thermostat.tone-lockout { --tone: #ffad55; }
 .afterheat-thermostat.tone-off { --tone: #6c8494; }
-.thermostat-dial { grid-area: dial; position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: auto; }
+.thermostat-dial { grid-area: dial; position: relative; width: 100%; aspect-ratio: 1; }
 .thermostat-dial svg { width: 100%; height: 100%; touch-action: none; cursor: pointer; overflow: visible; }
 .thermostat-dial svg:focus-visible { outline: none; }
 .thermostat-dial svg:focus-visible .thermostat-knob { stroke: #fff; stroke-width: 3; }
@@ -978,20 +984,21 @@ button { font: inherit; color: inherit; }
 .thermostat-scale { fill: #6f8898; font-size: 9px; font-weight: 700; }
 .thermostat-knob { fill: #eaf6fd; stroke: var(--tone); stroke-width: 4; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 45%)); }
 .thermostat-center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2px; pointer-events: none; text-align: center; }
-.thermostat-center strong { font-size: clamp(42px, 5cqi, 78px); line-height: 1; font-weight: 800; color: #eef8fd; letter-spacing: -.02em; }
+.thermostat-center strong { font-size: clamp(34px, 4.2cqi, 46px); line-height: 1; font-weight: 800; color: #eef8fd; letter-spacing: -.02em; }
 .thermostat-center strong small { font-size: .38em; font-weight: 700; margin-left: 2px; color: #a8bfcc; vertical-align: super; }
 .thermostat-state { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 16%, transparent); color: var(--tone); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .thermostat-sub { color: #7f97a6; font-size: 10px; font-weight: 600; }
 .thermostat-side { grid-area: readings; min-width: 0; display: grid; gap: 12px; align-content: center; }
-.thermostat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.thermostat-head span { color: #dff6ff; font-size: 22px; font-weight: 800; }
+.thermostat-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.thermostat-head span { color: #dff6ff; font-size: 15px; font-weight: 800; }
 .thermostat-head em { color: #6f8898; font-size: 10px; font-style: normal; font-weight: 600; }
-.thermostat-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.thermostat-readings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.thermostat-readings div { min-width: 0; }
 .thermostat-readings div { padding: 8px 10px; border: 1px solid #1f3948; border-radius: 9px; background: #0a1822; }
 .thermostat-readings small { display: block; color: #6f8898; font-size: 9px; font-weight: 700; }
-.thermostat-readings strong { color: #dff6ff; font-size: 21px; font-weight: 800; }
+.thermostat-readings strong { color: #dff6ff; font-size: 13px; font-weight: 800; }
 .thermostat-note { margin: 0; padding: 8px 10px; border: 1px solid #5a4a22; border-radius: 9px; background: rgb(255 173 85 / 9%); color: #ffc98a; font-size: 11px; line-height: 1.35; }
-.thermostat-actions { display: grid; grid-template-columns: 46px 1fr 46px; gap: 8px; }
+.thermostat-actions { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
 .thermostat-actions button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #294658; border-radius: 12px; background: #0c1b25; color: #cfe6f2; font-size: 20px; font-weight: 700; cursor: pointer; transition: .18s ease; }
 .thermostat-actions button:hover:not(:disabled) { border-color: var(--tone); color: #fff; }
 .thermostat-actions button:disabled { opacity: .4; cursor: default; }
@@ -1007,6 +1014,5 @@ button { font: inherit; color: inherit; }
 :host([light]) .thermostat-center strong, :host([light]) .thermostat-head span, :host([light]) .thermostat-readings strong { color: #0f2733; }
 :host([light]) .thermostat-readings div, :host([light]) .thermostat-actions button { background: var(--surface, #fff); border-color: #c3d6e2; color: #20394a; }
 :host([light]) .thermostat-knob { fill: #fff; }
-@container hch-card (min-width: 1081px) { .dashboard-main-grid { grid-template-areas: "unit controls" "climate climate" "afterheat afterheat"; } }
 @container hch-card (max-width: 680px) { .afterheat-setpoint-card { grid-template-columns: minmax(0, 1fr); } .afterheat-thermostat { width: 100%; } .thermostat-dial { max-width: 280px; } }
 @media (prefers-reduced-motion: reduce) { .thermostat-glow { animation: none; } }
