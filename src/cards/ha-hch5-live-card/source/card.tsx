@@ -47,6 +47,9 @@ function whole(value: number | null) {
 function watts(value: number | null) {
   return value === null ? "—" : `${Math.round(value).toLocaleString("da-DK")}\u00a0W`;
 }
+function kwh(value: number | null) {
+  return value === null ? "—" : value.toLocaleString("da-DK", { maximumFractionDigits: 2 });
+}
 function modeLabel(value: unknown) {
   return ({ local_auto: "Local Auto", smart_auto: "Smart Auto", manual: "Manuel" } as Record<string, string>)[String(value)] ?? text(value);
 }
@@ -135,7 +138,7 @@ function SmartdashCompact({ hass, config }: { hass: Hass; config: Config }) {
   }, [boostRemaining, boostChoice]);
   return <div className="hch-smartdash">
     <div className="hch-smartdash-head"><strong>HCH5 <span>· {modeLabel(selected("mode_control"))}</span></strong><span className="hch-smartdash-state">{config.entities.attic_temperature && <span className="hch-smartdash-attic">Loft {temp(num("attic_temperature"))} · </span>}{config.entities.power && <span className="hch-smartdash-power">{watts(num("power"))} · </span>}{value("active_master") === "pi" ? "● Live" : "● " + masterLabel(value("active_master"))}</span></div>
-        {(num("supply_recovery") !== null || num("afterheat_power") !== null) && <div className="hch-smartdash-calc">{num("supply_recovery") !== null && <span>Genv. ind <b>{whole(num("supply_recovery"))}%</b></span>}{num("recovered_heat") !== null && <span>Genvundet <b>{whole(num("recovered_heat"))} W</b></span>}{num("afterheat_power") !== null && <span>Eftervarme <b>{whole(num("afterheat_power"))} W</b></span>}</div>}
+        {(num("supply_recovery") !== null || num("afterheat_power") !== null || (value("diagnostics_status") ?? "ok") !== "ok") && <div className="hch-smartdash-calc">{(value("diagnostics_status") ?? "ok") !== "ok" && <span className={`hch-smartdash-alarm ${value("diagnostics_status")}`} title={text(value("diagnostics_alarm_text"))}>⚠ <b>{text(value("diagnostics_alarm_text"))}</b></span>}{num("supply_recovery") !== null && <span>Genv. ind <b>{whole(num("supply_recovery"))}%</b></span>}{num("recovered_heat") !== null && <span>Genvundet <b>{whole(num("recovered_heat"))} W</b></span>}{num("afterheat_power") !== null && <span>Eftervarme <b>{whole(num("afterheat_power"))} W</b></span>}</div>}
     <div className="hch-smartdash-body">
       <div className="hch-smartdash-art"><Hch5UnitDiagram outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={num("afterheat_before")} afterHeater={supply} room={num("room_temperature")} frost={num("afterheat_frost")} flowWater={num("water_flow")} returnWater={num("water_return")} supplyRpm={num("supply_fan_rpm")} extractRpm={num("extract_fan_rpm")} supplyPercent={num("supply_fan_percent")} extractPercent={num("extract_fan_percent")} fanLevel={num("effective_level")} bypassActual={bypassRaw === 255 || value("bypass") === "on"} bypassRequest={bypassRequest} heating={value("afterheat_active") === "on"} recovery={recovery} busActive={value("rs485_healthy") === "on"} bypassRaw={bypassRaw} bypassTravelDirection={value("bypass_travel_direction")} bypassTravelSeconds={travelSeconds} bypassTravelTotal={num("bypass_travel_total")} afterheatLockout={value("afterheat_lockout") === "on"} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"} control={value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace: fireplaceActive })} controlCompact/></div>
       <div className="hch-smartdash-controls" onClick={event => event.stopPropagation()}>
@@ -399,6 +402,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
         </div>
       </header>
 
+      {value("diagnostics_status") && value("diagnostics_status") !== "ok" && value("diagnostics_alarm_text") && <div className={`diagnostics-alarm ${value("diagnostics_status")}`} role="alert" data-sensor="diagnostics_alarm_text" onClick={() => showHistory("diagnostics_alarm_text")}><strong>{value("diagnostics_status") === "critical" ? "Fejl" : value("diagnostics_status") === "warning" ? "Advarsel" : "Bemærk"}</strong><span>{value("diagnostics_alarm_text")}</span></div>}
+
       <div className="dashboard-main-grid">
         <article className="surface pro-air-card">
           <div className="pro-card-head">
@@ -495,6 +500,15 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
               <div className="climate-metric neutral" data-sensor="afterheat_power"><Flame size={21}/><span>Eftervarme effekt</span><strong>{whole(num("afterheat_power"))} <small>W</small></strong><em>Varme tilført luften</em><i style={{ width: `${Math.min(100, (num("afterheat_power") ?? 0) / 20)}%` }}/></div>
             </div>
           </> : null}
+          {(config.entities.frost_state || config.entities.recovered_today) && <>
+            <div className="pro-card-head compact air-calc-head"><div><h2>Diagnose og energi i dag</h2><p>{!value("diagnostics_status") || value("diagnostics_status") === "ok" ? "Ingen advarsler" : text(value("diagnostics_alarm_text"))}</p></div></div>
+            <div className="climate-metrics" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
+              <div className="climate-metric cyan" data-sensor="frost_state"><Snowflake size={21}/><span>Frost i veksler</span><strong>{({ ok: "OK", watch: "Hold øje", risk: "Risiko" } as Record<string, string>)[String(value("frost_state"))] ?? "—"}</strong><em>Afkast T4 {temp(num("exhaust_temperature"))}</em><i style={{ width: value("frost_state") === "risk" ? "100%" : value("frost_state") === "watch" ? "50%" : "5%" }}/></div>
+              <div className="climate-metric neutral" data-sensor="filter_power"><Gauge size={21}/><span>Filter · strøm</span><strong>{num("filter_power") === null ? "—" : `${Math.round((num("filter_power")! - 1) * 100)} %`}</strong><em>{num("sfp") === null ? "Lærer rent filter" : `SFP ${whole(num("sfp"))} W/(m³/s)`}</em><i style={{ width: `${Math.min(100, Math.max(0, ((num("filter_power") ?? 1) - 1) * 400))}%` }}/></div>
+              <div className="climate-metric green" data-sensor="recovered_today"><Leaf size={21}/><span>Genvundet i dag</span><strong>{kwh(num("recovered_today"))} <small>kWh</small></strong><em>{num("recovery_factor") === null ? "Varme hentet hjem" : `${num("recovery_factor")!.toLocaleString("da-DK")} × anlæggets strøm`}</em><i style={{ width: `${Math.min(100, (num("recovered_today") ?? 0) * 5)}%` }}/></div>
+              <div className="climate-metric neutral" data-sensor="unit_energy_today"><Zap size={21}/><span>Strøm i dag</span><strong>{kwh(num("unit_energy_today"))} <small>kWh</small></strong><em>Eftervarme {kwh(num("afterheat_today"))} kWh</em><i style={{ width: `${Math.min(100, (num("unit_energy_today") ?? 0) * 50)}%` }}/></div>
+            </div>
+          </>}
         </article>
 
         <article className="surface afterheat-setpoint-card">
