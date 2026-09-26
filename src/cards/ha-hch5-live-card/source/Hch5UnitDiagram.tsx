@@ -10,7 +10,7 @@ export interface Hch5UnitDiagramProps {
   outdoor: Num;
   extract: Num;
   exhaust: Num;
-  /** Kept for callers; T2 before the coil is not drawn while it is unreliable. */
+  /** T2 before the afterheat coil, only when measured by a 1-Wire sensor in the duct. */
   beforeHeater?: Num;
   afterHeater: Num;
   /** Kept for callers; the HRC2 T5 room sensor is not drawn while it is unreliable. */
@@ -473,7 +473,7 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,afterHeater,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false}=props;
+  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false}=props;
   const water = afterheatCoil === "water";
   // Afkøl: how much the water cools across the coil, as in the WebUI.
   const waterDelta = flowWater === null || returnWater === null ? null : flowWater - returnWater;
@@ -491,7 +491,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   const bypassOpen=bypassPosition>=.5;
   // The card's afterheat_before entity carries the unit's T2, which is T2AH
   // relayed to the unit, so it is not a before-coil measurement for colours.
-  const air=airStops(outdoor,extract,exhaust,afterHeater,null,heating,recovery,bypassOpen);
+  const air=airStops(outdoor,extract,exhaust,afterHeater,beforeHeater,heating,recovery,bypassOpen);
   const [coreOpen,toggleCore]=useCoreView();
   const bypassPercent=travel?.percent??null;
   const bypassRemaining=travel?.remainingSeconds??null;
@@ -638,6 +638,8 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <TempPort cx={-150} cy={205} title="Udsugning · T3" sensor="extract_temperature" onSensor={onSensor} value={fmt(extract)} tone="warm"/>
       <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>
       <SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/>
+      {/* Measured T2 on the supply duct between the unit and the afterheat coil, as in the WebUI. */}
+      {beforeHeater !== null && <SensorPin x={150} y={331} lift={38} width={92} label="T2 · målt" sensor="afterheat_before" onSensor={onSensor} value={fmt(beforeHeater,"°")}/>}
       {control && <ControlPanel control={control} compact={controlCompact}/>}
       <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="90" rx="12"/><text x="14" y="20">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="40" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="60" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text><text className="water-value water-delta" x="14" y="80">Afkøl {fmt(waterDelta)}</text></g>
     </svg>
