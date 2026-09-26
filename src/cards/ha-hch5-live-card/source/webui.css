@@ -202,6 +202,12 @@
 .status-action-card { min-height: 86px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 11px 12px; border-radius: 12px; }
 .status-action-icon { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 10px; background: #0c2c44; color: #5fc5ff; }
 .status-action-icon.flame { background: #352314; color: #ffad55; }
+.status-action-icon.flame.auto-active { position: relative; isolation: isolate; color: #ffbc62; background: #4a2714; box-shadow: 0 0 0 1px #c67330, 0 0 15px rgb(255 133 52 / 38%); }
+.status-action-icon.flame.auto-active::after { content: ""; position: absolute; inset: -5px; z-index: -1; border: 2px solid #f5a04e; border-radius: 14px; animation: hch-auto-fireplace-pulse 2.2s ease-out infinite; }
+.status-action-icon.flame.auto-active svg { animation: hch-auto-fireplace-glow 1.8s ease-in-out infinite alternate; }
+@keyframes hch-auto-fireplace-pulse { 0% { opacity: .7; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes hch-auto-fireplace-glow { from { filter: drop-shadow(0 0 2px #ffac56); } to { filter: drop-shadow(0 0 8px #ff883e); } }
+@media (prefers-reduced-motion: reduce) { .status-action-icon.flame.auto-active::after,.status-action-icon.flame.auto-active svg { animation: none; } }
 .status-action-card > div:nth-child(2) { display: grid; gap: 2px; }
 .status-action-card span { color: #78919f; font-size: 8px; }
 .status-action-card strong { font-size: 10px; }
@@ -691,6 +697,7 @@ button { font: inherit; color: inherit; }
 :host([light]) .text-action{color:#0d97f0}
 :host([light]) .status-action-icon{background:#eef6fb;color:#0d9df0}
 :host([light]) .status-action-icon.flame{background:#f9f4f1;color:#f0820d}
+:host([light]) .status-action-icon.flame.auto-active{background:#fff1dc;color:#db6a0c;box-shadow:0 0 0 1px #da873d,0 0 13px rgb(225 115 28 / 25%)}
 :host([light]) .status-action-card span{color:#627885}
 :host([light]) .status-action-card small{color:#728997}
 :host([light]) .status-action-card > button,:host([light]) .fireplace-actions button{border:1px solid #aac5d5;background:#f0f6fa;color:#334954}

@@ -289,6 +289,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const afterheatStatus = heating ? "Aktiv" : afterheatLockout ? "Spærret af sommerstop" : "Inaktiv";
   const fireplaceRemaining = num("fireplace_remaining");
   const fireplace = (fireplaceRemaining ?? 0) > 0 || isOn("fireplace_active");
+  const fireplaceAuto = entity("fireplace_auto_signal");
+  const fireplaceAutoEnabled = fireplaceAuto?.attributes?.automatik_aktiveret === true;
+  const fireplaceAutoActive = fireplaceAuto?.attributes?.automatik_aktiv === true;
   const mode = String(value("mode_control") ?? "");
   const level = num("effective_level") ?? 3;
   const chosenLevel = num(mode === "manual" ? "level_control" : "auto_normal");
@@ -471,8 +474,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
               <button className={shownCoolingEnabled ? "active" : ""} aria-pressed={shownCoolingEnabled} disabled={busy !== null} aria-label={shownCoolingEnabled ? "Deaktiver frikøling" : "Aktiver frikøling"} onClick={() => void command("cooling", "cooling_control", "switch", shownCoolingEnabled ? "turn_off" : "turn_on", {}, shownCoolingEnabled ? "Frikøling deaktiveret." : "Frikøling aktiveret.", shownCoolingEnabled ? "off" : "on")}><ArrowRight size={17}/></button>
             </article>
             <article className="surface status-action-card">
-              <div className="status-action-icon flame"><Flame size={24}/></div>
-              <div><span>Pejsefunktion</span><strong>{fireplace ? "Aktiv" : "Ikke aktiv"}</strong><small>{fireplace ? remaining(fireplaceRemaining) : "15 eller 30 min"}</small></div>
+              <div className={`status-action-icon flame${fireplaceAutoActive ? " auto-active" : ""}`} aria-label={fireplaceAutoActive ? "Autopejs aktiv" : undefined}><Flame size={24}/></div>
+              <div><span>Pejsefunktion</span><strong>{fireplaceAutoActive ? "Autopejs aktiv" : fireplace ? "Aktiv" : "Ikke aktiv"}</strong><small>{fireplaceAutoActive ? `${remaining(fireplaceRemaining)} · automatisk` : fireplaceAutoEnabled ? "Autopejs klar" : fireplace ? remaining(fireplaceRemaining) : "15 eller 30 min"}</small></div>
               <div className="fireplace-actions">
                 {fireplace
                   ? <button disabled={busy !== null} onClick={() => void command("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket")}>Stop</button>
