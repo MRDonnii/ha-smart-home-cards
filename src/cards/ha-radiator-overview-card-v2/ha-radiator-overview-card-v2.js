@@ -17,7 +17,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 
-const VERSION = "2.0.5";
+const VERSION = "2.0.6";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -87,7 +87,6 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .outdoor .wx{position:absolute;right:16px;top:14px;--mdc-icon-size:30px;color:var(--rc-accent);opacity:.9}
 .meta{margin-top:9px;color:var(--rc-muted);font-size:12px;line-height:1.55}
 .meta b{color:var(--primary-text-color);font-weight:700}
-.outdoor .spark-wrap{margin-top:8px}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
 .stat{--stat-color:var(--rc-muted);display:flex;align-items:center;gap:11px;min-width:0;padding:12px 13px;border:1px solid var(--rc-edge);border-radius:16px;background:var(--rc-glass)}
 .stat.hot{--stat-color:var(--rc-hot)}.stat.warn{--stat-color:var(--rc-warm)}.stat.cool{--stat-color:var(--rc-cool)}.stat.ok{--stat-color:var(--rc-ok)}.stat.accent{--stat-color:var(--rc-accent)}.stat.open{--stat-color:var(--rc-open)}
@@ -109,14 +108,15 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .legend i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .zones{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,305px),1fr));gap:14px}
 .zone,.tile{--room-color:var(--rc-ok);position:relative;min-width:0;overflow:hidden;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .2s ease,border-color .25s ease,box-shadow .25s ease}
-.zone{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"top top" "dial metrics" "foot foot";gap:12px 14px;padding:16px 16px 13px;border:1px solid color-mix(in srgb,var(--room-color) 26%,var(--rc-edge));border-left:var(--rc-left) solid var(--room-color);border-radius:20px;background:radial-gradient(110% 80% at 100% 0%,color-mix(in srgb,var(--room-color) 13%,transparent),transparent 58%),linear-gradient(160deg,var(--rc-glass2),rgba(255,255,255,.012) 55%,rgba(0,0,0,.05));box-shadow:0 10px 26px rgba(0,0,0,.14)}
+.zone{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto 1fr;grid-template-areas:"top top" "dial metrics" "foot foot";gap:12px 14px;padding:16px 16px 13px;border:1px solid color-mix(in srgb,var(--room-color) 26%,var(--rc-edge));border-left:var(--rc-left) solid var(--room-color);border-radius:20px;background:radial-gradient(110% 80% at 100% 0%,color-mix(in srgb,var(--room-color) 13%,transparent),transparent 58%),linear-gradient(160deg,var(--rc-glass2),rgba(255,255,255,.012) 55%,rgba(0,0,0,.05));box-shadow:0 10px 26px rgba(0,0,0,.14)}
 .zone:hover,.tile:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--room-color) 52%,var(--rc-edge));box-shadow:0 16px 34px rgba(0,0,0,.2)}
 .zone.outdoor{--room-color:var(--rc-accent);width:auto}
 .zone.outdoor .dial .tick,.zone.outdoor .dial .halo{display:none}
 .zone.outdoor [data-m="day"]{grid-column:1/-1}
+.zone.outdoor .z-foot{padding-right:4px}
 .zone:focus-visible,.tile:focus-visible,.outdoor:focus-visible{outline:2px solid var(--rc-accent);outline-offset:2px}
 .a-ok{--room-color:var(--rc-ok)}.a-cold{--room-color:var(--rc-cool)}.a-warm,.a-warn{--room-color:var(--rc-warm)}.a-heating{--room-color:var(--rc-hot)}.a-open{--room-color:var(--rc-open)}.a-neutral{--room-color:color-mix(in srgb,var(--rc-muted) 75%,transparent)}.a-ac-cool{--room-color:var(--rc-cool)}.a-ac-hot{--room-color:var(--rc-hot)}.a-ac-dry{--room-color:#a68cff}.a-ac-fan{--room-color:#63d4c1}
-.z-top{grid-area:top;display:flex;align-items:center;gap:11px;min-width:0}
+.z-top{grid-area:top;display:flex;align-items:center;gap:11px;min-width:0;min-height:46px}
 .z-icon{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:color-mix(in srgb,var(--room-color) 15%,transparent);color:var(--room-color);transition:color .3s ease,background .3s ease}
 .z-icon ha-icon{--mdc-icon-size:21px}
 .z-title{flex:1;min-width:0}
@@ -132,36 +132,36 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .badge.ac.on{color:var(--room-color);border-color:color-mix(in srgb,var(--room-color) 50%,var(--rc-edge));animation:badge 2.2s ease-in-out infinite}
 .chev{--mdc-icon-size:18px;color:var(--rc-muted);opacity:.38;transition:opacity .2s ease,transform .2s ease}
 .zone:hover .chev{opacity:.85;transform:translateX(2px)}
-.dial{grid-area:dial;position:relative;width:124px;height:98px}
+.dial{grid-area:dial;align-self:center;position:relative;width:124px;height:98px}
 .dial svg{display:block;width:124px;height:98px;overflow:visible}
 .dial .track{fill:none;stroke:color-mix(in srgb,var(--room-color) 15%,rgba(255,255,255,.07));stroke-width:8;stroke-linecap:round}
 .dial .value{fill:none;stroke:var(--room-color);stroke-width:8;stroke-linecap:round;transition:stroke-dasharray .6s ease,stroke .3s ease}
 .dial .halo{fill:none;stroke:var(--room-color);stroke-width:15;stroke-linecap:round;opacity:0;filter:blur(5px)}
 .zone.is-heating .dial .halo{animation:halo 2.4s ease-in-out infinite}
 .dial .tick{stroke:var(--primary-text-color);stroke-width:3;stroke-linecap:round;opacity:.9;transition:all .5s ease}
-.dial-center{position:absolute;left:0;right:0;top:31px;text-align:center}
-.dial-center strong{display:inline-flex;align-items:flex-start;font-size:27px;font-weight:750;line-height:1;letter-spacing:-.045em}
-.dial-center strong small{margin:3px 0 0 2px;color:var(--rc-muted);font-size:12px;font-weight:700;letter-spacing:0}
-.dial-target{display:block;margin-top:6px;color:var(--rc-muted);font-size:10px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}
-.metrics{grid-area:metrics;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:8px}
-.metric{min-width:0;padding:8px 10px;border:1px solid var(--rc-edge);border-radius:12px;background:rgba(0,0,0,.08)}
-.metric span{display:block;color:var(--rc-muted);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
-.metric strong{display:block;margin-top:3px;overflow:hidden;font-size:13.5px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+.dial-center{position:absolute;left:0;right:0;top:42px;text-align:center}
+.dial-center strong{display:inline-flex;align-items:flex-start;font-size:26px;font-weight:750;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.dial-center strong small{margin:2px 0 0 2px;color:var(--rc-muted);font-size:12px;font-weight:700;letter-spacing:0}
+.dial-target{display:block;margin-top:9px;color:var(--rc-muted);font-size:10px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.metrics{grid-area:metrics;align-self:center;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:7px}
+.metric{min-width:0;padding:8px 9px 9px;border:1px solid var(--rc-edge);border-radius:12px;background:rgba(0,0,0,.08)}
+.metric span{display:block;overflow:hidden;color:var(--rc-muted);font-size:9px;font-weight:800;line-height:1.2;letter-spacing:.05em;text-transform:uppercase;text-overflow:ellipsis;white-space:nowrap}
+.metric strong{display:block;margin-top:4px;overflow:hidden;font-size:14px;font-weight:750;line-height:1.15;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
 .metric.na strong{color:var(--rc-muted);font-weight:600}
 .metric.low{border-color:color-mix(in srgb,var(--rc-danger) 45%,var(--rc-edge))}.metric.low strong{color:var(--rc-danger)}
-.z-foot{grid-area:foot;display:flex;align-items:flex-end;gap:12px;min-width:0;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rc-edge) 80%,transparent)}
+.z-foot{grid-area:foot;align-self:end;display:flex;align-items:flex-end;gap:12px;min-width:0;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rc-edge) 80%,transparent)}
 .spark-wrap{position:relative;flex:1;min-width:0}
-.spark{display:block;width:100%;height:44px;overflow:visible}
+.spark{display:block;width:100%;height:var(--spark-h,44px);overflow:visible}
 .spark .area{fill:var(--room-color);opacity:.1}
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .spark .target{stroke:var(--primary-text-color);stroke-width:1;stroke-dasharray:3 4;opacity:.38;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:100%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:44px;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
+.spark-cross{position:absolute;top:0;height:var(--spark-h,44px);width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
 .spark-tip{position:absolute;top:-26px;padding:3px 8px;border-radius:8px;background:var(--card-background-color,rgba(8,12,18,.9));color:var(--primary-text-color,#fff);border:1px solid var(--divider-color,transparent);font-size:10.5px;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(-50%);pointer-events:none;transition:opacity .12s ease}
 .spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
-.spark-range{display:flex;justify-content:space-between;gap:8px;margin-top:5px;color:var(--rc-muted);font-size:10px;font-weight:650}
-.visual{display:flex;flex:none;align-items:flex-end;justify-content:center;width:70px;height:52px}
+.spark-range{display:flex;justify-content:space-between;gap:8px;margin-top:7px;color:var(--rc-muted);font-size:10px;font-weight:650;line-height:1.2;font-variant-numeric:tabular-nums}
+.visual{display:flex;flex:none;align-self:flex-start;align-items:flex-end;justify-content:center;width:70px;height:var(--spark-h,44px)}
 .radiator{position:relative;display:flex;align-items:flex-end;gap:3px;height:40px;padding:0 4px 6px;color:color-mix(in srgb,var(--rc-muted) 65%,transparent)}
 .radiator::before{content:"";position:absolute;left:2px;right:2px;bottom:3px;height:3px;border-radius:9px;background:currentColor;opacity:.45}
 .radiator::after{content:"";display:none;position:absolute;left:2px;bottom:2px;width:13px;height:5px;border-radius:9px;background:linear-gradient(90deg,transparent,var(--rc-hot2),#fff,var(--rc-hot2),transparent);filter:drop-shadow(0 0 5px var(--rc-hot))}
@@ -184,7 +184,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .t-temp{display:flex;align-items:flex-start;font-size:27px;font-weight:750;line-height:1;letter-spacing:-.04em}
 .t-temp small{margin:3px 0 0 2px;color:var(--rc-muted);font-size:12px;font-weight:700;letter-spacing:0}
 .t-meta{overflow:hidden;color:var(--rc-muted);font-size:11px;line-height:1.45;text-align:right;white-space:nowrap}
-.tile .spark-wrap{margin-top:9px}.tile .spark,.tile .spark-cross{height:30px}
+.tile .spark-wrap{--spark-h:30px;margin-top:9px}
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
@@ -194,7 +194,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @container (max-width:760px){.shell{padding:16px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:40px}.legend{display:none}}
-@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:27px}.dial-center strong{font-size:24px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.05em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px;height:44px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
+@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
 @container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones,.tiles{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
@@ -523,7 +523,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
         <div class="metrics">
           <div class="metric na" data-m="humidity"><span>Fugt</span><strong>${DASH}</strong></div>
           <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH}</strong></div>
-          <div class="metric na" data-m="feels"><span>Føles som</span><strong>${DASH}</strong></div>
+          <div class="metric na" data-m="feels"><span title="Føles som">Føles</span><strong>${DASH}</strong></div>
           <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH}</strong></div>
         </div>
         <div class="z-foot">${spark()}<div class="visual" data-f="visual"></div></div>
@@ -540,7 +540,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
           <div class="dial-center"><strong><span data-f="temp">${DASH}</span><small>°C</small></strong><span class="dial-target">Lige nu</span></div>
         </div>
         <div class="metrics">
-          <div class="metric" data-m="feels"><span>Føles som</span><strong data-f="feels">${DASH}</strong></div>
+          <div class="metric" data-m="feels"><span title="Føles som">Føles</span><strong data-f="feels">${DASH}</strong></div>
           <div class="metric" data-m="humidity"><span>Fugt</span><strong data-f="humidity">${DASH}</strong></div>
           <div class="metric" data-m="day"><span>Døgnets spænd</span><strong data-f="day">${DASH}</strong></div>
         </div>
@@ -761,7 +761,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       spark.target.style.display = "";
     } else spark.target.style.display = "none";
     const last = points[points.length - 1];
-    spark.dot.style.top = `${((y(last.v) / SPARK_H) * 100).toFixed(1)}%`;
+    spark.dot.style.top = `calc(var(--spark-h, 44px) * ${(y(last.v) / SPARK_H).toFixed(3)})`;
     spark.scale = { t0, t1, lo, hi };
     if (spark.range) {
       const lows = points.map((point) => point.min ?? point.v);
