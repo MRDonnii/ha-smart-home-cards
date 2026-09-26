@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
 import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
-import { ArrowRight, Flame, Gauge, Leaf, Snowflake, Wind } from "./icons";
+import { ArrowRight, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
 import css from "./webui.css";
 
 // The HCH5 Control WebUI overview (frontend-v2 OverviewPage) as a Home
@@ -42,6 +42,10 @@ function temp(value: number | null) {
 }
 function whole(value: number | null) {
   return value === null ? "—" : Math.round(value).toLocaleString("da-DK");
+}
+// Electrical draw of the unit from an optional power meter (entities.power).
+function watts(value: number | null) {
+  return value === null ? "—" : `${Math.round(value).toLocaleString("da-DK")}\u00a0W`;
 }
 function modeLabel(value: unknown) {
   return ({ local_auto: "Local Auto", smart_auto: "Smart Auto", manual: "Manuel" } as Record<string, string>)[String(value)] ?? text(value);
@@ -130,7 +134,7 @@ function SmartdashCompact({ hass, config }: { hass: Hass; config: Config }) {
     return () => window.clearTimeout(timer);
   }, [boostRemaining, boostChoice]);
   return <div className="hch-smartdash">
-    <div className="hch-smartdash-head"><strong>HCH5 <span>· {modeLabel(selected("mode_control"))}</span></strong><span className="hch-smartdash-state">{value("active_master") === "pi" ? "● Live" : "● " + masterLabel(value("active_master"))}</span></div>
+    <div className="hch-smartdash-head"><strong>HCH5 <span>· {modeLabel(selected("mode_control"))}</span></strong><span className="hch-smartdash-state">{config.entities.attic_temperature && <span className="hch-smartdash-attic">Loft {temp(num("attic_temperature"))} · </span>}{config.entities.power && <span className="hch-smartdash-power">{watts(num("power"))} · </span>}{value("active_master") === "pi" ? "● Live" : "● " + masterLabel(value("active_master"))}</span></div>
     <div className="hch-smartdash-body">
       <div className="hch-smartdash-art"><Hch5UnitDiagram outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={num("afterheat_before") ?? num("supply_temperature")} afterHeater={supply} room={num("room_temperature")} frost={num("afterheat_frost")} flowWater={num("water_flow")} returnWater={num("water_return")} supplyRpm={num("supply_fan_rpm")} extractRpm={num("extract_fan_rpm")} supplyPercent={num("supply_fan_percent")} extractPercent={num("extract_fan_percent")} fanLevel={num("effective_level")} bypassActual={bypassRaw === 255 || value("bypass") === "on"} bypassRequest={bypassRequest} heating={value("afterheat_active") === "on"} recovery={recovery} busActive={value("rs485_healthy") === "on"} bypassRaw={bypassRaw} bypassTravelDirection={value("bypass_travel_direction")} bypassTravelSeconds={travelSeconds} bypassTravelTotal={num("bypass_travel_total")} afterheatLockout={value("afterheat_lockout") === "on"} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"} control={value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace: fireplaceActive })} controlCompact/></div>
       <div className="hch-smartdash-controls" onClick={event => event.stopPropagation()}>
@@ -388,6 +392,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           <div><span className="status-led"/><small>Master</small><strong>{masterLabel(value("active_master"))}</strong></div>
           <div><span className={`status-led ${busHealthy ? "" : "warn"}`}/><small>Bus</small><strong>{busHealthy ? "Sund" : "Afventer"}</strong></div>
           <div><Leaf size={18}/><small>Driftstilstand</small><strong>{modeLabel(value("mode_control"))}</strong></div>
+          {config.entities.power && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("power")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("power"); } }}><Zap size={18}/><small>Forbrug</small><strong>{watts(num("power"))}</strong></div>}
+          {config.entities.attic_temperature && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("attic_temperature")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("attic_temperature"); } }}><Roof size={18}/><small>Loftrum</small><strong>{temp(num("attic_temperature"))}</strong></div>}
         </div>
       </header>
 
