@@ -20,4 +20,6 @@ entities:
 - `entities.attic_temperature`: optional loft/attic temperature, shown as "Loftrum" beside "Forbrug" and in the Smartdash header.
 - `entities.supply_recovery`, `recovered_heat`, `afterheat_lift`, `afterheat_power`, `supply_airflow`: optional values the Pi computes from a measured T2 before the afterheat coil. Shown as "Beregnet fra målt T2" under the indoor climate data, and as a short line in Smartdash.
 - `entities.diagnostics_status`, `diagnostics_alarm_text`, `frost_state`, `filter_power`, `sfp`, `recovered_today`, `recovery_factor`, `unit_energy_today`, `afterheat_today`: optional Pi diagnostics. Active alarms show as a strip at the top (and in the Smartdash line), the rest under "Diagnose og energi i dag".
+- `entities.measured_energy_today`: optional daily HA Utility Meter from a physical Dantherm kWh meter. It takes priority over the Pi's estimated `unit_energy_today`.
+- `entities.electricity_price` and `entities.heat_price`: optional current prices in DKK/kWh. Cost figures are approximate. Afterheat and recovered heat are air-side estimates; recovered heat × heat price is a theoretical replacement value, not measured bill savings.
 - `variant: smartdash`: the compact drawing and controls used by Smartdash.

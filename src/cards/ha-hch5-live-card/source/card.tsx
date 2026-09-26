@@ -51,6 +51,9 @@ function watts(value: number | null) {
 function kwh(value: number | null) {
   return value === null ? "—" : value.toLocaleString("da-DK", { maximumFractionDigits: 2 });
 }
+function cost(energyKwh: number | null, price: number | null) {
+  return energyKwh === null || price === null ? "—" : `${(energyKwh * price).toLocaleString("da-DK", { maximumFractionDigits: 2 })} kr`;
+}
 function modeLabel(value: unknown) {
   return ({ local_auto: "Local Auto", smart_auto: "Smart Auto", manual: "Manuel" } as Record<string, string>)[String(value)] ?? text(value);
 }
@@ -509,8 +512,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             <div className="climate-metrics" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) showHistory(key); }}>
               <div className="climate-metric cyan" data-sensor="frost_state"><Snowflake size={21}/><span>Frost i veksler</span><strong>{({ ok: "OK", watch: "Hold øje", risk: "Risiko" } as Record<string, string>)[String(value("frost_state"))] ?? "—"}</strong><em>Afkast T4 {temp(num("exhaust_temperature"))}</em><i style={{ width: value("frost_state") === "risk" ? "100%" : value("frost_state") === "watch" ? "50%" : "5%" }}/></div>
               <div className="climate-metric neutral" data-sensor="filter_power"><Gauge size={21}/><span>Filter · strøm</span><strong>{num("filter_power") === null ? "—" : `${Math.round((num("filter_power")! - 1) * 100)} %`}</strong><em>{num("sfp") === null ? "Lærer rent filter" : `SFP ${whole(num("sfp"))} W/(m³/s)`}</em><i style={{ width: `${Math.min(100, Math.max(0, ((num("filter_power") ?? 1) - 1) * 400))}%` }}/></div>
-              <div className="climate-metric green" data-sensor="recovered_today"><Leaf size={21}/><span>Genvundet i dag</span><strong>{kwh(num("recovered_today"))} <small>kWh</small></strong><em>{num("recovery_factor") === null ? "Varme hentet hjem" : `${num("recovery_factor")!.toLocaleString("da-DK")} × anlæggets strøm`}</em><i style={{ width: `${Math.min(100, (num("recovered_today") ?? 0) * 5)}%` }}/></div>
-              <div className="climate-metric neutral" data-sensor="unit_energy_today"><Zap size={21}/><span>Strøm i dag</span><strong>{kwh(num("unit_energy_today"))} <small>kWh</small></strong><em>Eftervarme {kwh(num("afterheat_today"))} kWh</em><i style={{ width: `${Math.min(100, (num("unit_energy_today") ?? 0) * 50)}%` }}/></div>
+              <div className="climate-metric green" data-sensor="recovered_today"><Leaf size={21}/><span>Genvundet i dag · anslået</span><strong>{kwh(num("recovered_today"))} <small>kWh</small></strong><em>Teoretisk varmeværdi ca. {cost(num("recovered_today"), num("heat_price"))}</em><i style={{ width: `${Math.min(100, (num("recovered_today") ?? 0) * 5)}%` }}/></div>
+              <div className="climate-metric neutral" data-sensor="unit_energy_today"><Zap size={21}/><span>Strøm i dag{num("measured_energy_today") !== null ? " · målt" : " · anslået"}</span><strong>{kwh(num("measured_energy_today") ?? num("unit_energy_today"))} <small>kWh</small></strong><em>Ca. {cost(num("measured_energy_today") ?? num("unit_energy_today"), num("electricity_price"))} ved aktuel elpris</em><i style={{ width: `${Math.min(100, (num("measured_energy_today") ?? num("unit_energy_today") ?? 0) * 50)}%` }}/></div>
+              <div className="climate-metric neutral" data-sensor="afterheat_today"><Flame size={21}/><span>Eftervarme i dag · anslået</span><strong>{kwh(num("afterheat_today"))} <small>kWh</small></strong><em>Ca. {cost(num("afterheat_today"), num("heat_price"))} ved aktuel varmepris</em><i style={{ width: `${Math.min(100, (num("afterheat_today") ?? 0) * 50)}%` }}/></div>
             </div>
           </>}
         </article>
