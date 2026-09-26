@@ -54,6 +54,9 @@ function kwh(value: number | null) {
 function modeLabel(value: unknown) {
   return ({ local_auto: "Local Auto", smart_auto: "Smart Auto", manual: "Manuel" } as Record<string, string>)[String(value)] ?? text(value);
 }
+function outdoorAirLabel(value: unknown) {
+  return ({ excellent_air_quality: "Fremragende", good_air_quality: "God", fair_air_quality: "Rimelig", moderate_air_quality: "Moderat", poor_air_quality: "Dårlig", very_poor_air_quality: "Meget dårlig" } as Record<string, string>)[String(value)] ?? text(value);
+}
 function masterLabel(value: unknown) {
   if (value === "pi") return "Raspberry Pi";
   if (value === "hcp4") return "HCP4";
@@ -399,6 +402,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           <div><Leaf size={18}/><small>Driftstilstand</small><strong>{modeLabel(value("mode_control"))}</strong></div>
           {config.entities.power && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("power")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("power"); } }}><Zap size={18}/><small>Forbrug</small><strong>{watts(num("power"))}</strong></div>}
           {config.entities.attic_temperature && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("attic_temperature")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("attic_temperature"); } }}><Roof size={18}/><small>Loftrum</small><strong>{temp(num("attic_temperature"))}</strong></div>}
+          {config.entities.outdoor_air_quality && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("outdoor_air_quality")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("outdoor_air_quality"); } }} title={num("outdoor_pm25") === null ? "Google Air Quality · udendørs modeldata" : `Google Air Quality · PM2.5 ${num("outdoor_pm25")!.toLocaleString("da-DK")} µg/m³`}><Leaf size={18}/><small>Udeluft · Google</small><strong>{outdoorAirLabel(value("outdoor_air_quality"))}</strong></div>}
         </div>
       </header>
 
