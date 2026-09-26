@@ -900,3 +900,24 @@ button { font: inherit; color: inherit; }
     .hch-control-footer { font-size: 17px; }
   }
 }
+/* Claude AI 2026-09-26: på mobil står vand frem/retur og afkøl i tegningens
+   nederste venstre hjørne under varmefladen, ligesom på desktop. */
+.hch-mobile-water-badge { display: none; }
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-mobile-water-badge {
+      position: absolute; z-index: 1; left: 0; top: calc(78px + 14cqi); display: grid; gap: 0; padding: 2px 4px; line-height: 1.15;
+      border: 1px solid color-mix(in srgb, var(--hch-border) 48%, transparent); border-radius: 8px;
+      background: rgb(10 27 38 / 90%); box-shadow: 0 3px 12px rgb(0 0 0 / 28%);
+    }
+    .dashboard-overview .hch-mobile-water-badge small { color: #a6c1d0; font-size: 10px; white-space: nowrap; }
+    .dashboard-overview .hch-mobile-water-badge small b { color: #eefaff; font-weight: 800; }
+    .dashboard-overview .hch-mobile-water-badge strong { display: flex; align-items: baseline; gap: 1px; color: #eefaff; font-size: 13px; white-space: nowrap; }
+    .dashboard-overview .hch-mobile-water-badge strong span { color: #91aab8; }
+    .dashboard-overview .hch-mobile-water-badge button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+    .dashboard-overview .hch-mobile-subreadings .hch-mobile-water { display: none; }
+    .dashboard-overview .hch-mobile-subreadings { grid-template-columns: 1fr; }
+  }
+}
+:host([light]) .dashboard-overview .hch-mobile-water-badge { background: rgb(240 246 249 / 92%); }
+:host([light]) .dashboard-overview .hch-mobile-water-badge :is(small,strong,small b) { color: #14222a; }
