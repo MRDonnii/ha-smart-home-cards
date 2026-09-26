@@ -386,6 +386,15 @@ button { font: inherit; color: inherit; }
 .hch-smartdash-calc { display: flex; gap: 12px; justify-content: flex-end; color: var(--ink-muted,#a8b8c5); font-size: 11px; white-space: nowrap; overflow: hidden; }
 .hch-smartdash-calc b { color: var(--ink,#eef4fa); font-weight: 700; }
 .air-calc-head { margin-top: 14px; }
+.dashboard-overview .diagnostics-alarm { display: flex; gap: 10px; align-items: baseline; margin: 0 0 12px; padding: 9px 13px; border: 1px solid #5a4a22; border-radius: 10px; background: rgb(255 173 85 / 10%); color: #dff6ff; font-size: 12px; cursor: pointer; }
+.dashboard-overview .diagnostics-alarm strong { color: #ffad55; }
+.dashboard-overview .diagnostics-alarm.critical { border-color: #6b2a2a; background: rgb(255 90 90 / 12%); }
+.dashboard-overview .diagnostics-alarm.critical strong { color: #ff7a7a; }
+.dashboard-overview .diagnostics-alarm.info { border-color: #1f3948; background: rgb(112 204 255 / 8%); }
+.dashboard-overview .diagnostics-alarm.info strong { color: #70ccff; }
+.hch-smartdash-alarm { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #ffad55; }
+.hch-smartdash-alarm.critical { color: #ff7a7a; }
+.hch-smartdash-alarm b { color: inherit !important; font-weight: 600; }
 .hch-smartdash-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; white-space: nowrap; }
 .hch-smartdash-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
 .hch-smartdash-head strong span { color: var(--ink-muted, #a8b8c5); font-weight: 500; }
