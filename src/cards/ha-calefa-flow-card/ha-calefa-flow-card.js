@@ -1,10 +1,10 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.4";
+const CALEFA_FLOW_CARD_VERSION = "0.9.5";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
 const ENTITY_KEYS = [
-  "fjv_supply", "fjv_return", "fjv_flow",
-  "heating_supply", "heating_return", "heating_setpoint", "heating_flow",
+  "fjv_supply", "fjv_return", "fjv_delta", "fjv_flow",
+  "heating_supply", "heating_return", "heating_delta", "heating_setpoint", "heating_flow",
   "dhw_temperature", "dhw_setpoint", "cold_water_temperature", "water_flow",
   "pump", "pump_speed", "heating_valve", "dhw_valve",
   "heating_active", "dhw_active", "power", "pressure",
@@ -15,8 +15,8 @@ const ENTITY_KEYS = [
 
 // Registry unique IDs are stable when users rename Home Assistant entities.
 const CALEFA_SENSOR_KEYS = {
-  fjv_supply: "source_inlet_temperature", fjv_return: "source_return_temperature",
-  heating_supply: "cvv_supply_temperature", heating_return: "cvv_return_temperature",
+  fjv_supply: "source_inlet_temperature", fjv_return: "source_return_temperature", fjv_delta: "source_delta_temperature",
+  heating_supply: "cvv_supply_temperature", heating_return: "cvv_return_temperature", heating_delta: "cvv_delta_temperature",
   heating_setpoint: "cvv_desired_supply_temperature", dhw_temperature: "dhw_out_temperature",
   dhw_setpoint: "dhw_temperature_setpoint", cold_water_temperature: "dcw_sensor_temperature",
   water_flow: "domestic_cold_water_flow", pump: "itc_pump_status",
@@ -722,7 +722,7 @@ class HaCalefaFlowCard extends HTMLElement {
       const [, first, second, delta] = spec;
       const tiles = [this._tileMarkup(first), this._tileMarkup(second)].filter(Boolean);
       if (!tiles.length) return "";
-      const ring = tiles.length === 2 ? `<div class="cf-delta" data-delta="${delta}" role="status" aria-label="Temperaturforskel mellem frem og retur"><small>ΔT</small><strong><b>–</b><em>°C</em></strong></div>` : "";
+      const ring = tiles.length === 2 ? `<button class="cf-delta" type="button" data-delta="${delta}" data-action="delta-history" aria-label="Vis historik for ${delta === "fjv" ? "fjernvarmens" : "varmens"} temperaturforskel"><small>ΔT</small><strong><b>–</b><em>°C</em></strong></button>` : "";
       return `<div class="cf-block cf-pair ${tiles.length === 2 ? "" : "is-single"}" ${place(anchorY([first, second]))}>${tiles.join("")}${ring}</div>`;
     }
     const tile = this._tileMarkup(spec[1]);
@@ -1050,7 +1050,7 @@ class HaCalefaFlowCard extends HTMLElement {
       this._toggle(node, "is-muted", status === "unavailable");
       this._toggle(node, "is-good", status === "good");
       this._toggle(node, "is-bad", status === "bad");
-      const label = `${node.dataset.delta === "fjv" ? "Fjernvarme" : "Varme"} afkøling ${value === null ? "ikke tilgængelig" : `${this._formatNumber(value, 1)} grader, ${status === "good" ? "god" : "lav"}`}`;
+      const label = `${node.dataset.delta === "fjv" ? "Fjernvarme" : "Varme"} afkøling ${value === null ? "ikke tilgængelig" : `${this._formatNumber(value, 1)} grader, ${status === "good" ? "god" : "lav"}`}. Tryk for historik.`;
       if (node.getAttribute("aria-label") !== label) node.setAttribute("aria-label", label);
     });
   }
@@ -1915,6 +1915,10 @@ class HaCalefaFlowCard extends HTMLElement {
       const id = key === "pump" ? (this._config.pump || this._config.pump_speed) : key === "bypass" ? this._config.dhw_active : this._config?.[key];
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+    } else if (action === "delta-history") {
+      const key = target.dataset.delta === "fjv" ? "fjv_delta" : "heating_delta";
+      const id = this._config?.[key];
+      if (id && this._hass?.states?.[id]) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
     else if (action === "open-faults") this._openFaults();
     else if (action === "close-faults") this._closeFaults();
@@ -2034,10 +2038,10 @@ const CALEFA_STYLES = `
   .cf-tile strong{display:flex;align-items:baseline;color:var(--tone);font-size:clamp(15px,2cqw,22px);line-height:1.08;white-space:nowrap}.cf-tile strong b{font-weight:850;font-variant-numeric:tabular-nums}.cf-tile strong em{margin-left:2px;color:var(--cf-muted);font-size:clamp(9px,1cqw,12px);font-style:normal;font-weight:500}
   .cf-tile i{overflow:hidden;color:var(--cf-muted);font-size:clamp(10px,1cqw,11px);font-style:normal;line-height:1.2;white-space:nowrap;text-overflow:ellipsis}.cf-tile i:empty{display:none}
   .cf-tile[data-tone="component"]:not(.is-on){--tone:#7e8f99}.cf-tile[data-tone="bypass"]:not(.is-on):not(.is-armed){--tone:#7e8f99}.cf-tile[data-tone="component"] strong{color:#f2f7fa}.cf-tile.is-unavailable{opacity:.5}
-  .cf-pair{--ring:clamp(40px,4.8cqw,54px);display:grid;grid-template-rows:1fr 1fr;row-gap:calc(var(--ring) * .78)}.cf-pair.is-single{grid-template-rows:1fr;row-gap:0}.cf-pair .cf-tile{position:relative;z-index:1}.cf-pair:not(.is-single):before{content:"";position:absolute;left:50%;top:20%;bottom:20%;width:2px;transform:translateX(-50%);background:linear-gradient(var(--cf-supply),var(--cf-return));opacity:.7}.cf-right .cf-pair:not(.is-single):before{background:linear-gradient(var(--cf-heat),var(--cf-heat-return))}
+  .cf-pair{--ring:clamp(44px,4.8cqw,54px);display:grid;grid-template-rows:1fr 1fr;row-gap:calc(var(--ring) * .78)}.cf-pair.is-single{grid-template-rows:1fr;row-gap:0}.cf-pair .cf-tile{position:relative;z-index:1}.cf-pair:not(.is-single):before{content:"";position:absolute;left:50%;top:20%;bottom:20%;width:2px;transform:translateX(-50%);background:linear-gradient(var(--cf-supply),var(--cf-return));opacity:.7}.cf-right .cf-pair:not(.is-single):before{background:linear-gradient(var(--cf-heat),var(--cf-heat-return))}
 
   /* ΔT ring on the seam between supply and return. */
-  .cf-delta{--cf-delta-tone:#7b99a8;position:absolute;left:50%;top:50%;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;width:var(--ring);height:var(--ring);border:clamp(2px,.3cqw,3px) solid var(--cf-delta-tone);border-radius:50%;background:radial-gradient(circle,#15313d 0%,#0a1d29 74%);box-shadow:0 0 0 3px rgba(9,26,36,.9),0 0 14px color-mix(in srgb,var(--cf-delta-tone) 35%,transparent);color:#e7f7fa;transform:translate(-50%,-50%);pointer-events:none}
+  .cf-delta{--cf-delta-tone:#7b99a8;position:absolute;left:50%;top:50%;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;width:var(--ring);height:var(--ring);padding:0;border:clamp(2px,.3cqw,3px) solid var(--cf-delta-tone);border-radius:50%;background:radial-gradient(circle,#15313d 0%,#0a1d29 74%);box-shadow:0 0 0 3px rgba(9,26,36,.9),0 0 14px color-mix(in srgb,var(--cf-delta-tone) 35%,transparent);color:#e7f7fa;transform:translate(-50%,-50%);cursor:pointer;touch-action:manipulation}
   .cf-delta small{font-size:clamp(9px,.95cqw,11px);font-weight:800;line-height:1}.cf-delta strong{display:flex;align-items:baseline;font-size:clamp(10px,1.2cqw,13px);line-height:1.1;white-space:nowrap}.cf-delta strong em{margin-left:1px;font-size:.85em;font-style:normal}
   .cf-delta.is-good{--cf-delta-tone:var(--cf-ok)}.cf-delta.is-bad{--cf-delta-tone:#ff685a}.cf-delta.is-muted{opacity:.55}
   .cf-delta:not(.is-muted):after{content:"";position:absolute;inset:-6px;border:1px solid var(--cf-delta-tone);border-radius:50%;opacity:.35;animation:cf-pulse 2.8s ease-in-out infinite}

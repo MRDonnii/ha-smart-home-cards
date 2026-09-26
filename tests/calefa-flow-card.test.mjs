@@ -718,4 +718,26 @@ const integration = cardEditor.shadowRoot.querySelector("#integration");
 integration.listeners.change();
 assert.equal(cardEditor.lastEvent.detail.config.calefa_entry, "entry-1");
 
+// Both visible delta rings open the integration's own recorded delta sensor history.
+const deltaHistoryCard = new Card();
+deltaHistoryCard._build = () => {};
+deltaHistoryCard.setConfig({
+  fjv_supply: "sensor.fjv_supply", fjv_return: "sensor.fjv_return", fjv_delta: "sensor.fjv_delta",
+  heating_supply: "sensor.heat_supply", heating_return: "sensor.heat_return", heating_delta: "sensor.heat_delta",
+});
+deltaHistoryCard._hass = { states: { "sensor.fjv_delta": state(20.4), "sensor.heat_delta": state(6.3) } };
+assert.match(deltaHistoryCard._blockMarkup(["pair", "fjv_supply", "fjv_return", "fjv"]), /data-action="delta-history"/);
+for (const [delta, entityId] of [["fjv", "sensor.fjv_delta"], ["heating", "sensor.heat_delta"]]) {
+  deltaHistoryCard._handleClick({ composedPath: () => [{ dataset: { action: "delta-history", delta } }] });
+  assert.equal(deltaHistoryCard.lastEvent.type, "hass-more-info");
+  assert.equal(deltaHistoryCard.lastEvent.detail.entityId, entityId);
+}
+const bindings = vm.runInNewContext("calefaBindings", context);
+const deltaBindings = bindings([
+  { config_entry_id: "entry-1", unique_id: "entry-1_source_delta_temperature", entity_id: "sensor.fjv_delta" },
+  { config_entry_id: "entry-1", unique_id: "entry-1_cvv_delta_temperature", entity_id: "sensor.heat_delta" },
+], "entry-1");
+assert.equal(deltaBindings.entities.fjv_delta, "sensor.fjv_delta");
+assert.equal(deltaBindings.entities.heating_delta, "sensor.heat_delta");
+
 console.log("Validated Calefa flow card state handling");
