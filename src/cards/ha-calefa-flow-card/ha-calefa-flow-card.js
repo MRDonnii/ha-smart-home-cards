@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.3";
+const CALEFA_FLOW_CARD_VERSION = "0.9.4";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -52,6 +52,7 @@ const CALEFA_ALARM_KEYS = new Set([
   "itc_motor_failure", "itc_htco_error", "auto_standby_fault",
 ]);
 const CALEFA_REGISTRY_CACHE = new WeakMap();
+const CALEFA_DEVICE_CACHE = new WeakMap();
 function calefaRegistry(hass) {
   const visible = Object.values(hass?.entities || {}).filter((row) => row.platform === "wavin_calefa" && !row.disabled_by);
   const connection = hass?.connection;
@@ -69,6 +70,22 @@ function calefaRegistry(hass) {
   return CALEFA_REGISTRY_CACHE.get(connection);
 }
 function calefaEntries(rows) { return [...new Set(rows.map((row) => row.config_entry_id).filter(Boolean))]; }
+function calefaDevices(hass) {
+  const connection = hass?.connection;
+  if (!connection?.sendMessagePromise) return Promise.resolve([]);
+  if (!CALEFA_DEVICE_CACHE.has(connection)) {
+    const request = connection.sendMessagePromise({ type: "config/device_registry/list" })
+      .catch(() => { CALEFA_DEVICE_CACHE.delete(connection); return []; });
+    CALEFA_DEVICE_CACHE.set(connection, request);
+  }
+  return CALEFA_DEVICE_CACHE.get(connection);
+}
+function calefaUnitLabel(entryId, devices) {
+  const device = devices.find((row) => row.config_entries?.includes(entryId)
+    && row.identifiers?.some(([domain, id]) => domain === "wavin_calefa" && id === entryId));
+  const name = device?.name_by_user || device?.name || "Calefa-unit";
+  return device?.model ? `${name} · ${device.model}` : `${name} (${entryId.slice(0, 8)})`;
+}
 function calefaBindings(rows, entryId) {
   const found = new Map(rows.filter((row) => row.config_entry_id === entryId)
     .map((row) => [row.unique_id?.slice(entryId.length + 1), row.entity_id]));
@@ -1927,9 +1944,26 @@ class HaCalefaFlowCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.shadowRoot.innerHTML = `<style>:host{display:block;padding:12px 0;color:var(--primary-text-color)}label{display:block;margin-bottom:6px;font-weight:600}select{box-sizing:border-box;width:100%;min-height:40px;padding:7px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:inherit}p{margin:7px 0;color:var(--secondary-text-color);font-size:12px}</style><label for="integration">Calefa-integration</label><select id="integration"><option value="">Søg automatisk</option></select><p>Ved én integration forbindes kortet automatisk. Vælg her, hvis du har flere.</p><label for="orientation">Unitens retning</label><select id="orientation"><option value="left">Venstrevendt</option><option value="right">Højrevendt</option></select>`;
+    this.shadowRoot.innerHTML = `<style>
+      :host{display:block;padding:12px 0;color:var(--primary-text-color)}
+      label{display:block;margin:0 0 6px;font-weight:600}
+      select{box-sizing:border-box;width:100%;min-height:40px;padding:7px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:inherit}
+      p{margin:7px 0 18px;color:var(--secondary-text-color);font-size:12px;line-height:1.4}
+      .setting{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin-top:8px;cursor:pointer}
+      .setting span{flex:1}.setting input{width:20px;height:20px;margin:0;accent-color:var(--primary-color)}
+      .section{margin:20px 0 8px;color:var(--secondary-text-color);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    </style>
+    <label for="integration">Calefa-unit</label><select id="integration"><option value="">Søger efter Calefa-enheder…</option></select><p id="unit-help">Kortet finder Calefa-enheder fra integrationen.</p>
+    <label for="orientation">Unitens retning</label><select id="orientation"><option value="left">Venstrevendt</option><option value="right">Højrevendt</option></select>
+    <label class="setting" for="animations"><span>Animation i flowdiagram</span><input id="animations" type="checkbox"></label>
+    <div class="section">Ekstra visning</div>
+    <label class="setting" for="show-today"><span>Vis forbrug i dag</span><input id="show-today" type="checkbox"></label>
+    <label class="setting" for="show-footer"><span>Vis nøgletal nederst</span><input id="show-footer" type="checkbox"></label>`;
     this._select = this.shadowRoot.querySelector("#integration");
     this._orientation = this.shadowRoot.querySelector("#orientation");
+    this._animations = this.shadowRoot.querySelector("#animations");
+    this._showToday = this.shadowRoot.querySelector("#show-today");
+    this._showFooter = this.shadowRoot.querySelector("#show-footer");
     this._select.addEventListener("change", () => {
       const config = { ...this._config };
       if (this._select.value) config.calefa_entry = this._select.value;
@@ -1939,24 +1973,38 @@ class HaCalefaFlowCardEditor extends HTMLElement {
     this._orientation.addEventListener("change", () => {
       this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, orientation: this._orientation.value } } }));
     });
+    for (const [input, key] of [[this._animations, "animations"], [this._showToday, "show_today"], [this._showFooter, "show_footer"]]) {
+      input.addEventListener("change", () => {
+        this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, [key]: input.checked } } }));
+      });
+    }
   }
-  setConfig(config) { this._config = config; this._select.value = config.calefa_entry || ""; this._orientation.value = config.orientation === "right" ? "right" : "left"; }
+  setConfig(config) {
+    this._config = config;
+    this._select.value = config.calefa_entry || (this._entries?.length === 1 ? this._entries[0] : "");
+    this._orientation.value = config.orientation === "right" ? "right" : "left";
+    this._animations.checked = config.animations !== false;
+    this._showToday.checked = config.show_today !== false;
+    this._showFooter.checked = config.show_footer !== false;
+  }
   set hass(hass) {
     if (!hass?.connection || this._connection === hass.connection) return;
     this._connection = hass.connection;
-    calefaRegistry(hass).then((rows) => {
+    Promise.all([calefaRegistry(hass), calefaDevices(hass)]).then(([rows, devices]) => {
       if (this._connection !== hass.connection) return;
       const entries = calefaEntries(rows);
-      this._select.replaceChildren(new Option("Søg automatisk", ""), ...entries.map((id) => {
-        const first = rows.find((row) => row.config_entry_id === id && row.entity_id?.startsWith("sensor."));
-        return new Option(`${first?.entity_id?.split(".")[1]?.split("_").slice(0, 3).join(" ") || "Calefa"} (${id.slice(0, 8)})`, id);
-      }));
-      this._select.value = this._config?.calefa_entry || "";
-      this.shadowRoot.querySelector("p").textContent = entries.length > 1
-        ? "Flere Calefa-integrationer fundet. Vælg den, som kortet skal vise."
-        : entries.length === 1 ? "Én Calefa-integration fundet. Kortet forbinder automatisk."
-          : "Ingen Calefa-integration fundet endnu.";
-    }).catch(() => { this.shadowRoot.querySelector("p").textContent = "Integrationslisten kunne ikke indlæses."; });
+      this._entries = entries;
+      const selected = this._config?.calefa_entry || (entries.length === 1 ? entries[0] : "");
+      const options = entries.map((id) => new Option(calefaUnitLabel(id, devices), id));
+      if (entries.length !== 1) options.unshift(new Option(entries.length ? "Vælg Calefa-unit" : "Ingen Calefa-unit fundet", ""));
+      if (selected && !entries.includes(selected)) options.unshift(new Option("Tidligere valgt unit findes ikke", selected));
+      this._select.replaceChildren(...options);
+      this._select.value = selected;
+      this.shadowRoot.querySelector("#unit-help").textContent = entries.length > 1
+        ? "Vælg den unit, kortet skal vise."
+        : entries.length === 1 ? "Kortet er forbundet til denne unit automatisk."
+          : "Kontrollér, at Wavin Calefa-integrationen er indlæst.";
+    }).catch(() => { this.shadowRoot.querySelector("#unit-help").textContent = "Calefa-enhederne kunne ikke indlæses."; });
   }
 }
 if (!customElements.get("ha-calefa-flow-card-editor")) customElements.define("ha-calefa-flow-card-editor", HaCalefaFlowCardEditor);
