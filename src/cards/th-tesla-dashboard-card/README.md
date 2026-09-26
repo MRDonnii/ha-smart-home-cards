@@ -86,6 +86,17 @@ chart:
   energy_entity: sensor.monta_charger_charge_energy
 ```
 
+## Billede af bilen
+
+Kortet indeholder ikke et foto af bilen, da Teslas billeder ikke må distribueres her.
+Uden `vehicle.image` vises en neutral grå silhuet. Er stien forkert, vises silhuetten også.
+Vil du have din egen bil på kortet:
+
+1. Læg et billede med transparent baggrund (WebP/PNG/SVG, ca. 900×434) i
+   `config/www/`, fx `config/www/tesla/min-bil.webp`.
+2. Sæt `vehicle.image: /local/tesla/min-bil.webp` (`/local/` = `config/www/`).
+3. Genindlæs dashboardet (evt. tøm browserens cache).
+
 ## Smart ladeplan
 
 Panelet "Smart ladeplan" læser **dine egne sensorer**. Hverken Tesla-integrationen,
