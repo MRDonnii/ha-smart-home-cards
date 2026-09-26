@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.18 */
+/* MRDonnii Smart Home Cards v0.4.19 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -25567,7 +25567,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION23 = "0.8.56";
+var VERSION23 = "0.8.57";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -25630,6 +25630,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     e.definition = { roots: [
       { key: "title", label: "Titel" },
       { key: "weather", label: "Vejr", type: "entity" },
+      { key: "outdoor_temperature", label: "Udetemperatur (valgfri sensor)", type: "entity" },
       { key: "weather_path", label: "Vejrside" },
       { key: "mode_entity", label: "Hustilstand", type: "entity" },
       { key: "animation", label: "Animation", type: "boolean" },
@@ -25671,12 +25672,12 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._hass = h;
     this.style.setProperty("--header-accent-width", h?.states?.["input_boolean.dashboard_venstre_accent"]?.state === "on" ? "4px" : "0px");
     if (this._popupCard) this._popupCard.hass = h;
-    const ids = [this._config.weather, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c) => c.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error])].filter(Boolean);
+    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c) => c.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error])].filter(Boolean);
     const states = h?.states || {};
     const values = ids.map((id) => {
       const entity = states[id];
       const cameraId = (id.startsWith("camera.") ? id : typeof entity?.state === "string" ? entity.state : "").split("|", 1)[0];
-      return [id, entity?.state, cameraId.startsWith("camera.") ? states[cameraId]?.attributes?.entity_picture : void 0];
+      return [id, entity?.state, id === this._config.weather ? entity?.attributes?.temperature : void 0, cameraId.startsWith("camera.") ? states[cameraId]?.attributes?.entity_picture : void 0];
     });
     const s3 = JSON.stringify(values);
     if (s3 !== this._sig) {
@@ -25727,9 +25728,11 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
   _weather() {
     const e = this._e(this._config.weather), a = e?.attributes || {}, state = this._condition();
+    const rawTemp = this._config.outdoor_temperature ? this._s(this._config.outdoor_temperature) : a.temperature;
+    const temp = rawTemp == null || rawTemp === "" || ["unknown", "unavailable"].includes(String(rawTemp).toLowerCase()) ? NaN : Number(rawTemp);
     const labels = { sunny: "Solrigt", "clear-night": "Klart", cloudy: "Overskyet", partlycloudy: "Let overskyet", rainy: "Regn", pouring: "Kraftig regn", snowy: "Sne", "snowy-rainy": "Slud", fog: "T\xE5get", windy: "Bl\xE6sende", "windy-variant": "Bl\xE6sende", lightning: "Torden", "lightning-rainy": "Regn og torden", hail: "Hagl", exceptional: "Ekstremt vejr" };
     const icons = { sunny: "clear-day", "clear-night": "clear-night", cloudy: "cloudy", partlycloudy: "partly-cloudy-day", rainy: "rain", pouring: "rain", snowy: "snow", "snowy-rainy": "sleet", fog: "fog", windy: "wind", "windy-variant": "wind", lightning: "thunderstorms", "lightning-rainy": "thunderstorms-rain", hail: "hail", exceptional: "solar-eclipse" };
-    return { state, label: labels[state] || state, temp: Number(a.temperature), humidity: a.humidity, wind: a.wind_speed, icon: icons[state] || "not-available" };
+    return { state, label: labels[state] || state, temp, humidity: a.humidity, wind: a.wind_speed, icon: icons[state] || "not-available" };
   }
   _moonPhase(date2 = /* @__PURE__ */ new Date()) {
     const cycle = 29.53058867, epoch = Date.UTC(2e3, 0, 6, 18, 14), age = ((date2.getTime() - epoch) / 864e5 % cycle + cycle) % cycle, index = Math.round(age / (cycle / 8)) % 8;
