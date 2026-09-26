@@ -19,4 +19,5 @@ entities:
 - `entities.power`: optional power meter for the unit (W), e.g. a smart plug or relay. Shown as "Forbrug" next to the status pills, and in the Smartdash header.
 - `entities.attic_temperature`: optional loft/attic temperature, shown as "Loftrum" beside "Forbrug" and in the Smartdash header.
 - `entities.supply_recovery`, `recovered_heat`, `afterheat_lift`, `afterheat_power`, `supply_airflow`: optional values the Pi computes from a measured T2 before the afterheat coil. Shown as "Beregnet fra målt T2" under the indoor climate data, and as a short line in Smartdash.
+- `entities.diagnostics_status`, `diagnostics_alarm_text`, `frost_state`, `filter_power`, `sfp`, `recovered_today`, `recovery_factor`, `unit_energy_today`, `afterheat_today`: optional Pi diagnostics. Active alarms show as a strip at the top (and in the Smartdash line), the rest under "Diagnose og energi i dag".
 - `variant: smartdash`: the compact drawing and controls used by Smartdash.
