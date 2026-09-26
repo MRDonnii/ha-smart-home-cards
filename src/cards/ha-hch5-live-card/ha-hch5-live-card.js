@@ -968,11 +968,11 @@ button { font: inherit; color: inherit; }
 
 /* Same afterheat thermostat as the controller WebUI, adapted to this card. */
 .afterheat-setpoint-card { align-content: stretch; }
-.afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr); gap: 18px; align-items: center; --tone: #58b9ff; }
+.afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(220px, 1fr); grid-template-areas: "readings dial"; gap: 18px; align-items: center; --tone: #58b9ff; }
 .afterheat-thermostat.tone-heating { --tone: #ff8a47; }
 .afterheat-thermostat.tone-lockout { --tone: #ffad55; }
 .afterheat-thermostat.tone-off { --tone: #6c8494; }
-.thermostat-dial { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: auto; }
+.thermostat-dial { grid-area: dial; position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; margin: auto; }
 .thermostat-dial svg { width: 100%; height: 100%; touch-action: none; cursor: pointer; overflow: visible; }
 .thermostat-dial svg:focus-visible { outline: none; }
 .thermostat-dial svg:focus-visible .thermostat-knob { stroke: #fff; stroke-width: 3; }
@@ -990,7 +990,7 @@ button { font: inherit; color: inherit; }
 .thermostat-center strong small { font-size: .38em; font-weight: 700; margin-left: 2px; color: #a8bfcc; vertical-align: super; }
 .thermostat-state { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 16%, transparent); color: var(--tone); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .thermostat-sub { color: #7f97a6; font-size: 10px; font-weight: 600; }
-.thermostat-side { min-width: 0; display: grid; gap: 12px; align-content: center; }
+.thermostat-side { grid-area: readings; min-width: 0; display: grid; gap: 12px; align-content: center; }
 .thermostat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .thermostat-head span { color: #dff6ff; font-size: 22px; font-weight: 800; }
 .thermostat-head em { color: #6f8898; font-size: 10px; font-style: normal; font-weight: 600; }
@@ -1006,7 +1006,7 @@ button { font: inherit; color: inherit; }
 .thermostat-actions .thermostat-power { font-size: 12px; font-weight: 800; }
 .thermostat-actions .thermostat-power.on { border-color: color-mix(in srgb, var(--tone) 55%, #294658); color: var(--tone); }
 @container hch-card (max-width: 680px) {
-  .afterheat-thermostat { grid-template-columns: 1fr; justify-items: center; }
+  .afterheat-thermostat { grid-template-columns: 1fr; grid-template-areas: "dial" "readings"; justify-items: center; }
   .thermostat-dial { max-width: 240px; }
   .thermostat-side { width: 100%; }
 }
