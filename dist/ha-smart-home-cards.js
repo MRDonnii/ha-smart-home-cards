@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.17 */
+/* MRDonnii Smart Home Cards v0.4.18 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -2171,7 +2171,9 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.1.1";
+var TTD_VERSION = "1.1.2";
+var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
+var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
 var TTD_DASH = "\u2014";
 var TTD_EMPTY_STATES = /* @__PURE__ */ new Set(["", "unknown", "unavailable", "none", "null", "undefined", "nan"]);
@@ -2482,6 +2484,7 @@ function ttdNormalizeConfig(raw) {
     layout: config.layout === "charge" ? "charge" : "full",
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
+    plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key]),
     refresh: (Array.isArray(config.refresh_entities) ? config.refresh_entities : []).filter((id) => typeof id === "string" && id.includes("."))
   };
 }
@@ -2550,7 +2553,7 @@ function ttdTemplate(cfg) {
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
-  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}">
+  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
@@ -2576,7 +2579,7 @@ function ttdTemplate(cfg) {
   </div>
   <button class="foot" data-more="charging_price_estimate" data-r="estimate" hidden></button>
 </section>
-<section class="panel plan" data-r="plan" aria-label="Smart ladeplan">
+<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart ladeplan</h3><p data-r="planSub">${TTD_DASH}</p></div><span class="badge" data-r="planBadge"><span data-r="planBadgeText">${TTD_DASH}</span></span></header>
   <div class="box plan-top">${cell("best_charge_start", "mdi:clock-start", "blue", "bestStart", "Bedste start")}${cell("best_charge_end", "mdi:check-circle-outline", "green", "bestEnd", "Forventet slut")}${cell("best_charge_price", "mdi:cash", "amber", "bestPrice", "Forventet pris", `<em data-r="bestPriceKwh"></em>`)}</div>
   <div class="box plan-mid">${cell("missing_wall_kwh", "mdi:alarm", "orange", "missing", "Mangler for m\xE5l")}${cell("charge_minutes_needed", "mdi:timer-outline", "green", "minutes", "Ladetid (est.)")}</div>
@@ -2859,6 +2862,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 }
 /* popup layout (layout: charge): status, charging and plan only */
 .dash.charge-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "plan" "nav"}
+/* no smart charge plan configured: charging takes the plan's place */
+.dash.no-plan{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge charge charge charge charge tpms tpms tpms" "drive drive drive econ econ econ last last last daily daily daily"}
+@container ttd (max-width:1199px){.dash.no-plan{grid-template-areas:"hero hero" "charge charge" "map tpms" "drive econ" "last daily"}}
+@container ttd (max-width:699px){.dash.no-plan{grid-template-areas:"hero" "charge" "map" "tpms" "drive" "econ" "last" "daily"}}
+.dash.charge-layout.no-plan{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "nav"}
 .charge-layout .hero{grid-template-rows:auto minmax(120px,1fr)}
 .charge-layout .hero-car img{max-height:200px}
 @container panel (min-width:540px){

@@ -360,4 +360,9 @@ result = model({}, {});
 assertClean(result, "empty config");
 assert.equal(result.hero.range, "—");
 
+// The smart charge plan panel only exists when plan sensors or controls are configured.
+assert.equal(card(baseStates(), config)._cfg.plan, true);
+assert.equal(card({}, { entities: { battery: "sensor.car_battery" } })._cfg.plan, false, "no plan sensors: panel left out");
+assert.equal(card({}, { controls: { deadline: "input_datetime.ready_by" } })._cfg.plan, true);
+
 console.log("th-tesla-dashboard-card tests passed");
