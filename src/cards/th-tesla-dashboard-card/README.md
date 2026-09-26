@@ -99,6 +99,11 @@ Vil du have din egen bil på kortet:
 
 ## Smart ladeplan
 
+Den nemmeste vej er integrationen
+[EV Smart Charge](https://github.com/MRDonnii/ha-ev-smart-charge) (HACS). Den laver alle
+sensorerne til panelet ud fra bilens batteri og din elpris-sensor; se dens README for
+den færdige `entities`/`controls`-blok.
+
 Panelet "Smart ladeplan" læser **dine egne sensorer**. Hverken Tesla-integrationen,
 EV Ledger eller Monta/Zaptec leverer dem, så navnene i eksemplet ovenfor er kun
 pladsholdere. Byg dem fx som template-sensorer ud fra din elpris og din egen bils
