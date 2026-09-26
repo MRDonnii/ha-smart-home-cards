@@ -8,8 +8,20 @@ const registry = new Map();
 
 class HTMLElement {
   attachShadow() {
-    this.shadowRoot = { addEventListener() {}, querySelectorAll() { return []; } };
+    const nodes = new Map();
+    this.shadowRoot = {
+      addEventListener() {}, querySelectorAll() { return []; },
+      querySelector(selector) {
+        if (!nodes.has(selector)) nodes.set(selector, {
+          value: "", checked: false, options: [], listeners: {}, textContent: "",
+          addEventListener(type, listener) { this.listeners[type] = listener; },
+          replaceChildren(...options) { this.options = options; },
+        });
+        return nodes.get(selector);
+      },
+    };
   }
+  dispatchEvent(event) { this.lastEvent = event; }
 }
 
 const context = {
@@ -20,6 +32,8 @@ const context = {
   },
   window: { customCards: [], addEventListener() {}, removeEventListener() {} },
   console: { info() {}, warn() {} },
+  Option: class { constructor(text, value) { this.text = text; this.value = value; } },
+  CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
   Intl,
   setTimeout,
   clearTimeout,
@@ -679,5 +693,29 @@ todayCard.setConfig({ energy_meter: "sensor.heat_meter_total" });
 assert.equal(todayCard._todayMeterKey(), "energy_meter", "running meter has priority");
 todayCard.setConfig({ energy_today: "sensor.energy_today", show_today: false });
 assert.equal(todayCard._todayEnabled(), false);
+
+// Editor presents Calefa devices by name and saves each visible setting without dropping legacy fields.
+const Editor = registry.get("ha-calefa-flow-card-editor");
+const cardEditor = new Editor();
+cardEditor.setConfig({ title: "Min unit", orientation: "right", animations: false, show_footer: false });
+assert.equal(cardEditor.shadowRoot.querySelector("#orientation").value, "right");
+assert.equal(cardEditor.shadowRoot.querySelector("#animations").checked, false);
+assert.equal(cardEditor.shadowRoot.querySelector("#show-today").checked, true);
+assert.equal(cardEditor.shadowRoot.querySelector("#show-footer").checked, false);
+const connection = { sendMessagePromise: async ({ type }) => type === "config/entity_registry/list"
+  ? [{ platform: "wavin_calefa", config_entry_id: "entry-1", entity_id: "sensor.calefa_supply", unique_id: "entry-1_source_inlet_temperature" }]
+  : [{ config_entries: ["entry-1"], identifiers: [["wavin_calefa", "entry-1"]], name: "Bryggers Calefa", model: "Calefa II V" }] };
+cardEditor.hass = { connection };
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.equal(cardEditor.shadowRoot.querySelector("#integration").options[0].text, "Bryggers Calefa · Calefa II V");
+assert.equal(cardEditor.shadowRoot.querySelector("#integration").value, "entry-1");
+const animation = cardEditor.shadowRoot.querySelector("#animations");
+animation.checked = true;
+animation.listeners.change();
+assert.equal(cardEditor.lastEvent.detail.config.animations, true);
+assert.equal(cardEditor.lastEvent.detail.config.title, "Min unit");
+const integration = cardEditor.shadowRoot.querySelector("#integration");
+integration.listeners.change();
+assert.equal(cardEditor.lastEvent.detail.config.calefa_entry, "entry-1");
 
 console.log("Validated Calefa flow card state handling");
