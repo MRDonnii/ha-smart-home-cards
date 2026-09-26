@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.23 */
+/* MRDonnii Smart Home Cards v0.4.24 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -19095,9 +19095,9 @@ var Xf = class extends HTMLElement {
   }
   set hass(e) {
     if (this.hassValue = e, this.toggleAttribute("light", e.themes?.darkMode === false), !this.config) return;
-    let a = Object.values(this.config.entities).map((l) => {
-      let n = e.states[l];
-      return n ? `${n.state}|${n.last_changed}|${String(n.attributes?.temperature ?? "")}` : "-";
+    let a = Object.entries(this.config.entities).map(([l, n]) => {
+      let i = e.states[n];
+      return i ? `${i.state}|${i.last_changed}|${String(i.attributes?.temperature ?? "")}${l === "fireplace_auto_signal" ? `|${String(i.attributes?.automatik_aktiveret)}|${String(i.attributes?.automatik_aktiv)}` : ""}` : "-";
     }).join(";");
     a !== this.signature && (this.signature = a, this.renderCard());
   }
