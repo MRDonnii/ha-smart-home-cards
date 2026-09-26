@@ -119,8 +119,8 @@
    identical bright dots. The continuous fog beneath them keeps the air full. */
 .hch-wisp-group { pointer-events: none; }
 .hch-air-wisp { fill: none; stroke: currentColor; stroke-linecap: round; }
-.hch-air-wisps.hch-fog-supply { color: #a1e7e0; }
-.hch-air-wisps.hch-fog-extract { color: #ffd1a1; }
+.hch-air-wisps.hch-fog-supply .hch-air-wisp { stroke: url(#supplyWisp); }
+.hch-air-wisps.hch-fog-extract .hch-air-wisp { stroke: url(#extractWisp); }
 .hch-air-wisp-wide { stroke-width: 20; stroke-dasharray: 46 198; opacity: .2; animation: pro-air-wisp-wide calc(var(--flow-speed) / 5) linear infinite; }
 .hch-air-wisp-fine { stroke-width: 7; stroke-dasharray: 17 121; opacity: .42; animation: pro-air-wisp-fine calc(var(--flow-speed) / 9) linear infinite; animation-delay: -1.7s; }
 @keyframes pro-air-wisp-wide { to { stroke-dashoffset: -244; } }
@@ -765,15 +765,21 @@ button { font: inherit; color: inherit; }
 .hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: opacity .5s ease; }
 .hch-water-coil .water-pipe-shell { fill: none; stroke: #08141b; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
 .hch-water-coil .water-pipe-core { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: stroke .8s ease, opacity .5s ease; }
-.hch-water-coil .water-flow { fill: none; stroke: rgb(255 255 255 / 75%); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 2 10; opacity: 0; }
+.hch-water-coil .water-flow { opacity: 0; transition: opacity .6s ease; }
+.hch-water-coil .water-flow path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+/* Lighter bands of water sliding through the pipe, and small bubbles riding along. */
+.hch-water-coil .water-current { stroke: rgb(255 255 255 / 30%); stroke-width: 3.2; stroke-dasharray: 12 9; }
+.hch-water-coil .water-bubbles { stroke: rgb(255 255 255 / 85%); stroke-width: 1.6; stroke-dasharray: 0.1 17; }
+.hch-water-coil.active .water-flow { opacity: 1; }
+.hch-water-coil.active .water-current { animation: hch-water-current 1.4s linear infinite; }
+.hch-water-coil.active .water-bubbles { animation: hch-water-bubbles 1.1s linear infinite; }
+@keyframes hch-water-current { to { stroke-dashoffset: -21; } }
+@keyframes hch-water-bubbles { to { stroke-dashoffset: -17.1; } }
 .hch-water-coil.active .water-tube-core,.hch-water-coil.active .water-pipe-core { opacity: 1; }
-.hch-water-coil.active .water-tube-core { filter: drop-shadow(0 0 4px rgb(255 160 96 / 38%)); }
-.hch-water-coil.active .water-flow { opacity: .8; animation: hch-water-flow 1.5s linear infinite; }
-@keyframes hch-water-flow { to { stroke-dashoffset: -24; } }
 .hch-water-coil .valve-body { fill: #1d303b; stroke: #8ea5b2; stroke-width: 1.3; stroke-linejoin: round; }
 .hch-water-coil .valve-actuator { fill: #b8773c; stroke: #08141b; stroke-width: 1; }
 .hch-water-coil.active .valve-actuator { fill: #f0a050; }
-@media (prefers-reduced-motion: reduce) { .hch-water-coil .water-flow { animation: none; opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .hch-water-coil.active .water-flow path { animation: none; } }
 :host([light]) .hch-water-coil :is(.water-pipe-shell,.water-tube-shell) { stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-body { fill: #f0f6fa; stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-actuator { stroke: #52697a; }
@@ -921,3 +927,12 @@ button { font: inherit; color: inherit; }
 }
 :host([light]) .dashboard-overview .hch-mobile-water-badge { background: rgb(240 246 249 / 92%); }
 :host([light]) .dashboard-overview .hch-mobile-water-badge :is(small,strong,small b) { color: #14222a; }
+/* Solid core: tap to see the air inside for a minute; the recovery value opens its history. */
+.hch-core-toggle { fill: transparent; stroke: none; cursor: pointer; outline: none; }
+.hch-core-toggle:focus-visible { stroke: rgb(127 208 255 / 70%); stroke-width: 2; stroke-dasharray: 6 5; }
+.hch-recovery-hit { cursor: pointer; outline: none; }
+.hch-recovery-hit rect { fill: transparent; }
+.hch-recovery-hit:hover rect,.hch-recovery-hit:focus-visible rect { fill: rgb(127 208 255 / 10%); stroke: rgb(127 208 255 / 45%); stroke-width: 1.2; }
+/* Light theme: pale wisps vanish on a light drawing, so they use the full air colours. */
+:host([light]) .hch-air-wisps.hch-fog-supply .hch-air-wisp { stroke: url(#supplyFlow); }
+:host([light]) .hch-air-wisps.hch-fog-extract .hch-air-wisp { stroke: url(#extractFlow); }
