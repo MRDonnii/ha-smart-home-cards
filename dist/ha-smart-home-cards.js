@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.11 */
+/* MRDonnii Smart Home Cards v0.4.12 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -17801,7 +17801,7 @@ function Hy({ heating: t, lockout: e }) {
 }
 var ff = "M-30 68 V-52 A6 6 0 0 1 -18 -52 V52 A6 6 0 0 0 -6 52 V-52 A6 6 0 0 1 6 -52 V52 A6 6 0 0 0 18 52 V-52 A6 6 0 0 1 30 -52 V68";
 var Ry = [-42, -34, -26, -18, -10, -2, 6, 14, 22, 30, 38];
-var Li = [[15, 74, 163, 230], [25, 79, 204, 206], [35, 240, 180, 84], [45, 245, 124, 66], [60, 226, 70, 60]];
+var Li = [[15, 74, 163, 230], [21, 79, 204, 206], [27, 150, 214, 140], [33, 240, 196, 84], [42, 245, 132, 66], [55, 226, 70, 60]];
 function rg(t) {
   if (t === null || !Number.isFinite(t)) return "rgb(111 135 150)";
   let e = Li.findIndex(([c]) => t <= c);
@@ -18627,8 +18627,8 @@ button { font: inherit; color: inherit; }
    aluminium fins, water tinted by its measured temperature. It only flows, and
    only shows full colour, while the afterheat is active. */
 .hch-water-coil .coil-fin { fill: none; stroke: #7d95a2; stroke-width: 1; opacity: .34; }
-.hch-water-coil .water-tube-shell { fill: none; stroke: #6f4428; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
-.hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .5; transition: opacity .5s ease; }
+.hch-water-coil .water-tube-shell { fill: none; stroke: #08141b; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
+.hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: opacity .5s ease; }
 .hch-water-coil .water-pipe-shell { fill: none; stroke: #08141b; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
 .hch-water-coil .water-pipe-core { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: stroke .8s ease, opacity .5s ease; }
 .hch-water-coil .water-flow { fill: none; stroke: rgb(255 255 255 / 75%); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 2 10; opacity: 0; }
@@ -18640,7 +18640,7 @@ button { font: inherit; color: inherit; }
 .hch-water-coil .valve-actuator { fill: #b8773c; stroke: #08141b; stroke-width: 1; }
 .hch-water-coil.active .valve-actuator { fill: #f0a050; }
 @media (prefers-reduced-motion: reduce) { .hch-water-coil .water-flow { animation: none; opacity: .45; } }
-:host([light]) .hch-water-coil .water-pipe-shell { stroke: #52697a; }
+:host([light]) .hch-water-coil :is(.water-pipe-shell,.water-tube-shell) { stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-body { fill: #f0f6fa; stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-actuator { stroke: #52697a; }
 .hch-control-panel .control-body { fill: rgb(8 20 28 / 82%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }

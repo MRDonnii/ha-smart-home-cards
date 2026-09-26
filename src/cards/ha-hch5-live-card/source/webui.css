@@ -761,8 +761,8 @@ button { font: inherit; color: inherit; }
    aluminium fins, water tinted by its measured temperature. It only flows, and
    only shows full colour, while the afterheat is active. */
 .hch-water-coil .coil-fin { fill: none; stroke: #7d95a2; stroke-width: 1; opacity: .34; }
-.hch-water-coil .water-tube-shell { fill: none; stroke: #6f4428; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
-.hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .5; transition: opacity .5s ease; }
+.hch-water-coil .water-tube-shell { fill: none; stroke: #08141b; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
+.hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: opacity .5s ease; }
 .hch-water-coil .water-pipe-shell { fill: none; stroke: #08141b; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
 .hch-water-coil .water-pipe-core { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: stroke .8s ease, opacity .5s ease; }
 .hch-water-coil .water-flow { fill: none; stroke: rgb(255 255 255 / 75%); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 2 10; opacity: 0; }
@@ -774,7 +774,7 @@ button { font: inherit; color: inherit; }
 .hch-water-coil .valve-actuator { fill: #b8773c; stroke: #08141b; stroke-width: 1; }
 .hch-water-coil.active .valve-actuator { fill: #f0a050; }
 @media (prefers-reduced-motion: reduce) { .hch-water-coil .water-flow { animation: none; opacity: .45; } }
-:host([light]) .hch-water-coil .water-pipe-shell { stroke: #52697a; }
+:host([light]) .hch-water-coil :is(.water-pipe-shell,.water-tube-shell) { stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-body { fill: #f0f6fa; stroke: #52697a; }
 :host([light]) .hch-water-coil .valve-actuator { stroke: #52697a; }
 .hch-control-panel .control-body { fill: rgb(8 20 28 / 82%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }

@@ -330,7 +330,7 @@ function ElectricCoil({ heating, lockout }: { heating: boolean; lockout: boolean
 const WATER_TUBE = "M-30 68 V-52 A6 6 0 0 1 -18 -52 V52 A6 6 0 0 0 -6 52 V-52 A6 6 0 0 1 6 -52 V52 A6 6 0 0 0 18 52 V-52 A6 6 0 0 1 30 -52 V68";
 const WATER_FINS = [-42, -34, -26, -18, -10, -2, 6, 14, 22, 30, 38];
 // Blue when cold, teal around room temperature, amber and red as it gets hot.
-const WATER_SCALE: readonly (readonly [number, number, number, number])[] = [[15, 74, 163, 230], [25, 79, 204, 206], [35, 240, 180, 84], [45, 245, 124, 66], [60, 226, 70, 60]];
+const WATER_SCALE: readonly (readonly [number, number, number, number])[] = [[15, 74, 163, 230], [21, 79, 204, 206], [27, 150, 214, 140], [33, 240, 196, 84], [42, 245, 132, 66], [55, 226, 70, 60]];
 export function waterColour(t: Num) {
   if (t === null || !Number.isFinite(t)) return "rgb(111 135 150)";
   const i = WATER_SCALE.findIndex(([at]) => t <= at);
