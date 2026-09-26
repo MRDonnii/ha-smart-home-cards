@@ -11,6 +11,7 @@ function icon(paths: string[]) {
 
 export const ArrowRight = icon(["M5 12h14", "m12 5 7 7-7 7"]);
 export const Flame = icon(["M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"]);
+export const Power = icon(["M12 2v10", "M18.4 6.6a9 9 0 1 1-12.8 0"]);
 export const Gauge = icon(["m12 14 4-4", "M3.34 19a10 10 0 1 1 17.32 0"]);
 export const Roof = icon(["M3 11 12 4l9 7", "M5 10v10h14V10", "M10 20v-6h4v6"]);
 export const Zap = icon(["M13 2 4 14h7l-1 8 9-12h-7z"]);
