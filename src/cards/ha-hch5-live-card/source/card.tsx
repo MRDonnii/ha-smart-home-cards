@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
+import { AfterheatThermostat } from "./AfterheatThermostat";
 import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
 import { ArrowRight, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
@@ -370,11 +371,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
   }, []);
 
-  // Remote-style range: OFF - 10 - 11 ... 35. Minus below 10 selects OFF.
-  const stepAfterheat = (direction: 1 | -1) => {
-    const next: AfterheatValue = direction > 0
-      ? shownAfterheat === "off" ? 10 : Math.min(35, shownAfterheat + 1)
-      : shownAfterheat === "off" || shownAfterheat <= 10 ? "off" : shownAfterheat - 1;
+  const setAfterheatTarget = (next: AfterheatValue) => {
     const seq = ++afterheatSeq.current;
     setAfterheatDraft(next);
     afterheatPending.current = { target: next, seq };
@@ -515,15 +512,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
         </article>
 
         <article className="surface afterheat-setpoint-card">
-          <div className="afterheat-copy"><span>Eftervarme setpunkt</span>{afterheatLockout
-            // The summer stop replaces the RS485 details so the card stays compact.
-            ? <div className="afterheat-lockout">Spærret af HAC1: udetemperaturen er {temp(outdoor)}. Eftervarmen tænder først, når det er under {whole(afterheatCutoff)}{" "}°C ude.</div>
-            : <><strong>RS485: {actualAfterheatSelection}</strong><small>Ønsket: {shownAfterheat === "off" ? "OFF" : `${whole(shownAfterheat)} °C`} · Varmekald: {afterheatStatus}. HAC1 regulerer selv varmefladen.</small></>}</div>
-          <div className="setpoint-stepper">
-            <button disabled={shownAfterheat === "off"} aria-label="Sænk eftervarme" onClick={() => stepAfterheat(-1)}>−</button>
-            <strong>{shownAfterheat === "off" ? "OFF" : `${whole(shownAfterheat)} °C`}</strong>
-            <button disabled={shownAfterheat === 35} aria-label="Hæv eftervarme" onClick={() => stepAfterheat(1)}>+</button>
-          </div>
+          <AfterheatThermostat value={shownAfterheat} onChange={setAfterheatTarget} heating={heating} lockout={afterheatLockout}
+            cutoff={afterheatCutoff} outdoor={outdoor} airBefore={beforeHeater} airAfter={afterHeater}
+            registered={actualAfterheatSelection} lastOn={afterheatSetpoint}/>
         </article>
       </div>
       {notice && <div className={`hch-notice${notice.error ? " error" : ""}`} role="status">{notice.text}</div>}
