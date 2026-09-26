@@ -555,9 +555,9 @@ class Hch5LiveCard extends HTMLElement {
     if (!this.config) return;
     // HA sets hass on every state change in the house; only re-render when
     // one of this card's own entities changed.
-    const signature = Object.values(this.config.entities).map(id => {
+    const signature = Object.entries(this.config.entities).map(([key, id]) => {
       const state = hass.states[id];
-      return state ? `${state.state}|${state.last_changed}|${String(state.attributes?.temperature ?? "")}` : "-";
+      return state ? `${state.state}|${state.last_changed}|${String(state.attributes?.temperature ?? "")}${key === "fireplace_auto_signal" ? `|${String(state.attributes?.automatik_aktiveret)}|${String(state.attributes?.automatik_aktiv)}` : ""}` : "-";
     }).join(";");
     if (signature === this.signature) return;
     this.signature = signature;
