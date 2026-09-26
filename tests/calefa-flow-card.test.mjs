@@ -633,6 +633,10 @@ for (const track of geometry.TRACKS) {
 assert.equal(Math.round(geometry.pathLength("M0 0 H30 V40")), 70);
 const laidOut = Object.values(geometry.LAYOUT).flat().flatMap((spec) => spec[0] === "pair" ? spec.slice(1, 3) : [spec[1]]);
 assert.ok(laidOut.every((id) => geometry.ANCHORS[id]), "every side tile has a callout anchor");
+assert.deepEqual(Array.from(geometry.ANCHORS.fjv_return), [186.5, 800], "FJV return callout meets the nearer blue FR riser");
+assert.match(geometry.TRACKS.find((track) => track.id === "fr").d, /186\.5 589 V1238/, "the callout remains on the animated return track");
+assert.deepEqual(Array.from(geometry.ANCHORS.dhw_temperature), [510, 1020], "hot water callout meets the red outlet pipe");
+assert.match(geometry.TRACKS.find((track) => track.id === "bv").d, /M510 950 V1058/, "the hot water endpoint remains on the animated outlet track");
 
 const leds = new Card();
 leds._build = () => {};

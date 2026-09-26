@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.5";
+const CALEFA_FLOW_CARD_VERSION = "0.9.6";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -277,15 +277,15 @@ const VALVES = { heating_valve: { x: 255, y: 762, r: 46 }, dhw_valve: { x: 345, 
 const PORTS = [["FF", 98, "supply", "Fjernvarme frem"], ["FR", 187, "return", "Fjernvarme retur"], ["VR", 380, "heat-return", "Varme retur"], ["VF", 496, "heat", "Varme frem"], ["BV", 581, "dhw", "Brugsvand varmt"], ["KV", 679, "cold", "Koldt vand"]];
 const LED_POSITIONS = [["power", 347, "Strøm"], ["fault", 367, "Fejl"], ["mode", 387, "Driftstilstand"], ["lan", 406, "LAN"], ["peripheral", 426, "Ekstern enhed"]];
 // Callout targets on the drawing, and the side each tile sits on. FJF (51, red) sits in the supply tee,
-// so its callout stays on the supply line into the tee; FJR (51, dark blue) sits on the DHW exchanger's
-// primary outlet before valve 37, not on the common return (principle diagram p. 5, sensor colours p. 4).
+// so its callout stays on the supply line into the tee. The FJV return callout meets the visible blue
+// return riser beside the left tiles instead of crossing the unit to the exchanger-side branch.
 // The bypass tile points at the outer U-bend that carries the bypass only: supply tee to the DHW
-// exchanger's lower primary port.
+// exchanger's lower primary port. Hot water points at the animated outlet pipe below the exchanger.
 const ANCHORS = {
-  fjv_supply: [160, 668], fjv_return: [437, 575],
+  fjv_supply: [160, 668], fjv_return: [186.5, 800],
   dhw_valve: [345, 505], heating_valve: [255, 762], pump: [291.9, 987.4],
   heating_supply: [636, 500], heating_return: [486, 876],
-  dhw_temperature: [640, 950], cold_water_temperature: [679, 1180], bypass: [455, 790],
+  dhw_temperature: [510, 1020], cold_water_temperature: [679, 1180], bypass: [455, 790],
 };
 // Tiles whose height on the side differs from their callout target, so the side layout stays unchanged.
 const PLACE_Y = { fjv_return: 800 };
