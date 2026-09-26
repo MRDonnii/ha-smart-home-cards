@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.2";
+const CALEFA_FLOW_CARD_VERSION = "0.9.3";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -420,6 +420,7 @@ class HaCalefaFlowCard extends HTMLElement {
     this._registryConnection = null;
     this._config = {
       calefa_entry: text(config.calefa_entry),
+      orientation: config.orientation === "right" ? "right" : "left",
       title: text(config.title, "Calefa II 40/40"),
       subtitle: text(config.subtitle, "Fjernvarmeunit"),
       background_image: text(config.unit_image || config.background_image, CALEFA_DEFAULT_UNIT_IMAGE),
@@ -825,7 +826,8 @@ class HaCalefaFlowCard extends HTMLElement {
       const left = tile.closest(".cf-left") !== null;
       const sx = (left ? box.right : box.left) - bounds.left;
       const sy = box.top + box.height / 2 - bounds.top;
-      const tx = picture.left - bounds.left + (ANCHORS[id][0] / VIEW_W) * picture.width;
+      const anchorX = this._config.orientation === "right" ? VIEW_W - ANCHORS[id][0] : ANCHORS[id][0];
+      const tx = picture.left - bounds.left + (anchorX / VIEW_W) * picture.width;
       const ty = picture.top - bounds.top + (ANCHORS[id][1] / VIEW_H) * picture.height;
       const kx = sx + (left ? 1 : -1) * clamp(Math.abs(tx - sx) * 0.25, 6, 18);
       const d = `M${sx.toFixed(1)} ${sy.toFixed(1)} H${kx.toFixed(1)} L${tx.toFixed(1)} ${ty.toFixed(1)}`;
@@ -839,11 +841,12 @@ class HaCalefaFlowCard extends HTMLElement {
     const sides = Object.fromEntries(Object.entries(LAYOUT).map(([side, specs]) => [side, specs.map((spec) => this._blockMarkup(spec)).join("")]));
     const callouts = Object.keys(ANCHORS).filter((id) => this._configured(id))
       .map((id) => `<g data-callout="${id}" data-tone="${METRICS[id].tone}"><path/><circle class="cf-callout-ring" r="5.5"/><circle class="cf-callout-dot" r="2.2"/></g>`).join("");
-    return `<ha-card><div class="cf ${this._config.animations ? "" : "no-anim"}" data-ref="root">
+    const mirrored = this._config.orientation === "right";
+    return `<ha-card><div class="cf ${this._config.animations ? "" : "no-anim"} ${mirrored ? "cf-mirrored" : ""}" data-ref="root">
       <div class="cf-main" data-ref="main">
-        <aside class="cf-side cf-left" data-ref="left">${sides.left}</aside>
-        <section class="cf-stage"><div class="cf-stage-box" data-ref="stage">${this._stageMarkup()}</div><div class="cf-ports" aria-hidden="true">${PORTS.map(([code, x, tone, title]) => `<span data-tone="${tone}" title="${title}" style="left:${((x / VIEW_W) * 100).toFixed(2)}%">${code}</span>`).join("")}</div></section>
-        <aside class="cf-side cf-right" data-ref="right">${sides.right}</aside>
+        <aside class="cf-side cf-left" data-ref="left">${mirrored ? sides.right : sides.left}</aside>
+        <section class="cf-stage"><div class="cf-stage-box" data-ref="stage">${this._stageMarkup()}</div><div class="cf-ports" aria-hidden="true">${PORTS.map(([code, x, tone, title]) => `<span data-tone="${tone}" title="${title}" style="left:${(((mirrored ? VIEW_W - x : x) / VIEW_W) * 100).toFixed(2)}%">${code}</span>`).join("")}</div></section>
+        <aside class="cf-side cf-right" data-ref="right">${mirrored ? sides.left : sides.right}</aside>
         <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${callouts}</svg>
       </div>
       ${this._footerMarkup()}
@@ -1924,16 +1927,20 @@ class HaCalefaFlowCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.shadowRoot.innerHTML = `<style>:host{display:block;padding:12px 0;color:var(--primary-text-color)}label{display:block;margin-bottom:6px;font-weight:600}select{box-sizing:border-box;width:100%;min-height:40px;padding:7px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:inherit}p{margin:7px 0;color:var(--secondary-text-color);font-size:12px}</style><label for="integration">Calefa-integration</label><select id="integration"><option value="">Søg automatisk</option></select><p>Ved én integration forbindes kortet automatisk. Vælg her, hvis du har flere.</p>`;
-    this._select = this.shadowRoot.querySelector("select");
+    this.shadowRoot.innerHTML = `<style>:host{display:block;padding:12px 0;color:var(--primary-text-color)}label{display:block;margin-bottom:6px;font-weight:600}select{box-sizing:border-box;width:100%;min-height:40px;padding:7px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:inherit}p{margin:7px 0;color:var(--secondary-text-color);font-size:12px}</style><label for="integration">Calefa-integration</label><select id="integration"><option value="">Søg automatisk</option></select><p>Ved én integration forbindes kortet automatisk. Vælg her, hvis du har flere.</p><label for="orientation">Unitens retning</label><select id="orientation"><option value="left">Venstrevendt</option><option value="right">Højrevendt</option></select>`;
+    this._select = this.shadowRoot.querySelector("#integration");
+    this._orientation = this.shadowRoot.querySelector("#orientation");
     this._select.addEventListener("change", () => {
       const config = { ...this._config };
       if (this._select.value) config.calefa_entry = this._select.value;
       else delete config.calefa_entry;
       this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
     });
+    this._orientation.addEventListener("change", () => {
+      this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, orientation: this._orientation.value } } }));
+    });
   }
-  setConfig(config) { this._config = config; this._select.value = config.calefa_entry || ""; }
+  setConfig(config) { this._config = config; this._select.value = config.calefa_entry || ""; this._orientation.value = config.orientation === "right" ? "right" : "left"; }
   set hass(hass) {
     if (!hass?.connection || this._connection === hass.connection) return;
     this._connection = hass.connection;
@@ -1965,6 +1972,9 @@ const CALEFA_STYLES = `
   /* One composition for every width: tiles | unit | tiles, scaled with the card. */
   .cf-main{position:relative;display:grid;grid-template-columns:minmax(0,18fr) minmax(0,64fr) minmax(0,18fr);column-gap:clamp(8px,2.4cqw,30px);align-items:stretch;max-width:980px;margin:0 auto}
   .cf-stage{min-width:0}.cf-stage-box{position:relative;width:100%;aspect-ratio:775/1295;container:cf-stage / inline-size}
+  .cf-mirrored .cf-stage-box{transform:scaleX(-1)}
+  .cf-mirrored .cf-stage-box svg text{transform-box:fill-box;transform-origin:center;transform:scaleX(-1)}
+  .cf-mirrored .cf-info>*,.cf-mirrored .cf-fault>* , .cf-mirrored .cf-display-hit ha-icon{transform:scaleX(-1)}
   .cf-photo,.cf-layer{position:absolute;inset:0;width:100%;height:100%}.cf-photo{display:block;object-position:center}.cf-layer{overflow:visible;pointer-events:none}
   .cf-side{position:relative;min-width:0;z-index:4}.cf-block{position:absolute;top:var(--y);width:100%;max-width:100%;transform:translateY(-50%)}.cf-left .cf-block{right:0}.cf-right .cf-block{left:0}.cf-side.is-placed .cf-block{transform:none}
 
