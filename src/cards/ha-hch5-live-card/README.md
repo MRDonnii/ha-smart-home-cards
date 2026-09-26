@@ -18,4 +18,5 @@ entities:
 - `afterheat_outdoor_cutoff`: outdoor temperature (°C) from which HAC1 blocks the afterheat; 15 by default.
 - `entities.power`: optional power meter for the unit (W), e.g. a smart plug or relay. Shown as "Forbrug" next to the status pills, and in the Smartdash header.
 - `entities.attic_temperature`: optional loft/attic temperature, shown as "Loftrum" beside "Forbrug" and in the Smartdash header.
+- `entities.supply_recovery`, `recovered_heat`, `afterheat_lift`, `afterheat_power`, `supply_airflow`: optional values the Pi computes from a measured T2 before the afterheat coil. Shown as "Beregnet fra målt T2" under the indoor climate data, and as a short line in Smartdash.
 - `variant: smartdash`: the compact drawing and controls used by Smartdash.
