@@ -199,6 +199,18 @@ function Exchanger({ bypassed }: { bypassed: boolean }) {
     <g clipPath="url(#coreClip)">{CORE_PLATES.map(o=><path key={o} d={`M340 ${o}H700`}/>)}</g>
   </g>;
 }
+// The exchanger is drawn solid; tapping it shows the air passing through it
+// for a minute, then it closes again by itself.
+const CORE_OPEN_MS = 60_000;
+function useCoreView(): [boolean, () => void] {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => setOpen(false), CORE_OPEN_MS);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+  return [open, () => setOpen(value => !value)];
+}
 // Temperature "ports": semi-transparent duct-cap plates centred on the flow
 // line where the air fades out, so the reading marks the end of each duct.
 function TempPort({ cx, cy, title, value, tone = "neutral", sensor, onSensor }: { cx: number; cy: number; title: string; value: string; tone?: string; sensor?: string; onSensor?: (key: string) => void }) {
@@ -242,6 +254,84 @@ function RearDuct({ y }: { y: number }) {
     {REAR_SEAMS.map(({ x, r }) => { const c = centre(x); return <path key={x} className="hch-rear-duct-seam" d={`M${x} ${Math.round(c - r)} q${Math.round(r * .22)} ${r} 0 ${2 * r}`}/>; })}
     <rect className="hch-rear-duct-flange" x="920" y={y - 41} width="12" height="82" rx="3"/>
   </g>;
+}
+
+// Air colours are relative: the coldest air in the drawing right now is blue,
+// the warmest red, and everything else sits between them. So the warm side of
+// the exchanger is always redder than the cold side, also in summer when all
+// temperatures are close. The palette avoids a grey middle band.
+const AIR_PALETTE: readonly (readonly [number, number, number, number])[] = [[0, 70, 125, 255], [.25, 110, 195, 255], [.45, 225, 236, 240], [.58, 255, 220, 150], [.78, 255, 150, 70], [1, 255, 72, 56]];
+// Differences smaller than this are spread over it, so sensor noise and a
+// near-even summer day do not turn into full blue and red.
+const AIR_MIN_SPAN = 5;
+const AIR_UNKNOWN_SUPPLY = "rgb(110 195 255)", AIR_UNKNOWN_EXTRACT = "rgb(255 150 70)";
+export type AirRange = { lo: number; hi: number };
+export function airRange(temperatures: readonly Num[]): AirRange {
+  const known = temperatures.filter((t): t is number => t !== null && Number.isFinite(t));
+  if (!known.length) return { lo: -5, hi: 38 };
+  let lo = Math.min(...known), hi = Math.max(...known);
+  if (hi - lo < AIR_MIN_SPAN) { const mid = (lo + hi) / 2; lo = mid - AIR_MIN_SPAN / 2; hi = mid + AIR_MIN_SPAN / 2; }
+  return { lo, hi };
+}
+export function airColour(t: Num, fallback: string, range: AirRange = { lo: -5, hi: 38 }) {
+  if (t === null || !Number.isFinite(t)) return fallback;
+  const share = Math.min(1, Math.max(0, (t - range.lo) / (range.hi - range.lo)));
+  const i = AIR_PALETTE.findIndex(([at]) => share <= at);
+  if (i <= 0) return `rgb(${AIR_PALETTE[0].slice(1).join(" ")})`;
+  const [p0, ...a] = AIR_PALETTE[i - 1], [p1, ...b] = AIR_PALETTE[i], k = (share - p0) / (p1 - p0);
+  return `rgb(${a.map((c, j) => Math.round(c + (b[j] - c) * k)).join(" ")})`;
+}
+/** Lighter tone of an air colour for the moving wisps. */
+function airLight(colour: string) {
+  const [r, g, b] = colour.match(/\d+/g)!.map(Number);
+  return `rgb(${[r, g, b].map(c => Math.round(c + (255 - c) * .45)).join(" ")})`;
+}
+// Heat moves between the streams across the core, and the afterheat coil
+// sits between these x positions on the supply duct.
+const CORE_X = { from: 380, to: 660 };
+const COIL_X = { from: 9, to: 105 };
+const AIR_SPAN = { outdoor: REAR_FAR_X, room: ROOM_SIDE_X };
+/** Temperature of the supply air leaving the core: outdoor air warmed by the
+ *  recovery share of the extract-outdoor difference, or unchanged in bypass. */
+export function supplyAfterCore(outdoor: Num, extract: Num, recovery: number | null, bypassOpen: boolean): Num {
+  if (outdoor === null) return null;
+  if (bypassOpen || extract === null || recovery === null) return outdoor;
+  return outdoor + Math.min(100, Math.max(0, recovery)) / 100 * (extract - outdoor);
+}
+type Stop = readonly [number, string];
+// A fade between two temperatures across a part of the duct, sampled so the
+// colours follow the air scale instead of mixing straight through grey.
+function fade(from: Num, to: Num, fallback: string, range: AirRange, at: (x: number) => number, x0: number, x1: number, steps = 6): Stop[] {
+  if (from === null || to === null) return [[at(x0), airColour(from ?? to, fallback, range)], [at(x1), airColour(to ?? from, fallback, range)]];
+  return Array.from({ length: steps + 1 }, (_, i) => [at(x0 + (x1 - x0) * i / steps), airColour(from + (to - from) * i / steps, fallback, range)] as Stop);
+}
+function airStops(outdoor: Num, extract: Num, exhaust: Num, afterHeater: Num, beforeHeater: Num, heating: boolean, recovery: number | null, bypassOpen: boolean) {
+  const span = AIR_SPAN.outdoor - AIR_SPAN.room;
+  const fromOutdoor = (x: number) => Math.round((AIR_SPAN.outdoor - x) / span * 1000) / 1000;
+  const fromRoom = (x: number) => Math.round((x - AIR_SPAN.room) / span * 1000) / 1000;
+  // Supply between the core and the coil: with the afterheat off, T2AH is that
+  // same air; with it on, the unit's own T2 before the coil. The estimate from
+  // T1, T3 and the recovery share is only a fallback.
+  const estimate = supplyAfterCore(outdoor, extract, recovery, bypassOpen);
+  const core = heating ? beforeHeater ?? estimate : afterHeater ?? beforeHeater ?? estimate;
+  const heated = afterHeater ?? core;
+  const exhausted = exhaust ?? extract;
+  const range = airRange([outdoor, core, heated, extract, exhausted]);
+  const supply: Stop[] = [
+    [0, airColour(outdoor, AIR_UNKNOWN_SUPPLY, range)],
+    ...fade(outdoor, core, AIR_UNKNOWN_SUPPLY, range, fromOutdoor, CORE_X.to, CORE_X.from),
+    ...fade(core, heated, AIR_UNKNOWN_SUPPLY, range, fromOutdoor, COIL_X.to, COIL_X.from),
+    [1, airColour(heated, AIR_UNKNOWN_SUPPLY, range)],
+  ];
+  const extractStops: Stop[] = [
+    [0, airColour(extract, AIR_UNKNOWN_EXTRACT, range)],
+    ...fade(extract, exhausted, AIR_UNKNOWN_EXTRACT, range, fromRoom, CORE_X.from, CORE_X.to),
+    [1, airColour(exhausted, AIR_UNKNOWN_EXTRACT, range)],
+  ];
+  return { supply, extract: extractStops };
+}
+function AirGradient({ id, stops, from, to, light = false }: { id: string; stops: readonly Stop[]; from: number; to: number; light?: boolean }) {
+  return <linearGradient id={id} gradientUnits="userSpaceOnUse" x1={from} y1="0" x2={to} y2="0">{stops.map(([offset, colour], i) => <stop key={i} offset={offset} stopColor={light ? airLight(colour) : colour}/>)}</linearGradient>;
 }
 
 // Soft moving highlights run from the first point of each air path to its
@@ -329,29 +419,55 @@ function ElectricCoil({ heating, lockout }: { heating: boolean; lockout: boolean
 // the water only moves while the afterheat is active.
 const WATER_TUBE = "M-30 68 V-52 A6 6 0 0 1 -18 -52 V52 A6 6 0 0 0 -6 52 V-52 A6 6 0 0 1 6 -52 V52 A6 6 0 0 0 18 52 V-52 A6 6 0 0 1 30 -52 V68";
 const WATER_FINS = [-42, -34, -26, -18, -10, -2, 6, 14, 22, 30, 38];
-// Blue when cold, teal around room temperature, amber and red as it gets hot.
-const WATER_SCALE: readonly (readonly [number, number, number, number])[] = [[15, 74, 163, 230], [21, 79, 204, 206], [27, 150, 214, 140], [33, 240, 196, 84], [42, 245, 132, 66], [55, 226, 70, 60]];
+// Water-heating colours: blue when cold, orange when warm, red when hot.
+const WATER_SCALE: readonly (readonly [number, number, number, number])[] = [[15, 74, 163, 255], [28, 255, 154, 61], [45, 255, 78, 58]];
+const WATER_HOT = "rgb(255 78 58)", WATER_WARM = "rgb(255 154 61)", WATER_COLD = "rgb(74 163 255)", WATER_UNKNOWN = "rgb(111 135 150)";
+// Below this flow/return difference the water is drawn as one temperature.
+const WATER_SPLIT_DELTA = 0.3;
 export function waterColour(t: Num) {
-  if (t === null || !Number.isFinite(t)) return "rgb(111 135 150)";
+  if (t === null || !Number.isFinite(t)) return WATER_UNKNOWN;
   const i = WATER_SCALE.findIndex(([at]) => t <= at);
   if (i === 0 || i < 0) return `rgb(${WATER_SCALE[i === 0 ? 0 : WATER_SCALE.length - 1].slice(1).join(" ")})`;
   const [t0, ...a] = WATER_SCALE[i - 1], [t1, ...b] = WATER_SCALE[i], k = (t - t0) / (t1 - t0);
   return `rgb(${a.map((c, j) => Math.round(c + (b[j] - c) * k)).join(" ")})`;
 }
+/** Colours at the flow end, through the coil and at the return end. When
+ *  flow and return differ, the hotter end is red and the water fades through
+ *  orange to blue at the colder end; otherwise it is one colour. */
+export function waterPath(flow: Num, ret: Num): { flow: string; mid: string; ret: string } {
+  const known = (t: Num): t is number => t !== null && Number.isFinite(t);
+  if (!known(flow) && !known(ret)) return { flow: WATER_UNKNOWN, mid: WATER_UNKNOWN, ret: WATER_UNKNOWN };
+  if (!known(flow) || !known(ret) || Math.abs(flow - ret) < WATER_SPLIT_DELTA) {
+    const one = waterColour(known(flow) && known(ret) ? (flow + ret) / 2 : known(flow) ? flow : ret);
+    return { flow: one, mid: one, ret: one };
+  }
+  return flow > ret ? { flow: WATER_HOT, mid: WATER_WARM, ret: WATER_COLD } : { flow: WATER_COLD, mid: WATER_WARM, ret: WATER_HOT };
+}
+// Water moving inside a pipe: light bands and small bubbles slide along the
+// path in the flow direction. They are only drawn moving while the afterheat
+// is active; otherwise the water stands still.
+function WaterCurrent({ d }: { d: string }) {
+  return <g className="water-flow"><path className="water-current" d={d}/><path className="water-bubbles" d={d}/></g>;
+}
 function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: boolean; lockout: boolean; flowWater: Num; returnWater: Num }) {
   const local = ([x, y]: Point): Point => [x - COIL_AT[0], y - COIL_AT[1]];
   const [sx, sy] = local(WATER_SUPPLY_TO), [rx, ry] = local(WATER_RETURN_TO), [vx, vy] = local(WATER_VALVE_AT);
+  const colours = waterPath(flowWater, returnWater);
   const pipes = [
-    ["supply", `M${sx} ${sy} H-38 Q-30 ${sy} -30 ${sy - 8} V68`, waterColour(flowWater)],
-    ["return", `M30 68 V${ry - 8} Q30 ${ry} 22 ${ry} H${rx}`, waterColour(returnWater ?? flowWater)],
+    ["supply", `M${sx} ${sy} H-38 Q-30 ${sy} -30 ${sy - 8} V68`, colours.flow],
+    ["return", `M30 68 V${ry - 8} Q30 ${ry} 22 ${ry} H${rx}`, colours.ret],
   ] as const;
+  // The flow enters the left pass and leaves the right one, so the coil
+  // fades left to right from the flow colour through the middle to the return.
   return <g className={`hch-external-coil hch-water-coil${heating ? " active" : ""}`} transform={`translate(${COIL_AT[0]} ${COIL_AT[1]})`}>
-    <defs><linearGradient id="waterCoilTint" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="30" y2="0"><stop offset="0" stopColor={pipes[0][2]}/><stop offset="1" stopColor={pipes[1][2]}/></linearGradient></defs>
-    {pipes.map(([kind, d, colour]) => <g key={kind} className={`water-pipe ${kind}`}><path className="water-pipe-shell" d={d}/><path className="water-pipe-core" d={d} style={{ stroke: colour }}/><path className="water-flow" d={d}/></g>)}
+    <defs>
+      <linearGradient id="waterCoilTint" gradientUnits="userSpaceOnUse" x1="-30" y1="0" x2="30" y2="0"><stop offset="0" stopColor={colours.flow}/><stop offset=".5" stopColor={colours.mid}/><stop offset="1" stopColor={colours.ret}/></linearGradient>
+    </defs>
+    {pipes.map(([kind, d, colour]) => <g key={kind} className={`water-pipe ${kind}`}><path className="water-pipe-shell" d={d}/><path className="water-pipe-core" d={d} style={{ stroke: colour }}/><WaterCurrent d={d}/></g>)}
     <g className="water-valve" transform={`translate(${vx} ${vy})`}><path className="valve-body" d="M-8 -6 L8 6 V-6 L-8 6 Z"/><rect className="valve-actuator" x="-5" y="7" width="10" height="7" rx="2"/></g>
     <rect className="coil-case" x="-48" y="-68" width="96" height="136" rx="12"/><rect className="coil-duct" x="-61" y="-48" width="122" height="96" rx="20"/>
     {WATER_FINS.map(y => <path key={y} className="coil-fin" d={`M-44 ${y} H44`}/>)}
-    <path className="water-tube-shell" d={WATER_TUBE}/><path className="water-tube-core" d={WATER_TUBE} stroke="url(#waterCoilTint)"/><path className="water-flow" d={WATER_TUBE}/>
+    <path className="water-tube-shell" d={WATER_TUBE}/><path className="water-tube-core" d={WATER_TUBE} stroke="url(#waterCoilTint)"/><WaterCurrent d={WATER_TUBE}/>
     {lockout && <LockoutBadge/>}
   </g>;
 }
@@ -373,6 +489,10 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   const bypassPhase:BypassPhase=travel?travel.direction??"moving":null;
   const bypassPosition=bypassOpenShare(travel,settledOpen);
   const bypassOpen=bypassPosition>=.5;
+  // The card's afterheat_before entity carries the unit's T2, which is T2AH
+  // relayed to the unit, so it is not a before-coil measurement for colours.
+  const air=airStops(outdoor,extract,exhaust,afterHeater,null,heating,recovery,bypassOpen);
+  const [coreOpen,toggleCore]=useCoreView();
   const bypassPercent=travel?.percent??null;
   const bypassRemaining=travel?.remainingSeconds??null;
   const bypassAwaitingEnd=travel?.awaitingEnd??false;
@@ -412,8 +532,10 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <linearGradient id="rearDuctMetal" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#8a99a2"/><stop offset=".42" stopColor="#4a5d68"/><stop offset="1" stopColor="#15242d"/></linearGradient>
         <linearGradient id="fanDrum" x1="0" x2="1"><stop offset="0" stopColor="#2c4452"/><stop offset="1" stopColor="#0c1a22"/></linearGradient>
         {/* Supply runs right to left (outdoor blue to supply green), extract left to right. */}
-        <linearGradient id="supplyFlow" x1="1" x2="0"><stop offset="0" stopColor="#4abfff"/><stop offset=".55" stopColor="#6bd2bc"/><stop offset="1" stopColor="#59dfa1"/></linearGradient>
-        <linearGradient id="extractFlow" x1="0" x2="1"><stop offset="0" stopColor="#ff7171"/><stop offset=".5" stopColor="#ffae5a"/><stop offset="1" stopColor="#ff9345"/></linearGradient>
+        <AirGradient id="supplyFlow" stops={air.supply} from={AIR_SPAN.outdoor} to={AIR_SPAN.room}/>
+        <AirGradient id="extractFlow" stops={air.extract} from={AIR_SPAN.room} to={AIR_SPAN.outdoor}/>
+        <AirGradient id="supplyWisp" stops={air.supply} from={AIR_SPAN.outdoor} to={AIR_SPAN.room} light/>
+        <AirGradient id="extractWisp" stops={air.extract} from={AIR_SPAN.room} to={AIR_SPAN.outdoor} light/>
         <filter id="fogBlur" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="11"/></filter>
         <filter id="unitShadow" x="-30%" y="-40%" width="170%" height="190%"><feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#000" floodOpacity=".42"/></filter>
         <pattern id="filterMesh" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#1a2d37"/><path d="M0 8L8 0M-2 2L2-2M6 10L10 6" stroke="#aab9c1" strokeWidth="1" opacity=".6"/></pattern>
@@ -422,6 +544,9 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
             group's geometric height, which cut the wide blurred bands off
             flat at the top and bottom. */}
         <mask id="fogFadeMask" maskUnits="userSpaceOnUse" x={VIEW.x} y={VIEW.y} width={VIEW.width} height={VIEW.height}><rect x={VIEW.x} y={VIEW.y} width={VIEW.width} height={VIEW.height} fill="url(#fogFadeGradient)"/></mask>
+        <mask id="coreSolidMask" maskUnits="userSpaceOnUse" x={VIEW.x} y={VIEW.y} width={VIEW.width} height={VIEW.height}><rect x={VIEW.x} y={VIEW.y} width={VIEW.width} height={VIEW.height} fill="#fff"/><g filter="url(#coreMaskEdge)">{prismSides(CORE_CORNERS, CORE_DEPTH).map(face => <polygon key={face.points} points={face.points} fill="#000"/>)}<polygon points={CORE_POINTS} fill="#000"/></g></mask>
+        <filter id="coreMaskEdge" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5"/></filter>
+        <linearGradient id="rearDuctFadeGradient" gradientUnits="userSpaceOnUse" x1={REAR_FADE.from} x2={REAR_FADE.to}><stop offset="0" stopColor="#fff" stopOpacity="1"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></linearGradient>
         <linearGradient id="rearDuctFadeGradient" gradientUnits="userSpaceOnUse" x1={REAR_FADE.from} x2={REAR_FADE.to}><stop offset="0" stopColor="#fff" stopOpacity="1"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></linearGradient>
         <mask id="rearDuctFade" maskUnits="userSpaceOnUse" x="900" y={VIEW.y} width="320" height={VIEW.height}><rect x="900" y={VIEW.y} width="320" height={VIEW.height} fill="url(#rearDuctFadeGradient)"/></mask>
         <clipPath id="coreClip"><polygon points={CORE_POINTS}/></clipPath>
@@ -470,7 +595,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
                   : <path className="bypass-progress-fill" d={BYPASS_PROGRESS} pathLength={100} style={{strokeDasharray:`${bypassPercent} 100`}}/>}
                 <text className="hch-bypass-countdown" x="520" y="315" textAnchor="middle">{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?"Spjældet kører ca. 3 min":`ca. ${formatRemaining(bypassRemaining)} tilbage`}</text>
               </g>
-            : <><text className="hch-exchanger-title" x="520" y="255" textAnchor="middle">Varmeveksler</text><text className="hch-recovery" x="520" y="293" textAnchor="middle">{bypassOpen?"BYPASS":recovery===null?"—":`${recovery}%`}</text></>}
+            : <><text className="hch-exchanger-title" x="520" y="255" textAnchor="middle">Varmeveksler</text></>}
           {[["P3",438,204],["P1",602,204],["P2",438,334],["P4",602,334]].map(([port,x,y])=><text key={port} className="hch-core-port" x={x} y={y} textAnchor="middle">{port}</text>)}
           <Fan x={770} y={212} rpm={supplyRpm} label="Tilluft"/><Fan x={800} y={330} rpm={extractRpm} label="Fraluft" labelRight/>
           {/* Bypass damper sits on the lower (extract) fan motor, orange actuator at the bottom. */}
@@ -485,18 +610,28 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
       <DuctCollar x={164} y={205}/><DuctCollar x={164} y={365}/>
       {water ? <WaterCoil heating={heating} lockout={afterheatLockout} flowWater={flowWater} returnWater={returnWater}/> : <ElectricCoil heating={heating} lockout={afterheatLockout}/>}
       <Rs485Wiring active={busActive} water={water}/>
-      <g className="hch-fog-group" filter="url(#fogBlur)" mask="url(#fogFadeMask)">
-        <path className="hch-fog hch-fog-supply hch-fog-a" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-supply hch-fog-b" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.35}s`:"0s"} as CSSProperties}/>
-        {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog hch-fog-extract hch-fog-a" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-extract hch-fog-b" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.35}s`:"0s"} as CSSProperties}/></g>)}
+      {/* The core looks solid unless the user has opened it: the air layers are
+          masked out where they pass through it, with a soft edge. */}
+      <g className="hch-air-layer" mask={coreOpen ? undefined : "url(#coreSolidMask)"}>
+        <g className="hch-fog-group" filter="url(#fogBlur)" mask="url(#fogFadeMask)">
+          <path className="hch-fog hch-fog-supply hch-fog-a" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-supply hch-fog-b" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed*1.35}s`:"0s"} as CSSProperties}/>
+          {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-fog hch-fog-extract hch-fog-a" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/><path className="hch-fog hch-fog-extract hch-fog-b" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed*1.35}s`:"0s"} as CSSProperties}/></g>)}
+        </g>
+        <g className="hch-wisp-group" mask="url(#fogFadeMask)">
+          <AirWisps path={NORMAL_SUPPLY} kind="supply" speed={supplySpeed}/>
+          {EXTRACT_ROUTES.map(([route,path])=><g key={route} className={`hch-fog-route ${route}`} style={route==="route-core"?coreRoute:bypassRoute}><AirWisps path={path} kind="extract" speed={extractSpeed}/></g>)}
+        </g>
+        <g className="hch-airflow-guides" mask="url(#fogFadeMask)">
+          <path className="hch-airflow-guide hch-supply-flow" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/>
+          {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-airflow-guide hch-extract-flow" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/></g>)}
+        </g>
       </g>
-      <g className="hch-wisp-group" mask="url(#fogFadeMask)">
-        <AirWisps path={NORMAL_SUPPLY} kind="supply" speed={supplySpeed}/>
-        {EXTRACT_ROUTES.map(([route,path])=><g key={route} className={`hch-fog-route ${route}`} style={route==="route-core"?coreRoute:bypassRoute}><AirWisps path={path} kind="extract" speed={extractSpeed}/></g>)}
-      </g>
-      <g className="hch-airflow-guides" mask="url(#fogFadeMask)">
-        <path className="hch-airflow-guide hch-supply-flow" d={NORMAL_SUPPLY} style={{"--flow-speed":supplySpeed?`${supplySpeed}s`:"0s"} as CSSProperties}/>
-        {([["route-core",NORMAL_EXTRACT,coreRoute],["route-bypass",BYPASS_EXTRACT,bypassRoute]] as const).map(([route,path,style])=><g key={route} className={`hch-fog-route ${route}`} style={style}><path className="hch-airflow-guide hch-extract-flow" d={path} style={{"--flow-speed":extractSpeed?`${extractSpeed}s`:"0s"} as CSSProperties}/></g>)}
-      </g>
+      <polygon className={`hch-core-toggle${coreOpen ? " open" : ""}`} points={CORE_POINTS} role="button" tabIndex={0} aria-pressed={coreOpen} aria-label={coreOpen ? "Vis veksleren massiv" : "Vis luften gennem veksleren"} onClick={toggleCore} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleCore(); } }}><title>{coreOpen ? "Tryk for at gøre veksleren massiv igen" : "Tryk for at se luften gennem veksleren (1 min)"}</title></polygon>
+      {/* The recovery value sits above the core toggle and opens its own history. */}
+      {!bypassPhase && <g className="hch-recovery-hit" role="button" tabIndex={0} aria-label={`Varmegenvinding ${recovery===null?"ukendt":`${recovery} %`}, vis historik`} onClick={() => onSensor?.("heat_recovery")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSensor?.("heat_recovery"); } }}>
+        <rect x="462" y="264" width="116" height="40" rx="10"/>
+        <text className="hch-recovery" x="520" y="293" textAnchor="middle">{bypassOpen?"BYPASS":recovery===null?"—":`${recovery}%`}</text>
+      </g>}
       {/* Keep the physical readbacks on the unit at mobile sizes, as in WebUI. */}
       <TempPort cx={1112} cy={rearFarY(205)} title="Udeluft · T1" sensor="outdoor_temperature" onSensor={onSensor} value={fmt(outdoor)} tone="cold"/>
       <TempPort cx={1112} cy={rearFarY(365)} title="Afkast · T4" sensor="exhaust_temperature" onSensor={onSensor} value={fmt(exhaust)} tone="warm"/>
