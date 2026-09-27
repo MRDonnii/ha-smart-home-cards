@@ -97,4 +97,4 @@ The collection ships with neutral example values. Personal names, addresses, pri
 
 ## Integrations are separate
 
-Backend integrations such as Wavin Calefa, Dantherm HCH PassiveLink and Room Energy Optimizer are not part of this frontend bundle and continue in their own repositories.
+Backend integrations such as Wavin Calefa, Dantherm HCH5 Control and Room Energy Optimizer are not part of this frontend bundle and continue in their own repositories.
