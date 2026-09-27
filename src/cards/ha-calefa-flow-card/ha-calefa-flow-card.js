@@ -709,7 +709,7 @@ class HaCalefaFlowCard extends HTMLElement {
   _tileMarkup(id) {
     if (!this._configured(id)) return "";
     const metric = METRICS[id];
-    return `<button class="cf-tile" type="button" data-metric="${id}" data-tone="${metric.tone}" data-action="more-info" data-key="${id}"><ha-icon icon="${metric.icon}"></ha-icon><span><small>${metric.label}</small><strong><b data-num>–</b><em data-unit></em></strong><i data-sub></i></span></button>`;
+    return `<button class="cf-tile" type="button" data-metric="${id}" data-tone="${metric.tone}" data-action="more-info" data-key="${id}"><span><small>${metric.label}</small><strong><b data-num>–</b><em data-unit></em></strong><i data-sub></i></span></button>`;
   }
 
   _blockMarkup(spec) {
@@ -2032,7 +2032,6 @@ const CALEFA_STYLES = `
 
   .cf-tile:not([data-tone]){--tone:#6f8795}.cf-tile{display:flex;align-items:center;gap:clamp(4px,.7cqw,8px);width:100%;min-width:0;min-height:44px;padding:clamp(4px,.55cqw,7px) clamp(6px,.85cqw,10px);border:1px solid color-mix(in srgb,var(--tone) 42%,transparent);border-radius:clamp(9px,1.3cqw,15px);background:linear-gradient(135deg,color-mix(in srgb,var(--tone) 11%,transparent),rgba(5,13,20,.86) 72%);box-shadow:0 8px 20px rgba(0,0,0,.22);text-align:left;cursor:pointer;transition:border-color .4s,box-shadow .4s}
   .cf-tile.is-on{border-color:color-mix(in srgb,var(--tone) 78%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--tone) 18%,transparent),0 8px 20px rgba(0,0,0,.22)}
-  .cf-tile>ha-icon{--mdc-icon-size:clamp(14px,1.9cqw,22px);flex:0 0 auto;color:var(--tone)}
   .cf-tile>span{display:flex;flex-direction:column;min-width:0}
   .cf-tile small{overflow:hidden;color:#dbe6ec;font-size:clamp(10px,1.15cqw,13px);line-height:1.2;white-space:nowrap;text-overflow:ellipsis}
   .cf-tile strong{display:flex;align-items:baseline;color:var(--tone);font-size:clamp(15px,2cqw,22px);line-height:1.08;white-space:nowrap}.cf-tile strong b{font-weight:850;font-variant-numeric:tabular-nums}.cf-tile strong em{margin-left:2px;color:var(--cf-muted);font-size:clamp(9px,1cqw,12px);font-style:normal;font-weight:500}
@@ -2123,7 +2122,7 @@ const CALEFA_STYLES = `
   @media(prefers-reduced-motion:reduce){.cf-anim *,.cf-delta:after,.cf-modal *,.cf-pump-rotor,.cf-fog i{animation:none!important;transition:none!important}}
 
   @container cf-stage (max-width:360px){.cf-minor{display:none}}
-  @container calefa-card (max-width:520px){.cf-tile>ha-icon{display:none}.cf-tile i{display:none}.cf-tile strong em{font-size:9px}.cf-delta small{display:none}.cf-delta strong em{display:none}.cf-footer button{gap:5px}.cf-footer ha-icon{display:none}}
+  @container calefa-card (max-width:520px){.cf-tile i{display:none}.cf-tile strong em{font-size:9px}.cf-delta small{display:none}.cf-delta strong em{display:none}.cf-footer button{gap:5px}.cf-footer ha-icon{display:none}}
   @container calefa-card (max-width:520px){.cf-main{grid-template-columns:minmax(0,20fr) minmax(0,60fr) minmax(0,20fr)}}
   @container calefa-card (max-width:360px){.cf-main{column-gap:6px}.cf-tile{padding:4px}}
   /* Controller popup: the Calefa II V / DHW 212 V ITC fascia, measured on the controller photo (672 x 480). */
