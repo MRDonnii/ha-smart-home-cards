@@ -21,9 +21,6 @@ type Config = { entities: Record<string, string>; afterheat_outdoor_cutoff?: num
 type AfterheatValue = number | "off";
 type Notice = { text: string; error: boolean };
 
-// Same pause as the WebUI: +/- only move a local draft, and one command is
-// sent once the user has stopped pressing.
-const AFTERHEAT_SEND_DELAY_MS = 1200;
 // HA reports the new setpoint a moment after the service call returns; the
 // draft stays shown until then so the value does not jump back and forth.
 const AFTERHEAT_SETTLE_MS = 5000;
@@ -354,51 +351,39 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   }, [bypassActual, outdoor, extract, exhaust]);
 
   const [afterheatDraft, setAfterheatDraft] = useState<AfterheatValue | null>(null);
-  const afterheatTimer = useRef<number | null>(null);
+  // A confirmed value shown until HA reports it; not a draft needing confirmation.
+  const [afterheatSent, setAfterheatSent] = useState<AfterheatValue | null>(null);
   const settleTimer = useRef<number | null>(null);
-  const afterheatPending = useRef<{ target: AfterheatValue; seq: number } | null>(null);
   const afterheatSeq = useRef(0);
-  const shownAfterheat: AfterheatValue = afterheatDraft ?? actualAfterheat;
+  const committedAfterheat: AfterheatValue = afterheatSent ?? actualAfterheat;
+  const shownAfterheat: AfterheatValue = afterheatDraft ?? committedAfterheat;
 
   const sendAfterheat = useCallback(async (target: AfterheatValue, seq: number) => {
     const saved = target === "off"
       ? await command("afterheat", "afterheat_climate", "climate", "set_hvac_mode", { hvac_mode: "off" }, "Eftervarmen er sat til OFF.")
       // A setpoint also switches the afterheat on again in the controller.
       : await command("afterheat", "afterheat_climate", "climate", "set_temperature", { temperature: target }, `Eftervarmen er sat til ${target} °C.`);
-    // A newer press may have started another draft while this one was saving.
     if (afterheatSeq.current !== seq) return;
-    if (!saved) { setAfterheatDraft(null); return; }
+    if (!saved) { setAfterheatSent(null); return; }
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
-    settleTimer.current = window.setTimeout(() => { if (afterheatSeq.current === seq) setAfterheatDraft(null); }, AFTERHEAT_SETTLE_MS);
+    settleTimer.current = window.setTimeout(() => { if (afterheatSeq.current === seq) setAfterheatSent(null); }, AFTERHEAT_SETTLE_MS);
   }, [command]);
 
-  // The draft is dropped as soon as HA shows the value that was sent.
+  // The sent value is dropped as soon as HA shows it.
   useEffect(() => {
-    if (afterheatDraft !== null && afterheatPending.current === null && busy !== "afterheat" && afterheatDraft === actualAfterheat) setAfterheatDraft(null);
-  }, [afterheatDraft, actualAfterheat, busy]);
+    if (afterheatSent !== null && busy !== "afterheat" && afterheatSent === actualAfterheat) setAfterheatSent(null);
+  }, [afterheatSent, actualAfterheat, busy]);
+  useEffect(() => () => { if (settleTimer.current !== null) window.clearTimeout(settleTimer.current); }, []);
 
-  const flushAfterheat = useCallback(() => {
-    if (afterheatTimer.current !== null) window.clearTimeout(afterheatTimer.current);
-    afterheatTimer.current = null;
-    const pending = afterheatPending.current;
-    afterheatPending.current = null;
-    if (pending) void sendAfterheat(pending.target, pending.seq);
-  }, [sendAfterheat]);
-
-  // Leaving the dashboard must not drop a change that is still waiting to be sent.
-  const flushAfterheatRef = useRef(flushAfterheat);
-  flushAfterheatRef.current = flushAfterheat;
-  useEffect(() => () => {
-    flushAfterheatRef.current();
-    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
-  }, []);
-
-  const setAfterheatTarget = (next: AfterheatValue) => {
+  // +/-, the dial and the power button only move a draft; nothing is sent
+  // before the user confirms, so a slip cannot change the afterheat.
+  const setAfterheatTarget = (next: AfterheatValue) => setAfterheatDraft(next === committedAfterheat ? null : next);
+  const confirmAfterheat = () => {
+    if (afterheatDraft === null) return;
     const seq = ++afterheatSeq.current;
-    setAfterheatDraft(next);
-    afterheatPending.current = { target: next, seq };
-    if (afterheatTimer.current !== null) window.clearTimeout(afterheatTimer.current);
-    afterheatTimer.current = window.setTimeout(flushAfterheat, AFTERHEAT_SEND_DELAY_MS);
+    setAfterheatSent(afterheatDraft);
+    setAfterheatDraft(null);
+    void sendAfterheat(afterheatDraft, seq);
   };
 
   // Manual sets the manual level; the auto modes move their normal level,
@@ -544,7 +529,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
         <article className="surface afterheat-setpoint-card">
           <AfterheatThermostat value={shownAfterheat} onChange={setAfterheatTarget} heating={heating} lockout={afterheatLockout}
             cutoff={afterheatCutoff} outdoor={outdoor} airBefore={beforeHeater} airAfter={afterHeater}
-            registered={actualAfterheatSelection} lastOn={afterheatSetpoint}/>
+            registered={actualAfterheatSelection} lastOn={afterheatSetpoint}
+            current={committedAfterheat} onConfirm={confirmAfterheat} onCancel={() => setAfterheatDraft(null)} busy={busy !== null}/>
           {/* Values the Pi computes from a measured T2 before the afterheat coil, as in the WebUI. */}
           {num("supply_recovery") !== null || num("afterheat_lift") !== null ? <>
             <div className="pro-card-head compact air-calc-head"><div><h2>Beregnet fra målt T2</h2><p>Luftmængde anslået for aktuelt trin{num("supply_airflow") === null ? "" : ` · ${whole(num("supply_airflow"))} m³/h`}</p></div></div>
