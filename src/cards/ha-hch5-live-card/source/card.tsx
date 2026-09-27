@@ -53,6 +53,14 @@ function kwh(value: number | null) {
 }
 // Options of the integration's "Bål i haven" select, with the button labels.
 const BONFIRE_CHOICES: [string, string][] = [["30 min", "30 min"], ["1 time", "1 t"], ["2 timer", "2 t"], ["3 timer", "3 t"]];
+// Options of the integration's "Sluk anlæg" select, as in the WebUI's OFF popup.
+const STANDBY_CHOICES: [string, string, string][] = [
+  ["1 time", "1 time", "Tænder selv om en time"],
+  ["4 timer", "4 timer", "Tænder selv om fire timer"],
+  ["8 timer", "8 timer", "Tænder selv om otte timer"],
+  ["Til i morgen kl. 07", "Til i morgen", "Tænder selv kl. 07:00"],
+  ["Permanent", "Permanent", "Slukket, til du tænder igen"],
+];
 function cost(energyKwh: number | null, price: number | null) {
   return energyKwh === null || price === null ? "—" : `${(energyKwh * price).toLocaleString("da-DK", { maximumFractionDigits: 2 })} kr`;
 }
@@ -307,6 +315,10 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const chosen = (key: string) => pendingChoice?.key === key ? pendingChoice.target : value(key);
   const bonfireRemaining = num("bonfire_remaining");
   const bonfire = (bonfireRemaining ?? 0) > 0 || (chosen("bonfire_control") ?? "Slukket") !== "Slukket";
+  const standbyChoice = chosen("standby_control");
+  const standbyActive = standbyChoice !== null && standbyChoice !== "Tændt" && standbyChoice !== "unavailable" && standbyChoice !== "unknown";
+  const standbyRemaining = num("standby_remaining");
+  const [standbyDialog, setStandbyDialog] = useState(false);
   const climate = entity("afterheat_climate");
   const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
   const afterheatEnabled = climate ? climate.state !== "off" : true;
@@ -391,7 +403,12 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
 
   // Manual sets the manual level; the auto modes move their normal level,
   // exactly like the WebUI's manual_level / local_normal_level.
-  const setLevel = (target: number) => mode === "manual"
+  const setLevel = async (target: number) => {
+    // A level switches the unit on again, as in the WebUI.
+    if (standbyActive && !await command("standby-stop", "standby_control", "select", "select_option", { option: "Tændt" }, `Anlægget er tændt på trin ${target}.`, "Tændt")) return false;
+    return setLevelOnly(target);
+  };
+  const setLevelOnly = (target: number) => mode === "manual"
     ? command(`level-${target}`, "level_control", "select", "select_option", { option: String(target) }, `Ventilation sat til trin ${target}.`, String(target))
     : command(`level-${target}`, "auto_normal", "number", "set_value", { value: target }, `Ventilation sat til trin ${target}.`, String(target));
 
@@ -442,18 +459,19 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
               ))}
             </div>
             <label className="control-label">Ventilatorniveau</label>
-            <div className="pro-levels">
+            <div className={`pro-levels${config.entities.standby_control ? " with-off" : ""}`}>
               {[1,2,3,4,5,6].map(target => {
                 // Filled: the level the unit runs at now (or a click awaiting the
                 // controller). In Local/Smart Auto a dashed outline marks the normal
                 // level a click changes, which the controller may raise for air quality.
                 const levelChoiceKey = mode === "manual" ? "level_control" : "auto_normal";
-                const shown = pendingChoice?.key === levelChoiceKey ? Number(pendingChoice.target) : level;
+                const shown = standbyActive ? null : pendingChoice?.key === levelChoiceKey ? Number(pendingChoice.target) : level;
                 const normal = mode !== "manual" && Number(chosen("auto_normal") ?? chosenLevel) === target && shown !== target;
                 return <button key={target} className={shown === target ? "active" : normal ? "is-normal" : ""} aria-pressed={shown === target} title={normal ? "Normaltrin" : undefined} disabled={busy !== null} onClick={() => void setLevel(target)}>{target}</button>;
               })}
+              {config.entities.standby_control && <button className={`level-off${standbyActive ? " active" : ""}`} aria-haspopup="dialog" aria-pressed={standbyActive} disabled={busy !== null} onClick={() => setStandbyDialog(true)}>OFF</button>}
             </div>
-            <div className="active-decision"><span>Aktiv beslutning</span><strong>Trin {whole(level)} · {text(value("effective_source")).replaceAll("_", " ")}</strong><small>{text(value("effective_reason"), "Afventer controllerens beslutning")}</small></div>
+            <div className="active-decision"><span>Aktiv beslutning</span><strong>{standbyActive ? "OFF · anlæg slukket" : <>Trin {whole(level)} · {text(value("effective_source")).replaceAll("_", " ")}</>}</strong><small>{text(value("effective_reason"), "Afventer controllerens beslutning")}</small></div>
           </article>
 
           <div className="pro-control-pair">
@@ -494,11 +512,11 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
 
           {config.entities.bonfire_control && <article className={`surface status-action-card bonfire-card${bonfire ? " active" : ""}`}>
             <div className="status-action-icon smoke"><CloudFog size={24}/></div>
-            <div><span>Bål i haven</span><strong>{bonfire ? "Aktiv · minimal luft" : "Ikke aktiv"}</strong><small>{bonfire ? `${remaining(bonfireRemaining)} · stopper selv` : fireplace ? "Ikke under pejsefunktion" : "Ventilatorer på minimum, stopper selv"}</small></div>
+            <div><span>Bål i haven</span><strong>{bonfire ? "Aktiv · anlæg slukket" : "Ikke aktiv"}</strong><small>{bonfire ? `${remaining(bonfireRemaining)} · stopper selv` : fireplace ? "Ikke under pejsefunktion" : standbyActive ? "Ikke mens anlægget er slukket" : "Slukker anlægget, tænder selv igen"}</small></div>
             <div className="fireplace-actions bonfire-actions">
               {bonfire
                 ? <button disabled={busy !== null} onClick={() => void command("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "Bål-tilstand stoppet.", "Slukket")}>Stop</button>
-                : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
+                : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace || standbyActive} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
             </div>
           </article>}
         </aside>
@@ -539,6 +557,18 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           </> : null}
         </article>
       </div>
+      {standbyDialog && <div className="standby-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setStandbyDialog(false); }}>
+        <section className="standby-dialog surface" role="dialog" aria-modal="true" aria-label={standbyActive ? "Anlægget er slukket" : "Sluk anlægget"}>
+          <div className="standby-dialog-heading"><div><span className="eyebrow">VENTILATION</span><h2>{standbyActive ? "Anlægget er slukket" : "Sluk anlægget"}</h2></div><button type="button" aria-label="Luk" onClick={() => setStandbyDialog(false)}>×</button></div>
+          <p className="standby-dialog-lead">{standbyActive
+            ? (standbyRemaining === null ? "Begge ventilatorer står stille, til du tænder igen." : `Begge ventilatorer står stille · ${remaining(standbyRemaining)}.`)
+            : "Begge ventilatorer stopper. Pejs, bål og boost kan ikke startes, mens anlægget er slukket."}</p>
+          <div className="standby-choices">
+            {STANDBY_CHOICES.map(([option, label, hint]) => <button key={option} type="button" className={standbyChoice === option ? "active" : ""} disabled={busy !== null} onClick={() => { setStandbyDialog(false); void command(`standby-${option}`, "standby_control", "select", "select_option", { option }, option === "Permanent" ? "Anlægget er slukket, til du tænder igen." : option === "Til i morgen kl. 07" ? "Anlægget er slukket til i morgen kl. 07:00." : `Anlægget er slukket i ${label}.`, option); }}><strong>{label}</strong><small>{hint}</small></button>)}
+          </div>
+          {standbyActive && <button type="button" className="standby-on-action" disabled={busy !== null} onClick={() => { setStandbyDialog(false); void command("standby-stop", "standby_control", "select", "select_option", { option: "Tændt" }, "Anlægget er tændt igen.", "Tændt"); }}>Tænd anlægget igen</button>}
+        </section>
+      </div>}
       {notice && <div className={`hch-notice${notice.error ? " error" : ""}`} role="status">{notice.text}</div>}
     </section>
   );
