@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.32 */
+/* MRDonnii Smart Home Cards v0.4.33 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -36214,9 +36214,23 @@ var HASettingsCenterCard = class extends HTMLElement {
     else if (a === "more") this._more(b.dataset.moreEntity || b.dataset.entity);
     else if (a === "mode") this._call("input_select.select_option", { option: b.dataset.option }, { entity_id: b.dataset.entity });
     else if (a === "rum-nulstil") this._call("script.rum_nulstil_automatisk", { room: b.dataset.room });
-    else if (a === "step")
-      this._call(`input_number.${b.dataset.direction === "+" ? "increment" : "decrement"}`, {}, { entity_id: b.closest("[data-entity]").dataset.entity });
-    else if (a === "nav") this._nav(b.dataset.path);
+    else if (a === "step") {
+      const entityId = b.closest("[data-entity]").dataset.entity;
+      if (entityId.startsWith("number.")) {
+        const state = this._e(entityId);
+        const value = Number(state?.state);
+        const step = Number(state?.attributes?.step || 1);
+        if (!Number.isFinite(value) || !Number.isFinite(step) || step <= 0) return;
+        const direction = b.dataset.direction === "+" ? 1 : -1;
+        const limitRaw = state?.attributes?.[direction > 0 ? "max" : "min"];
+        const limit = limitRaw == null ? NaN : Number(limitRaw);
+        const next = Number((value + direction * step).toFixed(6));
+        const bounded = Number.isFinite(limit) ? direction > 0 ? Math.min(next, limit) : Math.max(next, limit) : next;
+        this._call("number.set_value", { value: bounded }, { entity_id: entityId });
+      } else {
+        this._call(`input_number.${b.dataset.direction === "+" ? "increment" : "decrement"}`, {}, { entity_id: entityId });
+      }
+    } else if (a === "nav") this._nav(b.dataset.path);
     else if (a === "gem-delt") this._gemDeltOmraade(b.dataset.omraade);
     else if (a === "service") {
       const i = JSON.parse(b.dataset.payload);
