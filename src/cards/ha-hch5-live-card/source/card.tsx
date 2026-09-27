@@ -4,7 +4,7 @@ import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
 import { AfterheatThermostat } from "./AfterheatThermostat";
 import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
-import { ArrowRight, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
+import { ArrowRight, CloudFog, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
 import css from "./webui.css";
 
 // The HCH5 Control WebUI overview (frontend-v2 OverviewPage) as a Home
@@ -51,6 +51,8 @@ function watts(value: number | null) {
 function kwh(value: number | null) {
   return value === null ? "—" : value.toLocaleString("da-DK", { maximumFractionDigits: 2 });
 }
+// Options of the integration's "Bål i haven" select, with the button labels.
+const BONFIRE_CHOICES: [string, string][] = [["30 min", "30 min"], ["1 time", "1 t"], ["2 timer", "2 t"], ["3 timer", "3 t"]];
 function cost(energyKwh: number | null, price: number | null) {
   return energyKwh === null || price === null ? "—" : `${(energyKwh * price).toLocaleString("da-DK", { maximumFractionDigits: 2 })} kr`;
 }
@@ -303,6 +305,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const level = num("effective_level") ?? 3;
   const chosenLevel = num(mode === "manual" ? "level_control" : "auto_normal");
   const chosen = (key: string) => pendingChoice?.key === key ? pendingChoice.target : value(key);
+  const bonfireRemaining = num("bonfire_remaining");
+  const bonfire = (bonfireRemaining ?? 0) > 0 || (chosen("bonfire_control") ?? "Slukket") !== "Slukket";
   const climate = entity("afterheat_climate");
   const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
   const afterheatEnabled = climate ? climate.state !== "off" : true;
@@ -487,6 +491,16 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
               </div>
             </article>
           </div>
+
+          {config.entities.bonfire_control && <article className={`surface status-action-card bonfire-card${bonfire ? " active" : ""}`}>
+            <div className="status-action-icon smoke"><CloudFog size={24}/></div>
+            <div><span>Bål i haven</span><strong>{bonfire ? "Aktiv · minimal luft" : "Ikke aktiv"}</strong><small>{bonfire ? `${remaining(bonfireRemaining)} · stopper selv` : fireplace ? "Ikke under pejsefunktion" : "Ventilatorer på minimum, stopper selv"}</small></div>
+            <div className="fireplace-actions bonfire-actions">
+              {bonfire
+                ? <button disabled={busy !== null} onClick={() => void command("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "Bål-tilstand stoppet.", "Slukket")}>Stop</button>
+                : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
+            </div>
+          </article>}
         </aside>
 
         <article className="surface climate-panel">

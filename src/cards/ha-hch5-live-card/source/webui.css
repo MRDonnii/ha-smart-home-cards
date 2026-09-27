@@ -1016,3 +1016,11 @@ button { font: inherit; color: inherit; }
 :host([light]) .thermostat-knob { fill: #fff; }
 @container hch-card (max-width: 680px) { .afterheat-setpoint-card { grid-template-columns: minmax(0, 1fr); } .afterheat-thermostat { width: 100%; } .thermostat-dial { max-width: 280px; } }
 @media (prefers-reduced-motion: reduce) { .thermostat-glow { animation: none; } }
+
+/* Bonfire in the garden: full-width card under the fireplace pair, as in the WebUI. */
+.bonfire-card { grid-template-columns: 44px minmax(0,1fr) auto; }
+.bonfire-card .status-action-icon.smoke { color: #b9c7d1; background: rgb(185 199 209 / 12%); }
+.bonfire-card.active { border-color: #8aa0ae; }
+.bonfire-card.active .status-action-icon.smoke { color: #fff; background: rgb(185 199 209 / 28%); }
+.bonfire-actions { flex-wrap: wrap; justify-content: flex-end; }
+.bonfire-actions button { min-width: 44px; }
