@@ -2,7 +2,7 @@ import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { Flame, Power, Snowflake } from "./icons";
 
 // Thermostat-style control for the HAC1 afterheat setpoint. The value is only
-// a local draft here; the page sends one command once the user lets go.
+// a local draft here; nothing is sent until the user confirms the change.
 export type AfterheatValue = number | "off";
 
 const MIN = 10;
@@ -39,9 +39,16 @@ export interface AfterheatThermostatProps {
   registered: string;
   /** The last value switched off from, restored by the power button. */
   lastOn?: number;
+  /** The saved setpoint; a different value is an unconfirmed draft. */
+  current: AfterheatValue;
+  onConfirm: () => void;
+  onCancel: () => void;
+  busy?: boolean;
 }
 
-export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20 }: AfterheatThermostatProps) {
+export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false }: AfterheatThermostatProps) {
+  const pending = value !== current;
+  const label = (v: AfterheatValue) => v === "off" ? "OFF" : `${v} °C`;
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
   const off = value === "off";
@@ -117,6 +124,13 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
         <div><small>I HAC1</small><strong>{registered}</strong></div>
       </div>
       {lockout && !off && <p className="thermostat-note">Sommerstop: udetemperaturen er {fmt(outdoor)}. HAC1 varmer først under {cutoff}{" "}°C ude.</p>}
+      {pending && <div className="thermostat-confirm" role="alertdialog" aria-label="Bekræft ændring af eftervarme">
+        <p>Skift eftervarme fra <strong>{label(current)}</strong> til <strong>{label(value)}</strong>?</p>
+        <div>
+          <button type="button" className="thermostat-cancel" disabled={busy} onClick={onCancel}>Fortryd</button>
+          <button type="button" className="thermostat-ok" disabled={busy} onClick={onConfirm}>Bekræft</button>
+        </div>
+      </div>}
       <div className="thermostat-actions">
         <button type="button" aria-label="Sænk eftervarme" disabled={off} onClick={() => onChange(off || value <= MIN ? "off" : value - 1)}>−</button>
         <button type="button" className={`thermostat-power${off ? "" : " on"}`} aria-pressed={!off} onClick={() => onChange(off ? lastOn : "off")}><Power size={15}/>{off ? "Tænd" : "Sluk"}</button>
