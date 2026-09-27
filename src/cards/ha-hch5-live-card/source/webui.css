@@ -1043,10 +1043,16 @@ button { font: inherit; color: inherit; }
 .standby-choices small { color: var(--muted); font-size: 11px; }
 .standby-on-action { min-height: 42px; border: 1px solid var(--success-color, #4fbf8a); border-radius: 10px; background: color-mix(in srgb, var(--success-color, #4fbf8a) 14%, transparent); color: var(--success-color, #4fbf8a); font-weight: 800; cursor: pointer; }
 
-/* Afterheat change waits for confirmation. */
-.thermostat-confirm { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--warning-color, #ffad55); border-radius: 12px; background: color-mix(in srgb, var(--warning-color, #ffad55) 10%, transparent); }
-.thermostat-confirm p { margin: 0; color: var(--text); font-size: 12px; line-height: 1.4; }
-.thermostat-confirm > div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.thermostat-confirm button { min-height: 40px; border-radius: 10px; border: 1px solid var(--hch-border); background: transparent; color: var(--text); font-size: 12px; font-weight: 800; cursor: pointer; }
-.thermostat-confirm .thermostat-ok { border-color: var(--warning-color, #ffad55); background: color-mix(in srgb, var(--warning-color, #ffad55) 22%, transparent); }
-.thermostat-confirm button:disabled { opacity: .5; cursor: wait; }
+/* Afterheat change waits for confirmation: a popup over the thermostat card. */
+.afterheat-thermostat { position: relative; }
+.thermostat-confirm { position: absolute; inset: -6px; z-index: 5; display: grid; place-items: center; padding: 8px; border-radius: 14px; background: color-mix(in srgb, var(--hch-base) 72%, transparent); backdrop-filter: blur(3px); }
+.thermostat-confirm-box { width: min(320px, 100%); display: grid; gap: 10px; padding: 14px; border: 1px solid var(--warning-color, #ffad55); border-radius: 14px; background: var(--hch-base); box-shadow: 0 14px 36px rgb(0 0 0 / 40%); text-align: center; }
+.thermostat-confirm-title { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.thermostat-confirm-values { display: flex; align-items: baseline; justify-content: center; gap: 10px; color: var(--muted); font-size: 18px; }
+.thermostat-confirm-values em { font-style: normal; }
+.thermostat-confirm-values strong { color: var(--text); font-size: 30px; }
+.thermostat-confirm-adjust, .thermostat-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.thermostat-confirm button { min-height: 42px; border-radius: 10px; border: 1px solid var(--hch-border); background: transparent; color: var(--text); font-size: 13px; font-weight: 800; cursor: pointer; }
+.thermostat-confirm-adjust button { font-size: 20px; }
+.thermostat-confirm .thermostat-ok { border-color: var(--warning-color, #ffad55); background: color-mix(in srgb, var(--warning-color, #ffad55) 24%, transparent); }
+.thermostat-confirm button:disabled { opacity: .45; cursor: wait; }

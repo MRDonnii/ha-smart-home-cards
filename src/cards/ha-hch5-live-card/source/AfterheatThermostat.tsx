@@ -124,18 +124,25 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
         <div><small>I HAC1</small><strong>{registered}</strong></div>
       </div>
       {lockout && !off && <p className="thermostat-note">Sommerstop: udetemperaturen er {fmt(outdoor)}. HAC1 varmer først under {cutoff}{" "}°C ude.</p>}
-      {pending && <div className="thermostat-confirm" role="alertdialog" aria-label="Bekræft ændring af eftervarme">
-        <p>Skift eftervarme fra <strong>{label(current)}</strong> til <strong>{label(value)}</strong>?</p>
-        <div>
-          <button type="button" className="thermostat-cancel" disabled={busy} onClick={onCancel}>Fortryd</button>
-          <button type="button" className="thermostat-ok" disabled={busy} onClick={onConfirm}>Bekræft</button>
-        </div>
-      </div>}
       <div className="thermostat-actions">
         <button type="button" aria-label="Sænk eftervarme" disabled={off} onClick={() => onChange(off || value <= MIN ? "off" : value - 1)}>−</button>
         <button type="button" className={`thermostat-power${off ? "" : " on"}`} aria-pressed={!off} onClick={() => onChange(off ? lastOn : "off")}><Power size={15}/>{off ? "Tænd" : "Sluk"}</button>
         <button type="button" aria-label="Hæv eftervarme" disabled={!off && value >= MAX} onClick={() => onChange(off ? MIN : Math.min(MAX, value + 1))}>+</button>
       </div>
     </div>
+    {pending && <div className="thermostat-confirm" role="alertdialog" aria-modal="true" aria-label="Bekræft ændring af eftervarme">
+      <div className="thermostat-confirm-box">
+        <span className="thermostat-confirm-title">Eftervarme</span>
+        <div className="thermostat-confirm-values"><span>{label(current)}</span><em>→</em><strong>{label(value)}</strong></div>
+        <div className="thermostat-confirm-adjust">
+          <button type="button" aria-label="Sænk eftervarme" disabled={busy || off} onClick={() => onChange(off || value <= MIN ? "off" : value - 1)}>−</button>
+          <button type="button" aria-label="Hæv eftervarme" disabled={busy || (!off && value >= MAX)} onClick={() => onChange(off ? MIN : Math.min(MAX, value + 1))}>+</button>
+        </div>
+        <div className="thermostat-confirm-actions">
+          <button type="button" className="thermostat-cancel" disabled={busy} onClick={onCancel}>Fortryd</button>
+          <button type="button" className="thermostat-ok" disabled={busy} onClick={onConfirm}>Bekræft</button>
+        </div>
+      </div>
+    </div>}
   </div>;
 }
