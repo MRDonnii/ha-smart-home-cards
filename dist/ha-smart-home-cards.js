@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.36 */
+/* MRDonnii Smart Home Cards v0.4.37 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -19285,7 +19285,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION50 = "0.3.2";
+  const VERSION50 = "0.3.3";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -19339,10 +19339,15 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
     getCardSize() {
       return this._config.show_stats ? 3 : 1;
     }
+    // Extra tabs from the config (key, label, icon, conditional) come after the built-in ones.
+    _tabs() {
+      const extra = Array.isArray(this._config?.extra_tabs) ? this._config.extra_tabs.filter((t) => t && t.key && t.conditional).map((t) => ({ key: String(t.key), label: String(t.label || t.key), icon: String(t.icon || "mdi:tab"), conditional: String(t.conditional) })) : [];
+      return [...TABS3, ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))];
+    }
     _readTab() {
       try {
         const item2 = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-        if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && TABS3.some((t) => t.key === item2.key)) return item2.key;
+        if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && this._tabs().some((t) => t.key === item2.key)) return item2.key;
       } catch {
       }
       return null;
@@ -19354,10 +19359,10 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
       }
     }
     _dispatchTab(key) {
-      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: TABS3.map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
+      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: this._tabs().map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
     }
     switchTab(key) {
-      if (!TABS3.some((t) => t.key === key)) return;
+      if (!this._tabs().some((t) => t.key === key)) return;
       this._userSwitched = true;
       this._active = key;
       this._writeTab(key);
@@ -19375,7 +19380,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
       const c = this._config;
       this.shadowRoot.innerHTML = `<style>
     :host{display:block;--hc-text:var(--primary-text-color);--hc-muted:var(--secondary-text-color);--hc-faint:var(--disabled-text-color);--hc-surface:var(--ha-card-background,var(--card-background-color));--hc-surface-2:var(--contrast1,color-mix(in srgb,var(--hc-text) 4%,transparent));--hc-border:var(--divider-color);--hc-accent:var(--dashboard-accent,var(--primary-color));--hc-shadow:var(--ha-card-box-shadow,none);font-family:var(--primary-font-family,inherit);color:var(--hc-text)}*{box-sizing:border-box}ha-card{background:transparent;border:0;box-shadow:none;padding:18px 20px 0;color:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--hc-accent);background:color-mix(in srgb,var(--hc-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--hc-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--hc-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--hc-surface);border:1px solid var(--hc-border);box-shadow:var(--hc-shadow);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border:0;border-radius:10px;background:transparent;color:var(--hc-muted);font:inherit;font-size:14px;font-weight:550;white-space:nowrap;cursor:pointer;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--hc-faint)}.tab:hover{color:var(--hc-text);background:var(--hc-surface-2)}.tab.on{color:var(--hc-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--hc-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--hc-accent)),0 0 18px -8px var(--hc-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--hc-accent))}.tab:focus-visible{outline:2px solid var(--hc-accent);outline-offset:2px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.stat{padding:14px;border:1px solid var(--hc-border);border-radius:var(--ha-card-border-radius,18px);background:var(--hc-surface)}.stat span{display:block;color:var(--hc-muted);font-size:11px}.stat strong{display:block;font-size:18px;margin-top:4px}@media(max-width:680px){ha-card{padding:14px 14px 0}.top{align-items:flex-start}.tabs{width:100%}.tab{flex:1 1 0;min-width:0;justify-content:center;gap:4px;padding:8px 4px;font-size:12.5px}.stats{grid-template-columns:1fr}}
-  </style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h1>${escapeHtml4(c.title)}</h1><p>${escapeHtml4(c.subtitle)}</p></div></div><nav class="tabs" role="tablist" aria-label="Varme Center">${TABS3.map((tab) => `<button type="button" role="tab" class="tab" data-tab="${tab.key}"><ha-icon icon="${tab.icon}"></ha-icon><span>${tab.label}</span></button>`).join("")}</nav></header>${c.show_stats ? '<div class="stats"><div class="stat"><span>Fjernvarme</span><strong data-value="district">\u2014</strong></div><div class="stat"><span>Ventilation</span><strong data-value="ventilation">\u2014</strong></div><div class="stat"><span>Pris i dag</span><strong data-value="cost">\u2014</strong></div></div>' : ""}</ha-card>`;
+  </style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h1>${escapeHtml4(c.title)}</h1><p>${escapeHtml4(c.subtitle)}</p></div></div><nav class="tabs" role="tablist" aria-label="Varme Center">${this._tabs().map((tab) => `<button type="button" role="tab" class="tab" data-tab="${tab.key}"><ha-icon icon="${tab.icon}"></ha-icon><span>${tab.label}</span></button>`).join("")}</nav></header>${c.show_stats ? '<div class="stats"><div class="stat"><span>Fjernvarme</span><strong data-value="district">\u2014</strong></div><div class="stat"><span>Ventilation</span><strong data-value="ventilation">\u2014</strong></div><div class="stat"><span>Pris i dag</span><strong data-value="cost">\u2014</strong></div></div>' : ""}</ha-card>`;
       this._syncTabs();
       this._updateStats();
     }
