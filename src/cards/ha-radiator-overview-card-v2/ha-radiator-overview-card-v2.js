@@ -21,7 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.1.3";
+const VERSION = "2.1.4";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -209,7 +209,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
    accent edge, card surface, shadow and 15px corners; the small tiles also put the big value
    first with detail and label below, and a large faint drifting icon. */
-.zone,.tile,.stat,.panel,.flow{--fp-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));border:0;border-left:3px solid color-mix(in srgb,var(--fp-accent,var(--room-color)) 78%,transparent);border-radius:15px;background:var(--fp-surface);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.zone,.tile,.stat,.panel,.flow{--fp-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--fp-accent,var(--room-color)) 78%,transparent);border-radius:15px;background:var(--fp-surface);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
 .zone:hover,.tile:hover{border-color:transparent;border-left-color:var(--room-color);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
 .panel{--fp-accent:var(--rc-accent)}
 .flow{--fp-accent:color-mix(in srgb,var(--rc-muted) 75%,transparent)}.flow.on{--fp-accent:var(--rc-hot)}
@@ -217,8 +217,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .metric{border:0;border-radius:10px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);display:flex;flex-direction:column}
 .metric strong{order:1;margin:0;font-size:15px}
 .metric span{order:2;margin-top:2px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
-.metric.low{box-shadow:inset 3px 0 0 var(--rc-danger)}
-.metric.air{border:0;border-left:0;box-shadow:inset 3px 0 0 var(--aq,var(--rc-edge))}
+.metric.low{box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--rc-danger)}
+.metric.air{border:0;border-left:0;box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--aq,var(--rc-edge))}
 .tile,.tiles .tile{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
 .tile .t-top,.tile .t-row{display:contents}
 .tile .t-ic,.tiles .t-top .t-ic{position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;border-radius:0;background:none;color:var(--room-color);opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}

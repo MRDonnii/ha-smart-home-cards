@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.7";
+const CALEFA_FLOW_CARD_VERSION = "0.9.8";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -2248,8 +2248,8 @@ const CALEFA_STYLES = `
      (custom:ha-home-status-card): accent edge, card surface, shadow, big value on
      top, detail and label below, and a large faint drifting icon. */
   .cf-footer{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;border-top:0}
-  .cf-footer button,.cf-stat{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;min-height:85px;padding:10px 12px;border:0;border-left:3px solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left}
-  .cf-footer button:first-child{border-left:3px solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
+  .cf-footer button,.cf-stat{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;min-height:85px;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left}
+  .cf-footer button:first-child{border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
   .cf-footer button[data-footer="power"]{--tile-accent:var(--orange,var(--warning-color,#fb923c))}
   .cf-footer button[data-footer="pressure"]{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
   .cf-stat:nth-child(1),.cf-stat-split{--tile-accent:var(--cf-chart-heat)}
