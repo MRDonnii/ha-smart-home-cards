@@ -4,7 +4,7 @@
  *
  * Samme config og samme rum-popups som ha-radiator-overview-card v0.6.1 - kun hovedsiden er
  * bygget om: termostatzoner med udendørs først, termostat-skive og 24-timers kurve,
- * målepunkter som 2×2 minikort i sidste felt af zonegitteret og et afsluttende overblik.
+ * målepunkter som små kort i de tomme felter efter sidste termostatkort og et afsluttende overblik.
  *
  * Vedligeholdelse
  * - DOM'en bygges én gang pr. config (_build) og opdateres derefter kun målrettet: et rum får kun
@@ -21,7 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.1.0";
+const VERSION = "2.1.1";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -178,7 +178,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .zone.is-heating .radiator i:nth-child(2){animation-delay:.12s}.zone.is-heating .radiator i:nth-child(3){animation-delay:.24s}.zone.is-heating .radiator i:nth-child(4){animation-delay:.36s}.zone.is-heating .radiator i:nth-child(5){animation-delay:.48s}
 .ac-mini{position:relative;width:67px;height:50px;overflow:hidden}
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
-.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:10px;min-width:0}.tiles.wide{grid-column:span 2;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:10px;min-width:0}
 .tiles .tile{display:flex;flex-direction:column;min-width:0;min-height:0;padding:11px 11px 9px}.tiles .t-top{gap:6px}.tiles .t-top .t-ic{width:22px;height:22px;border-radius:7px}.tiles .t-top ha-icon{--mdc-icon-size:13px}.tiles .t-top strong{font-size:12.5px}.tiles .t-row{display:block;margin-top:7px}.tiles .t-temp{font-size:24px}.tiles .t-meta{margin-top:3px;overflow:hidden;font-size:10.5px;text-align:left;text-overflow:ellipsis}.tiles .t-air{margin-top:4px;font-size:10.5px}
 .tile{display:block;padding:13px 14px 11px;border:1px solid color-mix(in srgb,var(--room-color) 20%,var(--rc-edge));border-radius:18px;background:linear-gradient(160deg,var(--rc-glass2),rgba(255,255,255,.01) 60%,rgba(0,0,0,.04))}
 .t-top{display:flex;align-items:center;gap:9px;min-width:0}
@@ -202,8 +202,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @container (max-width:760px){.shell{padding:16px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:40px}.legend{display:none}}
-@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tiles,.tiles.wide{grid-column:1/-1}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
-@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones{grid-template-columns:1fr}.tiles,.tiles.wide{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
+@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
 
@@ -259,6 +259,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   }
 
   connectedCallback() {
+    if (this._built) this._observeLayout();
     // Kortet ligger bag en fane (local-conditional-card) og bliver løsnet, når fanen skjules.
     // Opdateringer springes over imens; her indhentes de i én samlet opdatering.
     if (this._built && this._hass) this._dirtyAll();
@@ -266,6 +267,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._layoutObserver?.disconnect();
+    this._layoutObserver = undefined;
     clearTimeout(this._statsTimer);
     this._statsTimer = undefined;
     if (this._raf) cancelAnimationFrame(this._raf);
@@ -579,7 +582,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem – tallene for ventiler og varme kan være ufuldstændige.</span></div>
-          ${(outdoor || zones.length || sensors.length) ? `<section class="group"><div class="group-head"><h3>${outdoor || zones.length ? "Termostatzoner" : "Målepunkter"}</h3><span class="count">${outdoor || zones.length ? zones.length : sensors.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}${sensors.length ? `<div class="tiles${sensors.length > 4 ? " wide" : ""}" role="group" aria-label="Målepunkter">${sensors.map(tileMarkup).join("")}</div>` : ""}</div></section>` : ""}
+          ${(outdoor || zones.length || sensors.length) ? `<section class="group"><div class="group-head"><h3>${outdoor || zones.length ? "Termostatzoner" : "Målepunkter"}</h3><span class="count">${outdoor || zones.length ? zones.length : sensors.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}${sensors.length ? `<div class="tiles" role="group" aria-label="Målepunkter">${sensors.map(tileMarkup).join("")}</div>` : ""}</div></section>` : ""}
           <section class="hero" aria-label="Supplerende overblik">
             <div class="panel indoor">
               <span class="label">Indendørs gennemsnit</span>
@@ -626,7 +629,54 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       dots: [...root.querySelectorAll("[data-dot]")].map((el) => ({ el, index: Number(el.dataset.dot) })),
       heat: stat("heat"), open: stat("open"), ac: stat("ac"), demand: stat("demand"),
     };
+    this._zonesEl = root.querySelector(".zones");
+    this._tilesEl = root.querySelector(".zones > .tiles");
     this._built = true;
+    this._observeLayout();
+  }
+
+  // ---------- Målepunkter i zonegitteret ----------
+
+  // Zonegitteret har så mange kolonner, som bredden giver plads til. Målepunkterne udfylder de
+  // tomme felter efter sidste termostatkort med to små kort stablet i hvert felt (fire pr. felt,
+  // hvis der kun er ét). Er sidste række fuld, får målepunkterne en række for sig.
+  _observeLayout() {
+    this._layoutObserver?.disconnect();
+    this._layoutObserver = undefined;
+    cancelAnimationFrame(this._layoutRaf);
+    if (!this._zonesEl || !this._tilesEl || typeof ResizeObserver === "undefined") return;
+    // Placeringen ændrer gitterets højde; den udskydes til næste frame, så observeren ikke går i løkke.
+    this._layoutObserver = new ResizeObserver((entries) => {
+      const width = Math.round(entries[entries.length - 1]?.contentRect?.width || 0);
+      if (!width || width === this._layoutWidth) return;
+      this._layoutWidth = width;
+      cancelAnimationFrame(this._layoutRaf);
+      this._layoutRaf = requestAnimationFrame(() => this._layoutTiles());
+    });
+    this._layoutWidth = 0;
+    this._layoutObserver.observe(this._zonesEl);
+  }
+
+  _layoutTiles() {
+    const grid = this._zonesEl, block = this._tilesEl;
+    if (!grid?.isConnected || !block) return;
+    const tracks = getComputedStyle(grid).gridTemplateColumns;
+    if (!tracks || tracks === "none" || tracks.includes("repeat(")) return;
+    const cols = tracks.split(" ").filter(Boolean).length || 1;
+    const used = (grid.children.length - 1) % cols;
+    const empty = used ? cols - used : 0;
+    const count = block.children.length;
+    const perCell = empty ? Math.ceil(count / empty) : Infinity;
+    let span = cols, columns = Math.min(count, cols), rows = 0;
+    if (perCell <= 2) { span = empty; columns = empty; rows = 2; }
+    else if (perCell <= 4) { span = empty; columns = empty * 2; rows = 2; }
+    const layout = `${span}|${columns}|${rows}`;
+    if (block.dataset.layout === layout) return;
+    block.dataset.layout = layout;
+    block.style.gridColumn = `span ${span}`;
+    block.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+    block.style.gridTemplateRows = rows ? `repeat(${rows}, minmax(0, 1fr))` : "";
+    block.style.gridAutoFlow = rows ? "column" : "row";
   }
 
   // ---------- Målrettede opdateringer ----------
