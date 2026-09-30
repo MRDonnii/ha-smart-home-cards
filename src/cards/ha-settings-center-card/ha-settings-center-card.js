@@ -1,4 +1,4 @@
-const VERSION = "0.6.5";
+const VERSION = "0.6.6";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -451,7 +451,7 @@ class HASettingsCenterCard extends HTMLElement {
         <ha-icon icon="mdi:tune-variant"></ha-icon>
         <div><strong>${this._esc(this._config.title)}</strong><span>Modes, automatik og drift samlet</span></div>
         <div class="head-spacer"></div>
-        <div class="head-badge"><b data-health-summary>Kontrollerer…</b><small data-health-detail>—</small><ha-icon class="badge-icon" icon="mdi:heart-pulse"></ha-icon></div>
+        <div class="head-badge"><b data-health-summary>Kontrollerer…</b><small data-health-detail>—</small></div>
       </div>
       <div class="tabs">${TABS.map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
       ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}${this._cards()}
@@ -859,53 +859,6 @@ class HASettingsCenterCard extends HTMLElement {
       .reset-row:hover .row-icon{color:var(--warn)}
       @media(max-width:650px){.tab span{display:none}.tab{padding:10px 4px}.subgrid{grid-template-columns:1fr}}
       @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-
-      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
-         accent edge that follows --dashboard-left-accent-width, card surface, shadow, 15px corners
-         (12px when nested in a room/group card), the big value first with detail and label
-         below, and the small icon as a large faint drifting background icon. Controls
-         (steppers, profile select, mode buttons, tabs) keep their own look. */
-      :host{--st-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));--st-info:var(--state-info-icon,var(--info-color,#38bdf8));--st-ok:var(--state-on-icon,var(--success-color,#20e3a2));--st-warn:var(--warning-color,#f59e0b);--st-error:var(--error-color,#ef4444);--st-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
-      .subcard,.delt-omraade,.row,.tile-btn,.head-badge{--tile-accent:var(--st-info);position:relative;isolation:isolate;overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--st-surface);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
-      .subcard .row,.subcard .tile-btn{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--st-surface));box-shadow:0 4px 12px rgba(0,0,0,.14)}
-      .row[data-view="status"].ok{--tile-accent:var(--st-ok)}
-      .row[data-view="status"].problem{--tile-accent:var(--st-error)}
-      .row.toggle-btn,.tile-btn{--tile-accent:var(--st-muted)}
-      .row.toggle-btn.on,.tile-btn.on{--tile-accent:var(--st-ok)}
-      .row.missing,.tile-btn.missing{--tile-accent:var(--st-muted)}
-      .row.action{--tile-accent:var(--st-warn)}.row.action.danger{--tile-accent:var(--st-error)}
-      .profile-row.override-active{--tile-accent:var(--st-warn)}
-      .row.on.toggle-btn,.tile-btn.on,.row.action,.row.action.danger,.profile-row.override-active{background:var(--st-surface);border-color:transparent;border-left-color:color-mix(in srgb,var(--tile-accent) 78%,transparent)}
-      .subcard .row.on.toggle-btn,.subcard .tile-btn.on,.subcard .row.action,.subcard .profile-row.override-active{background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--st-surface))}
-      .tile-btn.on{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
-      .subcard .tile-btn.on{box-shadow:0 4px 12px rgba(0,0,0,.14)}
-      button.row:hover,.tile-btn:hover{border-color:transparent;border-left-color:var(--tile-accent)}
-      .row .row-icon{color:var(--tile-accent);background:color-mix(in srgb,var(--tile-accent) 14%,transparent)}
-      .row.action.danger .row-text b{color:var(--gray800,var(--primary-text-color,#f8fafc))}
-
-      /* value tiles: status, toggle, entity and metric rows, toggle tiles, the health badge */
-      .row-list:has(>[data-view="status"]),.row-list:has(>[data-view="metric"]){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px}
-      .row[data-view="status"],.row[data-view="toggle"],.row[data-view="entity"],.row[data-view="metric"],.tile-btn{flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-height:85px;padding:10px 12px;text-align:left}
-      .subcard .row[data-view="toggle"],.subcard .row[data-view="entity"],.subcard .row[data-view="metric"],.subcard .tile-btn{min-height:64px}
-      .row[data-view="status"] .row-text,.row[data-view="toggle"] .row-text,.row[data-view="entity"] .row-text,.row[data-view="metric"] .row-text,.tile-btn>span{display:contents}
-      .row[data-view="status"] small,.row[data-view="toggle"] small,.row[data-view="entity"] small,.row[data-view="metric"] .row-value,.tile-btn small{order:1;position:relative;z-index:1;margin:0;padding-right:18px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
-      .row[data-view="status"] b,.row[data-view="toggle"] b,.row[data-view="entity"] b,.row[data-view="metric"] b,.tile-btn b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;overflow:visible;overflow-wrap:anywhere}
-      .row[data-view="status"] .row-icon,.row[data-view="toggle"] .row-icon,.row[data-view="entity"] .row-icon,.row[data-view="metric"] .row-icon,.tile-btn>ha-icon:first-child,.head-badge .badge-icon{position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:settingsTileDrift 5s ease-in-out infinite}
-      .row:is([data-view="status"],[data-view="toggle"],[data-view="entity"],[data-view="metric"]) .row-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
-      .row-text b,.row-text small{white-space:normal;overflow:visible;overflow-wrap:anywhere}
-      .row[data-view="status"] .dot{position:absolute;top:10px;right:10px;z-index:1;background:var(--tile-accent)}
-      .row[data-view="toggle"]>ha-icon:last-child,.row[data-view="entity"]>ha-icon:last-child{position:absolute;top:9px;right:9px;z-index:1;--mdc-icon-size:15px;width:15px;height:15px;color:var(--tile-accent)}
-      .row.toggle-btn:not(.on)>ha-icon:last-child{opacity:.45}
-      .tile-btn.on small{color:var(--gray800,var(--primary-text-color,#f8fafc))}
-      .head-badge{display:flex;flex-direction:column;justify-content:center;min-width:150px;padding:9px 12px;text-align:left}
-      .head-badge,.head-badge:not(.warn){--tile-accent:var(--st-ok)}.head-badge.warn{--tile-accent:var(--st-error)}
-      .head-badge b{order:1;position:relative;z-index:1;padding-right:18px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
-      .head-badge.warn b{color:var(--gray800,var(--primary-text-color,#f8fafc))}
-      .head-badge small{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
-      .head .head-badge .badge-icon{--mdc-icon-size:58px;color:var(--tile-accent)}
-      @keyframes settingsTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
-      @media(prefers-reduced-motion:reduce){.row:is([data-view="status"],[data-view="toggle"],[data-view="entity"],[data-view="metric"]) .row-icon,.tile-btn>ha-icon:first-child,.head-badge .badge-icon{animation:none}}
-      @media(max-width:600px){.row[data-view="status"],.row[data-view="toggle"],.row[data-view="entity"],.row[data-view="metric"],.tile-btn,.head-badge{padding:9px}.row[data-view="status"] small,.row[data-view="toggle"] small,.row[data-view="entity"] small,.row[data-view="metric"] .row-value,.tile-btn small,.head-badge b{font-size:16px;line-height:19px}.row[data-view="status"] b,.row[data-view="toggle"] b,.row[data-view="entity"] b,.row[data-view="metric"] b,.tile-btn b,.head-badge small{font-size:10px;line-height:13px}.row-list:has(>[data-view="status"]),.row-list:has(>[data-view="metric"]){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.toggle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.head{flex-wrap:wrap}.head-spacer{display:none}.head-badge{flex:1 1 100%;min-width:0}}
     `;
   }
 }
