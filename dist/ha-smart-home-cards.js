@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.55 */
+/* MRDonnii Smart Home Cards v0.4.56 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -36569,7 +36569,7 @@ window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", de
 console.info(`%c HA AI USAGE CARD %c v${VERSION37} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION38 = "0.6.6";
+var VERSION38 = "0.6.7";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -37263,7 +37263,7 @@ var HASettingsCenterCard = class extends HTMLElement {
   }
   _styles() {
     return `
-      :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b));--settings-surface:var(--dashboard-card-bg, var(--ha-card-background, var(--card-background-color, #111820)));--settings-solid:var(--card-background-color, var(--ha-card-background, #111820));--settings-neutral:linear-gradient(180deg,color-mix(in srgb,var(--primary-text-color) 4%,transparent),transparent),var(--settings-surface);--settings-info:var(--dashboard-surface-info-dark, linear-gradient(180deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent),var(--settings-surface));--settings-positive:var(--dashboard-surface-positive-dark, linear-gradient(180deg,color-mix(in srgb,var(--good) 12%,transparent),transparent),var(--settings-surface));--settings-negative:var(--dashboard-surface-negative-dark, linear-gradient(180deg,color-mix(in srgb,var(--danger) 12%,transparent),transparent),var(--settings-surface));--settings-warning:var(--dashboard-surface-warn-dark, linear-gradient(180deg,color-mix(in srgb,var(--warn) 12%,transparent),transparent),var(--settings-surface));--settings-selected:var(--dashboard-tab-selected-bg, linear-gradient(180deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 9%,transparent)),var(--settings-surface));color:var(--primary-text-color)}
+      :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b));--settings-surface:var(--dashboard-card-bg, var(--ha-card-background, var(--card-background-color, #111820)));--settings-layer:transparent;--settings-solid:var(--card-background-color, var(--ha-card-background, #111820));--settings-neutral:linear-gradient(180deg,color-mix(in srgb,var(--primary-text-color) 4%,transparent),transparent),var(--settings-layer);--settings-info:var(--dashboard-surface-info-dark, linear-gradient(180deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent),var(--settings-layer));--settings-positive:var(--dashboard-surface-positive-dark, linear-gradient(180deg,color-mix(in srgb,var(--good) 12%,transparent),transparent),var(--settings-layer));--settings-negative:var(--dashboard-surface-negative-dark, linear-gradient(180deg,color-mix(in srgb,var(--danger) 12%,transparent),transparent),var(--settings-layer));--settings-warning:var(--dashboard-surface-warn-dark, linear-gradient(180deg,color-mix(in srgb,var(--warn) 12%,transparent),transparent),var(--settings-layer));--settings-selected:var(--dashboard-tab-selected-bg, linear-gradient(180deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 9%,transparent)),var(--settings-layer));color:var(--primary-text-color)}
       *{box-sizing:border-box}
       button{font:inherit;color:inherit}
       button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
