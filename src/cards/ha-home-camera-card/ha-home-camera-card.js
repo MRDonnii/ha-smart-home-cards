@@ -1,4 +1,4 @@
-const VERSION = "0.8.8";
+const VERSION = "0.8.9";
 
 // Shared by desktop/mobile card instances. This warms only still images;
 // live streams are still opened exclusively for the visible camera views.
@@ -72,10 +72,12 @@ class HaHomeCameraCard extends HTMLElement {
       aspect_ratio: "16:9",
       show_header: false,
       fill_height: false,
+      frameless: false,
       preload_snapshots: true,
       ...config,
     };
     this.classList.toggle("fill-height", Boolean(nextConfig.fill_height));
+    this.classList.toggle("frameless", Boolean(nextConfig.frameless));
     const signature = JSON.stringify(nextConfig);
     if (signature === this._configSignature) {
       this.config = nextConfig;
@@ -340,7 +342,7 @@ class HaHomeCameraCard extends HTMLElement {
     if (!this.shadowRoot || !this.config) return;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#1c1f26)));--card-solid:var(--card-background-color,#1c1f26);--popup-solid:var(--popupBG,var(--dashboard-popup-bg,var(--card-background-color,#1c1f26)));--text:var(--gray800,var(--primary-text-color,#f8fafc));--muted:var(--gray600,var(--secondary-text-color,#94a3b8));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(148,163,184,.2)));--accent:var(--dashboard-accent,var(--primary-color,#62b5ff));--ok:var(--dashboard-success,var(--success-color,#54d9aa));--warn:var(--dashboard-warning,var(--warning-color,#ffbd59));--danger:var(--dashboard-danger,var(--error-color,#ff667a));--animal:var(--dashboard-orange,var(--warning-color,#f97316));--object:var(--dashboard-purple,var(--accent-color,#a855f7));--motion:var(--dashboard-cyan,var(--info-color,#06b6d4));color:var(--text)}
-      *{box-sizing:border-box}ha-card{overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--card-surface);box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.fill-height),:host(.fill-height) ha-card{height:100%}:host(.fill-height) ha-card{display:flex;flex-direction:column}:host(.fill-height) .grid{flex:1;grid-auto-rows:minmax(0,1fr)}:host(.fill-height) .panel{display:flex;min-height:0;flex-direction:column}:host(.fill-height) .feed{flex:1;aspect-ratio:auto}
+      *{box-sizing:border-box}ha-card{overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--card-surface);box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.frameless) ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}:host(.frameless) .panel{box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.fill-height),:host(.fill-height) ha-card{height:100%}:host(.fill-height) ha-card{display:flex;flex-direction:column}:host(.fill-height) .grid{flex:1;grid-auto-rows:minmax(0,1fr)}:host(.fill-height) .panel{display:flex;min-height:0;flex-direction:column}:host(.fill-height) .feed{flex:1;aspect-ratio:auto}
       header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 4px}.heading{display:flex;align-items:center;gap:10px;min-width:0}.heading ha-icon{color:var(--accent)}h2{margin:0;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{margin-top:2px;color:var(--muted);font-size:11px}.all{display:flex;align-items:center;gap:5px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:999px;padding:7px 10px;background:transparent;color:var(--text);font:inherit;font-size:11px;font-weight:750;cursor:pointer;flex:0 0 auto}.all ha-icon{--mdc-icon-size:16px;color:var(--accent)}
       .grid{display:grid;grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:10px;padding:0}.panel{min-width:0;overflow:hidden;border:0;border-radius:18px;background:var(--card-surface);transition:transform .15s ease,box-shadow .15s ease}.panel:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.panel:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.panel{transition:none}.panel:hover{transform:none}}
       .bar{display:flex;align-items:center;gap:5px;padding:6px;background:transparent;border-bottom:0}.name{min-width:0;flex:1}.name b,.name span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name b{font-size:11px}.name span{display:none;color:var(--muted);font-size:9px}.activity{display:flex;align-items:center;gap:4px;color:var(--ok);font-size:10px;font-weight:800}.activity span{display:none}.activity ha-icon{--mdc-icon-size:14px}.danger .activity,.person .activity{color:var(--danger)}.animal .activity{color:var(--animal)}.vehicle .activity{color:var(--accent)}.object .activity{color:var(--object)}.motion .activity{color:var(--motion)}.choose{display:grid;width:29px;height:29px;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:50%;padding:0;background:color-mix(in srgb,var(--card-solid) 72%,transparent);color:var(--text);cursor:pointer}.choose ha-icon{--mdc-icon-size:16px;color:var(--accent)}
@@ -677,6 +679,10 @@ class HaHomeCameraCardEditor extends HTMLElement {
     fillLabel.className = "check";
     fillLabel.innerHTML = `<span>Udfyld tildelt højde</span><input type="checkbox" data-root-check="fill_height" ${this.config.fill_height ? "checked" : ""}>`;
     this.shadowRoot.querySelector(".top")?.appendChild(fillLabel);
+    const framelessLabel = document.createElement("label");
+    framelessLabel.className = "check";
+    framelessLabel.innerHTML = `<span>Uden ydre ramme (kameraerne står frit)</span><input type="checkbox" data-root-check="frameless" ${this.config.frameless ? "checked" : ""}>`;
+    this.shadowRoot.querySelector(".top")?.appendChild(framelessLabel);
     const preloadLabel = document.createElement("label");
     preloadLabel.className = "check";
     preloadLabel.innerHTML = `<span>Forindlæs stillbilleder (hurtigere skift)</span><input type="checkbox" data-root-check="preload_snapshots" ${this.config.preload_snapshots !== false ? "checked" : ""}>`;
