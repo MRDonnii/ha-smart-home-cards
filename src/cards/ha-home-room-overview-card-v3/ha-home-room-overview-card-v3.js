@@ -1,9 +1,11 @@
 import "./ha-card-list-editor.js";
+import { AIR_COLORS, airQuality, pm25Rank } from "../shared/air-quality.js";
 
 // 3.0.0 – rumoversigt med levende rumstatus, status-chips,
 // hurtigknapper (tryk = skift, hold = detaljer), lysfarve-glød, filtre og animationer.
 // Et tryk på selve kortet åbner fortsat rummets popup via popup-hashen.
-const ROOM_OVERVIEW_VERSION = "3.0.2";
+// 3.1.0 – luftkvalitet (co2 / pm25 / air_quality) vises som farvet status-chip på rumkortet.
+const ROOM_OVERVIEW_VERSION = "3.1.0";
 
 const OPEN_STATES = new Set(["on", "open", "opening"]);
 const PRESENT_STATES = new Set(["on", "home", "detected"]);
@@ -236,7 +238,8 @@ class HaHomeRoomOverviewCard extends HTMLElement {
           { key: "humidity", label: "Luftfugtighed", type: "entity" }, { key: "light", label: "Lys", type: "entity" },
           { key: "light_name", label: "Lysknap-tekst" }, { key: "presence", label: "Tilstedeværelse", type: "entity" },
           { key: "opening", label: "Vindue/dør", type: "entity" }, { key: "climate", label: "Termostat", type: "entity" },
-          { key: "co2", label: "CO₂", type: "entity" }, { key: "weather", label: "Vejr (udendørs)", type: "entity" },
+          { key: "co2", label: "CO₂", type: "entity" }, { key: "pm25", label: "PM2,5", type: "entity" },
+          { key: "air_quality", label: "Luftkvalitet (samlet)", type: "entity" }, { key: "weather", label: "Vejr (udendørs)", type: "entity" },
           { key: "info", label: "Info-sensor (vises uden presence)", type: "entity" }, { key: "info_name", label: "Info-tekst" },
         ],
       }],
@@ -299,7 +302,7 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     const ids = new Set();
     const add = (id) => { if (typeof id === "string" && id.includes(".")) ids.add(id); };
     for (const room of this._rooms) {
-      [room.temperature, room.humidity, room.light, room.presence, room.climate, room.co2, room.weather, room.info].forEach(add);
+      [room.temperature, room.humidity, room.light, room.presence, room.climate, room.co2, room.pm25, room.air_quality, room.weather, room.info].forEach(add);
       arr(room.batteries).forEach(add);
       room.openings.forEach((x) => add(x.entity));
       room.status.forEach((x) => { add(x.entity); add(x.progress); add(x.remaining); });
@@ -482,6 +485,14 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "Høj fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
     const co2 = this._num(room.co2);
     if (co2 != null && co2 >= (room.co2_warning ?? 1000)) out.push({ key: "co2", tone: co2 >= (room.co2_critical ?? 1400) ? "danger" : "warn", icon: "mdi:molecule-co2", text: "Luft ud", meta: `${this._fmt(co2, 0)} ppm` });
+    const pm25 = this._num(room.pm25);
+    if (pm25 != null && pm25Rank(pm25) >= 3) out.push({ key: "pm25", tone: pm25Rank(pm25) >= 4 ? "danger" : "warn", icon: "mdi:blur", text: "Partikler", meta: `${this._fmt(pm25, 0)} µg/m³` });
+    // Luftkvalitet vises altid for rum med en måler; ved høj CO₂ eller mange partikler tager advarslen over.
+    if (this._hasAir(room) && !out.some((chip) => chip.key === "co2" || chip.key === "pm25")) {
+      const air = airQuality(this._hass, room);
+      if (air.offline) out.push({ key: "air", tone: "info", icon: "mdi:air-filter", text: "Luftmåler offline" });
+      else out.push({ key: "air", tone: air.rank >= 3 ? "warn" : "info", color: AIR_COLORS[air.tone], icon: room.co2 ? "mdi:molecule-co2" : "mdi:air-filter", text: `${air.label} luft`, meta: air.co2 !== undefined ? `${this._fmt(air.co2, 0)} ppm` : air.pm25 !== undefined ? `PM2,5 ${this._fmt(air.pm25, 0)}` : "" });
+    }
     const battery = this._lowBattery(room, ctx.climate);
     if (battery != null) out.push({ key: "bat", tone: "warn", icon: "mdi:battery-alert-variant-outline", text: "Lavt batteri", meta: `${battery}%` });
     room.status.forEach((cfg, index) => { const chip = this._statusChip(cfg, index); if (chip) out.push(chip); });
@@ -717,6 +728,10 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     this._patchSpark(t, room);
   }
 
+  _hasAir(room) {
+    return [room.co2, room.pm25, room.air_quality].some((id) => typeof id === "string" && id.includes("."));
+  }
+
   _syncChips(t, chips) {
     const container = t.chips;
     const visible = chips.slice(0, 3);
@@ -745,6 +760,7 @@ class HaHomeRoomOverviewCard extends HTMLElement {
       el._entity = chip.entity;
       el.title = chip.tap ? `${chip.text} – tryk for at nulstille` : [chip.text, chip.meta].filter(Boolean).join(" · ");
       if (chip.progress != null) el.style.setProperty("--p", `${chip.progress}%`); else el.style.removeProperty("--p");
+      if (chip.color) el.style.setProperty("--cc", chip.color); else el.style.removeProperty("--cc");
       const icon = el.querySelector("ha-icon");
       if (icon.getAttribute("icon") !== chip.icon) icon.setAttribute("icon", chip.icon);
       this._setText(el.querySelector(".ct"), chip.text);

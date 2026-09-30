@@ -45,6 +45,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | Radiator Overview Card | `ha-radiator-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-radiator-overview-card) |
 | Radiator Overview Card V2 | `ha-radiator-overview-card-v2.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-radiator-overview-card-v2) |
 | Temperature Target Card | `ha-temperature-target-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-temperature-target-card) |
+| HA Air Quality Card | `ha-air-quality-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-air-quality-card) |
 | Water Meter Card | `ha-water-meter-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-water-meter-card) |
 
 ## Home and people
