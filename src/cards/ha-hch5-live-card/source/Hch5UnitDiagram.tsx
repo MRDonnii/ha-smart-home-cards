@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { ControlSummary } from "./control";
 import { bypassOpenShare, bypassTravel, formatRemaining, type BypassDirection } from "./bypass";
 
@@ -44,6 +44,7 @@ export interface Hch5UnitDiagramProps {
   control?: ControlSummary | null;
   /** Smartdash crops the bottom of the drawing; place the panel higher, without footer. */
   controlCompact?: boolean;
+  inlineControls?: ReactNode;
 }
 export type AfterheatCoil = "electric" | "water";
 
@@ -473,7 +474,7 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false}=props;
+  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false,inlineControls=null}=props;
   const water = afterheatCoil === "water";
   // Afkøl: how much the water cools across the coil, as in the WebUI.
   const waterDelta = flowWater === null || returnWater === null ? null : flowWater - returnWater;
@@ -656,6 +657,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <div className="hch-mobile-route"><span>→</span><i/><span>→</span></div>
         <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("exhaust_temperature")} aria-label="Vis historik for afkast T4"><small>Afkast · T4</small><strong>{fmt(exhaust)}</strong></button>
       </div>
+      {inlineControls && <div className="hch-inline-controls">{inlineControls}</div>}
       <div className="hch-mobile-subreadings">
         <div className="hch-mobile-water"><span>Vand frem / retur</span><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater)}</button><span> / </span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong></div>
         <button type="button" onClick={() => onSensor?.("afterheat_frost")}>Frost <strong>{fmt(frost)}</strong></button>

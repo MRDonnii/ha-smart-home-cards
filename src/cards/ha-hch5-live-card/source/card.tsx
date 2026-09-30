@@ -404,44 +404,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
     ? command(`level-${target}`, "level_control", "select", "select_option", { option: String(target) }, `Ventilation sat til trin ${target}.`, String(target))
     : command(`level-${target}`, "auto_normal", "number", "set_value", { value: target }, `Ventilation sat til trin ${target}.`, String(target));
 
-  return (
-    <section className="dashboard-overview">
-      <header className="overview-heading-row">
-        <div>
-          <span className="eyebrow">OVERBLIK</span>
-          <h1>Aktuel drift og status</h1>
-          <p>Live visning af HCH5, luftveje, sensorer og den styring der er aktiv lige nu.</p>
-        </div>
-        <div className="overview-status-pills">
-          <div><span className="status-led"/><small>Master</small><strong>{masterLabel(value("active_master"))}</strong></div>
-          <div><span className={`status-led ${busHealthy ? "" : "warn"}`}/><small>Bus</small><strong>{busHealthy ? "Sund" : "Afventer"}</strong></div>
-          <div><Leaf size={18}/><small>Driftstilstand</small><strong>{modeLabel(value("mode_control"))}</strong></div>
-          {config.entities.power && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("power")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("power"); } }}><Zap size={18}/><small>Forbrug</small><strong>{watts(num("power"))}</strong></div>}
-          {config.entities.attic_temperature && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("attic_temperature")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("attic_temperature"); } }}><Roof size={18}/><small>Loftrum</small><strong>{temp(num("attic_temperature"))}</strong></div>}
-          {config.entities.outdoor_air_quality && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("outdoor_air_quality")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("outdoor_air_quality"); } }} title={num("outdoor_pm25") === null ? "Google Air Quality · udendørs modeldata" : `Google Air Quality · PM2.5 ${num("outdoor_pm25")!.toLocaleString("da-DK")} µg/m³`}><Leaf size={18}/><small>Udeluft · Google</small><strong>{outdoorAirLabel(value("outdoor_air_quality"))}</strong></div>}
-        </div>
-      </header>
-
-      {value("diagnostics_status") && value("diagnostics_status") !== "ok" && value("diagnostics_alarm_text") && <div className={`diagnostics-alarm ${value("diagnostics_status")}`} role="alert" data-sensor="diagnostics_alarm_text" onClick={() => showHistory("diagnostics_alarm_text")}><strong>{value("diagnostics_status") === "critical" ? "Fejl" : value("diagnostics_status") === "warning" ? "Advarsel" : "Bemærk"}</strong><span>{value("diagnostics_alarm_text")}</span></div>}
-
-      <div className="dashboard-main-grid">
-        <article className="surface pro-air-card">
-          <div className="pro-card-head">
-            <div><h2>Luftstrømme og temperaturer</h2><p>Live luftveje gennem HCH5 med aktuelle temperaturer og fysisk status.</p></div>
-            <span className={`status-chip${online ? "" : " muted"}`}><span className="live-dot"/>{online ? "Live" : "Afventer"}</span>
-          </div>
-          <Hch5UnitDiagram
-            onSensor={showHistory} outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={beforeHeater} afterHeater={afterHeater}
-            room={room} frost={frost} flowWater={flowWater} returnWater={returnWater}
-            supplyRpm={supplyRpm} extractRpm={extractRpm} supplyPercent={supplyPercent} extractPercent={extractPercent} fanLevel={num("effective_level")}
-            bypassActual={bypassActual} bypassRequest={bypassRequest} heating={heating} recovery={recovery}
-            busActive={busHealthy} bypassRaw={bypassRaw} afterheatLockout={afterheatLockout} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"}
-            bypassTravelDirection={bypassTravelDirection} bypassTravelSeconds={bypassTravelSeconds} bypassTravelTotal={bypassTravelTotal}
-            control={!online || value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace })}
-          />
-        </article>
-
-        <aside className="pro-control-column">
+  // Mode, fan level and the other controls. On a phone they are shown inside the unit card,
+  // straight under the animated drawing and above Frost; elsewhere in their own column.
+  const controlColumn = <>
           <article className="surface pro-control-card">
             <div className="pro-card-head compact"><div><h2>Drift og styring</h2><p>Daglige funktioner</p></div><Gauge size={22}/></div>
             <label className="control-label">Ventilationstilstand</label>
@@ -511,7 +476,47 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
                 : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace || standbyActive} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
             </div>
           </article>}
-        </aside>
+  </>;
+
+  return (
+    <section className="dashboard-overview">
+      <header className="overview-heading-row">
+        <div>
+          <span className="eyebrow">OVERBLIK</span>
+          <h1>Aktuel drift og status</h1>
+          <p>Live visning af HCH5, luftveje, sensorer og den styring der er aktiv lige nu.</p>
+        </div>
+        <div className="overview-status-pills">
+          <div><span className="status-led"/><small>Master</small><strong>{masterLabel(value("active_master"))}</strong></div>
+          <div><span className={`status-led ${busHealthy ? "" : "warn"}`}/><small>Bus</small><strong>{busHealthy ? "Sund" : "Afventer"}</strong></div>
+          <div><Leaf size={18}/><small>Driftstilstand</small><strong>{modeLabel(value("mode_control"))}</strong></div>
+          {config.entities.power && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("power")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("power"); } }}><Zap size={18}/><small>Forbrug</small><strong>{watts(num("power"))}</strong></div>}
+          {config.entities.attic_temperature && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("attic_temperature")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("attic_temperature"); } }}><Roof size={18}/><small>Loftrum</small><strong>{temp(num("attic_temperature"))}</strong></div>}
+          {config.entities.outdoor_air_quality && <div className="power-pill" role="button" tabIndex={0} onClick={() => showHistory("outdoor_air_quality")} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); showHistory("outdoor_air_quality"); } }} title={num("outdoor_pm25") === null ? "Google Air Quality · udendørs modeldata" : `Google Air Quality · PM2.5 ${num("outdoor_pm25")!.toLocaleString("da-DK")} µg/m³`}><Leaf size={18}/><small>Udeluft · Google</small><strong>{outdoorAirLabel(value("outdoor_air_quality"))}</strong></div>}
+        </div>
+      </header>
+
+      {value("diagnostics_status") && value("diagnostics_status") !== "ok" && value("diagnostics_alarm_text") && <div className={`diagnostics-alarm ${value("diagnostics_status")}`} role="alert" data-sensor="diagnostics_alarm_text" onClick={() => showHistory("diagnostics_alarm_text")}><strong>{value("diagnostics_status") === "critical" ? "Fejl" : value("diagnostics_status") === "warning" ? "Advarsel" : "Bemærk"}</strong><span>{value("diagnostics_alarm_text")}</span></div>}
+
+      <div className="dashboard-main-grid">
+        <article className="surface pro-air-card">
+          <div className="pro-card-head">
+            <div><h2>Luftstrømme og temperaturer</h2><p>Live luftveje gennem HCH5 med aktuelle temperaturer og fysisk status.</p></div>
+            <span className={`status-chip${online ? "" : " muted"}`}><span className="live-dot"/>{online ? "Live" : "Afventer"}</span>
+          </div>
+          <Hch5UnitDiagram
+            onSensor={showHistory} outdoor={outdoor} extract={extract} exhaust={exhaust} beforeHeater={beforeHeater} afterHeater={afterHeater}
+            room={room} frost={frost} flowWater={flowWater} returnWater={returnWater}
+            supplyRpm={supplyRpm} extractRpm={extractRpm} supplyPercent={supplyPercent} extractPercent={extractPercent} fanLevel={num("effective_level")}
+            bypassActual={bypassActual} bypassRequest={bypassRequest} heating={heating} recovery={recovery}
+            busActive={busHealthy} bypassRaw={bypassRaw} afterheatLockout={afterheatLockout} afterheatCoil={config.afterheat_coil === "water" ? "water" : "electric"}
+            bypassTravelDirection={bypassTravelDirection} bypassTravelSeconds={bypassTravelSeconds} bypassTravelTotal={bypassTravelTotal}
+            inlineControls={controlColumn}
+            control={!online || value("effective_source") === null ? null : describeControl({ active_master: value("active_master"), effective_source: value("effective_source"), effective_level: num("effective_level"), effective_reason: value("effective_reason"), fireplace })}
+          />
+        </article>
+
+        <aside className="pro-control-column">{controlColumn}</aside>
 
         <article className="surface climate-panel">
           <div className="pro-card-head compact"><div><h2>Indeklimadata</h2><p>Aktuelle værdier</p></div></div>
