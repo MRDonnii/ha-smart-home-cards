@@ -28,11 +28,12 @@ export class WaterSection extends Section {
         <small>Flow lige nu</small>
         <div class="mega num"><b data-ref="flowV">—</b><small>L/min</small></div>
         <span class="status" data-ref="status">—</span>
+        ${icon("mdi:water", "tile-ic")}
       </div>
       <div class="tiles">
-        ${tile("today", "Forbrug i dag", c.id("water_total"))}
-        ${tile("cost", "Pris i dag", c.id("water_cost_today"))}
-        ${tile("price", "Pris pr. m³", c.id("water_price"))}
+        ${tile("today", "Forbrug i dag", c.id("water_total"), "mdi:water-outline")}
+        ${tile("cost", "Pris i dag", c.id("water_cost_today"), "mdi:cash")}
+        ${tile("price", "Pris pr. m³", c.id("water_price"), "mdi:tag-outline")}
       </div>
     </div>
   </section>

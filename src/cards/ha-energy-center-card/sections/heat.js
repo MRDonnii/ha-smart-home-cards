@@ -8,9 +8,9 @@ const TODAY_KEYS = [
 ];
 
 /** Fælles markup for et nøgletal i en sektions-header. */
-export const tile = (ref, label, entity = "") => `
+export const tile = (ref, label, entity = "", ic = "") => `
   <div class="tile ${entity ? "clickable" : ""}" ${entity ? `data-entity="${escapeHtml(entity)}" tabindex="0" role="button"` : ""} data-ref="${ref}Tile">
-    <small>${label}</small><b class="num"><span data-ref="${ref}V">—</span> <span class="u" data-ref="${ref}U"></span></b>
+    <small>${label}</small><b class="num"><span data-ref="${ref}V">—</span> <span class="u" data-ref="${ref}U"></span></b>${ic ? icon(ic, "tile-ic") : ""}
   </div>`;
 
 export class HeatSection extends Section {
@@ -39,18 +39,19 @@ export class HeatSection extends Section {
         <small>Aktuel effekt</small>
         <div class="mega num"><b data-ref="powV">—</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">—</span>
+        ${icon("mdi:radiator", "tile-ic")}
       </div>
       <div class="tiles">
-        ${tile("today", "Forbrug i dag", c.id("heat_energy"))}
-        ${tile("cost", "Pris i dag", c.id("heat_cost"))}
-        ${tile("price", "Aktuel pris", c.id("heat_price"))}
+        ${tile("today", "Forbrug i dag", c.id("heat_energy"), "mdi:fire")}
+        ${tile("cost", "Pris i dag", c.id("heat_cost"), "mdi:cash")}
+        ${tile("price", "Aktuel pris", c.id("heat_price"), "mdi:tag-outline")}
       </div>
     </div>
     <div class="subtiles">
-      <div class="subtile" ${opt("heat_supply")}><small>Fremløb</small><b class="num" data-ref="sup">—</b></div>
-      <div class="subtile" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">—</b></div>
-      <div class="subtile" ${opt("heat_cooling")}><small>Afkøling (ΔT)</small><b class="num" data-ref="cool">—</b></div>
-      <div class="subtile" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">—</b></div>
+      <div class="subtile st-warm" ${opt("heat_supply")}><small>Fremløb</small><b class="num" data-ref="sup">—</b>${icon("mdi:thermometer-chevron-up", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">—</b>${icon("mdi:thermometer-chevron-down", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_cooling")}><small>Afkøling (ΔT)</small><b class="num" data-ref="cool">—</b>${icon("mdi:thermometer-minus", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">—</b>${icon("mdi:waves-arrow-right", "tile-ic")}</div>
     </div>
   </section>
   ${this.panels[0].html("a-full tall")}

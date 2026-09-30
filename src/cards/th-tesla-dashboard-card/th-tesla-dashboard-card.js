@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.1.2";
+const TTD_VERSION = "1.1.3";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -367,10 +367,10 @@ function ttdIcon(icon, cls = "") {
 function ttdTemplate(cfg) {
   const e = ttdEsc;
   const stat = (key, icon, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
-  const kpi = (key, ref, label) => `<button class="kpi" data-more="${key}"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
+  const kpi = (key, icon, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
   const cell = (key, icon, tone, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon, `ic ${tone}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
-  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
+  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}">${ttdIcon("mdi:tire", "tile-i")}<b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
   const item = (key, icon, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
@@ -393,7 +393,7 @@ function ttdTemplate(cfg) {
   <header class="ph">${ttdIcon("mdi:lightning-bolt", "ph-i green")}<div class="ph-t"><h3>Opladning</h3><p data-r="chargeSub">${TTD_DASH}</p></div><span class="badge" data-r="chargeBadge">${ttdIcon("mdi:power-plug", "")}<span data-r="chargeBadgeText">${TTD_DASH}</span></span></header>
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
-  <div class="box kpis">${kpi("charger_power", "power", "Aktuel effekt")}${kpi("charging_rate", "rate", "Ladehastighed")}${kpi("charging_finish_time", "finish", "Forventet slut")}${kpi("charging_time_remaining", "remaining", "Resttid")}</div>
+  <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
   <div class="box monta">
     <button class="monta-main" data-more="monta_state"><i class="mdot" data-r="montaDot"></i><span><b>Monta</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -703,7 +703,64 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .icon-btn[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 50%,transparent)}
 .icon-btn[aria-pressed=true] ha-icon{color:var(--tdc-text)}
 .btn[data-busy]{opacity:.7;cursor:progress}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   card surface, shadow and rounded corners on the panels; the stat, KPI, plan, tyre and last-charge
+   tiles get an accent edge, the big value first with detail and label below, and a large faint drifting icon. */
+.wrap{--tdc-panel:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));--tdc-radius:15px;
+  --tdc-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));
+  --ttd-info:var(--state-info-icon,var(--info-color,#38bdf8));--ttd-ok:var(--state-on-icon,var(--success-color,#20e3a2));
+  --ttd-warm:var(--orange,var(--warning-color,#fb923c));--ttd-warn:var(--warning-color,#f59e0b);
+  --ttd-err:var(--error-color,#ef4444);--ttd-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.dash .panel{border-radius:15px;box-shadow:var(--tdc-shadow)}
+.dash .kpis.box,.dash .plan-top.box,.dash .plan-mid.box{border:0;border-radius:0;background:none;gap:10px}
+.dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{--tile-accent:var(--ttd-info);position:relative;isolation:isolate;overflow:hidden;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-width:0;padding:10px 12px;text-align:left;
+  border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;
+  background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
+  box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.dash .stat:hover,.dash .kpi:hover,.dash .cell:hover,.dash .tire:hover{background:color-mix(in srgb,var(--primary-text-color,#fff) 9%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
+.dash .stat-t,.dash .cell>span,.dash .lc>span,.dash .lc-i{display:contents}
+.dash .stat>ha-icon,.dash .kpi>.tile-i,.dash .cell>ha-icon,.dash .tire>.tile-i,.dash .lc-i ha-icon{display:block;position:absolute;right:-10px;bottom:-10px;z-index:0;
+  width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:ttdTileDrift 5s ease-in-out infinite}
+.dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{order:1;position:relative;z-index:1;font-size:18px;font-weight:750;line-height:21px;
+  color:var(--gray800,var(--primary-text-color,#f8fafc));white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.dash .cell em,.dash .tire em{order:3;position:relative;z-index:1;margin:0;padding-right:35px;font-size:11px;line-height:14px;white-space:normal;overflow:visible}
+.dash .cell em{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+.dash .tire em{color:var(--tile-accent);font-weight:700}
+.dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small{order:4;position:relative;z-index:1;margin:0;padding-right:35px;
+  font-size:11px;font-weight:700;line-height:14px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));letter-spacing:0;text-transform:none;white-space:normal;overflow:visible}
+.dash .lc-grid{gap:10px}
+.dash .hero-stats{gap:10px}
+.dash .stat:nth-child(2){--tile-accent:var(--ttd-warm)}
+.dash .stat:nth-child(4){--tile-accent:var(--ttd-ok)}
+.dash .kpi:nth-child(1){--tile-accent:var(--ttd-warm)}
+.dash .kpi:nth-child(2){--tile-accent:var(--ttd-ok)}
+.dash .cell:has(>.ic.green){--tile-accent:var(--ttd-ok)}
+.dash .cell:has(>.ic.amber){--tile-accent:var(--ttd-warm)}
+.dash .cell:has(>.ic.orange){--tile-accent:var(--ttd-warn)}
+.dash .tire{--tile-accent:var(--ttd-muted)}
+.dash .tire[data-tone=ok]{--tile-accent:var(--ttd-ok)}
+.dash .tire[data-tone=info]{--tile-accent:var(--ttd-info)}
+.dash .tire[data-tone=warn]{--tile-accent:var(--ttd-warn)}
+.dash .tire[data-tone=crit]{--tile-accent:var(--ttd-err)}
+.dash .tire small{padding-right:0}
+.dash .tpms-body{grid-template-columns:minmax(0,1fr) minmax(44px,68px) minmax(0,1fr)}
+@container panel (max-width:360px){.dash .tire{padding:9px}.dash .tire b{font-size:16px;line-height:19px}}
+.dash .lc:nth-child(1){--tile-accent:var(--ttd-ok)}
+.dash .lc:nth-child(2){--tile-accent:var(--ttd-warm)}
+.dash .monta.box{border:0;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+@keyframes ttdTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@container ttd (max-width:699px){
+  .dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{padding:9px}
+  .dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{font-size:16px}
+  .dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small,.dash .cell em,.dash .tire em{font-size:10px}
+}
+@media (max-width:600px){
+  .dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{padding:9px}
+  .dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{font-size:16px}
+  .dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small,.dash .cell em,.dash .tire em{font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.dash ha-icon{animation:none!important}}
 `;
 
 /* ----------------------------------------------------------------- card */

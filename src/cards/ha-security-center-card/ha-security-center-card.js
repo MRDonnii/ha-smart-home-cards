@@ -1,5 +1,5 @@
 import "./ha-card-list-editor.js";
-const SECURITY_CENTER_VERSION = "0.3.4";
+const SECURITY_CENTER_VERSION = "0.3.5";
 
 class HaSecurityCenterCard extends HTMLElement {
   static getStubConfig() {
@@ -134,8 +134,50 @@ class HaSecurityCenterCard extends HTMLElement {
       @keyframes breathe{50%{transform:scale(1.07);opacity:.5}}@keyframes alarm{50%{box-shadow:0 0 45px color-mix(in srgb,var(--dashboard-danger, var(--error-color, #ff4655)) 32%,transparent)}}
       @media(max-width:900px){header{flex-direction:column}.summary{width:100%}.sum{flex:1;min-width:0}.hero{grid-template-columns:190px 1fr}.access-grid{grid-template-columns:repeat(3,1fr)}}
       @media(max-width:600px){.shell{padding:14px;border-radius:21px}h1{font-size:29px}.subtitle{font-size:12px}.summary{display:grid;grid-template-columns:repeat(3,1fr)}.sum{padding:8px}.sum strong{font-size:14px}.hero{grid-template-columns:1fr;padding:15px}.visual{min-height:145px}.radar{width:125px;height:125px}.radar ha-icon{--mdc-icon-size:48px}.state-title{font-size:25px;text-align:center}.state-copy,.changed,.state-label{text-align:center}.modes{gap:6px}.mode{justify-content:center;min-height:54px;padding:7px}.mode b{font-size:10px}.mode ha-icon{--mdc-icon-size:19px}.systems{grid-template-columns:1fr}.access-grid{grid-template-columns:repeat(2,1fr)}.access{min-height:120px}.open-list{grid-template-columns:1fr}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, 15px corners, the big value first with detail and
+         label below, and a large faint drifting background icon. */
+      .sum,.system,.access,.open-panel{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .system,.access{--tile-accent:var(--color)}
+      .sum.sum-alarm{--tile-accent:var(--accent)}
+      .sum.sum-locks{--tile-accent:${locks.length && locked === locks.length ? "var(--state-on-icon,var(--success-color,#20e3a2))" : "var(--warning-color,#f59e0b)"}}
+      .sum.sum-open{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}.sum.sum-open.is-warn{--tile-accent:var(--warning-color,#f59e0b)}
+      .open-panel{--tile-accent:${openings.length ? "var(--warning-color,#f59e0b)" : "var(--state-on-icon,var(--success-color,#20e3a2))"}}
+      .sum{display:flex;flex-direction:column;justify-content:center;min-width:125px;min-height:85px;padding:10px 12px}
+      .sum strong{order:1;position:relative;z-index:1;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .sum strong.warn{color:var(--gray800,var(--primary-text-color,#f8fafc))!important}
+      .sum span{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none}
+      .sum-icon,.system .system-icon,.access>ha-icon:first-child,.open-head>ha-icon:first-child{position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:secTileDrift 5s ease-in-out infinite}
+      .system .system-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+      .system{flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-height:85px;padding:10px 12px}
+      .system>div:not(.system-icon):not(.system-state){display:contents}
+      .system-state{order:1;position:relative;z-index:1;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;text-transform:none}
+      .system small{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+      .system b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px}
+      .access{display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
+      .access>span{order:1;position:relative;z-index:1;margin:0;padding-right:36px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .access .meta{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;gap:3px 9px}
+      .access .meta span{margin:0;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:400;line-height:14px}
+      .access .meta ha-icon{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+      .access>b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px}
+      .lock-action{order:5;top:8px;right:8px;bottom:auto;z-index:2;width:28px;height:28px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .lock-action ha-icon{--mdc-icon-size:15px;color:var(--tile-accent)}
+      .access[data-lock]:hover,.access[data-lock]:focus-visible{border-color:transparent;border-left-color:var(--tile-accent);background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .open-panel{padding:10px 12px}
+      .open-head{position:static;min-height:65px}
+      .open-head>div{position:relative;z-index:1;display:flex;flex-direction:column}
+      .open-head b{color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .open-head span{margin-top:3px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+      .open-head>ha-icon:first-child{color:var(--tile-accent)}
+      .open-head .chevron{position:relative;z-index:1}
+      .open-list,.empty{position:relative;z-index:1}.open-list{padding-right:35px}.empty{padding-right:35px}
+      .opening{color:var(--gray800,var(--primary-text-color,#f8fafc));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--warning-color,#f59e0b) 78%,transparent);background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      .opening ha-icon{color:var(--warning-color,#f59e0b)}
+      @keyframes secTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.sum-icon,.system .system-icon,.access>ha-icon:first-child,.open-head>ha-icon:first-child{animation:none}}
+      @media(max-width:600px){.sum,.system,.access,.open-panel{padding:9px}.sum{min-width:0;min-height:0}.access{min-height:85px}.sum strong,.system-state,.access>span,.open-head b{font-size:16px;line-height:19px}.sum span,.system small,.system b,.access .meta span,.access>b,.open-head span{font-size:10px;line-height:13px}.sum span{padding-right:0}}
     </style><section class="shell ${mode === "danger" ? "danger-mode" : ""}">
-      <header><div><div class="eyebrow"><i class="pulse"></i>Sikkerhed i realtid</div><h1>Sikkerhedscenter</h1><div class="subtitle">Alarm, adgangspunkter og hjemmets ydre skal</div></div><div class="summary"><div class="sum"><span>Alarm</span><strong>${info[0]}</strong></div><div class="sum"><span>Låste døre</span><strong>${locked} / ${locks.length}</strong></div><div class="sum"><span>Åbninger</span><strong class="${openings.length ? "warn" : ""}">${openings.length}</strong></div></div></header>
+      <header><div><div class="eyebrow"><i class="pulse"></i>Sikkerhed i realtid</div><h1>Sikkerhedscenter</h1><div class="subtitle">Alarm, adgangspunkter og hjemmets ydre skal</div></div><div class="summary"><div class="sum sum-alarm"><span>Alarm</span><strong>${info[0]}</strong><ha-icon class="sum-icon" icon="mdi:shield-home-outline"></ha-icon></div><div class="sum sum-locks"><span>Låste døre</span><strong>${locked} / ${locks.length}</strong><ha-icon class="sum-icon" icon="mdi:lock-outline"></ha-icon></div><div class="sum sum-open ${openings.length ? "is-warn" : ""}"><span>Åbninger</span><strong class="${openings.length ? "warn" : ""}">${openings.length}</strong><ha-icon class="sum-icon" icon="mdi:window-open-variant"></ha-icon></div></div></header>
       <div class="hero"><div class="visual"><div class="radar"><ha-icon icon="${info[2]}"></ha-icon></div></div><div class="hero-body"><div class="state-label">${this.config.primary_alarm_name} alarm</div><div class="state-title">${info[0]}</div><div class="state-copy">${info[1]}</div><div class="changed">Sidst ændret ${this._ago(primary?.last_changed)}</div><div class="modes">
         ${[["disarmed","Frakoblet","mdi:shield-lock-open-outline","var(--dashboard-accent, var(--info-color, #71bfff))",this.config.actions.disarm],["armed_home","Hjemme","mdi:shield-home-outline","var(--dashboard-warning, var(--warning-color, #ffbd59))",this.config.actions.home],["armed_away","Ude","mdi:shield-lock-outline","var(--dashboard-success, var(--success-color, #5edbb0))",this.config.actions.away]].map(x=>`<div class="mode ${primary?.state===x[0]?"active":""} ${x[4]?"":"disabled"}" style="--tone:${x[3]}" ${x[4]?`data-script="${x[4]}"`:""}><ha-icon icon="${x[2]}"></ha-icon><b>${x[1]}</b></div>`).join("")}
       </div></div></div>

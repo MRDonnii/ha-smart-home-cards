@@ -254,15 +254,31 @@ class PoolForecastCard extends HTMLElement {
         .model{margin-top:8px;font-size:12px;line-height:1.35;color:var(--secondary-text-color);opacity:.85;position:relative;z-index:1}.empty{min-height:132px;display:grid;place-items:center;color:var(--secondary-text-color);font-size:14px;font-weight:650}
         @media(max-width:720px){ha-card{border-radius:16px;padding:13px 12px 11px}.header{grid-template-columns:1fr;gap:8px}.stats{justify-content:flex-start}.title-main{font-size:18px}.title-sub{font-size:12px}.badge{min-width:62px;height:40px;border-radius:10px}.badge span{font-size:8px}.badge strong{font-size:17px}.chart{aspect-ratio:760/260}.axis,.date-label{font-size:13px;font-weight:800}.value{font-size:14px;stroke-width:4px}.weather-days{gap:4px}.weather-day{padding:7px 3px}.weather-day-name{font-size:11px}.weather-range-text{font-size:12px}.weather-day img,.weather-day ha-icon{width:28px;height:28px}.weather-meta{font-size:9px}.weather-meta span:nth-child(2){display:none}.weather-condition{display:none}.model{font-size:11px}}
         @media(prefers-reduced-motion:reduce){.bg-icon-inner,.bg-icon-inner ha-icon{animation:none}}
+        /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+           accent edge that follows --dashboard-left-accent-width, nested card surface, big value on
+           top, detail and label below, and a large faint drifting icon. */
+        .stats{flex-wrap:wrap;gap:8px}
+        .stats .badge,.weather-days .weather-day{--tile-accent:var(--badge-color,var(--state-info-icon,var(--info-color,#38bdf8)));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:96px;height:auto;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;line-height:normal}
+        .weather-days .weather-day{--tile-accent:var(--pool-accent);min-width:0}
+        .stats .badge strong,.weather-day .weather-range-text{order:1;position:relative;z-index:2;display:flex;justify-content:flex-start;align-items:baseline;gap:5px;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:nowrap}
+        .weather-range-text b{color:inherit;font-weight:750}.weather-range-text span{color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700}
+        .weather-day .weather-meta,.weather-day .weather-condition{order:3;position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:0 6px;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:normal;overflow:visible;text-overflow:clip}
+        .stats .badge span,.weather-day .weather-day-name{order:4;position:relative;z-index:2;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none}
+        .stats .badge>ha-icon,.weather-day>img,.weather-day>ha-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolForecastTileDrift 5s ease-in-out infinite}
+        .weather-days{grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px}
+        @keyframes poolForecastTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+        @media(prefers-reduced-motion:reduce){.stats .badge>ha-icon,.weather-day>img,.weather-day>ha-icon{animation:none}}
+        @media(max-width:720px){.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.stats .badge{min-width:0}}
+        @media(max-width:600px){.stats .badge,.weather-days .weather-day{padding:9px}.stats .badge strong,.weather-day .weather-range-text{font-size:16px;line-height:19px}.stats .badge span,.weather-day .weather-day-name,.weather-day .weather-meta,.weather-day .weather-condition{font-size:10px;line-height:13px}.weather-day .weather-meta span:nth-child(2){display:inline}.weather-days{gap:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}}
       </style>
       <ha-card>
         <div class="bg-icon"><div class="bg-icon-inner"><ha-icon icon="mdi:thermometer-lines"></ha-icon></div></div>
         <div class="header">
           <div><div class="title-main">${this._escape(this.config?.title)}</div><div class="title-sub">${this._escape(this.config?.subtitle)}</div></div>
           <div class="stats">
-            <div class="badge" style="--badge-color:var(--pool-low)"><span>I DAG</span><strong>${this._fmt(today)}&deg;</strong></div>
-            <div class="badge" style="--badge-color:var(--pool-estimate)"><span>I MORGEN</span><strong>${this._fmt(tomorrow)}&deg;</strong></div>
-            <div class="badge" style="--badge-color:var(--pool-accent)"><span>4 DAGE</span><strong>${deltaText}</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-low)"><ha-icon icon="mdi:thermometer-water"></ha-icon><span>I dag</span><strong>${this._fmt(today)}&deg;</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-estimate)"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon><span>I morgen</span><strong>${this._fmt(tomorrow)}&deg;</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-accent)"><ha-icon icon="mdi:trending-up"></ha-icon><span>4 dage</span><strong>${deltaText}</strong></div>
           </div>
         </div>
         <div class="chart-wrap">${this._renderChart(points)}</div>

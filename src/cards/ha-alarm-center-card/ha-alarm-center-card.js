@@ -1,4 +1,4 @@
-const VERSION = "0.3.1";
+const VERSION = "0.3.2";
 
 class HAAlarmCenterCard extends HTMLElement {
   constructor() {
@@ -259,6 +259,28 @@ class HAAlarmCenterCard extends HTMLElement {
       .ack-btn{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--good) 42%,var(--edge));border-radius:11px;background:color-mix(in srgb,var(--good) 10%,transparent);color:var(--good);font-size:10px;font-weight:800;cursor:pointer}
       .ack-btn ha-icon{--mdc-icon-size:16px}.ack-btn:hover{background:color-mix(in srgb,var(--good) 18%,transparent)}
       @media(max-width:480px){.row-text .entity-id{display:none}.snooze-btn span,.ack-btn span{display:none}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, 15px corners, the alarm text first with detail and
+         entity below, and the row icon as a large faint drifting background icon. */
+      .rows .row{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;min-height:72px;padding:10px 12px;gap:8px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .rows .row.priority-1{--tile-accent:var(--warning-color,#f59e0b)}
+      .rows .row.priority-2,.rows .row.priority-3{--tile-accent:var(--error-color,#ef4444)}
+      .rows .row.snoozed{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b));opacity:.75}
+      .rows .row-main{position:static;align-self:stretch;padding:0;gap:0}
+      .rows .row-main:hover{background:transparent}
+      .rows .row:hover{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22))),inset 0 0 0 999px color-mix(in srgb,var(--primary-text-color) 3%,transparent)}
+      .rows .row-icon{position:absolute;right:-10px;bottom:-10px;z-index:0;display:grid;place-items:center;width:58px;height:58px;--mdc-icon-size:58px;font-size:48px;line-height:1;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:alarmTileDrift 5s ease-in-out infinite}
+      .rows .row-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+      .rows .row-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:0}
+      .rows .row-text strong{order:1;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+      .rows .row-text .sub{order:3;margin-top:3px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:normal;overflow:visible}
+      .rows .row-text .entity-id{order:4;margin-top:3px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));opacity:1;font-family:inherit;font-size:11px;font-weight:700;line-height:14px;overflow-wrap:anywhere}
+      .rows .snooze-btn,.rows .ack-btn{position:relative;z-index:2}
+      .rows .snooze-btn{background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .rows .snooze-btn:last-child,.rows .ack-btn{margin-right:30px}
+      @keyframes alarmTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.rows .row-icon{animation:none}}
+      @media(max-width:600px){.rows .row{padding:9px;min-height:64px}.rows .row-text strong{font-size:16px;line-height:19px}.rows .row-text .sub,.rows .row-text .entity-id{font-size:10px;line-height:13px}.rows .snooze-btn:last-child,.rows .ack-btn{margin-right:22px}}
     </style>
     <ha-card>
       <div class="head">

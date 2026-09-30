@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.50 */
+/* MRDonnii Smart Home Cards v0.4.51 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -549,7 +549,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION51 = "0.4.5";
+  const VERSION51 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -740,8 +740,8 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       <button data-toggle="automatic" class="statebox ${this.on("automatic") ? "good" : ""}">${this.icon("autorenew")}<span>Automatisk styring</span><b>${this.on("automatic") ? "Aktiv" : "Inaktiv"}</b></button>
       <div class="statebox ${this.on("pause") ? "warn" : ""}">${this.icon("pause-circle")}<span>Tvangspause</span><b>${this.on("pause") ? "Aktiv" : "Nej"}</b></div>
       <label class="mode-label">Manuel drift<select data-mode ${blocked ? "disabled" : ""}>${(this.state("mode")?.attributes?.options || []).map((o) => `<option value="${safe2(o)}" ${o === mode ? "selected" : ""}>${safe2(o)}</option>`).join("")}</select></label>
-    </div><div class="metric">Normal daglig k\xF8retid <b>${this.fmt(goal)} t</b><div class="progress"><i style="width:${progress}%"></i></div></div>
-    <div class="timers"><span>Manuel override <b data-timer="manualTimer">${this.timer("manualTimer")}</b></span><span>Efter badning <b data-timer="afterTimer">${this.timer("afterTimer")}</b></span></div>
+    </div><div class="metric">${this.icon("timer-cog-outline")}<span class="tl">Normal daglig k\xF8retid</span> <b>${this.fmt(goal)} t</b><div class="progress"><i style="width:${progress}%"></i></div></div>
+    <div class="timers"><span>${this.icon("hand-back-right-outline")}<em class="tl">Manuel override</em> <b data-timer="manualTimer">${this.timer("manualTimer")}</b></span><span>${this.icon("account-clock-outline")}<em class="tl">Efter badning</em> <b data-timer="afterTimer">${this.timer("afterTimer")}</b></span></div>
     <div class="actions"><button data-pump ${blocked ? "disabled" : ""}>${this.on("pump") ? "Sluk pumpe" : "Start 1 time"}</button><button data-script="pause1" ${blocked ? "disabled" : ""}>Pause 1 time</button><button data-script="pause2" ${blocked ? "disabled" : ""}>Pause 2 timer</button><button data-after ${blocked ? "disabled" : ""}>Efter badning</button></div>
     ${blocked ? `<p class="notice warn">${this.icon("snowflake")} Pumpen er vinterblokeret. Se status nederst.</p>` : ""}`);
       this.patch("history", this.historyChart());
@@ -770,7 +770,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       const allowed = { Inaktiv: ["prepare"], "Klar til BACKWASH": ["backwash", "abort"], "BACKWASH k\xF8rer": ["abort"], "Klar til RINSE": ["rinse", "abort"], "RINSE k\xF8rer": ["abort"], "S\xE6t p\xE5 FILTER": ["finish", "abort"] };
       const can = allowed[state] || [];
       const blocked = this.raw("winter") !== "off";
-      return `<div class="workflow">${phases.map(([label, key], i) => `<button class="phase ${can.includes(key) ? "ready" : ""} ${key === "abort" ? "danger" : ""}" data-script="${key}" ${!can.includes(key) || blocked && key !== "abort" ? "disabled" : ""}><small>0${i + 1}</small>${this.icon(["cog", "filter", "stop", "water", "check"][i])}<b>${label}</b></button>`).join("")}</div><div class="timers"><span>Status <b>${safe2(state)}</b></span><span>Backwash <b data-timer="backwashTimer">${this.timer("backwashTimer")}</b></span><span>Rinse <b data-timer="rinseTimer">${this.timer("rinseTimer")}</b></span></div><p class="hint">Flyt kun multiventilen, n\xE5r pumpen er stoppet. Bekr\xE6ft hvert trin f\xF8r start.</p>`;
+      return `<div class="workflow">${phases.map(([label, key], i) => `<button class="phase ${can.includes(key) ? "ready" : ""} ${key === "abort" ? "danger" : ""}" data-script="${key}" ${!can.includes(key) || blocked && key !== "abort" ? "disabled" : ""}><small>0${i + 1}</small>${this.icon(["cog", "filter", "stop", "water", "check"][i])}<b>${label}</b></button>`).join("")}</div><div class="timers"><span>${this.icon("information-outline")}<em class="tl">Status</em> <b>${safe2(state)}</b></span><span>${this.icon("filter")}<em class="tl">Backwash</em> <b data-timer="backwashTimer">${this.timer("backwashTimer")}</b></span><span>${this.icon("water")}<em class="tl">Rinse</em> <b data-timer="rinseTimer">${this.timer("rinseTimer")}</b></span></div><p class="hint">Flyt kun multiventilen, n\xE5r pumpen er stoppet. Bekr\xE6ft hvert trin f\xF8r start.</p>`;
     }
     adviceView() {
       const rows = [["filter", "Filtreringsfremdrift", "progress-check"], ["warning", "Statusadvarsel", "alert-circle-outline"], ["next", "N\xE6ste handling", "calendar-check"], ["swim", "Bedste badetid", "weather-sunny"], ["cover", "Coverstatus", "pool"], ["maintenance", "Vedligeholdelse", "wrench"]];
@@ -781,7 +781,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       const blocked = s?.state === "on", override = s?.attributes?.status === "override";
       const fault = s?.attributes?.sensor_ok === false;
       const status = fault ? "Sensorfejl" : override ? "Midlertidig override" : blocked ? "Aktiv" : "Ikke aktiv";
-      return `<div class="winter ${blocked ? "blocked" : ""} ${override ? "override" : ""}"><div class="winter-stats"><span>Status <b>${status}</b></span><span>Vand <b>${this.txt("water", " \xB0C")}</b></span><span>Gr\xE6nse <b>${this.txt("winterThreshold", " \xB0C")}</b></span><span>Periode <b>${safe2(s?.attributes?.periode_tekst || "Ikke tilg\xE6ngelig")}</b></span></div><p>${safe2(s?.attributes?.aarsag || "Vinterstatus ikke tilg\xE6ngelig")}</p><a href="${safe2(this.settingsPath())}" data-nav>\xC5bn vinterindstillinger ${this.icon("arrow-right")}</a></div>`;
+      return `<div class="winter ${blocked ? "blocked" : ""} ${override ? "override" : ""}"><div class="winter-stats"><span>${this.icon("snowflake")}<em class="tl">Status</em> <b>${status}</b></span><span>${this.icon("thermometer-water")}<em class="tl">Vand</em> <b>${this.txt("water", " \xB0C")}</b></span><span>${this.icon("thermometer-low")}<em class="tl">Gr\xE6nse</em> <b>${this.txt("winterThreshold", " \xB0C")}</b></span><span>${this.icon("calendar-range")}<em class="tl">Periode</em> <b>${safe2(s?.attributes?.periode_tekst || "Ikke tilg\xE6ngelig")}</b></span></div><p>${safe2(s?.attributes?.aarsag || "Vinterstatus ikke tilg\xE6ngelig")}</p><a href="${safe2(this.settingsPath())}" data-nav>\xC5bn vinterindstillinger ${this.icon("arrow-right")}</a></div>`;
     }
     async fetchHistory() {
       if (!this.ha?.callApi || !this.isConnected || Date.now() - this.historyAt < 6e5) return;
@@ -925,8 +925,44 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   }
   HAPoolCard.css = `
 :host{display:block;--pool-bg:var(--lovelace-background,var(--primary-background-color));--pool-card-bg:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));--pool-border:var(--dashboard-border-neutral,var(--divider-color));--pool-accent:var(--dashboard-accent,var(--primary-color));--pool-success:var(--dashboard-success,var(--success-color));--pool-warning:var(--dashboard-warning,var(--warning-color));--pool-danger:var(--dashboard-danger,var(--error-color));--pool-muted:var(--secondary-text-color);--pool-text:var(--primary-text-color);font-family:var(--primary-font-family,inherit)}
-*{box-sizing:border-box}ha-card{padding:16px;background:var(--pool-card-bg);color:var(--pool-text);box-shadow:var(--ha-card-box-shadow,0 8px 24px -12px rgba(0,0,0,.5));border:var(--ha-card-border-width,1px) solid var(--pool-border);border-radius:var(--ha-card-border-radius,18px)}button,select{font:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--pool-accent);background:color-mix(in srgb,var(--pool-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--pool-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--pool-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color,var(--pool-border));box-shadow:var(--ha-card-box-shadow,none);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;color:var(--pool-muted);font-size:14px;font-weight:550;white-space:nowrap;text-decoration:none;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--disabled-text-color,var(--pool-muted))}.tab:hover{color:var(--pool-text);background:var(--contrast1,color-mix(in srgb,var(--pool-text) 4%,transparent))}.tab.on{color:var(--pool-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--pool-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--pool-accent)),0 0 18px -8px var(--pool-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--pool-accent))}.tab:focus-visible{outline:2px solid var(--pool-accent);outline-offset:2px}.title{display:flex;gap:14px;align-items:center;margin-bottom:16px}.title>ha-icon{--mdc-icon-size:38px;color:var(--pool-accent)}h1{font-size:22px;margin:0;line-height:1.2}p{margin:0}.title p{font-size:12px;color:var(--pool-muted);margin-top:4px}.title a{margin-left:auto}.title a,.winter a{color:var(--pool-accent);text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700}.title a ha-icon,.winter a ha-icon{--mdc-icon-size:17px}.dashboard{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.kpi,.panel{background:transparent;border:0;border-radius:var(--ha-card-border-radius,18px)}.kpi{display:flex;flex-direction:column;gap:5px;min-width:0;padding:14px}.kpi ha-icon{color:var(--pool-accent);--mdc-icon-size:25px}.kpi.good ha-icon{color:var(--pool-success)}.kpi span,.kpi small{font-size:11px;color:var(--pool-muted)}.kpi strong{font-size:clamp(16px,1.5vw,23px);line-height:1.2;overflow-wrap:anywhere}.panel{padding:14px;min-width:0}.panel h2{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 12px}.panel h2 ha-icon{color:var(--pool-accent);--mdc-icon-size:20px}.camera-panel,.pump-panel{grid-column:span 6}.history-panel,.forecast-panel,.service-panel,.advice-panel{grid-column:span 6}.winter-panel{grid-column:1/-1}.live{margin-left:auto;color:var(--pool-success);font-size:11px}.camera-frame{aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:color-mix(in srgb,var(--pool-text) 8%,var(--pool-card-bg))}.camera-frame>*{width:100%;height:100%}.presence,.pump-controls,.timers,.actions,.workflow,.advice-grid,.winter-stats{display:grid;gap:8px}.presence{grid-template-columns:1fr 1fr;margin-top:10px}.chip,.statebox,.metric,.mode-label,.timers span,.advice-row,.winter-stats span{border:1px solid var(--pool-border);border-radius:10px;background:color-mix(in srgb,var(--pool-accent) 4%,var(--pool-card-bg));padding:9px}.chip{display:grid;grid-template-columns:20px 1fr;gap:2px 7px;font-size:11px}.chip ha-icon{grid-row:span 2;--mdc-icon-size:19px;color:var(--pool-muted)}.chip b{color:var(--pool-muted)}.chip.detected{border-color:var(--pool-success)}.chip.detected b,.chip.detected ha-icon{color:var(--pool-success)}.pump-controls{grid-template-columns:1fr 1fr}.statebox{display:grid;grid-template-columns:23px 1fr;gap:2px 7px;text-align:left;color:var(--pool-text);font-size:11px}.statebox ha-icon{grid-row:span 2;color:var(--pool-accent)}.statebox b{font-size:13px}.statebox.good b{color:var(--pool-success)}.statebox.warn b{color:var(--pool-warning)}button.statebox{cursor:pointer}.mode-label{font-size:11px}.mode-label select{display:block;width:100%;margin-top:5px;padding:6px;background:var(--pool-card-bg);color:var(--pool-text);border:1px solid var(--pool-border);border-radius:7px}.metric{margin-top:9px;font-size:11px}.metric b{float:right}.progress{height:6px;background:var(--pool-border);border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--pool-accent)}.timers{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:9px}.timers span{font-size:11px}.timers b{float:right}.actions{grid-template-columns:repeat(4,1fr);margin-top:9px}.actions button,.phase{border:1px solid var(--pool-border);border-radius:9px;background:color-mix(in srgb,var(--pool-accent) 11%,var(--pool-card-bg));color:var(--pool-text);padding:9px;cursor:pointer;font-size:11px}.actions button:disabled,.phase:disabled{opacity:.43;cursor:default}.notice{margin-top:9px}.warn{color:var(--pool-warning)}svg{width:100%;height:auto;display:block;max-height:220px}svg .axis{stroke:var(--pool-border)}svg .line{fill:none;stroke:var(--pool-accent);stroke-width:3}svg .dot{fill:var(--pool-accent)}svg .bar{fill:color-mix(in srgb,var(--pool-accent) 55%,transparent)}svg .threshold{stroke:var(--pool-warning);stroke-dasharray:5 4}svg text{fill:var(--pool-muted);font-size:10px}.legend{display:flex;gap:18px;color:var(--pool-muted);font-size:11px}.workflow{grid-template-columns:repeat(5,1fr)}.phase{display:flex;flex-direction:column;align-items:center;gap:4px}.phase.ready{border-color:var(--pool-accent)}.phase.danger.ready{border-color:var(--pool-danger);color:var(--pool-danger)}.phase ha-icon{--mdc-icon-size:20px}.phase small{align-self:flex-start;color:var(--pool-muted)}.hint,.empty{color:var(--pool-muted);font-size:11px;margin-top:10px}.advice-grid{grid-template-columns:1fr 1fr}.advice-row{display:grid;grid-template-columns:18px 1fr;gap:3px 7px;font-size:11px}.advice-row ha-icon{grid-row:span 2;color:var(--pool-accent);--mdc-icon-size:17px}.advice-row b{grid-column:2;overflow-wrap:anywhere}.winter{border:1px solid var(--pool-border);border-radius:10px;padding:10px}.winter.blocked,.winter.override{border-color:var(--pool-warning);background:color-mix(in srgb,var(--pool-warning) 8%,var(--pool-card-bg))}.winter-stats{grid-template-columns:repeat(4,1fr)}.winter-stats span{display:flex;flex-direction:column;gap:4px;font-size:11px}.winter-stats b{font-size:13px}.winter p{margin:10px 0;font-size:12px;color:var(--pool-muted)}.feedback{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:9px;background:var(--pool-card-bg);border:1px solid var(--pool-border);opacity:0;pointer-events:none}.feedback.show{opacity:1}
+*{box-sizing:border-box}ha-card{padding:16px;background:var(--pool-card-bg);color:var(--pool-text);box-shadow:var(--ha-card-box-shadow,0 8px 24px -12px rgba(0,0,0,.5));border:var(--ha-card-border-width,1px) solid var(--pool-border);border-radius:var(--ha-card-border-radius,18px)}button,select{font:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--pool-accent);background:color-mix(in srgb,var(--pool-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--pool-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--pool-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color,var(--pool-border));box-shadow:var(--ha-card-box-shadow,none);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;color:var(--pool-muted);font-size:14px;font-weight:550;white-space:nowrap;text-decoration:none;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--disabled-text-color,var(--pool-muted))}.tab:hover{color:var(--pool-text);background:var(--contrast1,color-mix(in srgb,var(--pool-text) 4%,transparent))}.tab.on{color:var(--pool-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--pool-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--pool-accent)),0 0 18px -8px var(--pool-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--pool-accent))}.tab:focus-visible{outline:2px solid var(--pool-accent);outline-offset:2px}.title{display:flex;gap:14px;align-items:center;margin-bottom:16px}.title>ha-icon{--mdc-icon-size:38px;color:var(--pool-accent)}h1{font-size:22px;margin:0;line-height:1.2}p{margin:0}.title p{font-size:12px;color:var(--pool-muted);margin-top:4px}.title a{margin-left:auto}.title a,.winter a{color:var(--pool-accent);text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700}.title a ha-icon,.winter a ha-icon{--mdc-icon-size:17px}.dashboard{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.kpi,.panel{background:transparent;border:0;border-radius:var(--ha-card-border-radius,18px)}.kpi{display:flex;flex-direction:column;gap:5px;min-width:0;padding:14px}.kpi ha-icon{color:var(--pool-accent);--mdc-icon-size:25px}.kpi.good ha-icon{color:var(--pool-success)}.kpi span,.kpi small{font-size:11px;color:var(--pool-muted)}.kpi strong{font-size:clamp(16px,1.5vw,23px);line-height:1.2;overflow-wrap:anywhere}.panel{padding:14px;min-width:0}.panel h2{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 12px}.panel h2 ha-icon{color:var(--pool-accent);--mdc-icon-size:20px}.camera-panel,.pump-panel{grid-column:span 6}.history-panel,.forecast-panel,.service-panel,.advice-panel{grid-column:span 6}.winter-panel{grid-column:1/-1}.live{margin-left:auto;color:var(--pool-success);font-size:11px}.camera-frame{aspect-ratio:16/9;overflow:hidden;border-radius:12px;background:color-mix(in srgb,var(--pool-text) 8%,var(--pool-card-bg))}.camera-frame>*{width:100%;height:100%}.presence,.pump-controls,.timers,.actions,.workflow,.advice-grid,.winter-stats{display:grid;gap:8px}.presence{grid-template-columns:1fr 1fr;margin-top:10px}.chip,.statebox,.metric,.mode-label,.timers span,.advice-row,.winter-stats span{border:1px solid var(--pool-border);border-radius:10px;background:color-mix(in srgb,var(--pool-accent) 4%,var(--pool-card-bg));padding:9px}.chip{display:grid;grid-template-columns:20px 1fr;gap:2px 7px;font-size:11px}.chip ha-icon{grid-row:span 2;--mdc-icon-size:19px;color:var(--pool-muted)}.chip b{color:var(--pool-muted)}.chip.detected{border-color:var(--pool-success)}.chip.detected b,.chip.detected ha-icon{color:var(--pool-success)}.pump-controls{grid-template-columns:1fr 1fr}.statebox{display:grid;grid-template-columns:23px 1fr;gap:2px 7px;text-align:left;color:var(--pool-text);font-size:11px}.statebox ha-icon{grid-row:span 2;color:var(--pool-accent)}.statebox b{font-size:13px}.statebox.good b{color:var(--pool-success)}.statebox.warn b{color:var(--pool-warning)}button.statebox{cursor:pointer}.mode-label{font-size:11px}.mode-label select{display:block;width:100%;margin-top:5px;padding:6px;background:var(--pool-card-bg);color:var(--pool-text);border:1px solid var(--pool-border);border-radius:7px}.metric{margin-top:9px;font-size:11px}.metric b{float:right}.progress{height:6px;background:var(--pool-border);border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--pool-accent)}.timers{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:9px}.timers span{font-size:11px}.timers b{float:right}.actions{grid-template-columns:repeat(4,1fr);margin-top:9px}.actions button,.phase{border:1px solid var(--pool-border);border-radius:9px;background:color-mix(in srgb,var(--pool-accent) 11%,var(--pool-card-bg));color:var(--pool-text);padding:9px;cursor:pointer;font-size:11px}.actions button:disabled,.phase:disabled{opacity:.43;cursor:default}.notice{margin-top:9px}.warn{color:var(--pool-warning)}svg{width:100%;height:auto;display:block;max-height:220px}svg .axis{stroke:var(--pool-border)}svg .line{fill:none;stroke:var(--pool-accent);stroke-width:3}svg .dot{fill:var(--pool-accent)}svg .bar{fill:color-mix(in srgb,var(--pool-accent) 55%,transparent)}svg .threshold{stroke:var(--pool-warning);stroke-dasharray:5 4}svg text{fill:var(--pool-muted);font-size:10px}.legend{display:flex;gap:18px;color:var(--pool-muted);font-size:11px}.workflow{grid-template-columns:repeat(5,minmax(0,1fr))}.workflow .phase{min-width:0;padding-left:4px;padding-right:4px}.workflow .phase b{min-width:0;max-width:100%;font-size:clamp(9px,2.4vw,13px);letter-spacing:0}.phase{display:flex;flex-direction:column;align-items:center;gap:4px}.phase.ready{border-color:var(--pool-accent)}.phase.danger.ready{border-color:var(--pool-danger);color:var(--pool-danger)}.phase ha-icon{--mdc-icon-size:20px}.phase small{align-self:flex-start;color:var(--pool-muted)}.hint,.empty{color:var(--pool-muted);font-size:11px;margin-top:10px}.advice-grid{grid-template-columns:1fr 1fr}.advice-row{display:grid;grid-template-columns:18px 1fr;gap:3px 7px;font-size:11px}.advice-row ha-icon{grid-row:span 2;color:var(--pool-accent);--mdc-icon-size:17px}.advice-row b{grid-column:2;overflow-wrap:anywhere}.winter{border:1px solid var(--pool-border);border-radius:10px;padding:10px}.winter.blocked,.winter.override{border-color:var(--pool-warning);background:color-mix(in srgb,var(--pool-warning) 8%,var(--pool-card-bg))}.winter-stats{grid-template-columns:repeat(4,1fr)}.winter-stats span{display:flex;flex-direction:column;gap:4px;font-size:11px}.winter-stats b{font-size:13px}.winter p{margin:10px 0;font-size:12px;color:var(--pool-muted)}.feedback{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:9px;background:var(--pool-card-bg);border:1px solid var(--pool-border);opacity:0;pointer-events:none}.feedback.show{opacity:1}
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}.camera-panel,.pump-panel,.history-panel,.forecast-panel,.service-panel,.advice-panel{grid-column:1/-1}.camera-panel{grid-row:1}.kpis{grid-row:2}.winter-panel{grid-row:3}.pump-panel{grid-row:4}.tabs{width:100%}.tab{flex:1 1 0;min-width:0;justify-content:center;padding:8px 6px;font-size:13px}.winter-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:380px){.kpis{grid-template-columns:1fr 1fr}.advice-grid{grid-template-columns:1fr}.workflow{gap:3px}.phase{padding:5px;font-size:9px}}
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   accent edge that follows --dashboard-left-accent-width, card surface, shadow, big value on
+   top, detail and label below, and a large faint drifting icon. Controls keep their own look. */
+.kpi,.chip,.statebox,.mode-label,.metric,.timers span,.advice-row,.winter-stats span{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left}
+.kpi{min-height:85px}
+.kpi:nth-child(2){--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.kpi.good{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+.kpi:nth-child(3),.kpi:nth-child(6){--tile-accent:var(--orange,var(--warning-color,#fb923c))}
+.kpi:nth-child(5){--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+.chip,.statebox,.timers span,.winter-stats span{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.chip.detected,.statebox.good{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+.statebox.warn{--tile-accent:var(--warning-color,#f59e0b)}
+.timers span:has(b[data-timer]){--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.advice-row:nth-child(1){--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+.advice-row:nth-child(2){--tile-accent:var(--warning-color,#f59e0b)}
+.advice-row:nth-child(4){--tile-accent:var(--orange,var(--warning-color,#fb923c))}
+.advice-row:nth-child(6){--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.winter-stats span:nth-child(2),.winter-stats span:nth-child(3){--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.winter.blocked .winter-stats span:first-child,.winter.override .winter-stats span:first-child{--tile-accent:var(--warning-color,#f59e0b)}
+.winter-stats span{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.kpi strong,.chip b,.statebox b,.metric b,.timers b,.advice-row b,.winter-stats b{order:1;position:relative;z-index:2;display:block;float:none;min-width:0;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;overflow-wrap:anywhere}
+.chip.detected b,.statebox.good b,.statebox.warn b{color:var(--gray800,var(--primary-text-color,#f8fafc))}
+.metric .progress{order:2;position:relative;z-index:2;margin:6px 35px 4px 0;height:5px;background:color-mix(in srgb,var(--tile-accent) 18%,transparent)}
+.metric .progress i{background:var(--tile-accent)}
+.kpi small{order:3;position:relative;z-index:2;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+.kpi span,.chip span,.statebox span,.metric .tl,.timers .tl,.advice-row span,.winter-stats .tl,.mode-label{order:4;position:relative;z-index:2;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;font-style:normal;text-transform:none;letter-spacing:0}
+.mode-label{order:0;justify-content:flex-start;gap:4px;padding-right:12px}
+.mode-label select{position:relative;z-index:2;margin-top:2px}
+.kpi>ha-icon,.chip>ha-icon,.statebox>ha-icon,.metric>ha-icon,.timers span>ha-icon,.advice-row>ha-icon,.winter-stats span>ha-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;margin:0;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolTileDrift 5s ease-in-out infinite}
+@keyframes poolTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media(prefers-reduced-motion:reduce){.kpi>ha-icon,.chip>ha-icon,.statebox>ha-icon,.metric>ha-icon,.timers span>ha-icon,.advice-row>ha-icon,.winter-stats span>ha-icon{animation:none}}
+.presence,.pump-controls,.timers,.advice-grid,.winter-stats{gap:10px}
+.metric,.timers,.presence{margin-top:10px}
+.winter{border:0;border-radius:15px;padding:0}
+.winter.blocked,.winter.override{padding:10px;background:color-mix(in srgb,var(--pool-warning) 8%,transparent)}
+@media(max-width:600px){.kpi,.chip,.statebox,.mode-label,.metric,.timers span,.advice-row,.winter-stats span{padding:9px}.kpi strong,.chip b,.statebox b,.metric b,.timers b,.advice-row b,.winter-stats b{font-size:16px;line-height:19px}.kpi small,.kpi span,.chip span,.statebox span,.metric .tl,.timers .tl,.advice-row span,.winter-stats .tl,.mode-label{font-size:10px;line-height:13px}.presence,.pump-controls,.timers,.advice-grid,.winter-stats,.kpis{gap:8px}}
 `;
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
@@ -936,7 +972,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION51 = "0.3.4";
+  const VERSION51 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -997,6 +1033,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       ["Override timer", "timer.pool_vinterblokering_override"]
     ] }
   ];
+  const ROW_ICONS = { input_boolean: "toggle-switch-outline", input_select: "format-list-bulleted", input_number: "tune-variant", input_datetime: "calendar-clock", binary_sensor: "checkbox-marked-circle-outline", timer: "timer-outline", sensor: "information-outline" };
   const escapeHtml4 = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   const available = (value) => value != null && !["unknown", "unavailable", "none", ""].includes(String(value).toLowerCase());
   class HAPoolSettingsCard extends HTMLElement {
@@ -1041,7 +1078,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     }
     mount() {
       if (!this.isConnected) return;
-      this.shadowRoot.innerHTML = `<style>${HAPoolSettingsCard.css}</style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:pool"></ha-icon></span><div><h1>Pool</h1><p>Drift, historik og indstillinger samlet \xE9t sted</p></div></div><nav class="tabs" role="tablist" aria-label="Pool"><a class="tab" role="tab" aria-selected="false" href="${escapeHtml4(this.backPath())}" data-pool-tab="pool"><ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Pool</span></a><a class="tab on" role="tab" aria-selected="true" href="${escapeHtml4(this.settingsPath())}" data-pool-tab="settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span>Indstillinger</span></a></nav></header><div class="sections">${SECTION_DATA.map((section) => `<section class="panel ${section.id}" id="${section.id}"><header><ha-icon icon="mdi:${section.icon}"></ha-icon><div><h2>${section.title}</h2><p>${section.subtitle}</p></div></header><div class="rows">${section.rows.map(([label, id]) => `<div class="row" data-row="${escapeHtml4(id)}"><label>${escapeHtml4(label)}</label><div data-control="${escapeHtml4(id)}"></div></div>`).join("")}</div>${section.id === "filter" ? '<div class="extras"><button class="danger" data-off><ha-icon icon="mdi:power"></ha-icon>Sluk helt \u2014 forbliv slukket</button><p>Bruges ved service, vinterlukning eller l\xE6ngere frav\xE6r.</p></div>' : ""}${section.id === "comfort" ? '<p class="hint">Poolen betragtes som badeklar ved eller over den valgte temperatur.</p>' : ""}${section.id === "water" ? '<div class="maintenance-actions"><button data-press="input_button.pool_registrer_klor_tilsat">Registrer klor</button><button data-press="input_button.pool_registrer_returskyl">Registrer backwash</button><button data-press="input_button.pool_registrer_filterrens">Registrer filterrens</button></div>' : ""}${section.id === "winter" ? '<div class="winter-actions"><button data-override="15">Override 15 min</button><button data-override="30">Override 30 min</button><button data-override="60">Override 1 time</button><button data-override-stop>Afslut override</button></div><p class="hint">N\xE5r vinterblokering er aktiv i den valgte periode, og vandet er under gr\xE6nsen, kan pumpen ikke starte automatisk. Override udl\xF8ber af sig selv.</p>' : ""}</section>`).join("")}</div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></ha-card>`;
+      this.shadowRoot.innerHTML = `<style>${HAPoolSettingsCard.css}</style><ha-card><header class="top"><div class="brand"><span class="brand-mark"><ha-icon icon="mdi:pool"></ha-icon></span><div><h1>Pool</h1><p>Drift, historik og indstillinger samlet \xE9t sted</p></div></div><nav class="tabs" role="tablist" aria-label="Pool"><a class="tab" role="tab" aria-selected="false" href="${escapeHtml4(this.backPath())}" data-pool-tab="pool"><ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Pool</span></a><a class="tab on" role="tab" aria-selected="true" href="${escapeHtml4(this.settingsPath())}" data-pool-tab="settings"><ha-icon icon="mdi:cog-outline"></ha-icon><span>Indstillinger</span></a></nav></header><div class="sections">${SECTION_DATA.map((section) => `<section class="panel ${section.id}" id="${section.id}"><header><ha-icon icon="mdi:${section.icon}"></ha-icon><div><h2>${section.title}</h2><p>${section.subtitle}</p></div></header><div class="rows">${section.rows.map(([label, id]) => `<div class="row" data-row="${escapeHtml4(id)}"><ha-icon class="row-icon" icon="mdi:${ROW_ICONS[id.split(".")[0]] || "information-outline"}"></ha-icon><label>${escapeHtml4(label)}</label><div data-control="${escapeHtml4(id)}"></div></div>`).join("")}</div>${section.id === "filter" ? '<div class="extras"><button class="danger" data-off><ha-icon icon="mdi:power"></ha-icon>Sluk helt \u2014 forbliv slukket</button><p>Bruges ved service, vinterlukning eller l\xE6ngere frav\xE6r.</p></div>' : ""}${section.id === "comfort" ? '<p class="hint">Poolen betragtes som badeklar ved eller over den valgte temperatur.</p>' : ""}${section.id === "water" ? '<div class="maintenance-actions"><button data-press="input_button.pool_registrer_klor_tilsat">Registrer klor</button><button data-press="input_button.pool_registrer_returskyl">Registrer backwash</button><button data-press="input_button.pool_registrer_filterrens">Registrer filterrens</button></div>' : ""}${section.id === "winter" ? '<div class="winter-actions"><button data-override="15">Override 15 min</button><button data-override="30">Override 30 min</button><button data-override="60">Override 1 time</button><button data-override-stop>Afslut override</button></div><p class="hint">N\xE5r vinterblokering er aktiv i den valgte periode, og vandet er under gr\xE6nsen, kan pumpen ikke starte automatisk. Override udl\xF8ber af sig selv.</p>' : ""}</section>`).join("")}</div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></ha-card>`;
       this.signatures.clear();
       this.update();
     }
@@ -1144,6 +1181,26 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   }
   HAPoolSettingsCard.css = `
 :host{display:block;--pool-bg:var(--lovelace-background,var(--primary-background-color));--pool-card-bg:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color)));--pool-border:var(--dashboard-border-neutral,var(--divider-color));--pool-accent:var(--dashboard-accent,var(--primary-color));--pool-success:var(--dashboard-success,var(--success-color));--pool-warning:var(--dashboard-warning,var(--warning-color));--pool-danger:var(--dashboard-danger,var(--error-color));--pool-muted:var(--secondary-text-color);--pool-text:var(--primary-text-color);font-family:var(--primary-font-family,inherit)}*{box-sizing:border-box}ha-card{padding:16px;background:var(--pool-card-bg);border:var(--ha-card-border-width,1px) solid var(--pool-border);box-shadow:var(--ha-card-box-shadow,0 8px 24px -12px rgba(0,0,0,.5));color:var(--pool-text);border-radius:var(--ha-card-border-radius,18px)}button,select,input{font:inherit}.top{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}.brand{display:flex;align-items:center;gap:14px;min-width:0}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--pool-accent);background:color-mix(in srgb,var(--pool-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--pool-accent) 32%,transparent)}.brand-mark ha-icon{--mdc-icon-size:26px}.brand h1{margin:0;font-size:26px;line-height:1.1;font-weight:700;letter-spacing:-.015em}.brand p{margin:3px 0 0;font-size:13.5px;color:var(--pool-muted)}.tabs{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color,var(--pool-border));box-shadow:var(--ha-card-box-shadow,none);overflow-x:auto;scrollbar-width:none;max-width:100%}.tabs::-webkit-scrollbar{display:none}.tab{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;color:var(--pool-muted);font-size:14px;font-weight:550;white-space:nowrap;text-decoration:none;transition:color .18s ease,background-color .18s ease}.tab ha-icon{--mdc-icon-size:18px;color:var(--disabled-text-color,var(--pool-muted))}.tab:hover{color:var(--pool-text);background:var(--contrast1,color-mix(in srgb,var(--pool-text) 4%,transparent))}.tab.on{color:var(--pool-text);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--pool-accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--pool-accent)),0 0 18px -8px var(--pool-accent)}.tab.on ha-icon{color:var(--dashboard-icon-active,var(--pool-accent))}.tab:focus-visible{outline:2px solid var(--pool-accent);outline-offset:2px}.title{display:flex;align-items:center;gap:14px;margin-bottom:16px}.title>ha-icon{color:var(--pool-accent);--mdc-icon-size:38px}.title h1{font-size:22px;margin:0}.title p,.panel header p{font-size:12px;color:var(--pool-muted);margin:4px 0 0}.title a{margin-left:auto;text-decoration:none;display:flex;align-items:center;gap:5px;color:var(--pool-accent);font-size:12px;font-weight:700}.title a ha-icon{--mdc-icon-size:17px}.sections{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}.panel{grid-column:span 6;min-width:0;background:transparent;border:0;border-radius:var(--ha-card-border-radius,18px);padding:14px}.filter,.winter{grid-column:1/-1}.panel.blocked,.panel.override{border-color:var(--pool-warning)}.panel header{display:flex;align-items:center;gap:9px;margin-bottom:12px}.panel header>ha-icon{--mdc-icon-size:23px;color:var(--pool-accent)}.panel.blocked header>ha-icon,.panel.override header>ha-icon{color:var(--pool-warning)}.panel h2{font-size:15px;margin:0}.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:9px;border:1px solid var(--pool-border);border-radius:10px;background:color-mix(in srgb,var(--pool-accent) 4%,var(--pool-card-bg))}.row label{font-size:11px;min-width:0}.row [data-control]{min-width:0}.value,.badge,.unavailable{font-size:11px;font-weight:700;overflow-wrap:anywhere;text-align:right}.unavailable{color:var(--pool-muted)}.badge.on{color:var(--pool-success)}.toggle{width:42px;height:24px;border:0;border-radius:99px;background:var(--pool-border);padding:2px;cursor:pointer}.toggle i{display:block;width:20px;height:20px;background:var(--pool-card-bg);border-radius:50%;transition:transform .18s}.toggle.on{background:var(--pool-success)}.toggle.on i{transform:translateX(18px)}select,input[type=date]{max-width:170px;width:100%;padding:6px;color:var(--pool-text);background:var(--pool-card-bg);border:1px solid var(--pool-border);border-radius:7px;font-size:11px}.number{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}.number span{font-size:11px;font-weight:700;min-width:52px;text-align:center}.number button{width:25px;height:25px;background:color-mix(in srgb,var(--pool-accent) 11%,var(--pool-card-bg));border:1px solid var(--pool-border);border-radius:7px;color:var(--pool-accent);cursor:pointer}.number input{width:100%;accent-color:var(--pool-accent);height:12px}.extras,.maintenance-actions,.winter-actions{margin-top:11px}.extras p,.hint{font-size:11px;color:var(--pool-muted);margin:7px 0 0}.extras button,.maintenance-actions button,.winter-actions button{padding:9px 12px;border:1px solid var(--pool-border);border-radius:9px;background:color-mix(in srgb,var(--pool-accent) 10%,var(--pool-card-bg));color:var(--pool-text);font-size:11px;cursor:pointer}.extras button{display:flex;align-items:center;gap:7px;border-color:var(--pool-danger);color:var(--pool-danger)}.extras button ha-icon{--mdc-icon-size:17px}.maintenance-actions,.winter-actions{display:flex;gap:8px;flex-wrap:wrap}.feedback{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--pool-card-bg);border:1px solid var(--pool-border);border-radius:8px;padding:8px 14px;opacity:0;pointer-events:none}.feedback.show{opacity:1}@media(max-width:850px){.panel{grid-column:1/-1}}@media(max-width:600px){.rows{grid-template-columns:1fr}.tabs{width:100%}.tab{flex:1 1 0;min-width:0;justify-content:center;padding:8px 6px;font-size:13px}}
+/* Setting rows use the same design as the front page status buttons (custom:ha-home-status-card):
+   accent edge that follows --dashboard-left-accent-width, card surface, shadow and a large faint
+   drifting icon. Rows that only show a value put the big value first and the label last;
+   rows with a control keep the control on the right. */
+.row{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;min-height:58px;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc))}
+.row:has(.toggle:not(.on)),.row:has(.badge:not(.on)),.row:has(.unavailable){--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.row:has(.toggle.on),.row:has(.badge.on){--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+.panel.blocked .row,.panel.override .row{--tile-accent:var(--warning-color,#f59e0b)}
+.row label{position:relative;z-index:2;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;text-transform:none;letter-spacing:0}
+.row [data-control]{position:relative;z-index:2}
+.row>.row-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolSettingsTileDrift 5s ease-in-out infinite}
+.row:has(> [data-control] > .value),.row:has(> [data-control] > .badge),.row:has(> [data-control] > .unavailable){flex-direction:column;align-items:stretch;justify-content:center;gap:0}
+.row:has(> [data-control] > .value) label,.row:has(> [data-control] > .badge) label,.row:has(> [data-control] > .unavailable) label{order:4;padding-right:35px}
+.row:has(> [data-control] > .value) [data-control],.row:has(> [data-control] > .badge) [data-control],.row:has(> [data-control] > .unavailable) [data-control]{order:1;padding-right:35px}
+.row [data-control]>.value,.row [data-control]>.badge,.row [data-control]>.unavailable{display:block;text-align:left;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;overflow-wrap:anywhere}
+.row [data-control]>.unavailable{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+.rows{gap:10px}
+@keyframes poolSettingsTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media(prefers-reduced-motion:reduce){.row>.row-icon{animation:none}}
+@media(max-width:600px){.row{padding:9px}.row label{font-size:10px;line-height:13px}.row [data-control]>.value,.row [data-control]>.badge,.row [data-control]>.unavailable{font-size:16px;line-height:19px}.rows{gap:8px}}
 `;
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
@@ -1834,6 +1891,31 @@ var HaTeslaVehicleCard = class extends HTMLElement {
       .vehicle,.charge-status,.monta,.plan,.history-grid>article,.summary,.vehicle-info-grid>article{border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent)}.metric,.fact,.record-grid>div{border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 72%,transparent)}
       .vehicle-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.vehicle-info-grid>article{position:relative;border-radius:16px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);border-right:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);border-bottom:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);padding:18px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}.location-card{min-height:150px}.tyres{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;gap:10px;margin-top:12px}.tyres>div{display:grid;gap:8px}.tyres>ha-icon{width:70px;height:70px;justify-self:center;color:color-mix(in srgb,var(--accent) 75%,white 25%);transform:rotate(-90deg);opacity:.75}
       @media(max-width:767px){nav{grid-template-columns:repeat(3,minmax(0,1fr))}nav button{font-size:10px}nav button span{display:inline}.vehicle-info-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tyres{grid-template-columns:1fr 60px 1fr}.tyres>ha-icon{width:52px;height:52px}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow and rounded corners; the big value first with detail and
+         label below, and a large faint drifting icon where the tile has one. */
+      :host{--tvc-info:var(--state-info-icon,var(--info-color,#38bdf8));--tvc-ok:var(--state-on-icon,var(--success-color,#20e3a2));--tvc-warm:var(--orange,var(--warning-color,#fb923c));--tvc-warn:var(--warning-color,#f59e0b);--tvc-err:var(--error-color,#ef4444);--tvc-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+      main .vehicle,main .charge-status,main .monta,main .plan,main .price-entry,main .history-grid>article,main .vehicle-info-grid>article{border-top:0;border-right:0;border-bottom:0;border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      main .summary{padding:0;border:0;background:none;box-shadow:none}
+      main .metric,main .summary>div,main .fact,main .record-grid>div{--tile-accent:var(--tvc-info);position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-width:0;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);padding:10px 12px}
+      main .metric,main .summary>div{min-height:85px;border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      main .summary>div:last-child{border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
+      main .fact,main .record-grid>div{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      main .metric>div{display:contents}
+      main .metric>ha-icon,main .summary .tile-i{display:block;position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:tvcTileDrift 5s ease-in-out infinite}
+      main .metric strong,main .summary strong,main .fact strong,main .record-grid b{order:1;position:relative;z-index:1;margin:0;font-size:18px;font-weight:750;line-height:21px;color:var(--gray800,var(--primary-text-color,#f8fafc));white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+      main .summary span{order:3;position:relative;z-index:1;margin:0;padding-right:35px;font-size:11px;line-height:14px;color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+      main .metric small,main .summary small,main .fact small,main .record-grid small{order:4;position:relative;z-index:1;margin:0;padding-right:35px;font-size:11px;font-weight:700;line-height:14px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));letter-spacing:0;text-transform:none}
+      main .metric:nth-child(3),main .metric:nth-child(6){--tile-accent:var(--tvc-warm)}
+      main .metric:nth-child(5){--tile-accent:var(--tvc-ok)}
+      main .summary>div:nth-child(2){--tile-accent:var(--tvc-ok)}
+      main .summary>div:nth-child(3){--tile-accent:var(--tvc-warm)}
+      main .charge-facts .fact,main .history-stats .fact{--tile-accent:var(--tvc-warm)}
+      main .plan-grid .fact,main .tyres .fact{--tile-accent:var(--tvc-ok)}
+      main .fact small,main .record-grid small{padding-right:0}
+      @keyframes tvcTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(max-width:600px){main .metric,main .summary>div,main .fact,main .record-grid>div{padding:9px}main .metric strong,main .summary strong,main .fact strong,main .record-grid b{font-size:16px}main .metric small,main .summary small,main .summary span,main .fact small,main .record-grid small{font-size:10px}}
+      @media(prefers-reduced-motion:reduce){main .tile-i,main .metric>ha-icon{animation:none}}
     </style>
       <ha-card><ha-icon class="watermark" icon="mdi:car-sports"></ha-icon>
         <header><div class="title"><span class="eyebrow">TESLA \xB7 SAMLET BILCENTER</span><h1>${this.config.title}</h1><div class="headline" data-v="headline"></div></div>
@@ -1858,7 +1940,7 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   _overviewHtml() {
     return `<div class="hero-grid"><article class="vehicle"><div class="car"><ha-icon icon="mdi:car-sports"></ha-icon><span class="pulse"></span></div><div class="status-row"><span class="pill" data-v="online"></span><span class="pill" data-v="chargerMode"></span></div></article>
     <div class="metrics">${this._metric("range", "mdi:map-marker-distance", "R\xE6kkevidde")}${this._metric("odometer", "mdi:speedometer", "Kilometerstand")}${this._metric("inside", "mdi:car-defrost-front", "Kabine")}${this._metric("outside", "mdi:thermometer", "Ude")}${this._metric("daily", "mdi:road-variant", "K\xF8rt i dag")}${this._metric("costKm", "mdi:cash-multiple", "Pris pr. km")}</div></div>
-    <div class="summary"><div><small>SENESTE TUR</small><strong data-v="lastTrip">\u2014</strong><span data-v="lastTripMeta"></span></div><div><small>DENNE M\xC5NED</small><strong data-v="performance">\u2014</strong><span>effektivitetsscore</span></div><div><small>EV LEDGER</small><strong data-v="tripCount">\u2014</strong><span data-v="totalDistance"></span></div></div>`;
+    <div class="summary"><div><ha-icon class="tile-i" icon="mdi:map-marker-path"></ha-icon><small>Seneste tur</small><strong data-v="lastTrip">\u2014</strong><span data-v="lastTripMeta"></span></div><div><ha-icon class="tile-i" icon="mdi:chart-line"></ha-icon><small>Denne m\xE5ned</small><strong data-v="performance">\u2014</strong><span>effektivitetsscore</span></div><div><ha-icon class="tile-i" icon="mdi:book-open-variant"></ha-icon><small>EV Ledger</small><strong data-v="tripCount">\u2014</strong><span data-v="totalDistance"></span></div></div>`;
   }
   _vehicleInfoHtml() {
     return `<div class="vehicle-info-grid"><article><div class="section-head"><div><small>BILSTATUS</small><h2>Aktuel tilstand</h2></div><ha-icon icon="mdi:car-info"></ha-icon></div><div class="detail-grid">${this._fact("doorState", "D\xF8re")}${this._fact("trunkState", "Bagagerum")}${this._fact("sentryState", "Sentry")}${this._fact("sleepState", "Bilens forbindelse")}${this._fact("chargerState", "Tesla ladestik")}${this._fact("chargingState", "Tesla ladestatus")}</div></article><article><div class="section-head"><div><small>KABINE</small><h2>Klima & data</h2></div><ha-icon icon="mdi:car-defrost-front"></ha-icon></div><div class="detail-grid">${this._fact("hvacState", "Klima")}${this._fact("hvacTarget", "M\xE5ltemperatur")}${this._fact("insideInfo", "Kabine")}${this._fact("outsideInfo", "Udetemperatur")}${this._fact("efficiencyInfo", "Batterieffektivitet")}${this._fact("lastUpdateInfo", "Senest opdateret")}</div></article><article class="location-card"><div class="section-head"><div><small>LOKATION</small><h2 data-v="locationState">\u2014</h2></div><ha-icon icon="mdi:map-marker"></ha-icon></div><p class="note" data-v="locationCoords"></p><div class="edit-actions"><button data-more="location">Vis placering</button></div></article><article><div class="section-head"><div><small>D\xC6KTRYK</small><h2>TPMS</h2></div><span class="pill">PSI</span></div><div class="tyres"><div>${this._fact("tpmsFl", "Foran venstre")}${this._fact("tpmsRl", "Bagest venstre")}</div><ha-icon icon="mdi:car-sports"></ha-icon><div>${this._fact("tpmsFr", "Foran h\xF8jre")}${this._fact("tpmsRr", "Bagest h\xF8jre")}</div></div></article></div>`;
@@ -2129,7 +2211,7 @@ var HaTeslaChargePopupCard = class extends HTMLElement {
     if (el && el.textContent !== String(value)) el.textContent = value;
   }
   _build() {
-    this.shadowRoot.innerHTML = `<style>:host{display:block;color:var(--primary-text-color,#f5f7fb)}*{box-sizing:border-box}.wrap{position:relative;overflow:hidden;padding:22px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--dashboard-accent,var(--primary-color,#62b5ff));border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#1c1f26)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.25)))}.watermark{position:absolute;right:-24px;bottom:-28px;width:150px;height:150px;opacity:.06;color:var(--dashboard-accent,var(--primary-color,#62b5ff));pointer-events:none}.head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;position:relative;z-index:1}.eyebrow,small{font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9aa4b2)}h2{margin:4px 0 0;font-size:24px}.pill{padding:6px 10px;border-radius:999px;background:color-mix(in srgb,var(--dashboard-accent,var(--primary-color,#62b5ff)) 14%,transparent);font-size:9px;font-weight:800;letter-spacing:.07em}.hero{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.fact{padding:12px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent)}.fact small,.fact strong{display:block}.fact strong{margin-top:6px;font-size:15px}.now{grid-column:1/-1;border-left:calc(var(--dashboard-left-accent-width, 1) * 2px) solid var(--dashboard-accent,var(--primary-color,#62b5ff))}.now strong{font-size:20px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;position:relative;z-index:2}button{min-height:45px;border:0;border-radius:12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;color:var(--primary-text-color,#fff);background:color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent)}button.primary{background:var(--dashboard-accent,var(--primary-color,#62b5ff));color:var(--text-primary-color,#10141b)}button.stop{background:color-mix(in srgb,var(--error-color,#ff5f68) 14%,transparent);color:var(--error-color,#ff5f68)}button.nav{grid-column:1/-1;border:1px solid color-mix(in srgb,var(--dashboard-accent,var(--primary-color,#62b5ff)) 25%,transparent)}button:disabled{opacity:.35;cursor:not-allowed}.hint{margin:12px 2px 0;color:var(--secondary-text-color,#9aa4b2);font-size:11px;line-height:1.4}@media(max-width:480px){.wrap{padding:18px}.hero{grid-template-columns:1fr 1fr}h2{font-size:21px}}</style><div class="wrap"><ha-icon class="watermark" icon="mdi:ev-station"></ha-icon><div class="head"><div><span class="eyebrow">KABEL TILSLUTTET</span><h2>${this.config.title}</h2></div><span class="pill" data-v="state">\u2014</span></div><div class="hero"><div class="fact"><small>START IF\xD8LGE PLAN</small><strong data-v="start">\u2014</strong></div><div class="fact"><small>PLANLAGT F\xC6RDIG</small><strong data-v="end">\u2014</strong></div><div class="fact"><small>ESTIMERET PRIS NU</small><strong data-v="price">\u2014</strong></div><div class="fact"><small>LADETID</small><strong data-v="duration">\u2014</strong></div><div class="fact now"><small>F\xC6RDIG HVIS DU STARTER NU</small><strong data-v="finishNow">\u2014</strong></div></div><div class="actions"><button class="primary" data-action="start">Lad nu</button><button class="stop" data-action="stop">Stop</button><button class="nav" data-action="navigate">\xC5bn hele Tesla-siden</button></div><p class="hint" data-v="hint"></p></div>`;
+    this.shadowRoot.innerHTML = `<style>:host{display:block;color:var(--primary-text-color,#f5f7fb)}*{box-sizing:border-box}.wrap{position:relative;overflow:hidden;padding:22px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--dashboard-accent,var(--primary-color,#62b5ff));border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#1c1f26)));box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.25)))}.watermark{position:absolute;right:-24px;bottom:-28px;width:150px;height:150px;opacity:.06;color:var(--dashboard-accent,var(--primary-color,#62b5ff));pointer-events:none}.head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;position:relative;z-index:1}.eyebrow,small{font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9aa4b2)}h2{margin:4px 0 0;font-size:24px}.pill{padding:6px 10px;border-radius:999px;background:color-mix(in srgb,var(--dashboard-accent,var(--primary-color,#62b5ff)) 14%,transparent);font-size:9px;font-weight:800;letter-spacing:.07em}.hero{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.fact{padding:12px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent)}.fact small,.fact strong{display:block}.fact strong{margin-top:6px;font-size:15px}.now{grid-column:1/-1;border-left:calc(var(--dashboard-left-accent-width, 1) * 2px) solid var(--dashboard-accent,var(--primary-color,#62b5ff))}.now strong{font-size:20px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;position:relative;z-index:2}button{min-height:45px;border:0;border-radius:12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;color:var(--primary-text-color,#fff);background:color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent)}button.primary{background:var(--dashboard-accent,var(--primary-color,#62b5ff));color:var(--text-primary-color,#10141b)}button.stop{background:color-mix(in srgb,var(--error-color,#ff5f68) 14%,transparent);color:var(--error-color,#ff5f68)}button.nav{grid-column:1/-1;border:1px solid color-mix(in srgb,var(--dashboard-accent,var(--primary-color,#62b5ff)) 25%,transparent)}button:disabled{opacity:.35;cursor:not-allowed}.hint{margin:12px 2px 0;color:var(--secondary-text-color,#9aa4b2);font-size:11px;line-height:1.4}@media(max-width:480px){.wrap{padding:18px}.hero{grid-template-columns:1fr 1fr}h2{font-size:21px}}/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card). */.wrap .fact{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:85px;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}.wrap .fact:nth-child(3){--tile-accent:var(--orange,var(--warning-color,#fb923c))}.wrap .fact:nth-child(4),.wrap .fact.now{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}.wrap .fact .tile-i{display:block;position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:tvpTileDrift 5s ease-in-out infinite}.wrap .fact strong,.wrap .now strong{order:1;position:relative;z-index:1;margin:0;font-size:18px;font-weight:750;line-height:21px;color:var(--gray800,var(--primary-text-color,#f8fafc));white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}.wrap .fact small{order:4;position:relative;z-index:1;margin:0;padding-right:35px;font-size:11px;font-weight:700;line-height:14px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));letter-spacing:0;text-transform:none}@keyframes tvpTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}@media(max-width:600px){.wrap .fact{padding:9px}.wrap .fact strong,.wrap .now strong{font-size:16px}.wrap .fact small{font-size:10px}}@media(prefers-reduced-motion:reduce){.wrap .tile-i{animation:none}}</style><div class="wrap"><ha-icon class="watermark" icon="mdi:ev-station"></ha-icon><div class="head"><div><span class="eyebrow">KABEL TILSLUTTET</span><h2>${this.config.title}</h2></div><span class="pill" data-v="state">\u2014</span></div><div class="hero"><div class="fact"><ha-icon class="tile-i" icon="mdi:clock-start"></ha-icon><small>Start if\xF8lge plan</small><strong data-v="start">\u2014</strong></div><div class="fact"><ha-icon class="tile-i" icon="mdi:flag-checkered"></ha-icon><small>Planlagt f\xE6rdig</small><strong data-v="end">\u2014</strong></div><div class="fact"><ha-icon class="tile-i" icon="mdi:cash"></ha-icon><small>Estimeret pris nu</small><strong data-v="price">\u2014</strong></div><div class="fact"><ha-icon class="tile-i" icon="mdi:timer-outline"></ha-icon><small>Ladetid</small><strong data-v="duration">\u2014</strong></div><div class="fact now"><ha-icon class="tile-i" icon="mdi:flash"></ha-icon><small>F\xE6rdig hvis du starter nu</small><strong data-v="finishNow">\u2014</strong></div></div><div class="actions"><button class="primary" data-action="start">Lad nu</button><button class="stop" data-action="stop">Stop</button><button class="nav" data-action="navigate">\xC5bn hele Tesla-siden</button></div><p class="hint" data-v="hint"></p></div>`;
     this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = true;
   }
@@ -2171,7 +2253,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.1.2";
+var TTD_VERSION = "1.1.3";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2545,10 +2627,10 @@ function ttdIcon(icon3, cls = "") {
 function ttdTemplate(cfg) {
   const e = ttdEsc;
   const stat = (key, icon3, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon3)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
-  const kpi = (key, ref, label) => `<button class="kpi" data-more="${key}"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
+  const kpi = (key, icon3, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon3, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
   const cell = (key, icon3, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon3, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
-  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
+  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}">${ttdIcon("mdi:tire", "tile-i")}<b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
   const item2 = (key, icon3, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon3)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
@@ -2571,7 +2653,7 @@ function ttdTemplate(cfg) {
   <header class="ph">${ttdIcon("mdi:lightning-bolt", "ph-i green")}<div class="ph-t"><h3>Opladning</h3><p data-r="chargeSub">${TTD_DASH}</p></div><span class="badge" data-r="chargeBadge">${ttdIcon("mdi:power-plug", "")}<span data-r="chargeBadgeText">${TTD_DASH}</span></span></header>
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
-  <div class="box kpis">${kpi("charger_power", "power", "Aktuel effekt")}${kpi("charging_rate", "rate", "Ladehastighed")}${kpi("charging_finish_time", "finish", "Forventet slut")}${kpi("charging_time_remaining", "remaining", "Resttid")}</div>
+  <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
   <div class="box monta">
     <button class="monta-main" data-more="monta_state"><i class="mdot" data-r="montaDot"></i><span><b>Monta</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -2880,7 +2962,64 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .icon-btn[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 50%,transparent)}
 .icon-btn[aria-pressed=true] ha-icon{color:var(--tdc-text)}
 .btn[data-busy]{opacity:.7;cursor:progress}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   card surface, shadow and rounded corners on the panels; the stat, KPI, plan, tyre and last-charge
+   tiles get an accent edge, the big value first with detail and label below, and a large faint drifting icon. */
+.wrap{--tdc-panel:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));--tdc-radius:15px;
+  --tdc-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));
+  --ttd-info:var(--state-info-icon,var(--info-color,#38bdf8));--ttd-ok:var(--state-on-icon,var(--success-color,#20e3a2));
+  --ttd-warm:var(--orange,var(--warning-color,#fb923c));--ttd-warn:var(--warning-color,#f59e0b);
+  --ttd-err:var(--error-color,#ef4444);--ttd-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.dash .panel{border-radius:15px;box-shadow:var(--tdc-shadow)}
+.dash .kpis.box,.dash .plan-top.box,.dash .plan-mid.box{border:0;border-radius:0;background:none;gap:10px}
+.dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{--tile-accent:var(--ttd-info);position:relative;isolation:isolate;overflow:hidden;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-width:0;padding:10px 12px;text-align:left;
+  border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;
+  background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
+  box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.dash .stat:hover,.dash .kpi:hover,.dash .cell:hover,.dash .tire:hover{background:color-mix(in srgb,var(--primary-text-color,#fff) 9%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
+.dash .stat-t,.dash .cell>span,.dash .lc>span,.dash .lc-i{display:contents}
+.dash .stat>ha-icon,.dash .kpi>.tile-i,.dash .cell>ha-icon,.dash .tire>.tile-i,.dash .lc-i ha-icon{display:block;position:absolute;right:-10px;bottom:-10px;z-index:0;
+  width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:ttdTileDrift 5s ease-in-out infinite}
+.dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{order:1;position:relative;z-index:1;font-size:18px;font-weight:750;line-height:21px;
+  color:var(--gray800,var(--primary-text-color,#f8fafc));white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.dash .cell em,.dash .tire em{order:3;position:relative;z-index:1;margin:0;padding-right:35px;font-size:11px;line-height:14px;white-space:normal;overflow:visible}
+.dash .cell em{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+.dash .tire em{color:var(--tile-accent);font-weight:700}
+.dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small{order:4;position:relative;z-index:1;margin:0;padding-right:35px;
+  font-size:11px;font-weight:700;line-height:14px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));letter-spacing:0;text-transform:none;white-space:normal;overflow:visible}
+.dash .lc-grid{gap:10px}
+.dash .hero-stats{gap:10px}
+.dash .stat:nth-child(2){--tile-accent:var(--ttd-warm)}
+.dash .stat:nth-child(4){--tile-accent:var(--ttd-ok)}
+.dash .kpi:nth-child(1){--tile-accent:var(--ttd-warm)}
+.dash .kpi:nth-child(2){--tile-accent:var(--ttd-ok)}
+.dash .cell:has(>.ic.green){--tile-accent:var(--ttd-ok)}
+.dash .cell:has(>.ic.amber){--tile-accent:var(--ttd-warm)}
+.dash .cell:has(>.ic.orange){--tile-accent:var(--ttd-warn)}
+.dash .tire{--tile-accent:var(--ttd-muted)}
+.dash .tire[data-tone=ok]{--tile-accent:var(--ttd-ok)}
+.dash .tire[data-tone=info]{--tile-accent:var(--ttd-info)}
+.dash .tire[data-tone=warn]{--tile-accent:var(--ttd-warn)}
+.dash .tire[data-tone=crit]{--tile-accent:var(--ttd-err)}
+.dash .tire small{padding-right:0}
+.dash .tpms-body{grid-template-columns:minmax(0,1fr) minmax(44px,68px) minmax(0,1fr)}
+@container panel (max-width:360px){.dash .tire{padding:9px}.dash .tire b{font-size:16px;line-height:19px}}
+.dash .lc:nth-child(1){--tile-accent:var(--ttd-ok)}
+.dash .lc:nth-child(2){--tile-accent:var(--ttd-warm)}
+.dash .monta.box{border:0;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+@keyframes ttdTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@container ttd (max-width:699px){
+  .dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{padding:9px}
+  .dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{font-size:16px}
+  .dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small,.dash .cell em,.dash .tire em{font-size:10px}
+}
+@media (max-width:600px){
+  .dash .stat,.dash .kpi,.dash .cell,.dash .tire,.dash .lc{padding:9px}
+  .dash .stat b,.dash .kpi b,.dash .cell b,.dash .tire b,.dash .lc b{font-size:16px}
+  .dash .stat small,.dash .kpi small,.dash .cell small,.dash .tire small,.dash .lc small,.dash .cell em,.dash .tire em{font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.dash ha-icon{animation:none!important}}
 `;
 var ThTeslaDashboardCard = class extends HTMLElement {
   static deriveStatus(snapshot) {
@@ -4903,15 +5042,31 @@ var PoolForecastCard = class extends HTMLElement {
         .model{margin-top:8px;font-size:12px;line-height:1.35;color:var(--secondary-text-color);opacity:.85;position:relative;z-index:1}.empty{min-height:132px;display:grid;place-items:center;color:var(--secondary-text-color);font-size:14px;font-weight:650}
         @media(max-width:720px){ha-card{border-radius:16px;padding:13px 12px 11px}.header{grid-template-columns:1fr;gap:8px}.stats{justify-content:flex-start}.title-main{font-size:18px}.title-sub{font-size:12px}.badge{min-width:62px;height:40px;border-radius:10px}.badge span{font-size:8px}.badge strong{font-size:17px}.chart{aspect-ratio:760/260}.axis,.date-label{font-size:13px;font-weight:800}.value{font-size:14px;stroke-width:4px}.weather-days{gap:4px}.weather-day{padding:7px 3px}.weather-day-name{font-size:11px}.weather-range-text{font-size:12px}.weather-day img,.weather-day ha-icon{width:28px;height:28px}.weather-meta{font-size:9px}.weather-meta span:nth-child(2){display:none}.weather-condition{display:none}.model{font-size:11px}}
         @media(prefers-reduced-motion:reduce){.bg-icon-inner,.bg-icon-inner ha-icon{animation:none}}
+        /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+           accent edge that follows --dashboard-left-accent-width, nested card surface, big value on
+           top, detail and label below, and a large faint drifting icon. */
+        .stats{flex-wrap:wrap;gap:8px}
+        .stats .badge,.weather-days .weather-day{--tile-accent:var(--badge-color,var(--state-info-icon,var(--info-color,#38bdf8)));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:96px;height:auto;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;line-height:normal}
+        .weather-days .weather-day{--tile-accent:var(--pool-accent);min-width:0}
+        .stats .badge strong,.weather-day .weather-range-text{order:1;position:relative;z-index:2;display:flex;justify-content:flex-start;align-items:baseline;gap:5px;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:nowrap}
+        .weather-range-text b{color:inherit;font-weight:750}.weather-range-text span{color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700}
+        .weather-day .weather-meta,.weather-day .weather-condition{order:3;position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:0 6px;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:normal;overflow:visible;text-overflow:clip}
+        .stats .badge span,.weather-day .weather-day-name{order:4;position:relative;z-index:2;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none}
+        .stats .badge>ha-icon,.weather-day>img,.weather-day>ha-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolForecastTileDrift 5s ease-in-out infinite}
+        .weather-days{grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px}
+        @keyframes poolForecastTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+        @media(prefers-reduced-motion:reduce){.stats .badge>ha-icon,.weather-day>img,.weather-day>ha-icon{animation:none}}
+        @media(max-width:720px){.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.stats .badge{min-width:0}}
+        @media(max-width:600px){.stats .badge,.weather-days .weather-day{padding:9px}.stats .badge strong,.weather-day .weather-range-text{font-size:16px;line-height:19px}.stats .badge span,.weather-day .weather-day-name,.weather-day .weather-meta,.weather-day .weather-condition{font-size:10px;line-height:13px}.weather-day .weather-meta span:nth-child(2){display:inline}.weather-days{gap:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}}
       </style>
       <ha-card>
         <div class="bg-icon"><div class="bg-icon-inner"><ha-icon icon="mdi:thermometer-lines"></ha-icon></div></div>
         <div class="header">
           <div><div class="title-main">${this._escape(this.config?.title)}</div><div class="title-sub">${this._escape(this.config?.subtitle)}</div></div>
           <div class="stats">
-            <div class="badge" style="--badge-color:var(--pool-low)"><span>I DAG</span><strong>${this._fmt(today)}&deg;</strong></div>
-            <div class="badge" style="--badge-color:var(--pool-estimate)"><span>I MORGEN</span><strong>${this._fmt(tomorrow)}&deg;</strong></div>
-            <div class="badge" style="--badge-color:var(--pool-accent)"><span>4 DAGE</span><strong>${deltaText}</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-low)"><ha-icon icon="mdi:thermometer-water"></ha-icon><span>I dag</span><strong>${this._fmt(today)}&deg;</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-estimate)"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon><span>I morgen</span><strong>${this._fmt(tomorrow)}&deg;</strong></div>
+            <div class="badge" style="--badge-color:var(--pool-accent)"><ha-icon icon="mdi:trending-up"></ha-icon><span>4 dage</span><strong>${deltaText}</strong></div>
           </div>
         </div>
         <div class="chart-wrap">${this._renderChart(points)}</div>
@@ -5430,6 +5585,16 @@ var PoolHistoryCard = class extends HTMLElement {
         @media (prefers-reduced-motion: reduce) {
           .bg-icon-inner, .bg-icon-inner ha-icon { animation: none; }
         }
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card): accent edge that follows --dashboard-left-accent-width, nested card surface, big value on top, label below, and a large faint drifting icon. */
+.stats{flex-wrap:wrap;gap:8px}
+.stats .badge{--tile-accent:var(--badge-color,var(--state-info-icon,var(--info-color,#38bdf8)));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:96px;height:auto;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;line-height:normal;white-space:normal}
+.stats .badge strong{order:1;position:relative;z-index:2;display:block;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:nowrap}
+.stats .badge span{order:4;position:relative;z-index:2;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal}
+.stats .badge>ha-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolHistoryTileDrift 5s ease-in-out infinite}
+@keyframes poolHistoryTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media(prefers-reduced-motion:reduce){.stats .badge>ha-icon{animation:none}}
+@media(max-width:720px){.stats{display:grid;grid-template-columns:repeat(var(--tile-cols,3),minmax(0,1fr))}.stats .badge,.stats .badge.chlorine-current{min-width:0;height:auto}}
+@media(max-width:600px){.stats .badge{padding:9px}.stats .badge strong{font-size:16px;line-height:19px}.stats .badge span{font-size:10px;line-height:13px}}
       </style>
       <ha-card>
         <div class="bg-icon"><div class="bg-icon-inner"><ha-icon icon="mdi:pool"></ha-icon></div></div>
@@ -5439,9 +5604,9 @@ var PoolHistoryCard = class extends HTMLElement {
             <div class="title-sub">${this._escape(this.config?.subtitle || "")}</div>
           </div>
           <div class="stats">
-            <div class="badge" style="--badge-color: var(--pool-high);"><span>H\xD8J</span><strong>${this._fmt(weekHigh)}&deg;</strong></div>
-            <div class="badge" style="--badge-color: var(--pool-low);"><span>LAV</span><strong>${this._fmt(weekLow)}&deg;</strong></div>
-            <div class="badge" style="--badge-color: var(--pool-pump);"><span>FILTER 7D</span><strong>${this._fmt(totalPump)}t</strong></div>
+            <div class="badge" style="--badge-color: var(--pool-high);"><ha-icon icon="mdi:thermometer-chevron-up"></ha-icon><span>H\xF8j</span><strong>${this._fmt(weekHigh)}&deg;</strong></div>
+            <div class="badge" style="--badge-color: var(--pool-low);"><ha-icon icon="mdi:thermometer-chevron-down"></ha-icon><span>Lav</span><strong>${this._fmt(weekLow)}&deg;</strong></div>
+            <div class="badge" style="--badge-color: var(--pool-pump);"><ha-icon icon="mdi:filter-outline"></ha-icon><span>Filter 7 dage</span><strong>${this._fmt(totalPump)}t</strong></div>
           </div>
         </div>
         <div class="chart-wrap">
@@ -5700,7 +5865,18 @@ var PoolWaterQualityCard = class extends HTMLElement {
       .legend::after{content:"Anbefalet m\xE5lomr\xE5de \xB7 pH 7,2\u20137,6 \xB7 Klor 1,0\u20133,0 mg/L";flex-basis:100%;display:block;margin-top:1px;padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--color-success-500,#22c55e) 9%,transparent);border:1px solid color-mix(in srgb,var(--color-success-500,#22c55e) 24%,transparent);color:var(--secondary-text-color);font-size:12px;font-weight:750;box-sizing:border-box}
       .target-band{fill:var(--color-success-500,#22c55e);pointer-events:none}.ph-target{opacity:.075;stroke:color-mix(in srgb,var(--ph) 45%,transparent);stroke-width:1}.chlorine-target{opacity:.055;stroke:color-mix(in srgb,var(--chlorine) 48%,transparent);stroke-width:1}.target-label{font-size:9px;font-weight:850;fill:var(--color-success-500,#22c55e);opacity:.9}.quality-segment{fill:none;stroke-width:3.8;stroke-linecap:round}.quality-segment.chlorine{stroke-dasharray:7 5}.quality-segment.good{stroke:var(--color-success-500,#22c55e)}.quality-segment.warning{stroke:var(--color-warning-500,#f59e0b)}.quality-segment.bad{stroke:var(--color-error-500,#ef4444)}.dot{stroke:var(--surface);stroke-width:1.7}.dot.good{fill:var(--color-success-500,#22c55e)!important}.dot.warning{fill:var(--color-warning-500,#f59e0b)!important}.dot.bad{fill:var(--color-error-500,#ef4444)!important}.legend .line-key{background:var(--primary-text-color)}.legend .chlorine-key{background:repeating-linear-gradient(90deg,var(--primary-text-color) 0 6px,transparent 6px 9px)}
       :host{display:block;--ph:#8b5cf6;--chlorine:#14b8a6;--accent:#8b5cf6}ha-card{position:relative;overflow:hidden;border-radius:18px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);background:var(--surface);box-shadow:var(--dashboard-shadow-soft);padding:16px 18px 13px;box-sizing:border-box}.bg-icon{position:absolute;right:-34px;bottom:-34px;width:178px;height:178px;opacity:.18;color:var(--accent);pointer-events:none;z-index:0}.bg-icon-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;width:100%;height:100%;animation:qualityIconFloat 6s ease-in-out infinite;transform-origin:center;will-change:transform}.bg-icon-inner ha-icon{display:block;width:178px!important;height:178px!important;--mdc-icon-size:178px;animation:qualityIconPulse 3.2s ease-in-out infinite;transform-origin:center;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--dashboard-icon-muted) 22%,transparent));will-change:transform,opacity}@keyframes qualityIconFloat{0%{transform:translate(0,0) rotate(0deg) scale(1)}50%{transform:translate(-8px,-6px) rotate(-4deg) scale(1.05)}100%{transform:translate(0,0) rotate(0deg) scale(1)}}@keyframes qualityIconPulse{0%{transform:scale(1);opacity:.95}50%{transform:scale(1.09);opacity:1}100%{transform:scale(1);opacity:.95}}.header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;position:relative;z-index:1}.title-main{font-size:20px;font-weight:850;color:var(--primary-text-color)}.title-sub{margin-top:4px;font-size:13px;font-weight:650;color:var(--secondary-text-color)}.stats{display:flex;gap:7px;align-items:center;justify-content:flex-end}.badge{min-width:74px;height:44px;padding:5px 10px;border-radius:12px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#07111f;background:linear-gradient(135deg,var(--badge),color-mix(in srgb,var(--badge) 74%,black 26%));box-shadow:0 7px 16px rgba(0,0,0,.16);cursor:pointer;white-space:nowrap}.badge.chlorine-current{min-width:112px}.badge span{font-size:8px;font-weight:900;letter-spacing:.07em;line-height:1}.badge strong{font-size:18px;font-weight:900;line-height:1;margin-top:4px;white-space:nowrap}.chart-wrap{position:relative;z-index:1;margin-top:8px}.chart{width:100%;height:auto;display:block;aspect-ratio:760/226}.grid{stroke:color-mix(in srgb,var(--secondary-text-color) 20%,transparent)}.axis,.date-label{fill:var(--secondary-text-color);font-size:13px;font-weight:750}.ph-axis{fill:#a78bfa}.chlorine-axis{fill:#14b8a6}.ph-line,.chlorine-line{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}.ph-line{stroke:var(--ph)}.chlorine-line{stroke:var(--chlorine)}.dot.ph{fill:var(--ph)}.dot.chlorine{fill:var(--chlorine)}.legend{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:8px 15px;margin-top:3px;color:var(--secondary-text-color);font-size:13px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:18px;height:3px;border-radius:99px;background:var(--legend)}.empty{min-height:150px;display:grid;place-items:center;color:var(--secondary-text-color);font-weight:650}.measured{margin-top:8px;font-size:12px;color:var(--secondary-text-color);position:relative;z-index:1}@media(max-width:720px){ha-card{padding:13px 12px 11px}.header{grid-template-columns:1fr;gap:8px}.stats{justify-content:flex-start}.title-main{font-size:18px}.title-sub{font-size:12px}.badge{min-width:68px;height:40px;padding:4px 8px}.badge.chlorine-current{min-width:102px}.badge strong{font-size:16px}.chart{aspect-ratio:760/270}.axis,.date-label{font-size:12px;font-weight:800}}@media(prefers-reduced-motion:reduce){.bg-icon-inner,.bg-icon-inner ha-icon{animation:none}}
-    </style><ha-card><div class="bg-icon"><div class="bg-icon-inner"><ha-icon icon="mdi:flask-round-bottom"></ha-icon></div></div><div class="header"><div><div class="title-main">${this._escape(this.config?.title)}</div><div class="title-sub">${this._escape(this.config?.subtitle)}</div></div><div class="stats"><div class="badge ph-current" title="pH ${phQuality.label} \xB7 tryk for mere info" style="--badge:${phQuality.color}"><span>pH \xB7 ${phQuality.label}</span><strong>${this._fmt(ph)}</strong></div><div class="badge chlorine-current" title="Klor ${chlorineQuality.label} \xB7 tryk for mere info" style="--badge:${chlorineQuality.color}"><span>KLOR \xB7 ${chlorineQuality.label}</span><strong>${this._fmt(chlorine)} mg/L</strong></div></div></div><div class="chart-wrap">${this._error ? `<div class="empty">${this._escape(this._error)}</div>` : this._loading && !points.length ? `<div class="empty">Henter historik...</div>` : this._renderChart(points)}</div><div class="legend"><span><i class="line-key ph-key"></i>pH \xB7 fuld linje</span><span><i class="line-key chlorine-key"></i>Klor \xB7 stiplet</span><span><i style="--legend:var(--quality-good)"></i>OK</span><span><i style="--legend:var(--quality-warning)"></i>T\xE6t p\xE5</span><span><i style="--legend:var(--quality-bad)"></i>Udenfor</span></div><div class="measured">Seneste gemte m\xE5ling: ${this._escape(measured)}</div></ha-card>`;
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card): accent edge that follows --dashboard-left-accent-width, nested card surface, big value on top, label below, and a large faint drifting icon. */
+.stats{flex-wrap:wrap;gap:8px}
+.stats .badge{--tile-accent:var(--badge,var(--state-info-icon,var(--info-color,#38bdf8)));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:96px;height:auto;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;line-height:normal;white-space:normal}
+.stats .badge strong{order:1;position:relative;z-index:2;display:block;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:nowrap}
+.stats .badge span{order:4;position:relative;z-index:2;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal}
+.stats .badge>ha-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:poolQualityTileDrift 5s ease-in-out infinite}
+@keyframes poolQualityTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media(prefers-reduced-motion:reduce){.stats .badge>ha-icon{animation:none}}
+@media(max-width:720px){.stats{display:grid;grid-template-columns:repeat(var(--tile-cols,3),minmax(0,1fr))}.stats .badge,.stats .badge.chlorine-current{min-width:0;height:auto}}
+@media(max-width:600px){.stats .badge{padding:9px}.stats .badge strong{font-size:16px;line-height:19px}.stats .badge span{font-size:10px;line-height:13px}}
+.stats{--tile-cols:2}.stats .badge.chlorine-current{min-width:112px}
+    </style><ha-card><div class="bg-icon"><div class="bg-icon-inner"><ha-icon icon="mdi:flask-round-bottom"></ha-icon></div></div><div class="header"><div><div class="title-main">${this._escape(this.config?.title)}</div><div class="title-sub">${this._escape(this.config?.subtitle)}</div></div><div class="stats"><div class="badge ph-current" title="pH ${phQuality.label} \xB7 tryk for mere info" style="--badge:${phQuality.color}"><ha-icon icon="mdi:ph"></ha-icon><span>pH \xB7 ${phQuality.label}</span><strong>${this._fmt(ph)}</strong></div><div class="badge chlorine-current" title="Klor ${chlorineQuality.label} \xB7 tryk for mere info" style="--badge:${chlorineQuality.color}"><ha-icon icon="mdi:flask-outline"></ha-icon><span>Klor \xB7 ${chlorineQuality.label}</span><strong>${this._fmt(chlorine)} mg/L</strong></div></div></div><div class="chart-wrap">${this._error ? `<div class="empty">${this._escape(this._error)}</div>` : this._loading && !points.length ? `<div class="empty">Henter historik...</div>` : this._renderChart(points)}</div><div class="legend"><span><i class="line-key ph-key"></i>pH \xB7 fuld linje</span><span><i class="line-key chlorine-key"></i>Klor \xB7 stiplet</span><span><i style="--legend:var(--quality-good)"></i>OK</span><span><i style="--legend:var(--quality-warning)"></i>T\xE6t p\xE5</span><span><i style="--legend:var(--quality-bad)"></i>Udenfor</span></div><div class="measured">Seneste gemte m\xE5ling: ${this._escape(measured)}</div></ha-card>`;
     this.shadowRoot.querySelector(".ph-current")?.addEventListener("click", () => this._moreInfo(this.config.ph_entity));
     this.shadowRoot.querySelector(".chlorine-current")?.addEventListener("click", () => this._moreInfo(this.config.chlorine_entity));
   }
@@ -7810,7 +7986,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.7.12";
+var VERSION13 = "0.7.13";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -8166,7 +8342,21 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       @media(max-width:700px){.tabs{gap:0;padding:0;overflow:hidden;border:0;background:transparent;box-shadow:inset 0 0 0 1px var(--divider-color,var(--edge))}.tabs button{border-radius:0}.tabs button:first-child{border-radius:14px 0 0 14px}.tabs button:last-child{border-radius:0 14px 14px 0}}
       /* Telefon: fanerne rykker op, s\xE5 der er lige langt fra rammen til kortets top og sider. */
       @media(max-width:600px){ha-card{padding-top:8px}}
-    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong>` : this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>SNIT</span><b>${this._fmt(avg)}</b></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xD8J</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, big value first, label last and a large faint drifting icon.
+         The summary row keeps its fixed height so the chart below is unchanged. */
+      ha-card .summary{grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr));align-items:stretch;gap:8px}
+      ha-card .summary .day,ha-card .summary .stat{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:stretch!important;gap:0!important;min-width:0;height:100%!important;padding:3px 12px!important;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;line-height:normal!important}
+      ha-card .summary .stat{--tile-accent:var(--stat-color)}
+      ha-card .summary .day{overflow:hidden;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:15px;font-weight:750;line-height:19px;letter-spacing:0}
+      ha-card .summary .day .now-value,ha-card .summary .stat b{order:1;position:relative;z-index:2;display:block;margin:0;overflow:hidden;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;letter-spacing:0;white-space:nowrap;text-overflow:ellipsis}
+      ha-card .summary .day .now-value small{margin-left:3px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700}
+      ha-card .summary .day .now-label,ha-card .summary .stat span{order:4;position:relative;z-index:2;display:block;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal}
+      ha-card .summary .tile-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:epTileDrift 5s ease-in-out infinite}
+      @keyframes epTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){ha-card .summary .tile-icon{animation:none}}
+      @media(max-width:600px){ha-card .summary{grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:5px}ha-card .summary .day,ha-card .summary .stat{padding:2px 9px!important}ha-card .summary .day{font-size:12px;line-height:15px}ha-card .summary .day .now-value,ha-card .summary .stat b{font-size:16px;line-height:19px}ha-card .summary .day .now-value small{font-size:10px}ha-card .summary .day .now-label,ha-card .summary .stat span{padding-right:12px;font-size:10px;line-height:12px}}
+    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong><ha-icon class="tile-icon" icon="mdi:flash"></ha-icon>` : this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>Lav</span><b>${this._fmt(min)}</b><ha-icon class="tile-icon" icon="mdi:arrow-down-bold"></ha-icon></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>Snit</span><b>${this._fmt(avg)}</b><ha-icon class="tile-icon" icon="mdi:approximately-equal"></ha-icon></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xF8j</span><b>${this._fmt(max)}</b><ha-icon class="tile-icon" icon="mdi:arrow-up-bold"></ha-icon></div></div>${this._bars(points)}</ha-card>`;
     const compactMobile = window.matchMedia("(max-width: 600px)").matches;
     const card = this.shadowRoot.querySelector("ha-card");
     const weekSlot = this.shadowRoot.querySelector(".week-slot");
@@ -28703,7 +28893,7 @@ var HACardListEditor9 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION27 = "0.2.1";
+var VERSION27 = "0.2.2";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28855,7 +29045,36 @@ var HAPetCareCard = class extends HTMLElement {
       .section-title{display:flex;align-items:end;justify-content:space-between;margin:5px 2px 9px}.section-title span{color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.section-title strong{font-size:10px}.meals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:9px}.meal{--tone:var(--pet-muted);min-width:0;padding:12px;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--pet-edge));border-radius:16px;background:linear-gradient(150deg,color-mix(in srgb,var(--tone) 7%,transparent),rgba(0,0,0,.035));animation:rise .35s both;animation-delay:var(--delay)}.meal.done{--tone:var(--pet-good)}.meal.pending{--tone:var(--pet-accent)}.meal.danger{--tone:var(--pet-danger)}.meal.skipped{--tone:var(--pet-warning)}.meal.disabled{opacity:.66}.meal-head{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:8px}.meal-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--tone) 13%,transparent);color:var(--tone)}.meal-icon ha-icon{width:20px;height:20px;--mdc-icon-size:20px}.meal-head div>span{display:block;color:var(--tone);font-size:9px;font-weight:800}.meal h3{overflow:hidden;margin:2px 0 0;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.switch{position:relative;width:31px;height:18px;padding:0;border:1px solid var(--pet-edge);border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer}.switch i{position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;background:var(--pet-muted);transition:.2s}.enabled .switch{background:color-mix(in srgb,var(--pet-good) 25%,transparent)}.enabled .switch i{left:16px;background:var(--pet-good);box-shadow:0 0 7px var(--pet-good)}.meal-status{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:11px 0 9px;color:var(--secondary-text-color);font-size:8px}.meal-status span{display:flex;align-items:center;gap:5px;color:var(--tone);font-weight:800;text-transform:uppercase}.meal-status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor}.meal-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.feed,.skip{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;min-height:34px;padding:0 6px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--pet-edge));border-radius:10px;background:color-mix(in srgb,var(--tone) 9%,transparent);color:var(--tone);font-size:8px;font-weight:800;cursor:pointer}.feed:hover,.skip:hover{background:color-mix(in srgb,var(--tone) 16%,transparent)}.feed ha-icon,.skip ha-icon{width:14px;height:14px;--mdc-icon-size:14px}
       .feeder{display:flex;flex-direction:column}.feeder-head{display:flex;align-items:center;justify-content:space-between}.feeder-head span{color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.health{display:flex;align-items:center;gap:6px;color:var(--pet-good);font-size:8px;font-weight:800;text-transform:uppercase}.health.error{color:var(--pet-danger)}.health i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}.health.error i{animation:pulse 1.3s infinite}.tank-wrap{display:grid;grid-template-columns:86px 1fr;align-items:center;gap:14px;margin:18px 0}.tank{position:relative;width:78px;height:112px;margin:auto;border:2px solid color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 45%,var(--pet-edge));border-radius:17px 17px 24px 24px;overflow:hidden;background:rgba(0,0,0,.1)}.fill{position:absolute;right:0;bottom:0;left:0;height:${percent2}%;background:linear-gradient(180deg,color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 68%,var(--pet-accent)),var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}));transition:height .8s ease}.fill:before{content:"";position:absolute;top:-5px;left:-10%;width:120%;height:10px;border-radius:50%;background:color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 72%,white);animation:wave 3s ease-in-out infinite}.tank strong{position:absolute;inset:0;display:grid;place-items:center;z-index:1;font-size:20px;text-shadow:0 1px 5px rgba(0,0,0,.55)}.tank-data span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase}.tank-data strong{display:block;margin:3px 0 12px;font-size:14px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}.metric{padding:10px;border:1px solid var(--pet-edge);border-radius:12px;background:rgba(255,255,255,.025);cursor:pointer}.metric span{display:block;color:var(--secondary-text-color);font-size:7px;text-transform:uppercase}.metric strong{display:block;margin-top:4px;font-size:11px}.refill{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:39px;margin-top:9px;border:1px solid color-mix(in srgb,var(--pet-accent) 35%,var(--pet-edge));border-radius:12px;background:color-mix(in srgb,var(--pet-accent) 10%,transparent);color:var(--pet-accent);font-size:9px;font-weight:800;cursor:pointer}.refill ha-icon{width:17px;height:17px;--mdc-icon-size:17px}.no-animation *{animation:none!important;transition:none!important}
       @keyframes pulse{50%{opacity:.45;transform:scale(1.35)}}@keyframes ripple{0%{transform:scale(.65);opacity:.6}100%{transform:scale(1.3);opacity:0}}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes wave{50%{transform:translateX(7%) rotate(2deg)}}@media(max-width:760px){.shell{padding:15px}header{display:block}.summary{justify-content:flex-start;margin-top:13px}.summary>div{flex:1}.dashboard{grid-template-columns:1fr}.care-row{grid-template-columns:1fr 1fr}.meals{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.tank-wrap{margin:12px 0}}@media(max-width:420px){.care-row{grid-template-columns:1fr}.summary>div{min-width:80px;padding:9px}.meal-head{grid-template-columns:32px minmax(0,1fr) auto}.meal-icon{width:32px;height:32px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-    </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, m\xE5ltider og foder samlet \xE9t sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` \xB7 ${skipped} sprunget` : ""}</strong></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandsk\xE5l</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens m\xE5ltider</span><strong>${next ? `N\xE6ste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kr\xE6ver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent2)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, big value first, detail and label below and a large faint drifting icon.
+         Buttons, switches and the tank drawing keep their own look. */
+      .shell .summary>div,.shell .care,.shell .meal,.shell .metric{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left}
+      .shell .summary>div{min-width:124px;min-height:85px;border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .care,.shell .meal,.shell .metric{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      .shell .summary>.good,.shell .water.ok{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+      .shell .summary>.danger{--tile-accent:var(--error-color,#ef4444)}
+      .shell .water.low{--tile-accent:var(--warning-color,#f59e0b)}
+      .shell .meal{--tile-accent:var(--tone);justify-content:flex-start}
+      .shell .metric:first-child{--tile-accent:var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"})}
+      .shell .metric:nth-child(2){--tile-accent:${error ? "var(--pet-danger)" : "var(--pet-good)"}}
+      .shell .summary>div>strong,.shell .care>div>strong,.shell .metric>strong,.shell .meal .meal-head div>span{order:1;position:relative;z-index:2;display:block;margin:0;overflow:visible;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;letter-spacing:0;white-space:normal;text-overflow:clip}
+      .shell .care>div>small,.shell .meal .meal-status{order:3;position:relative;z-index:2;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:400;line-height:14px}
+      .shell .summary>div>span,.shell .care>div>span,.shell .metric>span,.shell .meal h3{order:4;position:relative;z-index:2;display:block;margin:0;padding-right:35px;overflow:visible;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;text-overflow:clip}
+      .shell .care{display:block}.shell .care>div{position:relative;z-index:2;display:flex;flex-direction:column;min-width:0}
+      .shell .meal-head,.shell .meal-head>div{display:contents}
+      .shell .meal .meal-head div>span{padding-right:44px}
+      .shell .meal .switch{position:absolute;top:11px;right:12px;z-index:3}
+      .shell .meal .meal-status{padding-right:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:0 6px;margin-top:1px}
+      .shell .meal .meal-status span{color:inherit;font-weight:400;text-transform:none}.shell .meal .meal-status i{color:var(--tone)}
+      .shell .meal .meal-status strong{font-weight:400}.shell .meal .meal-status strong:before{content:"\xB7";margin-right:6px}
+      .shell .meal h3{margin-top:1px}
+      .shell .meal .meal-actions{order:5;position:relative;z-index:2;margin-top:10px}
+      .shell .tile-icon,.shell .care .care-icon,.shell .meal .meal-icon{position:absolute;right:-10px;bottom:-10px;left:auto;top:auto;z-index:1;display:block;flex:none;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:petTileDrift 5s ease-in-out infinite}
+      .shell .care .care-icon ha-icon,.shell .meal .meal-icon ha-icon{width:58px;height:58px;--mdc-icon-size:58px}
+      @keyframes petTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.shell .tile-icon,.shell .care .care-icon,.shell .meal .meal-icon{animation:none}}
+      @media(max-width:600px){.shell .summary>div,.shell .care,.shell .meal,.shell .metric{padding:9px}.shell .summary>div{min-width:0}.shell .summary>div>strong,.shell .care>div>strong,.shell .metric>strong,.shell .meal .meal-head div>span{font-size:16px;line-height:19px}.shell .care>div>small,.shell .meal .meal-status,.shell .summary>div>span,.shell .care>div>span,.shell .metric>span,.shell .meal h3{font-size:10px;line-height:13px}.shell .meal .switch{top:9px;right:9px}}
+    </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, m\xE5ltider og foder samlet \xE9t sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong><ha-icon class="tile-icon" icon="mdi:water"></ha-icon></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` \xB7 ${skipped} sprunget` : ""}</strong><ha-icon class="tile-icon" icon="mdi:calendar-check"></ha-icon></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong><ha-icon class="tile-icon" icon="mdi:bowl-mix"></ha-icon></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandsk\xE5l</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens m\xE5ltider</span><strong>${next ? `N\xE6ste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kr\xE6ver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent2)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong><ha-icon class="tile-icon" icon="mdi:gauge"></ha-icon></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong><ha-icon class="tile-icon" icon="mdi:shield-check-outline"></ha-icon></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
     this.shadowRoot.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
     this.shadowRoot.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
@@ -32505,7 +32724,7 @@ window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Ov
 console.info(`SMART HOME OVERVIEW CARD ${VERSION31}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION32 = "0.3.1";
+var VERSION32 = "0.3.2";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -32775,6 +32994,28 @@ var HAAlarmCenterCard = class extends HTMLElement {
       .ack-btn{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--good) 42%,var(--edge));border-radius:11px;background:color-mix(in srgb,var(--good) 10%,transparent);color:var(--good);font-size:10px;font-weight:800;cursor:pointer}
       .ack-btn ha-icon{--mdc-icon-size:16px}.ack-btn:hover{background:color-mix(in srgb,var(--good) 18%,transparent)}
       @media(max-width:480px){.row-text .entity-id{display:none}.snooze-btn span,.ack-btn span{display:none}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, 15px corners, the alarm text first with detail and
+         entity below, and the row icon as a large faint drifting background icon. */
+      .rows .row{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;min-height:72px;padding:10px 12px;gap:8px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .rows .row.priority-1{--tile-accent:var(--warning-color,#f59e0b)}
+      .rows .row.priority-2,.rows .row.priority-3{--tile-accent:var(--error-color,#ef4444)}
+      .rows .row.snoozed{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b));opacity:.75}
+      .rows .row-main{position:static;align-self:stretch;padding:0;gap:0}
+      .rows .row-main:hover{background:transparent}
+      .rows .row:hover{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22))),inset 0 0 0 999px color-mix(in srgb,var(--primary-text-color) 3%,transparent)}
+      .rows .row-icon{position:absolute;right:-10px;bottom:-10px;z-index:0;display:grid;place-items:center;width:58px;height:58px;--mdc-icon-size:58px;font-size:48px;line-height:1;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:alarmTileDrift 5s ease-in-out infinite}
+      .rows .row-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+      .rows .row-text{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:0}
+      .rows .row-text strong{order:1;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+      .rows .row-text .sub{order:3;margin-top:3px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:normal;overflow:visible}
+      .rows .row-text .entity-id{order:4;margin-top:3px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));opacity:1;font-family:inherit;font-size:11px;font-weight:700;line-height:14px;overflow-wrap:anywhere}
+      .rows .snooze-btn,.rows .ack-btn{position:relative;z-index:2}
+      .rows .snooze-btn{background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .rows .snooze-btn:last-child,.rows .ack-btn{margin-right:30px}
+      @keyframes alarmTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.rows .row-icon{animation:none}}
+      @media(max-width:600px){.rows .row{padding:9px;min-height:64px}.rows .row-text strong{font-size:16px;line-height:19px}.rows .row-text .sub,.rows .row-text .entity-id{font-size:10px;line-height:13px}.rows .snooze-btn:last-child,.rows .ack-btn{margin-right:22px}}
     </style>
     <ha-card>
       <div class="head">
@@ -35651,7 +35892,7 @@ var HACardListEditor12 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor12);
 
 // src/cards/ha-security-center-card/ha-security-center-card.js
-var SECURITY_CENTER_VERSION = "0.3.4";
+var SECURITY_CENTER_VERSION = "0.3.5";
 var HaSecurityCenterCard = class extends HTMLElement {
   static getStubConfig() {
     return {
@@ -35830,8 +36071,50 @@ var HaSecurityCenterCard = class extends HTMLElement {
       @keyframes breathe{50%{transform:scale(1.07);opacity:.5}}@keyframes alarm{50%{box-shadow:0 0 45px color-mix(in srgb,var(--dashboard-danger, var(--error-color, #ff4655)) 32%,transparent)}}
       @media(max-width:900px){header{flex-direction:column}.summary{width:100%}.sum{flex:1;min-width:0}.hero{grid-template-columns:190px 1fr}.access-grid{grid-template-columns:repeat(3,1fr)}}
       @media(max-width:600px){.shell{padding:14px;border-radius:21px}h1{font-size:29px}.subtitle{font-size:12px}.summary{display:grid;grid-template-columns:repeat(3,1fr)}.sum{padding:8px}.sum strong{font-size:14px}.hero{grid-template-columns:1fr;padding:15px}.visual{min-height:145px}.radar{width:125px;height:125px}.radar ha-icon{--mdc-icon-size:48px}.state-title{font-size:25px;text-align:center}.state-copy,.changed,.state-label{text-align:center}.modes{gap:6px}.mode{justify-content:center;min-height:54px;padding:7px}.mode b{font-size:10px}.mode ha-icon{--mdc-icon-size:19px}.systems{grid-template-columns:1fr}.access-grid{grid-template-columns:repeat(2,1fr)}.access{min-height:120px}.open-list{grid-template-columns:1fr}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, 15px corners, the big value first with detail and
+         label below, and a large faint drifting background icon. */
+      .sum,.system,.access,.open-panel{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .system,.access{--tile-accent:var(--color)}
+      .sum.sum-alarm{--tile-accent:var(--accent)}
+      .sum.sum-locks{--tile-accent:${locks.length && locked === locks.length ? "var(--state-on-icon,var(--success-color,#20e3a2))" : "var(--warning-color,#f59e0b)"}}
+      .sum.sum-open{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}.sum.sum-open.is-warn{--tile-accent:var(--warning-color,#f59e0b)}
+      .open-panel{--tile-accent:${openings.length ? "var(--warning-color,#f59e0b)" : "var(--state-on-icon,var(--success-color,#20e3a2))"}}
+      .sum{display:flex;flex-direction:column;justify-content:center;min-width:125px;min-height:85px;padding:10px 12px}
+      .sum strong{order:1;position:relative;z-index:1;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .sum strong.warn{color:var(--gray800,var(--primary-text-color,#f8fafc))!important}
+      .sum span{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none}
+      .sum-icon,.system .system-icon,.access>ha-icon:first-child,.open-head>ha-icon:first-child{position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:secTileDrift 5s ease-in-out infinite}
+      .system .system-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+      .system{flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-height:85px;padding:10px 12px}
+      .system>div:not(.system-icon):not(.system-state){display:contents}
+      .system-state{order:1;position:relative;z-index:1;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;text-transform:none}
+      .system small{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+      .system b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px}
+      .access{display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
+      .access>span{order:1;position:relative;z-index:1;margin:0;padding-right:36px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .access .meta{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;gap:3px 9px}
+      .access .meta span{margin:0;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:400;line-height:14px}
+      .access .meta ha-icon{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+      .access>b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px}
+      .lock-action{order:5;top:8px;right:8px;bottom:auto;z-index:2;width:28px;height:28px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .lock-action ha-icon{--mdc-icon-size:15px;color:var(--tile-accent)}
+      .access[data-lock]:hover,.access[data-lock]:focus-visible{border-color:transparent;border-left-color:var(--tile-accent);background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)))}
+      .open-panel{padding:10px 12px}
+      .open-head{position:static;min-height:65px}
+      .open-head>div{position:relative;z-index:1;display:flex;flex-direction:column}
+      .open-head b{color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .open-head span{margin-top:3px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+      .open-head>ha-icon:first-child{color:var(--tile-accent)}
+      .open-head .chevron{position:relative;z-index:1}
+      .open-list,.empty{position:relative;z-index:1}.open-list{padding-right:35px}.empty{padding-right:35px}
+      .opening{color:var(--gray800,var(--primary-text-color,#f8fafc));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--warning-color,#f59e0b) 78%,transparent);background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      .opening ha-icon{color:var(--warning-color,#f59e0b)}
+      @keyframes secTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.sum-icon,.system .system-icon,.access>ha-icon:first-child,.open-head>ha-icon:first-child{animation:none}}
+      @media(max-width:600px){.sum,.system,.access,.open-panel{padding:9px}.sum{min-width:0;min-height:0}.access{min-height:85px}.sum strong,.system-state,.access>span,.open-head b{font-size:16px;line-height:19px}.sum span,.system small,.system b,.access .meta span,.access>b,.open-head span{font-size:10px;line-height:13px}.sum span{padding-right:0}}
     </style><section class="shell ${mode === "danger" ? "danger-mode" : ""}">
-      <header><div><div class="eyebrow"><i class="pulse"></i>Sikkerhed i realtid</div><h1>Sikkerhedscenter</h1><div class="subtitle">Alarm, adgangspunkter og hjemmets ydre skal</div></div><div class="summary"><div class="sum"><span>Alarm</span><strong>${info[0]}</strong></div><div class="sum"><span>L\xE5ste d\xF8re</span><strong>${locked} / ${locks.length}</strong></div><div class="sum"><span>\xC5bninger</span><strong class="${openings.length ? "warn" : ""}">${openings.length}</strong></div></div></header>
+      <header><div><div class="eyebrow"><i class="pulse"></i>Sikkerhed i realtid</div><h1>Sikkerhedscenter</h1><div class="subtitle">Alarm, adgangspunkter og hjemmets ydre skal</div></div><div class="summary"><div class="sum sum-alarm"><span>Alarm</span><strong>${info[0]}</strong><ha-icon class="sum-icon" icon="mdi:shield-home-outline"></ha-icon></div><div class="sum sum-locks"><span>L\xE5ste d\xF8re</span><strong>${locked} / ${locks.length}</strong><ha-icon class="sum-icon" icon="mdi:lock-outline"></ha-icon></div><div class="sum sum-open ${openings.length ? "is-warn" : ""}"><span>\xC5bninger</span><strong class="${openings.length ? "warn" : ""}">${openings.length}</strong><ha-icon class="sum-icon" icon="mdi:window-open-variant"></ha-icon></div></div></header>
       <div class="hero"><div class="visual"><div class="radar"><ha-icon icon="${info[2]}"></ha-icon></div></div><div class="hero-body"><div class="state-label">${this.config.primary_alarm_name} alarm</div><div class="state-title">${info[0]}</div><div class="state-copy">${info[1]}</div><div class="changed">Sidst \xE6ndret ${this._ago(primary?.last_changed)}</div><div class="modes">
         ${[["disarmed", "Frakoblet", "mdi:shield-lock-open-outline", "var(--dashboard-accent, var(--info-color, #71bfff))", this.config.actions.disarm], ["armed_home", "Hjemme", "mdi:shield-home-outline", "var(--dashboard-warning, var(--warning-color, #ffbd59))", this.config.actions.home], ["armed_away", "Ude", "mdi:shield-lock-outline", "var(--dashboard-success, var(--success-color, #5edbb0))", this.config.actions.away]].map((x) => `<div class="mode ${primary?.state === x[0] ? "active" : ""} ${x[4] ? "" : "disabled"}" style="--tone:${x[3]}" ${x[4] ? `data-script="${x[4]}"` : ""}><ha-icon icon="${x[2]}"></ha-icon><b>${x[1]}</b></div>`).join("")}
       </div></div></div>
@@ -36300,7 +36583,7 @@ window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", de
 console.info(`%c HA AI USAGE CARD %c v${VERSION37} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION38 = "0.6.4";
+var VERSION38 = "0.6.5";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -36699,7 +36982,7 @@ var HASettingsCenterCard = class extends HTMLElement {
         <ha-icon icon="mdi:tune-variant"></ha-icon>
         <div><strong>${this._esc(this._config.title)}</strong><span>Modes, automatik og drift samlet</span></div>
         <div class="head-spacer"></div>
-        <div class="head-badge"><b data-health-summary>Kontrollerer\u2026</b><small data-health-detail>\u2014</small></div>
+        <div class="head-badge"><b data-health-summary>Kontrollerer\u2026</b><small data-health-detail>\u2014</small><ha-icon class="badge-icon" icon="mdi:heart-pulse"></ha-icon></div>
       </div>
       <div class="tabs">${TABS.map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
       ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}${this._cards()}
@@ -37092,6 +37375,53 @@ var HASettingsCenterCard = class extends HTMLElement {
       .reset-row:hover .row-icon{color:var(--warn)}
       @media(max-width:650px){.tab span{display:none}.tab{padding:10px 4px}.subgrid{grid-template-columns:1fr}}
       @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge that follows --dashboard-left-accent-width, card surface, shadow, 15px corners
+         (12px when nested in a room/group card), the big value first with detail and label
+         below, and the small icon as a large faint drifting background icon. Controls
+         (steppers, profile select, mode buttons, tabs) keep their own look. */
+      :host{--st-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));--st-info:var(--state-info-icon,var(--info-color,#38bdf8));--st-ok:var(--state-on-icon,var(--success-color,#20e3a2));--st-warn:var(--warning-color,#f59e0b);--st-error:var(--error-color,#ef4444);--st-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+      .subcard,.delt-omraade,.row,.tile-btn,.head-badge{--tile-accent:var(--st-info);position:relative;isolation:isolate;overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--st-surface);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .subcard .row,.subcard .tile-btn{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--st-surface));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      .row[data-view="status"].ok{--tile-accent:var(--st-ok)}
+      .row[data-view="status"].problem{--tile-accent:var(--st-error)}
+      .row.toggle-btn,.tile-btn{--tile-accent:var(--st-muted)}
+      .row.toggle-btn.on,.tile-btn.on{--tile-accent:var(--st-ok)}
+      .row.missing,.tile-btn.missing{--tile-accent:var(--st-muted)}
+      .row.action{--tile-accent:var(--st-warn)}.row.action.danger{--tile-accent:var(--st-error)}
+      .profile-row.override-active{--tile-accent:var(--st-warn)}
+      .row.on.toggle-btn,.tile-btn.on,.row.action,.row.action.danger,.profile-row.override-active{background:var(--st-surface);border-color:transparent;border-left-color:color-mix(in srgb,var(--tile-accent) 78%,transparent)}
+      .subcard .row.on.toggle-btn,.subcard .tile-btn.on,.subcard .row.action,.subcard .profile-row.override-active{background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--st-surface))}
+      .tile-btn.on{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .subcard .tile-btn.on{box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      button.row:hover,.tile-btn:hover{border-color:transparent;border-left-color:var(--tile-accent)}
+      .row .row-icon{color:var(--tile-accent);background:color-mix(in srgb,var(--tile-accent) 14%,transparent)}
+      .row.action.danger .row-text b{color:var(--gray800,var(--primary-text-color,#f8fafc))}
+
+      /* value tiles: status, toggle, entity and metric rows, toggle tiles, the health badge */
+      .row-list:has(>[data-view="status"]),.row-list:has(>[data-view="metric"]){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px}
+      .row[data-view="status"],.row[data-view="toggle"],.row[data-view="entity"],.row[data-view="metric"],.tile-btn{flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-height:85px;padding:10px 12px;text-align:left}
+      .subcard .row[data-view="toggle"],.subcard .row[data-view="entity"],.subcard .row[data-view="metric"],.subcard .tile-btn{min-height:64px}
+      .row[data-view="status"] .row-text,.row[data-view="toggle"] .row-text,.row[data-view="entity"] .row-text,.row[data-view="metric"] .row-text,.tile-btn>span{display:contents}
+      .row[data-view="status"] small,.row[data-view="toggle"] small,.row[data-view="entity"] small,.row[data-view="metric"] .row-value,.tile-btn small{order:1;position:relative;z-index:1;margin:0;padding-right:18px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+      .row[data-view="status"] b,.row[data-view="toggle"] b,.row[data-view="entity"] b,.row[data-view="metric"] b,.tile-btn b{order:4;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+      .row[data-view="status"] .row-icon,.row[data-view="toggle"] .row-icon,.row[data-view="entity"] .row-icon,.row[data-view="metric"] .row-icon,.tile-btn>ha-icon:first-child,.head-badge .badge-icon{position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:settingsTileDrift 5s ease-in-out infinite}
+      .row:is([data-view="status"],[data-view="toggle"],[data-view="entity"],[data-view="metric"]) .row-icon ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+      .row-text b,.row-text small{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+      .row[data-view="status"] .dot{position:absolute;top:10px;right:10px;z-index:1;background:var(--tile-accent)}
+      .row[data-view="toggle"]>ha-icon:last-child,.row[data-view="entity"]>ha-icon:last-child{position:absolute;top:9px;right:9px;z-index:1;--mdc-icon-size:15px;width:15px;height:15px;color:var(--tile-accent)}
+      .row.toggle-btn:not(.on)>ha-icon:last-child{opacity:.45}
+      .tile-btn.on small{color:var(--gray800,var(--primary-text-color,#f8fafc))}
+      .head-badge{display:flex;flex-direction:column;justify-content:center;min-width:150px;padding:9px 12px;text-align:left}
+      .head-badge,.head-badge:not(.warn){--tile-accent:var(--st-ok)}.head-badge.warn{--tile-accent:var(--st-error)}
+      .head-badge b{order:1;position:relative;z-index:1;padding-right:18px;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px}
+      .head-badge.warn b{color:var(--gray800,var(--primary-text-color,#f8fafc))}
+      .head-badge small{order:3;position:relative;z-index:1;margin-top:3px;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+      .head .head-badge .badge-icon{--mdc-icon-size:58px;color:var(--tile-accent)}
+      @keyframes settingsTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.row:is([data-view="status"],[data-view="toggle"],[data-view="entity"],[data-view="metric"]) .row-icon,.tile-btn>ha-icon:first-child,.head-badge .badge-icon{animation:none}}
+      @media(max-width:600px){.row[data-view="status"],.row[data-view="toggle"],.row[data-view="entity"],.row[data-view="metric"],.tile-btn,.head-badge{padding:9px}.row[data-view="status"] small,.row[data-view="toggle"] small,.row[data-view="entity"] small,.row[data-view="metric"] .row-value,.tile-btn small,.head-badge b{font-size:16px;line-height:19px}.row[data-view="status"] b,.row[data-view="toggle"] b,.row[data-view="entity"] b,.row[data-view="metric"] b,.tile-btn b,.head-badge small{font-size:10px;line-height:13px}.row-list:has(>[data-view="status"]),.row-list:has(>[data-view="metric"]){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.toggle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.head{flex-wrap:wrap}.head-spacer{display:none}.head-badge{flex:1 1 100%;min-width:0}}
     `;
   }
 };
@@ -44161,7 +44491,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashboard", description: "AI-forbrug og kvoter" });
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
-var VERSION49 = "1.1.0";
+var VERSION49 = "1.1.1";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -44740,6 +45070,90 @@ var STYLE4 = `
   .mini-grid{grid-template-columns:minmax(0,1fr)}
   .flow-body{grid-template-columns:1fr}
 }
+
+/* ---------- Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   accent edge (follows --dashboard-left-accent-width), card surface, shadow, value first, then meter,
+   detail and label, and a large faint drifting background icon. Charts, the ring, the donut, the
+   charger drawing, pills and chips keep their own look; only the panels get surface/shadow/radius. ---------- */
+.dash .card{border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--energy-accent-bar);border-radius:15px;background:var(--surface,var(--energy-card));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.dash .chip,.dash .card.a-price,.dash .card.a-house,.dash .mini,.dash .leg,.dash .fact,.dash .erow,.dash .ext,.dash .range>div,.dash .advice-box{
+  --tile-accent:var(--tone,var(--state-info-icon,var(--info-color,#38bdf8)));
+  position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;
+  padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);
+  border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
+  box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;filter:none
+}
+.dash .chip,.dash .card.a-price,.dash .card.a-house{border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.dash .card.a-price,.dash .card.a-house{min-height:85px}
+.dash .chip{min-width:130px}
+.dash .card.a-price{--tile-accent:var(--energy-yellow)}
+.dash .a-price:has(.big.tone-green){--tile-accent:var(--state-on-icon,var(--energy-green))}
+.dash .a-price:has(.big.tone-blue){--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.dash .a-price:has(.big.tone-orange){--tile-accent:var(--orange,var(--energy-orange))}
+.dash .a-price:has(.big.tone-red){--tile-accent:var(--error-color,var(--energy-red))}
+.dash .range>div.range-avg{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.dash .chip>.dot,.dash .a-price .glow{display:none}
+.dash .advice-box::after{z-index:0}
+/* store svage baggrundsikoner */
+.dash .chip>.ic,.dash .a-price>.card-head>.ic,.dash .a-house>.card-head>.ic,.dash .mini>.card-head>.ic,.dash .leg>.ic,.dash .fact>.ic,.dash .erow>.ic,.dash .ext>.badge>.ic,.dash .range>div>.ic,.dash .advice-box>.ic{
+  position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;filter:none;pointer-events:none;animation:edTileDrift 5s ease-in-out infinite
+}
+.dash .ext>.badge{display:contents}
+@keyframes edTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+/* tekst over ikonet */
+.dash .chip>div,.dash .a-price>*:not(.card-head),.dash .a-house>*:not(.card-head),.dash .mini>*:not(.card-head),.dash .tile-text,.dash .ext>div,.dash .advice-box>div,
+.dash .card-head h3,.dash .leg>*:not(.ic),.dash .fact>*:not(.ic),.dash .erow>*:not(.ic),.dash .range>div>*:not(.ic){position:relative;z-index:1}
+.dash .a-price>.card-head,.dash .a-house>.card-head,.dash .mini>.card-head{position:static;display:block;order:4;margin:0}
+.dash .chip>div,.dash .ext>div,.dash .advice-box>div{display:flex;flex-direction:column;min-width:0}
+/* v\xE6rdi f\xF8rst */
+.dash .a-price .big,.dash .a-house .big,.dash .mini .big{order:1;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.dash .a-price .big .v,.dash .a-house .big .v,.dash .mini .big .v,.dash .chip b,.dash .leg b,.dash .fact b,.dash .fact b.txt,.dash .erow .val,.dash .ext b,.dash .range .rv,.dash .advice-box b{
+  order:1;display:block;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;letter-spacing:0;text-align:left;white-space:normal;overflow:visible;text-overflow:clip;grid-column:auto
+}
+.dash .fact b,.dash .erow .val,.dash .leg b,.dash .ext b,.dash .range .rv{white-space:nowrap}
+.dash .a-price .big .u,.dash .a-house .big .u,.dash .mini .big .u,.dash .unit,.dash .range .ru{order:1;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700;opacity:1}
+/* meter */
+.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini svg.mini-line,.dash .erow .bar{order:2;margin-top:6px}
+.dash .a-house .spark,.dash .mini .spark{height:30px}
+.dash .mini svg.mini-line{height:30px}
+.dash .erow .bar{height:5px;margin-bottom:4px;grid-column:auto}
+/* detalje */
+.dash .a-price .delta,.dash .mini-foot,.dash .leg .pct,.dash .erow .share,.dash .ext>div>span,.dash .range .rt,.dash .advice-box small{
+  order:3;margin:2px 0 0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;font-weight:400;grid-column:auto
+}
+.dash .a-price .delta,.dash .mini-foot{gap:6px;flex-wrap:wrap}
+.dash .a-price .delta .pill,.dash .mini-foot .pill{font-size:11px;padding:1px 7px;border-radius:8px;gap:4px}
+.dash .erow .share{display:flex;flex-wrap:wrap;gap:0 5px;align-items:baseline}
+.dash .erow .share small{display:inline;font-size:11px;color:inherit}
+/* label sidst */
+.dash .a-price .card-head h3,.dash .a-house .card-head h3,.dash .mini .card-head h3,.dash .chip small,.dash .leg small,.dash .fact small,.dash .erow .name,.dash .ext small,.dash .range .rl,.dash .range-label{
+  order:4;display:block;margin:3px 0 0;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;overflow:visible;-webkit-line-clamp:unset;text-align:left
+}
+.dash .fact small::before{display:none}
+.dash .chip small{margin-top:1px}
+/* layout for de nye fliser */
+.dash .range{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:0}
+.dash .range>div{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;column-gap:4px;padding:8px 12px}
+.dash .range .rt,.dash .range .rl{flex-basis:100%}
+.dash .legend{gap:8px}
+.dash .facts{gap:8px}
+.dash .fact{padding:8px 12px}
+.dash .charge-body{background:none;border:0;padding:0}
+.dash .energy-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dash .extremes{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0;border-radius:0;align-content:start}
+.dash .ext>div{flex:1}
+.dash .advice-box{padding:10px 12px}
+.dash .advice-box>div{padding-right:35px}
+.dash .advice-box small{padding-right:0}
+@media (prefers-reduced-motion:reduce){.dash .ic{animation:none!important}}
+@container (max-width:640px){
+  .dash .chip,.dash .card.a-price,.dash .card.a-house,.dash .mini,.dash .leg,.dash .fact,.dash .erow,.dash .ext,.dash .range>div,.dash .advice-box{padding:9px}
+  .dash .a-price .big .v,.dash .a-house .big .v,.dash .mini .big .v,.dash .chip b,.dash .leg b,.dash .fact b,.dash .fact b.txt,.dash .erow .val,.dash .ext b,.dash .range .rv,.dash .advice-box b{font-size:16px;line-height:19px}
+  .dash .a-price .delta,.dash .mini-foot,.dash .leg .pct,.dash .erow .share,.dash .erow .share small,.dash .ext>div>span,.dash .range .rt,.dash .advice-box small,
+  .dash .a-price .card-head h3,.dash .a-house .card-head h3,.dash .mini .card-head h3,.dash .chip small,.dash .leg small,.dash .fact small,.dash .erow .name,.dash .ext small,.dash .range .rl{font-size:10px}
+  .dash .extremes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash .card.a-house{display:none}
+}
 `;
 var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLElement {
   constructor() {
@@ -44989,8 +45403,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     </div>
     <div class="chips">
       <div class="chip">${icon("mdi:calendar-clock")}<div><b data-ref="hdrDate">\u2014</b><small data-ref="hdrTime">\u2014</small></div></div>
-      <div class="chip" data-ref="hdrOnline"><span class="dot"></span><div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
-      <div class="chip" data-ref="hdrSystem"><span class="dot"></span><div><b>System</b><small data-ref="hdrSystemText">\u2014</small></div></div>
+      <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
+      <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">\u2014</small></div></div>
     </div>
   </header>
 
@@ -45003,9 +45417,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   <section class="card kpi a-range">
     <div class="card-head" style="--head-ic:var(--energy-blue)">${icon("mdi:chart-bar")}<h3>Dagens min / max / gennemsnit</h3></div>
     <div class="range">
-      <div class="tone-green"><span class="rv num" data-ref="minVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">\u2014</span></div>
-      <div class="tone-red"><span class="rv num" data-ref="maxVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">\u2014</span></div>
-      <div style="--tone:var(--energy-text)"><span class="rv num" data-ref="avgVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
+      <div class="tone-green">${icon("mdi:arrow-down-bold")}<span class="rv num" data-ref="minVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">\u2014</span></div>
+      <div class="tone-red">${icon("mdi:arrow-up-bold")}<span class="rv num" data-ref="maxVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">\u2014</span></div>
+      <div class="range-avg" style="--tone:var(--energy-text)">${icon("mdi:approximately-equal")}<span class="rv num" data-ref="avgVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
     </div>
   </section>
 
@@ -45081,8 +45495,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         <div class="donut-center"><span class="v num" data-ref="flowTotal" data-v>\u2014</span><span class="u">kW</span></div>
       </div>
       <div class="legend">
-        <div class="leg tone-blue clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>\u2014</span> kW</b><span class="pct" data-ref="flowCarPct">\u2014</span></div>
-        <div class="leg tone-green clickable" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>\u2014</span> kW</b><span class="pct" data-ref="flowHousePct">\u2014</span></div>
+        <div class="leg tone-blue clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">\u2014</span></div>
+        <div class="leg tone-green clickable" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">\u2014</span></div>
       </div>
     </div>
   </section>
@@ -45103,10 +45517,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         <rect class="pin" x="106" y="92" width="4" height="10" rx="1.5"/><rect class="pin" x="114" y="92" width="4" height="10" rx="1.5"/>
       </svg>
       <div class="facts">
-        <div class="fact" style="--tone:var(--energy-blue)"><small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>\u2014</span> kW</b></div>
-        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}><small>Tilf\xF8rt i dag</small><b class="num"><span data-ref="chargeToday" data-v>\u2014</span> kWh</b></div>
-        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}><small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>\u2014</span> kWh</b></div>
-        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}><small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>\u2014</b></div>
+        <div class="fact" style="--tone:var(--energy-blue)">${icon("mdi:flash")}<small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>\u2014</span> <span class="unit">kW</span></b></div>
+        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:battery-charging")}<small>Tilf\xF8rt i dag</small><b class="num"><span data-ref="chargeToday" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}>${icon("mdi:counter")}<small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}>${icon("mdi:ev-station")}<small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>\u2014</b></div>
         <div class="bar-row" data-ref="chargeUtilRow" hidden><div class="bar tone-green"><i data-ref="chargeUtil"></i></div><span data-ref="chargeUtilText">\u2014</span></div>
       </div>
     </div>
@@ -45118,9 +45532,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       <span class="tag">${icon("mdi:calendar-today")}I dag</span>
     </div>
     <div class="energy-rows">
-      <div class="erow tone-green clickable" data-entity="${escapeHtml2(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>\u2014</span> kWh</span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">\u2014</span></div>
-      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml2(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>\u2014</span> kWh</span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">\u2014</span></div>
-      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>\u2014</span> kWh</span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
+      <div class="erow tone-green clickable" data-entity="${escapeHtml2(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">\u2014</span></div>
+      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml2(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">\u2014</span></div>
+      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
     </div>
   </section>
 
@@ -45628,8 +46042,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     <div class="x-axis">${xLabels}</div>
   </div>
   <div class="extremes">
-    <div class="ext tone-green"><span class="badge">${icon("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} kr/kWh</b><span>kl. ${a.minEntry.label}</span></div></div>
-    <div class="ext tone-red"><span class="badge">${icon("mdi:arrow-up")}</span><div><small>H\xF8jeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} kr/kWh</b><span>kl. ${a.maxEntry.label}</span></div></div>
+    <div class="ext tone-green"><span class="badge">${icon("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} <span class="unit">kr/kWh</span></b><span>kl. ${a.minEntry.label}</span></div></div>
+    <div class="ext tone-red"><span class="badge">${icon("mdi:arrow-up")}</span><div><small>H\xF8jeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} <span class="unit">kr/kWh</span></b><span>kl. ${a.maxEntry.label}</span></div></div>
   </div>
 </div>`;
     this._tomorrowGeom = { entries: m.tomorrow, analysis: a, xPct, start, end };
@@ -46280,6 +46694,124 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
 }
 @container (max-width:360px){
   .kpis{grid-template-columns:1fr}
+}
+
+/* ---------- Tiles use the same design as the front page status buttons ----------
+   (custom:ha-home-status-card): accent edge that follows --dashboard-left-accent-width,
+   card surface, shadow, big value first, then meter, detail and label last, and a
+   large faint drifting background icon. Charts, flow drawing, tabs and segmented
+   buttons keep their own look. */
+:host{
+  --ect-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));
+  --ect-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));
+  --ect-value:var(--gray800,var(--primary-text-color,#f8fafc));
+  --ect-detail:var(--gray600,var(--secondary-text-color,#a7b2c2));
+  --ect-label:var(--gray700,var(--secondary-text-color,#cbd5e1));
+  --ect-info:var(--state-info-icon,var(--info-color,#38bdf8));
+  --ect-ok:var(--state-on-icon,var(--success-color,#20e3a2));
+  --ect-warm:var(--orange,var(--warning-color,#fb923c));
+  --ect-warning:var(--warning-color,#f59e0b);
+  --ect-error:var(--error-color,#ef4444);
+  --ect-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b));
+}
+.hero-grid .hero-item,.kpis .kpi.card,.quad .mini.card,.groups .grow,.phases .phase,.util-body .util-main,.tiles .tile,.subtiles .subtile,.hero-main .facts > div{
+  --tile-accent:var(--tone,var(--ect-info));
+  position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;
+  min-width:0;min-height:85px;padding:10px 12px;
+  border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);
+  border-radius:15px;background:var(--ect-surface);box-shadow:var(--ect-shadow);
+  color:var(--ect-value);text-align:left;
+}
+.hero-grid .hero-item::before{display:none}
+.hero-grid .hero-item:hover,.kpis .kpi.card:hover,.quad .mini.card.clickable:hover,.groups .grow:hover,.phases .phase:hover,.util-body .util-main:hover,.tiles .tile.clickable:hover,.subtiles .subtile:hover{
+  background:color-mix(in srgb,var(--tile-accent) 6%,var(--ect-surface));
+  border-left-color:color-mix(in srgb,var(--tile-accent) 78%,transparent);
+}
+/* accent per tile meaning (card's own state colours where it has them) */
+.quad .mini.card:nth-child(3){--tile-accent:var(--ect-muted)}
+.quad .mini.acct.tone-warn{--tile-accent:var(--c-warn);background:var(--dashboard-surface-warn-dark,linear-gradient(180deg,color-mix(in srgb,var(--c-warn) 10%,transparent),transparent)),var(--ect-surface)}
+.groups .grow{--tile-accent:var(--c-el)}
+.phases .phase{--tile-accent:var(--tone,var(--c-el))}
+.hero-main .facts > div.st-el{--tile-accent:var(--c-el)}
+.hero-main .facts > div.st-warm,.subtiles .subtile.st-warm{--tile-accent:var(--ect-warm)}
+.hero-main .facts > div.st-muted{--tile-accent:var(--ect-muted)}
+.hero-main .facts > div.st-ok{--tile-accent:var(--ect-ok)}
+.subtiles .subtile.st-info{--tile-accent:var(--ect-info)}
+
+/* flatten wrappers so children can be re-ordered */
+.kpis .kpi .kpi-top,.quad .mini .card-head{display:contents}
+
+/* big value first */
+.hero-item .hi-val,.kpi .kpi-val,.mini .mini-val,.phase .ph-val{order:1;position:relative;z-index:2;display:flex;align-items:baseline;gap:4px;margin:0;min-width:0;flex-wrap:wrap}
+.hero-item .hi-val b,.kpi .kpi-val b,.mini .mini-val b,.phase .ph-val b,.groups .grow .gval,.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{font-size:18px;font-weight:750;line-height:21px;color:var(--ect-value)}
+.hero-item .hi-val small,.kpi .kpi-val small,.mini .mini-val small,.phase .ph-val small,.tiles .tile .u{font-size:11px;font-weight:700;line-height:14px;color:var(--ect-detail)}
+.groups .grow .gval{order:1;position:relative;z-index:2;text-align:left}
+.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{order:1;position:relative;z-index:2;display:block;white-space:nowrap}
+.util-body .util-main .mega{order:1;position:relative;z-index:2;margin:0 0 6px}
+/* meter / bar */
+.phase .meter,.groups .grow .gbar,.mini .stack{order:2;position:relative;z-index:2;margin:6px 0}
+.groups .grow .gbar{height:6px;margin-right:35px}
+/* detail */
+.hero-item .hi-sub,.kpi .kpi-foot,.mini .mini-sub,.mini .acct-rows,.mini .acct-msg,.phase dl,.groups .grow .gshare,.util-body .util-main .status{
+  order:3;position:relative;z-index:2;min-width:0;margin:0;padding:0 35px 0 0;border:0;
+  font-size:11px;line-height:14px;font-weight:400;color:var(--ect-detail);text-align:left;white-space:normal;overflow:visible;text-overflow:clip
+}
+.hero-item .hi-sub{min-height:14px}
+.hero-item .hi-sub.tone-ok,.hero-item .hi-sub.tone-warn,.hero-item .hi-sub.tone-water,.util-body .util-main .status.tone-heat,.util-body .util-main .status.tone-ok,.util-body .util-main .status.tone-warn,.util-body .util-main .status.tone-water{color:var(--tone)}
+.kpi .kpi-foot{display:flex;flex-wrap:wrap;gap:0 4px}
+.kpi .kpi-foot .num,.mini .mini-sub .num,.mini .acct-rows b{font-size:11px;font-weight:700;color:var(--ect-value)}
+.mini .mini-sub{display:flex;flex-wrap:wrap;gap:0 4px}
+.mini .acct-rows{display:flex;flex-wrap:wrap;gap:0 10px}
+.mini .acct-msg{margin-top:2px}
+.phase dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;margin:2px 0 4px}
+.phase dt{font-size:10px;line-height:12px;color:var(--ect-detail)}
+.phase dd{font-size:12px;line-height:15px;font-weight:700;color:var(--ect-value);white-space:nowrap}
+/* label last */
+.hero-item .hi-label,.kpi .kpi-label,.mini .card-head h3,.phase .ph-head,.groups .grow .gname,.util-body .util-main > small,.tiles .tile small,.subtiles .subtile small,.hero-main .facts > div small{
+  order:4;position:relative;z-index:2;display:block;min-width:0;margin:2px 0 0;padding-right:35px;
+  font-size:11px;line-height:14px;font-weight:700;color:var(--ect-label);text-transform:none;letter-spacing:0;white-space:normal;overflow:visible;text-overflow:clip
+}
+.phase .ph-head{display:flex;justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.phase .ph-name{font-size:11px;font-weight:700;color:var(--ect-label);text-transform:none;letter-spacing:0}
+.phase .ph-flag{font-size:11px}
+.groups .grow .gname{display:flex;gap:6px}
+/* chevron on KPI tiles stays as a small hint in the corner */
+.kpi .kpi-top .chev{position:absolute;top:8px;right:8px;z-index:2;margin:0}
+.kpi .kpi-val{padding-right:20px}
+
+/* the small icon becomes a large faint background icon */
+.hero-item > .badge,.kpi .kpi-top > .badge,.groups .grow > .badge,.mini .card-head > .ic,.tile-ic{
+  position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;
+  margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+  color:var(--tile-accent);opacity:.12;pointer-events:none;animation:ecTileDrift 5s ease-in-out infinite
+}
+.hero-item > .badge .ic,.kpi .kpi-top > .badge .ic,.groups .grow > .badge .ic{--mdc-icon-size:58px;width:58px;height:58px}
+@keyframes ecTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media (prefers-reduced-motion:reduce){.hero-item > .badge,.kpi .kpi-top > .badge,.groups .grow > .badge,.mini .card-head > .ic,.tile-ic{animation:none!important}}
+
+/* grids for the converted tiles; wrappers without card padding get it so tiles line up with the sections */
+.kpis.a-full{padding:0 18px}
+.quad.a-half{padding:18px}
+.phases .phase.tone-warn{--tone:var(--c-warn)}
+.phases .phase.tone-bad{--tone:var(--c-bad)}
+.hero-grid{gap:10px}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.phases{gap:10px}
+.facts{gap:10px}
+.util-body .tiles{gap:10px}
+.subtiles{gap:10px}
+
+@container (max-width:600px){
+  .hero-grid .hero-item,.kpis .kpi.card,.quad .mini.card,.groups .grow,.phases .phase,.util-body .util-main,.tiles .tile,.subtiles .subtile,.hero-main .facts > div{padding:9px}
+  .hero-item .hi-val b,.kpi .kpi-val b,.mini .mini-val b,.phase .ph-val b,.groups .grow .gval,.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{font-size:16px;line-height:19px}
+  .hero-item .hi-sub,.kpi .kpi-foot,.kpi .kpi-foot .num,.mini .mini-sub,.mini .mini-sub .num,.mini .acct-rows,.mini .acct-rows b,.mini .acct-msg,.groups .grow .gshare,.util-body .util-main .status,
+  .hero-item .hi-label,.kpi .kpi-label,.mini .card-head h3,.phase .ph-head,.phase .ph-name,.groups .grow .gname,.util-body .util-main > small,.tiles .tile small,.subtiles .subtile small,.hero-main .facts > div small{font-size:10px}
+  .groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpis.a-full{padding:0 14px}
+  .quad.a-half{padding:0 14px}
+  .hero-grid,.facts,.util-body .tiles,.subtiles,.phases{gap:8px}
+  .subtiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 `;
 
@@ -47297,6 +47829,7 @@ var PowerSection = class extends Section {
       (p, i) => `
       <div class="phase clickable" data-ref="ph${i}" data-entity="${escapeHtml3(p.power || p.current || "")}" tabindex="0" role="button">
         <div class="ph-head"><span class="ph-name">Fase ${escapeHtml3(p.name)}</span><span class="ph-flag" data-ref="ph${i}Flag" hidden>Afviger</span></div>
+        ${icon2("mdi:sine-wave", "tile-ic")}
         <div class="ph-val num"><b data-ref="ph${i}V">\u2014</b><small data-ref="ph${i}U">W</small></div>
         <div class="meter"><i data-ref="ph${i}Bar"></i></div>
         <dl>
@@ -47320,10 +47853,10 @@ var PowerSection = class extends Section {
     <div class="hero-head"><div class="card-head">${icon2("mdi:flash")}<h3>Str\xF8m lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">\u2014</b><small data-ref="mainU">W</small></div>
     <div class="facts">
-      <div><small>Tilsyneladende</small><b class="num" data-ref="mainVa">\u2014</b></div>
-      <div><small>Pris nu</small><b class="num" data-ref="mainPrice">\u2014</b></div>
-      <div><small>M\xE5lertemperatur</small><b class="num" data-ref="mainTemp">\u2014</b></div>
-      <div><small>Returneret i alt</small><b class="num" data-ref="mainRet">\u2014</b></div>
+      <div class="st-el"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">\u2014</b>${icon2("mdi:sine-wave", "tile-ic")}</div>
+      <div class="st-warm"><small>Pris nu</small><b class="num" data-ref="mainPrice">\u2014</b>${icon2("mdi:cash", "tile-ic")}</div>
+      <div class="st-muted"><small>M\xE5lertemperatur</small><b class="num" data-ref="mainTemp">\u2014</b>${icon2("mdi:thermometer", "tile-ic")}</div>
+      <div class="st-ok"><small>Returneret i alt</small><b class="num" data-ref="mainRet">\u2014</b>${icon2("mdi:transmission-tower-export", "tile-ic")}</div>
     </div>
   </section>
   <div class="quad a-half">
@@ -47471,9 +48004,9 @@ var TODAY_KEYS3 = [
   ["heat_energy", "energy"],
   ["heat_cost", "monetary"]
 ];
-var tile = (ref, label, entity = "") => `
+var tile = (ref, label, entity = "", ic = "") => `
   <div class="tile ${entity ? "clickable" : ""}" ${entity ? `data-entity="${escapeHtml3(entity)}" tabindex="0" role="button"` : ""} data-ref="${ref}Tile">
-    <small>${label}</small><b class="num"><span data-ref="${ref}V">\u2014</span> <span class="u" data-ref="${ref}U"></span></b>
+    <small>${label}</small><b class="num"><span data-ref="${ref}V">\u2014</span> <span class="u" data-ref="${ref}U"></span></b>${ic ? icon2(ic, "tile-ic") : ""}
   </div>`;
 var HeatSection = class extends Section {
   constructor(card) {
@@ -47497,18 +48030,19 @@ var HeatSection = class extends Section {
         <small>Aktuel effekt</small>
         <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">\u2014</span>
+        ${icon2("mdi:radiator", "tile-ic")}
       </div>
       <div class="tiles">
-        ${tile("today", "Forbrug i dag", c.id("heat_energy"))}
-        ${tile("cost", "Pris i dag", c.id("heat_cost"))}
-        ${tile("price", "Aktuel pris", c.id("heat_price"))}
+        ${tile("today", "Forbrug i dag", c.id("heat_energy"), "mdi:fire")}
+        ${tile("cost", "Pris i dag", c.id("heat_cost"), "mdi:cash")}
+        ${tile("price", "Aktuel pris", c.id("heat_price"), "mdi:tag-outline")}
       </div>
     </div>
     <div class="subtiles">
-      <div class="subtile" ${opt("heat_supply")}><small>Freml\xF8b</small><b class="num" data-ref="sup">\u2014</b></div>
-      <div class="subtile" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">\u2014</b></div>
-      <div class="subtile" ${opt("heat_cooling")}><small>Afk\xF8ling (\u0394T)</small><b class="num" data-ref="cool">\u2014</b></div>
-      <div class="subtile" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">\u2014</b></div>
+      <div class="subtile st-warm" ${opt("heat_supply")}><small>Freml\xF8b</small><b class="num" data-ref="sup">\u2014</b>${icon2("mdi:thermometer-chevron-up", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">\u2014</b>${icon2("mdi:thermometer-chevron-down", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_cooling")}><small>Afk\xF8ling (\u0394T)</small><b class="num" data-ref="cool">\u2014</b>${icon2("mdi:thermometer-minus", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">\u2014</b>${icon2("mdi:waves-arrow-right", "tile-ic")}</div>
     </div>
   </section>
   ${this.panels[0].html("a-full tall")}
@@ -47572,11 +48106,12 @@ var WaterSection = class extends Section {
         <small>Flow lige nu</small>
         <div class="mega num"><b data-ref="flowV">\u2014</b><small>L/min</small></div>
         <span class="status" data-ref="status">\u2014</span>
+        ${icon2("mdi:water", "tile-ic")}
       </div>
       <div class="tiles">
-        ${tile("today", "Forbrug i dag", c.id("water_total"))}
-        ${tile("cost", "Pris i dag", c.id("water_cost_today"))}
-        ${tile("price", "Pris pr. m\xB3", c.id("water_price"))}
+        ${tile("today", "Forbrug i dag", c.id("water_total"), "mdi:water-outline")}
+        ${tile("cost", "Pris i dag", c.id("water_cost_today"), "mdi:cash")}
+        ${tile("price", "Pris pr. m\xB3", c.id("water_price"), "mdi:tag-outline")}
       </div>
     </div>
   </section>
@@ -47635,12 +48170,13 @@ var EvSection = class extends Section {
         <small>Aktuel ladeeffekt</small>
         <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">\u2014</span>
+        ${icon2("mdi:car-electric", "tile-ic")}
       </div>
       <div class="tiles four">
-        ${tile("today", "Energi i dag", c.id("ev_energy_today"))}
-        ${tile("month", "Energi denne m\xE5ned", c.id("ev_energy_month"))}
-        ${tile("cost", "Pris i dag", c.id("ev_cost_today"))}
-        ${tile("session", "Seneste session", c.id("ev_session"))}
+        ${tile("today", "Energi i dag", c.id("ev_energy_today"), "mdi:lightning-bolt")}
+        ${tile("month", "Energi denne m\xE5ned", c.id("ev_energy_month"), "mdi:calendar-month")}
+        ${tile("cost", "Pris i dag", c.id("ev_cost_today"), "mdi:cash")}
+        ${tile("session", "Seneste session", c.id("ev_session"), "mdi:ev-plug-type2")}
       </div>
     </div>
   </section>
@@ -47667,7 +48203,7 @@ var EvSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION50 = "0.2.0";
+var VERSION50 = "0.2.1";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },

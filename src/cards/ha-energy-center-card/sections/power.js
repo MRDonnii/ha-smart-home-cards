@@ -72,6 +72,7 @@ export class PowerSection extends Section {
         (p, i) => `
       <div class="phase clickable" data-ref="ph${i}" data-entity="${escapeHtml(p.power || p.current || "")}" tabindex="0" role="button">
         <div class="ph-head"><span class="ph-name">Fase ${escapeHtml(p.name)}</span><span class="ph-flag" data-ref="ph${i}Flag" hidden>Afviger</span></div>
+        ${icon("mdi:sine-wave", "tile-ic")}
         <div class="ph-val num"><b data-ref="ph${i}V">—</b><small data-ref="ph${i}U">W</small></div>
         <div class="meter"><i data-ref="ph${i}Bar"></i></div>
         <dl>
@@ -96,10 +97,10 @@ export class PowerSection extends Section {
     <div class="hero-head"><div class="card-head">${icon("mdi:flash")}<h3>Strøm lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">—</b><small data-ref="mainU">W</small></div>
     <div class="facts">
-      <div><small>Tilsyneladende</small><b class="num" data-ref="mainVa">—</b></div>
-      <div><small>Pris nu</small><b class="num" data-ref="mainPrice">—</b></div>
-      <div><small>Målertemperatur</small><b class="num" data-ref="mainTemp">—</b></div>
-      <div><small>Returneret i alt</small><b class="num" data-ref="mainRet">—</b></div>
+      <div class="st-el"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">—</b>${icon("mdi:sine-wave", "tile-ic")}</div>
+      <div class="st-warm"><small>Pris nu</small><b class="num" data-ref="mainPrice">—</b>${icon("mdi:cash", "tile-ic")}</div>
+      <div class="st-muted"><small>Målertemperatur</small><b class="num" data-ref="mainTemp">—</b>${icon("mdi:thermometer", "tile-ic")}</div>
+      <div class="st-ok"><small>Returneret i alt</small><b class="num" data-ref="mainRet">—</b>${icon("mdi:transmission-tower-export", "tile-ic")}</div>
     </div>
   </section>
   <div class="quad a-half">

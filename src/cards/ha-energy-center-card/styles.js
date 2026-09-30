@@ -319,4 +319,122 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
 @container (max-width:360px){
   .kpis{grid-template-columns:1fr}
 }
+
+/* ---------- Tiles use the same design as the front page status buttons ----------
+   (custom:ha-home-status-card): accent edge that follows --dashboard-left-accent-width,
+   card surface, shadow, big value first, then meter, detail and label last, and a
+   large faint drifting background icon. Charts, flow drawing, tabs and segmented
+   buttons keep their own look. */
+:host{
+  --ect-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));
+  --ect-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));
+  --ect-value:var(--gray800,var(--primary-text-color,#f8fafc));
+  --ect-detail:var(--gray600,var(--secondary-text-color,#a7b2c2));
+  --ect-label:var(--gray700,var(--secondary-text-color,#cbd5e1));
+  --ect-info:var(--state-info-icon,var(--info-color,#38bdf8));
+  --ect-ok:var(--state-on-icon,var(--success-color,#20e3a2));
+  --ect-warm:var(--orange,var(--warning-color,#fb923c));
+  --ect-warning:var(--warning-color,#f59e0b);
+  --ect-error:var(--error-color,#ef4444);
+  --ect-muted:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b));
+}
+.hero-grid .hero-item,.kpis .kpi.card,.quad .mini.card,.groups .grow,.phases .phase,.util-body .util-main,.tiles .tile,.subtiles .subtile,.hero-main .facts > div{
+  --tile-accent:var(--tone,var(--ect-info));
+  position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;
+  min-width:0;min-height:85px;padding:10px 12px;
+  border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);
+  border-radius:15px;background:var(--ect-surface);box-shadow:var(--ect-shadow);
+  color:var(--ect-value);text-align:left;
+}
+.hero-grid .hero-item::before{display:none}
+.hero-grid .hero-item:hover,.kpis .kpi.card:hover,.quad .mini.card.clickable:hover,.groups .grow:hover,.phases .phase:hover,.util-body .util-main:hover,.tiles .tile.clickable:hover,.subtiles .subtile:hover{
+  background:color-mix(in srgb,var(--tile-accent) 6%,var(--ect-surface));
+  border-left-color:color-mix(in srgb,var(--tile-accent) 78%,transparent);
+}
+/* accent per tile meaning (card's own state colours where it has them) */
+.quad .mini.card:nth-child(3){--tile-accent:var(--ect-muted)}
+.quad .mini.acct.tone-warn{--tile-accent:var(--c-warn);background:var(--dashboard-surface-warn-dark,linear-gradient(180deg,color-mix(in srgb,var(--c-warn) 10%,transparent),transparent)),var(--ect-surface)}
+.groups .grow{--tile-accent:var(--c-el)}
+.phases .phase{--tile-accent:var(--tone,var(--c-el))}
+.hero-main .facts > div.st-el{--tile-accent:var(--c-el)}
+.hero-main .facts > div.st-warm,.subtiles .subtile.st-warm{--tile-accent:var(--ect-warm)}
+.hero-main .facts > div.st-muted{--tile-accent:var(--ect-muted)}
+.hero-main .facts > div.st-ok{--tile-accent:var(--ect-ok)}
+.subtiles .subtile.st-info{--tile-accent:var(--ect-info)}
+
+/* flatten wrappers so children can be re-ordered */
+.kpis .kpi .kpi-top,.quad .mini .card-head{display:contents}
+
+/* big value first */
+.hero-item .hi-val,.kpi .kpi-val,.mini .mini-val,.phase .ph-val{order:1;position:relative;z-index:2;display:flex;align-items:baseline;gap:4px;margin:0;min-width:0;flex-wrap:wrap}
+.hero-item .hi-val b,.kpi .kpi-val b,.mini .mini-val b,.phase .ph-val b,.groups .grow .gval,.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{font-size:18px;font-weight:750;line-height:21px;color:var(--ect-value)}
+.hero-item .hi-val small,.kpi .kpi-val small,.mini .mini-val small,.phase .ph-val small,.tiles .tile .u{font-size:11px;font-weight:700;line-height:14px;color:var(--ect-detail)}
+.groups .grow .gval{order:1;position:relative;z-index:2;text-align:left}
+.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{order:1;position:relative;z-index:2;display:block;white-space:nowrap}
+.util-body .util-main .mega{order:1;position:relative;z-index:2;margin:0 0 6px}
+/* meter / bar */
+.phase .meter,.groups .grow .gbar,.mini .stack{order:2;position:relative;z-index:2;margin:6px 0}
+.groups .grow .gbar{height:6px;margin-right:35px}
+/* detail */
+.hero-item .hi-sub,.kpi .kpi-foot,.mini .mini-sub,.mini .acct-rows,.mini .acct-msg,.phase dl,.groups .grow .gshare,.util-body .util-main .status{
+  order:3;position:relative;z-index:2;min-width:0;margin:0;padding:0 35px 0 0;border:0;
+  font-size:11px;line-height:14px;font-weight:400;color:var(--ect-detail);text-align:left;white-space:normal;overflow:visible;text-overflow:clip
+}
+.hero-item .hi-sub{min-height:14px}
+.hero-item .hi-sub.tone-ok,.hero-item .hi-sub.tone-warn,.hero-item .hi-sub.tone-water,.util-body .util-main .status.tone-heat,.util-body .util-main .status.tone-ok,.util-body .util-main .status.tone-warn,.util-body .util-main .status.tone-water{color:var(--tone)}
+.kpi .kpi-foot{display:flex;flex-wrap:wrap;gap:0 4px}
+.kpi .kpi-foot .num,.mini .mini-sub .num,.mini .acct-rows b{font-size:11px;font-weight:700;color:var(--ect-value)}
+.mini .mini-sub{display:flex;flex-wrap:wrap;gap:0 4px}
+.mini .acct-rows{display:flex;flex-wrap:wrap;gap:0 10px}
+.mini .acct-msg{margin-top:2px}
+.phase dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;margin:2px 0 4px}
+.phase dt{font-size:10px;line-height:12px;color:var(--ect-detail)}
+.phase dd{font-size:12px;line-height:15px;font-weight:700;color:var(--ect-value);white-space:nowrap}
+/* label last */
+.hero-item .hi-label,.kpi .kpi-label,.mini .card-head h3,.phase .ph-head,.groups .grow .gname,.util-body .util-main > small,.tiles .tile small,.subtiles .subtile small,.hero-main .facts > div small{
+  order:4;position:relative;z-index:2;display:block;min-width:0;margin:2px 0 0;padding-right:35px;
+  font-size:11px;line-height:14px;font-weight:700;color:var(--ect-label);text-transform:none;letter-spacing:0;white-space:normal;overflow:visible;text-overflow:clip
+}
+.phase .ph-head{display:flex;justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.phase .ph-name{font-size:11px;font-weight:700;color:var(--ect-label);text-transform:none;letter-spacing:0}
+.phase .ph-flag{font-size:11px}
+.groups .grow .gname{display:flex;gap:6px}
+/* chevron on KPI tiles stays as a small hint in the corner */
+.kpi .kpi-top .chev{position:absolute;top:8px;right:8px;z-index:2;margin:0}
+.kpi .kpi-val{padding-right:20px}
+
+/* the small icon becomes a large faint background icon */
+.hero-item > .badge,.kpi .kpi-top > .badge,.groups .grow > .badge,.mini .card-head > .ic,.tile-ic{
+  position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;
+  margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+  color:var(--tile-accent);opacity:.12;pointer-events:none;animation:ecTileDrift 5s ease-in-out infinite
+}
+.hero-item > .badge .ic,.kpi .kpi-top > .badge .ic,.groups .grow > .badge .ic{--mdc-icon-size:58px;width:58px;height:58px}
+@keyframes ecTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@media (prefers-reduced-motion:reduce){.hero-item > .badge,.kpi .kpi-top > .badge,.groups .grow > .badge,.mini .card-head > .ic,.tile-ic{animation:none!important}}
+
+/* grids for the converted tiles; wrappers without card padding get it so tiles line up with the sections */
+.kpis.a-full{padding:0 18px}
+.quad.a-half{padding:18px}
+.phases .phase.tone-warn{--tone:var(--c-warn)}
+.phases .phase.tone-bad{--tone:var(--c-bad)}
+.hero-grid{gap:10px}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.phases{gap:10px}
+.facts{gap:10px}
+.util-body .tiles{gap:10px}
+.subtiles{gap:10px}
+
+@container (max-width:600px){
+  .hero-grid .hero-item,.kpis .kpi.card,.quad .mini.card,.groups .grow,.phases .phase,.util-body .util-main,.tiles .tile,.subtiles .subtile,.hero-main .facts > div{padding:9px}
+  .hero-item .hi-val b,.kpi .kpi-val b,.mini .mini-val b,.phase .ph-val b,.groups .grow .gval,.tiles .tile b,.subtiles .subtile b,.hero-main .facts > div b{font-size:16px;line-height:19px}
+  .hero-item .hi-sub,.kpi .kpi-foot,.kpi .kpi-foot .num,.mini .mini-sub,.mini .mini-sub .num,.mini .acct-rows,.mini .acct-rows b,.mini .acct-msg,.groups .grow .gshare,.util-body .util-main .status,
+  .hero-item .hi-label,.kpi .kpi-label,.mini .card-head h3,.phase .ph-head,.phase .ph-name,.groups .grow .gname,.util-body .util-main > small,.tiles .tile small,.subtiles .subtile small,.hero-main .facts > div small{font-size:10px}
+  .groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpis.a-full{padding:0 14px}
+  .quad.a-half{padding:0 14px}
+  .hero-grid,.facts,.util-body .tiles,.subtiles,.phases{gap:8px}
+  .subtiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 `;

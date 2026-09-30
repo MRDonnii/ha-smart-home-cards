@@ -15,7 +15,7 @@
  * Alle entity-id'er kommer fra kortets konfiguration – kortet opfinder ingen værdier.
  */
 
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 const CARD_TAG = "ha-electricity-dashboard-card";
 
 /* ------------------------------------------------------------------------------------------
@@ -676,6 +676,90 @@ const STYLE = `
   .mini-grid{grid-template-columns:minmax(0,1fr)}
   .flow-body{grid-template-columns:1fr}
 }
+
+/* ---------- Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   accent edge (follows --dashboard-left-accent-width), card surface, shadow, value first, then meter,
+   detail and label, and a large faint drifting background icon. Charts, the ring, the donut, the
+   charger drawing, pills and chips keep their own look; only the panels get surface/shadow/radius. ---------- */
+.dash .card{border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--energy-accent-bar);border-radius:15px;background:var(--surface,var(--energy-card));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.dash .chip,.dash .card.a-price,.dash .card.a-house,.dash .mini,.dash .leg,.dash .fact,.dash .erow,.dash .ext,.dash .range>div,.dash .advice-box{
+  --tile-accent:var(--tone,var(--state-info-icon,var(--info-color,#38bdf8)));
+  position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;
+  padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);
+  border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
+  box-shadow:0 4px 12px rgba(0,0,0,.14);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left;filter:none
+}
+.dash .chip,.dash .card.a-price,.dash .card.a-house{border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.dash .card.a-price,.dash .card.a-house{min-height:85px}
+.dash .chip{min-width:130px}
+.dash .card.a-price{--tile-accent:var(--energy-yellow)}
+.dash .a-price:has(.big.tone-green){--tile-accent:var(--state-on-icon,var(--energy-green))}
+.dash .a-price:has(.big.tone-blue){--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.dash .a-price:has(.big.tone-orange){--tile-accent:var(--orange,var(--energy-orange))}
+.dash .a-price:has(.big.tone-red){--tile-accent:var(--error-color,var(--energy-red))}
+.dash .range>div.range-avg{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8))}
+.dash .chip>.dot,.dash .a-price .glow{display:none}
+.dash .advice-box::after{z-index:0}
+/* store svage baggrundsikoner */
+.dash .chip>.ic,.dash .a-price>.card-head>.ic,.dash .a-house>.card-head>.ic,.dash .mini>.card-head>.ic,.dash .leg>.ic,.dash .fact>.ic,.dash .erow>.ic,.dash .ext>.badge>.ic,.dash .range>div>.ic,.dash .advice-box>.ic{
+  position:absolute;right:-10px;bottom:-10px;z-index:0;display:block;width:58px;height:58px;margin:0;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;filter:none;pointer-events:none;animation:edTileDrift 5s ease-in-out infinite
+}
+.dash .ext>.badge{display:contents}
+@keyframes edTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+/* tekst over ikonet */
+.dash .chip>div,.dash .a-price>*:not(.card-head),.dash .a-house>*:not(.card-head),.dash .mini>*:not(.card-head),.dash .tile-text,.dash .ext>div,.dash .advice-box>div,
+.dash .card-head h3,.dash .leg>*:not(.ic),.dash .fact>*:not(.ic),.dash .erow>*:not(.ic),.dash .range>div>*:not(.ic){position:relative;z-index:1}
+.dash .a-price>.card-head,.dash .a-house>.card-head,.dash .mini>.card-head{position:static;display:block;order:4;margin:0}
+.dash .chip>div,.dash .ext>div,.dash .advice-box>div{display:flex;flex-direction:column;min-width:0}
+/* værdi først */
+.dash .a-price .big,.dash .a-house .big,.dash .mini .big{order:1;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.dash .a-price .big .v,.dash .a-house .big .v,.dash .mini .big .v,.dash .chip b,.dash .leg b,.dash .fact b,.dash .fact b.txt,.dash .erow .val,.dash .ext b,.dash .range .rv,.dash .advice-box b{
+  order:1;display:block;margin:0;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;letter-spacing:0;text-align:left;white-space:normal;overflow:visible;text-overflow:clip;grid-column:auto
+}
+.dash .fact b,.dash .erow .val,.dash .leg b,.dash .ext b,.dash .range .rv{white-space:nowrap}
+.dash .a-price .big .u,.dash .a-house .big .u,.dash .mini .big .u,.dash .unit,.dash .range .ru{order:1;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700;opacity:1}
+/* meter */
+.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini svg.mini-line,.dash .erow .bar{order:2;margin-top:6px}
+.dash .a-house .spark,.dash .mini .spark{height:30px}
+.dash .mini svg.mini-line{height:30px}
+.dash .erow .bar{height:5px;margin-bottom:4px;grid-column:auto}
+/* detalje */
+.dash .a-price .delta,.dash .mini-foot,.dash .leg .pct,.dash .erow .share,.dash .ext>div>span,.dash .range .rt,.dash .advice-box small{
+  order:3;margin:2px 0 0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;font-weight:400;grid-column:auto
+}
+.dash .a-price .delta,.dash .mini-foot{gap:6px;flex-wrap:wrap}
+.dash .a-price .delta .pill,.dash .mini-foot .pill{font-size:11px;padding:1px 7px;border-radius:8px;gap:4px}
+.dash .erow .share{display:flex;flex-wrap:wrap;gap:0 5px;align-items:baseline}
+.dash .erow .share small{display:inline;font-size:11px;color:inherit}
+/* label sidst */
+.dash .a-price .card-head h3,.dash .a-house .card-head h3,.dash .mini .card-head h3,.dash .chip small,.dash .leg small,.dash .fact small,.dash .erow .name,.dash .ext small,.dash .range .rl,.dash .range-label{
+  order:4;display:block;margin:3px 0 0;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;overflow:visible;-webkit-line-clamp:unset;text-align:left
+}
+.dash .fact small::before{display:none}
+.dash .chip small{margin-top:1px}
+/* layout for de nye fliser */
+.dash .range{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:0}
+.dash .range>div{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;column-gap:4px;padding:8px 12px}
+.dash .range .rt,.dash .range .rl{flex-basis:100%}
+.dash .legend{gap:8px}
+.dash .facts{gap:8px}
+.dash .fact{padding:8px 12px}
+.dash .charge-body{background:none;border:0;padding:0}
+.dash .energy-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dash .extremes{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0;border-radius:0;align-content:start}
+.dash .ext>div{flex:1}
+.dash .advice-box{padding:10px 12px}
+.dash .advice-box>div{padding-right:35px}
+.dash .advice-box small{padding-right:0}
+@media (prefers-reduced-motion:reduce){.dash .ic{animation:none!important}}
+@container (max-width:640px){
+  .dash .chip,.dash .card.a-price,.dash .card.a-house,.dash .mini,.dash .leg,.dash .fact,.dash .erow,.dash .ext,.dash .range>div,.dash .advice-box{padding:9px}
+  .dash .a-price .big .v,.dash .a-house .big .v,.dash .mini .big .v,.dash .chip b,.dash .leg b,.dash .fact b,.dash .fact b.txt,.dash .erow .val,.dash .ext b,.dash .range .rv,.dash .advice-box b{font-size:16px;line-height:19px}
+  .dash .a-price .delta,.dash .mini-foot,.dash .leg .pct,.dash .erow .share,.dash .erow .share small,.dash .ext>div>span,.dash .range .rt,.dash .advice-box small,
+  .dash .a-price .card-head h3,.dash .a-house .card-head h3,.dash .mini .card-head h3,.dash .chip small,.dash .leg small,.dash .fact small,.dash .erow .name,.dash .ext small,.dash .range .rl{font-size:10px}
+  .dash .extremes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash .card.a-house{display:none}
+}
 `;
 
 /* ------------------------------------------------------------------------------------------
@@ -964,8 +1048,8 @@ class HAElectricityDashboardCard extends HTMLElement {
     </div>
     <div class="chips">
       <div class="chip">${icon("mdi:calendar-clock")}<div><b data-ref="hdrDate">—</b><small data-ref="hdrTime">—</small></div></div>
-      <div class="chip" data-ref="hdrOnline"><span class="dot"></span><div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
-      <div class="chip" data-ref="hdrSystem"><span class="dot"></span><div><b>System</b><small data-ref="hdrSystemText">—</small></div></div>
+      <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
+      <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">—</small></div></div>
     </div>
   </header>
 
@@ -978,9 +1062,9 @@ class HAElectricityDashboardCard extends HTMLElement {
   <section class="card kpi a-range">
     <div class="card-head" style="--head-ic:var(--energy-blue)">${icon("mdi:chart-bar")}<h3>Dagens min / max / gennemsnit</h3></div>
     <div class="range">
-      <div class="tone-green"><span class="rv num" data-ref="minVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">—</span></div>
-      <div class="tone-red"><span class="rv num" data-ref="maxVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">—</span></div>
-      <div style="--tone:var(--energy-text)"><span class="rv num" data-ref="avgVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
+      <div class="tone-green">${icon("mdi:arrow-down-bold")}<span class="rv num" data-ref="minVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">—</span></div>
+      <div class="tone-red">${icon("mdi:arrow-up-bold")}<span class="rv num" data-ref="maxVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">—</span></div>
+      <div class="range-avg" style="--tone:var(--energy-text)">${icon("mdi:approximately-equal")}<span class="rv num" data-ref="avgVal" data-v>—</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
     </div>
   </section>
 
@@ -1056,8 +1140,8 @@ class HAElectricityDashboardCard extends HTMLElement {
         <div class="donut-center"><span class="v num" data-ref="flowTotal" data-v>—</span><span class="u">kW</span></div>
       </div>
       <div class="legend">
-        <div class="leg tone-blue clickable" data-entity="${escapeHtml(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>—</span> kW</b><span class="pct" data-ref="flowCarPct">—</span></div>
-        <div class="leg tone-green clickable" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>—</span> kW</b><span class="pct" data-ref="flowHousePct">—</span></div>
+        <div class="leg tone-blue clickable" data-entity="${escapeHtml(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">—</span></div>
+        <div class="leg tone-green clickable" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">—</span></div>
       </div>
     </div>
   </section>
@@ -1078,10 +1162,10 @@ class HAElectricityDashboardCard extends HTMLElement {
         <rect class="pin" x="106" y="92" width="4" height="10" rx="1.5"/><rect class="pin" x="114" y="92" width="4" height="10" rx="1.5"/>
       </svg>
       <div class="facts">
-        <div class="fact" style="--tone:var(--energy-blue)"><small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>—</span> kW</b></div>
-        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}><small>Tilført i dag</small><b class="num"><span data-ref="chargeToday" data-v>—</span> kWh</b></div>
-        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}><small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>—</span> kWh</b></div>
-        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}><small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>—</b></div>
+        <div class="fact" style="--tone:var(--energy-blue)">${icon("mdi:flash")}<small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>—</span> <span class="unit">kW</span></b></div>
+        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:battery-charging")}<small>Tilført i dag</small><b class="num"><span data-ref="chargeToday" data-v>—</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}>${icon("mdi:counter")}<small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>—</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}>${icon("mdi:ev-station")}<small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>—</b></div>
         <div class="bar-row" data-ref="chargeUtilRow" hidden><div class="bar tone-green"><i data-ref="chargeUtil"></i></div><span data-ref="chargeUtilText">—</span></div>
       </div>
     </div>
@@ -1093,9 +1177,9 @@ class HAElectricityDashboardCard extends HTMLElement {
       <span class="tag">${icon("mdi:calendar-today")}I dag</span>
     </div>
     <div class="energy-rows">
-      <div class="erow tone-green clickable" data-entity="${escapeHtml(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>—</span> kWh</span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">—</span></div>
-      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>—</span> kWh</span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">—</span></div>
-      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>—</span> kWh</span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
+      <div class="erow tone-green clickable" data-entity="${escapeHtml(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">—</span></div>
+      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">—</span></div>
+      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
     </div>
   </section>
 
@@ -1669,8 +1753,8 @@ class HAElectricityDashboardCard extends HTMLElement {
     <div class="x-axis">${xLabels}</div>
   </div>
   <div class="extremes">
-    <div class="ext tone-green"><span class="badge">${icon("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} kr/kWh</b><span>kl. ${a.minEntry.label}</span></div></div>
-    <div class="ext tone-red"><span class="badge">${icon("mdi:arrow-up")}</span><div><small>Højeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} kr/kWh</b><span>kl. ${a.maxEntry.label}</span></div></div>
+    <div class="ext tone-green"><span class="badge">${icon("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} <span class="unit">kr/kWh</span></b><span>kl. ${a.minEntry.label}</span></div></div>
+    <div class="ext tone-red"><span class="badge">${icon("mdi:arrow-up")}</span><div><small>Højeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} <span class="unit">kr/kWh</span></b><span>kl. ${a.maxEntry.label}</span></div></div>
   </div>
 </div>`;
     this._tomorrowGeom = { entries: m.tomorrow, analysis: a, xPct, start, end };
