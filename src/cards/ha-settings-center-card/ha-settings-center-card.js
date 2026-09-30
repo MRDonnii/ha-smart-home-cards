@@ -1,4 +1,4 @@
-const VERSION = "0.6.7";
+const VERSION = "0.6.8";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -781,7 +781,8 @@ class HASettingsCenterCard extends HTMLElement {
       .tab ha-icon{--mdc-icon-size:16px}
       .tab.active{color:var(--dashboard-icon-active, #fff);background:var(--settings-selected);border-color:var(--dashboard-tab-selected-border, var(--accent));box-shadow:0 0 14px color-mix(in srgb,var(--accent) 12%,transparent)}
       .page[hidden]{display:none}
-      .page-panel{border:1px solid var(--edge);border-radius:16px;padding:14px;background:var(--settings-info)}
+      /* Sections are headings on the card itself, not a box around the room cards. */
+      .page-panel{border:0;border-radius:0;padding:0;background:transparent;box-shadow:none}
       .section{padding-top:14px;margin-top:14px;border-top:1px solid var(--edge)}
       .section:first-child{padding-top:0;margin-top:0;border-top:0}
       .subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;align-items:start}
