@@ -1133,3 +1133,13 @@ button { font: inherit; color: inherit; }
   .dashboard-overview :is(.unit-readback em,.climate-metric > em,.status-action-card > div > small,.unit-readback small,.climate-metric > span,.status-action-card > div > span,.overview-status-pills > div > small,.hch-mobile-subreadings > button,.hch-mobile-water > span) { font-size: 10px; }
   .dashboard-overview .overview-status-pills { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
 }
+
+/* On a phone the controls sit inside the unit card, straight under the animated drawing and
+   above Frost; their own column is hidden there. Elsewhere only the column is shown. */
+.hch-inline-controls { display: none; }
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-inline-controls { display: grid; gap: 8px; margin: 4px 0 10px; }
+    .dashboard-overview .dashboard-main-grid > .pro-control-column { display: none; }
+  }
+}
