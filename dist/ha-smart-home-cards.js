@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.51 */
+/* MRDonnii Smart Home Cards v0.4.52 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -7986,7 +7986,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.7.13";
+var VERSION13 = "0.7.14";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -8356,6 +8356,19 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       @keyframes epTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
       @media(prefers-reduced-motion:reduce){ha-card .summary .tile-icon{animation:none}}
       @media(max-width:600px){ha-card .summary{grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:5px}ha-card .summary .day,ha-card .summary .stat{padding:2px 9px!important}ha-card .summary .day{font-size:12px;line-height:15px}ha-card .summary .day .now-value,ha-card .summary .stat b{font-size:16px;line-height:19px}ha-card .summary .day .now-value small{font-size:10px}ha-card .summary .day .now-label,ha-card .summary .stat span{padding-right:12px;font-size:10px;line-height:12px}}
+      /* Period buttons use the same tile design, at their existing height: accent edge that follows
+         the dashboard left accent toggle, card surface, shadow and a faint drifting icon. */
+      ha-card .tabs{border-color:transparent;background:transparent;box-shadow:none;gap:6px}
+      ha-card .tabs button,ha-card .tabs button:first-child,ha-card .tabs button:last-child{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b));position:relative;isolation:isolate;overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));backdrop-filter:none;-webkit-backdrop-filter:none}
+      ha-card .tabs button:hover{background:color-mix(in srgb,var(--tile-accent) 8%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
+      ha-card .tabs button.active{--tile-accent:var(--dashboard-accent,var(--accent));border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);background:color-mix(in srgb,var(--tile-accent) 14%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      ha-card .tabs button>ha-icon,ha-card .tabs button.active>ha-icon{position:absolute;right:-6px;bottom:-9px;z-index:0;width:40px;height:40px;--mdc-icon-size:40px;color:var(--tile-accent);opacity:.14;pointer-events:none;animation:epTileDrift 5s ease-in-out infinite}
+      ha-card .tabs button{justify-content:flex-start;text-align:left}ha-card .tabs .tab-copy{z-index:1;padding-right:18px}
+      ha-card .tabs .tab-copy b{color:var(--gray800,var(--primary-text-color,#f8fafc));font-weight:750;letter-spacing:0}
+      ha-card .tabs .tab-copy small{color:var(--gray600,var(--secondary-text-color,#a7b2c2));opacity:1}
+      ha-card .tabs button.active .tab-copy b{color:var(--gray800,var(--primary-text-color,#f8fafc))}ha-card .tabs button.active .tab-copy small{color:var(--gray600,var(--secondary-text-color,#a7b2c2))}
+      @media(prefers-reduced-motion:reduce){ha-card .tabs button>ha-icon{animation:none}}
+      @media(max-width:700px){ha-card .tabs{gap:5px;overflow:visible;box-shadow:none}}
     </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong><ha-icon class="tile-icon" icon="mdi:flash"></ha-icon>` : this._date(points)}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>Lav</span><b>${this._fmt(min)}</b><ha-icon class="tile-icon" icon="mdi:arrow-down-bold"></ha-icon></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>Snit</span><b>${this._fmt(avg)}</b><ha-icon class="tile-icon" icon="mdi:approximately-equal"></ha-icon></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xF8j</span><b>${this._fmt(max)}</b><ha-icon class="tile-icon" icon="mdi:arrow-up-bold"></ha-icon></div></div>${this._bars(points)}</ha-card>`;
     const compactMobile = window.matchMedia("(max-width: 600px)").matches;
     const card = this.shadowRoot.querySelector("ha-card");
