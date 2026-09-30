@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.37 */
+/* MRDonnii Smart Home Cards v0.4.38 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -549,7 +549,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION50 = "0.4.5";
+  const VERSION51 = "0.4.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -931,12 +931,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION50}`);
+  console.info(`HA POOL CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION50 = "0.3.4";
+  const VERSION51 = "0.3.4";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -1148,7 +1148,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION50}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-roborock-vacuum-card/ha-roborock-vacuum-card.js
@@ -11755,20 +11755,20 @@ Error generating stack: ` + l.message + `
         return G && ba(m, T), N;
       }
       for (E = l(E); T < g.length; T++) k = p(E, m, T, g[T], y), k !== null && (t && (O = k.alternate, O !== null && E.delete(O.key === null ? T : O.key)), f = i(k, f, T), M === null ? N = k : M.sibling = k, M = k);
-      return t && E.forEach(function(W) {
-        return e(m, W);
+      return t && E.forEach(function(W2) {
+        return e(m, W2);
       }), G && ba(m, T), N;
     }
     function S(m, f, g, y) {
       if (g == null) throw Error(x(151));
       for (var N = null, M = null, E = f, T = f = 0, k = null, O = g.next(); E !== null && !O.done; T++, O = g.next()) {
         E.index > T ? (k = E, E = null) : k = E.sibling;
-        var W = d(m, E, O.value, y);
-        if (W === null) {
+        var W2 = d(m, E, O.value, y);
+        if (W2 === null) {
           E === null && (E = k);
           break;
         }
-        t && E && W.alternate === null && e(m, E), f = i(W, f, T), M === null ? N = W : M.sibling = W, M = W, E = k;
+        t && E && W2.alternate === null && e(m, E), f = i(W2, f, T), M === null ? N = W2 : M.sibling = W2, M = W2, E = k;
       }
       if (O.done) return a(m, E), G && ba(m, T), N;
       if (E === null) {
@@ -17889,24 +17889,24 @@ function B2({ heating: t, lockout: e, flowWater: a, returnWater: l }) {
   return (0, r.jsxs)("g", { className: `hch-external-coil hch-water-coil${t ? " active" : ""}`, transform: `translate(${Kn[0]} ${Kn[1]})`, children: [(0, r.jsx)("defs", { children: (0, r.jsxs)("linearGradient", { id: "waterCoilTint", gradientUnits: "userSpaceOnUse", x1: "-30", y1: "0", x2: "30", y2: "0", children: [(0, r.jsx)("stop", { offset: "0", stopColor: v.flow }), (0, r.jsx)("stop", { offset: ".5", stopColor: v.mid }), (0, r.jsx)("stop", { offset: "1", stopColor: v.ret })] }) }), d.map(([p, _, S]) => (0, r.jsxs)("g", { className: `water-pipe ${p}`, children: [(0, r.jsx)("path", { className: "water-pipe-shell", d: _ }), (0, r.jsx)("path", { className: "water-pipe-core", d: _, style: { stroke: S } }), (0, r.jsx)(Ig, { d: _ })] }, p)), (0, r.jsxs)("g", { className: "water-valve", transform: `translate(${h} ${b})`, children: [(0, r.jsx)("path", { className: "valve-body", d: "M-8 -6 L8 6 V-6 L-8 6 Z" }), (0, r.jsx)("rect", { className: "valve-actuator", x: "-5", y: "7", width: "10", height: "7", rx: "2" })] }), (0, r.jsx)("rect", { className: "coil-case", x: "-48", y: "-68", width: "96", height: "136", rx: "12" }), (0, r.jsx)("rect", { className: "coil-duct", x: "-61", y: "-48", width: "122", height: "96", rx: "20" }), D2.map((p) => (0, r.jsx)("path", { className: "coil-fin", d: `M-44 ${p} H44` }, p)), (0, r.jsx)("path", { className: "water-tube-shell", d: Lf }), (0, r.jsx)("path", { className: "water-tube-core", d: Lf, stroke: "url(#waterCoilTint)" }), (0, r.jsx)(Ig, { d: Lf }), e && (0, r.jsx)(e1, {})] });
 }
 function Jf(t) {
-  let { onSensor: e, outdoor: a, extract: l, exhaust: n, afterHeater: i, beforeHeater: o = null, frost: c, flowWater: u, returnWater: h, supplyRpm: b, extractRpm: v, supplyPercent: d, extractPercent: p, fanLevel: _ = null, bypassActual: S, bypassRequest: C, heating: m, recovery: f, busActive: g = false, bypassRaw: y = null, bypassTravelDirection: N = null, bypassTravelSeconds: M = null, bypassTravelTotal: E = null, afterheatLockout: T = false, afterheatCoil: k = "electric", control: O = null, controlCompact: W = false } = t, qt = k === "water", ee = u === null || h === null ? null : u - h, ft = typeof y == "number" && Number.isFinite(y) ? Math.min(255, Math.max(0, y)) : null, Rt = ft === null ? S : ft >= 255, fl = C.toLowerCase() === "on", ia = u2(ft ?? (Rt ? 255 : 0), ft !== null && ft > 0 && ft < 255), Ht = no({ raw: ft, requestOn: fl, direction: N, seconds: M, total: E, observed: ia }), Yt = Ht ? Ht.direction ?? "moving" : null, oa = Hg(Ht, Rt), zt = oa >= 0.5, Ae = N2(a, l, n, i, o, m, f, zt), [Zt, z] = y2(), bt = Ht?.percent ?? null, ca = Ht?.remainingSeconds ?? null, hl = Ht?.awaitingEnd ?? false, ra = Yt ? `${r2[Yt]}${bt === null ? "" : ` ${bt} %`}` : zt ? "\xC5ben" : "Lukket", ke = { opacity: 1 - oa }, ua = { opacity: oa }, Be = Math.round(90 * (1 - oa) * 10) / 10, Ge = b && b > 0 ? 12 : 0, pe = v && v > 0 ? 12 : 0, Ql = (0, la.useRef)(null);
+  let { onSensor: e, outdoor: a, extract: l, exhaust: n, afterHeater: i, beforeHeater: o = null, frost: c, flowWater: u, returnWater: h, supplyRpm: b, extractRpm: v, supplyPercent: d, extractPercent: p, fanLevel: _ = null, bypassActual: S, bypassRequest: C, heating: m, recovery: f, busActive: g = false, bypassRaw: y = null, bypassTravelDirection: N = null, bypassTravelSeconds: M = null, bypassTravelTotal: E = null, afterheatLockout: T = false, afterheatCoil: k = "electric", control: O = null, controlCompact: W2 = false } = t, qt = k === "water", ee = u === null || h === null ? null : u - h, ft = typeof y == "number" && Number.isFinite(y) ? Math.min(255, Math.max(0, y)) : null, Rt = ft === null ? S : ft >= 255, fl = C.toLowerCase() === "on", ia = u2(ft ?? (Rt ? 255 : 0), ft !== null && ft > 0 && ft < 255), Ht = no({ raw: ft, requestOn: fl, direction: N, seconds: M, total: E, observed: ia }), Yt = Ht ? Ht.direction ?? "moving" : null, oa = Hg(Ht, Rt), zt = oa >= 0.5, Ae = N2(a, l, n, i, o, m, f, zt), [Zt, z] = y2(), bt = Ht?.percent ?? null, ca = Ht?.remainingSeconds ?? null, hl = Ht?.awaitingEnd ?? false, ra = Yt ? `${r2[Yt]}${bt === null ? "" : ` ${bt} %`}` : zt ? "\xC5ben" : "Lukket", ke = { opacity: 1 - oa }, ua = { opacity: oa }, Be = Math.round(90 * (1 - oa) * 10) / 10, Ge = b && b > 0 ? 12 : 0, pe = v && v > 0 ? 12 : 0, Ql = (0, la.useRef)(null);
   (0, la.useEffect)(() => {
-    let H = _ === null ? 4 : Math.max(1, Math.min(6, Math.round(_))), Z = [0.65, 0.8, 0.95, 1.1, 1.25, 1.4][H - 1];
+    let H3 = _ === null ? 4 : Math.max(1, Math.min(6, Math.round(_))), Z = [0.65, 0.8, 0.95, 1.1, 1.25, 1.4][H3 - 1];
     Ql.current?.querySelectorAll(".hch-fan-rotor, .hch-air-wisp, .hch-airflow-guide").forEach((Ye) => {
       Ye.getAnimations().forEach((Zl) => Zl.updatePlaybackRate(Z));
     });
   }, [_, Ge, pe]);
-  let xr = Yl.to - ct.x, go = (H) => Math.round((H - ct.x) / xr * 1e3) / 1e3, { x: Kt, y: vt, width: qe, height: sa } = d2, fa = Kt + qe + Yg[0], ha = vt + sa + Yg[1], dl = ct;
-  return (0, r.jsxs)("div", { className: `hch5-visual${zt ? " is-bypass" : " is-recovery"}`, children: [(0, r.jsxs)("svg", { ref: Ql, viewBox: `${dl.x} ${dl.y} ${dl.width} ${dl.height}`, role: "img", "aria-label": "HCH5 luftstr\xF8m med intern bypass og ekstern eftervarme", children: [(0, r.jsxs)("defs", { children: [(0, r.jsxs)("linearGradient", { id: "metalFace", x1: "0", x2: "1", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#596b76" }), (0, r.jsx)("stop", { offset: ".4", stopColor: "#263843" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#14242e" })] }), (0, r.jsxs)("linearGradient", { id: "metalTop", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#7b8991" }), (0, r.jsx)("stop", { offset: ".48", stopColor: "#40515b" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#263640" })] }), (0, r.jsxs)("linearGradient", { id: "metalSide", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#6b7d88" }), (0, r.jsx)("stop", { offset: ".55", stopColor: "#3a4c57" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#223440" })] }), (0, r.jsxs)("linearGradient", { id: "exchangerMetal", x1: "0", x2: "1", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#8e9aa1" }), (0, r.jsx)("stop", { offset: ".55", stopColor: "#455760" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#25353e" })] }), (0, r.jsxs)("linearGradient", { id: "cavityFloor", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#0a1a24" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#173041" })] }), (0, r.jsxs)("linearGradient", { id: "cavityWall", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#0b1a23" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1b3445" })] }), (0, r.jsxs)("linearGradient", { id: "rearDuctMetal", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#8a99a2" }), (0, r.jsx)("stop", { offset: ".42", stopColor: "#4a5d68" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#15242d" })] }), (0, r.jsxs)("linearGradient", { id: "fanDrum", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#2c4452" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#0c1a22" })] }), (0, r.jsx)(pr, { id: "supplyFlow", stops: Ae.supply, from: Ee.outdoor, to: Ee.room }), (0, r.jsx)(pr, { id: "extractFlow", stops: Ae.extract, from: Ee.room, to: Ee.outdoor }), (0, r.jsx)(pr, { id: "supplyWisp", stops: Ae.supply, from: Ee.outdoor, to: Ee.room, light: true }), (0, r.jsx)(pr, { id: "extractWisp", stops: Ae.extract, from: Ee.room, to: Ee.outdoor, light: true }), (0, r.jsx)("filter", { id: "fogBlur", x: "-100%", y: "-100%", width: "300%", height: "300%", children: (0, r.jsx)("feGaussianBlur", { stdDeviation: "11" }) }), (0, r.jsx)("filter", { id: "unitShadow", x: "-30%", y: "-40%", width: "170%", height: "190%", children: (0, r.jsx)("feDropShadow", { dx: "0", dy: "18", stdDeviation: "18", floodColor: "#000", floodOpacity: ".42" }) }), (0, r.jsxs)("pattern", { id: "filterMesh", width: "8", height: "8", patternUnits: "userSpaceOnUse", children: [(0, r.jsx)("rect", { width: "8", height: "8", fill: "#1a2d37" }), (0, r.jsx)("path", { d: "M0 8L8 0M-2 2L2-2M6 10L10 6", stroke: "#aab9c1", strokeWidth: "1", opacity: ".6" })] }), (0, r.jsxs)("linearGradient", { id: "fogFadeGradient", gradientUnits: "userSpaceOnUse", x1: ct.x, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "0" }), (0, r.jsx)("stop", { offset: go(ro + 30), stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: go(Yl.from), stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsx)("mask", { id: "fogFadeMask", maskUnits: "userSpaceOnUse", x: ct.x, y: ct.y, width: ct.width, height: ct.height, children: (0, r.jsx)("rect", { x: ct.x, y: ct.y, width: ct.width, height: ct.height, fill: "url(#fogFadeGradient)" }) }), (0, r.jsxs)("mask", { id: "coreSolidMask", maskUnits: "userSpaceOnUse", x: ct.x, y: ct.y, width: ct.width, height: ct.height, children: [(0, r.jsx)("rect", { x: ct.x, y: ct.y, width: ct.width, height: ct.height, fill: "#fff" }), (0, r.jsxs)("g", { filter: "url(#coreMaskEdge)", children: [Kf(t1, br).map((H) => (0, r.jsx)("polygon", { points: H.points, fill: "#000" }, H.points)), (0, r.jsx)("polygon", { points: gr, fill: "#000" })] })] }), (0, r.jsx)("filter", { id: "coreMaskEdge", x: "-10%", y: "-10%", width: "120%", height: "120%", children: (0, r.jsx)("feGaussianBlur", { stdDeviation: "5" }) }), (0, r.jsxs)("linearGradient", { id: "rearDuctFadeGradient", gradientUnits: "userSpaceOnUse", x1: Yl.from, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsxs)("linearGradient", { id: "rearDuctFadeGradient", gradientUnits: "userSpaceOnUse", x1: Yl.from, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsx)("mask", { id: "rearDuctFade", maskUnits: "userSpaceOnUse", x: "900", y: ct.y, width: "320", height: ct.height, children: (0, r.jsx)("rect", { x: "900", y: ct.y, width: "320", height: ct.height, fill: "url(#rearDuctFadeGradient)" }) }), (0, r.jsx)("clipPath", { id: "coreClip", children: (0, r.jsx)("polygon", { points: gr }) }), (0, r.jsx)("clipPath", { id: "cabinetOpening", children: (0, r.jsx)("rect", { x: Kt, y: vt, width: qe, height: sa, rx: "5" }) }), (0, r.jsxs)("linearGradient", { id: "ductPipe", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#7b8991" }), (0, r.jsx)("stop", { offset: ".45", stopColor: "#40515b" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1a2a33" })] }), (0, r.jsxs)("radialGradient", { id: "fanHub", cx: ".38", cy: ".35", r: ".75", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#c9d8e0" }), (0, r.jsx)("stop", { offset: ".5", stopColor: "#5f7a8a" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1d303b" })] }), (0, r.jsxs)("radialGradient", { id: "fanBlur", children: [(0, r.jsx)("stop", { offset: ".3", stopColor: "#68bcf0", stopOpacity: "0" }), (0, r.jsx)("stop", { offset: ".78", stopColor: "#68bcf0", stopOpacity: ".32" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#a8ddff", stopOpacity: ".08" })] })] }), (0, r.jsx)("ellipse", { className: "hch-floor-shadow", cx: "560", cy: "483", rx: "380", ry: "32" }), (0, r.jsx)(Zg, { y: 205 }), (0, r.jsx)(Zg, { y: 365 }), (0, r.jsxs)("g", { filter: "url(#unitShadow)", children: [(0, r.jsx)("polygon", { className: "hch-top-panel", points: "188,132 154,102 890,102 924,132", fill: "url(#metalTop)" }), (0, r.jsx)("path", { className: "hch-top-fold", d: "M172 113 H884 L907 132 H188" }), (0, r.jsx)("rect", { className: "hch-cabinet", x: "188", y: "132", width: "736", height: "302", rx: "8", fill: "url(#metalFace)" }), (0, r.jsx)("polygon", { className: "hch-side-panel", points: "188,132 154,102 154,404 188,434", fill: "url(#metalSide)" }), (0, r.jsx)("polygon", { className: "hch-side-inset", points: "182,146 160,127 160,398 182,420" }), (0, r.jsx)("path", { className: "hch-side-seam", d: "M166 140 V388 M175 149 V406" }), (0, r.jsx)("rect", { className: "hch-inner", x: Kt, y: vt, width: qe, height: sa, rx: "5" }), (0, r.jsx)("rect", { className: "hch-opening-gasket", x: Kt - 8, y: vt - 8, width: qe + 16, height: sa + 16, rx: "9" }), [[199, 144], [916, 144], [199, 423], [916, 423]].map(([H, Z]) => (0, r.jsxs)("g", { className: "hch-cabinet-fastener", transform: `translate(${H} ${Z})`, children: [(0, r.jsx)("circle", { r: "4" }), (0, r.jsx)("path", { d: "M-2 0 H2" })] }, `${H}-${Z}`)), (0, r.jsxs)("g", { clipPath: "url(#cabinetOpening)", children: [(0, r.jsx)("polygon", { className: "hch-cavity-floor", points: yr([[Kt, ha], [fa, ha], [Kt + qe, vt + sa], [Kt, vt + sa]]) }), (0, r.jsx)("polygon", { className: "hch-cavity-wall", points: yr([[fa, vt], [Kt + qe, vt], [Kt + qe, vt + sa], [fa, ha]]) }), (0, r.jsx)("path", { className: "hch-cavity-edge", d: `M${Kt} ${ha} H${fa} V${vt}` }), (0, r.jsx)("path", { className: "hch-cavity-rail", d: "M225 407 H858 M225 157 H855" }), (0, r.jsx)(Lg, { x: 262, y: 206, angle: 24, label: "Filter \xB7 udsugning" }), (0, r.jsx)(Lg, { x: 866, y: 204, angle: -24, label: "Filter \xB7 udeluft" }), (0, r.jsx)("rect", { className: "hch-bypass-channel", x: "300", y: "371", width: "482", height: "34", rx: "12" }), (0, r.jsx)("rect", { className: "hch-bypass-channel-glow", x: "300", y: "371", width: "482", height: "34", rx: "12", style: ua }), (0, r.jsx)("text", { className: "hch-channel-label", x: "541", y: "393", textAnchor: "middle", children: "Bypass-kanal" }), (0, r.jsx)(b2, { bypassed: zt }), Yt ? (0, r.jsxs)("g", { className: `hch-bypass-progress ${Yt}`, children: [(0, r.jsx)("text", { className: "hch-exchanger-title", x: "520", y: "242", textAnchor: "middle", children: c2[Yt] }), (0, r.jsx)("text", { className: "hch-recovery", x: "520", y: "276", textAnchor: "middle", children: bt === null ? "K\xF8rer\u2026" : `${bt} %` }), (0, r.jsx)("path", { className: "bypass-progress-track", d: Uf, pathLength: 100 }), bt === null ? (0, r.jsx)("path", { className: "bypass-progress-fill indeterminate", d: Uf, pathLength: 100 }) : (0, r.jsx)("path", { className: "bypass-progress-fill", d: Uf, pathLength: 100, style: { strokeDasharray: `${bt} 100` } }), (0, r.jsx)("text", { className: "hch-bypass-countdown", x: "520", y: "315", textAnchor: "middle", children: hl ? "Afventer endestilling" : ca === null ? "Spj\xE6ldet k\xF8rer ca. 3 min" : `ca. ${io(ca)} tilbage` })] }) : (0, r.jsx)(r.Fragment, { children: (0, r.jsx)("text", { className: "hch-exchanger-title", x: "520", y: "255", textAnchor: "middle", children: "Varmeveksler" }) }), [["P3", 438, 204], ["P1", 602, 204], ["P2", 438, 334], ["P4", 602, 334]].map(([H, Z, Ye]) => (0, r.jsx)("text", { className: "hch-core-port", x: Z, y: Ye, textAnchor: "middle", children: H }, H)), (0, r.jsx)(Vg, { x: 770, y: 212, rpm: b, label: "Tilluft" }), (0, r.jsx)(Vg, { x: 800, y: 330, rpm: v, label: "Fraluft", labelRight: true }), (0, r.jsxs)("g", { className: `hch-bypass ${zt ? "open" : "closed"}${Yt ? " moving" : ""}`, transform: "translate(800 386)", children: [(0, r.jsx)("rect", { className: "damper-frame", x: "-17", y: "-12", width: "34", height: "24", rx: "5" }), (0, r.jsx)("rect", { className: "bypass-blade", x: "-12", y: "-3", width: "24", height: "6", rx: "3", style: { transform: `rotate(${Be}deg)` } }), (0, r.jsx)("rect", { className: "bypass-actuator", x: "-15", y: "13", width: "30", height: "11", rx: "4" })] }), (0, r.jsx)("rect", { className: "hch-service-box", x: "214", y: "374", width: "80", height: "36", rx: "8" }), (0, r.jsx)("text", { className: "hch-part-label", x: "254", y: "397", textAnchor: "middle", children: "Styring" })] })] }), (0, r.jsx)(Qg, { x: 164, y: 205 }), (0, r.jsx)(Qg, { x: 164, y: 365 }), qt ? (0, r.jsx)(B2, { heating: m, lockout: T, flowWater: u, returnWater: h }) : (0, r.jsx)(M2, { heating: m, lockout: T }), (0, r.jsx)(A2, { active: g, water: qt }), (0, r.jsxs)("g", { className: "hch-air-layer", mask: Zt ? void 0 : "url(#coreSolidMask)", children: [(0, r.jsxs)("g", { className: "hch-fog-group", filter: "url(#fogBlur)", mask: "url(#fogFadeMask)", children: [(0, r.jsx)("path", { className: "hch-fog hch-fog-supply hch-fog-a", d: sr, style: { "--flow-speed": Ge ? `${Ge}s` : "0s" } }), (0, r.jsx)("path", { className: "hch-fog hch-fog-supply hch-fog-b", d: sr, style: { "--flow-speed": Ge ? `${Ge * 1.35}s` : "0s" } }), [["route-core", Xf, ke], ["route-bypass", Qf, ua]].map(([H, Z, Ye]) => (0, r.jsxs)("g", { className: `hch-fog-route ${H}`, style: Ye, children: [(0, r.jsx)("path", { className: "hch-fog hch-fog-extract hch-fog-a", d: Z, style: { "--flow-speed": pe ? `${pe}s` : "0s" } }), (0, r.jsx)("path", { className: "hch-fog hch-fog-extract hch-fog-b", d: Z, style: { "--flow-speed": pe ? `${pe * 1.35}s` : "0s" } })] }, H))] }), (0, r.jsxs)("g", { className: "hch-wisp-group", mask: "url(#fogFadeMask)", children: [(0, r.jsx)(Jg, { path: sr, kind: "supply", speed: Ge }), f2.map(([H, Z]) => (0, r.jsx)("g", { className: `hch-fog-route ${H}`, style: H === "route-core" ? ke : ua, children: (0, r.jsx)(Jg, { path: Z, kind: "extract", speed: pe }) }, H))] }), (0, r.jsxs)("g", { className: "hch-airflow-guides", mask: "url(#fogFadeMask)", children: [(0, r.jsx)("path", { className: "hch-airflow-guide hch-supply-flow", d: sr, style: { "--flow-speed": Ge ? `${Ge}s` : "0s" } }), [["route-core", Xf, ke], ["route-bypass", Qf, ua]].map(([H, Z, Ye]) => (0, r.jsx)("g", { className: `hch-fog-route ${H}`, style: Ye, children: (0, r.jsx)("path", { className: "hch-airflow-guide hch-extract-flow", d: Z, style: { "--flow-speed": pe ? `${pe}s` : "0s" } }) }, H))] })] }), (0, r.jsx)("polygon", { className: `hch-core-toggle${Zt ? " open" : ""}`, points: gr, role: "button", tabIndex: 0, "aria-pressed": Zt, "aria-label": Zt ? "Vis veksleren massiv" : "Vis luften gennem veksleren", onClick: z, onKeyDown: (H) => {
-    (H.key === "Enter" || H.key === " ") && (H.preventDefault(), z());
-  }, children: (0, r.jsx)("title", { children: Zt ? "Tryk for at g\xF8re veksleren massiv igen" : "Tryk for at se luften gennem veksleren (1 min)" }) }), !Yt && (0, r.jsxs)("g", { className: "hch-recovery-hit", role: "button", tabIndex: 0, "aria-label": `Varmegenvinding ${f === null ? "ukendt" : `${f} %`}, vis historik`, onClick: () => e?.("heat_recovery"), onKeyDown: (H) => {
-    (H.key === "Enter" || H.key === " ") && (H.preventDefault(), e?.("heat_recovery"));
-  }, children: [(0, r.jsx)("rect", { x: "462", y: "264", width: "116", height: "40", rx: "10" }), (0, r.jsx)("text", { className: "hch-recovery", x: "520", y: "293", textAnchor: "middle", children: zt ? "BYPASS" : f === null ? "\u2014" : `${f}%` })] }), (0, r.jsx)(fr, { cx: 1112, cy: co(205), title: "Udeluft \xB7 T1", sensor: "outdoor_temperature", onSensor: e, value: gt(a), tone: "cold" }), (0, r.jsx)(fr, { cx: 1112, cy: co(365), title: "Afkast \xB7 T4", sensor: "exhaust_temperature", onSensor: e, value: gt(n), tone: "warm" }), (0, r.jsx)(fr, { cx: -150, cy: 205, title: "Udsugning \xB7 T3", sensor: "extract_temperature", onSensor: e, value: gt(l), tone: "warm" }), (0, r.jsx)(fr, { cx: -150, cy: 365, title: "Indbl\xE6sning \xB7 T2AH", sensor: "afterheat_after", onSensor: e, value: gt(i), tone: "green" }), (0, r.jsx)(Xg, { x: 57, y: 292, label: "Frost", sensor: "afterheat_frost", onSensor: e, value: gt(c, "\xB0") }), o !== null && (0, r.jsx)(Xg, { x: 150, y: 331, lift: 38, width: 92, label: "T2 \xB7 m\xE5lt", sensor: "afterheat_before", onSensor: e, value: gt(o, "\xB0") }), O && (0, r.jsx)(C2, { control: O, compact: W }), (0, r.jsxs)("g", { className: "hch-water-callout", transform: "translate(-236 424)", children: [(0, r.jsx)("rect", { width: "166", height: "90", rx: "12" }), (0, r.jsx)("text", { x: "14", y: "20", children: qt ? "Vandvarmeflade" : "Eftervarmevand" }), (0, r.jsxs)("text", { className: "water-value", x: "14", y: "40", role: e ? "button" : void 0, tabIndex: e ? 0 : void 0, onClick: () => e?.("water_flow"), onKeyDown: (H) => {
-    (H.key === "Enter" || H.key === " ") && (H.preventDefault(), e?.("water_flow"));
-  }, children: ["Freml\xF8b ", gt(u)] }), (0, r.jsxs)("text", { className: "water-value", x: "14", y: "60", role: e ? "button" : void 0, tabIndex: e ? 0 : void 0, onClick: () => e?.("water_return"), onKeyDown: (H) => {
-    (H.key === "Enter" || H.key === " ") && (H.preventDefault(), e?.("water_return"));
-  }, children: ["Retur ", gt(h)] }), (0, r.jsxs)("text", { className: "water-value water-delta", x: "14", y: "80", children: ["Afk\xF8l ", gt(ee)] })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-flow", "aria-label": "HCH5 luftstr\xF8mme og temperaturer", children: [(0, r.jsxs)("div", { className: "hch-mobile-flow-head", children: [(0, r.jsx)("span", { children: "LUFTVEJE" }), (0, r.jsx)("strong", { children: "HCH5" }), (0, r.jsx)("span", { className: g ? "connected" : "", children: g ? "Bus aktiv" : "Afventer bus" })] }), (0, r.jsxs)("div", { className: "hch-mobile-lane supply", children: [(0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("outdoor_temperature"), "aria-label": "Vis historik for udeluft T1", children: [(0, r.jsx)("small", { children: "Udeluft \xB7 T1" }), (0, r.jsx)("strong", { children: gt(a) })] }), (0, r.jsxs)("div", { className: "hch-mobile-route", children: [(0, r.jsx)("span", { children: "\u2192" }), (0, r.jsx)("i", {}), (0, r.jsx)("span", { children: "\u2192" })] }), (0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("afterheat_after"), "aria-label": "Vis historik for indbl\xE6sning T2AH", children: [(0, r.jsx)("small", { children: "Ind \xB7 T2AH" }), (0, r.jsx)("strong", { children: gt(i) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-core", children: [(0, r.jsx)("span", { children: "VARMEGENVINDING" }), (0, r.jsx)("strong", { children: f === null ? "\u2014" : `${f}%` }), (0, r.jsx)("span", { className: zt ? "bypass-open" : "", children: Yt ? ra : zt ? "Bypass \xE5ben" : "Bypass lukket" })] }), (0, r.jsxs)("div", { className: "hch-mobile-lane extract", children: [(0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("extract_temperature"), "aria-label": "Vis historik for fraluft T3", children: [(0, r.jsx)("small", { children: "Fraluft \xB7 T3" }), (0, r.jsx)("strong", { children: gt(l) })] }), (0, r.jsxs)("div", { className: "hch-mobile-route", children: [(0, r.jsx)("span", { children: "\u2192" }), (0, r.jsx)("i", {}), (0, r.jsx)("span", { children: "\u2192" })] }), (0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("exhaust_temperature"), "aria-label": "Vis historik for afkast T4", children: [(0, r.jsx)("small", { children: "Afkast \xB7 T4" }), (0, r.jsx)("strong", { children: gt(n) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-subreadings", children: [(0, r.jsxs)("div", { className: "hch-mobile-water", children: [(0, r.jsx)("span", { children: "Vand frem / retur" }), (0, r.jsxs)("strong", { children: [(0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand freml\xF8b", onClick: () => e?.("water_flow"), children: gt(u) }), (0, r.jsx)("span", { children: " / " }), (0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand retur", onClick: () => e?.("water_return"), children: gt(h) })] })] }), (0, r.jsxs)("button", { type: "button", onClick: () => e?.("afterheat_frost"), children: ["Frost ", (0, r.jsx)("strong", { children: gt(c) })] }), (0, r.jsxs)("div", { className: "hch-mobile-water hch-mobile-water-delta", children: [(0, r.jsx)("span", { children: "Afk\xF8l" }), (0, r.jsx)("strong", { children: gt(ee) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-water-badge", children: [(0, r.jsx)("small", { children: "Vand frem/retur" }), (0, r.jsxs)("strong", { children: [(0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand freml\xF8b", onClick: () => e?.("water_flow"), children: gt(u).replace("\xB0C", "") }), (0, r.jsx)("span", { children: "/" }), (0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand retur", onClick: () => e?.("water_return"), children: gt(h) })] }), (0, r.jsxs)("small", { children: ["Afk\xF8l ", (0, r.jsx)("b", { children: gt(ee) })] })] })] }), (0, r.jsxs)("div", { className: "unit-readback-row", onClick: (H) => {
-    let Z = H.target.closest("[data-sensor]")?.getAttribute("data-sensor");
+  let xr = Yl.to - ct.x, go = (H3) => Math.round((H3 - ct.x) / xr * 1e3) / 1e3, { x: Kt, y: vt, width: qe, height: sa } = d2, fa = Kt + qe + Yg[0], ha = vt + sa + Yg[1], dl = ct;
+  return (0, r.jsxs)("div", { className: `hch5-visual${zt ? " is-bypass" : " is-recovery"}`, children: [(0, r.jsxs)("svg", { ref: Ql, viewBox: `${dl.x} ${dl.y} ${dl.width} ${dl.height}`, role: "img", "aria-label": "HCH5 luftstr\xF8m med intern bypass og ekstern eftervarme", children: [(0, r.jsxs)("defs", { children: [(0, r.jsxs)("linearGradient", { id: "metalFace", x1: "0", x2: "1", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#596b76" }), (0, r.jsx)("stop", { offset: ".4", stopColor: "#263843" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#14242e" })] }), (0, r.jsxs)("linearGradient", { id: "metalTop", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#7b8991" }), (0, r.jsx)("stop", { offset: ".48", stopColor: "#40515b" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#263640" })] }), (0, r.jsxs)("linearGradient", { id: "metalSide", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#6b7d88" }), (0, r.jsx)("stop", { offset: ".55", stopColor: "#3a4c57" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#223440" })] }), (0, r.jsxs)("linearGradient", { id: "exchangerMetal", x1: "0", x2: "1", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#8e9aa1" }), (0, r.jsx)("stop", { offset: ".55", stopColor: "#455760" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#25353e" })] }), (0, r.jsxs)("linearGradient", { id: "cavityFloor", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#0a1a24" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#173041" })] }), (0, r.jsxs)("linearGradient", { id: "cavityWall", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#0b1a23" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1b3445" })] }), (0, r.jsxs)("linearGradient", { id: "rearDuctMetal", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#8a99a2" }), (0, r.jsx)("stop", { offset: ".42", stopColor: "#4a5d68" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#15242d" })] }), (0, r.jsxs)("linearGradient", { id: "fanDrum", x1: "0", x2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#2c4452" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#0c1a22" })] }), (0, r.jsx)(pr, { id: "supplyFlow", stops: Ae.supply, from: Ee.outdoor, to: Ee.room }), (0, r.jsx)(pr, { id: "extractFlow", stops: Ae.extract, from: Ee.room, to: Ee.outdoor }), (0, r.jsx)(pr, { id: "supplyWisp", stops: Ae.supply, from: Ee.outdoor, to: Ee.room, light: true }), (0, r.jsx)(pr, { id: "extractWisp", stops: Ae.extract, from: Ee.room, to: Ee.outdoor, light: true }), (0, r.jsx)("filter", { id: "fogBlur", x: "-100%", y: "-100%", width: "300%", height: "300%", children: (0, r.jsx)("feGaussianBlur", { stdDeviation: "11" }) }), (0, r.jsx)("filter", { id: "unitShadow", x: "-30%", y: "-40%", width: "170%", height: "190%", children: (0, r.jsx)("feDropShadow", { dx: "0", dy: "18", stdDeviation: "18", floodColor: "#000", floodOpacity: ".42" }) }), (0, r.jsxs)("pattern", { id: "filterMesh", width: "8", height: "8", patternUnits: "userSpaceOnUse", children: [(0, r.jsx)("rect", { width: "8", height: "8", fill: "#1a2d37" }), (0, r.jsx)("path", { d: "M0 8L8 0M-2 2L2-2M6 10L10 6", stroke: "#aab9c1", strokeWidth: "1", opacity: ".6" })] }), (0, r.jsxs)("linearGradient", { id: "fogFadeGradient", gradientUnits: "userSpaceOnUse", x1: ct.x, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "0" }), (0, r.jsx)("stop", { offset: go(ro + 30), stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: go(Yl.from), stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsx)("mask", { id: "fogFadeMask", maskUnits: "userSpaceOnUse", x: ct.x, y: ct.y, width: ct.width, height: ct.height, children: (0, r.jsx)("rect", { x: ct.x, y: ct.y, width: ct.width, height: ct.height, fill: "url(#fogFadeGradient)" }) }), (0, r.jsxs)("mask", { id: "coreSolidMask", maskUnits: "userSpaceOnUse", x: ct.x, y: ct.y, width: ct.width, height: ct.height, children: [(0, r.jsx)("rect", { x: ct.x, y: ct.y, width: ct.width, height: ct.height, fill: "#fff" }), (0, r.jsxs)("g", { filter: "url(#coreMaskEdge)", children: [Kf(t1, br).map((H3) => (0, r.jsx)("polygon", { points: H3.points, fill: "#000" }, H3.points)), (0, r.jsx)("polygon", { points: gr, fill: "#000" })] })] }), (0, r.jsx)("filter", { id: "coreMaskEdge", x: "-10%", y: "-10%", width: "120%", height: "120%", children: (0, r.jsx)("feGaussianBlur", { stdDeviation: "5" }) }), (0, r.jsxs)("linearGradient", { id: "rearDuctFadeGradient", gradientUnits: "userSpaceOnUse", x1: Yl.from, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsxs)("linearGradient", { id: "rearDuctFadeGradient", gradientUnits: "userSpaceOnUse", x1: Yl.from, x2: Yl.to, children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#fff", stopOpacity: "1" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#fff", stopOpacity: "0" })] }), (0, r.jsx)("mask", { id: "rearDuctFade", maskUnits: "userSpaceOnUse", x: "900", y: ct.y, width: "320", height: ct.height, children: (0, r.jsx)("rect", { x: "900", y: ct.y, width: "320", height: ct.height, fill: "url(#rearDuctFadeGradient)" }) }), (0, r.jsx)("clipPath", { id: "coreClip", children: (0, r.jsx)("polygon", { points: gr }) }), (0, r.jsx)("clipPath", { id: "cabinetOpening", children: (0, r.jsx)("rect", { x: Kt, y: vt, width: qe, height: sa, rx: "5" }) }), (0, r.jsxs)("linearGradient", { id: "ductPipe", x1: "0", x2: "0", y1: "0", y2: "1", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#7b8991" }), (0, r.jsx)("stop", { offset: ".45", stopColor: "#40515b" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1a2a33" })] }), (0, r.jsxs)("radialGradient", { id: "fanHub", cx: ".38", cy: ".35", r: ".75", children: [(0, r.jsx)("stop", { offset: "0", stopColor: "#c9d8e0" }), (0, r.jsx)("stop", { offset: ".5", stopColor: "#5f7a8a" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#1d303b" })] }), (0, r.jsxs)("radialGradient", { id: "fanBlur", children: [(0, r.jsx)("stop", { offset: ".3", stopColor: "#68bcf0", stopOpacity: "0" }), (0, r.jsx)("stop", { offset: ".78", stopColor: "#68bcf0", stopOpacity: ".32" }), (0, r.jsx)("stop", { offset: "1", stopColor: "#a8ddff", stopOpacity: ".08" })] })] }), (0, r.jsx)("ellipse", { className: "hch-floor-shadow", cx: "560", cy: "483", rx: "380", ry: "32" }), (0, r.jsx)(Zg, { y: 205 }), (0, r.jsx)(Zg, { y: 365 }), (0, r.jsxs)("g", { filter: "url(#unitShadow)", children: [(0, r.jsx)("polygon", { className: "hch-top-panel", points: "188,132 154,102 890,102 924,132", fill: "url(#metalTop)" }), (0, r.jsx)("path", { className: "hch-top-fold", d: "M172 113 H884 L907 132 H188" }), (0, r.jsx)("rect", { className: "hch-cabinet", x: "188", y: "132", width: "736", height: "302", rx: "8", fill: "url(#metalFace)" }), (0, r.jsx)("polygon", { className: "hch-side-panel", points: "188,132 154,102 154,404 188,434", fill: "url(#metalSide)" }), (0, r.jsx)("polygon", { className: "hch-side-inset", points: "182,146 160,127 160,398 182,420" }), (0, r.jsx)("path", { className: "hch-side-seam", d: "M166 140 V388 M175 149 V406" }), (0, r.jsx)("rect", { className: "hch-inner", x: Kt, y: vt, width: qe, height: sa, rx: "5" }), (0, r.jsx)("rect", { className: "hch-opening-gasket", x: Kt - 8, y: vt - 8, width: qe + 16, height: sa + 16, rx: "9" }), [[199, 144], [916, 144], [199, 423], [916, 423]].map(([H3, Z]) => (0, r.jsxs)("g", { className: "hch-cabinet-fastener", transform: `translate(${H3} ${Z})`, children: [(0, r.jsx)("circle", { r: "4" }), (0, r.jsx)("path", { d: "M-2 0 H2" })] }, `${H3}-${Z}`)), (0, r.jsxs)("g", { clipPath: "url(#cabinetOpening)", children: [(0, r.jsx)("polygon", { className: "hch-cavity-floor", points: yr([[Kt, ha], [fa, ha], [Kt + qe, vt + sa], [Kt, vt + sa]]) }), (0, r.jsx)("polygon", { className: "hch-cavity-wall", points: yr([[fa, vt], [Kt + qe, vt], [Kt + qe, vt + sa], [fa, ha]]) }), (0, r.jsx)("path", { className: "hch-cavity-edge", d: `M${Kt} ${ha} H${fa} V${vt}` }), (0, r.jsx)("path", { className: "hch-cavity-rail", d: "M225 407 H858 M225 157 H855" }), (0, r.jsx)(Lg, { x: 262, y: 206, angle: 24, label: "Filter \xB7 udsugning" }), (0, r.jsx)(Lg, { x: 866, y: 204, angle: -24, label: "Filter \xB7 udeluft" }), (0, r.jsx)("rect", { className: "hch-bypass-channel", x: "300", y: "371", width: "482", height: "34", rx: "12" }), (0, r.jsx)("rect", { className: "hch-bypass-channel-glow", x: "300", y: "371", width: "482", height: "34", rx: "12", style: ua }), (0, r.jsx)("text", { className: "hch-channel-label", x: "541", y: "393", textAnchor: "middle", children: "Bypass-kanal" }), (0, r.jsx)(b2, { bypassed: zt }), Yt ? (0, r.jsxs)("g", { className: `hch-bypass-progress ${Yt}`, children: [(0, r.jsx)("text", { className: "hch-exchanger-title", x: "520", y: "242", textAnchor: "middle", children: c2[Yt] }), (0, r.jsx)("text", { className: "hch-recovery", x: "520", y: "276", textAnchor: "middle", children: bt === null ? "K\xF8rer\u2026" : `${bt} %` }), (0, r.jsx)("path", { className: "bypass-progress-track", d: Uf, pathLength: 100 }), bt === null ? (0, r.jsx)("path", { className: "bypass-progress-fill indeterminate", d: Uf, pathLength: 100 }) : (0, r.jsx)("path", { className: "bypass-progress-fill", d: Uf, pathLength: 100, style: { strokeDasharray: `${bt} 100` } }), (0, r.jsx)("text", { className: "hch-bypass-countdown", x: "520", y: "315", textAnchor: "middle", children: hl ? "Afventer endestilling" : ca === null ? "Spj\xE6ldet k\xF8rer ca. 3 min" : `ca. ${io(ca)} tilbage` })] }) : (0, r.jsx)(r.Fragment, { children: (0, r.jsx)("text", { className: "hch-exchanger-title", x: "520", y: "255", textAnchor: "middle", children: "Varmeveksler" }) }), [["P3", 438, 204], ["P1", 602, 204], ["P2", 438, 334], ["P4", 602, 334]].map(([H3, Z, Ye]) => (0, r.jsx)("text", { className: "hch-core-port", x: Z, y: Ye, textAnchor: "middle", children: H3 }, H3)), (0, r.jsx)(Vg, { x: 770, y: 212, rpm: b, label: "Tilluft" }), (0, r.jsx)(Vg, { x: 800, y: 330, rpm: v, label: "Fraluft", labelRight: true }), (0, r.jsxs)("g", { className: `hch-bypass ${zt ? "open" : "closed"}${Yt ? " moving" : ""}`, transform: "translate(800 386)", children: [(0, r.jsx)("rect", { className: "damper-frame", x: "-17", y: "-12", width: "34", height: "24", rx: "5" }), (0, r.jsx)("rect", { className: "bypass-blade", x: "-12", y: "-3", width: "24", height: "6", rx: "3", style: { transform: `rotate(${Be}deg)` } }), (0, r.jsx)("rect", { className: "bypass-actuator", x: "-15", y: "13", width: "30", height: "11", rx: "4" })] }), (0, r.jsx)("rect", { className: "hch-service-box", x: "214", y: "374", width: "80", height: "36", rx: "8" }), (0, r.jsx)("text", { className: "hch-part-label", x: "254", y: "397", textAnchor: "middle", children: "Styring" })] })] }), (0, r.jsx)(Qg, { x: 164, y: 205 }), (0, r.jsx)(Qg, { x: 164, y: 365 }), qt ? (0, r.jsx)(B2, { heating: m, lockout: T, flowWater: u, returnWater: h }) : (0, r.jsx)(M2, { heating: m, lockout: T }), (0, r.jsx)(A2, { active: g, water: qt }), (0, r.jsxs)("g", { className: "hch-air-layer", mask: Zt ? void 0 : "url(#coreSolidMask)", children: [(0, r.jsxs)("g", { className: "hch-fog-group", filter: "url(#fogBlur)", mask: "url(#fogFadeMask)", children: [(0, r.jsx)("path", { className: "hch-fog hch-fog-supply hch-fog-a", d: sr, style: { "--flow-speed": Ge ? `${Ge}s` : "0s" } }), (0, r.jsx)("path", { className: "hch-fog hch-fog-supply hch-fog-b", d: sr, style: { "--flow-speed": Ge ? `${Ge * 1.35}s` : "0s" } }), [["route-core", Xf, ke], ["route-bypass", Qf, ua]].map(([H3, Z, Ye]) => (0, r.jsxs)("g", { className: `hch-fog-route ${H3}`, style: Ye, children: [(0, r.jsx)("path", { className: "hch-fog hch-fog-extract hch-fog-a", d: Z, style: { "--flow-speed": pe ? `${pe}s` : "0s" } }), (0, r.jsx)("path", { className: "hch-fog hch-fog-extract hch-fog-b", d: Z, style: { "--flow-speed": pe ? `${pe * 1.35}s` : "0s" } })] }, H3))] }), (0, r.jsxs)("g", { className: "hch-wisp-group", mask: "url(#fogFadeMask)", children: [(0, r.jsx)(Jg, { path: sr, kind: "supply", speed: Ge }), f2.map(([H3, Z]) => (0, r.jsx)("g", { className: `hch-fog-route ${H3}`, style: H3 === "route-core" ? ke : ua, children: (0, r.jsx)(Jg, { path: Z, kind: "extract", speed: pe }) }, H3))] }), (0, r.jsxs)("g", { className: "hch-airflow-guides", mask: "url(#fogFadeMask)", children: [(0, r.jsx)("path", { className: "hch-airflow-guide hch-supply-flow", d: sr, style: { "--flow-speed": Ge ? `${Ge}s` : "0s" } }), [["route-core", Xf, ke], ["route-bypass", Qf, ua]].map(([H3, Z, Ye]) => (0, r.jsx)("g", { className: `hch-fog-route ${H3}`, style: Ye, children: (0, r.jsx)("path", { className: "hch-airflow-guide hch-extract-flow", d: Z, style: { "--flow-speed": pe ? `${pe}s` : "0s" } }) }, H3))] })] }), (0, r.jsx)("polygon", { className: `hch-core-toggle${Zt ? " open" : ""}`, points: gr, role: "button", tabIndex: 0, "aria-pressed": Zt, "aria-label": Zt ? "Vis veksleren massiv" : "Vis luften gennem veksleren", onClick: z, onKeyDown: (H3) => {
+    (H3.key === "Enter" || H3.key === " ") && (H3.preventDefault(), z());
+  }, children: (0, r.jsx)("title", { children: Zt ? "Tryk for at g\xF8re veksleren massiv igen" : "Tryk for at se luften gennem veksleren (1 min)" }) }), !Yt && (0, r.jsxs)("g", { className: "hch-recovery-hit", role: "button", tabIndex: 0, "aria-label": `Varmegenvinding ${f === null ? "ukendt" : `${f} %`}, vis historik`, onClick: () => e?.("heat_recovery"), onKeyDown: (H3) => {
+    (H3.key === "Enter" || H3.key === " ") && (H3.preventDefault(), e?.("heat_recovery"));
+  }, children: [(0, r.jsx)("rect", { x: "462", y: "264", width: "116", height: "40", rx: "10" }), (0, r.jsx)("text", { className: "hch-recovery", x: "520", y: "293", textAnchor: "middle", children: zt ? "BYPASS" : f === null ? "\u2014" : `${f}%` })] }), (0, r.jsx)(fr, { cx: 1112, cy: co(205), title: "Udeluft \xB7 T1", sensor: "outdoor_temperature", onSensor: e, value: gt(a), tone: "cold" }), (0, r.jsx)(fr, { cx: 1112, cy: co(365), title: "Afkast \xB7 T4", sensor: "exhaust_temperature", onSensor: e, value: gt(n), tone: "warm" }), (0, r.jsx)(fr, { cx: -150, cy: 205, title: "Udsugning \xB7 T3", sensor: "extract_temperature", onSensor: e, value: gt(l), tone: "warm" }), (0, r.jsx)(fr, { cx: -150, cy: 365, title: "Indbl\xE6sning \xB7 T2AH", sensor: "afterheat_after", onSensor: e, value: gt(i), tone: "green" }), (0, r.jsx)(Xg, { x: 57, y: 292, label: "Frost", sensor: "afterheat_frost", onSensor: e, value: gt(c, "\xB0") }), o !== null && (0, r.jsx)(Xg, { x: 150, y: 331, lift: 38, width: 92, label: "T2 \xB7 m\xE5lt", sensor: "afterheat_before", onSensor: e, value: gt(o, "\xB0") }), O && (0, r.jsx)(C2, { control: O, compact: W2 }), (0, r.jsxs)("g", { className: "hch-water-callout", transform: "translate(-236 424)", children: [(0, r.jsx)("rect", { width: "166", height: "90", rx: "12" }), (0, r.jsx)("text", { x: "14", y: "20", children: qt ? "Vandvarmeflade" : "Eftervarmevand" }), (0, r.jsxs)("text", { className: "water-value", x: "14", y: "40", role: e ? "button" : void 0, tabIndex: e ? 0 : void 0, onClick: () => e?.("water_flow"), onKeyDown: (H3) => {
+    (H3.key === "Enter" || H3.key === " ") && (H3.preventDefault(), e?.("water_flow"));
+  }, children: ["Freml\xF8b ", gt(u)] }), (0, r.jsxs)("text", { className: "water-value", x: "14", y: "60", role: e ? "button" : void 0, tabIndex: e ? 0 : void 0, onClick: () => e?.("water_return"), onKeyDown: (H3) => {
+    (H3.key === "Enter" || H3.key === " ") && (H3.preventDefault(), e?.("water_return"));
+  }, children: ["Retur ", gt(h)] }), (0, r.jsxs)("text", { className: "water-value water-delta", x: "14", y: "80", children: ["Afk\xF8l ", gt(ee)] })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-flow", "aria-label": "HCH5 luftstr\xF8mme og temperaturer", children: [(0, r.jsxs)("div", { className: "hch-mobile-flow-head", children: [(0, r.jsx)("span", { children: "LUFTVEJE" }), (0, r.jsx)("strong", { children: "HCH5" }), (0, r.jsx)("span", { className: g ? "connected" : "", children: g ? "Bus aktiv" : "Afventer bus" })] }), (0, r.jsxs)("div", { className: "hch-mobile-lane supply", children: [(0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("outdoor_temperature"), "aria-label": "Vis historik for udeluft T1", children: [(0, r.jsx)("small", { children: "Udeluft \xB7 T1" }), (0, r.jsx)("strong", { children: gt(a) })] }), (0, r.jsxs)("div", { className: "hch-mobile-route", children: [(0, r.jsx)("span", { children: "\u2192" }), (0, r.jsx)("i", {}), (0, r.jsx)("span", { children: "\u2192" })] }), (0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("afterheat_after"), "aria-label": "Vis historik for indbl\xE6sning T2AH", children: [(0, r.jsx)("small", { children: "Ind \xB7 T2AH" }), (0, r.jsx)("strong", { children: gt(i) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-core", children: [(0, r.jsx)("span", { children: "VARMEGENVINDING" }), (0, r.jsx)("strong", { children: f === null ? "\u2014" : `${f}%` }), (0, r.jsx)("span", { className: zt ? "bypass-open" : "", children: Yt ? ra : zt ? "Bypass \xE5ben" : "Bypass lukket" })] }), (0, r.jsxs)("div", { className: "hch-mobile-lane extract", children: [(0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("extract_temperature"), "aria-label": "Vis historik for fraluft T3", children: [(0, r.jsx)("small", { children: "Fraluft \xB7 T3" }), (0, r.jsx)("strong", { children: gt(l) })] }), (0, r.jsxs)("div", { className: "hch-mobile-route", children: [(0, r.jsx)("span", { children: "\u2192" }), (0, r.jsx)("i", {}), (0, r.jsx)("span", { children: "\u2192" })] }), (0, r.jsxs)("button", { type: "button", className: "hch-mobile-reading", onClick: () => e?.("exhaust_temperature"), "aria-label": "Vis historik for afkast T4", children: [(0, r.jsx)("small", { children: "Afkast \xB7 T4" }), (0, r.jsx)("strong", { children: gt(n) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-subreadings", children: [(0, r.jsxs)("div", { className: "hch-mobile-water", children: [(0, r.jsx)("span", { children: "Vand frem / retur" }), (0, r.jsxs)("strong", { children: [(0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand freml\xF8b", onClick: () => e?.("water_flow"), children: gt(u) }), (0, r.jsx)("span", { children: " / " }), (0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand retur", onClick: () => e?.("water_return"), children: gt(h) })] })] }), (0, r.jsxs)("button", { type: "button", onClick: () => e?.("afterheat_frost"), children: ["Frost ", (0, r.jsx)("strong", { children: gt(c) })] }), (0, r.jsxs)("div", { className: "hch-mobile-water hch-mobile-water-delta", children: [(0, r.jsx)("span", { children: "Afk\xF8l" }), (0, r.jsx)("strong", { children: gt(ee) })] })] }), (0, r.jsxs)("div", { className: "hch-mobile-water-badge", children: [(0, r.jsx)("small", { children: "Vand frem/retur" }), (0, r.jsxs)("strong", { children: [(0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand freml\xF8b", onClick: () => e?.("water_flow"), children: gt(u).replace("\xB0C", "") }), (0, r.jsx)("span", { children: "/" }), (0, r.jsx)("button", { type: "button", "aria-label": "Vis historik for vand retur", onClick: () => e?.("water_return"), children: gt(h) })] }), (0, r.jsxs)("small", { children: ["Afk\xF8l ", (0, r.jsx)("b", { children: gt(ee) })] })] })] }), (0, r.jsxs)("div", { className: "unit-readback-row", onClick: (H3) => {
+    let Z = H3.target.closest("[data-sensor]")?.getAttribute("data-sensor");
     Z && e?.(Z);
   }, children: [(0, r.jsxs)("div", { className: "unit-readback", "data-sensor": "supply_fan_rpm", children: [(0, r.jsx)("span", { className: "readback-icon fan" }), (0, r.jsxs)("div", { children: [(0, r.jsx)("small", { children: "Tilluft ventilator" }), (0, r.jsxs)("strong", { children: [ur(b), " RPM"] }), (0, r.jsxs)("em", { "data-sensor": "supply_fan_percent", children: [ur(d), "%"] })] })] }), (0, r.jsxs)("div", { className: "unit-readback", "data-sensor": "extract_fan_rpm", children: [(0, r.jsx)("span", { className: "readback-icon fan" }), (0, r.jsxs)("div", { children: [(0, r.jsx)("small", { children: "Fraluft ventilator" }), (0, r.jsxs)("strong", { children: [ur(v), " RPM"] }), (0, r.jsxs)("em", { "data-sensor": "extract_fan_percent", children: [ur(p), "%"] })] })] }), (0, r.jsxs)("div", { className: "unit-readback", "data-sensor": "bypass_raw", children: [(0, r.jsx)("span", { className: `readback-icon damper ${zt ? "active" : ""}` }), (0, r.jsxs)("div", { children: [(0, r.jsx)("small", { children: "Bypass-spj\xE6ld" }), (0, r.jsx)("strong", { children: Yt ? ra : zt ? "\xC5bent" : "Lukket" }), (0, r.jsx)("em", { children: hl ? "Afventer endestilling" : ca === null ? `\xD8nske: ${fl ? "On" : "Auto"}` : `ca. ${io(ca)} tilbage` })] })] }), (0, r.jsxs)("div", { className: "unit-readback", "data-sensor": "afterheat_active", children: [(0, r.jsx)("span", { className: `readback-icon heater ${m ? "active" : ""}` }), (0, r.jsxs)("div", { children: [(0, r.jsx)("small", { children: "Ekstern eftervarme" }), (0, r.jsx)("strong", { children: m ? "Aktiv" : T ? "Sp\xE6rret" : "Ikke aktiv" }), (0, r.jsx)("em", { children: T ? "Sommerstop: ude \u2265 15 \xB0C" : "Kun setpunkt styres" })] })] })] })] });
 }
@@ -17951,7 +17951,7 @@ function c1({ value: t, onChange: e, heating: a, lockout: l, cutoff: n, outdoor:
   let _ = t !== b, S = (k) => k === "off" ? "OFF" : `${k} \xB0C`, C = (0, eh.useRef)(null), m = (0, eh.useRef)(false), f = t === "off", g = f ? "off" : l ? "lockout" : a ? "heating" : "idle", y = f ? "Slukket" : l ? "Sommerstop" : a ? "Varmer" : "Klar", N = (k) => {
     let O = C.current;
     if (!O) return null;
-    let W = O.getBoundingClientRect(), qt = (k.clientX - W.left) / W.width * 200 - i1, ee = (k.clientY - W.top) / W.height * 200 - o1, ft = Math.atan2(ee, qt) * 180 / Math.PI;
+    let W2 = O.getBoundingClientRect(), qt = (k.clientX - W2.left) / W2.width * 200 - i1, ee = (k.clientY - W2.top) / W2.height * 200 - o1, ft = Math.atan2(ee, qt) * 180 / Math.PI;
     ft < 0 && (ft += 360);
     let Rt = ft - Vl;
     return Rt < 0 && (Rt += 360), Rt > Ll && (Rt = Rt - Ll < (360 - Ll) / 2 ? Ll : 0), Math.round(de + Rt / Ll * (Ca - de));
@@ -17970,11 +17970,11 @@ function c1({ value: t, onChange: e, heating: a, lockout: l, cutoff: n, outdoor:
   }, onPointerCancel: () => {
     m.current = false;
   }, children: [(0, A.jsxs)("defs", { children: [(0, A.jsxs)("linearGradient", { id: "thermostatHeat", x1: "0", x2: "1", y1: "1", y2: "0", children: [(0, A.jsx)("stop", { offset: "0", stopColor: "#ffb057" }), (0, A.jsx)("stop", { offset: "1", stopColor: "#ff6a3d" })] }), (0, A.jsxs)("linearGradient", { id: "thermostatIdle", x1: "0", x2: "1", y1: "1", y2: "0", children: [(0, A.jsx)("stop", { offset: "0", stopColor: "#58b9ff" }), (0, A.jsx)("stop", { offset: "1", stopColor: "#7de0c4" })] }), (0, A.jsx)("filter", { id: "thermostatGlow", x: "-50%", y: "-50%", width: "200%", height: "200%", children: (0, A.jsx)("feGaussianBlur", { stdDeviation: "4" }) })] }), E.map((k) => {
-    let O = so(k), W = k % 5 === 0, [qt, ee] = Fn(O, ho + 11), [ft, Rt] = Fn(O, ho + (W ? 18 : 15));
-    return (0, A.jsx)("line", { className: `thermostat-tick${W ? " major" : ""}${!f && k <= t ? " lit" : ""}`, x1: qt, y1: ee, x2: ft, y2: Rt }, k);
+    let O = so(k), W2 = k % 5 === 0, [qt, ee] = Fn(O, ho + 11), [ft, Rt] = Fn(O, ho + (W2 ? 18 : 15));
+    return (0, A.jsx)("line", { className: `thermostat-tick${W2 ? " major" : ""}${!f && k <= t ? " lit" : ""}`, x1: qt, y1: ee, x2: ft, y2: Rt }, k);
   }), [10, 20, 30].map((k) => {
-    let [O, W] = Fn(so(k), ho + 27);
-    return (0, A.jsx)("text", { className: "thermostat-scale", x: O, y: W + 3, textAnchor: "middle", children: k }, k);
+    let [O, W2] = Fn(so(k), ho + 27);
+    return (0, A.jsx)("text", { className: "thermostat-scale", x: O, y: W2 + 3, textAnchor: "middle", children: k }, k);
   }), (0, A.jsx)("path", { className: "thermostat-track", d: th(Vl, Vl + Ll) }), !f && (0, A.jsxs)(A.Fragment, { children: [g === "heating" && (0, A.jsx)("path", { className: "thermostat-glow", d: th(Vl, so(t)), filter: "url(#thermostatGlow)" }), (0, A.jsx)("path", { className: "thermostat-value", d: th(Vl, Math.max(Vl + 0.5, so(t))), stroke: g === "heating" ? "url(#thermostatHeat)" : g === "lockout" ? "#b88a52" : "url(#thermostatIdle)" })] }), T && (0, A.jsx)("circle", { className: "thermostat-knob", cx: T[0], cy: T[1], r: "9" })] }), (0, A.jsxs)("div", { className: "thermostat-center", "aria-hidden": "true", children: [(0, A.jsxs)("span", { className: "thermostat-state", children: [g === "heating" ? (0, A.jsx)(Jn, { size: 13 }) : g === "lockout" ? (0, A.jsx)(uo, { size: 13 }) : null, y] }), (0, A.jsx)("strong", { children: f ? "OFF" : (0, A.jsxs)(A.Fragment, { children: [t, (0, A.jsx)("small", { children: "\xB0C" })] }) }), (0, A.jsxs)("span", { className: "thermostat-sub", children: ["Luft ind ", fo(c)] })] })] }), (0, A.jsxs)("div", { className: "thermostat-side", children: [(0, A.jsxs)("div", { className: "thermostat-head", children: [(0, A.jsx)("span", { children: "Eftervarme" }), (0, A.jsx)("em", { children: "HAC1 \xB7 vandflade" })] }), (0, A.jsxs)("div", { className: "thermostat-readings", children: [(0, A.jsxs)("div", { children: [(0, A.jsx)("small", { children: "F\xF8r flade" }), (0, A.jsx)("strong", { children: fo(o) })] }), (0, A.jsxs)("div", { children: [(0, A.jsx)("small", { children: "Efter flade" }), (0, A.jsx)("strong", { children: fo(c) })] }), (0, A.jsxs)("div", { children: [(0, A.jsx)("small", { children: "L\xF8ft" }), (0, A.jsx)("strong", { children: o === null || c === null ? "\u2014" : fo(c - o) })] }), (0, A.jsxs)("div", { children: [(0, A.jsx)("small", { children: "I HAC1" }), (0, A.jsx)("strong", { children: u })] })] }), l && !f && (0, A.jsxs)("p", { className: "thermostat-note", children: ["Sommerstop: udetemperaturen er ", fo(i), ". HAC1 varmer f\xF8rst under ", n, "\xA0", "\xB0C ude."] }), (0, A.jsxs)("div", { className: "thermostat-actions", children: [(0, A.jsx)("button", { type: "button", "aria-label": "S\xE6nk eftervarme", disabled: f, onClick: () => e(f || t <= de ? "off" : t - 1), children: "\u2212" }), (0, A.jsxs)("button", { type: "button", className: `thermostat-power${f ? "" : " on"}`, "aria-pressed": !f, onClick: () => e(f ? h : "off"), children: [(0, A.jsx)(a1, { size: 15 }), f ? "T\xE6nd" : "Sluk"] }), (0, A.jsx)("button", { type: "button", "aria-label": "H\xE6v eftervarme", disabled: !f && t >= Ca, onClick: () => e(f ? de : Math.min(Ca, t + 1)), children: "+" })] })] }), _ && (0, A.jsx)("div", { className: "thermostat-confirm", role: "alertdialog", "aria-modal": "true", "aria-label": "Bekr\xE6ft \xE6ndring af eftervarme", children: (0, A.jsxs)("div", { className: "thermostat-confirm-box", children: [(0, A.jsx)("span", { className: "thermostat-confirm-title", children: "Eftervarme" }), (0, A.jsxs)("div", { className: "thermostat-confirm-values", children: [(0, A.jsx)("span", { children: S(b) }), (0, A.jsx)("em", { children: "\u2192" }), (0, A.jsx)("strong", { children: S(t) })] }), (0, A.jsxs)("div", { className: "thermostat-confirm-adjust", children: [(0, A.jsx)("button", { type: "button", "aria-label": "S\xE6nk eftervarme", disabled: p || f, onClick: () => e(f || t <= de ? "off" : t - 1), children: "\u2212" }), (0, A.jsx)("button", { type: "button", "aria-label": "H\xE6v eftervarme", disabled: p || !f && t >= Ca, onClick: () => e(f ? de : Math.min(Ca, t + 1)), children: "+" })] }), (0, A.jsxs)("div", { className: "thermostat-confirm-actions", children: [(0, A.jsx)("button", { type: "button", className: "thermostat-cancel", disabled: p, onClick: d, children: "Fortryd" }), (0, A.jsx)("button", { type: "button", className: "thermostat-ok", disabled: p, onClick: v, children: "Bekr\xE6ft" })] })] }) })] });
 }
 var G2 = { local_auto: "Local Auto", local_fallback: "Local Auto \xB7 HA offline", ha_smart: "Smart Auto", manual: "Manuel", night: "Nats\xE6nkning", night_air_quality: "Nat \xB7 luftkvalitet", vacation: "Ferie", quick_boost: "Quick Boost", free_cooling: "Frik\xF8ling", dry_protection: "T\xF8r luft-beskyttelse" };
@@ -19130,7 +19130,7 @@ function $2({ hass: t, config: e }) {
     } finally {
       C(false);
     }
-  }, N = i("outdoor_temperature"), M = i("extract_temperature"), E = i("exhaust_temperature"), T = i("afterheat_after") ?? i("supply_temperature"), k = N !== null && M !== null && E !== null && Math.abs(M - N) >= 0.5 && c !== 255 ? Math.max(0, Math.min(100, Math.round((M - E) / (M - N) * 100))) : null, O = i("bypass_travel_seconds"), W = Date.parse(l("bypass_travel_seconds")?.last_changed ?? l("bypass_raw")?.last_changed ?? ""), qt = u && Number.isFinite(W) ? (O ?? 0) + Math.max(0, (h - W) / 1e3) : O, ee = String(n("bypass_request") ?? n("bypass_control") ?? "off"), ft = no({ raw: c, requestOn: ee === "on", direction: n("bypass_travel_direction"), seconds: qt, total: i("bypass_travel_total") }), Rt = ft ? `${ft.direction === "opening" ? "\xC5bner" : ft.direction === "closing" ? "Lukker" : "Bev\xE6ger sig"}${ft.percent === null ? "" : ` ${ft.percent}%`}` : c === 255 || n("bypass") === "on" ? "\xC5ben" : c === 0 ? "Lukket" : "\u2014", fl = i(o === "manual" ? "level_control" : "auto_normal"), ia = o === "manual" ? "level_control" : "auto_normal", Ht = i("boost_remaining") ?? 0, Yt = i("fireplace_remaining") ?? 0, oa = String(g("fireplace_control") ?? "Slukket"), zt = Yt > 0 || oa !== "Slukket", Ae = Date.parse(l("boost_remaining")?.last_changed ?? "") + Ht * 1e3, Zt = Ht > 0 ? [15, 30].find((z) => Math.abs(Date.parse(l(`boost_${z}`)?.state ?? "") + z * 6e4 - Ae) < 45e3) ?? p : p;
+  }, N = i("outdoor_temperature"), M = i("extract_temperature"), E = i("exhaust_temperature"), T = i("afterheat_after") ?? i("supply_temperature"), k = N !== null && M !== null && E !== null && Math.abs(M - N) >= 0.5 && c !== 255 ? Math.max(0, Math.min(100, Math.round((M - E) / (M - N) * 100))) : null, O = i("bypass_travel_seconds"), W2 = Date.parse(l("bypass_travel_seconds")?.last_changed ?? l("bypass_raw")?.last_changed ?? ""), qt = u && Number.isFinite(W2) ? (O ?? 0) + Math.max(0, (h - W2) / 1e3) : O, ee = String(n("bypass_request") ?? n("bypass_control") ?? "off"), ft = no({ raw: c, requestOn: ee === "on", direction: n("bypass_travel_direction"), seconds: qt, total: i("bypass_travel_total") }), Rt = ft ? `${ft.direction === "opening" ? "\xC5bner" : ft.direction === "closing" ? "Lukker" : "Bev\xE6ger sig"}${ft.percent === null ? "" : ` ${ft.percent}%`}` : c === 255 || n("bypass") === "on" ? "\xC5ben" : c === 0 ? "Lukket" : "\u2014", fl = i(o === "manual" ? "level_control" : "auto_normal"), ia = o === "manual" ? "level_control" : "auto_normal", Ht = i("boost_remaining") ?? 0, Yt = i("fireplace_remaining") ?? 0, oa = String(g("fireplace_control") ?? "Slukket"), zt = Yt > 0 || oa !== "Slukket", Ae = Date.parse(l("boost_remaining")?.last_changed ?? "") + Ht * 1e3, Zt = Ht > 0 ? [15, 30].find((z) => Math.abs(Date.parse(l(`boost_${z}`)?.state ?? "") + z * 6e4 - Ae) < 45e3) ?? p : p;
   return (0, V.useEffect)(() => {
     if (Ht > 0 || p === null) return;
     let z = window.setTimeout(() => _(null), 8e3);
@@ -19191,11 +19191,11 @@ function F2({ hass: t, config: e, host: a }) {
   }, T = (w) => {
     let B = l[w];
     B && a.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: B }, bubbles: true, composed: true }));
-  }, k = c("outdoor_temperature"), O = c("extract_temperature"), W = c("exhaust_temperature"), qt = c("afterheat_before"), ee = c("afterheat_after") ?? c("supply_temperature"), ft = c("room_temperature"), Rt = c("afterheat_frost"), fl = c("water_flow"), ia = c("water_return"), Ht = c("supply_fan_rpm"), Yt = c("extract_fan_rpm"), oa = c("supply_fan_percent"), zt = c("extract_fan_percent"), Ae = c("humidity"), Zt = c("co2"), z = c("filter_life"), bt = u("bypass"), ca = String(o("bypass_request") ?? o("bypass_control") ?? "off"), hl = o("bypass_travel_direction"), ra = c("bypass_travel_seconds"), ke = M ? ra !== null ? ra + (E("bypass_travel_seconds") ?? 0) : E("bypass_raw") : ra, ua = c("bypass_travel_total"), Be = no({ raw: N, requestOn: ca.toLowerCase() === "on", direction: hl, seconds: ke, total: ua }), Ge = Be ? [Be.direction === "opening" ? "\xE5bner" : Be.direction === "closing" ? "lukker" : "bev\xE6ger sig", Be.percent === null ? null : `${Be.percent} %`, Be.awaitingEnd ? "afventer endestilling" : null, Be.remainingSeconds === null ? null : `${io(Be.remainingSeconds)} tilbage`].filter(Boolean).join(" \xB7 ") : bt ? "\xE5ben" : "lukket", pe = u("afterheat_active"), Ql = u("afterheat_lockout"), xr = Wn(e.afterheat_outdoor_cutoff) ?? 15, go = pe ? "Aktiv" : Ql ? "Sp\xE6rret af sommerstop" : "Inaktiv", Kt = c("fireplace_remaining"), vt = (Kt ?? 0) > 0 || u("fireplace_active"), qe = i("fireplace_auto_signal"), sa = qe?.attributes?.automatik_aktiveret === true, fa = qe?.attributes?.automatik_aktiv === true, ha = String(o("mode_control") ?? ""), dl = c("effective_level") ?? 3, H = c(ha === "manual" ? "level_control" : "auto_normal"), Z = (w) => v?.key === w ? v.target : o(w), Ye = c("bonfire_remaining"), Zl = (Ye ?? 0) > 0 || (Z("bonfire_control") ?? "Slukket") !== "Slukket", In = Z("standby_control"), Oe = In !== null && In !== "T\xE6ndt" && In !== "unavailable" && In !== "unknown", ch = c("standby_remaining"), [m1, Pn] = (0, V.useState)(false), wr = i("afterheat_climate"), rh = Wn(wr?.attributes?.temperature) ?? 20, _r = (wr ? wr.state !== "off" : true) ? rh : "off", uh = o("afterheat_selection"), sh = Wn(uh), p1 = uh?.toLowerCase() === "off" ? "OFF" : sh !== null ? `${me(sh)} \xB0C` : "Afventer", Sr = u("rs485_healthy"), Nr = o("cooling_state"), g1 = o("cooling_control") !== null ? u("cooling_control") : Nr !== null && Nr !== "disabled", ml = v?.key === "cooling_control" ? v.target === "on" : g1, Tr = c("boost_remaining") ?? 0, fh = Tr > 0, b1 = Date.parse(i("boost_remaining")?.last_changed ?? "") + Tr * 1e3, hh = fh ? u1.find((w) => Math.abs(Date.parse(o(`boost_${w}`) ?? "") + w * 6e4 - b1) < 45e3) ?? null : null, zr = i("active_master") !== void 0 && i("outdoor_temperature") !== void 0, v1 = (0, V.useMemo)(() => {
-    if (bt || k === null || O === null || W === null || Math.abs(O - k) < 0.5) return null;
-    let w = (O - W) / (O - k) * 100;
+  }, k = c("outdoor_temperature"), O = c("extract_temperature"), W2 = c("exhaust_temperature"), qt = c("afterheat_before"), ee = c("afterheat_after") ?? c("supply_temperature"), ft = c("room_temperature"), Rt = c("afterheat_frost"), fl = c("water_flow"), ia = c("water_return"), Ht = c("supply_fan_rpm"), Yt = c("extract_fan_rpm"), oa = c("supply_fan_percent"), zt = c("extract_fan_percent"), Ae = c("humidity"), Zt = c("co2"), z = c("filter_life"), bt = u("bypass"), ca = String(o("bypass_request") ?? o("bypass_control") ?? "off"), hl = o("bypass_travel_direction"), ra = c("bypass_travel_seconds"), ke = M ? ra !== null ? ra + (E("bypass_travel_seconds") ?? 0) : E("bypass_raw") : ra, ua = c("bypass_travel_total"), Be = no({ raw: N, requestOn: ca.toLowerCase() === "on", direction: hl, seconds: ke, total: ua }), Ge = Be ? [Be.direction === "opening" ? "\xE5bner" : Be.direction === "closing" ? "lukker" : "bev\xE6ger sig", Be.percent === null ? null : `${Be.percent} %`, Be.awaitingEnd ? "afventer endestilling" : null, Be.remainingSeconds === null ? null : `${io(Be.remainingSeconds)} tilbage`].filter(Boolean).join(" \xB7 ") : bt ? "\xE5ben" : "lukket", pe = u("afterheat_active"), Ql = u("afterheat_lockout"), xr = Wn(e.afterheat_outdoor_cutoff) ?? 15, go = pe ? "Aktiv" : Ql ? "Sp\xE6rret af sommerstop" : "Inaktiv", Kt = c("fireplace_remaining"), vt = (Kt ?? 0) > 0 || u("fireplace_active"), qe = i("fireplace_auto_signal"), sa = qe?.attributes?.automatik_aktiveret === true, fa = qe?.attributes?.automatik_aktiv === true, ha = String(o("mode_control") ?? ""), dl = c("effective_level") ?? 3, H3 = c(ha === "manual" ? "level_control" : "auto_normal"), Z = (w) => v?.key === w ? v.target : o(w), Ye = c("bonfire_remaining"), Zl = (Ye ?? 0) > 0 || (Z("bonfire_control") ?? "Slukket") !== "Slukket", In = Z("standby_control"), Oe = In !== null && In !== "T\xE6ndt" && In !== "unavailable" && In !== "unknown", ch = c("standby_remaining"), [m1, Pn] = (0, V.useState)(false), wr = i("afterheat_climate"), rh = Wn(wr?.attributes?.temperature) ?? 20, _r = (wr ? wr.state !== "off" : true) ? rh : "off", uh = o("afterheat_selection"), sh = Wn(uh), p1 = uh?.toLowerCase() === "off" ? "OFF" : sh !== null ? `${me(sh)} \xB0C` : "Afventer", Sr = u("rs485_healthy"), Nr = o("cooling_state"), g1 = o("cooling_control") !== null ? u("cooling_control") : Nr !== null && Nr !== "disabled", ml = v?.key === "cooling_control" ? v.target === "on" : g1, Tr = c("boost_remaining") ?? 0, fh = Tr > 0, b1 = Date.parse(i("boost_remaining")?.last_changed ?? "") + Tr * 1e3, hh = fh ? u1.find((w) => Math.abs(Date.parse(o(`boost_${w}`) ?? "") + w * 6e4 - b1) < 45e3) ?? null : null, zr = i("active_master") !== void 0 && i("outdoor_temperature") !== void 0, v1 = (0, V.useMemo)(() => {
+    if (bt || k === null || O === null || W2 === null || Math.abs(O - k) < 0.5) return null;
+    let w = (O - W2) / (O - k) * 100;
     return w >= 0 && w <= 105 ? Math.round(w) : null;
-  }, [bt, k, O, W]), [bo, Er] = (0, V.useState)(null), [vo, yo] = (0, V.useState)(null), ti = (0, V.useRef)(null), Ar = (0, V.useRef)(0), kr = vo ?? _r, ei = bo ?? kr, y1 = (0, V.useCallback)(async (w, B) => {
+  }, [bt, k, O, W2]), [bo, Er] = (0, V.useState)(null), [vo, yo] = (0, V.useState)(null), ti = (0, V.useRef)(null), Ar = (0, V.useRef)(0), kr = vo ?? _r, ei = bo ?? kr, y1 = (0, V.useCallback)(async (w, B) => {
     let da = w === "off" ? await f("afterheat", "afterheat_climate", "climate", "set_hvac_mode", { hvac_mode: "off" }, "Eftervarmen er sat til OFF.") : await f("afterheat", "afterheat_climate", "climate", "set_temperature", { temperature: w }, `Eftervarmen er sat til ${w} \xB0C.`);
     if (Ar.current === B) {
       if (!da) {
@@ -19223,8 +19223,8 @@ function F2({ hass: t, config: e, host: a }) {
     (w.key === "Enter" || w.key === " ") && (w.preventDefault(), T("attic_temperature"));
   }, children: [(0, s.jsx)(l1, { size: 18 }), (0, s.jsx)("small", { children: "Loftrum" }), (0, s.jsx)("strong", { children: Xl(c("attic_temperature")) })] }), e.entities.outdoor_air_quality && (0, s.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => T("outdoor_air_quality"), onKeyDown: (w) => {
     (w.key === "Enter" || w.key === " ") && (w.preventDefault(), T("outdoor_air_quality"));
-  }, title: c("outdoor_pm25") === null ? "Google Air Quality \xB7 udend\xF8rs modeldata" : `Google Air Quality \xB7 PM2.5 ${c("outdoor_pm25").toLocaleString("da-DK")} \xB5g/m\xB3`, children: [(0, s.jsx)($n, { size: 18 }), (0, s.jsx)("small", { children: "Udeluft \xB7 Google" }), (0, s.jsx)("strong", { children: K2(o("outdoor_air_quality")) })] })] })] }), o("diagnostics_status") && o("diagnostics_status") !== "ok" && o("diagnostics_alarm_text") && (0, s.jsxs)("div", { className: `diagnostics-alarm ${o("diagnostics_status")}`, role: "alert", "data-sensor": "diagnostics_alarm_text", onClick: () => T("diagnostics_alarm_text"), children: [(0, s.jsx)("strong", { children: o("diagnostics_status") === "critical" ? "Fejl" : o("diagnostics_status") === "warning" ? "Advarsel" : "Bem\xE6rk" }), (0, s.jsx)("span", { children: o("diagnostics_alarm_text") })] }), (0, s.jsxs)("div", { className: "dashboard-main-grid", children: [(0, s.jsxs)("article", { className: "surface pro-air-card", children: [(0, s.jsxs)("div", { className: "pro-card-head", children: [(0, s.jsxs)("div", { children: [(0, s.jsx)("h2", { children: "Luftstr\xF8mme og temperaturer" }), (0, s.jsx)("p", { children: "Live luftveje gennem HCH5 med aktuelle temperaturer og fysisk status." })] }), (0, s.jsxs)("span", { className: `status-chip${zr ? "" : " muted"}`, children: [(0, s.jsx)("span", { className: "live-dot" }), zr ? "Live" : "Afventer"] })] }), (0, s.jsx)(Jf, { onSensor: T, outdoor: k, extract: O, exhaust: W, beforeHeater: qt, afterHeater: ee, room: ft, frost: Rt, flowWater: fl, returnWater: ia, supplyRpm: Ht, extractRpm: Yt, supplyPercent: oa, extractPercent: zt, fanLevel: c("effective_level"), bypassActual: bt, bypassRequest: ca, heating: pe, recovery: v1, busActive: Sr, bypassRaw: N, afterheatLockout: Ql, afterheatCoil: e.afterheat_coil === "water" ? "water" : "electric", bypassTravelDirection: hl, bypassTravelSeconds: ke, bypassTravelTotal: ua, control: !zr || o("effective_source") === null ? null : lh({ active_master: o("active_master"), effective_source: o("effective_source"), effective_level: c("effective_level"), effective_reason: o("effective_reason"), fireplace: vt }) })] }), (0, s.jsxs)("aside", { className: "pro-control-column", children: [(0, s.jsxs)("article", { className: "surface pro-control-card", children: [(0, s.jsxs)("div", { className: "pro-card-head compact", children: [(0, s.jsxs)("div", { children: [(0, s.jsx)("h2", { children: "Drift og styring" }), (0, s.jsx)("p", { children: "Daglige funktioner" })] }), (0, s.jsx)(Wf, { size: 22 })] }), (0, s.jsx)("label", { className: "control-label", children: "Ventilationstilstand" }), (0, s.jsx)("div", { className: "pro-segment three", children: ["local_auto", "smart_auto", "manual"].map((w) => (0, s.jsx)("button", { className: Z("mode_control") === w ? "active" : "", "aria-pressed": Z("mode_control") === w, disabled: h !== null, onClick: () => void f(`mode-${w}`, "mode_control", "select", "select_option", { option: w }, `${po(w)} valgt.`, w), children: po(w) }, w)) }), (0, s.jsx)("label", { className: "control-label", children: "Ventilatorniveau" }), (0, s.jsxs)("div", { className: `pro-levels${e.entities.standby_control ? " with-off" : ""}`, children: [[1, 2, 3, 4, 5, 6].map((w) => {
-    let B = ha === "manual" ? "level_control" : "auto_normal", da = Oe ? null : v?.key === B ? Number(v.target) : dl, xo = ha !== "manual" && Number(Z("auto_normal") ?? H) === w && da !== w;
+  }, title: c("outdoor_pm25") === null ? "Google Air Quality \xB7 udend\xF8rs modeldata" : `Google Air Quality \xB7 PM2.5 ${c("outdoor_pm25").toLocaleString("da-DK")} \xB5g/m\xB3`, children: [(0, s.jsx)($n, { size: 18 }), (0, s.jsx)("small", { children: "Udeluft \xB7 Google" }), (0, s.jsx)("strong", { children: K2(o("outdoor_air_quality")) })] })] })] }), o("diagnostics_status") && o("diagnostics_status") !== "ok" && o("diagnostics_alarm_text") && (0, s.jsxs)("div", { className: `diagnostics-alarm ${o("diagnostics_status")}`, role: "alert", "data-sensor": "diagnostics_alarm_text", onClick: () => T("diagnostics_alarm_text"), children: [(0, s.jsx)("strong", { children: o("diagnostics_status") === "critical" ? "Fejl" : o("diagnostics_status") === "warning" ? "Advarsel" : "Bem\xE6rk" }), (0, s.jsx)("span", { children: o("diagnostics_alarm_text") })] }), (0, s.jsxs)("div", { className: "dashboard-main-grid", children: [(0, s.jsxs)("article", { className: "surface pro-air-card", children: [(0, s.jsxs)("div", { className: "pro-card-head", children: [(0, s.jsxs)("div", { children: [(0, s.jsx)("h2", { children: "Luftstr\xF8mme og temperaturer" }), (0, s.jsx)("p", { children: "Live luftveje gennem HCH5 med aktuelle temperaturer og fysisk status." })] }), (0, s.jsxs)("span", { className: `status-chip${zr ? "" : " muted"}`, children: [(0, s.jsx)("span", { className: "live-dot" }), zr ? "Live" : "Afventer"] })] }), (0, s.jsx)(Jf, { onSensor: T, outdoor: k, extract: O, exhaust: W2, beforeHeater: qt, afterHeater: ee, room: ft, frost: Rt, flowWater: fl, returnWater: ia, supplyRpm: Ht, extractRpm: Yt, supplyPercent: oa, extractPercent: zt, fanLevel: c("effective_level"), bypassActual: bt, bypassRequest: ca, heating: pe, recovery: v1, busActive: Sr, bypassRaw: N, afterheatLockout: Ql, afterheatCoil: e.afterheat_coil === "water" ? "water" : "electric", bypassTravelDirection: hl, bypassTravelSeconds: ke, bypassTravelTotal: ua, control: !zr || o("effective_source") === null ? null : lh({ active_master: o("active_master"), effective_source: o("effective_source"), effective_level: c("effective_level"), effective_reason: o("effective_reason"), fireplace: vt }) })] }), (0, s.jsxs)("aside", { className: "pro-control-column", children: [(0, s.jsxs)("article", { className: "surface pro-control-card", children: [(0, s.jsxs)("div", { className: "pro-card-head compact", children: [(0, s.jsxs)("div", { children: [(0, s.jsx)("h2", { children: "Drift og styring" }), (0, s.jsx)("p", { children: "Daglige funktioner" })] }), (0, s.jsx)(Wf, { size: 22 })] }), (0, s.jsx)("label", { className: "control-label", children: "Ventilationstilstand" }), (0, s.jsx)("div", { className: "pro-segment three", children: ["local_auto", "smart_auto", "manual"].map((w) => (0, s.jsx)("button", { className: Z("mode_control") === w ? "active" : "", "aria-pressed": Z("mode_control") === w, disabled: h !== null, onClick: () => void f(`mode-${w}`, "mode_control", "select", "select_option", { option: w }, `${po(w)} valgt.`, w), children: po(w) }, w)) }), (0, s.jsx)("label", { className: "control-label", children: "Ventilatorniveau" }), (0, s.jsxs)("div", { className: `pro-levels${e.entities.standby_control ? " with-off" : ""}`, children: [[1, 2, 3, 4, 5, 6].map((w) => {
+    let B = ha === "manual" ? "level_control" : "auto_normal", da = Oe ? null : v?.key === B ? Number(v.target) : dl, xo = ha !== "manual" && Number(Z("auto_normal") ?? H3) === w && da !== w;
     return (0, s.jsx)("button", { className: da === w ? "active" : xo ? "is-normal" : "", "aria-pressed": da === w, title: xo ? "Normaltrin" : void 0, disabled: h !== null, onClick: () => void _1(w), children: w }, w);
   }), e.entities.standby_control && (0, s.jsx)("button", { className: `level-off${Oe ? " active" : ""}`, "aria-haspopup": "dialog", "aria-pressed": Oe, disabled: h !== null, onClick: () => Pn(true), children: "OFF" })] }), (0, s.jsxs)("div", { className: "active-decision", children: [(0, s.jsx)("span", { children: "Aktiv beslutning" }), (0, s.jsx)("strong", { children: Oe ? "OFF \xB7 anl\xE6g slukket" : (0, s.jsxs)(s.Fragment, { children: ["Trin ", me(dl), " \xB7 ", sl(o("effective_source")).replaceAll("_", " ")] }) }), (0, s.jsx)("small", { children: sl(o("effective_reason"), "Afventer controllerens beslutning") })] })] }), (0, s.jsxs)("div", { className: "pro-control-pair", children: [(0, s.jsxs)("article", { className: "surface mini-control", children: [(0, s.jsxs)("div", { className: "mini-control-title", children: [(0, s.jsx)(Pf, { size: 20 }), (0, s.jsx)("strong", { children: "Hurtig boost" })] }), (0, s.jsx)("div", { className: "mini-buttons three", children: u1.map((w) => (0, s.jsxs)("button", { className: hh === w || h === `boost-${w}` ? "active" : "", "aria-pressed": hh === w, disabled: h !== null || vt, onClick: () => void f(`boost-${w}`, `boost_${w}`, "button", "press", {}, `Quick Boost ${w} min startet.`), children: [w, " min"] }, w)) }), fh && (0, s.jsxs)("button", { className: "text-action", onClick: () => void f("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet."), children: [mo(Tr), " \xB7 stop"] })] }), (0, s.jsxs)("article", { className: "surface mini-control", children: [(0, s.jsxs)("div", { className: "mini-control-title", children: [(0, s.jsx)(Ff, { size: 20 }), (0, s.jsx)("strong", { children: "Bypass-styring" })] }), (0, s.jsxs)("div", { className: "mini-buttons two", children: [(0, s.jsx)("button", { className: Z("bypass_control") === "off" ? "active" : "", "aria-pressed": Z("bypass_control") === "off", disabled: h !== null || M, onClick: () => void f("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.", "off"), children: "Auto" }), (0, s.jsx)("button", { className: Z("bypass_control") === "on" ? "active" : "", "aria-pressed": Z("bypass_control") === "on", disabled: h !== null || vt || M, onClick: () => void f("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass \xF8nskes \xE5ben.", "on"), children: "On" })] }), (0, s.jsxs)("small", { className: "control-footnote", children: ["Faktisk: ", Ge] })] })] }), (0, s.jsxs)("div", { className: "pro-control-pair", children: [(0, s.jsxs)("article", { className: "surface status-action-card", children: [(0, s.jsx)("div", { className: "status-action-icon", children: (0, s.jsx)(uo, { size: 24 }) }), (0, s.jsxs)("div", { children: [(0, s.jsx)("span", { children: "Frik\xF8ling" }), (0, s.jsx)("strong", { children: J2(Nr) }), (0, s.jsx)("small", { children: ml ? "Automatik aktiv" : "Deaktiveret" })] }), (0, s.jsx)("button", { className: ml ? "active" : "", "aria-pressed": ml, disabled: h !== null, "aria-label": ml ? "Deaktiver frik\xF8ling" : "Aktiver frik\xF8ling", onClick: () => void f("cooling", "cooling_control", "switch", ml ? "turn_off" : "turn_on", {}, ml ? "Frik\xF8ling deaktiveret." : "Frik\xF8ling aktiveret.", ml ? "off" : "on"), children: (0, s.jsx)(Ff, { size: 17 }) })] }), (0, s.jsxs)("article", { className: "surface status-action-card", children: [(0, s.jsx)("div", { className: `status-action-icon flame${fa ? " auto-active" : ""}`, "aria-label": fa ? "Autopejs aktiv" : void 0, children: (0, s.jsx)(Jn, { size: 24 }) }), (0, s.jsxs)("div", { children: [(0, s.jsx)("span", { children: "Pejsefunktion" }), (0, s.jsx)("strong", { children: fa ? "Autopejs aktiv" : vt ? "Aktiv" : "Ikke aktiv" }), (0, s.jsx)("small", { children: fa ? `${mo(Kt)} \xB7 automatisk` : sa ? "Autopejs klar" : vt ? mo(Kt) : "15 eller 30 min" })] }), (0, s.jsx)("div", { className: "fireplace-actions", children: vt ? (0, s.jsx)("button", { disabled: h !== null, onClick: () => void f("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket"), children: "Stop" }) : (0, s.jsxs)(s.Fragment, { children: [(0, s.jsx)("button", { className: Z("fireplace_control") === "15 min" ? "active" : "", "aria-pressed": Z("fireplace_control") === "15 min", disabled: h !== null, onClick: () => void f("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.", "15 min"), children: "15" }), (0, s.jsx)("button", { className: Z("fireplace_control") === "30 min" ? "active" : "", "aria-pressed": Z("fireplace_control") === "30 min", disabled: h !== null, onClick: () => void f("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.", "30 min"), children: "30" })] }) })] })] }), e.entities.bonfire_control && (0, s.jsxs)("article", { className: `surface status-action-card bonfire-card${Zl ? " active" : ""}`, children: [(0, s.jsx)("div", { className: "status-action-icon smoke", children: (0, s.jsx)(n1, { size: 24 }) }), (0, s.jsxs)("div", { children: [(0, s.jsx)("span", { children: "B\xE5l i haven" }), (0, s.jsx)("strong", { children: Zl ? "Aktiv \xB7 anl\xE6g slukket" : "Ikke aktiv" }), (0, s.jsx)("small", { children: Zl ? `${mo(Ye)} \xB7 stopper selv` : vt ? "Ikke under pejsefunktion" : Oe ? "Ikke mens anl\xE6gget er slukket" : "Slukker anl\xE6gget, t\xE6nder selv igen" })] }), (0, s.jsx)("div", { className: "fireplace-actions bonfire-actions", children: Zl ? (0, s.jsx)("button", { disabled: h !== null, onClick: () => void f("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "B\xE5l-tilstand stoppet.", "Slukket"), children: "Stop" }) : Q2.map(([w, B]) => (0, s.jsx)("button", { disabled: h !== null || vt || Oe, onClick: () => void f(`bonfire-${w}`, "bonfire_control", "select", "select_option", { option: w }, `B\xE5l-tilstand startet i ${B}.`, w), children: B }, w)) })] })] }), (0, s.jsxs)("article", { className: "surface climate-panel", children: [(0, s.jsx)("div", { className: "pro-card-head compact", children: (0, s.jsxs)("div", { children: [(0, s.jsx)("h2", { children: "Indeklimadata" }), (0, s.jsx)("p", { children: "Aktuelle v\xE6rdier" })] }) }), (0, s.jsxs)("div", { className: "climate-metrics", onClick: (w) => {
     let B = w.target.closest("[data-sensor]")?.getAttribute("data-sensor");
@@ -19285,7 +19285,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION50 = "0.3.3";
+  const VERSION51 = "0.3.3";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -19396,7 +19396,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION50}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION51}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -23986,13 +23986,472 @@ function acUnitVisualMarkup2(label, active) {
   </div>`;
 }
 
-// src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION20 = "2.0.6";
-var TAG = "ha-radiator-overview-card-v2";
+// src/cards/shared/air-quality.js
+var AIR_LABELS = ["God", "Rimelig", "Moderat", "D\xE5rlig", "Meget d\xE5rlig", "Ekstremt d\xE5rlig"];
+var AIR_TONES = ["good", "fair", "moderate", "poor", "bad", "bad"];
+var AIR_COLORS = {
+  good: "#4fd08f",
+  fair: "#a3d65c",
+  moderate: "#ffc157",
+  poor: "#ff9a4d",
+  bad: "#ff5d73"
+};
+var QUALITY_RANK = { good: 0, excellent: 0, fair: 1, moderate: 2, poor: 3, very_poor: 4, extremely_poor: 5, unhealthy: 4, hazardous: 5 };
+var DEAD = /* @__PURE__ */ new Set(["unknown", "unavailable", ""]);
+var AIR_DEFAULTS = { co2_good: 800, co2_warning: 1e3, co2_critical: 1400, pm25_good: 15, pm25_moderate: 25, pm25_poor: 35, pm25_bad: 55 };
+function co2Rank(value, cfg = {}) {
+  if (!Number.isFinite(value)) return void 0;
+  const good = cfg.co2_good ?? AIR_DEFAULTS.co2_good;
+  const warning = cfg.co2_warning ?? AIR_DEFAULTS.co2_warning;
+  const critical = cfg.co2_critical ?? AIR_DEFAULTS.co2_critical;
+  if (value < good) return 0;
+  if (value < warning) return 1;
+  if (value < critical) return 3;
+  return 4;
+}
+function pm25Rank(value) {
+  if (!Number.isFinite(value)) return void 0;
+  if (value < AIR_DEFAULTS.pm25_good) return 0;
+  if (value < AIR_DEFAULTS.pm25_moderate) return 1;
+  if (value < AIR_DEFAULTS.pm25_poor) return 2;
+  if (value < AIR_DEFAULTS.pm25_bad) return 3;
+  return 4;
+}
+function qualityRank(state) {
+  const rank = QUALITY_RANK[String(state ?? "").trim().toLowerCase().replace(/\s+/g, "_")];
+  return rank === void 0 ? void 0 : rank;
+}
+function airQuality(hass, cfg = {}) {
+  const ids = [cfg.co2, cfg.pm25, cfg.air_quality].filter((id) => typeof id === "string" && id.includes("."));
+  if (!ids.length) return { configured: false };
+  const live = (id) => {
+    const entity = id ? hass?.states?.[id] : void 0;
+    return entity && !DEAD.has(String(entity.state)) ? entity : void 0;
+  };
+  const number2 = (id) => {
+    const value = Number(live(id)?.state);
+    return Number.isFinite(value) ? value : void 0;
+  };
+  const co2 = number2(cfg.co2);
+  const pm25 = number2(cfg.pm25);
+  const quality = live(cfg.air_quality)?.state;
+  const ranks = [co2Rank(co2, cfg), pm25Rank(pm25), qualityRank(quality)].filter((rank2) => rank2 !== void 0);
+  if (!ranks.length) return { configured: true, offline: true, co2, pm25, quality, tone: "offline", label: "Offline", text: "Offline" };
+  const rank = Math.max(...ranks);
+  const text = co2 !== void 0 ? `${Math.round(co2)} ppm` : pm25 !== void 0 ? `PM2,5 ${Math.round(pm25)}` : AIR_LABELS[rank];
+  return { configured: true, offline: false, co2, pm25, quality, rank, tone: AIR_TONES[rank], label: AIR_LABELS[rank], text };
+}
+
+// src/cards/ha-air-quality-card/ha-air-quality-card.js
+var VERSION20 = "1.0.0";
+var TAG = "ha-air-quality-card";
 var DASH = "\u2014";
+var W = 400;
+var H = 132;
+var PAD = { l: 6, r: 6, t: 10, b: 20 };
+var MAX_POINTS = 240;
+var isId = (id) => typeof id === "string" && id.includes(".");
+var toMs = (value) => typeof value === "number" ? value < 1e12 ? value * 1e3 : value : Date.parse(value);
+var ADVICE = [
+  "Frisk luft \u2013 der er intet at g\xF8re.",
+  "Fin luft i rummet.",
+  "Luften bliver tung \u2013 overvej at lufte ud.",
+  "Luft ud nu.",
+  "Luft ud med det samme.",
+  "Luft ud med det samme."
+];
+var STYLE = `
+:host{display:block;--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.11)));--muted:var(--secondary-text-color,#8898ad);--surface:var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))));--good:${AIR_COLORS.good};--fair:${AIR_COLORS.fair};--moderate:${AIR_COLORS.moderate};--poor:${AIR_COLORS.poor};--bad:${AIR_COLORS.bad};--offline:#7d8796}
+*{box-sizing:border-box}
+ha-card{overflow:hidden;border-radius:24px;background:var(--surface);color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
+.shell{--tone:var(--good);position:relative;padding:20px;isolation:isolate}
+.shell.fair{--tone:var(--fair)}.shell.moderate{--tone:var(--moderate)}.shell.poor{--tone:var(--poor)}.shell.bad{--tone:var(--bad)}.shell.offline{--tone:var(--offline)}
+.backdrop{position:absolute;inset:-20%;z-index:-1;background:radial-gradient(circle at 92% 0,color-mix(in srgb,var(--tone) 16%,transparent),transparent 30%),radial-gradient(circle at 0 100%,color-mix(in srgb,var(--tone) 6%,transparent),transparent 35%)}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.eyebrow{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--tone);box-shadow:0 0 12px var(--tone)}
+.animate .eyebrow i{animation:pulse 2.2s ease-in-out infinite}
+h2{margin:5px 0 0;font-size:23px;line-height:1.08;letter-spacing:-.03em}
+.pill{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none;padding:9px 13px;border:1px solid color-mix(in srgb,var(--tone) 38%,var(--edge));border-radius:15px;background:color-mix(in srgb,var(--tone) 12%,transparent)}
+.pill strong{color:var(--tone);font-size:16px;line-height:1}.pill span{color:var(--muted);font-size:10px;font-weight:700}
+.advice{margin:-4px 0 14px;color:color-mix(in srgb,var(--tone) 70%,var(--primary-text-color));font-size:12px;font-weight:650}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:14px}
+.tile{--t:var(--offline);min-width:0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--t) 30%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--t);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--t) 8%,transparent),rgba(0,0,0,.06));color:inherit;font:inherit;text-align:left;cursor:pointer}
+.tile:disabled{cursor:default;opacity:.55}
+.tile.good{--t:var(--good)}.tile.fair{--t:var(--fair)}.tile.moderate{--t:var(--moderate)}.tile.poor{--t:var(--poor)}.tile.bad{--t:var(--bad)}
+.tile span{display:block;overflow:hidden;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;text-overflow:ellipsis}
+.tile strong{display:block;margin-top:5px;overflow:hidden;font-size:22px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;text-overflow:ellipsis}
+.tile strong small{margin-left:3px;color:var(--muted);font-size:10px;font-weight:700}
+.tile em{display:block;margin-top:5px;color:var(--t);font-size:10px;font-style:normal;font-weight:800}
+.chart{position:relative;margin-top:10px;padding:12px 12px 8px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.07)}
+.chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
+.chart-head strong{font-size:12px}.chart-head span{overflow:hidden;color:var(--muted);font-size:10px;font-weight:700;text-align:right;white-space:nowrap;text-overflow:ellipsis}
+.plot{position:relative;height:${H}px}
+.plot svg{display:block;width:100%;height:100%;overflow:visible}
+.plot.small{height:${Math.round(H * 0.72)}px}
+.axis{stroke:rgba(255,255,255,.1);stroke-width:1;vector-effect:non-scaling-stroke}
+.limit{stroke-width:1;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:.8}
+.tick,.lim{position:absolute;color:var(--muted);font-size:9px;font-weight:700;line-height:1;white-space:nowrap;pointer-events:none}.tick{bottom:4px;transform:translateX(-50%)}.tick.first{transform:none}.tick.last{transform:translateX(-100%)}.lim{transform:translate(-100%,-120%)}
+.line{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.cross{position:absolute;top:0;bottom:${PAD.b}px;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);pointer-events:none;opacity:0}
+.dot{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border:2px solid var(--surface);border-radius:50%;background:var(--primary-text-color);pointer-events:none;opacity:0}
+.tip{position:absolute;top:-4px;padding:4px 8px;border:1px solid var(--edge);border-radius:9px;background:var(--surface);color:var(--primary-text-color);font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transform:translateX(-50%);box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.plot.hover .cross,.plot.hover .dot,.plot.hover .tip{opacity:1}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:100%;color:var(--muted);font-size:10px}
+.timeline{position:relative;height:12px;overflow:hidden;margin-top:6px;border-radius:6px;background:rgba(255,255,255,.05)}
+.timeline i{position:absolute;top:0;bottom:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:7px;color:var(--muted);font-size:10px;font-weight:700}
+.legend span{display:flex;align-items:center;gap:5px}.legend b{width:8px;height:8px;border-radius:50%}
+.tile:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
+@keyframes pulse{50%{opacity:.4;transform:scale(1.45)}}
+@media(max-width:520px){.shell{padding:15px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tiles .tile:last-child{grid-column:1/-1}h2{font-size:20px}.tile strong{font-size:19px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+`;
+var HAAirQualityCard = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._raw = {};
+    this._signature = "";
+    this._loading = false;
+    this._fetchedAt = 0;
+    this._series = {};
+  }
+  static getStubConfig(hass) {
+    const states = Object.values(hass?.states || {});
+    const find = (deviceClass) => states.find((state) => state.attributes?.device_class === deviceClass)?.entity_id;
+    return { name: "Rum", co2: find("carbon_dioxide") || "sensor.co2", pm25: find("pm25") };
+  }
+  static getConfigElement() {
+    const editor = document.createElement("ha-card-list-editor");
+    editor.definition = {
+      roots: [
+        { key: "name", label: "Rum" },
+        { key: "title", label: "Titel (valgfri)" },
+        { key: "co2", label: "CO\u2082", type: "entity" },
+        { key: "pm25", label: "PM2,5", type: "entity" },
+        { key: "air_quality", label: "Luftkvalitet (samlet)", type: "entity" },
+        { key: "hours", label: "Historik i timer", type: "number", min: 1, max: 168 },
+        { key: "animation", label: "Animation", type: "boolean" }
+      ],
+      collections: []
+    };
+    return editor;
+  }
+  setConfig(config) {
+    if (!config || ![config.co2, config.pm25, config.air_quality].some(isId)) throw new Error("Luftkvalitetskortet kr\xE6ver mindst \xE9n af co2, pm25 eller air_quality");
+    this._config = { hours: 24, animation: true, ...config };
+    this._raw = {};
+    this._fetchedAt = 0;
+    this._signature = "";
+    this._render();
+    this._ensureHistory();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    const signature = [this._config.co2, this._config.pm25, this._config.air_quality].map((id) => hass?.states?.[id]?.state).join("|");
+    if (signature !== this._signature) {
+      this._signature = signature;
+      this._render();
+    }
+    this._ensureHistory();
+  }
+  connectedCallback() {
+    this._ensureHistory();
+    if (!this._timer) this._timer = setInterval(() => this._ensureHistory(), 6e4);
+  }
+  disconnectedCallback() {
+    clearInterval(this._timer);
+    this._timer = void 0;
+  }
+  getCardSize() {
+    return 9;
+  }
+  getGridOptions() {
+    return { rows: "auto", columns: 12, min_columns: 6 };
+  }
+  // ---------- Data ----------
+  _ids() {
+    return [this._config.co2, this._config.pm25, this._config.air_quality].filter(isId);
+  }
+  _hours() {
+    const hours = Number(this._config.hours);
+    return Number.isFinite(hours) && hours > 0 ? Math.min(hours, 168) : 24;
+  }
+  _ensureHistory() {
+    if (!this._hass || this._loading || !this.isConnected) return;
+    if (this._fetchedAt && Date.now() - this._fetchedAt < 5 * 6e4) return;
+    this._fetchHistory();
+  }
+  async _fetchHistory() {
+    const ids = this._ids();
+    if (!ids.length || !this._hass?.callWS && !this._hass?.callApi) return;
+    this._loading = true;
+    const end = Date.now();
+    const start = end - this._hours() * 36e5;
+    const rows = {};
+    try {
+      try {
+        const result = await this._hass.callWS({ type: "history/history_during_period", start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString(), entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+        for (const [id, list] of Object.entries(result || {})) rows[id] = (list || []).map((row) => ({ t: toMs(row.lu ?? row.lc), s: row.s }));
+      } catch (_) {
+        const path = `history/period/${encodeURIComponent(new Date(start).toISOString())}?end_time=${encodeURIComponent(new Date(end).toISOString())}&filter_entity_id=${encodeURIComponent(ids.join(","))}&minimal_response&no_attributes`;
+        for (const list of await this._hass.callApi("GET", path) || []) {
+          if (list?.length) rows[list[0].entity_id] = list.map((row) => ({ t: Date.parse(row.last_changed || row.last_updated), s: row.state }));
+        }
+      }
+      this._raw = rows;
+      this._start = start;
+    } catch (error) {
+      console.warn("HA Air Quality Card: history could not be loaded", error);
+    } finally {
+      this._loading = false;
+      this._fetchedAt = Date.now();
+      this._render();
+    }
+  }
+  // Numeric series clipped to the window, with the live value appended.
+  _numeric(id) {
+    if (!isId(id)) return [];
+    const now = Date.now();
+    const start = now - this._hours() * 36e5;
+    const points = (this._raw[id] || []).map((row) => ({ t: Math.max(row.t, start), v: Number(row.s) })).filter((point) => Number.isFinite(point.t) && Number.isFinite(point.v)).sort((a, b) => a.t - b.t);
+    const live = Number(this._hass?.states?.[id]?.state);
+    if (Number.isFinite(live)) points.push({ t: now, v: live });
+    return points;
+  }
+  // Time-weighted average, maximum and time at or above a limit.
+  _stats(points, limit) {
+    if (!points.length) return void 0;
+    let weighted = 0, total = 0, above = 0, max = points[0];
+    for (let i = 0; i < points.length; i += 1) {
+      const point = points[i];
+      if (point.v > max.v) max = point;
+      const next = points[i + 1];
+      if (!next) continue;
+      const duration2 = Math.max(0, next.t - point.t);
+      weighted += point.v * duration2;
+      total += duration2;
+      if (limit !== void 0 && point.v >= limit) above += duration2;
+    }
+    return { avg: total ? weighted / total : points[points.length - 1].v, max, above };
+  }
+  _downsample(points) {
+    if (points.length <= MAX_POINTS) return points;
+    const first = points[0].t, last = points[points.length - 1].t;
+    const size = (last - first) / MAX_POINTS || 1;
+    const buckets = /* @__PURE__ */ new Map();
+    for (const point of points) {
+      const key = Math.min(MAX_POINTS - 1, Math.floor((point.t - first) / size));
+      const bucket = buckets.get(key) || { t: 0, v: 0, n: 0 };
+      bucket.t += point.t;
+      bucket.v += point.v;
+      bucket.n += 1;
+      buckets.set(key, bucket);
+    }
+    const result = [...buckets.values()].map((bucket) => ({ t: bucket.t / bucket.n, v: bucket.v / bucket.n }));
+    result[result.length - 1] = points[points.length - 1];
+    return result;
+  }
+  _segments(id) {
+    if (!isId(id)) return [];
+    const now = Date.now();
+    const start = now - this._hours() * 36e5;
+    const rows = (this._raw[id] || []).map((row) => ({ t: Math.max(row.t, start), s: String(row.s) })).filter((row) => Number.isFinite(row.t)).sort((a, b) => a.t - b.t);
+    const current = this._hass?.states?.[id]?.state;
+    if (current !== void 0 && (!rows.length || rows[rows.length - 1].s !== String(current))) rows.push({ t: now, s: String(current) });
+    const segments = [];
+    rows.forEach((row, index) => {
+      const end = rows[index + 1]?.t ?? now;
+      if (end <= row.t) return;
+      const previous = segments[segments.length - 1];
+      if (previous && previous.s === row.s) previous.end = end;
+      else segments.push({ s: row.s, start: row.t, end });
+    });
+    return segments;
+  }
+  // ---------- Formatting ----------
+  _format(value, digits = 0) {
+    if (value === void 0 || !Number.isFinite(value)) return DASH;
+    const language = this._hass?.locale?.language || this._hass?.language || "da";
+    return value.toLocaleString(language, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  }
+  _clock(time) {
+    const language = this._hass?.locale?.language || this._hass?.language || "da";
+    return new Date(time).toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" });
+  }
+  _duration(ms) {
+    const minutes = Math.round(ms / 6e4);
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60), rest = minutes % 60;
+    return rest ? `${hours} t ${rest} min` : `${hours} t`;
+  }
+  _escape(value) {
+    return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  // ---------- Charts ----------
+  _plot(kind, points, limits, yMin, yMax, small) {
+    const height = small ? Math.round(H * 0.72) : H;
+    this._series[kind] = { points, yMin, yMax, height };
+    if (points.length < 2) return `<div class="plot${small ? " small" : ""}"><div class="empty"><ha-icon icon="mdi:chart-line"></ha-icon><span>${this._loading || !this._fetchedAt ? "Historik indl\xE6ses" : "Ingen historik endnu"}</span></div></div>`;
+    const now = Date.now(), start = now - this._hours() * 36e5;
+    const x = (time) => PAD.l + Math.max(0, Math.min(1, (time - start) / (now - start))) * (W - PAD.l - PAD.r);
+    const y = (value) => PAD.t + (yMax - value) / (yMax - yMin) * (height - PAD.t - PAD.b);
+    const line = points.map((point) => `${x(point.t).toFixed(1)},${y(point.v).toFixed(1)}`).join(" ");
+    const bottom = height - PAD.b;
+    const area = `${x(points[0].t).toFixed(1)},${bottom} ${line} ${x(points[points.length - 1].t).toFixed(1)},${bottom}`;
+    const stops = limits.slice().sort((a, b) => b.value - a.value).flatMap((limit) => {
+      const offset = Math.max(0, Math.min(1, (y(limit.value) - PAD.t) / (bottom - PAD.t)));
+      return [`<stop offset="${offset.toFixed(4)}" style="stop-color:var(--${limit.above})"/>`, `<stop offset="${offset.toFixed(4)}" style="stop-color:var(--${limit.below})"/>`];
+    }).join("");
+    const top = limits.length ? `var(--${limits.slice().sort((a, b) => b.value - a.value)[0].above})` : "var(--good)";
+    const gradient = `<linearGradient id="${kind}-line" gradientUnits="userSpaceOnUse" x1="0" y1="${PAD.t}" x2="0" y2="${bottom}"><stop offset="0" style="stop-color:${top}"/>${stops}<stop offset="1" style="stop-color:var(--good)"/></linearGradient><linearGradient id="${kind}-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--tone);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--tone);stop-opacity:0"/></linearGradient>`;
+    const shown = limits.filter((limit) => limit.label && limit.value > yMin && limit.value < yMax);
+    const lines = shown.map((limit) => {
+      const ly = y(limit.value).toFixed(1);
+      return `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${ly}" y2="${ly}" class="limit" style="stroke:var(--${limit.above})"/>`;
+    }).join("");
+    const pct2 = (value) => `${(value / W * 100).toFixed(2)}%`;
+    const labels = shown.map((limit) => `<span class="lim" style="left:${pct2(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
+    const hours = this._hours();
+    const ticks = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct2(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct2(W - PAD.r)}">Nu</span>`;
+    return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO\u2082" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks}<i class="cross"></i><i class="dot"></i><span class="tip"></span></div>`;
+  }
+  _co2Chart(points) {
+    const cfg = this._config;
+    const good = cfg.co2_good ?? AIR_DEFAULTS.co2_good;
+    const warning = cfg.co2_warning ?? AIR_DEFAULTS.co2_warning;
+    const critical = cfg.co2_critical ?? AIR_DEFAULTS.co2_critical;
+    const values = points.map((point) => point.v);
+    const max = values.length ? Math.max(...values) : warning;
+    const min = values.length ? Math.min(...values) : 400;
+    const yMax = Math.max(max * 1.08, warning + 150);
+    const yMin = Math.max(0, Math.min(min - 60, 380));
+    const limits = [
+      { value: good, above: "fair", below: "good" },
+      { value: warning, above: "poor", below: "fair", label: `${warning} ppm \xB7 luft ud` },
+      { value: critical, above: "bad", below: "poor", label: `${critical} ppm` }
+    ];
+    const stats = this._stats(points, warning);
+    const summary = stats ? `Gns. ${this._format(stats.avg)} \xB7 maks. ${this._format(stats.max.v)} kl. ${this._clock(stats.max.t)} \xB7 over ${warning}: ${this._duration(stats.above)}` : "";
+    return `<section class="chart"><div class="chart-head"><strong>CO\u2082 \xB7 ${this._hours()} timer</strong><span>${summary}</span></div>${this._plot("co2", this._downsample(points), limits, yMin, yMax, false)}</section>`;
+  }
+  _pmChart(points) {
+    const values = points.map((point) => point.v);
+    const max = values.length ? Math.max(...values) : 0;
+    const yMax = Math.max(max * 1.15, AIR_DEFAULTS.pm25_good + 7);
+    const limits = [
+      { value: AIR_DEFAULTS.pm25_good, above: "fair", below: "good", label: `WHO ${AIR_DEFAULTS.pm25_good} \xB5g/m\xB3` },
+      { value: AIR_DEFAULTS.pm25_moderate, above: "moderate", below: "fair" },
+      { value: AIR_DEFAULTS.pm25_poor, above: "poor", below: "moderate", label: `${AIR_DEFAULTS.pm25_poor} \xB5g/m\xB3` },
+      { value: AIR_DEFAULTS.pm25_bad, above: "bad", below: "poor" }
+    ];
+    const stats = this._stats(points, AIR_DEFAULTS.pm25_good);
+    const summary = stats ? `Gns. ${this._format(stats.avg, 1)} \xB7 maks. ${this._format(stats.max.v, 1)} kl. ${this._clock(stats.max.t)}` : "";
+    return `<section class="chart"><div class="chart-head"><strong>PM2,5 \xB7 ${this._hours()} timer</strong><span>${summary}</span></div>${this._plot("pm25", this._downsample(points), limits, 0, yMax, true)}</section>`;
+  }
+  _timeline(segments) {
+    if (!segments.length) return "";
+    const now = Date.now(), start = now - this._hours() * 36e5, span = now - start;
+    const seen = /* @__PURE__ */ new Map();
+    const bars = segments.map((segment) => {
+      const rank = qualityRank(segment.s);
+      const tone2 = rank === void 0 ? "offline" : AIR_TONES[rank];
+      const label = rank === void 0 ? "Ingen data" : AIR_LABELS[rank];
+      seen.set(label, tone2);
+      const left = Math.max(0, (Math.max(segment.start, start) - start) / span * 100);
+      const width = Math.max(0, (Math.min(segment.end, now) - Math.max(segment.start, start)) / span * 100);
+      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone2})" title="${this._escape(`${label}: ${this._clock(segment.start)}\u2013${this._clock(segment.end)}`)}"></i>`;
+    }).join("");
+    const legend = [...seen].map(([label, tone2]) => `<span><b style="background:var(--${tone2})"></b>${this._escape(label)}</span>`).join("");
+    return `<section class="chart"><div class="chart-head"><strong>M\xE5lerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
+  }
+  _bindHover() {
+    this.shadowRoot.querySelectorAll("[data-plot]").forEach((plot) => {
+      const series = this._series[plot.dataset.plot];
+      if (!series || series.points.length < 2) return;
+      const unit = plot.dataset.plot === "co2" ? "ppm" : "\xB5g/m\xB3";
+      const digits = plot.dataset.plot === "co2" ? 0 : 1;
+      const move = (event) => {
+        const rect = plot.getBoundingClientRect();
+        if (!rect.width) return;
+        const now = Date.now(), start = now - this._hours() * 36e5;
+        const scale = rect.width / W;
+        const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left - PAD.l * scale) / ((W - PAD.l - PAD.r) * scale)));
+        const time = start + fraction * (now - start);
+        let nearest = series.points[0];
+        for (const point of series.points) if (Math.abs(point.t - time) < Math.abs(nearest.t - time)) nearest = point;
+        const px = (PAD.l + Math.max(0, Math.min(1, (nearest.t - start) / (now - start))) * (W - PAD.l - PAD.r)) * scale;
+        const py = (PAD.t + (series.yMax - nearest.v) / (series.yMax - series.yMin) * (series.height - PAD.t - PAD.b)) * (rect.height / series.height);
+        plot.querySelector(".cross").style.left = `${px}px`;
+        const dot = plot.querySelector(".dot");
+        dot.style.left = `${px}px`;
+        dot.style.top = `${py}px`;
+        const tip = plot.querySelector(".tip");
+        tip.textContent = `${this._clock(nearest.t)} \xB7 ${this._format(nearest.v, digits)} ${unit}`;
+        tip.style.left = `${Math.max(48, Math.min(rect.width - 48, px))}px`;
+        plot.classList.add("hover");
+      };
+      plot.addEventListener("pointermove", move);
+      plot.addEventListener("pointerdown", move);
+      plot.addEventListener("pointerleave", () => plot.classList.remove("hover"));
+    });
+  }
+  _open(id) {
+    if (isId(id)) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+  }
+  _tile(label, id, value, unit, rank, sub) {
+    const tone2 = rank === void 0 ? "" : AIR_TONES[rank];
+    const disabled = !isId(id) ? " disabled" : "";
+    const shown = value === void 0 ? DASH : this._escape(value);
+    return `<button class="tile ${tone2}" type="button" data-open="${this._escape(id || "")}"${disabled} aria-label="${this._escape(`${label}: ${value ?? "ingen data"} ${unit}`)}"><span>${label}</span><strong>${shown}${value !== void 0 && unit ? `<small>${unit}</small>` : ""}</strong><em>${this._escape(sub)}</em></button>`;
+  }
+  _render() {
+    if (!this.shadowRoot || !this._config) return;
+    const cfg = this._config;
+    const air = airQuality(this._hass, cfg);
+    const tone2 = !air.configured || air.offline ? "offline" : air.tone;
+    const co2Points = this._numeric(cfg.co2);
+    const pmPoints = this._numeric(cfg.pm25);
+    const qualityState = this._hass?.states?.[cfg.air_quality]?.state;
+    const deviceRank = qualityRank(qualityState);
+    const co2 = co2Rank(air.co2, cfg);
+    const pm = pm25Rank(air.pm25);
+    const worstIsPm = pm !== void 0 && pm === air.rank && (co2 === void 0 || pm > co2);
+    const advice = air.offline ? "M\xE5leren svarer ikke lige nu \u2013 kurverne viser den seneste historik." : worstIsPm && air.rank >= 2 ? "Mange partikler i luften \u2013 fx fra madlavning, stearinlys eller st\xF8v." : ADVICE[air.rank ?? 0];
+    const title = cfg.title || (cfg.name ? `Luftkvalitet \xB7 ${cfg.name}` : "Luftkvalitet");
+    const tiles = [
+      isId(cfg.co2) ? this._tile("CO\u2082", cfg.co2, air.co2 === void 0 ? void 0 : this._format(air.co2), "ppm", co2, co2 === void 0 ? "Ingen data" : AIR_LABELS[co2]) : "",
+      isId(cfg.pm25) ? this._tile("PM2,5", cfg.pm25, air.pm25 === void 0 ? void 0 : this._format(air.pm25, air.pm25 < 10 ? 1 : 0), "\xB5g/m\xB3", pm, pm === void 0 ? "Ingen data" : AIR_LABELS[pm]) : "",
+      this._tile("Samlet", cfg.air_quality, air.offline ? void 0 : air.label, "", air.offline ? void 0 : air.rank, air.offline ? "M\xE5leren er offline" : deviceRank !== void 0 ? "M\xE5lerens vurdering" : "Beregnet af CO\u2082/PM2,5")
+    ].join("");
+    this._series = {};
+    const charts = [isId(cfg.co2) ? this._co2Chart(co2Points) : "", isId(cfg.pm25) ? this._pmChart(pmPoints) : "", isId(cfg.air_quality) ? this._timeline(this._segments(cfg.air_quality)) : ""].join("");
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div class="shell ${tone2}${cfg.animation === false ? "" : " animate"}"><div class="backdrop"></div>
+      <header><div><div class="eyebrow"><i></i>Luftkvalitet \xB7 ${this._hours()} timer</div><h2>${this._escape(title)}</h2></div>
+      <div class="pill"><strong>${this._escape(air.configured ? air.label : DASH)}</strong><span>${this._escape(air.co2 !== void 0 ? `CO\u2082 ${this._format(air.co2)} ppm` : air.pm25 !== void 0 ? `PM2,5 ${this._format(air.pm25, 1)}` : "")}</span></div></header>
+      <div class="advice">${this._escape(advice)}</div>
+      <div class="tiles">${tiles}</div>${charts}</div></ha-card>`;
+    this.shadowRoot.querySelectorAll("[data-open]").forEach((button) => button.addEventListener("click", () => this._open(button.dataset.open)));
+    this._bindHover();
+  }
+};
+if (!customElements.get(TAG)) customElements.define(TAG, HAAirQualityCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((card) => card.type === TAG)) {
+  window.customCards.push({ type: TAG, name: "HA Air Quality Card", description: "Luftkvalitet i et rum: CO\u2082, PM2,5 og m\xE5lerens vurdering med 24-timers kurver", preview: true });
+}
+console.info(`%c HA AIR QUALITY CARD %c v${VERSION20} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
+
+// src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
+var VERSION21 = "2.1.0";
+var TAG2 = "ha-radiator-overview-card-v2";
+var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
 var SPARK_W = 240;
 var SPARK_H = 44;
+var hasAir = (room) => [room?.co2, room?.pm25, room?.air_quality].some((id) => typeof id === "string" && id.includes("."));
 var RADIATOR_MARKUP = '<div class="radiator" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>';
 var polar = (angle, radius = DIAL.r) => {
   const a = angle * Math.PI / 180;
@@ -24017,7 +24476,7 @@ var smoothPath = (points) => {
   }
   return d;
 };
-var STYLE = `
+var STYLE2 = `
 :host{display:block;--rc-accent:var(--dashboard-accent,var(--info-color,#38bdf8));--rc-ok:var(--dashboard-success,var(--success-color,#5bc99a));--rc-hot:#ff8a3d;--rc-hot2:#ffca62;--rc-warm:#f2c14e;--rc-cool:var(--state-cool-icon,var(--info-color,#58aaf8));--rc-open:#a78bfa;--rc-danger:var(--dashboard-danger,var(--error-color,#ef4444));--rc-edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.11)));--rc-muted:var(--secondary-text-color);--rc-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#141a22)));--rc-glass:rgba(255,255,255,.035);--rc-glass2:rgba(255,255,255,.06);--rc-left:calc(var(--dashboard-left-accent-width,1) * 3px)}
 *{box-sizing:border-box}
 ha-card{position:relative;overflow:hidden;background:none;border:0;border-radius:0;box-shadow:none;color:var(--primary-text-color);font-family:var(--primary-font-family,var(--paper-font-body1_-_font-family,inherit))}
@@ -24139,7 +24598,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .zone.is-heating .radiator i:nth-child(2){animation-delay:.12s}.zone.is-heating .radiator i:nth-child(3){animation-delay:.24s}.zone.is-heating .radiator i:nth-child(4){animation-delay:.36s}.zone.is-heating .radiator i:nth-child(5){animation-delay:.48s}
 .ac-mini{position:relative;width:67px;height:50px;overflow:hidden}
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:10px;min-width:0}.tiles.wide{grid-column:span 2;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tiles .tile{display:flex;flex-direction:column;min-width:0;min-height:0;padding:11px 11px 9px}.tiles .t-top{gap:6px}.tiles .t-top .t-ic{width:22px;height:22px;border-radius:7px}.tiles .t-top ha-icon{--mdc-icon-size:13px}.tiles .t-top strong{font-size:12.5px}.tiles .t-row{display:block;margin-top:7px}.tiles .t-temp{font-size:24px}.tiles .t-meta{margin-top:3px;overflow:hidden;font-size:10.5px;text-align:left;text-overflow:ellipsis}.tiles .t-air{margin-top:4px;font-size:10.5px}
 .tile{display:block;padding:13px 14px 11px;border:1px solid color-mix(in srgb,var(--room-color) 20%,var(--rc-edge));border-radius:18px;background:linear-gradient(160deg,var(--rc-glass2),rgba(255,255,255,.01) 60%,rgba(0,0,0,.04))}
 .t-top{display:flex;align-items:center;gap:9px;min-width:0}
 .t-top .t-ic{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:color-mix(in srgb,var(--room-color) 14%,transparent);color:var(--room-color)}
@@ -24150,7 +24610,9 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .t-temp{display:flex;align-items:flex-start;font-size:27px;font-weight:750;line-height:1;letter-spacing:-.04em}
 .t-temp small{margin:3px 0 0 2px;color:var(--rc-muted);font-size:12px;font-weight:700;letter-spacing:0}
 .t-meta{overflow:hidden;color:var(--rc-muted);font-size:11px;line-height:1.45;text-align:right;white-space:nowrap}
-.tile .spark-wrap{--spark-h:30px;margin-top:9px}
+.t-air{display:flex;align-items:center;gap:6px;margin-top:7px;overflow:hidden;font-size:11px;line-height:1.3;white-space:nowrap}.t-air i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--aq,var(--rc-muted));box-shadow:0 0 8px var(--aq,transparent)}.t-air b{color:var(--aq,var(--rc-muted));font-weight:750}.t-air span{overflow:hidden;color:var(--rc-muted);text-overflow:ellipsis}
+.metric.air{grid-column:1/-1;border-color:color-mix(in srgb,var(--aq,var(--rc-edge)) 38%,var(--rc-edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--aq,var(--rc-edge))}.metric.air strong{color:var(--aq)}.metric.air.na strong{color:var(--rc-muted)}
+.tile .spark-wrap{--spark-h:30px;margin-top:auto;padding-top:7px}
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
@@ -24160,8 +24622,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @container (max-width:760px){.shell{padding:16px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:40px}.legend{display:none}}
-@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
-@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones,.tiles{grid-template-columns:1fr}}
+@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tiles,.tiles.wide{grid-column:1/-1}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
+@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones{grid-template-columns:1fr}.tiles,.tiles.wide{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
 var HARadiatorOverviewCardV2 = class extends HTMLElement {
@@ -24200,7 +24662,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   }
   static getConfigElement() {
     const e = document.createElement("ha-card-list-editor");
-    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "rooms", label: "Radiatorer og rum", itemLabel: "rum", defaults: { name: "Nyt rum", icon: "mdi:radiator" }, fields: [{ key: "name", label: "Navn" }, { key: "icon", label: "Ikon" }, { key: "temperature", label: "Temperatur", type: "entity" }, { key: "humidity", label: "Luftfugtighed", type: "entity" }, { key: "comfort", label: "Komfortstatus", type: "entity" }, { key: "climate", label: "Termostat", type: "entity" }, { key: "window", label: "Vindue/d\xF8r", type: "entity" }] }] };
+    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "rooms", label: "Radiatorer og rum", itemLabel: "rum", defaults: { name: "Nyt rum", icon: "mdi:radiator" }, fields: [{ key: "name", label: "Navn" }, { key: "icon", label: "Ikon" }, { key: "temperature", label: "Temperatur", type: "entity" }, { key: "humidity", label: "Luftfugtighed", type: "entity" }, { key: "comfort", label: "Komfortstatus", type: "entity" }, { key: "climate", label: "Termostat", type: "entity" }, { key: "window", label: "Vindue/d\xF8r", type: "entity" }, { key: "co2", label: "CO\u2082", type: "entity" }, { key: "pm25", label: "PM2,5", type: "entity" }, { key: "air_quality", label: "Luftkvalitet (samlet)", type: "entity" }] }] };
     return e;
   }
   setConfig(config) {
@@ -24333,10 +24795,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     else if (state.heating) accent = "heating";
     else if (state.windowOpen) accent = "open";
     else if (state.off || kind === "zone" && !state.climate) accent = "neutral";
-    return { ...state, kind, feels, acActive, batteryMin, batteryLow: batteryMin !== void 0 && batteryMin <= 20, status, accent };
+    const air = airQuality(this._hass, room);
+    return { ...state, kind, feels, acActive, batteryMin, batteryLow: batteryMin !== void 0 && batteryMin <= 20, status, accent, air };
   }
   _format(value, digits = 1) {
-    if (value === void 0) return DASH;
+    if (value === void 0) return DASH2;
     const language = this._hass?.locale?.language || this._hass?.language || "da";
     return value.toLocaleString(language, { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
@@ -24450,15 +24913,15 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const outdoor = indexed.find(({ room }) => room.outdoor);
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
-    const isId = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId));
-    this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
-    const spark = (small = false) => `<div class="spark-wrap"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
+    const isId2 = (id) => typeof id === "string" && id.includes(".");
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate, room.co2, room.pm25, room.air_quality].filter(isId2));
+    this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
+    const spark = (small = false) => `<div class="spark-wrap"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH2}</span></div>`}</div>`;
     const zoneMarkup = ({ room, index }) => `
       <button class="zone a-neutral" type="button" data-room="${index}">
         <div class="z-top">
           <span class="z-icon"><ha-icon icon="${this._escape(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${this._escape(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH}</em></span></span>
+          <span class="z-title"><strong>${this._escape(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH2}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -24469,13 +24932,14 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
         </div>
         <div class="dial">
           <svg viewBox="0 0 120 95" aria-hidden="true"><path class="track" d="${DIAL_PATH}"></path><path class="halo" d="${DIAL_PATH}" pathLength="100" stroke-dasharray="0 100"></path><path class="value" d="${DIAL_PATH}" pathLength="100" stroke-dasharray="0 100"></path><line class="tick" x1="-20" y1="-20" x2="-20" y2="-20"></line></svg>
-          <div class="dial-center"><strong><span data-f="temp">${DASH}</span><small>\xB0C</small></strong><span class="dial-target" data-f="target">M\xE5l ${DASH}</span></div>
+          <div class="dial-center"><strong><span data-f="temp">${DASH2}</span><small>\xB0C</small></strong><span class="dial-target" data-f="target">M\xE5l ${DASH2}</span></div>
         </div>
         <div class="metrics">
-          <div class="metric na" data-m="humidity"><span>Fugt</span><strong>${DASH}</strong></div>
-          <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH}</strong></div>
-          <div class="metric na" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong>${DASH}</strong></div>
-          <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH}</strong></div>
+          <div class="metric na" data-m="humidity"><span>Fugt</span><strong>${DASH2}</strong></div>
+          <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH2}</strong></div>
+          <div class="metric na" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong>${DASH2}</strong></div>
+          <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH2}</strong></div>
+          ${hasAir(room) ? `<div class="metric air na" data-m="air"><span>Luft</span><strong>${DASH2}</strong></div>` : ""}
         </div>
         <div class="z-foot">${spark()}<div class="visual" data-f="visual"></div></div>
       </button>`;
@@ -24488,25 +24952,26 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
         </div>
         <div class="dial">
           <svg viewBox="0 0 120 95" aria-hidden="true"><path class="track" d="${DIAL_PATH}"></path><path class="value" d="${DIAL_PATH}" pathLength="100" stroke-dasharray="0 100"></path></svg>
-          <div class="dial-center"><strong><span data-f="temp">${DASH}</span><small>\xB0C</small></strong><span class="dial-target">Lige nu</span></div>
+          <div class="dial-center"><strong><span data-f="temp">${DASH2}</span><small>\xB0C</small></strong><span class="dial-target">Lige nu</span></div>
         </div>
         <div class="metrics">
-          <div class="metric" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong data-f="feels">${DASH}</strong></div>
-          <div class="metric" data-m="humidity"><span>Fugt</span><strong data-f="humidity">${DASH}</strong></div>
-          <div class="metric" data-m="day"><span>D\xF8gnets sp\xE6nd</span><strong data-f="day">${DASH}</strong></div>
+          <div class="metric" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong data-f="feels">${DASH2}</strong></div>
+          <div class="metric" data-m="humidity"><span>Fugt</span><strong data-f="humidity">${DASH2}</strong></div>
+          <div class="metric" data-m="day"><span>D\xF8gnets sp\xE6nd</span><strong data-f="day">${DASH2}</strong></div>
         </div>
         <div class="z-foot">${spark()}</div>
       </button>`;
     const tileMarkup = ({ room, index }) => `
       <button class="tile a-neutral" type="button" data-room="${index}">
         <div class="t-top"><span class="t-ic"><ha-icon icon="${this._escape(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${this._escape(room.name)}</strong><b title="Status"></b></div>
-        <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH}</div></div>
+        <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH2}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH2}</div></div>
+        ${hasAir(room) ? `<div class="t-air" data-f="air"><i></i><b>${DASH2}</b><span></span></div>` : ""}
         ${spark(true)}
       </button>`;
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${this._escape(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([color, label]) => `<span><i style="--c:${color}"></i>${label}</span>`).join("");
     this.shadowRoot.innerHTML = `
-      <style>${STYLE}${AC_UNIT_VISUAL_STYLE2}</style>
+      <style>${STYLE2}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
@@ -24515,23 +24980,22 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
               <h2>${this._escape(this._config.title)}</h2>
               <p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p>
             </div>
-            <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH}</strong></div><i class="flow-line"></i></div>
+            <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH2}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
-          ${outdoor || zones.length ? `<section class="group"><div class="group-head"><h3>Termostatzoner</h3><span class="count">${zones.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}</div></section>` : ""}
-          ${sensors.length ? `<section class="group"><div class="group-head"><h3>M\xE5lepunkter</h3><span class="count">${sensors.length}</span><i class="rule"></i></div><div class="tiles">${sensors.map(tileMarkup).join("")}</div></section>` : ""}
+          ${outdoor || zones.length || sensors.length ? `<section class="group"><div class="group-head"><h3>${outdoor || zones.length ? "Termostatzoner" : "M\xE5lepunkter"}</h3><span class="count">${outdoor || zones.length ? zones.length : sensors.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}${sensors.length ? `<div class="tiles${sensors.length > 4 ? " wide" : ""}" role="group" aria-label="M\xE5lepunkter">${sensors.map(tileMarkup).join("")}</div>` : ""}</div></section>` : ""}
           <section class="hero" aria-label="Supplerende overblik">
             <div class="panel indoor">
               <span class="label">Indend\xF8rs gennemsnit</span>
-              <div class="big"><span data-s="avg">${DASH}</span><small>\xB0C</small></div>
+              <div class="big"><span data-s="avg">${DASH2}</span><small>\xB0C</small></div>
               <div class="spread" data-s="spread"><i class="spread-track"></i><i class="spread-band" data-s="band"></i>${dots}</div>
-              <div class="spread-scale"><span data-s="coldest">${DASH}</span><span data-s="warmest">${DASH}</span></div>
+              <div class="spread-scale"><span data-s="coldest">${DASH2}</span><span data-s="warmest">${DASH2}</span></div>
             </div>
             <div class="stats">
-              <div class="stat" data-s="heat"><span class="ic"><ha-icon icon="mdi:radiator"></ha-icon></span><div><span>Varmer nu</span><strong>${DASH}</strong><em>${DASH}</em></div></div>
-              <div class="stat" data-s="open"><span class="ic"><ha-icon icon="mdi:window-open-variant"></ha-icon></span><div><span>\xC5bninger</span><strong>${DASH}</strong><em>${DASH}</em></div></div>
-              <div class="stat" data-s="ac"><span class="ic"><ha-icon icon="mdi:air-conditioner"></ha-icon></span><div><span>Aircondition</span><strong>${DASH}</strong><em>${DASH}</em></div></div>
-              <div class="stat" data-s="demand"><span class="ic"><ha-icon icon="mdi:home-lightning-bolt-outline"></ha-icon></span><div><span>Varmebehov</span><strong>${DASH}</strong><em>${DASH}</em></div></div>
+              <div class="stat" data-s="heat"><span class="ic"><ha-icon icon="mdi:radiator"></ha-icon></span><div><span>Varmer nu</span><strong>${DASH2}</strong><em>${DASH2}</em></div></div>
+              <div class="stat" data-s="open"><span class="ic"><ha-icon icon="mdi:window-open-variant"></ha-icon></span><div><span>\xC5bninger</span><strong>${DASH2}</strong><em>${DASH2}</em></div></div>
+              <div class="stat" data-s="ac"><span class="ic"><ha-icon icon="mdi:air-conditioner"></ha-icon></span><div><span>Aircondition</span><strong>${DASH2}</strong><em>${DASH2}</em></div></div>
+              <div class="stat" data-s="demand"><span class="ic"><ha-icon icon="mdi:home-lightning-bolt-outline"></ha-icon></span><div><span>Varmebehov</span><strong>${DASH2}</strong><em>${DASH2}</em></div></div>
             </div>
           </section>
         </div>
@@ -24549,12 +25013,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       if (!host) return void 0;
       const kind = room.outdoor ? "outdoor" : room.climate ? "zone" : "sensor";
       const f = (name) => host.querySelector(`[data-f="${name}"]`);
-      const refs = { kind, host, view: "", status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), day: f("day"), visual: f("visual"), visualKind: "", spark: sparkRefs(host) };
+      const refs = { kind, host, view: "", air: f("air"), status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), day: f("day"), visual: f("visual"), visualKind: "", spark: sparkRefs(host) };
       if (kind === "zone" || kind === "outdoor") {
         refs.value = host.querySelector(".dial .value");
         refs.halo = host.querySelector(".dial .halo");
         refs.tick = host.querySelector(".dial .tick");
-        refs.metrics = Object.fromEntries(["humidity", "valve", "feels", "battery"].map((name) => [name, host.querySelector(`[data-m="${name}"]`)]));
+        refs.metrics = Object.fromEntries(["humidity", "valve", "feels", "battery", "air"].map((name) => [name, host.querySelector(`[data-m="${name}"]`)]));
         refs.badges = { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]') };
       }
       return refs;
@@ -24607,7 +25071,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const refs = this._refs[index];
     if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.current, model.target, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.acActive ? this._acMiniLabel(model) : "", model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
+    const view = [model.accent, model.status, model.current, model.target, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.acActive ? this._acMiniLabel(model) : "", model.heating, model.air?.tone, model.air?.label, model.air?.text, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
     if (refs.view === view) return;
     refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model);
@@ -24624,6 +25088,20 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._setText(node.querySelector("strong"), text);
     node.classList.toggle("na", missing);
     node.classList.toggle("low", low);
+  }
+  // Luftkvalitet på rumkortet: niveau i farve og det målte tal ved siden af.
+  _renderAir(node, air) {
+    if (!node || !air?.configured) return;
+    const color = air.offline ? "var(--rc-muted)" : AIR_COLORS[air.tone];
+    node.style.setProperty("--aq", color);
+    node.classList.toggle("na", !!air.offline);
+    const detail = air.offline ? "" : air.co2 !== void 0 ? `${this._format(air.co2, 0)} ppm` : air.pm25 !== void 0 ? `PM2,5 ${this._format(air.pm25, 0)}` : "";
+    if (node.classList.contains("metric")) this._setText(node.querySelector("strong"), air.offline ? "Offline" : `${air.label}${detail ? ` \xB7 ${detail}` : ""}`);
+    else {
+      this._setText(node.querySelector("b"), air.offline ? "Luftm\xE5ler offline" : `${air.label} luft`);
+      this._setText(node.querySelector("span"), detail);
+    }
+    node.title = air.offline ? "Luftkvalitetsm\xE5leren svarer ikke" : `Luftkvalitet: ${air.label}${detail ? ` (${detail})` : ""}`;
   }
   _renderZone(room, refs, model) {
     refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}`;
@@ -24644,10 +25122,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       refs.tick.setAttribute("x2", x22.toFixed(2));
       refs.tick.setAttribute("y2", y22.toFixed(2));
     }
-    this._metric(refs.metrics.humidity, model.humidity === void 0 ? DASH : `${this._format(model.humidity, 0)} %`, model.humidity === void 0);
-    this._metric(refs.metrics.valve, model.valve === void 0 ? DASH : `${this._format(model.valve, 0)} %`, model.valve === void 0);
-    this._metric(refs.metrics.feels, model.feels === void 0 ? DASH : `${this._format(model.feels)}\xB0`, model.feels === void 0);
-    this._metric(refs.metrics.battery, model.batteryMin === void 0 ? DASH : `${this._format(model.batteryMin, 0)} %`, model.batteryMin === void 0, model.batteryLow);
+    this._metric(refs.metrics.humidity, model.humidity === void 0 ? DASH2 : `${this._format(model.humidity, 0)} %`, model.humidity === void 0);
+    this._metric(refs.metrics.valve, model.valve === void 0 ? DASH2 : `${this._format(model.valve, 0)} %`, model.valve === void 0);
+    this._metric(refs.metrics.feels, model.feels === void 0 ? DASH2 : `${this._format(model.feels)}\xB0`, model.feels === void 0);
+    this._metric(refs.metrics.battery, model.batteryMin === void 0 ? DASH2 : `${this._format(model.batteryMin, 0)} %`, model.batteryMin === void 0, model.batteryLow);
+    this._renderAir(refs.metrics.air, model.air);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
     refs.badges.ac?.classList.toggle("on", model.acActive);
@@ -24668,6 +25147,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (model.humidity !== void 0) parts.push(`Fugt ${this._format(model.humidity, 0)} %`);
     if (model.feels !== void 0) parts.push(`F\xF8les ${this._format(model.feels)}\xB0`);
     this._setText(refs.meta, parts.join(" \xB7 ") || model.status);
+    this._renderAir(refs.air, model.air);
     refs.host.querySelector(".t-top b")?.setAttribute("title", model.status);
     this._renderSpark(refs.spark, this._sparkPoints(room, model), void 0);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. \xC5bn detaljer`);
@@ -24676,12 +25156,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._setText(refs.temp, this._format(model.current));
     const outdoorFraction = model.current === void 0 ? 0 : Math.min(1, Math.max(0, (model.current + 20) / 60));
     refs.value.setAttribute("stroke-dasharray", `${(outdoorFraction * 100).toFixed(2)} 100`);
-    this._setText(refs.feels, model.feels === void 0 ? DASH : `${this._format(model.feels)}\xB0`);
-    this._setText(refs.humidity, model.humidity === void 0 ? DASH : `${this._format(model.humidity, 0)} %`);
+    this._setText(refs.feels, model.feels === void 0 ? DASH2 : `${this._format(model.feels)}\xB0`);
+    this._setText(refs.humidity, model.humidity === void 0 ? DASH2 : `${this._format(model.humidity, 0)} %`);
     const points = this._sparkPoints(room, model);
     const lows = points.map((point) => point.min ?? point.v);
     const highs = points.map((point) => point.max ?? point.v);
-    this._setText(refs.day, points.length > 1 ? `${this._format(Math.min(...lows))}\xB0 \u2013 ${this._format(Math.max(...highs))}\xB0` : DASH);
+    this._setText(refs.day, points.length > 1 ? `${this._format(Math.min(...lows))}\xB0 \u2013 ${this._format(Math.max(...highs))}\xB0` : DASH2);
     this._renderSpark(refs.spark, points, void 0);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader. \xC5bn detaljer`);
   }
@@ -24691,7 +25171,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (points.length < 2) {
       spark.wrap.classList.add("empty");
       spark.scale = void 0;
-      this._setText(spark.range, DASH);
+      this._setText(spark.range, DASH2);
       return;
     }
     spark.wrap.classList.remove("empty");
@@ -24929,6 +25409,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const tabs = [{ id: "temperature", label: "Temperatur" }];
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
+    if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
       content.dataset.defaultTab = acActive ? "ac" : "temperature";
@@ -24991,6 +25472,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const definitions = {
       temperature: { type: "custom:ha-temperature-target-card", title: `Temperatur \xB7 ${room.name}`, hours: this._config.history_hours || 24, animation: this._config.animation, rooms: [{ name: room.name, icon: room.icon, temperature: room.temperature, climate: room.climate }] },
       ac: room.ac ? { type: "custom:ha-ac-climate-card", title: `AC \xB7 ${room.name}`, animation: this._config.animation, units: [room.ac] } : null,
+      air: hasAir(room) ? { type: "custom:ha-air-quality-card", name: room.name, co2: room.co2, pm25: room.pm25, air_quality: room.air_quality, co2_warning: room.co2_warning, co2_critical: room.co2_critical, hours: this._config.history_hours || 24, animation: this._config.animation } : null,
       optimization: room.optimization ? { type: "custom:ha-heating-diagnostics-card", title: `Optimering \xB7 ${room.name}`, animation: this._config.animation, learning_hours: this._config.learning_hours || 48, total_demand: this._config.total_demand, data_problem: this._config.data_problem, rooms: [room.optimization] } : null
     };
     try {
@@ -25013,12 +25495,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     }
   }
 };
-if (!customElements.get(TAG)) customElements.define(TAG, HARadiatorOverviewCardV2);
+if (!customElements.get(TAG2)) customElements.define(TAG2, HARadiatorOverviewCardV2);
 window.customCards = window.customCards || [];
-if (!window.customCards.some((card) => card.type === TAG)) {
-  window.customCards.push({ type: TAG, name: "HA Radiator Overview Card v2", description: "Rumklima-overblik med termostat-skiver, 24-timers kurver og AC-animation", preview: true });
+if (!window.customCards.some((card) => card.type === TAG2)) {
+  window.customCards.push({ type: TAG2, name: "HA Radiator Overview Card v2", description: "Rumklima-overblik med termostat-skiver, 24-timers kurver og AC-animation", preview: true });
 }
-console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION20} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
+console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION21} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-temperature-target-card/ha-card-list-editor.js
 var HACardListEditor7 = class extends HTMLElement {
@@ -25103,7 +25585,7 @@ var HACardListEditor7 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor7);
 
 // src/cards/ha-temperature-target-card/ha-temperature-target-card.js
-var VERSION21 = "0.4.0";
+var VERSION22 = "0.4.0";
 var HATemperatureTargetCard = class extends HTMLElement {
   constructor() {
     super();
@@ -25257,15 +25739,15 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const span = Math.max(max - min, 1.2);
     min -= span * 0.18;
     max += span * 0.18;
-    const W = 400, H = 142, L = 8, R = 8, T = 12, B = 22;
-    const x = (time) => L + Math.max(0, Math.min(1, (time - start) / (now - start))) * (W - L - R);
-    const y = (value) => T + (max - value) / (max - min) * (H - T - B);
+    const W2 = 400, H3 = 142, L = 8, R = 8, T = 12, B = 22;
+    const x = (time) => L + Math.max(0, Math.min(1, (time - start) / (now - start))) * (W2 - L - R);
+    const y = (value) => T + (max - value) / (max - min) * (H3 - T - B);
     const points = values.map((p) => `${x(p.time).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
-    const fill = values.length ? `${x(values[0].time).toFixed(1)},${H - B} ${points} ${x(values[values.length - 1].time).toFixed(1)},${H - B}` : "";
+    const fill = values.length ? `${x(values[0].time).toFixed(1)},${H3 - B} ${points} ${x(values[values.length - 1].time).toFixed(1)},${H3 - B}` : "";
     const ty = state.target === void 0 ? void 0 : y(state.target);
-    const band = state.target === void 0 ? "" : `<rect x="${L}" y="${y(state.target + 0.35).toFixed(1)}" width="${W - L - R}" height="${Math.max(2, y(state.target - 0.35) - y(state.target + 0.35)).toFixed(1)}" rx="4" class="target-band"/><line x1="${L}" x2="${W - R}" y1="${ty.toFixed(1)}" y2="${ty.toFixed(1)}" class="target-line"/><text x="${W - R}" y="${Math.max(10, ty - 5).toFixed(1)}" text-anchor="end" class="target-label">M\xC5L ${this._format(state.target)}\xB0</text>`;
-    const targetOffset = ty === void 0 ? 50 : Math.max(0, Math.min(100, ty / H * 100));
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="line-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="${Math.max(0, targetOffset - 3)}%" stop-color="#ffbd58"/><stop offset="${targetOffset}%" stop-color="#5bd3a0"/><stop offset="${Math.min(100, targetOffset + 3)}%" stop-color="#63aefe"/><stop offset="100%" stop-color="#6b8cff"/></linearGradient><linearGradient id="fill-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a4d" stop-opacity=".22"/><stop offset="${targetOffset}%" stop-color="#5bd3a0" stop-opacity=".10"/><stop offset="100%" stop-color="#63aefe" stop-opacity=".03"/></linearGradient></defs>${band}<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="axis"/>${fill ? `<polygon points="${fill}" fill="url(#fill-${index})"/>` : ""}${points ? `<polyline points="${points}" fill="none" stroke="url(#line-${index})" class="temperature-line"/>` : ""}<text x="${L}" y="${H - 5}" class="time-label">-${this._config.hours} t</text><text x="${W - R}" y="${H - 5}" text-anchor="end" class="time-label">Nu</text></svg>`;
+    const band = state.target === void 0 ? "" : `<rect x="${L}" y="${y(state.target + 0.35).toFixed(1)}" width="${W2 - L - R}" height="${Math.max(2, y(state.target - 0.35) - y(state.target + 0.35)).toFixed(1)}" rx="4" class="target-band"/><line x1="${L}" x2="${W2 - R}" y1="${ty.toFixed(1)}" y2="${ty.toFixed(1)}" class="target-line"/><text x="${W2 - R}" y="${Math.max(10, ty - 5).toFixed(1)}" text-anchor="end" class="target-label">M\xC5L ${this._format(state.target)}\xB0</text>`;
+    const targetOffset = ty === void 0 ? 50 : Math.max(0, Math.min(100, ty / H3 * 100));
+    return `<svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="line-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="${Math.max(0, targetOffset - 3)}%" stop-color="#ffbd58"/><stop offset="${targetOffset}%" stop-color="#5bd3a0"/><stop offset="${Math.min(100, targetOffset + 3)}%" stop-color="#63aefe"/><stop offset="100%" stop-color="#6b8cff"/></linearGradient><linearGradient id="fill-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a4d" stop-opacity=".22"/><stop offset="${targetOffset}%" stop-color="#5bd3a0" stop-opacity=".10"/><stop offset="100%" stop-color="#63aefe" stop-opacity=".03"/></linearGradient></defs>${band}<line x1="${L}" x2="${W2 - R}" y1="${H3 - B}" y2="${H3 - B}" class="axis"/>${fill ? `<polygon points="${fill}" fill="url(#fill-${index})"/>` : ""}${points ? `<polyline points="${points}" fill="none" stroke="url(#line-${index})" class="temperature-line"/>` : ""}<text x="${L}" y="${H3 - 5}" class="time-label">-${this._config.hours} t</text><text x="${W2 - R}" y="${H3 - 5}" text-anchor="end" class="time-label">Nu</text></svg>`;
   }
   _room(room, index) {
     const s3 = this._state(room);
@@ -25357,10 +25839,10 @@ var HATemperatureTargetCard = class extends HTMLElement {
 if (!customElements.get("ha-temperature-target-card")) customElements.define("ha-temperature-target-card", HATemperatureTargetCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-temperature-target-card", name: "HA Temperature Target Card", description: "Temperaturgrafer med dynamiske termostatm\xE5l", preview: true });
-console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION21} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
+console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION22} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
 
 // src/cards/ha-water-meter-card/ha-water-meter-card.js
-var VERSION22 = "0.2.0";
+var VERSION23 = "0.2.0";
 var HAWaterMeterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -25571,7 +26053,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WATER METER CARD %c v${VERSION22} `,
+  `%c HA WATER METER CARD %c v${VERSION23} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -25741,7 +26223,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION23 = "0.8.57";
+var VERSION24 = "0.8.57";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -26370,10 +26852,10 @@ if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-
 });
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Card", description: "Samlet statusheader med vejr, alarmer og lokale vejreffekter", preview: true });
-console.info(`%c HA HOME HEADER CARD %c v${VERSION23} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA HOME HEADER CARD %c v${VERSION24} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION24 = "0.8.63";
+var VERSION25 = "0.8.63";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -27752,13 +28234,13 @@ window.customCards.push({
 window.customCards.push({ type: "ha-home-summary-card", name: "HA Home Summary Card", description: "Samlet husstatus, forbrug, kalender og kameraoverblik", preview: true });
 window.customCards.push({ type: "ha-home-desktop-layout-card", name: "HA Home Desktop Layout", description: "Balancerede responsive kolonner til PC-forsiden", preview: false });
 console.info(
-  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION24} `,
+  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION25} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#102030"
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION25 = "0.2.3";
+var VERSION26 = "0.2.3";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -27895,7 +28377,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA PERSON OVERVIEW CARD %c v${VERSION25} `,
+  `%c HA PERSON OVERVIEW CARD %c v${VERSION26} `,
   "color:white;background:#2687b8;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -27983,7 +28465,7 @@ var HACardListEditor9 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION26 = "0.2.1";
+var VERSION27 = "0.2.1";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28147,13 +28629,13 @@ var HAPetCareCard = class extends HTMLElement {
 if (!customElements.get("ha-pet-care-card")) customElements.define("ha-pet-care-card", HAPetCareCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-pet-care-card", name: "HA Pet Care Card", description: "Samlet k\xE6ledyrs-, vand- og foderoversigt", preview: true });
-console.info(`%c HA PET CARE CARD %c v${VERSION26} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA PET CARE CARD %c v${VERSION27} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-weather-card/ha-weather-card-assets.js
 window.HAWeatherCardAssets = Object.freeze({ "weather": { "clear-night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "clear-night_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "fog": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "fog_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "hail": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "hail_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "lightning-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjYuNzQiIHkxPSIzNy44OCIgeDI9IjM1Ljc2IiB5Mj0iNTMuNTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGxpbmUgeDE9IjI0LjM5IiB5MT0iNDMuMDMiIHgyPSIyMy42MSIgeTI9IjQ3Ljk3IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMzkiIHkxPSI0My4wMyIgeDI9IjMwLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuNHMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC40cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMzkiIHkxPSI0My4wMyIgeDI9IjM3LjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuMnMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC4ycyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8cG9seWdvbiBwb2ludHM9IjMwIDM2IDI2IDQ4IDMwIDQ4IDI4IDU4IDM4IDQ0IDMyIDQ0IDM2IDM2IDMwIDM2IiBzdHJva2U9IiNmNmE4MjMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjZSkiPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMTsgMTsgMTsgMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDE7IDE7IDAuMTsgMTsgMC4xOyAxIiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wb2x5Z29uPgo8L3N2Zz4K", "lightning-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMTMuNTgiIHkxPSIxNS41NyIgeDI9IjI0LjE1IiB5Mj0iMzMuODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0iZ3JhZGllbnRUcmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIxMCAxOS4yMiAyNC4yOTM7IC0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIyLjUzIiB5MT0iNDIuOTUiIHgyPSIyNS40NyIgeTI9IjQ4LjA1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIyOS41MyIgeTE9IjQyLjk1IiB4Mj0iMzIuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImUiIHgxPSIzNi41MyIgeTE9IjQyLjk1IiB4Mj0iMzkuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImYiIHgxPSIyNi43NCIgeTE9IjM3Ljg4IiB4Mj0iMzUuNzYiIHkyPSI1My41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Zz4KCQk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2IpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2UpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNmKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "not-available": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8cGF0aCBkPSJNMjYuMSwyNC4wOGEuODMuODMsMCwwLDEsLjE2LjU2VjM4LjEyYS41OS41OSwwLDAsMS0uNzIuNzFoLTEuMmEuNzUuNzUsMCwwLDEtLjY5LS4zNWwtNS4xNC03LjZhMTEuNjIsMTEuNjIsMCwwLDEtLjg1LTEuNWMtLjI4LS41Ny0uNDktMS4wNS0uNjQtMS40M3MtLjIzLS41OS0uMjMtLjZoLS4xM3MwLC4yMy4xMi42Ni4xNSwxLC4yMywxLjY0YTE4LDE4LDAsMCwxLC4xMSwxLjg4djYuNTlhLjc3Ljc3LDAsMCwxLS4xNi41Ni43OS43OSwwLDAsMS0uNTUuMTVIMTUuM2EuODUuODUsMCwwLDEtLjU3LS4xNS43Ni43NiwwLDAsMS0uMTctLjU2VjI0LjY0YS43OC43OCwwLDAsMSwuMTctLjU2Ljg1Ljg1LDAsMCwxLC41Ny0uMTVoMS4xOWEuODEuODEsMCwwLDEsLjcuMzNsNS4xLDcuNTZhMTMsMTMsMCwwLDEsLjg5LDEuNTZjLjI3LjU1LjQ4LDEsLjYzLDEuNDFzLjIzLjU5LjI0LjZoLjEzczAtLjI1LS4xMi0uNjctLjE1LTEtLjIzLTEuNjNhMTYuMTEsMTYuMTEsMCwwLDEtLjExLTEuOTRWMjQuNjRhLjgzLjgzLDAsMCwxLC4xNS0uNTYuODIuODIsMCwwLDEsLjU2LS4xNWgxLjExQS44Mi44MiwwLDAsMSwyNi4xLDI0LjA4WiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTMwLjQ3LDQwYTEsMSwwLDAsMS0uNTQuMTJIMjguNzZjLS4yNCwwLS40LS4wNS0uNDYtLjE0YS40My40MywwLDAsMSwwLS40NGw1LjU4LTE1YTEuMTYsMS4xNiwwLDAsMSwuMzMtLjQ2Ljk0Ljk0LDAsMCwxLC41My0uMTJIMzZjLjI0LDAsLjM5LjA1LjQ1LjE0YS41LjUsMCwwLDEsMCwuNDRsLTUuNTksMTVBMS4wNiwxLjA2LDAsMCwxLDMwLjQ3LDQwWiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTQ4Ljg5LDM4LjgzSDQ3LjhhMi40LDIuNCwwLDAsMS0uOTEtLjEyLjc4Ljc4LDAsMCwxLS4zOS0uNTFsLTEtMi43SDM5Ljc0bC0xLDIuN2EuNzguNzgsMCwwLDEtLjM5LjUxLDIuNCwyLjQsMCwwLDEtLjkxLjEyaC0xcS0uNzMsMC0uNDgtLjY5bDUuMjUtMTMuNjVhMS4wNywxLjA3LDAsMCwxLC4zMy0uNDcsMSwxLDAsMCwxLC41NS0uMTFoMS4xMWExLjA2LDEuMDYsMCwwLDEsLjU3LjExLjkuOSwwLDAsMSwuMzIuNDVsNS4yNCwxMy42N1E0OS42MywzOC44Myw0OC44OSwzOC44M1ptLTYtMTEuMTNjLS4wOS0uNDMtLjE0LS43Ni0uMTctMWwwLS4zNmgtLjE1YTcuNzMsNy43MywwLDAsMS0uNDYsMi41NGwtMS42Miw0LjQ1SDQ0LjhMNDMuMiwyOC45QTEwLDEwLDAsMCwxLDQyLjg5LDI3LjdaIiBmaWxsPSIjMzc0MTUxIi8+Cjwvc3ZnPgo=", "partlycloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxNi41IiB5MT0iMTkuNjciIHgyPSIyMS41IiB5Mj0iMjguMzMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIxOSIgY3k9IjI0IiByPSI1IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0xOSwxNS42N1YxMi41bTAsMjNWMzIuMzNtNS44OS0xNC4yMiwyLjI0LTIuMjRNMTAuODcsMzIuMTNsMi4yNC0yLjI0bTAtMTEuNzgtMi4yNC0yLjI0TTI3LjEzLDMyLjEzbC0yLjI0LTIuMjRNNy41LDI0aDMuMTdNMzAuNSwyNEgyNy4zMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDE5IDI0OyAzNjAgMTkgMjQiIGR1cj0iNDVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSIvPgo8L3N2Zz4K", "partlycloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxMy41OCIgeTE9IjE1LjU3IiB4Mj0iMjQuMTUiIHkyPSIzMy44NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzOyAtMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KPC9zdmc+Cg==", "pouring": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "pouring_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "smoke-particles": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMzAuMjUiIHkxPSIzOS40IiB4Mj0iMzMuMjUiIHkyPSI0NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNiOGJkYzYiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYTVhYWIyIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy41IiB5MT0iMjkuMSIgeDI9IjI4IiB5Mj0iMzYuOSIgeGxpbms6aHJlZj0iI2EiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImMiIHgxPSIzMy43NSIgeTE9IjE5LjgiIHgyPSIzOS43NSIgeTI9IjMwLjIiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMS43NSIgY3k9IjQyIiByPSIzIiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMjUuNzUiIGN5PSI0MiIgcj0iNC41IiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJjeCIgdmFsdWVzPSIzMS43NTsgMjUuNzUiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2NpcmNsZT4KCTxjaXJjbGUgY3g9IjM2Ljc1IiBjeT0iNDIiIHI9IjYiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAzNi43NSIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgo8L3N2Zz4K", "smoke": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4yNSIgeTE9IjQ4LjQiIHgyPSIzMy4yNSIgeTI9IjUzLjYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYjhiZGM2Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhNWFhYjIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIzLjUiIHkxPSIzOC4xIiB4Mj0iMjgiIHkyPSI0NS45IiB4bGluazpocmVmPSIjYiIvPgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iZCIgeDE9IjMzLjc1IiB5MT0iMjguOCIgeDI9IjM5Ljc1IiB5Mj0iMzkuMiIgeGxpbms6aHJlZj0iI2IiLz4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxjaXJjbGUgY3g9IjMxLjc1IiBjeT0iNTEiIHI9IjMiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cgk8Y2lyY2xlIGN4PSIyNS43NSIgY3k9IjUxIiByPSI0LjUiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAyNS43NSIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMzYuNzUiIGN5PSI1MSIgcj0iNiIgc3Ryb2tlPSIjYWZiNGJjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwIDA7IDAgLTE3OyIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7IDE7IDE7IDE7IDAiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iciIgdmFsdWVzPSIzOyA0LjU7IDYiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iY3giIHZhbHVlcz0iMzEuNzU7IDM2Ljc1IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cjwvc3ZnPgo=", "snowy-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "snowy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "sunny": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunny_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunrise": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgMzggMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "sunset": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgNDcgMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "windy-variant": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy-variant_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K" } });
 
 // src/cards/ha-weather-card/ha-weather-card.js
-var VERSION27 = "0.4.1";
+var VERSION28 = "0.4.1";
 var CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
   cloudy: "Overskyet",
@@ -28621,7 +29103,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WEATHER CARD %c v${VERSION27} `,
+  `%c HA WEATHER CARD %c v${VERSION28} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#161b22"
 );
@@ -28997,11 +29479,11 @@ var HACardListEditor11 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor11);
 
 // src/cards/ha-home-room-overview-card-v3/ha-home-room-overview-card-v3.js
-var ROOM_OVERVIEW_VERSION2 = "3.0.2";
+var ROOM_OVERVIEW_VERSION2 = "3.1.0";
 var OPEN_STATES = /* @__PURE__ */ new Set(["on", "open", "opening"]);
 var PRESENT_STATES = /* @__PURE__ */ new Set(["on", "home", "detected"]);
 var MEDIA_OFF = /* @__PURE__ */ new Set(["off", "standby", "unavailable", "unknown"]);
-var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
+var DEAD2 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
 var TONE_RANK = { critical: 0, danger: 1, warn: 2, active: 3, info: 4 };
 var OPENING_LABEL = { door: "D\xF8r", window: "Vindue", garage_door: "Port", garage: "Port", gate: "L\xE5ge", opening: "\xC5bning" };
 var WEATHER = {
@@ -29051,7 +29533,7 @@ function hsRgb(h, s3) {
   };
   return [f(5), f(3), f(1)].map((v) => Math.round(v));
 }
-var STYLE2 = `
+var STYLE3 = `
 :host{display:block;container:roomcard / inline-size;color:var(--primary-text-color);font-family:var(--paper-font-body1_-_font-family,Inter,system-ui,sans-serif);--ok:var(--dashboard-success,var(--success-color,#00e676));--warn:var(--dashboard-warning,var(--warning-color,#ff8a00));--bad:var(--dashboard-danger,var(--error-color,#ff365e));--line:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.2)));--muted:var(--secondary-text-color,#8898ad);--brand:var(--dashboard-accent,var(--primary-color,#00b8ff));--ease:cubic-bezier(.2,.8,.2,1)}
 *{box-sizing:border-box}button{font:inherit;color:inherit;margin:0}
 .shell{position:relative;overflow:hidden;padding:26px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-radius:30px;background:radial-gradient(110% 80% at 100% 0%,color-mix(in srgb,var(--brand) 11%,transparent),transparent 45%),radial-gradient(70% 60% at 0% 100%,color-mix(in srgb,var(--brand) 5%,transparent),transparent 60%),var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#14171c)));box-shadow:var(--dashboard-shadow-deep,0 20px 50px rgba(0,0,0,.3))}
@@ -29250,6 +29732,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
           { key: "opening", label: "Vindue/d\xF8r", type: "entity" },
           { key: "climate", label: "Termostat", type: "entity" },
           { key: "co2", label: "CO\u2082", type: "entity" },
+          { key: "pm25", label: "PM2,5", type: "entity" },
+          { key: "air_quality", label: "Luftkvalitet (samlet)", type: "entity" },
           { key: "weather", label: "Vejr (udend\xF8rs)", type: "entity" },
           { key: "info", label: "Info-sensor (vises uden presence)", type: "entity" },
           { key: "info_name", label: "Info-tekst" }
@@ -29313,7 +29797,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       if (typeof id === "string" && id.includes(".")) ids.add(id);
     };
     for (const room of this._rooms) {
-      [room.temperature, room.humidity, room.light, room.presence, room.climate, room.co2, room.weather, room.info].forEach(add);
+      [room.temperature, room.humidity, room.light, room.presence, room.climate, room.co2, room.pm25, room.air_quality, room.weather, room.info].forEach(add);
       arr(room.batteries).forEach(add);
       room.openings.forEach((x) => add(x.entity));
       room.status.forEach((x) => {
@@ -29360,7 +29844,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _num(id) {
     const st = typeof id === "string" ? this._state(id) : id;
-    if (!st || DEAD.has(st.state)) return null;
+    if (!st || DEAD2.has(st.state)) return null;
     const value = Number(st.state);
     return Number.isFinite(value) ? value : null;
   }
@@ -29382,7 +29866,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     return Number.isFinite(time) ? (Date.now() - time) / 6e4 : null;
   }
   _minutes(st) {
-    if (!st || DEAD.has(st.state)) return null;
+    if (!st || DEAD2.has(st.state)) return null;
     if (st.attributes?.device_class === "timestamp") {
       const end = Date.parse(st.state);
       return Number.isFinite(end) ? Math.max(0, (end - Date.now()) / 6e4) : null;
@@ -29401,7 +29885,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const domain = id.split(".")[0];
     if (domain === "media_player") return !MEDIA_OFF.has(st.state);
     if (domain === "lock") return st.state !== "locked";
-    if (domain === "climate") return st.state !== "off" && !DEAD.has(st.state);
+    if (domain === "climate") return st.state !== "off" && !DEAD2.has(st.state);
     if (domain === "vacuum") return ["cleaning", "returning"].includes(st.state);
     return ["on", "open", "opening", "playing", "home", "active"].includes(st.state);
   }
@@ -29452,7 +29936,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _statusChip(cfg, index) {
     const st = this._state(cfg.entity);
-    if (!st || DEAD.has(st.state)) return null;
+    if (!st || DEAD2.has(st.state)) return null;
     const domain = cfg.entity.split(".")[0];
     const dc = st.attributes?.device_class;
     const name = cfg.name || st.attributes?.friendly_name || cfg.entity;
@@ -29510,6 +29994,13 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "H\xF8j fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
     const co2 = this._num(room.co2);
     if (co2 != null && co2 >= (room.co2_warning ?? 1e3)) out.push({ key: "co2", tone: co2 >= (room.co2_critical ?? 1400) ? "danger" : "warn", icon: "mdi:molecule-co2", text: "Luft ud", meta: `${this._fmt(co2, 0)} ppm` });
+    const pm25 = this._num(room.pm25);
+    if (pm25 != null && pm25Rank(pm25) >= 3) out.push({ key: "pm25", tone: pm25Rank(pm25) >= 4 ? "danger" : "warn", icon: "mdi:blur", text: "Partikler", meta: `${this._fmt(pm25, 0)} \xB5g/m\xB3` });
+    if (this._hasAir(room) && !out.some((chip) => chip.key === "co2" || chip.key === "pm25")) {
+      const air = airQuality(this._hass, room);
+      if (air.offline) out.push({ key: "air", tone: "info", icon: "mdi:air-filter", text: "Luftm\xE5ler offline" });
+      else out.push({ key: "air", tone: air.rank >= 3 ? "warn" : "info", color: AIR_COLORS[air.tone], icon: room.co2 ? "mdi:molecule-co2" : "mdi:air-filter", text: `${air.label} luft`, meta: air.co2 !== void 0 ? `${this._fmt(air.co2, 0)} ppm` : air.pm25 !== void 0 ? `PM2,5 ${this._fmt(air.pm25, 0)}` : "" });
+    }
     const battery = this._lowBattery(room, ctx.climate);
     if (battery != null) out.push({ key: "bat", tone: "warn", icon: "mdi:battery-alert-variant-outline", text: "Lavt batteri", meta: `${battery}%` });
     room.status.forEach((cfg, index) => {
@@ -29521,7 +30012,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _line(room, ctx) {
     if (room.weather) {
       const w = this._state(room.weather);
-      if (w && !DEAD.has(w.state)) {
+      if (w && !DEAD2.has(w.state)) {
         const label = WEATHER[w.state]?.[0] || w.state;
         const wind = Number(w.attributes?.wind_speed);
         const unit = String(w.attributes?.wind_speed_unit || "km/h").replace("km/h", "km/t");
@@ -29530,7 +30021,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     }
     const presence = this._state(room.presence);
     if (presence) {
-      if (DEAD.has(presence.state)) return { text: "Sensor offline", cls: "off" };
+      if (DEAD2.has(presence.state)) return { text: "Sensor offline", cls: "off" };
       const motion = presence.attributes?.device_class === "motion";
       if (ctx.present) return { text: motion ? "Bev\xE6gelse nu" : "Aktivitet nu", cls: "live" };
       const since = this._since(presence);
@@ -29538,7 +30029,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       return { text: since == null ? motion ? "Stille" : "Tomt" : `${motion ? "Stille" : "Tomt"} i ${this._dur(since)}`, cls: "" };
     }
     const info = this._state(room.info);
-    if (info && !DEAD.has(info.state)) {
+    if (info && !DEAD2.has(info.state)) {
       const unit = info.attributes?.unit_of_measurement;
       const value = ["h", "min", "s", "d"].includes(unit) ? this._dur(this._minutes(info)) : `${info.state}${unit ? ` ${unit}` : ""}`;
       return { text: `${room.info_name || info.attributes?.friendly_name || ""} ${value}`.trim(), cls: "" };
@@ -29557,7 +30048,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const climate = this._state(room.climate);
     const target = Number(climate?.attributes?.temperature);
     const open = this._openParts(room);
-    const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD.has(tempState.state) };
+    const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD2.has(tempState.state) };
     const chips = this._chips(room, ctx);
     const mediaOn = [...room.actions, ...room.status].some((x) => x.entity?.startsWith("media_player.") && this._isOn(x.entity));
     return {
@@ -29584,7 +30075,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
-    this.shadowRoot.innerHTML = `<style>${STYLE2}</style><section class="shell" style="--cols:${cols}">
+    this.shadowRoot.innerHTML = `<style>${STYLE3}</style><section class="shell" style="--cols:${cols}">
       <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
@@ -29807,6 +30298,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     this._patchActions(t, m);
     this._patchSpark(t, room);
   }
+  _hasAir(room) {
+    return [room.co2, room.pm25, room.air_quality].some((id) => typeof id === "string" && id.includes("."));
+  }
   _syncChips(t, chips) {
     const container = t.chips;
     const visible = chips.slice(0, 3);
@@ -29836,6 +30330,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       el.title = chip.tap ? `${chip.text} \u2013 tryk for at nulstille` : [chip.text, chip.meta].filter(Boolean).join(" \xB7 ");
       if (chip.progress != null) el.style.setProperty("--p", `${chip.progress}%`);
       else el.style.removeProperty("--p");
+      if (chip.color) el.style.setProperty("--cc", chip.color);
+      else el.style.removeProperty("--cc");
       const icon3 = el.querySelector("ha-icon");
       if (icon3.getAttribute("icon") !== chip.icon) icon3.setAttribute("icon", chip.icon);
       this._setText(el.querySelector(".ct"), chip.text);
@@ -29847,7 +30343,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _patchActions(t, m) {
     const { room } = t;
     if (t.light) {
-      const dead = !m.light || DEAD.has(m.light.state);
+      const dead = !m.light || DEAD2.has(m.light.state);
       t.light.classList.toggle("on", m.lightOn);
       t.light.classList.toggle("unavail", dead);
       t.light.classList.toggle("pending", this._isPending(room.light));
@@ -29863,7 +30359,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       const cfg = room.actions[index];
       const st = this._state(cfg.entity);
       const domain = cfg.entity?.split(".")[0];
-      const dead = !!cfg.entity && (!st || DEAD.has(st.state));
+      const dead = !!cfg.entity && (!st || DEAD2.has(st.state));
       const on = cfg.entity ? this._isOn(cfg.entity) : false;
       const lock = domain === "lock";
       const armed = this._armed?.key === `${room.index}:${index}`;
@@ -30004,7 +30500,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (!st) return;
     const domain = entity.split(".")[0];
     const call = (service, svcDomain = domain) => this._call(svcDomain, service, { entity_id: entity }, void 0, entity, entity, el);
-    if (DEAD.has(st.state)) return this._moreInfo(entity);
+    if (DEAD2.has(st.state)) return this._moreInfo(entity);
     switch (domain) {
       case "lock":
         return call(st.state === "locked" ? "unlock" : "lock");
@@ -30071,7 +30567,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const cfg = t.room.actions[index];
     const button = t.acts[index];
     const key = `${t.room.index}:${index}`;
-    if (cfg.entity && DEAD.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
+    if (cfg.entity && DEAD2.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
     if (this._needsConfirm(cfg) && this._armed?.key !== key) {
       const label = cfg.entity?.startsWith("lock.") ? "L\xE5s op?" : cfg.confirm_text || "Sluk?";
       this._armed = { key, label };
@@ -30098,7 +30594,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tapLight(t) {
     const st = this._state(t.room.light);
-    if (!st || DEAD.has(st.state)) return this._moreInfo(t.room.light);
+    if (!st || DEAD2.has(st.state)) return this._moreInfo(t.room.light);
     this._call("light", "toggle", { entity_id: t.room.light }, void 0, t.room.light, t.room.light, t.light);
     this._update();
   }
@@ -30584,7 +31080,7 @@ window.customCards.push({
 });
 
 // src/cards/ha-house-mode-card/ha-house-mode-card.js
-var VERSION28 = "0.3.0";
+var VERSION29 = "0.3.0";
 var DEFAULT_ICONS = {
   Normal: "mdi:home",
   Stille: "mdi:volume-mute",
@@ -30759,13 +31255,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HOUSE MODE CARD %c v${VERSION28} `,
+  `%c HA HOUSE MODE CARD %c v${VERSION29} `,
   "color:white;background:#c27a3f;font-weight:700",
   "color:#f5d3ab;background:#161b22"
 );
 
 // src/cards/ha-kid-tracker-card/ha-kid-tracker-card.js
-var VERSION29 = "0.5.0";
+var VERSION30 = "0.5.0";
 var HAKidTrackerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -31083,13 +31579,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KID TRACKER CARD %c v${VERSION29} `,
+  `%c HA KID TRACKER CARD %c v${VERSION30} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/smart-home-overview-card/smart-home-overview-card.js
-var VERSION30 = "1.0.1";
+var VERSION31 = "1.0.1";
 var DEFAULT_ENTITIES = {
   houseMode: "input_select.house_mode",
   guestOverride: "input_boolean.house_mode_guest_override",
@@ -31767,11 +32263,11 @@ var SmartHomeOverviewCardEditor = class extends HTMLElement {
 if (!customElements.get("smart-home-overview-card")) customElements.define("smart-home-overview-card", SmartHomeOverviewCard);
 if (!customElements.get("smart-home-overview-card-editor")) customElements.define("smart-home-overview-card-editor", SmartHomeOverviewCardEditor);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION30}`, preview: true });
-console.info(`SMART HOME OVERVIEW CARD ${VERSION30}`);
+window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION31}`, preview: true });
+console.info(`SMART HOME OVERVIEW CARD ${VERSION31}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION31 = "0.3.1";
+var VERSION32 = "0.3.1";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -32088,13 +32584,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ALARM CENTER CARD %c v${VERSION31} `,
+  `%c HA ALARM CENTER CARD %c v${VERSION32} `,
   "color:white;background:#d9534f;font-weight:700",
   "color:#ff9d9d;background:#161b22"
 );
 
 // src/cards/ha-camera-hub-card/ha-camera-hub-card.js
-var VERSION32 = "0.6.1";
+var VERSION33 = "0.6.1";
 var EVENTS_REFRESH_MS = 30 * 1e3;
 var SYSTEM_TICK_MS = 30 * 1e3;
 var EVENTS_WINDOW_HOURS = 36;
@@ -33284,13 +33780,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CAMERA HUB CARD %c v${VERSION32} `,
+  `%c HA CAMERA HUB CARD %c v${VERSION33} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-door-window-card/ha-door-window-card.js
-var VERSION33 = "0.4.0";
+var VERSION34 = "0.4.0";
 var HISTORY_REFRESH_MS = 5 * 60 * 1e3;
 var TICK_MS = 30 * 1e3;
 var LONG_OPEN_MS = 30 * 60 * 1e3;
@@ -33582,13 +34078,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA DOOR/WINDOW CARD %c v${VERSION33} `,
+  `%c HA DOOR/WINDOW CARD %c v${VERSION34} `,
   "color:#fff;background:#f59e0b;font-weight:700",
   "color:#f59e0b;background:#161b22"
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION34 = "0.8.8";
+var VERSION35 = "0.8.8";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -34389,7 +34885,7 @@ if (!customElements.get("ha-home-camera-card")) customElements.define("ha-home-c
 if (!customElements.get("ha-home-camera-card-editor")) customElements.define("ha-home-camera-card-editor", HaHomeCameraCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Card", description: "Responsive camera overview with automatic and manual camera selection", preview: true });
-console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION34} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
+console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION35} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
 // src/cards/ha-license-plate-card/ha-license-plate-card.js
 var HaLicensePlateCard = class extends HTMLElement {
@@ -35123,7 +35619,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-security-center-card", name: "HA Security Center", description: `Security center ${SECURITY_CENTER_VERSION}` });
 
 // src/cards/ha-control-center-card/ha-control-center-card.js
-var VERSION35 = "0.3.0";
+var VERSION36 = "0.3.0";
 var HAControlCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -35329,13 +35825,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CONTROL CENTER CARD %c v${VERSION35} `,
+  `%c HA CONTROL CENTER CARD %c v${VERSION36} `,
   "color:white;background:#3f7fbf;font-weight:700",
   "color:#9dc8ff;background:#161b22"
 );
 
 // src/cards/ha-ai-usage-card/ha-ai-usage-card.js
-var VERSION36 = "0.4.1";
+var VERSION37 = "0.4.1";
 var HAAIUsageCard = class extends HTMLElement {
   constructor() {
     super();
@@ -35557,10 +36053,10 @@ var HAAIUsageCard = class extends HTMLElement {
 if (!customElements.get("ha-ai-usage-card")) customElements.define("ha-ai-usage-card", HAAIUsageCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", description: "Samlet og animeret overblik over AI-forbrugsgr\xE6nser", preview: true });
-console.info(`%c HA AI USAGE CARD %c v${VERSION36} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AI USAGE CARD %c v${VERSION37} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION37 = "0.6.4";
+var VERSION38 = "0.6.4";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -36410,13 +36906,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SETTINGS CENTER %c v${VERSION37} `,
+  `%c HA SETTINGS CENTER %c v${VERSION38} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-kiosk-server-card/ha-kiosk-server-card.js
-var VERSION38 = "0.2.0";
+var VERSION39 = "0.2.0";
 var HAKioskServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -36758,13 +37254,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KIOSK SERVER CARD %c v${VERSION38} `,
+  `%c HA KIOSK SERVER CARD %c v${VERSION39} `,
   "color:white;background:#5a3ea8;font-weight:700",
   "color:#d3c6f5;background:#161b22"
 );
 
 // src/cards/ha-ops-status-card/ha-ops-status-card.js
-var VERSION39 = "0.3.0";
+var VERSION40 = "0.3.0";
 var BAD_STATES = ["off", "critical", "error", "unavailable"];
 var WARN_STATES = ["warn", "warning"];
 var HAOpsStatusCard = class extends HTMLElement {
@@ -36952,13 +37448,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA OPS STATUS CARD %c v${VERSION39} `,
+  `%c HA OPS STATUS CARD %c v${VERSION40} `,
   "color:white;background:#4f6d8f;font-weight:700",
   "color:#b8d0e8;background:#161b22"
 );
 
 // src/cards/ha-unraid-server-card/ha-unraid-server-card.js
-var VERSION40 = "0.2.0";
+var VERSION41 = "0.2.0";
 var HAUnraidServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -37243,13 +37739,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA UNRAID SERVER CARD %c v${VERSION40} `,
+  `%c HA UNRAID SERVER CARD %c v${VERSION41} `,
   "color:white;background:#f15a24;font-weight:700",
   "color:#ffcbb0;background:#161b22"
 );
 
 // src/cards/ha-tts-center-card/ha-tts-center-card.js
-var VERSION41 = "0.1.0";
+var VERSION42 = "0.1.0";
 var DAYS = [["mon", "Man"], ["tue", "Tir"], ["wed", "Ons"], ["thu", "Tor"], ["fri", "Fre"], ["sat", "L\xF8r"], ["sun", "S\xF8n"]];
 var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
   constructor() {
@@ -37413,10 +37909,10 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
 if (!customElements.get("ha-tts-center-card")) customElements.define("ha-tts-center-card", HATtsCenterCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tts-center-card", name: "HA TTS Center Card", description: "Samlet center til direkte og planlagte TTS-beskeder", preview: true });
-console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION41} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
+console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION42} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
 
 // src/cards/ha-light-automation-card/ha-light-automation-card.js
-var VERSION42 = "0.1.1";
+var VERSION43 = "0.1.1";
 var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
   constructor() {
     super();
@@ -37596,10 +38092,10 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
 if (!customElements.get("ha-light-automation-card")) customElements.define("ha-light-automation-card", HALightAutomationCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Automation Card", description: "Samlet styring af dagvindue og rumbaseret lysautomatik", preview: true });
-console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION42} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
+console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION43} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION43 = "0.1.0";
+var VERSION44 = "0.1.0";
 var DAY_NAMES = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH_NAMES = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
 var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk", MUS: "Musik", KRI: "Kristendom", "N/T": "Natur/teknologi", UDE: "Udeskole", TB: "Temab\xE5nd", "FL-D": "Fagdage", "Klp\xE6d": "Klassens tid", "2-l\xE6rer": "To-l\xE6rer" };
@@ -37808,10 +38304,10 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
 if (!customElements.get("ha-family-calendar-card")) customElements.define("ha-family-calendar-card", HAFamilyCalendarCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Stor familieagenda med kalenderfiltre, detaljer, vejr og skoleskema", preview: true });
-console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION43} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
+console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION44} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
 
 // src/cards/ha-waste-journey-card/ha-waste-journey-card.js
-var VERSION44 = "0.1.0";
+var VERSION45 = "0.1.0";
 var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   constructor() {
     super();
@@ -37898,7 +38394,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
 if (!customElements.get("ha-waste-journey-card")) customElements.define("ha-waste-journey-card", HAWasteJourneyCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-waste-journey-card", name: "HA Waste Journey Card", description: "Animeret affaldskalender med skraldebil p\xE5 vej mod huset", preview: true });
-console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION44} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
+console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION45} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
 
 // src/cards/ha-calefa-flow-card/ha-calefa-flow-card.js
 var CALEFA_FLOW_CARD_VERSION = "0.9.6";
@@ -40163,7 +40659,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION45 = "0.1.11";
+var VERSION46 = "0.1.11";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -40593,10 +41089,10 @@ if (!customElements.get("ha-home-desktop-layout-card-front")) customElements.def
 if (!customElements.get("ha-home-desktop-layout-card-front-editor")) customElements.define("ha-home-desktop-layout-card-front-editor", HaHomeDesktopLayoutCardEditor2);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-desktop-layout-card-front", name: "HA Home Front Layout", description: "Forside med valg mellem kort og samlet flade", preview: false });
-console.info(`HA HOME FRONT LAYOUT v${VERSION45}`);
+console.info(`HA HOME FRONT LAYOUT v${VERSION46}`);
 
 // src/cards/ha-navbar-card/ha-navbar-card.js
-var VERSION46 = "0.10.3";
+var VERSION47 = "0.10.3";
 var PULSE_FARVER = ["--error-color", "--warning-color"];
 var NB_STOERRELSER = {
   max_width: "--nb-maxbredde",
@@ -41851,14 +42347,14 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NAVBAR CARD %c v${VERSION46} `,
+  `%c HA NAVBAR CARD %c v${VERSION47} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#222"
 );
 
 // src/cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js
-var VERSION47 = "0.1.5";
-var TAG2 = "ha-roborock-room-map-card";
+var VERSION48 = "0.1.5";
+var TAG3 = "ha-roborock-room-map-card";
 var ROOM_PALETTE = {
   1: [240, 178, 122],
   2: [133, 193, 233],
@@ -42041,8 +42537,8 @@ function analyseMap(img, rooms, scale) {
   const y0 = Math.max(0, Math.floor((minY - margin) / scale) * scale);
   const x1 = Math.min(FW, Math.ceil((maxX + 1 + margin) / scale) * scale);
   const y1 = Math.min(FH, Math.ceil((maxY + 1 + margin) / scale) * scale);
-  const W = x1 - x0, H = y1 - y0;
-  const CW = Math.ceil(W / scale), CH = Math.ceil(H / scale);
+  const W2 = x1 - x0, H3 = y1 - y0;
+  const CW = Math.ceil(W2 / scale), CH = Math.ceil(H3 / scale);
   const roomByColor = /* @__PURE__ */ new Map();
   rooms.forEach((room, i) => {
     if (!room.mappable) return;
@@ -42078,18 +42574,18 @@ function analyseMap(img, rooms, scale) {
     }
     return [K_KEEP, 0, 0];
   };
-  const kind = new Uint8Array(W * H);
-  const orig = new Uint32Array(W * H);
+  const kind = new Uint8Array(W2 * H3);
+  const orig = new Uint32Array(W2 * H3);
   const label = new Uint8Array(CW * CH);
   const fillable = new Uint8Array(CW * CH);
   let robotX = 0, robotY = 0, robotN = 0, dockX = 0, dockY = 0, dockN = 0;
   let lastPx = -1, last = null;
-  for (let y = 0; y < H; y++) {
+  for (let y = 0; y < H3; y++) {
     const srcRow = (y + y0) * FW + x0;
     const cellRow = (y / scale | 0) * CW;
-    for (let x = 0; x < W; x++) {
+    for (let x = 0; x < W2; x++) {
       const p = px[srcRow + x];
-      const i = y * W + x;
+      const i = y * W2 + x;
       orig[i] = p;
       let res;
       if (p === lastPx) res = last;
@@ -42136,9 +42632,9 @@ function analyseMap(img, rooms, scale) {
     if (!changed) break;
   }
   const visited = new Uint8Array(CW * CH);
-  for (let y = 0; y < H; y += 2) {
-    const row = y * W, cellRow = (y / scale | 0) * CW;
-    for (let x = 0; x < W; x += 2) if (kind[row + x] === K_PATH && orig[row + x] === PATH_PX) visited[cellRow + (x / scale | 0)] = 1;
+  for (let y = 0; y < H3; y += 2) {
+    const row = y * W2, cellRow = (y / scale | 0) * CW;
+    for (let x = 0; x < W2; x += 2) if (kind[row + x] === K_PATH && orig[row + x] === PATH_PX) visited[cellRow + (x / scale | 0)] = 1;
   }
   const dist = new Float32Array(CW * CH);
   const D = 1, D22 = 1.414;
@@ -42208,8 +42704,8 @@ function analyseMap(img, rooms, scale) {
     s3.by = s3.ny;
   }
   return {
-    W,
-    H,
+    W: W2,
+    H: H3,
     CW,
     CH,
     scale,
@@ -42217,9 +42713,9 @@ function analyseMap(img, rooms, scale) {
     orig,
     label,
     edge,
-    rooms: stats.map((s3) => s3.cells ? { x: (s3.bx + 0.5) * scale / W, y: (s3.by + 0.5) * scale / H, cells: s3.cells, depth: s3.best } : null),
-    robot: robotN > 12 ? { x: robotX / robotN / W, y: robotY / robotN / H } : null,
-    dock: dockN > 12 ? { x: dockX / dockN / W, y: dockY / dockN / H } : null
+    rooms: stats.map((s3) => s3.cells ? { x: (s3.bx + 0.5) * scale / W2, y: (s3.by + 0.5) * scale / H3, cells: s3.cells, depth: s3.best } : null),
+    robot: robotN > 12 ? { x: robotX / robotN / W2, y: robotY / robotN / H3 } : null,
+    dock: dockN > 12 ? { x: dockX / dockN / W2, y: dockY / dockN / H3 } : null
   };
 }
 var HARoborockRoomMapCard = class extends HTMLElement {
@@ -42501,10 +42997,10 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       table[k << 6 | e << 5 | r3] = col;
     }
     const out = new Uint32Array(this._out.data.buffer);
-    const { W, H, CW, scale, kind, orig, label, edge } = map;
-    for (let y = 0; y < H; y++) {
-      const cellRow = (y / scale | 0) * CW, row = y * W;
-      for (let x = 0; x < W; x++) {
+    const { W: W2, H: H3, CW, scale, kind, orig, label, edge } = map;
+    for (let y = 0; y < H3; y++) {
+      const cellRow = (y / scale | 0) * CW, row = y * W2;
+      for (let x = 0; x < W2; x++) {
         const i = row + x, k = kind[i];
         if (k === K_OUT) {
           out[i] = 0;
@@ -42522,7 +43018,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   }
   /* ---------- selection ---------- */
   _storeKey() {
-    return `${TAG2}:${this._config.entity}`;
+    return `${TAG3}:${this._config.entity}`;
   }
   _restore() {
     try {
@@ -43203,12 +43699,12 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     `;
   }
 };
-if (!customElements.get(TAG2)) customElements.define(TAG2, HARoborockRoomMapCard);
+if (!customElements.get(TAG3)) customElements.define(TAG3, HARoborockRoomMapCard);
 window.customCards = window.customCards || [];
-if (!window.customCards.some((c) => c.type === TAG2)) {
-  window.customCards.push({ type: TAG2, name: "HA Roborock Room Map Card", description: "V\xE6lg rum direkte p\xE5 Roborock-kortet og reng\xF8r dem i valgt r\xE6kkef\xF8lge", preview: false });
+if (!window.customCards.some((c) => c.type === TAG3)) {
+  window.customCards.push({ type: TAG3, name: "HA Roborock Room Map Card", description: "V\xE6lg rum direkte p\xE5 Roborock-kortet og reng\xF8r dem i valgt r\xE6kkef\xF8lge", preview: false });
 }
-console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION47} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
+console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION48} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
 
 // src/cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js
 var ACCOUNTS = [
@@ -43394,7 +43890,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashboard", description: "AI-forbrug og kvoter" });
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
-var VERSION48 = "1.1.0";
+var VERSION49 = "1.1.0";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -43636,7 +44132,7 @@ function statTime(value) {
   return typeof value === "number" ? value : Date.parse(value);
 }
 var icon = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${name}"></ha-icon>`;
-var STYLE3 = `
+var STYLE4 = `
 :host{
   /* Alle tokens peger p\xE5 det aktive temas variabler; hex-v\xE6rdierne er kun fallback. */
   --energy-card:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));
@@ -44205,7 +44701,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const u = this._uid;
     const has = (k) => Boolean(this._id(k));
     this.shadowRoot.innerHTML = `
-<style>${STYLE3}</style>
+<style>${STYLE4}</style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--energy-blue)"/><stop offset="1" style="stop-color:var(--energy-cyan)"/></linearGradient>
@@ -44634,10 +45130,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const scale = niceScale(a.min, a.max);
     const xPct = (t) => (t - start) / (end - start) * 100;
     const yPct = (v) => (1 - (v - scale.lo) / (scale.hi - scale.lo)) * 100;
-    const W = 1e3;
-    const H = 300;
-    const X = (t) => xPct(t) / 100 * W;
-    const Y = (v) => yPct(v) / 100 * H;
+    const W2 = 1e3;
+    const H3 = 300;
+    const X = (t) => xPct(t) / 100 * W2;
+    const Y = (v) => yPct(v) / 100 * H3;
     const zeroY = Y(0);
     const mid = (e) => (e.start + e.end) / 2;
     const segments = splitOnGaps(m.today);
@@ -44649,14 +45145,14 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       line += d;
       area += `${d}L${pts[pts.length - 1][0].toFixed(2)},${zeroY.toFixed(2)}L${pts[0][0].toFixed(2)},${zeroY.toFixed(2)}Z`;
     }
-    const grid = scale.ticks.map((v) => `<line class="${v === 0 ? "zero-line" : "grid-line"}" x1="0" x2="${W}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}"/>`).join("");
+    const grid = scale.ticks.map((v) => `<line class="${v === 0 ? "zero-line" : "grid-line"}" x1="0" x2="${W2}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}"/>`).join("");
     const avgY = Number.isFinite(a.avg) ? Y(a.avg).toFixed(2) : void 0;
     const cur = m.current;
     const curPrice = Number.isFinite(nowPrice) ? nowPrice : cur?.price;
     const nowX = cur ? X(mid(cur)).toFixed(2) : void 0;
     const vlines = [
-      cur && Number.isFinite(curPrice) ? `<line class="v-line now" x1="${nowX}" x2="${nowX}" y1="${Y(curPrice).toFixed(2)}" y2="${H}"/>` : "",
-      a.maxEntry !== cur ? `<line class="v-line max" x1="${X(mid(a.maxEntry)).toFixed(2)}" x2="${X(mid(a.maxEntry)).toFixed(2)}" y1="${Y(a.max).toFixed(2)}" y2="${H}"/>` : ""
+      cur && Number.isFinite(curPrice) ? `<line class="v-line now" x1="${nowX}" x2="${nowX}" y1="${Y(curPrice).toFixed(2)}" y2="${H3}"/>` : "",
+      a.maxEntry !== cur ? `<line class="v-line max" x1="${X(mid(a.maxEntry)).toFixed(2)}" x2="${X(mid(a.maxEntry)).toFixed(2)}" y1="${Y(a.max).toFixed(2)}" y2="${H3}"/>` : ""
     ].join("");
     const oldPlot = host.querySelector(".plot");
     const plotWidth = oldPlot?.clientWidth || this._refs.todayChart.clientWidth || 700;
@@ -44697,10 +45193,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   <div class="y-unit">kr/kWh</div>
   <div class="y-axis">${yLabels}</div>
   <div class="plot ${draw ? "draw" : ""}">
-    <svg class="lines" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="lines" viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-hidden="true">
       ${grid}
       <path class="price-area" d="${area}"/>
-      ${avgY !== void 0 ? `<line class="avg-line" x1="0" x2="${W}" y1="${avgY}" y2="${avgY}"/>` : ""}
+      ${avgY !== void 0 ? `<line class="avg-line" x1="0" x2="${W2}" y1="${avgY}" y2="${avgY}"/>` : ""}
       ${vlines}
       <path class="price-line" d="${line}"/>
     </svg>
@@ -45141,7 +45637,7 @@ if (!window.customCards.some((c) => c.type === CARD_TAG)) {
     preview: false
   });
 }
-console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION48} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
+console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION49} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
 
 // src/cards/ha-energy-center-card/defaults.js
 var DEFAULT_ENTITIES2 = {
@@ -45201,7 +45697,7 @@ var DEFAULT_CONFIG2 = {
 };
 
 // src/cards/ha-energy-center-card/styles.js
-var STYLE4 = `
+var STYLE5 = `
 :host{
   /* Alt hentes fra de aktive thtema-*-temaer; hex-v\xE6rdierne er kun fallback uden tema. */
   --ec-text:var(--primary-text-color,#e8eef8);
@@ -46900,7 +47396,7 @@ var EvSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION49 = "0.2.0";
+var VERSION50 = "0.2.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
@@ -47105,7 +47601,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     this._sections.clear();
     this._today.clear();
     this.shadowRoot.innerHTML = `
-<style>${STYLE4}</style>
+<style>${STYLE5}</style>
 <div class="shell">
   <header class="top">
     <div class="brand">
@@ -47372,7 +47868,7 @@ if (!window.customCards.some((c) => c.type === CARD_TAG2)) {
     preview: false
   });
 }
-console.info(`%c ENERGY CENTER %c v${VERSION49} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+console.info(`%c ENERGY CENTER %c v${VERSION50} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 /*! Bundled license information:
 
 react/cjs/react.production.js:

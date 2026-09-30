@@ -30,6 +30,7 @@ import "./cards/ha-power-flow-card/ha-power-flow-card.js";
 import "./cards/ha-radiator-overview-card/ha-radiator-overview-card.js";
 import "./cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import "./cards/ha-temperature-target-card/ha-temperature-target-card.js";
+import "./cards/ha-air-quality-card/ha-air-quality-card.js";
 import "./cards/ha-water-meter-card/ha-water-meter-card.js";
 import "./cards/ha-home-header-card/ha-home-header-card.js";
 import "./cards/ha-home-status-grid-card/ha-home-status-grid-card.js";

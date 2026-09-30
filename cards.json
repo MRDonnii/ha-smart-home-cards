@@ -224,6 +224,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-air-quality-card",
+    "name": "HA Air Quality Card",
+    "filename": "ha-air-quality-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-water-meter-card",
     "name": "Water Meter Card",
     "filename": "ha-water-meter-card.js",

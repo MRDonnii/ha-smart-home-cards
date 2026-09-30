@@ -4,7 +4,7 @@
  *
  * Samme config og samme rum-popups som ha-radiator-overview-card v0.6.1 - kun hovedsiden er
  * bygget om: termostatzoner med udendørs først, termostat-skive og 24-timers kurve,
- * kompakte målepunkter og et afsluttende overblik.
+ * målepunkter som 2×2 minikort i sidste felt af zonegitteret og et afsluttende overblik.
  *
  * Vedligeholdelse
  * - DOM'en bygges én gang pr. config (_build) og opdateres derefter kun målrettet: et rum får kun
@@ -13,16 +13,21 @@
  *   vises, og igen lige efter hver hel time, mens det er synligt. Det aktuelle punkt tegnes live.
  * - AC-animationen er den delte ac-unit-visual (samme som ha-ac-climate-card og v1).
  * - Popups (Temperatur/AC/Optimering) er kopieret uændret fra v0.6.1.
+ * - Luftkvalitet (valgfri co2/pm25/air_quality pr. rum) vises på rumkortet og som egen popup-fane
+ *   med ha-air-quality-card. Niveauerne deles med de andre kort i ../shared/air-quality.js.
  */
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
+import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
+import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.0.6";
+const VERSION = "2.1.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
 const SPARK_W = 240;
 const SPARK_H = 44;
+const hasAir = (room) => [room?.co2, room?.pm25, room?.air_quality].some((id) => typeof id === "string" && id.includes("."));
 const RADIATOR_MARKUP = '<div class="radiator" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>';
 
 const polar = (angle, radius = DIAL.r) => {
@@ -173,7 +178,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .zone.is-heating .radiator i:nth-child(2){animation-delay:.12s}.zone.is-heating .radiator i:nth-child(3){animation-delay:.24s}.zone.is-heating .radiator i:nth-child(4){animation-delay:.36s}.zone.is-heating .radiator i:nth-child(5){animation-delay:.48s}
 .ac-mini{position:relative;width:67px;height:50px;overflow:hidden}
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:10px;min-width:0}.tiles.wide{grid-column:span 2;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tiles .tile{display:flex;flex-direction:column;min-width:0;min-height:0;padding:11px 11px 9px}.tiles .t-top{gap:6px}.tiles .t-top .t-ic{width:22px;height:22px;border-radius:7px}.tiles .t-top ha-icon{--mdc-icon-size:13px}.tiles .t-top strong{font-size:12.5px}.tiles .t-row{display:block;margin-top:7px}.tiles .t-temp{font-size:24px}.tiles .t-meta{margin-top:3px;overflow:hidden;font-size:10.5px;text-align:left;text-overflow:ellipsis}.tiles .t-air{margin-top:4px;font-size:10.5px}
 .tile{display:block;padding:13px 14px 11px;border:1px solid color-mix(in srgb,var(--room-color) 20%,var(--rc-edge));border-radius:18px;background:linear-gradient(160deg,var(--rc-glass2),rgba(255,255,255,.01) 60%,rgba(0,0,0,.04))}
 .t-top{display:flex;align-items:center;gap:9px;min-width:0}
 .t-top .t-ic{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:color-mix(in srgb,var(--room-color) 14%,transparent);color:var(--room-color)}
@@ -184,7 +190,9 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .t-temp{display:flex;align-items:flex-start;font-size:27px;font-weight:750;line-height:1;letter-spacing:-.04em}
 .t-temp small{margin:3px 0 0 2px;color:var(--rc-muted);font-size:12px;font-weight:700;letter-spacing:0}
 .t-meta{overflow:hidden;color:var(--rc-muted);font-size:11px;line-height:1.45;text-align:right;white-space:nowrap}
-.tile .spark-wrap{--spark-h:30px;margin-top:9px}
+.t-air{display:flex;align-items:center;gap:6px;margin-top:7px;overflow:hidden;font-size:11px;line-height:1.3;white-space:nowrap}.t-air i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--aq,var(--rc-muted));box-shadow:0 0 8px var(--aq,transparent)}.t-air b{color:var(--aq,var(--rc-muted));font-weight:750}.t-air span{overflow:hidden;color:var(--rc-muted);text-overflow:ellipsis}
+.metric.air{grid-column:1/-1;border-color:color-mix(in srgb,var(--aq,var(--rc-edge)) 38%,var(--rc-edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--aq,var(--rc-edge))}.metric.air strong{color:var(--aq)}.metric.air.na strong{color:var(--rc-muted)}
+.tile .spark-wrap{--spark-h:30px;margin-top:auto;padding-top:7px}
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
@@ -194,8 +202,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @container (max-width:760px){.shell{padding:16px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:40px}.legend{display:none}}
-@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
-@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones,.tiles{grid-template-columns:1fr}}
+@container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tiles,.tiles.wide{grid-column:1/-1}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
+@container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones{grid-template-columns:1fr}.tiles,.tiles.wide{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
 
@@ -236,7 +244,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     return { title: "Radiatorer & rumklima", rooms: [] };
   }
 
-  static getConfigElement(){const e=document.createElement("ha-card-list-editor");e.definition={roots:[{key:"title",label:"Titel"},{key:"animation",label:"Animation",type:"boolean"}],collections:[{key:"rooms",label:"Radiatorer og rum",itemLabel:"rum",defaults:{name:"Nyt rum",icon:"mdi:radiator"},fields:[{key:"name",label:"Navn"},{key:"icon",label:"Ikon"},{key:"temperature",label:"Temperatur",type:"entity"},{key:"humidity",label:"Luftfugtighed",type:"entity"},{key:"comfort",label:"Komfortstatus",type:"entity"},{key:"climate",label:"Termostat",type:"entity"},{key:"window",label:"Vindue/dør",type:"entity"}]}]};return e;}
+  static getConfigElement(){const e=document.createElement("ha-card-list-editor");e.definition={roots:[{key:"title",label:"Titel"},{key:"animation",label:"Animation",type:"boolean"}],collections:[{key:"rooms",label:"Radiatorer og rum",itemLabel:"rum",defaults:{name:"Nyt rum",icon:"mdi:radiator"},fields:[{key:"name",label:"Navn"},{key:"icon",label:"Ikon"},{key:"temperature",label:"Temperatur",type:"entity"},{key:"humidity",label:"Luftfugtighed",type:"entity"},{key:"comfort",label:"Komfortstatus",type:"entity"},{key:"climate",label:"Termostat",type:"entity"},{key:"window",label:"Vindue/dør",type:"entity"},{key:"co2",label:"CO₂",type:"entity"},{key:"pm25",label:"PM2,5",type:"entity"},{key:"air_quality",label:"Luftkvalitet (samlet)",type:"entity"}]}]};return e;}
 
   setConfig(config) {
     if (!config || !Array.isArray(config.rooms)) throw new Error("Radiatoroverblik kræver en rooms-liste");
@@ -378,7 +386,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     else if (state.heating) accent = "heating";
     else if (state.windowOpen) accent = "open";
     else if (state.off || (kind === "zone" && !state.climate)) accent = "neutral";
-    return { ...state, kind, feels, acActive, batteryMin, batteryLow: batteryMin !== undefined && batteryMin <= 20, status, accent };
+    const air = airQuality(this._hass, room);
+    return { ...state, kind, feels, acActive, batteryMin, batteryLow: batteryMin !== undefined && batteryMin <= 20, status, accent, air };
   }
 
   _format(value, digits = 1) {
@@ -500,7 +509,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId));
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate, room.co2, room.pm25, room.air_quality].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
     const spark = (small = false) => `<div class="spark-wrap"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
     const zoneMarkup = ({ room, index }) => `
@@ -525,6 +534,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
           <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH}</strong></div>
           <div class="metric na" data-m="feels"><span title="Føles som">Føles</span><strong>${DASH}</strong></div>
           <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH}</strong></div>
+          ${hasAir(room) ? `<div class="metric air na" data-m="air"><span>Luft</span><strong>${DASH}</strong></div>` : ""}
         </div>
         <div class="z-foot">${spark()}<div class="visual" data-f="visual"></div></div>
       </button>`;
@@ -550,6 +560,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       <button class="tile a-neutral" type="button" data-room="${index}">
         <div class="t-top"><span class="t-ic"><ha-icon icon="${this._escape(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${this._escape(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH}</span><small>°C</small></div><div class="t-meta" data-f="meta">${DASH}</div></div>
+        ${hasAir(room) ? `<div class="t-air" data-f="air"><i></i><b>${DASH}</b><span></span></div>` : ""}
         ${spark(true)}
       </button>`;
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${this._escape(room.name)}" hidden></i>`).join("");
@@ -568,8 +579,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem – tallene for ventiler og varme kan være ufuldstændige.</span></div>
-          ${(outdoor || zones.length) ? `<section class="group"><div class="group-head"><h3>Termostatzoner</h3><span class="count">${zones.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}</div></section>` : ""}
-          ${sensors.length ? `<section class="group"><div class="group-head"><h3>Målepunkter</h3><span class="count">${sensors.length}</span><i class="rule"></i></div><div class="tiles">${sensors.map(tileMarkup).join("")}</div></section>` : ""}
+          ${(outdoor || zones.length || sensors.length) ? `<section class="group"><div class="group-head"><h3>${outdoor || zones.length ? "Termostatzoner" : "Målepunkter"}</h3><span class="count">${outdoor || zones.length ? zones.length : sensors.length}</span><i class="rule"></i><div class="legend">${legend}</div></div><div class="zones">${outdoor ? outdoorMarkup(outdoor) : ""}${zones.map(zoneMarkup).join("")}${sensors.length ? `<div class="tiles${sensors.length > 4 ? " wide" : ""}" role="group" aria-label="Målepunkter">${sensors.map(tileMarkup).join("")}</div>` : ""}</div></section>` : ""}
           <section class="hero" aria-label="Supplerende overblik">
             <div class="panel indoor">
               <span class="label">Indendørs gennemsnit</span>
@@ -599,12 +609,12 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       if (!host) return undefined;
       const kind = room.outdoor ? "outdoor" : room.climate ? "zone" : "sensor";
       const f = (name) => host.querySelector(`[data-f="${name}"]`);
-      const refs = { kind, host, view: "", status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), day: f("day"), visual: f("visual"), visualKind: "", spark: sparkRefs(host) };
+      const refs = { kind, host, view: "", air: f("air"), status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), day: f("day"), visual: f("visual"), visualKind: "", spark: sparkRefs(host) };
       if (kind === "zone" || kind === "outdoor") {
         refs.value = host.querySelector(".dial .value");
         refs.halo = host.querySelector(".dial .halo");
         refs.tick = host.querySelector(".dial .tick");
-        refs.metrics = Object.fromEntries(["humidity", "valve", "feels", "battery"].map((name) => [name, host.querySelector(`[data-m="${name}"]`)]));
+        refs.metrics = Object.fromEntries(["humidity", "valve", "feels", "battery", "air"].map((name) => [name, host.querySelector(`[data-m="${name}"]`)]));
         refs.badges = { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]') };
       }
       return refs;
@@ -646,7 +656,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const refs = this._refs[index];
     if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.current, model.target, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.acActive ? this._acMiniLabel(model) : "", model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
+    const view = [model.accent, model.status, model.current, model.target, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.acActive ? this._acMiniLabel(model) : "", model.heating, model.air?.tone, model.air?.label, model.air?.text, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
     if (refs.view === view) return;
     refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model);
@@ -665,6 +675,21 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     this._setText(node.querySelector("strong"), text);
     node.classList.toggle("na", missing);
     node.classList.toggle("low", low);
+  }
+
+  // Luftkvalitet på rumkortet: niveau i farve og det målte tal ved siden af.
+  _renderAir(node, air) {
+    if (!node || !air?.configured) return;
+    const color = air.offline ? "var(--rc-muted)" : AIR_COLORS[air.tone];
+    node.style.setProperty("--aq", color);
+    node.classList.toggle("na", !!air.offline);
+    const detail = air.offline ? "" : air.co2 !== undefined ? `${this._format(air.co2, 0)} ppm` : air.pm25 !== undefined ? `PM2,5 ${this._format(air.pm25, 0)}` : "";
+    if (node.classList.contains("metric")) this._setText(node.querySelector("strong"), air.offline ? "Offline" : `${air.label}${detail ? ` · ${detail}` : ""}`);
+    else {
+      this._setText(node.querySelector("b"), air.offline ? "Luftmåler offline" : `${air.label} luft`);
+      this._setText(node.querySelector("span"), detail);
+    }
+    node.title = air.offline ? "Luftkvalitetsmåleren svarer ikke" : `Luftkvalitet: ${air.label}${detail ? ` (${detail})` : ""}`;
   }
 
   _renderZone(room, refs, model) {
@@ -688,6 +713,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     this._metric(refs.metrics.valve, model.valve === undefined ? DASH : `${this._format(model.valve, 0)} %`, model.valve === undefined);
     this._metric(refs.metrics.feels, model.feels === undefined ? DASH : `${this._format(model.feels)}°`, model.feels === undefined);
     this._metric(refs.metrics.battery, model.batteryMin === undefined ? DASH : `${this._format(model.batteryMin, 0)} %`, model.batteryMin === undefined, model.batteryLow);
+    this._renderAir(refs.metrics.air, model.air);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
     refs.badges.ac?.classList.toggle("on", model.acActive);
@@ -709,6 +735,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     if (model.humidity !== undefined) parts.push(`Fugt ${this._format(model.humidity, 0)} %`);
     if (model.feels !== undefined) parts.push(`Føles ${this._format(model.feels)}°`);
     this._setText(refs.meta, parts.join(" · ") || model.status);
+    this._renderAir(refs.air, model.air);
     refs.host.querySelector(".t-top b")?.setAttribute("title", model.status);
     this._renderSpark(refs.spark, this._sparkPoints(room, model), undefined);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. Åbn detaljer`);
@@ -977,6 +1004,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const tabs = [{ id: "temperature", label: "Temperatur" }];
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
+    if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
       // When AC is running it also switches the radiator off, so lead with the
@@ -1030,6 +1058,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const definitions = {
       temperature: { type:"custom:ha-temperature-target-card", title:`Temperatur · ${room.name}`, hours:this._config.history_hours || 24, animation:this._config.animation, rooms:[{ name:room.name, icon:room.icon, temperature:room.temperature, climate:room.climate }] },
       ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
+      air: hasAir(room) ? { type:"custom:ha-air-quality-card", name:room.name, co2:room.co2, pm25:room.pm25, air_quality:room.air_quality, co2_warning:room.co2_warning, co2_critical:room.co2_critical, hours:this._config.history_hours || 24, animation:this._config.animation } : null,
       optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
     };
     try {
