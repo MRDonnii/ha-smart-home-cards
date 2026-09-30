@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.56 */
+/* MRDonnii Smart Home Cards v0.4.57 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -36569,7 +36569,7 @@ window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", de
 console.info(`%c HA AI USAGE CARD %c v${VERSION37} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION38 = "0.6.7";
+var VERSION38 = "0.6.8";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -37283,7 +37283,8 @@ var HASettingsCenterCard = class extends HTMLElement {
       .tab ha-icon{--mdc-icon-size:16px}
       .tab.active{color:var(--dashboard-icon-active, #fff);background:var(--settings-selected);border-color:var(--dashboard-tab-selected-border, var(--accent));box-shadow:0 0 14px color-mix(in srgb,var(--accent) 12%,transparent)}
       .page[hidden]{display:none}
-      .page-panel{border:1px solid var(--edge);border-radius:16px;padding:14px;background:var(--settings-info)}
+      /* Sections are headings on the card itself, not a box around the room cards. */
+      .page-panel{border:0;border-radius:0;padding:0;background:transparent;box-shadow:none}
       .section{padding-top:14px;margin-top:14px;border-top:1px solid var(--edge)}
       .section:first-child{padding-top:0;margin-top:0;border-top:0}
       .subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;align-items:start}
