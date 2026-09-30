@@ -1056,3 +1056,80 @@ button { font: inherit; color: inherit; }
 .thermostat-confirm-adjust button { font-size: 20px; }
 .thermostat-confirm .thermostat-ok { border-color: var(--warning-color, #ffad55); background: color-mix(in srgb, var(--warning-color, #ffad55) 24%, transparent); }
 .thermostat-confirm button:disabled { opacity: .45; cursor: wait; }
+
+/* Tiles use the same design as the front page status buttons
+   (custom:ha-home-status-card): accent edge, card surface, shadow, big value
+   on top, detail and label below, and a large faint drifting icon. */
+.dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) {
+  --tile-accent: var(--state-info-icon, var(--info-color, #38bdf8));
+  position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box; min-width: 0; min-height: 85px;
+  display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 0; padding: 10px 12px;
+  border: 0; border-left: 3px solid color-mix(in srgb, var(--tile-accent) 78%, transparent); border-radius: 15px;
+  background: var(--surface, var(--ha-card-background, var(--card-background-color, #172536)));
+  box-shadow: var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));
+  color: var(--gray800, var(--primary-text-color, #f8fafc)); font: inherit; text-align: left;
+}
+.dashboard-overview .unit-readback > div,.dashboard-overview .status-action-card > div:nth-child(2) { position: relative; z-index: 2; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+.dashboard-overview article.status-action-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; justify-content: stretch; gap: 8px; }
+.dashboard-overview .status-action-card > :is(button,.fireplace-actions) { position: relative; z-index: 2; }
+.dashboard-overview article.status-action-card:has(.fireplace-actions) { grid-template-columns: minmax(0,1fr) auto; }
+.dashboard-overview .status-action-card .fireplace-actions { grid-column: auto; }
+.dashboard-overview article.status-action-card.bonfire-card { grid-template-columns: minmax(0,1fr); }
+.dashboard-overview .status-action-card.bonfire-card .fireplace-actions { justify-content: start; }
+
+/* Value */
+.dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong,.hch-mobile-subreadings > button > strong,.hch-mobile-water > strong) {
+  order: 1; position: relative; z-index: 2; margin: 0; color: var(--gray800, var(--primary-text-color, #f8fafc));
+  font-size: 18px; font-weight: 750; line-height: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dashboard-overview .climate-metric > strong small { color: var(--gray600, var(--secondary-text-color, #a7b2c2)); font-size: 11px; font-weight: 700; }
+.dashboard-overview .hch-mobile-subreadings > button > strong { order: -1; }
+.dashboard-overview .hch-mobile-water > strong button { font: inherit; color: inherit; }
+/* Meter */
+.dashboard-overview .climate-metric > i { order: 2; position: relative; z-index: 2; height: 6px; margin: 5px 0 3px; border-radius: 99px; background: var(--tile-accent); box-shadow: 0 0 7px color-mix(in srgb, var(--tile-accent) 28%, transparent); }
+.dashboard-overview .climate-metric::after { content: none; }
+/* Detail */
+.dashboard-overview :is(.unit-readback em,.climate-metric > em,.status-action-card > div > small) {
+  order: 3; position: relative; z-index: 2; color: var(--gray600, var(--secondary-text-color, #a7b2c2));
+  font-size: 11px; font-style: normal; line-height: 14px; white-space: normal; overflow: visible; padding-right: 35px;
+}
+/* Label */
+.dashboard-overview :is(.unit-readback small,.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat),.status-action-card > div > span,.overview-status-pills > div > small,.hch-mobile-subreadings > button,.hch-mobile-water > span) {
+  order: 4; position: relative; z-index: 2; color: var(--gray700, var(--secondary-text-color, #cbd5e1));
+  font-size: 11px; font-weight: 700; line-height: 14px; white-space: normal; padding-right: 35px;
+}
+.dashboard-overview .hch-mobile-subreadings > button { padding-right: 12px; }
+
+/* The small icons become the large faint background icon. */
+.dashboard-overview :is(.readback-icon,.climate-metric > svg,.climate-metric > .metric-drop,.climate-metric > .metric-filter,.climate-metric > .metric-heat,.status-action-icon,.overview-status-pills > div > svg) {
+  position: absolute; right: -10px; bottom: -10px; z-index: 1; width: 58px; height: 58px; margin: 0; padding: 0;
+  display: grid; place-items: center; border: 0; border-radius: 0; background: none; box-shadow: none;
+  color: var(--tile-accent); font-size: 50px; line-height: 1; opacity: .12; pointer-events: none;
+  animation: hch-tile-drift 5s ease-in-out infinite;
+}
+.dashboard-overview .climate-metric.neutral > .metric-heat { transform: none; color: var(--tile-accent); }
+.dashboard-overview :is(.climate-metric > svg,.status-action-icon svg,.overview-status-pills > div > svg) { width: 50px; height: 50px; }
+.dashboard-overview .readback-icon::before { position: static; color: var(--tile-accent) !important; font-size: 50px !important; text-shadow: none !important; }
+.dashboard-overview .status-action-icon.flame.auto-active { opacity: .3; }
+.dashboard-overview .status-action-icon.flame.auto-active::after { content: none; }
+.dashboard-overview .overview-status-pills .status-led { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; z-index: 2; }
+@keyframes hch-tile-drift { 50% { transform: translate(-4px,-3px) scale(1.04) rotate(-4deg); opacity: .22; } }
+@media (prefers-reduced-motion: reduce) { .dashboard-overview :is(.readback-icon,.climate-metric > svg,.climate-metric > span,.status-action-icon,.overview-status-pills > div > svg) { animation: none; } }
+
+/* Accent per tile, as on the front page. */
+.dashboard-overview :is(.unit-readback:has(.damper:not(.active)),.unit-readback:has(.heater:not(.active)),.climate-metric.neutral) { --tile-accent: var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)); }
+.dashboard-overview :is(.unit-readback:has(.damper.active),.climate-metric.green,.overview-status-pills > div) { --tile-accent: var(--state-on-icon, var(--success-color, #20e3a2)); }
+.dashboard-overview .overview-status-pills > div:has(.status-led.warn) { --tile-accent: var(--warning-color, #f59e0b); }
+.dashboard-overview :is(.unit-readback:has(.heater.active),.status-action-card:has(.flame)) { --tile-accent: var(--orange, var(--warning-color, #fb923c)); }
+.dashboard-overview .climate-metric.cyan { --tile-accent: #22d3ee; }
+
+@media (min-width: 1101px) and (max-height: 950px) {
+  .dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) { min-height: 66px; padding: 5px 10px; }
+  .dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong) { font-size: 16px; line-height: 18px; }
+}
+@media (max-width: 600px) {
+  .dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) { padding: 9px; }
+  .dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong,.hch-mobile-subreadings > button > strong,.hch-mobile-water > strong) { font-size: 16px; }
+  .dashboard-overview :is(.unit-readback em,.climate-metric > em,.status-action-card > div > small,.unit-readback small,.climate-metric > span,.status-action-card > div > span,.overview-status-pills > div > small,.hch-mobile-subreadings > button,.hch-mobile-water > span) { font-size: 10px; }
+  .dashboard-overview .overview-status-pills { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+}
