@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.6";
+const CALEFA_FLOW_CARD_VERSION = "0.9.7";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -1248,12 +1248,12 @@ class HaCalefaFlowCard extends HTMLElement {
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
     const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><title></title><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
-    const stat = (key, label, ref, unit, sub = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">–</b><em>${unit}</em></strong>${sub}</button>`;
+    const stat = (key, label, ref, unit, sub = "", icon = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">–</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
-        ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>Målt · Kamstrup</i>` : "")}
-        ${stat(this._config.cost_today ? "cost_today" : "energy_price", "Pris i dag", "today-cost", "kr", `<i data-ref="today-price"></i>`)}
-        ${split ? `<div class="cf-stat cf-stat-split"><small>Fordeling · Calefa-estimat</small><span><i class="cf-key cf-key-heat"></i>Varme <b data-ref="today-heat">–</b></span><span><i class="cf-key cf-key-dhw"></i>Varmt vand <b data-ref="today-dhw">–</b></span></div>` : ""}
+        ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>Målt · Kamstrup</i>` : "", "mdi:radiator")}
+        ${stat(this._config.cost_today ? "cost_today" : "energy_price", "Pris i dag", "today-cost", "kr", `<i data-ref="today-price"></i>`, "mdi:cash")}
+        ${split ? `<div class="cf-stat cf-stat-split"><small>Fordeling · Calefa-estimat</small><span><i class="cf-key cf-key-heat"></i>Varme <b data-ref="today-heat">–</b></span><span><i class="cf-key cf-key-dhw"></i>Varmt vand <b data-ref="today-dhw">–</b></span><ha-icon class="cf-stat-icon" icon="mdi:chart-donut"></ha-icon></div>` : ""}
       </div>
       <div class="cf-chart" role="img" data-ref="today-chart" aria-label="Forbrug pr. time i dag">
         <span class="cf-chart-y" data-ref="today-ymax"></span><span class="cf-chart-r" data-ref="today-cmax"></span>
@@ -2244,6 +2244,30 @@ const CALEFA_STYLES = `
   .cf-stat:nth-child(1) strong b{color:var(--cf-chart-heat)}.cf-stat:nth-child(2) strong b{color:var(--cf-chart-cost)}
   .cf-hour.is-now .cf-bar-slot{fill:color-mix(in srgb,var(--cf-chart-cost) 12%,transparent)}
   .cf-now-line{stroke:color-mix(in srgb,var(--cf-chart-cost) 60%,transparent)}
+  /* Footer and today tiles use the same design as the front page status buttons
+     (custom:ha-home-status-card): accent edge, card surface, shadow, big value on
+     top, detail and label below, and a large faint drifting icon. */
+  .cf-footer{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;border-top:0}
+  .cf-footer button,.cf-stat{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;min-height:85px;padding:10px 12px;border:0;border-left:3px solid color-mix(in srgb,var(--tile-accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left}
+  .cf-footer button:first-child{border-left:3px solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
+  .cf-footer button[data-footer="power"]{--tile-accent:var(--orange,var(--warning-color,#fb923c))}
+  .cf-footer button[data-footer="pressure"]{--tile-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+  .cf-stat:nth-child(1),.cf-stat-split{--tile-accent:var(--cf-chart-heat)}
+  .cf-stat:nth-child(2){--tile-accent:var(--cf-chart-cost)}
+  .cf-footer span{position:relative;z-index:2;display:flex;flex-direction:column;min-width:0}
+  .cf-footer strong,.cf-stat strong{order:1;position:relative;z-index:2;display:flex;align-items:baseline;gap:3px;overflow:hidden;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;text-overflow:ellipsis}
+  .cf-footer strong{display:block}
+  .cf-stat strong b,.cf-stat:nth-child(1) strong b,.cf-stat:nth-child(2) strong b{color:inherit;font-weight:750}
+  .cf-stat strong em{color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700}
+  .cf-stat>i{order:3;position:relative;z-index:2;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-style:normal;line-height:14px}
+  .cf-footer small,.cf-stat>small{order:4;position:relative;z-index:2;overflow:hidden;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;white-space:nowrap;text-overflow:ellipsis}
+  .cf-stat-split>small{order:4}
+  .cf-stat-split span{position:relative;z-index:2;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:13px;font-weight:700;line-height:19px}
+  .cf-footer ha-icon,.cf-footer button ha-icon,.cf-stat-icon{position:absolute;right:-10px;bottom:-10px;z-index:1;display:block;width:58px;height:58px;--mdc-icon-size:58px;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:cf-tile-drift 5s ease-in-out infinite}
+  .cf-stat-split{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:0}.cf-stat-split>small{flex:none}.cf-stat-split b{margin-left:4px}
+  @keyframes cf-tile-drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+  @media(prefers-reduced-motion:reduce){.cf-footer ha-icon,.cf-stat-icon{animation:none}}
+  @container calefa-card (max-width:520px){.cf-footer{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.cf-today-stats{gap:7px}.cf-footer button,.cf-stat{padding:9px}.cf-footer strong,.cf-stat strong{font-size:16px}.cf-footer small,.cf-stat>small,.cf-stat>i{font-size:10px}}
 `;
 
 if (!customElements.get("ha-calefa-flow-card")) customElements.define("ha-calefa-flow-card", HaCalefaFlowCard);
