@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.59 */
+/* MRDonnii Smart Home Cards v0.4.60 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -18540,7 +18540,7 @@ button { font: inherit; color: inherit; }
 
 /* WebUI @media (max-width: 1350px): content narrower than ~1080 px. */
 @container hch-card (max-width: 1080px) {
-  .dashboard-main-grid { grid-template-columns: minmax(0,1fr); grid-template-areas: "unit" "climate" "controls" "afterheat"; }
+  .dashboard-main-grid { grid-template-columns: minmax(0,1fr); grid-template-areas: "unit" "controls" "climate" "afterheat"; }
   .pro-control-column { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .pro-control-card { grid-column: 1/-1; }
 }
