@@ -1,4 +1,4 @@
-const CALEFA_FLOW_CARD_VERSION = "0.9.8";
+const CALEFA_FLOW_CARD_VERSION = "0.9.9";
 // The release build replaces this empty string with the bundled, generated unit image.
 const CALEFA_DEFAULT_UNIT_IMAGE = "";
 
@@ -2267,6 +2267,9 @@ const CALEFA_STYLES = `
   .cf-stat-split{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:0}.cf-stat-split>small{flex:none}.cf-stat-split b{margin-left:4px}
   @keyframes cf-tile-drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
   @media(prefers-reduced-motion:reduce){.cf-footer ha-icon,.cf-stat-icon{animation:none}}
+  .cf-footer small,.cf-stat>small{white-space:normal;text-overflow:clip}
+  .cf-stat-split span{overflow:visible;white-space:normal}.cf-stat-split b{white-space:nowrap}
+  @container calefa-card (max-width:760px){.cf-today-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cf-stat-split{grid-column:1/-1}}
   @container calefa-card (max-width:520px){.cf-footer{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.cf-today-stats{gap:7px}.cf-footer button,.cf-stat{padding:9px}.cf-footer strong,.cf-stat strong{font-size:16px}.cf-footer small,.cf-stat>small,.cf-stat>i{font-size:10px}}
 `;
 
