@@ -1072,7 +1072,7 @@ button { font: inherit; color: inherit; }
   --tile-accent: var(--state-info-icon, var(--info-color, #38bdf8));
   position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box; min-width: 0; min-height: 85px;
   display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 0; padding: 10px 12px;
-  border: 0; border-left: 3px solid color-mix(in srgb, var(--tile-accent) 78%, transparent); border-radius: 15px;
+  border: 0; border-left: calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb, var(--tile-accent) 78%, transparent); border-radius: 15px;
   background: var(--surface, var(--ha-card-background, var(--card-background-color, #172536)));
   box-shadow: var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));
   color: var(--gray800, var(--primary-text-color, #f8fafc)); font: inherit; text-align: left;
