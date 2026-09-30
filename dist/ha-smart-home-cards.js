@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.48 */
+/* MRDonnii Smart Home Cards v0.4.49 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -24532,7 +24532,7 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION20} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION21 = "2.1.4";
+var VERSION21 = "2.1.5";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -24721,11 +24721,13 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .panel{--fp-accent:var(--rc-accent)}
 .flow{--fp-accent:color-mix(in srgb,var(--rc-muted) 75%,transparent)}.flow.on{--fp-accent:var(--rc-hot)}
 .stat{--fp-accent:var(--stat-color)}
-.metric{border:0;border-radius:10px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);display:flex;flex-direction:column}
-.metric strong{order:1;margin:0;font-size:15px}
-.metric span{order:2;margin-top:2px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
-.metric.low{box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--rc-danger)}
-.metric.air{border:0;border-left:0;box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--aq,var(--rc-edge))}
+.metric{--m-accent:var(--room-color);position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-height:48px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--m-accent) 78%,transparent);border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.metric.na{--m-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
+.metric.low{--m-accent:var(--rc-danger)}
+.metric.air{--m-accent:var(--aq,var(--rc-edge));border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--m-accent) 78%,transparent)}
+.metric strong{order:1;position:relative;z-index:1;margin:0;padding-right:18px;font-size:15px}
+.metric span{order:2;position:relative;z-index:1;margin-top:2px;padding-right:18px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
+.metric .m-ic{position:absolute;right:-7px;bottom:-7px;z-index:0;width:36px;height:36px;--mdc-icon-size:36px;color:var(--m-accent);opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}
 .tile,.tiles .tile{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
 .tile .t-top,.tile .t-row{display:contents}
 .tile .t-ic,.tiles .t-top .t-ic{position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;border-radius:0;background:none;color:var(--room-color);opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}
@@ -25059,11 +25061,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
           <div class="dial-center"><strong><span data-f="temp">${DASH2}</span><small>\xB0C</small></strong><span class="dial-target" data-f="target">M\xE5l ${DASH2}</span></div>
         </div>
         <div class="metrics">
-          <div class="metric na" data-m="humidity"><span>Fugt</span><strong>${DASH2}</strong></div>
-          <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH2}</strong></div>
-          <div class="metric na" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong>${DASH2}</strong></div>
-          <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH2}</strong></div>
-          ${hasAir(room) ? `<div class="metric air na" data-m="air"><span>Luft</span><strong>${DASH2}</strong></div>` : ""}
+          <div class="metric na" data-m="humidity"><span>Fugt</span><strong>${DASH2}</strong><ha-icon class="m-ic" icon="mdi:water-percent"></ha-icon></div>
+          <div class="metric na" data-m="valve"><span>Ventil</span><strong>${DASH2}</strong><ha-icon class="m-ic" icon="mdi:valve"></ha-icon></div>
+          <div class="metric na" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong>${DASH2}</strong><ha-icon class="m-ic" icon="mdi:thermometer"></ha-icon></div>
+          <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH2}</strong><ha-icon class="m-ic" icon="mdi:battery-outline"></ha-icon></div>
+          ${hasAir(room) ? `<div class="metric air na" data-m="air"><span>Luft</span><strong>${DASH2}</strong><ha-icon class="m-ic" icon="mdi:leaf"></ha-icon></div>` : ""}
         </div>
         <div class="z-foot">${spark()}<div class="visual" data-f="visual"></div></div>
       </button>`;
@@ -25079,9 +25081,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
           <div class="dial-center"><strong><span data-f="temp">${DASH2}</span><small>\xB0C</small></strong><span class="dial-target">Lige nu</span></div>
         </div>
         <div class="metrics">
-          <div class="metric" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong data-f="feels">${DASH2}</strong></div>
-          <div class="metric" data-m="humidity"><span>Fugt</span><strong data-f="humidity">${DASH2}</strong></div>
-          <div class="metric" data-m="day"><span>D\xF8gnets sp\xE6nd</span><strong data-f="day">${DASH2}</strong></div>
+          <div class="metric" data-m="feels"><span title="F\xF8les som">F\xF8les</span><strong data-f="feels">${DASH2}</strong><ha-icon class="m-ic" icon="mdi:thermometer"></ha-icon></div>
+          <div class="metric" data-m="humidity"><span>Fugt</span><strong data-f="humidity">${DASH2}</strong><ha-icon class="m-ic" icon="mdi:water-percent"></ha-icon></div>
+          <div class="metric" data-m="day"><span>D\xF8gnets sp\xE6nd</span><strong data-f="day">${DASH2}</strong><ha-icon class="m-ic" icon="mdi:arrow-expand-vertical"></ha-icon></div>
         </div>
         <div class="z-foot">${spark()}</div>
       </button>`;
