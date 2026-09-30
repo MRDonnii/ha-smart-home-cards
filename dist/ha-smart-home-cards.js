@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.42 */
+/* MRDonnii Smart Home Cards v0.4.43 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -28305,7 +28305,7 @@ console.info(
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION26 = "0.2.3";
+var VERSION26 = "0.2.4";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28382,7 +28382,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   }
   _render() {
     if (!this.shadowRoot || !this._config) return;
-    this.shadowRoot.innerHTML = `<style>:host{display:block}*{box-sizing:border-box}.grid{display:grid;grid-template-columns:repeat(${this._config.columns || 2},minmax(0,1fr));gap:10px}.person{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 104px;grid-template-rows:1fr 1fr;grid-template-areas:'main battery' 'main trip';height:92px;overflow:hidden;padding:10px 14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--person-color);border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#142332)));box-shadow:var(--state-card-shadow,var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.18))));color:var(--primary-text-color);text-align:left;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.person:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.person:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.person{transition:none}.person:hover{transform:none}}.portrait{position:absolute;z-index:-1;right:66px;top:50%;width:122px;height:122px;transform:translateY(-50%);border-radius:50%;background-position:center;background-size:cover;opacity:.28;filter:saturate(1.04) contrast(1.03)}.main{grid-area:main;display:flex;min-width:0;flex-direction:column;justify-content:center;gap:5px}.main b{overflow:hidden;font-size:16px;text-overflow:ellipsis;white-space:nowrap;color:var(--gray800,var(--primary-text-color))}.main strong{font-size:11px}.main small,.mini small{overflow:hidden;color:var(--gray600,var(--secondary-text-color));text-overflow:ellipsis;white-space:nowrap}.main small{font-size:11px}.mini{display:flex;min-width:0;flex-direction:column;align-items:flex-end;justify-content:center}.battery{grid-area:battery}.trip{grid-area:trip}.mini b{font-size:12px}.mini small{font-size:8px}.segments{display:flex;gap:2px;margin:3px 0}.segments i{width:9px;height:5px;border-radius:999px}@media(max-width:600px){.grid{gap:8px}.person{grid-template-columns:minmax(0,1fr) 88px;height:92px;padding:9px 11px}.portrait{right:49px}.main b{font-size:15px}.segments i{width:8px}}@media(max-width:430px){.grid{grid-template-columns:1fr}}</style><ha-card><div class="grid">${this._config.persons.map((p) => this._person(p)).join("")}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>:host{display:block}*{box-sizing:border-box}ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}.grid{display:grid;grid-template-columns:repeat(${this._config.columns || 2},minmax(0,1fr));gap:10px}.person{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 104px;grid-template-rows:1fr 1fr;grid-template-areas:'main battery' 'main trip';height:92px;overflow:hidden;padding:10px 14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--person-color);border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#142332)));box-shadow:var(--state-card-shadow,var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.18))));color:var(--primary-text-color);text-align:left;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.person:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.person:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.person{transition:none}.person:hover{transform:none}}.portrait{position:absolute;z-index:-1;right:66px;top:50%;width:122px;height:122px;transform:translateY(-50%);border-radius:50%;background-position:center;background-size:cover;opacity:.28;filter:saturate(1.04) contrast(1.03)}.main{grid-area:main;display:flex;min-width:0;flex-direction:column;justify-content:center;gap:5px}.main b{overflow:hidden;font-size:16px;text-overflow:ellipsis;white-space:nowrap;color:var(--gray800,var(--primary-text-color))}.main strong{font-size:11px}.main small,.mini small{overflow:hidden;color:var(--gray600,var(--secondary-text-color));text-overflow:ellipsis;white-space:nowrap}.main small{font-size:11px}.mini{display:flex;min-width:0;flex-direction:column;align-items:flex-end;justify-content:center}.battery{grid-area:battery}.trip{grid-area:trip}.mini b{font-size:12px}.mini small{font-size:8px}.segments{display:flex;gap:2px;margin:3px 0}.segments i{width:9px;height:5px;border-radius:999px}@media(max-width:600px){.grid{gap:8px}.person{grid-template-columns:minmax(0,1fr) 88px;height:92px;padding:9px 11px}.portrait{right:49px}.main b{font-size:15px}.segments i{width:8px}}@media(max-width:430px){.grid{grid-template-columns:1fr}}</style><ha-card><div class="grid">${this._config.persons.map((p) => this._person(p)).join("")}</div></ha-card>`;
     const viewportStyle = document.createElement("style");
     viewportStyle.textContent = "@media(min-width:1101px) and (max-height:950px){.grid{gap:6px}.person{height:70px;padding:5px 12px}.portrait{width:98px;height:98px}.main{gap:2px}}";
     this.shadowRoot.append(viewportStyle);
@@ -34149,7 +34149,7 @@ console.info(
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION35 = "0.8.8";
+var VERSION35 = "0.8.9";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -34215,10 +34215,12 @@ var HaHomeCameraCard = class extends HTMLElement {
       aspect_ratio: "16:9",
       show_header: false,
       fill_height: false,
+      frameless: false,
       preload_snapshots: true,
       ...config
     };
     this.classList.toggle("fill-height", Boolean(nextConfig.fill_height));
+    this.classList.toggle("frameless", Boolean(nextConfig.frameless));
     const signature = JSON.stringify(nextConfig);
     if (signature === this._configSignature) {
       this.config = nextConfig;
@@ -34457,7 +34459,7 @@ var HaHomeCameraCard = class extends HTMLElement {
     if (!this.shadowRoot || !this.config) return;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#1c1f26)));--card-solid:var(--card-background-color,#1c1f26);--popup-solid:var(--popupBG,var(--dashboard-popup-bg,var(--card-background-color,#1c1f26)));--text:var(--gray800,var(--primary-text-color,#f8fafc));--muted:var(--gray600,var(--secondary-text-color,#94a3b8));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(148,163,184,.2)));--accent:var(--dashboard-accent,var(--primary-color,#62b5ff));--ok:var(--dashboard-success,var(--success-color,#54d9aa));--warn:var(--dashboard-warning,var(--warning-color,#ffbd59));--danger:var(--dashboard-danger,var(--error-color,#ff667a));--animal:var(--dashboard-orange,var(--warning-color,#f97316));--object:var(--dashboard-purple,var(--accent-color,#a855f7));--motion:var(--dashboard-cyan,var(--info-color,#06b6d4));color:var(--text)}
-      *{box-sizing:border-box}ha-card{overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--card-surface);box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.fill-height),:host(.fill-height) ha-card{height:100%}:host(.fill-height) ha-card{display:flex;flex-direction:column}:host(.fill-height) .grid{flex:1;grid-auto-rows:minmax(0,1fr)}:host(.fill-height) .panel{display:flex;min-height:0;flex-direction:column}:host(.fill-height) .feed{flex:1;aspect-ratio:auto}
+      *{box-sizing:border-box}ha-card{overflow:hidden;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--card-surface);box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.frameless) ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}:host(.frameless) .panel{box-shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}:host(.fill-height),:host(.fill-height) ha-card{height:100%}:host(.fill-height) ha-card{display:flex;flex-direction:column}:host(.fill-height) .grid{flex:1;grid-auto-rows:minmax(0,1fr)}:host(.fill-height) .panel{display:flex;min-height:0;flex-direction:column}:host(.fill-height) .feed{flex:1;aspect-ratio:auto}
       header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 4px}.heading{display:flex;align-items:center;gap:10px;min-width:0}.heading ha-icon{color:var(--accent)}h2{margin:0;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{margin-top:2px;color:var(--muted);font-size:11px}.all{display:flex;align-items:center;gap:5px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:999px;padding:7px 10px;background:transparent;color:var(--text);font:inherit;font-size:11px;font-weight:750;cursor:pointer;flex:0 0 auto}.all ha-icon{--mdc-icon-size:16px;color:var(--accent)}
       .grid{display:grid;grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:10px;padding:0}.panel{min-width:0;overflow:hidden;border:0;border-radius:18px;background:var(--card-surface);transition:transform .15s ease,box-shadow .15s ease}.panel:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.panel:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.panel{transition:none}.panel:hover{transform:none}}
       .bar{display:flex;align-items:center;gap:5px;padding:6px;background:transparent;border-bottom:0}.name{min-width:0;flex:1}.name b,.name span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name b{font-size:11px}.name span{display:none;color:var(--muted);font-size:9px}.activity{display:flex;align-items:center;gap:4px;color:var(--ok);font-size:10px;font-weight:800}.activity span{display:none}.activity ha-icon{--mdc-icon-size:14px}.danger .activity,.person .activity{color:var(--danger)}.animal .activity{color:var(--animal)}.vehicle .activity{color:var(--accent)}.object .activity{color:var(--object)}.motion .activity{color:var(--motion)}.choose{display:grid;width:29px;height:29px;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:50%;padding:0;background:color-mix(in srgb,var(--card-solid) 72%,transparent);color:var(--text);cursor:pointer}.choose ha-icon{--mdc-icon-size:16px;color:var(--accent)}
@@ -34815,6 +34817,10 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
     fillLabel.className = "check";
     fillLabel.innerHTML = `<span>Udfyld tildelt h\xF8jde</span><input type="checkbox" data-root-check="fill_height" ${this.config.fill_height ? "checked" : ""}>`;
     this.shadowRoot.querySelector(".top")?.appendChild(fillLabel);
+    const framelessLabel = document.createElement("label");
+    framelessLabel.className = "check";
+    framelessLabel.innerHTML = `<span>Uden ydre ramme (kameraerne st\xE5r frit)</span><input type="checkbox" data-root-check="frameless" ${this.config.frameless ? "checked" : ""}>`;
+    this.shadowRoot.querySelector(".top")?.appendChild(framelessLabel);
     const preloadLabel = document.createElement("label");
     preloadLabel.className = "check";
     preloadLabel.innerHTML = `<span>Forindl\xE6s stillbilleder (hurtigere skift)</span><input type="checkbox" data-root-check="preload_snapshots" ${this.config.preload_snapshots !== false ? "checked" : ""}>`;
