@@ -21,7 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.1.2";
+const VERSION = "2.1.3";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -206,6 +206,38 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @container (max-width:760px){.shell{padding:16px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:40px}.legend{display:none}}
 @container (max-width:560px){.hero{grid-template-columns:1fr}.zones,.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.zone{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"top" "dial" "metrics" "foot";gap:8px;padding:12px 11px 10px;border-radius:18px}.z-top{gap:8px}.z-icon{width:30px;height:30px;border-radius:10px}.z-icon ha-icon{--mdc-icon-size:17px}.z-title strong{font-size:13px}.z-status{align-items:flex-start;gap:5px;font-size:9px;letter-spacing:.03em}.z-status b{margin-top:2px}.z-status em{white-space:normal;line-height:1.25}.badges{gap:4px}.badge{width:22px;height:22px;border-radius:7px}.badge ha-icon{--mdc-icon-size:13px}.badges .badge.show:not(.window):not(.battery),.chev{display:none}.dial{justify-self:center}.dial,.dial svg{width:112px;height:89px}.dial-center{top:37px}.dial-center strong{font-size:23px}.dial-target{margin-top:8px}.metrics{gap:6px}.metric{padding:6px 7px;border-radius:10px}.metric span{font-size:8px;letter-spacing:.04em}.metric strong{margin-top:2px;font-size:12px}.z-foot{gap:6px;padding-top:8px}.spark-range span:first-child{display:none}.visual{width:56px}.radiator{height:34px;gap:2px}.radiator i{width:5px;height:23px}.ac-mini{width:56px;height:42px}.ac-mini .ac-unit-visual{transform:scale(.42)}.tile{padding:12px 12px 10px}.t-row{display:block}.t-meta{margin-top:5px;text-align:left}}
 @container (max-width:360px){.t-temp{font-size:24px}}@container (max-width:300px){.zones{grid-template-columns:1fr}}
+/* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+   accent edge, card surface, shadow and 15px corners; the small tiles also put the big value
+   first with detail and label below, and a large faint drifting icon. */
+.zone,.tile,.stat,.panel,.flow{--fp-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));border:0;border-left:3px solid color-mix(in srgb,var(--fp-accent,var(--room-color)) 78%,transparent);border-radius:15px;background:var(--fp-surface);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.zone:hover,.tile:hover{border-color:transparent;border-left-color:var(--room-color);box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+.panel{--fp-accent:var(--rc-accent)}
+.flow{--fp-accent:color-mix(in srgb,var(--rc-muted) 75%,transparent)}.flow.on{--fp-accent:var(--rc-hot)}
+.stat{--fp-accent:var(--stat-color)}
+.metric{border:0;border-radius:10px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);display:flex;flex-direction:column}
+.metric strong{order:1;margin:0;font-size:15px}
+.metric span{order:2;margin-top:2px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
+.metric.low{box-shadow:inset 3px 0 0 var(--rc-danger)}
+.metric.air{border:0;border-left:0;box-shadow:inset 3px 0 0 var(--aq,var(--rc-edge))}
+.tile,.tiles .tile{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
+.tile .t-top,.tile .t-row{display:contents}
+.tile .t-ic,.tiles .t-top .t-ic{position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;border-radius:0;background:none;color:var(--room-color);opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}
+.tile .t-ic ha-icon,.tiles .t-top ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+.tile .t-top b{position:absolute;top:10px;right:10px}
+.tile .t-temp,.tiles .t-temp{order:1;position:relative;z-index:1;font-size:18px;font-weight:750;line-height:21px;letter-spacing:0}
+.tile .t-temp small{margin:0 0 0 2px;font-size:11px}
+.tile .t-meta,.tiles .t-meta,.tile .t-air,.tiles .t-air{order:3;position:relative;z-index:1;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;text-align:left}
+.tile .t-top strong,.tiles .t-top strong{order:4;flex:none;position:relative;z-index:1;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px}
+.tile .spark-wrap{order:5}
+.stat{position:relative;isolation:isolate;flex-direction:column;align-items:stretch;justify-content:center;gap:0;min-height:85px;padding:10px 12px;overflow:hidden}
+.stat>div{position:relative;z-index:1;display:flex;flex-direction:column}
+.stat strong{order:1;margin:0;font-size:18px;line-height:21px}
+.stat em{order:3;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px}
+.stat span{order:4;padding-right:35px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none}
+.stat .ic{position:absolute;right:-10px;bottom:-10px;z-index:0;width:58px;height:58px;border-radius:0;background:none;opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}
+.stat .ic ha-icon{--mdc-icon-size:58px;width:58px;height:58px}
+@keyframes fpDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+@container (max-width:560px){.zone{border-radius:15px}.tile,.tiles .tile,.stat{padding:9px}.tile .t-temp,.tiles .t-temp,.stat strong{font-size:16px}.tile .t-meta,.tile .t-air,.tile .t-top strong,.stat em,.stat span{font-size:10px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 `;
 
