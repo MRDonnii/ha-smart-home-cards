@@ -21,7 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.1.1";
+const VERSION = "2.1.2";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -156,12 +156,13 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .metric.low{border-color:color-mix(in srgb,var(--rc-danger) 45%,var(--rc-edge))}.metric.low strong{color:var(--rc-danger)}
 .z-foot{grid-area:foot;align-self:end;display:flex;align-items:flex-end;gap:12px;min-width:0;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rc-edge) 80%,transparent)}
 .spark-wrap{position:relative;flex:1;min-width:0}
-.spark{display:block;width:100%;height:var(--spark-h,44px);overflow:visible}
+.spark-box{position:relative;height:var(--spark-h,44px)}
+.spark{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}
 .spark .area{fill:var(--room-color);opacity:.1}
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .spark .target{stroke:var(--primary-text-color);stroke-width:1;stroke-dasharray:3 4;opacity:.38;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:100%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:var(--spark-h,44px);width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
+.spark-cross{position:absolute;top:0;height:100%;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
 .spark-tip{position:absolute;top:-26px;padding:3px 8px;border-radius:8px;background:var(--card-background-color,rgba(8,12,18,.9));color:var(--primary-text-color,#fff);border:1px solid var(--divider-color,transparent);font-size:10.5px;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(-50%);pointer-events:none;transition:opacity .12s ease}
 .spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
@@ -193,6 +194,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .t-air{display:flex;align-items:center;gap:6px;margin-top:7px;overflow:hidden;font-size:11px;line-height:1.3;white-space:nowrap}.t-air i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--aq,var(--rc-muted));box-shadow:0 0 8px var(--aq,transparent)}.t-air b{color:var(--aq,var(--rc-muted));font-weight:750}.t-air span{overflow:hidden;color:var(--rc-muted);text-overflow:ellipsis}
 .metric.air{grid-column:1/-1;border-color:color-mix(in srgb,var(--aq,var(--rc-edge)) 38%,var(--rc-edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--aq,var(--rc-edge))}.metric.air strong{color:var(--aq)}.metric.air.na strong{color:var(--rc-muted)}
 .tile .spark-wrap{--spark-h:30px;margin-top:auto;padding-top:7px}
+.zone .z-foot{align-self:stretch;align-items:stretch}.zone .spark-wrap{display:flex;flex-direction:column}.zone .spark-box{flex:1 1 auto;height:auto;min-height:var(--spark-h,44px)}.zone .visual{align-self:flex-end;margin-bottom:19px}
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 7px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
@@ -514,7 +516,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const isId = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate, room.co2, room.pm25, room.air_quality].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
-    const spark = (small = false) => `<div class="spark-wrap"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
+    const spark = (small = false) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
     const zoneMarkup = ({ room, index }) => `
       <button class="zone a-neutral" type="button" data-room="${index}">
         <div class="z-top">
@@ -838,7 +840,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       spark.target.style.display = "";
     } else spark.target.style.display = "none";
     const last = points[points.length - 1];
-    spark.dot.style.top = `calc(var(--spark-h, 44px) * ${(y(last.v) / SPARK_H).toFixed(3)})`;
+    spark.dot.style.top = `${((y(last.v) / SPARK_H) * 100).toFixed(2)}%`;
     spark.scale = { t0, t1, lo, hi };
     if (spark.range) {
       const lows = points.map((point) => point.min ?? point.v);
