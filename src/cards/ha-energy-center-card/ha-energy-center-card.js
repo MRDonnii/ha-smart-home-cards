@@ -26,7 +26,7 @@ import { HeatSection } from "./sections/heat.js";
 import { WaterSection } from "./sections/water.js";
 import { EvSection } from "./sections/ev.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 const CARD_TAG = "ha-energy-center-card";
 
 const TABS = [

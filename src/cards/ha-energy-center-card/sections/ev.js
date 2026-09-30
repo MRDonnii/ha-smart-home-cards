@@ -32,12 +32,13 @@ export class EvSection extends Section {
         <small>Aktuel ladeeffekt</small>
         <div class="mega num"><b data-ref="powV">—</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">—</span>
+        ${icon("mdi:car-electric", "tile-ic")}
       </div>
       <div class="tiles four">
-        ${tile("today", "Energi i dag", c.id("ev_energy_today"))}
-        ${tile("month", "Energi denne måned", c.id("ev_energy_month"))}
-        ${tile("cost", "Pris i dag", c.id("ev_cost_today"))}
-        ${tile("session", "Seneste session", c.id("ev_session"))}
+        ${tile("today", "Energi i dag", c.id("ev_energy_today"), "mdi:lightning-bolt")}
+        ${tile("month", "Energi denne måned", c.id("ev_energy_month"), "mdi:calendar-month")}
+        ${tile("cost", "Pris i dag", c.id("ev_cost_today"), "mdi:cash")}
+        ${tile("session", "Seneste session", c.id("ev_session"), "mdi:ev-plug-type2")}
       </div>
     </div>
   </section>

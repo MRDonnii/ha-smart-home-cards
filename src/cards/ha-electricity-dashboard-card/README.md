@@ -10,7 +10,7 @@ Kopiér `ha-electricity-dashboard-card.js` til `/config/www/ha-electricity-dashb
 og registrér ressourcen som et JavaScript-modul:
 
 ```text
-/local/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js?v=1.1.0
+/local/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js?v=1.1.1
 ```
 
 ## Konfiguration
