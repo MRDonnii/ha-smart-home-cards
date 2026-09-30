@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Hch5UnitDiagram } from "./Hch5UnitDiagram";
 import { AfterheatThermostat } from "./AfterheatThermostat";
@@ -25,6 +25,13 @@ type Notice = { text: string; error: boolean };
 // draft stays shown until then so the value does not jump back and forth.
 const AFTERHEAT_SETTLE_MS = 5000;
 const BOOST_MINUTES = [15, 30, 60] as const;
+
+/** Fan steps offered by the level select: 1-4 with Dantherm steps (HCH5 Control 1.4.0), else 1-6. */
+function fanLevels(hass: Hass, entityId: string | undefined): number[] {
+  const options = entityId ? (hass.states[entityId]?.attributes as { options?: unknown } | undefined)?.options : undefined;
+  const levels = Array.isArray(options) ? options.map(Number).filter(level => Number.isInteger(level) && level > 0) : [];
+  return levels.length ? levels : [1, 2, 3, 4, 5, 6];
+}
 
 function number(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
@@ -158,7 +165,7 @@ function SmartdashCompact({ hass, config }: { hass: Hass; config: Config }) {
       <div className="hch-smartdash-controls" onClick={event => event.stopPropagation()}>
         <div className="hch-smartdash-readings"><span>Ude <b>{temp(outdoor)}</b></span><span>Ind <b>{temp(supply)}</b></span><span>Gen. <b>{recovery === null ? "—" : `${recovery}%`}</b></span><span>Bypass <b>{bypassLabel}</b></span></div>
         <div className="hch-smartdash-control-row hch-smartdash-mode"><div className="hch-smartdash-control-label"><span>Driftstilstand</span><em>{modeLabel(selected("mode_control"))}</em></div><div className="hch-smartdash-choice">{(["local_auto", "smart_auto", "manual"] as const).map(option => <button key={option} type="button" aria-pressed={selected("mode_control") === option} disabled={busy} onClick={() => void command("mode_control", "select", "select_option", { option }, option)}>{option === "local_auto" ? "Auto" : option === "smart_auto" ? "Smart" : "Manuel"}</button>)}</div></div>
-        <div className="hch-smartdash-control-row hch-smartdash-level"><div className="hch-smartdash-control-label"><span>Ventilatorniveau</span><em>Aktuelt trin {num("effective_level") ?? "—"}</em></div><div className="hch-smartdash-choice">{[1,2,3,4,5,6].map(level => <button key={level} type="button" aria-pressed={(pending?.key === levelKey ? Number(pending.value) : num("effective_level")) === level} className={mode !== "manual" && Number(selected(levelKey) ?? chosenLevel) === level && (pending?.key === levelKey ? Number(pending.value) : num("effective_level")) !== level ? "is-normal" : undefined} title={mode !== "manual" && Number(selected(levelKey) ?? chosenLevel) === level ? "Normaltrin" : undefined} disabled={busy} onClick={() => void command(levelKey, mode === "manual" ? "select" : "number", mode === "manual" ? "select_option" : "set_value", mode === "manual" ? { option: String(level) } : { value: level }, String(level))}>{level}</button>)}</div></div>
+        <div className="hch-smartdash-control-row hch-smartdash-level"><div className="hch-smartdash-control-label"><span>Ventilatorniveau</span><em>Aktuelt trin {num("effective_level") ?? "—"}</em></div><div className="hch-smartdash-choice">{fanLevels(hass, ids.level_control).map(level => <button key={level} type="button" aria-pressed={(pending?.key === levelKey ? Number(pending.value) : num("effective_level")) === level} className={mode !== "manual" && Number(selected(levelKey) ?? chosenLevel) === level && (pending?.key === levelKey ? Number(pending.value) : num("effective_level")) !== level ? "is-normal" : undefined} title={mode !== "manual" && Number(selected(levelKey) ?? chosenLevel) === level ? "Normaltrin" : undefined} disabled={busy} onClick={() => void command(levelKey, mode === "manual" ? "select" : "number", mode === "manual" ? "select_option" : "set_value", mode === "manual" ? { option: String(level) } : { value: level }, String(level))}>{level}</button>)}</div></div>
         <div className="hch-smartdash-control-row hch-smartdash-bypass"><div className="hch-smartdash-control-label"><span>Bypass</span><em>{bypassLabel}</em></div><div className="hch-smartdash-choice">{["off", "on"].map(option => <button key={option} type="button" aria-pressed={selected("bypass_control") === option} disabled={busy || moving || (option === "on" && fireplaceActive)} onClick={() => void command("bypass_control", "select", "select_option", { option }, option)}>{option === "off" ? "Auto" : "Åbn"}</button>)}</div></div>
         <div className="hch-smartdash-control-row hch-smartdash-boost"><div className="hch-smartdash-control-label"><span>Hurtig boost</span><em>{boostRemaining > 0 ? `${Math.ceil(boostRemaining / 60)} min tilbage` : "Klar"}</em></div><div className="hch-smartdash-choice">{[15,30].map(minutes => <button key={minutes} type="button" aria-pressed={activeBoost === minutes} disabled={busy || fireplaceActive} onClick={() => { setBoostChoice(minutes); void command(`boost_${minutes}`, "button", "press", {}).then(ok => { if (!ok) setBoostChoice(null); }); }}>{minutes} min</button>)}<button type="button" disabled={busy || boostRemaining <= 0} onClick={() => void command("boost_stop", "button", "press", {}).then(ok => { if (ok) setBoostChoice(null); })}>Stop</button></div></div>
         <div className="hch-smartdash-control-row hch-smartdash-fireplace"><div className="hch-smartdash-control-label"><span>Pejsefunktion</span><em>{fireplaceRemaining > 0 ? `${Math.ceil(fireplaceRemaining / 60)} min tilbage` : fireplaceActive ? "Aktiv" : "Slukket"}</em></div><div className="hch-smartdash-choice">{(["Slukket", "15 min", "30 min"] as const).map(option => <button key={option} type="button" aria-pressed={fireplaceChoice === option} disabled={busy} onClick={() => void command("fireplace_control", "select", "select_option", { option }, option)}>{option === "Slukket" ? "Fra" : option}</button>)}</div></div>
@@ -444,8 +451,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
               ))}
             </div>
             <label className="control-label">Ventilatorniveau</label>
-            <div className={`pro-levels${config.entities.standby_control ? " with-off" : ""}`}>
-              {[1,2,3,4,5,6].map(target => {
+            <div className={`pro-levels${config.entities.standby_control ? " with-off" : ""}`} style={{ "--levels": fanLevels(hass, ids.level_control).length } as CSSProperties}>
+              {fanLevels(hass, ids.level_control).map(target => {
                 // Filled: the level the unit runs at now (or a click awaiting the
                 // controller). In Local/Smart Auto a dashed outline marks the normal
                 // level a click changes, which the controller may raise for air quality.
