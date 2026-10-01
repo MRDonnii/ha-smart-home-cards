@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.68 */
+/* MRDonnii Smart Home Cards v0.4.69 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -24718,7 +24718,7 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION20} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION21 = "2.1.5";
+var VERSION21 = "2.1.6";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -24893,6 +24893,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
 @keyframes halo{0%,100%{opacity:0}50%{opacity:.4}}
 @keyframes badge{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--room-color) 18%,transparent)}}
+.metric>.mq{text-overflow:clip}.metric>.mq>.mq-track{display:inline-block;white-space:nowrap;animation:rcMarquee var(--mq-dur,8s) ease-in-out infinite alternate;will-change:transform}.mq-track{display:inline-block;white-space:nowrap}@keyframes rcMarquee{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(calc(-1 * var(--mq-dist,0px)))}}@media(prefers-reduced-motion:reduce){.metric>.mq>.mq-track{animation:none}}.no-animation .metric>.mq>.mq-track{animation:none}
 @keyframes radiatorFlow{from{transform:translateX(-13px)}to{transform:translateX(43px)}}
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -24911,8 +24912,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .metric.na{--m-accent:var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))}
 .metric.low{--m-accent:var(--rc-danger)}
 .metric.air{--m-accent:var(--aq,var(--rc-edge));border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--m-accent) 78%,transparent)}
-.metric strong{order:1;position:relative;z-index:1;margin:0;padding-right:18px;font-size:15px}
-.metric span{order:2;position:relative;z-index:1;margin-top:2px;padding-right:18px;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
+.metric strong{order:1;position:relative;z-index:1;margin:0;padding-right:0;font-size:15px}
+.metric span{order:2;position:relative;z-index:1;margin-top:2px;padding-right:0;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:10px;font-weight:700;letter-spacing:0;text-transform:none}
 .metric .m-ic{position:absolute;right:-7px;bottom:-7px;z-index:0;width:36px;height:36px;--mdc-icon-size:36px;color:var(--m-accent);opacity:.12;pointer-events:none;animation:fpDrift 5s ease-in-out infinite}
 .tile,.tiles .tile{position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:center;min-height:85px;padding:10px 12px}
 .tile .t-top,.tile .t-row{display:contents}
@@ -25375,6 +25376,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       this._layoutWidth = width;
       cancelAnimationFrame(this._layoutRaf);
       this._layoutRaf = requestAnimationFrame(() => this._layoutTiles());
+      this._scheduleMetricFit();
     });
     this._layoutWidth = 0;
     this._layoutObserver.observe(this._zonesEl);
@@ -25439,6 +25441,33 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (refs.kind === "zone") this._renderZone(room, refs, model);
     else if (refs.kind === "sensor") this._renderTile(room, refs, model);
     else this._renderOutdoor(room, refs, model);
+    this._scheduleMetricFit();
+  }
+  _scheduleMetricFit() {
+    cancelAnimationFrame(this._metricFitRaf);
+    this._metricFitRaf = requestAnimationFrame(() => this._fitMetrics());
+  }
+  // Text that does not fit a small metric box scrolls back and forth instead of
+  // ending in "…". Only direct children are touched, so the track is never wrapped twice.
+  _fitMetrics() {
+    this.shadowRoot?.querySelectorAll(".metric > strong, .metric > span").forEach((el) => {
+      let track = el.firstElementChild;
+      if (!track?.classList.contains("mq-track") || el.childNodes.length !== 1) {
+        const text = el.textContent;
+        track = document.createElement("span");
+        track.className = "mq-track";
+        track.textContent = text;
+        el.replaceChildren(track);
+      }
+      const available = el.clientWidth;
+      const distance = Math.ceil(track.scrollWidth - available);
+      const scroll = available > 0 && distance > 1;
+      el.classList.toggle("mq", scroll);
+      if (scroll) {
+        el.style.setProperty("--mq-dist", `${distance}px`);
+        el.style.setProperty("--mq-dur", `${Math.max(6, 4 + distance / 12).toFixed(1)}s`);
+      }
+    });
   }
   _dialFraction(value) {
     const min = this._number(this._config.dial_min) ?? 14;
