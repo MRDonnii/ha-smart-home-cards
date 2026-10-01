@@ -1,4 +1,4 @@
-const VERSION = "0.6.10";
+const VERSION = "0.6.11";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -765,7 +765,7 @@ class HASettingsCenterCard extends HTMLElement {
       *{box-sizing:border-box}
       button{font:inherit;color:inherit}
       button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-      ha-card{padding:16px;border-radius:22px;background-color:var(--card-background-color, #111820);background-image:var(--settings-surface);background-size:100% min(100%, 500px);background-repeat:no-repeat;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));color:var(--primary-text-color);box-shadow:var(--dashboard-shadow-deep, var(--ha-card-box-shadow, 0 18px 50px rgba(0,0,0,.22)))}
+      ha-card{padding:16px;border-radius:22px;background-color:var(--card-background-color, #111820);background-image:linear-gradient(180deg,transparent calc(100% - 180px),var(--card-background-color, #111820)),var(--settings-surface);background-size:100% min(100%, 500px);background-repeat:no-repeat;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));color:var(--primary-text-color);box-shadow:var(--dashboard-shadow-deep, var(--ha-card-box-shadow, 0 18px 50px rgba(0,0,0,.22)))}
       .head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
       .head ha-icon{--mdc-icon-size:24px;color:var(--accent)}
       .head strong{display:block;font-size:16px}
