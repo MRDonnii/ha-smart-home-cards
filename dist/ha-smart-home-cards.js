@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.64 */
+/* MRDonnii Smart Home Cards v0.4.65 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -27217,7 +27217,7 @@ window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Car
 console.info(`%c HA HOME HEADER CARD %c v${VERSION24} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION25 = "0.8.67";
+var VERSION25 = "0.8.68";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -27406,6 +27406,7 @@ function setMarqueeContent(el, html) {
 }
 function updateMarquees(root, selector) {
   root.querySelectorAll(selector).forEach((el) => {
+    if (el.classList.contains("marquee-track")) return;
     let track = el.firstElementChild;
     if (!track?.classList.contains("marquee-track") || el.childNodes.length !== 1) {
       const html = el.innerHTML;
@@ -28208,7 +28209,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     this._observeMarquees();
   }
   _observeMarquees() {
-    observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy b, .event-copy span");
+    observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span");
   }
   _render() {
     if (!this.config) return;

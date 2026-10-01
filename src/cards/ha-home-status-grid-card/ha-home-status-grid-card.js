@@ -1,4 +1,4 @@
-const VERSION = "0.8.67";
+const VERSION = "0.8.68";
 
 const PRESETS = {
   "home_energy": {
@@ -192,6 +192,8 @@ function setMarqueeContent(el, html) {
 
 function updateMarquees(root, selector) {
   root.querySelectorAll(selector).forEach((el) => {
+    // A selector can also match the track spans themselves; wrapping those again nests forever.
+    if (el.classList.contains("marquee-track")) return;
     let track = el.firstElementChild;
     if (!track?.classList.contains("marquee-track") || el.childNodes.length !== 1) {
       const html = el.innerHTML;
@@ -1085,7 +1087,7 @@ class HaHomeSummaryCard extends HTMLElement {
     }).join("") : `<div class="empty">Ingen aftaler de næste 7 dage</div>`;
     this._observeMarquees();
   }
-  _observeMarquees() { observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy b, .event-copy span"); }
+  _observeMarquees() { observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span"); }
   _render() {
     if (!this.config) return;
     if (!this._rendered) {
