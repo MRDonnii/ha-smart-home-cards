@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.69 */
+/* MRDonnii Smart Home Cards v0.4.70 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -82,8 +82,69 @@ var HACardListEditor = class extends HTMLElement {
 };
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor);
 
+// src/cards/shared/alert-rules.js
+var regex = (source) => {
+  if (!source) return null;
+  try {
+    return new RegExp(String(source).replace(/^\//, "").replace(/\/[gimyus]*$/, ""));
+  } catch {
+    return void 0;
+  }
+};
+var isFilterRule = (rule) => !rule?.entity && !!(rule?.entity_filter || rule?.device_class);
+var ruleKey = (rule) => JSON.stringify([rule.entity_filter || "", rule.device_class || "", rule.exclude_filter || ""]);
+function scanRuleMatches(states, rules) {
+  const matches = {};
+  for (const rule of rules.filter(isFilterRule)) {
+    const key = ruleKey(rule);
+    if (matches[key]) continue;
+    const include = regex(rule.entity_filter), exclude = regex(rule.exclude_filter);
+    if (include === void 0 || exclude === void 0) {
+      matches[key] = [];
+      continue;
+    }
+    matches[key] = Object.keys(states).filter((id) => (!include || include.test(id)) && (!rule.device_class || states[id]?.attributes?.device_class === rule.device_class) && (!exclude || !exclude.test(id)));
+  }
+  return matches;
+}
+function ruleHeld(rule, entity, now = Date.now()) {
+  const minutes = Number(rule?.for_minutes);
+  if (!Number.isFinite(minutes) || minutes <= 0) return true;
+  const changed = Date.parse(entity?.last_changed || "");
+  return Number.isFinite(changed) && now - changed >= minutes * 6e4;
+}
+function matchSignature(states, rules, matches) {
+  const timed = rules.filter((rule) => isFilterRule(rule) && Number(rule.for_minutes) > 0);
+  return JSON.stringify([
+    Object.entries(matches).map(([key, ids]) => [key, ids.map((id) => [id, states[id]?.state])]),
+    timed.map((rule) => (matches[ruleKey(rule)] || []).map((id) => ruleHeld(rule, states[id])))
+  ]);
+}
+function deviceName(hass, entity) {
+  const id = entity?.entity_id;
+  const deviceId = id && hass?.entities?.[id]?.device_id;
+  const device = deviceId && hass?.devices?.[deviceId];
+  const name = device?.name_by_user || device?.name;
+  if (name) return name;
+  return String(entity?.attributes?.friendly_name || id || "").replace(/\s+(battery( level)?|batteri(niveau)?)$/i, "").trim();
+}
+var sinceText = (iso) => {
+  const date2 = new Date(iso);
+  if (Number.isNaN(date2.getTime())) return "";
+  const today = /* @__PURE__ */ new Date();
+  const time = date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  if (date2.toDateString() === today.toDateString()) return `i dag ${time}`;
+  return `${date2.toLocaleDateString("da-DK", { day: "numeric", month: "numeric" })} kl. ${time}`;
+};
+function fillAlertText(text, entity, hass) {
+  if (text == null) return text;
+  const state = entity?.state;
+  const number2 = Number(state);
+  return String(text).replace(/\{name\}/g, entity?.attributes?.friendly_name || entity?.entity_id || "").replace(/\{device\}/g, deviceName(hass, entity)).replace(/\{state\}/g, Number.isFinite(number2) ? String(Math.round(number2 * 10) / 10).replace(".", ",") : String(state ?? "")).replace(/\{unit\}/g, entity?.attributes?.unit_of_measurement || "").replace(/\{since\}/g, sinceText(entity?.last_changed));
+}
+
 // src/cards/ha-battery-status-card/ha-battery-status-card.js
-var VERSION = "0.1.1";
+var VERSION = "0.2.0";
 var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   constructor() {
     super();
@@ -91,6 +152,8 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
     this._filter = "all";
     this._entitySignature = "";
     this._valueSignature = "";
+    this._lastKnown = {};
+    this._historyAsked = /* @__PURE__ */ new Set();
   }
   static getStubConfig() {
     return { title: "Batteristatus", subtitle: "Alle batteridrevne enheder samlet \xE9t sted", critical_threshold: 20, warning_threshold: 50, animation: true, show_entity_id: false, excluded_entities: [] };
@@ -114,7 +177,7 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
       this._entitySignature = entitySignature;
       this._buildGrid(batteries);
     }
-    const valueSignature = JSON.stringify(batteries.map((item2) => [item2.id, item2.value, item2.raw, item2.changed]));
+    const valueSignature = JSON.stringify(batteries.map((item2) => [item2.id, item2.value, item2.raw, item2.changed, item2.updated, item2.voltage, item2.lastKnown]));
     if (valueSignature !== this._valueSignature) {
       this._valueSignature = valueSignature;
       this._update(batteries);
@@ -125,11 +188,66 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   }
   _batteries() {
     if (!this._hass) return [];
-    const excluded = this._excluded();
-    return Object.values(this._hass.states || {}).filter((state) => state?.attributes?.device_class === "battery" && !excluded.has(state.entity_id)).map((state) => {
-      const number2 = Number(String(state.state).replace(",", "."));
-      return { id: state.entity_id, name: state.attributes?.friendly_name || state.entity_id, value: Number.isFinite(number2) ? Math.max(0, Math.min(100, number2)) : null, raw: state.state, changed: state.last_changed, icon: this._icon(state) };
-    }).sort((a, b) => (a.value ?? 101) - (b.value ?? 101) || a.name.localeCompare(b.name, this._hass?.locale?.language || "da"));
+    const excluded = this._excluded(), states = this._hass.states || {};
+    const list = Object.values(states).filter((state) => state?.attributes?.device_class === "battery" && !excluded.has(state.entity_id)).map((state) => {
+      const id = state.entity_id, binary = id.startsWith("binary_sensor."), offline = ["unavailable", "unknown"].includes(state.state), number2 = Number(String(state.state).replace(",", "."));
+      const value = offline ? null : binary ? state.state === "on" ? 5 : 100 : Number.isFinite(number2) ? Math.max(0, Math.min(100, number2)) : null;
+      const volt = states[id.replace(/_battery(_level)?$/, "_battery_voltage")];
+      const voltage = Number(volt?.state);
+      return { id, name: deviceName(this._hass, state), value, binary, offline, raw: state.state, changed: state.last_changed, updated: state.last_updated, voltage: Number.isFinite(voltage) ? voltage : null, lastKnown: offline ? this._lastKnown[id] : void 0, icon: this._icon(state) };
+    });
+    const order = (item2) => {
+      const tone2 = this._tone(item2);
+      return tone2 === "critical" ? 0 : tone2 === "offline" ? 1 : 2;
+    };
+    return list.sort((a, b) => order(a) - order(b) || (a.value ?? a.lastKnown ?? 101) - (b.value ?? b.lastKnown ?? 101) || a.name.localeCompare(b.name, this._hass?.locale?.language || "da"));
+  }
+  // Last numeric level before an offline battery went away, from the recorder.
+  _fetchLastKnown(batteries) {
+    const ids = batteries.filter((item2) => item2.offline && !item2.binary && !this._historyAsked.has(item2.id)).map((item2) => item2.id);
+    if (!ids.length || !this._hass?.callWS) return;
+    ids.forEach((id) => this._historyAsked.add(id));
+    const start = new Date(Date.now() - 30 * 864e5).toISOString();
+    this._hass.callWS({ type: "history/history_during_period", start_time: start, entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false }).then((result) => {
+      let changed = false;
+      for (const id of ids) {
+        const rows = result?.[id] || [];
+        for (let k3 = rows.length - 1; k3 >= 0; k3--) {
+          const value = Number(rows[k3].s);
+          if (Number.isFinite(value)) {
+            this._lastKnown[id] = Math.max(0, Math.min(100, value));
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (changed && this._hass) {
+        this._valueSignature = "";
+        this.hass = this._hass;
+      }
+    }).catch(() => {
+    });
+  }
+  _ago(iso) {
+    const time = Date.parse(iso || "");
+    if (!Number.isFinite(time)) return "";
+    const minutes = Math.max(0, Math.round((Date.now() - time) / 6e4));
+    if (minutes < 60) return minutes < 2 ? "lige nu" : `for ${minutes} min siden`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 36) return `for ${hours} t siden`;
+    return `for ${Math.round(hours / 24)} dage siden`;
+  }
+  _since(iso) {
+    const date2 = new Date(iso || "");
+    if (Number.isNaN(date2.getTime())) return "";
+    const time = date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    return date2.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? `i dag ${time}` : `${date2.toLocaleDateString("da-DK", { day: "numeric", month: "numeric" })} kl. ${time}`;
+  }
+  _detail(item2) {
+    if (item2.offline) return `Offline siden ${this._since(item2.changed)}`;
+    const parts = [item2.binary ? item2.raw === "on" ? "Melder lavt batteri" : "Melder batteri OK" : `\xC6ndret ${this._ago(item2.changed)}`];
+    if (item2.voltage !== null) parts.push(`${item2.voltage.toFixed(2).replace(".", ",")} V`);
+    return parts.join(" \xB7 ");
   }
   _icon(state) {
     const text = `${state.entity_id} ${state.attributes?.friendly_name || ""}`.toLowerCase();
@@ -146,7 +264,9 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
     if (/remote|fjern/.test(text)) return "mdi:remote";
     return "mdi:access-point";
   }
-  _tone(value) {
+  _tone(item2) {
+    if (item2.offline) return "offline";
+    const value = item2.value;
     const critical = Number(this._config.critical_threshold) || 20, warning = Math.max(critical + 1, Number(this._config.warning_threshold) || 50);
     return value === null ? "offline" : value < critical ? "critical" : value < warning ? "warning" : "good";
   }
@@ -159,11 +279,11 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
     :host{display:block;--good:var(--dashboard-success,var(--success-color,#20e3a2));--warn:var(--dashboard-warning,var(--warning-color,#f59e0b));--danger:var(--dashboard-danger,var(--error-color,#ef4444));--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));--muted:var(--secondary-text-color,#8b99aa);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.2)))}*{box-sizing:border-box}button{font:inherit;color:inherit}
     ha-card{position:relative;overflow:hidden;border:1px solid var(--edge);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:24px;background:radial-gradient(circle at 88% -15%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 30%),linear-gradient(145deg,color-mix(in srgb,var(--surface) 96%,var(--accent) 4%),var(--surface));box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow))}.shell{position:relative;padding:20px}.ambient{position:absolute;top:-100px;right:-80px;width:280px;height:280px;border-radius:50%;background:var(--accent);filter:blur(100px);opacity:.1;pointer-events:none;animation:breathe 6s ease-in-out infinite}
-    header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.eyebrow i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 14px currentColor;animation:pulse 2s ease-in-out infinite}h2{margin:5px 0 3px;font-size:27px;line-height:1.1}.subtitle{color:var(--muted);font-size:13px}.health{display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:7px}.health>div{padding:9px 11px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);text-align:right}.health span{display:block;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}.health strong{display:block;margin-top:3px;font-size:19px}.health .critical strong{color:var(--danger)}.health .warning strong{color:var(--warn)}
+    header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.eyebrow i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 14px currentColor;animation:pulse 2s ease-in-out infinite}h2{margin:5px 0 3px;font-size:27px;line-height:1.1}.subtitle{color:var(--muted);font-size:13px}.health{display:grid;grid-template-columns:repeat(4,minmax(72px,1fr));gap:7px}.health>div{padding:9px 11px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.035);text-align:right}.health span{display:block;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}.health strong{display:block;margin-top:3px;font-size:19px}.health .critical strong{color:var(--danger)}.health .warning strong{color:var(--warn)}.health .offline strong{color:var(--muted)}
     .toolbar{display:flex;align-items:center;gap:7px;margin-bottom:14px;padding:5px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.12)}.filter{flex:1;min-height:39px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:800;cursor:pointer}.filter.active{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px}.battery{--tone:var(--good);position:relative;isolation:isolate;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:11px 12px;min-width:0;padding:13px 14px 14px;border:1px solid color-mix(in srgb,var(--tone) 25%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:16px;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--tone) 12%,transparent),transparent 42%),linear-gradient(140deg,color-mix(in srgb,var(--tone) 7%,transparent),rgba(255,255,255,.025));text-align:left;cursor:pointer;transition:transform .2s ease,filter .2s ease,opacity .2s ease,box-shadow .2s ease}.battery:hover{transform:translateY(-3px);filter:brightness(1.08);box-shadow:0 12px 25px rgba(0,0,0,.2)}.battery[hidden]{display:none}.battery.warning{--tone:var(--warn)}.battery.critical{--tone:var(--danger);animation:criticalGlow 2s ease-in-out infinite}.battery.offline{--tone:var(--muted);opacity:.62}.device-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--tone) 15%,transparent);color:var(--tone);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone) 18%,transparent)}.device-icon ha-icon{--mdc-icon-size:25px}.copy{min-width:0}.copy b,.copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.copy b{font-size:13.5px}.copy small{margin-top:4px;color:var(--muted);font-size:10px}.level{text-align:right}.level strong{display:block;color:var(--tone);font-size:22px;line-height:1}.level small{display:block;margin-top:4px;color:var(--tone);font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.meter{position:relative;grid-column:1/-1;height:13px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--edge));border-radius:999px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0,rgba(255,255,255,.055) calc(10% - 2px),transparent calc(10% - 2px),transparent 10%),rgba(0,0,0,.24);box-shadow:inset 0 2px 5px rgba(0,0,0,.28)}.fill{position:relative;display:block;width:var(--level);height:100%;overflow:hidden;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 72%,white 15%),var(--tone));box-shadow:0 0 15px color-mix(in srgb,var(--tone) 60%,transparent);transition:width .85s cubic-bezier(.22,.75,.25,1)}.fill:after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,.55) 45%,transparent 70%);transform:translateX(-120%);animation:chargeSweep 3.4s ease-in-out infinite}.empty{grid-column:1/-1;padding:45px 15px;text-align:center;color:var(--muted)}
-    @keyframes breathe{50%{transform:scale(1.13);opacity:.16}}@keyframes pulse{50%{opacity:.35;transform:scale(.72)}}@keyframes criticalGlow{50%{box-shadow:0 0 22px color-mix(in srgb,var(--danger) 18%,transparent)}}@keyframes chargeSweep{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(130%)}}.no-animation *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){*{animation:none!important}}@media(max-width:700px){.shell{padding:14px}header{grid-template-columns:1fr}.health{grid-template-columns:repeat(3,1fr)}.health>div{text-align:left}.toolbar{overflow-x:auto}.filter{flex:0 0 auto;padding:0 14px}.grid{grid-template-columns:1fr}h2{font-size:23px}}
-  </style><ha-card class="${noAnimation.trim()}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>Energi & vedligehold</div><h2>${this._esc(this._config.title)}</h2><div class="subtitle">${this._esc(this._config.subtitle)}</div></div><div class="health"><div><span>Enheder</span><strong data-count="all">0</strong></div><div class="warning"><span>Opm\xE6rksomhed</span><strong data-count="warning">0</strong></div><div class="critical"><span>Kritiske</span><strong data-count="critical">0</strong></div></div></header><nav class="toolbar"><button class="filter active" data-filter="all">Alle</button><button class="filter" data-filter="attention">Opm\xE6rksomhed</button><button class="filter" data-filter="critical">Kritiske</button></nav><div class="grid"></div></div></ha-card>`;
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px}.battery{--tone:var(--good);position:relative;isolation:isolate;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:11px 12px;min-width:0;padding:13px 14px 14px;border:1px solid color-mix(in srgb,var(--tone) 25%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:16px;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--tone) 12%,transparent),transparent 42%),linear-gradient(140deg,color-mix(in srgb,var(--tone) 7%,transparent),rgba(255,255,255,.025));text-align:left;cursor:pointer;transition:transform .2s ease,filter .2s ease,opacity .2s ease,box-shadow .2s ease}.battery:hover{transform:translateY(-3px);filter:brightness(1.08);box-shadow:0 12px 25px rgba(0,0,0,.2)}.battery[hidden]{display:none}.battery.warning{--tone:var(--warn)}.battery.critical{--tone:var(--danger);animation:criticalGlow 2s ease-in-out infinite}.battery.offline{--tone:var(--muted)}.battery.offline .copy,.battery.offline .device-icon,.battery.offline .meter{opacity:.7}.battery.offline .level strong{font-size:17px}.device-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--tone) 15%,transparent);color:var(--tone);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone) 18%,transparent)}.device-icon ha-icon{--mdc-icon-size:25px}.copy{min-width:0}.copy b,.copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.copy b{font-size:13.5px}.copy small{margin-top:4px;color:var(--muted);font-size:10px}.level{text-align:right}.level strong{display:block;color:var(--tone);font-size:22px;line-height:1}.level small{display:block;margin-top:4px;color:var(--tone);font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.meter{position:relative;grid-column:1/-1;height:13px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--edge));border-radius:999px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0,rgba(255,255,255,.055) calc(10% - 2px),transparent calc(10% - 2px),transparent 10%),rgba(0,0,0,.24);box-shadow:inset 0 2px 5px rgba(0,0,0,.28)}.fill{position:relative;display:block;width:var(--level);height:100%;overflow:hidden;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 72%,white 15%),var(--tone));box-shadow:0 0 15px color-mix(in srgb,var(--tone) 60%,transparent);transition:width .85s cubic-bezier(.22,.75,.25,1)}.fill:after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,.55) 45%,transparent 70%);transform:translateX(-120%);animation:chargeSweep 3.4s ease-in-out infinite}.empty{grid-column:1/-1;padding:45px 15px;text-align:center;color:var(--muted)}
+    @keyframes breathe{50%{transform:scale(1.13);opacity:.16}}@keyframes pulse{50%{opacity:.35;transform:scale(.72)}}@keyframes criticalGlow{50%{box-shadow:0 0 22px color-mix(in srgb,var(--danger) 18%,transparent)}}@keyframes chargeSweep{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(130%)}}.no-animation *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){*{animation:none!important}}@media(max-width:700px){.shell{padding:14px}header{grid-template-columns:1fr}.health{grid-template-columns:repeat(4,1fr)}.health>div{text-align:left}.toolbar{overflow-x:auto}.filter{flex:0 0 auto;padding:0 14px}.grid{grid-template-columns:1fr}h2{font-size:23px}}
+  </style><ha-card class="${noAnimation.trim()}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>Energi & vedligehold</div><h2>${this._esc(this._config.title)}</h2><div class="subtitle">${this._esc(this._config.subtitle)}</div></div><div class="health"><div><span>Enheder</span><strong data-count="all">0</strong></div><div class="warning"><span>Opm\xE6rksomhed</span><strong data-count="warning">0</strong></div><div class="critical"><span>Kritiske</span><strong data-count="critical">0</strong></div><div class="offline"><span>Offline</span><strong data-count="offline">0</strong></div></div></header><nav class="toolbar"><button class="filter active" data-filter="all">Alle</button><button class="filter" data-filter="attention">Opm\xE6rksomhed</button><button class="filter" data-filter="critical">Kritiske</button><button class="filter" data-filter="offline">Offline</button></nav><div class="grid"></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
       this._filter = button.dataset.filter;
       this.shadowRoot.querySelectorAll("[data-filter]").forEach((item2) => item2.classList.toggle("active", item2 === button));
@@ -174,33 +294,37 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   _buildGrid(batteries) {
     const grid = this.shadowRoot?.querySelector(".grid");
     if (!grid) return;
-    grid.innerHTML = batteries.length ? batteries.map((item2) => `<button class="battery" data-entity="${this._esc(item2.id)}"><span class="device-icon"><ha-icon icon="${this._esc(item2.icon)}"></ha-icon></span><span class="copy"><b>${this._esc(item2.name)}</b><small>${this._config.show_entity_id ? this._esc(item2.id) : "Tryk for detaljer"}</small></span><span class="level"><strong data-value>\u2014</strong><small data-status>\u2014</small></span><i class="meter"><i class="fill"></i></i></button>`).join("") : `<div class="empty">Ingen batterisensorer fundet</div>`;
+    grid.innerHTML = batteries.length ? batteries.map((item2) => `<button class="battery" data-entity="${this._esc(item2.id)}"><span class="device-icon"><ha-icon icon="${this._esc(item2.icon)}"></ha-icon></span><span class="copy"><b title="${this._esc(item2.name)}">${this._esc(item2.name)}</b><small data-detail>${this._config.show_entity_id ? this._esc(item2.id) : ""}</small></span><span class="level"><strong data-value>\u2014</strong><small data-status>\u2014</small></span><i class="meter"><i class="fill"></i></i></button>`).join("") : `<div class="empty">Ingen batterisensorer fundet</div>`;
     grid.querySelectorAll("[data-entity]").forEach((button) => button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: button.dataset.entity }, bubbles: true, composed: true }))));
     this._update(batteries);
   }
   _update(batteries) {
-    const critical = Number(this._config.critical_threshold) || 20, warning = Math.max(critical + 1, Number(this._config.warning_threshold) || 50);
-    let criticalCount = 0, warningCount = 0;
+    let criticalCount = 0, warningCount = 0, offlineCount = 0;
     batteries.forEach((item2) => {
-      const tone2 = this._tone(item2.value);
+      const tone2 = this._tone(item2);
       if (tone2 === "critical") criticalCount += 1;
       if (tone2 === "critical" || tone2 === "warning") warningCount += 1;
+      if (tone2 === "offline") offlineCount += 1;
       const node = this.shadowRoot?.querySelector(`[data-entity="${CSS.escape(item2.id)}"]`);
       if (!node) return;
       node.className = `battery ${tone2}`;
       node.dataset.tone = tone2;
-      node.querySelector("[data-value]").textContent = item2.value === null ? "\u2014" : `${Math.round(item2.value)}%`;
-      node.querySelector("[data-status]").textContent = tone2 === "critical" ? "Kritisk" : tone2 === "warning" ? "Lav" : tone2 === "offline" ? "Ingen data" : "God";
-      node.style.setProperty("--level", `${item2.value ?? 0}%`);
+      const shown = item2.offline ? item2.lastKnown : item2.value;
+      node.querySelector("[data-value]").textContent = item2.binary ? item2.offline ? "\u2014" : item2.raw === "on" ? "Lav" : "OK" : shown == null ? "\u2014" : `${Math.round(shown)}%`;
+      node.querySelector("[data-status]").textContent = tone2 === "critical" ? "Kritisk" : tone2 === "warning" ? "Lav" : tone2 === "offline" ? item2.lastKnown != null ? "Sidst kendt \xB7 offline" : "Offline" : "God";
+      if (!this._config.show_entity_id) node.querySelector("[data-detail]").textContent = this._detail(item2);
+      node.style.setProperty("--level", `${shown ?? 0}%`);
     });
     this.shadowRoot?.querySelector('[data-count="all"]')?.replaceChildren(String(batteries.length));
     this.shadowRoot?.querySelector('[data-count="warning"]')?.replaceChildren(String(warningCount));
     this.shadowRoot?.querySelector('[data-count="critical"]')?.replaceChildren(String(criticalCount));
+    this.shadowRoot?.querySelector('[data-count="offline"]')?.replaceChildren(String(offlineCount));
+    this._fetchLastKnown(batteries);
     this._applyFilter();
   }
   _applyFilter() {
     this.shadowRoot?.querySelectorAll(".battery").forEach((node) => {
-      node.hidden = this._filter === "critical" ? node.dataset.tone !== "critical" : this._filter === "attention" ? !["critical", "warning"].includes(node.dataset.tone) : false;
+      node.hidden = this._filter === "critical" ? node.dataset.tone !== "critical" : this._filter === "offline" ? node.dataset.tone !== "offline" : this._filter === "attention" ? !["critical", "warning", "offline"].includes(node.dataset.tone) : false;
     });
   }
   getCardSize() {
@@ -26614,7 +26738,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.58";
+var VERSION24 = "0.8.59";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -26734,19 +26858,9 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
   _scanFilters() {
     if (!this._hass) return;
-    const rules = (this._config.alerts || []).filter((a) => a.entity_filter);
-    if (!rules.length) return;
-    const matches = {};
-    for (const a of rules) {
-      try {
-        const p = String(a.entity_filter).replace(/^\//, "").replace(/\/[gimyus]*$/, "");
-        const re = new RegExp(p);
-        matches[a.entity_filter] = Object.keys(this._hass.states).filter((id) => re.test(id));
-      } catch {
-        matches[a.entity_filter] = [];
-      }
-    }
-    const sig = JSON.stringify(Object.entries(matches).map(([k3, ids]) => [k3, ids.map((id) => [id, this._hass.states[id]?.state])]));
+    const rules = this._config.alerts || [];
+    if (!rules.some(isFilterRule)) return;
+    const states = this._hass.states || {}, matches = scanRuleMatches(states, rules), sig = matchSignature(states, rules, matches);
     if (sig === this._filterSig) return;
     this._filterSig = sig;
     this._filterMatches = matches;
@@ -26819,10 +26933,10 @@ var HAHomeHeaderCard = class extends HTMLElement {
       if (!conditionsOk) continue;
       let entities = [];
       if (a.entity) entities = [this._e(a.entity)].filter(Boolean);
-      else if (a.entity_filter) {
-        entities = (this._filterMatches[a.entity_filter] || []).map((id) => this._e(id)).filter(Boolean);
+      else if (isFilterRule(a)) {
+        entities = (this._filterMatches[ruleKey(a)] || []).map((id) => this._e(id)).filter(Boolean);
       }
-      for (const e of entities) if (this._match(a, e) && !snoozed.has(e.entity_id)) result.push({ ...a, entity: e.entity_id, name: String(a.name || a.message || "Alarm").replace("{name}", e.attributes?.friendly_name || e.entity_id), priority: Number(a.priority) || 0 });
+      for (const e of entities) if (this._match(a, e) && ruleHeld(a, e) && !snoozed.has(e.entity_id)) result.push({ ...a, entity: e.entity_id, name: fillAlertText(a.name || a.message || "Alarm", e, this._hass), message: fillAlertText(a.message, e, this._hass), secondary_text: fillAlertText(a.secondary_text, e, this._hass), priority: Number(a.priority) || 0 });
     }
     return result.sort((a, b) => b.priority - a.priority);
   }
@@ -32750,7 +32864,7 @@ window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Ov
 console.info(`SMART HOME OVERVIEW CARD ${VERSION31}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION32 = "0.3.2";
+var VERSION32 = "0.4.0";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -32795,26 +32909,11 @@ var HAAlarmCenterCard = class extends HTMLElement {
   }
   _scanFilters() {
     if (!this._hass) return;
-    const rules = (this._config.alerts || []).filter((a) => a.entity_filter);
-    if (!rules.length) return;
-    const matches = {};
-    for (const a of rules) {
-      try {
-        const p = String(a.entity_filter).replace(/^\//, "").replace(/\/[gimyus]*$/, "");
-        const re = new RegExp(p);
-        matches[a.entity_filter] = Object.keys(this._hass.states).filter(
-          (id) => re.test(id)
-        );
-      } catch {
-        matches[a.entity_filter] = [];
-      }
-    }
-    const sig = JSON.stringify(
-      Object.entries(matches).map(([k3, ids]) => [
-        k3,
-        ids.map((id) => [id, this._hass.states[id]?.state])
-      ])
-    );
+    const rules = this._config.alerts || [];
+    if (!rules.some(isFilterRule)) return;
+    const states = this._hass.states || {};
+    const matches = scanRuleMatches(states, rules);
+    const sig = matchSignature(states, rules, matches);
     if (sig === this._filterSig) return;
     this._filterSig = sig;
     this._filterMatches = matches;
@@ -32837,17 +32936,15 @@ var HAAlarmCenterCard = class extends HTMLElement {
       if (!conditionsOk) continue;
       let entities = [];
       if (a.entity) entities = [this._e(a.entity)].filter(Boolean);
-      else if (a.entity_filter)
-        entities = (this._filterMatches[a.entity_filter] || []).map((id) => this._e(id)).filter(Boolean);
+      else if (isFilterRule(a))
+        entities = (this._filterMatches[ruleKey(a)] || []).map((id) => this._e(id)).filter(Boolean);
       for (const e of entities)
-        if (this._match(a, e))
+        if (this._match(a, e) && ruleHeld(a, e))
           result.push({
             ...a,
             entity: e.entity_id,
-            name: String(a.name || a.message || "Alarm").replace(
-              "{name}",
-              e.attributes?.friendly_name || e.entity_id
-            ),
+            name: fillAlertText(a.name || a.message || "Alarm", e, this._hass),
+            secondary_text: fillAlertText(a.secondary_text, e, this._hass),
             priority: Number(a.priority) || 0
           });
     }
