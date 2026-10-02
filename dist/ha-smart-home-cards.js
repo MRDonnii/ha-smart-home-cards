@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.71 */
+/* MRDonnii Smart Home Cards v0.4.72 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -29059,7 +29059,7 @@ var HACardListEditor9 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION27 = "0.2.2";
+var VERSION27 = "0.3.0";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -29240,6 +29240,16 @@ var HAPetCareCard = class extends HTMLElement {
       @keyframes petTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
       @media(prefers-reduced-motion:reduce){.shell .tile-icon,.shell .care .care-icon,.shell .meal .meal-icon{animation:none}}
       @media(max-width:600px){.shell .summary>div,.shell .care,.shell .meal,.shell .metric{padding:9px}.shell .summary>div{min-width:0}.shell .summary>div>strong,.shell .care>div>strong,.shell .metric>strong,.shell .meal .meal-head div>span{font-size:16px;line-height:19px}.shell .care>div>small,.shell .meal .meal-status,.shell .summary>div>span,.shell .care>div>span,.shell .metric>span,.shell .meal h3{font-size:10px;line-height:13px}.shell .meal .switch{top:9px;right:9px}}
+      /* Free layout like the front page and the settings page: no card surface, no glow and no
+         framed panels. Water, plan and each meal are tiles of their own; the food container is
+         one tile with its gauges inside. */
+      ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}
+      .ambient{display:none}
+      .shell{padding:0}
+      .shell .main{padding:0;border:0;border-radius:0;background:none}
+      .shell .care,.shell .meal{border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .feeder{position:relative;isolation:isolate;padding:14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pet-accent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .section-title{margin:14px 2px 9px}
     </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, m\xE5ltider og foder samlet \xE9t sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong><ha-icon class="tile-icon" icon="mdi:water"></ha-icon></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` \xB7 ${skipped} sprunget` : ""}</strong><ha-icon class="tile-icon" icon="mdi:calendar-check"></ha-icon></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong><ha-icon class="tile-icon" icon="mdi:bowl-mix"></ha-icon></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandsk\xE5l</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens m\xE5ltider</span><strong>${next ? `N\xE6ste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kr\xE6ver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent2)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong><ha-icon class="tile-icon" icon="mdi:gauge"></ha-icon></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong><ha-icon class="tile-icon" icon="mdi:shield-check-outline"></ha-icon></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
     this.shadowRoot.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
