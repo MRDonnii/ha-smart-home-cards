@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.70 */
+/* MRDonnii Smart Home Cards v0.4.71 */
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -26738,7 +26738,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.59";
+var VERSION24 = "0.8.60";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -26938,7 +26938,33 @@ var HAHomeHeaderCard = class extends HTMLElement {
       }
       for (const e of entities) if (this._match(a, e) && ruleHeld(a, e) && !snoozed.has(e.entity_id)) result.push({ ...a, entity: e.entity_id, name: fillAlertText(a.name || a.message || "Alarm", e, this._hass), message: fillAlertText(a.message, e, this._hass), secondary_text: fillAlertText(a.secondary_text, e, this._hass), priority: Number(a.priority) || 0 });
     }
-    return result.sort((a, b) => b.priority - a.priority);
+    return this._groupAlerts(result).sort((a, b) => b.priority - a.priority);
+  }
+  // Rules with header_title show as one short indicator in the header ("{count} enheder offline");
+  // the alarm center popup still lists every entity with its own details and snooze.
+  _groupAlerts(result) {
+    const out = [], groups = /* @__PURE__ */ new Map();
+    for (const r of result) {
+      if (!r.header_title) {
+        out.push(r);
+        continue;
+      }
+      const key = JSON.stringify([r.header_title, r.header_title_one || "", r.header_text || ""]);
+      let g = groups.get(key);
+      if (!g) {
+        g = { ...r, members: [] };
+        groups.set(key, g);
+        out.push(g);
+      }
+      g.members.push(r);
+    }
+    for (const g of groups.values()) {
+      const n = g.members.length, first = this._e(g.members[0].entity);
+      g.entity = g.members[0].entity;
+      g.name = n === 1 && g.header_title_one ? fillAlertText(g.header_title_one, first, this._hass) : String(g.header_title).replace(/\{count\}/g, n);
+      g.secondary_text = String(g.header_text ?? "Tryk for detaljer").replace(/\{count\}/g, n);
+    }
+    return out;
   }
   _activity() {
     const snoozed = this._snoozed();
