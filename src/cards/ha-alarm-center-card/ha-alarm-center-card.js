@@ -1,4 +1,6 @@
-const VERSION = "0.3.2";
+import { fillAlertText, isFilterRule, matchSignature, ruleHeld, ruleKey, scanRuleMatches } from "../shared/alert-rules.js";
+
+const VERSION = "0.4.0";
 
 class HAAlarmCenterCard extends HTMLElement {
   constructor() {
@@ -44,28 +46,11 @@ class HAAlarmCenterCard extends HTMLElement {
   }
   _scanFilters() {
     if (!this._hass) return;
-    const rules = (this._config.alerts || []).filter((a) => a.entity_filter);
-    if (!rules.length) return;
-    const matches = {};
-    for (const a of rules) {
-      try {
-        const p = String(a.entity_filter)
-          .replace(/^\//, "")
-          .replace(/\/[gimyus]*$/, "");
-        const re = new RegExp(p);
-        matches[a.entity_filter] = Object.keys(this._hass.states).filter((id) =>
-          re.test(id),
-        );
-      } catch {
-        matches[a.entity_filter] = [];
-      }
-    }
-    const sig = JSON.stringify(
-      Object.entries(matches).map(([k, ids]) => [
-        k,
-        ids.map((id) => [id, this._hass.states[id]?.state]),
-      ]),
-    );
+    const rules = this._config.alerts || [];
+    if (!rules.some(isFilterRule)) return;
+    const states = this._hass.states || {};
+    const matches = scanRuleMatches(states, rules);
+    const sig = matchSignature(states, rules, matches);
     if (sig === this._filterSig) return;
     this._filterSig = sig;
     this._filterMatches = matches;
@@ -92,17 +77,15 @@ class HAAlarmCenterCard extends HTMLElement {
       if (!conditionsOk) continue;
       let entities = [];
       if (a.entity) entities = [this._e(a.entity)].filter(Boolean);
-      else if (a.entity_filter)
-        entities = (this._filterMatches[a.entity_filter] || []).map((id) => this._e(id)).filter(Boolean);
+      else if (isFilterRule(a))
+        entities = (this._filterMatches[ruleKey(a)] || []).map((id) => this._e(id)).filter(Boolean);
       for (const e of entities)
-        if (this._match(a, e))
+        if (this._match(a, e) && ruleHeld(a, e))
           result.push({
             ...a,
             entity: e.entity_id,
-            name: String(a.name || a.message || "Alarm").replace(
-              "{name}",
-              e.attributes?.friendly_name || e.entity_id,
-            ),
+            name: fillAlertText(a.name || a.message || "Alarm", e, this._hass),
+            secondary_text: fillAlertText(a.secondary_text, e, this._hass),
             priority: Number(a.priority) || 0,
           });
     }
