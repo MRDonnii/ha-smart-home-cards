@@ -1143,3 +1143,7 @@ button { font: inherit; color: inherit; }
     .dashboard-overview .dashboard-main-grid > .pro-control-column { display: none; }
   }
 }
+
+/* Bål in a half-width pair next to Pejsefunktion: four choices on one row (Claude AI). */
+.pro-control-pair .bonfire-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; }
+.pro-control-pair .bonfire-actions button { min-width: 0; padding: 0 2px; }

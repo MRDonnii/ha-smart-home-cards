@@ -58,6 +58,7 @@ function kwh(value: number | null) {
 // Options of the integration's "Bål i haven" select, with the button labels.
 const BONFIRE_CHOICES: [string, string][] = [["30 min", "30 min"], ["1 time", "1 t"], ["2 timer", "2 t"], ["3 timer", "3 t"]];
 // Options of the integration's "Sluk anlæg" select, as in the WebUI's OFF popup.
+const COOL_CHOICES: [string, string][] = [["cool_30", "30 min"], ["cool_60", "1 time"], ["cool_120", "2 timer"]];
 const STANDBY_CHOICES: [string, string, string][] = [
   ["1 time", "1 time", "Tænder selv om en time"],
   ["4 timer", "4 timer", "Tænder selv om fire timer"],
@@ -323,6 +324,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const standbyActive = standbyChoice !== null && standbyChoice !== "Tændt" && standbyChoice !== "unavailable" && standbyChoice !== "unknown";
   const standbyRemaining = num("standby_remaining");
   const [standbyDialog, setStandbyDialog] = useState(false);
+  const [coolDialog, setCoolDialog] = useState(false);
   const climate = entity("afterheat_climate");
   const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
   const afterheatEnabled = climate ? climate.state !== "off" : true;
@@ -342,6 +344,10 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const shownCoolingEnabled = pendingChoice?.key === "cooling_control" ? pendingChoice.target === "on" : coolingEnabled;
   const boostRemaining = num("boost_remaining") ?? 0;
   const quickBoostActive = boostRemaining > 0;
+  // Køl (HCH5 Control 1.5.0+): bypass open, top step and afterheat held down for a while.
+  const coolAvailable = Boolean(config.entities.cool_30);
+  const coolRemaining = num("cool_remaining") ?? 0;
+  const coolActive = coolRemaining > 0;
   // HA has no readback of which boost runs. A button's state is the time it
   // was last pressed, so the running boost is the one whose press time plus
   // its length matches the end the controller reports.
@@ -451,11 +457,15 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           </div>
 
           <div className="pro-control-pair">
-            <article className="surface status-action-card">
-              <div className="status-action-icon"><Snowflake size={24}/></div>
-              <div><span>Frikøling</span><strong>{coolingLabel(coolingState)}</strong><small>{shownCoolingEnabled ? "Automatik aktiv" : "Deaktiveret"}</small></div>
-              <button className={shownCoolingEnabled ? "active" : ""} aria-pressed={shownCoolingEnabled} disabled={busy !== null} aria-label={shownCoolingEnabled ? "Deaktiver frikøling" : "Aktiver frikøling"} onClick={() => void command("cooling", "cooling_control", "switch", shownCoolingEnabled ? "turn_off" : "turn_on", {}, shownCoolingEnabled ? "Frikøling deaktiveret." : "Frikøling aktiveret.", shownCoolingEnabled ? "off" : "on")}><ArrowRight size={17}/></button>
-            </article>
+            {config.entities.bonfire_control && <article className={`surface status-action-card bonfire-card${bonfire ? " active" : ""}`}>
+              <div className="status-action-icon smoke"><CloudFog size={24}/></div>
+              <div><span>Bål i haven</span><strong>{bonfire ? "Aktiv · anlæg slukket" : "Ikke aktiv"}</strong><small>{bonfire ? `${remaining(bonfireRemaining)} · stopper selv` : fireplace ? "Ikke under pejsefunktion" : standbyActive ? "Ikke mens anlægget er slukket" : "Slukker anlægget, tænder selv igen"}</small></div>
+              <div className="fireplace-actions bonfire-actions">
+                {bonfire
+                  ? <button disabled={busy !== null} onClick={() => void command("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "Bål-tilstand stoppet.", "Slukket")}>Stop</button>
+                  : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace || standbyActive} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
+              </div>
+            </article>}
             <article className="surface status-action-card">
               <div className={`status-action-icon flame${fireplaceAutoActive ? " auto-active" : ""}`} aria-label={fireplaceAutoActive ? "Autopejs aktiv" : undefined}><Flame size={24}/></div>
               <div><span>Pejsefunktion</span><strong>{fireplaceAutoActive ? "Autopejs aktiv" : fireplace ? "Aktiv" : "Ikke aktiv"}</strong><small>{fireplaceAutoActive ? `${remaining(fireplaceRemaining)} · automatisk` : fireplaceAutoEnabled ? "Autopejs klar" : fireplace ? remaining(fireplaceRemaining) : "15 eller 30 min"}</small></div>
@@ -467,15 +477,16 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             </article>
           </div>
 
-          {config.entities.bonfire_control && <article className={`surface status-action-card bonfire-card${bonfire ? " active" : ""}`}>
-            <div className="status-action-icon smoke"><CloudFog size={24}/></div>
-            <div><span>Bål i haven</span><strong>{bonfire ? "Aktiv · anlæg slukket" : "Ikke aktiv"}</strong><small>{bonfire ? `${remaining(bonfireRemaining)} · stopper selv` : fireplace ? "Ikke under pejsefunktion" : standbyActive ? "Ikke mens anlægget er slukket" : "Slukker anlægget, tænder selv igen"}</small></div>
-            <div className="fireplace-actions bonfire-actions">
-              {bonfire
-                ? <button disabled={busy !== null} onClick={() => void command("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "Bål-tilstand stoppet.", "Slukket")}>Stop</button>
-                : BONFIRE_CHOICES.map(([option, label]) => <button key={option} disabled={busy !== null || fireplace || standbyActive} onClick={() => void command(`bonfire-${option}`, "bonfire_control", "select", "select_option", { option }, `Bål-tilstand startet i ${label}.`, option)}>{label}</button>)}
+          <article className={`surface status-action-card cooling-card${coolActive || shownCoolingEnabled ? " active" : ""}`}>
+            <div className="status-action-icon"><Snowflake size={24}/></div>
+            <div><span>Frikøling</span><strong>{coolActive ? "Køl aktiv" : coolingLabel(coolingState)}</strong><small>{coolActive ? `${remaining(coolRemaining)} · bypass åben og boost` : shownCoolingEnabled ? "Automatik aktiv" : "Automatik slået fra"}</small></div>
+            <div className="fireplace-actions cooling-actions">
+              {coolAvailable && <button className={coolActive ? "active" : ""} aria-haspopup="dialog" disabled={busy !== null || fireplace || standbyActive} title={fireplace ? "Ikke under pejsefunktion" : "Åbn bypass og kør boost i en periode"} onClick={() => setCoolDialog(true)}>Køl</button>}
+              {coolAvailable && coolActive && <button className="stop" disabled={busy !== null} onClick={() => void command("cool-stop", "cool_stop", "button", "press", {}, "Køl stoppet.")}>Stop</button>}
+              <button className={shownCoolingEnabled ? "active" : ""} aria-pressed={shownCoolingEnabled} disabled={busy !== null} onClick={() => !shownCoolingEnabled && void command("cooling", "cooling_control", "switch", "turn_on", {}, "Frikøling aktiveret.", "on")}>Til</button>
+              <button className={!shownCoolingEnabled ? "active" : ""} aria-pressed={!shownCoolingEnabled} disabled={busy !== null} onClick={() => shownCoolingEnabled && void command("cooling", "cooling_control", "switch", "turn_off", {}, "Frikøling deaktiveret.", "off")}>Fra</button>
             </div>
-          </article>}
+          </article>
   </>;
 
   return (
@@ -565,6 +576,18 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             {STANDBY_CHOICES.map(([option, label, hint]) => <button key={option} type="button" className={standbyChoice === option ? "active" : ""} disabled={busy !== null} onClick={() => { setStandbyDialog(false); void command(`standby-${option}`, "standby_control", "select", "select_option", { option }, option === "Permanent" ? "Anlægget er slukket, til du tænder igen." : option === "Til i morgen kl. 07" ? "Anlægget er slukket til i morgen kl. 07:00." : `Anlægget er slukket i ${label}.`, option); }}><strong>{label}</strong><small>{hint}</small></button>)}
           </div>
           {standbyActive && <button type="button" className="standby-on-action" disabled={busy !== null} onClick={() => { setStandbyDialog(false); void command("standby-stop", "standby_control", "select", "select_option", { option: "Tændt" }, "Anlægget er tændt igen.", "Tændt"); }}>Tænd anlægget igen</button>}
+        </section>
+      </div>}
+      {coolDialog && <div className="standby-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setCoolDialog(false); }}>
+        <section className="standby-dialog surface" role="dialog" aria-modal="true" aria-label={coolActive ? "Køl kører" : "Køl huset"}>
+          <div className="standby-dialog-heading"><div><span className="eyebrow">FRIKØLING</span><h2>{coolActive ? "Køl kører" : "Køl huset"}</h2></div><button type="button" aria-label="Luk" onClick={() => setCoolDialog(false)}>×</button></div>
+          <p className="standby-dialog-lead">{coolActive
+            ? `Bypass er åben og anlægget kører boost · ${remaining(coolRemaining)}. Derefter går det tilbage til normal drift.`
+            : `Bypass åbnes, anlægget kører boost, og eftervarmen holdes nede. Bagefter går det selv tilbage til normal drift.${outdoor === null ? "" : ` Udeluft lige nu ${temp(outdoor)}.`}`}</p>
+          <div className="standby-choices">
+            {COOL_CHOICES.map(([key, label]) => <button key={key} type="button" disabled={busy !== null || !config.entities[key]} onClick={() => { setCoolDialog(false); void command(key, key, "button", "press", {}, `Køl startet i ${label}.`); }}><strong>{label}</strong><small>Bypass åben og boost</small></button>)}
+          </div>
+          {coolActive && <button type="button" className="standby-on-action" disabled={busy !== null} onClick={() => { setCoolDialog(false); void command("cool-stop", "cool_stop", "button", "press", {}, "Køl stoppet."); }}>Stop køl</button>}
         </section>
       </div>}
       {notice && <div className={`hch-notice${notice.error ? " error" : ""}`} role="status">{notice.text}</div>}
