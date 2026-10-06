@@ -91,6 +91,14 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 - Cards remain separated internally and can be maintained independently.
 - The old standalone repositories are archived migration history; all new development and releases happen here.
 
+## Animations rest when nobody uses the screen
+
+The cards' endless animations (drifting tile icons, breathing glows, flowing lines) run while someone uses the screen and
+stand still after 30 seconds without a touch, click, key or scroll; the next one wakes them. A running animation makes
+the browser redraw the page on every frame: on a wall display this took views from 30–55 % GPU to 0–5 % at rest.
+Alarm, error, warning and critical animations always keep moving. To keep every animation running on one device, set
+`localStorage.setItem("shc-motion", "always")` in that browser.
+
 ## Privacy
 
 The collection ships with neutral example values. Personal names, addresses, private network addresses, credentials and household-specific defaults are not permitted in published source or release artifacts. See [the privacy policy](docs/PRIVACY.md).

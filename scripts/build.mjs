@@ -17,7 +17,13 @@ await build({
   minify: true,
 });
 const cards = JSON.parse(await readFile(path.join(root, "cards.json"), "utf8"));
-const entry = cards.map((card) => `import ${JSON.stringify(`./cards/${card.slug}/${card.filename}`)};`).join("\n");
+// motion-rest.js registers every element class the cards define between it and motion-rest-end.js (endless animations
+// rest when nobody uses the screen); see src/cards/shared/motion-rest.js.
+const entry = [
+  `import "./cards/shared/motion-rest.js";`,
+  ...cards.map((card) => `import ${JSON.stringify(`./cards/${card.slug}/${card.filename}`)};`),
+  `import "./cards/shared/motion-rest-end.js";`,
+].join("\n");
 await writeFile(path.join(root, "src", "index.js"), `${entry}\n`);
 
 const outfile = path.join(root, "dist", "ha-smart-home-cards.js");

@@ -1,4 +1,4 @@
-const VERSION = "0.10.3";
+const VERSION = "0.10.4";
 
 /* ha-navbar-card
  * Erstatning for decluttering-templaten "global_navbar_front_responsive".
@@ -906,8 +906,8 @@ svg.nbikon{display:block;fill:currentColor}
 .badge.tom{min-width:10px;width:10px;height:10px;padding:0;border-radius:5px;font-size:0}
 .badge.puls{animation:nbPuls 1.8s ease-in-out infinite}
 .badge.pop{animation:nbBadgePop .32s cubic-bezier(.34,1.56,.64,1)}
-@keyframes nbPuls{0%,100%{transform:scale(1);filter:brightness(1)}
-  50%{transform:scale(1.18);filter:brightness(1.25)}}
+@keyframes nbPuls{0%,100%{transform:scale(1)}
+  50%{transform:scale(1.18)}}
 @keyframes nbBadgePop{from{transform:scale(0)}to{transform:scale(1)}}
 .notif.ring .ikonboks{animation:nbRing .5s ease-in-out}
 @keyframes nbRing{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(11deg)}

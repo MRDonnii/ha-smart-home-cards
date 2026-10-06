@@ -1,4 +1,131 @@
-/* MRDonnii Smart Home Cards v0.4.77 */
+/* MRDonnii Smart Home Cards v0.4.78 */
+
+// src/cards/shared/motion-rest.js
+var REST_AFTER_MS = 3e4;
+var RESCAN_MS = 3e3;
+var KEEP = /alarm|alert|error|warn|critical|danger|triggered|siren/i;
+var ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"];
+var hosts = /* @__PURE__ */ new Set();
+var paused = /* @__PURE__ */ new Set();
+var resting = false;
+var restTimer = 0;
+var scanTimer = 0;
+var originalDefine = null;
+function alwaysMove() {
+  try {
+    return localStorage.getItem("shc-motion") === "always";
+  } catch (_) {
+    return false;
+  }
+}
+function endless(animation) {
+  const timing = animation.effect?.getTiming?.();
+  return timing && timing.iterations === Infinity;
+}
+var restSheet = null;
+try {
+  restSheet = new CSSStyleSheet();
+  restSheet.replaceSync("*,*::before,*::after{animation-play-state:paused!important}");
+} catch (_) {
+  restSheet = null;
+}
+function pauseIn(host) {
+  const root = host.shadowRoot;
+  const adopted = Boolean(root && restSheet && root.adoptedStyleSheets);
+  if (adopted && !root.adoptedStyleSheets.includes(restSheet)) root.adoptedStyleSheets = [...root.adoptedStyleSheets, restSheet];
+  const list = root?.getAnimations ? root.getAnimations() : host.getAnimations({ subtree: true });
+  list.forEach((animation) => {
+    if (!endless(animation)) return;
+    if (KEEP.test(animation.animationName || animation.id || "")) {
+      if (animation.playState === "paused") animation.play();
+      return;
+    }
+    if (!adopted && animation.playState === "running") {
+      animation.pause();
+      paused.add(animation);
+    }
+  });
+}
+function wakeIn(host) {
+  const root = host.shadowRoot;
+  if (root?.adoptedStyleSheets?.includes(restSheet)) root.adoptedStyleSheets = root.adoptedStyleSheets.filter((sheet) => sheet !== restSheet);
+}
+function rest() {
+  if (resting || alwaysMove()) return;
+  resting = true;
+  hosts.forEach((host) => {
+    if (host.isConnected) pauseIn(host);
+  });
+  scanTimer = window.setInterval(() => hosts.forEach((host) => {
+    if (host.isConnected) pauseIn(host);
+  }), RESCAN_MS);
+}
+function wake() {
+  window.clearTimeout(restTimer);
+  restTimer = window.setTimeout(rest, REST_AFTER_MS);
+  if (!resting) return;
+  resting = false;
+  window.clearInterval(scanTimer);
+  hosts.forEach(wakeIn);
+  paused.forEach((animation) => {
+    try {
+      animation.play();
+    } catch (_) {
+    }
+  });
+  paused.clear();
+}
+var lastMove = 0;
+function onActivity(event) {
+  if (event.type === "pointermove") {
+    const now = Date.now();
+    if (now - lastMove < 1e3 && !resting) return;
+    lastMove = now;
+  }
+  wake();
+}
+ACTIVITY.forEach((type) => window.addEventListener(type, onActivity, { capture: true, passive: true }));
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) wake();
+});
+restTimer = window.setTimeout(rest, REST_AFTER_MS);
+function track(cls) {
+  const proto = cls?.prototype;
+  if (!proto || Object.prototype.hasOwnProperty.call(proto, "__shcMotionRest")) return;
+  Object.defineProperty(proto, "__shcMotionRest", { value: true });
+  const connected = proto.connectedCallback;
+  const disconnected = proto.disconnectedCallback;
+  proto.connectedCallback = function(...args) {
+    hosts.add(this);
+    const result = connected?.apply(this, args);
+    if (resting) window.setTimeout(() => {
+      if (resting && this.isConnected) pauseIn(this);
+    }, 0);
+    return result;
+  };
+  proto.disconnectedCallback = function(...args) {
+    hosts.delete(this);
+    wakeIn(this);
+    return disconnected?.apply(this, args);
+  };
+}
+if (window.customElements && !window.customElements.__shcMotionRest) {
+  originalDefine = window.customElements.define;
+  window.customElements.define = function(name, cls, options) {
+    track(cls);
+    return originalDefine.call(this, name, cls, options);
+  };
+  window.customElements.__shcMotionRest = true;
+}
+function motionRestEnd() {
+  if (originalDefine) window.customElements.define = originalDefine;
+  originalDefine = null;
+}
+window.shcMotion = Object.freeze({ wake, rest, get resting() {
+  return resting;
+}, get cards() {
+  return hosts.size;
+} });
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
@@ -20508,8 +20635,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const minutes = Math.round(ms / 6e4);
     if (minutes < 1) return "under 1 min";
     if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60), rest = minutes % 60;
-    return rest ? `${hours} t ${rest} min` : `${hours} t`;
+    const hours = Math.floor(minutes / 60), rest2 = minutes % 60;
+    return rest2 ? `${hours} t ${rest2} min` : `${hours} t`;
   }
   // Tæller perioder med tilstanden "on" i historikken og deres samlede varighed inden for vinduet.
   _onPeriods(states, start, end) {
@@ -24692,8 +24819,8 @@ var HAAirQualityCard = class extends HTMLElement {
   _duration(ms) {
     const minutes = Math.round(ms / 6e4);
     if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60), rest = minutes % 60;
-    return rest ? `${hours} t ${rest} min` : `${hours} t`;
+    const hours = Math.floor(minutes / 60), rest2 = minutes % 60;
+    return rest2 ? `${hours} t ${rest2} min` : `${hours} t`;
   }
   _escape(value) {
     return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -25586,16 +25713,16 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   // ending in "…". Only direct children are touched, so the track is never wrapped twice.
   _fitMetrics() {
     this.shadowRoot?.querySelectorAll(".metric > strong, .metric > span").forEach((el) => {
-      let track = el.firstElementChild;
-      if (!track?.classList.contains("mq-track") || el.childNodes.length !== 1) {
+      let track2 = el.firstElementChild;
+      if (!track2?.classList.contains("mq-track") || el.childNodes.length !== 1) {
         const text = el.textContent;
-        track = document.createElement("span");
-        track.className = "mq-track";
-        track.textContent = text;
-        el.replaceChildren(track);
+        track2 = document.createElement("span");
+        track2.className = "mq-track";
+        track2.textContent = text;
+        el.replaceChildren(track2);
       }
       const available = el.clientWidth;
-      const distance = Math.ceil(track.scrollWidth - available);
+      const distance = Math.ceil(track2.scrollWidth - available);
       const scroll = available > 0 && distance > 1;
       el.classList.toggle("mq", scroll);
       if (scroll) {
@@ -27404,7 +27531,7 @@ window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Car
 console.info(`%c HA HOME HEADER CARD %c v${VERSION24} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION25 = "0.8.69";
+var VERSION25 = "0.8.70";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -27594,16 +27721,16 @@ function setMarqueeContent(el, html) {
 function updateMarquees(root, selector) {
   root.querySelectorAll(selector).forEach((el) => {
     if (el.classList.contains("marquee-track")) return;
-    let track = el.firstElementChild;
-    if (!track?.classList.contains("marquee-track") || el.childNodes.length !== 1) {
+    let track2 = el.firstElementChild;
+    if (!track2?.classList.contains("marquee-track") || el.childNodes.length !== 1) {
       const html = el.innerHTML;
       el._marqueeHtml = void 0;
       setMarqueeContent(el, html);
-      track = el.firstElementChild;
+      track2 = el.firstElementChild;
     }
     const style = getComputedStyle(el);
     const available = el.clientWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0);
-    const distance = Math.ceil(track.scrollWidth - available);
+    const distance = Math.ceil(track2.scrollWidth - available);
     const scroll = available > 0 && distance > 1;
     el.classList.toggle("marquee", scroll);
     if (scroll) {
@@ -28312,12 +28439,13 @@ var HaHomeSummaryCard = class extends HTMLElement {
       liveKeys.add(key);
       let node = this._robotNodes.get(key);
       if (!node || !node.isConnected) {
-        node = document.createElement("ha-icon");
+        node = document.createElement("span");
         node.className = "room-robot";
         node.dataset.robot = key;
+        node.innerHTML = '<span class="room-robot-x"><ha-icon class="room-robot-icon"></ha-icon></span>';
         this._robotNodes.set(key, node);
       }
-      node.setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
+      node.querySelector(".room-robot-icon").setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
       node.title = robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot";
       node.style.setProperty("--robot-speed", `${Math.max(7, Math.min(90, Number(robot.speed_seconds) || 16))}s`);
       node.style.setProperty("--robot-speed-y", `${Math.max(6, Math.min(75, (Number(robot.speed_seconds) || 16) * 0.72))}s`);
@@ -28407,9 +28535,9 @@ var HaHomeSummaryCard = class extends HTMLElement {
         .utilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:13px}.utility{--accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;min-width:0;padding:13px 13px 12px 15px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:16px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.utility:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.utility:active{transform:translateY(0)}.utility>*:not(.utility-bg){position:relative;z-index:1}.utility-head{display:flex;align-items:center;gap:7px;color:var(--secondary-text-color,#a7b2c2);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.utility-head ha-icon{width:17px;height:17px;--mdc-icon-size:17px;color:var(--accent)}.utility-bg{position:absolute;right:-13px;bottom:-17px;z-index:0;width:76px;height:76px;--mdc-icon-size:76px;color:var(--accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.use{display:flex;align-items:baseline;gap:4px;margin-top:7px}.use b{font-size:22px;line-height:1}.use span{font-size:10px;color:var(--secondary-text-color,#a7b2c2)}.cost{margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent);font-size:11px;color:var(--secondary-text-color,#a7b2c2)}.cost b{float:right;color:var(--primary-text-color,#fff);font-size:13px}.cost small{font-size:9px}
         .body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(205px,.58fr);flex:1;min-height:0;gap:12px}.panel{--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));position:relative;isolation:isolate;padding:13px 13px 13px 15px;border-radius:16px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18)));overflow:hidden}a.panel{color:inherit;text-decoration:none;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}a.panel:focus-visible{border-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 48%,transparent);outline:none}a.panel:hover,a.panel:focus-visible{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}a.panel:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){a.panel:hover,a.panel:focus-visible{transform:none}}a.panel:active{transform:scale(.995)}.temperature-panel{position:relative}.panel.temperature-panel,.panel.agenda-panel{padding:0;border-left:0;border-radius:0;background:none;box-shadow:none;overflow:visible}.panel.temperature-panel h3,.panel.agenda-panel h3{padding-left:2px}a.panel.temperature-panel:hover,a.panel.temperature-panel:focus-visible,a.panel.temperature-panel:active,a.panel.agenda-panel:hover,a.panel.agenda-panel:focus-visible,a.panel.agenda-panel:active{transform:none;box-shadow:none}.panel.agenda-panel{overflow:hidden;min-height:0}.card .panel.agenda-panel .events{gap:7px;padding:0 5px 4px 0;contain:size}.card.portrait .panel.agenda-panel .events{column-gap:7px}.card .panel.agenda-panel .event{grid-template-columns:34px minmax(0,1fr);gap:9px;padding:7px 9px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--event);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));transition:transform .18s ease,box-shadow .18s ease}.card .panel.agenda-panel .event>i{display:none}a.agenda-panel:hover .event:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px))}.temperature-panel .room{transition:transform .18s ease,box-shadow .18s ease}a.temperature-panel:hover .room:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 10px) calc(var(--dashboard-card-highlight, 1) * 22px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--secondary-text-color,#a7b2c2)}
         .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(64px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:5px;min-width:0;padding:9px 10px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*{position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-8px;bottom:-8px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.room-name{min-width:0;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-badges{display:flex;align-items:center;gap:4px;flex:0 0 auto}.room-status{display:none;flex:0 0 auto;align-items:center;color:#fb923c}.room-status.heating,.room-status.presence{display:flex;animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.presence{color:var(--dashboard-accent,var(--info-color,#38bdf8))}.room-status ha-icon{--mdc-icon-size:14px}.room-body{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}.room-temp{flex:0 0 auto;margin-left:auto;font-size:20px;font-weight:900;line-height:1}.room-target{min-width:0;font-size:10px;line-height:1.25;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-target:empty,.room-target:has(>.marquee-track:empty){display:none}.room-target b{color:var(--room-accent);font-size:11px}@keyframes roomHeatPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
-        .room-robot{position:absolute!important;z-index:3!important;left:8%;top:24%;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor);pointer-events:none;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate,roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;color:var(--success-color,#20e3a2);offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{left:8%}to{left:calc(100% - 30px)}}@keyframes roomRobotY{from{top:24%}to{top:calc(100% - 29px)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
+        .room-robot{position:absolute!important;z-index:3!important;left:0;top:24%;width:100%;height:calc(76% - 29px);pointer-events:none;animation:roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot-x{position:absolute;left:8%;top:0;width:calc(92% - 30px);height:0;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate}.room-robot-icon{position:absolute;left:0;top:0;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor)}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;width:22px;height:22px;offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot.outdoors .room-robot-x{left:0;width:22px;animation:none}.room-robot.outdoors .room-robot-icon{color:var(--success-color,#20e3a2)}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{transform:translateX(0)}to{transform:translateX(100%)}}@keyframes roomRobotY{from{transform:translateY(0)}to{transform:translateY(100%)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
         @keyframes summaryIconDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-11deg);opacity:.22}}
-        @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot{animation:none}}
+        @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
         @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}.card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}.card.portrait .event{padding:5px 0}}
@@ -30507,8 +30635,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (minutes == null || !Number.isFinite(minutes)) return "";
     const m = Math.max(0, Math.round(minutes));
     if (m < 60) return `${m} min`;
-    const h = Math.floor(m / 60), rest = m % 60;
-    if (h < 24) return rest && h < 10 ? `${h} t ${rest} min` : `${h} t`;
+    const h = Math.floor(m / 60), rest2 = m % 60;
+    if (h < 24) return rest2 && h < 10 ? `${h} t ${rest2} min` : `${h} t`;
     const d = Math.floor(h / 24);
     return d < 3 && h % 24 ? `${d} d ${h % 24} t` : `${d} d`;
   }
@@ -36628,8 +36756,8 @@ var HAAIUsageCard = class extends HTMLElement {
     const minutes = Math.ceil(difference / 6e4);
     if (minutes < 60) return `Om ${minutes} min`;
     const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    if (hours < 24) return `Om ${hours} t${rest ? ` ${rest} min` : ""}`;
+    const rest2 = minutes % 60;
+    if (hours < 24) return `Om ${hours} t${rest2 ? ` ${rest2} min` : ""}`;
     const days = Math.floor(hours / 24);
     return `Om ${days} d ${hours % 24} t`;
   }
@@ -40055,19 +40183,19 @@ var HaCalefaFlowCard = class extends HTMLElement {
     return `<footer class="cf-footer">${items.map(([key, label, icon3]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon3}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
   }
   // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
-  _markersMarkup(track, level, variant = "") {
+  _markersMarkup(track2, level, variant = "") {
     const bypass = variant === "bypass";
-    const length = pathLength(track.d);
+    const length = pathLength(track2.d);
     const count = Math.max(1, Math.round(length / (bypass ? 78 : 54)));
     const duration2 = length / FLOW_SPEEDS[level];
     const shape = bypass ? "M-5 -4.5 L3.5 0 L-5 4.5 L-2.5 0 Z" : "M-7 -6.5 L5 0 L-7 6.5 L-3.5 0 Z";
-    return Array.from({ length: count }, (_, index) => `<path class="cf-marker" d="${shape}"><animateMotion path="${track.d}" dur="${duration2.toFixed(2)}s" begin="-${(index * duration2 / count).toFixed(2)}s" repeatCount="indefinite" rotate="auto"/></path>`).join("");
+    return Array.from({ length: count }, (_, index) => `<path class="cf-marker" d="${shape}"><animateMotion path="${track2.d}" dur="${duration2.toFixed(2)}s" begin="-${(index * duration2 / count).toFixed(2)}s" repeatCount="indefinite" rotate="auto"/></path>`).join("");
   }
   _stageMarkup() {
-    const clip = (layer, track) => track.hide ? ` clip-path="url(#cf-hide-${layer}-${track.id})"` : "";
-    const clips = (layer) => TRACKS.filter((track) => track.hide).map((track) => hideClip(`cf-hide-${layer}-${track.id}`, track.hide)).join("");
-    const tracks = TRACKS.map((track) => `<g class="cf-track" data-circuit="${track.circuit}" data-id="${track.id}" data-tone="${track.tone}"${clip("g", track)}><path class="cf-track-halo" d="${track.d}"/><path class="cf-track-core" d="${track.d}"/><path class="cf-track-hot" d="${track.d}"/></g>`).join("");
-    const markers = TRACKS.map((track) => `<g class="cf-markers" data-circuit="${track.circuit}" data-track="${track.id}"${clip("a", track)}>${this._markersMarkup(track, 2)}</g>`).join("");
+    const clip = (layer, track2) => track2.hide ? ` clip-path="url(#cf-hide-${layer}-${track2.id})"` : "";
+    const clips = (layer) => TRACKS.filter((track2) => track2.hide).map((track2) => hideClip(`cf-hide-${layer}-${track2.id}`, track2.hide)).join("");
+    const tracks = TRACKS.map((track2) => `<g class="cf-track" data-circuit="${track2.circuit}" data-id="${track2.id}" data-tone="${track2.tone}"${clip("g", track2)}><path class="cf-track-halo" d="${track2.d}"/><path class="cf-track-core" d="${track2.d}"/><path class="cf-track-hot" d="${track2.d}"/></g>`).join("");
+    const markers = TRACKS.map((track2) => `<g class="cf-markers" data-circuit="${track2.circuit}" data-track="${track2.id}"${clip("a", track2)}>${this._markersMarkup(track2, 2)}</g>`).join("");
     const pct2 = (value, total) => `${(value / total * 100).toFixed(3)}%`;
     const fogs = Object.entries(HX).map(([key, face]) => {
       const rx = pct2(face.r, face.w), ry = pct2(face.r, face.h);
@@ -40241,9 +40369,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const key = `${level}:${variant}`;
     if (!level || this._markerLevels?.[speed] === key) return;
     this._markerLevels[speed] = key;
-    for (const track of TRACKS.filter((entry) => entry.speed === speed)) {
-      const group = this.shadowRoot.querySelector(`[data-track="${track.id}"]`);
-      if (group) group.innerHTML = this._markersMarkup(track, level, variant);
+    for (const track2 of TRACKS.filter((entry) => entry.speed === speed)) {
+      const group = this.shadowRoot.querySelector(`[data-track="${track2.id}"]`);
+      if (group) group.innerHTML = this._markersMarkup(track2, level, variant);
     }
   }
   // Marker level of a primary branch from its valve opening (the PICV sets the flow).
@@ -40271,10 +40399,10 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._setCircuit("dhw-primary", Boolean(model.dhwPrimary));
     this._setCircuit("heat", model.heatMoving);
     this._setCircuit("dhw", model.waterMoving);
-    for (const track of TRACKS.filter((entry) => entry.bypass)) {
-      const trunk = track.circuit === "primary";
+    for (const track2 of TRACKS.filter((entry) => entry.bypass)) {
+      const trunk = track2.circuit === "primary";
       const moving = trunk ? model.primaryMoving : Boolean(model.dhwPrimary);
-      for (const node of this._trackNodes?.get(track.id) || []) {
+      for (const node of this._trackNodes?.get(track2.id) || []) {
         this._toggle(node, "is-bypass", trunk ? bypassOnly : model.bypassFlow);
         this._toggle(node, "is-armed", model.bypassArmed && !moving);
       }
@@ -41827,7 +41955,7 @@ window.customCards.push({ type: "ha-home-desktop-layout-card-front", name: "HA H
 console.info(`HA HOME FRONT LAYOUT v${VERSION46}`);
 
 // src/cards/ha-navbar-card/ha-navbar-card.js
-var VERSION47 = "0.10.3";
+var VERSION47 = "0.10.4";
 var PULSE_FARVER = ["--error-color", "--warning-color"];
 var NB_STOERRELSER = {
   max_width: "--nb-maxbredde",
@@ -41961,11 +42089,11 @@ var HaNavbarCard = class extends HTMLElement {
   // simpelthen ved med at bruge ha-icon.
   _hoestIkoner() {
     if (!this.shadowRoot) return;
-    const rest = this.shadowRoot.querySelectorAll("ha-icon[data-hoest]");
-    if (!rest.length) return;
+    const rest2 = this.shadowRoot.querySelectorAll("ha-icon[data-hoest]");
+    if (!rest2.length) return;
     setTimeout(() => {
       let nye = false;
-      rest.forEach((el) => {
+      rest2.forEach((el) => {
         try {
           const svg = el.shadowRoot && el.shadowRoot.querySelector("ha-svg-icon");
           const sti = svg && (svg.path || svg.shadowRoot && svg.shadowRoot.querySelector("path") && svg.shadowRoot.querySelector("path").getAttribute("d"));
@@ -42595,8 +42723,8 @@ svg.nbikon{display:block;fill:currentColor}
 .badge.tom{min-width:10px;width:10px;height:10px;padding:0;border-radius:5px;font-size:0}
 .badge.puls{animation:nbPuls 1.8s ease-in-out infinite}
 .badge.pop{animation:nbBadgePop .32s cubic-bezier(.34,1.56,.64,1)}
-@keyframes nbPuls{0%,100%{transform:scale(1);filter:brightness(1)}
-  50%{transform:scale(1.18);filter:brightness(1.25)}}
+@keyframes nbPuls{0%,100%{transform:scale(1)}
+  50%{transform:scale(1.18)}}
 @keyframes nbBadgePop{from{transform:scale(0)}to{transform:scale(1)}}
 .notif.ring .ikonboks{animation:nbRing .5s ease-in-out}
 @keyframes nbRing{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(11deg)}
@@ -44178,7 +44306,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const vstate = vac?.state || "unavailable";
     const key = this._statusKey();
     const active = ACTIVE.has(key) || vstate === "cleaning";
-    const paused = key === "paused" || vstate === "paused";
+    const paused2 = key === "paused" || vstate === "paused";
     const docked = vstate === "docked" || ["charging", "charging_complete", "emptying_the_bin"].includes(key);
     const offline = vstate === "unavailable" || key === "device_offline";
     const battery = this._num(E3.battery);
@@ -44195,7 +44323,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     else if (docked && battery >= 100) detail = "Opladet og klar til reng\xF8ring";
     else if (docked) detail = "Oplader i dock";
     else detail = room && room !== "unknown" ? `St\xE5r i ${room}` : "";
-    const dot = hasErr || offline ? "bad" : active ? "live" : paused ? "warn" : "ok";
+    const dot = hasErr || offline ? "bad" : active ? "live" : paused2 ? "warn" : "ok";
     const fanList = (vac?.attributes?.fan_speed_list || []).filter((f) => !["off", "custom"].includes(f));
     const waterState = this._state(E3.water_amount);
     const waterList = (waterState?.attributes?.options || []).filter((o) => !["custom", "unknown"].includes(o));
@@ -44208,7 +44336,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const canSegments = this._supports(FEATURE.SEND_COMMAND);
     const emptying = key === "emptying_the_bin" || this._s(E3.empty_dust) === "on";
     const selRooms = this._sel.map((id) => this._rooms.find((r) => r.id === id)).filter(Boolean);
-    const rest = this._rooms.filter((r) => !this._sel.includes(r.id));
+    const rest2 = this._rooms.filter((r) => !this._sel.includes(r.id));
     const n = selRooms.length;
     const alerts = [];
     if (offline) alerts.push(["bad", "mdi:wifi-off", "Robotten er offline", "Handlinger er sl\xE5et fra, indtil den er online igen."]);
@@ -44219,7 +44347,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const unmappable = this._rooms.filter((r) => !r.mappable || this._map && !this._map.rooms[this._rooms.indexOf(r)]);
     if (this._map && unmappable.length) alerts.push(["info", "mdi:information-outline", `${unmappable.map((r) => r.name).join(", ")} kan ikke placeres p\xE5 kortet`, "V\xE6lg dem i listen i stedet."]);
     const info = [];
-    if (active || paused) {
+    if (active || paused2) {
       const pct2 = this._num(E3.cleaning_progress), area = this._num(E3.cleaning_area), time = this._num(E3.cleaning_time);
       if (Number.isFinite(pct2)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct2)} %`]);
       if (Number.isFinite(area)) info.push(["mdi:texture-box", "Areal", `${area.toLocaleString("da-DK", { maximumFractionDigits: 1 })} m\xB2`]);
@@ -44233,12 +44361,12 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       }
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
-    const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
+    const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
     const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc2(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
     const actions = [
-      this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused),
-      this._supports(FEATURE.PAUSE) && (paused ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
-      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active || paused || key === "returning_home")),
+      this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
+      this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
+      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active || paused2 || key === "returning_home")),
       this._supports(FEATURE.RETURN_HOME) && act("home", "mdi:home-import-outline", "Send hjem", !offline && !docked),
       E3.empty_dust && act("empty", "mdi:delete-empty-outline", emptying ? "T\xF8mmer \u2026" : "T\xF8m st\xF8v", !offline && docked && !emptying),
       this._supports(FEATURE.LOCATE) && act("locate", "mdi:map-marker-question-outline", "Find", !offline)
@@ -44271,7 +44399,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
             <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc2(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
             <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc2(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest.length ? `<div class="chips">${rest.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc2(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc2(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -44456,8 +44584,8 @@ var safe = (value) => String(value ?? "\u2014").replace(/[&<>"']/g, (char) => ({
 var pct = (value) => value == null ? "\u2014" : `${Math.round(value)} %`;
 var duration = (seconds) => {
   if (seconds == null || seconds < 0) return "\u2014";
-  const minutes = Math.ceil(seconds / 60), days = Math.floor(minutes / 1440), hours = Math.floor(minutes % 1440 / 60), rest = minutes % 60;
-  return days ? `${days} dage ${hours} t` : hours ? `${hours} t ${rest} min` : `${rest} min`;
+  const minutes = Math.ceil(seconds / 60), days = Math.floor(minutes / 1440), hours = Math.floor(minutes % 1440 / 60), rest2 = minutes % 60;
+  return days ? `${days} dage ${hours} t` : hours ? `${hours} t ${rest2} min` : `${rest2} min`;
 };
 var date = (value) => {
   if (!valid(value)) return "\u2014";
@@ -48810,6 +48938,9 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
   });
 }
 console.info(`%c ENERGY CENTER %c v${VERSION50} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+
+// src/cards/shared/motion-rest-end.js
+motionRestEnd();
 /*! Bundled license information:
 
 react/cjs/react.production.js:
