@@ -25,3 +25,4 @@ entities:
 - `entities.bonfire_control` and `entities.bonfire_remaining`: the integration's "Bål i haven" select and "Bål tid tilbage" sensor (HCH5 Control 0.8.1+). Adds a "Bål i haven" card under the fireplace controls: 30 min to 3 hours with the fans at minimum, stopping by itself.
 - `entities.standby_control` and `standby_remaining`: optional "Sluk anlæg" select and remaining-off-time sensor of the integration (0.8.1-beta.3 or newer). Adds OFF to the level row, with a popup for 1, 4 or 8 hours, until tomorrow at 07:00 or permanently. Pressing a level switches the unit on again.
 - `variant: smartdash`: the compact drawing and controls used by Smartdash.
+- `controls: false` (with `variant: smartdash`): the compact drawing and readings only, without the control rows — for a side panel that opens the full card elsewhere.
