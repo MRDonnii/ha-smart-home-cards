@@ -94,7 +94,8 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 ## Weather card: radar image, warnings and extra measurements
 
 v0.4.80 redesigns the card: a hero with key figures, a 7-day list with temperature range bars, the radar beside it on
-wide screens, and the extra measurements as compact panels in up to three columns.
+wide screens, and the extra measurements as compact panels in up to three columns. v0.4.81 fills very wide screens: from 1300 px
+everything below the hourly forecast flows as three balanced columns.
 
 `ha-weather-card` can show an `image` entity in its radar section (`radar_image_entity`, for example a national radar
 with lightning), warnings from a sensor's attribute list (`warnings_entity`, yellow/orange/red banners at the top) and

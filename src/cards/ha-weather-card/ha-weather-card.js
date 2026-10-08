@@ -1,5 +1,5 @@
 import "./ha-weather-card-assets.js";
-const VERSION = "0.6.0";
+const VERSION = "0.6.1";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -655,6 +655,18 @@ class HAWeatherCard extends HTMLElement {
         .cols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:start}
         .panels{columns:3}
       }
+      @container (min-width: 1300px){
+        ha-card{padding:28px}
+        .hero-icon{width:150px;height:150px}
+        .hero-temp{font-size:84px}
+        .chip b{font-size:16px}
+        .hourly-scroll{justify-content:space-between}
+        .hour{width:auto;flex:1 0 62px}
+        /* Everything below the hours flows as balanced columns. */
+        .lower{columns:3;column-gap:16px;margin-top:16px}
+        .cols,.panels{display:contents}
+        .lower .panel{break-inside:avoid;display:inline-block;width:100%;margin:0 0 16px}
+      }
       @container (max-width: 420px){
         ha-card{padding:16px}
         .hero{padding:14px}
@@ -671,11 +683,13 @@ class HAWeatherCard extends HTMLElement {
       ${this._warningsHtml()}
       ${this._heroHtml()}
       ${this._hourlyHtml()}
-      <div class="cols">
-        ${this._panel("mdi:calendar-week", "De næste dage", this._daysHtml())}
-        ${this._panel("mdi:radar", "Radar", this._radarHtml())}
+      <div class="lower">
+        <div class="cols">
+          ${this._panel("mdi:calendar-week", "De næste dage", this._daysHtml())}
+          ${this._panel("mdi:radar", "Radar", this._radarHtml())}
+        </div>
+        ${this._panelsHtml()}
       </div>
-      ${this._panelsHtml()}
     </ha-card>`;
 
     this.shadowRoot.querySelectorAll("[data-radar]").forEach((el) =>
