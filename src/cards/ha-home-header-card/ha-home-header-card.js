@@ -25,6 +25,65 @@ const V3_SHADOW={
 };
 const V3_CATEGORY={sunny:"sunny","clear-night":"sunny",cloudy:"cloudy",partlycloudy:"partly",rainy:"rain",pouring:"rain",snowy:"snow","snowy-rainy":"snow",hail:"snow",fog:"fog",windy:"windy","windy-variant":"windy",lightning:"storm","lightning-rainy":"storm",exceptional:"unknown"};
 
+// Clouds like the 3D house's sky (Claude AI, 2026-10-08; user: "Det skydække du har bygget her inde kan du lave det i
+// mit headerkort i HA også"): soft value-noise clouds seen as a layer overhead towards the horizon (smaller and closer
+// together low down), as thick as the weather's cloud cover, drifting with the wind, white by day, warm at dusk and
+// dark at night, with a silver edge towards the sun. Plain WebGL at a third of the card's size and at most ~20 frames
+// a second; it stops while the card is off screen or the page is hidden, and stands still with reduced motion. The V3
+// sky behind it is untouched; weather_v3_clouds: css keeps the drawn clouds.
+class V3SkyClouds {
+  static supported() {
+    if (V3SkyClouds._ok === undefined) { try { const c = document.createElement("canvas"); const gl = c.getContext("webgl"); V3SkyClouds._ok = Boolean(gl); gl?.getExtension("WEBGL_lose_context")?.loseContext(); } catch { V3SkyClouds._ok = false; } }
+    return V3SkyClouds._ok;
+  }
+  constructor(canvas) {
+    this.canvas = canvas; this.t0 = performance.now(); this.raf = 0; this.last = 0; this.visible = true;
+    this.p = { cover: 0.4, drift: [0.012, 0.004], lit: [1, 1, 1], dark: [0.55, 0.59, 0.63], sun: [0.97, 0.86], sunK: 1, still: false };
+    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
+    if (!gl) { this.failed = true; return; } this.gl = gl;
+    const vs = "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+    const fs = `precision mediump float; uniform vec2 uRes; uniform float uTime; uniform vec2 uDrift; uniform float uCover; uniform vec3 uLit; uniform vec3 uDark; uniform vec2 uSun; uniform float uSunK;
+      float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+      float fbm(vec2 p){ float v = 0.0; float a = 0.5; for (int i = 0; i < 5; i++) { v += a * vn(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return v; }
+      void main(){
+        vec2 uv = gl_FragCoord.xy / uRes; float asp = uRes.x / uRes.y;
+        // A wide, low card: an even field of clouds about the card's height across (the 3D sky's dome perspective showed
+        // only a sliver between clouds here), slightly flattened like clouds seen at a slant.
+        vec2 q = vec2(uv.x * asp, uv.y * 1.6) * 0.95 + uDrift * uTime * 12.0;
+        float n = fbm(q) * 0.85 + fbm(q * 2.7 - uDrift * uTime * 6.0) * 0.15;
+        float edge = 1.0 - uCover; float dens = smoothstep(edge - 0.12, edge + 0.28, n); float shade = smoothstep(edge, edge + 0.55, n);
+        vec3 cc = mix(uLit, uDark, clamp(shade * (0.4 + 0.6 * uCover), 0.0, 1.0));
+        float s = exp(-length((uv - uSun) * vec2(asp, 1.0)) * 2.2) * uSunK; cc += vec3(1.0, 0.93, 0.8) * s * (1.0 - shade) * 0.45;
+        float a = clamp(dens * (0.55 + 0.45 * uCover), 0.0, 1.0);
+        gl_FragColor = vec4(cc * a, a);
+      }`;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+    const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { this.failed = true; return; }
+    gl.useProgram(prog); const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    this.u = Object.fromEntries(["uRes", "uTime", "uDrift", "uCover", "uLit", "uDark", "uSun", "uSunK"].map((k) => [k, gl.getUniformLocation(prog, k)]));
+    gl.clearColor(0, 0, 0, 0);
+    this.io = typeof IntersectionObserver === "function" ? new IntersectionObserver((e) => { this.visible = e.some((x) => x.isIntersecting); if (this.visible) this.start(); else this.stop(); }) : null; this.io?.observe(canvas);
+  }
+  set(p) { Object.assign(this.p, p); if (this.p.still) this.draw(); }
+  start() {
+    if (this.failed || this.raf || !this.visible) return;
+    if (this.p.still) { this.draw(); return; }
+    const loop = (now) => { this.raf = requestAnimationFrame(loop); if (document.hidden || now - this.last < 48) return; this.last = now; this.draw(now); };
+    this.raf = requestAnimationFrame(loop);
+  }
+  stop() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
+  draw(now = performance.now()) {
+    const gl = this.gl; if (!gl) return; const c = this.canvas; const w = Math.max(2, Math.round(c.clientWidth / 3)); const h = Math.max(2, Math.round(c.clientHeight / 3));
+    if (!c.clientWidth) return; if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } gl.viewport(0, 0, w, h);
+    const p = this.p; gl.uniform2f(this.u.uRes, w, h); gl.uniform1f(this.u.uTime, (now - this.t0) / 1000); gl.uniform2f(this.u.uDrift, p.drift[0], p.drift[1]); gl.uniform1f(this.u.uCover, p.cover);
+    gl.uniform3f(this.u.uLit, ...p.lit); gl.uniform3f(this.u.uDark, ...p.dark); gl.uniform2f(this.u.uSun, p.sun[0], p.sun[1]); gl.uniform1f(this.u.uSunK, p.sunK);
+    gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  destroy() { this.stop(); this.io?.disconnect(); this.gl?.getExtension("WEBGL_lose_context")?.loseContext(); this.gl = null; }
+}
 class HAHomeHeaderCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=undefined;this._sig="";this._alertIndex=0;this._lastCycle=Date.now();this._mediaIndex=0;this._lastMediaCycle=Date.now();this._timer=undefined;this._filterTimer=undefined;this._filterSig="";this._filterMatches={};this._popupEl=null;this._popupCard=null;this._built=false;this._structureKey="";this._mediaSig=null;this._runwaySig=null;this._currentActiveAlert=null;this._currentMediaAlert=null;this._v3Bucket=null}
   connectedCallback(){if(!this._timer)this._timer=setInterval(()=>this._updateClock(),1000);if(!this._filterTimer)this._filterTimer=setInterval(()=>this._scanFilters(),15000);this._updateClock();this._scanFilters()}
@@ -83,13 +142,13 @@ class HAHomeHeaderCard extends HTMLElement{
   // Hoejden fordeles i "band" (78% delt over antal skyer) i stedet for rent
   // tilfaeldigt, saa skyerne rent faktisk spreder sig over flere hoejder i
   // stedet for at klumpe sig tilfaeldigt sammen i samme baand.
-  _v3Clouds(count,cloudClass,speed=1){let html="";const models=["v3-cloud-model-a","v3-cloud-model-b","v3-cloud-model-c"];const band=78/count;for(let i=0;i<count;i++){const top=(4+i*band+Math.random()*band*0.9).toFixed(1),scale=(0.36+Math.random()*0.8).toFixed(2),duration=Math.max(4,Math.round((65+Math.random()*95)*speed)),delay=-Math.round(Math.random()*duration),opacity=(0.45+Math.random()*0.42).toFixed(2),start=Math.round(1700+Math.random()*900),end=Math.round(-260-Math.random()*160),model=models[Math.floor(Math.random()*models.length)];html+=`<div class="v3-cloud ${cloudClass} ${model}" style="top:${top}%;--cloud-scale:${scale};--cloud-duration:${duration}s;--cloud-delay:${delay}s;--cloud-opacity:${opacity};--cloud-start:${start}px;--cloud-end:${end}px"></div>`}return html}
+  _v3Clouds(count,cloudClass,speed=1){if(this._skyCloudsOn())return"";let html="";const models=["v3-cloud-model-a","v3-cloud-model-b","v3-cloud-model-c"];const band=78/count;for(let i=0;i<count;i++){const top=(4+i*band+Math.random()*band*0.9).toFixed(1),scale=(0.36+Math.random()*0.8).toFixed(2),duration=Math.max(4,Math.round((65+Math.random()*95)*speed)),delay=-Math.round(Math.random()*duration),opacity=(0.45+Math.random()*0.42).toFixed(2),start=Math.round(1700+Math.random()*900),end=Math.round(-260-Math.random()*160),model=models[Math.floor(Math.random()*models.length)];html+=`<div class="v3-cloud ${cloudClass} ${model}" style="top:${top}%;--cloud-scale:${scale};--cloud-duration:${duration}s;--cloud-delay:${delay}s;--cloud-opacity:${opacity};--cloud-start:${start}px;--cloud-end:${end}px"></div>`}return html}
   _v3Effects(cat,tD){const isNight=tD==="night",theme=tD!=="day"?"twilight":"day",cloudClass=isNight?"v3-cloud-night":(tD!=="day"?"v3-cloud-twilight":""),stars=isNight?`<div class="v3-stars"><div class="v3-star-layer"></div><div class="v3-t-star v3-ts-1"></div><div class="v3-t-star v3-ts-2"></div><div class="v3-t-star v3-ts-3"></div></div>`:"",body=isNight?"moon":"sun",bodyTheme=isNight?"night":theme,celestialInner=`<div class="v3-${body}-aura-${bodyTheme} v3-celestial"></div><div class="v3-${body}-core-${bodyTheme} v3-celestial"></div>`;if(cat==="storm")return`<div class="v3-fx v3-storm-flash"></div><div class="v3-fx v3-storm-bolt"></div>`;if(cat==="snow")return`<div class="v3-fx v3-snow-1"></div><div class="v3-fx v3-snow-2"></div>`;if(cat==="rain")return`<div class="v3-fx v3-rain-1"></div><div class="v3-fx v3-rain-2"></div>`;if(cat==="partly")return`${stars}<div class="v3-fx">${celestialInner}${this._v3Clouds(Math.max(1,Math.round(6*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="cloudy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(11*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="fog")return`${stars}<div class="v3-fx"><div class="v3-fog-band v3-fog-1"></div><div class="v3-fog-band v3-fog-2"></div></div>`;if(cat==="windy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(7*this._v3CloudDensity())),cloudClass,.14*this._v3CloudSpeed())}<div class="v3-wind-stream v3-ws-1"></div><div class="v3-wind-stream v3-ws-2"></div><div class="v3-wind-stream v3-ws-3"></div></div>`;return`${stars}<div class="v3-fx">${celestialInner}</div>`}
   // weather_v3_bg=false springer selve himmel-gradienten over (og dens indre
   // skygge) men beholder alle bevaegelige effekter (sol/maane, skyer, regn,
   // sne osv), saa kortet holder sin normale moerke baggrund og kun "vejret"
   // spiller ovenpaa.
-  _v3Backdrop(cat,tD){if(this._config.show_weather_fx===false)return"";const bgHtml=this._config.weather_v3_bg===false?"":(()=>{const bgCat=cat==="windy"?"cloudy":cat,tK=tD==="night"?"night":(tD!=="day"?"twilight":"day"),bg=(V3_BG[bgCat]||V3_BG.sunny)[tK]||V3_BG.sunny.day,shadow=(V3_SHADOW[bgCat]||{})[tK]||"none";return`<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`})();return`${bgHtml}${this._v3Effects(cat,tD)}`}
+  _v3Backdrop(cat,tD){if(this._config.show_weather_fx===false)return"";const bgHtml=this._config.weather_v3_bg===false?"":(()=>{const bgCat=cat==="windy"?"cloudy":cat,tK=tD==="night"?"night":(tD!=="day"?"twilight":"day"),bg=(V3_BG[bgCat]||V3_BG.sunny)[tK]||V3_BG.sunny.day,shadow=(V3_SHADOW[bgCat]||{})[tK]||"none";return`<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`})();const skyOn=this._skyCloudsOn()&&cat!=="fog"&&cat!=="unknown",behind=["rain","snow","storm"].includes(cat);return`${bgHtml}${this._v3Effects(cat,tD)}${skyOn?`<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind?0:1};opacity:.92"></canvas>`:""}`}
   _mode(){const s=this._s(this._config.mode_entity);const m={"Hjemme":["mdi:home-heart","Hjemme"],"Ingen hjemme":["mdi:home-export-outline","Ingen hjemme"],Nat:["mdi:weather-night","Nat"],Stille:["mdi:volume-mute","Stille"],Gæster:["mdi:account-group","Gæster"],Ferie:["mdi:palm-tree","Ferie"]};return m[s]||["mdi:home-heart",s||"Hjemme"]}
   _updateClock(){const root=this.shadowRoot;if(!root)return;const now=new Date(),clock=root.querySelector(".clock"),date=root.querySelector(".date");if(clock)clock.textContent=now.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});if(date)date.textContent=now.toLocaleDateString("da-DK",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}).replace(".","");if(this._config.weather_style_v3===true){const bucket=`${this._v3Category()}|${this._v3TimeOfDay()}`;if(bucket!==this._v3Bucket){this._v3Bucket=bucket;this._render();return}}const alerts=this._alerts();let changed=false;if(Date.now()-this._lastCycle>(Number(this._config.cycle_seconds)||8)*1000&&alerts.length>1){this._alertIndex++;this._lastCycle=Date.now();changed=true}const mediaCount=alerts.filter(a=>a.media).length;if(Date.now()-this._lastMediaCycle>(Number(this._config.media_cycle_seconds)||8)*1000&&mediaCount>1){this._mediaIndex++;this._lastMediaCycle=Date.now();changed=true}if(changed){this._updateStatusGroup();this._updateMedia()}}
   _mediaSlotHtml(mediaAlert){const url=mediaAlert?this._snapshotUrl(mediaAlert.snapshot):"";return url?`<img class="snapshot" src="${this._esc(url)}" alt="">`:`<div class="media-icon"><ha-icon icon="${this._esc(mediaAlert?.icon||"mdi:bell-ring")}"></ha-icon></div>`}
@@ -127,4 +186,33 @@ class HAHomeHeaderCard extends HTMLElement{
   :host([home-unified]) .weather-fx{mask-image:linear-gradient(to bottom,#000 0%,#000 86%,transparent 100%)}
   </style><ha-card class="${cardClass}" style="--robot-icon-size:${robotSize}px;--robot-opacity:${robotOpacity}">${backdropHtml}<div class="runway"></div><div class="status-group${v3?" v3-active":""}"><ha-icon></ha-icon><div><span></span><strong></strong></div></div><div class="content"><button class="menu" title="Åbn sidemenu"><ha-icon icon="mdi:menu"></ha-icon></button>${(Array.isArray(this._config.quick_buttons)?this._config.quick_buttons:[]).slice(0,1).map((b,i)=>`<button class="menu quick" data-quick="${i}" title="${this._esc(b?.title||b?.name||"")}" aria-label="${this._esc(b?.title||b?.name||"")}"><ha-icon icon="${this._esc(b?.icon||"mdi:arrow-right")}"></ha-icon></button>`).join("")}<div class="time"><div class="date"></div><div class="clock"></div></div><div class="weather${weatherClass}"></div></div></ha-card>`;this._built=true;this._mediaSig=null;this._runwaySig=null;this.shadowRoot.querySelector(".menu")?.addEventListener("click",()=>this.dispatchEvent(new Event("hass-toggle-menu",{bubbles:true,composed:true})));this.shadowRoot.querySelectorAll(".menu.quick").forEach(el=>el.addEventListener("click",()=>{const b=(this._config.quick_buttons||[])[Number(el.dataset.quick)]||{};if(b.tap_action)this._runAction(b.tap_action);else this._navigate(b.navigation_path||b.path)}));this._bindPress(this.shadowRoot.querySelector(".status-group"),()=>this._alertTap(this._currentActiveAlert),()=>this._alertHold(this._currentActiveAlert))}this._updateRunway(activity);this._updateStatusGroup();this._updateMedia();this._updateClock()}
 }
+// The sky clouds (see V3SkyClouds): on with the V3 weather unless weather_v3_clouds is "css" or WebGL is missing; fed
+// from the weather entity's cloud cover and wind and the sun's elevation, the same way as the 3D house's sky.
+HAHomeHeaderCard.prototype._skyCloudsOn=function(){return this._config?.weather_style_v3===true&&this._config.show_weather_fx!==false&&this._config.weather_v3_clouds!=="css"&&V3SkyClouds.supported()};
+HAHomeHeaderCard.prototype._skyParams=function(){
+  const clamp=(v)=>Math.max(0,Math.min(1,v)),mix=(a,b,t)=>a.map((x,i)=>x+(b[i]-x)*t),hex=(h)=>[(h>>16&255)/255,(h>>8&255)/255,(h&255)/255];
+  const w=this._e(this._config.weather),a=w?.attributes||{},cond=String(w?.state||"").toLowerCase();
+  const condCloud=/pouring|rainy|snowy|hail|lightning|fog|cloudy$/.test(cond)&&!/partly/.test(cond)?1:/partly/.test(cond)?0.45:0;
+  const cc=Number(a.cloud_coverage),cover=Number.isFinite(cc)?clamp(cc/100):condCloud;
+  const el0=Number(this._e(this._config.sun_entity||"sun.sun")?.attributes?.elevation),el=Number.isFinite(el0)?el0:(cond==="clear-night"?-20:30);
+  const day=clamp((el+6)/14),dusk=clamp(1-Math.abs(el-2)/10)*day;
+  // At dusk the clouds stay lit warm and only darken towards night (the house's sky darkens with its own gradient).
+  const night=Math.pow(1-day,2);
+  const lit=mix(mix(hex(0xffffff),hex(0xffb48a),dusk*0.85),hex(0x2a3140),night);
+  const dark=mix(mix(mix(hex(0x8d96a0),hex(0x5a6270),Math.min(1,Math.max(0,cover-0.5)*1.6)),hex(0xb87a86),dusk*0.55),hex(0x0d1018),night);
+  const unit=String(a.wind_speed_unit||"km/h").toLowerCase();let ws=Number(a.wind_speed)||0;ws=unit.includes("km")?ws/3.6:unit.includes("mph")?ws*0.447:unit.includes("kn")?ws*0.514:ws;
+  const to=((Number.isFinite(Number(a.wind_bearing))?Number(a.wind_bearing):270)+180)*Math.PI/180,k=0.012+Math.min(20,ws)*0.006;
+  const still=this._config.animation===false||(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+  return{cover,drift:[Math.sin(to)*k,Math.cos(to)*k],lit,dark,sun:[0.97,0.86],sunK:day*(1-0.6*cover),still};
+};
+HAHomeHeaderCard.prototype._skyAttach=function(){
+  const canvas=this.shadowRoot?.querySelector("canvas.v3-skyclouds");
+  if(this._sky&&this._sky.canvas!==canvas){this._sky.destroy();this._sky=null}
+  if(canvas&&!this._sky){this._sky=new V3SkyClouds(canvas);if(this._sky.failed){this._sky=null;return}}
+  if(this._sky){this._sky.set(this._skyParams());this._sky.start()}
+};
+{const render=HAHomeHeaderCard.prototype._render;HAHomeHeaderCard.prototype._render=function(){render.call(this);this._skyAttach()};
+const clock=HAHomeHeaderCard.prototype._updateClock;HAHomeHeaderCard.prototype._updateClock=function(){clock.call(this);if(this._sky&&(this._skyTick=(this._skyTick||0)+1)%10===0)this._sky.set(this._skyParams())};
+const off=HAHomeHeaderCard.prototype.disconnectedCallback;HAHomeHeaderCard.prototype.disconnectedCallback=function(){off.call(this);this._sky?.destroy();this._sky=null};
+const on=HAHomeHeaderCard.prototype.connectedCallback;HAHomeHeaderCard.prototype.connectedCallback=function(){on.call(this);if(this._built)this._skyAttach()};}
 if(!customElements.get("ha-home-header-card"))customElements.define("ha-home-header-card",HAHomeHeaderCard);if(!customElements.get("ha-home-header-card-front"))customElements.define("ha-home-header-card-front",class HAHomeHeaderCardFront extends HAHomeHeaderCard{});window.customCards=window.customCards||[];window.customCards.push({type:"ha-home-header-card",name:"HA Home Header Card",description:"Samlet statusheader med vejr, alarmer og lokale vejreffekter",preview:true});console.info(`%c HA HOME HEADER CARD %c v${VERSION} `,"color:white;background:#357fc4;font-weight:700","color:#69c4ff;background:#161b22");

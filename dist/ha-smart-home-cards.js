@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.81 */
+/* MRDonnii Smart Home Cards v0.4.82 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -26893,6 +26893,133 @@ var V3_SHADOW = {
   storm: { day: "inset 0 0 50px rgba(0,0,0,.7)", twilight: "inset 0 0 50px rgba(0,0,0,.8)", night: "inset 0 0 50px rgba(0,0,0,.9)" }
 };
 var V3_CATEGORY = { sunny: "sunny", "clear-night": "sunny", cloudy: "cloudy", partlycloudy: "partly", rainy: "rain", pouring: "rain", snowy: "snow", "snowy-rainy": "snow", hail: "snow", fog: "fog", windy: "windy", "windy-variant": "windy", lightning: "storm", "lightning-rainy": "storm", exceptional: "unknown" };
+var V3SkyClouds = class _V3SkyClouds {
+  static supported() {
+    if (_V3SkyClouds._ok === void 0) {
+      try {
+        const c2 = document.createElement("canvas");
+        const gl = c2.getContext("webgl");
+        _V3SkyClouds._ok = Boolean(gl);
+        gl?.getExtension("WEBGL_lose_context")?.loseContext();
+      } catch {
+        _V3SkyClouds._ok = false;
+      }
+    }
+    return _V3SkyClouds._ok;
+  }
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.t0 = performance.now();
+    this.raf = 0;
+    this.last = 0;
+    this.visible = true;
+    this.p = { cover: 0.4, drift: [0.012, 4e-3], lit: [1, 1, 1], dark: [0.55, 0.59, 0.63], sun: [0.97, 0.86], sunK: 1, still: false };
+    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
+    if (!gl) {
+      this.failed = true;
+      return;
+    }
+    this.gl = gl;
+    const vs = "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+    const fs = `precision mediump float; uniform vec2 uRes; uniform float uTime; uniform vec2 uDrift; uniform float uCover; uniform vec3 uLit; uniform vec3 uDark; uniform vec2 uSun; uniform float uSunK;
+      float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+      float fbm(vec2 p){ float v = 0.0; float a = 0.5; for (int i = 0; i < 5; i++) { v += a * vn(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return v; }
+      void main(){
+        vec2 uv = gl_FragCoord.xy / uRes; float asp = uRes.x / uRes.y;
+        // A wide, low card: an even field of clouds about the card's height across (the 3D sky's dome perspective showed
+        // only a sliver between clouds here), slightly flattened like clouds seen at a slant.
+        vec2 q = vec2(uv.x * asp, uv.y * 1.6) * 0.95 + uDrift * uTime * 12.0;
+        float n = fbm(q) * 0.85 + fbm(q * 2.7 - uDrift * uTime * 6.0) * 0.15;
+        float edge = 1.0 - uCover; float dens = smoothstep(edge - 0.12, edge + 0.28, n); float shade = smoothstep(edge, edge + 0.55, n);
+        vec3 cc = mix(uLit, uDark, clamp(shade * (0.4 + 0.6 * uCover), 0.0, 1.0));
+        float s = exp(-length((uv - uSun) * vec2(asp, 1.0)) * 2.2) * uSunK; cc += vec3(1.0, 0.93, 0.8) * s * (1.0 - shade) * 0.45;
+        float a = clamp(dens * (0.55 + 0.45 * uCover), 0.0, 1.0);
+        gl_FragColor = vec4(cc * a, a);
+      }`;
+    const sh2 = (type, src) => {
+      const o = gl.createShader(type);
+      gl.shaderSource(o, src);
+      gl.compileShader(o);
+      return o;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh2(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, sh2(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      this.failed = true;
+      return;
+    }
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    this.u = Object.fromEntries(["uRes", "uTime", "uDrift", "uCover", "uLit", "uDark", "uSun", "uSunK"].map((k) => [k, gl.getUniformLocation(prog, k)]));
+    gl.clearColor(0, 0, 0, 0);
+    this.io = typeof IntersectionObserver === "function" ? new IntersectionObserver((e) => {
+      this.visible = e.some((x) => x.isIntersecting);
+      if (this.visible) this.start();
+      else this.stop();
+    }) : null;
+    this.io?.observe(canvas);
+  }
+  set(p) {
+    Object.assign(this.p, p);
+    if (this.p.still) this.draw();
+  }
+  start() {
+    if (this.failed || this.raf || !this.visible) return;
+    if (this.p.still) {
+      this.draw();
+      return;
+    }
+    const loop = (now) => {
+      this.raf = requestAnimationFrame(loop);
+      if (document.hidden || now - this.last < 48) return;
+      this.last = now;
+      this.draw(now);
+    };
+    this.raf = requestAnimationFrame(loop);
+  }
+  stop() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+  }
+  draw(now = performance.now()) {
+    const gl = this.gl;
+    if (!gl) return;
+    const c2 = this.canvas;
+    const w = Math.max(2, Math.round(c2.clientWidth / 3));
+    const h = Math.max(2, Math.round(c2.clientHeight / 3));
+    if (!c2.clientWidth) return;
+    if (c2.width !== w || c2.height !== h) {
+      c2.width = w;
+      c2.height = h;
+    }
+    gl.viewport(0, 0, w, h);
+    const p = this.p;
+    gl.uniform2f(this.u.uRes, w, h);
+    gl.uniform1f(this.u.uTime, (now - this.t0) / 1e3);
+    gl.uniform2f(this.u.uDrift, p.drift[0], p.drift[1]);
+    gl.uniform1f(this.u.uCover, p.cover);
+    gl.uniform3f(this.u.uLit, ...p.lit);
+    gl.uniform3f(this.u.uDark, ...p.dark);
+    gl.uniform2f(this.u.uSun, p.sun[0], p.sun[1]);
+    gl.uniform1f(this.u.uSunK, p.sunK);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  destroy() {
+    this.stop();
+    this.io?.disconnect();
+    this.gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    this.gl = null;
+  }
+};
 var HAHomeHeaderCard = class extends HTMLElement {
   constructor() {
     super();
@@ -27168,6 +27295,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
   // tilfaeldigt, saa skyerne rent faktisk spreder sig over flere hoejder i
   // stedet for at klumpe sig tilfaeldigt sammen i samme baand.
   _v3Clouds(count, cloudClass, speed = 1) {
+    if (this._skyCloudsOn()) return "";
     let html = "";
     const models = ["v3-cloud-model-a", "v3-cloud-model-b", "v3-cloud-model-c"];
     const band = 78 / count;
@@ -27198,7 +27326,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
       const bgCat = cat === "windy" ? "cloudy" : cat, tK = tD === "night" ? "night" : tD !== "day" ? "twilight" : "day", bg = (V3_BG[bgCat] || V3_BG.sunny)[tK] || V3_BG.sunny.day, shadow = (V3_SHADOW[bgCat] || {})[tK] || "none";
       return `<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`;
     })();
-    return `${bgHtml}${this._v3Effects(cat, tD)}`;
+    const skyOn = this._skyCloudsOn() && cat !== "fog" && cat !== "unknown", behind = ["rain", "snow", "storm"].includes(cat);
+    return `${bgHtml}${this._v3Effects(cat, tD)}${skyOn ? `<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind ? 0 : 1};opacity:.92"></canvas>` : ""}`;
   }
   _mode() {
     const s = this._s(this._config.mode_entity);
@@ -27523,6 +27652,67 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._updateClock();
   }
 };
+HAHomeHeaderCard.prototype._skyCloudsOn = function() {
+  return this._config?.weather_style_v3 === true && this._config.show_weather_fx !== false && this._config.weather_v3_clouds !== "css" && V3SkyClouds.supported();
+};
+HAHomeHeaderCard.prototype._skyParams = function() {
+  const clamp5 = (v) => Math.max(0, Math.min(1, v)), mix = (a2, b, t) => a2.map((x, i) => x + (b[i] - x) * t), hex = (h) => [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255];
+  const w = this._e(this._config.weather), a = w?.attributes || {}, cond = String(w?.state || "").toLowerCase();
+  const condCloud = /pouring|rainy|snowy|hail|lightning|fog|cloudy$/.test(cond) && !/partly/.test(cond) ? 1 : /partly/.test(cond) ? 0.45 : 0;
+  const cc = Number(a.cloud_coverage), cover = Number.isFinite(cc) ? clamp5(cc / 100) : condCloud;
+  const el0 = Number(this._e(this._config.sun_entity || "sun.sun")?.attributes?.elevation), el = Number.isFinite(el0) ? el0 : cond === "clear-night" ? -20 : 30;
+  const day = clamp5((el + 6) / 14), dusk = clamp5(1 - Math.abs(el - 2) / 10) * day;
+  const night = Math.pow(1 - day, 2);
+  const lit = mix(mix(hex(16777215), hex(16757898), dusk * 0.85), hex(2765120), night);
+  const dark = mix(mix(mix(hex(9279136), hex(5923440), Math.min(1, Math.max(0, cover - 0.5) * 1.6)), hex(12089990), dusk * 0.55), hex(856088), night);
+  const unit = String(a.wind_speed_unit || "km/h").toLowerCase();
+  let ws = Number(a.wind_speed) || 0;
+  ws = unit.includes("km") ? ws / 3.6 : unit.includes("mph") ? ws * 0.447 : unit.includes("kn") ? ws * 0.514 : ws;
+  const to = ((Number.isFinite(Number(a.wind_bearing)) ? Number(a.wind_bearing) : 270) + 180) * Math.PI / 180, k = 0.012 + Math.min(20, ws) * 6e-3;
+  const still = this._config.animation === false || typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: day * (1 - 0.6 * cover), still };
+};
+HAHomeHeaderCard.prototype._skyAttach = function() {
+  const canvas = this.shadowRoot?.querySelector("canvas.v3-skyclouds");
+  if (this._sky && this._sky.canvas !== canvas) {
+    this._sky.destroy();
+    this._sky = null;
+  }
+  if (canvas && !this._sky) {
+    this._sky = new V3SkyClouds(canvas);
+    if (this._sky.failed) {
+      this._sky = null;
+      return;
+    }
+  }
+  if (this._sky) {
+    this._sky.set(this._skyParams());
+    this._sky.start();
+  }
+};
+{
+  const render = HAHomeHeaderCard.prototype._render;
+  HAHomeHeaderCard.prototype._render = function() {
+    render.call(this);
+    this._skyAttach();
+  };
+  const clock = HAHomeHeaderCard.prototype._updateClock;
+  HAHomeHeaderCard.prototype._updateClock = function() {
+    clock.call(this);
+    if (this._sky && (this._skyTick = (this._skyTick || 0) + 1) % 10 === 0) this._sky.set(this._skyParams());
+  };
+  const off = HAHomeHeaderCard.prototype.disconnectedCallback;
+  HAHomeHeaderCard.prototype.disconnectedCallback = function() {
+    off.call(this);
+    this._sky?.destroy();
+    this._sky = null;
+  };
+  const on = HAHomeHeaderCard.prototype.connectedCallback;
+  HAHomeHeaderCard.prototype.connectedCallback = function() {
+    on.call(this);
+    if (this._built) this._skyAttach();
+  };
+}
 if (!customElements.get("ha-home-header-card")) customElements.define("ha-home-header-card", HAHomeHeaderCard);
 if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-home-header-card-front", class HAHomeHeaderCardFront extends HAHomeHeaderCard {
 });
