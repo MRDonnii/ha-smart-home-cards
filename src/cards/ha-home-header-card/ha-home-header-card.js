@@ -1,6 +1,6 @@
 import "./ha-card-list-editor.js?v=0.8.52";
 import{fillAlertText,isFilterRule,matchSignature,ruleHeld,ruleKey,scanRuleMatches}from"../shared/alert-rules.js";
-const VERSION="0.8.63";
+const VERSION="0.8.66";
 
 // Vejr-baggrund "V3": port af AnasBox' "Animated Weather Card V3" (button-card)
 // til dette kort som et ALTERNATIVT baggrundslag, slaaet fra som standard.
@@ -42,7 +42,7 @@ class V3SkyClouds {
     const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
     if (!gl) { this.failed = true; return; } this.gl = gl;
     const vs = "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
-    const fs = `precision mediump float; uniform vec2 uRes; uniform float uTime; uniform vec2 uDrift; uniform float uCover; uniform vec3 uLit; uniform vec3 uDark; uniform vec2 uSun; uniform float uSunK;
+    const fs = `precision mediump float; uniform vec2 uRes; uniform float uTime; uniform vec2 uDrift; uniform float uCover; uniform vec3 uLit; uniform vec3 uDark; uniform vec2 uSun; uniform float uSunK; uniform float uMist;
       float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vn(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
       float fbm(vec2 p){ float v = 0.0; float a = 0.5; for (int i = 0; i < 5; i++) { v += a * vn(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return v; }
@@ -50,12 +50,15 @@ class V3SkyClouds {
         vec2 uv = gl_FragCoord.xy / uRes; float asp = uRes.x / uRes.y;
         // A wide, low card: an even field of clouds about the card's height across (the 3D sky's dome perspective showed
         // only a sliver between clouds here), slightly flattened like clouds seen at a slant.
-        vec2 q = vec2(uv.x * asp, uv.y * 1.6) * 0.95 + uDrift * uTime * 12.0;
+        // Fog (uMist): long, low banks of mist drifting past, thickest near the ground.
+        vec2 q = vec2(uv.x * asp, uv.y * mix(1.6, 5.0, uMist)) * mix(0.95, 0.6, uMist) + uDrift * uTime * mix(12.0, 7.0, uMist);
         float n = fbm(q) * 0.85 + fbm(q * 2.7 - uDrift * uTime * 6.0) * 0.15;
         float edge = 1.0 - uCover; float dens = smoothstep(edge - 0.12, edge + 0.28, n); float shade = smoothstep(edge, edge + 0.55, n);
         vec3 cc = mix(uLit, uDark, clamp(shade * (0.4 + 0.6 * uCover), 0.0, 1.0));
         float s = exp(-length((uv - uSun) * vec2(asp, 1.0)) * 2.2) * uSunK; cc += vec3(1.0, 0.93, 0.8) * s * (1.0 - shade) * 0.45;
         float a = clamp(dens * (0.55 + 0.45 * uCover), 0.0, 1.0);
+        float ma = clamp((0.22 + 0.78 * smoothstep(0.3, 0.78, n)) * (0.3 + 0.7 * (1.0 - uv.y)), 0.0, 1.0) * 0.82;
+        cc = mix(cc, mix(uLit, uDark, 0.3), uMist); a = mix(a, ma, uMist);
         gl_FragColor = vec4(cc * a, a);
       }`;
     const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
@@ -63,7 +66,7 @@ class V3SkyClouds {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { this.failed = true; return; }
     gl.useProgram(prog); const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    this.u = Object.fromEntries(["uRes", "uTime", "uDrift", "uCover", "uLit", "uDark", "uSun", "uSunK"].map((k) => [k, gl.getUniformLocation(prog, k)]));
+    this.u = Object.fromEntries(["uRes", "uTime", "uDrift", "uCover", "uLit", "uDark", "uSun", "uSunK", "uMist"].map((k) => [k, gl.getUniformLocation(prog, k)]));
     gl.clearColor(0, 0, 0, 0);
     this.io = typeof IntersectionObserver === "function" ? new IntersectionObserver((e) => { this.visible = e.some((x) => x.isIntersecting); if (this.visible) this.start(); else this.stop(); }) : null; this.io?.observe(canvas);
   }
@@ -79,10 +82,114 @@ class V3SkyClouds {
     const gl = this.gl; if (!gl) return; const c = this.canvas; const w = Math.max(2, Math.round(c.clientWidth / 3)); const h = Math.max(2, Math.round(c.clientHeight / 3));
     if (!c.clientWidth) return; if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } gl.viewport(0, 0, w, h);
     const p = this.p; gl.uniform2f(this.u.uRes, w, h); gl.uniform1f(this.u.uTime, (now - this.t0) / 1000); gl.uniform2f(this.u.uDrift, p.drift[0], p.drift[1]); gl.uniform1f(this.u.uCover, p.cover);
-    gl.uniform3f(this.u.uLit, ...p.lit); gl.uniform3f(this.u.uDark, ...p.dark); gl.uniform2f(this.u.uSun, p.sun[0], p.sun[1]); gl.uniform1f(this.u.uSunK, p.sunK);
+    gl.uniform3f(this.u.uLit, ...p.lit); gl.uniform3f(this.u.uDark, ...p.dark); gl.uniform2f(this.u.uSun, p.sun[0], p.sun[1]); gl.uniform1f(this.u.uSunK, p.sunK); gl.uniform1f(this.u.uMist, p.mist || 0);
     gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   destroy() { this.stop(); this.io?.disconnect(); this.gl?.getExtension("WEBGL_lose_context")?.loseContext(); this.gl = null; }
+}
+// Stars and the moon (Claude AI, 2026-10-08; user: "Hvad med stjerner og de ting?"): the drawn star pattern (a fixed
+// grid of equal dots, three of them twinkling) becomes a sky of crisp stars of different brightness and a faint tint, each
+// twinkling on its own, the brightest with a soft glow; they come out one by one in the dusk, only where the sky is
+// open (behind the drifting clouds, none in fog, rain or snow), and now and then a shooting star crosses. The moon is
+// drawn in its real phase and only while it is above the horizon (computed for the home location), with its seas and
+// the faint earthshine on its dark side; by day it can stand pale in a clear sky. It sits in the free space next to the
+// weather; where the card has none, the drawn moon stays. About 14 frames a second (30 during a shooting star), off
+// screen or with the page hidden none; with `animation: false` or reduced motion the sky stands still.
+// weather_v3_stars: css keeps the drawn stars and moon.
+function v3Smooth(a, b, x) { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+// The moon's altitude, lit fraction and phase (0 new, 0.5 full) after the low-precision formulas of Astronomical
+// Algorithms (as in suncalc), good to well under a degree.
+function v3Moon(date, lat, lng) {
+  const R = Math.PI / 180, d = date.valueOf() / 86400000 - 0.5 + 2440588 - 2451545, e = R * 23.4397;
+  const ra = (l, b) => Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));
+  const dec = (l, b) => Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l));
+  const M = R * (357.5291 + 0.98560028 * d), L = M + R * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + R * 102.9372 + Math.PI;
+  const sDec = dec(L, 0), sRa = ra(L, 0);
+  const Mm = R * (134.963 + 13.064993 * d), l = R * (218.316 + 13.176396 * d) + R * 6.289 * Math.sin(Mm), b = R * 5.128 * Math.sin(R * (93.272 + 13.22935 * d)), dist = 385001 - 20905 * Math.cos(Mm);
+  const mRa = ra(l, b), mDec = dec(l, b), H = R * (280.16 + 360.9856235 * d) + R * lng - mRa, phi = R * lat;
+  const alt = Math.asin(Math.sin(phi) * Math.sin(mDec) + Math.cos(phi) * Math.cos(mDec) * Math.cos(H));
+  const ph = Math.acos(Math.sin(sDec) * Math.sin(mDec) + Math.cos(sDec) * Math.cos(mDec) * Math.cos(sRa - mRa)), inc = Math.atan2(149598000 * Math.sin(ph), dist - 149598000 * Math.cos(ph));
+  const angle = Math.atan2(Math.cos(sDec) * Math.sin(sRa - mRa), Math.sin(sDec) * Math.cos(mDec) - Math.cos(sDec) * Math.sin(mDec) * Math.cos(sRa - mRa));
+  return { alt: alt / R, fraction: (1 + Math.cos(inc)) / 2, phase: 0.5 + (0.5 * inc * (angle < 0 ? -1 : 1)) / Math.PI };
+}
+// The seas on the moon's near side (x, y, radius as parts of the moon's radius; north up).
+const V3_MARIA = [[-0.36, -0.36, 0.27], [0.17, -0.35, 0.17], [0.3, -0.04, 0.2], [-0.56, 0.02, 0.32], [0.64, -0.22, 0.1], [-0.16, 0.4, 0.19], [0.5, 0.21, 0.13], [-0.02, 0.07, 0.1]];
+class V3NightSky {
+  constructor(canvas) {
+    this.canvas = canvas; this.ctx = canvas.getContext("2d"); this.raf = 0; this.last = 0; this.lastT = 0; this.visible = true; this.key = ""; this.moonKey = "";
+    this.stars = []; this.meteor = null; this.nextMeteor = 0; this.p = { starK: 0, moon: null, still: false };
+    const glow = document.createElement("canvas"); glow.width = glow.height = 32; const g = glow.getContext("2d"); const rg = g.createRadialGradient(16, 16, 0, 16, 16, 16); rg.addColorStop(0, "rgba(255,255,255,0.9)"); rg.addColorStop(0.35, "rgba(220,230,255,0.25)"); rg.addColorStop(1, "rgba(220,230,255,0)"); g.fillStyle = rg; g.fillRect(0, 0, 32, 32); this.glow = glow;
+    this.io = typeof IntersectionObserver === "function" ? new IntersectionObserver((e) => { this.visible = e.some((x) => x.isIntersecting); if (this.visible) this.start(); else this.stop(); }) : null; this.io?.observe(canvas);
+    this.ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => { this.key = ""; if (this.onLayout) this.onLayout(); else { this.stop(); this.start(); } }) : null; this.ro?.observe(canvas);
+  }
+  set(p) { Object.assign(this.p, p); this.stop(); this.start(); }
+  _build() {
+    const c = this.canvas; const w = c.clientWidth; const h = c.clientHeight; if (!w || !h) return false;
+    const dpr = Math.min(2, window.devicePixelRatio || 1); const key = `${w}x${h}@${dpr}`; if (key === this.key) return true; this.key = key; this.moonKey = "";
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); this.w = w; this.h = h; this.dpr = dpr;
+    // The same sky every time (seeded), so a re-render does not move the stars. Mostly faint stars, a few bright ones.
+    let seed = (w * 7919 + 104729) >>> 0; const rnd = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const tints = ["255,255,255", "255,255,255", "214,226,255", "255,240,218", "255,224,196"];
+    this.stars = Array.from({ length: Math.round(Math.min(170, (w * h) / 2200)) }, () => { const b = Math.pow(rnd(), 2.4); return { x: rnd() * w, y: Math.pow(rnd(), 1.2) * h * 0.86, b: 0.22 + b * 0.78, r: 0.45 + b * 0.95, fill: `rgb(${tints[Math.floor(rnd() * tints.length)]})`, tw: 0.12 + rnd() * 0.3, sp: 0.6 + rnd() * 1.8, ph: rnd() * 6.283 }; });
+    return true;
+  }
+  _moonSprite() {
+    const m = this.p.moon; if (!m) return;
+    const key = `${m.r}|${Math.round(m.phase * 400)}|${m.night ? 1 : 0}|${m.south ? 1 : 0}|${this.dpr}`; if (key === this.moonKey && this.moonImg) return; this.moonKey = key;
+    const r = m.r; const G = Math.ceil(r * (m.night ? 4 : 1.2)); const dpr = this.dpr; const c = document.createElement("canvas"); c.width = c.height = Math.ceil(G * 2 * dpr);
+    const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (m.night) {
+      const halo = g.createRadialGradient(G, G, r * 0.8, G, G, G); halo.addColorStop(0, `rgba(200,216,255,${(0.3 * Math.sqrt(m.fraction)).toFixed(3)})`); halo.addColorStop(1, "rgba(200,216,255,0)"); g.fillStyle = halo; g.fillRect(0, 0, G * 2, G * 2);
+      g.beginPath(); g.arc(G, G, r, 0, 6.283); g.fillStyle = "rgba(110,124,156,0.3)"; g.fill();
+    }
+    // The lit part: the half towards the sun (right while waxing, seen from the north) and the terminator's half-ellipse.
+    g.translate(G, G); if (m.south) g.rotate(Math.PI);
+    const k = Math.cos(2 * Math.PI * m.phase); const s = m.phase < 0.5 ? 1 : -1; const bulgeRight = (s > 0) === (k > 0);
+    g.beginPath(); g.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, s < 0); g.ellipse(0, 0, Math.max(0.01, r * Math.abs(k)), r, 0, Math.PI / 2, -Math.PI / 2, bulgeRight); g.closePath();
+    const body = g.createRadialGradient(-r * 0.25, -r * 0.3, r * 0.1, 0, 0, r); body.addColorStop(0, "#fdfbf4"); body.addColorStop(0.65, "#e9e7df"); body.addColorStop(1, "#c4c7ce");
+    g.fillStyle = body; g.fill(); g.clip(); g.filter = "blur(0.8px)"; g.fillStyle = "rgba(112,120,136,0.34)";
+    for (const [x, y, mr] of V3_MARIA) { g.beginPath(); g.arc(x * r, y * r, mr * r, 0, 6.283); g.fill(); }
+    this.moonImg = c; this.moonG = G;
+  }
+  start() {
+    if (this.raf || !this.visible || !this._build()) return; this._moonSprite();
+    if (this.p.still || this.p.starK <= 0.01) { this._paint(performance.now()); return; }
+    const loop = (now) => { this.raf = requestAnimationFrame(loop); if (document.hidden || (this.last && now - this.last < (this.meteor ? 31 : 68))) return; this.last = now; this._paint(now); };
+    this.raf = requestAnimationFrame(loop);
+  }
+  stop() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; this.last = 0; this.lastT = 0; }
+  _paint(now) {
+    const ctx = this.ctx; const { w, h, dpr } = this; if (!ctx || !w) return;
+    const dt = this.lastT ? Math.min(0.1, (now - this.lastT) / 1000) : 0; this.lastT = now; const t = now / 1000; const k = this.p.starK; const still = this.p.still;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    if (k > 0.01) for (const st of this.stars) {
+      // The brightest stars show first in the dusk and through thin cloud, the faint ones only in a dark, open sky.
+      const vis = v3Smooth(1 - st.b - 0.08, 1 - st.b + 0.22, k); if (vis <= 0) continue;
+      const a = st.b * vis * (1 - st.tw * (still ? 0.5 : 0.5 + 0.5 * Math.sin(t * st.sp + st.ph)));
+      const x = (Math.round(st.x * dpr) + 0.5) / dpr; const y = (Math.round(st.y * dpr) + 0.5) / dpr;
+      if (st.b > 0.72) { ctx.globalAlpha = a * 0.32; ctx.drawImage(this.glow, x - st.r * 5, y - st.r * 5, st.r * 10, st.r * 10); }
+      ctx.globalAlpha = a; ctx.fillStyle = st.fill; ctx.beginPath(); ctx.arc(x, y, st.r, 0, 6.283); ctx.fill();
+      if (st.b > 0.92) { const L = st.r * 5; ctx.globalAlpha = a * 0.28; ctx.strokeStyle = st.fill; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke(); }
+    }
+    const m = this.p.moon; if (m && this.moonImg && m.k > 0.01) { ctx.globalAlpha = m.k; ctx.drawImage(this.moonImg, m.x - this.moonG, m.y - this.moonG, this.moonG * 2, this.moonG * 2); }
+    // Now and then a shooting star in a dark, open sky: a quick bright streak with a fading tail.
+    if (this.meteor) {
+      const me = this.meteor; me.age += dt; const q = me.age / me.life;
+      if (q >= 1) this.meteor = null;
+      else { const hx = me.x + me.vx * me.age; const hy = me.y + me.vy * me.age; const tail = me.len * Math.min(1, q * 3); const tx = hx - (me.vx / me.v) * tail; const ty = hy - (me.vy / me.v) * tail;
+        const gr = ctx.createLinearGradient(hx, hy, tx, ty); gr.addColorStop(0, "rgba(255,255,255,0.95)"); gr.addColorStop(1, "rgba(220,232,255,0)");
+        ctx.globalAlpha = (q < 0.15 ? q / 0.15 : 1 - (q - 0.15) / 0.85) * k; ctx.strokeStyle = gr; ctx.lineWidth = 1.3; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(tx, ty); ctx.stroke(); ctx.lineCap = "butt"; }
+    } else if (!still && k > 0.55) {
+      if (!this.nextMeteor) this.nextMeteor = now + 8000 + Math.random() * 25000;
+      else if (now >= this.nextMeteor) {
+        const dir = Math.random() < 0.5 ? 1 : -1; const ang = (18 + Math.random() * 22) * Math.PI / 180; const v = 420 + Math.random() * 260;
+        this.meteor = { x: w * (0.1 + Math.random() * 0.8), y: Math.random() * h * 0.3, vx: dir * v * Math.cos(ang), vy: v * Math.sin(ang), v, len: 70 + Math.random() * 60, life: 0.45 + Math.random() * 0.4, age: 0 };
+        this.nextMeteor = now + 30000 + Math.random() * 60000;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  destroy() { this.stop(); this.io?.disconnect(); this.ro?.disconnect(); }
 }
 // Rain, snow, hail, sleet, wind and lightning as in HA Smartdash's weather overlay (Claude AI, 2026-10-08; user: "Er der
 // flere vejr forhold der er lækre og flottere fra HA smartdash end det vi har i mit header kort? hvis ja så skal det
@@ -273,12 +380,12 @@ class HAHomeHeaderCard extends HTMLElement{
   // tilfaeldigt, saa skyerne rent faktisk spreder sig over flere hoejder i
   // stedet for at klumpe sig tilfaeldigt sammen i samme baand.
   _v3Clouds(count,cloudClass,speed=1){if(this._skyCloudsOn())return"";let html="";const models=["v3-cloud-model-a","v3-cloud-model-b","v3-cloud-model-c"];const band=78/count;for(let i=0;i<count;i++){const top=(4+i*band+Math.random()*band*0.9).toFixed(1),scale=(0.36+Math.random()*0.8).toFixed(2),duration=Math.max(4,Math.round((65+Math.random()*95)*speed)),delay=-Math.round(Math.random()*duration),opacity=(0.45+Math.random()*0.42).toFixed(2),start=Math.round(1700+Math.random()*900),end=Math.round(-260-Math.random()*160),model=models[Math.floor(Math.random()*models.length)];html+=`<div class="v3-cloud ${cloudClass} ${model}" style="top:${top}%;--cloud-scale:${scale};--cloud-duration:${duration}s;--cloud-delay:${delay}s;--cloud-opacity:${opacity};--cloud-start:${start}px;--cloud-end:${end}px"></div>`}return html}
-  _v3Effects(cat,tD){const isNight=tD==="night",theme=tD!=="day"?"twilight":"day",cloudClass=isNight?"v3-cloud-night":(tD!=="day"?"v3-cloud-twilight":""),stars=isNight?`<div class="v3-stars"><div class="v3-star-layer"></div><div class="v3-t-star v3-ts-1"></div><div class="v3-t-star v3-ts-2"></div><div class="v3-t-star v3-ts-3"></div></div>`:"",body=isNight?"moon":"sun",bodyTheme=isNight?"night":theme,celestialInner=`<div class="v3-${body}-aura-${bodyTheme} v3-celestial"></div><div class="v3-${body}-core-${bodyTheme} v3-celestial"></div>`;const fxOn=this._fxParticlesOn();if(fxOn&&(cat==="storm"||cat==="snow"||cat==="rain"))return"";if(cat==="storm")return`<div class="v3-fx v3-storm-flash"></div><div class="v3-fx v3-storm-bolt"></div>`;if(cat==="snow")return`<div class="v3-fx v3-snow-1"></div><div class="v3-fx v3-snow-2"></div>`;if(cat==="rain")return`<div class="v3-fx v3-rain-1"></div><div class="v3-fx v3-rain-2"></div>`;if(cat==="partly")return`${stars}<div class="v3-fx">${celestialInner}${this._v3Clouds(Math.max(1,Math.round(6*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="cloudy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(11*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="fog")return`${stars}<div class="v3-fx"><div class="v3-fog-band v3-fog-1"></div><div class="v3-fog-band v3-fog-2"></div></div>`;if(cat==="windy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(7*this._v3CloudDensity())),cloudClass,.14*this._v3CloudSpeed())}${fxOn?"":`<div class="v3-wind-stream v3-ws-1"></div><div class="v3-wind-stream v3-ws-2"></div><div class="v3-wind-stream v3-ws-3"></div>`}</div>`;return`${stars}<div class="v3-fx">${celestialInner}</div>`}
+  _v3Effects(cat,tD){const isNight=tD==="night",theme=tD!=="day"?"twilight":"day",cloudClass=isNight?"v3-cloud-night":(tD!=="day"?"v3-cloud-twilight":""),stars=isNight&&!this._nightSkyOn()?`<div class="v3-stars"><div class="v3-star-layer"></div><div class="v3-t-star v3-ts-1"></div><div class="v3-t-star v3-ts-2"></div><div class="v3-t-star v3-ts-3"></div></div>`:"",body=isNight?"moon":"sun",bodyTheme=isNight?"night":theme,celestialInner=`<div class="v3-${body}-aura-${bodyTheme} v3-celestial"></div><div class="v3-${body}-core-${bodyTheme} v3-celestial"></div>`;const fxOn=this._fxParticlesOn();if(fxOn&&(cat==="storm"||cat==="snow"||cat==="rain"))return"";if(cat==="storm")return`<div class="v3-fx v3-storm-flash"></div><div class="v3-fx v3-storm-bolt"></div>`;if(cat==="snow")return`<div class="v3-fx v3-snow-1"></div><div class="v3-fx v3-snow-2"></div>`;if(cat==="rain")return`<div class="v3-fx v3-rain-1"></div><div class="v3-fx v3-rain-2"></div>`;if(cat==="partly")return`${stars}<div class="v3-fx">${celestialInner}${this._v3Clouds(Math.max(1,Math.round(6*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="cloudy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(11*this._v3CloudDensity())),cloudClass,this._v3CloudSpeed())}</div>`;if(cat==="fog"&&this._skyCloudsOn())return"";if(cat==="fog")return`${stars}<div class="v3-fx"><div class="v3-fog-band v3-fog-1"></div><div class="v3-fog-band v3-fog-2"></div></div>`;if(cat==="windy")return`${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2,Math.round(7*this._v3CloudDensity())),cloudClass,.14*this._v3CloudSpeed())}${fxOn?"":`<div class="v3-wind-stream v3-ws-1"></div><div class="v3-wind-stream v3-ws-2"></div><div class="v3-wind-stream v3-ws-3"></div>`}</div>`;return`${stars}<div class="v3-fx">${celestialInner}</div>`}
   // weather_v3_bg=false springer selve himmel-gradienten over (og dens indre
   // skygge) men beholder alle bevaegelige effekter (sol/maane, skyer, regn,
   // sne osv), saa kortet holder sin normale moerke baggrund og kun "vejret"
   // spiller ovenpaa.
-  _v3Backdrop(cat,tD){if(this._config.show_weather_fx===false)return"";const bgHtml=this._config.weather_v3_bg===false?"":(()=>{const bgCat=cat==="windy"?"cloudy":cat,tK=tD==="night"?"night":(tD!=="day"?"twilight":"day"),bg=(V3_BG[bgCat]||V3_BG.sunny)[tK]||V3_BG.sunny.day,shadow=(V3_SHADOW[bgCat]||{})[tK]||"none";return`<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`})();const skyOn=this._skyCloudsOn()&&cat!=="fog"&&cat!=="unknown",behind=["rain","snow","storm"].includes(cat);return`${bgHtml}${this._v3Effects(cat,tD)}${skyOn?`<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind?0:1};opacity:.92"></canvas>`:""}${this._fxParticlesOn()&&(V3_PARTICLE_FX[this._condition()]||this._config.snow_ground_entity||this._config.snow_depth_entity)?`<canvas class="v3-particles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>`:""}`}
+  _v3Backdrop(cat,tD){if(this._config.show_weather_fx===false)return"";const bgHtml=this._config.weather_v3_bg===false?"":(()=>{const bgCat=cat==="windy"?"cloudy":cat,tK=tD==="night"?"night":(tD!=="day"?"twilight":"day"),bg=(V3_BG[bgCat]||V3_BG.sunny)[tK]||V3_BG.sunny.day,shadow=(V3_SHADOW[bgCat]||{})[tK]||"none";return`<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`})();const skyOn=this._skyCloudsOn()&&cat!=="unknown",behind=["rain","snow","storm"].includes(cat);return`${bgHtml}${this._nightSkyOn()?`<canvas class="v3-nightsky" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>`:""}${this._v3Effects(cat,tD)}${skyOn?`<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind?0:1};opacity:.92"></canvas>`:""}${this._fxParticlesOn()&&(V3_PARTICLE_FX[this._condition()]||this._config.snow_ground_entity||this._config.snow_depth_entity)?`<canvas class="v3-particles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>`:""}`}
   _mode(){const s=this._s(this._config.mode_entity);const m={"Hjemme":["mdi:home-heart","Hjemme"],"Ingen hjemme":["mdi:home-export-outline","Ingen hjemme"],Nat:["mdi:weather-night","Nat"],Stille:["mdi:volume-mute","Stille"],Gæster:["mdi:account-group","Gæster"],Ferie:["mdi:palm-tree","Ferie"]};return m[s]||["mdi:home-heart",s||"Hjemme"]}
   _updateClock(){const root=this.shadowRoot;if(!root)return;const now=new Date(),clock=root.querySelector(".clock"),date=root.querySelector(".date");if(clock)clock.textContent=now.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});if(date)date.textContent=now.toLocaleDateString("da-DK",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}).replace(".","");if(this._config.weather_style_v3===true){const bucket=`${this._v3Category()}|${this._v3TimeOfDay()}`;if(bucket!==this._v3Bucket){this._v3Bucket=bucket;this._render();return}}const alerts=this._alerts();let changed=false;if(Date.now()-this._lastCycle>(Number(this._config.cycle_seconds)||8)*1000&&alerts.length>1){this._alertIndex++;this._lastCycle=Date.now();changed=true}const mediaCount=alerts.filter(a=>a.media).length;if(Date.now()-this._lastMediaCycle>(Number(this._config.media_cycle_seconds)||8)*1000&&mediaCount>1){this._mediaIndex++;this._lastMediaCycle=Date.now();changed=true}if(changed){this._updateStatusGroup();this._updateMedia()}}
   _mediaSlotHtml(mediaAlert){const url=mediaAlert?this._snapshotUrl(mediaAlert.snapshot):"";return url?`<img class="snapshot" src="${this._esc(url)}" alt="">`:`<div class="media-icon"><ha-icon icon="${this._esc(mediaAlert?.icon||"mdi:bell-ring")}"></ha-icon></div>`}
@@ -333,7 +440,38 @@ HAHomeHeaderCard.prototype._skyParams=function(){
   const unit=String(a.wind_speed_unit||"km/h").toLowerCase();let ws=Number(a.wind_speed)||0;ws=unit.includes("km")?ws/3.6:unit.includes("mph")?ws*0.447:unit.includes("kn")?ws*0.514:ws;
   const to=((Number.isFinite(Number(a.wind_bearing))?Number(a.wind_bearing):270)+180)*Math.PI/180,k=0.012+Math.min(20,ws)*0.006;
   const still=this._config.animation===false||(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches);
-  return{cover,drift:[Math.sin(to)*k,Math.cos(to)*k],lit,dark,sun:[0.97,0.86],sunK:day*(1-0.6*cover),still};
+  return{cover,drift:[Math.sin(to)*k,Math.cos(to)*k],lit,dark,sun:[0.97,0.86],sunK:cond==="fog"?0:day*(1-0.6*cover),mist:cond==="fog"?1:0,still};
+};
+HAHomeHeaderCard.prototype._nightSkyOn=function(){return this._config?.weather_style_v3===true&&this._config.show_weather_fx!==false&&this._config.weather_v3_stars!=="css"};
+// Where the moon goes: in the free space between the status in the middle and the weather (or the clock and the status),
+// a third of the way down. None when the card has no room; then the drawn moon stays.
+HAHomeHeaderCard.prototype._moonSpot=function(canvas){
+  const sr=this.shadowRoot,cr=canvas.getBoundingClientRect();if(!cr.width)return null;
+  const rect=(sel)=>{const r=sr.querySelector(sel)?.getBoundingClientRect();return r&&r.width?r:null};
+  const wx=rect(".weather"),sg=rect(".status-group"),tm=rect(".time"),r=Math.round(Math.max(10,Math.min(15,cr.height*0.12))),need=2*r+36;let gap=null;
+  if(wx){const left=sg&&sg.right<wx.left?sg.right:tm?tm.right:cr.left;if(wx.left-left>=need)gap=[left,wx.left]}
+  if(!gap&&sg&&tm&&sg.left-tm.right>=need)gap=[tm.right,sg.left];
+  if(!gap)return null;
+  return{x:Math.round(gap[1]-Math.max(r+18,(gap[1]-gap[0])*0.28)-cr.left),y:Math.round(cr.height*0.3),r};
+};
+HAHomeHeaderCard.prototype._nightParams=function(canvas){
+  const cat=this._v3Category(),el0=Number(this._e(this._config.sun_entity||"sun.sun")?.attributes?.elevation),el=Number.isFinite(el0)?el0:(this._condition()==="clear-night"?-20:30);
+  const{cover,still}=this._skyParams();
+  // Stars in an open sky only, as many as the cloud cover leaves; none in fog, rain or snow.
+  const open=["sunny","partly","windy","cloudy","unknown"].includes(cat)?Math.max(0,Math.min(1,1-cover*1.1)):0;
+  const lat=Number(this._hass?.config?.latitude),lng=Number(this._hass?.config?.longitude),known=Number.isFinite(lat)&&Number.isFinite(lng);
+  const mi=v3Moon(new Date(),known?lat:50,known?lng:10);if(!known)mi.alt=el<-4?30:-10;
+  const spot=this._moonSpot(canvas),nightK=v3Smooth(2,-6,el);
+  this.shadowRoot?.querySelectorAll(".v3-celestial").forEach((e)=>{if(/v3-moon-/.test(e.className))e.style.display=spot?"none":""});
+  const moonOpen=["sunny","partly","windy","unknown"].includes(cat)?1-0.7*cover:cat==="cloudy"?0.25:0;
+  const mk=v3Smooth(-1,5,mi.alt)*v3Smooth(0.015,0.08,mi.fraction)*moonOpen*(nightK>0.5?1:0.5*v3Smooth(6,14,mi.alt));
+  return{starK:v3Smooth(-1,-9,el)*open,still,moon:spot&&mk>0.01?{...spot,phase:mi.phase,fraction:mi.fraction,night:nightK>0.5,south:known&&lat<0,k:mk}:null};
+};
+HAHomeHeaderCard.prototype._nightAttach=function(){
+  const canvas=this.shadowRoot?.querySelector("canvas.v3-nightsky");
+  if(this._ns&&this._ns.canvas!==canvas){this._ns.destroy();this._ns=null}
+  if(canvas&&!this._ns){const ns=new V3NightSky(canvas);ns.onLayout=()=>ns.set(this._nightParams(canvas));this._ns=ns}
+  if(this._ns)this._ns.set(this._nightParams(canvas));
 };
 HAHomeHeaderCard.prototype._fxParticlesOn=function(){return this._config?.weather_style_v3===true&&this._config.show_weather_fx!==false&&this._config.weather_v3_fx!=="css"};
 HAHomeHeaderCard.prototype._fxParams=function(){
@@ -361,8 +499,8 @@ HAHomeHeaderCard.prototype._skyAttach=function(){
   if(canvas&&!this._sky){this._sky=new V3SkyClouds(canvas);if(this._sky.failed){this._sky=null;return}}
   if(this._sky){this._sky.set(this._skyParams());this._sky.start()}
 };
-{const render=HAHomeHeaderCard.prototype._render;HAHomeHeaderCard.prototype._render=function(){render.call(this);this._skyAttach();this._fxAttach()};
-const clock=HAHomeHeaderCard.prototype._updateClock;HAHomeHeaderCard.prototype._updateClock=function(){clock.call(this);if((this._skyTick=(this._skyTick||0)+1)%10===0){if(this._sky)this._sky.set(this._skyParams());if(this._fxp)this._fxp.set(this._fxParams())}};
-const off=HAHomeHeaderCard.prototype.disconnectedCallback;HAHomeHeaderCard.prototype.disconnectedCallback=function(){off.call(this);this._sky?.stop();this._fxp?.stop()};
-const on=HAHomeHeaderCard.prototype.connectedCallback;HAHomeHeaderCard.prototype.connectedCallback=function(){on.call(this);if(this._built){this._skyAttach();this._fxAttach()}};}
+{const render=HAHomeHeaderCard.prototype._render;HAHomeHeaderCard.prototype._render=function(){render.call(this);this._skyAttach();this._fxAttach();this._nightAttach()};
+const clock=HAHomeHeaderCard.prototype._updateClock;HAHomeHeaderCard.prototype._updateClock=function(){clock.call(this);if((this._skyTick=(this._skyTick||0)+1)%10===0){if(this._sky)this._sky.set(this._skyParams());if(this._fxp)this._fxp.set(this._fxParams());if(this._ns)this._ns.set(this._nightParams(this._ns.canvas))}};
+const off=HAHomeHeaderCard.prototype.disconnectedCallback;HAHomeHeaderCard.prototype.disconnectedCallback=function(){off.call(this);this._sky?.stop();this._fxp?.stop();this._ns?.stop()};
+const on=HAHomeHeaderCard.prototype.connectedCallback;HAHomeHeaderCard.prototype.connectedCallback=function(){on.call(this);if(this._built){this._skyAttach();this._fxAttach();this._nightAttach()}};}
 if(!customElements.get("ha-home-header-card"))customElements.define("ha-home-header-card",HAHomeHeaderCard);if(!customElements.get("ha-home-header-card-front"))customElements.define("ha-home-header-card-front",class HAHomeHeaderCardFront extends HAHomeHeaderCard{});window.customCards=window.customCards||[];window.customCards.push({type:"ha-home-header-card",name:"HA Home Header Card",description:"Samlet statusheader med vejr, alarmer og lokale vejreffekter",preview:true});console.info(`%c HA HOME HEADER CARD %c v${VERSION} `,"color:white;background:#357fc4;font-weight:700","color:#69c4ff;background:#161b22");
