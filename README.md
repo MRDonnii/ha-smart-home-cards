@@ -112,6 +112,26 @@ warm at dusk and dark at night (`sun_entity` elevation). They are drawn at a thi
 a second, stop while the card is off screen or the page is hidden, and stand still with `animation: false` or reduced
 motion. Set `weather_v3_clouds: css` to keep the drawn clouds; without WebGL the drawn clouds are used automatically.
 
+## Home header card: rain, snow, hail, wind and lightning
+
+v0.4.84 draws the V3 weather's precipitation as particles (as in HA Smartdash): slanting rain streaks that lean with
+`wind_bearing`/`wind_speed` and splash on the card's lower edge over a wet sheen, heavier and denser when pouring;
+swaying snowflakes that settle along the lower edge; hail as quick icy streaks that bounce; sleet as rain and snow
+together; streaks of wind when windy; and soft lightning flashes (sometimes a double flicker) during thunder. They are
+drawn on one canvas at most 30 times a second (about 0.2 ms per frame), stop while the card is off screen or the page
+is hidden, and stand still with `animation: false` or reduced motion. Set `weather_v3_fx: css` to keep the previous
+CSS effects.
+
+Snow lying on the ground can stay along the card's lower edge as a soft, uneven drift for as long as it lies, whatever
+the weather is now: set `snow_ground_entity` (a binary sensor that is on while snow lies, or a depth sensor in cm, from
+1 cm) and optionally `snow_depth_entity` (cm; the drift grows a little with the depth). It is bright by day and a cool
+blue-white at night (`sun_entity`), is painted once and does not animate unless something is falling on it.
+
+```yaml
+snow_ground_entity: binary_sensor.snow_on_ground
+snow_depth_entity: sensor.snow_depth
+```
+
 ## Animations rest when nobody uses the screen
 
 The cards' endless animations (drifting tile icons, breathing glows, flowing lines) run while someone uses the screen and

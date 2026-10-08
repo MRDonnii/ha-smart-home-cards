@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.83 */
+/* MRDonnii Smart Home Cards v0.4.84 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -27020,6 +27020,328 @@ var V3SkyClouds = class _V3SkyClouds {
     this.gl = null;
   }
 };
+var V3_PARTICLE_FX = {
+  rainy: { layers: ["rain"] },
+  pouring: { layers: ["rainHeavy"] },
+  lightning: { layers: [], flash: true },
+  "lightning-rainy": { layers: ["rain"], flash: true },
+  hail: { layers: ["hail"] },
+  snowy: { layers: ["snow"] },
+  "snowy-rainy": { layers: ["rainLight", "snowLight"] },
+  windy: { layers: ["wind"] },
+  "windy-variant": { layers: ["wind"] }
+};
+var V3WeatherParticles = class {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.parts = [];
+    this.impacts = [];
+    this.flash = 0;
+    this.nextFlash = 0;
+    this.raf = 0;
+    this.last = 0;
+    this.step = 1;
+    this.visible = true;
+    this.key = "";
+    this.p = { condition: "", drift: 1.2, still: false, ground: 0, dim: 1 };
+    this.io = typeof IntersectionObserver === "function" ? new IntersectionObserver((e) => {
+      this.visible = e.some((x) => x.isIntersecting);
+      if (this.visible) this.start();
+      else this.stop();
+    }) : null;
+    this.io?.observe(canvas);
+    this.ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      this.key = "";
+      this._build();
+      if (this.p.still) this._frame(performance.now(), true);
+    }) : null;
+    this.ro?.observe(canvas);
+  }
+  set(p) {
+    Object.assign(this.p, p);
+    this._build();
+    if (this.p.still || !this.cfg) this.stop();
+    this.start();
+  }
+  _build() {
+    const c2 = this.canvas;
+    const w = c2.clientWidth;
+    const h = c2.clientHeight;
+    if (!w || !h) return;
+    const key = `${this.p.condition}|${w}x${h}|${Math.round(this.p.ground)}|${this.p.dim < 1 ? "n" : "d"}`;
+    if (key === this.key) return;
+    this.key = key;
+    if (c2.width !== w || c2.height !== h) {
+      c2.width = w;
+      c2.height = h;
+    }
+    this.w = w;
+    this.h = h;
+    this.cfg = V3_PARTICLE_FX[this.p.condition] || null;
+    this.impacts = [];
+    this.flash = 0;
+    this.nextFlash = 0;
+    const n = (per, cap, min = 6) => Math.min(cap, Math.max(min, Math.round(w * h / per)));
+    const rain = (count, sp, spR, len, lenR, op, opR) => Array.from({ length: count }, () => ({ kind: "rain", x: Math.random() * w, y: Math.random() * h, len: len + Math.random() * lenR, speed: sp + Math.random() * spR, op: op + Math.random() * opR }));
+    const snow = (count, r, rR, sp, spR) => Array.from({ length: count }, () => ({ kind: "snow", x: Math.random() * w, y: Math.random() * h, r: r + Math.random() * rR, speed: sp + Math.random() * spR, drift: Math.random() * 0.6 - 0.3, sway: Math.random() * 6.283, op: 0.45 + Math.random() * 0.4 }));
+    const B = {
+      rain: () => rain(n(1300, 220), 4.5, 3, 10, 12, 0.28, 0.3),
+      rainLight: () => rain(n(2600, 110), 4, 2.5, 8, 9, 0.24, 0.24),
+      rainHeavy: () => rain(n(750, 340), 6.5, 3.5, 13, 15, 0.32, 0.34),
+      hail: () => Array.from({ length: n(2600, 70) }, () => ({ kind: "hail", x: Math.random() * w, y: Math.random() * h, speed: 5 + Math.random() * 3, op: 0.5 + Math.random() * 0.4 })),
+      snow: () => snow(n(2300, 90), 1.3, 2.2, 0.35, 0.7),
+      snowLight: () => snow(n(3800, 55), 1.1, 1.9, 0.3, 0.6),
+      wind: () => Array.from({ length: n(3500, 60) }, () => ({ kind: "wind", x: Math.random() * w, y: Math.random() * h, len: 22 + Math.random() * 34, speed: 5 + Math.random() * 4, op: 0.18 + Math.random() * 0.2 }))
+    };
+    const order = { wind: 0, rain: 1, hail: 2, snow: 3 };
+    const layers = this.cfg?.layers || [];
+    this.raining = layers.some((l) => l.startsWith("rain"));
+    this.snowing = layers.some((l) => l.startsWith("snow"));
+    this.parts = layers.flatMap((l) => B[l]?.() || []).map((q) => (q.op = Math.round(q.op * 20) / 20, q)).sort((a, b) => order[a.kind] - order[b.kind] || a.op - b.op);
+    this.bank = this.p.ground > 0 ? this._bank(w, h) : null;
+  }
+  // Snow lying on the ground (snow_ground_entity / snow_depth_entity, Claude AI 2026-10-08; user: "Og sne bliver liggende
+  // i bunden af kortet så længe der ligger sne i området?"): a soft, uneven drift along the card's lower edge, a little
+  // deeper the more snow there is, with a bright rim and a few glints. Painted once; with nothing falling the card does not
+  // animate at all. Falling flakes land on it.
+  _surf(x) {
+    return this.h - this.bankH * (0.66 + 0.14 * Math.sin(x * 0.011 + 1.3) + 0.11 * Math.sin(x * 0.047 + 0.4) + 0.06 * Math.sin(x * 0.13 + 2.1) + 0.03 * Math.sin(x * 0.31 + 0.7));
+  }
+  _bank(w, h) {
+    this.bankH = Math.max(5, Math.min(18, 4 + this.p.ground * 0.6));
+    const night = this.p.dim < 1;
+    const H3 = Math.ceil(this.bankH + 12);
+    const y0 = h - H3;
+    const c2 = document.createElement("canvas");
+    c2.width = w;
+    c2.height = H3;
+    const g = c2.getContext("2d");
+    g.translate(0, -y0);
+    const glow = g.createLinearGradient(0, h - this.bankH - 10, 0, h - this.bankH * 0.5);
+    glow.addColorStop(0, "rgba(235,243,255,0)");
+    glow.addColorStop(1, "rgba(235,243,255,0.12)");
+    g.fillStyle = glow;
+    g.fillRect(0, h - this.bankH - 10, w, this.bankH + 10);
+    g.beginPath();
+    g.moveTo(0, h);
+    for (let x = 0; x <= w + 4; x += 4) g.lineTo(x, this._surf(x));
+    g.lineTo(w, h);
+    g.closePath();
+    const body = g.createLinearGradient(0, h - this.bankH, 0, h);
+    if (night) {
+      body.addColorStop(0, "rgba(226,234,250,0.94)");
+      body.addColorStop(0.5, "rgba(190,205,232,0.9)");
+      body.addColorStop(1, "rgba(150,170,205,0.86)");
+    } else {
+      body.addColorStop(0, "rgba(253,254,255,0.95)");
+      body.addColorStop(0.5, "rgba(232,241,252,0.88)");
+      body.addColorStop(1, "rgba(196,214,238,0.84)");
+    }
+    g.fillStyle = body;
+    g.fill();
+    g.beginPath();
+    for (let x = 0; x <= w + 4; x += 4) x ? g.lineTo(x, this._surf(x) + 0.5) : g.moveTo(x, this._surf(x) + 0.5);
+    g.strokeStyle = night ? "rgba(240,246,255,0.9)" : "rgba(255,255,255,0.95)";
+    g.lineWidth = 1;
+    g.stroke();
+    g.fillStyle = "#fff";
+    for (let i = 0, n = Math.round(w / 40); i < n; i += 1) {
+      const x = Math.random() * w;
+      const top = this._surf(x) + 1.5;
+      g.globalAlpha = 0.5 + Math.random() * 0.5;
+      g.fillRect(x, top + Math.random() * Math.max(0, h - top - 1.5), 1, 1);
+    }
+    return { canvas: c2, y0 };
+  }
+  // Builds when the card has a size (a hidden copy of the card has none until it shows, and then the observer starts it).
+  start() {
+    this._build();
+    if (this.raf || !this.visible) return;
+    if (this.p.still || !this.cfg) {
+      this._frame(performance.now(), true);
+      return;
+    }
+    const loop = (now) => {
+      this.raf = requestAnimationFrame(loop);
+      if (document.hidden || this.last && now - this.last < 31) return;
+      this._frame(now);
+    };
+    this.raf = requestAnimationFrame(loop);
+  }
+  stop() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this.last = 0;
+  }
+  _frame(now, still = false) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const { w, h } = this;
+    if (!w) return;
+    this.step = still ? 0 : this.last ? Math.min(4, Math.max(0.25, (now - this.last) / (1e3 / 60))) : 1;
+    this.last = now;
+    const st = this.step;
+    const drift = this.p.drift;
+    ctx.clearRect(0, 0, w, h);
+    const floor = this.bank ? (x) => this._surf(x) : () => h - 2;
+    if (this.bank) {
+      ctx.globalAlpha = 1;
+      ctx.drawImage(this.bank.canvas, 0, this.bank.y0);
+    }
+    let cur = null;
+    const flush = () => {
+      if (cur) {
+        if (cur.kind === "snow") ctx.fill();
+        else ctx.stroke();
+      }
+    };
+    const dir = drift >= 0 ? 1 : -1;
+    let snowOut = 0;
+    for (const q of this.parts) {
+      if (!cur || q.kind !== cur.kind || q.op !== cur.op) {
+        flush();
+        cur = q;
+        ctx.globalAlpha = q.op;
+        ctx.beginPath();
+        ctx.lineCap = q.kind === "hail" ? "round" : "butt";
+        if (q.kind === "rain") {
+          ctx.strokeStyle = "rgb(205,225,255)";
+          ctx.lineWidth = 1.2;
+        } else if (q.kind === "wind") {
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1;
+        } else if (q.kind === "hail") {
+          ctx.strokeStyle = "rgb(232,240,250)";
+          ctx.lineWidth = 2.4;
+        } else ctx.fillStyle = "#fff";
+      }
+      if (q.kind === "rain") {
+        ctx.moveTo(q.x, q.y);
+        ctx.lineTo(q.x + drift * 2.2, q.y + q.len);
+        q.y += q.speed * st;
+        q.x += drift * st;
+        if (q.y > h) {
+          this.impacts.push({ kind: "splash", x: q.x, y: floor(q.x), age: 0, life: 14 + Math.random() * 10 });
+          q.y = -q.len;
+          q.x = Math.random() * w;
+        }
+        if (q.x < -10) q.x = w + 10;
+        if (q.x > w + 10) q.x = -10;
+      } else if (q.kind === "snow") {
+        ctx.moveTo(q.x + q.r, q.y);
+        ctx.arc(q.x, q.y, q.r, 0, 6.283);
+        q.sway += 0.02 * st;
+        q.y += q.speed * st;
+        q.x += (q.drift + drift * 0.35 + Math.sin(q.sway) * 0.4) * st;
+        if (q.y > h) {
+          this.impacts.push({ kind: "snow", x: q.x, y: this.bank ? floor(q.x) + Math.random() * 2 : h - 1 - Math.random() * 6, r: q.r * (0.7 + Math.random() * 0.6), op: q.op * 0.8, age: 0, life: 700 + Math.random() * 700 });
+          snowOut += 1;
+          q.y = -q.r;
+          q.x = Math.random() * w;
+        }
+        if (q.x < -10) q.x = w + 10;
+        if (q.x > w + 10) q.x = -10;
+      } else if (q.kind === "hail") {
+        ctx.moveTo(q.x - drift * 0.8, q.y - q.speed * 1.4);
+        ctx.lineTo(q.x, q.y);
+        q.y += q.speed * st;
+        q.x += drift * 0.5 * st;
+        if (q.y > h) {
+          this.impacts.push({ kind: "bounce", x: q.x, y: floor(q.x), vx: (Math.random() - 0.5) * 1.4, vy: -(1.2 + Math.random() * 1.6), age: 0, life: 20 });
+          q.y = -q.speed * 1.4;
+          q.x = Math.random() * w;
+        }
+      } else if (q.kind === "wind") {
+        ctx.moveTo(q.x, q.y);
+        ctx.lineTo(q.x + q.len * dir, q.y - 2);
+        q.x += q.speed * dir * st;
+        if (dir > 0 && q.x > w) {
+          q.x = -q.len;
+          q.y = Math.random() * h;
+        }
+        if (dir < 0 && q.x < -q.len) {
+          q.x = w + q.len;
+          q.y = Math.random() * h;
+        }
+      }
+    }
+    flush();
+    if (snowOut || this.impacts.length > 70) {
+      let snow = 0;
+      for (const i of this.impacts) if (i.kind === "snow") snow += 1;
+      let dropSnow = Math.max(0, snow - 110);
+      let dropSplash = Math.max(0, this.impacts.length - snow - 70);
+      if (dropSnow || dropSplash) this.impacts = this.impacts.filter((i) => i.kind === "snow" ? dropSnow > 0 ? (dropSnow -= 1, false) : true : dropSplash > 0 ? (dropSplash -= 1, false) : true);
+    }
+    if (this.raining && !this.bank) {
+      const g = ctx.createLinearGradient(0, h - 22, 0, h);
+      g.addColorStop(0, "rgba(110,150,205,0)");
+      g.addColorStop(1, "rgba(110,150,205,0.22)");
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, h - 22, w, 22);
+    }
+    if (this.snowing && !this.bank) {
+      const g = ctx.createLinearGradient(0, h - 14, 0, h);
+      g.addColorStop(0, "rgba(245,250,255,0)");
+      g.addColorStop(1, "rgba(245,250,255,0.3)");
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, h - 14, w, 14);
+    }
+    this.impacts = this.impacts.filter((i) => {
+      i.age += st;
+      const left = Math.max(0, 1 - i.age / i.life);
+      if (i.kind === "bounce") {
+        i.x += i.vx * st;
+        i.vy += 0.22 * st;
+        i.y = Math.min(floor(i.x) + 0.8, i.y + i.vy * st);
+        ctx.globalAlpha = left * 0.8;
+        ctx.fillStyle = "rgb(232,240,250)";
+        ctx.beginPath();
+        ctx.arc(i.x, i.y, 1.2, 0, 6.283);
+        ctx.fill();
+      } else if (i.kind === "splash") {
+        ctx.globalAlpha = left * 0.55;
+        ctx.strokeStyle = "rgba(205,225,255,1)";
+        ctx.lineWidth = 1;
+        const sp = 2 + i.age * 0.5;
+        ctx.beginPath();
+        ctx.ellipse(i.x, i.y, sp, Math.max(0.7, sp * 0.18), 0, Math.PI, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.globalAlpha = Math.min(i.op, left * i.op * 2);
+        ctx.fillStyle = "rgba(250,253,255,1)";
+        ctx.beginPath();
+        ctx.ellipse(i.x, i.y, i.r * 1.35, i.r * 0.55, 0, 0, 6.283);
+        ctx.fill();
+      }
+      return i.age < i.life;
+    });
+    if (this.cfg?.flash && !still) {
+      const t = Date.now();
+      if (!this.nextFlash) this.nextFlash = t + 2500 + Math.random() * 5e3;
+      if (t >= this.nextFlash) {
+        this.flash = 0.32 + Math.random() * 0.2;
+        this.again = !this.again && Math.random() < 0.45;
+        this.nextFlash = this.again ? t + 110 + Math.random() * 140 : t + 4e3 + Math.random() * 8e3;
+      }
+      if (this.flash > 0) {
+        ctx.globalAlpha = this.flash;
+        ctx.fillStyle = "rgb(222,230,255)";
+        ctx.fillRect(0, 0, w, h);
+        this.flash -= 0.045 * st;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  destroy() {
+    this.stop();
+    this.io?.disconnect();
+    this.ro?.disconnect();
+  }
+};
 var HAHomeHeaderCard = class extends HTMLElement {
   constructor() {
     super();
@@ -27307,13 +27629,15 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
   _v3Effects(cat, tD) {
     const isNight = tD === "night", theme = tD !== "day" ? "twilight" : "day", cloudClass = isNight ? "v3-cloud-night" : tD !== "day" ? "v3-cloud-twilight" : "", stars = isNight ? `<div class="v3-stars"><div class="v3-star-layer"></div><div class="v3-t-star v3-ts-1"></div><div class="v3-t-star v3-ts-2"></div><div class="v3-t-star v3-ts-3"></div></div>` : "", body = isNight ? "moon" : "sun", bodyTheme = isNight ? "night" : theme, celestialInner = `<div class="v3-${body}-aura-${bodyTheme} v3-celestial"></div><div class="v3-${body}-core-${bodyTheme} v3-celestial"></div>`;
+    const fxOn = this._fxParticlesOn();
+    if (fxOn && (cat === "storm" || cat === "snow" || cat === "rain")) return "";
     if (cat === "storm") return `<div class="v3-fx v3-storm-flash"></div><div class="v3-fx v3-storm-bolt"></div>`;
     if (cat === "snow") return `<div class="v3-fx v3-snow-1"></div><div class="v3-fx v3-snow-2"></div>`;
     if (cat === "rain") return `<div class="v3-fx v3-rain-1"></div><div class="v3-fx v3-rain-2"></div>`;
     if (cat === "partly") return `${stars}<div class="v3-fx">${celestialInner}${this._v3Clouds(Math.max(1, Math.round(6 * this._v3CloudDensity())), cloudClass, this._v3CloudSpeed())}</div>`;
     if (cat === "cloudy") return `${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2, Math.round(11 * this._v3CloudDensity())), cloudClass, this._v3CloudSpeed())}</div>`;
     if (cat === "fog") return `${stars}<div class="v3-fx"><div class="v3-fog-band v3-fog-1"></div><div class="v3-fog-band v3-fog-2"></div></div>`;
-    if (cat === "windy") return `${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2, Math.round(7 * this._v3CloudDensity())), cloudClass, 0.14 * this._v3CloudSpeed())}<div class="v3-wind-stream v3-ws-1"></div><div class="v3-wind-stream v3-ws-2"></div><div class="v3-wind-stream v3-ws-3"></div></div>`;
+    if (cat === "windy") return `${stars}<div class="v3-fx">${this._v3Clouds(Math.max(2, Math.round(7 * this._v3CloudDensity())), cloudClass, 0.14 * this._v3CloudSpeed())}${fxOn ? "" : `<div class="v3-wind-stream v3-ws-1"></div><div class="v3-wind-stream v3-ws-2"></div><div class="v3-wind-stream v3-ws-3"></div>`}</div>`;
     return `${stars}<div class="v3-fx">${celestialInner}</div>`;
   }
   // weather_v3_bg=false springer selve himmel-gradienten over (og dens indre
@@ -27327,7 +27651,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
       return `<div class="v3-bg" style="background:linear-gradient(to bottom, ${bg.join(", ")});box-shadow:${shadow};"></div>`;
     })();
     const skyOn = this._skyCloudsOn() && cat !== "fog" && cat !== "unknown", behind = ["rain", "snow", "storm"].includes(cat);
-    return `${bgHtml}${this._v3Effects(cat, tD)}${skyOn ? `<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind ? 0 : 1};opacity:.92"></canvas>` : ""}`;
+    return `${bgHtml}${this._v3Effects(cat, tD)}${skyOn ? `<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind ? 0 : 1};opacity:.92"></canvas>` : ""}${this._fxParticlesOn() && (V3_PARTICLE_FX[this._condition()] || this._config.snow_ground_entity || this._config.snow_depth_entity) ? `<canvas class="v3-particles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>` : ""}`;
   }
   _mode() {
     const s = this._s(this._config.mode_entity);
@@ -27672,6 +27996,33 @@ HAHomeHeaderCard.prototype._skyParams = function() {
   const still = this._config.animation === false || typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: day * (1 - 0.6 * cover), still };
 };
+HAHomeHeaderCard.prototype._fxParticlesOn = function() {
+  return this._config?.weather_style_v3 === true && this._config.show_weather_fx !== false && this._config.weather_v3_fx !== "css";
+};
+HAHomeHeaderCard.prototype._fxParams = function() {
+  const a = this._e(this._config.weather)?.attributes || {};
+  const unit = String(a.wind_speed_unit || "km/h").toLowerCase();
+  let ws = Number(a.wind_speed) || 0;
+  ws = unit.includes("km") ? ws / 3.6 : unit.includes("mph") ? ws * 0.447 : unit.includes("kn") ? ws * 0.514 : ws;
+  const to = ((Number.isFinite(Number(a.wind_bearing)) ? Number(a.wind_bearing) : 270) + 180) * Math.PI / 180, side = Math.sin(to), drift = Math.max(-3, Math.min(3, side * (0.35 + ws * 0.22)));
+  const still = this._config.animation === false || typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const gE = this._config.snow_ground_entity, dE = this._config.snow_depth_entity, gs = gE ? this._s(gE) : null, dv = Number(dE ? this._s(dE) : gs);
+  const lying = gE ? gs === "on" || gs !== null && gs !== "" && Number(gs) >= 1 : Number.isFinite(dv) && dv >= 1, ground = lying ? Number.isFinite(dv) && dv > 0 ? dv : 3 : 0;
+  const el = Number(this._e(this._config.sun_entity || "sun.sun")?.attributes?.elevation);
+  return { condition: this._condition(), drift: Math.abs(drift) < 0.3 ? drift < 0 ? -0.3 : 0.3 : drift, still, ground, dim: Number.isFinite(el) && el < -4 ? 0.7 : 1 };
+};
+HAHomeHeaderCard.prototype._fxAttach = function() {
+  const canvas = this.shadowRoot?.querySelector("canvas.v3-particles");
+  if (this._fxp && this._fxp.canvas !== canvas) {
+    this._fxp.destroy();
+    this._fxp = null;
+  }
+  if (canvas && !this._fxp) this._fxp = new V3WeatherParticles(canvas);
+  if (this._fxp) {
+    this._fxp.set(this._fxParams());
+    this._fxp.start();
+  }
+};
 HAHomeHeaderCard.prototype._skyAttach = function() {
   let canvas = this.shadowRoot?.querySelector("canvas.v3-skyclouds");
   if (this._sky && this._sky.canvas !== canvas) {
@@ -27702,21 +28053,29 @@ HAHomeHeaderCard.prototype._skyAttach = function() {
   HAHomeHeaderCard.prototype._render = function() {
     render.call(this);
     this._skyAttach();
+    this._fxAttach();
   };
   const clock = HAHomeHeaderCard.prototype._updateClock;
   HAHomeHeaderCard.prototype._updateClock = function() {
     clock.call(this);
-    if (this._sky && (this._skyTick = (this._skyTick || 0) + 1) % 10 === 0) this._sky.set(this._skyParams());
+    if ((this._skyTick = (this._skyTick || 0) + 1) % 10 === 0) {
+      if (this._sky) this._sky.set(this._skyParams());
+      if (this._fxp) this._fxp.set(this._fxParams());
+    }
   };
   const off = HAHomeHeaderCard.prototype.disconnectedCallback;
   HAHomeHeaderCard.prototype.disconnectedCallback = function() {
     off.call(this);
     this._sky?.stop();
+    this._fxp?.stop();
   };
   const on = HAHomeHeaderCard.prototype.connectedCallback;
   HAHomeHeaderCard.prototype.connectedCallback = function() {
     on.call(this);
-    if (this._built) this._skyAttach();
+    if (this._built) {
+      this._skyAttach();
+      this._fxAttach();
+    }
   };
 }
 if (!customElements.get("ha-home-header-card")) customElements.define("ha-home-header-card", HAHomeHeaderCard);
