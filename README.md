@@ -91,6 +91,14 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 - Cards remain separated internally and can be maintained independently.
 - The old standalone repositories are archived migration history; all new development and releases happen here.
 
+## Weather card: radar image, warnings and extra measurements
+
+`ha-weather-card` can show an `image` entity in its radar section (`radar_image_entity`, for example a national radar
+with lightning), warnings from a sensor's attribute list (`warnings_entity`, yellow/orange/red banners at the top) and
+any sensors as groups of tiles (`detail_sections`). Tiles and the radar image update in place, so the card is not rebuilt
+and the wind map is not reloaded on every sensor update. See the
+[card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-weather-card).
+
 ## Animations rest when nobody uses the screen
 
 The cards' endless animations (drifting tile icons, breathing glows, flowing lines) run while someone uses the screen and

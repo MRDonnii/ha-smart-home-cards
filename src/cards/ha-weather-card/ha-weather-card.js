@@ -1,5 +1,5 @@
 import "./ha-weather-card-assets.js";
-const VERSION = "0.4.1";
+const VERSION = "0.5.0";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -21,6 +21,9 @@ const CONDITION_LABEL_DA = {
 
 const VALID_CONDITIONS = new Set(Object.keys(CONDITION_LABEL_DA));
 
+// Warning levels as used by MeteoAlarm/CAP awareness levels (2 yellow, 3 orange, 4 red).
+const WARNING_TONES = { 2: "#e3c63a", 3: "#f08c2e", 4: "var(--danger)" };
+
 const COMPASS_DA = ["N", "NNØ", "NØ", "ØNØ", "Ø", "ØSØ", "SØ", "SSØ", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"];
 
 const FORECAST_REFRESH_MS = 20 * 60 * 1000;
@@ -32,6 +35,8 @@ class HAWeatherCard extends HTMLElement {
     this._config = {};
     this._hass = undefined;
     this._sig = "";
+    this._radarSig = "";
+    this._detailSig = "";
     this._heroMode = "now";
     this._radarTab = "nedbor";
     this._daily = [];
@@ -57,6 +62,14 @@ class HAWeatherCard extends HTMLElement {
       ],
       radar_lat: null,
       radar_lon: null,
+      // Optional: an image entity (e.g. a national radar) shown instead of the
+      // web radar and lightning maps; the wind map stays.
+      radar_image_entity: null,
+      // Optional: a sensor whose `varsler` (or `warnings`) attribute lists
+      // warnings as {type, overskrift, beskrivelse, niveau, start, slut}.
+      warnings_entity: null,
+      // Optional: extra groups of sensors, [{title, icon, items: [{name, entity, icon}]}].
+      detail_sections: [],
     };
   }
 
@@ -77,16 +90,43 @@ class HAWeatherCard extends HTMLElement {
 
   _watchedIds() {
     const c = this._config;
-    return [c.weather_entity, c.sun_entity, ...(c.pollen || []).map((p) => p.entity)].filter(Boolean);
+    return [c.weather_entity, c.sun_entity, c.warnings_entity, ...(c.pollen || []).map((p) => p.entity)].filter(Boolean);
+  }
+
+  _detailIds() {
+    return (this._config.detail_sections || []).flatMap((s) => (s.items || []).map((i) => i.entity)).filter(Boolean);
+  }
+
+  _stateSig(hass, ids) {
+    return JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
   }
 
   set hass(hass) {
     this._hass = hass;
-    const ids = this._watchedIds();
-    const sig = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
+    // Three signatures so a radar image or a sensor tile can update without
+    // rebuilding the card (which would also reload the wind map iframe).
+    const sig = this._stateSig(hass, this._watchedIds());
+    const radarState = this._s(this._config.radar_image_entity);
+    const radarSig = radarState ? `${radarState.state}|${radarState.attributes?.entity_picture}` : "";
+    const detailSig = this._stateSig(hass, this._detailIds());
     if (sig !== this._sig) {
       this._sig = sig;
+      this._radarSig = radarSig;
+      this._detailSig = detailSig;
       this._render();
+    } else {
+      if (radarSig !== this._radarSig) {
+        this._radarSig = radarSig;
+        const img = this.shadowRoot.querySelector("img.radar-img");
+        if (img) img.src = this._radarImageUrl();
+      }
+      if (detailSig !== this._detailSig) {
+        this._detailSig = detailSig;
+        this.shadowRoot.querySelectorAll("[data-detail-section]").forEach((el) => {
+          el.innerHTML = this._detailTilesHtml((this._config.detail_sections || [])[Number(el.dataset.detailSection)]);
+        });
+        this._bindMore(this.shadowRoot.querySelector(".details"));
+      }
     }
     if (this._config.weather_entity && this._fetchedFor !== this._config.weather_entity) {
       this._fetchForecasts();
@@ -362,16 +402,99 @@ class HAWeatherCard extends HTMLElement {
     const windyUrl = (overlay) =>
       `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=11&overlay=${overlay}&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${dLat}&detailLon=${dLon}&marker=true&message=true`;
     const lightningUrl = `https://map.blitzortung.org/index.php?interactive=0&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#7/${lat}/${lon}`;
-    const tabs = [
-      ["nedbor", "Nedbør", "mdi:weather-pouring", windyUrl("radar")],
-      ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
-      ["lyn", "Lyn", "mdi:weather-lightning", lightningUrl],
-    ];
+    const image = this._config.radar_image_entity;
+    const tabs = image
+      ? [
+          ["nedbor", "Nedbør og lyn", "mdi:weather-pouring", null],
+          ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
+        ]
+      : [
+          ["nedbor", "Nedbør", "mdi:weather-pouring", windyUrl("radar")],
+          ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
+          ["lyn", "Lyn", "mdi:weather-lightning", lightningUrl],
+        ];
     const active = tabs.find((t) => t[0] === this._radarTab) || tabs[0];
+    const body = active[3]
+      ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>`
+      : `<div class="radar-img-wrap" data-more="${this._esc(image)}"><img class="radar-img" src="${this._esc(this._radarImageUrl())}" alt="Radarkort"></div>`;
     return `<div class="subtabs">${tabs
-      .map((t) => `<button class="subtab ${t[0] === this._radarTab ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`)
+      .map((t) => `<button class="subtab ${t[0] === active[0] ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`)
       .join("")}</div>
-      <div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>`;
+      ${body}`;
+  }
+
+  _radarImageUrl() {
+    const picture = this._s(this._config.radar_image_entity)?.attributes?.entity_picture;
+    if (!picture) return "";
+    return this._hass?.hassUrl ? this._hass.hassUrl(picture) : picture;
+  }
+
+  _when(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return `${d.toLocaleDateString("da-DK", { weekday: "short" })} ${d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  _warningsHtml() {
+    const id = this._config.warnings_entity;
+    if (!id) return "";
+    const state = this._s(id);
+    if (!state || state.state === "unavailable") return "";
+    const list = state.attributes?.varsler || state.attributes?.warnings || [];
+    if (!list.length) {
+      return `<div class="warn-none" data-more="${this._esc(id)}"><ha-icon icon="mdi:shield-check-outline"></ha-icon>Ingen aktive vejrvarsler</div>`;
+    }
+    return `<div class="warn-list">${list
+      .map((w) => {
+        const level = Number(w.niveau ?? w.level) || 2;
+        const tone = WARNING_TONES[Math.min(4, Math.max(2, level))];
+        const title = w.overskrift || w.headline || w.type || w.event || "Varsel";
+        const span = [w.start || w.onset, w.slut || w.expires].map((t) => this._when(t)).filter(Boolean).join(" – ");
+        return `<div class="warn" style="--tone:${tone}" data-more="${this._esc(id)}">
+          <ha-icon icon="mdi:alert"></ha-icon>
+          <div><b>${this._esc(title)}</b><span>${this._esc(span)}</span>${
+            w.beskrivelse || w.description ? `<small>${this._esc(w.beskrivelse || w.description)}</small>` : ""
+          }</div>
+        </div>`;
+      })
+      .join("")}</div>`;
+  }
+
+  _detailValue(id) {
+    const state = this._s(id);
+    if (!state || state.state === "unavailable" || state.state === "unknown") return "—";
+    if (typeof this._hass?.formatEntityState === "function") return this._hass.formatEntityState(state);
+    const unit = state.attributes?.unit_of_measurement;
+    return unit ? `${state.state} ${unit}` : state.state;
+  }
+
+  _detailTilesHtml(section) {
+    return (section?.items || [])
+      .map((item) => {
+        const state = this._s(item.entity);
+        const name = item.name || state?.attributes?.friendly_name || item.entity;
+        const icon = item.icon || state?.attributes?.icon || "mdi:information-outline";
+        return `<div class="tile detail" data-more="${this._esc(item.entity)}">
+          <ha-icon icon="${this._esc(icon)}"></ha-icon>
+          <div><span>${this._esc(name)}</span><b>${this._esc(this._detailValue(item.entity))}</b></div>
+        </div>`;
+      })
+      .join("");
+  }
+
+  _detailsHtml() {
+    const sections = this._config.detail_sections || [];
+    if (!sections.length) return "";
+    return `<div class="details">${sections
+      .map(
+        (section, i) => `${this._sectionHeading(section.icon || "mdi:information-outline", section.title || "")}
+        <div class="grid-auto" data-detail-section="${i}">${this._detailTilesHtml(section)}</div>`,
+      )
+      .join("")}</div>`;
+  }
+
+  _bindMore(root) {
+    root?.querySelectorAll("[data-more]").forEach((el) => el.addEventListener("click", () => this._more(el.dataset.more)));
   }
 
   _forecastHtml() {
@@ -450,6 +573,20 @@ class HAWeatherCard extends HTMLElement {
       .subtab.active{color:#fff;background:var(--accent);border-color:var(--accent)}
       .radar-frame{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;border:1px solid var(--edge)}
       .radar-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+      .radar-img-wrap{border-radius:16px;overflow:hidden;border:1px solid var(--edge);background:#121820;cursor:pointer;max-width:560px;margin:0 auto}
+      .radar-img{display:block;width:100%;height:auto;aspect-ratio:1/1}
+      .warn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+      .warn{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--tone) 45%,transparent);background:color-mix(in srgb,var(--tone) 14%,transparent);cursor:pointer}
+      .warn ha-icon{--mdc-icon-size:22px;color:var(--tone);flex:0 0 auto}
+      .warn b{display:block;font-size:13px}
+      .warn span{display:block;font-size:11px;color:var(--secondary-text-color);margin-top:2px}
+      .warn small{display:block;font-size:11px;margin-top:4px;color:var(--primary-text-color);white-space:pre-line}
+      .warn-none{display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:11px;font-weight:700;color:var(--secondary-text-color);cursor:pointer}
+      .warn-none ha-icon{--mdc-icon-size:16px;color:var(--good)}
+      .grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+      .tile.detail b{color:var(--primary-text-color)}
+      .tile ha-icon,.tile img{flex:0 0 auto}
+      .details .section-heading:first-child{margin-top:26px}
       .forecast-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--edge)}
       .forecast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--secondary-text-color);margin-bottom:10px}
       .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
@@ -469,6 +606,7 @@ class HAWeatherCard extends HTMLElement {
         <div><strong>${this._esc(c.title)}</strong><span>${this._esc(c.subtitle)}</span></div>
       </div>
       <div class="main">
+        ${this._warningsHtml()}
         ${this._heroHtml()}
         ${this._hourlyHtml()}
         <div class="forecast-section">
@@ -477,6 +615,7 @@ class HAWeatherCard extends HTMLElement {
         </div>
         ${this._sectionHeading("mdi:radar", "Radar")}
         ${this._radarHtml()}
+        ${this._detailsHtml()}
         ${this._sectionHeading("mdi:flower-pollen", "Pollen")}
         ${this._pollenHtml()}
         ${this._sectionHeading("mdi:white-balance-sunny", "Sol & UV")}
@@ -496,9 +635,7 @@ class HAWeatherCard extends HTMLElement {
         this._render();
       }),
     );
-    this.shadowRoot.querySelectorAll("[data-more]").forEach((el) =>
-      el.addEventListener("click", () => this._more(el.dataset.more)),
-    );
+    this._bindMore(this.shadowRoot);
     this._shieldFromSwipeNav(this.shadowRoot.querySelector(".hourly-scroll"));
     this._shieldFromSwipeNav(this.shadowRoot.querySelector(".forecast-row"));
   }
@@ -513,7 +650,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "ha-weather-card",
   name: "HA Weather Card",
-  description: "Samlet vejrkort: nu/i dag, timeprognose, pollen, sol & UV, radar og 5-dages udsigt — henter alt direkte fra en native weather-entity",
+  description: "Samlet vejrkort: varsler, nu/i dag, timeprognose, radar (web eller image-entity), ekstra målinger, pollen, sol & UV og 5-dages udsigt",
   preview: true,
 });
 console.info(
