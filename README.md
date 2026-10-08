@@ -91,6 +91,12 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 - Cards remain separated internally and can be maintained independently.
 - The old standalone repositories are archived migration history; all new development and releases happen here.
 
+## Header card: sidebar as a drawer on desktop
+
+`ha-home-header-card` takes `desktop_sidebar: drawer`. It sets Home Assistant's sidebar to "always hidden" in that browser,
+so on a PC the dashboard gets the full width and the header's menu button opens the sidebar as an overlay drawer, as on a
+phone. `desktop_sidebar: docked` puts the docked sidebar back; without the option the user's own choice is left alone.
+
 ## Weather card: radar image, warnings and extra measurements
 
 v0.4.80 redesigns the card: a hero with key figures, a 7-day list with temperature range bars, the radar beside it on

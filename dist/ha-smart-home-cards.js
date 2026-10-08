@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.84 */
+/* MRDonnii Smart Home Cards v0.4.82 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -26876,7 +26876,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.62";
+var VERSION24 = "0.8.63";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -27372,6 +27372,23 @@ var HAHomeHeaderCard = class extends HTMLElement {
     if (!this._filterTimer) this._filterTimer = setInterval(() => this._scanFilters(), 15e3);
     this._updateClock();
     this._scanFilters();
+    setTimeout(() => this._applySidebarMode(), 0);
+  }
+  // desktop_sidebar: "drawer" hides Home Assistant's docked sidebar in this
+  // browser (the same as Profile > "Always hide the sidebar"), so the menu
+  // button opens it as an overlay drawer like on mobile and the dashboard gets
+  // the full width. "docked" puts it back. Unset leaves the user's choice alone.
+  _applySidebarMode() {
+    const mode = this._config?.desktop_sidebar;
+    const dock = mode === "drawer" ? "always_hidden" : mode === "docked" ? "docked" : null;
+    if (!dock || !this.isConnected) return;
+    let current = null;
+    try {
+      current = JSON.parse(localStorage.getItem("dockedSidebar") || "null");
+    } catch (e) {
+    }
+    if (current === dock) return;
+    this.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock }, bubbles: true, composed: true }));
   }
   disconnectedCallback() {
     clearInterval(this._timer);

@@ -1,6 +1,6 @@
 import "./ha-card-list-editor.js?v=0.8.52";
 import{fillAlertText,isFilterRule,matchSignature,ruleHeld,ruleKey,scanRuleMatches}from"../shared/alert-rules.js";
-const VERSION="0.8.62";
+const VERSION="0.8.63";
 
 // Vejr-baggrund "V3": port af AnasBox' "Animated Weather Card V3" (button-card)
 // til dette kort som et ALTERNATIVT baggrundslag, slaaet fra som standard.
@@ -211,7 +211,12 @@ class V3WeatherParticles {
 }
 class HAHomeHeaderCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=undefined;this._sig="";this._alertIndex=0;this._lastCycle=Date.now();this._mediaIndex=0;this._lastMediaCycle=Date.now();this._timer=undefined;this._filterTimer=undefined;this._filterSig="";this._filterMatches={};this._popupEl=null;this._popupCard=null;this._built=false;this._structureKey="";this._mediaSig=null;this._runwaySig=null;this._currentActiveAlert=null;this._currentMediaAlert=null;this._v3Bucket=null}
-  connectedCallback(){if(!this._timer)this._timer=setInterval(()=>this._updateClock(),1000);if(!this._filterTimer)this._filterTimer=setInterval(()=>this._scanFilters(),15000);this._updateClock();this._scanFilters()}
+  connectedCallback(){if(!this._timer)this._timer=setInterval(()=>this._updateClock(),1000);if(!this._filterTimer)this._filterTimer=setInterval(()=>this._scanFilters(),15000);this._updateClock();this._scanFilters();setTimeout(()=>this._applySidebarMode(),0)}
+  // desktop_sidebar: "drawer" hides Home Assistant's docked sidebar in this
+  // browser (the same as Profile > "Always hide the sidebar"), so the menu
+  // button opens it as an overlay drawer like on mobile and the dashboard gets
+  // the full width. "docked" puts it back. Unset leaves the user's choice alone.
+  _applySidebarMode(){const mode=this._config?.desktop_sidebar;const dock=mode==="drawer"?"always_hidden":mode==="docked"?"docked":null;if(!dock||!this.isConnected)return;let current=null;try{current=JSON.parse(localStorage.getItem("dockedSidebar")||"null")}catch(e){}if(current===dock)return;this.dispatchEvent(new CustomEvent("hass-dock-sidebar",{detail:{dock},bubbles:true,composed:true}))}
   disconnectedCallback(){clearInterval(this._timer);this._timer=undefined;clearInterval(this._filterTimer);this._filterTimer=undefined;window.HAHomeWeatherFx?.clear(this)}
   static getStubConfig(){return{title:"Hjemmet lige nu",weather:"weather.home",alerts:[],activities:[]}}
   static getConfigElement(){const e=document.createElement("ha-home-header-card-editor");e.definition={roots:[
