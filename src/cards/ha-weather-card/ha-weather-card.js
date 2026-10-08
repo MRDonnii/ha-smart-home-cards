@@ -1,5 +1,5 @@
 import "./ha-weather-card-assets.js";
-const VERSION = "0.5.0";
+const VERSION = "0.6.0";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -37,7 +37,6 @@ class HAWeatherCard extends HTMLElement {
     this._sig = "";
     this._radarSig = "";
     this._detailSig = "";
-    this._heroMode = "now";
     this._radarTab = "nedbor";
     this._daily = [];
     this._hourly = [];
@@ -70,6 +69,8 @@ class HAWeatherCard extends HTMLElement {
       warnings_entity: null,
       // Optional: extra groups of sensors, [{title, icon, items: [{name, entity, icon}]}].
       detail_sections: [],
+      // Optional: small facts under the radar, [{name, entity, icon}].
+      radar_details: [],
     };
   }
 
@@ -94,7 +95,11 @@ class HAWeatherCard extends HTMLElement {
   }
 
   _detailIds() {
-    return (this._config.detail_sections || []).flatMap((s) => (s.items || []).map((i) => i.entity)).filter(Boolean);
+    const c = this._config;
+    return [
+      ...(c.detail_sections || []).flatMap((s) => (s.items || []).map((i) => i.entity)),
+      ...(c.radar_details || []).map((i) => i.entity),
+    ].filter(Boolean);
   }
 
   _stateSig(hass, ids) {
@@ -123,9 +128,14 @@ class HAWeatherCard extends HTMLElement {
       if (detailSig !== this._detailSig) {
         this._detailSig = detailSig;
         this.shadowRoot.querySelectorAll("[data-detail-section]").forEach((el) => {
-          el.innerHTML = this._detailTilesHtml((this._config.detail_sections || [])[Number(el.dataset.detailSection)]);
+          el.innerHTML = this._detailRowsHtml((this._config.detail_sections || [])[Number(el.dataset.detailSection)]);
+          this._bindMore(el);
         });
-        this._bindMore(this.shadowRoot.querySelector(".details"));
+        const facts = this.shadowRoot.querySelector("[data-radar-facts]");
+        if (facts) {
+          facts.innerHTML = this._factsHtml();
+          this._bindMore(facts);
+        }
       }
     }
     if (this._config.weather_entity && this._fetchedFor !== this._config.weather_entity) {
@@ -250,9 +260,18 @@ class HAWeatherCard extends HTMLElement {
     return { color: "var(--muted)", label: "Meget lav" };
   }
 
+  _windMs(value, unit) {
+    if (!Number.isFinite(value)) return undefined;
+    const u = String(unit || "km/h").toLowerCase();
+    if (u === "m/s") return value;
+    if (u === "mph") return value * 0.44704;
+    if (u === "kn" || u === "kt") return value * 0.514444;
+    if (u === "ft/s") return value * 0.3048;
+    return value / 3.6;
+  }
+
   _now() {
-    const c = this._config;
-    const w = this._s(c.weather_entity);
+    const w = this._s(this._config.weather_entity);
     const a = w?.attributes || {};
     const hourNow = (this._hourly || [])[0];
     return {
@@ -260,138 +279,106 @@ class HAWeatherCard extends HTMLElement {
       temp: this._num(a.temperature),
       feels: this._num(a.apparent_temperature),
       humidity: this._num(a.humidity),
-      windSpeed: this._num(a.wind_speed),
-      windGust: this._num(a.wind_gust_speed),
-      windBearing: this._num(a.wind_bearing),
+      wind: this._windMs(this._num(a.wind_speed), a.wind_speed_unit),
+      gust: this._windMs(this._num(a.wind_gust_speed), a.wind_speed_unit),
+      bearing: this._num(a.wind_bearing),
       pressure: this._num(a.pressure),
       uv: this._num(a.uv_index),
+      visibility: this._num(a.visibility),
+      dewPoint: this._num(a.dew_point),
       cloud: this._num(a.cloud_coverage),
       precipProb: hourNow ? this._num(hourNow.precipitation_probability) : undefined,
     };
   }
 
-  _today() {
-    const d = (this._daily || [])[0];
-    if (!d) return undefined;
-    return {
-      condition: d.condition,
-      temp: this._num(d.temperature),
-      templow: this._num(d.templow),
-      feels: this._num(d.apparent_temperature),
-      precip: this._num(d.precipitation) ?? 0,
-      precipProb: this._num(d.precipitation_probability),
-      windSpeed: this._num(d.wind_speed),
-      windBearing: this._num(d.wind_bearing),
-      humidity: this._num(d.humidity),
-      uv: this._num(d.uv_index),
-    };
-  }
-
-  _heroTile() {
-    const now = this._heroMode === "now";
-    const data = now ? this._now() : this._today();
-    if (!data) return { empty: true };
-    return { ...data, now };
-  }
-
-  _windArrow(bearing) {
+  _windArrow(bearing, size = 16) {
     if (!Number.isFinite(bearing)) return "";
-    return `<svg class="wind-arrow" viewBox="0 0 24 24" style="transform:rotate(${bearing}deg)"><path d="M12 2L6 12h4v10h4V12h4L12 2z"/></svg>`;
+    // Wind bearing is where the wind comes from; the arrow points where it blows.
+    return `<svg class="wind-arrow" width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${(bearing + 180) % 360}deg)"><path d="M12 2L6 12h4v10h4V12h4L12 2z"/></svg>`;
+  }
+
+  _chip(icon, label, value, extra = "") {
+    return `<div class="chip"${extra}><ha-icon icon="${icon}"></ha-icon><div><span>${this._esc(label)}</span><b>${value}</b></div></div>`;
   }
 
   _heroHtml() {
-    const t = this._heroTile();
-    if (t.empty) return `<div class="hero-empty">Henter vejrdata…</div>`;
-    const isDay = t.now ? this._isDaytimeNow() : true;
-    const icon = this._iconPath(t.condition, isDay);
-    const meta = [];
-    if (Number.isFinite(t.windSpeed)) {
-      meta.push(
-        `<span class="meta-item">${this._windArrow(t.windBearing)}<b>${this._fmt(t.windSpeed, 0)}</b> km/t ${this._esc(this._compass(t.windBearing))}</span>`,
-      );
+    const n = this._now();
+    if (!Number.isFinite(n.temp) && !n.condition) return `<div class="empty">Henter vejrdata…</div>`;
+    const today = (this._daily || [])[0];
+    const hi = this._num(today?.temperature);
+    const lo = this._num(today?.templow);
+    const icon = this._iconPath(n.condition, this._isDaytimeNow());
+    const uv = this._uvTone(n.uv);
+    const chips = [];
+    if (Number.isFinite(n.wind)) {
+      chips.push(this._chip("mdi:weather-windy", "Vind", `${this._windArrow(n.bearing, 14)}${this._fmt(n.wind, 1)} m/s <small>${this._esc(this._compass(n.bearing))}</small>`));
     }
-    if (Number.isFinite(t.humidity)) meta.push(`<span class="meta-item"><ha-icon icon="mdi:water-percent"></ha-icon><b>${this._fmt(t.humidity, 0)}</b>%</span>`);
-    if (Number.isFinite(t.precipProb)) meta.push(`<span class="meta-item"><ha-icon icon="mdi:umbrella-outline"></ha-icon><b>${this._fmt(t.precipProb, 0)}</b>%</span>`);
-    if (!t.now && Number.isFinite(t.precip)) meta.push(`<span class="meta-item"><ha-icon icon="mdi:weather-rainy"></ha-icon><b>${this._fmt(t.precip, 1)}</b> mm</span>`);
-    if (t.now && Number.isFinite(t.uv)) {
-      const uvTone = this._uvTone(t.uv);
-      meta.push(`<span class="meta-item" style="color:${uvTone.color}"><ha-icon icon="mdi:weather-sunny-alert"></ha-icon>UV <b>${this._fmt(t.uv, 0)}</b></span>`);
-    }
-    return `
-      <div class="hero-toggle">
-        <button class="pill ${t.now ? "active" : ""}" data-hero="now">Nu</button>
-        <button class="pill ${!t.now ? "active" : ""}" data-hero="today">I dag</button>
-      </div>
-      <div class="hero-body">
-        <img class="hero-icon" src="${icon}" width="108" height="108" alt="">
-        <div class="hero-figures">
-          <div class="hero-temp">${this._fmt(t.temp, 1)}°${
-            !t.now && Number.isFinite(t.templow) ? `<span class="hero-low">${this._fmt(t.templow, 1)}°</span>` : ""
-          }${Number.isFinite(t.feels) ? `<span class="hero-feels">Føles som ${this._fmt(t.feels, 1)}°</span>` : ""}</div>
-          <div class="hero-condition">${this._esc(this._conditionLabel(t.condition))}</div>
-          <div class="hero-meta">${meta.join("")}</div>
+    if (Number.isFinite(n.gust)) chips.push(this._chip("mdi:weather-windy-variant", "Vindstød", `${this._fmt(n.gust, 1)} m/s`));
+    if (Number.isFinite(n.humidity)) chips.push(this._chip("mdi:water-percent", "Luftfugtighed", `${this._fmt(n.humidity, 0)} %`));
+    if (Number.isFinite(n.precipProb)) chips.push(this._chip("mdi:umbrella-outline", "Regnrisiko", `${this._fmt(n.precipProb, 0)} %`));
+    if (Number.isFinite(n.pressure)) chips.push(this._chip("mdi:gauge", "Lufttryk", `${this._fmt(n.pressure, 0)} hPa`));
+    if (Number.isFinite(n.dewPoint)) chips.push(this._chip("mdi:water-thermometer", "Dugpunkt", `${this._fmt(n.dewPoint, 1)}°`));
+    if (Number.isFinite(n.visibility)) chips.push(this._chip("mdi:eye-outline", "Sigtbarhed", `${this._fmt(n.visibility, n.visibility < 10 ? 1 : 0)} km`));
+    if (Number.isFinite(n.uv)) chips.push(this._chip("mdi:weather-sunny-alert", "UV-indeks", `${this._fmt(n.uv, 0)} <small>${uv.label}</small>`, ` style="--tone:${uv.color}"`));
+    return `<div class="hero" data-more="${this._esc(this._config.more_info_entity || this._config.weather_entity)}">
+        <div class="hero-main">
+          <img class="hero-icon" src="${icon}" alt="">
+          <div class="hero-text">
+            <div class="hero-temp">${this._fmt(n.temp, 1)}<sup>°</sup></div>
+            <div class="hero-cond">${this._esc(this._conditionLabel(n.condition))}</div>
+            <div class="hero-sub">${[
+              Number.isFinite(n.feels) ? `Føles som ${this._fmt(n.feels, 1)}°` : "",
+              Number.isFinite(hi) ? `I dag ${this._fmt(hi, 0)}° / ${this._fmt(lo, 0)}°` : "",
+            ].filter(Boolean).join(" · ")}</div>
+          </div>
         </div>
+        <div class="chips">${chips.join("")}</div>
       </div>`;
   }
 
   _hourlyHtml() {
     const hours = (this._hourly || []).slice(0, 24);
-    if (!hours.length) return `<div class="hourly-empty">Henter timeprognose…</div>`;
+    if (!hours.length) return `<div class="empty">Henter timeprognose…</div>`;
     return `<div class="hourly-scroll">${hours
       .map((h, i) => {
         const prob = this._num(h.precipitation_probability) ?? 0;
-        return `<div class="hour">
+        const mm = this._num(h.precipitation) ?? 0;
+        return `<div class="hour${i === 0 ? " now" : ""}">
           <span class="hour-label">${this._hourLabel(h.datetime, i === 0)}</span>
-          <img src="${this._iconPath(h.condition, h.is_daytime)}" width="34" height="34" alt="">
+          <img src="${this._iconPath(h.condition, h.is_daytime)}" alt="">
           <span class="hour-temp">${this._fmt(this._num(h.temperature), 0)}°</span>
-          <span class="hour-prob ${prob >= 40 ? "wet" : ""}">${prob > 0 ? `${prob}%` : ""}</span>
+          <span class="hour-rain${prob >= 40 ? " wet" : ""}">${mm >= 0.1 ? `${this._fmt(mm, 1)} mm` : prob > 0 ? `${prob}%` : "&nbsp;"}</span>
+          <span class="hour-bar"><i style="height:${Math.min(100, prob)}%"></i></span>
         </div>`;
       })
       .join("")}</div>`;
   }
 
-  _pollenHtml() {
-    const items = this._config.pollen || [];
-    return `<div class="grid2">${items
-      .map((p) => {
-        const s = this._s(p.entity);
-        const idx = this._num(s?.attributes?.index_value) ?? 0;
-        const category = s?.attributes?.category || "—";
-        const color = this._pollenTone(idx);
-        return `<div class="tile" data-more="${this._esc(p.entity)}" style="--tone:${color}">
-          <ha-icon icon="${this._esc(p.icon || "mdi:flower-pollen")}"></ha-icon>
-          <div><span>${this._esc(p.name)}</span><b>${this._esc(category)} (${idx})</b></div>
+  _daysHtml() {
+    const days = (this._daily || []).slice(0, 7);
+    if (!days.length) return `<div class="empty">Henter prognose…</div>`;
+    const temps = days.flatMap((d) => [this._num(d.templow), this._num(d.temperature)]).filter(Number.isFinite);
+    const min = Math.min(...temps);
+    const span = Math.max(1, Math.max(...temps) - min);
+    const more = this._esc(this._config.more_info_entity || this._config.weather_entity);
+    return `<div class="days">${days
+      .map((d, i) => {
+        const lo = this._num(d.templow);
+        const hi = this._num(d.temperature);
+        const left = Number.isFinite(lo) ? ((lo - min) / span) * 100 : 0;
+        const width = Number.isFinite(lo) && Number.isFinite(hi) ? Math.max(6, ((hi - lo) / span) * 100) : 0;
+        const mm = this._num(d.precipitation) ?? 0;
+        const prob = this._num(d.precipitation_probability);
+        return `<div class="day" data-more="${more}">
+          <span class="day-name">${i === 0 ? "I dag" : this._esc(this._weekday(d.datetime).replace(/^./, (ch) => ch.toUpperCase()))}</span>
+          <img src="${this._iconPath(d.condition, true)}" alt="" title="${this._esc(this._conditionLabel(d.condition))}">
+          <span class="day-rain${mm >= 1 ? " wet" : ""}">${mm >= 0.1 ? `${this._fmt(mm, 1)} mm` : ""}${Number.isFinite(prob) && prob > 0 ? `<small>${this._fmt(prob, 0)}%</small>` : ""}</span>
+          <span class="day-lo">${this._fmt(lo, 0)}°</span>
+          <span class="day-range"><i style="left:${left}%;width:${width}%"></i></span>
+          <span class="day-hi">${this._fmt(hi, 0)}°</span>
         </div>`;
       })
       .join("")}</div>`;
-  }
-
-  _sunHtml() {
-    const c = this._config;
-    const sun = this._s(c.sun_entity);
-    const now = this._now();
-    const elevation = this._num(sun?.attributes?.elevation);
-    const azimuth = this._num(sun?.attributes?.azimuth);
-    const uvTone = this._uvTone(now.uv);
-    const elevationPct = Number.isFinite(elevation) ? Math.max(0, Math.min(100, ((elevation + 10) / 80) * 100)) : 0;
-    return `<div class="grid2">
-        <div class="tile" data-more="${this._esc(c.sun_entity)}">
-          <img src="${window.HAWeatherCardAssets?.weather?.sunset || ""}" width="30" height="30" alt="">
-          <div><span>Solnedgang</span><b>${this._time(sun?.attributes?.next_setting)}</b></div>
-        </div>
-        <div class="tile" data-more="${this._esc(c.sun_entity)}">
-          <img src="${window.HAWeatherCardAssets?.weather?.sunrise || ""}" width="30" height="30" alt="">
-          <div><span>Solopgang</span><b>${this._time(sun?.attributes?.next_rising)}</b></div>
-        </div>
-        <div class="tile" data-more="${this._esc(c.weather_entity)}" style="--tone:${uvTone.color}">
-          <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
-          <div><span>UV-indeks</span><b>${uvTone.label} (${this._fmt(now.uv, 1)})</b></div>
-        </div>
-      </div>
-      <div class="sun-arc">
-        <div class="sun-arc-track"><div class="sun-arc-fill" style="width:${elevationPct}%"></div><div class="sun-arc-dot" style="left:${elevationPct}%"></div></div>
-        <div class="sun-arc-labels"><span>Solhøjde ${this._fmt(elevation, 1)}°</span><span>Retning ${this._esc(this._compass(azimuth))}</span></div>
-      </div>`;
   }
 
   _radarHtml() {
@@ -417,10 +404,23 @@ class HAWeatherCard extends HTMLElement {
     const body = active[3]
       ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>`
       : `<div class="radar-img-wrap" data-more="${this._esc(image)}"><img class="radar-img" src="${this._esc(this._radarImageUrl())}" alt="Radarkort"></div>`;
+    const facts = (this._config.radar_details || []).length
+      ? `<div class="facts" data-radar-facts>${this._factsHtml()}</div>`
+      : "";
     return `<div class="subtabs">${tabs
       .map((t) => `<button class="subtab ${t[0] === active[0] ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`)
       .join("")}</div>
-      ${body}`;
+      ${body}${facts}`;
+  }
+
+  _factsHtml() {
+    return (this._config.radar_details || [])
+      .map((item) => {
+        const state = this._s(item.entity);
+        const icon = item.icon || state?.attributes?.icon || "mdi:information-outline";
+        return `<div class="fact" data-more="${this._esc(item.entity)}"><ha-icon icon="${this._esc(icon)}"></ha-icon><span>${this._esc(item.name || state?.attributes?.friendly_name || item.entity)}</span><b>${this._esc(this._detailValue(item.entity))}</b></div>`;
+      })
+      .join("");
   }
 
   _radarImageUrl() {
@@ -468,53 +468,83 @@ class HAWeatherCard extends HTMLElement {
     return unit ? `${state.state} ${unit}` : state.state;
   }
 
-  _detailTilesHtml(section) {
+  _detailNote(state) {
+    const a = state?.attributes || {};
+    if (a.station) return `${a.station}${Number.isFinite(Number(a.afstand_km)) ? ` · ${this._fmt(Number(a.afstand_km), 0)} km` : ""}`;
+    if (a.i_går !== undefined && a.i_går !== null) {
+      const unit = a.unit_of_measurement ? ` ${a.unit_of_measurement}` : "";
+      return `I går ${typeof a.i_går === "number" ? this._fmt(a.i_går, 1) : this._esc(a.i_går)}${unit}`;
+    }
+    if (a.næste_6_timer !== undefined && a.næste_6_timer !== null) return `Næste 6 t: ${this._fmt(Number(a.næste_6_timer), 0)} %`;
+    if (a.niveau_cm !== undefined) return `${this._fmt(Number(a.niveau_cm), 0)} cm`;
+    return "";
+  }
+
+  _detailRowsHtml(section) {
     return (section?.items || [])
       .map((item) => {
         const state = this._s(item.entity);
         const name = item.name || state?.attributes?.friendly_name || item.entity;
         const icon = item.icon || state?.attributes?.icon || "mdi:information-outline";
-        return `<div class="tile detail" data-more="${this._esc(item.entity)}">
+        const value = this._detailValue(item.entity);
+        const note = this._detailNote(state);
+        return `<div class="row${value === "—" ? " off" : ""}" data-more="${this._esc(item.entity)}">
           <ha-icon icon="${this._esc(icon)}"></ha-icon>
-          <div><span>${this._esc(name)}</span><b>${this._esc(this._detailValue(item.entity))}</b></div>
+          <span class="row-label">${this._esc(name)}${note ? `<small>${this._esc(note)}</small>` : ""}</span>
+          <b>${this._esc(value)}</b>
         </div>`;
       })
       .join("");
   }
 
-  _detailsHtml() {
+  _panel(icon, title, body, extra = "") {
+    return `<section class="panel"${extra}><div class="panel-head"><ha-icon icon="${icon}"></ha-icon><span>${this._esc(title)}</span></div>${body}</section>`;
+  }
+
+  _pollenRows() {
+    return (this._config.pollen || [])
+      .map((p) => {
+        const s = this._s(p.entity);
+        const idx = this._num(s?.attributes?.index_value) ?? 0;
+        const category = s?.attributes?.category || (s ? s.state : "—");
+        return `<div class="row" data-more="${this._esc(p.entity)}" style="--tone:${this._pollenTone(idx)}">
+          <ha-icon icon="${this._esc(p.icon || "mdi:flower-pollen")}"></ha-icon>
+          <span class="row-label">${this._esc(p.name)}</span>
+          <b class="toned"><i class="dot"></i>${this._esc(category)}</b>
+        </div>`;
+      })
+      .join("");
+  }
+
+  _sunPanelBody() {
+    const c = this._config;
+    const sun = this._s(c.sun_entity);
+    const now = this._now();
+    const elevation = this._num(sun?.attributes?.elevation);
+    const uv = this._uvTone(now.uv);
+    const pct = Number.isFinite(elevation) ? Math.max(0, Math.min(100, ((elevation + 10) / 80) * 100)) : 0;
+    return `<div class="row" data-more="${this._esc(c.sun_entity)}"><ha-icon icon="mdi:weather-sunset-up"></ha-icon><span class="row-label">Solopgang</span><b>${this._time(sun?.attributes?.next_rising)}</b></div>
+      <div class="row" data-more="${this._esc(c.sun_entity)}"><ha-icon icon="mdi:weather-sunset-down"></ha-icon><span class="row-label">Solnedgang</span><b>${this._time(sun?.attributes?.next_setting)}</b></div>
+      <div class="row" data-more="${this._esc(c.weather_entity)}" style="--tone:${uv.color}"><ha-icon icon="mdi:weather-sunny-alert"></ha-icon><span class="row-label">UV-indeks</span><b class="toned">${this._fmt(now.uv, 1)} · ${uv.label}</b></div>
+      <div class="sun-arc"><div class="sun-track"><div class="sun-fill" style="width:${pct}%"></div><div class="sun-dot" style="left:${pct}%"></div></div>
+        <div class="sun-labels"><span>Solhøjde ${this._fmt(elevation, 1)}°</span><span>Retning ${this._esc(this._compass(this._num(sun?.attributes?.azimuth)))}</span></div></div>`;
+  }
+
+  _panelsHtml() {
     const sections = this._config.detail_sections || [];
-    if (!sections.length) return "";
-    return `<div class="details">${sections
-      .map(
-        (section, i) => `${this._sectionHeading(section.icon || "mdi:information-outline", section.title || "")}
-        <div class="grid-auto" data-detail-section="${i}">${this._detailTilesHtml(section)}</div>`,
-      )
-      .join("")}</div>`;
+    const panels = sections.map((section, i) =>
+      this._panel(section.icon || "mdi:information-outline", section.title || "", `<div class="rows" data-detail-section="${i}">${this._detailRowsHtml(section)}</div>`),
+    );
+    if ((this._config.pollen || []).length) panels.push(this._panel("mdi:flower-pollen", "Pollen", `<div class="rows">${this._pollenRows()}</div>`));
+    panels.push(this._panel("mdi:white-balance-sunny", "Sol & UV", `<div class="rows">${this._sunPanelBody()}</div>`));
+    return `<div class="panels">${panels.join("")}</div>`;
   }
 
   _bindMore(root) {
-    root?.querySelectorAll("[data-more]").forEach((el) => el.addEventListener("click", () => this._more(el.dataset.more)));
-  }
-
-  _forecastHtml() {
-    const days = (this._daily || []).slice(1);
-    if (!days.length) return `<div class="forecast-empty">Henter prognose…</div>`;
-    return `<div class="forecast-row">${days
-      .map(
-        (d) => `<div class="fday" data-more="${this._esc(this._config.more_info_entity || this._config.weather_entity)}">
-          <span class="fday-name">${this._esc(this._weekday(d.datetime))}</span>
-          <img src="${this._iconPath(d.condition, true)}" width="54" height="54" alt="">
-          <span class="fday-temp">${this._fmt(this._num(d.temperature), 0)}°<small>${this._fmt(this._num(d.templow), 0)}°</small></span>
-          <span class="fday-cond">${this._esc(this._conditionLabel(d.condition))}</span>
-          <span class="fday-precip">${this._fmt(this._num(d.precipitation) ?? 0, 1)} mm</span>
-        </div>`,
-      )
-      .join("")}</div>`;
-  }
-
-  _sectionHeading(icon, title) {
-    return `<div class="section-heading"><ha-icon icon="${icon}"></ha-icon><span>${this._esc(title)}</span></div>`;
+    root?.querySelectorAll("[data-more]").forEach((el) => el.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      this._more(el.dataset.more);
+    }));
   }
 
   _render() {
@@ -523,112 +553,131 @@ class HAWeatherCard extends HTMLElement {
     if (!c.weather_entity) return;
 
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))}
+      :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b));--surface:color-mix(in srgb,var(--primary-text-color) 4%,transparent);--surface-2:color-mix(in srgb,var(--primary-text-color) 7%,transparent)}
       *{box-sizing:border-box}
-      ha-card{padding:22px;border-radius:26px;background:linear-gradient(150deg,color-mix(in srgb,var(--ha-card-background,var(--card-background-color)) 94%,var(--accent) 6%),var(--ha-card-background,var(--card-background-color)));border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
+      ha-card{container-type:inline-size;padding:20px;border-radius:26px;background:linear-gradient(160deg,color-mix(in srgb,var(--ha-card-background,var(--card-background-color)) 92%,var(--accent) 8%),var(--ha-card-background,var(--card-background-color)) 55%);border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
       .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-      .head ha-icon{--mdc-icon-size:26px;color:var(--accent)}
+      .head>ha-icon{--mdc-icon-size:26px;color:var(--accent)}
       .head strong{display:block;font-size:16px}
       .head span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
-      .section-heading{display:flex;align-items:center;gap:8px;margin:26px 0 12px;color:var(--secondary-text-color);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-      .section-heading:first-child{margin-top:0}
-      .section-heading ha-icon{--mdc-icon-size:16px;color:var(--accent)}
-      .hero-toggle{display:flex;gap:6px;margin-bottom:14px}
-      .pill{padding:6px 14px;border-radius:999px;border:1px solid var(--edge);background:transparent;color:var(--secondary-text-color);font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
-      .pill.active{color:#fff;background:var(--accent);border-color:var(--accent)}
-      .hero-empty,.hourly-empty,.forecast-empty{padding:20px;text-align:center;color:var(--secondary-text-color);font-size:12px}
-      .hero-body{display:flex;align-items:center;gap:18px}
-      .hero-icon{filter:drop-shadow(0 6px 14px color-mix(in srgb,var(--accent) 30%,transparent))}
-      .hero-temp{font-size:42px;font-weight:800;line-height:1;display:flex;align-items:baseline;gap:8px}
-      .hero-low{font-size:0.5em;color:var(--secondary-text-color);font-weight:700}
-      .hero-feels{font-size:12px;color:var(--secondary-text-color);font-weight:600;margin-left:6px}
-      .hero-condition{margin-top:6px;font-size:15px;font-weight:700}
-      .hero-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
-      .meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--secondary-text-color)}
-      .meta-item ha-icon{--mdc-icon-size:15px}
-      .meta-item b{color:var(--primary-text-color);font-weight:800}
-      .wind-arrow{width:14px;height:14px;fill:var(--accent);transition:transform .4s ease}
-      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:18px;padding-bottom:6px;scroll-snap-type:x proximity}
+      .empty{padding:18px;text-align:center;color:var(--secondary-text-color);font-size:12px}
+      .warn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+      .warn{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;border:1px solid color-mix(in srgb,var(--tone) 45%,transparent);background:linear-gradient(120deg,color-mix(in srgb,var(--tone) 20%,transparent),color-mix(in srgb,var(--tone) 6%,transparent));cursor:pointer}
+      .warn ha-icon{--mdc-icon-size:24px;color:var(--tone);flex:0 0 auto}
+      .warn b{display:block;font-size:14px}
+      .warn span{display:block;font-size:11px;color:var(--secondary-text-color);margin-top:2px}
+      .warn small{display:block;font-size:12px;margin-top:6px;white-space:pre-line;line-height:1.4}
+      .warn-none{display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--good) 10%,transparent);font-size:11px;font-weight:700;color:var(--secondary-text-color);cursor:pointer}
+      .warn-none ha-icon{--mdc-icon-size:15px;color:var(--good)}
+      .hero{display:grid;gap:16px;align-items:center;padding:18px;border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 16%,transparent),color-mix(in srgb,var(--accent) 3%,transparent));border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);cursor:pointer}
+      .hero-main{display:flex;align-items:center;gap:14px;min-width:0}
+      .hero-icon{width:104px;height:104px;flex:0 0 auto;filter:drop-shadow(0 8px 18px color-mix(in srgb,var(--accent) 35%,transparent))}
+      .hero-temp{font-size:58px;font-weight:800;line-height:.95;letter-spacing:-.02em}
+      .hero-temp sup{font-size:.45em;vertical-align:top;margin-left:2px;color:var(--secondary-text-color)}
+      .hero-cond{margin-top:6px;font-size:17px;font-weight:700}
+      .hero-sub{margin-top:4px;font-size:12px;color:var(--secondary-text-color)}
+      .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .chip{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:14px;background:color-mix(in srgb,var(--ha-card-background,var(--card-background-color)) 70%,transparent);border:1px solid var(--edge);--tone:var(--accent);min-width:0}
+      .chip>ha-icon{--mdc-icon-size:19px;color:var(--tone);flex:0 0 auto}
+      .chip span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--secondary-text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .chip b{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:800;white-space:nowrap}
+      .chip small,.hour-rain small{font-size:11px;font-weight:600;color:var(--secondary-text-color)}
+      .wind-arrow{fill:var(--accent);flex:0 0 auto}
+      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:14px;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin}
       .hourly-scroll::-webkit-scrollbar{height:4px}
       .hourly-scroll::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
-      .hour{flex:0 0 auto;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);scroll-snap-align:start}
-      .hour-label{font-size:10px;color:var(--secondary-text-color);font-weight:700}
-      .hour-temp{font-size:13px;font-weight:800}
-      .hour-prob{font-size:9px;color:var(--accent);font-weight:700;min-height:11px}
-      .hour-prob.wet{color:var(--warn)}
-      .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-      .tile{position:relative;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--tone) 18%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 7%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer;--tone:var(--accent)}
-      .tile ha-icon{--mdc-icon-size:22px;color:var(--tone)}
-      .tile img{width:26px;height:26px}
-      .tile span{display:block;font-size:10px;color:var(--secondary-text-color);text-transform:uppercase;font-weight:700;letter-spacing:.03em}
-      .tile b{display:block;margin-top:2px;font-size:13px;color:var(--tone)}
-      .sun-arc{margin-top:14px;padding:14px;border:1px solid var(--edge);border-radius:16px}
-      .sun-arc-track{position:relative;height:6px;border-radius:99px;background:color-mix(in srgb,var(--primary-text-color) 10%,transparent)}
-      .sun-arc-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--warn));transition:width .6s ease}
-      .sun-arc-dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px color-mix(in srgb,var(--warn) 60%,transparent);transform:translate(-50%,-50%);transition:left .6s ease}
-      .sun-arc-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--secondary-text-color)}
+      .hour{flex:0 0 auto;width:58px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border-radius:16px;background:var(--surface);scroll-snap-align:start}
+      .hour.now{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
+      .hour img{width:34px;height:34px}
+      .hour-label{font-size:11px;color:var(--secondary-text-color);font-weight:700}
+      .hour-temp{font-size:14px;font-weight:800}
+      .hour-rain{font-size:9px;color:var(--accent);font-weight:700;min-height:11px;white-space:nowrap}
+      .hour-rain.wet{color:var(--warn)}
+      .hour-bar{width:24px;height:4px;border-radius:4px;background:var(--surface-2);overflow:hidden;display:flex;align-items:flex-end}
+      .hour-bar i{display:block;width:100%;background:var(--accent);border-radius:4px;height:0}
+      .cols{display:grid;gap:14px;margin-top:14px}
+      .panel{padding:14px 16px;border-radius:20px;background:var(--surface);border:1px solid var(--edge);min-width:0}
+      .panel-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--secondary-text-color);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+      .panel-head ha-icon{--mdc-icon-size:17px;color:var(--accent)}
+      .days{display:flex;flex-direction:column}
+      .day{display:grid;grid-template-columns:52px 34px minmax(54px,auto) 30px 1fr 30px;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid color-mix(in srgb,var(--edge) 60%,transparent);cursor:pointer}
+      .day:last-child{border-bottom:0}
+      .day img{width:32px;height:32px}
+      .day-name{font-size:13px;font-weight:800}
+      .day-rain{font-size:11px;font-weight:700;color:var(--accent);display:flex;flex-direction:column;line-height:1.15}
+      .day-rain small{font-weight:600;color:var(--secondary-text-color);font-size:10px}
+      .day-rain.wet{color:var(--warn)}
+      .day-lo{text-align:right;font-size:13px;color:var(--secondary-text-color);font-weight:700}
+      .day-hi{font-size:14px;font-weight:800}
+      .day-range{position:relative;height:6px;border-radius:6px;background:var(--surface-2)}
+      .day-range i{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#60a5fa,#facc15 60%,#fb923c)}
       .subtabs{display:flex;gap:6px;margin-bottom:10px}
       .subtab{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:999px;border:1px solid var(--edge);background:transparent;color:var(--secondary-text-color);font-size:11px;font-weight:700;cursor:pointer}
       .subtab ha-icon{--mdc-icon-size:14px}
       .subtab.active{color:#fff;background:var(--accent);border-color:var(--accent)}
-      .radar-frame{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;border:1px solid var(--edge)}
+      .radar-frame{position:relative;width:100%;padding-top:100%;border-radius:16px;overflow:hidden;border:1px solid var(--edge)}
       .radar-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-      .radar-img-wrap{border-radius:16px;overflow:hidden;border:1px solid var(--edge);background:#121820;cursor:pointer;max-width:560px;margin:0 auto}
+      .radar-img-wrap{border-radius:16px;overflow:hidden;border:1px solid var(--edge);background:#121820;cursor:pointer}
       .radar-img{display:block;width:100%;height:auto;aspect-ratio:1/1}
-      .warn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-      .warn{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--tone) 45%,transparent);background:color-mix(in srgb,var(--tone) 14%,transparent);cursor:pointer}
-      .warn ha-icon{--mdc-icon-size:22px;color:var(--tone);flex:0 0 auto}
-      .warn b{display:block;font-size:13px}
-      .warn span{display:block;font-size:11px;color:var(--secondary-text-color);margin-top:2px}
-      .warn small{display:block;font-size:11px;margin-top:4px;color:var(--primary-text-color);white-space:pre-line}
-      .warn-none{display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:11px;font-weight:700;color:var(--secondary-text-color);cursor:pointer}
-      .warn-none ha-icon{--mdc-icon-size:16px;color:var(--good)}
-      .grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-      .tile.detail b{color:var(--primary-text-color)}
-      .tile ha-icon,.tile img{flex:0 0 auto}
-      .details .section-heading:first-child{margin-top:26px}
-      .forecast-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--edge)}
-      .forecast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--secondary-text-color);margin-bottom:10px}
-      .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
-      .forecast-row::-webkit-scrollbar{height:4px}
-      .forecast-row::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
-      .fday{flex:0 0 auto;width:96px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-top:3px solid var(--accent);border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer;text-align:center;scroll-snap-align:start}
-      .fday-name{font-size:11px;font-weight:800;text-transform:capitalize}
-      .fday-temp{font-size:13px;font-weight:800}
-      .fday-temp small{color:var(--secondary-text-color);font-weight:700;margin-left:4px}
-      .fday-cond{font-size:10px;color:var(--secondary-text-color);min-height:24px}
-      .fday-precip{font-size:10px;color:var(--accent);font-weight:700}
-      @media(max-width:560px){.hero-body{flex-direction:column;align-items:flex-start}.hero-icon{width:84px;height:84px}.hero-temp{font-size:34px}.grid2{grid-template-columns:1fr}}
+      .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;margin-top:10px}
+      .fact{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;background:var(--surface);cursor:pointer;min-width:0}
+      .fact ha-icon{--mdc-icon-size:16px;color:var(--accent)}
+      .fact span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--secondary-text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .fact b{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .panels{margin-top:14px;columns:1;column-gap:14px}
+      .panels .panel{break-inside:avoid;margin-bottom:14px;display:inline-block;width:100%}
+      .rows{display:flex;flex-direction:column}
+      .row{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid color-mix(in srgb,var(--edge) 55%,transparent);cursor:pointer;--tone:var(--accent)}
+      .row:last-child{border-bottom:0}
+      .row>ha-icon{--mdc-icon-size:19px;color:var(--tone)}
+      .row-label{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+      .row-label small{display:block;font-size:10px;color:var(--secondary-text-color);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .row b{font-size:13px;font-weight:800;text-align:right;white-space:nowrap}
+      .row b.toned{color:var(--tone);display:flex;align-items:center;gap:6px}
+      .row.off b,.row.off>ha-icon{color:var(--muted)}
+      .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--tone)}
+      .sun-arc{margin-top:8px;padding:10px 4px 2px}
+      .sun-track{position:relative;height:6px;border-radius:99px;background:var(--surface-2)}
+      .sun-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--warn))}
+      .sun-dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px color-mix(in srgb,var(--warn) 60%,transparent);transform:translate(-50%,-50%)}
+      .sun-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--secondary-text-color)}
+      @container (min-width: 560px){
+        .hero{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
+        .chips{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .panels{columns:2}
+      }
+      @container (min-width: 860px){
+        ha-card{padding:24px}
+        .hero-icon{width:128px;height:128px}
+        .hero-temp{font-size:72px}
+        .chips{grid-template-columns:repeat(4,minmax(0,1fr))}
+        .hero{grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr)}
+        .cols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:start}
+        .panels{columns:3}
+      }
+      @container (max-width: 420px){
+        ha-card{padding:16px}
+        .hero{padding:14px}
+        .hero-icon{width:84px;height:84px}
+        .hero-temp{font-size:46px}
+        .day{grid-template-columns:44px 30px minmax(46px,auto) 26px 1fr 26px;gap:6px}
+      }
     </style>
     <ha-card>
       <div class="head">
         <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
         <div><strong>${this._esc(c.title)}</strong><span>${this._esc(c.subtitle)}</span></div>
       </div>
-      <div class="main">
-        ${this._warningsHtml()}
-        ${this._heroHtml()}
-        ${this._hourlyHtml()}
-        <div class="forecast-section">
-          <div class="forecast-title">Prognose &middot; de næste dage</div>
-          ${this._forecastHtml()}
-        </div>
-        ${this._sectionHeading("mdi:radar", "Radar")}
-        ${this._radarHtml()}
-        ${this._detailsHtml()}
-        ${this._sectionHeading("mdi:flower-pollen", "Pollen")}
-        ${this._pollenHtml()}
-        ${this._sectionHeading("mdi:white-balance-sunny", "Sol & UV")}
-        ${this._sunHtml()}
+      ${this._warningsHtml()}
+      ${this._heroHtml()}
+      ${this._hourlyHtml()}
+      <div class="cols">
+        ${this._panel("mdi:calendar-week", "De næste dage", this._daysHtml())}
+        ${this._panel("mdi:radar", "Radar", this._radarHtml())}
       </div>
+      ${this._panelsHtml()}
     </ha-card>`;
 
-    this.shadowRoot.querySelectorAll("[data-hero]").forEach((el) =>
-      el.addEventListener("click", () => {
-        this._heroMode = el.dataset.hero;
-        this._render();
-      }),
-    );
     this.shadowRoot.querySelectorAll("[data-radar]").forEach((el) =>
       el.addEventListener("click", () => {
         this._radarTab = el.dataset.radar;
@@ -637,11 +686,10 @@ class HAWeatherCard extends HTMLElement {
     );
     this._bindMore(this.shadowRoot);
     this._shieldFromSwipeNav(this.shadowRoot.querySelector(".hourly-scroll"));
-    this._shieldFromSwipeNav(this.shadowRoot.querySelector(".forecast-row"));
   }
 
   getCardSize() {
-    return 34;
+    return 24;
   }
 }
 

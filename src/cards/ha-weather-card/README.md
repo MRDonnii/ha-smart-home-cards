@@ -1,7 +1,9 @@
 # HA Weather Card
 
-One weather card: warnings, now/today, hourly forecast, 5-day outlook, radar,
-extra measurements, pollen, and sun & UV. Forecasts come from any native
+One weather card: warnings, now with key figures, hourly forecast, a 7-day list
+with temperature ranges, radar, extra measurements as tidy panels, pollen, and
+sun & UV. On wide screens (container width 860 px and up) the days and the radar
+sit side by side and the panels flow in three columns; narrow cards stack. Forecasts come from any native
 `weather` entity through `weather.get_forecasts`.
 
 ```yaml
@@ -40,6 +42,7 @@ detail_sections:
 | `radar_lat`, `radar_lon` | home | Centre of the web radar and wind maps. |
 | `radar_image_entity` | none | An `image` entity. When set, the radar section shows it under **Nedbør og lyn** (tap for more-info); the **Vind** tab keeps the web wind map. |
 | `warnings_entity` | none | A sensor whose `varsler` or `warnings` attribute is a list of `{type, overskrift, beskrivelse, niveau, start, slut}` (English keys `event`, `headline`, `description`, `level`, `onset`, `expires` work too). Levels 2/3/4 are yellow/orange/red. With an empty list the card says there are no active warnings. |
+| `radar_details` | none | Small facts under the radar: `[{name, entity, icon}]`. |
 | `detail_sections` | none | Groups of tiles: `[{title, icon, items: [{name, entity, icon}]}]`. Values are formatted by Home Assistant (unit, decimals, dates). |
 
 Tiles and the radar image update in place, so a sensor update does not rebuild
