@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.82 */
+/* MRDonnii Smart Home Cards v0.4.83 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -27673,10 +27673,17 @@ HAHomeHeaderCard.prototype._skyParams = function() {
   return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: day * (1 - 0.6 * cover), still };
 };
 HAHomeHeaderCard.prototype._skyAttach = function() {
-  const canvas = this.shadowRoot?.querySelector("canvas.v3-skyclouds");
+  let canvas = this.shadowRoot?.querySelector("canvas.v3-skyclouds");
   if (this._sky && this._sky.canvas !== canvas) {
     this._sky.destroy();
     this._sky = null;
+  }
+  if (this._sky && this._sky.gl?.isContextLost?.()) {
+    this._sky.destroy();
+    this._sky = null;
+    const fresh = canvas.cloneNode();
+    canvas.replaceWith(fresh);
+    canvas = fresh;
   }
   if (canvas && !this._sky) {
     this._sky = new V3SkyClouds(canvas);
@@ -27704,8 +27711,7 @@ HAHomeHeaderCard.prototype._skyAttach = function() {
   const off = HAHomeHeaderCard.prototype.disconnectedCallback;
   HAHomeHeaderCard.prototype.disconnectedCallback = function() {
     off.call(this);
-    this._sky?.destroy();
-    this._sky = null;
+    this._sky?.stop();
   };
   const on = HAHomeHeaderCard.prototype.connectedCallback;
   HAHomeHeaderCard.prototype.connectedCallback = function() {

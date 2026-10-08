@@ -206,13 +206,15 @@ HAHomeHeaderCard.prototype._skyParams=function(){
   return{cover,drift:[Math.sin(to)*k,Math.cos(to)*k],lit,dark,sun:[0.97,0.86],sunK:day*(1-0.6*cover),still};
 };
 HAHomeHeaderCard.prototype._skyAttach=function(){
-  const canvas=this.shadowRoot?.querySelector("canvas.v3-skyclouds");
+  let canvas=this.shadowRoot?.querySelector("canvas.v3-skyclouds");
   if(this._sky&&this._sky.canvas!==canvas){this._sky.destroy();this._sky=null}
+  // A lost drawing context (the graphics process restarted) cannot be used again on the same canvas: a fresh one.
+  if(this._sky&&this._sky.gl?.isContextLost?.()){this._sky.destroy();this._sky=null;const fresh=canvas.cloneNode();canvas.replaceWith(fresh);canvas=fresh}
   if(canvas&&!this._sky){this._sky=new V3SkyClouds(canvas);if(this._sky.failed){this._sky=null;return}}
   if(this._sky){this._sky.set(this._skyParams());this._sky.start()}
 };
 {const render=HAHomeHeaderCard.prototype._render;HAHomeHeaderCard.prototype._render=function(){render.call(this);this._skyAttach()};
 const clock=HAHomeHeaderCard.prototype._updateClock;HAHomeHeaderCard.prototype._updateClock=function(){clock.call(this);if(this._sky&&(this._skyTick=(this._skyTick||0)+1)%10===0)this._sky.set(this._skyParams())};
-const off=HAHomeHeaderCard.prototype.disconnectedCallback;HAHomeHeaderCard.prototype.disconnectedCallback=function(){off.call(this);this._sky?.destroy();this._sky=null};
+const off=HAHomeHeaderCard.prototype.disconnectedCallback;HAHomeHeaderCard.prototype.disconnectedCallback=function(){off.call(this);this._sky?.stop()};
 const on=HAHomeHeaderCard.prototype.connectedCallback;HAHomeHeaderCard.prototype.connectedCallback=function(){on.call(this);if(this._built)this._skyAttach()};}
 if(!customElements.get("ha-home-header-card"))customElements.define("ha-home-header-card",HAHomeHeaderCard);if(!customElements.get("ha-home-header-card-front"))customElements.define("ha-home-header-card-front",class HAHomeHeaderCardFront extends HAHomeHeaderCard{});window.customCards=window.customCards||[];window.customCards.push({type:"ha-home-header-card",name:"HA Home Header Card",description:"Samlet statusheader med vejr, alarmer og lokale vejreffekter",preview:true});console.info(`%c HA HOME HEADER CARD %c v${VERSION} `,"color:white;background:#357fc4;font-weight:700","color:#69c4ff;background:#161b22");

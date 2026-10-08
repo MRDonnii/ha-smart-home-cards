@@ -105,7 +105,7 @@ and the wind map is not reloaded on every sensor update. See the
 
 ## Home header card: sky clouds
 
-v0.4.82 draws the clouds of the V3 weather backdrop (`weather_style_v3: true`) as a soft, drifting cloud layer (WebGL,
+v0.4.82 (v0.4.83: keeps drawing when the dashboard moves the card) draws the clouds of the V3 weather backdrop (`weather_style_v3: true`) as a soft, drifting cloud layer (WebGL,
 value-noise clouds as in a 3D sky) instead of the drawn cloud shapes. The amount follows the weather entity's
 `cloud_coverage` (or the condition), the clouds drift with `wind_bearing`/`wind_speed`, and they are lit white by day,
 warm at dusk and dark at night (`sun_entity` elevation). They are drawn at a third of the card's size at most ~20 times
