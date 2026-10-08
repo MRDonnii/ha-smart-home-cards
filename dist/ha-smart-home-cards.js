@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.85 */
+/* MRDonnii Smart Home Cards v0.4.86 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -27138,7 +27138,7 @@ var V3NightSky = class {
       g.fillRect(0, 0, G * 2, G * 2);
       g.beginPath();
       g.arc(G, G, r, 0, 6.283);
-      g.fillStyle = "rgba(110,124,156,0.3)";
+      g.fillStyle = `rgba(110,124,156,${(0.24 * (1 - m.fraction)).toFixed(3)})`;
       g.fill();
     }
     g.translate(G, G);
@@ -27154,8 +27154,11 @@ var V3NightSky = class {
     body.addColorStop(0, "#fdfbf4");
     body.addColorStop(0.65, "#e9e7df");
     body.addColorStop(1, "#c4c7ce");
+    g.save();
+    g.filter = "blur(0.35px)";
     g.fillStyle = body;
     g.fill();
+    g.restore();
     g.clip();
     g.filter = "blur(0.8px)";
     g.fillStyle = "rgba(112,120,136,0.34)";
@@ -27199,7 +27202,10 @@ var V3NightSky = class {
     const still = this.p.still;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
+    const mo2 = this.p.moon && this.p.moon.k > 0.01 ? this.p.moon : null;
+    const keep = mo2 ? (mo2.r * 1.8) ** 2 : 0;
     if (k > 0.01) for (const st of this.stars) {
+      if (mo2 && (st.x - mo2.x) ** 2 + (st.y - mo2.y) ** 2 < keep) continue;
       const vis = v3Smooth(1 - st.b - 0.08, 1 - st.b + 0.22, k);
       if (vis <= 0) continue;
       const a = st.b * vis * (1 - st.tw * (still ? 0.5 : 0.5 + 0.5 * Math.sin(t * st.sp + st.ph)));
@@ -27214,9 +27220,9 @@ var V3NightSky = class {
       ctx.beginPath();
       ctx.arc(x, y, st.r, 0, 6.283);
       ctx.fill();
-      if (st.b > 0.92) {
-        const L3 = st.r * 5;
-        ctx.globalAlpha = a * 0.28;
+      if (st.b > 0.965) {
+        const L3 = st.r * 4.5;
+        ctx.globalAlpha = a * 0.18;
         ctx.strokeStyle = st.fill;
         ctx.lineWidth = 0.6;
         ctx.beginPath();
@@ -28266,6 +28272,10 @@ HAHomeHeaderCard.prototype._skyParams = function() {
   ws = unit.includes("km") ? ws / 3.6 : unit.includes("mph") ? ws * 0.447 : unit.includes("kn") ? ws * 0.514 : ws;
   const to = ((Number.isFinite(Number(a.wind_bearing)) ? Number(a.wind_bearing) : 270) + 180) * Math.PI / 180, k = 0.012 + Math.min(20, ws) * 6e-3;
   const still = this._config.animation === false || typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (cond === "fog") {
+    lit.splice(0, 3, ...mix(hex(15659509), hex(6976386), night));
+    dark.splice(0, 3, ...mix(hex(11450049), hex(3488840), night));
+  }
   return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: cond === "fog" ? 0 : day * (1 - 0.6 * cover), mist: cond === "fog" ? 1 : 0, still };
 };
 HAHomeHeaderCard.prototype._nightSkyOn = function() {

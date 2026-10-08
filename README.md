@@ -138,6 +138,18 @@ snow_ground_entity: binary_sensor.snow_on_ground
 snow_depth_entity: sensor.snow_depth
 ```
 
+## Home header card: stars, moon and mist
+
+v0.4.85 (v0.4.86: softer earthshine, fewer star spikes, no stars behind the moon, grey mist at night) replaces the V3 weather's drawn star pattern with a sky of crisp stars of different brightness and a faint
+tint, each twinkling on its own, the brightest with a soft glow. They come out one by one in the dusk (`sun_entity`
+elevation), only as far as the cloud cover leaves the sky open (behind the drifting clouds, none in fog, rain or snow),
+and now and then a shooting star crosses. The moon is drawn in its real phase (with its seas and the earthshine on the
+dark side) and only while it is above the horizon, computed for Home Assistant's home location; by day it can stand
+pale in a clear sky. It sits in the free space next to the weather (the drawn moon stays where the card has none). Fog
+is drawn as long, low banks of mist drifting past, thickest near the ground. The sky is drawn about 14 times a second
+(about 0.2 ms per frame), stops while the card is off screen or the page is hidden, and stands still with
+`animation: false` or reduced motion. Set `weather_v3_stars: css` to keep the drawn stars and moon.
+
 ## Animations rest when nobody uses the screen
 
 The cards' endless animations (drifting tile icons, breathing glows, flowing lines) run while someone uses the screen and

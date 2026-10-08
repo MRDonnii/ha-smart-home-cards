@@ -140,14 +140,15 @@ class V3NightSky {
     const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (m.night) {
       const halo = g.createRadialGradient(G, G, r * 0.8, G, G, G); halo.addColorStop(0, `rgba(200,216,255,${(0.3 * Math.sqrt(m.fraction)).toFixed(3)})`); halo.addColorStop(1, "rgba(200,216,255,0)"); g.fillStyle = halo; g.fillRect(0, 0, G * 2, G * 2);
-      g.beginPath(); g.arc(G, G, r, 0, 6.283); g.fillStyle = "rgba(110,124,156,0.3)"; g.fill();
+      // Earthshine: the dark side faintly lit by the earth, clearest at a thin crescent.
+      g.beginPath(); g.arc(G, G, r, 0, 6.283); g.fillStyle = `rgba(110,124,156,${(0.24 * (1 - m.fraction)).toFixed(3)})`; g.fill();
     }
     // The lit part: the half towards the sun (right while waxing, seen from the north) and the terminator's half-ellipse.
     g.translate(G, G); if (m.south) g.rotate(Math.PI);
     const k = Math.cos(2 * Math.PI * m.phase); const s = m.phase < 0.5 ? 1 : -1; const bulgeRight = (s > 0) === (k > 0);
     g.beginPath(); g.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, s < 0); g.ellipse(0, 0, Math.max(0.01, r * Math.abs(k)), r, 0, Math.PI / 2, -Math.PI / 2, bulgeRight); g.closePath();
     const body = g.createRadialGradient(-r * 0.25, -r * 0.3, r * 0.1, 0, 0, r); body.addColorStop(0, "#fdfbf4"); body.addColorStop(0.65, "#e9e7df"); body.addColorStop(1, "#c4c7ce");
-    g.fillStyle = body; g.fill(); g.clip(); g.filter = "blur(0.8px)"; g.fillStyle = "rgba(112,120,136,0.34)";
+    g.save(); g.filter = "blur(0.35px)"; g.fillStyle = body; g.fill(); g.restore(); g.clip(); g.filter = "blur(0.8px)"; g.fillStyle = "rgba(112,120,136,0.34)";
     for (const [x, y, mr] of V3_MARIA) { g.beginPath(); g.arc(x * r, y * r, mr * r, 0, 6.283); g.fill(); }
     this.moonImg = c; this.moonG = G;
   }
@@ -162,14 +163,16 @@ class V3NightSky {
     const ctx = this.ctx; const { w, h, dpr } = this; if (!ctx || !w) return;
     const dt = this.lastT ? Math.min(0.1, (now - this.lastT) / 1000) : 0; this.lastT = now; const t = now / 1000; const k = this.p.starK; const still = this.p.still;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    const mo = this.p.moon && this.p.moon.k > 0.01 ? this.p.moon : null; const keep = mo ? (mo.r * 1.8) ** 2 : 0;
     if (k > 0.01) for (const st of this.stars) {
+      if (mo && (st.x - mo.x) ** 2 + (st.y - mo.y) ** 2 < keep) continue;
       // The brightest stars show first in the dusk and through thin cloud, the faint ones only in a dark, open sky.
       const vis = v3Smooth(1 - st.b - 0.08, 1 - st.b + 0.22, k); if (vis <= 0) continue;
       const a = st.b * vis * (1 - st.tw * (still ? 0.5 : 0.5 + 0.5 * Math.sin(t * st.sp + st.ph)));
       const x = (Math.round(st.x * dpr) + 0.5) / dpr; const y = (Math.round(st.y * dpr) + 0.5) / dpr;
       if (st.b > 0.72) { ctx.globalAlpha = a * 0.32; ctx.drawImage(this.glow, x - st.r * 5, y - st.r * 5, st.r * 10, st.r * 10); }
       ctx.globalAlpha = a; ctx.fillStyle = st.fill; ctx.beginPath(); ctx.arc(x, y, st.r, 0, 6.283); ctx.fill();
-      if (st.b > 0.92) { const L = st.r * 5; ctx.globalAlpha = a * 0.28; ctx.strokeStyle = st.fill; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke(); }
+      if (st.b > 0.965) { const L = st.r * 4.5; ctx.globalAlpha = a * 0.18; ctx.strokeStyle = st.fill; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke(); }
     }
     const m = this.p.moon; if (m && this.moonImg && m.k > 0.01) { ctx.globalAlpha = m.k; ctx.drawImage(this.moonImg, m.x - this.moonG, m.y - this.moonG, this.moonG * 2, this.moonG * 2); }
     // Now and then a shooting star in a dark, open sky: a quick bright streak with a fading tail.
@@ -440,6 +443,7 @@ HAHomeHeaderCard.prototype._skyParams=function(){
   const unit=String(a.wind_speed_unit||"km/h").toLowerCase();let ws=Number(a.wind_speed)||0;ws=unit.includes("km")?ws/3.6:unit.includes("mph")?ws*0.447:unit.includes("kn")?ws*0.514:ws;
   const to=((Number.isFinite(Number(a.wind_bearing))?Number(a.wind_bearing):270)+180)*Math.PI/180,k=0.012+Math.min(20,ws)*0.006;
   const still=this._config.animation===false||(typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+  if(cond==="fog"){lit.splice(0,3,...mix(hex(0xeef1f5),hex(0x6a7382),night));dark.splice(0,3,...mix(hex(0xaeb6c1),hex(0x353c48),night))}
   return{cover,drift:[Math.sin(to)*k,Math.cos(to)*k],lit,dark,sun:[0.97,0.86],sunK:cond==="fog"?0:day*(1-0.6*cover),mist:cond==="fog"?1:0,still};
 };
 HAHomeHeaderCard.prototype._nightSkyOn=function(){return this._config?.weather_style_v3===true&&this._config.show_weather_fx!==false&&this._config.weather_v3_stars!=="css"};
