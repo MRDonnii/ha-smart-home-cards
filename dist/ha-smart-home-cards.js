@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.0 */
+/* MRDonnii Smart Home Cards v0.5.1 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.5.0";
+var TTD_VERSION = "1.6.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2632,7 +2632,8 @@ var TTD_SC_ROLES = {
   confirm_on_phone: "switch._confirm_plan_on_phone",
   confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone",
-  send_plan: "button._send_plan_to_phone"
+  send_plan: "button._send_plan_to_phone",
+  price_cap_override: "switch._exceed_price_cap"
 };
 var TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"],
@@ -3074,6 +3075,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>\u2013</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
+    <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
   </div>
   <div class="sc-trip" data-r="scTrip">
     <button type="button" class="sc-trip-h" data-sctrip data-r="scTripHead" aria-expanded="false">${ttdIcon("mdi:map-marker-path", "ic blue")}<span><b>Midlertidig plan</b><small data-r="scTripSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
@@ -3256,7 +3258,7 @@ button[data-dead]:hover{background:none}
 .cmp-i em{font-style:normal;font-size:13px;font-weight:700;color:var(--tdc-green)}
 .cmp-i[aria-checked=true]{border-color:color-mix(in srgb,var(--tdc-blue) 70%,transparent);background:color-mix(in srgb,var(--tdc-blue) 16%,transparent)}
 .cmp-i[aria-checked=true] small{color:var(--tdc-blue)}
-.cmp-i[data-armed],.sc-modes button[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
+.cmp-i[data-armed],.sc-modes button[data-armed],.chip[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
 .cmp-i[data-armed] small{color:var(--tdc-orange)}
 @container panel (max-width:420px){.cmp{grid-template-columns:minmax(0,1fr)}.cmp-i{grid-template-columns:auto 1fr;column-gap:12px}.cmp-i b{grid-row:1/3;grid-column:1;align-self:center}}
 /* plan */
@@ -4035,7 +4037,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " \xB7 delvist sk\xF8nnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
-      cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc") } : null,
+      cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc"), over: (() => {
+        const sw = this._sc("price_cap_override");
+        if (!sw || sw.state === "unavailable") return null;
+        const a = sw.attributes || {};
+        const kwh = Number(a.over_cap_kwh) || 0;
+        const reach = Number.isFinite(Number(a.cap_soc)) && a.cap_soc !== null ? `loftet n\xE5r ca. ${f.number(Number(a.cap_soc), 0)} %` : "";
+        const unit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
+        let info;
+        if (sw.state !== "on") info = ["Holder loftet", reach].filter(Boolean).join(" \xB7 ");
+        else if (kwh > 0) info = [`${f.number(kwh, 1)} kWh over loftet${Number.isFinite(Number(a.over_cap_max_price)) && a.over_cap_max_price !== null ? `, op til ${f.number(Number(a.over_cap_max_price), 2)} ${unit}/kWh` : ""} (+${f.number(Number(a.over_cap_extra) || 0, 2)} ${unit})`, reach].filter(Boolean).join(" \xB7 ");
+        else info = "Loftet r\xE6kker til m\xE5let";
+        return { on: sw.state === "on", info };
+      })() } : null,
       trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip },
       awaiting: statusKey === "awaiting_confirmation",
       confirmLabel: `Bekr\xE6ft ${ttdScLabel(mode).toLowerCase()}`,
@@ -4468,6 +4482,16 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (active !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
     }
     this._hide("scCap", !sc.cap);
+    this._hide("scCapX", !sc.cap?.over);
+    if (sc.cap?.over) {
+      const armed = this._armed === "capx";
+      this._attrSet("scCapXChip", "aria-pressed", String(sc.cap.over.on));
+      this._attrSet("scCapXChip", "data-armed", armed);
+      const label = this._r.scCapXChip?.querySelector("span");
+      const text = armed ? "Bekr\xE6ft" : "Overskrid ved behov";
+      if (label && label.textContent !== text) label.textContent = text;
+      this._t("scCapXInfo", sc.cap.over.info);
+    }
     if (sc.cap) {
       if (active !== r.scCapInput && r.scCapInput.value !== sc.cap.value) r.scCapInput.value = sc.cap.value;
       this._t("scCapUnit", sc.cap.unit);
@@ -4809,10 +4833,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
     if (!target) return;
     if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
+    else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
       this._queue(true);
@@ -4959,6 +4984,18 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     this._disarm(true);
     this._scCall("default_charge_mode", "select", "select_option", { option: mode });
+  }
+  /** Going above the price cap (or not) changes when the car charges, so it takes a second tap too. */
+  _toggleCapOverride() {
+    if (this._cfg.confirm_mode_change && this._armed !== "capx") {
+      this._disarm(false);
+      this._armed = "capx";
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    this._scCall("price_cap_override", "switch", "toggle");
   }
   _disarm(render) {
     clearTimeout(this._armTimer);

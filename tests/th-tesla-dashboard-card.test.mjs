@@ -437,6 +437,13 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(JSON.stringify(model(st, scConfig).sc.fixed), JSON.stringify({ start: "22:00", end: "06:00" }));
   st["select.bil_charge_mode"] = s("price_cap", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
   assert.equal(model(st, scConfig).sc.cap.value, "1.5");
+  assert.equal(model(st, scConfig).sc.cap.over, null, "no override switch: no row");
+  st["switch.bil_exceed_price_cap"] = s("on", { over_cap_kwh: 9, over_cap_max_price: 3, over_cap_extra: 13.5, cap_soc: 66.5 });
+  assert.equal(model(st, scConfig).sc.cap.over.info, "9,0 kWh over loftet, op til 3,00 kr./kWh (+13,50 kr.) · loftet når ca. 67 %");
+  st["switch.bil_exceed_price_cap"] = s("off", { over_cap_kwh: 0, cap_soc: 66.5 });
+  assert.equal(model(st, scConfig).sc.cap.over.info, "Holder loftet · loftet når ca. 67 %");
+  st["switch.bil_exceed_price_cap"] = s("on", { over_cap_kwh: 0, cap_soc: 85 });
+  assert.equal(model(st, scConfig).sc.cap.over.info, "Loftet rækker til målet");
 
   st = scStates();
   st["datetime.bil_temporary_departure"] = s(at(20));
