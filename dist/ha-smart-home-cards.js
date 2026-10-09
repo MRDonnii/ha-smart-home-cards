@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.92 */
+/* MRDonnii Smart Home Cards v0.4.93 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.2.0";
+var TTD_VERSION = "1.2.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3097,7 +3097,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 </section>
 <section class="panel list econ" data-r="econ" aria-label="\xD8konomi">
   <header class="ph">${ttdIcon("mdi:chart-bar", "ph-i")}<div class="ph-t"><h3>\xD8konomi <span class="light">(EV Ledger)</span></h3></div><button class="icon-btn" data-more="charges" aria-label="\xC5bn opladninger">${ttdIcon("mdi:chevron-right")}</button></header>
-  <div class="rows">${row("cost_per_km", "Pris pr. km", "costKm")}${row("efficiency_score", "Effektivitetsscore", "effScore")}${row("monthly_performance", "M\xE5nedlig performance", "monthly", ttdIcon("mdi:arrow-up", "trend"))}${row("charges", "Antal opladninger", "chargeCount")}${row("charges_needing_price", "Opladninger uden pris", "noPrice", ttdIcon("mdi:alert-outline", "trend"))}${row("monta_wallet", "Monta wallet", "wallet")}</div>
+  <div class="rows">${row("cost_per_km", "Pris pr. km", "costKm")}${row("efficiency_score", "Effektivitetsscore", "effScore")}${row("monthly_performance", "M\xE5nedlig performance", "monthly", ttdIcon("mdi:arrow-up", "trend"))}${row("charges", "Antal opladninger", "chargeCount")}${row("charges_needing_price", "Opladninger uden pris", "noPrice", ttdIcon("mdi:alert-outline", "trend"))}${cfg.entities.monta_wallet ? row("monta_wallet", "Monta wallet", "wallet") : ""}</div>
 </section>
 <section class="panel last" data-r="last" aria-label="Seneste opladning">
   <header class="ph">${ttdIcon("mdi:ev-station", "ph-i")}<div class="ph-t"><h3>Seneste opladning</h3></div><button class="icon-btn" data-more="last_charge" data-r="lastMore" aria-label="\xC5bn seneste opladning">${ttdIcon("mdi:chevron-right")}</button></header>

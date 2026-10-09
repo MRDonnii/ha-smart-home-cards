@@ -455,4 +455,11 @@ console.log("th-tesla-dashboard-card tests passed");
     }
   }
 }
+// Monta only where it is configured.
+{
+  const plain = { ...config, entities: Object.fromEntries(Object.entries(config.entities).filter(([key]) => !key.startsWith("monta_"))) };
+  const html = context.ttdTemplate(context.ttdNormalizeConfig(plain));
+  assert.doesNotMatch(html, />Monta|Monta wallet/, "no visible Monta without Monta entities");
+  assert.match(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Monta wallet/);
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");
