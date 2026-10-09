@@ -1,4 +1,4 @@
-const VERSION = "0.8.70";
+const VERSION = "0.8.71";
 
 const PRESETS = {
   "home_energy": {
@@ -1148,7 +1148,7 @@ class HaHomeSummaryCard extends HTMLElement {
       return `<div class="room ${tone}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp,1)}°</strong></div></div>`;
     }).join("");
     const rooms=this.shadowRoot.querySelector(".rooms");
-    if(rooms._html!==roomsHtml){rooms._html=roomsHtml;rooms.innerHTML=roomsHtml;this._robotNodes.clear();}
+    if(rooms._html!==roomsHtml){rooms._html=roomsHtml;for(const node of this._robotNodes.values())node.remove();this._robotNodes.clear();rooms.innerHTML=roomsHtml;}
     this._updateRobots();
     this._renderEvents();
     this._observeMarquees();

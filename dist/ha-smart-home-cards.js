@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.87 */
+/* MRDonnii Smart Home Cards v0.4.88 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -28420,7 +28420,7 @@ window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Car
 console.info(`%c HA HOME HEADER CARD %c v${VERSION24} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION25 = "0.8.70";
+var VERSION25 = "0.8.71";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -29482,8 +29482,9 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const rooms = this.shadowRoot.querySelector(".rooms");
     if (rooms._html !== roomsHtml) {
       rooms._html = roomsHtml;
-      rooms.innerHTML = roomsHtml;
+      for (const node of this._robotNodes.values()) node.remove();
       this._robotNodes.clear();
+      rooms.innerHTML = roomsHtml;
     }
     this._updateRobots();
     this._renderEvents();
