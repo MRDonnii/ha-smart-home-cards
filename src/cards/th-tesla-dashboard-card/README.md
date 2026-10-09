@@ -26,8 +26,8 @@ vehicle:
   model: Tesla Model 3 RWD
   image: /local/tesla/model-3-rwd.webp   # transparent WebP/PNG/SVG, valgfri
   photos:                                # fotos af bilen, valgfri
-    charging: /local/tesla/plugged-in.jpg  # med ladekabel: i Opladning og i lade-popuppen
-    parked: /local/tesla/parked.jpg        # uden kabel: i Opladning
+    charging: /local/tesla/plugged-in.webp # med ladekabel: i Opladning og i lade-popuppen
+    parked: /local/tesla/parked.webp       # uden kabel: i Opladning
 location_entity: device_tracker.tesla_location_tracker
 entities:
   battery: sensor.tesla_battery
@@ -111,7 +111,8 @@ Vil du have din egen bil på kortet:
 2. Sæt `vehicle.image: /local/tesla/min-bil.webp` (`/local/` = `config/www/`).
 3. Genindlæs dashboardet (evt. tøm browserens cache).
 
-Fotos med mørk baggrund (`vehicle.photos.charging` / `.parked`) toner ud mod kanterne. Opladning-panelet viser
+Gennemsigtige fotos (WebP/PNG) vises som topbilledet med skygge; JPEG-fotos med egen baggrund toner ud mod
+kanterne (bedst er at fjerne baggrunden). Opladning-panelet viser
 fotoet med kabel, når bilen er sat til, ellers det parkerede, og lade-popuppen (`layout: charge`) bruger fotoet med
 kabel som topbillede, mens bilen er sat til.
 

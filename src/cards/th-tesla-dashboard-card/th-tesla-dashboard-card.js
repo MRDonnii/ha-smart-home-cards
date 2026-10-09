@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.7.1";
+const TTD_VERSION = "1.7.2";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -454,6 +454,11 @@ function ttdPressure(stateObj, options, format) {
 
 /* -------------------------------------------------------------- markup */
 
+/** A JPEG photo has its own (studio) backdrop, which the card fades out; WebP/PNG photos are expected to be transparent. */
+function ttdOpaque(path) {
+  return /\.jpe?g(?:[?#]|$)/i.test(String(path || ""));
+}
+
 function ttdIcon(icon, cls = "") {
   return `<ha-icon icon="${icon}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 }
@@ -661,9 +666,10 @@ button[data-dead]:hover{background:none}
 .charge .sc-phone{margin-top:14px}
 /* The car's own photo fills what is left of the panel; its dark backdrop fades into the panel. */
 .charge>.charge-art{flex:1 1 0;position:relative;min-height:150px;margin-top:12px}
-.charge-art img,.hero-car img[data-photo]{--fx:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent);--fy:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);
+.charge-art img[data-fade],.hero-car img[data-photo]{--fx:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent);--fy:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);
   -webkit-mask-image:var(--fx),var(--fy);-webkit-mask-composite:source-in;mask-image:var(--fx),var(--fy);mask-composite:intersect}
 .charge-art img{position:absolute;inset:0;margin:auto;width:auto;height:100%;max-width:100%;object-fit:contain}
+.charge-art img:not([data-fade]){filter:drop-shadow(0 14px 14px rgba(0,0,0,.35))}
 .hero-car img[data-photo]{width:auto;max-width:100%;filter:none}
 .charge[data-active]{border-color:color-mix(in srgb,var(--tdc-green) 38%,var(--tdc-line))}
 .charge[data-active]::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 0 0,color-mix(in srgb,var(--tdc-green) 9%,transparent),transparent 70%)}
@@ -1821,13 +1827,15 @@ class ThTeslaDashboardCard extends HTMLElement {
       r.carImg.hidden = false;
       r.carImg.src = this._url(heroPhoto || v.image) || ttdCarArt(v.body, v.paint);
     }
-    this._attrSet(r.carImg, "data-photo", !!heroPhoto);
+    // A photo with its own backdrop (JPEG) fades out at the edges; a transparent one (WebP/PNG) is drawn like the artwork.
+    this._attrSet(r.carImg, "data-photo", !!heroPhoto && ttdOpaque(heroPhoto));
     if (r.chargeArt) {
       const photo = m.charge.plugged ? cfg.chargeImage || cfg.parkedImage : cfg.parkedImage;
       this._hide("chargeArt", !photo);
       if (photo && r.chargeArtImg.dataset.src !== photo) {
         r.chargeArtImg.dataset.src = photo;
         r.chargeArtImg.src = this._url(photo);
+        this._attrSet(r.chargeArtImg, "data-fade", ttdOpaque(photo));
       }
     }
     if (m.sc) this._applySmart(m.sc);
