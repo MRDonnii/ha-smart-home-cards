@@ -34,6 +34,7 @@ const PRESETS = {
     "session_energy_entity": "sensor.ev_session_energy",
     "schedule_entity": "sensor.ev_schedule",
     "charger_state_entity": "sensor.ev_charger_state",
+    "smart_charge": "select.ev_charge_mode",
     "cable_entity": "binary_sensor.ev_cable",
     "plug_mode_entity": "sensor.ev_plug_mode",
     "vehicle_plug_entity": "binary_sensor.ev_vehicle_plug",
@@ -281,6 +282,7 @@ class HaHomeStatusCard extends HTMLElement {
       cfg.blocked_by_entity,
       cfg.off_count_entity,
       cfg.secondary_entity,
+      ...Object.values(this.smartIds(cfg.smart_charge) || {}),
       ...(cfg.phase_entities || []),
       ...(cfg.status_entities || []),
       ...(cfg.lock_entities || []),
@@ -313,6 +315,43 @@ class HaHomeStatusCard extends HTMLElement {
   }
   number(id) {
     return Number(String(this.state(id)?.state ?? "").replace(",", "."));
+  }
+  // Smart charging (EV Ledger's charge plan select): its sensors share the select's name (English entity ids).
+  smartIds(mode) {
+    const match = /^select\.(.+)_charge_mode$/.exec(String(mode || ""));
+    if (!match) return null;
+    const p = match[1];
+    return { mode, status: `sensor.${p}_charge_status`, start: `sensor.${p}_next_charge_start`, end: `sensor.${p}_next_charge_end`,
+      cost: `sensor.${p}_planned_charge_cost`, energy: `sensor.${p}_planned_charge_energy`, target: `sensor.${p}_plan_target_soc` };
+  }
+  // One line for the car's tile: the plan's time, price and what is missing to the target, or what the charging does
+  // now. It scrolls when it is longer than the tile.
+  evPlanText(ids, battery, power, session) {
+    if (!ids) return "";
+    const status = this.text(ids.status, "");
+    const clock = (id) => {
+      const date = new Date(this.text(id, ""));
+      return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    };
+    const start = clock(ids.start);
+    const end = clock(ids.end);
+    const cost = this.number(ids.cost);
+    const energy = this.number(ids.energy);
+    const target = this.number(ids.target);
+    const missing = Number.isFinite(target) && Number.isFinite(battery) ? target - battery : NaN;
+    const price = Number.isFinite(cost) && cost > 0 ? `${cost.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr` : "";
+    const need = missing >= 1 ? `mangler ${this.fmt(missing, 0)} %${Number.isFinite(energy) && energy > 0 ? ` (${this.fmt(energy, 1)} kWh)` : ""} til ${this.fmt(target, 0)} %` : "";
+    if (power > 0) {
+      return [`${this.fmt(power, 1)} kW`, Number.isFinite(session) && session > 0 ? `${this.fmt(session, 1)} kWh ladet` : "",
+        end ? `færdig ${end}` : "", need, price ? `${price} i alt` : ""].filter(Boolean).join(" · ");
+    }
+    const fixed = { done: "Mål nået", paused: "På pause", awaiting_confirmation: "Venter på bekræftelse",
+      stopped_externally: "Stoppet af bil/app", not_responding: "Laderen svarer ikke", other_car: "Anden bil i laderen" };
+    if (fixed[status]) return [fixed[status], status === "done" ? "" : need].filter(Boolean).join(" · ");
+    if (["waiting", "starting"].includes(status) && start) {
+      return [`Lader ${start}${end ? `–${end}` : ""}`, price, need].filter(Boolean).join(" · ");
+    }
+    return "";
   }
   on(id) {
     return this.state(id)?.state === "on";
@@ -385,7 +424,8 @@ class HaHomeStatusCard extends HTMLElement {
         .join(" ")
         .toLowerCase();
       const sessionEnergy = this.number(cfg.session_energy_entity);
-      detail = power > 0
+      const plan = this.evPlanText(this.smartIds(cfg.smart_charge), battery, power, sessionEnergy);
+      detail = plan ? plan : power > 0
         ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0
           ? `${this.fmt(sessionEnergy, 1)} kWh ladet`
           : `${this.fmt(power, 1)} kW lader`

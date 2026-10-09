@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.1 */
+/* MRDonnii Smart Home Cards v0.5.2 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.6.0";
+var TTD_VERSION = "1.7.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2952,6 +2952,10 @@ function ttdNormalizeConfig(raw) {
     body: TTD_BODIES[vehicle.body] ? vehicle.body : null,
     paint: TTD_PAINTS[vehicle.color] ? vehicle.color : "grey",
     image: vehicle.image || config.vehicle_image || null,
+    // Photos of the car itself: plugged in (with the cable) and parked, shown in the charging panel and popup.
+    // vehicle.photos: { charging: "/local/…/plugged-in.jpg", parked: "/local/…/parked.jpg" } (the 3D house reads the same).
+    chargeImage: typeof vehicle.photos?.charging === "string" && vehicle.photos.charging ? vehicle.photos.charging : null,
+    parkedImage: typeof vehicle.photos?.parked === "string" && vehicle.photos.parked ? vehicle.photos.parked : null,
     smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : null,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
@@ -3063,6 +3067,8 @@ function ttdTemplate(cfg) {
   </div>
   <div class="cmp" data-r="cmp" role="radiogroup" aria-label="Pris pr. ladeplan" hidden></div>
   <button class="foot" data-more="charging_price_estimate" data-r="estimate" hidden></button>
+  ${cfg.smart_charge ? `<div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scinfo data-r="scInfoChip" aria-pressed="false" hidden>${ttdIcon("mdi:cellphone-message")}<span>Besked om plan</span></button><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekr\xE6ft p\xE5 mobil</span></button><button type="button" class="chip" data-scsend data-r="scSendChip" hidden>${ttdIcon("mdi:send")}<span>Send nu</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>` : ""}
+  ${full && (cfg.chargeImage || cfg.parkedImage) ? `<div class="charge-art" data-r="chargeArt" hidden><img data-r="chargeArtImg" alt="${e(cfg.name)}" decoding="async"></div>` : ""}
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
@@ -3093,7 +3099,6 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
       <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
     </div>
   </div>
-  <div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scinfo data-r="scInfoChip" aria-pressed="false" hidden>${ttdIcon("mdi:cellphone-message")}<span>Besked om plan</span></button><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekr\xE6ft p\xE5 mobil</span></button><button type="button" class="chip" data-scsend data-r="scSendChip" hidden>${ttdIcon("mdi:send")}<span>Send nu</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>
 </section>` : `<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart ladeplan</h3><p data-r="planSub">${TTD_DASH}</p></div><span class="badge" data-r="planBadge"><span data-r="planBadgeText">${TTD_DASH}</span></span></header>
   <div class="box plan-top">${cell("best_charge_start", "mdi:clock-start", "blue", "bestStart", "Bedste start")}${cell("best_charge_end", "mdi:check-circle-outline", "green", "bestEnd", "Forventet slut")}${cell("best_charge_price", "mdi:cash", "amber", "bestPrice", "Forventet pris", `<em data-r="bestPriceKwh"></em>`)}</div>
@@ -3222,6 +3227,15 @@ button[data-dead]:hover{background:none}
 .stat b{font-size:17px}
 .stat small,.kpi small,.cell small,.tire small,.lc small{font-size:14px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* charge */
+.charge{display:flex;flex-direction:column}
+.charge>*{flex:0 0 auto}
+.charge .sc-phone{margin-top:14px}
+/* The car's own photo fills what is left of the panel; its dark backdrop fades into the panel. */
+.charge>.charge-art{flex:1 1 0;position:relative;min-height:150px;margin-top:12px}
+.charge-art img,.hero-car img[data-photo]{--fx:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent);--fy:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);
+  -webkit-mask-image:var(--fx),var(--fy);-webkit-mask-composite:source-in;mask-image:var(--fx),var(--fy);mask-composite:intersect}
+.charge-art img{position:absolute;inset:0;margin:auto;width:auto;height:100%;max-width:100%;object-fit:contain}
+.hero-car img[data-photo]{width:auto;max-width:100%;filter:none}
 .charge[data-active]{border-color:color-mix(in srgb,var(--tdc-green) 38%,var(--tdc-line))}
 .charge[data-active]::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 0 0,color-mix(in srgb,var(--tdc-green) 9%,transparent),transparent 70%)}
 .soc-row{display:flex;justify-content:space-between;gap:12px;font-size:19px;font-weight:600}
@@ -3860,6 +3874,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     return {
       active: status.charging,
+      plugged: !!(status.plugged || cable === true || plug === true),
       sub: [cableText, activity].filter(Boolean).join(" \xB7 ") || TTD_DASH,
       badge: { text: TTD_TEXT.status[badgeKey], tone: TTD_STATUS_TONES[badgeKey], icon: TTD_STATUS_ICONS[badgeKey] },
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`,
@@ -4326,11 +4341,22 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     const v = m.vehicle;
     this._t("model", v.name);
-    if (!v.image) {
-      const art = `${v.body}|${v.paint}`;
-      if (r.carImg.dataset.art !== art) {
-        r.carImg.dataset.art = art;
-        r.carImg.src = ttdCarArt(v.body, v.paint);
+    const cfg = this._cfg;
+    const heroPhoto = cfg.layout === "charge" && m.charge.plugged ? cfg.chargeImage : null;
+    const heroKey = heroPhoto || v.image || `${v.body}|${v.paint}`;
+    if (r.carImg.dataset.key !== heroKey) {
+      r.carImg.dataset.key = heroKey;
+      delete r.carImg.dataset.fallback;
+      r.carImg.hidden = false;
+      r.carImg.src = heroPhoto || v.image || ttdCarArt(v.body, v.paint);
+    }
+    this._attrSet(r.carImg, "data-photo", !!heroPhoto);
+    if (r.chargeArt) {
+      const photo = m.charge.plugged ? cfg.chargeImage || cfg.parkedImage : cfg.parkedImage;
+      this._hide("chargeArt", !photo);
+      if (photo && r.chargeArtImg.dataset.src !== photo) {
+        r.chargeArtImg.dataset.src = photo;
+        r.chargeArtImg.src = photo;
       }
     }
     if (m.sc) this._applySmart(m.sc);
@@ -29111,6 +29137,7 @@ var PRESETS = {
     "session_energy_entity": "sensor.ev_session_energy",
     "schedule_entity": "sensor.ev_schedule",
     "charger_state_entity": "sensor.ev_charger_state",
+    "smart_charge": "select.ev_charge_mode",
     "cable_entity": "binary_sensor.ev_cable",
     "plug_mode_entity": "sensor.ev_plug_mode",
     "vehicle_plug_entity": "binary_sensor.ev_vehicle_plug",
@@ -29348,6 +29375,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       cfg.blocked_by_entity,
       cfg.off_count_entity,
       cfg.secondary_entity,
+      ...Object.values(this.smartIds(cfg.smart_charge) || {}),
       ...cfg.phase_entities || [],
       ...cfg.status_entities || [],
       ...cfg.lock_entities || [],
@@ -29378,6 +29406,61 @@ var HaHomeStatusCard = class extends HTMLElement {
   }
   number(id) {
     return Number(String(this.state(id)?.state ?? "").replace(",", "."));
+  }
+  // Smart charging (EV Ledger's charge plan select): its sensors share the select's name (English entity ids).
+  smartIds(mode) {
+    const match = /^select\.(.+)_charge_mode$/.exec(String(mode || ""));
+    if (!match) return null;
+    const p = match[1];
+    return {
+      mode,
+      status: `sensor.${p}_charge_status`,
+      start: `sensor.${p}_next_charge_start`,
+      end: `sensor.${p}_next_charge_end`,
+      cost: `sensor.${p}_planned_charge_cost`,
+      energy: `sensor.${p}_planned_charge_energy`,
+      target: `sensor.${p}_plan_target_soc`
+    };
+  }
+  // One line for the car's tile: the plan's time, price and what is missing to the target, or what the charging does
+  // now. It scrolls when it is longer than the tile.
+  evPlanText(ids, battery, power, session) {
+    if (!ids) return "";
+    const status = this.text(ids.status, "");
+    const clock = (id) => {
+      const date2 = new Date(this.text(id, ""));
+      return Number.isNaN(date2.getTime()) ? "" : date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    };
+    const start = clock(ids.start);
+    const end = clock(ids.end);
+    const cost = this.number(ids.cost);
+    const energy = this.number(ids.energy);
+    const target = this.number(ids.target);
+    const missing = Number.isFinite(target) && Number.isFinite(battery) ? target - battery : NaN;
+    const price = Number.isFinite(cost) && cost > 0 ? `${cost.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr` : "";
+    const need = missing >= 1 ? `mangler ${this.fmt(missing, 0)} %${Number.isFinite(energy) && energy > 0 ? ` (${this.fmt(energy, 1)} kWh)` : ""} til ${this.fmt(target, 0)} %` : "";
+    if (power > 0) {
+      return [
+        `${this.fmt(power, 1)} kW`,
+        Number.isFinite(session) && session > 0 ? `${this.fmt(session, 1)} kWh ladet` : "",
+        end ? `f\xE6rdig ${end}` : "",
+        need,
+        price ? `${price} i alt` : ""
+      ].filter(Boolean).join(" \xB7 ");
+    }
+    const fixed = {
+      done: "M\xE5l n\xE5et",
+      paused: "P\xE5 pause",
+      awaiting_confirmation: "Venter p\xE5 bekr\xE6ftelse",
+      stopped_externally: "Stoppet af bil/app",
+      not_responding: "Laderen svarer ikke",
+      other_car: "Anden bil i laderen"
+    };
+    if (fixed[status]) return [fixed[status], status === "done" ? "" : need].filter(Boolean).join(" \xB7 ");
+    if (["waiting", "starting"].includes(status) && start) {
+      return [`Lader ${start}${end ? `\u2013${end}` : ""}`, price, need].filter(Boolean).join(" \xB7 ");
+    }
+    return "";
   }
   on(id) {
     return this.state(id)?.state === "on";
@@ -29430,7 +29513,8 @@ var HaHomeStatusCard = class extends HTMLElement {
         this.text(cfg.charger_state_entity, "")
       ].join(" ").toLowerCase();
       const sessionEnergy = this.number(cfg.session_energy_entity);
-      detail = power > 0 ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0 ? `${this.fmt(sessionEnergy, 1)} kWh ladet` : `${this.fmt(power, 1)} kW lader` : scheduleState.includes("scheduled") || scheduleState.split(" ").includes("waiting") ? "Planlagt" : `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
+      const plan = this.evPlanText(this.smartIds(cfg.smart_charge), battery, power, sessionEnergy);
+      detail = plan ? plan : power > 0 ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0 ? `${this.fmt(sessionEnergy, 1)} kWh ladet` : `${this.fmt(power, 1)} kW lader` : scheduleState.includes("scheduled") || scheduleState.split(" ").includes("waiting") ? "Planlagt" : `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
       meter = Math.ceil((battery || 0) / 20);
       if (battery < 20) color = "var(--error-color, #f43f5e)";
       else if (battery < 45) color = "var(--warning-color, #f59e0b)";
