@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.4.1";
+const TTD_VERSION = "1.5.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -86,7 +86,7 @@ const TTD_TOP_CAR = `<svg class="topcar" viewBox="0 0 120 250" aria-hidden="true
 // Smart charging by the EV Smart Charge integration (ev_smart_charge). Its entities are found on the car's device by
 // translation key; the English entity id suffixes are the fallback when the entity registry is not available.
 const TTD_SC_ROLES = {
-  charge_mode: "select._charge_mode", charge_status: "sensor._charge_status", next_charge_start: "sensor._next_charge_start",
+  charge_mode: "select._charge_mode", default_charge_mode: "select._default_plan", charge_status: "sensor._charge_status", next_charge_start: "sensor._next_charge_start",
   next_charge_end: "sensor._next_charge_end", planned_cost: "sensor._planned_charge_cost", planned_energy: "sensor._planned_charge_energy",
   plan_target_soc: "sensor._plan_target_soc", target_soc: "number._target_soc", ready_by_time: "time._ready_by",
   fixed_start: "time._fixed_charging_start", fixed_end: "time._fixed_charging_end", price_cap: "number._price_cap",
@@ -101,6 +101,9 @@ const TTD_SC_MODES = [
   ["now", "Lad nu", "mdi:lightning-bolt"], ["price_cap", "Prisloft", "mdi:cash-lock"],
   ["off", "Pause", "mdi:pause"], ["manual", "Manuel", "mdi:hand-back-right-outline"],
 ];
+// Plans that can be the default (used when the cable goes in, and returned to after another plan has run).
+const TTD_SC_DEFAULTS = ["smart", "fixed", "price_cap", "now", "manual"];
+const ttdScLabel = (mode) => TTD_SC_MODES.find(([key]) => key === mode)?.[1] || ttdHumanize(mode || "");
 const TTD_SC_STATUS = {
   plan_only: ["Kun plan", "muted"], manual: ["Manuel", "muted"], disconnected: ["Ikke tilsluttet", "muted"],
   other_car: ["Anden bil i laderen", "muted"], unknown: ["Ukendt", "muted"], charging: ["Lader", "ok"],
@@ -490,7 +493,7 @@ function ttdTemplate(cfg) {
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
-  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span></button>`).join("")}</div>
+  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekræft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
@@ -507,6 +510,13 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
       <label class="sc-f"><span>Destination (valgfri)</span><input type="text" data-r="scDest" placeholder="Adresse, by eller zone.arbejde" enterkeyhint="done" autocomplete="off"></label>
       <div class="sc-row"><button type="button" class="chip" data-scround data-r="scRound" aria-pressed="false">${ttdIcon("mdi:swap-horizontal")}<span>Tur/retur</span></button><span class="sc-info" data-r="scTripInfo"></span></div>
       <button type="button" class="btn stop wide" data-scclear data-r="scClear" hidden>Ryd midlertidig plan</button>
+    </div>
+  </div>
+  <div class="sc-trip sc-def" data-r="scDef" hidden>
+    <button type="button" class="sc-trip-h" data-scdef data-r="scDefHead" aria-expanded="false">${ttdIcon("mdi:calendar-star", "ic amber")}<span><b>Standardplan</b><small data-r="scDefSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
+    <div class="sc-trip-b" data-r="scDefBody" hidden>
+      <p class="sc-note">Kører når kablet sættes i. Vælger du en anden plan, kører den én gang og går så tilbage hertil.</p>
+      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon)}<span>${label}</span></button>`).join("")}</div>
     </div>
   </div>
   <div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scinfo data-r="scInfoChip" aria-pressed="false" hidden>${ttdIcon("mdi:cellphone-message")}<span>Besked om plan</span></button><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekræft på mobil</span></button><button type="button" class="chip" data-scsend data-r="scSendChip" hidden>${ttdIcon("mdi:send")}<span>Send nu</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>
@@ -705,6 +715,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-modes button:hover{background:var(--tdc-hover)}
 .sc-modes button[aria-checked=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
 .sc-modes button[aria-checked=true] ha-icon{color:var(--tdc-blue)}
+.sc-modes button{position:relative}
+.sc-modes .sc-star{display:none;position:absolute;top:3px;right:4px;--mdc-icon-size:13px;color:var(--tdc-amber)}
+.sc-modes button[data-default] .sc-star{display:block}
+.sc-modes button[aria-checked=true] .sc-star{color:var(--tdc-amber)}
 .sc-time{margin-bottom:14px}
 .sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
 .sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
@@ -739,7 +753,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-trip .btn.wide{margin-top:0}
 .sc-confirm{margin:0 0 14px}
 .sc-phone{margin-top:12px}
-@container panel (max-width:380px){.sc-modes button ha-icon{display:none}}
+.sc-def{border-left-color:color-mix(in srgb,var(--tdc-amber) 70%,transparent)}
+.sc-def .sc-defs{margin:0}
+.sc-defs button[aria-checked=true]{background:color-mix(in srgb,var(--tdc-amber) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-amber) 65%,transparent)}
+.sc-defs button[aria-checked=true] ha-icon{color:var(--tdc-amber)}
+.sc-note{margin:0;font-size:13px;line-height:1.4;color:var(--tdc-muted)}
+@container panel (max-width:380px){.sc-modes button ha-icon:not(.sc-star){display:none}}
 /* narrow panels: the status badge moves below the title instead of cutting it off */
 @container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph:has(.badge) .ph-t{flex:1 1 calc(100% - 52px)}.ph .badge{margin-left:40px}}
 /* map */
@@ -1480,6 +1499,18 @@ class ThTeslaDashboardCard extends HTMLElement {
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc") } : null,
       trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip },
       awaiting: statusKey === "awaiting_confirmation",
+      confirmLabel: `Bekræft ${ttdScLabel(mode).toLowerCase()}`,
+      def: (() => {
+        const obj = this._sc("default_charge_mode");
+        if (!ttdHasValue(obj)) return null;
+        const value = obj.state;
+        const label = ttdScLabel(value);
+        let summary = label;
+        if (mode === "manual" && value !== "manual") summary = `${label} · Manuel er valgt, indtil du skifter`;
+        else if (mode && mode !== value) summary = `${label} · går tilbage hertil efter ${ttdScLabel(mode)}`;
+        const options = Array.isArray(obj.attributes?.options) ? obj.attributes.options.map(String) : TTD_SC_DEFAULTS;
+        return { mode: value, label, summary, options };
+      })(),
       phone: (() => {
         const sw = this._sc("confirm_on_phone");
         if (!sw || sw.state === "unavailable") return null;
@@ -1857,6 +1888,25 @@ class ThTeslaDashboardCard extends HTMLElement {
       const label = button.querySelector("span");
       const text = armed ? "Bekræft" : TTD_SC_MODES.find(([key]) => key === button.dataset.scmode)?.[1] || "";
       if (label && label.textContent !== text) label.textContent = text;
+      const isDefault = sc.def?.mode === button.dataset.scmode;
+      this._attrSet(button, "data-default", isDefault);
+      this._attrSet(button, "title", isDefault ? "Standardplan" : null);
+    }
+    this._hide("scDef", !sc.def);
+    if (sc.def) {
+      this._t("scDefSum", sc.def.summary);
+      this._attrSet("scDefHead", "aria-expanded", String(!!this._defOpen));
+      this._hide("scDefBody", !this._defOpen);
+      for (const button of this.shadowRoot.querySelectorAll(".sc-defs [data-scdefault]")) {
+        const key = button.dataset.scdefault;
+        const armed = this._armed === `default:${key}`;
+        this._attrSet(button, "aria-checked", String(key === sc.def.mode));
+        this._attrSet(button, "data-armed", armed);
+        button.hidden = !sc.def.options.includes(key);
+        const label = button.querySelector("span");
+        const text = armed ? "Bekræft" : ttdScLabel(key);
+        if (label && label.textContent !== text) label.textContent = text;
+      }
     }
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
@@ -1912,6 +1962,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._t("scTripInfo", trip.info);
     this._hide("scClear", !trip.active && !trip.destination);
     this._hide("scConfirm", !sc.awaiting);
+    if (sc.awaiting) this._t("scConfirm", sc.confirmLabel);
     this._hide("scPhone", !sc.phone);
     if (sc.phone) {
       this._attrSet("scPhoneChip", "aria-pressed", String(sc.phone.on));
@@ -2257,10 +2308,14 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
     if (!target) return;
     if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
-    else if (target.dataset.sctrip != null) {
+    else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
+    else if (target.dataset.scdef != null) {
+      this._defOpen = !this._defOpen;
+      this._queue(true);
+    } else if (target.dataset.sctrip != null) {
       this._tripOpen = !this._tripOpen;
       this._queue(true);
     } else if (target.dataset.scround != null) this._scCall("trip_round_trip", "switch", "toggle");
@@ -2401,6 +2456,21 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     this._disarm(true);
     this._scCall("charge_mode", "select", "select_option", { option: mode });
+  }
+
+  /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */
+  _chooseDefault(mode) {
+    if (this._sc("default_charge_mode")?.state === mode) return;
+    const key = `default:${mode}`;
+    if (this._cfg.confirm_mode_change && this._armed !== key) {
+      this._disarm(false);
+      this._armed = key;
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    this._scCall("default_charge_mode", "select", "select_option", { option: mode });
   }
 
   _disarm(render) {

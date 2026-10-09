@@ -451,6 +451,20 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.sc.trip.info, "50 km hver vej · 43 min · 17,1 kWh · kræver 40 %");
   assert.ok(r.sc.marks.some((mark) => mark.kind === "trip"));
 
+  // Default plan: shown when the integration has it, and what a temporary plan returns to.
+  st = scStates();
+  assert.equal(model(st, scConfig).sc.def, null, "no default plan entity: section hidden");
+  st["select.bil_default_plan"] = s("fixed", { options: ["smart", "fixed", "price_cap", "now", "manual"] });
+  st["select.bil_charge_mode"] = s("fixed", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
+  r = model(st, scConfig);
+  assert.equal(r.sc.def.mode, "fixed");
+  assert.equal(r.sc.def.summary, "Fast tid");
+  st["select.bil_charge_mode"] = s("now", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
+  assert.equal(model(st, scConfig).sc.def.summary, "Fast tid · går tilbage hertil efter Lad nu");
+  st["select.bil_charge_mode"] = s("manual", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
+  assert.equal(model(st, scConfig).sc.def.summary, "Fast tid · Manuel er valgt, indtil du skifter");
+  assert.equal(model(st, scConfig).sc.confirmLabel, "Bekræft manuel");
+
   // Waiting for an answer on the phone.
   st = scStates();
   st["sensor.bil_charge_status"] = s("awaiting_confirmation");
