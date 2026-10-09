@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.6 */
+/* MRDonnii Smart Home Cards v0.5.7 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.8.1";
+var TTD_VERSION = "1.9.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2965,6 +2965,14 @@ function ttdNormalizeConfig(raw) {
     // vehicle.photos: { charging: "/local/…/plugged-in.jpg", parked: "/local/…/parked.jpg" } (the 3D house reads the same).
     chargeImage: typeof vehicle.photos?.charging === "string" && vehicle.photos.charging ? vehicle.photos.charging : null,
     parkedImage: typeof vehicle.photos?.parked === "string" && vehicle.photos.parked ? vehicle.photos.parked : null,
+    // A picture of the car from above (front up) for the tyres, and where its wheels are in it (% of width/height).
+    topImage: typeof vehicle.photos?.top === "string" && vehicle.photos.top ? vehicle.photos.top : null,
+    topWheels: Object.fromEntries(Object.entries({ fl: [13, 19], fr: [87, 19], rl: [13, 79], rr: [87, 79] }).map(([key, fallback]) => {
+      const value = vehicle.photos?.top_wheels?.[key];
+      return [key, Array.isArray(value) && value.length === 2 && value.every((n) => Number.isFinite(Number(n))) ? value.map(Number) : fallback];
+    })),
+    // The cable in the plugged-in photo ({ path, width, height } in the photo's pixels): animated while charging.
+    cable: typeof vehicle.photos?.cable?.path === "string" && Number(vehicle.photos.cable.width) > 0 && Number(vehicle.photos.cable.height) > 0 ? { path: vehicle.photos.cable.path, width: Number(vehicle.photos.cable.width), height: Number(vehicle.photos.cable.height) } : null,
     smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : null,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
@@ -3070,7 +3078,7 @@ function ttdTemplate(cfg) {
     <p class="model" data-r="model">${e(cfg.model || "Tesla")}</p>
     <button class="updated" data-more="last_update"><span>Sidst opdateret</span><span data-r="updatedLong">${TTD_DASH}</span></button>
   </div>
-  <div class="hero-car"><img data-r="carImg" alt="${e(cfg.model || "Tesla")}" decoding="async" width="900" height="434"></div>
+  <div class="hero-car"><img data-r="carImg" alt="${e(cfg.model || "Tesla")}" decoding="async" width="900" height="434"><svg class="cable" data-r="heroCable" hidden aria-hidden="true"><path class="cable-base"/><path class="cable-flow"/><circle class="cable-port" r="5"/></svg></div>
   <button class="ring-wrap" data-more="battery" data-r="ring">
     <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" data-r="ringFill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100"/></svg>
     <span class="ring-t"><span class="soc"><b data-r="soc">${TTD_DASH}</b><small data-r="socUnit">%</small>${ttdIcon("mdi:lightning-bolt", "bolt")}</span><span class="range" data-r="range">${TTD_DASH}</span><span class="muted">r\xE6kkevidde</span></span>
@@ -3090,7 +3098,7 @@ function ttdTemplate(cfg) {
   <div class="cmp" data-r="cmp" role="radiogroup" aria-label="Pris pr. ladeplan" hidden></div>
   <button class="foot" data-more="charging_price_estimate" data-r="estimate" hidden></button>
   ${cfg.smart_charge ? `<div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scinfo data-r="scInfoChip" aria-pressed="false" hidden>${ttdIcon("mdi:cellphone-message")}<span>Besked om plan</span></button><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekr\xE6ft p\xE5 mobil</span></button><button type="button" class="chip" data-scsend data-r="scSendChip" hidden>${ttdIcon("mdi:send")}<span>Send nu</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>` : ""}
-  ${full && (cfg.chargeImage || cfg.parkedImage) ? `<div class="charge-art" data-r="chargeArt" hidden><img data-r="chargeArtImg" alt="${e(cfg.name)}" decoding="async"></div>` : ""}
+  ${full && (cfg.chargeImage || cfg.parkedImage) ? `<div class="charge-art" data-r="chargeArt" hidden><img data-r="chargeArtImg" alt="${e(cfg.name)}" decoding="async"><svg class="cable" data-r="artCable" hidden aria-hidden="true"><path class="cable-base"/><path class="cable-flow"/><circle class="cable-port" r="5"/></svg></div>` : ""}
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
@@ -3132,9 +3140,9 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   </div>
 </section>`}
 ${full && Object.keys(cfg.carControls).length ? `<section class="panel carctl" data-r="ctlPanel" aria-label="Bilstyring">
-  <header class="ph">${ttdIcon("mdi:car-cog", "ph-i")}<div class="ph-t"><h3>Bilstyring</h3><p>Hver handling kr\xE6ver to tryk</p></div></header>
+  <header class="ph">${ttdIcon("mdi:car-cog", "ph-i")}<div class="ph-t"><h3>Bilstyring</h3><p>Opl\xE5sning, ladeport og vagtpost fra kr\xE6ver to tryk</p></div></header>
   <div class="cc-grid">${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain !== "number").map(([key, label, icon3]) => `<button type="button" class="cc" data-cc="${key}" aria-pressed="false">${ttdIcon(icon3)}<span><b data-ccl="${key}">${label}</b><small data-ccs="${key}">${TTD_DASH}</small></span></button>`).join("")}</div>
-  ${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain === "number").map(([key, label, icon3]) => `<div class="cc-num" data-ccbox="${key}"><span class="cc-num-l">${ttdIcon(icon3)}${label}</span><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"><span class="cc-set" data-ccset-box="${key}" hidden><button type="button" class="btn go" data-ccset="${key}">S\xE6t</button><button type="button" class="btn" data-ccundo="${key}">Fortryd</button></span></div>`).join("")}
+  ${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain === "number").map(([key, label, icon3]) => `<div class="cc-num" data-ccbox="${key}"><span class="cc-num-l">${ttdIcon(icon3)}${label}</span><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div>`).join("")}
 </section>` : ""}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
   <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
@@ -3142,7 +3150,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 </section>
 <section class="panel tpms" data-r="tpms" aria-label="D\xE6ktryk">
   <header class="ph">${ttdIcon("mdi:tire", "ph-i")}<div class="ph-t"><h3>D\xE6ktryk</h3><p data-r="tpmsSum">${TTD_DASH}</p></div><span class="meta" data-r="tpmsTime"></span></header>
-  <div class="tpms-body">${tire("tpms_front_left", "tFL", "Venstre for")}${tire("tpms_front_right", "tFR", "H\xF8jre for")}${TTD_TOP_CAR}${tire("tpms_rear_left", "tRL", "Venstre bag")}${tire("tpms_rear_right", "tRR", "H\xF8jre bag")}</div>
+  <div class="tpms-body">${tire("tpms_front_left", "tFL", "Venstre for")}${tire("tpms_front_right", "tFR", "H\xF8jre for")}${cfg.topImage ? `<div class="topcar topphoto" data-r="topPhoto"><img data-r="topImg" alt="" decoding="async">${["FL", "FR", "RL", "RR"].map((key) => `<i class="wheel" data-r="w${key}" style="left:${cfg.topWheels[key.toLowerCase()][0]}%;top:${cfg.topWheels[key.toLowerCase()][1]}%"></i>`).join("")}</div>` : TTD_TOP_CAR}${tire("tpms_rear_left", "tRL", "Venstre bag")}${tire("tpms_rear_right", "tRR", "H\xF8jre bag")}</div>
 </section>
 <section class="panel list drive" data-r="drive" aria-label="K\xF8rsel og historik">
   <header class="ph">${ttdIcon("mdi:road-variant", "ph-i")}<div class="ph-t"><h3>K\xF8rsel &amp; historik</h3></div><button class="icon-btn" data-more="trips" aria-label="\xC5bn ture">${ttdIcon("mdi:chevron-right")}</button></header>
@@ -3263,6 +3271,16 @@ button[data-dead]:hover{background:none}
   -webkit-mask-image:var(--fx),var(--fy);-webkit-mask-composite:source-in;mask-image:var(--fx),var(--fy);mask-composite:intersect}
 .charge-art img{position:absolute;inset:0;margin:auto;width:auto;height:100%;max-width:100%;object-fit:contain}
 .charge-art img:not([data-fade]){filter:drop-shadow(0 14px 14px rgba(0,0,0,.35))}
+/* The charging cable while charging: a green glow with bright pulses running into the car, the port breathing. */
+.hero-car{position:relative}
+.cable{position:absolute;pointer-events:none;overflow:visible}
+.cable path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.cable .cable-base{stroke:color-mix(in srgb,var(--tdc-green) 70%,transparent);stroke-width:3.5px;filter:drop-shadow(0 0 4px var(--tdc-green))}
+.cable .cable-flow{stroke:#eafff3;stroke-width:2.5px;stroke-dasharray:14px 30px;animation:ttdCableFlow 1.1s linear infinite;filter:drop-shadow(0 0 5px var(--tdc-green)) drop-shadow(0 0 2px #fff)}
+.cable .cable-port{fill:var(--tdc-green);filter:drop-shadow(0 0 6px var(--tdc-green));animation:ttdPortPulse 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ttdCableFlow{to{stroke-dashoffset:44px}}
+@keyframes ttdPortPulse{50%{opacity:.45;transform:scale(1.6)}}
+@media (prefers-reduced-motion:reduce){.cable .cable-flow,.cable .cable-port{animation:none}}
 .hero-car img[data-photo]{width:auto;max-width:100%;filter:none}
 .charge[data-active]{border-color:color-mix(in srgb,var(--tdc-green) 38%,var(--tdc-line))}
 .charge[data-active]::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 0 0,color-mix(in srgb,var(--tdc-green) 9%,transparent),transparent 70%)}
@@ -3394,6 +3412,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 /* The car fills two rows; each tyre sits in the middle of its half, level with its wheel. */
 .tpms-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:repeat(2,150px);align-content:center;align-items:center;gap:0 14px}
 .topcar{grid-column:2;grid-row:1/3;align-self:center;height:300px;width:auto;max-width:none;filter:drop-shadow(0 18px 22px rgba(0,0,0,.45))}
+/* The car photographed from above: its wheels glow in the tyre's status colour. */
+.topphoto{position:relative;filter:drop-shadow(0 18px 22px rgba(0,0,0,.45))}
+.topphoto img{display:block;height:100%;width:auto}
+.topphoto .wheel{position:absolute;width:8%;height:10%;transform:translate(-50%,-50%);border-radius:999px;background:var(--tone,var(--tdc-muted));box-shadow:0 0 10px 2px var(--tone,transparent);opacity:.92}
 @container panel (max-width:340px){.tpms-body{grid-template-rows:repeat(2,120px);gap:0 10px}.topcar{height:240px}}
 .topcar .wheel{fill:var(--tone,var(--tdc-muted));filter:drop-shadow(0 0 5px var(--tone,transparent))}
 .tire{display:grid;gap:4px;min-width:0;padding:10px;border:1px solid var(--tdc-line);border-radius:12px;background:var(--tdc-tile)}
@@ -3515,7 +3537,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .cc[data-warn] ha-icon{color:var(--tdc-orange)}
 .cc[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
 .cc:disabled{opacity:.45;cursor:default}
-.cc-num{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:12px;margin-top:14px;font-size:14px;color:var(--tdc-muted)}
+.cc-num{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:12px;margin-top:14px;font-size:14px;color:var(--tdc-muted)}
 .cc-num-l{display:inline-flex;align-items:center;gap:8px}.cc-num-l ha-icon{--mdc-icon-size:20px}
 .cc-num b{color:var(--tdc-text);font-size:15px;min-width:48px}
 .cc-set{display:inline-flex;gap:8px}.cc-set .btn{margin:0;min-height:34px;padding:0 14px}
@@ -4042,7 +4064,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       climate: (o) => o.state === "off" ? ["Slukket", false] : [`T\xE6ndt${Number.isFinite(Number(o.attributes?.current_temperature)) ? ` \xB7 ${f.number(Number(o.attributes.current_temperature), 0)} \xB0C` : ""}`, true],
       charge_port: (o) => ({ open: ["\xC5ben", true], opening: ["\xC5bner\u2026", true], closed: ["Lukket", false], closing: ["Lukker\u2026", false] })[o.state] || [ttdHumanize(o.state), false],
       sentry: (o) => o.state === "on" ? ["Til", true] : ["Fra", false],
-      flash: () => ["Tryk to gange", false]
+      flash: () => ["Blinker \xE9n gang", false]
     };
     for (const button of this.shadowRoot.querySelectorAll("[data-cc]")) {
       const key = button.dataset.cc;
@@ -4089,7 +4111,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const id = this._cfg.carControls[key];
     const o = id ? this._hass?.states?.[id] : null;
     if (!o) return;
-    if (this._armed !== `cc:${key}`) {
+    if (key === "climate") {
+      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      return;
+    }
+    const critical = key === "lock" && o.state !== "unlocked" && o.state !== "open" || key === "charge_port" || key === "sentry" && o.state === "on";
+    if (critical && this._armed !== `cc:${key}`) {
       this._disarm(false);
       this._armed = `cc:${key}`;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
@@ -4098,7 +4125,6 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     this._disarm(true);
     if (key === "lock") this._call("lock", o.state === "locked" ? "unlock" : "lock", { entity_id: id });
-    else if (key === "climate") this._call("climate", o.state === "off" ? "turn_on" : "turn_off", { entity_id: id });
     else if (key === "charge_port") this._call("cover", ["open", "opening"].includes(o.state) ? "close_cover" : "open_cover", { entity_id: id });
     else if (key === "sentry") this._call("switch", o.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
     else if (key === "flash") this._call("button", "press", { entity_id: id });
@@ -4488,6 +4514,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       r.carImg.src = this._url(heroPhoto || v.image) || ttdCarArt(v.body, v.paint);
     }
     this._attrSet(r.carImg, "data-photo", !!heroPhoto && ttdOpaque(heroPhoto));
+    const flowing = !!cfg.cable && m.charge.active && !!cfg.chargeImage;
+    this._placeCable(r.heroCable, r.carImg, flowing && heroPhoto === cfg.chargeImage, "YMax");
     if (r.chargeArt) {
       const photo = m.charge.plugged ? cfg.chargeImage || cfg.parkedImage : cfg.parkedImage;
       this._hide("chargeArt", !photo);
@@ -4496,6 +4524,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         r.chargeArtImg.src = this._url(photo);
         this._attrSet(r.chargeArtImg, "data-fade", ttdOpaque(photo));
       }
+      this._placeCable(r.artCable, r.chargeArtImg, flowing && photo === cfg.chargeImage, "YMid");
     }
     if (m.sc) this._applySmart(m.sc);
     this._applyCarControls();
@@ -4544,6 +4573,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (r[`t${key}`]) this._attrSet(`t${key}`, "aria-label", `${r[`t${key}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
     }
     this._t("tpmsTime", m.tpms.measured);
+    if (r.topImg && r.topImg.dataset.src !== this._cfg.topImage) {
+      r.topImg.dataset.src = this._cfg.topImage;
+      r.topImg.src = this._url(this._cfg.topImage);
+    }
     const names = { FL: "venstre for", FR: "h\xF8jre for", RL: "venstre bag", RR: "h\xF8jre bag" };
     const tires = ["FL", "FR", "RL", "RR"].map((key) => [key, m.tpms.tires[key]]);
     const off = tires.filter(([, tire]) => ["warn", "crit"].includes(tire.tone));
@@ -4583,6 +4616,35 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     for (const el of this._rangeEls) this._attrSet(el, "aria-pressed", String(Number(el.dataset.range) === this._mapHours));
     this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
+  }
+  /** Lays the cable over the photo exactly where the picture is drawn (object-fit: contain inside the img box). */
+  _placeCable(svg, img, show, align) {
+    if (!svg || !img) return;
+    const cable = this._cfg.cable;
+    if (!show || !cable || !img.offsetWidth) {
+      svg.setAttribute("hidden", "");
+      if (show && !img.dataset.cableWait) {
+        img.dataset.cableWait = "1";
+        img.addEventListener("load", () => this._queue(true), { once: true });
+      }
+      return;
+    }
+    if (svg.dataset.d !== cable.path) {
+      svg.dataset.d = cable.path;
+      svg.setAttribute("viewBox", `0 0 ${cable.width} ${cable.height}`);
+      for (const path of svg.querySelectorAll("path")) path.setAttribute("d", cable.path);
+      const [x, y] = cable.path.replace(/^M\s*/, "").split(/[\s,L]+/).map(Number);
+      const port = svg.querySelector("circle");
+      port.setAttribute("cx", x);
+      port.setAttribute("cy", y);
+    }
+    svg.setAttribute("preserveAspectRatio", `xMid${align} meet`);
+    const box = `${img.offsetLeft}|${img.offsetTop}|${img.offsetWidth}|${img.offsetHeight}`;
+    if (svg.dataset.box !== box) {
+      svg.dataset.box = box;
+      Object.assign(svg.style, { left: `${img.offsetLeft}px`, top: `${img.offsetTop}px`, width: `${img.offsetWidth}px`, height: `${img.offsetHeight}px` });
+    }
+    svg.removeAttribute("hidden");
   }
   /** "/local/…" pictures come from Home Assistant, also when the card runs elsewhere (e.g. HA Smartdash's screens). */
   _url(path) {
@@ -5060,12 +5122,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const el = event.target;
     const r = this._r;
     if (el?.dataset?.ccnum) {
-      this._ccPending = { key: el.dataset.ccnum, value: Number(el.value) };
-      clearTimeout(this._ccTimer);
-      this._ccTimer = setTimeout(() => {
-        this._ccPending = null;
-        this._applyCarControls();
-      }, 2e4);
+      const id = this._cfg.carControls[el.dataset.ccnum];
+      this._ccPending = null;
+      if (id) this._call("number", "set_value", { entity_id: id, value: Number(el.value) });
       this._applyCarControls();
       return;
     }

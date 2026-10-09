@@ -28,6 +28,17 @@ vehicle:
   photos:                                # fotos af bilen, valgfri
     charging: /local/tesla/plugged-in.webp # med ladekabel: i Opladning og i lade-popuppen
     parked: /local/tesla/parked.webp       # uden kabel: i Opladning
+    top: /local/tesla/top.webp             # bilen set ovenfra (front op): i Dæktryk
+    top_wheels: { fl: [13, 19], fr: [87, 19], rl: [13, 79], rr: [87, 79] }   # hjulenes placering i %
+    cable: { path: "M524 252 L…", width: 889, height: 504 }  # kablet i ladefotoet: animeres under ladning
+car_controls:                            # Bilstyring (kun på hele Tesla-siden)
+  lock: lock.tesla_lock                  # oplåsning kræver to tryk
+  climate: climate.tesla_climate         # åbner termostaten
+  charge_port: cover.tesla_charge_port_door   # to tryk
+  sentry: switch.tesla_sentry_mode       # slå fra kræver to tryk
+  flash: button.tesla_flash_lights
+  charge_limit: number.tesla_charge_limit
+  charge_current: number.tesla_charge_current
 location_entity: device_tracker.tesla_location_tracker
 entities:
   battery: sensor.tesla_battery
