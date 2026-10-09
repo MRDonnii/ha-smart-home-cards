@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.96 */
+/* MRDonnii Smart Home Cards v0.4.97 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.3.0";
+var TTD_VERSION = "1.3.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3238,6 +3238,8 @@ button[data-dead]:hover{background:none}
 .cmp-i em{font-style:normal;font-size:13px;font-weight:700;color:var(--tdc-green)}
 .cmp-i[aria-checked=true]{border-color:color-mix(in srgb,var(--tdc-blue) 70%,transparent);background:color-mix(in srgb,var(--tdc-blue) 16%,transparent)}
 .cmp-i[aria-checked=true] small{color:var(--tdc-blue)}
+.cmp-i[data-armed],.sc-modes button[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
+.cmp-i[data-armed] small{color:var(--tdc-orange)}
 @container panel (max-width:420px){.cmp{grid-template-columns:minmax(0,1fr)}.cmp-i{grid-template-columns:auto 1fr;column-gap:12px}.cmp-i b{grid-row:1/3;grid-column:1;align-self:center}}
 /* plan */
 .plan-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -3280,7 +3282,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .ctl2 input,.sc-f input{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:15px;min-width:0}
 .ctl2 input[type=number]{width:86px}
 .sc-trip{margin-top:14px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
-  border-left:3px solid color-mix(in srgb,var(--tdc-blue) 70%,transparent)}
+  border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tdc-blue) 70%,transparent)}
 .sc-trip[data-active]{background:color-mix(in srgb,var(--tdc-blue) 12%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
 .sc-trip-h{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px}
 .sc-trip-h:hover{background:var(--tdc-hover)}
@@ -3527,6 +3529,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this.shadowRoot.addEventListener("change", (event) => this._onChange(event));
     this.shadowRoot.addEventListener("input", (event) => this._onInput(event));
     this.shadowRoot.addEventListener("keydown", (event) => this._onKey(event));
+    this.shadowRoot.addEventListener("focusout", (event) => this._commitInput(event.target));
   }
   setConfig(config) {
     if (!config || typeof config !== "object") throw new Error("th-tesla-dashboard-card: ugyldig konfiguration");
@@ -4246,10 +4249,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("estimate", c2.estimate || "");
     this._hide("cmp", !c2.compare);
     if (c2.compare) {
-      const signature = JSON.stringify(c2.compare);
+      const signature = JSON.stringify([c2.compare, this._armed]);
       if (r.cmp.dataset.sig !== signature) {
         r.cmp.dataset.sig = signature;
-        r.cmp.innerHTML = c2.compare.map((item2) => `<button type="button" role="radio" class="cmp-i" data-scmode="${item2.key}" aria-checked="${item2.active}"><small>${ttdEsc(item2.label)}</small><b>${ttdEsc(item2.price)}${item2.estimated ? "*" : ""}</b><span>${ttdEsc(item2.detail)}</span>${item2.saving ? `<em>${ttdEsc(item2.saving)}</em>` : ""}</button>`).join("");
+        r.cmp.innerHTML = c2.compare.map((item2) => `<button type="button" role="radio" class="cmp-i" data-scmode="${item2.key}" aria-checked="${item2.active}"${this._armed === `mode:${item2.key}` ? " data-armed" : ""}><small>${ttdEsc(this._armed === `mode:${item2.key}` ? "Tryk igen for at v\xE6lge" : item2.label)}</small><b>${ttdEsc(item2.price)}${item2.estimated ? "*" : ""}</b><span>${ttdEsc(item2.detail)}</span>${item2.saving ? `<em>${ttdEsc(item2.saving)}</em>` : ""}</button>`).join("");
       }
     }
     const v = m.vehicle;
@@ -4346,9 +4349,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._attrSet("scBadge", "data-tone", sc.badge.tone);
     this._t("scBadgeText", sc.badge.text);
     this._t("scSub", sc.sub);
-    for (const button of this.shadowRoot.querySelectorAll("[data-scmode]")) {
+    for (const button of this.shadowRoot.querySelectorAll(".sc-modes [data-scmode]")) {
+      const armed = this._armed === `mode:${button.dataset.scmode}`;
       this._attrSet(button, "aria-checked", String(button.dataset.scmode === sc.mode));
+      this._attrSet(button, "data-armed", armed);
       button.hidden = !sc.modes.includes(button.dataset.scmode);
+      const label = button.querySelector("span");
+      const text = armed ? "Bekr\xE6ft" : TTD_SC_MODES.find(([key]) => key === button.dataset.scmode)?.[1] || "";
+      if (label && label.textContent !== text) label.textContent = text;
     }
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
@@ -4719,7 +4727,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   _onClick(event) {
     const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear]");
     if (!target) return;
-    if (target.dataset.scmode) this._scCall("charge_mode", "select", "select_option", { option: target.dataset.scmode });
+    if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.sctrip != null) {
       this._tripOpen = !this._tripOpen;
       this._queue(true);
@@ -4753,9 +4761,24 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else if (el === r.socRange) {
       this._dragSoc = false;
       this._setTargetSoc(Number(el.value));
-    } else if (el === r.dlInput) this._setDeadline(el.value);
-    else if (el === r.modeSelect) this._setChargerMode(el.value);
-    else if (el === r.scFixedStart && el.value) this._scCall("fixed_start", "time", "set_value", { time: `${el.value}:00` });
+    } else if (el === r.dlInput) {
+      clearTimeout(this._dlTimer);
+      this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);
+    } else if (el === r.modeSelect) this._setChargerMode(el.value);
+    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep].includes(el)) this._deferInput(el);
+  }
+  /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
+  _deferInput(el) {
+    clearTimeout(this._inputTimer);
+    this._inputEl = el;
+    this._inputTimer = setTimeout(() => this._commitInput(el), 1500);
+  }
+  _commitInput(el) {
+    if (!el || el !== this._inputEl) return;
+    clearTimeout(this._inputTimer);
+    this._inputEl = null;
+    const r = this._r;
+    if (el === r.scFixedStart && el.value) this._scCall("fixed_start", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scFixedEnd && el.value) this._scCall("fixed_end", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
@@ -4816,6 +4839,20 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     else if (domain === "switch" || domain === "input_boolean") this._call(domain, name === "stop_charge" ? "turn_off" : "turn_on", { entity_id: id });
     else if (domain === "script" || domain === "scene") this._call(domain, "turn_on", { entity_id: id });
     else if (domain === "automation") this._call(domain, "trigger", { entity_id: id });
+  }
+  /** Switching plan can start or stop the charger, so it takes a second tap within a few seconds. */
+  _chooseMode(mode) {
+    if (this._sc("charge_mode")?.state === mode) return;
+    const key = `mode:${mode}`;
+    if (this._armed !== key) {
+      this._disarm(false);
+      this._armed = key;
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    this._scCall("charge_mode", "select", "select_option", { option: mode });
   }
   _disarm(render) {
     clearTimeout(this._armTimer);
