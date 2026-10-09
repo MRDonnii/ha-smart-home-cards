@@ -1,4 +1,4 @@
-const VERSION = "0.8.9";
+const VERSION = "0.8.10";
 
 // Shared by desktop/mobile card instances. This warms only still images;
 // live streams are still opened exclusively for the visible camera views.
@@ -472,28 +472,39 @@ class HaHomeCameraCard extends HTMLElement {
     snapshot.decoding = "async";
     const snapshotUrl = this._snapshotUrl(camera);
     if (snapshotUrl) snapshot.src = snapshotUrl;
-    feed.replaceChildren(snapshot);
+    // The live card is created once per feed and re-configured on a camera switch. A new card per switch left
+    // every old one alive (card-mod keeps a document listener per card), so the tab grew all day (Claude AI).
+    let card = feed.querySelector(":scope > [data-live-card]");
+    feed.querySelectorAll(":scope > .snapshot, :scope > .missing").forEach((node) => node.remove());
+    feed.prepend(snapshot);
+    const config = {
+      type: "picture-elements",
+      camera_image: camera.entity,
+      camera_view: "live",
+      elements: [],
+      aspect_ratio: this.config.aspect_ratio,
+      fit_mode: "cover",
+      tap_action: { action: "none" },
+    };
     try {
-      const helpers = await window.loadCardHelpers();
-      if (generation !== this._generation || this._feedEntities[index] !== camera.entity) return;
-      const card = await helpers.createCardElement({
-        type: "picture-elements",
-        camera_image: camera.entity,
-        camera_view: "live",
-        elements: [],
-        aspect_ratio: this.config.aspect_ratio,
-        fit_mode: "cover",
-        tap_action: { action: "none" },
-      });
-      card.classList.add("live-card");
-      card.dataset.liveCard = "";
-      const fitScale = Number(camera.fit_scale || 1);
-      if (Number.isFinite(fitScale) && fitScale > 0) {
-        card.style.transform = `scale(${fitScale})`;
-        card.style.transformOrigin = "center center";
+      if (card) {
+        card.setConfig(config);
+      } else {
+        const helpers = await window.loadCardHelpers();
+        if (generation !== this._generation || this._feedEntities[index] !== camera.entity) return;
+        card = feed.querySelector(":scope > [data-live-card]");
+        if (card) card.setConfig(config);
+        else {
+          card = await helpers.createCardElement(config);
+          card.classList.add("live-card");
+          card.dataset.liveCard = "";
+          feed.appendChild(card);
+        }
       }
+      const fitScale = Number(camera.fit_scale || 1);
+      card.style.transform = Number.isFinite(fitScale) && fitScale > 0 && fitScale !== 1 ? `scale(${fitScale})` : "";
+      card.style.transformOrigin = card.style.transform ? "center center" : "";
       card.hass = this._hass;
-      feed.appendChild(card);
       this._revealWhenReady(feed, card, generation, camera.entity);
     } catch (error) {
       feed.innerHTML = `<div class="missing"><div><ha-icon icon="mdi:alert-circle-outline"></ha-icon><br>Stream kunne ikke indlæses</div></div>`;

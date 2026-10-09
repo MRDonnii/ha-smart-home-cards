@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.89 */
+/* MRDonnii Smart Home Cards v0.4.90 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -35940,7 +35940,7 @@ console.info(
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION35 = "0.8.9";
+var VERSION35 = "0.8.10";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -36374,8 +36374,8 @@ var HaHomeCameraCard = class extends HTMLElement {
   }
   async _setFeed(index, camera) {
     if (this._feedEntities[index] === camera.entity) {
-      const card = this.shadowRoot.querySelector(`[data-feed="${index}"] [data-live-card]`);
-      if (card) card.hass = this._hass;
+      const card2 = this.shadowRoot.querySelector(`[data-feed="${index}"] [data-live-card]`);
+      if (card2) card2.hass = this._hass;
       return;
     }
     this._feedEntities[index] = camera.entity;
@@ -36394,28 +36394,37 @@ var HaHomeCameraCard = class extends HTMLElement {
     snapshot.decoding = "async";
     const snapshotUrl = this._snapshotUrl(camera);
     if (snapshotUrl) snapshot.src = snapshotUrl;
-    feed.replaceChildren(snapshot);
+    let card = feed.querySelector(":scope > [data-live-card]");
+    feed.querySelectorAll(":scope > .snapshot, :scope > .missing").forEach((node) => node.remove());
+    feed.prepend(snapshot);
+    const config = {
+      type: "picture-elements",
+      camera_image: camera.entity,
+      camera_view: "live",
+      elements: [],
+      aspect_ratio: this.config.aspect_ratio,
+      fit_mode: "cover",
+      tap_action: { action: "none" }
+    };
     try {
-      const helpers = await window.loadCardHelpers();
-      if (generation !== this._generation || this._feedEntities[index] !== camera.entity) return;
-      const card = await helpers.createCardElement({
-        type: "picture-elements",
-        camera_image: camera.entity,
-        camera_view: "live",
-        elements: [],
-        aspect_ratio: this.config.aspect_ratio,
-        fit_mode: "cover",
-        tap_action: { action: "none" }
-      });
-      card.classList.add("live-card");
-      card.dataset.liveCard = "";
-      const fitScale = Number(camera.fit_scale || 1);
-      if (Number.isFinite(fitScale) && fitScale > 0) {
-        card.style.transform = `scale(${fitScale})`;
-        card.style.transformOrigin = "center center";
+      if (card) {
+        card.setConfig(config);
+      } else {
+        const helpers = await window.loadCardHelpers();
+        if (generation !== this._generation || this._feedEntities[index] !== camera.entity) return;
+        card = feed.querySelector(":scope > [data-live-card]");
+        if (card) card.setConfig(config);
+        else {
+          card = await helpers.createCardElement(config);
+          card.classList.add("live-card");
+          card.dataset.liveCard = "";
+          feed.appendChild(card);
+        }
       }
+      const fitScale = Number(camera.fit_scale || 1);
+      card.style.transform = Number.isFinite(fitScale) && fitScale > 0 && fitScale !== 1 ? `scale(${fitScale})` : "";
+      card.style.transformOrigin = card.style.transform ? "center center" : "";
       card.hass = this._hass;
-      feed.appendChild(card);
       this._revealWhenReady(feed, card, generation, camera.entity);
     } catch (error) {
       feed.innerHTML = `<div class="missing"><div><ha-icon icon="mdi:alert-circle-outline"></ha-icon><br>Stream kunne ikke indl\xE6ses</div></div>`;
