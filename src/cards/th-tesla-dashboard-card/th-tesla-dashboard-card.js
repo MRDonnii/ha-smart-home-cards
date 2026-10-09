@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.4.0";
+const TTD_VERSION = "1.4.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -94,6 +94,7 @@ const TTD_SC_ROLES = {
   trip_round_trip: "switch._round_trip", trip_clear: "button._clear_temporary_plan", trip_distance: "sensor._trip_distance",
   trip_energy: "sensor._trip_energy", trip_target_soc: "sensor._trip_soc_needed", charge_now: "binary_sensor._charge_now",
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
+  notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
 };
 const TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"], ["fixed", "Fast tid", "mdi:clock-time-four-outline"],
@@ -508,7 +509,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
       <button type="button" class="btn stop wide" data-scclear data-r="scClear" hidden>Ryd midlertidig plan</button>
     </div>
   </div>
-  <div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekræft på mobil</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>
+  <div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scinfo data-r="scInfoChip" aria-pressed="false" hidden>${ttdIcon("mdi:cellphone-message")}<span>Besked om plan</span></button><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekræft på mobil</span></button><button type="button" class="chip" data-scsend data-r="scSendChip" hidden>${ttdIcon("mdi:send")}<span>Send nu</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>
 </section>` : `<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart ladeplan</h3><p data-r="planSub">${TTD_DASH}</p></div><span class="badge" data-r="planBadge"><span data-r="planBadgeText">${TTD_DASH}</span></span></header>
   <div class="box plan-top">${cell("best_charge_start", "mdi:clock-start", "blue", "bestStart", "Bedste start")}${cell("best_charge_end", "mdi:check-circle-outline", "green", "bestEnd", "Forventet slut")}${cell("best_charge_price", "mdi:cash", "amber", "bestPrice", "Forventet pris", `<em data-r="bestPriceKwh"></em>`)}</div>
@@ -1483,7 +1484,13 @@ class ThTeslaDashboardCard extends HTMLElement {
         const sw = this._sc("confirm_on_phone");
         if (!sw || sw.state === "unavailable") return null;
         const phones = Array.isArray(sw.attributes?.phones) ? sw.attributes.phones.length : 0;
-        return { on: sw.state === "on", info: phones ? `${phones} ${phones === 1 ? "mobil" : "mobiler"}` : "Vælg mobiler under Konfigurer" };
+        const info = this._sc("notify_plan");
+        return {
+          on: sw.state === "on", phones,
+          info: phones ? `${phones} ${phones === 1 ? "mobil" : "mobiler"}` : "Vælg mobiler under Konfigurer",
+          notify: info && info.state !== "unavailable" ? info.state === "on" : null,
+          send: !!phones && !!this._sc("send_plan") && this._sc("send_plan").state !== "unavailable",
+        };
       })(),
     };
   }
@@ -1909,6 +1916,9 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (sc.phone) {
       this._attrSet("scPhoneChip", "aria-pressed", String(sc.phone.on));
       this._t("scPhoneInfo", sc.phone.info);
+      this._hide("scInfoChip", sc.phone.notify == null);
+      this._attrSet("scInfoChip", "aria-pressed", String(!!sc.phone.notify));
+      this._hide("scSendChip", !sc.phone.send);
     }
   }
 
@@ -2247,7 +2257,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
     if (!target) return;
     if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.sctrip != null) {
@@ -2257,6 +2267,8 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scclear != null) this._scCall("trip_clear", "button", "press");
     else if (target.dataset.scconfirm != null) this._scCall("confirm_plan", "button", "press");
     else if (target.dataset.scphone != null) this._scCall("confirm_on_phone", "switch", "toggle");
+    else if (target.dataset.scinfo != null) this._scCall("notify_plan", "switch", "toggle");
+    else if (target.dataset.scsend != null) this._scCall("send_plan", "button", "press");
     else if (target.dataset.nav != null) this._navigate();
     else if (target.dataset.mapstyle != null) this._toggleMapStyle();
     else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));

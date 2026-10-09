@@ -459,6 +459,12 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.sc.awaiting, true);
   assert.equal(r.sc.badge.text, "Venter på bekræftelse");
   assert.equal(r.sc.phone.info, "2 mobiler");
+  assert.equal(r.sc.phone.notify, null, "no plan-message switch: chip hidden");
+  st["switch.bil_notify_plan_on_phone"] = s("on");
+  st["button.bil_send_plan_to_phone"] = s("unknown");
+  r = model(st, scConfig);
+  assert.equal(r.sc.phone.notify, true);
+  assert.equal(r.sc.phone.send, true);
 
   // Charging: the stop button pauses the plan.
   st = scStates();
