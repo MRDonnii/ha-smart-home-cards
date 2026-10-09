@@ -313,8 +313,12 @@ function ttdDeriveStatus(snapshot) {
   const monta = s.monta || "";
   const chargingState = s.chargingState || "";
   const plugged = s.plug === true || s.cable === true || mode.startsWith("connected_") || TTD_MONTA_PLUGGED.has(monta);
-  const charging = s.charging === true || chargingState === "Charging" || mode === "connected_charging" || monta === "busy-charging"
-    || (s.power != null && s.power >= 0.3);
+  // Plugged into the home charger, the charger decides whether it charges: the car's own charging flag can stand still
+  // for an hour after a stop (Claude AI, 2026-10-09: stopped, yet shown charging with only "Stop"). Elsewhere (a public
+  // charger) the car's own state counts.
+  const atCharger = s.cable === true || mode.startsWith("connected_") || TTD_MONTA_PLUGGED.has(monta);
+  const chargerCharging = mode === "connected_charging" || monta === "busy-charging" || (s.power != null && s.power >= 0.3);
+  const charging = atCharger ? chargerCharging : s.charging === true || chargingState === "Charging" || chargerCharging;
   const reached = s.soc != null && s.target != null && s.soc >= s.target - 0.5;
   let key;
   if (charging) key = "charging";

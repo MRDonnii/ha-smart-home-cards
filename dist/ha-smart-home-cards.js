@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.90 */
+/* MRDonnii Smart Home Cards v0.4.91 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2827,7 +2827,9 @@ function ttdDeriveStatus(snapshot) {
   const monta = s.monta || "";
   const chargingState = s.chargingState || "";
   const plugged = s.plug === true || s.cable === true || mode.startsWith("connected_") || TTD_MONTA_PLUGGED.has(monta);
-  const charging = s.charging === true || chargingState === "Charging" || mode === "connected_charging" || monta === "busy-charging" || s.power != null && s.power >= 0.3;
+  const atCharger = s.cable === true || mode.startsWith("connected_") || TTD_MONTA_PLUGGED.has(monta);
+  const chargerCharging = mode === "connected_charging" || monta === "busy-charging" || s.power != null && s.power >= 0.3;
+  const charging = atCharger ? chargerCharging : s.charging === true || chargingState === "Charging" || chargerCharging;
   const reached = s.soc != null && s.target != null && s.soc >= s.target - 0.5;
   let key;
   if (charging) key = "charging";
