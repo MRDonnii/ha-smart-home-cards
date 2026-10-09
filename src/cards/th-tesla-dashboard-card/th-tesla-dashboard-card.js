@@ -15,13 +15,19 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.7.2";
+const TTD_VERSION = "1.8.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 const TTD_TAG = "th-tesla-dashboard-card";
 const TTD_DASH = "—";
 const TTD_EMPTY_STATES = new Set(["", "unknown", "unavailable", "none", "null", "undefined", "nan"]);
+// Car controls: key, label, icon, the entity's domain.
+const TTD_CAR_CONTROLS = [
+  ["lock", "Lås", "mdi:lock", "lock"], ["climate", "Klima", "mdi:fan", "climate"], ["charge_port", "Ladeport", "mdi:ev-plug-type2", "cover"],
+  ["sentry", "Vagtpost", "mdi:shield-car", "switch"], ["flash", "Blink lys", "mdi:car-light-high", "button"],
+  ["charge_limit", "Ladegrænse", "mdi:battery-charging-high", "number"], ["charge_current", "Ladestrøm", "mdi:current-ac", "number"],
+];
 const TTD_CONTROL_KEYS = ["start_charge", "stop_charge", "charger_mode", "target_soc", "deadline", "apply_plan"];
 const TTD_MAP_RANGES = [0, 1, 6, 12, 24];
 const TTD_CHART_RANGES = {
@@ -387,6 +393,9 @@ function ttdNormalizeConfig(raw) {
     confirm_mode_change: config.confirm_mode_change !== false,
     location: config.location_entity || entities.location || null,
     entities, controls, map, chart, tpms, battery, precision,
+    // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
+    carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, config.car_controls?.[key]])
+      .filter(([, id]) => typeof id === "string" && id.includes("."))),
     layout: config.layout === "charge" ? "charge" : "full",
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
@@ -459,6 +468,17 @@ function ttdOpaque(path) {
   return /\.jpe?g(?:[?#]|$)/i.test(String(path || ""));
 }
 
+/** A short name that tells which car it is ("Tesla Model 3 RWD"), not the catalogue's full model line. */
+function ttdShortModel(name) {
+  const text = String(name || "").trim();
+  const match = /(model\s?[3sxy]\b|cybertruck|roadster)/i.exec(text);
+  if (!match) return text.length > 28 ? `${text.slice(0, 27).trim()}…` : text;
+  const model = /^model/i.test(match[1]) ? `Model ${match[1].slice(-1).toUpperCase()}` : match[1][0].toUpperCase() + match[1].slice(1).toLowerCase();
+  const drive = /performance/i.test(text) ? "Performance" : /long range/i.test(text) ? "Long Range" : /\bAWD\b/i.test(text) ? "AWD"
+    : /\bRWD\b|standard range/i.test(text) ? "RWD" : "";
+  return ["Tesla", model, drive].filter(Boolean).join(" ");
+}
+
 function ttdIcon(icon, cls = "") {
   return `<ha-icon icon="${icon}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 }
@@ -474,7 +494,7 @@ function ttdTemplate(cfg) {
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
-  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
+  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}${full && Object.keys(cfg.carControls).length ? " has-ctl" : ""}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
@@ -542,6 +562,11 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
 </section>`}
+${full && Object.keys(cfg.carControls).length ? `<section class="panel carctl" data-r="ctlPanel" aria-label="Bilstyring">
+  <header class="ph">${ttdIcon("mdi:car-cog", "ph-i")}<div class="ph-t"><h3>Bilstyring</h3><p>Hver handling kræver to tryk</p></div></header>
+  <div class="cc-grid">${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain !== "number").map(([key, label, icon]) => `<button type="button" class="cc" data-cc="${key}" aria-pressed="false">${ttdIcon(icon)}<span><b data-ccl="${key}">${label}</b><small data-ccs="${key}">${TTD_DASH}</small></span></button>`).join("")}</div>
+  ${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain === "number").map(([key, label, icon]) => `<div class="cc-num" data-ccbox="${key}"><span class="cc-num-l">${ttdIcon(icon)}${label}</span><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"><span class="cc-set" data-ccset-box="${key}" hidden><button type="button" class="btn go" data-ccset="${key}">Sæt</button><button type="button" class="btn" data-ccundo="${key}">Fortryd</button></span></div>`).join("")}
+</section>` : ""}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
   <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="Åbn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
@@ -900,6 +925,28 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 @container ttd (max-width:1199px){.dash.no-plan{grid-template-areas:"hero hero" "charge charge" "map tpms" "drive econ" "last daily"}}
 @container ttd (max-width:699px){.dash.no-plan{grid-template-areas:"hero" "charge" "map" "tpms" "drive" "econ" "last" "daily"}}
 .dash.charge-layout.no-plan{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "nav"}
+/* Car controls: a full row under the charging panels (Tesla page only). */
+.carctl{grid-area:carctl}
+.dash.has-ctl{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge plan plan plan plan tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
+.dash.has-ctl.no-plan{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge charge charge charge charge tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
+@container ttd (max-width:1199px){.dash.has-ctl{grid-template-areas:"hero hero" "charge plan" "carctl carctl" "map tpms" "drive econ" "last daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero hero" "charge charge" "carctl carctl" "map tpms" "drive econ" "last daily"}}
+@container ttd (max-width:899px){.dash.has-ctl{grid-template-areas:"hero hero" "charge charge" "plan plan" "carctl carctl" "map tpms" "drive econ" "last daily"}}
+@container ttd (max-width:699px){.dash.has-ctl{grid-template-areas:"hero" "charge" "plan" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero" "charge" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}}
+.cc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cc{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);text-align:left;min-width:0}
+.cc:hover{background:var(--tdc-hover)}
+.cc ha-icon{--mdc-icon-size:22px;color:var(--tdc-muted)}
+.cc>span{display:grid;gap:2px;min-width:0}.cc b{font-size:15px;font-weight:650}.cc small{font-size:12.5px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 20%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.cc[aria-pressed=true] ha-icon{color:var(--tdc-blue)}
+.cc[data-warn] ha-icon{color:var(--tdc-orange)}
+.cc[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
+.cc:disabled{opacity:.45;cursor:default}
+.cc-num{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:12px;margin-top:14px;font-size:14px;color:var(--tdc-muted)}
+.cc-num-l{display:inline-flex;align-items:center;gap:8px}.cc-num-l ha-icon{--mdc-icon-size:20px}
+.cc-num b{color:var(--tdc-text);font-size:15px;min-width:48px}
+.cc-set{display:inline-flex;gap:8px}.cc-set .btn{margin:0;min-height:34px;padding:0 14px}
+@container ttd (max-width:699px){.cc-num{grid-template-columns:auto 1fr;}.cc-num input{grid-column:1/-1}.cc-set{grid-column:1/-1}}
 .charge-layout .hero{grid-template-rows:auto minmax(120px,1fr)}
 .charge-layout .hero-car img{max-height:200px}
 @container panel (min-width:540px){
@@ -1353,7 +1400,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`, socPercent: soc == null ? 0 : ttdClamp(soc, 0, 100), socTone,
       target: target == null ? null : `Mål ${f.number(target, 0)} %`, targetPercent: target == null ? null : ttdClamp(target, 0, 100),
       power: this._value("charger_power", 1), rate: rateText, finish, remaining,
-      monta: montaLabel ?? (mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : TTD_DASH),
+      monta: montaLabel ?? (mode ? this._chargerText(mode) : TTD_DASH),
       montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : { connected_charging: "ok", connected_requesting: "info", connected_finished: "info" }[mode] || "muted",
       modeBoxVisible: montaConfigured || !!this._modeOptions(),
       mode: mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : this._id("charger_mode") ? TTD_TEXT.unavailable : TTD_DASH,
@@ -1446,10 +1493,87 @@ class ThTeslaDashboardCard extends HTMLElement {
     };
   }
 
+  /** The car controls: state per button, the value per slider (unless one is being set). */
+  _applyCarControls() {
+    const ids = this._cfg.carControls;
+    if (!this._r.ctlPanel) return;
+    const f = this._format();
+    const st = (key) => this._hass?.states?.[ids[key]];
+    const text = {
+      lock: (o) => ({ locked: ["Låst", false], unlocked: ["Ulåst", true], locking: ["Låser…", false], unlocking: ["Låser op…", true], open: ["Åben", true] }[o.state] || [ttdHumanize(o.state), false]),
+      climate: (o) => o.state === "off" ? ["Slukket", false] : [`Tændt${Number.isFinite(Number(o.attributes?.current_temperature)) ? ` · ${f.number(Number(o.attributes.current_temperature), 0)} °C` : ""}`, true],
+      charge_port: (o) => ({ open: ["Åben", true], opening: ["Åbner…", true], closed: ["Lukket", false], closing: ["Lukker…", false] }[o.state] || [ttdHumanize(o.state), false]),
+      sentry: (o) => o.state === "on" ? ["Til", true] : ["Fra", false],
+      flash: () => ["Tryk to gange", false],
+    };
+    for (const button of this.shadowRoot.querySelectorAll("[data-cc]")) {
+      const key = button.dataset.cc; const o = st(key);
+      const dead = !o || ["unavailable", "unknown"].includes(o.state) && key !== "flash";
+      const [label, on] = o ? text[key](o) : [TTD_TEXT.unavailable, false];
+      const armed = this._armed === `cc:${key}`;
+      button.disabled = !!dead && !o;
+      this._attrSet(button, "aria-pressed", String(key === "lock" ? false : !!on));
+      this._attrSet(button, "data-warn", key === "lock" && on);
+      this._attrSet(button, "data-armed", armed);
+      const small = button.querySelector(`[data-ccs="${key}"]`);
+      const value = armed ? "Tryk igen for at udføre" : dead ? TTD_TEXT.unavailable : label;
+      if (small && small.textContent !== value) small.textContent = value;
+    }
+    for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
+      const key = input.dataset.ccnum; const o = st(key); const a = o?.attributes || {};
+      const pending = this._ccPending?.key === key ? this._ccPending.value : null;
+      const value = pending ?? (o && Number.isFinite(Number(o.state)) ? Number(o.state) : null);
+      const unit = a.unit_of_measurement || (key === "charge_limit" ? "%" : "A");
+      if (this.shadowRoot.activeElement !== input || pending === null) {
+        this._attrSet(input, "min", a.min ?? 0); this._attrSet(input, "max", a.max ?? 100); this._attrSet(input, "step", a.step ?? 1);
+        if (value !== null && input.value !== String(value)) input.value = String(value);
+      }
+      input.disabled = value === null;
+      const lo = Number(input.min) || 0; const hi = Number(input.max) || 100;
+      if (value !== null) input.style.setProperty("--p", `${hi > lo ? ((value - lo) / (hi - lo)) * 100 : 0}%`);
+      const out = this.shadowRoot.querySelector(`[data-ccv="${key}"]`);
+      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}`;
+      if (out && out.textContent !== shown) out.textContent = shown;
+      const box = this.shadowRoot.querySelector(`[data-ccset-box="${key}"]`);
+      if (box) box.hidden = pending === null;
+      const set = this.shadowRoot.querySelector(`[data-ccset="${key}"]`);
+      if (set && pending !== null) set.textContent = `Sæt ${f.number(pending, 0)} ${unit}`;
+    }
+  }
+
+  /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
+  _carControl(key) {
+    const id = this._cfg.carControls[key]; const o = id ? this._hass?.states?.[id] : null;
+    if (!o) return;
+    if (this._armed !== `cc:${key}`) {
+      this._disarm(false);
+      this._armed = `cc:${key}`;
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    if (key === "lock") this._call("lock", o.state === "locked" ? "unlock" : "lock", { entity_id: id });
+    else if (key === "climate") this._call("climate", o.state === "off" ? "turn_on" : "turn_off", { entity_id: id });
+    else if (key === "charge_port") this._call("cover", ["open", "opening"].includes(o.state) ? "close_cover" : "open_cover", { entity_id: id });
+    else if (key === "sentry") this._call("switch", o.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
+    else if (key === "flash") this._call("button", "press", { entity_id: id });
+  }
+
+  /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
+  _chargerText(mode) {
+    const plan = this._cfg.smart_charge ? this._sc("charge_status")?.state : null;
+    if (["connected_finished", "connected_requesting"].includes(mode) && plan) {
+      const waiting = { waiting: "Venter på planen", starting: "Starter", awaiting_confirmation: "Venter på bekræftelse", paused: "På pause", done: "Færdig – mål nået" }[plan];
+      if (waiting) return waiting;
+    }
+    return TTD_TEXT.mode[mode] ?? ttdHumanize(mode);
+  }
+
   /** Name and artwork: configured, or the model EV Smart Charge recognised for this car. */
   _vehicleModel() {
     const attrs = this._sc("charge_status")?.attributes || {};
-    const name = this._cfg.model || (attrs.vehicle_name ? `Tesla ${attrs.vehicle_name}` : "Tesla");
+    const name = this._cfg.model || (attrs.vehicle_name ? ttdShortModel(attrs.vehicle_name) : "Tesla");
     const body = this._cfg.body || (TTD_BODIES[attrs.vehicle_body] ? attrs.vehicle_body : "model_3");
     return { name, body, paint: this._cfg.paint, image: this._cfg.image };
   }
@@ -1839,6 +1963,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       }
     }
     if (m.sc) this._applySmart(m.sc);
+    this._applyCarControls();
     // plan
     const p = m.plan;
     this._hide("planBadge", !p.badge);
@@ -2374,9 +2499,16 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
     if (!target) return;
-    if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
+    if (target.dataset.cc) this._carControl(target.dataset.cc);
+    else if (target.dataset.ccset) {
+      const pending = this._ccPending; const id = this._cfg.carControls[target.dataset.ccset];
+      this._ccPending = null; clearTimeout(this._ccTimer);
+      if (pending && id && pending.key === target.dataset.ccset) this._call("number", "set_value", { entity_id: id, value: pending.value });
+      this._applyCarControls();
+    } else if (target.dataset.ccundo) { this._ccPending = null; clearTimeout(this._ccTimer); this._applyCarControls(); }
+    else if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.scdef != null) {
@@ -2415,6 +2547,13 @@ class ThTeslaDashboardCard extends HTMLElement {
   _onChange(event) {
     const el = event.target;
     const r = this._r;
+    if (el?.dataset?.ccnum) {
+      this._ccPending = { key: el.dataset.ccnum, value: Number(el.value) };
+      clearTimeout(this._ccTimer);
+      this._ccTimer = setTimeout(() => { this._ccPending = null; this._applyCarControls(); }, 20000);
+      this._applyCarControls();
+      return;
+    }
     if (el === r.rangeSelect) {
       this._chartRange = TTD_CHART_RANGES[el.value] ? el.value : "today";
       this._renderChart(true);
@@ -2454,6 +2593,12 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onInput(event) {
+    if (event.target?.dataset?.ccnum) {
+      // A car slider is only shown while dragging; it is set after "Sæt" (see _onChange).
+      this._ccPending = { key: event.target.dataset.ccnum, value: Number(event.target.value) };
+      this._applyCarControls();
+      return;
+    }
     if (event.target !== this._r.socRange) return;
     const el = event.target;
     this._dragSoc = true;

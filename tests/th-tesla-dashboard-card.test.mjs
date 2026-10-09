@@ -413,12 +413,12 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.sc.marks[0].kind, "deadline");
   assert.match(r.sc.sub, /^Klar .* · mål 100 %$/);
   assert.equal(r.sc.fixed, null, "fixed window only in fixed mode");
-  assert.equal(r.vehicle.name, "Tesla Model Y Long Range AWD (2020–2024)", "model comes from the car EV Smart Charge recognised");
+  assert.equal(r.vehicle.name, "Tesla Model Y Long Range", "a short model name from the car EV Smart Charge recognised");
   assert.equal(r.vehicle.body, "model_y");
   assert.equal(r.plan.soc.value, 100, "target slider follows the integration");
   assert.equal(r.plan.deadline.text, "06:45");
   assert.equal(r.charge.startVisible, true, "plugged in and waiting: Lad nu switches the plan");
-  assert.equal(r.charge.monta, "Færdig", "without Monta the charger box shows the charger state");
+  assert.equal(r.charge.monta, "Venter på planen", "a finished charger that waits for the plan says so");
   assert.equal(r.charge.modeBoxVisible, false);
   assert.equal(r.charge.compare, null, "no comparison without the integration's alternatives");
   st["sensor.bil_planned_charge_cost"] = s("6.27", { unit_of_measurement: "kr", alternatives: {
@@ -502,6 +502,18 @@ console.log("th-tesla-dashboard-card tests passed");
       assert.match(context.ttdCarArt(body, paint), /^data:image\/svg\+xml,/);
     }
   }
+}
+// Car controls: only in the full layout, only the configured entities.
+{
+  const withCtl = { ...config, car_controls: { lock: "lock.car", climate: "climate.car", charge_limit: "number.car_limit", bogus: "x.y" } };
+  const html = context.ttdTemplate(context.ttdNormalizeConfig(withCtl));
+  assert.match(html, /data-cc="lock"/);
+  assert.match(html, /data-cc="climate"/);
+  assert.doesNotMatch(html, /data-cc="sentry"/);
+  assert.match(html, /data-ccnum="charge_limit"/);
+  assert.match(html, /has-ctl/);
+  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-cc=/, "not in the charge popup");
+  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Bilstyring/);
 }
 // Monta only where it is configured.
 {
