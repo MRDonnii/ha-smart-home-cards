@@ -451,6 +451,15 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.sc.trip.info, "50 km hver vej · 43 min · 17,1 kWh · kræver 40 %");
   assert.ok(r.sc.marks.some((mark) => mark.kind === "trip"));
 
+  // Waiting for an answer on the phone.
+  st = scStates();
+  st["sensor.bil_charge_status"] = s("awaiting_confirmation");
+  st["switch.bil_confirm_plan_on_phone"] = s("on", { phones: ["mobile_app_a", "mobile_app_b"] });
+  r = model(st, scConfig);
+  assert.equal(r.sc.awaiting, true);
+  assert.equal(r.sc.badge.text, "Venter på bekræftelse");
+  assert.equal(r.sc.phone.info, "2 mobiler");
+
   // Charging: the stop button pauses the plan.
   st = scStates();
   st["sensor.mode"] = s("connected_charging");

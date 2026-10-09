@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.97 */
+/* MRDonnii Smart Home Cards v0.4.98 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.3.1";
+var TTD_VERSION = "1.4.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2627,7 +2627,9 @@ var TTD_SC_ROLES = {
   trip_distance: "sensor._trip_distance",
   trip_energy: "sensor._trip_energy",
   trip_target_soc: "sensor._trip_soc_needed",
-  charge_now: "binary_sensor._charge_now"
+  charge_now: "binary_sensor._charge_now",
+  confirm_on_phone: "switch._confirm_plan_on_phone",
+  confirm_plan: "button._confirm_plan"
 };
 var TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"],
@@ -2649,7 +2651,8 @@ var TTD_SC_STATUS = {
   paused: ["P\xE5 pause", "warn"],
   starting: ["Starter", "info"],
   done: ["M\xE5l n\xE5et", "ok"],
-  waiting: ["Venter p\xE5 billig str\xF8m", "info"]
+  waiting: ["Venter p\xE5 billig str\xF8m", "info"],
+  awaiting_confirmation: ["Venter p\xE5 bekr\xE6ftelse", "warn"]
 };
 var TTD_PAINTS = {
   grey: ["#6b7482", "#363c47", "#1c2027"],
@@ -2945,6 +2948,7 @@ function ttdNormalizeConfig(raw) {
     image: vehicle.image || config.vehicle_image || null,
     smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : null,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
+    confirm_mode_change: config.confirm_mode_change !== false,
     location: config.location_entity || entities.location || null,
     entities,
     controls,
@@ -3057,6 +3061,7 @@ function ttdTemplate(cfg) {
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
+  <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "N\xE6ste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
@@ -3074,6 +3079,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
       <button type="button" class="btn stop wide" data-scclear data-r="scClear" hidden>Ryd midlertidig plan</button>
     </div>
   </div>
+  <div class="sc-row sc-phone" data-r="scPhone" hidden><button type="button" class="chip" data-scphone data-r="scPhoneChip" aria-pressed="false">${ttdIcon("mdi:cellphone-check")}<span>Bekr\xE6ft p\xE5 mobil</span></button><span class="sc-info" data-r="scPhoneInfo"></span></div>
 </section>` : `<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart ladeplan</h3><p data-r="planSub">${TTD_DASH}</p></div><span class="badge" data-r="planBadge"><span data-r="planBadgeText">${TTD_DASH}</span></span></header>
   <div class="box plan-top">${cell("best_charge_start", "mdi:clock-start", "blue", "bestStart", "Bedste start")}${cell("best_charge_end", "mdi:check-circle-outline", "green", "bestEnd", "Forventet slut")}${cell("best_charge_price", "mdi:cash", "amber", "bestPrice", "Forventet pris", `<em data-r="bestPriceKwh"></em>`)}</div>
@@ -3300,6 +3306,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .chip[aria-pressed=true] ha-icon{color:var(--tdc-blue)}
 .sc-info{flex:1;min-width:0;font-size:13px;color:var(--tdc-text)}
 .sc-trip .btn.wide{margin-top:0}
+.sc-confirm{margin:0 0 14px}
+.sc-phone{margin-top:12px}
 @container panel (max-width:380px){.sc-modes button ha-icon{display:none}}
 /* narrow panels: the status badge moves below the title instead of cutting it off */
 @container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph:has(.badge) .ph-t{flex:1 1 calc(100% - 52px)}.ph .badge{margin-left:40px}}
@@ -4007,7 +4015,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " \xB7 delvist sk\xF8nnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc") } : null,
-      trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip }
+      trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip },
+      awaiting: statusKey === "awaiting_confirmation",
+      phone: (() => {
+        const sw = this._sc("confirm_on_phone");
+        if (!sw || sw.state === "unavailable") return null;
+        const phones = Array.isArray(sw.attributes?.phones) ? sw.attributes.phones.length : 0;
+        return { on: sw.state === "on", info: phones ? `${phones} ${phones === 1 ? "mobil" : "mobiler"}` : "V\xE6lg mobiler under Konfigurer" };
+      })()
     };
   }
   _deadlineModel(f) {
@@ -4411,6 +4426,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._attrSet("scRound", "aria-pressed", String(trip.roundTrip));
     this._t("scTripInfo", trip.info);
     this._hide("scClear", !trip.active && !trip.destination);
+    this._hide("scConfirm", !sc.awaiting);
+    this._hide("scPhone", !sc.phone);
+    if (sc.phone) {
+      this._attrSet("scPhoneChip", "aria-pressed", String(sc.phone.on));
+      this._t("scPhoneInfo", sc.phone.info);
+    }
   }
   _renderModeSelect(model) {
     const select = this._r.modeSelect;
@@ -4725,7 +4746,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone]");
     if (!target) return;
     if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.sctrip != null) {
@@ -4733,6 +4754,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._queue(true);
     } else if (target.dataset.scround != null) this._scCall("trip_round_trip", "switch", "toggle");
     else if (target.dataset.scclear != null) this._scCall("trip_clear", "button", "press");
+    else if (target.dataset.scconfirm != null) this._scCall("confirm_plan", "button", "press");
+    else if (target.dataset.scphone != null) this._scCall("confirm_on_phone", "switch", "toggle");
     else if (target.dataset.nav != null) this._navigate();
     else if (target.dataset.mapstyle != null) this._toggleMapStyle();
     else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));
@@ -4844,7 +4867,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   _chooseMode(mode) {
     if (this._sc("charge_mode")?.state === mode) return;
     const key = `mode:${mode}`;
-    if (this._armed !== key) {
+    if (this._cfg.confirm_mode_change && this._armed !== key) {
       this._disarm(false);
       this._armed = key;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
