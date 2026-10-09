@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.8.0";
+const TTD_VERSION = "1.8.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -489,7 +489,7 @@ function ttdTemplate(cfg) {
   const kpi = (key, icon, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
   const cell = (key, icon, tone, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon, `ic ${tone}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
-  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}">${ttdIcon("mdi:tire", "tile-i")}<b data-r="${ref}V">${TTD_DASH}</b><small>${label}</small><em data-r="${ref}S"></em></button>`;
+  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><small>${label}</small><b data-r="${ref}V">${TTD_DASH}</b><em data-r="${ref}S"></em></button>`;
   const item = (key, icon, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
@@ -572,7 +572,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
 </section>
 <section class="panel tpms" data-r="tpms" aria-label="Dæktryk">
-  <header class="ph">${ttdIcon("mdi:tire", "ph-i")}<div class="ph-t"><h3>Dæktryk</h3></div><span class="meta" data-r="tpmsTime"></span></header>
+  <header class="ph">${ttdIcon("mdi:tire", "ph-i")}<div class="ph-t"><h3>Dæktryk</h3><p data-r="tpmsSum">${TTD_DASH}</p></div><span class="meta" data-r="tpmsTime"></span></header>
   <div class="tpms-body">${tire("tpms_front_left", "tFL", "Venstre for")}${tire("tpms_front_right", "tFR", "Højre for")}${TTD_TOP_CAR}${tire("tpms_rear_left", "tRL", "Venstre bag")}${tire("tpms_rear_right", "tRR", "Højre bag")}</div>
 </section>
 <section class="panel list drive" data-r="drive" aria-label="Kørsel og historik">
@@ -823,14 +823,19 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .seg button[aria-pressed=true]{background:var(--tdc-blue);color:var(--text-primary-color,#fff)}
 /* tpms */
 .tpms{display:flex;flex-direction:column}
-.tpms-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(56px,84px) minmax(0,1fr);grid-template-rows:1fr 1fr;gap:12px 10px;align-items:start}
-.tpms-body .tire:nth-child(n+4){align-self:end}
-.topcar{grid-column:2;grid-row:1/3;align-self:center;width:100%;max-height:260px}
-.topcar .wheel{fill:var(--tone,var(--tdc-muted))}
+/* The car fills two rows; each tyre sits in the middle of its half, level with its wheel. */
+.tpms-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:repeat(2,150px);align-content:center;align-items:center;gap:0 14px}
+.topcar{grid-column:2;grid-row:1/3;align-self:center;height:300px;width:auto;max-width:none;filter:drop-shadow(0 18px 22px rgba(0,0,0,.45))}
+@container panel (max-width:340px){.tpms-body{grid-template-rows:repeat(2,120px);gap:0 10px}.topcar{height:240px}}
+.topcar .wheel{fill:var(--tone,var(--tdc-muted));filter:drop-shadow(0 0 5px var(--tone,transparent))}
 .tire{display:grid;gap:4px;min-width:0;padding:10px;border:1px solid var(--tdc-line);border-radius:12px;background:var(--tdc-tile)}
-.tire b{font-size:19px;color:var(--tone,var(--tdc-text))}
-.tire em{font-style:normal;font-size:12px;font-weight:600;color:var(--tone)}
+.tire b{font-size:24px;font-weight:700;letter-spacing:-.01em;color:var(--tdc-text)}
+.tire em{display:inline-flex;align-items:center;gap:6px;font-style:normal;font-size:12.5px;font-weight:600;color:var(--tone,var(--tdc-muted));white-space:nowrap}
+.tire small,.tire b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tire em::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
 .tire em:empty{display:none}
+/* The right-hand tyres mirror the left ones, facing the car. */
+.tpms-body>.tire:nth-child(2),.tpms-body>.tire:nth-child(5){text-align:right;justify-items:end}
 /* lists */
 .rows{display:grid}
 .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;padding:8px 6px;margin:0 -6px;font-size:16px}
@@ -1001,7 +1006,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .dash .tire[data-tone=warn]{--tile-accent:var(--ttd-warn)}
 .dash .tire[data-tone=crit]{--tile-accent:var(--ttd-err)}
 .dash .tire small{padding-right:0}
-.dash .tpms-body{grid-template-columns:minmax(0,1fr) minmax(44px,68px) minmax(0,1fr)}
+.dash .tpms-body{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.dash .tpms-body>.tire:nth-child(2),.dash .tpms-body>.tire:nth-child(5){border-left:0;border-right:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
 @container panel (max-width:360px){.dash .tire{padding:9px}.dash .tire b{font-size:16px;line-height:19px}}
 .dash .lc:nth-child(1){--tile-accent:var(--ttd-ok)}
 .dash .lc:nth-child(2){--tile-accent:var(--ttd-warm)}
@@ -2007,10 +2013,19 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._attrSet(`t${key}`, "data-tone", tire.tone);
       this._attrSet(`w${key}`, "data-tone", tire.tone);
       this._t(`t${key}V`, tire.text);
-      this._t(`t${key}S`, tire.tone === "ok" ? "" : tire.status);
+      this._t(`t${key}S`, { ok: "Normalt", warn: tire.status, crit: tire.status }[tire.tone] || tire.status);
       if (r[`t${key}`]) this._attrSet(`t${key}`, "aria-label", `${r[`t${key}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
     }
     this._t("tpmsTime", m.tpms.measured);
+    // One line for all four: fine, or which tyres need air.
+    const names = { FL: "venstre for", FR: "højre for", RL: "venstre bag", RR: "højre bag" };
+    const tires = ["FL", "FR", "RL", "RR"].map((key) => [key, m.tpms.tires[key]]);
+    const off = tires.filter(([, tire]) => ["warn", "crit"].includes(tire.tone));
+    const known = tires.filter(([, tire]) => tire.tone !== "muted");
+    const summary = !known.length ? TTD_TEXT.tpms.unknown : !off.length ? "Alle fire dæk har normalt tryk"
+      : Object.entries(off.reduce((acc, [key, tire]) => ({ ...acc, [tire.status]: [...(acc[tire.status] || []), names[key]] }), {}))
+        .map(([status, where]) => `${status}: ${where.join(", ")}`).join(" · ");
+    this._t("tpmsSum", summary);
     // drive & economy
     this._t("month", m.drive.month);
     this._t("totalDist", m.drive.total);
