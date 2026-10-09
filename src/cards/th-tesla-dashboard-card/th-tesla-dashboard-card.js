@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.7.0";
+const TTD_VERSION = "1.7.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -1708,7 +1708,7 @@ class ThTeslaDashboardCard extends HTMLElement {
         img.src = TTD_FALLBACK_CAR;
       }
     });
-    img.src = cfg.image || ttdCarArt(cfg.body || "model_3", cfg.paint);
+    img.src = this._url(cfg.image) || ttdCarArt(cfg.body || "model_3", cfg.paint);
     if (!cfg.image) img.dataset.art = `${cfg.body || "model_3"}|${cfg.paint}`;
     const chart = this._r.chart;
     if (chart) {
@@ -1819,7 +1819,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       r.carImg.dataset.key = heroKey;
       delete r.carImg.dataset.fallback;
       r.carImg.hidden = false;
-      r.carImg.src = heroPhoto || v.image || ttdCarArt(v.body, v.paint);
+      r.carImg.src = this._url(heroPhoto || v.image) || ttdCarArt(v.body, v.paint);
     }
     this._attrSet(r.carImg, "data-photo", !!heroPhoto);
     if (r.chargeArt) {
@@ -1827,7 +1827,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._hide("chargeArt", !photo);
       if (photo && r.chargeArtImg.dataset.src !== photo) {
         r.chargeArtImg.dataset.src = photo;
-        r.chargeArtImg.src = photo;
+        r.chargeArtImg.src = this._url(photo);
       }
     }
     if (m.sc) this._applySmart(m.sc);
@@ -1915,6 +1915,12 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
     // Tiles whose entity is missing stay visible (layout) but stop acting like buttons.
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
+  }
+
+  /** "/local/…" pictures come from Home Assistant, also when the card runs elsewhere (e.g. HA Smartdash's screens). */
+  _url(path) {
+    if (!path) return null;
+    return path.startsWith("/") && typeof this._hass?.hassUrl === "function" ? this._hass.hassUrl(path) : path;
   }
 
   _applySmart(sc) {

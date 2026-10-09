@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.2 */
+/* MRDonnii Smart Home Cards v0.5.3 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.7.0";
+var TTD_VERSION = "1.7.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -4246,7 +4246,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         img.src = TTD_FALLBACK_CAR;
       }
     });
-    img.src = cfg.image || ttdCarArt(cfg.body || "model_3", cfg.paint);
+    img.src = this._url(cfg.image) || ttdCarArt(cfg.body || "model_3", cfg.paint);
     if (!cfg.image) img.dataset.art = `${cfg.body || "model_3"}|${cfg.paint}`;
     const chart = this._r.chart;
     if (chart) {
@@ -4348,7 +4348,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       r.carImg.dataset.key = heroKey;
       delete r.carImg.dataset.fallback;
       r.carImg.hidden = false;
-      r.carImg.src = heroPhoto || v.image || ttdCarArt(v.body, v.paint);
+      r.carImg.src = this._url(heroPhoto || v.image) || ttdCarArt(v.body, v.paint);
     }
     this._attrSet(r.carImg, "data-photo", !!heroPhoto);
     if (r.chargeArt) {
@@ -4356,7 +4356,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._hide("chargeArt", !photo);
       if (photo && r.chargeArtImg.dataset.src !== photo) {
         r.chargeArtImg.dataset.src = photo;
-        r.chargeArtImg.src = photo;
+        r.chargeArtImg.src = this._url(photo);
       }
     }
     if (m.sc) this._applySmart(m.sc);
@@ -4438,6 +4438,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     for (const el of this._rangeEls) this._attrSet(el, "aria-pressed", String(Number(el.dataset.range) === this._mapHours));
     this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
+  }
+  /** "/local/…" pictures come from Home Assistant, also when the card runs elsewhere (e.g. HA Smartdash's screens). */
+  _url(path) {
+    if (!path) return null;
+    return path.startsWith("/") && typeof this._hass?.hassUrl === "function" ? this._hass.hassUrl(path) : path;
   }
   _applySmart(sc) {
     const r = this._r;
