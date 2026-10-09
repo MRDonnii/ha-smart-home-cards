@@ -420,6 +420,18 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.charge.startVisible, true, "plugged in and waiting: Lad nu switches the plan");
   assert.equal(r.charge.monta, "Færdig", "without Monta the charger box shows the charger state");
   assert.equal(r.charge.modeBoxVisible, false);
+  assert.equal(r.charge.compare, null, "no comparison without the integration's alternatives");
+  st["sensor.bil_planned_charge_cost"] = s("6.27", { unit_of_measurement: "kr", alternatives: {
+    now: { cost: 32.79, start: at(0), end: at(1.5), blocks: 1 }, smart: { cost: 6.27, start: at(2), end: at(3.5), blocks: 1 },
+    fixed: { cost: 9.1, start: at(3), end: at(4.5), blocks: 1 }, price_cap: { cost: null } } });
+  const cmp = model(st, scConfig).charge.compare;
+  assertClean(cmp, "compare");
+  assert.equal(cmp.map((item) => item.price).join("|"), "32,79 kr.|6,27 kr.|9,10 kr.");
+  assert.equal(cmp[1].saving, "spar 26,52 kr.");
+  assert.equal(cmp[1].active, true);
+  assert.match(cmp[0].detail, /^nu–/);
+  assert.equal(cmp[2].label, "Fast tid 22:00–06:00");
+  assert.match(cmp[2].detail, /^\d\d:\d\d–\d\d:\d\d$/);
 
   st["select.bil_charge_mode"] = s("fixed", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
   assert.equal(JSON.stringify(model(st, scConfig).sc.fixed), JSON.stringify({ start: "22:00", end: "06:00" }));

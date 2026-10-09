@@ -389,7 +389,8 @@ class HaHomeStatusCard extends HTMLElement {
         ? this._evCycle % 2 === 1 && Number.isFinite(sessionEnergy) && sessionEnergy > 0
           ? `${this.fmt(sessionEnergy, 1)} kWh ladet`
           : `${this.fmt(power, 1)} kW lader`
-        : scheduleState.includes("scheduled")
+        // "scheduled" from Monta, "waiting" from EV Smart Charge's charge status.
+        : scheduleState.includes("scheduled") || scheduleState.split(" ").includes("waiting")
           ? "Planlagt"
           : `${this.fmt(this.number(cfg.daily_entity), 1)} kWh`;
       meter = Math.ceil((battery || 0) / 20);

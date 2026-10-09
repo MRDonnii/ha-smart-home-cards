@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.2.3";
+const TTD_VERSION = "1.3.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -481,6 +481,7 @@ function ttdTemplate(cfg) {
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
     <div class="acts"><button type="button" class="btn go" data-action="start_charge" data-r="startBtn" hidden>Lad nu</button><button type="button" class="btn stop" data-action="stop_charge" data-r="stopBtn" hidden>Stop</button></div>
   </div>
+  <div class="cmp" data-r="cmp" role="radiogroup" aria-label="Pris pr. ladeplan" hidden></div>
   <button class="foot" data-more="charging_price_estimate" data-r="estimate" hidden></button>
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
@@ -657,6 +658,18 @@ button[data-dead]:hover{background:none}
 .acts{display:flex;gap:8px;padding:8px 12px}
 .acts:not(:has(.btn:not([hidden]))){display:none}
 .foot{display:block;width:100%;margin-top:12px;padding:6px 8px;font-size:13px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* price per plan */
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.cmp-i{display:grid;align-content:start;gap:3px;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--tdc-line);
+  background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
+.cmp-i:hover{background:var(--tdc-hover)}
+.cmp-i small{font-size:13px;font-weight:700;color:var(--tdc-muted)}
+.cmp-i b{font-size:21px;font-weight:750;line-height:1.15;color:var(--tdc-text);white-space:nowrap}
+.cmp-i span{font-size:13px;color:color-mix(in srgb,var(--tdc-text) 75%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp-i em{font-style:normal;font-size:13px;font-weight:700;color:var(--tdc-green)}
+.cmp-i[aria-checked=true]{border-color:color-mix(in srgb,var(--tdc-blue) 70%,transparent);background:color-mix(in srgb,var(--tdc-blue) 16%,transparent)}
+.cmp-i[aria-checked=true] small{color:var(--tdc-blue)}
+@container panel (max-width:420px){.cmp{grid-template-columns:minmax(0,1fr)}.cmp-i{grid-template-columns:auto 1fr;column-gap:12px}.cmp-i b{grid-row:1/3;grid-column:1;align-self:center}}
 /* plan */
 .plan-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .plan-mid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
@@ -1298,7 +1311,32 @@ class ThTeslaDashboardCard extends HTMLElement {
       stopBusy: this._busy("stop_charge", stop),
       modeOptions: this._modeOptions(),
       estimate: estimateText,
+      compare: this._compareModel(f),
     };
+  }
+
+  /** Price of charging now, cheapest and in the fixed window, from EV Smart Charge (empty without it). */
+  _compareModel(f) {
+    if (!this._cfg.smart_charge) return null;
+    const costObj = this._sc("planned_cost");
+    const alternatives = costObj?.attributes?.alternatives;
+    if (!alternatives || typeof alternatives !== "object") return null;
+    const unit = ttdUnit(costObj.attributes.unit_of_measurement ?? "kr.");
+    const mode = this._sc("charge_mode")?.state;
+    const now = ttdToNumber(alternatives.now?.cost);
+    const clock = (role) => (ttdIsClock(this._sc(role)?.state) ? ttdClock(this._sc(role).state) : null);
+    const items = [["now", "Lad nu"], ["smart", "Billigst"], ["fixed", "Fast tid"]].map(([key, name]) => {
+      let label = name;
+      const plan = alternatives[key] || {};
+      const cost = ttdToNumber(plan.cost);
+      const start = ttdToDate(plan.start);
+      const end = ttdToDate(plan.end);
+      const detail = start && end ? `${start.getTime() <= Date.now() + 60000 ? "nu" : f.time(start)}–${f.time(end)}${ttdToNumber(plan.blocks) > 1 ? " (delt)" : ""}` : "Intet at lade";
+      if (key === "fixed" && clock("fixed_start") && clock("fixed_end")) label = `${label} ${clock("fixed_start")}–${clock("fixed_end")}`;
+      const saving = key !== "now" && cost != null && now != null && now - cost >= 0.5 ? `spar ${ttdJoin(f.number(now - cost, 2), unit)}` : "";
+      return { key, label, price: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), unit), detail, saving, active: key === mode, estimated: !!plan.estimated };
+    });
+    return items.some((item) => item.price !== TTD_DASH) ? items : null;
   }
 
   /** A control is busy while its script runs, or for a few seconds after a direct command. */
@@ -1675,8 +1713,16 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._attrSet("stopBtn", "aria-busy", c.stopBusy ? "true" : null);
     this._attrSet("startBtn", "data-armed", this._armed === "start_charge");
     this._attrSet("stopBtn", "data-armed", this._armed === "stop_charge");
-    this._hide("estimate", !c.estimate);
+    this._hide("estimate", !c.estimate || !!c.compare);
     this._t("estimate", c.estimate || "");
+    this._hide("cmp", !c.compare);
+    if (c.compare) {
+      const signature = JSON.stringify(c.compare);
+      if (r.cmp.dataset.sig !== signature) {
+        r.cmp.dataset.sig = signature;
+        r.cmp.innerHTML = c.compare.map((item) => `<button type="button" role="radio" class="cmp-i" data-scmode="${item.key}" aria-checked="${item.active}"><small>${ttdEsc(item.label)}</small><b>${ttdEsc(item.price)}${item.estimated ? "*" : ""}</b><span>${ttdEsc(item.detail)}</span>${item.saving ? `<em>${ttdEsc(item.saving)}</em>` : ""}</button>`).join("");
+      }
+    }
     // vehicle
     const v = m.vehicle;
     this._t("model", v.name);
