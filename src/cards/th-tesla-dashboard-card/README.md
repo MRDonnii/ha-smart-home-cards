@@ -88,8 +88,19 @@ chart:
 
 ## Billede af bilen
 
-Kortet indeholder ikke et foto af bilen, da Teslas billeder ikke må distribueres her.
-Uden `vehicle.image` vises en neutral grå silhuet. Er stien forkert, vises silhuetten også.
+Kortet tegner selv bilen: én enkel sidevisning pr. Tesla-karrosseri (`model_3`,
+`model_3_highland`, `model_y`, `model_y_juniper`, `model_s`, `model_x`, `cybertruck`,
+`roadster`) i farverne `grey` (standard), `black`, `white`, `silver`, `blue` og `red`.
+
+```yaml
+vehicle:
+  model: auto        # navn og karrosseri fra EV Smart Charge (smart_charge)
+  color: white
+  # body: model_y    # vælg karrosseriet selv
+```
+
+Med `smart_charge` og `model: auto` (eller uden `model`) bruger kortet den model, EV Smart
+Charge har fundet eller fået valgt for bilen. Teslas egne fotos må ikke distribueres her.
 Vil du have din egen bil på kortet:
 
 1. Læg et billede med transparent baggrund (WebP/PNG/SVG, ca. 900×434) i
@@ -97,7 +108,30 @@ Vil du have din egen bil på kortet:
 2. Sæt `vehicle.image: /local/tesla/min-bil.webp` (`/local/` = `config/www/`).
 3. Genindlæs dashboardet (evt. tøm browserens cache).
 
-## Smart ladeplan
+## Smart opladning (EV Smart Charge)
+
+Med integrationen [EV Smart Charge](https://github.com/MRDonnii/ha-ev-smart-charge) (HACS)
+er én linje nok:
+
+```yaml
+smart_charge: select.min_bil_charge_mode   # en vilkårlig entity fra bilens EV Smart Charge-enhed
+charger_label: Zaptec                      # valgfrit navn på laderen i opladningspanelet
+```
+
+Kortet finder selv resten af bilens entiteter og viser panelet "Smart opladning":
+
+- Ladeplan: Billigst, Fast tid, Lad nu, Prisloft, Pause og Manuel.
+- Tidslinje fra nu til "klar senest" med de planlagte ladeperioder (skønnede priser stribet).
+- Næste start, forventet slut og planlagt pris, mål-SOC og "klar senest".
+- Fast tid viser start/slut, Prisloft viser prisloft og minimum-SOC.
+- Midlertidig plan: afgang, destination (adresse, by eller `zone.*`) og tur/retur; viser
+  afstand, energi og den SOC turen kræver.
+
+Uden egne `start_charge`/`stop_charge` skifter knapperne i opladningspanelet ladeplanen:
+"Lad nu" vælger *Lad nu*, og "Stop" vælger *Pause*. `target_soc` og `deadline` følger
+integrationen, med mindre de er sat under `controls`.
+
+## Smart ladeplan (egne sensorer)
 
 Den nemmeste vej er integrationen
 [EV Smart Charge](https://github.com/MRDonnii/ha-ev-smart-charge) (HACS). Den laver alle

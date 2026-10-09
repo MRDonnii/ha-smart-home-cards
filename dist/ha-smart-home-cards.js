@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.91 */
+/* MRDonnii Smart Home Cards v0.4.92 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.1.3";
+var TTD_VERSION = "1.2.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2606,6 +2606,140 @@ var TTD_MONTA_TONES = {
 };
 var TTD_FALLBACK_CAR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 210"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7482"/><stop offset=".5" stop-color="#363c47"/><stop offset="1" stop-color="#1c2027"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3442"/><stop offset="1" stop-color="#0c1016"/></linearGradient><radialGradient id="s"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><ellipse cx="243" cy="186" rx="228" ry="16" fill="url(#s)"/><path fill="url(#b)" d="M30 140c-2-15 7-26 27-30l74-11c33-25 69-39 118-41 47-2 90 11 126 37l52 10c21 4 33 17 33 36l-2 14c0 6-4 10-10 10h-49a39 39 0 0 0-78 0H168a39 39 0 0 0-78 0H43c-8 0-12-6-13-13z"/><path fill="url(#g)" d="M144 99c29-21 62-31 104-33 43-2 80 9 109 29z"/><path d="M36 128h38" stroke="#c9d3e0" stroke-width="3" stroke-linecap="round"/><circle cx="129" cy="170" r="31" fill="#121418"/><circle cx="129" cy="170" r="21" fill="#3b424d"/><circle cx="364" cy="170" r="31" fill="#121418"/><circle cx="364" cy="170" r="21" fill="#3b424d"/></svg>')}`;
 var TTD_TOP_CAR = `<svg class="topcar" viewBox="0 0 120 250" aria-hidden="true"><defs><linearGradient id="ttd-body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#262c36"/><stop offset=".5" stop-color="#4a5260"/><stop offset="1" stop-color="#262c36"/></linearGradient><linearGradient id="ttd-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2735"/><stop offset="1" stop-color="#0b1018"/></linearGradient></defs><rect class="wheel" data-r="wFL" x="3" y="44" width="10" height="34" rx="4"/><rect class="wheel" data-r="wFR" x="107" y="44" width="10" height="34" rx="4"/><rect class="wheel" data-r="wRL" x="3" y="170" width="10" height="34" rx="4"/><rect class="wheel" data-r="wRR" x="107" y="170" width="10" height="34" rx="4"/><ellipse cx="9" cy="86" rx="6" ry="3.5" fill="#3a414d"/><ellipse cx="111" cy="86" rx="6" ry="3.5" fill="#3a414d"/><path fill="url(#ttd-body)" stroke="rgba(255,255,255,.14)" d="M60 8c20 0 37 5 43 18 4 10 5 26 5 44v116c0 20-2 36-8 46-6 8-20 12-40 12s-34-4-40-12c-6-10-8-26-8-46V70c0-18 1-34 5-44C23 13 40 8 60 8z"/><path fill="url(#ttd-glass)" d="M24 80c10-12 62-12 72 0l3 70c-13 6-65 6-78 0z"/><path fill="url(#ttd-glass)" d="M22 158c14 4 62 4 76 0l-2 38c-12 8-60 8-72 0z"/><path d="M24 25c6-6 13-9 21-10M96 25c-6-6-13-9-21-10" stroke="#cfd8e3" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M24 233c7 4 14 6 22 6M96 233c-7 4-14 6-22 6" stroke="#dc2626" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
+var TTD_SC_ROLES = {
+  charge_mode: "select._charge_mode",
+  charge_status: "sensor._charge_status",
+  next_charge_start: "sensor._next_charge_start",
+  next_charge_end: "sensor._next_charge_end",
+  planned_cost: "sensor._planned_charge_cost",
+  planned_energy: "sensor._planned_charge_energy",
+  plan_target_soc: "sensor._plan_target_soc",
+  target_soc: "number._target_soc",
+  ready_by_time: "time._ready_by",
+  fixed_start: "time._fixed_charging_start",
+  fixed_end: "time._fixed_charging_end",
+  price_cap: "number._price_cap",
+  min_soc: "number._minimum_soc",
+  trip_departure: "datetime._temporary_departure",
+  trip_destination: "text._trip_destination",
+  trip_round_trip: "switch._round_trip",
+  trip_clear: "button._clear_temporary_plan",
+  trip_distance: "sensor._trip_distance",
+  trip_energy: "sensor._trip_energy",
+  trip_target_soc: "sensor._trip_soc_needed",
+  charge_now: "binary_sensor._charge_now"
+};
+var TTD_SC_MODES = [
+  ["smart", "Billigst", "mdi:piggy-bank-outline"],
+  ["fixed", "Fast tid", "mdi:clock-time-four-outline"],
+  ["now", "Lad nu", "mdi:lightning-bolt"],
+  ["price_cap", "Prisloft", "mdi:cash-lock"],
+  ["off", "Pause", "mdi:pause"],
+  ["manual", "Manuel", "mdi:hand-back-right-outline"]
+];
+var TTD_SC_STATUS = {
+  plan_only: ["Kun plan", "muted"],
+  manual: ["Manuel", "muted"],
+  disconnected: ["Ikke tilsluttet", "muted"],
+  other_car: ["Anden bil i laderen", "muted"],
+  unknown: ["Ukendt", "muted"],
+  charging: ["Lader", "ok"],
+  stopped_externally: ["Stoppet af bil/app", "warn"],
+  not_responding: ["Laderen svarer ikke", "crit"],
+  paused: ["P\xE5 pause", "warn"],
+  starting: ["Starter", "info"],
+  done: ["M\xE5l n\xE5et", "ok"],
+  waiting: ["Venter p\xE5 billig str\xF8m", "info"]
+};
+var TTD_PAINTS = {
+  grey: ["#6b7482", "#363c47", "#1c2027"],
+  black: ["#4a5058", "#1d2026", "#0b0d10"],
+  white: ["#f4f6f8", "#d3d8de", "#98a0aa"],
+  silver: ["#dde1e6", "#9aa2ab", "#5c636d"],
+  blue: ["#4a72b8", "#1f3d78", "#0e1f40"],
+  red: ["#d23b45", "#8e1820", "#4d0b10"]
+};
+var TTD_BODIES = {
+  model_3: {
+    body: "M30 140c-2-15 7-26 27-30l74-11c33-25 69-39 118-41 47-2 90 11 126 37l52 10c21 4 33 17 33 36l-2 14c0 6-4 10-10 10h-49a39 39 0 0 0-78 0H168a39 39 0 0 0-78 0H43c-8 0-12-6-13-13z",
+    glass: "M144 99c29-21 62-31 104-33 43-2 80 9 109 29z",
+    light: "M36 128h38",
+    tail: "M448 126l14 3",
+    wheels: [129, 364],
+    wy: 170,
+    wr: 31
+  },
+  model_3_highland: {
+    body: "M30 140c-2-15 7-26 27-30l74-11c33-25 69-39 118-41 47-2 90 11 126 37l52 10c21 4 33 17 33 36l-2 14c0 6-4 10-10 10h-49a39 39 0 0 0-78 0H168a39 39 0 0 0-78 0H43c-8 0-12-6-13-13z",
+    glass: "M144 99c29-21 62-31 104-33 43-2 80 9 109 29z",
+    light: "M34 124c11-3 22-4 33-4",
+    tail: "M440 122h22",
+    wheels: [129, 364],
+    wy: 170,
+    wr: 31
+  },
+  model_y: {
+    body: "M28 146C26 128 36 116 58 112L128 100C160 72 200 56 252 54C300 52 338 64 372 92L420 104C442 110 454 124 454 142L452 158C452 164 448 168 442 168L402 168A39 39 0 0 0 324 168L168 168A39 39 0 0 0 90 168L40 168C33 168 29 160 28 146Z",
+    glass: "M142 98C172 76 206 64 250 62C292 60 326 70 356 92Z",
+    light: "M34 132h40",
+    tail: "M440 120l14 3",
+    wheels: [129, 363],
+    wy: 168,
+    wr: 31
+  },
+  model_y_juniper: {
+    body: "M28 146C26 128 36 116 58 112L128 100C160 72 200 56 252 54C300 52 338 64 372 92L420 104C442 110 454 124 454 142L452 158C452 164 448 168 442 168L402 168A39 39 0 0 0 324 168L168 168A39 39 0 0 0 90 168L40 168C33 168 29 160 28 146Z",
+    glass: "M142 98C172 76 206 64 250 62C292 60 326 70 356 92Z",
+    light: "M30 122c16-2 34-2 52 0",
+    tail: "M432 118h22",
+    wheels: [129, 363],
+    wy: 168,
+    wr: 31
+  },
+  model_s: {
+    body: "M20 142C18 128 28 118 48 114L122 102C156 78 196 64 250 62C304 60 352 74 392 100L436 108C454 112 464 126 464 142L462 156C462 163 458 168 451 168L414 168A39 39 0 0 0 336 168L164 168A39 39 0 0 0 86 168L34 168C26 168 21 158 20 142Z",
+    glass: "M138 100C170 80 206 70 250 68C296 66 338 78 372 100Z",
+    light: "M26 128h40",
+    tail: "M450 122l13 3",
+    wheels: [125, 375],
+    wy: 170,
+    wr: 31
+  },
+  model_x: {
+    body: "M22 148C20 130 30 118 52 114L120 100C150 66 196 50 256 48C316 46 362 62 398 96L440 106C458 112 466 126 466 144L464 158C464 164 460 168 453 168L416 168A40 40 0 0 0 336 168L166 168A40 40 0 0 0 86 168L36 168C28 168 23 160 22 148Z",
+    glass: "M136 98C166 70 206 58 254 56C302 54 342 68 376 96Z",
+    light: "M28 132h40",
+    tail: "M452 120l13 3",
+    wheels: [126, 376],
+    wy: 170,
+    wr: 32
+  },
+  cybertruck: {
+    body: "M22 140L28 118L240 44L454 104L460 140L458 162L420 162A40 40 0 0 0 340 162L172 162A40 40 0 0 0 92 162L26 162Z",
+    glass: "M150 94L240 56L322 80L322 94Z",
+    light: "M26 120l40-14",
+    tail: "M454 106l4 12",
+    wheels: [132, 380],
+    wy: 166,
+    wr: 32
+  },
+  roadster: {
+    body: "M40 150C38 138 46 130 62 126L150 112C176 92 206 84 240 84C278 84 312 96 340 112L408 120C426 122 438 134 438 150L436 160C436 165 432 168 426 168L388 168A35 35 0 0 0 318 168L170 168A35 35 0 0 0 100 168L52 168C45 168 41 162 40 150Z",
+    glass: "M176 110C196 96 216 90 240 90C266 90 290 98 310 110Z",
+    light: "M46 136h32",
+    tail: "M424 128l12 2",
+    wheels: [135, 353],
+    wy: 170,
+    wr: 28
+  }
+};
+function ttdCarArt(bodyKey, paintKey) {
+  const b = TTD_BODIES[bodyKey] || TTD_BODIES.model_3;
+  const [hi, mid, lo] = TTD_PAINTS[paintKey] || TTD_PAINTS.grey;
+  const wheel = (x) => `<circle cx="${x}" cy="${b.wy}" r="${b.wr}" fill="#121418"/><circle cx="${x}" cy="${b.wy}" r="${Math.round(b.wr * 0.68)}" fill="#3b424d"/><circle cx="${x}" cy="${b.wy}" r="${Math.round(b.wr * 0.24)}" fill="#1b1f25"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 210"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hi}"/><stop offset=".5" stop-color="${mid}"/><stop offset="1" stop-color="${lo}"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3442"/><stop offset="1" stop-color="#0c1016"/></linearGradient><radialGradient id="s"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><ellipse cx="243" cy="188" rx="228" ry="15" fill="url(#s)"/><path fill="url(#b)" d="${b.body}"/><path fill="url(#g)" d="${b.glass}"/><path d="${b.light}" stroke="#e7eef6" stroke-width="3" stroke-linecap="round" fill="none"/><path d="${b.tail}" stroke="#e0464f" stroke-width="3" stroke-linecap="round" fill="none"/>${b.wheels.map(wheel).join("")}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 function ttdEsc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch2]);
 }
@@ -2804,8 +2938,13 @@ function ttdNormalizeConfig(raw) {
   const precision = config.precision && typeof config.precision === "object" ? config.precision : {};
   return {
     name: String(config.name || "Tesla"),
-    model: String(vehicle.model || config.model || "Tesla"),
+    // "auto" or no model: the name and body come from the car EV Smart Charge plans for.
+    model: (vehicle.model || config.model) && (vehicle.model || config.model) !== "auto" ? String(vehicle.model || config.model) : null,
+    body: TTD_BODIES[vehicle.body] ? vehicle.body : null,
+    paint: TTD_PAINTS[vehicle.color] ? vehicle.color : "grey",
     image: vehicle.image || config.vehicle_image || null,
+    smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : null,
+    charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     location: config.location_entity || entities.location || null,
     entities,
     controls,
@@ -2817,7 +2956,7 @@ function ttdNormalizeConfig(raw) {
     layout: config.layout === "charge" ? "charge" : "full",
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
-    plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key]),
+    plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key]) || typeof config.smart_charge === "string" && config.smart_charge.includes("."),
     refresh: (Array.isArray(config.refresh_entities) ? config.refresh_entities : []).filter((id) => typeof id === "string" && id.includes("."))
   };
 }
@@ -2892,10 +3031,10 @@ function ttdTemplate(cfg) {
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
-    <p class="model">${e(cfg.model)}</p>
+    <p class="model" data-r="model">${e(cfg.model || "Tesla")}</p>
     <button class="updated" data-more="last_update"><span>Sidst opdateret</span><span data-r="updatedLong">${TTD_DASH}</span></button>
   </div>
-  <div class="hero-car"><img data-r="carImg" alt="${e(cfg.model)}" decoding="async" width="900" height="434"></div>
+  <div class="hero-car"><img data-r="carImg" alt="${e(cfg.model || "Tesla")}" decoding="async" width="900" height="434"></div>
   <button class="ring-wrap" data-more="battery" data-r="ring">
     <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" data-r="ringFill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100"/></svg>
     <span class="ring-t"><span class="soc"><b data-r="soc">${TTD_DASH}</b><small data-r="socUnit">%</small>${ttdIcon("mdi:lightning-bolt", "bolt")}</span><span class="range" data-r="range">${TTD_DASH}</span><span class="muted">r\xE6kkevidde</span></span>
@@ -2908,13 +3047,33 @@ function ttdTemplate(cfg) {
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
   <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
   <div class="box monta">
-    <button class="monta-main" data-more="monta_state"><i class="mdot" data-r="montaDot"></i><span><b>Monta</b><small data-r="montaState">${TTD_DASH}</small></span></button>
+    <button class="monta-main" data-more="${cfg.entities.monta_state ? "monta_state" : "charger_mode"}"><i class="mdot" data-r="montaDot"></i><span><b>${e(cfg.charger_label || (cfg.entities.monta_state ? "Monta" : "Lader"))}</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
     <div class="acts"><button type="button" class="btn go" data-action="start_charge" data-r="startBtn" hidden>Lad nu</button><button type="button" class="btn stop" data-action="stop_charge" data-r="stopBtn" hidden>Stop</button></div>
   </div>
   <button class="foot" data-more="charging_price_estimate" data-r="estimate" hidden></button>
 </section>
-<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
+${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
+  <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
+  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
+  <div class="sc-time" data-r="scTime"><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div></div>
+  <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "N\xE6ste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
+  <div class="plan-ctl" data-r="planCtl">
+    <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>M\xE5l SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="M\xE5l SOC"></label>
+    <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
+    <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>\u2013</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
+    <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
+  </div>
+  <div class="sc-trip" data-r="scTrip">
+    <button type="button" class="sc-trip-h" data-sctrip data-r="scTripHead" aria-expanded="false">${ttdIcon("mdi:map-marker-path", "ic blue")}<span><b>Midlertidig plan</b><small data-r="scTripSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
+    <div class="sc-trip-b" data-r="scTripBody" hidden>
+      <label class="sc-f"><span>Afgang</span><input type="datetime-local" data-r="scDep"></label>
+      <label class="sc-f"><span>Destination (valgfri)</span><input type="text" data-r="scDest" placeholder="Adresse, by eller zone.arbejde" enterkeyhint="done" autocomplete="off"></label>
+      <div class="sc-row"><button type="button" class="chip" data-scround data-r="scRound" aria-pressed="false">${ttdIcon("mdi:swap-horizontal")}<span>Tur/retur</span></button><span class="sc-info" data-r="scTripInfo"></span></div>
+      <button type="button" class="btn stop wide" data-scclear data-r="scClear" hidden>Ryd midlertidig plan</button>
+    </div>
+  </div>
+</section>` : `<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart ladeplan</h3><p data-r="planSub">${TTD_DASH}</p></div><span class="badge" data-r="planBadge"><span data-r="planBadgeText">${TTD_DASH}</span></span></header>
   <div class="box plan-top">${cell("best_charge_start", "mdi:clock-start", "blue", "bestStart", "Bedste start")}${cell("best_charge_end", "mdi:check-circle-outline", "green", "bestEnd", "Forventet slut")}${cell("best_charge_price", "mdi:cash", "amber", "bestPrice", "Forventet pris", `<em data-r="bestPriceKwh"></em>`)}</div>
   <div class="box plan-mid">${cell("missing_wall_kwh", "mdi:alarm", "orange", "missing", "Mangler for m\xE5l")}${cell("charge_minutes_needed", "mdi:timer-outline", "green", "minutes", "Ladetid (est.)")}</div>
@@ -2923,7 +3082,7 @@ function ttdTemplate(cfg) {
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>M\xE5l SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="M\xE5l SOC"></label>
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
-</section>
+</section>`}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
   <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
@@ -3085,6 +3244,50 @@ input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;
   background:linear-gradient(to right,var(--tdc-blue) var(--p,0%),color-mix(in srgb,var(--tdc-text) 14%,transparent) var(--p,0%))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid var(--tdc-blue);cursor:pointer}
 input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:4px solid var(--tdc-blue);cursor:pointer}
+/* smart charging (EV Smart Charge) */
+.sc-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.sc-modes button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:40px;padding:0 8px;border-radius:10px;
+  border:1px solid var(--tdc-line);background:var(--tdc-tile);font-size:14px;font-weight:600;white-space:nowrap}
+.sc-modes button span{overflow:hidden;text-overflow:ellipsis}
+.sc-modes button ha-icon{--mdc-icon-size:18px}
+.sc-modes button:hover{background:var(--tdc-hover)}
+.sc-modes button[aria-checked=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.sc-modes button[aria-checked=true] ha-icon{color:var(--tdc-blue)}
+.sc-time{margin-bottom:14px}
+.sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
+.sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
+.sc-seg[data-est]{background:repeating-linear-gradient(45deg,var(--tdc-green) 0 5px,color-mix(in srgb,var(--tdc-green) 50%,transparent) 5px 10px)}
+.sc-mark{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--tdc-text)}
+.sc-mark.trip{background:var(--tdc-blue)}
+.sc-axis{display:grid;grid-template-columns:auto 1fr auto;gap:8px;margin-top:7px;font-size:12px;color:var(--tdc-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sc-axis span:nth-child(2){text-align:center;color:var(--tdc-green);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.sc .plan-ctl{margin-top:14px}
+.ctl2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--tdc-muted)}
+.ctl2 small{font-size:13px}
+.ctl2 input,.sc-f input{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:15px;min-width:0}
+.ctl2 input[type=number]{width:86px}
+.sc-trip{margin-top:14px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
+  border-left:3px solid color-mix(in srgb,var(--tdc-blue) 70%,transparent)}
+.sc-trip[data-active]{background:color-mix(in srgb,var(--tdc-blue) 12%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))))}
+.sc-trip-h{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px}
+.sc-trip-h:hover{background:var(--tdc-hover)}
+.sc-trip-h>span{display:grid;gap:2px;flex:1;min-width:0}
+.sc-trip-h b{font-size:15px;font-weight:600}
+.sc-trip-h small{font-size:13px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-chev{transition:transform .2s}
+.sc-trip-h[aria-expanded=true] .sc-chev{transform:rotate(180deg)}
+.sc-trip-b{display:grid;gap:12px;padding:2px 14px 14px}
+.sc-f{display:grid;gap:5px;font-size:13px;color:var(--tdc-muted)}
+.sc-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--tdc-line);font-size:14px;font-weight:600}
+.chip ha-icon{--mdc-icon-size:18px}
+.chip[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.chip[aria-pressed=true] ha-icon{color:var(--tdc-blue)}
+.sc-info{flex:1;min-width:0;font-size:13px;color:var(--tdc-text)}
+.sc-trip .btn.wide{margin-top:0}
+@container panel (max-width:380px){.sc-modes button ha-icon{display:none}}
+/* narrow panels: the status badge moves below the title instead of cutting it off */
+@container panel (max-width:440px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph .badge{margin-left:40px}}
 /* map */
 .map{display:flex;flex-direction:column;padding:0;min-height:340px}
 .map .ph{padding:16px 16px 12px 20px;margin:0}
@@ -3466,15 +3669,54 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return value == null ? TTD_DASH : ttdJoin(this._format().number(value, this._digits(key, digits)), this._unit(key, unitFallback));
   }
   _control(key) {
-    const id = this._cfg.controls[key]?.entity;
+    const fallback = { target_soc: "target_soc", deadline: "ready_by_time" }[key];
+    const id = this._cfg.controls[key]?.entity || fallback && this._scIds()[fallback];
     const stateObj = id ? this._hass?.states?.[id] : void 0;
     return stateObj && stateObj.state !== "unavailable" ? { id, stateObj, domain: id.split(".")[0] } : null;
   }
   _targetEntity() {
-    return this._cfg.controls.target_soc?.entity || this._id("target_soc") || null;
+    return this._cfg.controls.target_soc?.entity || this._id("target_soc") || this._scIds().target_soc || null;
   }
   _deadlineEntity() {
-    return this._cfg.controls.deadline?.entity || this._id("deadline") || null;
+    return this._cfg.controls.deadline?.entity || this._id("deadline") || this._scIds().ready_by_time || null;
+  }
+  /** Entity ids of the EV Smart Charge car the card follows, by role (translation key). */
+  _scIds() {
+    const anchor = this._cfg?.smart_charge;
+    if (!anchor) return {};
+    const registry = this._hass?.entities;
+    if (this._scMap && this._scMapSrc === registry) return this._scMap;
+    const map = {};
+    const own = registry?.[anchor];
+    if (own?.device_id) {
+      for (const entry of Object.values(registry)) {
+        if (entry.device_id === own.device_id && entry.platform === own.platform && TTD_SC_ROLES[entry.translation_key]) map[entry.translation_key] = entry.entity_id;
+      }
+    }
+    if (!Object.keys(map).length) {
+      const object = anchor.split(".")[1] || "";
+      const suffix = Object.values(TTD_SC_ROLES).map((pattern) => pattern.split("._")[1]).find((end) => object.endsWith(`_${end}`));
+      const prefix = suffix ? object.slice(0, -suffix.length - 1) : object;
+      for (const [role, pattern] of Object.entries(TTD_SC_ROLES)) {
+        const [domain, end] = pattern.split("._");
+        map[role] = `${domain}.${prefix}_${end}`;
+      }
+    }
+    this._scMap = map;
+    this._scMapSrc = registry;
+    return map;
+  }
+  _sc(role) {
+    const id = this._scIds()[role];
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _scNum(role) {
+    const stateObj = this._sc(role);
+    return ttdHasValue(stateObj) ? ttdToNumber(stateObj.state) : null;
+  }
+  _scCall(role, domain, service, data = {}) {
+    const id = this._scIds()[role];
+    if (id && this._hass?.states?.[id]) this._call(domain, service, { entity_id: id, ...data });
   }
   _targetSoc() {
     const stateObj = this._hass?.states?.[this._targetEntity()];
@@ -3527,6 +3769,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       hero,
       charge: this._chargeModel(f, status, soc, target, socTone),
       plan: this._planModel(f),
+      sc: this._cfg.smart_charge ? this._scModel(f) : null,
+      vehicle: this._vehicleModel(),
       tpms: this._tpmsModel(f),
       drive: this._driveModel(f),
       econ: this._econModel(f),
@@ -3557,6 +3801,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const finish = finishRaw == null ? TTD_DASH : ttdIsClock(finishRaw) ? ttdClock(finishRaw) : ttdToDate(finishRaw) ? f.time(finishRaw) : finishRaw;
     const start = this._control("start_charge");
     const stop = this._control("stop_charge");
+    const scMode = this._cfg.smart_charge && ttdHasValue(this._sc("charge_mode")) ? this._sc("charge_mode") : null;
     const scheduled = montaKey === "busy-scheduled";
     const estimate = this._num("charging_price_estimate");
     let estimateText = null;
@@ -3579,12 +3824,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       rate: rateText,
       finish,
       remaining,
-      monta: montaLabel ?? TTD_DASH,
-      montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : "muted",
+      monta: montaLabel ?? (mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : TTD_DASH),
+      montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : { connected_charging: "ok", connected_requesting: "info", connected_finished: "info" }[mode] || "muted",
+      modeBoxVisible: montaConfigured || !!this._modeOptions(),
       mode: mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : this._id("charger_mode") ? TTD_TEXT.unavailable : TTD_DASH,
       // Offered on the fastest plug signal (Zaptec/Tesla/Monta) instead of waiting for a single, possibly stale, source.
-      startVisible: !!start && status.plugged && !status.charging,
-      stopVisible: !!stop && (status.charging || scheduled),
+      startVisible: (!!start || !!scMode) && status.plugged && !status.charging,
+      stopVisible: !!stop && (status.charging || scheduled) || !stop && !!scMode && status.charging,
       startBusy: this._busy("start_charge", start),
       stopBusy: this._busy("stop_charge", stop),
       modeOptions: this._modeOptions(),
@@ -3641,6 +3887,87 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       soc,
       targetKnown: !!targetId,
       deadline
+    };
+  }
+  /** Name and artwork: configured, or the model EV Smart Charge recognised for this car. */
+  _vehicleModel() {
+    const attrs = this._sc("charge_status")?.attributes || {};
+    const name = this._cfg.model || (attrs.vehicle_name ? `Tesla ${attrs.vehicle_name}` : "Tesla");
+    const body = this._cfg.body || (TTD_BODIES[attrs.vehicle_body] ? attrs.vehicle_body : "model_3");
+    return { name, body, paint: this._cfg.paint, image: this._cfg.image };
+  }
+  _scModel(f) {
+    const status = this._sc("charge_status");
+    const statusKey = ttdHasValue(status) ? status.state : null;
+    const [label, tone2] = TTD_SC_STATUS[statusKey] || [statusKey ? ttdHumanize(statusKey) : TTD_TEXT.unavailable, "muted"];
+    const modeObj = this._sc("charge_mode");
+    const mode = ttdHasValue(modeObj) ? modeObj.state : null;
+    const plan = this._sc("next_charge_start")?.attributes || {};
+    const now = Date.now();
+    const blocks = (Array.isArray(plan.blocks) ? plan.blocks : []).map((block) => ({ start: ttdToDate(block.start), end: ttdToDate(block.end), estimated: !!block.estimated })).filter((block) => block.start && block.end && block.end.getTime() > now);
+    const deadline = ttdToDate(plan.deadline);
+    const trip = ttdToDate(this._sc("trip_departure")?.state);
+    const target = this._scNum("plan_target_soc");
+    const until = Math.min(now + 48 * 36e5, Math.max(now + 36e5, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
+    const at = (date2) => ttdClamp((date2.getTime() - now) / (until - now) * 100, 0, 100);
+    const segments = blocks.filter((block) => block.start.getTime() < until).map((block) => {
+      const left = at(new Date(Math.max(block.start.getTime(), now)));
+      return { left, width: Math.max(at(block.end) - left, 0.6), estimated: block.estimated, title: `${f.time(block.start)}\u2013${f.time(block.end)}` };
+    });
+    const marks = [deadline && deadline.getTime() <= until ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
+    const next = blocks[0];
+    const cost = this._scNum("planned_cost");
+    const energy = this._scNum("planned_energy");
+    const costUnit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
+    const sub = [];
+    if (mode === "now") sub.push("Lader nu til bilens egen gr\xE6nse");
+    else if (mode === "off") sub.push("Laderen holdes p\xE5 pause");
+    else if (mode === "manual") sub.push("Laderen styres ikke");
+    else if (deadline) sub.push(`Klar ${f.dayTime(trip && trip < deadline ? trip : deadline)}`);
+    if (target != null && mode !== "now" && mode !== "off") sub.push(`m\xE5l ${f.number(target, 0)} %`);
+    const time = (role) => {
+      const raw = this._sc(role)?.state;
+      return ttdIsClock(raw) ? ttdClock(raw) : "";
+    };
+    const capObj = this._sc("price_cap");
+    const distanceObj = this._sc("trip_distance");
+    const distance = ttdHasValue(distanceObj) ? ttdToNumber(distanceObj.state) : null;
+    const dAttrs = distanceObj?.attributes || {};
+    const need = this._scNum("trip_target_soc");
+    const tripEnergy = this._scNum("trip_energy");
+    const destination = ttdHasValue(this._sc("trip_destination")) ? String(this._sc("trip_destination").state) : "";
+    const roundTrip = this._sc("trip_round_trip")?.state === "on";
+    let tripInfo = "";
+    if (dAttrs.looking_up) tripInfo = "Finder ruten \u2026";
+    else if (dAttrs.error === "not_found") tripInfo = "Adressen blev ikke fundet";
+    else if (dAttrs.error) tripInfo = "Ruten kunne ikke hentes, pr\xF8ver igen";
+    else if (distance != null) {
+      tripInfo = [
+        `${f.number(distance, 0)} km${roundTrip ? " hver vej" : ""}`,
+        dAttrs.duration_min ? f.duration(dAttrs.duration_min) : null,
+        tripEnergy != null ? `${f.number(tripEnergy, 1)} kWh` : null,
+        need != null ? `kr\xE6ver ${f.number(Math.min(need, 100), 0)} %${need > 100 ? " (r\xE6kker ikke)" : ""}` : null
+      ].filter(Boolean).join(" \xB7 ");
+    }
+    const tripSum = trip ? [destination || "Uden destination", f.dayTime(trip), need != null ? `kr\xE6ver ${f.number(Math.min(need, 100), 0)} %` : null].filter(Boolean).join(" \xB7 ") : "Afgang p\xE5 et andet tidspunkt eller en l\xE6ngere tur";
+    return {
+      badge: { text: label, tone: tone2 },
+      sub: sub.join(" \xB7 ") || TTD_DASH,
+      mode,
+      modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
+      segments,
+      marks,
+      axisRight: f.dayTime(new Date(until)),
+      axisMid: next ? `${f.time(next.start)}\u2013${f.time(next.end)}` : "",
+      start: next ? next.start.getTime() <= now ? "Nu" : f.time(next.start) : TTD_DASH,
+      startDay: next && next.start.getTime() > now ? f.relativeDay(next.start) : "",
+      end: next ? f.time(blocks[blocks.length - 1].end) : TTD_DASH,
+      endDay: next ? f.relativeDay(blocks[blocks.length - 1].end) : "",
+      cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
+      kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " \xB7 delvist sk\xF8nnet pris" : ""}` : "",
+      fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
+      cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc") } : null,
+      trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip }
     };
   }
   _deadlineModel(f) {
@@ -3712,7 +4039,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   _lastChargeModel(f) {
     const ledger = this._so("last_charge");
     const monta = this._so("monta_last_charge");
-    const useLedger = ttdHasValue(ledger);
+    const useLedger = ttdHasValue(ledger) || !!ttdToDate(ledger?.attributes?.started_at);
     const a = (useLedger ? ledger : monta)?.attributes || {};
     const source = useLedger ? "last_charge" : ttdHasValue(monta) ? "monta_last_charge" : null;
     const kwh = ttdToNumber(useLedger ? a.kwh : a.consumedKwh);
@@ -3779,7 +4106,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       ...Object.values(cfg.controls).map((control) => control.entity),
       cfg.location,
       cfg.chart.distance_entity,
-      cfg.chart.energy_entity
+      cfg.chart.energy_entity,
+      ...Object.values(this._scIds())
     ].filter(Boolean))];
     this._seen.clear();
     this._force = true;
@@ -3794,7 +4122,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         img.src = TTD_FALLBACK_CAR;
       }
     });
-    img.src = cfg.image || TTD_FALLBACK_CAR;
+    img.src = cfg.image || ttdCarArt(cfg.body || "model_3", cfg.paint);
+    if (!cfg.image) img.dataset.art = `${cfg.body || "model_3"}|${cfg.paint}`;
     const chart = this._r.chart;
     if (chart) {
       this._r.rangeSelect.value = this._chartRange;
@@ -3864,6 +4193,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._attrSet("montaDot", "data-tone", c2.montaTone);
     this._t("montaState", c2.monta);
     this._t("chargerMode", c2.mode);
+    this._hide("modeBox", !c2.modeBoxVisible);
     this._renderModeSelect(c2.modeOptions);
     this._hide("startBtn", !c2.startVisible);
     this._hide("stopBtn", !c2.stopVisible);
@@ -3877,6 +4207,16 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._attrSet("stopBtn", "data-armed", this._armed === "stop_charge");
     this._hide("estimate", !c2.estimate);
     this._t("estimate", c2.estimate || "");
+    const v = m.vehicle;
+    this._t("model", v.name);
+    if (!v.image) {
+      const art = `${v.body}|${v.paint}`;
+      if (r.carImg.dataset.art !== art) {
+        r.carImg.dataset.art = art;
+        r.carImg.src = ttdCarArt(v.body, v.paint);
+      }
+    }
+    if (m.sc) this._applySmart(m.sc);
     const p = m.plan;
     this._hide("planBadge", !p.badge);
     if (p.badge) {
@@ -3912,7 +4252,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (input.type !== dl2.type) input.type = dl2.type;
       if (this.shadowRoot.activeElement !== input && input.value !== dl2.input) input.value = dl2.input;
     }
-    this._hide("planCtl", !p.soc && !dl2.editable);
+    this._hide("planCtl", !m.sc && !p.soc && !dl2.editable);
     for (const key of ["FL", "FR", "RL", "RR"]) {
       const tire = m.tpms.tires[key];
       this._attrSet(`t${key}`, "data-tone", tire.tone);
@@ -3955,6 +4295,69 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     for (const el of this._rangeEls) this._attrSet(el, "aria-pressed", String(Number(el.dataset.range) === this._mapHours));
     this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
+  }
+  _applySmart(sc) {
+    const r = this._r;
+    this._attrSet("scBadge", "data-tone", sc.badge.tone);
+    this._t("scBadgeText", sc.badge.text);
+    this._t("scSub", sc.sub);
+    for (const button of this.shadowRoot.querySelectorAll("[data-scmode]")) {
+      this._attrSet(button, "aria-checked", String(button.dataset.scmode === sc.mode));
+      button.hidden = !sc.modes.includes(button.dataset.scmode);
+    }
+    const signature = JSON.stringify([sc.segments, sc.marks]);
+    if (r.scTrack && r.scTrack.dataset.sig !== signature) {
+      r.scTrack.dataset.sig = signature;
+      r.scTrack.replaceChildren(
+        ...sc.segments.map((segment) => {
+          const el = document.createElement("i");
+          el.className = "sc-seg";
+          el.title = segment.title;
+          el.style.left = `${segment.left}%`;
+          el.style.width = `${segment.width}%`;
+          if (segment.estimated) el.dataset.est = "";
+          return el;
+        }),
+        ...sc.marks.map((mark) => {
+          const el = document.createElement("i");
+          el.className = `sc-mark ${mark.kind}`;
+          el.style.left = `${mark.left}%`;
+          return el;
+        })
+      );
+    }
+    this._t("scAxisM", sc.axisMid);
+    this._t("scAxisR", sc.axisRight);
+    this._t("scStart", sc.start);
+    this._t("scEnd", sc.end);
+    this._t("scStartDay", sc.startDay);
+    this._t("scEndDay", sc.endDay);
+    this._t("scCost", sc.cost);
+    this._t("scKwh", sc.kwh);
+    const active = this.shadowRoot.activeElement;
+    this._hide("scFixed", !sc.fixed);
+    if (sc.fixed) {
+      if (active !== r.scFixedStart && r.scFixedStart.value !== sc.fixed.start) r.scFixedStart.value = sc.fixed.start;
+      if (active !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
+    }
+    this._hide("scCap", !sc.cap);
+    if (sc.cap) {
+      if (active !== r.scCapInput && r.scCapInput.value !== sc.cap.value) r.scCapInput.value = sc.cap.value;
+      this._t("scCapUnit", sc.cap.unit);
+      const min = sc.cap.min == null ? "" : String(sc.cap.min);
+      if (active !== r.scMinInput && r.scMinInput.value !== min) r.scMinInput.value = min;
+    }
+    const trip = sc.trip;
+    this._t("scTripSum", trip.summary);
+    this._attrSet("scTrip", "data-active", trip.active);
+    this._attrSet("scTripHead", "aria-expanded", String(!!this._tripOpen));
+    this._hide("scTripBody", !this._tripOpen);
+    const dep = trip.departure ? ttdLocalInput(trip.departure) : "";
+    if (active !== r.scDep && r.scDep.value !== dep) r.scDep.value = dep;
+    if (active !== r.scDest && r.scDest.value !== trip.destination) r.scDest.value = trip.destination;
+    this._attrSet("scRound", "aria-pressed", String(trip.roundTrip));
+    this._t("scTripInfo", trip.info);
+    this._hide("scClear", !trip.active && !trip.destination);
   }
   _renderModeSelect(model) {
     const select = this._r.modeSelect;
@@ -4262,15 +4665,22 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /* ------------------------------------------------------ interaction */
   _moreId(key) {
     if (!key) return null;
+    if (key.startsWith("sc:")) return this._scIds()[key.slice(3)] || null;
     if (key === "location") return this._cfg.location;
     if (key === "target_soc") return this._targetEntity();
     if (key === "deadline") return this._deadlineEntity();
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-sctrip],[data-scround],[data-scclear]");
     if (!target) return;
-    if (target.dataset.nav != null) this._navigate();
+    if (target.dataset.scmode) this._scCall("charge_mode", "select", "select_option", { option: target.dataset.scmode });
+    else if (target.dataset.sctrip != null) {
+      this._tripOpen = !this._tripOpen;
+      this._queue(true);
+    } else if (target.dataset.scround != null) this._scCall("trip_round_trip", "switch", "toggle");
+    else if (target.dataset.scclear != null) this._scCall("trip_clear", "button", "press");
+    else if (target.dataset.nav != null) this._navigate();
     else if (target.dataset.mapstyle != null) this._toggleMapStyle();
     else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));
     else if (target.dataset.action) this._action(target.dataset.action);
@@ -4300,6 +4710,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._setTargetSoc(Number(el.value));
     } else if (el === r.dlInput) this._setDeadline(el.value);
     else if (el === r.modeSelect) this._setChargerMode(el.value);
+    else if (el === r.scFixedStart && el.value) this._scCall("fixed_start", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scFixedEnd && el.value) this._scCall("fixed_end", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });
+    else if (el === r.scDep && el.value) {
+      const date2 = new Date(el.value);
+      if (!Number.isNaN(date2.getTime())) this._scCall("trip_departure", "datetime", "set_value", { datetime: date2.toISOString() });
+    }
   }
   _onInput(event) {
     if (event.target !== this._r.socRange) return;
@@ -4322,7 +4741,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else if (event.key === "Escape") this._showTip(-1);
   }
   _action(name) {
-    const control = this._control(name);
+    let control = this._control(name);
+    if (!control && (name === "start_charge" || name === "stop_charge") && this._cfg.smart_charge) {
+      const id2 = this._scIds().charge_mode;
+      const stateObj = id2 ? this._hass?.states?.[id2] : void 0;
+      if (stateObj && stateObj.state !== "unavailable") control = { id: id2, stateObj, domain: "select", option: name === "start_charge" ? "now" : "off" };
+    }
     if (!control || this._busy(name, control)) return;
     if (this._armed !== name) {
       this._disarm(false);
@@ -4342,7 +4766,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       }, 4e3);
       setTimeout(() => this._queue(true), TTD_PENDING_MS + 50);
     }
-    if (domain === "button" || domain === "input_button") this._call(domain, "press", { entity_id: id });
+    if (control.option) this._call("select", "select_option", { entity_id: id, option: control.option });
+    else if (domain === "button" || domain === "input_button") this._call(domain, "press", { entity_id: id });
     else if (domain === "switch" || domain === "input_boolean") this._call(domain, name === "stop_charge" ? "turn_off" : "turn_on", { entity_id: id });
     else if (domain === "script" || domain === "scene") this._call(domain, "turn_on", { entity_id: id });
     else if (domain === "automation") this._call(domain, "trigger", { entity_id: id });
@@ -4386,6 +4811,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
   }
 };
+function ttdLocalInput(date2) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date2.getFullYear()}-${pad(date2.getMonth() + 1)}-${pad(date2.getDate())}T${pad(date2.getHours())}:${pad(date2.getMinutes())}`;
+}
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
 }

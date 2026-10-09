@@ -366,3 +366,93 @@ assert.equal(card({}, { entities: { battery: "sensor.car_battery" } })._cfg.plan
 assert.equal(card({}, { controls: { deadline: "input_datetime.ready_by" } })._cfg.plan, true);
 
 console.log("th-tesla-dashboard-card tests passed");
+
+// EV Smart Charge: plan modes, timeline, trip and the car's model, found from one entity of the car.
+{
+  const hour = 3600000;
+  const at = (hours) => new Date(Date.now() + hours * hour).toISOString();
+  const scConfig = { ...config, vehicle: {}, smart_charge: "select.bil_charge_mode",
+    controls: { target_soc: undefined, deadline: undefined } };
+  delete scConfig.controls.target_soc;
+  delete scConfig.controls.deadline;
+  scConfig.controls = {};
+  scConfig.entities = Object.fromEntries(Object.entries(config.entities).filter(([key]) => !key.startsWith("monta_")));
+  const scStates = () => ({
+    ...baseStates(),
+    "sensor.mode": s("connected_finished"),
+    "binary_sensor.charger": s("on", { charging_state: "Stopped" }),
+    "select.bil_charge_mode": s("smart", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] }),
+    "sensor.bil_charge_status": s("waiting", { vehicle_name: "Model Y Long Range AWD (2020–2024)", vehicle_body: "model_y" }),
+    "sensor.bil_next_charge_start": s(at(2), { deadline: at(9), blocks: [{ start: at(2), end: at(3.5), kwh: 16, cost: 6.27, estimated: false }] }),
+    "sensor.bil_planned_charge_cost": s("6.27", { unit_of_measurement: "kr" }),
+    "sensor.bil_planned_charge_energy": s("15.97", { unit_of_measurement: "kWh" }),
+    "sensor.bil_plan_target_soc": s("100", { unit_of_measurement: "%" }),
+    "number.bil_target_soc": s("100", { min: 10, max: 100, step: 1 }),
+    "time.bil_ready_by": s("06:45:00"),
+    "time.bil_fixed_charging_start": s("22:00:00"),
+    "time.bil_fixed_charging_end": s("06:00:00"),
+    "number.bil_price_cap": s("1.5", { unit_of_measurement: "kr/kWh" }),
+    "number.bil_minimum_soc": s("20"),
+    "datetime.bil_temporary_departure": s("unknown"),
+    "text.bil_trip_destination": s(""),
+    "switch.bil_round_trip": s("on"),
+    "button.bil_clear_temporary_plan": s("unknown"),
+    "sensor.bil_trip_distance": s("unknown"),
+    "sensor.bil_trip_energy": s("unknown"),
+    "sensor.bil_trip_soc_needed": s("unknown"),
+  });
+  let st = scStates();
+  let r = model(st, scConfig);
+  assertClean(r, "smart charge");
+  assert.equal(r.sc.badge.text, "Venter på billig strøm");
+  assert.equal(r.sc.mode, "smart");
+  assert.equal(r.sc.cost, "6,27 kr.");
+  assert.match(r.sc.kwh, /^16,0 kWh$/);
+  assert.equal(r.sc.segments.length, 1);
+  assert.ok(r.sc.segments[0].left > 15 && r.sc.segments[0].left < 30, "block placed on the timeline");
+  assert.equal(r.sc.marks[0].kind, "deadline");
+  assert.match(r.sc.sub, /^Klar .* · mål 100 %$/);
+  assert.equal(r.sc.fixed, null, "fixed window only in fixed mode");
+  assert.equal(r.vehicle.name, "Tesla Model Y Long Range AWD (2020–2024)", "model comes from the car EV Smart Charge recognised");
+  assert.equal(r.vehicle.body, "model_y");
+  assert.equal(r.plan.soc.value, 100, "target slider follows the integration");
+  assert.equal(r.plan.deadline.text, "06:45");
+  assert.equal(r.charge.startVisible, true, "plugged in and waiting: Lad nu switches the plan");
+  assert.equal(r.charge.monta, "Færdig", "without Monta the charger box shows the charger state");
+  assert.equal(r.charge.modeBoxVisible, false);
+
+  st["select.bil_charge_mode"] = s("fixed", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
+  assert.equal(JSON.stringify(model(st, scConfig).sc.fixed), JSON.stringify({ start: "22:00", end: "06:00" }));
+  st["select.bil_charge_mode"] = s("price_cap", { options: ["smart", "fixed", "now", "price_cap", "off", "manual"] });
+  assert.equal(model(st, scConfig).sc.cap.value, "1.5");
+
+  st = scStates();
+  st["datetime.bil_temporary_departure"] = s(at(20));
+  st["text.bil_trip_destination"] = s("Aarhus");
+  st["sensor.bil_trip_distance"] = s("49.7", { duration_min: 43 });
+  st["sensor.bil_trip_energy"] = s("17.1", { unit_of_measurement: "kWh" });
+  st["sensor.bil_trip_soc_needed"] = s("39.8", { unit_of_measurement: "%" });
+  r = model(st, scConfig);
+  assertClean(r, "trip");
+  assert.equal(r.sc.trip.active, true);
+  assert.match(r.sc.trip.summary, /^Aarhus · .* · kræver 40 %$/);
+  assert.equal(r.sc.trip.info, "50 km hver vej · 43 min · 17,1 kWh · kræver 40 %");
+  assert.ok(r.sc.marks.some((mark) => mark.kind === "trip"));
+
+  // Charging: the stop button pauses the plan.
+  st = scStates();
+  st["sensor.mode"] = s("connected_charging");
+  st["sensor.power"] = s("10.9", { unit_of_measurement: "kW" });
+  st["sensor.bil_charge_status"] = s("charging");
+  r = model(st, scConfig);
+  assert.equal(r.charge.stopVisible, true);
+  assert.equal(r.sc.badge.tone, "ok");
+
+  // Every Tesla body draws, in every paint.
+  for (const body of ["model_3", "model_3_highland", "model_y", "model_y_juniper", "model_s", "model_x", "cybertruck", "roadster"]) {
+    for (const paint of ["grey", "black", "white", "silver", "blue", "red"]) {
+      assert.match(context.ttdCarArt(body, paint), /^data:image\/svg\+xml,/);
+    }
+  }
+}
+console.log("th-tesla-dashboard-card smart charge tests passed");
