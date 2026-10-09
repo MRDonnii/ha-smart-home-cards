@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.4.94 */
+/* MRDonnii Smart Home Cards v0.4.95 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.2.2";
+var TTD_VERSION = "1.2.3";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3287,7 +3287,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-trip .btn.wide{margin-top:0}
 @container panel (max-width:380px){.sc-modes button ha-icon{display:none}}
 /* narrow panels: the status badge moves below the title instead of cutting it off */
-@container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph .badge{margin-left:40px}}
+@container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph:has(.badge) .ph-t{flex:1 1 calc(100% - 52px)}.ph .badge{margin-left:40px}}
 /* map */
 .map{display:flex;flex-direction:column;padding:0;min-height:340px}
 .map .ph{padding:16px 16px 12px 20px;margin:0}

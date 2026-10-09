@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.2.2";
+const TTD_VERSION = "1.2.3";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -718,7 +718,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-trip .btn.wide{margin-top:0}
 @container panel (max-width:380px){.sc-modes button ha-icon{display:none}}
 /* narrow panels: the status badge moves below the title instead of cutting it off */
-@container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph .badge{margin-left:40px}}
+@container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph:has(.badge) .ph-t{flex:1 1 calc(100% - 52px)}.ph .badge{margin-left:40px}}
 /* map */
 .map{display:flex;flex-direction:column;padding:0;min-height:340px}
 .map .ph{padding:16px 16px 12px 20px;margin:0}
