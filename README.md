@@ -104,7 +104,7 @@ wide screens, and the extra measurements as compact panels in up to three column
 everything below the hourly forecast flows as three balanced columns.
 
 `ha-weather-card` can show an `image` entity in its radar section (`radar_image_entity`, for example a national radar
-with lightning), warnings from a sensor's attribute list (`warnings_entity`, yellow/orange/red banners at the top) and
+with lightning) and a satellite map as its own tab (`satellite_image_entity`, v0.5.19), warnings from a sensor's attribute list (`warnings_entity`, yellow/orange/red banners at the top) and
 any sensors as groups of tiles (`detail_sections`). Tiles and the radar image update in place, so the card is not rebuilt
 and the wind map is not reloaded on every sensor update. See the
 [card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-weather-card).

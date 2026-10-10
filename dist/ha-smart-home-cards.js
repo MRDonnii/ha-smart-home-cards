@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.18 */
+/* MRDonnii Smart Home Cards v0.5.19 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -32157,6 +32157,9 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
       // Optional: an image entity (e.g. a national radar) shown instead of the
       // web radar and lightning maps; the wind map stays.
       radar_image_entity: null,
+      // Optional: an image entity with a satellite map (e.g. EUMETSAT clouds),
+      // shown as its own "Satellit" tab next to the radar image.
+      satellite_image_entity: null,
       // Optional: a sensor whose `varsler` (or `warnings`) attribute lists
       // warnings as {type, overskrift, beskrivelse, niveau, start, slut}.
       warnings_entity: null,
@@ -32196,8 +32199,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const sig = this._stateSig(hass, this._watchedIds());
-    const radarState = this._s(this._config.radar_image_entity);
-    const radarSig = radarState ? `${radarState.state}|${radarState.attributes?.entity_picture}` : "";
+    const radarSig = [this._config.radar_image_entity, this._config.satellite_image_entity].map((id) => this._s(id)).map((st) => st ? `${st.state}|${st.attributes?.entity_picture}` : "").join("|");
     const detailSig = this._stateSig(hass, this._detailIds());
     if (sig !== this._sig) {
       this._sig = sig;
@@ -32208,7 +32210,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
       if (radarSig !== this._radarSig) {
         this._radarSig = radarSig;
         const img = this.shadowRoot.querySelector("img.radar-img");
-        if (img) img.src = this._radarImageUrl();
+        if (img) img.src = this._imageUrl(img.dataset.entity);
       }
       if (detailSig !== this._detailSig) {
         this._detailSig = detailSig;
@@ -32448,8 +32450,10 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const windyUrl = (overlay) => `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=11&overlay=${overlay}&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${dLat}&detailLon=${dLon}&marker=true&message=true`;
     const lightningUrl = `https://map.blitzortung.org/index.php?interactive=0&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#7/${lat}/${lon}`;
     const image = this._config.radar_image_entity;
+    const satellite = this._config.satellite_image_entity;
     const tabs = image ? [
-      ["nedbor", "Nedb\xF8r og lyn", "mdi:weather-pouring", null],
+      ["nedbor", "Nedb\xF8r og lyn", "mdi:weather-pouring", null, image],
+      ...satellite ? [["satellit", "Satellit", "mdi:satellite-variant", null, satellite]] : [],
       ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")]
     ] : [
       ["nedbor", "Nedb\xF8r", "mdi:weather-pouring", windyUrl("radar")],
@@ -32457,7 +32461,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
       ["lyn", "Lyn", "mdi:weather-lightning", lightningUrl]
     ];
     const active = tabs.find((t) => t[0] === this._radarTab) || tabs[0];
-    const body = active[3] ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>` : `<div class="radar-img-wrap" data-more="${this._esc(image)}"><img class="radar-img" src="${this._esc(this._radarImageUrl())}" alt="Radarkort"></div>`;
+    const body = active[3] ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>` : `<div class="radar-img-wrap" data-more="${this._esc(active[4])}"><img class="radar-img" data-entity="${this._esc(active[4])}" src="${this._esc(this._imageUrl(active[4]))}" alt="${active[0] === "satellit" ? "Satellitkort" : "Radarkort"}"></div>`;
     const facts = (this._config.radar_details || []).length ? `<div class="facts" data-radar-facts>${this._factsHtml()}</div>` : "";
     return `<div class="subtabs">${tabs.map((t) => `<button class="subtab ${t[0] === active[0] ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`).join("")}</div>
       ${body}${facts}`;
@@ -32469,8 +32473,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
       return `<div class="fact" data-more="${this._esc(item2.entity)}"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span>${this._esc(item2.name || state?.attributes?.friendly_name || item2.entity)}</span><b>${this._esc(this._detailValue(item2.entity))}</b></div>`;
     }).join("");
   }
-  _radarImageUrl() {
-    const picture = this._s(this._config.radar_image_entity)?.attributes?.entity_picture;
+  _imageUrl(entity) {
+    const picture = this._s(entity)?.attributes?.entity_picture;
     if (!picture) return "";
     return this._hass?.hassUrl ? this._hass.hassUrl(picture) : picture;
   }

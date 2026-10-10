@@ -64,6 +64,9 @@ class HAWeatherCard extends HTMLElement {
       // Optional: an image entity (e.g. a national radar) shown instead of the
       // web radar and lightning maps; the wind map stays.
       radar_image_entity: null,
+      // Optional: an image entity with a satellite map (e.g. EUMETSAT clouds),
+      // shown as its own "Satellit" tab next to the radar image.
+      satellite_image_entity: null,
       // Optional: a sensor whose `varsler` (or `warnings`) attribute lists
       // warnings as {type, overskrift, beskrivelse, niveau, start, slut}.
       warnings_entity: null,
@@ -111,8 +114,10 @@ class HAWeatherCard extends HTMLElement {
     // Three signatures so a radar image or a sensor tile can update without
     // rebuilding the card (which would also reload the wind map iframe).
     const sig = this._stateSig(hass, this._watchedIds());
-    const radarState = this._s(this._config.radar_image_entity);
-    const radarSig = radarState ? `${radarState.state}|${radarState.attributes?.entity_picture}` : "";
+    const radarSig = [this._config.radar_image_entity, this._config.satellite_image_entity]
+      .map((id) => this._s(id))
+      .map((st) => (st ? `${st.state}|${st.attributes?.entity_picture}` : ""))
+      .join("|");
     const detailSig = this._stateSig(hass, this._detailIds());
     if (sig !== this._sig) {
       this._sig = sig;
@@ -123,7 +128,7 @@ class HAWeatherCard extends HTMLElement {
       if (radarSig !== this._radarSig) {
         this._radarSig = radarSig;
         const img = this.shadowRoot.querySelector("img.radar-img");
-        if (img) img.src = this._radarImageUrl();
+        if (img) img.src = this._imageUrl(img.dataset.entity);
       }
       if (detailSig !== this._detailSig) {
         this._detailSig = detailSig;
@@ -390,9 +395,11 @@ class HAWeatherCard extends HTMLElement {
       `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=11&overlay=${overlay}&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${dLat}&detailLon=${dLon}&marker=true&message=true`;
     const lightningUrl = `https://map.blitzortung.org/index.php?interactive=0&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#7/${lat}/${lon}`;
     const image = this._config.radar_image_entity;
+    const satellite = this._config.satellite_image_entity;
     const tabs = image
       ? [
-          ["nedbor", "Nedbør og lyn", "mdi:weather-pouring", null],
+          ["nedbor", "Nedbør og lyn", "mdi:weather-pouring", null, image],
+          ...(satellite ? [["satellit", "Satellit", "mdi:satellite-variant", null, satellite]] : []),
           ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
         ]
       : [
@@ -403,7 +410,7 @@ class HAWeatherCard extends HTMLElement {
     const active = tabs.find((t) => t[0] === this._radarTab) || tabs[0];
     const body = active[3]
       ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>`
-      : `<div class="radar-img-wrap" data-more="${this._esc(image)}"><img class="radar-img" src="${this._esc(this._radarImageUrl())}" alt="Radarkort"></div>`;
+      : `<div class="radar-img-wrap" data-more="${this._esc(active[4])}"><img class="radar-img" data-entity="${this._esc(active[4])}" src="${this._esc(this._imageUrl(active[4]))}" alt="${active[0] === "satellit" ? "Satellitkort" : "Radarkort"}"></div>`;
     const facts = (this._config.radar_details || []).length
       ? `<div class="facts" data-radar-facts>${this._factsHtml()}</div>`
       : "";
@@ -423,8 +430,8 @@ class HAWeatherCard extends HTMLElement {
       .join("");
   }
 
-  _radarImageUrl() {
-    const picture = this._s(this._config.radar_image_entity)?.attributes?.entity_picture;
+  _imageUrl(entity) {
+    const picture = this._s(entity)?.attributes?.entity_picture;
     if (!picture) return "";
     return this._hass?.hassUrl ? this._hass.hassUrl(picture) : picture;
   }

@@ -17,6 +17,8 @@ pollen:
 # Optional: show an image entity (for example a national radar with lightning)
 # in the radar section instead of the web radar and lightning maps.
 radar_image_entity: image.radar_map
+# Optional: a satellite map (an image entity) as its own Satellit tab.
+satellite_image_entity: image.satellite_map
 # Optional: a sensor whose `varsler` (or `warnings`) attribute lists warnings.
 warnings_entity: sensor.weather_warnings
 # Optional: any sensors, in groups of tiles.
@@ -41,6 +43,7 @@ detail_sections:
 | `pollen` | five Google Pollen sensors | List of `{name, entity, icon}`. |
 | `radar_lat`, `radar_lon` | home | Centre of the web radar and wind maps. |
 | `radar_image_entity` | none | An `image` entity. When set, the radar section shows it under **Nedbør og lyn** (tap for more-info); the **Vind** tab keeps the web wind map. |
+| `satellite_image_entity` | none | An `image` entity with a satellite map (for example EUMETSAT clouds). With `radar_image_entity` set it gets its own **Satellit** tab between **Nedbør og lyn** and **Vind**, and updates in place like the radar image. |
 | `warnings_entity` | none | A sensor whose `varsler` or `warnings` attribute is a list of `{type, overskrift, beskrivelse, niveau, start, slut}` (English keys `event`, `headline`, `description`, `level`, `onset`, `expires` work too). Levels 2/3/4 are yellow/orange/red. With an empty list the card says there are no active warnings. |
 | `radar_details` | none | Small facts under the radar: `[{name, entity, icon}]`. |
 | `detail_sections` | none | Groups of tiles: `[{title, icon, items: [{name, entity, icon}]}]`. Values are formatted by Home Assistant (unit, decimals, dates). |
