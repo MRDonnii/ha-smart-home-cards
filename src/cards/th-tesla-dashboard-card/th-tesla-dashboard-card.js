@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.9.0";
+const TTD_VERSION = "1.10.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -101,7 +101,7 @@ const TTD_SC_ROLES = {
   trip_energy: "sensor._trip_energy", trip_target_soc: "sensor._trip_soc_needed", charge_now: "binary_sensor._charge_now",
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
-  price_cap_override: "switch._exceed_price_cap",
+  price_cap_override: "switch._exceed_price_cap", price_resolution: "select._price_resolution",
 };
 const TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"], ["fixed", "Fast tid", "mdi:clock-time-four-outline"],
@@ -544,6 +544,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>–</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
+    <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
   </div>
   <div class="sc-trip" data-r="scTrip">
     <button type="button" class="sc-trip-h" data-sctrip data-r="scTripHead" aria-expanded="false">${ttdIcon("mdi:map-marker-path", "ic blue")}<span><b>Midlertidig plan</b><small data-r="scTripSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
@@ -814,6 +815,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--tdc-line);font-size:14px;font-weight:600}
 .chip ha-icon{--mdc-icon-size:18px}
 .chip[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.chip[aria-checked=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.sc-res{gap:8px}.sc-res .sc-res-l{color:var(--tdc-muted,var(--secondary-text-color));font-size:13px;margin-right:2px}
 .chip[aria-pressed=true] ha-icon{color:var(--tdc-blue)}
 .sc-info{flex:1;min-width:0;font-size:13px;color:var(--tdc-text)}
 .sc-trip .btn.wide{margin-top:0}
@@ -2198,6 +2201,10 @@ class ThTeslaDashboardCard extends HTMLElement {
       if (active !== r.scFixedStart && r.scFixedStart.value !== sc.fixed.start) r.scFixedStart.value = sc.fixed.start;
       if (active !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
     }
+    // Quarters or whole hours: the plans (and the price cards that follow EV Ledger) change with it.
+    const resolution = this._sc("price_resolution")?.state;
+    this._hide("scRes", !["quarter", "hour"].includes(resolution));
+    for (const button of this.shadowRoot.querySelectorAll("[data-scres]")) this._attrSet(button, "aria-checked", String(button.dataset.scres === resolution));
     this._hide("scCap", !sc.cap);
     this._hide("scCapX", !sc.cap?.over);
     if (sc.cap?.over) {
@@ -2573,7 +2580,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres]");
     if (!target) return;
     if (target.dataset.cc) this._carControl(target.dataset.cc);
     else if (target.dataset.ccset) {
@@ -2585,6 +2592,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
+    else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
       this._queue(true);

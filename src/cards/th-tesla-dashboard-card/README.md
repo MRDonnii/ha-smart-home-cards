@@ -145,6 +145,8 @@ Kortet finder selv resten af bilens entiteter og viser panelet "Smart opladning"
 - Fast tid viser start/slut, Prisloft viser prisloft og minimum-SOC.
 - Midlertidig plan: afgang, destination (adresse, by eller `zone.*`) og tur/retur; viser
   afstand, energi og den SOC turen kræver.
+- "Priser i": **Kvarter** eller **Time** (EV Ledgers prisopløsning). Med Time lægges planerne i hele
+  timer med timens gennemsnitspris; pris-kort med `resolution_entity` følger med.
 
 Uden egne `start_charge`/`stop_charge` skifter knapperne i opladningspanelet ladeplanen:
 "Lad nu" vælger *Lad nu*, og "Stop" vælger *Pause*. `target_soc` og `deadline` følger

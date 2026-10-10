@@ -13,7 +13,7 @@ kan også ændres i GUI-editoren under **Vis titel og aktuel pris**.
 
 Et samlet, responsivt Home Assistant-kort til elpriser fra enten Strømligning eller Energi Data Service.
 
-Kortet viser aktuel pris, dagens minimum/gennemsnit/maksimum, 24 interaktive timesøjler, officielle morgendagspriser og fler-dages forecast. Ugefanen har direkte valg af hver ugedag med dato samt forrige/næste-navigation.
+Kortet viser aktuel pris, dagens minimum/gennemsnit/maksimum, interaktive søjler pr. time eller kvarter, officielle morgendagspriser og fler-dages forecast. Ugefanen har direkte valg af hver ugedag med dato samt forrige/næste-navigation.
 
 ![HA Electricity Price Card](docs/preview.png)
 
@@ -28,6 +28,11 @@ energidataservice: sensor.energi_data_service
 show_header: false
 force_price_animation: false
 ```
+
+`resolution` kan være `auto` (som prissensoren leverer dem), `quarter` eller `hour`: med `hour` bliver
+kvarterpriser til timer med timens gennemsnitspris. `resolution_entity` (fx EV Ledgers
+`select.<bil>_price_resolution`) vinder over `resolution`, så kortet viser kvarterer eller timer ligesom
+ladeplanerne.
 
 `source` kan være `auto`, `stromligning` eller `energidataservice`. I automatisk tilstand foretrækkes Strømligning, hvis den har gyldige prisdata; ellers bruges Energi Data Service.
 

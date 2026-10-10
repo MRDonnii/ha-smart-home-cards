@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.7 */
+/* MRDonnii Smart Home Cards v0.5.8 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.9.0";
+var TTD_VERSION = "1.10.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2642,7 +2642,8 @@ var TTD_SC_ROLES = {
   confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone",
   send_plan: "button._send_plan_to_phone",
-  price_cap_override: "switch._exceed_price_cap"
+  price_cap_override: "switch._exceed_price_cap",
+  price_resolution: "select._price_resolution"
 };
 var TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"],
@@ -3112,6 +3113,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>\u2013</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
+    <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
   </div>
   <div class="sc-trip" data-r="scTrip">
     <button type="button" class="sc-trip-h" data-sctrip data-r="scTripHead" aria-expanded="false">${ttdIcon("mdi:map-marker-path", "ic blue")}<span><b>Midlertidig plan</b><small data-r="scTripSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
@@ -3381,6 +3383,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--tdc-line);font-size:14px;font-weight:600}
 .chip ha-icon{--mdc-icon-size:18px}
 .chip[aria-pressed=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.chip[aria-checked=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.sc-res{gap:8px}.sc-res .sc-res-l{color:var(--tdc-muted,var(--secondary-text-color));font-size:13px;margin-right:2px}
 .chip[aria-pressed=true] ha-icon{color:var(--tdc-blue)}
 .sc-info{flex:1;min-width:0;font-size:13px;color:var(--tdc-text)}
 .sc-trip .btn.wide{margin-top:0}
@@ -4719,6 +4723,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (active !== r.scFixedStart && r.scFixedStart.value !== sc.fixed.start) r.scFixedStart.value = sc.fixed.start;
       if (active !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
     }
+    const resolution = this._sc("price_resolution")?.state;
+    this._hide("scRes", !["quarter", "hour"].includes(resolution));
+    for (const button of this.shadowRoot.querySelectorAll("[data-scres]")) this._attrSet(button, "aria-checked", String(button.dataset.scres === resolution));
     this._hide("scCap", !sc.cap);
     this._hide("scCapX", !sc.cap?.over);
     if (sc.cap?.over) {
@@ -5071,7 +5078,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres]");
     if (!target) return;
     if (target.dataset.cc) this._carControl(target.dataset.cc);
     else if (target.dataset.ccset) {
@@ -5088,6 +5095,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
+    else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
       this._queue(true);
@@ -9155,7 +9163,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.7.16";
+var VERSION13 = "0.8.0";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -9240,7 +9248,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       this._config.energidataservice,
       this._config.stromligning_current,
       this._config.stromligning_tomorrow,
-      this._config.stromligning_forecast
+      this._config.stromligning_forecast,
+      this._config.resolution_entity
     ];
     const sig = JSON.stringify(
       ids.map((id) => [
@@ -9279,7 +9288,43 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     const start = raw ? Date.parse(raw) : new Date(
       (/* @__PURE__ */ new Date()).setHours(fallbackHour, 0, 0, 0) + dayOffset * 864e5
     ).getTime();
-    return Number.isFinite(price) && Number.isFinite(start) ? { price, start } : null;
+    const end = Date.parse(item2?.end ?? "");
+    return Number.isFinite(price) && Number.isFinite(start) ? { price, start, end: Number.isFinite(end) && end > start ? end : null } : null;
+  }
+  // Quarters or whole hours: "resolution_entity" (e.g. EV Ledger's price resolution select) wins over "resolution"
+  // (auto = as the price sensor delivers them).
+  _resolution() {
+    const entity = this._entity(this._config.resolution_entity);
+    const value = String(entity?.attributes?.price_resolution ?? entity?.state ?? this._config.resolution ?? "auto").toLowerCase();
+    if (["hour", "time", "60", "1h", "hourly"].includes(value)) return 60;
+    if (["quarter", "kvarter", "15", "15m"].includes(value)) return 15;
+    return 0;
+  }
+  // Each point gets its end (the next start, at most an hour), and quarters become hours (mean price) when asked.
+  _shapeSeries(points) {
+    const sorted = [...points].sort((a, b) => a.start - b.start).filter((p, i, all) => !i || p.start !== all[i - 1].start);
+    sorted.forEach((p, i) => {
+      if (p.end) return;
+      const next = sorted[i + 1]?.start;
+      p.end = next && next - p.start <= 36e5 ? next : p.start + 36e5;
+    });
+    if (this._resolution() !== 60 || sorted.every((p) => p.end - p.start >= 36e5)) return sorted;
+    const hours = /* @__PURE__ */ new Map();
+    sorted.forEach((p) => {
+      const hour = new Date(p.start);
+      hour.setMinutes(0, 0, 0);
+      const key = hour.getTime();
+      if (!hours.has(key)) hours.set(key, { start: key, end: key + 36e5, sum: 0, minutes: 0 });
+      const slot = hours.get(key);
+      const minutes = (p.end - p.start) / 6e4;
+      slot.sum += p.price * minutes;
+      slot.minutes += minutes;
+    });
+    return [...hours.values()].map((h) => ({ start: h.start, end: h.end, price: h.sum / h.minutes }));
+  }
+  _label(p) {
+    const d = new Date(p.start);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   }
   _stromligning() {
     const todayEntity = this._entity(this._config.stromligning_current), tomorrowEntity = this._entity(this._config.stromligning_tomorrow), forecastEntity = this._entity(this._config.stromligning_forecast);
@@ -9314,7 +9359,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     const now = Date.now();
     const currentPeriod = (entity?.attributes?.prices || []).some((entry) => {
       const start = Date.parse(entry?.start || "");
-      return Number.isFinite(start) && start <= now && now < start + 36e5;
+      const end = Date.parse(entry?.end || "");
+      return Number.isFinite(start) && start <= now && now < (Number.isFinite(end) ? end : start + 36e5);
     });
     return entity?.state !== "unknown" && entity?.state !== "unavailable" && Number.isFinite(price) && Number.isFinite(updated) && now - updated >= 0 && now - updated < 72e5 && currentPeriod;
   }
@@ -9327,7 +9373,14 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     live.textContent = isLive ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
   }
   _data() {
-    return this._source() === "energidataservice" ? this._eds() : this._stromligning();
+    const data = this._source() === "energidataservice" ? this._eds() : this._stromligning();
+    data.today = this._shapeSeries(data.today);
+    data.tomorrow = this._shapeSeries(data.tomorrow);
+    data.forecast = this._shapeSeries(data.forecast);
+    const now = Date.now();
+    const current = data.today.find((p) => p.start <= now && now < p.end);
+    if (current && this._resolution() === 60) data.current = current.price;
+    return data;
   }
   _shape(data) {
     const selected = this._selected(data);
@@ -9422,9 +9475,11 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     if (!points.length)
       return `<div class="empty"><ha-icon icon="mdi:chart-bar-off"></ha-icon><span>Ingen prisdata for denne dag</span></div>`;
     const values = points.map((p) => p.price), min = Math.min(...values), max = Math.max(...values), span = Math.max(0.01, max - min), now = Date.now();
-    return `<div class="chart">${points.map((p) => {
-      const h = 18 + (p.price - min) / span * 82, d = new Date(p.start), hour = String(d.getHours()).padStart(2, "0"), current = now >= p.start && now < p.start + 36e5, extreme = p.price === min ? "min" : p.price === max ? "max" : "", badgeText = current ? "NU" : extreme === "min" ? "LAV" : extreme === "max" ? "H\xD8J" : "", pulse = this._pulse(p.price), alert2 = this._config.high_price_animation !== false && pulse > 0;
-      return `<button class="bar-wrap ${current ? "current" : ""} ${extreme} ${alert2 ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time"><span class="tip">${hour}:00<br><b>${this._fmt(p.price)} kr.</b></span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
+    const dense = points.length > 30;
+    const lowAt = values.indexOf(min), highAt = values.indexOf(max);
+    return `<div class="chart${dense ? " dense" : ""}" style="grid-template-columns:repeat(${points.length},minmax(0,1fr))">${points.map((p, index) => {
+      const h = 18 + (p.price - min) / span * 82, hour = this._label(p), current = now >= p.start && now < p.end, extreme = index === lowAt ? "min" : index === highAt ? "max" : "", badgeText = current ? "NU" : extreme === "min" ? "LAV" : extreme === "max" ? "H\xD8J" : "", pulse = this._pulse(p.price), alert2 = this._config.high_price_animation !== false && pulse > 0;
+      return `<button class="bar-wrap ${current ? "current" : ""} ${extreme} ${alert2 ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time"><span class="tip">${hour}<br><b>${this._fmt(p.price)} kr.</b></span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
     }).join("")}</div>`;
   }
   _updateDynamic(data) {
@@ -9463,14 +9518,13 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       const span = Math.max(0.01, max - min);
       const ratio = (point.price - min) / span;
       const height = 18 + ratio * 82;
-      const date2 = new Date(point.start);
-      const hour = String(date2.getHours()).padStart(2, "0");
-      const current = now >= point.start && now < point.start + 36e5;
-      const extreme = point.price === min ? "min" : point.price === max ? "max" : "";
+      const hour = this._label(point);
+      const current = now >= point.start && now < point.end;
+      const extreme = index === values.indexOf(min) ? "min" : index === values.indexOf(max) ? "max" : "";
       bar.className = `bar-wrap ${current ? "current" : ""} ${extreme}`;
       this._setBarVisual(bar, point.price);
       bar.setAttribute("aria-label", `Klokken ${hour}, ${this._fmt(point.price)} kroner per kilowatt-time`);
-      bar.querySelector(".tip").innerHTML = `${hour}:00<br><b>${this._fmt(point.price)} kr.</b>`;
+      bar.querySelector(".tip").innerHTML = `${hour}<br><b>${this._fmt(point.price)} kr.</b>`;
       const column = bar.querySelector("i");
       column.style.setProperty("--h", `${height}%`);
       let marker = bar.querySelector("em");
@@ -9497,7 +9551,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     const tab = (id, name, label, icon3) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:2px solid var(--primary-text-color);outline-offset:2px}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
+      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.chart.dense{gap:1px}.chart.dense .bar-wrap i{border-radius:2px 2px 1px 1px}.chart.dense .bar-wrap em{display:none}.chart.dense .bar-wrap.current em,.chart.dense .bar-wrap.min em,.chart.dense .bar-wrap.max em{display:flex}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:2px solid var(--primary-text-color);outline-offset:2px}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
       ha-card{height:414px}.tabs{display:flex;height:52px;gap:8px;margin:9px 0 7px;padding:0;border:0;background:transparent}.tabs button{flex:1;position:relative;display:flex;align-items:center;gap:8px;height:52px;overflow:hidden;padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.11) 0%,rgba(255,255,255,.035) 100%);backdrop-filter:blur(10px) saturate(155%);-webkit-backdrop-filter:blur(10px) saturate(155%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26);text-align:left;cursor:pointer;color:var(--secondary-text-color);transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.tabs button:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.tabs button:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.tabs button{transition:none}.tabs button:hover{transform:none}}.tabs button.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 20px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 34%,transparent)}.tabs button ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color);flex-shrink:0}.tabs button.active ha-icon{color:#fff}.tab-copy{position:relative;z-index:3;align-self:center;min-width:0}.tab-copy b,.tab-copy small{display:block}.tab-copy b{color:var(--secondary-text-color);font-size:14px;font-weight:800;line-height:1.05}.tab-copy small{margin-top:1px;color:var(--secondary-text-color);font-size:10px;white-space:nowrap;opacity:.75}.tabs button.active .tab-copy b,.tabs button.active .tab-copy small{color:#fff;opacity:1}.week-slot{height:43px;margin-bottom:7px}.week-nav{height:43px;margin:0}.day-choice{border-radius:12px}.stat{border:0;color:var(--state-badge-text,#fff);background:linear-gradient(135deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 78%,black 22%));box-shadow:var(--state-badge-shadow,0 3px 9px rgba(0,0,0,.18))}.stat span{color:inherit}.chart{height:167px;padding-top:34px}.bar-wrap{height:132px}@media(max-width:600px){ha-card{height:calc(330px + var(--front-mobile-fill,0px))}.tabs{height:50px;gap:5px}.tabs button{height:50px;padding:4px 6px}.tab-copy b{font-size:13px}.tab-copy small{font-size:8px}.tabs button>ha-icon{--mdc-icon-size:30px}.week-slot,.week-nav{height:40px}.week-slot{margin-bottom:5px}.chart{height:calc(188px + var(--front-mobile-fill,0px));gap:5px;padding-top:22px}.bar-wrap{height:calc(165px + var(--front-mobile-fill,0px))}.stat{height:27px}}
       .bar-wrap i{background:var(--price-color);transform-origin:center bottom;transition:background-color .9s ease,filter .15s,transform .15s}.bar-wrap.price-alert i{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.9;filter:brightness(1) drop-shadow(0 0 2px var(--price-color))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--price-color))}}@media(prefers-reduced-motion:reduce){:host(:not([force-price-animation])) .bar-wrap.price-alert i{animation:none}}
 
