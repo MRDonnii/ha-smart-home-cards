@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.14 */
+/* MRDonnii Smart Home Cards v0.5.15 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.12.0";
+var TTD_VERSION = "1.12.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2519,6 +2519,15 @@ var TTD_CAR_CONTROLS = [
   ["charge_limit", "Ladegr\xE6nse", "mdi:battery-charging-high", "number"],
   ["charge_current", "Ladestr\xF8m", "mdi:current-ac", "number"]
 ];
+var TTD_CC_TWINS = {
+  lock: (id) => /_(doors|lock)$/.test(id) && !id.includes("charge"),
+  climate: () => true,
+  charge_port: (id) => /charge|charger/.test(id),
+  sentry: (id) => id.includes("sentry"),
+  flash: (id) => id.includes("flash"),
+  charge_limit: (id) => id.includes("charge_limit"),
+  charge_current: (id) => /charging_amps|charge_current/.test(id)
+};
 var TTD_CONTROL_KEYS = ["start_charge", "stop_charge", "charger_mode", "target_soc", "deadline", "apply_plan"];
 var TTD_MAP_RANGES = [0, 1, 6, 12, 24];
 var TTD_CHART_RANGES = {
@@ -4264,12 +4273,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** How a car control stands, in words, and whether it is "on" (lit) or calls for attention. */
   _ccText(key, o, f) {
     if (!o) return [TTD_TEXT.unavailable, false, false];
+    if (o.state === "unknown" && key !== "flash") return ["Venter p\xE5 bilen \u2013 tryk sender kommandoen", false, false];
     const temp = Number(o.attributes?.current_temperature);
     switch (key) {
       case "lock":
         return [{ locked: "L\xE5st", unlocked: "Ul\xE5st", locking: "L\xE5ser\u2026", unlocking: "L\xE5ser op\u2026", open: "\xC5ben" }[o.state] || ttdHumanize(o.state), false, ["unlocked", "open"].includes(o.state)];
       case "climate":
-        return [o.state === "off" ? "Klima slukket" : `Klima t\xE6ndt${Number.isFinite(temp) ? ` \xB7 inde ${f.number(temp, 0)} \xB0C` : ""}`, o.state !== "off", false];
+        return [o.state === "off" ? "Klima slukket" : `Klima t\xE6ndt${o.attributes?.current_temperature != null && Number.isFinite(temp) ? ` \xB7 inde ${f.number(temp, 0)} \xB0C` : ""}`, o.state !== "off", false];
       case "charge_port":
         return [{ open: "Ladeport \xE5ben", opening: "Ladeport \xE5bner\u2026", closed: "Ladeport lukket", closing: "Ladeport lukker\u2026" }[o.state] || ttdHumanize(o.state), ["open", "opening"].includes(o.state), false];
       case "sentry":
@@ -4314,18 +4324,50 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._applyCarControls();
     });
   }
+  /** The same control in the car's other integration, when there is one. */
+  _ccTwin(key) {
+    const id = this._cfg.carControls[key];
+    const registry = this._hass?.entities;
+    const devices = this._hass?.devices;
+    if (!id || !registry || !devices) return null;
+    this._ccTwins = this._ccTwinsSrc === registry ? this._ccTwins || {} : {};
+    this._ccTwinsSrc = registry;
+    if (key in this._ccTwins) return this._ccTwins[key];
+    const own = registry[id];
+    const name = (dev) => String(dev?.name_by_user || dev?.name || "").toLowerCase();
+    const carName = own?.device_id ? name(devices[own.device_id]) : "";
+    const domain = id.split(".")[0];
+    const twin = carName ? Object.values(registry).find((entry) => entry.entity_id !== id && entry.entity_id.startsWith(`${domain}.`) && entry.device_id && entry.device_id !== own.device_id && name(devices[entry.device_id]) === carName && TTD_CC_TWINS[key]?.(entry.entity_id)) : null;
+    this._ccTwins[key] = twin?.entity_id || null;
+    return this._ccTwins[key];
+  }
+  /** The control's state: the configured entity's, or its twin's while the configured one has none. */
+  _ccState(key) {
+    const o = this._hass?.states?.[this._cfg.carControls[key]];
+    if (o && !["unknown", "unavailable"].includes(o.state)) return o;
+    const twin = this._ccTwin(key);
+    const t = twin ? this._hass?.states?.[twin] : null;
+    return t && !["unknown", "unavailable"].includes(t.state) ? t : o;
+  }
+  /** Where a command goes: the configured entity (it wakes the car), or the twin when the configured one is unavailable. */
+  _ccTarget(key) {
+    const id = this._cfg.carControls[key];
+    const o = this._hass?.states?.[id];
+    if (o && o.state !== "unavailable") return id;
+    const twin = this._ccTwin(key);
+    return twin && this._hass?.states?.[twin]?.state !== "unavailable" ? twin : id;
+  }
   _applyCarControls() {
-    const ids = this._cfg.carControls;
     if (!this._r.qc) return;
     const f = this._format();
-    const st = (key) => this._hass?.states?.[ids[key]];
+    const st = (key) => this._ccState(key);
     this._ccSettle(st);
     const busy = this._ccBusy || {};
     const busyFor = (ctl) => Object.values(busy).find((item2) => item2.ctl === ctl);
     for (const button of this.shadowRoot.querySelectorAll(".qc-b")) {
       const key = button.dataset.cc || button.dataset.qc;
       const o = st(key);
-      const dead = !o || ["unavailable", "unknown"].includes(o.state) && key !== "flash";
+      const dead = !o || o.state === "unavailable" && key !== "flash";
       const [label, on, warn] = this._ccText(key, o, f);
       const working2 = busyFor(key);
       button.disabled = !!dead;
@@ -4336,10 +4378,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet(button, "aria-busy", String(!!working2));
       this._attrSet(button, "data-open", this._qcOpen === key);
       this._attrSet(button, "title", working2 ? working2.text : label);
-      if (key === "lock") button.querySelector("ha-icon")?.setAttribute("icon", o?.state === "locked" ? "mdi:lock" : ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : "mdi:lock-clock");
+      if (key === "lock") button.querySelector("ha-icon")?.setAttribute("icon", ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : ["locking", "unlocking"].includes(o?.state) ? "mdi:lock-clock" : "mdi:lock");
       const value = button.querySelector(`[data-qcv="${key}"]`);
       let shown = "";
-      if (key === "climate" && o && o.state !== "off" && Number.isFinite(Number(o.attributes?.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}\xB0`;
+      if (key === "climate" && o && !["off", "unknown", "unavailable"].includes(o.state) && o.attributes?.temperature != null && Number.isFinite(Number(o.attributes.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}\xB0`;
       else if (["charge_limit", "charge_current"].includes(key)) shown = dead ? TTD_DASH : label;
       if (value && value.textContent !== shown) value.textContent = shown;
     }
@@ -4403,7 +4445,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const sub = pop.querySelector('[data-qcp="sub"]');
     if (key === "climate") {
       const temp = Number(o?.attributes?.current_temperature);
-      const subText = Number.isFinite(temp) ? `Inde ${f.number(temp, 0)} \xB0C` : "";
+      const subText = o?.attributes?.current_temperature != null && Number.isFinite(temp) ? `Inde ${f.number(temp, 0)} \xB0C` : "";
       if (sub && sub.textContent !== subText) sub.textContent = subText;
       const power = busyFor("climate");
       const on = o && o.state !== "off";
@@ -4416,7 +4458,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const span = btn.querySelector('[data-qcp="power"]');
         if (span && span.textContent !== text) span.textContent = text;
       }
-      const target = this._qcTemp ?? Number(o?.attributes?.temperature);
+      const target = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
       const tEl = pop.querySelector('[data-qcp="temp"]');
       const tText = Number.isFinite(target) ? `${f.number(target, 1)} \xB0C` : TTD_DASH;
       if (tEl && tEl.textContent !== tText) tEl.textContent = tText;
@@ -4428,8 +4470,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
   }
   _qcPower() {
-    const id = this._cfg.carControls.climate;
-    const o = id ? this._hass?.states?.[id] : null;
+    const id = this._ccTarget("climate");
+    const o = this._ccState("climate");
     if (!o || (this._ccBusy || {}).climate) return;
     const on = o.state !== "off";
     this._ccCall(
@@ -4444,12 +4486,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     );
   }
   _qcTempStep(delta) {
-    const id = this._cfg.carControls.climate;
-    const o = id ? this._hass?.states?.[id] : null;
+    const id = this._ccTarget("climate");
+    const o = this._ccState("climate");
     if (!o) return;
     const a = o.attributes || {};
     const step = Number(a.target_temp_step) || 0.5;
-    const base = this._qcTemp ?? Number(a.temperature);
+    const base = this._qcTemp ?? (a.temperature != null ? Number(a.temperature) : NaN);
     if (!Number.isFinite(base)) return;
     const value = ttdClamp(Math.round((base + delta * step) / step) * step, Number(a.min_temp) || 15, Number(a.max_temp) || 28);
     this._qcTemp = value;
@@ -4473,8 +4515,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
   _carControl(key) {
-    const id = this._cfg.carControls[key];
-    const o = id ? this._hass?.states?.[id] : null;
+    const id = this._ccTarget(key);
+    const o = this._ccState(key);
     if (!o || Object.values(this._ccBusy || {}).some((item2) => item2.ctl === key)) return;
     if (key === "climate") {
       this._openQc("climate");
@@ -5582,7 +5624,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (target.dataset.cc) this._carControl(target.dataset.cc);
     else if (target.dataset.ccset) {
       const pending = this._ccPending;
-      const id = this._cfg.carControls[target.dataset.ccset];
+      const id = this._ccTarget(target.dataset.ccset);
       this._ccPending = null;
       clearTimeout(this._ccTimer);
       if (pending && id && pending.key === target.dataset.ccset) this._call("number", "set_value", { entity_id: id, value: pending.value });
@@ -5638,7 +5680,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const r = this._r;
     if (el?.dataset?.ccnum) {
       const key = el.dataset.ccnum;
-      const id = this._cfg.carControls[key];
+      const id = this._ccTarget(key);
       const value = Number(el.value);
       const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
       this._ccPending = null;

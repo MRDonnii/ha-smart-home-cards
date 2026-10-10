@@ -503,6 +503,39 @@ console.log("th-tesla-dashboard-card tests passed");
     }
   }
 }
+// Car controls while Tesla Fleet has no data yet (after a restart): the state comes from the car's Tesla Custom twin,
+// the command still goes to the configured (Fleet) entity, unknown is not "0°" and the buttons are not dead.
+{
+  const st = {
+    "lock.gk_lock": s("unknown"), "lock.gk_doors": s("locked"),
+    "climate.gk_climate": s("unknown", { temperature: null, current_temperature: null }),
+    "climate.gk_hvac_climate_system": s("off", { temperature: 20, current_temperature: 18.8 }),
+    "number.gk_charge_limit_2": s("unknown", { min: 50, max: 100 }), "number.gk_charge_limit": s("100", { min: 50, max: 100 }),
+    "switch.gk_sentry_mode_2": s("unknown"),
+  };
+  const ctl = { lock: "lock.gk_lock", climate: "climate.gk_climate", charge_limit: "number.gk_charge_limit_2", sentry: "switch.gk_sentry_mode_2" };
+  const c = card(st, { ...config, car_controls: ctl });
+  c._hass.entities = {
+    "lock.gk_lock": { entity_id: "lock.gk_lock", device_id: "F" }, "climate.gk_climate": { entity_id: "climate.gk_climate", device_id: "F" },
+    "number.gk_charge_limit_2": { entity_id: "number.gk_charge_limit_2", device_id: "F" }, "switch.gk_sentry_mode_2": { entity_id: "switch.gk_sentry_mode_2", device_id: "F" },
+    "lock.gk_doors": { entity_id: "lock.gk_doors", device_id: "C" }, "lock.gk_charge_port_latch": { entity_id: "lock.gk_charge_port_latch", device_id: "C" },
+    "climate.gk_hvac_climate_system": { entity_id: "climate.gk_hvac_climate_system", device_id: "C" },
+    "number.gk_charge_limit": { entity_id: "number.gk_charge_limit", device_id: "C" },
+  };
+  c._hass.devices = { F: { id: "F", name: "Gokart" }, C: { id: "C", name: "Gokart" } };
+  assert.equal(c._ccState("lock").state, "locked", "the twin's state");
+  assert.equal(c._ccTwin("lock"), "lock.gk_doors", "not the charge port latch");
+  assert.equal(c._ccTarget("lock"), "lock.gk_lock", "the command still goes to Tesla Fleet");
+  assert.equal(c._ccState("climate").attributes.temperature, 20);
+  assert.equal(c._ccState("charge_limit").state, "100");
+  assert.equal(c._ccState("sentry").state, "unknown", "no twin: unknown");
+  const f = c._format();
+  assert.equal(c._ccText("sentry", c._ccState("sentry"), f)[0], "Venter på bilen – tryk sender kommandoen");
+  assert.equal(c._ccText("climate", st["climate.gk_climate"], f)[0], "Venter på bilen – tryk sender kommandoen");
+  st["lock.gk_lock"] = s("unavailable");
+  c._hass.states = { ...st };
+  assert.equal(c._ccTarget("lock"), "lock.gk_doors", "unavailable: the twin takes the command");
+}
 // Car controls: round buttons in the hero, only in the full layout, only the configured entities.
 {
   const withCtl = { ...config, car_controls: { lock: "lock.car", climate: "climate.car", charge_limit: "number.car_limit", bogus: "x.y" } };
