@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.13.1";
+const TTD_VERSION = "1.13.2";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -2138,7 +2138,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     const energy = this._scNum("planned_energy");
     const costUnit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
     const sub = [];
-    if (mode === "now") sub.push("Lader nu til bilens egen grænse");
+    if (mode === "now") {
+      // EV Ledger: Charge now hands back to the default plan once the target is reached.
+      const def = this._sc("default_charge_mode")?.state || "smart";
+      sub.push(def === "now" ? "Lader nu til målet" : `Lader nu til målet, derefter ${ttdScLabel(def).toLowerCase()}`);
+    }
     else if (mode === "off") sub.push("Laderen holdes på pause");
     else if (mode === "manual") sub.push("Laderen styres ikke");
     else if (deadline) sub.push(`Klar ${f.dayTime(trip && trip < deadline ? trip : deadline)}`);

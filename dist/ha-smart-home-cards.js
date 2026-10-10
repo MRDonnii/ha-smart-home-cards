@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.17 */
+/* MRDonnii Smart Home Cards v0.5.18 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.13.1";
+var TTD_VERSION = "1.13.2";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -4733,8 +4733,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const energy = this._scNum("planned_energy");
     const costUnit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
     const sub = [];
-    if (mode === "now") sub.push("Lader nu til bilens egen gr\xE6nse");
-    else if (mode === "off") sub.push("Laderen holdes p\xE5 pause");
+    if (mode === "now") {
+      const def = this._sc("default_charge_mode")?.state || "smart";
+      sub.push(def === "now" ? "Lader nu til m\xE5let" : `Lader nu til m\xE5let, derefter ${ttdScLabel(def).toLowerCase()}`);
+    } else if (mode === "off") sub.push("Laderen holdes p\xE5 pause");
     else if (mode === "manual") sub.push("Laderen styres ikke");
     else if (deadline) sub.push(`Klar ${f.dayTime(trip && trip < deadline ? trip : deadline)}`);
     if (target != null && mode !== "now" && mode !== "off") sub.push(`m\xE5l ${f.number(target, 0)} %`);
