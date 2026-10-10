@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.21 */
+/* MRDonnii Smart Home Cards v0.5.22 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -37259,6 +37259,10 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       @keyframes campulse{50%{opacity:.35}}
       .camfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--secondary-text-color)}
       .cammore{border:1px solid var(--edge);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);color:var(--primary-text-color);border-radius:9px;padding:4px 10px;min-height:29px;font-family:inherit;font-size:12px;font-weight:650;cursor:pointer}
+      .camfoot .camacts{display:flex;gap:6px}
+      .camsound{display:inline-flex;align-items:center;gap:5px}.camsound ha-icon{--mdc-icon-size:16px}
+      .camsound[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+      .camsound[hidden]{display:none}
       .cammore:hover{background:color-mix(in srgb,var(--primary-text-color) 14%,transparent)}
       @media(max-width:600px){.cambox{padding:12px 10px 10px;border-radius:20px}.camstrip img{width:80px;height:45px}.camstrip button{width:80px}.camnav{width:34px;height:34px}.camfoot .kbd{display:none}}
       @media(max-width:600px){.tab span{display:none}.tab{padding:10px 4px}}
@@ -37377,7 +37381,13 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       }
     }
     this._camKey = this._camKey || ((event) => {
-      if (!this._camOpen || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      if (!this._camOpen) return;
+      if ((event.key === "m" || event.key === "M") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        this._toggleCamSound();
+        return;
+      }
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       this._camStep(event.key === "ArrowLeft" ? -1 : 1);
     });
@@ -37439,7 +37449,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       const pic = this._camPicture(c2.camera_entity, 192);
       return `<button data-camgo="${j}" data-st="${this._camStatus(c2).st}" aria-pressed="${j === o.i}" title="${this._esc(c2.name || c2.key)}"><img alt="" draggable="false"${pic ? ` src="${this._esc(pic)}"` : ""}><span><i class="cdot"></i>${this._esc(c2.name || c2.key)}</span></button>`;
     }).join("")}</div>
-      <div class="camfoot"><span>${o.i + 1} af ${cams.length}<span class="kbd"> \xB7 \u2190 \u2192 skifter</span></span><button class="cammore" data-cammore>\xC5bn i Home Assistant</button></div>
+      <div class="camfoot"><span>${o.i + 1} af ${cams.length}<span class="kbd"> \xB7 \u2190 \u2192 skifter \xB7 M lyd</span></span><span class="camacts"><button class="cammore camsound" data-camsound hidden aria-pressed="${!!this._camSound}">${this._camSoundLabel()}</button><button class="cammore" data-cammore>\xC5bn i Home Assistant</button></span></div>
     </div>`;
     dialog.querySelectorAll(".camstrip img").forEach((img) => {
       if (img.complete && img.naturalWidth) img.classList.add("ok");
@@ -37448,6 +37458,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     dialog.querySelector("[data-camclose]").addEventListener("click", () => this._closeCam());
     dialog.querySelectorAll("[data-camstep]").forEach((b) => b.addEventListener("click", () => this._camStep(Number(b.dataset.camstep))));
     dialog.querySelectorAll("[data-camgo]").forEach((b) => b.addEventListener("click", () => this._openCam(Number(b.dataset.camgo))));
+    dialog.querySelector("[data-camsound]").addEventListener("click", () => this._toggleCamSound());
     dialog.querySelector("[data-cammore]").addEventListener("click", () => {
       const id = this._camHq(cam);
       this._closeCam();
@@ -37475,11 +37486,13 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         const el = document.createElement("ha-camera-stream");
         el.hass = this._hass;
         el.stateObj = st;
-        el.muted = true;
+        el.muted = !this._camSound;
         el.controls = false;
         el.allowExoPlayer = false;
         host.appendChild(el);
         o.el = el;
+        const sound = host.closest(".cambox")?.querySelector("[data-camsound]");
+        if (sound) sound.hidden = false;
         return;
       }
     } catch (error) {
@@ -37500,6 +37513,36 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     o.poll = setInterval(() => {
       if (alive() && !document.hidden) load();
     }, 1e3);
+  }
+  // Sound: off until switched on, then it stays on for the next camera while the popup is open.
+  _camSoundLabel() {
+    return `<ha-icon icon="${this._camSound ? "mdi:volume-high" : "mdi:volume-off"}"></ha-icon>${this._camSound ? "Lyd til" : "Lyd fra"}`;
+  }
+  _toggleCamSound() {
+    const o = this._camOpen;
+    if (!o?.el) return;
+    this._camSound = !this._camSound;
+    o.el.muted = !this._camSound;
+    const videos = [];
+    const walk = (root) => root?.querySelectorAll?.("*").forEach((n) => {
+      if (n.tagName === "VIDEO") videos.push(n);
+      if (n.shadowRoot) walk(n.shadowRoot);
+    });
+    walk(o.el.shadowRoot);
+    walk(o.el);
+    videos.forEach((v) => {
+      v.muted = !this._camSound;
+      if (this._camSound) {
+        v.volume = 1;
+        v.play?.().catch(() => {
+        });
+      }
+    });
+    const b = this.shadowRoot.querySelector("[data-camsound]");
+    if (b) {
+      b.setAttribute("aria-pressed", String(!!this._camSound));
+      b.innerHTML = this._camSoundLabel();
+    }
   }
   // The strip's pictures refresh every 10 s while the popup is open (loaded aside, so they never blink).
   _refreshCamStrip() {
