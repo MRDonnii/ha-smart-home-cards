@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.13.0";
+const TTD_VERSION = "1.13.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -1070,24 +1070,26 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 @keyframes ttdSpin{to{transform:rotate(360deg)}}
 .qc-cap{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 82%,transparent);border:1px solid var(--tdc-line);font-size:13px;color:var(--tdc-text);white-space:nowrap;pointer-events:none}
 .qc-cap[data-tone=warn]{border-color:var(--tdc-orange);color:var(--tdc-orange)}
-.qc-pop{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);z-index:4;width:min(320px,90vw);display:grid;gap:14px;padding:16px;border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--tdc-blue) 7%,var(--tdc-pop-bg,#161c25)),var(--tdc-pop-bg,#161c25) 60%);border:1px solid color-mix(in srgb,var(--tdc-text) 12%,transparent);box-shadow:0 22px 48px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
-.qcp-h{display:flex;align-items:center;gap:10px}
-.qcp-i{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--tdc-blue) 18%,transparent);color:var(--tdc-blue)}.qcp-i ha-icon{--mdc-icon-size:20px}
-.qcp-t{display:grid;gap:1px;min-width:0;flex:1}.qcp-t b{font-size:16px;font-weight:700}.qcp-t small{color:var(--tdc-muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qcp-x{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:50%;border:0;background:color-mix(in srgb,var(--tdc-text) 8%,transparent);color:var(--tdc-muted);cursor:pointer}.qcp-x ha-icon{--mdc-icon-size:18px}
-.qcp-power{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;border:1px solid color-mix(in srgb,var(--tdc-blue) 45%,transparent);background:color-mix(in srgb,var(--tdc-blue) 12%,transparent);color:var(--tdc-blue);font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
+.qc-pop{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:4;width:min(320px,90vw);display:grid;gap:10px;padding:12px;border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--tdc-blue) 7%,var(--tdc-pop-bg,#161c25)),var(--tdc-pop-bg,#161c25) 60%);border:1px solid color-mix(in srgb,var(--tdc-text) 12%,transparent);box-shadow:0 22px 48px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
+.qcp-h{display:flex;align-items:center;gap:8px}
+.qcp-i{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--tdc-blue) 18%,transparent);color:var(--tdc-blue)}.qcp-i ha-icon{--mdc-icon-size:20px}
+.qcp-t{display:grid;gap:0;min-width:0;flex:1}.qcp-t b{font-size:15px;font-weight:700}.qcp-t small{color:var(--tdc-muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcp-x{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:50%;border:0;background:color-mix(in srgb,var(--tdc-text) 8%,transparent);color:var(--tdc-muted);cursor:pointer}.qcp-x ha-icon{--mdc-icon-size:18px}
+.qcp-row{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
+.qcp-power{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;height:42px;min-width:84px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--tdc-blue) 45%,transparent);background:color-mix(in srgb,var(--tdc-blue) 12%,transparent);color:var(--tdc-blue);font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
 .qcp-power ha-icon{--mdc-icon-size:20px}
 .qcp-power[data-on]{background:linear-gradient(135deg,color-mix(in srgb,var(--tdc-blue) 90%,#fff 0%),color-mix(in srgb,var(--tdc-blue) 70%,#000 0%));border-color:transparent;color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--tdc-blue) 35%,transparent)}
 .qcp-power[data-busy]{cursor:progress;opacity:.85}
 .qc-pop[data-down]{bottom:auto;top:calc(100% + 10px)}
 .panel.hero[data-pop]{overflow:visible;z-index:30}
-.qcp-temp{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;text-align:center}
-.qcp-temp button{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);cursor:pointer}.qcp-temp button ha-icon{--mdc-icon-size:22px}
+.qcp-temp{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;text-align:center}
+.qcp-temp b{font-size:22px;font-weight:700;line-height:1}.qcp-temp b[data-busy]{color:var(--tdc-blue)}
+.qcp-temp button{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);cursor:pointer}.qcp-temp button ha-icon{--mdc-icon-size:22px}
 .qcp-temp button:active{transform:scale(.94)}
 .qcp-tv{display:grid;gap:2px}.qcp-tv b{font-size:28px;font-weight:700;line-height:1}.qcp-tv b[data-busy]{color:var(--tdc-blue)}.qcp-tv small{color:var(--tdc-muted);font-size:12px}
 .qcp-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.qcp-chip{display:grid;justify-items:center;gap:3px;min-width:0;padding:8px 4px 7px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);text-align:center;cursor:pointer}
-.qcp-chip ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}.qcp-chip span{display:grid;min-width:0}.qcp-chip b{font-size:11.5px;font-weight:650;white-space:nowrap}.qcp-chip small{font-size:11px;color:var(--tdc-muted)}
+.qcp-chip{display:grid;justify-items:center;gap:1px;min-width:0;padding:6px 4px 5px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);text-align:center;cursor:pointer}
+.qcp-chip ha-icon{--mdc-icon-size:18px;color:var(--tdc-muted)}.qcp-chip span{display:grid;min-width:0}.qcp-chip b{font-size:11.5px;font-weight:650;white-space:nowrap}.qcp-chip small{font-size:11px;color:var(--tdc-muted)}
 .qcp-chip[data-on]{border-color:color-mix(in srgb,var(--tdc-amber,#f5a524) 55%,transparent);background:color-mix(in srgb,var(--tdc-amber,#f5a524) 14%,transparent)}.qcp-chip[data-on] ha-icon,.qcp-chip[data-on] small{color:var(--tdc-amber,#f5a524)}
 .qcp-chip[data-kind=switch][data-on]{border-color:color-mix(in srgb,var(--tdc-blue) 55%,transparent);background:color-mix(in srgb,var(--tdc-blue) 14%,transparent)}.qcp-chip[data-kind=switch][data-on] ha-icon,.qcp-chip[data-kind=switch][data-on] small{color:var(--tdc-blue)}
 .qcp-chip[data-busy]{opacity:.7;cursor:progress}.qcp-chip:disabled{opacity:.4;cursor:default}
@@ -1916,13 +1918,12 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._r.hero?.toggleAttribute("data-pop", !!this._qcOpen);
     if (!this._qcOpen) { this._applyCarControls(); return; }
     const [, label, icon] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
-    const head = `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div><button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
+    const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
     pop.innerHTML = key === "climate"
-      ? `${head}<button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
-        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><div class="qcp-tv"><b data-qcp="temp">${TTD_DASH}</b><small>Indstillet</small></div><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div>
-        <div class="qcp-chips" data-qcp="chips"></div>
-        <button type="button" class="qcp-more" data-qcmore>Flere indstillinger ›</button>`
-      : `${head}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>Åbn i Home Assistant ›</button>`;
+      ? `${head(true)}<div class="qcp-row"><button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
+        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div></div>
+        <div class="qcp-chips" data-qcp="chips"></div>`
+      : `${head(false)}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>Åbn i Home Assistant ›</button>`;
     this._applyCarControls();
     // Not room above the buttons inside the card (a phone): open downwards instead.
     pop.removeAttribute("data-down");
@@ -1939,7 +1940,8 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (key === "climate") {
       const temp = Number(o?.attributes?.current_temperature);
       const outside = this._num("temperature_outside");
-      const subText = [o?.attributes?.current_temperature != null && Number.isFinite(temp) ? `Inde ${f.number(temp, 1)} °C` : "",
+      const subText = [busyFor("climate") ? busyFor("climate").text : o && !["off", "unknown", "unavailable"].includes(o.state) ? "Kører" : "",
+        o?.attributes?.current_temperature != null && Number.isFinite(temp) ? `inde ${f.number(temp, 1)} °C` : "",
         outside != null ? `ude ${f.number(outside, 1)} °C` : ""].filter(Boolean).join(" · ");
       if (sub && sub.textContent !== subText) sub.textContent = subText;
       const chips = this._qcChips();
@@ -1956,7 +1958,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       const btn = pop.querySelector("[data-qcpower]");
       if (btn) {
         this._attrSet(btn, "data-on", !!on && !power); this._attrSet(btn, "data-busy", !!power); btn.disabled = !o || o.state === "unavailable";
-        const text = power ? power.text : on ? "Klima kører · sluk" : "Tænd klima";
+        const text = power ? "…" : on ? "Sluk" : "Tænd";
         const span = btn.querySelector('[data-qcp="power"]'); if (span && span.textContent !== text) span.textContent = text;
       }
       const target = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
