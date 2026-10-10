@@ -543,4 +543,73 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.charge.finish, `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`);
   assert.match(r.charge.remaining, /^1 t (29|30) min$/);
 }
+// ev_ledger: one EV Ledger entity finds the ledger's and the car's entities (here without an entity registry, so from
+// the Tesla Custom names next to the battery sensor the ledger reads).
+{
+  const now = new Date().toISOString();
+  const st = {
+    "select.bil_charge_mode": s("smart", { options: ["smart", "now"] }),
+    "sensor.bil_charging_status": s("idle", { source_entities: { battery: "sensor.car_battery", odometer: "sensor.car_odometer", location: "device_tracker.car_location_tracker", charger_power: "sensor.charger_charge_power" } }),
+    "sensor.car_battery": s("64", { unit_of_measurement: "%" }), "sensor.car_odometer": s("71478", { unit_of_measurement: "km" }),
+    "sensor.car_range": s("310", { unit_of_measurement: "km" }), "sensor.car_temperature_inside": s("19", { unit_of_measurement: "°C" }),
+    "device_tracker.car_location_tracker": s("home", { latitude: 56, longitude: 10 }),
+    "sensor.bil_trips": s("12"), "sensor.bil_distance_today": s("25.2", { unit_of_measurement: "km" }),
+    "sensor.bil_home_charging_power": s("0.0", { unit_of_measurement: "kW" }), "sensor.charger_charger_mode": s("disconnected"),
+    "number.bil_public_charge_energy": s("0"), "number.bil_public_charge_price": s("0"), "button.bil_log_public_charge": s("unknown"),
+    "sensor.bil_next_charge_start": s(now, { waiting_for: { deadline: new Date(Date.now() + 50 * 3600000).toISOString(), price: 0.52, price_now: 1.95, saving: 12.4, soc_then: 41 }, co2: 85, blocks: [] }),
+    "switch.bil_wait_for_a_cheaper_day": s("on", { daily_use_kwh: 3.6 }),
+    "switch.bil_learn_departure_times": s("on", { departures: { man: "07:15", tir: "07:15", lør: null }, history_days: 40 }),
+    "switch.bil_prefer_green_power": s("off", { price_area: "DK1" }),
+  };
+  const auto = { name: "Bil", ev_ledger: "select.bil_charge_mode" };
+  const c = card(st, auto);
+  assert.equal(c._id("battery"), "sensor.car_battery");
+  assert.equal(c._id("range"), "sensor.car_range", "the car's range next to its battery sensor");
+  assert.equal(c._id("temperature_inside"), "sensor.car_temperature_inside");
+  assert.equal(c._id("trips"), "sensor.bil_trips", "the ledger's trips");
+  assert.equal(c._id("daily_energy"), "sensor.bil_distance_today", "km today from the ledger");
+  assert.equal(c._id("charger_power"), "sensor.bil_home_charging_power");
+  assert.equal(c._id("charger_mode"), "sensor.charger_charger_mode", "the charger's mode next to its power sensor");
+  assert.equal(c._loc(), "device_tracker.car_location_tracker");
+  assert.equal(c._cfg.chart.distance_entity, "sensor.car_odometer");
+  const r = c._model();
+  assertClean(r, "ev_ledger");
+  assert.equal(r.hero.range, "310 km");
+  assert.match(r.sc.wait, /^Venter til .*: ca\. 0,52 kr\/kWh mod 1,95 i nat \(spar ca\. 12 kr\)\. Batteriet rækker \(ca\. 41 %\)\. · CO₂ ca\. 85 g\/kWh$/);
+  assert.equal(r.sc.options.summary, "2 af 3 slået til");
+  assert.match(r.sc.options.note, /^Lærte afgange: man 07:15 · tir 07:15 · lør –$/);
+  // Set by hand wins.
+  assert.equal(card(st, { ...auto, entities: { range: "sensor.other_range" } })._id("range"), "sensor.other_range");
+  const html = context.ttdTemplate(context.ttdNormalizeConfig(auto));
+  assert.match(html, /data-r="pc"/, "the public charge form");
+  assert.match(html, /data-scoptrole="wait_cheaper_day"/, "the smarter choices");
+  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...auto, public_charge: false })), /data-r="pc"/);
+}
+// ev_ledger with the entity registry: Tesla Fleet names, and a second Tesla integration's device with the same name.
+{
+  const st = {
+    "select.gk_charge_mode": s("smart", { options: ["smart"] }),
+    "sensor.gk_charging_status": s("idle", { source_entities: { battery: "sensor.gokart_battery_level" } }),
+    "sensor.gokart_battery_level": s("70", { unit_of_measurement: "%" }), "sensor.gokart_battery_range": s("300", { unit_of_measurement: "km" }),
+    "device_tracker.gokart_location": s("home", { latitude: 56, longitude: 10 }), "binary_sensor.gokart_charge_cable": s("off"),
+    "sensor.gokart_tpms_front_left": s("2.9", { unit_of_measurement: "bar" }),
+  };
+  const entities = {
+    "select.gk_charge_mode": { entity_id: "select.gk_charge_mode", device_id: "L", platform: "evledger", translation_key: "charge_mode" },
+    "sensor.gk_charging_status": { entity_id: "sensor.gk_charging_status", device_id: "L", platform: "evledger", translation_key: "charging_status" },
+    "sensor.gokart_battery_level": { entity_id: "sensor.gokart_battery_level", device_id: "F", platform: "tesla_fleet", translation_key: "charge_state_battery_level" },
+    "sensor.gokart_battery_range": { entity_id: "sensor.gokart_battery_range", device_id: "F", platform: "tesla_fleet", translation_key: "charge_state_battery_range" },
+    "device_tracker.gokart_location": { entity_id: "device_tracker.gokart_location", device_id: "F", platform: "tesla_fleet", translation_key: "location" },
+    "binary_sensor.gokart_charge_cable": { entity_id: "binary_sensor.gokart_charge_cable", device_id: "F", platform: "tesla_fleet", translation_key: "charge_state_conn_charge_cable" },
+    "sensor.gokart_tpms_front_left": { entity_id: "sensor.gokart_tpms_front_left", device_id: "C", platform: "tesla_custom" },
+  };
+  const devices = { L: { id: "L", name: "Gokart" }, F: { id: "F", name: "Gokart" }, C: { id: "C", name: "Gokart" } };
+  const c = card(st, { name: "Gokart", ev_ledger: "select.gk_charge_mode" });
+  c._hass.entities = entities;
+  c._hass.devices = devices;
+  assert.equal(c._id("range"), "sensor.gokart_battery_range", "Tesla Fleet by translation key");
+  assert.equal(c._id("charger"), "binary_sensor.gokart_charge_cable");
+  assert.equal(c._loc(), "device_tracker.gokart_location");
+  assert.equal(c._id("tpms_front_left"), "sensor.gokart_tpms_front_left", "another device with the car's name (Tesla Custom)");
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

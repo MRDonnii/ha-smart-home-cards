@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.11.2";
+const TTD_VERSION = "1.12.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -104,6 +104,53 @@ const TTD_SC_ROLES = {
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
   price_cap_override: "switch._exceed_price_cap", price_resolution: "select._price_resolution",
+  // The smarter choices (EV Ledger), each on or off.
+  wait_cheaper_day: "switch._wait_for_a_cheaper_day", learn_departure: "switch._learn_departure_times",
+  prefer_green: "switch._prefer_green_power", ask_public_price: "switch._ask_for_the_price_of_public_charges",
+  morning_check: "switch._message_if_the_target_is_not_reached", low_price_alert: "switch._message_when_power_is_cheap",
+  // The ledger's own entities on the same device.
+  trips: "sensor._trips", last_trip: "sensor._last_trip", total_distance: "sensor._total_distance",
+  cost_per_km: "sensor._cost_per_km", monthly_performance: "sensor._monthly_performance", charges: "sensor._charges",
+  last_charge: "sensor._last_charge", pending_review: "sensor._charges_needing_price",
+  battery_efficiency_score: "sensor._battery_efficiency_score", distance_today: "sensor._distance_today",
+  home_charging_power: "sensor._home_charging_power", home_cost_today: "sensor._home_charging_cost_today",
+  charging_status: "sensor._charging_status", home_charging_energy: "sensor._home_charging_energy",
+  public_charge_energy: "number._public_charge_energy",
+  public_charge_price: "number._public_charge_price", public_charge_location: "text._public_charge_location",
+  log_public_charge: "button._log_public_charge",
+};
+// The smarter choices shown under "Smarte valg": role, label, icon.
+const TTD_SC_OPTIONS = [
+  ["wait_cheaper_day", "Vent på billigere dag", "mdi:calendar-arrow-right"], ["learn_departure", "Lær køretider", "mdi:clock-start"],
+  ["prefer_green", "Grøn strøm", "mdi:leaf"], ["ask_public_price", "Spørg om pris ude", "mdi:message-reply-text-outline"],
+  ["morning_check", "Morgentjek", "mdi:alarm-check"], ["low_price_alert", "Billig strøm-besked", "mdi:cash-check"],
+];
+// ev_ledger: the card's entities from EV Ledger alone. Card key -> EV Ledger role ...
+const TTD_LEDGER_KEYS = {
+  trips: "trips", last_trip: "last_trip", total_distance: "total_distance", cost_per_km: "cost_per_km",
+  monthly_performance: "monthly_performance", charges: "charges", last_charge: "last_charge",
+  charges_needing_price: "pending_review", efficiency_score: "battery_efficiency_score", daily_energy: "distance_today",
+  charger_power: "home_charging_power",
+};
+// ... and the car's own entities, found next to the battery sensor EV Ledger reads: domain, translation keys (Tesla Fleet,
+// Teslemetry, Tessie), entity id endings (Tesla Custom).
+const TTD_CAR_KEYS = {
+  battery: ["sensor", ["charge_state_battery_level"], ["_battery", "_battery_level"]],
+  range: ["sensor", ["charge_state_battery_range"], ["_range", "_battery_range"]],
+  odometer: ["sensor", ["vehicle_state_odometer"], ["_odometer"]],
+  temperature_inside: ["sensor", ["climate_state_inside_temp"], ["_temperature_inside", "_inside_temperature"]],
+  temperature_outside: ["sensor", ["climate_state_outside_temp"], ["_temperature_outside", "_outside_temperature"]],
+  online: ["binary_sensor", ["state"], ["_online"]],
+  asleep: ["binary_sensor", [], ["_asleep"]],
+  charger: ["binary_sensor", ["charge_state_conn_charge_cable"], ["_charger", "_charge_cable"]],
+  charging: ["binary_sensor", [], ["_charging"]],
+  charging_rate: ["sensor", ["charge_state_charge_rate"], ["_charging_rate", "_charge_rate"]],
+  last_update: ["sensor", [], ["_data_last_update_time"]],
+  tpms_front_left: ["sensor", ["vehicle_state_tpms_pressure_fl"], ["_tpms_front_left"]],
+  tpms_front_right: ["sensor", ["vehicle_state_tpms_pressure_fr"], ["_tpms_front_right"]],
+  tpms_rear_left: ["sensor", ["vehicle_state_tpms_pressure_rl"], ["_tpms_rear_left"]],
+  tpms_rear_right: ["sensor", ["vehicle_state_tpms_pressure_rr"], ["_tpms_rear_right"]],
+  location: ["device_tracker", ["location"], ["_location_tracker", "_location"]],
 };
 const TTD_SC_MODES = [
   ["smart", "Billigst", "mdi:piggy-bank-outline"], ["fixed", "Fast tid", "mdi:clock-time-four-outline"],
@@ -399,7 +446,11 @@ function ttdNormalizeConfig(raw) {
     // The cable in the plugged-in photo ({ path, width, height } in the photo's pixels): animated while charging.
     cable: typeof vehicle.photos?.cable?.path === "string" && Number(vehicle.photos.cable.width) > 0 && Number(vehicle.photos.cable.height) > 0
       ? { path: vehicle.photos.cable.path, width: Number(vehicle.photos.cable.width), height: Number(vehicle.photos.cable.height) } : null,
-    smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : null,
+    smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim()
+      : typeof config.ev_ledger === "string" && config.ev_ledger.includes(".") ? config.ev_ledger.trim() : null,
+    // ev_ledger: any EV Ledger entity of the car; every entity not set by hand is found from it.
+    ev_ledger: typeof config.ev_ledger === "string" && config.ev_ledger.includes(".") ? config.ev_ledger.trim() : null,
+    public_charge: config.public_charge !== false,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
     location: config.location_entity || entities.location || null,
@@ -411,7 +462,8 @@ function ttdNormalizeConfig(raw) {
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
     plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key])
-      || (typeof config.smart_charge === "string" && config.smart_charge.includes(".")),
+      || (typeof config.smart_charge === "string" && config.smart_charge.includes("."))
+      || (typeof config.ev_ledger === "string" && config.ev_ledger.includes(".")),
     refresh: (Array.isArray(config.refresh_entities) ? config.refresh_entities : []).filter((id) => typeof id === "string" && id.includes(".")),
   };
 }
@@ -543,7 +595,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekræft billigst</button>
-  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p></div>
+  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
@@ -567,6 +619,13 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <div class="sc-trip-b" data-r="scDefBody" hidden>
       <p class="sc-note">Kører når kablet sættes i. Vælger du en anden plan, kører den én gang og går så tilbage hertil.</p>
       <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon)}<span>${label}</span></button>`).join("")}</div>
+    </div>
+  </div>
+  <div class="sc-trip sc-opt" data-r="scOpt" hidden>
+    <button type="button" class="sc-trip-h" data-scopt data-r="scOptHead" aria-expanded="false">${ttdIcon("mdi:tune-variant", "ic green")}<span><b>Smarte valg</b><small data-r="scOptSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
+    <div class="sc-trip-b" data-r="scOptBody" hidden>
+      <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon)}<span>${label}</span></button>`).join("")}</div>
+      <p class="sc-note" data-r="scOptNote"></p>
     </div>
   </div>
 </section>` : `<section class="panel plan" data-r="plan" aria-label="Smart ladeplan"${cfg.plan ? "" : " hidden"}>
@@ -599,6 +658,15 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
   <header class="ph">${ttdIcon("mdi:ev-station", "ph-i")}<div class="ph-t"><h3>Seneste opladning</h3></div><button class="icon-btn" data-more="last_charge" data-r="lastMore" aria-label="Åbn seneste opladning">${ttdIcon("mdi:chevron-right")}</button></header>
   <div class="lc-grid">${item("", "mdi:battery-charging-medium", "lcKwh", "Opladet energi")}${item("", "mdi:cash", "lcPrice", "Total pris")}${item("", "mdi:calendar-month-outline", "lcStart", "Starttidspunkt")}${item("", "mdi:clock-outline", "lcDuration", "Varighed")}</div>
   <p class="lc-foot" data-r="lcFoot"></p><p class="lc-foot" data-r="lcMonta"></p>
+  ${cfg.public_charge && cfg.smart_charge ? `<div class="sc-trip pc" data-r="pc" hidden>
+    <button type="button" class="sc-trip-h" data-pctoggle data-r="pcHead" aria-expanded="false">${ttdIcon("mdi:map-marker-plus-outline", "ic blue")}<span><b>Offentlig ladning</b><small data-r="pcSum">Log kWh og pris</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
+    <div class="sc-trip-b" data-r="pcBody" hidden>
+      <div class="pc-f"><label class="sc-f"><span>kWh</span><input type="number" step="0.1" min="0" inputmode="decimal" data-r="pcKwh"></label><label class="sc-f"><span>Pris (kr.)</span><input type="number" step="0.01" min="0" inputmode="decimal" data-r="pcPrice"></label></div>
+      <label class="sc-f"><span>Sted (valgfri)</span><input type="text" data-r="pcPlace" placeholder="Fx Clever Aarhus" autocomplete="off"></label>
+      <button type="button" class="btn go wide" data-pcsave data-r="pcSave">Gem offentlig ladning</button>
+      <p class="sc-note" data-r="pcNote"></p>
+    </div>
+  </div>` : ""}
 </section>
 <section class="panel daily" data-r="daily" aria-label="Dagligt forbrug">
   <header class="ph">${ttdIcon("mdi:chart-bar", "ph-i")}<div class="ph-t"><h3>Dagligt forbrug</h3><p data-r="dailySub">${TTD_DASH}</p></div><select class="range-sel" data-r="rangeSelect" aria-label="Periode">${chartOptions}</select></header>
@@ -818,6 +886,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-chev{transition:transform .2s}
 .sc-trip-h[aria-expanded=true] .sc-chev{transform:rotate(180deg)}
 .sc-trip-b{display:grid;gap:12px;padding:2px 14px 14px}
+.sc-opts{display:flex;flex-wrap:wrap;gap:8px}
+[data-r="scOptNote"]{white-space:pre-line}
+.sc-wait{color:var(--tdc-blue)}
+.pc{margin-top:12px}.pc-f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sc-f{display:grid;gap:5px;font-size:13px;color:var(--tdc-muted)}
 .sc-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--tdc-line);font-size:14px;font-weight:600}
@@ -1263,7 +1335,68 @@ class ThTeslaDashboardCard extends HTMLElement {
   /* ------------------------------------------------------ state access */
 
   _id(key) {
-    return this._cfg.entities[key];
+    return this._cfg.entities[key] || (this._cfg.ev_ledger ? this._autoIds()[key] : undefined);
+  }
+
+  /** The car's location tracker: set by hand, or found from EV Ledger. */
+  _loc() {
+    return this._cfg.location || (this._cfg.ev_ledger ? this._autoIds().location : null) || null;
+  }
+
+  /** ev_ledger: the ledger's entities by role, and the car's own entities next to the battery sensor EV Ledger reads. */
+  _autoIds() {
+    const sc = this._scIds();
+    const sources = this._hass?.states?.[sc.charging_status]?.attributes?.source_entities || {};
+    const registry = this._hass?.entities;
+    const sig = JSON.stringify(sources);
+    if (this._autoMap && this._autoSrc === registry && this._autoSig === sig && this._autoStates === !!this._hass?.states) return this._autoMap;
+    const map = {};
+    for (const [key, role] of Object.entries(TTD_LEDGER_KEYS)) if (sc[role] && this._hass?.states?.[sc[role]]) map[key] = sc[role];
+    const states = this._hass?.states || {};
+    const battery = sources.battery;
+    if (battery) map.battery = battery;
+    if (sources.odometer) map.odometer = sources.odometer;
+    if (sources.location) map.location = sources.location;
+    if (sources.charging?.startsWith("binary_sensor.")) map.charging = sources.charging;
+    // The car's devices: the battery sensor's, and any other device with the same name (another Tesla integration).
+    let pool = [];
+    const devices = this._hass?.devices;
+    const own = registry?.[battery];
+    if (own?.device_id && devices) {
+      const name = (dev) => String(dev?.name_by_user || dev?.name || "").toLowerCase();
+      const carName = name(devices[own.device_id]);
+      const ids = new Set(Object.values(devices).filter((dev) => dev.id === own.device_id || (carName && name(dev) === carName)).map((dev) => dev.id));
+      pool = Object.values(registry).filter((entry) => ids.has(entry.device_id) && !entry.hidden);
+    }
+    const prefix = (battery?.split(".")[1] || "").replace(/_battery(_level)?$/, "");
+    for (const [key, [domain, keys, endings]] of Object.entries(TTD_CAR_KEYS)) {
+      if (map[key]) continue;
+      const hit = pool.find((entry) => entry.entity_id.startsWith(`${domain}.`) && keys.includes(entry.translation_key))
+        || pool.find((entry) => entry.entity_id.startsWith(`${domain}.`) && endings.some((end) => entry.entity_id.endsWith(end)) && !entry.entity_id.includes("destination"));
+      if (hit) map[key] = hit.entity_id;
+      else if (prefix) {
+        // No entity registry (or an older frontend): the Tesla Custom names next to the battery sensor.
+        const guess = endings.map((end) => `${domain}.${prefix}${end}`).find((id) => states[id]);
+        if (guess) map[key] = guess;
+      }
+    }
+    // The charger's mode, next to the charger power sensor EV Ledger reads.
+    const power = sources.charger_power && registry?.[sources.charger_power];
+    if (power?.device_id) {
+      const mode = Object.values(registry).find((entry) => entry.device_id === power.device_id && entry.entity_id.startsWith("sensor.") && entry.entity_id.endsWith("_charger_mode"));
+      if (mode) map.charger_mode = mode.entity_id;
+    } else if (sources.charger_power) {
+      const guess = `sensor.${sources.charger_power.split(".")[1].replace(/_charge_power$/, "")}_charger_mode`;
+      if (states[guess]) map.charger_mode = guess;
+    }
+    // The daily chart: driving from the odometer, charging from the ledger's home charging energy.
+    if (!this._cfg.chart.distance_entity && map.odometer) this._cfg.chart.distance_entity = map.odometer;
+    if (!this._cfg.chart.energy_entity && sc.home_charging_energy && states[sc.home_charging_energy]) this._cfg.chart.energy_entity = sc.home_charging_energy;
+    this._autoMap = map;
+    this._autoSrc = registry;
+    this._autoSig = sig;
+    this._autoStates = !!this._hass?.states;
+    return map;
   }
 
   _so(key) {
@@ -1319,6 +1452,32 @@ class ThTeslaDashboardCard extends HTMLElement {
 
   _deadlineEntity() {
     return this._cfg.controls.deadline?.entity || this._id("deadline") || this._scIds().ready_by_time || null;
+  }
+
+  /** Save the public charge typed in: the ledger's kWh, price and place, then its button. */
+  async _savePublic() {
+    const r = this._r;
+    const ids = this._scIds();
+    const kwh = ttdToNumber(r.pcKwh?.value);
+    const price = ttdToNumber(r.pcPrice?.value);
+    const place = String(r.pcPlace?.value || "").trim();
+    if (!(kwh > 0) || price == null || price < 0) {
+      this._pcNote = "Skriv kWh og pris.";
+      this._queue(true);
+      return;
+    }
+    try {
+      await this._hass.callService("number", "set_value", { entity_id: ids.public_charge_energy, value: kwh });
+      await this._hass.callService("number", "set_value", { entity_id: ids.public_charge_price, value: price });
+      if (ids.public_charge_location && this._hass.states[ids.public_charge_location]) await this._hass.callService("text", "set_value", { entity_id: ids.public_charge_location, value: place });
+      await this._hass.callService("button", "press", { entity_id: ids.log_public_charge });
+      const f = this._format();
+      this._pcNote = `Gemt: ${f.number(kwh, 1)} kWh for ${f.number(price, 2)} kr.${place ? ` (${place})` : ""}`;
+      for (const input of [r.pcKwh, r.pcPrice, r.pcPlace]) if (input) input.value = "";
+    } catch (err) {
+      this._pcNote = `Kunne ikke gemme: ${err?.message || err}`;
+    }
+    this._queue(true);
   }
 
   /** Entity ids of the EV Smart Charge car the card follows, by role (translation key). */
@@ -1821,8 +1980,10 @@ class ThTeslaDashboardCard extends HTMLElement {
     const deadline = ttdToDate(plan.deadline);
     const trip = ttdToDate(this._sc("trip_departure")?.state);
     const target = this._scNum("plan_target_soc");
-    // Timeline from now to the latest of the deadline, the trip and the plan (at least an hour, at most two days).
-    const until = Math.min(now + 48 * 3600000, Math.max(now + 3600000, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
+    // Timeline from now to the latest of the deadline, the trip and the plan (at least an hour, at most two days; four
+    // while the plan waits for a cheaper day).
+    const waiting = plan.waiting_for && typeof plan.waiting_for === "object" ? plan.waiting_for : null;
+    const until = Math.min(now + (waiting ? 96 : 48) * 3600000, Math.max(now + 3600000, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
     const at = (date) => ttdClamp(((date.getTime() - now) / (until - now)) * 100, 0, 100);
     const segments = blocks.filter((block) => block.start.getTime() < until).map((block) => {
       const left = at(new Date(Math.max(block.start.getTime(), now)));
@@ -1874,6 +2035,23 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     const tripSum = trip ? [destination || "Uden destination", f.dayTime(trip), need != null ? `kræver ${f.number(Math.min(need, 100), 0)} %` : null].filter(Boolean).join(" · ")
       : "Afgang på et andet tidspunkt eller en længere tur";
+    // Why the plan waits (EV Ledger "Vent på billigere dag") and how green its power is ("Grøn strøm").
+    const waitDay = waiting ? ttdToDate(waiting.deadline) : null;
+    const wait = [waiting && waitDay ? `Venter til ${waitDay.toLocaleDateString("da-DK", { weekday: "long" })}: ca. ${f.number(Number(waiting.price), 2)} kr/kWh mod ${f.number(Number(waiting.price_now), 2)} i nat (spar ca. ${f.number(Number(waiting.saving), 0)} kr). Batteriet rækker (ca. ${f.number(Number(waiting.soc_then), 0)} %).` : "",
+      Number.isFinite(Number(plan.co2)) && plan.co2 !== null ? `CO₂ ca. ${f.number(Number(plan.co2), 0)} g/kWh` : ""].filter(Boolean).join(" · ");
+    const options = TTD_SC_OPTIONS.map(([role, label]) => {
+      const sw = this._sc(role);
+      return sw && sw.state !== "unavailable" ? { role, label, on: sw.state === "on", attrs: sw.attributes || {} } : null;
+    }).filter(Boolean);
+    const notes = [];
+    for (const option of options.filter((o) => o.on)) {
+      if (option.role === "learn_departure") {
+        const days = option.attrs.departures;
+        notes.push(days ? `Lærte afgange: ${Object.entries(days).map(([day, at]) => `${day} ${at || "–"}`).join(" · ")}` : `Lærer stadig køretider (${option.attrs.history_days || 0} af 21 dages ture)`);
+      } else if (option.role === "wait_cheaper_day" && !waiting) {
+        notes.push(option.attrs.daily_use_kwh == null ? "Venter på mindst en uges ture for at kende dagligt forbrug" : `Ingen billigere dag lige nu · forbrug ca. ${f.number(Number(option.attrs.daily_use_kwh), 1)} kWh/dag`);
+      } else if (option.role === "prefer_green" && !option.attrs.price_area) notes.push("Grøn strøm: CO₂-prognosen findes kun for Danmark");
+    }
     return {
       badge: { text: label, tone }, sub: sub.join(" · ") || TTD_DASH,
       mode, modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
@@ -1901,6 +2079,8 @@ class ThTeslaDashboardCard extends HTMLElement {
         return { on: sw.state === "on", info };
       })() } : null,
       trip: { active: !!trip, departure: trip, summary: tripSum, info: tripInfo, destination, roundTrip },
+      wait,
+      options: options.length ? { list: options, summary: `${options.filter((o) => o.on).length} af ${options.length} slået til`, note: notes.join("\n") } : null,
       awaiting: statusKey === "awaiting_confirmation",
       confirmLabel: `Bekræft ${ttdScLabel(mode).toLowerCase()}`,
       def: (() => {
@@ -2036,7 +2216,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _mapModel(f) {
-    const id = this._cfg.location;
+    const id = this._loc();
     const stateObj = id ? this._hass?.states?.[id] : undefined;
     const lat = ttdToNumber(stateObj?.attributes?.latitude);
     const lon = ttdToNumber(stateObj?.attributes?.longitude);
@@ -2066,7 +2246,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const cfg = this._cfg;
     this._watch = [...new Set([
       ...Object.values(cfg.entities), ...Object.values(cfg.controls).map((control) => control.entity),
-      cfg.location, cfg.chart.distance_entity, cfg.chart.energy_entity, ...Object.values(this._scIds()),
+      this._loc(), cfg.chart.distance_entity, cfg.chart.energy_entity, ...Object.values(this._scIds()),
     ].filter(Boolean))];
     this._seen.clear();
     this._force = true;
@@ -2294,6 +2474,19 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._t("lcDuration", l.duration);
     this._t("lcFoot", l.foot);
     this._t("lcMonta", l.montaLine);
+    // Public charge form (EV Ledger): kWh, price and place, saved with the ledger's button.
+    if (this._r.pc) {
+      const ids = this._scIds();
+      const ready = ["public_charge_energy", "public_charge_price", "log_public_charge"].every((role) => ids[role] && this._hass?.states?.[ids[role]] && this._hass.states[ids[role]].state !== "unavailable");
+      this._hide("pc", !ready);
+      if (ready) {
+        const pending = Number(this._hass.states[ids.pending_review]?.state) || 0;
+        this._t("pcSum", pending > 0 ? `${pending} ${pending === 1 ? "ladning mangler" : "ladninger mangler"} pris` : "Log kWh og pris");
+        this._attrSet("pcHead", "aria-expanded", String(!!this._pcOpen));
+        this._hide("pcBody", !this._pcOpen);
+        this._t("pcNote", this._pcNote || "");
+      }
+    }
     // map
     this._attrSet("mapMeta", "data-tone", m.map.fresh ? "ok" : "muted");
     this._t("mapMetaText", m.map.meta);
@@ -2382,6 +2575,20 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (r.scTrack) r.scTrack.hidden = !!sc.chart.length;
     this._t("scHint", sc.hint);
     if (r.scHint) r.scHint.hidden = !sc.hint;
+    this._t("scWait", sc.wait);
+    if (r.scWait) r.scWait.hidden = !sc.wait;
+    this._hide("scOpt", !sc.options);
+    if (sc.options) {
+      this._t("scOptSum", sc.options.summary);
+      this._attrSet("scOptHead", "aria-expanded", String(!!this._optOpen));
+      this._hide("scOptBody", !this._optOpen);
+      for (const button of this.shadowRoot.querySelectorAll("[data-scoptrole]")) {
+        const option = sc.options.list.find((o) => o.role === button.dataset.scoptrole);
+        button.hidden = !option;
+        if (option) this._attrSet(button, "aria-pressed", String(option.on));
+      }
+      this._t("scOptNote", sc.options.note);
+    }
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
       r.scTrack.dataset.sig = signature;
@@ -2485,7 +2692,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const map = this._cfg.map;
     return {
       type: "map",
-      entities: [{ entity: this._cfg.location, focus: true }],
+      entities: [{ entity: this._loc(), focus: true }],
       hours_to_show: this._mapHours,
       theme_mode: map.theme_mode,
       default_zoom: map.default_zoom,
@@ -2494,8 +2701,8 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   async _ensureMap() {
-    if (this._map || this._mapLoading || !this._cfg.location || !this._r.mapHost) return;
-    const stateObj = this._hass?.states?.[this._cfg.location];
+    if (this._map || this._mapLoading || !this._loc() || !this._r.mapHost) return;
+    const stateObj = this._hass?.states?.[this._loc()];
     if (!stateObj || stateObj.state === "unavailable") return;
     this._mapLoading = true;
     const host = this._r.mapHost;
@@ -2789,7 +2996,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   _moreId(key) {
     if (!key) return null;
     if (key.startsWith("sc:")) return this._scIds()[key.slice(3)] || null;
-    if (key === "location") return this._cfg.location;
+    if (key === "location") return this._loc();
     if (key === "target_soc") return this._targetEntity();
     if (key === "deadline") return this._deadlineEntity();
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
@@ -2798,7 +3005,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   _onClick(event) {
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave]");
     if (!target) return;
     if (target.dataset.qc) { if (!target.disabled) this._openQc(target.dataset.qc); return; }
     if (target.dataset.qcclose != null) { this._openQc(this._qcOpen); return; }
@@ -2833,6 +3040,10 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scphone != null) this._scCall("confirm_on_phone", "switch", "toggle");
     else if (target.dataset.scinfo != null) this._scCall("notify_plan", "switch", "toggle");
     else if (target.dataset.scsend != null) this._scCall("send_plan", "button", "press");
+    else if (target.dataset.scopt != null) { this._optOpen = !this._optOpen; this._queue(true); }
+    else if (target.dataset.scoptrole) this._scCall(target.dataset.scoptrole, "switch", "toggle");
+    else if (target.dataset.pctoggle != null) { this._pcOpen = !this._pcOpen; this._queue(true); }
+    else if (target.dataset.pcsave != null) this._savePublic();
     else if (target.dataset.nav != null) this._navigate();
     else if (target.dataset.mapstyle != null) this._toggleMapStyle();
     else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));

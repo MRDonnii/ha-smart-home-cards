@@ -131,6 +131,35 @@ kanterne (bedst er at fjerne baggrunden). Opladning-panelet viser
 fotoet med kabel, når bilen er sat til, ellers det parkerede, og lade-popuppen (`layout: charge`) bruger fotoet med
 kabel som topbillede, mens bilen er sat til.
 
+## EV Ledger: hele kortet fra én linje
+
+Med integrationen [EV Ledger](https://github.com/MRDonnii/evledger) (HACS) er én linje nok til hele kortet:
+
+```yaml
+type: custom:th-tesla-dashboard-card
+name: Min Tesla
+ev_ledger: select.min_bil_charge_mode   # en vilkårlig entity fra bilens EV Ledger-enhed
+```
+
+Kortet finder så selv:
+
+- EV Ledgers egne entiteter: smart opladning, ture, opladninger, økonomi, km i dag, laderens effekt og kWh.
+- Bilens egne entiteter ved siden af den batterisensor, EV Ledger læser: batteri, rækkevidde, kilometertæller,
+  temperaturer, kabel, dæktryk og placering. Det virker for Tesla Fleet, Teslemetry og Tessie (oversættelsesnøgler)
+  og Tesla Custom (entity-navne). Kører bilen i to integrationer, bruges enheder med samme navn.
+- Laderens tilstand ved siden af laderens effektsensor.
+- Grafen over dagligt forbrug: kørsel fra kilometertælleren og opladning fra EV Ledgers kWh.
+
+Det, der sættes under `entities`, vinder over det fundne. Bilens knapper (`car_controls`) sættes stadig med hånden.
+
+**Offentlig ladning:** Under "Seneste opladning" kan kWh, pris og sted for en offentlig ladning skrives og gemmes i
+EV Ledger. Viser også, hvor mange opladninger der mangler pris. Slå den fra med `public_charge: false`.
+
+**Smarte valg:** En sektion i "Smart opladning" slår EV Ledgers valg til og fra: Vent på billigere dag, Lær
+køretider, Grøn strøm, Spørg om pris ude, Morgentjek og Billig strøm-besked. Den viser de lærte afgange. Venter
+planen på en billigere dag, står det under tidslinjen med pris, besparelse og batteriniveau, og med Grøn strøm også
+planens CO₂ pr. kWh.
+
 ## Smart opladning (EV Smart Charge)
 
 Med integrationen [EV Smart Charge](https://github.com/MRDonnii/ha-ev-smart-charge) (HACS)
