@@ -35,8 +35,13 @@ kvarterpriser til timer med timens gennemsnitspris. `resolution_entity` (fx EV L
 ladeplanerne.
 
 `charge_plan_entity` (fx EV Ledgers `sensor.<bil>_next_charge_start`) giver de søjler, hvor bilen efter planen
-lader, en svag farvet fod i bunden; tooltippen siger "Bilen lader her". Planen findes også, før bilen er sat til,
-så grafen viser, hvornår den vil lade.
+lader, en svag farvet søjle bag priserne og en fod i bunden, og et "BIL"-mærke med starttiden over dem; tooltippen
+siger "Bilen lader her". Ligger planen på en senere dag (fx efter midnat), står mærket ved grafens højre kant som
+"BIL · I MORGEN". Planen findes også, før bilen er sat til, så grafen viser, hvornår den vil lade. Farven kan
+ændres med CSS-variablen `--plan-color`.
+
+Mærkerne LAV, NU, HØJ og BIL står over grafen og skubbes til side, hvis de ville overlappe. NU har en prikket
+linje ned til søjlen, og den aktuelle søjle er bredere.
 
 `source` kan være `auto`, `stromligning` eller `energidataservice`. I automatisk tilstand foretrækkes Strømligning, hvis den har gyldige prisdata; ellers bruges Energi Data Service.
 

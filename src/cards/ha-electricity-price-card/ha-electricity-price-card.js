@@ -1,4 +1,4 @@
-const VERSION = "0.9.0";
+const VERSION = "0.10.0";
 
 class HAElectricityPriceCardEditor extends HTMLElement {
   setConfig(config) {
@@ -55,10 +55,16 @@ class HAElectricityPriceCard extends HTMLElement {
   }
   connectedCallback() {
     if (!this._liveTimer) this._liveTimer = setInterval(() => this._updateLiveStatus(), 60000);
+    if (!this._resize && typeof ResizeObserver !== "undefined") {
+      this._resize = new ResizeObserver(() => this._placeBadges());
+      this._resize.observe(this);
+    }
   }
   disconnectedCallback() {
     clearInterval(this._liveTimer);
     this._liveTimer = null;
+    this._resize?.disconnect();
+    this._resize = null;
   }
   static getStubConfig() {
     return {
@@ -348,6 +354,52 @@ class HAElectricityPriceCard extends HTMLElement {
       .map((b) => [Date.parse(b?.start), Date.parse(b?.end)])
       .filter(([s, e]) => Number.isFinite(s) && Number.isFinite(e) && e > s);
   }
+  // Where the car's first charging run of the shown day starts: a "BIL" badge over the middle of that run. A plan on a
+  // later day (e.g. after midnight) gets a badge at the chart's right edge with the day.
+  _carMark(points, plan) {
+    if (!points.length) return null;
+    const planned = (p) => plan.some(([s, e]) => p.start < e && p.end > s);
+    const first = points.findIndex(planned);
+    if (first < 0) {
+      const dayEnd = new Date(points[points.length - 1].end).getTime();
+      const next = plan.map(([s]) => s).filter((s) => s >= dayEnd).sort((a, b) => a - b)[0];
+      if (!Number.isFinite(next)) return null;
+      const day = new Date(dayEnd); day.setHours(0, 0, 0, 0);
+      const when = new Date(next); const startDay = new Date(next); startDay.setHours(0, 0, 0, 0);
+      const title = startDay.getTime() === day.getTime() ? "BIL · I MORGEN"
+        : `BIL · ${when.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "").toUpperCase()}`;
+      return { index: points.length - 1, title, text: this._label({ start: next }), later: true };
+    }
+    let last = first;
+    while (last + 1 < points.length && planned(points[last + 1])) last++;
+    const starts = plan.filter(([s, e]) => points[first].start < e && points[first].end > s).map(([s]) => s);
+    const start = Math.max(new Date(points[first].start).getTime(), Math.min(...starts));
+    return { index: Math.round((first + last) / 2), title: "BIL", text: this._label({ start }) };
+  }
+  // Badges centred over their bar, pushed apart where they would overlap and kept inside the chart.
+  _placeBadges() {
+    const chart = this.shadowRoot?.querySelector(".chart");
+    const box = chart?.getBoundingClientRect();
+    if (!box?.width) return;
+    const items = [...chart.querySelectorAll(".bar-wrap em")]
+      .map((em) => {
+        em.style.left = "";
+        em.style.right = "";
+        const bar = em.parentElement.getBoundingClientRect();
+        const w = em.getBoundingClientRect().width;
+        // A plan on a later day points past the chart: it keeps the right edge.
+        return { em, bar, w, x: em.classList.contains("later") ? box.right : bar.left + bar.width / 2 - w / 2 };
+      })
+      .filter((item) => item.w > 0)
+      .sort((a, b) => a.x - b.x);
+    const gap = 3;
+    items.forEach((item, i) => { item.x = Math.max(item.x, box.left, i ? items[i - 1].x + items[i - 1].w + gap : box.left); });
+    for (let i = items.length - 1; i >= 0; i--) {
+      const limit = i < items.length - 1 ? items[i + 1].x - gap - items[i].w : box.right - items[i].w;
+      items[i].x = Math.max(box.left, Math.min(items[i].x, limit));
+    }
+    items.forEach((item) => { item.em.style.left = `${(item.x - item.bar.left).toFixed(1)}px`; item.em.style.right = "auto"; });
+  }
   _barState(points, index, min, max, plan) {
     const p = points[index], n = points.length, now = Date.now();
     const values = points.map((x) => x.price);
@@ -371,6 +423,7 @@ class HAElectricityPriceCard extends HTMLElement {
       now = Date.now();
     const dense = points.length > 30;
     const plan = this._planBlocks();
+    const car = this._carMark(points, plan);
     return `<div class="chart${dense ? " dense" : ""}" style="grid-template-columns:repeat(${points.length},minmax(0,1fr))">${points
       .map((p, index) => {
         const h = 18 + ((p.price - min) / span) * 82,
@@ -379,7 +432,7 @@ class HAElectricityPriceCard extends HTMLElement {
           badgeText = state.badge,
           pulse = this._pulse(p.price),
           alert = this._config.high_price_animation !== false && pulse > 0;
-        return `<button class="${state.cls} ${alert ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time${state.planned ? ", bilen lader her" : ""}"><span class="tip">${this._tip(p, state.planned)}</span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
+        return `<button class="${state.cls} ${alert ? "price-alert" : ""}" style="--h:${h}%;--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time${state.planned ? ", bilen lader her" : ""}"><span class="tip">${this._tip(p, state.planned)}</span>${badgeText ? `<em class="mark">${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}${car?.index === index ? `<em class="car${car.later ? " later" : ""}">${car.title}<b>${car.text}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
       })
       .join("")}</div>`;
   }
@@ -413,6 +466,7 @@ class HAElectricityPriceCard extends HTMLElement {
     });
     const bars = this.shadowRoot.querySelectorAll(".bar-wrap");
     const plan = this._planBlocks();
+    const car = this._carMark(points, plan);
     points.forEach((point, index) => {
       const bar = bars[index];
       if (!bar) return;
@@ -427,17 +481,29 @@ class HAElectricityPriceCard extends HTMLElement {
       bar.querySelector(".tip").innerHTML = this._tip(point, state.planned);
       const column = bar.querySelector("i");
       column.style.setProperty("--h", `${height}%`);
-      let marker = bar.querySelector("em");
+      bar.style.setProperty("--h", `${height}%`);
+      let marker = bar.querySelector("em.mark");
       if (!state.badge) marker?.remove();
       else {
         if (!marker) {
           marker = document.createElement("em");
+          marker.className = "mark";
           bar.insertBefore(marker, column);
         }
         marker.innerHTML = `${state.badge}<b>${this._fmt(point.price)}</b>`;
-        marker.style.top = window.matchMedia("(max-width: 600px)").matches ? "-24px" : "-28px";
+      }
+      let carMarker = bar.querySelector("em.car");
+      if (car?.index !== index) carMarker?.remove();
+      else {
+        if (!carMarker) {
+          carMarker = document.createElement("em");
+          bar.insertBefore(carMarker, column);
+        }
+        carMarker.className = car.later ? "car later" : "car";
+        carMarker.innerHTML = `${car.title}<b>${car.text}</b>`;
       }
     });
+    requestAnimationFrame(() => this._placeBadges());
   }
   _render() {
     if (!this.shadowRoot) return;
@@ -466,8 +532,8 @@ class HAElectricityPriceCard extends HTMLElement {
       `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.bar-wrap.plan i{background:linear-gradient(to top,var(--plan-color,#4fd1ff) 0,var(--plan-color,#4fd1ff) var(--plan-foot,6px),var(--price-color) var(--plan-foot,6px))!important}.bar-wrap.plan .tip small{color:var(--plan-color,#4fd1ff);font-size:8px}.bar-wrap.edge-l em,.bar-wrap.edge-l .tip{left:0}.bar-wrap.edge-r em,.bar-wrap.edge-r .tip{right:0}.chart.dense .bar-wrap.current i{box-shadow:0 -2px 0 0 var(--primary-text-color,#fff),0 0 8px color-mix(in srgb,var(--price-color) 70%,transparent)}.chart.dense{gap:1px}.chart.dense .bar-wrap i{border-radius:2px 2px 1px 1px}.chart.dense .bar-wrap em{display:none}.chart.dense .bar-wrap.current em,.chart.dense .bar-wrap.min em,.chart.dense .bar-wrap.max em{display:flex}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:none;filter:brightness(1.3) saturate(1.15);box-shadow:0 -3px 0 0 var(--primary-text-color,#fff),0 0 12px color-mix(in srgb,var(--price-color) 65%,transparent)}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
-      ha-card{height:414px}.tabs{display:flex;height:52px;gap:8px;margin:9px 0 7px;padding:0;border:0;background:transparent}.tabs button{flex:1;position:relative;display:flex;align-items:center;gap:8px;height:52px;overflow:hidden;padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.11) 0%,rgba(255,255,255,.035) 100%);backdrop-filter:blur(10px) saturate(155%);-webkit-backdrop-filter:blur(10px) saturate(155%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26);text-align:left;cursor:pointer;color:var(--secondary-text-color);transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.tabs button:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.tabs button:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.tabs button{transition:none}.tabs button:hover{transform:none}}.tabs button.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 20px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 34%,transparent)}.tabs button ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color);flex-shrink:0}.tabs button.active ha-icon{color:#fff}.tab-copy{position:relative;z-index:3;align-self:center;min-width:0}.tab-copy b,.tab-copy small{display:block}.tab-copy b{color:var(--secondary-text-color);font-size:14px;font-weight:800;line-height:1.05}.tab-copy small{margin-top:1px;color:var(--secondary-text-color);font-size:10px;white-space:nowrap;opacity:.75}.tabs button.active .tab-copy b,.tabs button.active .tab-copy small{color:#fff;opacity:1}.week-slot{height:43px;margin-bottom:7px}.week-nav{height:43px;margin:0}.day-choice{border-radius:12px}.stat{border:0;color:var(--state-badge-text,#fff);background:linear-gradient(135deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 78%,black 22%));box-shadow:var(--state-badge-shadow,0 3px 9px rgba(0,0,0,.18))}.stat span{color:inherit}.chart{height:167px;padding-top:34px}.bar-wrap{height:132px}@media(max-width:600px){ha-card{height:calc(330px + var(--front-mobile-fill,0px))}.tabs{height:50px;gap:5px}.tabs button{height:50px;padding:4px 6px}.tab-copy b{font-size:13px}.tab-copy small{font-size:8px}.tabs button>ha-icon{--mdc-icon-size:30px}.week-slot,.week-nav{height:40px}.week-slot{margin-bottom:5px}.chart{height:calc(188px + var(--front-mobile-fill,0px));gap:5px;padding-top:22px}.bar-wrap{height:calc(165px + var(--front-mobile-fill,0px))}.stat{height:27px}}
+      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.bar-wrap.plan i{background:linear-gradient(to top,var(--plan-color,#4fd1ff) 0,var(--plan-color,#4fd1ff) var(--plan-foot,6px),var(--price-color) var(--plan-foot,6px))!important}.bar-wrap.plan .tip small{color:var(--plan-color,#4fd1ff);font-size:8px}.bar-wrap.edge-l em,.bar-wrap.edge-l .tip{left:0}.bar-wrap.edge-r em,.bar-wrap.edge-r .tip{right:0}.chart.dense .bar-wrap.current i{box-shadow:0 -2px 0 0 var(--primary-text-color,#fff),0 0 8px color-mix(in srgb,var(--price-color) 70%,transparent)}.chart.dense{gap:1px}.chart.dense .bar-wrap i{border-radius:2px 2px 1px 1px}.chart.dense .bar-wrap em{display:none}.chart.dense .bar-wrap.current em,.chart.dense .bar-wrap.min em,.chart.dense .bar-wrap.max em,.chart.dense .bar-wrap em.car{display:flex}.bar-wrap i{position:relative;z-index:1}.bar-wrap.current{z-index:3}.bar-wrap.current:before{content:"";position:absolute;z-index:2;top:-5px;bottom:calc(var(--h) + 3px);left:50%;border-left:2px dotted color-mix(in srgb,var(--primary-text-color,#fff) 75%,transparent);transform:translateX(-50%);pointer-events:none}.chart.dense .bar-wrap.current i{transform:scaleX(1.8)}.bar-wrap.plan:after{content:"";position:absolute;z-index:0;inset:-4px -1px 0;border-radius:4px 4px 0 0;background:linear-gradient(to top,color-mix(in srgb,var(--plan-color,#4fd1ff) 34%,transparent),color-mix(in srgb,var(--plan-color,#4fd1ff) 10%,transparent));pointer-events:none}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:none;filter:brightness(1.3) saturate(1.15);box-shadow:0 -3px 0 0 var(--primary-text-color,#fff),0 0 12px color-mix(in srgb,var(--price-color) 65%,transparent)}.bar-wrap em{position:absolute;z-index:4;top:-36px;display:flex;flex-direction:column;align-items:center;padding:3px 6px;border:1.5px solid currentColor;border-radius:8px;background:var(--surface-local);box-shadow:0 2px 7px rgba(0,0,0,.35);font-size:9px;font-style:normal;font-weight:800;letter-spacing:.04em;line-height:1.1;white-space:nowrap;pointer-events:none}.bar-wrap em b{font-size:12px;letter-spacing:0}.bar-wrap.current em.mark{color:var(--primary-text-color,#fff)}.chart .bar-wrap em.car{color:var(--plan-color,#4fd1ff)}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 5px}}
+      ha-card{height:414px}.tabs{display:flex;height:52px;gap:8px;margin:9px 0 7px;padding:0;border:0;background:transparent}.tabs button{flex:1;position:relative;display:flex;align-items:center;gap:8px;height:52px;overflow:hidden;padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.11) 0%,rgba(255,255,255,.035) 100%);backdrop-filter:blur(10px) saturate(155%);-webkit-backdrop-filter:blur(10px) saturate(155%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26);text-align:left;cursor:pointer;color:var(--secondary-text-color);transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.tabs button:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.tabs button:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.tabs button{transition:none}.tabs button:hover{transform:none}}.tabs button.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 20px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 34%,transparent)}.tabs button ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color);flex-shrink:0}.tabs button.active ha-icon{color:#fff}.tab-copy{position:relative;z-index:3;align-self:center;min-width:0}.tab-copy b,.tab-copy small{display:block}.tab-copy b{color:var(--secondary-text-color);font-size:14px;font-weight:800;line-height:1.05}.tab-copy small{margin-top:1px;color:var(--secondary-text-color);font-size:10px;white-space:nowrap;opacity:.75}.tabs button.active .tab-copy b,.tabs button.active .tab-copy small{color:#fff;opacity:1}.week-slot{height:43px;margin-bottom:7px}.week-nav{height:43px;margin:0}.day-choice{border-radius:12px}.stat{border:0;color:var(--state-badge-text,#fff);background:linear-gradient(135deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 78%,black 22%));box-shadow:var(--state-badge-shadow,0 3px 9px rgba(0,0,0,.18))}.stat span{color:inherit}.chart{height:167px;padding-top:40px}.bar-wrap{height:126px}@media(max-width:600px){ha-card{height:calc(330px + var(--front-mobile-fill,0px))}.tabs{height:50px;gap:5px}.tabs button{height:50px;padding:4px 6px}.tab-copy b{font-size:13px}.tab-copy small{font-size:8px}.tabs button>ha-icon{--mdc-icon-size:30px}.week-slot,.week-nav{height:40px}.week-slot{margin-bottom:5px}.chart{height:calc(188px + var(--front-mobile-fill,0px));gap:5px;padding-top:40px}.bar-wrap{height:calc(165px + var(--front-mobile-fill,0px))}.stat{height:27px}}
       .bar-wrap i{background:var(--price-color);transform-origin:center bottom;transition:background-color .9s ease,filter .15s,transform .15s}.bar-wrap.price-alert i{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.9;filter:brightness(1) drop-shadow(0 0 2px var(--price-color))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--price-color))}}@media(prefers-reduced-motion:reduce){:host(:not([force-price-animation])) .bar-wrap.price-alert i{animation:none}}
 
       .top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin-bottom:9px}.head{display:flex;align-items:center;gap:12px;min-width:0}.identity{gap:12px}.identity strong{font-size:22px;line-height:1.1}.subtitle{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:11px}.icon{width:42px;height:42px}.live-status{display:inline-flex;align-items:center;gap:6px;margin-left:8px;color:var(--secondary-text-color);font-size:10px;white-space:nowrap}.live-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--secondary-text-color)}.live-status.is-live{color:var(--good)}.live-status.is-live:before{background:var(--good);box-shadow:0 0 8px var(--good)}.tabs{flex:0 1 auto;width:auto;height:auto;margin:0;padding:4px;border:0;border-radius:14px;background:transparent;box-shadow:none;gap:4px}.tabs button{flex:0 0 auto;height:39px;min-width:74px;padding:7px 10px;border:0;border-radius:10px;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;gap:6px}.tabs button:hover{transform:none;box-shadow:none;background:color-mix(in srgb,var(--accent) 8%,transparent)}.tabs button.active{border:0;background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--accent) 16%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--accent))}.tabs button.active .tab-copy b{color:var(--primary-text-color)}.tabs button.active .tab-copy small{color:var(--secondary-text-color)}.tabs button.active ha-icon{color:var(--accent)}.tabs button ha-icon{--mdc-icon-size:17px}.tab-copy b{font-size:12px}.tab-copy small{font-size:9px}.no-head .top{justify-content:flex-start}@media(max-width:700px){.top{align-items:stretch}.head{width:100%;justify-content:space-between}.identity strong{font-size:18px}.subtitle{font-size:10px}.live-status{font-size:9px}.head{display:none}.top{margin-bottom:0}.tabs{width:100%;border:0;padding:0;background:transparent}.tabs button{flex:1 1 0;min-width:0;justify-content:center;padding:6px 4px}.tab-copy b{font-size:12px}.tab-copy small{font-size:8px}}
@@ -512,9 +578,6 @@ class HAElectricityPriceCard extends HTMLElement {
         stat.style.lineHeight = "1";
       });
     }
-    this.shadowRoot.querySelectorAll(".bar-wrap em").forEach((marker) => {
-      marker.style.top = compactMobile ? "-24px" : "-28px";
-    });
     const chart = this.shadowRoot.querySelector(".chart");
     if (chart) {
       if (fillHeight) {
@@ -522,23 +585,24 @@ class HAElectricityPriceCard extends HTMLElement {
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = "100%"; });
       } else if (!compactMobile && extraHeight) {
         chart.style.height = `${167 + extraHeight + headerGain}px`;
-        chart.style.paddingTop = `${34 + Math.round((extraHeight + headerGain) * 0.28)}px`;
+        chart.style.paddingTop = `${40 + Math.round((extraHeight + headerGain) * 0.28)}px`;
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
-          bar.style.height = `${132 + Math.round((extraHeight + headerGain) * 0.72)}px`;
+          bar.style.height = `${126 + Math.round((extraHeight + headerGain) * 0.72)}px`;
         });
       } else if (!compactMobile && headerGain) {
         chart.style.height = `${183 + headerGain}px`;
-        chart.style.paddingTop = `${34 + Math.round(headerGain * 0.28)}px`;
-        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = `${148 + Math.round(headerGain * 0.72)}px`; });
+        chart.style.paddingTop = `${40 + Math.round(headerGain * 0.28)}px`;
+        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = `${142 + Math.round(headerGain * 0.72)}px`; });
       } else if (compactMobile) {
         // Phone: the chart takes whatever height the card has left, so the bars
         // end at the card's bottom padding and follow the surrounding edge.
         chart.style.flex = "1 1 0"; chart.style.height = "auto"; chart.style.minHeight = "150px";
-        chart.style.paddingTop = `${22 + Math.round(headerGain * 0.28)}px`;
+        chart.style.paddingTop = `${40 + Math.round(headerGain * 0.28)}px`;
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = "100%"; });
       }
       chart.style.transform = compactMobile ? "none" : "translateY(8px)";
     }
+    requestAnimationFrame(() => this._placeBadges());
     this.shadowRoot.querySelectorAll("[data-tab]").forEach(
       (button) =>
         (button.onclick = () => {
