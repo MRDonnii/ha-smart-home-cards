@@ -540,7 +540,7 @@ console.log("th-tesla-dashboard-card tests passed");
   st["sensor.mode"] = s("connected_charging");
   r = model(st, ledger);
   assertClean(r, "ledger charging");
-  assert.equal(r.charge.finish, end.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" }).replace(".", ":"));
+  assert.equal(r.charge.finish, `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`);
   assert.match(r.charge.remaining, /^1 t (29|30) min$/);
 }
 console.log("th-tesla-dashboard-card smart charge tests passed");
