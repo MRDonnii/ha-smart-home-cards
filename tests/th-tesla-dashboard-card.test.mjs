@@ -523,4 +523,24 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.doesNotMatch(html, />Monta|Monta wallet/, "no visible Monta without Monta entities");
   assert.match(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Monta wallet/);
 }
+// EV Ledger without own finish/remaining sensors: the plan's end while the cable is in, nothing while it is out.
+{
+  const end = new Date(Date.now() + 90 * 60000);
+  const ledger = { ...config, smart_charge: "select.bil_charge_mode",
+    entities: Object.fromEntries(Object.entries(config.entities).filter(([key]) => !/^monta_|^charging_(finish_time|time_remaining|price_estimate)$/.test(key))) };
+  const st = { ...baseStates(), "select.bil_charge_mode": s("smart", { options: ["smart", "now"] }),
+    "sensor.bil_next_charge_end": s(end.toISOString(), { device_class: "timestamp" }),
+    "binary_sensor.charger": s("off"), "binary_sensor.charging": s("off"), "sensor.mode": s("disconnected") };
+  let r = model(st, ledger);
+  assertClean(r, "ledger unplugged");
+  assert.equal(r.charge.finish, "—", "unplugged: the plan's end is not the expected end");
+  assert.equal(r.charge.remaining, "—");
+  st["binary_sensor.charger"] = s("on", { charging_state: "Charging" });
+  st["binary_sensor.charging"] = s("on");
+  st["sensor.mode"] = s("connected_charging");
+  r = model(st, ledger);
+  assertClean(r, "ledger charging");
+  assert.equal(r.charge.finish, end.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" }).replace(".", ":"));
+  assert.match(r.charge.remaining, /^1 t (29|30) min$/);
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

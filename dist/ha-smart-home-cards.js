@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.10 */
+/* MRDonnii Smart Home Cards v0.5.11 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.11.1";
+var TTD_VERSION = "1.11.2";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3967,7 +3967,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const badgeKey = !known ? "unknown" : status.plugged ? status.key : "unplugged";
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
-    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") ? ttdToDate(this._sc("next_charge_end")?.state) : null;
+    const pluggedNow = !!(status.plugged || cable === true || plug === true);
+    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
     let remainingRaw = this._text("charging_time_remaining");
     if (remainingRaw == null && !this._id("charging_time_remaining") && status.charging && scEnd) remainingRaw = String(Math.max(0, Math.round((scEnd.getTime() - Date.now()) / 6e4)));

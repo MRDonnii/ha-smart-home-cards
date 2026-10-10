@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.11.1";
+const TTD_VERSION = "1.11.2";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -1438,8 +1438,10 @@ class ThTeslaDashboardCard extends HTMLElement {
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
     // With EV Ledger the end of this charging period comes from the plan (the car's own "full at" time for the last
-    // one), and the time left is counted from it, unless own sensors are configured.
-    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") ? ttdToDate(this._sc("next_charge_end")?.state) : null;
+    // one), and the time left is counted from it, unless own sensors are configured. Unplugged, the plan's end is only
+    // what would happen if the car were plugged in now, so it is not shown as the expected end here.
+    const pluggedNow = !!(status.plugged || cable === true || plug === true);
+    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
     let remainingRaw = this._text("charging_time_remaining");
     if (remainingRaw == null && !this._id("charging_time_remaining") && status.charging && scEnd) remainingRaw = String(Math.max(0, Math.round((scEnd.getTime() - Date.now()) / 60000)));
