@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.11.0";
+const TTD_VERSION = "1.11.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -1437,12 +1437,16 @@ class ThTeslaDashboardCard extends HTMLElement {
     const badgeKey = !known ? "unknown" : status.plugged ? status.key : "unplugged";
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
-    const remainingRaw = this._text("charging_time_remaining");
+    // With EV Ledger the end of this charging period comes from the plan (the car's own "full at" time for the last
+    // one), and the time left is counted from it, unless own sensors are configured.
+    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") ? ttdToDate(this._sc("next_charge_end")?.state) : null;
+    const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
+    let remainingRaw = this._text("charging_time_remaining");
+    if (remainingRaw == null && !this._id("charging_time_remaining") && status.charging && scEnd) remainingRaw = String(Math.max(0, Math.round((scEnd.getTime() - Date.now()) / 60000)));
     const remainingNumber = ttdToNumber(remainingRaw);
     const remainingUnit = String(this._attr("charging_time_remaining", "unit_of_measurement") || "min");
     const remaining = remainingRaw == null ? TTD_DASH : remainingNumber == null ? remainingRaw
       : remainingNumber <= 0 ? TTD_DASH : f.duration(remainingUnit === "h" ? remainingNumber * 60 : remainingNumber);
-    const finishRaw = this._text("charging_finish_time");
     const finish = finishRaw == null ? TTD_DASH : ttdIsClock(finishRaw) ? ttdClock(finishRaw) : ttdToDate(finishRaw) ? f.time(finishRaw) : finishRaw;
     const start = this._control("start_charge");
     const stop = this._control("stop_charge");
@@ -1451,6 +1455,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     const scheduled = montaKey === "busy-scheduled";
     const estimate = this._num("charging_price_estimate");
     let estimateText = null;
+    const nowPlan = this._cfg.smart_charge && !this._id("charging_price_estimate") ? this._sc("planned_cost")?.attributes?.alternatives?.now : null;
+    if (estimate == null && nowPlan && Number.isFinite(Number(nowPlan.cost)) && Number(nowPlan.energy_kwh) > 0) {
+      const unit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
+      estimateText = `Estimeret pris ved ladning nu: ${ttdJoin(f.number(Number(nowPlan.cost), 2), unit)} (${f.number(Number(nowPlan.energy_kwh), 1)} kWh)`;
+    }
     if (estimate != null) {
       const unit = this._unit("charging_price_estimate", "kr.");
       const kwh = ttdToNumber(this._attr("charging_price_estimate", "estimated_kwh_needed"));
