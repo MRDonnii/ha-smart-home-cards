@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.13 */
+/* MRDonnii Smart Home Cards v0.5.14 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -3041,9 +3041,6 @@ function ttdNormalizeConfig(raw) {
     // The cable in the plugged-in photo ({ path, width, height } in the photo's pixels): animated while charging.
     cable: typeof vehicle.photos?.cable?.path === "string" && Number(vehicle.photos.cable.width) > 0 && Number(vehicle.photos.cable.height) > 0 ? { path: vehicle.photos.cable.path, width: Number(vehicle.photos.cable.width), height: Number(vehicle.photos.cable.height) } : null,
     smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : typeof config.ev_ledger === "string" && config.ev_ledger.includes(".") ? config.ev_ledger.trim() : null,
-    // ev_ledger: any EV Ledger entity of the car; every entity not set by hand is found from it.
-    ev_ledger: typeof config.ev_ledger === "string" && config.ev_ledger.includes(".") ? config.ev_ledger.trim() : null,
-    public_charge: config.public_charge !== false,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
     location: config.location_entity || entities.location || null,
@@ -3240,7 +3237,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
   <header class="ph">${ttdIcon("mdi:ev-station", "ph-i")}<div class="ph-t"><h3>Seneste opladning</h3></div><button class="icon-btn" data-more="last_charge" data-r="lastMore" aria-label="\xC5bn seneste opladning">${ttdIcon("mdi:chevron-right")}</button></header>
   <div class="lc-grid">${item2("", "mdi:battery-charging-medium", "lcKwh", "Opladet energi")}${item2("", "mdi:cash", "lcPrice", "Total pris")}${item2("", "mdi:calendar-month-outline", "lcStart", "Starttidspunkt")}${item2("", "mdi:clock-outline", "lcDuration", "Varighed")}</div>
   <p class="lc-foot" data-r="lcFoot"></p><p class="lc-foot" data-r="lcMonta"></p>
-  ${cfg.public_charge && cfg.smart_charge ? `<div class="sc-trip pc" data-r="pc" hidden>
+  ${cfg.smart_charge ? `<div class="sc-trip pc" data-r="pc" hidden>
     <button type="button" class="sc-trip-h" data-pctoggle data-r="pcHead" aria-expanded="false">${ttdIcon("mdi:map-marker-plus-outline", "ic blue")}<span><b>Offentlig ladning</b><small data-r="pcSum">Log kWh og pris</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="pcBody" hidden>
       <div class="pc-f"><label class="sc-f"><span>kWh</span><input type="number" step="0.1" min="0" inputmode="decimal" data-r="pcKwh"></label><label class="sc-f"><span>Pris (kr.)</span><input type="number" step="0.01" min="0" inputmode="decimal" data-r="pcPrice"></label></div>
@@ -3896,11 +3893,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   /* ------------------------------------------------------ state access */
   _id(key) {
-    return this._cfg.entities[key] || (this._cfg.ev_ledger ? this._autoIds()[key] : void 0);
+    return this._cfg.entities[key] || (this._cfg.smart_charge ? this._autoIds()[key] : void 0);
   }
   /** The car's location tracker: set by hand, or found from EV Ledger. */
   _loc() {
-    return this._cfg.location || (this._cfg.ev_ledger ? this._autoIds().location : null) || null;
+    return this._cfg.location || (this._cfg.smart_charge ? this._autoIds().location : null) || null;
   }
   /** ev_ledger: the ledger's entities by role, and the car's own entities next to the battery sensor EV Ledger reads. */
   _autoIds() {

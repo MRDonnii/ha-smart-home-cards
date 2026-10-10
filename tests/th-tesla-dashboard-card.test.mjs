@@ -583,7 +583,8 @@ console.log("th-tesla-dashboard-card tests passed");
   const html = context.ttdTemplate(context.ttdNormalizeConfig(auto));
   assert.match(html, /data-r="pc"/, "the public charge form");
   assert.match(html, /data-scoptrole="wait_cheaper_day"/, "the smarter choices");
-  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...auto, public_charge: false })), /data-r="pc"/);
+  // smart_charge does the same: the card always finds what is not set by hand.
+  assert.equal(card(st, { name: "Bil", smart_charge: "select.bil_charge_mode" })._id("range"), "sensor.car_range");
 }
 // ev_ledger with the entity registry: Tesla Fleet names, and a second Tesla integration's device with the same name.
 {

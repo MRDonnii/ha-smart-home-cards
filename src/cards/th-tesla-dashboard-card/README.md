@@ -150,10 +150,11 @@ Kortet finder så selv:
 - Laderens tilstand ved siden af laderens effektsensor.
 - Grafen over dagligt forbrug: kørsel fra kilometertælleren og opladning fra EV Ledgers kWh.
 
-Det, der sættes under `entities`, vinder over det fundne. Bilens knapper (`car_controls`) sættes stadig med hånden.
+Det samme gælder med `smart_charge`: kortet finder altid selv det, der ikke er sat med hånden. Det, der sættes under
+`entities`, vinder over det fundne. Bilens knapper (`car_controls`) sættes stadig med hånden.
 
 **Offentlig ladning:** Under "Seneste opladning" kan kWh, pris og sted for en offentlig ladning skrives og gemmes i
-EV Ledger. Viser også, hvor mange opladninger der mangler pris. Slå den fra med `public_charge: false`.
+EV Ledger. Viser også, hvor mange opladninger der mangler pris.
 
 **Smarte valg:** En sektion i "Smart opladning" slår EV Ledgers valg til og fra: Vent på billigere dag, Lær
 køretider, Grøn strøm, Spørg om pris ude, Morgentjek og Billig strøm-besked. Den viser de lærte afgange. Venter
