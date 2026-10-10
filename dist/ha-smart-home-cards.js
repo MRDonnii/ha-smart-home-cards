@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.23 */
+/* MRDonnii Smart Home Cards v0.5.24 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -37248,7 +37248,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       .camstrip img{display:block;width:96px;height:54px;object-fit:cover;border-radius:9px;background:#11151b;outline:2px solid transparent;outline-offset:1px;opacity:0;transition:opacity .45s}
       .camstrip img.ok{opacity:1}
       .camstrip button[aria-pressed="true"]{color:var(--primary-text-color)}.camstrip button[aria-pressed="true"] img{outline-color:var(--accent)}
-      .camstrip span{display:flex;align-items:center;gap:5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .camstrip span{display:flex;align-items:center;gap:6px;margin-top:2px;padding:3px 0 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .cdot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 18%,transparent)}
       [data-st="person"] .cdot{background:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 30%,transparent);animation:campulse .8s infinite}
       [data-st="animal"] .cdot{background:var(--animal);animation:campulse 1.2s infinite}
