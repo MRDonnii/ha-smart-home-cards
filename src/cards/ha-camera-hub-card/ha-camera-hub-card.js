@@ -1,4 +1,4 @@
-const VERSION = "0.6.1";
+const VERSION = "0.7.0";
 
 const EVENTS_REFRESH_MS = 30 * 1000;
 const SYSTEM_TICK_MS = 30 * 1000;
@@ -112,6 +112,7 @@ class HACameraHubCard extends HTMLElement {
     clearInterval(this._eventsTimer);
     clearInterval(this._systemTimer);
     clearTimeout(this._eventsDebounceTimer);
+    this._closeCam();
     for (const cached of this._thumbBlobCache.values()) if (cached.url) URL.revokeObjectURL(cached.url);
     this._thumbBlobCache.clear();
     this._eventsTimer = undefined;
@@ -136,6 +137,7 @@ class HACameraHubCard extends HTMLElement {
       return [source.id, state?.state, state?.attributes?.event_id, state?.attributes?.event_type];
     })));
     this._updateLiveTiles();
+    if (this._camOpen) this._renderCam(false);
     if (sig !== this._sig) {
       this._sig = sig;
       this._renderSystem();
@@ -785,7 +787,12 @@ class HACameraHubCard extends HTMLElement {
       mount.dataset.bound = "true";
       mount.addEventListener("click", (event) => {
         const more = event.target.closest?.("[data-more]");
-        if (more) { event.stopPropagation(); this._more(more.dataset.more); return; }
+        if (more) {
+          event.stopPropagation();
+          const i = (this._cameras || []).findIndex((cam) => cam.camera_entity === more.dataset.more);
+          if (i >= 0) this._openCam(i); else this._more(more.dataset.more);
+          return;
+        }
         const filter = event.target.closest?.("[data-filter]");
         if (filter) { this._filter = filter.dataset.filter; this._renderEvents(true); return; }
         const row = event.target.closest?.("[data-media-cam]");
@@ -985,6 +992,42 @@ class HACameraHubCard extends HTMLElement {
       .media-player video{width:100%;border-radius:12px;background:#000;display:block}
       .media-loading,.media-error{padding:30px 10px;text-align:center;color:var(--secondary-text-color);font-size:12.5px}
       .media-error{color:var(--danger)}
+      /* Camera popup: the big live picture, status, arrows and a strip of every camera (the same player as the house card's). */
+      dialog.campop{padding:0;border:0;background:transparent;color:var(--primary-text-color);max-width:100vw;max-height:100dvh;overflow:visible}
+      dialog.campop::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+      .cambox{width:min(1400px,calc(100vw - 16px),max(min(760px,calc(100vw - 16px)),calc((100dvh - 230px) * 16 / 9)));max-height:calc(100dvh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:18px 18px 14px;border-radius:26px;border:1px solid var(--edge);background:color-mix(in srgb,var(--card-solid) 88%,transparent);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);box-shadow:0 30px 80px -20px rgba(0,0,0,.6);animation:camin .22s cubic-bezier(.2,.9,.3,1.2)}
+      @keyframes camin{from{transform:translateY(14px) scale(.97)}to{transform:none}}
+      .camhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+      .camhead h3{margin:0;font-size:19px;font-weight:750;line-height:1.2}
+      .camhead .sub{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12.5px;color:var(--secondary-text-color)}
+      .camhead .dot{width:8px;height:8px;border-radius:50%;background:var(--mc,var(--muted));box-shadow:0 0 0 3px color-mix(in srgb,var(--mc,var(--muted)) 25%,transparent)}
+      .camclose{flex:none;width:36px;height:36px;border-radius:12px;border:1px solid var(--edge);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);color:var(--primary-text-color);cursor:pointer;display:grid;place-items:center;font-size:15px}
+      .camclose:hover{background:color-mix(in srgb,var(--primary-text-color) 14%,transparent)}
+      .camview{position:relative;flex:none;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#05070a}
+      .camlive,.camlive>*{position:absolute;inset:0;width:100%;height:100%}
+      .camlive img.camstill{object-fit:contain}
+      .camlive ha-camera-stream{display:block;--video-max-height:100%}
+      .livebadge{position:absolute;right:10px;top:10px;padding:5px 7px;border-radius:6px;background:rgba(255,59,48,.92);color:#fff;font-size:10px;font-weight:750;line-height:1;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
+      .camnav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;padding:0 0 3px;display:grid;place-items:center;background:rgba(0,0,0,.42);color:#fff;font-family:inherit;font-size:24px;line-height:1;cursor:pointer;opacity:.85;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+      .camnav:hover{opacity:1;background:rgba(0,0,0,.6)}.camnav.prev{left:10px}.camnav.next{right:10px}
+      .camstrip{flex:none;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:thin}
+      .camstrip button{flex:0 0 auto;width:96px;padding:0;border:0;background:none;color:var(--secondary-text-color);font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.2;text-align:left;cursor:pointer}
+      .camstrip img{display:block;width:96px;height:54px;object-fit:cover;border-radius:9px;background:#11151b;outline:2px solid transparent;outline-offset:1px;opacity:0;transition:opacity .45s}
+      .camstrip img.ok{opacity:1}
+      .camstrip button[aria-pressed="true"]{color:var(--primary-text-color)}.camstrip button[aria-pressed="true"] img{outline-color:var(--accent)}
+      .camstrip span{display:flex;align-items:center;gap:5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .cdot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 18%,transparent)}
+      [data-st="person"] .cdot{background:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 30%,transparent);animation:campulse .8s infinite}
+      [data-st="animal"] .cdot{background:var(--animal);animation:campulse 1.2s infinite}
+      [data-st="vehicle"] .cdot{background:var(--accent);animation:campulse 1.2s infinite}
+      [data-st="object"] .cdot{background:var(--object);animation:campulse 1.2s infinite}
+      [data-st="motion"] .cdot{background:var(--motion);animation:campulse 1.2s infinite}
+      [data-st="off"] .cdot{background:var(--muted);box-shadow:none}
+      @keyframes campulse{50%{opacity:.35}}
+      .camfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--secondary-text-color)}
+      .cammore{border:1px solid var(--edge);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);color:var(--primary-text-color);border-radius:9px;padding:4px 10px;min-height:29px;font-family:inherit;font-size:12px;font-weight:650;cursor:pointer}
+      .cammore:hover{background:color-mix(in srgb,var(--primary-text-color) 14%,transparent)}
+      @media(max-width:600px){.cambox{padding:12px 10px 10px;border-radius:20px}.camstrip img{width:80px;height:45px}.camstrip button{width:80px}.camnav{width:34px;height:34px}.camfoot .kbd{display:none}}
       @media(max-width:600px){.tab span{display:none}.tab{padding:10px 4px}}
     </style>
     <ha-card>
@@ -1008,6 +1051,7 @@ class HACameraHubCard extends HTMLElement {
       <div class="panel" data-panel="system" ${this._tab === "system" ? "" : "hidden"}><div data-system-mount></div></div>
       ${(c.quick_links || []).length ? `<div class="quick-links">${c.quick_links.map((link) => `<button class="quick-link" data-quick-link="${this._esc(link.navigation_path || "")}"><span class="quick-icon"><ha-icon icon="${this._esc(link.icon || "mdi:arrow-right-circle-outline")}"></ha-icon></span><span><b>${this._esc(link.name || "Åbn")}</b><small>${this._esc(link.subtitle || "Åbn oversigt")}</small></span><ha-icon class="arrow" icon="mdi:chevron-right"></ha-icon></button>`).join("")}</div>` : ""}
     </ha-card>
+    <dialog data-cam-dialog class="campop" aria-label="Kamera"></dialog>
     <dialog data-media-dialog>
       <div class="sheet-head">
         <button data-media-back hidden title="Tilbage"><ha-icon icon="mdi:arrow-left"></ha-icon></button>
@@ -1038,10 +1082,13 @@ class HACameraHubCard extends HTMLElement {
 
     this.shadowRoot.querySelectorAll("[data-feed]").forEach((feed) =>
       feed.addEventListener("click", () => {
-        const cam = (this._cameras || []).find((c2) => c2.key === feed.dataset.feed);
-        if (cam) this._more(cam.camera_entity);
+        const i = (this._cameras || []).findIndex((c2) => c2.key === feed.dataset.feed);
+        if (i >= 0) this._openCam(i);
       }),
     );
+    const camDialog = this.shadowRoot.querySelector("[data-cam-dialog]");
+    camDialog?.addEventListener("click", (event) => { if (event.target === camDialog && performance.now() - (this._camOpenedAt || 0) > 400) this._closeCam(); });
+    camDialog?.addEventListener("close", () => this._closeCam(true));
     this.shadowRoot.querySelectorAll("[data-quick-link]").forEach((button) => button.addEventListener("click", () => this._navigate(button.dataset.quickLink)));
 
     const mediaDialog = this.shadowRoot.querySelector("[data-media-dialog]");
@@ -1060,6 +1107,133 @@ class HACameraHubCard extends HTMLElement {
       this._renderSystem();
     }
     if (this._events.length) this._renderEvents();
+  }
+
+  // ------------------------------------------------------------------ camera popup
+  // A tap on a camera opens it big: the live picture (Home Assistant's own player, WebRTC or HLS) on the camera's
+  // high-resolution channel when there is one, its status, arrows (and ← →) to the next camera, a strip of every camera
+  // to jump between, and the camera in Home Assistant. It opens on the camera that was tapped.
+  _camHq(cam) {
+    const high = `camera.${cam.key}_high_resolution_channel`;
+    return this._s(high) ? high : cam.camera_entity;
+  }
+  _camPicture(id, width) {
+    const pic = this._s(id)?.attributes?.entity_picture;
+    if (!pic || !this._hass) return "";
+    return this._hass.hassUrl(`${pic}${pic.includes("?") ? "&" : "?"}width=${width}&height=${Math.round((width * 9) / 16)}`);
+  }
+  _camStatus(cam) {
+    const st = this._s(this._camHq(cam));
+    if (!st || st.state === "unavailable") return { st: "off", text: st ? "Utilgængelig" : "Kamera ikke fundet", color: "var(--muted)" };
+    const activity = this._liveActivity(cam);
+    const colors = { person: "var(--danger)", animal: "var(--animal)", vehicle: "var(--accent)", object: "var(--object)", motion: "var(--motion)", quiet: "var(--good)" };
+    const rec = st.state === "recording" ? " · Optager" : st.state === "streaming" ? " · Streamer" : "";
+    return { st: activity.cls, text: `${activity.cls === "quiet" ? "Roligt" : activity.text}${rec}`, color: colors[activity.cls] || "var(--good)" };
+  }
+  _openCam(i) {
+    const cams = this._cameras || []; if (!cams[i]) return;
+    const dialog = this.shadowRoot.querySelector("[data-cam-dialog]"); if (!dialog) return;
+    if (this._camOpen) { clearInterval(this._camOpen.poll); this._camOpen.el?.remove(); }
+    this._camOpen = { i, token: Symbol("cam"), key: "" };
+    if (!dialog.open) { this._camOpenedAt = performance.now(); try { dialog.showModal(); } catch { dialog.setAttribute("open", ""); } }
+    this._camKey = this._camKey || ((event) => {
+      if (!this._camOpen || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault(); this._camStep(event.key === "ArrowLeft" ? -1 : 1);
+    });
+    window.removeEventListener("keydown", this._camKey); window.addEventListener("keydown", this._camKey);
+    this._renderCam(true);
+    clearInterval(this._camStripTimer); this._camStripTimer = setInterval(() => this._refreshCamStrip(), 10000);
+  }
+  _closeCam(fromDialog = false) {
+    if (!this._camOpen && !fromDialog) return;
+    const o = this._camOpen; this._camOpen = null;
+    if (o) { clearInterval(o.poll); o.el?.remove(); }
+    clearInterval(this._camStripTimer); this._camStripTimer = undefined;
+    if (this._camKey) window.removeEventListener("keydown", this._camKey);
+    const dialog = this.shadowRoot?.querySelector("[data-cam-dialog]");
+    if (dialog) { if (dialog.open && !fromDialog) dialog.close(); dialog.replaceChildren(); }
+  }
+  _camStep(step) {
+    const n = (this._cameras || []).length; if (!n || !this._camOpen) return;
+    this._openCam((this._camOpen.i + step + n) % n);
+  }
+  _renderCam(first) {
+    const o = this._camOpen; const dialog = this.shadowRoot.querySelector("[data-cam-dialog]"); if (!o || !dialog) return;
+    const cams = this._cameras || []; const cam = cams[o.i]; const cs = this._camStatus(cam);
+    if (!first) {
+      // Only the status changes; the live picture keeps running.
+      if (cs.text !== o.key) {
+        o.key = cs.text;
+        const sub = dialog.querySelector(".camhead .sub");
+        if (sub) sub.innerHTML = `<span class="dot" style="--mc:${cs.color}"></span>${this._esc(cs.text)}`;
+      }
+      cams.forEach((c2, j) => { const b = dialog.querySelector(`[data-camgo="${j}"]`); if (b) b.dataset.st = this._camStatus(c2).st; });
+      if (o.el && "hass" in o.el) o.el.hass = this._hass;
+      return;
+    }
+    o.key = cs.text;
+    const still = this._camPicture(this._camHq(cam), 1280);
+    dialog.innerHTML = `<div class="cambox" role="document">
+      <div class="camhead"><div><h3>${this._esc(cam.name || cam.key)}</h3><div class="sub"><span class="dot" style="--mc:${cs.color}"></span>${this._esc(cs.text)}</div></div><button class="camclose" data-camclose aria-label="Luk">✕</button></div>
+      <div class="camview"><div class="camlive" data-camlive>${still ? `<img class="camstill" alt="" src="${this._esc(still)}">` : ""}</div><span class="livebadge">Live</span>
+        <button class="camnav prev" data-camstep="-1" aria-label="Forrige kamera">‹</button><button class="camnav next" data-camstep="1" aria-label="Næste kamera">›</button></div>
+      <div class="camstrip" role="group" aria-label="Kameraer">${cams.map((c2, j) => {
+        const pic = this._camPicture(c2.camera_entity, 192);
+        return `<button data-camgo="${j}" data-st="${this._camStatus(c2).st}" aria-pressed="${j === o.i}" title="${this._esc(c2.name || c2.key)}"><img alt="" draggable="false"${pic ? ` src="${this._esc(pic)}"` : ""}><span><i class="cdot"></i>${this._esc(c2.name || c2.key)}</span></button>`;
+      }).join("")}</div>
+      <div class="camfoot"><span>${o.i + 1} af ${cams.length}<span class="kbd"> · ← → skifter</span></span><button class="cammore" data-cammore>Åbn i Home Assistant</button></div>
+    </div>`;
+    dialog.querySelectorAll(".camstrip img").forEach((img) => {
+      if (img.complete && img.naturalWidth) img.classList.add("ok"); else img.addEventListener("load", () => img.classList.add("ok"), { once: true });
+    });
+    dialog.querySelector("[data-camclose]").addEventListener("click", () => this._closeCam());
+    dialog.querySelectorAll("[data-camstep]").forEach((b) => b.addEventListener("click", () => this._camStep(Number(b.dataset.camstep))));
+    dialog.querySelectorAll("[data-camgo]").forEach((b) => b.addEventListener("click", () => this._openCam(Number(b.dataset.camgo))));
+    dialog.querySelector("[data-cammore]").addEventListener("click", () => { const id = this._camHq(cam); this._closeCam(); this._more(id); });
+    dialog.querySelector(`[data-camgo="${o.i}"]`)?.scrollIntoView?.({ block: "nearest", inline: "center" });
+    dialog.querySelector("[data-camclose]").focus({ preventScroll: true });
+    this._mountCamLive(dialog.querySelector("[data-camlive]"), cam, o);
+  }
+  // The live picture: Home Assistant's camera player when it can be had, else a fresh still every second.
+  async _mountCamLive(host, cam, o) {
+    const id = this._camHq(cam); const st = this._s(id);
+    const alive = () => this._camOpen === o && host.isConnected;
+    if (!st || !host) return;
+    try {
+      if (!customElements.get("ha-camera-stream") && window.loadCardHelpers) {
+        // Home Assistant loads its camera player with the picture card; creating one (not shown) brings it in.
+        const helpers = await window.loadCardHelpers();
+        const card = await helpers.createCardElement({ type: "picture-entity", entity: id, camera_view: "live", show_name: false, show_state: false });
+        if (card && this._hass) card.hass = this._hass;
+        await Promise.race([customElements.whenDefined("ha-camera-stream"), new Promise((resolve) => setTimeout(resolve, 6000))]);
+      }
+      if (!alive()) return;
+      if (customElements.get("ha-camera-stream")) {
+        const el = document.createElement("ha-camera-stream");
+        el.hass = this._hass; el.stateObj = st; el.muted = true; el.controls = false; el.allowExoPlayer = false;
+        // The still stays under the video until it plays.
+        host.appendChild(el); o.el = el;
+        return;
+      }
+    } catch (error) {
+      console.warn("HA Camera Hub Card: camera player", error);
+    }
+    if (!alive()) return;
+    const img = host.querySelector(".camstill") || host.appendChild(Object.assign(document.createElement("img"), { className: "camstill", alt: "" }));
+    const load = () => {
+      const url = this._camPicture(id, 1280); if (!url) return;
+      const pre = new Image(); pre.onload = () => { if (alive()) img.src = pre.src; }; pre.src = `${url}&_=${Date.now()}`;
+    };
+    load(); o.poll = setInterval(() => { if (alive() && !document.hidden) load(); }, 1000);
+  }
+  // The strip's pictures refresh every 10 s while the popup is open (loaded aside, so they never blink).
+  _refreshCamStrip() {
+    const dialog = this.shadowRoot.querySelector("[data-cam-dialog]"); if (!this._camOpen || !dialog || document.hidden) return;
+    (this._cameras || []).forEach((cam, j) => {
+      const img = dialog.querySelector(`[data-camgo="${j}"] img`); const url = this._camPicture(cam.camera_entity, 192);
+      if (!img || !url) return;
+      const pre = new Image(); pre.onload = () => { if (this._camOpen && img.isConnected) { img.src = pre.src; img.classList.add("ok"); } }; pre.src = `${url}&_=${Date.now()}`;
+    });
   }
 
   getCardSize() {
