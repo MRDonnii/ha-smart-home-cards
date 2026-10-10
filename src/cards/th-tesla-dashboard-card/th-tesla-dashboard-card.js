@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.12.1";
+const TTD_VERSION = "1.13.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -35,6 +35,15 @@ const TTD_CC_TWINS = {
   charge_port: (id) => /charge|charger/.test(id), sentry: (id) => id.includes("sentry"), flash: (id) => id.includes("flash"),
   charge_limit: (id) => id.includes("charge_limit"), charge_current: (id) => /charging_amps|charge_current/.test(id),
 };
+// Quick climate extras in the climate popup, found next to the climate entity (Tesla Fleet or Tesla Custom names): role,
+// label, icon, domain, entity id pattern.
+const TTD_QC_CHIPS = [
+  ["defrost", "Afrim", "mdi:car-defrost-front", "switch", /_defrost$/],
+  ["steering", "Rat", "mdi:steering", "select", /(steering_wheel_heater|heated_steering_wheel)$/],
+  ["seat_left", "Sæde V", "mdi:car-seat-heater", "select", /(seat_heater_front_left|heated_seat_left)$/],
+  ["seat_right", "Sæde H", "mdi:car-seat-heater", "select", /(seat_heater_front_right|heated_seat_right)$/],
+];
+const TTD_HEAT_LEVELS = { off: "Fra", low: "Lav", medium: "Mellem", high: "Høj", auto: "Auto" };
 const TTD_CONTROL_KEYS = ["start_charge", "stop_charge", "charger_mode", "target_soc", "deadline", "apply_plan"];
 const TTD_MAP_RANGES = [0, 1, 6, 12, 24];
 const TTD_CHART_RANGES = {
@@ -1061,16 +1070,28 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 @keyframes ttdSpin{to{transform:rotate(360deg)}}
 .qc-cap{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 82%,transparent);border:1px solid var(--tdc-line);font-size:13px;color:var(--tdc-text);white-space:nowrap;pointer-events:none}
 .qc-cap[data-tone=warn]{border-color:var(--tdc-orange);color:var(--tdc-orange)}
-.qc-pop{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:4;width:min(300px,86vw);display:grid;gap:12px;padding:14px;border-radius:16px;background:var(--tdc-pop-bg,#161c25);border:1px solid var(--tdc-line);box-shadow:0 18px 40px rgba(0,0,0,.6)}
-.qcp-h{display:flex;align-items:center;gap:8px;font-size:15px}.qcp-h ha-icon{--mdc-icon-size:20px;color:var(--tdc-blue)}.qcp-h small{margin-left:auto;color:var(--tdc-muted);font-size:12.5px}
-.qcp-x{border:0;background:transparent;color:var(--tdc-muted);font-size:20px;line-height:1;padding:0 2px;cursor:pointer}
-.qcp-power{position:relative;height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:14.5px;font-weight:650;cursor:pointer}
-.qcp-power[data-on]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.qc-pop{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);z-index:4;width:min(320px,90vw);display:grid;gap:14px;padding:16px;border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--tdc-blue) 7%,var(--tdc-pop-bg,#161c25)),var(--tdc-pop-bg,#161c25) 60%);border:1px solid color-mix(in srgb,var(--tdc-text) 12%,transparent);box-shadow:0 22px 48px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
+.qcp-h{display:flex;align-items:center;gap:10px}
+.qcp-i{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--tdc-blue) 18%,transparent);color:var(--tdc-blue)}.qcp-i ha-icon{--mdc-icon-size:20px}
+.qcp-t{display:grid;gap:1px;min-width:0;flex:1}.qcp-t b{font-size:16px;font-weight:700}.qcp-t small{color:var(--tdc-muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcp-x{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:50%;border:0;background:color-mix(in srgb,var(--tdc-text) 8%,transparent);color:var(--tdc-muted);cursor:pointer}.qcp-x ha-icon{--mdc-icon-size:18px}
+.qcp-power{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;border:1px solid color-mix(in srgb,var(--tdc-blue) 45%,transparent);background:color-mix(in srgb,var(--tdc-blue) 12%,transparent);color:var(--tdc-blue);font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
+.qcp-power ha-icon{--mdc-icon-size:20px}
+.qcp-power[data-on]{background:linear-gradient(135deg,color-mix(in srgb,var(--tdc-blue) 90%,#fff 0%),color-mix(in srgb,var(--tdc-blue) 70%,#000 0%));border-color:transparent;color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--tdc-blue) 35%,transparent)}
 .qcp-power[data-busy]{cursor:progress;opacity:.85}
-.qcp-temp{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;text-align:center}
-.qcp-temp button{height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:20px;cursor:pointer}
-.qcp-temp b{font-size:24px;font-weight:700}.qcp-temp b[data-busy]{color:var(--tdc-blue)}
-.qcp-more{justify-self:start;border:0;background:transparent;color:var(--tdc-blue);font-size:13px;cursor:pointer;padding:0}
+.qc-pop[data-down]{bottom:auto;top:calc(100% + 10px)}
+.panel.hero[data-pop]{overflow:visible;z-index:30}
+.qcp-temp{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;text-align:center}
+.qcp-temp button{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);cursor:pointer}.qcp-temp button ha-icon{--mdc-icon-size:22px}
+.qcp-temp button:active{transform:scale(.94)}
+.qcp-tv{display:grid;gap:2px}.qcp-tv b{font-size:28px;font-weight:700;line-height:1}.qcp-tv b[data-busy]{color:var(--tdc-blue)}.qcp-tv small{color:var(--tdc-muted);font-size:12px}
+.qcp-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.qcp-chip{display:grid;justify-items:center;gap:3px;min-width:0;padding:8px 4px 7px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);text-align:center;cursor:pointer}
+.qcp-chip ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}.qcp-chip span{display:grid;min-width:0}.qcp-chip b{font-size:11.5px;font-weight:650;white-space:nowrap}.qcp-chip small{font-size:11px;color:var(--tdc-muted)}
+.qcp-chip[data-on]{border-color:color-mix(in srgb,var(--tdc-amber,#f5a524) 55%,transparent);background:color-mix(in srgb,var(--tdc-amber,#f5a524) 14%,transparent)}.qcp-chip[data-on] ha-icon,.qcp-chip[data-on] small{color:var(--tdc-amber,#f5a524)}
+.qcp-chip[data-kind=switch][data-on]{border-color:color-mix(in srgb,var(--tdc-blue) 55%,transparent);background:color-mix(in srgb,var(--tdc-blue) 14%,transparent)}.qcp-chip[data-kind=switch][data-on] ha-icon,.qcp-chip[data-kind=switch][data-on] small{color:var(--tdc-blue)}
+.qcp-chip[data-busy]{opacity:.7;cursor:progress}.qcp-chip:disabled{opacity:.4;cursor:default}
+.qcp-more{justify-self:center;border:0;background:transparent;color:var(--tdc-muted);font-size:13px;cursor:pointer;padding:2px 6px}.qcp-more:hover{color:var(--tdc-blue)}
 .qc-pop .cc-num{margin-top:0;grid-template-columns:auto 1fr}.qc-pop .cc-num input{grid-column:1/-1}
 @container ttd (max-width:699px){.qc{grid-area:2/1/3/3;margin-left:0}.qc{gap:4px;padding:4px}.qc-b{height:36px;min-width:34px;padding:0 6px;font-size:12px;gap:3px}.qc-b ha-icon{--mdc-icon-size:18px}}
 @container ttd (max-width:380px){.qc{gap:4px}.qc-b{min-width:32px;padding:0 5px}.qc-b ha-icon{--mdc-icon-size:18px}}
@@ -1758,7 +1779,8 @@ class ThTeslaDashboardCard extends HTMLElement {
   _ccSettle(st) {
     const now = Date.now();
     for (const [key, item] of Object.entries(this._ccBusy || {})) {
-      const o = st(item.ctl);
+      const o = String(item.ctl).startsWith("chip:")
+        ? this._hass?.states?.[this._qcChips().find((chip) => `chip:${chip.role}` === item.ctl)?.target] : st(item.ctl);
       if (o && item.done(o)) {
         delete this._ccBusy[key];
         if (item.ok) this._ccSay(item.ok, 4000);
@@ -1777,7 +1799,7 @@ class ThTeslaDashboardCard extends HTMLElement {
 
   /** Send a car command and show at once that it is on its way; the button cannot be pressed again until the car answers. */
   _ccCall(key, ctl, domain, service, data, done, text, ok) {
-    const label = TTD_CAR_CONTROLS.find(([k]) => k === ctl)?.[1] || "Bilen";
+    const label = TTD_CAR_CONTROLS.find(([k]) => k === ctl)?.[1] || TTD_QC_CHIPS.find(([k]) => `chip:${k}` === ctl)?.[1] || "Bilen";
     this._ccBusy = { ...(this._ccBusy || {}), [key]: { ctl, done, text, ok, label, until: Date.now() + TTD_CC_BUSY_MS } };
     clearTimeout(this._ccBusyTimer);
     this._ccBusyTimer = setTimeout(() => this._applyCarControls(), TTD_CC_BUSY_MS + 100);
@@ -1890,15 +1912,23 @@ class ThTeslaDashboardCard extends HTMLElement {
     const pop = this._r.qcPop;
     if (!pop) return;
     pop.hidden = !this._qcOpen;
+    // While the popup is open it may lie over the panels below the car (the hero panel clips otherwise).
+    this._r.hero?.toggleAttribute("data-pop", !!this._qcOpen);
     if (!this._qcOpen) { this._applyCarControls(); return; }
     const [, label, icon] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
-    const head = `<div class="qcp-h">${ttdIcon(icon)}<b>${label}</b><small data-qcp="sub"></small><button type="button" class="qcp-x" data-qcclose aria-label="Luk">×</button></div>`;
+    const head = `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div><button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
     pop.innerHTML = key === "climate"
-      ? `${head}<button type="button" class="qcp-power" data-qcpower><span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
-        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">−</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">+</button></div>
-        <button type="button" class="qcp-more" data-qcmore>Flere indstillinger (sæder, rat …) ›</button>`
+      ? `${head}<button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
+        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><div class="qcp-tv"><b data-qcp="temp">${TTD_DASH}</b><small>Indstillet</small></div><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div>
+        <div class="qcp-chips" data-qcp="chips"></div>
+        <button type="button" class="qcp-more" data-qcmore>Flere indstillinger ›</button>`
       : `${head}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>Åbn i Home Assistant ›</button>`;
     this._applyCarControls();
+    // Not room above the buttons inside the card (a phone): open downwards instead.
+    pop.removeAttribute("data-down");
+    const card = this.shadowRoot.querySelector("ha-card") || this;
+    const top = pop.getBoundingClientRect?.().top; const cardTop = card.getBoundingClientRect?.().top;
+    if (Number.isFinite(top) && Number.isFinite(cardTop) && top < Math.max(cardTop, 0) + 4) pop.setAttribute("data-down", "");
   }
 
   _applyQcPop(st, f, busyFor) {
@@ -1908,13 +1938,25 @@ class ThTeslaDashboardCard extends HTMLElement {
     const sub = pop.querySelector('[data-qcp="sub"]');
     if (key === "climate") {
       const temp = Number(o?.attributes?.current_temperature);
-      const subText = o?.attributes?.current_temperature != null && Number.isFinite(temp) ? `Inde ${f.number(temp, 0)} °C` : "";
+      const outside = this._num("temperature_outside");
+      const subText = [o?.attributes?.current_temperature != null && Number.isFinite(temp) ? `Inde ${f.number(temp, 1)} °C` : "",
+        outside != null ? `ude ${f.number(outside, 1)} °C` : ""].filter(Boolean).join(" · ");
       if (sub && sub.textContent !== subText) sub.textContent = subText;
+      const chips = this._qcChips();
+      const box = pop.querySelector('[data-qcp="chips"]');
+      if (box) {
+        const html = chips.map((chip) => {
+          const working = busyFor(`chip:${chip.role}`);
+          return `<button type="button" class="qcp-chip" data-qcchip="${chip.role}" data-kind="${chip.domain}"${chip.on ? " data-on" : ""}${working ? " data-busy" : ""}${chip.dead ? " disabled" : ""}>${ttdIcon(chip.icon)}<span><b>${chip.label}</b><small>${working ? "…" : chip.level}</small></span></button>`;
+        }).join("");
+        if (box.dataset.sig !== html) { box.dataset.sig = html; box.innerHTML = html; }
+        box.hidden = !chips.length;
+      }
       const power = busyFor("climate"); const on = o && o.state !== "off";
       const btn = pop.querySelector("[data-qcpower]");
       if (btn) {
         this._attrSet(btn, "data-on", !!on && !power); this._attrSet(btn, "data-busy", !!power); btn.disabled = !o || o.state === "unavailable";
-        const text = power ? power.text : on ? "Sluk klima" : "Tænd klima";
+        const text = power ? power.text : on ? "Klima kører · sluk" : "Tænd klima";
         const span = btn.querySelector('[data-qcp="power"]'); if (span && span.textContent !== text) span.textContent = text;
       }
       const target = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
@@ -1926,6 +1968,50 @@ class ThTeslaDashboardCard extends HTMLElement {
       const [label] = this._ccText(key, o, f);
       const text = `Nu ${label}`; if (sub.textContent !== text) sub.textContent = text;
     }
+  }
+
+  /** The climate extras next to the climate entity: on the same device first (it takes the commands), else the car's
+   * other integration; the state from whichever knows it. */
+  _qcChips() {
+    const registry = this._hass?.entities; const devices = this._hass?.devices; const states = this._hass?.states || {};
+    const climate = this._cfg.carControls.climate;
+    if (!climate || !registry || !devices) return [];
+    const own = registry[climate];
+    const name = (dev) => String(dev?.name_by_user || dev?.name || "").toLowerCase();
+    const carName = own?.device_id ? name(devices[own.device_id]) : "";
+    const pool = Object.values(registry).filter((entry) => entry.device_id && (entry.device_id === own?.device_id || (carName && name(devices[entry.device_id]) === carName)) && !entry.hidden);
+    pool.sort((a, b) => (a.device_id === own?.device_id ? 0 : 1) - (b.device_id === own?.device_id ? 0 : 1));
+    const known = (id) => states[id] && !["unknown", "unavailable"].includes(states[id].state);
+    return TTD_QC_CHIPS.map(([role, label, icon, domain, pattern]) => {
+      const found = pool.filter((entry) => entry.entity_id.startsWith(`${domain}.`) && pattern.test(entry.entity_id)).map((entry) => entry.entity_id);
+      if (!found.length) return null;
+      const target = found.find((id) => states[id] && states[id].state !== "unavailable") || found[0];
+      const shown = states[found.find(known) || target];
+      const value = String(shown?.state || "").toLowerCase();
+      const on = domain === "switch" ? value === "on" : !!value && !["off", "unknown", "unavailable"].includes(value);
+      const level = domain === "switch" ? (on ? "Til" : "Fra") : TTD_HEAT_LEVELS[value] || TTD_DASH;
+      return { role, label, icon, domain, target, value, on, level, dead: !states[target] || states[target].state === "unavailable" };
+    }).filter(Boolean);
+  }
+
+  _qcChip(role) {
+    const chip = this._qcChips().find((item) => item.role === role);
+    if (!chip || chip.dead || Object.values(this._ccBusy || {}).some((item) => item.ctl === `chip:${role}`)) return;
+    if (chip.domain === "switch") {
+      const on = !chip.on;
+      this._ccCall(`chip:${role}`, `chip:${role}`, "switch", on ? "turn_on" : "turn_off", { entity_id: chip.target },
+        (st) => st.state === (on ? "on" : "off"), `${chip.label} ${on ? "til" : "fra"}…`, `${chip.label} ${on ? "til" : "fra"}`);
+      return;
+    }
+    // Heat levels: Fra → Lav → (Mellem) → Høj → Fra, in the target entity's own spelling.
+    const options = (this._hass.states[chip.target]?.attributes?.options || []).map(String);
+    const levels = options.filter((option) => option.toLowerCase() !== "auto");
+    if (!levels.length) return;
+    const index = levels.findIndex((option) => option.toLowerCase() === chip.value);
+    const next = levels[(index + 1) % levels.length];
+    this._ccCall(`chip:${role}`, `chip:${role}`, "select", "select_option", { entity_id: chip.target, option: next },
+      (st) => String(st.state).toLowerCase() === next.toLowerCase(), `${chip.label}: ${TTD_HEAT_LEVELS[next.toLowerCase()] || next}…`,
+      `${chip.label}: ${TTD_HEAT_LEVELS[next.toLowerCase()] || next}`);
   }
 
   _qcPower() {
@@ -3047,11 +3133,12 @@ class ThTeslaDashboardCard extends HTMLElement {
   _onClick(event) {
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip]");
     if (!target) return;
     if (target.dataset.qc) { if (!target.disabled) this._openQc(target.dataset.qc); return; }
     if (target.dataset.qcclose != null) { this._openQc(this._qcOpen); return; }
     if (target.dataset.qcpower != null) { this._qcPower(); return; }
+    if (target.dataset.qcchip) { this._qcChip(target.dataset.qcchip); return; }
     if (target.dataset.qctemp) { this._qcTempStep(Number(target.dataset.qctemp)); return; }
     if (target.dataset.qcmore != null) {
       const id = this._cfg.carControls[this._qcOpen];
