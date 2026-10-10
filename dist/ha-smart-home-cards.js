@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.8 */
+/* MRDonnii Smart Home Cards v0.5.9 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.10.0";
+var TTD_VERSION = "1.11.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2529,6 +2529,7 @@ var TTD_CHART_RANGES = {
 var TTD_STATS_TTL = 15 * 60 * 1e3;
 var TTD_ARM_MS = 4e3;
 var TTD_PENDING_MS = 8e3;
+var TTD_CC_BUSY_MS = 9e4;
 var TTD_REFRESH_MS = 60 * 1e3;
 var TTD_SATELLITE = {
   url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -3072,7 +3073,9 @@ function ttdTemplate(cfg) {
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
-  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}${full && Object.keys(cfg.carControls).length ? " has-ctl" : ""}">
+  const quick = full ? TTD_CAR_CONTROLS.filter(([key]) => cfg.carControls[key]) : [];
+  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon3, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon3)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
+  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
@@ -3084,6 +3087,7 @@ function ttdTemplate(cfg) {
     <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" data-r="ringFill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100"/></svg>
     <span class="ring-t"><span class="soc"><b data-r="soc">${TTD_DASH}</b><small data-r="socUnit">%</small>${ttdIcon("mdi:lightning-bolt", "bolt")}</span><span class="range" data-r="range">${TTD_DASH}</span><span class="muted">r\xE6kkevidde</span></span>
   </button>
+  ${quickHtml}
   ${full ? `<div class="hero-stats">${stat("odometer", "mdi:speedometer", "odometer", "Kilometerstand")}${stat("temperature_inside", "mdi:thermometer", "inside", "Indetemperatur")}${stat("temperature_outside", "mdi:thermometer", "outside", "Udetemperatur")}${stat("last_update", "mdi:refresh", "updatedShort", "Sidst opdateret")}</div>` : ""}
 </section>
 <section class="panel charge" data-r="charge" aria-label="Opladning">
@@ -3105,7 +3109,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon3)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
-  <div class="sc-time" data-r="scTime"><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div></div>
+  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "N\xE6ste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>M\xE5l SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="M\xE5l SOC"></label>
@@ -3141,11 +3145,6 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
 </section>`}
-${full && Object.keys(cfg.carControls).length ? `<section class="panel carctl" data-r="ctlPanel" aria-label="Bilstyring">
-  <header class="ph">${ttdIcon("mdi:car-cog", "ph-i")}<div class="ph-t"><h3>Bilstyring</h3><p>Opl\xE5sning, ladeport og vagtpost fra kr\xE6ver to tryk</p></div></header>
-  <div class="cc-grid">${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain !== "number").map(([key, label, icon3]) => `<button type="button" class="cc" data-cc="${key}" aria-pressed="false">${ttdIcon(icon3)}<span><b data-ccl="${key}">${label}</b><small data-ccs="${key}">${TTD_DASH}</small></span></button>`).join("")}</div>
-  ${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain === "number").map(([key, label, icon3]) => `<div class="cc-num" data-ccbox="${key}"><span class="cc-num-l">${ttdIcon(icon3)}${label}</span><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div>`).join("")}
-</section>` : ""}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
   <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
@@ -3355,6 +3354,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-modes button[data-default] .sc-star{display:block}
 .sc-modes button[aria-checked=true] .sc-star{color:var(--tdc-amber)}
 .sc-time{margin-bottom:14px}
+.sc-chart svg{display:block;width:100%;height:64px;overflow:visible}
+.sc-chart rect{fill:color-mix(in srgb,var(--tdc-text) 17%,transparent)}
+.sc-chart rect.on{fill:var(--tdc-green);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tdc-green) 55%,transparent))}
+.sc-chart rect.est{opacity:.55}
+.sc-chart line{stroke:var(--tdc-text);stroke-width:2;vector-effect:non-scaling-stroke}.sc-chart line.trip{stroke:var(--tdc-blue)}
+.sc-hint{margin:6px 0 0;font-size:13px;color:var(--tdc-green)}
 .sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
 .sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
 .sc-seg[data-est]{background:repeating-linear-gradient(45deg,var(--tdc-green) 0 5px,color-mix(in srgb,var(--tdc-green) 50%,transparent) 5px 10px)}
@@ -3525,12 +3530,38 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 @container ttd (max-width:699px){.dash.no-plan{grid-template-areas:"hero" "charge" "map" "tpms" "drive" "econ" "last" "daily"}}
 .dash.charge-layout.no-plan{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "nav"}
 /* Car controls: a full row under the charging panels (Tesla page only). */
-.carctl{grid-area:carctl}
-.dash.has-ctl{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge plan plan plan plan tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
-.dash.has-ctl.no-plan{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge charge charge charge charge tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
-@container ttd (max-width:1199px){.dash.has-ctl{grid-template-areas:"hero hero" "charge plan" "carctl carctl" "map tpms" "drive econ" "last daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero hero" "charge charge" "carctl carctl" "map tpms" "drive econ" "last daily"}}
-@container ttd (max-width:899px){.dash.has-ctl{grid-template-areas:"hero hero" "charge charge" "plan plan" "carctl carctl" "map tpms" "drive econ" "last daily"}}
-@container ttd (max-width:699px){.dash.has-ctl{grid-template-areas:"hero" "charge" "plan" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero" "charge" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}}
+.hero{position:relative}
+.qc{position:relative;grid-area:2/1/3/2;align-self:end;justify-self:center;margin:0 0 -8px 16%;z-index:20;display:flex;gap:8px;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 72%,transparent);border:1px solid var(--tdc-line);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%)}
+.qc-b{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:38px;min-width:38px;padding:0 9px;border-radius:999px;border:1px solid transparent;background:var(--tdc-tile);color:var(--tdc-text);font-size:13px;font-weight:650;cursor:pointer;transition:background .15s,border-color .15s}
+.qc-b ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}
+.qc-b span:empty{display:none}
+.qc-b span{white-space:nowrap}
+.qc-b:hover{background:var(--tdc-hover)}
+.qc-b[data-on]{background:color-mix(in srgb,var(--tdc-blue) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.qc-b[data-on] ha-icon{color:var(--tdc-blue)}
+.qc-b[data-warn] ha-icon{color:var(--tdc-orange)}
+.qc-b[data-armed]{border-color:var(--tdc-orange);box-shadow:0 0 0 2px color-mix(in srgb,var(--tdc-orange) 45%,transparent)}
+.qc-b[data-open]{border-color:color-mix(in srgb,var(--tdc-text) 45%,transparent)}
+.qc-b:disabled{opacity:.4;cursor:default}
+.qc-spin{position:absolute;inset:-3px;border-radius:999px;border:2px solid transparent;border-top-color:var(--tdc-blue);border-right-color:var(--tdc-blue);display:none;animation:ttdSpin .9s linear infinite;pointer-events:none}
+.qc-b[data-busy] .qc-spin{display:block}
+.qc-b[data-busy]{cursor:progress}
+@keyframes ttdSpin{to{transform:rotate(360deg)}}
+.qc-cap{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 82%,transparent);border:1px solid var(--tdc-line);font-size:13px;color:var(--tdc-text);white-space:nowrap;pointer-events:none}
+.qc-cap[data-tone=warn]{border-color:var(--tdc-orange);color:var(--tdc-orange)}
+.qc-pop{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:4;width:min(300px,86vw);display:grid;gap:12px;padding:14px;border-radius:16px;background:var(--tdc-pop-bg,#161c25);border:1px solid var(--tdc-line);box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.qcp-h{display:flex;align-items:center;gap:8px;font-size:15px}.qcp-h ha-icon{--mdc-icon-size:20px;color:var(--tdc-blue)}.qcp-h small{margin-left:auto;color:var(--tdc-muted);font-size:12.5px}
+.qcp-x{border:0;background:transparent;color:var(--tdc-muted);font-size:20px;line-height:1;padding:0 2px;cursor:pointer}
+.qcp-power{position:relative;height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:14.5px;font-weight:650;cursor:pointer}
+.qcp-power[data-on]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.qcp-power[data-busy]{cursor:progress;opacity:.85}
+.qcp-temp{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;text-align:center}
+.qcp-temp button{height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:20px;cursor:pointer}
+.qcp-temp b{font-size:24px;font-weight:700}.qcp-temp b[data-busy]{color:var(--tdc-blue)}
+.qcp-more{justify-self:start;border:0;background:transparent;color:var(--tdc-blue);font-size:13px;cursor:pointer;padding:0}
+.qc-pop .cc-num{margin-top:0;grid-template-columns:auto 1fr}.qc-pop .cc-num input{grid-column:1/-1}
+@container ttd (max-width:699px){.qc{grid-area:2/1/3/3;margin-left:0}.qc{gap:4px;padding:4px}.qc-b{height:36px;min-width:34px;padding:0 6px;font-size:12px;gap:3px}.qc-b ha-icon{--mdc-icon-size:18px}}
+@container ttd (max-width:380px){.qc{gap:4px}.qc-b{min-width:32px;padding:0 5px}.qc-b ha-icon{--mdc-icon-size:18px}}
 .cc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .cc{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);text-align:left;min-width:0}
 .cc:hover{background:var(--tdc-hover)}
@@ -4058,32 +4089,100 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     };
   }
   /** The car controls: state per button, the value per slider (unless one is being set). */
+  /** How a car control stands, in words, and whether it is "on" (lit) or calls for attention. */
+  _ccText(key, o, f) {
+    if (!o) return [TTD_TEXT.unavailable, false, false];
+    const temp = Number(o.attributes?.current_temperature);
+    switch (key) {
+      case "lock":
+        return [{ locked: "L\xE5st", unlocked: "Ul\xE5st", locking: "L\xE5ser\u2026", unlocking: "L\xE5ser op\u2026", open: "\xC5ben" }[o.state] || ttdHumanize(o.state), false, ["unlocked", "open"].includes(o.state)];
+      case "climate":
+        return [o.state === "off" ? "Klima slukket" : `Klima t\xE6ndt${Number.isFinite(temp) ? ` \xB7 inde ${f.number(temp, 0)} \xB0C` : ""}`, o.state !== "off", false];
+      case "charge_port":
+        return [{ open: "Ladeport \xE5ben", opening: "Ladeport \xE5bner\u2026", closed: "Ladeport lukket", closing: "Ladeport lukker\u2026" }[o.state] || ttdHumanize(o.state), ["open", "opening"].includes(o.state), false];
+      case "sentry":
+        return [o.state === "on" ? "Vagtpost til" : "Vagtpost fra", o.state === "on", false];
+      case "flash":
+        return ["Blink lys", false, false];
+      default: {
+        const unit = o.attributes?.unit_of_measurement || (key === "charge_limit" ? "%" : "A");
+        return [Number.isFinite(Number(o.state)) ? `${f.number(Number(o.state), 0)} ${unit}` : TTD_TEXT.unavailable, false, false];
+      }
+    }
+  }
+  /** A command that was sent and is waiting for the car: done when its entity shows the result, given up after a while. */
+  _ccSettle(st) {
+    const now = Date.now();
+    for (const [key, item2] of Object.entries(this._ccBusy || {})) {
+      const o = st(item2.ctl);
+      if (o && item2.done(o)) {
+        delete this._ccBusy[key];
+        if (item2.ok) this._ccSay(item2.ok, 4e3);
+      } else if (now >= item2.until) {
+        delete this._ccBusy[key];
+        this._ccSay(`${item2.label} svarede ikke \u2013 pr\xF8v igen`, 6e3, "warn");
+      }
+    }
+  }
+  _ccSay(text, ms, tone2 = "") {
+    this._ccMsg = { text, tone: tone2, until: Date.now() + ms };
+    clearTimeout(this._ccMsgTimer);
+    this._ccMsgTimer = setTimeout(() => this._applyCarControls(), ms + 50);
+  }
+  /** Send a car command and show at once that it is on its way; the button cannot be pressed again until the car answers. */
+  _ccCall(key, ctl, domain, service, data, done, text, ok) {
+    const label = TTD_CAR_CONTROLS.find(([k]) => k === ctl)?.[1] || "Bilen";
+    this._ccBusy = { ...this._ccBusy || {}, [key]: { ctl, done, text, ok, label, until: Date.now() + TTD_CC_BUSY_MS } };
+    clearTimeout(this._ccBusyTimer);
+    this._ccBusyTimer = setTimeout(() => this._applyCarControls(), TTD_CC_BUSY_MS + 100);
+    this._applyCarControls();
+    Promise.resolve(this._hass?.callService(domain, service, data)).catch((err) => {
+      if (this._ccBusy) delete this._ccBusy[key];
+      this._ccSay(`Fejl: ${err?.message || err}`, 7e3, "warn");
+      this._applyCarControls();
+    });
+  }
   _applyCarControls() {
     const ids = this._cfg.carControls;
-    if (!this._r.ctlPanel) return;
+    if (!this._r.qc) return;
     const f = this._format();
     const st = (key) => this._hass?.states?.[ids[key]];
-    const text = {
-      lock: (o) => ({ locked: ["L\xE5st", false], unlocked: ["Ul\xE5st", true], locking: ["L\xE5ser\u2026", false], unlocking: ["L\xE5ser op\u2026", true], open: ["\xC5ben", true] })[o.state] || [ttdHumanize(o.state), false],
-      climate: (o) => o.state === "off" ? ["Slukket", false] : [`T\xE6ndt${Number.isFinite(Number(o.attributes?.current_temperature)) ? ` \xB7 ${f.number(Number(o.attributes.current_temperature), 0)} \xB0C` : ""}`, true],
-      charge_port: (o) => ({ open: ["\xC5ben", true], opening: ["\xC5bner\u2026", true], closed: ["Lukket", false], closing: ["Lukker\u2026", false] })[o.state] || [ttdHumanize(o.state), false],
-      sentry: (o) => o.state === "on" ? ["Til", true] : ["Fra", false],
-      flash: () => ["Blinker \xE9n gang", false]
-    };
-    for (const button of this.shadowRoot.querySelectorAll("[data-cc]")) {
-      const key = button.dataset.cc;
+    this._ccSettle(st);
+    const busy = this._ccBusy || {};
+    const busyFor = (ctl) => Object.values(busy).find((item2) => item2.ctl === ctl);
+    for (const button of this.shadowRoot.querySelectorAll(".qc-b")) {
+      const key = button.dataset.cc || button.dataset.qc;
       const o = st(key);
       const dead = !o || ["unavailable", "unknown"].includes(o.state) && key !== "flash";
-      const [label, on] = o ? text[key](o) : [TTD_TEXT.unavailable, false];
-      const armed = this._armed === `cc:${key}`;
-      button.disabled = !!dead && !o;
-      this._attrSet(button, "aria-pressed", String(key === "lock" ? false : !!on));
-      this._attrSet(button, "data-warn", key === "lock" && on);
-      this._attrSet(button, "data-armed", armed);
-      const small = button.querySelector(`[data-ccs="${key}"]`);
-      const value = armed ? "Tryk igen for at udf\xF8re" : dead ? TTD_TEXT.unavailable : label;
-      if (small && small.textContent !== value) small.textContent = value;
+      const [label, on, warn] = this._ccText(key, o, f);
+      const working2 = busyFor(key);
+      button.disabled = !!dead;
+      this._attrSet(button, "data-on", !!on && !working2);
+      this._attrSet(button, "data-warn", !!warn);
+      this._attrSet(button, "data-armed", this._armed === `cc:${key}`);
+      this._attrSet(button, "data-busy", !!working2);
+      this._attrSet(button, "aria-busy", String(!!working2));
+      this._attrSet(button, "data-open", this._qcOpen === key);
+      this._attrSet(button, "title", working2 ? working2.text : label);
+      if (key === "lock") button.querySelector("ha-icon")?.setAttribute("icon", o?.state === "locked" ? "mdi:lock" : ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : "mdi:lock-clock");
+      const value = button.querySelector(`[data-qcv="${key}"]`);
+      let shown = "";
+      if (key === "climate" && o && o.state !== "off" && Number.isFinite(Number(o.attributes?.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}\xB0`;
+      else if (["charge_limit", "charge_current"].includes(key)) shown = dead ? TTD_DASH : label;
+      if (value && value.textContent !== shown) value.textContent = shown;
     }
+    const armedKey = this._armed?.startsWith("cc:") ? this._armed.slice(3) : null;
+    const armedText = armedKey ? { lock: "Tryk igen for at l\xE5se op", charge_port: "Tryk igen for ladeporten", sentry: "Tryk igen for at sl\xE5 vagtpost fra" }[armedKey] : null;
+    const working = Object.values(busy).at(-1);
+    const msg = this._ccMsg && Date.now() < this._ccMsg.until ? this._ccMsg : null;
+    const cap = armedText ? [armedText, "warn"] : working ? [working.text, ""] : msg ? [msg.text, msg.tone] : ["", ""];
+    const capEl = this._r.qcCap;
+    if (capEl) {
+      capEl.hidden = !cap[0] || !!this._qcOpen;
+      if (capEl.textContent !== cap[0]) capEl.textContent = cap[0];
+      this._attrSet(capEl, "data-tone", cap[1] || null);
+    }
+    this._applyQcPop(st, f, busyFor);
     for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
       const key = input.dataset.ccnum;
       const o = st(key);
@@ -4097,26 +4196,116 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this._attrSet(input, "step", a.step ?? 1);
         if (value !== null && input.value !== String(value)) input.value = String(value);
       }
-      input.disabled = value === null;
+      input.disabled = value === null || !!busyFor(key);
       const lo = Number(input.min) || 0;
       const hi = Number(input.max) || 100;
       if (value !== null) input.style.setProperty("--p", `${hi > lo ? (value - lo) / (hi - lo) * 100 : 0}%`);
       const out = this.shadowRoot.querySelector(`[data-ccv="${key}"]`);
-      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}`;
+      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}${busyFor(key) ? " \u2026" : ""}`;
       if (out && out.textContent !== shown) out.textContent = shown;
-      const box = this.shadowRoot.querySelector(`[data-ccset-box="${key}"]`);
-      if (box) box.hidden = pending === null;
-      const set = this.shadowRoot.querySelector(`[data-ccset="${key}"]`);
-      if (set && pending !== null) set.textContent = `S\xE6t ${f.number(pending, 0)} ${unit}`;
     }
+  }
+  /** The small panel above the buttons: the climate (on/off and temperature) or a number (charge limit, current). */
+  _openQc(key) {
+    this._qcOpen = this._qcOpen === key ? null : key;
+    this._qcTemp = null;
+    const pop = this._r.qcPop;
+    if (!pop) return;
+    pop.hidden = !this._qcOpen;
+    if (!this._qcOpen) {
+      this._applyCarControls();
+      return;
+    }
+    const [, label, icon3] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+    const head = `<div class="qcp-h">${ttdIcon(icon3)}<b>${label}</b><small data-qcp="sub"></small><button type="button" class="qcp-x" data-qcclose aria-label="Luk">\xD7</button></div>`;
+    pop.innerHTML = key === "climate" ? `${head}<button type="button" class="qcp-power" data-qcpower><span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
+        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">\u2212</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">+</button></div>
+        <button type="button" class="qcp-more" data-qcmore>Flere indstillinger (s\xE6der, rat \u2026) \u203A</button>` : `${head}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>\xC5bn i Home Assistant \u203A</button>`;
+    this._applyCarControls();
+  }
+  _applyQcPop(st, f, busyFor) {
+    const pop = this._r.qcPop;
+    const key = this._qcOpen;
+    if (!pop || !key || pop.hidden) return;
+    const o = st(key);
+    const sub = pop.querySelector('[data-qcp="sub"]');
+    if (key === "climate") {
+      const temp = Number(o?.attributes?.current_temperature);
+      const subText = Number.isFinite(temp) ? `Inde ${f.number(temp, 0)} \xB0C` : "";
+      if (sub && sub.textContent !== subText) sub.textContent = subText;
+      const power = busyFor("climate");
+      const on = o && o.state !== "off";
+      const btn = pop.querySelector("[data-qcpower]");
+      if (btn) {
+        this._attrSet(btn, "data-on", !!on && !power);
+        this._attrSet(btn, "data-busy", !!power);
+        btn.disabled = !o || o.state === "unavailable";
+        const text = power ? power.text : on ? "Sluk klima" : "T\xE6nd klima";
+        const span = btn.querySelector('[data-qcp="power"]');
+        if (span && span.textContent !== text) span.textContent = text;
+      }
+      const target = this._qcTemp ?? Number(o?.attributes?.temperature);
+      const tEl = pop.querySelector('[data-qcp="temp"]');
+      const tText = Number.isFinite(target) ? `${f.number(target, 1)} \xB0C` : TTD_DASH;
+      if (tEl && tEl.textContent !== tText) tEl.textContent = tText;
+      if (tEl) this._attrSet(tEl, "data-busy", this._qcTemp != null || !!(this._ccBusy || {}).climate_temp);
+    } else if (sub) {
+      const [label] = this._ccText(key, o, f);
+      const text = `Nu ${label}`;
+      if (sub.textContent !== text) sub.textContent = text;
+    }
+  }
+  _qcPower() {
+    const id = this._cfg.carControls.climate;
+    const o = id ? this._hass?.states?.[id] : null;
+    if (!o || (this._ccBusy || {}).climate) return;
+    const on = o.state !== "off";
+    this._ccCall(
+      "climate",
+      "climate",
+      "climate",
+      on ? "turn_off" : "turn_on",
+      { entity_id: id },
+      (s) => s.state !== "off" === !on,
+      on ? "Slukker klima\u2026" : "Starter klima\u2026",
+      on ? "Klima slukket" : "Klima t\xE6ndt"
+    );
+  }
+  _qcTempStep(delta) {
+    const id = this._cfg.carControls.climate;
+    const o = id ? this._hass?.states?.[id] : null;
+    if (!o) return;
+    const a = o.attributes || {};
+    const step = Number(a.target_temp_step) || 0.5;
+    const base = this._qcTemp ?? Number(a.temperature);
+    if (!Number.isFinite(base)) return;
+    const value = ttdClamp(Math.round((base + delta * step) / step) * step, Number(a.min_temp) || 15, Number(a.max_temp) || 28);
+    this._qcTemp = value;
+    this._applyCarControls();
+    clearTimeout(this._qcTempTimer);
+    this._qcTempTimer = setTimeout(() => {
+      const t = this._qcTemp;
+      this._qcTemp = null;
+      if (t == null) return;
+      this._ccCall(
+        "climate_temp",
+        "climate",
+        "climate",
+        "set_temperature",
+        { entity_id: id, temperature: t },
+        (s) => Math.abs(Number(s.attributes?.temperature) - t) < 0.01,
+        `S\xE6tter ${this._format().number(t, 1)} \xB0C\u2026`,
+        `Klima sat til ${this._format().number(t, 1)} \xB0C`
+      );
+    }, 1200);
   }
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
   _carControl(key) {
     const id = this._cfg.carControls[key];
     const o = id ? this._hass?.states?.[id] : null;
-    if (!o) return;
+    if (!o || Object.values(this._ccBusy || {}).some((item2) => item2.ctl === key)) return;
     if (key === "climate") {
-      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      this._openQc("climate");
       return;
     }
     const critical = key === "lock" && o.state !== "unlocked" && o.state !== "open" || key === "charge_port" || key === "sentry" && o.state === "on";
@@ -4128,10 +4317,46 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     this._disarm(true);
-    if (key === "lock") this._call("lock", o.state === "locked" ? "unlock" : "lock", { entity_id: id });
-    else if (key === "charge_port") this._call("cover", ["open", "opening"].includes(o.state) ? "close_cover" : "open_cover", { entity_id: id });
-    else if (key === "sentry") this._call("switch", o.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
-    else if (key === "flash") this._call("button", "press", { entity_id: id });
+    if (key === "lock") {
+      const lock = o.state !== "locked";
+      this._ccCall(
+        key,
+        key,
+        "lock",
+        lock ? "lock" : "unlock",
+        { entity_id: id },
+        (s) => s.state === (lock ? "locked" : "unlocked"),
+        lock ? "L\xE5ser bilen\u2026" : "L\xE5ser op\u2026",
+        lock ? "Bilen er l\xE5st" : "Bilen er l\xE5st op"
+      );
+    } else if (key === "charge_port") {
+      const open = !["open", "opening"].includes(o.state);
+      this._ccCall(
+        key,
+        key,
+        "cover",
+        open ? "open_cover" : "close_cover",
+        { entity_id: id },
+        (s) => s.state === (open ? "open" : "closed"),
+        open ? "\xC5bner ladeporten\u2026" : "Lukker ladeporten\u2026",
+        open ? "Ladeporten er \xE5ben" : "Ladeporten er lukket"
+      );
+    } else if (key === "sentry") {
+      const on = o.state !== "on";
+      this._ccCall(
+        key,
+        key,
+        "switch",
+        on ? "turn_on" : "turn_off",
+        { entity_id: id },
+        (s) => s.state === (on ? "on" : "off"),
+        on ? "Sl\xE5r vagtpost til\u2026" : "Sl\xE5r vagtpost fra\u2026",
+        on ? "Vagtpost er til" : "Vagtpost er fra"
+      );
+    } else if (key === "flash") {
+      const before = o.state;
+      this._ccCall(key, key, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker\u2026", "Bilen blinkede");
+    }
   }
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
   _chargerText(mode) {
@@ -4169,6 +4394,23 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     });
     const marks = [deadline && deadline.getTime() <= until ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
     const next = blocks[0];
+    const minutes = Number(plan.slot_minutes) || 15;
+    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until);
+    const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
+    const chart = slots.map((x) => {
+      const left = at(new Date(Math.max(x.s, now)));
+      const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
+      return {
+        left,
+        width: at(new Date(Math.min(x.e, until))) - left,
+        h: 0.22 + 0.78 * (hi > lo ? (x.p - lo) / (hi - lo) : 0.5),
+        on,
+        est: x.est,
+        title: `${f.time(new Date(x.s))} \xB7 ${f.number(x.p, 2)} kr/kWh${on ? " \xB7 lader" : ""}`
+      };
+    });
+    const endSensor = ttdToDate(this._sc("next_charge_end")?.state);
+    const lastEnd = blocks.length === 1 && endSensor ? endSensor : blocks[blocks.length - 1]?.end;
     const cost = this._scNum("planned_cost");
     const energy = this._scNum("planned_energy");
     const costUnit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
@@ -4210,12 +4452,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
       segments,
       marks,
+      chart,
       axisRight: f.dayTime(new Date(until)),
-      axisMid: next ? `${f.time(next.start)}\u2013${f.time(next.end)}` : "",
+      axisMid: next ? `${f.time(next.start)}\u2013${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
+      hint: statusKey === "disconnected" && next ? `S\xE6ttes bilen til nu, lader den ${f.dayTime(next.start)}\u2013${f.time(blocks.length === 1 ? lastEnd : next.end)}${blocks.length > 1 ? ` (+${blocks.length - 1} perioder)` : ""}${cost != null ? ` \xB7 ${ttdJoin(f.number(cost, 2), costUnit)}` : ""}` : "",
       start: next ? next.start.getTime() <= now ? "Nu" : f.time(next.start) : TTD_DASH,
       startDay: next && next.start.getTime() > now ? f.relativeDay(next.start) : "",
-      end: next ? f.time(blocks[blocks.length - 1].end) : TTD_DASH,
-      endDay: next ? f.relativeDay(blocks[blocks.length - 1].end) : "",
+      end: next ? f.time(lastEnd) : TTD_DASH,
+      endDay: next ? f.relativeDay(lastEnd) : "",
       cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " \xB7 delvist sk\xF8nnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
@@ -4688,6 +4932,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
+    const chartSig = JSON.stringify([sc.chart, sc.marks]);
+    if (r.scChart && r.scChart.dataset.sig !== chartSig) {
+      r.scChart.dataset.sig = chartSig;
+      const H3 = 60;
+      r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H3}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
+        const h = Math.max(3, b.h * (H3 - 4));
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H3 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H3}" class="${m.kind}"/>`).join("")}</svg>` : "";
+    }
+    if (r.scChart) r.scChart.hidden = !sc.chart.length;
+    if (r.scTrack) r.scTrack.hidden = !!sc.chart.length;
+    this._t("scHint", sc.hint);
+    if (r.scHint) r.scHint.hidden = !sc.hint;
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
       r.scTrack.dataset.sig = signature;
@@ -5078,8 +5335,31 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
   }
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres]");
+    if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore]");
     if (!target) return;
+    if (target.dataset.qc) {
+      if (!target.disabled) this._openQc(target.dataset.qc);
+      return;
+    }
+    if (target.dataset.qcclose != null) {
+      this._openQc(this._qcOpen);
+      return;
+    }
+    if (target.dataset.qcpower != null) {
+      this._qcPower();
+      return;
+    }
+    if (target.dataset.qctemp) {
+      this._qcTempStep(Number(target.dataset.qctemp));
+      return;
+    }
+    if (target.dataset.qcmore != null) {
+      const id = this._cfg.carControls[this._qcOpen];
+      this._openQc(this._qcOpen);
+      if (id) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      return;
+    }
     if (target.dataset.cc) this._carControl(target.dataset.cc);
     else if (target.dataset.ccset) {
       const pending = this._ccPending;
@@ -5130,9 +5410,21 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const el = event.target;
     const r = this._r;
     if (el?.dataset?.ccnum) {
-      const id = this._cfg.carControls[el.dataset.ccnum];
+      const key = el.dataset.ccnum;
+      const id = this._cfg.carControls[key];
+      const value = Number(el.value);
+      const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
       this._ccPending = null;
-      if (id) this._call("number", "set_value", { entity_id: id, value: Number(el.value) });
+      if (id) this._ccCall(
+        key,
+        key,
+        "number",
+        "set_value",
+        { entity_id: id, value },
+        (s) => Number(s.state) === value,
+        `S\xE6tter ${String(label).toLowerCase()} til ${value}\u2026`,
+        `${label} er ${value}`
+      );
       this._applyCarControls();
       return;
     }
@@ -9163,7 +9455,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.8.0";
+var VERSION13 = "0.9.0";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -9249,7 +9541,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       this._config.stromligning_current,
       this._config.stromligning_tomorrow,
       this._config.stromligning_forecast,
-      this._config.resolution_entity
+      this._config.resolution_entity,
+      this._config.charge_plan_entity
     ];
     const sig = JSON.stringify(
       ids.map((id) => [
@@ -9471,15 +9764,33 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       })
     } : { weekday: "\u2014", date: "\u2014" };
   }
+  // The car's planned charging (EV Ledger's next_charge_start sensor, attribute "blocks"): those bars get a faint foot.
+  _planBlocks() {
+    const blocks = this._entity(this._config.charge_plan_entity)?.attributes?.blocks;
+    return (Array.isArray(blocks) ? blocks : []).map((b) => [Date.parse(b?.start), Date.parse(b?.end)]).filter(([s, e]) => Number.isFinite(s) && Number.isFinite(e) && e > s);
+  }
+  _barState(points, index, min, max, plan) {
+    const p = points[index], n = points.length, now = Date.now();
+    const values = points.map((x) => x.price);
+    const current = now >= p.start && now < p.end;
+    const extreme = index === values.indexOf(min) ? "min" : index === values.indexOf(max) ? "max" : "";
+    const planned = plan.some(([s, e]) => p.start < e && p.end > s);
+    const edge = n > 30 ? index < 3 ? "edge-l" : index > n - 4 ? "edge-r" : "" : index === 0 ? "edge-l" : index === n - 1 ? "edge-r" : "";
+    const badge = current ? "NU" : extreme === "min" ? "LAV" : extreme === "max" ? "H\xD8J" : "";
+    return { current, extreme, planned, edge, badge, cls: `bar-wrap ${current ? "current" : ""} ${extreme} ${planned ? "plan" : ""} ${edge}` };
+  }
+  _tip(p, planned) {
+    return `${this._label(p)}<br><b>${this._fmt(p.price)} kr.</b>${planned ? `<br><small>Bilen lader her</small>` : ""}`;
+  }
   _bars(points) {
     if (!points.length)
       return `<div class="empty"><ha-icon icon="mdi:chart-bar-off"></ha-icon><span>Ingen prisdata for denne dag</span></div>`;
     const values = points.map((p) => p.price), min = Math.min(...values), max = Math.max(...values), span = Math.max(0.01, max - min), now = Date.now();
     const dense = points.length > 30;
-    const lowAt = values.indexOf(min), highAt = values.indexOf(max);
+    const plan = this._planBlocks();
     return `<div class="chart${dense ? " dense" : ""}" style="grid-template-columns:repeat(${points.length},minmax(0,1fr))">${points.map((p, index) => {
-      const h = 18 + (p.price - min) / span * 82, hour = this._label(p), current = now >= p.start && now < p.end, extreme = index === lowAt ? "min" : index === highAt ? "max" : "", badgeText = current ? "NU" : extreme === "min" ? "LAV" : extreme === "max" ? "H\xD8J" : "", pulse = this._pulse(p.price), alert2 = this._config.high_price_animation !== false && pulse > 0;
-      return `<button class="bar-wrap ${current ? "current" : ""} ${extreme} ${alert2 ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time"><span class="tip">${hour}<br><b>${this._fmt(p.price)} kr.</b></span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
+      const h = 18 + (p.price - min) / span * 82, hour = this._label(p), state = this._barState(points, index, min, max, plan), badgeText = state.badge, pulse = this._pulse(p.price), alert2 = this._config.high_price_animation !== false && pulse > 0;
+      return `<button class="${state.cls} ${alert2 ? "price-alert" : ""}" style="--price-color:${this._color(p.price)};--price-pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--price-pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--price-pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--price-pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--price-pulse-glow:${(3 + pulse * 15).toFixed(1)}px" aria-label="Klokken ${hour}, ${this._fmt(p.price)} kroner per kilowatt-time${state.planned ? ", bilen lader her" : ""}"><span class="tip">${this._tip(p, state.planned)}</span>${badgeText ? `<em>${badgeText}<b>${this._fmt(p.price)}</b></em>` : ""}<i style="--h:${h}%"></i></button>`;
     }).join("")}</div>`;
   }
   _updateDynamic(data) {
@@ -9510,8 +9821,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       const label = stat.querySelector("b");
       if (label) label.textContent = this._fmt(value);
     });
-    const now = Date.now();
     const bars = this.shadowRoot.querySelectorAll(".bar-wrap");
+    const plan = this._planBlocks();
     points.forEach((point, index) => {
       const bar = bars[index];
       if (!bar) return;
@@ -9519,22 +9830,21 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       const ratio = (point.price - min) / span;
       const height = 18 + ratio * 82;
       const hour = this._label(point);
-      const current = now >= point.start && now < point.end;
-      const extreme = index === values.indexOf(min) ? "min" : index === values.indexOf(max) ? "max" : "";
-      bar.className = `bar-wrap ${current ? "current" : ""} ${extreme}`;
+      const state = this._barState(points, index, min, max, plan);
+      bar.className = state.cls;
       this._setBarVisual(bar, point.price);
-      bar.setAttribute("aria-label", `Klokken ${hour}, ${this._fmt(point.price)} kroner per kilowatt-time`);
-      bar.querySelector(".tip").innerHTML = `${hour}<br><b>${this._fmt(point.price)} kr.</b>`;
+      bar.setAttribute("aria-label", `Klokken ${hour}, ${this._fmt(point.price)} kroner per kilowatt-time${state.planned ? ", bilen lader her" : ""}`);
+      bar.querySelector(".tip").innerHTML = this._tip(point, state.planned);
       const column = bar.querySelector("i");
       column.style.setProperty("--h", `${height}%`);
       let marker = bar.querySelector("em");
-      if (!extreme) marker?.remove();
+      if (!state.badge) marker?.remove();
       else {
         if (!marker) {
           marker = document.createElement("em");
           bar.insertBefore(marker, column);
         }
-        marker.innerHTML = `${extreme === "min" ? "LAV" : "H\xD8J"}<b>${this._fmt(point.price)}</b>`;
+        marker.innerHTML = `${state.badge}<b>${this._fmt(point.price)}</b>`;
         marker.style.top = window.matchMedia("(max-width: 600px)").matches ? "-24px" : "-28px";
       }
     });
@@ -9551,7 +9861,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     const tab = (id, name, label, icon3) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.chart.dense{gap:1px}.chart.dense .bar-wrap i{border-radius:2px 2px 1px 1px}.chart.dense .bar-wrap em{display:none}.chart.dense .bar-wrap.current em,.chart.dense .bar-wrap.min em,.chart.dense .bar-wrap.max em{display:flex}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:2px solid var(--primary-text-color);outline-offset:2px}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
+      :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.stat{min-width:55px;padding:5px 7px;border:1px solid var(--edge);border-radius:10px;text-align:center}.stat span{display:block;color:var(--secondary-text-color);font-size:7px;font-weight:700}.stat b{font-size:10px}.bar-wrap.plan i{background:linear-gradient(to top,var(--plan-color,#4fd1ff) 0,var(--plan-color,#4fd1ff) var(--plan-foot,6px),var(--price-color) var(--plan-foot,6px))!important}.bar-wrap.plan .tip small{color:var(--plan-color,#4fd1ff);font-size:8px}.bar-wrap.edge-l em,.bar-wrap.edge-l .tip{left:0}.bar-wrap.edge-r em,.bar-wrap.edge-r .tip{right:0}.chart.dense .bar-wrap.current i{box-shadow:0 -2px 0 0 var(--primary-text-color,#fff),0 0 8px color-mix(in srgb,var(--price-color) 70%,transparent)}.chart.dense{gap:1px}.chart.dense .bar-wrap i{border-radius:2px 2px 1px 1px}.chart.dense .bar-wrap em{display:none}.chart.dense .bar-wrap.current em,.chart.dense .bar-wrap.min em,.chart.dense .bar-wrap.max em{display:flex}.chart{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:4px;height:180px;margin-top:5px;padding-top:39px;border-bottom:1px solid var(--edge);background:repeating-linear-gradient(to bottom,transparent 0 31px,color-mix(in srgb,var(--edge) 65%,transparent) 32px,transparent 33px)}.bar-wrap{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:140px;min-width:0;padding:0;border:0;background:transparent;cursor:pointer}.bar-wrap i{display:block;width:100%;height:var(--h);min-height:7px;margin-bottom:1px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,var(--danger) calc(var(--ratio)*100%),var(--good));transition:filter .15s,transform .15s}.bar-wrap:hover i,.bar-wrap:focus-visible i{filter:brightness(1.15);transform:scaleX(1.18)}.bar-wrap.current i{outline:none;filter:brightness(1.3) saturate(1.15);box-shadow:0 -3px 0 0 var(--primary-text-color,#fff),0 0 12px color-mix(in srgb,var(--price-color) 65%,transparent)}.bar-wrap em{position:absolute;z-index:2;top:-35px;display:flex;flex-direction:column;align-items:center;padding:3px 5px;border:1px solid currentColor;border-radius:7px;background:var(--surface-local);font-size:6px;font-style:normal;font-weight:800;line-height:1.1;white-space:nowrap}.bar-wrap em b{font-size:8px}.bar-wrap.min em{color:var(--good)}.bar-wrap.max em{color:var(--danger)}.tip{position:absolute;z-index:5;bottom:105px;display:none;padding:5px 7px;border:1px solid var(--accent);border-radius:8px;background:var(--card-background-color,#161d28);color:var(--primary-text-color,#fff);box-shadow:0 5px 14px rgba(0,0,0,.35);font-size:9px;white-space:nowrap}.bar-wrap:hover .tip,.bar-wrap:focus-visible .tip{display:block}.empty{display:flex;align-items:center;justify-content:center;gap:8px;height:164px;color:var(--secondary-text-color)}@media(max-width:600px){ha-card{padding:12px 8px 10px}.icon{width:31px;height:31px}.identity strong{font-size:13px}.price b{font-size:24px}.tabs{margin-top:10px}.days{gap:2px}.day-choice{padding:5px 1px}.day-choice b{font-size:9px}.day-choice span{font-size:6px}.summary{grid-template-columns:1fr repeat(3,43px);gap:3px}.stat{min-width:0;padding:4px 2px}.day{font-size:12px}.chart{gap:2px}.bar-wrap em{padding:2px 3px}.bar-wrap em b{font-size:7px}}
       ha-card{height:414px}.tabs{display:flex;height:52px;gap:8px;margin:9px 0 7px;padding:0;border:0;background:transparent}.tabs button{flex:1;position:relative;display:flex;align-items:center;gap:8px;height:52px;overflow:hidden;padding:5px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.11) 0%,rgba(255,255,255,.035) 100%);backdrop-filter:blur(10px) saturate(155%);-webkit-backdrop-filter:blur(10px) saturate(155%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26);text-align:left;cursor:pointer;color:var(--secondary-text-color);transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.tabs button:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.26),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.tabs button:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.tabs button{transition:none}.tabs button:hover{transform:none}}.tabs button.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 20px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 34%,transparent)}.tabs button ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color);flex-shrink:0}.tabs button.active ha-icon{color:#fff}.tab-copy{position:relative;z-index:3;align-self:center;min-width:0}.tab-copy b,.tab-copy small{display:block}.tab-copy b{color:var(--secondary-text-color);font-size:14px;font-weight:800;line-height:1.05}.tab-copy small{margin-top:1px;color:var(--secondary-text-color);font-size:10px;white-space:nowrap;opacity:.75}.tabs button.active .tab-copy b,.tabs button.active .tab-copy small{color:#fff;opacity:1}.week-slot{height:43px;margin-bottom:7px}.week-nav{height:43px;margin:0}.day-choice{border-radius:12px}.stat{border:0;color:var(--state-badge-text,#fff);background:linear-gradient(135deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 78%,black 22%));box-shadow:var(--state-badge-shadow,0 3px 9px rgba(0,0,0,.18))}.stat span{color:inherit}.chart{height:167px;padding-top:34px}.bar-wrap{height:132px}@media(max-width:600px){ha-card{height:calc(330px + var(--front-mobile-fill,0px))}.tabs{height:50px;gap:5px}.tabs button{height:50px;padding:4px 6px}.tab-copy b{font-size:13px}.tab-copy small{font-size:8px}.tabs button>ha-icon{--mdc-icon-size:30px}.week-slot,.week-nav{height:40px}.week-slot{margin-bottom:5px}.chart{height:calc(188px + var(--front-mobile-fill,0px));gap:5px;padding-top:22px}.bar-wrap{height:calc(165px + var(--front-mobile-fill,0px))}.stat{height:27px}}
       .bar-wrap i{background:var(--price-color);transform-origin:center bottom;transition:background-color .9s ease,filter .15s,transform .15s}.bar-wrap.price-alert i{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.9;filter:brightness(1) drop-shadow(0 0 2px var(--price-color))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--price-color))}}@media(prefers-reduced-motion:reduce){:host(:not([force-price-animation])) .bar-wrap.price-alert i{animation:none}}
 
@@ -9560,7 +9870,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       /* Periodeknapperne sidder i samme beholder som Varme Centers faner. */
       .tabs{padding:4px;gap:4px;border:1px solid var(--divider-color,var(--edge));border-radius:14px;background:var(--front-theme-surface,var(--ha-card-background,var(--card-background-color,var(--surface-local))));box-shadow:var(--front-theme-shadow,var(--ha-card-box-shadow,none))}.tabs button{border:0;border-radius:10px;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}.tabs button:hover{color:var(--primary-text-color);background:var(--contrast1,color-mix(in srgb,var(--primary-text-color) 4%,transparent))}.tabs button.active{border:0;color:var(--primary-text-color);background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--accent) 14%,transparent));box-shadow:inset 0 0 0 1px var(--dashboard-tab-selected-border,var(--accent)),0 0 18px -8px var(--accent)}
       /* Telefon: s\xF8jlerne g\xE5r helt ned til kortets kant, s\xE5 de yderste f\xF8lger hj\xF8rnernes bue. */
-      @media(max-width:600px){ha-card{padding-bottom:0}.chart{border-bottom:0}.bar-wrap i{margin-bottom:0;border-radius:5px 5px 0 0}}
+      @media(max-width:600px){.bar-wrap.plan{--plan-foot:8px}ha-card{padding-bottom:0}.chart{border-bottom:0}.bar-wrap i{margin-bottom:0;border-radius:5px 5px 0 0}}
       /* Mobil: rammen slutter t\xE6t om periodeknapperne uden luft, baggrund eller skygge, og den valgte knaps kant ligger oven p\xE5 rammen. */
       @media(max-width:700px){.tabs{gap:0;padding:0;overflow:hidden;border:0;background:transparent;box-shadow:inset 0 0 0 1px var(--divider-color,var(--edge))}.tabs button{border-radius:0}.tabs button:first-child{border-radius:14px 0 0 14px}.tabs button:last-child{border-radius:0 14px 14px 0}}
       /* Telefon: fanerne rykker op, s\xE5 der er lige langt fra rammen til kortets top og sider. */

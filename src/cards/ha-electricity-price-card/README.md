@@ -34,6 +34,10 @@ kvarterpriser til timer med timens gennemsnitspris. `resolution_entity` (fx EV L
 `select.<bil>_price_resolution`) vinder over `resolution`, så kortet viser kvarterer eller timer ligesom
 ladeplanerne.
 
+`charge_plan_entity` (fx EV Ledgers `sensor.<bil>_next_charge_start`) giver de søjler, hvor bilen efter planen
+lader, en svag farvet fod i bunden; tooltippen siger "Bilen lader her". Planen findes også, før bilen er sat til,
+så grafen viser, hvornår den vil lade.
+
 `source` kan være `auto`, `stromligning` eller `energidataservice`. I automatisk tilstand foretrækkes Strømligning, hvis den har gyldige prisdata; ellers bruges Energi Data Service.
 
 `force_price_animation: true` lader højpris-pulsen fortsætte på en skærm, der

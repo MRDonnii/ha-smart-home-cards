@@ -31,14 +31,14 @@ vehicle:
     top: /local/tesla/top.webp             # bilen set ovenfra (front op): i Dæktryk
     top_wheels: { fl: [13, 19], fr: [87, 19], rl: [13, 79], rr: [87, 79] }   # hjulenes placering i %
     cable: { path: "M524 252 L…", width: 889, height: 504 }  # kablet i ladefotoet: animeres under ladning
-car_controls:                            # Bilstyring (kun på hele Tesla-siden)
+car_controls:                            # Bilstyring: runde knapper nederst i topkortet (kun på hele Tesla-siden)
   lock: lock.tesla_lock                  # oplåsning kræver to tryk
-  climate: climate.tesla_climate         # åbner termostaten
+  climate: climate.tesla_climate         # lille termostat: tænd/sluk og temperatur ± (+ "Flere indstillinger")
   charge_port: cover.tesla_charge_port_door   # to tryk
   sentry: switch.tesla_sentry_mode       # slå fra kræver to tryk
   flash: button.tesla_flash_lights
   charge_limit: number.tesla_charge_limit
-  charge_current: number.tesla_charge_current
+  charge_current: number.tesla_charge_current   # ladegrænse og -strøm: skyder i det lille panel
 location_entity: device_tracker.tesla_location_tracker
 entities:
   battery: sensor.tesla_battery
@@ -100,6 +100,10 @@ chart:
   energy_entity: sensor.monta_charger_charge_energy
 ```
 
+Bilstyringen ligger som en række runde knapper nederst i topkortet, så kortet ikke bliver større. Et tryk viser straks,
+at kommandoen er sendt ("Låser…", "Starter klima…" med en roterende ring), og knappen kan ikke trykkes igen, før bilen
+har svaret (eller efter 90 sekunder: "svarede ikke").
+
 ## Billede af bilen
 
 Kortet tegner selv bilen: én enkel sidevisning pr. Tesla-karrosseri (`model_3`,
@@ -145,6 +149,8 @@ Kortet finder selv resten af bilens entiteter og viser panelet "Smart opladning"
 - Fast tid viser start/slut, Prisloft viser prisloft og minimum-SOC.
 - Midlertidig plan: afgang, destination (adresse, by eller `zone.*`) og tur/retur; viser
   afstand, energi og den SOC turen kræver.
+- En lille prisgraf fra nu til "klar senest" med planens ladetider fremhævet (fra EV Ledgers `prices`), og når bilen
+  ikke er sat til: "Sættes bilen til nu, lader den …".
 - "Priser i": **Kvarter** eller **Time** (EV Ledgers prisopløsning). Med Time lægges planerne i hele
   timer med timens gennemsnitspris; pris-kort med `resolution_entity` følger med.
 

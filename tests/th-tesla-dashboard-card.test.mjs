@@ -503,16 +503,17 @@ console.log("th-tesla-dashboard-card tests passed");
     }
   }
 }
-// Car controls: only in the full layout, only the configured entities.
+// Car controls: round buttons in the hero, only in the full layout, only the configured entities.
 {
   const withCtl = { ...config, car_controls: { lock: "lock.car", climate: "climate.car", charge_limit: "number.car_limit", bogus: "x.y" } };
   const html = context.ttdTemplate(context.ttdNormalizeConfig(withCtl));
   assert.match(html, /data-cc="lock"/);
-  assert.match(html, /data-cc="climate"/);
+  assert.match(html, /data-qc="climate"/, "the climate opens the small thermostat");
   assert.doesNotMatch(html, /data-cc="sentry"/);
-  assert.match(html, /data-ccnum="charge_limit"/);
-  assert.match(html, /has-ctl/);
-  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-cc=/, "not in the charge popup");
+  assert.match(html, /data-qc="charge_limit"/);
+  assert.match(html, /class="qc" data-r="qc"/);
+  assert.doesNotMatch(html, /panel carctl/, "no separate panel: the card does not grow");
+  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-cc=|data-qc=/, "not in the charge popup");
   assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Bilstyring/);
 }
 // Monta only where it is configured.

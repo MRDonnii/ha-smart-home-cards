@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.10.0";
+const TTD_VERSION = "1.11.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -38,6 +38,8 @@ const TTD_CHART_RANGES = {
 const TTD_STATS_TTL = 15 * 60 * 1000;
 const TTD_ARM_MS = 4000;
 const TTD_PENDING_MS = 8000;
+// A car command waits this long for the car to answer (a sleeping car first has to wake up).
+const TTD_CC_BUSY_MS = 90000;
 const TTD_REFRESH_MS = 60 * 1000;
 // Esri World Imagery (satellite) and its place-name overlay, shown on top of Home Assistant's own map on request.
 const TTD_SATELLITE = {
@@ -503,7 +505,11 @@ function ttdTemplate(cfg) {
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
-  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}${full && Object.keys(cfg.carControls).length ? " has-ctl" : ""}">
+  // The car's controls as a row of round buttons at the foot of the car picture (user, 2026-10-10: "styring af bilen
+  // kommer op i top kortet uden at lave det større"); the climate and the two numbers open a small panel above it.
+  const quick = full ? TTD_CAR_CONTROLS.filter(([key]) => cfg.carControls[key]) : [];
+  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
+  return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
     <div class="hero-title"><h2 class="name">${e(cfg.name)}</h2><button class="pill" data-more="online" data-r="pill"><i class="dot"></i><span data-r="statusText">${TTD_DASH}</span></button></div>
@@ -515,6 +521,7 @@ function ttdTemplate(cfg) {
     <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" data-r="ringFill" cx="60" cy="60" r="52" pathLength="100" stroke-dasharray="0 100"/></svg>
     <span class="ring-t"><span class="soc"><b data-r="soc">${TTD_DASH}</b><small data-r="socUnit">%</small>${ttdIcon("mdi:lightning-bolt", "bolt")}</span><span class="range" data-r="range">${TTD_DASH}</span><span class="muted">rækkevidde</span></span>
   </button>
+  ${quickHtml}
   ${full ? `<div class="hero-stats">${stat("odometer", "mdi:speedometer", "odometer", "Kilometerstand")}${stat("temperature_inside", "mdi:thermometer", "inside", "Indetemperatur")}${stat("temperature_outside", "mdi:thermometer", "outside", "Udetemperatur")}${stat("last_update", "mdi:refresh", "updatedShort", "Sidst opdateret")}</div>` : ""}
 </section>
 <section class="panel charge" data-r="charge" aria-label="Opladning">
@@ -536,7 +543,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekræft billigst</button>
-  <div class="sc-time" data-r="scTime"><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div></div>
+  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
@@ -572,11 +579,6 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
 </section>`}
-${full && Object.keys(cfg.carControls).length ? `<section class="panel carctl" data-r="ctlPanel" aria-label="Bilstyring">
-  <header class="ph">${ttdIcon("mdi:car-cog", "ph-i")}<div class="ph-t"><h3>Bilstyring</h3><p>Oplåsning, ladeport og vagtpost fra kræver to tryk</p></div></header>
-  <div class="cc-grid">${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain !== "number").map(([key, label, icon]) => `<button type="button" class="cc" data-cc="${key}" aria-pressed="false">${ttdIcon(icon)}<span><b data-ccl="${key}">${label}</b><small data-ccs="${key}">${TTD_DASH}</small></span></button>`).join("")}</div>
-  ${TTD_CAR_CONTROLS.filter(([key, , , domain]) => cfg.carControls[key] && domain === "number").map(([key, label, icon]) => `<div class="cc-num" data-ccbox="${key}"><span class="cc-num-l">${ttdIcon(icon)}${label}</span><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div>`).join("")}
-</section>` : ""}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
   <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="Åbn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
@@ -787,6 +789,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-modes button[data-default] .sc-star{display:block}
 .sc-modes button[aria-checked=true] .sc-star{color:var(--tdc-amber)}
 .sc-time{margin-bottom:14px}
+.sc-chart svg{display:block;width:100%;height:64px;overflow:visible}
+.sc-chart rect{fill:color-mix(in srgb,var(--tdc-text) 17%,transparent)}
+.sc-chart rect.on{fill:var(--tdc-green);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tdc-green) 55%,transparent))}
+.sc-chart rect.est{opacity:.55}
+.sc-chart line{stroke:var(--tdc-text);stroke-width:2;vector-effect:non-scaling-stroke}.sc-chart line.trip{stroke:var(--tdc-blue)}
+.sc-hint{margin:6px 0 0;font-size:13px;color:var(--tdc-green)}
 .sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
 .sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
 .sc-seg[data-est]{background:repeating-linear-gradient(45deg,var(--tdc-green) 0 5px,color-mix(in srgb,var(--tdc-green) 50%,transparent) 5px 10px)}
@@ -957,12 +965,38 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 @container ttd (max-width:699px){.dash.no-plan{grid-template-areas:"hero" "charge" "map" "tpms" "drive" "econ" "last" "daily"}}
 .dash.charge-layout.no-plan{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "charge" "nav"}
 /* Car controls: a full row under the charging panels (Tesla page only). */
-.carctl{grid-area:carctl}
-.dash.has-ctl{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge plan plan plan plan tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
-.dash.has-ctl.no-plan{grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge charge charge charge charge tpms tpms tpms" "carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl carctl" "drive drive drive econ econ econ last last last daily daily daily"}
-@container ttd (max-width:1199px){.dash.has-ctl{grid-template-areas:"hero hero" "charge plan" "carctl carctl" "map tpms" "drive econ" "last daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero hero" "charge charge" "carctl carctl" "map tpms" "drive econ" "last daily"}}
-@container ttd (max-width:899px){.dash.has-ctl{grid-template-areas:"hero hero" "charge charge" "plan plan" "carctl carctl" "map tpms" "drive econ" "last daily"}}
-@container ttd (max-width:699px){.dash.has-ctl{grid-template-areas:"hero" "charge" "plan" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}.dash.has-ctl.no-plan{grid-template-areas:"hero" "charge" "carctl" "map" "tpms" "drive" "econ" "last" "daily"}}
+.hero{position:relative}
+.qc{position:relative;grid-area:2/1/3/2;align-self:end;justify-self:center;margin:0 0 -8px 16%;z-index:20;display:flex;gap:8px;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 72%,transparent);border:1px solid var(--tdc-line);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%)}
+.qc-b{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:38px;min-width:38px;padding:0 9px;border-radius:999px;border:1px solid transparent;background:var(--tdc-tile);color:var(--tdc-text);font-size:13px;font-weight:650;cursor:pointer;transition:background .15s,border-color .15s}
+.qc-b ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}
+.qc-b span:empty{display:none}
+.qc-b span{white-space:nowrap}
+.qc-b:hover{background:var(--tdc-hover)}
+.qc-b[data-on]{background:color-mix(in srgb,var(--tdc-blue) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.qc-b[data-on] ha-icon{color:var(--tdc-blue)}
+.qc-b[data-warn] ha-icon{color:var(--tdc-orange)}
+.qc-b[data-armed]{border-color:var(--tdc-orange);box-shadow:0 0 0 2px color-mix(in srgb,var(--tdc-orange) 45%,transparent)}
+.qc-b[data-open]{border-color:color-mix(in srgb,var(--tdc-text) 45%,transparent)}
+.qc-b:disabled{opacity:.4;cursor:default}
+.qc-spin{position:absolute;inset:-3px;border-radius:999px;border:2px solid transparent;border-top-color:var(--tdc-blue);border-right-color:var(--tdc-blue);display:none;animation:ttdSpin .9s linear infinite;pointer-events:none}
+.qc-b[data-busy] .qc-spin{display:block}
+.qc-b[data-busy]{cursor:progress}
+@keyframes ttdSpin{to{transform:rotate(360deg)}}
+.qc-cap{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:3;padding:5px 12px;border-radius:999px;background:color-mix(in srgb,var(--tdc-panel,#11161d) 82%,transparent);border:1px solid var(--tdc-line);font-size:13px;color:var(--tdc-text);white-space:nowrap;pointer-events:none}
+.qc-cap[data-tone=warn]{border-color:var(--tdc-orange);color:var(--tdc-orange)}
+.qc-pop{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);z-index:4;width:min(300px,86vw);display:grid;gap:12px;padding:14px;border-radius:16px;background:var(--tdc-pop-bg,#161c25);border:1px solid var(--tdc-line);box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.qcp-h{display:flex;align-items:center;gap:8px;font-size:15px}.qcp-h ha-icon{--mdc-icon-size:20px;color:var(--tdc-blue)}.qcp-h small{margin-left:auto;color:var(--tdc-muted);font-size:12.5px}
+.qcp-x{border:0;background:transparent;color:var(--tdc-muted);font-size:20px;line-height:1;padding:0 2px;cursor:pointer}
+.qcp-power{position:relative;height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:14.5px;font-weight:650;cursor:pointer}
+.qcp-power[data-on]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent)}
+.qcp-power[data-busy]{cursor:progress;opacity:.85}
+.qcp-temp{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;text-align:center}
+.qcp-temp button{height:42px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:20px;cursor:pointer}
+.qcp-temp b{font-size:24px;font-weight:700}.qcp-temp b[data-busy]{color:var(--tdc-blue)}
+.qcp-more{justify-self:start;border:0;background:transparent;color:var(--tdc-blue);font-size:13px;cursor:pointer;padding:0}
+.qc-pop .cc-num{margin-top:0;grid-template-columns:auto 1fr}.qc-pop .cc-num input{grid-column:1/-1}
+@container ttd (max-width:699px){.qc{grid-area:2/1/3/3;margin-left:0}.qc{gap:4px;padding:4px}.qc-b{height:36px;min-width:34px;padding:0 6px;font-size:12px;gap:3px}.qc-b ha-icon{--mdc-icon-size:18px}}
+@container ttd (max-width:380px){.qc{gap:4px}.qc-b{min-width:32px;padding:0 5px}.qc-b ha-icon{--mdc-icon-size:18px}}
 .cc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .cc{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border-radius:12px;border:1px solid var(--tdc-line);background:var(--tdc-tile);text-align:left;min-width:0}
 .cc:hover{background:var(--tdc-hover)}
@@ -1526,31 +1560,99 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   /** The car controls: state per button, the value per slider (unless one is being set). */
+  /** How a car control stands, in words, and whether it is "on" (lit) or calls for attention. */
+  _ccText(key, o, f) {
+    if (!o) return [TTD_TEXT.unavailable, false, false];
+    const temp = Number(o.attributes?.current_temperature);
+    switch (key) {
+      case "lock": return [{ locked: "Låst", unlocked: "Ulåst", locking: "Låser…", unlocking: "Låser op…", open: "Åben" }[o.state] || ttdHumanize(o.state), false, ["unlocked", "open"].includes(o.state)];
+      case "climate": return [o.state === "off" ? "Klima slukket" : `Klima tændt${Number.isFinite(temp) ? ` · inde ${f.number(temp, 0)} °C` : ""}`, o.state !== "off", false];
+      case "charge_port": return [{ open: "Ladeport åben", opening: "Ladeport åbner…", closed: "Ladeport lukket", closing: "Ladeport lukker…" }[o.state] || ttdHumanize(o.state), ["open", "opening"].includes(o.state), false];
+      case "sentry": return [o.state === "on" ? "Vagtpost til" : "Vagtpost fra", o.state === "on", false];
+      case "flash": return ["Blink lys", false, false];
+      default: {
+        const unit = o.attributes?.unit_of_measurement || (key === "charge_limit" ? "%" : "A");
+        return [Number.isFinite(Number(o.state)) ? `${f.number(Number(o.state), 0)} ${unit}` : TTD_TEXT.unavailable, false, false];
+      }
+    }
+  }
+
+  /** A command that was sent and is waiting for the car: done when its entity shows the result, given up after a while. */
+  _ccSettle(st) {
+    const now = Date.now();
+    for (const [key, item] of Object.entries(this._ccBusy || {})) {
+      const o = st(item.ctl);
+      if (o && item.done(o)) {
+        delete this._ccBusy[key];
+        if (item.ok) this._ccSay(item.ok, 4000);
+      } else if (now >= item.until) {
+        delete this._ccBusy[key];
+        this._ccSay(`${item.label} svarede ikke – prøv igen`, 6000, "warn");
+      }
+    }
+  }
+
+  _ccSay(text, ms, tone = "") {
+    this._ccMsg = { text, tone, until: Date.now() + ms };
+    clearTimeout(this._ccMsgTimer);
+    this._ccMsgTimer = setTimeout(() => this._applyCarControls(), ms + 50);
+  }
+
+  /** Send a car command and show at once that it is on its way; the button cannot be pressed again until the car answers. */
+  _ccCall(key, ctl, domain, service, data, done, text, ok) {
+    const label = TTD_CAR_CONTROLS.find(([k]) => k === ctl)?.[1] || "Bilen";
+    this._ccBusy = { ...(this._ccBusy || {}), [key]: { ctl, done, text, ok, label, until: Date.now() + TTD_CC_BUSY_MS } };
+    clearTimeout(this._ccBusyTimer);
+    this._ccBusyTimer = setTimeout(() => this._applyCarControls(), TTD_CC_BUSY_MS + 100);
+    this._applyCarControls();
+    Promise.resolve(this._hass?.callService(domain, service, data)).catch((err) => {
+      if (this._ccBusy) delete this._ccBusy[key];
+      this._ccSay(`Fejl: ${err?.message || err}`, 7000, "warn");
+      this._applyCarControls();
+    });
+  }
+
   _applyCarControls() {
     const ids = this._cfg.carControls;
-    if (!this._r.ctlPanel) return;
+    if (!this._r.qc) return;
     const f = this._format();
     const st = (key) => this._hass?.states?.[ids[key]];
-    const text = {
-      lock: (o) => ({ locked: ["Låst", false], unlocked: ["Ulåst", true], locking: ["Låser…", false], unlocking: ["Låser op…", true], open: ["Åben", true] }[o.state] || [ttdHumanize(o.state), false]),
-      climate: (o) => o.state === "off" ? ["Slukket", false] : [`Tændt${Number.isFinite(Number(o.attributes?.current_temperature)) ? ` · ${f.number(Number(o.attributes.current_temperature), 0)} °C` : ""}`, true],
-      charge_port: (o) => ({ open: ["Åben", true], opening: ["Åbner…", true], closed: ["Lukket", false], closing: ["Lukker…", false] }[o.state] || [ttdHumanize(o.state), false]),
-      sentry: (o) => o.state === "on" ? ["Til", true] : ["Fra", false],
-      flash: () => ["Blinker én gang", false],
-    };
-    for (const button of this.shadowRoot.querySelectorAll("[data-cc]")) {
-      const key = button.dataset.cc; const o = st(key);
-      const dead = !o || ["unavailable", "unknown"].includes(o.state) && key !== "flash";
-      const [label, on] = o ? text[key](o) : [TTD_TEXT.unavailable, false];
-      const armed = this._armed === `cc:${key}`;
-      button.disabled = !!dead && !o;
-      this._attrSet(button, "aria-pressed", String(key === "lock" ? false : !!on));
-      this._attrSet(button, "data-warn", key === "lock" && on);
-      this._attrSet(button, "data-armed", armed);
-      const small = button.querySelector(`[data-ccs="${key}"]`);
-      const value = armed ? "Tryk igen for at udføre" : dead ? TTD_TEXT.unavailable : label;
-      if (small && small.textContent !== value) small.textContent = value;
+    this._ccSettle(st);
+    const busy = this._ccBusy || {};
+    const busyFor = (ctl) => Object.values(busy).find((item) => item.ctl === ctl);
+    for (const button of this.shadowRoot.querySelectorAll(".qc-b")) {
+      const key = button.dataset.cc || button.dataset.qc; const o = st(key);
+      const dead = !o || (["unavailable", "unknown"].includes(o.state) && key !== "flash");
+      const [label, on, warn] = this._ccText(key, o, f);
+      const working = busyFor(key);
+      button.disabled = !!dead;
+      this._attrSet(button, "data-on", !!on && !working);
+      this._attrSet(button, "data-warn", !!warn);
+      this._attrSet(button, "data-armed", this._armed === `cc:${key}`);
+      this._attrSet(button, "data-busy", !!working);
+      this._attrSet(button, "aria-busy", String(!!working));
+      this._attrSet(button, "data-open", this._qcOpen === key);
+      this._attrSet(button, "title", working ? working.text : label);
+      if (key === "lock") button.querySelector("ha-icon")?.setAttribute("icon", o?.state === "locked" ? "mdi:lock" : ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : "mdi:lock-clock");
+      const value = button.querySelector(`[data-qcv="${key}"]`);
+      let shown = "";
+      if (key === "climate" && o && o.state !== "off" && Number.isFinite(Number(o.attributes?.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}°`;
+      else if (["charge_limit", "charge_current"].includes(key)) shown = dead ? TTD_DASH : label;
+      if (value && value.textContent !== shown) value.textContent = shown;
     }
+    // One line above the buttons: "Tryk igen …", what is on its way, or how it went.
+    const armedKey = this._armed?.startsWith("cc:") ? this._armed.slice(3) : null;
+    const armedText = armedKey ? { lock: "Tryk igen for at låse op", charge_port: "Tryk igen for ladeporten", sentry: "Tryk igen for at slå vagtpost fra" }[armedKey] : null;
+    const working = Object.values(busy).at(-1);
+    const msg = this._ccMsg && Date.now() < this._ccMsg.until ? this._ccMsg : null;
+    const cap = armedText ? [armedText, "warn"] : working ? [working.text, ""] : msg ? [msg.text, msg.tone] : ["", ""];
+    const capEl = this._r.qcCap;
+    if (capEl) {
+      capEl.hidden = !cap[0] || !!this._qcOpen;
+      if (capEl.textContent !== cap[0]) capEl.textContent = cap[0];
+      this._attrSet(capEl, "data-tone", cap[1] || null);
+    }
+    this._applyQcPop(st, f, busyFor);
     for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
       const key = input.dataset.ccnum; const o = st(key); const a = o?.attributes || {};
       const pending = this._ccPending?.key === key ? this._ccPending.value : null;
@@ -1560,28 +1662,92 @@ class ThTeslaDashboardCard extends HTMLElement {
         this._attrSet(input, "min", a.min ?? 0); this._attrSet(input, "max", a.max ?? 100); this._attrSet(input, "step", a.step ?? 1);
         if (value !== null && input.value !== String(value)) input.value = String(value);
       }
-      input.disabled = value === null;
+      input.disabled = value === null || !!busyFor(key);
       const lo = Number(input.min) || 0; const hi = Number(input.max) || 100;
       if (value !== null) input.style.setProperty("--p", `${hi > lo ? ((value - lo) / (hi - lo)) * 100 : 0}%`);
       const out = this.shadowRoot.querySelector(`[data-ccv="${key}"]`);
-      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}`;
+      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}${busyFor(key) ? " …" : ""}`;
       if (out && out.textContent !== shown) out.textContent = shown;
-      const box = this.shadowRoot.querySelector(`[data-ccset-box="${key}"]`);
-      if (box) box.hidden = pending === null;
-      const set = this.shadowRoot.querySelector(`[data-ccset="${key}"]`);
-      if (set && pending !== null) set.textContent = `Sæt ${f.number(pending, 0)} ${unit}`;
     }
+  }
+
+  /** The small panel above the buttons: the climate (on/off and temperature) or a number (charge limit, current). */
+  _openQc(key) {
+    this._qcOpen = this._qcOpen === key ? null : key;
+    this._qcTemp = null;
+    const pop = this._r.qcPop;
+    if (!pop) return;
+    pop.hidden = !this._qcOpen;
+    if (!this._qcOpen) { this._applyCarControls(); return; }
+    const [, label, icon] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+    const head = `<div class="qcp-h">${ttdIcon(icon)}<b>${label}</b><small data-qcp="sub"></small><button type="button" class="qcp-x" data-qcclose aria-label="Luk">×</button></div>`;
+    pop.innerHTML = key === "climate"
+      ? `${head}<button type="button" class="qcp-power" data-qcpower><span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
+        <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">−</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">+</button></div>
+        <button type="button" class="qcp-more" data-qcmore>Flere indstillinger (sæder, rat …) ›</button>`
+      : `${head}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>Åbn i Home Assistant ›</button>`;
+    this._applyCarControls();
+  }
+
+  _applyQcPop(st, f, busyFor) {
+    const pop = this._r.qcPop; const key = this._qcOpen;
+    if (!pop || !key || pop.hidden) return;
+    const o = st(key);
+    const sub = pop.querySelector('[data-qcp="sub"]');
+    if (key === "climate") {
+      const temp = Number(o?.attributes?.current_temperature);
+      const subText = Number.isFinite(temp) ? `Inde ${f.number(temp, 0)} °C` : "";
+      if (sub && sub.textContent !== subText) sub.textContent = subText;
+      const power = busyFor("climate"); const on = o && o.state !== "off";
+      const btn = pop.querySelector("[data-qcpower]");
+      if (btn) {
+        this._attrSet(btn, "data-on", !!on && !power); this._attrSet(btn, "data-busy", !!power); btn.disabled = !o || o.state === "unavailable";
+        const text = power ? power.text : on ? "Sluk klima" : "Tænd klima";
+        const span = btn.querySelector('[data-qcp="power"]'); if (span && span.textContent !== text) span.textContent = text;
+      }
+      const target = this._qcTemp ?? Number(o?.attributes?.temperature);
+      const tEl = pop.querySelector('[data-qcp="temp"]');
+      const tText = Number.isFinite(target) ? `${f.number(target, 1)} °C` : TTD_DASH;
+      if (tEl && tEl.textContent !== tText) tEl.textContent = tText;
+      if (tEl) this._attrSet(tEl, "data-busy", this._qcTemp != null || !!(this._ccBusy || {}).climate_temp);
+    } else if (sub) {
+      const [label] = this._ccText(key, o, f);
+      const text = `Nu ${label}`; if (sub.textContent !== text) sub.textContent = text;
+    }
+  }
+
+  _qcPower() {
+    const id = this._cfg.carControls.climate; const o = id ? this._hass?.states?.[id] : null;
+    if (!o || (this._ccBusy || {}).climate) return;
+    const on = o.state !== "off";
+    this._ccCall("climate", "climate", "climate", on ? "turn_off" : "turn_on", { entity_id: id },
+      (s) => (s.state !== "off") === !on, on ? "Slukker klima…" : "Starter klima…", on ? "Klima slukket" : "Klima tændt");
+  }
+
+  _qcTempStep(delta) {
+    const id = this._cfg.carControls.climate; const o = id ? this._hass?.states?.[id] : null;
+    if (!o) return;
+    const a = o.attributes || {}; const step = Number(a.target_temp_step) || 0.5;
+    const base = this._qcTemp ?? Number(a.temperature);
+    if (!Number.isFinite(base)) return;
+    const value = ttdClamp(Math.round((base + delta * step) / step) * step, Number(a.min_temp) || 15, Number(a.max_temp) || 28);
+    this._qcTemp = value;
+    this._applyCarControls();
+    // Set when the taps stop, so a few taps send one command.
+    clearTimeout(this._qcTempTimer);
+    this._qcTempTimer = setTimeout(() => {
+      const t = this._qcTemp; this._qcTemp = null;
+      if (t == null) return;
+      this._ccCall("climate_temp", "climate", "climate", "set_temperature", { entity_id: id, temperature: t },
+        (s) => Math.abs(Number(s.attributes?.temperature) - t) < 0.01, `Sætter ${this._format().number(t, 1)} °C…`, `Klima sat til ${this._format().number(t, 1)} °C`);
+    }, 1200);
   }
 
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
   _carControl(key) {
     const id = this._cfg.carControls[key]; const o = id ? this._hass?.states?.[id] : null;
-    if (!o) return;
-    // The climate opens Home Assistant's thermostat (temperature, seat heating …) instead of switching blindly.
-    if (key === "climate") {
-      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
-      return;
-    }
+    if (!o || Object.values(this._ccBusy || {}).some((item) => item.ctl === key)) return; // on its way: not twice
+    if (key === "climate") { this._openQc("climate"); return; }
     // Only what could do harm by a stray tap asks first: unlocking, the charge port (it releases the cable) and
     // switching sentry off. Locking, sentry on and flashing the lights act at once.
     const critical = (key === "lock" && o.state !== "unlocked" && o.state !== "open") || key === "charge_port"
@@ -1594,10 +1760,22 @@ class ThTeslaDashboardCard extends HTMLElement {
       return;
     }
     this._disarm(true);
-    if (key === "lock") this._call("lock", o.state === "locked" ? "unlock" : "lock", { entity_id: id });
-    else if (key === "charge_port") this._call("cover", ["open", "opening"].includes(o.state) ? "close_cover" : "open_cover", { entity_id: id });
-    else if (key === "sentry") this._call("switch", o.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
-    else if (key === "flash") this._call("button", "press", { entity_id: id });
+    if (key === "lock") {
+      const lock = o.state !== "locked";
+      this._ccCall(key, key, "lock", lock ? "lock" : "unlock", { entity_id: id }, (s) => s.state === (lock ? "locked" : "unlocked"),
+        lock ? "Låser bilen…" : "Låser op…", lock ? "Bilen er låst" : "Bilen er låst op");
+    } else if (key === "charge_port") {
+      const open = !["open", "opening"].includes(o.state);
+      this._ccCall(key, key, "cover", open ? "open_cover" : "close_cover", { entity_id: id }, (s) => s.state === (open ? "open" : "closed"),
+        open ? "Åbner ladeporten…" : "Lukker ladeporten…", open ? "Ladeporten er åben" : "Ladeporten er lukket");
+    } else if (key === "sentry") {
+      const on = o.state !== "on";
+      this._ccCall(key, key, "switch", on ? "turn_on" : "turn_off", { entity_id: id }, (s) => s.state === (on ? "on" : "off"),
+        on ? "Slår vagtpost til…" : "Slår vagtpost fra…", on ? "Vagtpost er til" : "Vagtpost er fra");
+    } else if (key === "flash") {
+      const before = o.state;
+      this._ccCall(key, key, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker…", "Bilen blinkede");
+    }
   }
 
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
@@ -1641,6 +1819,19 @@ class ThTeslaDashboardCard extends HTMLElement {
     });
     const marks = [deadline && deadline.getTime() <= until ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
     const next = blocks[0];
+    // The prices the plan chose from (EV Ledger): a small chart of when the car charges – also before it is plugged in.
+    const minutes = Number(plan.slot_minutes) || 15;
+    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e }))
+      .map((x) => ({ ...x, e: x.s + minutes * 60000 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until);
+    const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
+    const chart = slots.map((x) => {
+      const left = at(new Date(Math.max(x.s, now))); const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
+      return { left, width: at(new Date(Math.min(x.e, until))) - left, h: 0.22 + 0.78 * (hi > lo ? (x.p - lo) / (hi - lo) : 0.5), on, est: x.est,
+        title: `${f.time(new Date(x.s))} · ${f.number(x.p, 2)} kr/kWh${on ? " · lader" : ""}` };
+    });
+    // The car's own "full at" time while it charges up to its limit (EV Ledger's next charge end), for the last period.
+    const endSensor = ttdToDate(this._sc("next_charge_end")?.state);
+    const lastEnd = blocks.length === 1 && endSensor ? endSensor : blocks[blocks.length - 1]?.end;
     const cost = this._scNum("planned_cost");
     const energy = this._scNum("planned_energy");
     const costUnit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.");
@@ -1675,11 +1866,12 @@ class ThTeslaDashboardCard extends HTMLElement {
     return {
       badge: { text: label, tone }, sub: sub.join(" · ") || TTD_DASH,
       mode, modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
-      segments, marks, axisRight: f.dayTime(new Date(until)), axisMid: next ? `${f.time(next.start)}–${f.time(next.end)}` : "",
+      segments, marks, chart, axisRight: f.dayTime(new Date(until)), axisMid: next ? `${f.time(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
+      hint: statusKey === "disconnected" && next ? `Sættes bilen til nu, lader den ${f.dayTime(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}${blocks.length > 1 ? ` (+${blocks.length - 1} perioder)` : ""}${cost != null ? ` · ${ttdJoin(f.number(cost, 2), costUnit)}` : ""}` : "",
       start: next ? (next.start.getTime() <= now ? "Nu" : f.time(next.start)) : TTD_DASH,
       startDay: next && next.start.getTime() > now ? f.relativeDay(next.start) : "",
-      end: next ? f.time(blocks[blocks.length - 1].end) : TTD_DASH,
-      endDay: next ? f.relativeDay(blocks[blocks.length - 1].end) : "",
+      end: next ? f.time(lastEnd) : TTD_DASH,
+      endDay: next ? f.relativeDay(lastEnd) : "",
       cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " · delvist skønnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
@@ -2166,6 +2358,19 @@ class ThTeslaDashboardCard extends HTMLElement {
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
+    const chartSig = JSON.stringify([sc.chart, sc.marks]);
+    if (r.scChart && r.scChart.dataset.sig !== chartSig) {
+      r.scChart.dataset.sig = chartSig;
+      const H = 60;
+      r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
+        const h = Math.max(3, b.h * (H - 4));
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H}" class="${m.kind}"/>`).join("")}</svg>` : "";
+    }
+    if (r.scChart) r.scChart.hidden = !sc.chart.length;
+    if (r.scTrack) r.scTrack.hidden = !!sc.chart.length;
+    this._t("scHint", sc.hint);
+    if (r.scHint) r.scHint.hidden = !sc.hint;
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
       r.scTrack.dataset.sig = signature;
@@ -2580,8 +2785,20 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres]");
+    // A tap outside the small control panel closes it.
+    if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore]");
     if (!target) return;
+    if (target.dataset.qc) { if (!target.disabled) this._openQc(target.dataset.qc); return; }
+    if (target.dataset.qcclose != null) { this._openQc(this._qcOpen); return; }
+    if (target.dataset.qcpower != null) { this._qcPower(); return; }
+    if (target.dataset.qctemp) { this._qcTempStep(Number(target.dataset.qctemp)); return; }
+    if (target.dataset.qcmore != null) {
+      const id = this._cfg.carControls[this._qcOpen];
+      this._openQc(this._qcOpen);
+      if (id) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
+      return;
+    }
     if (target.dataset.cc) this._carControl(target.dataset.cc);
     else if (target.dataset.ccset) {
       const pending = this._ccPending; const id = this._cfg.carControls[target.dataset.ccset];
@@ -2631,9 +2848,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     const r = this._r;
     if (el?.dataset?.ccnum) {
       // Charge limit and current are not critical: set when the slider is let go, like the target.
-      const id = this._cfg.carControls[el.dataset.ccnum];
+      const key = el.dataset.ccnum; const id = this._cfg.carControls[key]; const value = Number(el.value);
+      const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
       this._ccPending = null;
-      if (id) this._call("number", "set_value", { entity_id: id, value: Number(el.value) });
+      if (id) this._ccCall(key, key, "number", "set_value", { entity_id: id, value }, (s) => Number(s.state) === value,
+        `Sætter ${String(label).toLowerCase()} til ${value}…`, `${label} er ${value}`);
       this._applyCarControls();
       return;
     }
