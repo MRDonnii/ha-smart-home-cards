@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.24 */
+/* MRDonnii Smart Home Cards v0.5.25 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -37344,7 +37344,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   // ------------------------------------------------------------------ camera popup
   // A tap on a camera opens it big: the live picture (Home Assistant's own player, WebRTC or HLS) on the camera's
   // own Protect channel (medium unless the camera sets res), its status, arrows (and ← →) to the next camera, a strip of every camera
-  // to jump between, and the camera in Home Assistant. It opens on the camera that was tapped.
+  // to jump between. It opens on the camera that was tapped.
   _camLive(cam) {
     return cam.camera_entity;
   }
@@ -37448,7 +37448,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       const pic = this._camPicture(c2.camera_entity, 192);
       return `<button data-camgo="${j}" data-st="${this._camStatus(c2).st}" aria-pressed="${j === o.i}" title="${this._esc(c2.name || c2.key)}"><img alt="" draggable="false"${pic ? ` src="${this._esc(pic)}"` : ""}><span><i class="cdot"></i>${this._esc(c2.name || c2.key)}</span></button>`;
     }).join("")}</div>
-      <div class="camfoot"><span>${o.i + 1} af ${cams.length}<span class="kbd"> \xB7 \u2190 \u2192 skifter \xB7 M lyd</span></span><span class="camacts"><button class="cammore camsound" data-camsound hidden aria-pressed="${!!this._camSound}">${this._camSoundLabel()}</button><button class="cammore" data-cammore>\xC5bn i Home Assistant</button></span></div>
+      <div class="camfoot"><span>${o.i + 1} af ${cams.length}<span class="kbd"> \xB7 \u2190 \u2192 skifter \xB7 M lyd</span></span><span class="camacts"><button class="cammore camsound" data-camsound hidden aria-pressed="${!!this._camSound}">${this._camSoundLabel()}</button></span></div>
     </div>`;
     dialog.querySelectorAll(".camstrip img").forEach((img) => {
       if (img.complete && img.naturalWidth) img.classList.add("ok");
@@ -37458,11 +37458,6 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     dialog.querySelectorAll("[data-camstep]").forEach((b) => b.addEventListener("click", () => this._camStep(Number(b.dataset.camstep))));
     dialog.querySelectorAll("[data-camgo]").forEach((b) => b.addEventListener("click", () => this._openCam(Number(b.dataset.camgo))));
     dialog.querySelector("[data-camsound]").addEventListener("click", () => this._toggleCamSound());
-    dialog.querySelector("[data-cammore]").addEventListener("click", () => {
-      const id = this._camLive(cam);
-      this._closeCam();
-      this._more(id);
-    });
     dialog.querySelector(`[data-camgo="${o.i}"]`)?.scrollIntoView?.({ block: "nearest", inline: "center" });
     dialog.querySelector("[data-camclose]").focus({ preventScroll: true });
     this._mountCamLive(dialog.querySelector("[data-camlive]"), cam, o);
