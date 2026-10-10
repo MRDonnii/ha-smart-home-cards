@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.22 */
+/* MRDonnii Smart Home Cards v0.5.23 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -37343,11 +37343,10 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   }
   // ------------------------------------------------------------------ camera popup
   // A tap on a camera opens it big: the live picture (Home Assistant's own player, WebRTC or HLS) on the camera's
-  // high-resolution channel when there is one, its status, arrows (and ← →) to the next camera, a strip of every camera
+  // own Protect channel (medium unless the camera sets res), its status, arrows (and ← →) to the next camera, a strip of every camera
   // to jump between, and the camera in Home Assistant. It opens on the camera that was tapped.
-  _camHq(cam) {
-    const high = `camera.${cam.key}_high_resolution_channel`;
-    return this._s(high) ? high : cam.camera_entity;
+  _camLive(cam) {
+    return cam.camera_entity;
   }
   _camPicture(id, width) {
     const pic = this._s(id)?.attributes?.entity_picture;
@@ -37355,7 +37354,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     return this._hass.hassUrl(`${pic}${pic.includes("?") ? "&" : "?"}width=${width}&height=${Math.round(width * 9 / 16)}`);
   }
   _camStatus(cam) {
-    const st = this._s(this._camHq(cam));
+    const st = this._s(this._camLive(cam));
     if (!st || st.state === "unavailable") return { st: "off", text: st ? "Utilg\xE6ngelig" : "Kamera ikke fundet", color: "var(--muted)" };
     const activity = this._liveActivity(cam);
     const colors = { person: "var(--danger)", animal: "var(--animal)", vehicle: "var(--accent)", object: "var(--object)", motion: "var(--motion)", quiet: "var(--good)" };
@@ -37440,7 +37439,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       return;
     }
     o.key = cs.text;
-    const still = this._camPicture(this._camHq(cam), 1280);
+    const still = this._camPicture(this._camLive(cam), 1280);
     dialog.innerHTML = `<div class="cambox" role="document">
       <div class="camhead"><div><h3>${this._esc(cam.name || cam.key)}</h3><div class="sub"><span class="dot" style="--mc:${cs.color}"></span>${this._esc(cs.text)}</div></div><button class="camclose" data-camclose aria-label="Luk">\u2715</button></div>
       <div class="camview"><div class="camlive" data-camlive>${still ? `<img class="camstill" alt="" src="${this._esc(still)}">` : ""}</div><span class="livebadge">Live</span>
@@ -37460,7 +37459,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     dialog.querySelectorAll("[data-camgo]").forEach((b) => b.addEventListener("click", () => this._openCam(Number(b.dataset.camgo))));
     dialog.querySelector("[data-camsound]").addEventListener("click", () => this._toggleCamSound());
     dialog.querySelector("[data-cammore]").addEventListener("click", () => {
-      const id = this._camHq(cam);
+      const id = this._camLive(cam);
       this._closeCam();
       this._more(id);
     });
@@ -37470,7 +37469,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   }
   // The live picture: Home Assistant's camera player when it can be had, else a fresh still every second.
   async _mountCamLive(host, cam, o) {
-    const id = this._camHq(cam);
+    const id = this._camLive(cam);
     const st = this._s(id);
     const alive = () => this._camOpen === o && host.isConnected;
     if (!st || !host) return;
