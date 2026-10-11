@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.32 */
+/* MRDonnii Smart Home Cards v0.5.34 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
