@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.37 */
+/* MRDonnii Smart Home Cards v0.5.38 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -1898,7 +1898,7 @@ console.info(
 );
 
 // src/cards/ha-robot-fleet-card/ha-robot-fleet-card.js
-var VERSION4 = "0.2.1";
+var VERSION4 = "0.2.2";
 var HARobotFleetCard = class extends HTMLElement {
   constructor() {
     super();
@@ -1979,6 +1979,18 @@ var HARobotFleetCard = class extends HTMLElement {
     if (!mount || !r) return;
     mount.replaceChildren();
     this._child = null;
+    if (!String(r.card.type || "").startsWith("custom:")) {
+      const helpers = window.loadCardHelpers?.();
+      if (!helpers) return;
+      helpers.then((h) => {
+        if (this._config.robots[this._active] !== r) return;
+        const card2 = h.createCardElement(r.card);
+        if (this._hass) card2.hass = this._hass;
+        mount.replaceChildren(card2);
+        this._child = card2;
+      });
+      return;
+    }
     const tag = r.card.type.replace("custom:", "");
     if (!customElements.get(tag)) {
       customElements.whenDefined(tag).then(() => {
