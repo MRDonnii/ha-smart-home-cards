@@ -1,4 +1,5 @@
-const VERSION = "0.4.1";
+import { keepScroll } from "../shared/keep-scroll.js";
+const VERSION = "0.4.2";
 
 class HALawnMowerCard extends HTMLElement {
   constructor() {
@@ -172,6 +173,19 @@ class HALawnMowerCard extends HTMLElement {
     });
   }
   _render() {
+    return keepScroll(this, () => this._renderNow());
+  }
+  /** The card stays; only its content is redrawn, so it never drops to zero height while Home Assistant draws a new ha-card. */
+  _paint(style, cls, body) {
+    if (this._card?.parentNode !== this.shadowRoot) {
+      this.shadowRoot.innerHTML = "<style></style><ha-card></ha-card>";
+      [this._style, this._card] = this.shadowRoot.children;
+    }
+    if (this._style.textContent !== style) this._style.textContent = style;
+    if (this._card.className !== cls) this._card.className = cls;
+    this._card.innerHTML = body;
+  }
+  _renderNow() {
     if (!this.shadowRoot) return;
     const mower = this._e(this._config.mower);
     const state = mower?.state || "unknown";
@@ -245,7 +259,7 @@ class HALawnMowerCard extends HTMLElement {
       this._statItem(this._config.distance_driven_total, "Kørt distance", (id) => `${this._fmt(this._km(id), 1)} km`),
       this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt(this._hours(id), 0)} t`),
     ].filter(Boolean);
-    this.shadowRoot.innerHTML = `<style>
+    const style = `
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:16px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
@@ -290,8 +304,8 @@ class HALawnMowerCard extends HTMLElement {
       .controls button:disabled{opacity:.35;cursor:default}
       .controls ha-icon{--mdc-icon-size:18px}
       @media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.fields{grid-template-columns:1fr}}
-    </style>
-    <ha-card class="${hasError ? "has-error" : ""}">
+    `;
+    const body = `
       <div class="head">
         <div class="identity">
           <span class="icon"><ha-icon icon="mdi:robot-mower"></ha-icon></span>
@@ -330,7 +344,8 @@ class HALawnMowerCard extends HTMLElement {
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
         <button class="primary" data-action="dock" ${canDock ? "" : "disabled"}><ha-icon icon="mdi:home-import-outline"></ha-icon>Hjem</button>
       </div>
-    </ha-card>`;
+    `;
+    this._paint(style, hasError ? "has-error" : "", body);
     this.shadowRoot.querySelectorAll("[data-action]").forEach((btn) =>
       btn.addEventListener("click", () => {
         if (!btn.disabled) this._call(btn.dataset.action);

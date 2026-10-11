@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.45 */
+/* MRDonnii Smart Home Cards v0.5.46 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -1459,8 +1459,44 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   console.info(`HA POOL SETTINGS CARD v${VERSION52}`);
 })();
 
+// src/cards/shared/keep-scroll.js
+function keepScroll(host, render) {
+  const saved = [];
+  for (let node = host; node; node = node.parentNode || node.host) {
+    if (node.nodeType === 1 && node.scrollHeight > node.clientHeight) saved.push([node, node.scrollTop, node.scrollLeft]);
+  }
+  const x = window.scrollX;
+  const y = window.scrollY;
+  const root = host.shadowRoot;
+  const focused = root?.activeElement;
+  const key = focused && Object.keys(focused.dataset || {}).length ? Object.entries(focused.dataset).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (c2) => `-${c2.toLowerCase()}`)}="${CSS.escape(v)}"]`).join("") : "";
+  const restore = () => {
+    for (const [el, top, left] of saved) {
+      if (el.scrollTop !== top) el.scrollTop = top;
+      if (el.scrollLeft !== left) el.scrollLeft = left;
+    }
+    if (window.scrollY !== y || window.scrollX !== x) window.scrollTo(x, y);
+  };
+  try {
+    return render();
+  } finally {
+    if (key && !focused.isConnected) root.querySelector(key)?.focus({ preventScroll: true });
+    restore();
+    let moved = false;
+    const mark = () => {
+      moved = true;
+    };
+    const opts = { capture: true, passive: true };
+    for (const type of ["touchmove", "wheel", "keydown"]) window.addEventListener(type, mark, opts);
+    requestAnimationFrame(() => {
+      for (const type of ["touchmove", "wheel", "keydown"]) window.removeEventListener(type, mark, opts);
+      if (!moved) restore();
+    });
+  }
+}
+
 // src/cards/ha-roborock-vacuum-card/ha-roborock-vacuum-card.js
-var VERSION3 = "0.4.0";
+var VERSION3 = "0.4.1";
 var HARoborockVacuumCard = class extends HTMLElement {
   constructor() {
     super();
@@ -1665,6 +1701,19 @@ var HARoborockVacuumCard = class extends HTMLElement {
     });
   }
   _render() {
+    return keepScroll(this, () => this._renderNow());
+  }
+  /** The card stays; only its content is redrawn, so it never drops to zero height while Home Assistant draws a new ha-card. */
+  _paint(style, cls, body) {
+    if (this._card?.parentNode !== this.shadowRoot) {
+      this.shadowRoot.innerHTML = "<style></style><ha-card></ha-card>";
+      [this._style, this._card] = this.shadowRoot.children;
+    }
+    if (this._style.textContent !== style) this._style.textContent = style;
+    if (this._card.className !== cls) this._card.className = cls;
+    this._card.innerHTML = body;
+  }
+  _renderNow() {
     if (!this.shadowRoot) return;
     const vacuum = this._e(this._config.vacuum);
     const state = vacuum?.state || "unknown";
@@ -1682,7 +1731,7 @@ var HARoborockVacuumCard = class extends HTMLElement {
     const dockError = this._s(this._config.dock_error);
     const hasError = vacuumError && !["none", "ok"].includes(vacuumError) || dockError && dockError !== "ok";
     const quickClean = this._config.quick_clean || [];
-    this.shadowRoot.innerHTML = `<style>
+    const style = `
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:16px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-radius:20px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 38%),var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:none}
@@ -1750,8 +1799,8 @@ var HARoborockVacuumCard = class extends HTMLElement {
       .volume-row ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color)}
       .volume-row input{flex:1}
       @media(max-width:700px){.map{height:270px}.stats{grid-template-columns:repeat(2,1fr)}.selects{grid-template-columns:1fr}}
-    </style>
-    <ha-card class="${hasError ? "has-error" : ""}">
+    `;
+    const body = `
       <div class="head">
         <div class="identity">
           <span class="icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
@@ -1824,7 +1873,8 @@ var HARoborockVacuumCard = class extends HTMLElement {
         <button class="primary" data-action="return_to_base"><ha-icon icon="mdi:home-import-outline"></ha-icon>Hjem</button>
         <button data-action="locate"><ha-icon icon="mdi:map-marker-radius"></ha-icon>Find</button>
       </div>
-    </ha-card>`;
+    `;
+    this._paint(style, hasError ? "has-error" : "", body);
     this.shadowRoot.querySelectorAll("[data-action]").forEach(
       (btn) => btn.addEventListener("click", () => this._call(btn.dataset.action))
     );
@@ -1898,7 +1948,7 @@ console.info(
 );
 
 // src/cards/ha-robot-fleet-card/ha-robot-fleet-card.js
-var VERSION4 = "0.2.2";
+var VERSION4 = "0.2.3";
 var HARobotFleetCard = class extends HTMLElement {
   constructor() {
     super();
@@ -1962,6 +2012,9 @@ var HARobotFleetCard = class extends HTMLElement {
     this._renderChild();
   }
   _renderNav() {
+    return keepScroll(this, () => this._renderNavNow());
+  }
+  _renderNavNow() {
     const n = this.shadowRoot.querySelector(".tabs");
     if (!n) return;
     n.innerHTML = this._config.robots.map((r, i) => {
@@ -1975,6 +2028,9 @@ var HARobotFleetCard = class extends HTMLElement {
     });
   }
   _renderChild() {
+    return keepScroll(this, () => this._renderChildNow());
+  }
+  _renderChildNow() {
     const mount = this.shadowRoot.querySelector(".mount"), r = this._config.robots[this._active];
     if (!mount || !r) return;
     mount.replaceChildren();
@@ -6473,7 +6529,7 @@ window.customCards.push({ type: "ha-tesla-glance-card", name: "HA Tesla Glance C
 console.info(`%c HA TESLA GLANCE %c v${VERSION5} `, "color:white;background:#cc0000;font-weight:700", "color:#ffb4b4;background:#111827");
 
 // src/cards/ha-lawn-mower-card/ha-lawn-mower-card.js
-var VERSION6 = "0.4.1";
+var VERSION6 = "0.4.2";
 var HALawnMowerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -6638,6 +6694,19 @@ var HALawnMowerCard = class extends HTMLElement {
     });
   }
   _render() {
+    return keepScroll(this, () => this._renderNow());
+  }
+  /** The card stays; only its content is redrawn, so it never drops to zero height while Home Assistant draws a new ha-card. */
+  _paint(style, cls, body) {
+    if (this._card?.parentNode !== this.shadowRoot) {
+      this.shadowRoot.innerHTML = "<style></style><ha-card></ha-card>";
+      [this._style, this._card] = this.shadowRoot.children;
+    }
+    if (this._style.textContent !== style) this._style.textContent = style;
+    if (this._card.className !== cls) this._card.className = cls;
+    this._card.innerHTML = body;
+  }
+  _renderNow() {
     if (!this.shadowRoot) return;
     const mower = this._e(this._config.mower);
     const state = mower?.state || "unknown";
@@ -6696,7 +6765,7 @@ var HALawnMowerCard = class extends HTMLElement {
       this._statItem(this._config.distance_driven_total, "K\xF8rt distance", (id) => `${this._fmt(this._km(id), 1)} km`),
       this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt(this._hours(id), 0)} t`)
     ].filter(Boolean);
-    this.shadowRoot.innerHTML = `<style>
+    const style = `
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:16px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
@@ -6741,8 +6810,8 @@ var HALawnMowerCard = class extends HTMLElement {
       .controls button:disabled{opacity:.35;cursor:default}
       .controls ha-icon{--mdc-icon-size:18px}
       @media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.fields{grid-template-columns:1fr}}
-    </style>
-    <ha-card class="${hasError ? "has-error" : ""}">
+    `;
+    const body = `
       <div class="head">
         <div class="identity">
           <span class="icon"><ha-icon icon="mdi:robot-mower"></ha-icon></span>
@@ -6777,7 +6846,8 @@ var HALawnMowerCard = class extends HTMLElement {
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
         <button class="primary" data-action="dock" ${canDock ? "" : "disabled"}><ha-icon icon="mdi:home-import-outline"></ha-icon>Hjem</button>
       </div>
-    </ha-card>`;
+    `;
+    this._paint(style, hasError ? "has-error" : "", body);
     this.shadowRoot.querySelectorAll("[data-action]").forEach(
       (btn) => btn.addEventListener("click", () => {
         if (!btn.disabled) this._call(btn.dataset.action);
@@ -8212,7 +8282,7 @@ if (!customElements.get("pool-water-quality-card")) customElements.define("pool-
 window.customCards.push({ type: "pool-water-quality-card", name: "Pool Water Quality Card", description: "pH and chlorine history in the pool dashboard style." });
 
 // src/cards/ha-simple-vacuum-card/ha-simple-vacuum-card.js
-var VERSION9 = "0.4.0";
+var VERSION9 = "0.4.1";
 var HASimpleVacuumCard = class extends HTMLElement {
   constructor() {
     super();
@@ -8311,6 +8381,19 @@ var HASimpleVacuumCard = class extends HTMLElement {
     });
   }
   _render() {
+    return keepScroll(this, () => this._renderNow());
+  }
+  /** The card stays; only its content is redrawn, so it never drops to zero height while Home Assistant draws a new ha-card. */
+  _paint(style, cls, body) {
+    if (this._card?.parentNode !== this.shadowRoot) {
+      this.shadowRoot.innerHTML = "<style></style><ha-card></ha-card>";
+      [this._style, this._card] = this.shadowRoot.children;
+    }
+    if (this._style.textContent !== style) this._style.textContent = style;
+    if (this._card.className !== cls) this._card.className = cls;
+    this._card.innerHTML = body;
+  }
+  _renderNow() {
     if (!this.shadowRoot) return;
     const vacuum = this._e(this._config.vacuum);
     const state = vacuum?.state || "unknown";
@@ -8321,7 +8404,7 @@ var HASimpleVacuumCard = class extends HTMLElement {
     const total = this._num(this._config.missions_total);
     const successful = this._num(this._config.missions_successful);
     const successRate = Number.isFinite(total) && total > 0 && Number.isFinite(successful) ? successful / total * 100 : void 0;
-    this.shadowRoot.innerHTML = `<style>
+    const style = `
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:16px;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:18px;background:var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
@@ -8355,8 +8438,8 @@ var HASimpleVacuumCard = class extends HTMLElement {
       .controls button.primary{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--primary-text-color)}
       .controls ha-icon{--mdc-icon-size:18px}
       @media(max-width:420px){.stats{grid-template-columns:repeat(2,1fr)}}
-    </style>
-    <ha-card class="${hasError ? "has-error" : ""}">
+    `;
+    const body = `
       <div class="head">
         <div class="identity">
           <span class="icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
@@ -8386,7 +8469,8 @@ var HASimpleVacuumCard = class extends HTMLElement {
         <button class="primary" data-action="return_to_base"><ha-icon icon="mdi:home-import-outline"></ha-icon>Hjem</button>
         <button data-action="locate"><ha-icon icon="mdi:map-marker-radius"></ha-icon>Find</button>
       </div>
-    </ha-card>`;
+    `;
+    this._paint(style, hasError ? "has-error" : "", body);
     this.shadowRoot.querySelectorAll("[data-action]").forEach(
       (btn) => btn.addEventListener("click", () => this._call(btn.dataset.action))
     );
@@ -47107,7 +47191,7 @@ console.info(
 );
 
 // src/cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js
-var VERSION49 = "0.1.5";
+var VERSION49 = "0.1.6";
 var TAG3 = "ha-roborock-room-map-card";
 var ROOM_PALETTE = {
   1: [240, 178, 122],
@@ -48086,6 +48170,9 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
   }
   _renderMapMessage() {
+    return keepScroll(this, () => this._renderMapMessageNow());
+  }
+  _renderMapMessageNow() {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
@@ -48097,6 +48184,9 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     el.hidden = !html;
   }
   _renderLabels() {
+    return keepScroll(this, () => this._renderLabelsNow());
+  }
+  _renderLabelsNow() {
     const wrap = this.shadowRoot.querySelector(".labels");
     if (!wrap) return;
     const map = this._map;
@@ -48191,6 +48281,9 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }).join("")}</div>`;
   }
   _renderPanel() {
+    return keepScroll(this, () => this._renderPanelNow());
+  }
+  _renderPanelNow() {
     const panel = this.shadowRoot.querySelector(".panel");
     if (!panel || !this._hass || !this._ent) return;
     const E3 = this._ent, vac = this._state(this._config.entity);

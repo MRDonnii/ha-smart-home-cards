@@ -1,4 +1,5 @@
-const VERSION = "0.4.0";
+import { keepScroll } from "../shared/keep-scroll.js";
+const VERSION = "0.4.1";
 
 class HARoborockVacuumCard extends HTMLElement {
   constructor() {
@@ -211,6 +212,19 @@ class HARoborockVacuumCard extends HTMLElement {
     });
   }
   _render() {
+    return keepScroll(this, () => this._renderNow());
+  }
+  /** The card stays; only its content is redrawn, so it never drops to zero height while Home Assistant draws a new ha-card. */
+  _paint(style, cls, body) {
+    if (this._card?.parentNode !== this.shadowRoot) {
+      this.shadowRoot.innerHTML = "<style></style><ha-card></ha-card>";
+      [this._style, this._card] = this.shadowRoot.children;
+    }
+    if (this._style.textContent !== style) this._style.textContent = style;
+    if (this._card.className !== cls) this._card.className = cls;
+    this._card.innerHTML = body;
+  }
+  _renderNow() {
     if (!this.shadowRoot) return;
     const vacuum = this._e(this._config.vacuum);
     const state = vacuum?.state || "unknown";
@@ -233,7 +247,7 @@ class HARoborockVacuumCard extends HTMLElement {
       (vacuumError && !["none", "ok"].includes(vacuumError)) ||
       (dockError && dockError !== "ok");
     const quickClean = this._config.quick_clean || [];
-    this.shadowRoot.innerHTML = `<style>
+    const style = `
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:16px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-radius:20px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 38%),var(--ha-card-background,var(--card-background-color));color:var(--primary-text-color);box-shadow:none}
@@ -301,8 +315,8 @@ class HARoborockVacuumCard extends HTMLElement {
       .volume-row ha-icon{--mdc-icon-size:18px;color:var(--secondary-text-color)}
       .volume-row input{flex:1}
       @media(max-width:700px){.map{height:270px}.stats{grid-template-columns:repeat(2,1fr)}.selects{grid-template-columns:1fr}}
-    </style>
-    <ha-card class="${hasError ? "has-error" : ""}">
+    `;
+    const body = `
       <div class="head">
         <div class="identity">
           <span class="icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
@@ -420,7 +434,8 @@ class HARoborockVacuumCard extends HTMLElement {
         <button class="primary" data-action="return_to_base"><ha-icon icon="mdi:home-import-outline"></ha-icon>Hjem</button>
         <button data-action="locate"><ha-icon icon="mdi:map-marker-radius"></ha-icon>Find</button>
       </div>
-    </ha-card>`;
+    `;
+    this._paint(style, hasError ? "has-error" : "", body);
     this.shadowRoot.querySelectorAll("[data-action]").forEach((btn) =>
       btn.addEventListener("click", () => this._call(btn.dataset.action)),
     );

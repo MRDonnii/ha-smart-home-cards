@@ -1,4 +1,5 @@
-const VERSION = "0.1.5";
+import { keepScroll } from "../shared/keep-scroll.js";
+const VERSION = "0.1.6";
 const TAG = "ha-roborock-room-map-card";
 
 /*
@@ -826,6 +827,9 @@ class HARoborockRoomMapCard extends HTMLElement {
   }
 
   _renderMapMessage() {
+    return keepScroll(this, () => this._renderMapMessageNow());
+  }
+  _renderMapMessageNow() {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
@@ -838,6 +842,9 @@ class HARoborockRoomMapCard extends HTMLElement {
   }
 
   _renderLabels() {
+    return keepScroll(this, () => this._renderLabelsNow());
+  }
+  _renderLabelsNow() {
     const wrap = this.shadowRoot.querySelector(".labels");
     if (!wrap) return;
     const map = this._map;
@@ -931,6 +938,9 @@ class HARoborockRoomMapCard extends HTMLElement {
   }
 
   _renderPanel() {
+    return keepScroll(this, () => this._renderPanelNow());
+  }
+  _renderPanelNow() {
     const panel = this.shadowRoot.querySelector(".panel");
     if (!panel || !this._hass || !this._ent) return;
     const E = this._ent, vac = this._state(this._config.entity);
