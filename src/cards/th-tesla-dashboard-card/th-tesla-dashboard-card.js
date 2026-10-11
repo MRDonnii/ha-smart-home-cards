@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.15.0";
+const TTD_VERSION = "1.16.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -133,6 +133,9 @@ const TTD_SC_ROLES = {
   home_charging_power: "sensor._home_charging_power", home_cost_today: "sensor._home_charging_cost_today",
   charging_status: "sensor._charging_status", home_charging_energy: "sensor._home_charging_energy",
   cost_this_year: "sensor._charging_cost_this_year",
+  // Ready-by times: the week plan, the one-time time and the weekend time (EV Ledger).
+  week_plan: "switch._week_plan", ready_by_once: "datetime._ready_by_once",
+  weekend_ready_by: "switch._another_time_at_the_weekend", ready_by_weekend: "time._ready_by_at_the_weekend",
   public_charge_energy: "number._public_charge_energy",
   public_charge_price: "number._public_charge_price", public_charge_location: "text._public_charge_location",
   log_public_charge: "button._log_public_charge",
@@ -617,6 +620,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
+    <button type="button" class="ctl rb-open" data-rbopen data-r="rbOpen" aria-haspopup="dialog" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span class="rb-open-t"><span>Klar senest</span><small data-r="rbSrc"></small></span><b data-r="rbVal">${TTD_DASH}</b>${ttdIcon("mdi:chevron-right", "rb-chev")}</button>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>–</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
@@ -701,8 +705,8 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
   <div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. måned"></div>
   <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><span data-r="costBeforeKey" hidden><i class="sw cost-before"></i>Samme måned året før</span><em data-r="costNote"></em></div>
 </section>` : ""}` : ""}
-${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>Åbn hele Tesla-oversigten</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
-</div></div>`;
+${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "Åbn hele Tesla-oversigten" : "Flere indstillinger på Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
+</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}</div>`;
 }
 
 const TTD_STYLES = `
@@ -881,6 +885,44 @@ button[data-dead]:hover{background:none}
 .plan-ctl{display:grid;gap:10px;margin-top:14px}
 .ctl{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);align-items:center;gap:10px;font-size:14px;color:var(--tdc-muted)}
 .ctl b{color:var(--tdc-text);font-weight:600;min-width:44px}
+.rb-open{width:100%;grid-template-columns:auto minmax(0,1fr) auto auto;padding:10px 12px;border:1px solid var(--tdc-line);border-radius:14px;background:color-mix(in srgb,var(--tdc-blue) 6%,transparent);text-align:left;cursor:pointer}
+.rb-open:hover{border-color:color-mix(in srgb,var(--tdc-blue) 45%,transparent)}
+.rb-open-t{display:grid;gap:1px;min-width:0}.rb-open-t span{color:var(--tdc-text);font-weight:600}.rb-open-t small{font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb-open b{white-space:nowrap}.rb-chev{color:var(--tdc-muted);--mdc-icon-size:20px}
+.rb-dlg{width:min(560px,calc(100vw - 20px));max-height:min(88vh,860px);padding:0;border:1px solid color-mix(in srgb,var(--tdc-text) 12%,transparent);border-radius:24px;background-color:var(--tdc-dlg-bg,#121821);background-image:linear-gradient(180deg,color-mix(in srgb,var(--tdc-blue) 8%,transparent),transparent 140px);color:var(--tdc-text);color-scheme:dark;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:auto;overscroll-behavior:contain}
+.rb-dlg::backdrop{background:rgba(3,7,13,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.rb{display:grid;gap:14px;padding:18px}
+.rb button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+.rb-h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.rb-hi{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:color-mix(in srgb,var(--tdc-blue) 18%,transparent);color:var(--tdc-blue)}
+.rb-h h3{margin:0;font-size:19px;outline:none}.rb-h p{margin:2px 0 0;font-size:13px;color:var(--tdc-muted)}.rb-h p b{color:var(--tdc-text);font-weight:600}
+.rb-x{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--tdc-line)!important}
+.rb-sec{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-text) 3%,transparent)}
+.rb-sec h4{display:flex;align-items:center;gap:8px;margin:0;font-size:15px}.rb-sec h4 ha-icon{--mdc-icon-size:20px;color:var(--tdc-blue)}
+.rb-note{margin:0;font-size:12.5px;line-height:1.45;color:var(--tdc-muted)}
+.rb input,.rb select{font:inherit;font-size:15px;min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-text) 5%,transparent);color:var(--tdc-text);color-scheme:dark light;min-width:0}
+.rb input:disabled{opacity:.45}
+.rb-once{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;align-items:end}.rb-once .btn{grid-column:1/-1}
+.rb-f{display:grid;gap:4px;font-size:12px;color:var(--tdc-muted)}.rb-f input,.rb-f select{width:100%}
+.rb-once-on{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border-radius:14px;background:color-mix(in srgb,var(--tdc-blue) 12%,transparent);border:1px solid color-mix(in srgb,var(--tdc-blue) 40%,transparent)}
+.rb-once-on b{display:block;font-size:15px}.rb-once-on small{display:block;margin-top:2px;font-size:12px;color:var(--tdc-muted)}
+.rb .btn{border:1px solid var(--tdc-line)}.rb .btn.go{border-color:transparent;background:var(--tdc-blue);color:var(--text-primary-color,#fff)}.rb .btn:disabled{opacity:.5}
+.rb-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--tdc-text) 6%,transparent)}
+.rb-seg button{min-height:38px;padding:0 8px;border-radius:10px;font-weight:600;font-size:14px;color:var(--tdc-muted);text-align:center;line-height:1.15}
+.rb-seg button[aria-checked="true"]{background:var(--tdc-blue);color:var(--text-primary-color,#fff)}
+.rb-row{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;align-items:center}
+.rb-day{font-weight:600}
+.rb-week{display:grid;gap:6px}
+.rb-wd{display:grid;grid-template-columns:118px minmax(0,1fr) minmax(0,1.25fr);gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--tdc-line)}
+.rb-wd:last-child{border-bottom:0}
+.rb-wd.off .rb-tog{color:var(--tdc-muted)}
+.rb-free{grid-column:2/-1;font-size:13px;color:var(--tdc-muted)}
+.rb-tog{display:flex;align-items:center;gap:8px;min-height:40px;text-align:left;font-weight:600}
+.rb-tog ha-icon{--mdc-icon-size:22px;color:var(--tdc-muted)}.rb-tog[aria-pressed="true"] ha-icon{color:var(--tdc-blue)}
+.rb-tools{display:flex;flex-wrap:wrap;gap:8px}.rb-tools .chip{border:1px solid var(--tdc-line)}
+.rb-err{margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#ef4444 15%,transparent);color:#fecaca;font-size:13px}
+.rb-foot{position:sticky;bottom:-18px;display:flex;justify-content:flex-end;gap:10px;margin:0 -18px -18px;padding:12px 18px 18px;background:var(--tdc-dlg-bg,#121821);border-top:1px solid var(--tdc-line)}
+@media (max-width:520px){.rb{padding:14px;gap:12px}.rb-sec{padding:12px}.rb input,.rb select{font-size:14px;padding:6px 8px}.rb-wd{grid-template-columns:88px minmax(0,1fr) minmax(0,1fr);gap:6px}.rb-tog{gap:6px}.rb-h h3{font-size:17px}.rb-once{grid-template-columns:1fr}.rb-foot{margin:0 -14px -14px;padding:12px 14px 14px;bottom:-14px}.rb-foot .btn{flex:1}}
 .ctl input[type=time]{justify-self:start;grid-column:3/5;min-height:32px;padding:0 8px;border-radius:8px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text)}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;margin:0;
   background:linear-gradient(to right,var(--tdc-blue) var(--p,0%),color-mix(in srgb,var(--tdc-text) 14%,transparent) var(--p,0%))}
@@ -888,6 +930,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:4px solid var(--tdc-blue);cursor:pointer}
 /* smart charging (EV Smart Charge) */
 .sc-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+/* The compact charge layout (the front page's popup while the car is plugged in) keeps what is used quickly: status,
+   the four everyday plans, the plan's times and price, the target and "Klar senest" (with the one-time time). The
+   rest (phone choices, price cap, manual, quarters/hours, temporary trip, default plan, smart choices) is set on the
+   Tesla page. A plan that is chosen anyway stays visible. */
+.dash.charge-layout .cmp,.dash.charge-layout .sc-phone,.dash.charge-layout .sc-res,.dash.charge-layout .sc-trip,
+.dash.charge-layout .sc-def,.dash.charge-layout .sc-opt,.dash.charge-layout .charge-art{display:none!important}
+.dash.charge-layout .sc-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dash.charge-layout [data-scmode="price_cap"]:not([aria-checked="true"]),.dash.charge-layout [data-scmode="manual"]:not([aria-checked="true"]){display:none}
 .sc-modes button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:40px;padding:0 8px;border-radius:10px;
   border:1px solid var(--tdc-line);background:var(--tdc-tile);font-size:14px;font-weight:600;white-space:nowrap}
 .sc-modes button span{overflow:hidden;text-overflow:ellipsis}
@@ -1250,6 +1300,8 @@ class ThTeslaDashboardCard extends HTMLElement {
     // All interaction is delegated from the shadow root, so rebuilding the DOM never duplicates listeners.
     this.shadowRoot.addEventListener("click", (event) => this._onClick(event));
     this.shadowRoot.addEventListener("change", (event) => this._onChange(event));
+    // The ready-by popup keeps what is typed in its draft.
+    this.shadowRoot.addEventListener("input", (event) => { if (event.target?.dataset?.rbin) this._rbInput(event.target); });
     this.shadowRoot.addEventListener("input", (event) => this._onInput(event));
     this.shadowRoot.addEventListener("keydown", (event) => this._onKey(event));
     this.shadowRoot.addEventListener("focusout", (event) => this._commitInput(event.target));
@@ -1628,6 +1680,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       charge: this._chargeModel(f, status, soc, target, socTone),
       plan: this._planModel(f),
       sc: this._cfg.smart_charge ? this._scModel(f) : null,
+      rb: this._cfg.smart_charge ? this._rbModel(f) : null,
       vehicle: this._vehicleModel(),
       tpms: this._tpmsModel(f),
       drive: this._driveModel(f),
@@ -2322,6 +2375,233 @@ class ThTeslaDashboardCard extends HTMLElement {
     };
   }
 
+  /* ------------------------------------------------------ ready-by popup (EV Ledger week plan, one-time time) */
+
+  /** The "Klar senest" button: the next ready-by time, its target when it has its own, and what set it. */
+  _rbModel(f) {
+    const week = this._sc("week_plan");
+    if (!week) return null;
+    const a = week.attributes || {};
+    const next = ttdToDate(a.next_ready_by);
+    const normal = ttdToNumber(a.normal_target);
+    const target = ttdToNumber(a.next_target);
+    const own = target != null && normal != null && Math.round(target) !== Math.round(normal);
+    const source = { once: "Engangstid", week: "Ugeplan", learned: "Lærte afgange", time: this._rbSameText() }[a.next_source] || "";
+    return {
+      value: next ? `${ttdRbWhen(f, next)}${own ? ` · ${Math.round(target)} %` : ""}` : TTD_DASH,
+      source,
+      sig: JSON.stringify([a.next_ready_by, a.next_target, a.next_source, a.once, week.state, a.days]),
+    };
+  }
+
+  _rbSameText() {
+    const weekend = this._sc("weekend_ready_by")?.state === "on" && ttdIsClock(this._sc("ready_by_weekend")?.state);
+    return weekend ? "Hverdage og weekend" : "Samme tid hver dag";
+  }
+
+  _rbIsOpen() {
+    return !!this._r.rbDlg?.open;
+  }
+
+  /** Open the popup with a draft of the current settings (nothing is saved before "Gem"). */
+  _rbOpen() {
+    const dlg = this._r.rbDlg;
+    if (!dlg) return;
+    const week = this._sc("week_plan");
+    const a = week?.attributes || {};
+    const same = ttdClock(this._sc("ready_by_time")?.state) || "07:00";
+    const weekend = ttdClock(this._sc("ready_by_weekend")?.state) || "09:00";
+    const weekendOn = this._sc("weekend_ready_by")?.state === "on";
+    const days = {};
+    for (const [key] of TTD_RB_DAYS) {
+      const day = a.days?.[key];
+      days[key] = day ? { on: true, time: ttdClock(day.time) || same, target: day.target ?? "" }
+        : a.days ? { on: false, time: same, target: "" } : { on: true, time: weekendOn && (key === "sat" || key === "sun") ? weekend : same, target: "" };
+    }
+    const next = ttdToDate(a.next_ready_by);
+    this._rbDraft = {
+      mode: week?.state === "on" ? "week" : "same", same, weekend, weekendOn, days,
+      onceAt: next ? ttdLocalInput(next) : "", onceTarget: "", error: "", busy: false,
+    };
+    this._rbRender();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+  }
+
+  _rbClose() {
+    const dlg = this._r.rbDlg;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+    this._rbDraft = null;
+  }
+
+  _rbRender() {
+    const body = this._r.rbBody;
+    const d = this._rbDraft;
+    if (!body || !d) return;
+    const f = this._format();
+    const week = this._sc("week_plan");
+    const a = week?.attributes || {};
+    const normal = ttdToNumber(a.normal_target) ?? this._targetSoc() ?? 80;
+    const next = ttdToDate(a.next_ready_by);
+    const nextTarget = ttdToNumber(a.next_target);
+    const once = a.once && ttdToDate(a.once.at) ? { at: ttdToDate(a.once.at), target: ttdToNumber(a.once.target) } : null;
+    const src = { once: "engangstid", week: "ugeplan", learned: "lærte afgange", time: this._rbSameText().toLowerCase() }[a.next_source] || "";
+    const learned = this._sc("learn_departure");
+    const learnedTimes = learned?.attributes?.departures;
+    const minSoc = ttdToNumber(this._sc("min_soc")?.state);
+    const targets = (value) => `<option value=""${value === "" || value == null ? " selected" : ""}>Normal ${Math.round(normal)} %</option>${[50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100].map((v) => `<option value="${v}"${Number(value) === v ? " selected" : ""}>${v} %</option>`).join("")}`;
+    const now = new Date();
+    const max = new Date(now.getTime() + 14 * 86400000);
+    const onDays = TTD_RB_DAYS.filter(([key]) => d.days[key].on);
+    const earliest = onDays.map(([key]) => d.days[key].time).sort()[0];
+    const scroll = this._r.rbDlg?.scrollTop || 0;
+    body.innerHTML = `
+      <header class="rb-h">
+        <span class="rb-hi">${ttdIcon("mdi:calendar-clock")}</span>
+        <div><h3 tabindex="-1" autofocus>Klar senest</h3><p>${next ? `Næste: <b>${ttdEsc(ttdRbWhen(f, next, true))}</b> · ${Math.round(nextTarget ?? normal)} % · ${ttdEsc(src)}` : "Ingen klar-senest-tid endnu"}</p></div>
+        <button type="button" class="rb-x" data-rbclose aria-label="Luk">${ttdIcon("mdi:close")}</button>
+      </header>
+      <section class="rb-sec">
+        <h4>${ttdIcon("mdi:numeric-1-circle-outline")}Engangstid</h4>
+        ${once ? `<div class="rb-once-on">
+            <div><b>${ttdEsc(ttdRbWhen(f, once.at, true))}</b><small>${Math.round(once.target ?? normal)} % · bruges én gang, derefter gælder ${d.mode === "week" && week?.state === "on" ? "ugeplanen" : "den normale tid"} igen</small></div>
+            <button type="button" class="btn" data-rbonceclear ${d.busy ? "disabled" : ""}>Fjern</button>
+          </div>`
+          : `<p class="rb-note">Til en enkelt gang, fx en tidlig tur. Når tiden er nået, gælder den normale plan igen af sig selv.</p>
+          <div class="rb-once">
+            <label class="rb-f"><span>Klar senest</span><input type="datetime-local" step="60" data-rbin="onceAt" value="${ttdEsc(d.onceAt)}" min="${ttdLocalInput(now)}" max="${ttdLocalInput(max)}"></label>
+            <label class="rb-f"><span>Mål</span><select data-rbin="onceTarget">${targets(d.onceTarget)}</select></label>
+            <button type="button" class="btn go" data-rboncesave ${d.busy ? "disabled" : ""}>Brug én gang</button>
+          </div>`}
+      </section>
+      <section class="rb-sec">
+        <h4>${ttdIcon("mdi:calendar-sync-outline")}Normal plan</h4>
+        <div class="rb-seg" role="radiogroup" aria-label="Normal plan">
+          <button type="button" role="radio" aria-checked="${d.mode === "same"}" data-rbmode="same">Samme tid hver dag</button>
+          <button type="button" role="radio" aria-checked="${d.mode === "week"}" data-rbmode="week">Ugeplan</button>
+        </div>
+        ${d.mode === "same" ? `
+          <label class="rb-row"><span class="rb-day">Hver dag</span><input type="time" step="60" data-rbin="same" value="${ttdEsc(d.same)}"></label>
+          <div class="rb-row">
+            <button type="button" class="rb-tog" data-rbweekend aria-pressed="${d.weekendOn}">${ttdIcon(d.weekendOn ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>Anden tid i weekenden</span></button>
+            <input type="time" step="60" data-rbin="weekend" value="${ttdEsc(d.weekend)}" ${d.weekendOn ? "" : "disabled"} aria-label="Weekend">
+          </div>
+          <p class="rb-note">Målet er ${Math.round(normal)} % (Mål SOC). Med ugeplanen kan hver dag få sin egen tid og sit eget mål, og dage uden kørsel kan springes over.</p>`
+        : `
+          <div class="rb-week">${TTD_RB_DAYS.map(([key, name]) => {
+            const day = d.days[key];
+            return `<div class="rb-wd${day.on ? "" : " off"}">
+              <button type="button" class="rb-tog" data-rbday="${key}" aria-pressed="${day.on}" aria-label="${name} ${day.on ? "til" : "fri"}">${ttdIcon(day.on ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>${name}</span></button>
+              ${day.on ? `<input type="time" step="60" data-rbin="time:${key}" value="${ttdEsc(day.time)}" aria-label="${name} klar senest"><select data-rbin="target:${key}" aria-label="${name} mål">${targets(day.target)}</select>`
+                : `<span class="rb-free">Fri dag – ingen klar-tid</span>`}
+            </div>`;
+          }).join("")}</div>
+          <div class="rb-tools">
+            <button type="button" class="chip" data-rbcopy>${ttdIcon("mdi:content-copy")}<span>Mandag til alle hverdage</span></button>
+            ${learnedTimes && Object.values(learnedTimes).some(Boolean) ? `<button type="button" class="chip" data-rblearned>${ttdIcon("mdi:school-outline")}<span>Brug lærte afgange</span></button>` : ""}
+          </div>
+          <p class="rb-note">Planen lader billigst muligt, så bilen er klar på hver dags tid med dagens mål.${onDays.length < 7 && earliest ? ` På fri dage holdes mindst ${minSoc != null ? `${Math.round(minSoc)} %` : "minimum"} fra kl. ${earliest}.` : ""}${learned?.state === "on" ? " Ugeplanen bruges i stedet for de lærte afgange." : ""} Et eget mål sættes også som bilens ladegrænse, mens den er sat til laderen.</p>`}
+      </section>
+      <p class="rb-err" role="alert"${d.error ? "" : " hidden"}>${ttdEsc(d.error)}</p>
+      <footer class="rb-foot">
+        <button type="button" class="btn" data-rbclose>Annuller</button>
+        <button type="button" class="btn go" data-rbsave ${d.busy ? "disabled" : ""}>Gem plan</button>
+      </footer>`;
+    this._rbSig = this._rbModel(f)?.sig;
+    if (this._r.rbDlg) this._r.rbDlg.scrollTop = scroll;
+  }
+
+  /** Inputs only change the draft (no redraw while typing). */
+  _rbInput(el) {
+    const d = this._rbDraft;
+    const key = el.dataset.rbin;
+    if (!d || !key) return;
+    if (key.startsWith("time:")) d.days[key.slice(5)].time = el.value;
+    else if (key.startsWith("target:")) d.days[key.slice(7)].target = el.value;
+    else d[key] = el.value;
+  }
+
+  _rbAction(target) {
+    const d = this._rbDraft;
+    if (target.dataset.rbopen != null) return this._rbOpen();
+    if (!d) return undefined;
+    if (target.dataset.rbclose != null) return this._rbClose();
+    d.error = "";
+    if (target.dataset.rbmode) d.mode = target.dataset.rbmode;
+    else if (target.dataset.rbday) { const day = d.days[target.dataset.rbday]; day.on = !day.on; }
+    else if (target.dataset.rbweekend != null) d.weekendOn = !d.weekendOn;
+    else if (target.dataset.rbcopy != null) {
+      for (const key of ["tue", "wed", "thu", "fri"]) d.days[key] = { ...d.days.mon };
+    } else if (target.dataset.rblearned != null) {
+      const learned = this._sc("learn_departure")?.attributes?.departures || {};
+      TTD_RB_DAYS.forEach(([key], i) => {
+        const time = learned[TTD_RB_LEARNED[i]];
+        d.days[key] = time ? { ...d.days[key], on: true, time } : { ...d.days[key], on: false };
+      });
+    } else if (target.dataset.rbsave != null) return this._rbSave();
+    else if (target.dataset.rboncesave != null) return this._rbOnceSave();
+    else if (target.dataset.rbonceclear != null) return this._rbService("clear_ready_by_once", {}, false);
+    this._rbRender();
+    return undefined;
+  }
+
+  async _rbService(service, data, close) {
+    const d = this._rbDraft;
+    const id = this._scIds().week_plan;
+    if (!d || !id) return false;
+    d.busy = true; this._rbRender();
+    try {
+      await this._hass.callService("evledger", service, { entity_id: id, ...data });
+      if (close) this._rbClose(); else { d.busy = false; d.error = ""; this._rbRender(); }
+      return true;
+    } catch (err) {
+      d.busy = false; d.error = `Kunne ikke gemmes: ${err?.message || err}`; this._rbRender();
+      return false;
+    }
+  }
+
+  _rbOnceSave() {
+    const d = this._rbDraft;
+    const at = d.onceAt ? new Date(d.onceAt) : null;
+    if (!at || Number.isNaN(at.getTime()) || at <= new Date()) { d.error = "Vælg et tidspunkt ude i fremtiden."; this._rbRender(); return; }
+    if (at.getTime() > Date.now() + 14 * 86400000) { d.error = "Engangstiden kan højst ligge 14 dage frem."; this._rbRender(); return; }
+    this._rbService("set_ready_by_once", { at: at.toISOString(), ...(d.onceTarget ? { target: Number(d.onceTarget) } : {}) }, false);
+  }
+
+  async _rbSave() {
+    const d = this._rbDraft;
+    if (d.mode === "week") {
+      const days = {};
+      for (const [key, name] of TTD_RB_DAYS) {
+        const day = d.days[key];
+        if (day.on && !ttdIsClock(day.time)) { d.error = `Vælg en tid for ${name.toLowerCase()}.`; this._rbRender(); return; }
+        days[key] = day.on ? { time: day.time, ...(day.target !== "" && day.target != null ? { target: Number(day.target) } : {}) } : null;
+      }
+      if (!Object.values(days).some(Boolean)) { d.error = "Mindst én dag skal have en klar-senest-tid."; this._rbRender(); return; }
+      await this._rbService("set_week_plan", { days, enabled: true }, true);
+      return;
+    }
+    if (!ttdIsClock(d.same) || (d.weekendOn && !ttdIsClock(d.weekend))) { d.error = "Vælg en tid."; this._rbRender(); return; }
+    const ids = this._scIds();
+    d.busy = true; this._rbRender();
+    try {
+      if (this._sc("week_plan")?.state === "on") await this._hass.callService("switch", "turn_off", { entity_id: ids.week_plan });
+      if (ttdClock(this._sc("ready_by_time")?.state) !== d.same) await this._hass.callService("time", "set_value", { entity_id: ids.ready_by_time, time: `${d.same}:00` });
+      if (ids.weekend_ready_by && this._sc("weekend_ready_by")) {
+        if (d.weekendOn && ttdClock(this._sc("ready_by_weekend")?.state) !== d.weekend) await this._hass.callService("time", "set_value", { entity_id: ids.ready_by_weekend, time: `${d.weekend}:00` });
+        if ((this._sc("weekend_ready_by").state === "on") !== d.weekendOn) await this._hass.callService("switch", d.weekendOn ? "turn_on" : "turn_off", { entity_id: ids.weekend_ready_by });
+      }
+      this._rbClose();
+    } catch (err) {
+      d.busy = false; d.error = `Kunne ikke gemmes: ${err?.message || err}`; this._rbRender();
+    }
+  }
+
   _deadlineModel(f) {
     const id = this._deadlineEntity();
     const stateObj = id ? this._hass?.states?.[id] : undefined;
@@ -2634,13 +2914,18 @@ class ThTeslaDashboardCard extends HTMLElement {
       }
     }
     const dl = p.deadline;
-    this._hide("dlCtl", !dl.editable);
+    // EV Ledger with the week plan: "Klar senest" opens the ready-by popup instead of a single time field.
+    const rb = m.rb;
+    this._hide("rbOpen", !rb);
+    if (rb) { this._t("rbVal", rb.value); this._t("rbSrc", rb.source); }
+    this._hide("dlCtl", !dl.editable || !!rb);
+    if (rb && this._rbIsOpen() && rb.sig !== this._rbSig) this._rbRender();
     if (dl.editable) {
       const input = r.dlInput;
       if (input.type !== dl.type) input.type = dl.type;
       if (this.shadowRoot.activeElement !== input && input.value !== dl.input) input.value = dl.input;
     }
-    this._hide("planCtl", !m.sc && !p.soc && !dl.editable);
+    this._hide("planCtl", !m.sc && !p.soc && !dl.editable && !rb);
     // tpms
     for (const key of ["FL", "FR", "RL", "RR"]) {
       const tire = m.tpms.tires[key];
@@ -3242,10 +3527,13 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onClick(event) {
+    // A tap on the backdrop around the ready-by popup closes it.
+    if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear]");
     if (!target) return;
+    if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
     if (target.dataset.qc) { if (!target.disabled) this._openQc(target.dataset.qc); return; }
     if (target.dataset.qcclose != null) { this._openQc(this._qcOpen); return; }
     if (target.dataset.qcpower != null) { this._qcPower(); return; }
@@ -3306,6 +3594,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   _onChange(event) {
+    if (event.target?.dataset?.rbin) { this._rbInput(event.target); return; }
     const el = event.target;
     const r = this._r;
     if (el?.dataset?.ccnum) {
@@ -3504,6 +3793,18 @@ class ThTeslaDashboardCard extends HTMLElement {
       }));
     }
   }
+}
+
+const TTD_RB_DAYS = [["mon", "Mandag"], ["tue", "Tirsdag"], ["wed", "Onsdag"], ["thu", "Torsdag"], ["fri", "Fredag"], ["sat", "Lørdag"], ["sun", "Søndag"]];
+// EV Ledger's learned departures are keyed by Danish short weekday names.
+const TTD_RB_LEARNED = ["man", "tir", "ons", "tor", "fre", "lør", "søn"];
+
+/** "i morgen kl. 07:00", or a weekday and date further ahead ("onsdag 14/10 kl. 05:30"). */
+function ttdRbWhen(f, date, long = false) {
+  const diff = f.dayDiff(date);
+  const day = diff === 0 ? TTD_TEXT.today : diff === 1 ? TTD_TEXT.tomorrow
+    : `${f.weekday(date, long ? "long" : "short").replace(/\.$/, "")}${long ? ` ${date.getDate()}/${date.getMonth() + 1}` : ""}`;
+  return `${day} ${TTD_TEXT.at} ${f.time(date)}`;
 }
 
 /** A date as the value of an <input type="datetime-local"> in the browser's time zone. */

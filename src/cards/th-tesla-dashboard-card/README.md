@@ -280,6 +280,20 @@ musen over en måned for kr., kWh, kr/kWh og antal ladninger. Det kommer fra EV 
 (EV Ledger 0.5.0 eller nyere) og vises kun, når den findes. Med EV Ledger 0.5.1 eller nyere står samme måned året
 før som en svag søjle ved siden af, og sidste års total vises under grafen.
 
+**Klar senest (ugeplan og engangstid):** Med EV Ledger 0.6.0 eller nyere viser "Klar senest" den næste klar-tid med
+dagens mål og hvor den kommer fra (Ugeplan, Engangstid, Lærte afgange, Samme tid hver dag). Et tryk åbner en popup:
+
+- **Engangstid:** én bestemt gang (dato, tid og evt. eget mål). Bruges én gang, derefter gælder den normale plan igen.
+- **Normal plan:** "Samme tid hver dag" (med anden tid i weekenden) eller **Ugeplan** med tid og mål pr. dag og fri
+  dage, "Mandag til alle hverdage" og "Brug lærte afgange".
+
+Popuppen er en rigtig dialog over hele siden (Esc eller tryk udenfor lukker), og intet gemmes før "Gem plan".
+
+**Kompakt visning (`layout: charge`):** Forsidens popup, når bilen er sat til, viser kun det, man hurtigt bruger:
+status, opladning, Billigst / Fast tid / Lad nu / Pause, tidslinjen, næste start, slut og pris, Mål SOC og Klar senest.
+Telefonvalg, prisloft, manuel, kvarter/time, midlertidig plan, standardplan og smarte valg ligger på Tesla-siden; med
+`navigation_path` vises "Flere indstillinger på Tesla-siden" nederst.
+
 **Offentlig ladning:** Under "Seneste opladning" kan kWh, pris og sted for en offentlig ladning skrives og gemmes i
 EV Ledger. Viser også, hvor mange opladninger der mangler pris.
 
@@ -387,6 +401,7 @@ otte sekunder og beder derefter `refresh_entities` om ny status.
 | `charging_price_estimate` | `estimated_kwh_needed`, `current_price` |
 | `monthly_performance` (EV Ledger) | `months[].month`, `months[].distance_km` |
 | `last_trip` (EV Ledger) | `started_at`, `ended_at` |
+| `week_plan` (EV Ledger) | `days`, `next_ready_by`, `next_target`, `next_source`, `once`, `normal_target` |
 | `cost_this_year` (EV Ledger) | `kwh`, `unpriced`, `previous_year`, `previous_year_kwh`, `months_year_before[]` (samme felter som `months[]`), `months[].month`, `months[].cost`, `months[].kwh`, `months[].home_cost`, `months[].public_cost`, `months[].charges`, `months[].unpriced` |
 | `last_charge` (EV Ledger) | `kwh`, `price`, `price_currency`, `started_at`, `ended_at`, `start_battery_pct`, `end_battery_pct`, `location_name` |
 | `monta_last_charge` | `consumedKwh`, `cost`, `currency.identifier`, `startedAt`, `stoppedAt`, `soc.percentage` |

@@ -691,4 +691,60 @@ console.log("th-tesla-dashboard-card tests passed");
   delete st["sensor.bil_charging_cost_this_year"];
   assert.equal(card(st, auto)._model().cost, null, "no panel without the sensor");
 }
+// Ready-by popup (EV Ledger week plan and one-time time).
+{
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(5, 30, 0, 0);
+  const st = {
+    "select.bil_charge_mode": s("smart", { options: ["smart"] }),
+    "switch.bil_week_plan": s("on", { days: { mon: { time: "06:30", target: null }, tue: null, wed: { time: "06:30", target: 90 }, thu: null, fri: null, sat: null, sun: null },
+      next_ready_by: tomorrow.toISOString(), next_target: 90, next_source: "week", once: null, normal_target: 80 }),
+    "time.bil_ready_by": s("07:00:00"), "switch.bil_another_time_at_the_weekend": s("off"), "time.bil_ready_by_at_the_weekend": s("09:00:00"),
+  };
+  const auto = { name: "Bil", ev_ledger: "select.bil_charge_mode" };
+  const c = card(st, auto);
+  const rb = c._model().rb;
+  assert.equal(rb.value, "i morgen kl. 05:30 · 90 %");
+  assert.equal(rb.source, "Ugeplan");
+  st["switch.bil_week_plan"] = s("off", { ...st["switch.bil_week_plan"].attributes, next_source: "once", next_target: 80 });
+  assert.deepEqual(JSON.parse(JSON.stringify([card(st, auto)._model().rb.value, card(st, auto)._model().rb.source])), ["i morgen kl. 05:30", "Engangstid"], "the normal target is not repeated");
+  delete st["switch.bil_week_plan"];
+  assert.equal(card(st, auto)._model().rb, null, "older EV Ledger: the single time field");
+  // Saving the week plan sends one call with the days.
+  st["switch.bil_week_plan"] = s("on", { days: { mon: { time: "06:30", target: null }, tue: null, wed: null, thu: null, fri: null, sat: null, sun: null }, next_source: "week", normal_target: 80 });
+  const calls = [];
+  const d = card(st, auto);
+  d._hass.callService = async (domain, service, data) => { calls.push([domain, service, data]); };
+  d._r = { rbBody: { innerHTML: "" }, rbDlg: { open: false, showModal() { this.open = true; }, close() { this.open = false; }, scrollTop: 0 } };
+  d._rbOpen();
+  assert.equal(d._rbDraft.mode, "week");
+  assert.equal(d._rbDraft.days.tue.on, false);
+  d._rbAction({ dataset: { rbcopy: "" } });
+  assert.equal(d._rbDraft.days.fri.on, true, "Monday copied to the workdays");
+  d._rbDraft.days.fri.target = "90";
+  await d._rbSave();
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["evledger", "set_week_plan", { entity_id: "switch.bil_week_plan", enabled: true, days: { mon: { time: "06:30" }, tue: { time: "06:30" }, wed: { time: "06:30" }, thu: { time: "06:30" }, fri: { time: "06:30", target: 90 }, sat: null, sun: null } }]]);
+  // An empty week is refused before anything is sent.
+  calls.length = 0;
+  d._rbOpen();
+  for (const key of Object.keys(d._rbDraft.days)) d._rbDraft.days[key].on = false;
+  await d._rbSave();
+  assert.equal(calls.length, 0);
+  assert.match(d._rbDraft.error, /Mindst én dag/);
+  // A one-time time in the past is refused; a future one is sent as an exact moment.
+  d._rbDraft.onceAt = "2000-01-01T05:00";
+  d._rbOnceSave();
+  assert.match(d._rbDraft.error, /fremtiden/);
+  d._rbDraft.onceAt = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}T05:30`;
+  d._rbDraft.onceTarget = "95";
+  d._rbOnceSave();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1))), ["evledger", "set_ready_by_once", { entity_id: "switch.bil_week_plan", at: tomorrow.toISOString(), target: 95 }]);
+  // Back to the same time every day: the week plan off and the time set.
+  calls.length = 0;
+  d._rbOpen();
+  d._rbDraft.mode = "same"; d._rbDraft.same = "06:45";
+  await d._rbSave();
+  assert.deepEqual(calls.map((x) => `${x[0]}.${x[1]}`), ["switch.turn_off", "time.set_value"]);
+  assert.equal(calls[1][2].time, "06:45:00");
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");
