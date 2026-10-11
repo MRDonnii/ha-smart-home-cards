@@ -99,6 +99,13 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 - Cards remain separated internally and can be maintained independently.
 - The old standalone repositories are archived migration history; all new development and releases happen here.
 
+## Header card: robots only drive while they work
+
+A robot in the header's `activities` drives across the card only in a working state: mowers `mowing`, `edgecut`,
+`starting`, `leaving`, `returning`; vacuums `cleaning`, `segment_cleaning`, `zoned_cleaning`, `spot_cleaning`, `mopping`,
+`returning`. `paused` no longer counts (Mammotion mowers report it while standing ready off the charger). Other models can
+set `active_states` per activity, for example `active_states: [mowing, returning]`.
+
 ## Header card: sidebar as a drawer on desktop
 
 `ha-home-header-card` takes `desktop_sidebar: drawer`. It sets Home Assistant's sidebar to "always hidden" in that browser,

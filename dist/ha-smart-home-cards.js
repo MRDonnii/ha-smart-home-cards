@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.31 */
+/* MRDonnii Smart Home Cards v0.5.32 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -28774,7 +28774,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.68";
+var VERSION24 = "0.8.69";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -29584,7 +29584,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
       { key: "robot_opacity", label: "Robot gennemsigtighed (0.1\u20131)", type: "number", min: 0.1, max: 1, step: 0.05 }
     ], collections: [
       { key: "alerts", label: "Alarmregler", itemLabel: "regel", defaults: { name: "Ny alarm", operator: "=", state: "on", priority: 1, icon: "mdi:alert" }, fields: [{ key: "name", label: "Tekst" }, { key: "secondary_text", label: "Detalje" }, { key: "entity", label: "Entity", type: "entity" }, { key: "entity_filter", label: "Entity-regex" }, { key: "operator", label: "Operator (=, !=, <, >)" }, { key: "state", label: "V\xE6rdi" }, { key: "priority", label: "Prioritet", type: "number" }, { key: "icon", label: "Ikon" }, { key: "path", label: "Navigation" }, { key: "media", label: "Erstat vejr (d\xF8rklokke/post)", type: "boolean" }, { key: "snapshot", label: "Kamera-snapshot", type: "entity" }] },
-      { key: "activities", label: "Aktiviteter", itemLabel: "aktivitet", defaults: { name: "Robot", icon: "mdi:robot-vacuum" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "battery", label: "Batteri", type: "entity" }, { key: "charging", label: "Oplader", type: "entity" }, { key: "error", label: "Fejl", type: "entity" }, { key: "icon", label: "Ikon" }] }
+      { key: "activities", label: "Aktiviteter", itemLabel: "aktivitet", defaults: { name: "Robot", icon: "mdi:robot-vacuum" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "battery", label: "Batteri", type: "entity" }, { key: "charging", label: "Oplader", type: "entity" }, { key: "error", label: "Fejl", type: "entity" }, { key: "icon", label: "Ikon" }, { key: "active_states", label: "Aktive tilstande (valgfri, kommasepareret)" }] }
     ] };
     return e;
   }
@@ -29746,11 +29746,22 @@ var HAHomeHeaderCard = class extends HTMLElement {
     }
     return out;
   }
+  // Which entity states mean "on the move". "paused" is not one of them: Mammotion (and other mowers)
+  // report paused while standing ready off the charger, which made the robot drive across the header.
+  // Per activity, active_states (list or comma text) overrides the defaults (Claude AI).
+  _activityStates(a) {
+    const custom = Array.isArray(a.active_states) ? a.active_states : typeof a.active_states === "string" && a.active_states.trim() ? a.active_states.split(",") : null;
+    if (custom) return custom.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    const id = String(a.entity || "");
+    if (id.startsWith("lawn_mower.")) return ["mowing", "edgecut", "starting", "leaving", "returning"];
+    if (id.startsWith("vacuum.")) return ["cleaning", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping", "returning"];
+    return ["cleaning", "mowing", "returning", "edgecut", "starting", "leaving", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping"];
+  }
   _activity() {
     const snoozed = this._snoozed();
     return (this._config.activities || []).filter((a) => !snoozed.has(a.error) && !snoozed.has(a.entity)).map((a) => {
       const state = this._s(a.entity), err = a.error && !["off", "none", "no_error", "unknown", "unavailable", void 0].includes(this._s(a.error));
-      const active = ["cleaning", "mowing", "returning", "paused"].includes(state);
+      const active = this._activityStates(a).includes(String(state ?? "").toLowerCase());
       const low = Number(this._s(a.battery)) < 10 && !this._on(a.charging);
       return { ...a, state, active, error: err || state === "error" || low };
     }).filter((a) => a.active || a.error);
