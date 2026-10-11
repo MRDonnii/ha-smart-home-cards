@@ -1,4 +1,8 @@
-const VERSION = "0.10.1";
+const VERSION = "0.11.0";
+// ev_ledger: any entity of the car's EV Ledger; the plan (charge times) and the price resolution are found from it.
+const EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
+const EPC_LEDGER_ENDINGS = ["charge_mode", "next_charge_start", "next_charge_end", "price_resolution", "charge_status",
+  "charging_status", "charges", "trips", "planned_charge_cost", "home_charging_cost_today"];
 
 class HAElectricityPriceCardEditor extends HTMLElement {
   setConfig(config) {
@@ -27,6 +31,7 @@ class HAElectricityPriceCardEditor extends HTMLElement {
       <div class="row"><label>Strømligning i morgen</label><input data-key="stromligning_tomorrow"></div>
       <div class="row"><label>Strømligning forecast</label><input data-key="stromligning_forecast"></div>
       <div class="row"><label>Energi Data Service</label><input data-key="energidataservice"></div>
+      <div class="row"><label>EV Ledger (bilens ladetider)</label><input data-key="ev_ledger" placeholder="select.min_bil_charge_mode"></div>
       <div class="row"><label>Desktophøjde (px)</label><input data-key="desktop_height" type="number" min="350" max="560" step="10"></div>
       <div class="row"><label>Vis titel og aktuel pris</label><input data-key="show_header" type="checkbox"></div>
       <div class="row"><label>Udfyld tilgængelig højde</label><input data-key="fill_height" type="checkbox"></div>
@@ -96,8 +101,8 @@ class HAElectricityPriceCard extends HTMLElement {
       this._config.stromligning_current,
       this._config.stromligning_tomorrow,
       this._config.stromligning_forecast,
-      this._config.resolution_entity,
-      this._config.charge_plan_entity,
+      this._resolutionEntity(),
+      this._planEntity(),
     ];
     const sig = JSON.stringify(
       ids.map((id) => [
@@ -122,6 +127,40 @@ class HAElectricityPriceCard extends HTMLElement {
   }
   _entity(id) {
     return this._hass?.states?.[id];
+  }
+  /** The car's EV Ledger entities by role, found from ev_ledger (any entity of the car's EV Ledger). */
+  _ledger() {
+    const anchor = typeof this._config.ev_ledger === "string" && this._config.ev_ledger.includes(".") ? this._config.ev_ledger.trim() : null;
+    if (!anchor) return {};
+    const registry = this._hass?.entities;
+    if (this._ledgerMap && this._ledgerSrc === registry && this._ledgerAnchor === anchor) return this._ledgerMap;
+    const map = {};
+    const own = registry?.[anchor];
+    if (own?.device_id) {
+      for (const entry of Object.values(registry)) {
+        if (entry.device_id === own.device_id && entry.platform === own.platform && EPC_LEDGER_ROLES[entry.translation_key]) map[entry.translation_key] = entry.entity_id;
+      }
+    }
+    if (!map.next_charge_start) {
+      // No entity registry: the English entity id endings next to the anchor.
+      const object = anchor.split(".")[1] || "";
+      const end = EPC_LEDGER_ENDINGS.find((ending) => object.endsWith(`_${ending}`));
+      const prefix = end ? object.slice(0, -end.length - 1) : object;
+      for (const [role, pattern] of Object.entries(EPC_LEDGER_ROLES)) {
+        const [domain, ending] = pattern.split("._");
+        map[role] = map[role] || `${domain}.${prefix}_${ending}`;
+      }
+    }
+    this._ledgerMap = map;
+    this._ledgerSrc = registry;
+    this._ledgerAnchor = anchor;
+    return map;
+  }
+  _planEntity() {
+    return this._config.charge_plan_entity || this._ledger().next_charge_start || null;
+  }
+  _resolutionEntity() {
+    return this._config.resolution_entity || this._ledger().price_resolution || null;
   }
   _source() {
     const requested = this._config.source || "auto";
@@ -149,7 +188,7 @@ class HAElectricityPriceCard extends HTMLElement {
   // Quarters or whole hours: "resolution_entity" (e.g. EV Ledger's price resolution select) wins over "resolution"
   // (auto = as the price sensor delivers them).
   _resolution() {
-    const entity = this._entity(this._config.resolution_entity);
+    const entity = this._entity(this._resolutionEntity());
     const value = String(entity?.attributes?.price_resolution ?? entity?.state ?? this._config.resolution ?? "auto").toLowerCase();
     if (["hour", "time", "60", "1h", "hourly"].includes(value)) return 60;
     if (["quarter", "kvarter", "15", "15m"].includes(value)) return 15;
@@ -349,7 +388,7 @@ class HAElectricityPriceCard extends HTMLElement {
   }
   // The car's planned charging (EV Ledger's next_charge_start sensor, attribute "blocks"): those bars get a faint foot.
   _planBlocks() {
-    const blocks = this._entity(this._config.charge_plan_entity)?.attributes?.blocks;
+    const blocks = this._entity(this._planEntity())?.attributes?.blocks;
     return (Array.isArray(blocks) ? blocks : [])
       .map((b) => [Date.parse(b?.start), Date.parse(b?.end)])
       .filter(([s, e]) => Number.isFinite(s) && Number.isFinite(e) && e > s);

@@ -34,6 +34,17 @@ kvarterpriser til timer med timens gennemsnitspris. `resolution_entity` (fx EV L
 `select.<bil>_price_resolution`) vinder over `resolution`, så kortet viser kvarterer eller timer ligesom
 ladeplanerne.
 
+**EV Ledger med én linje:** `ev_ledger: select.<bil>_charge_mode` (en vilkårlig entity fra bilens EV Ledger-enhed)
+er nok. Kortet finder selv ladeplanen (`sensor.<bil>_next_charge_start`) og kvarter/time-valget
+(`select.<bil>_price_resolution`), så bilens ladetider vises i grafen. `charge_plan_entity` og `resolution_entity`
+vinder, hvis de sættes med hånden. Feltet findes også i kortets editor ("EV Ledger (bilens ladetider)").
+
+```yaml
+type: custom:ha-electricity-price-card
+stromligning_current: sensor.stromligning_current_price_vat
+ev_ledger: select.min_bil_charge_mode
+```
+
 `charge_plan_entity` (fx EV Ledgers `sensor.<bil>_next_charge_start`) giver de søjler, hvor bilen efter planen
 lader, en svag farvet søjle bag priserne og en fod i bunden, og et "BIL"-mærke med starttiden over dem; tooltippen
 siger "Bilen lader her". Ligger planen på en senere dag (fx efter midnat), står mærket ved grafens højre kant som
