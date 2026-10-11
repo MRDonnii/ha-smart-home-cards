@@ -16,6 +16,14 @@ Rendered from the neutral demo dashboard used for compatibility testing — anim
 |---|---|
 | ![Animated desktop dashboard preview](docs/screenshots/dashboard-pc-animated.gif) | ![Animated iPhone 17 Pro dashboard preview](docs/screenshots/dashboard-iphone-17-pro.gif) |
 
+### Tesla dashboard
+
+The full Tesla page (`custom:th-tesla-dashboard-card`) with example data. The car images and the complete view YAML are in the [card's README](src/cards/th-tesla-dashboard-card#hele-tesla-siden).
+
+| Desktop | Mobile |
+|---|---|
+| ![Tesla dashboard on desktop](docs/screenshots/tesla-dashboard-desktop.webp) | <img src="docs/screenshots/tesla-dashboard-mobile.webp" alt="Tesla dashboard on mobile" width="260"> |
+
 ## Install with HACS
 
 1. Open HACS.

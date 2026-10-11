@@ -5,6 +5,18 @@ bilstatus med batteriring, Home Assistants eget kort med bilens placering,
 opladning (Monta/Zaptec), smart ladeplan, dæktryk, kørsel, økonomi (EV Ledger),
 seneste opladning og en let graf over dagligt forbrug.
 
+![Tesla-siden på PC](../../../docs/screenshots/tesla-dashboard-desktop.webp)
+
+<details>
+<summary>Samme side på mobil</summary>
+
+<img src="../../../docs/screenshots/tesla-dashboard-mobile.webp" alt="Tesla-siden på mobil" width="390">
+
+</details>
+
+Skærmbillederne er taget med eksempeldata. Bilbillederne ligger i [`images/`](images) – se
+[Hele Tesla-siden](#hele-tesla-siden) for, hvordan du bruger dem.
+
 - Vanilla Web Component uden afhængigheder. Skyggeroden bygges én gang og
   opdateres derefter målrettet, når en overvåget entity ændrer sig.
 - Ingen polling. Grafens statistik hentes via `recorder/statistics_during_period`,
@@ -118,7 +130,8 @@ vehicle:
 ```
 
 Med `smart_charge` og `model: auto` (eller uden `model`) bruger kortet den model, EV Smart
-Charge har fundet eller fået valgt for bilen. Teslas egne fotos må ikke distribueres her.
+Charge har fundet eller fået valgt for bilen. Teslas egne fotos må ikke distribueres her, men
+[`images/`](images) har renderede billeder af en grå Model 3 RWD, som følger med (se [Hele Tesla-siden](#hele-tesla-siden)).
 Vil du have din egen bil på kortet:
 
 1. Læg et billede med transparent baggrund (WebP/PNG/SVG, ca. 900×434) i
@@ -130,6 +143,114 @@ Gennemsigtige fotos (WebP/PNG) vises som topbilledet med skygge; JPEG-fotos med 
 kanterne (bedst er at fjerne baggrunden). Opladning-panelet viser
 fotoet med kabel, når bilen er sat til, ellers det parkerede, og lade-popuppen (`layout: charge`) bruger fotoet med
 kabel som topbillede, mens bilen er sat til.
+
+## Hele Tesla-siden
+
+Siden på skærmbillederne er en skjult visning (`subview: true`) med `custom:grid-layout`
+([layout-card](https://github.com/thomasloven/lovelace-layout-card)): Tesla-kortet i fuld bredde, lidt luft
+og en navigationsbjælke nederst. Bilbillederne er renderede billeder af en Model 3 RWD i grå uden nummerplade.
+
+1. Kopiér de fire billeder fra [`images/`](images) til `config/www/tesla/`:
+
+   | Fil | Bruges til |
+   |---|---|
+   | `model-3-rwd-charcoal.webp` | Topbilledet (`vehicle.image`) |
+   | `charging.webp` | Bilen med ladekabel i Opladning og lade-popuppen (`photos.charging`) |
+   | `parked.webp` | Bilen uden kabel i Opladning (`photos.parked`) |
+   | `top.webp` | Bilen set ovenfra i Dæktryk (`photos.top`) |
+
+2. Opret en ny visning (rediger dashboard → ⋮ → Raw configuration editor) og indsæt visningen nedenfor.
+   Skift `min_tesla`/`hjemmelader` ud med dine egne entiteter. `top_wheels` og `cable` passer til netop disse billeder.
+
+```yaml
+type: custom:grid-layout
+path: tesla
+title: Tesla
+icon: mdi:ev-plug-ccs1
+subview: true
+layout:
+  margin: 0 auto
+  width: 100%
+  max-width: 1500px
+  grid-template-columns: minmax(0, 1fr)
+  place-content: center
+  padding: 0 10px 24px 10px
+cards:
+  - type: custom:th-tesla-dashboard-card
+    name: Min Tesla
+    vehicle:
+      model: auto
+      image: /local/tesla/model-3-rwd-charcoal.webp
+      photos:
+        charging: /local/tesla/charging.webp
+        parked: /local/tesla/parked.webp
+        top: /local/tesla/top.webp
+        top_wheels: { fl: [12.8, 18.9], fr: [87.1, 18.9], rl: [12.5, 79.2], rr: [87.4, 79.1] }
+        cable:
+          width: 889
+          height: 504
+          path: >-
+            M524.0 252.0 L519.0 258.0 L513.2 264.0 L507.9 270.0 L503.6 276.0 L500.4 282.0 L498.0 288.0
+            L496.0 294.0 L494.1 300.0 L492.4 306.0 L490.5 312.0 L488.8 318.0 L487.4 324.0 L486.0 330.0
+            L484.5 336.0 L483.0 342.0 L481.6 348.0 L480.5 354.0 L479.5 360.0 L478.2 366.0 L476.8 372.0
+            L475.5 378.0 L474.2 384.0 L472.8 390.0 L471.5 396.0 L470.2 402.0 L468.8 408.0 L467.2 414.0
+            L465.8 420.0 L464.2 426.0 L462.4 432.0 L460.1 438.0 L457.6 444.0 L453.8 450.5 L448.1 457.4
+            L442.0 463.1 L436.0 467.2 L430.0 470.5 L424.0 473.4 L418.0 476.0 L412.0 478.2 L406.0 480.1
+            L400.0 482.0 L394.0 483.8 L388.0 485.1 L382.0 486.4 L376.0 487.6 L370.0 488.9 L364.0 490.0
+    location_entity: device_tracker.min_tesla_location_tracker
+    smart_charge: select.min_tesla_charge_mode   # EV Ledger: finder resten selv
+    charger_label: Zaptec
+    entities:
+      battery: sensor.min_tesla_battery
+      range: sensor.min_tesla_range
+      odometer: sensor.min_tesla_odometer
+      temperature_inside: sensor.min_tesla_temperature_inside
+      temperature_outside: sensor.min_tesla_temperature_outside
+      last_update: sensor.min_tesla_data_last_update_time
+      online: binary_sensor.min_tesla_online
+      asleep: binary_sensor.min_tesla_asleep
+      charger: binary_sensor.min_tesla_charger
+      charging: binary_sensor.min_tesla_charging
+      charging_rate: sensor.min_tesla_charging_rate
+      tpms_front_left: sensor.min_tesla_tpms_front_left
+      tpms_front_right: sensor.min_tesla_tpms_front_right
+      tpms_rear_left: sensor.min_tesla_tpms_rear_left
+      tpms_rear_right: sensor.min_tesla_tpms_rear_right
+      daily_energy: sensor.min_tesla_distance_today
+      charger_power: sensor.min_tesla_home_charging_power
+      charger_mode: sensor.hjemmelader_charger_mode
+      efficiency_score: sensor.min_tesla_battery_efficiency_score
+      trips: sensor.min_tesla_trips
+      last_trip: sensor.min_tesla_last_trip
+      total_distance: sensor.min_tesla_total_distance
+      cost_per_km: sensor.min_tesla_cost_per_km
+      monthly_performance: sensor.min_tesla_monthly_performance
+      charges: sensor.min_tesla_charges
+      last_charge: sensor.min_tesla_last_charge
+      charges_needing_price: sensor.min_tesla_charges_needing_price
+    car_controls:
+      lock: lock.min_tesla_lock
+      climate: climate.min_tesla_climate
+      charge_port: cover.min_tesla_charge_port_door
+      sentry: switch.min_tesla_sentry_mode
+      flash: button.min_tesla_flash_lights
+      charge_limit: number.min_tesla_charge_limit
+      charge_current: number.min_tesla_charge_current
+    controls: {}
+    tpms:
+      unit: bar
+    chart:
+      energy_entity: sensor.hjemmelader_energy_meter
+    map:
+      theme_mode: dark
+      style: satellite
+  - type: custom:gap-card        # luft over navigationsbjælken (valgfri, gap-card fra HACS)
+    height: 150
+  - type: custom:ha-navbar-card  # valgfri bundmenu (med i denne pakke)
+    config_url: /local/ha-navbar-card/navbar.json
+```
+
+Med EV Ledger kan hele `entities`-blokken også undværes (se næste afsnit).
 
 ## EV Ledger: hele kortet fra én linje
 
