@@ -752,4 +752,24 @@ console.log("th-tesla-dashboard-card tests passed");
   const st = { ...baseStates(), "sensor.last_update": s("1970-01-01T00:00:00+00:00") };
   assert.equal(model(st, config).hero.updatedLong, "—");
 }
+// A new target SOC is sent only after "Bekræft".
+{
+  const st = { "select.bil_charge_mode": s("smart", { options: ["smart"] }), "number.bil_target_soc": s("80", { min: 50, max: 100, step: 5 }) };
+  const c = card(st, { name: "Bil", ev_ledger: "select.bil_charge_mode" });
+  const calls = [];
+  c._hass.callService = async (...a) => { calls.push(a); };
+  c._queue = () => {};
+  const range = { value: "90", dataset: {} };
+  c._r = { socRange: range };
+  c._onChange({ target: range });
+  assert.equal(c._socPending, 90);
+  assert.equal(calls.length, 0, "not sent yet");
+  c._onClick({ target: { closest: () => ({ dataset: { socok: "" } }) } });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["number", "set_value", { entity_id: "number.bil_target_soc", value: 90 }]]);
+  range.value = "60";
+  c._onChange({ target: range });
+  c._onClick({ target: { closest: () => ({ dataset: { socundo: "" } }) } });
+  assert.equal(calls.length, 1, "undo sends nothing");
+  assert.equal(c._socPending, null);
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.16.1";
+const TTD_VERSION = "1.17.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -619,6 +619,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
+    <div class="soc-ok" data-r="socOk" role="group" aria-label="Bekræft nyt mål" hidden>${ttdIcon("mdi:target", "ic amber")}<span data-r="socOkText"></span><button type="button" class="btn" data-socundo>Fortryd</button><button type="button" class="btn go" data-socok>Bekræft</button></div>
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
     <button type="button" class="ctl rb-open" data-rbopen data-r="rbOpen" aria-haspopup="dialog" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span class="rb-open-t"><span>Klar senest</span><small data-r="rbSrc"></small></span><b data-r="rbVal">${TTD_DASH}</b>${ttdIcon("mdi:chevron-right", "rb-chev")}</button>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>–</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
@@ -657,6 +658,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <button type="button" class="btn go wide" data-action="apply_plan" data-r="applyBtn" hidden>Brug ladeplan</button>
   <div class="plan-ctl" data-r="planCtl" hidden>
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
+    <div class="soc-ok" data-r="socOk" role="group" aria-label="Bekræft nyt mål" hidden>${ttdIcon("mdi:target", "ic amber")}<span data-r="socOkText"></span><button type="button" class="btn" data-socundo>Fortryd</button><button type="button" class="btn go" data-socok>Bekræft</button></div>
     <label class="ctl" data-r="dlCtl" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span>Klar senest</span><input type="time" data-r="dlInput" aria-label="Klar senest"></label>
   </div>
 </section>`}
@@ -886,6 +888,8 @@ button[data-dead]:hover{background:none}
 .cell b{font-size:19px}
 .cell em{font-style:normal;font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plan-ctl{display:grid;gap:10px;margin-top:14px}
+.soc-ok{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--tdc-amber) 45%,transparent);background:color-mix(in srgb,var(--tdc-amber) 10%,transparent);font-size:13px}
+.soc-ok .btn{min-height:32px;padding:0 12px;border:1px solid var(--tdc-line)}.soc-ok .btn.go{border-color:transparent}
 .ctl{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);align-items:center;gap:10px;font-size:14px;color:var(--tdc-muted)}
 .ctl b{color:var(--tdc-text);font-weight:600;min-width:44px}
 .rb-open{width:100%;grid-template-columns:auto minmax(0,1fr) auto auto;padding:10px 12px;border:1px solid var(--tdc-line);border-radius:14px;background:color-mix(in srgb,var(--tdc-blue) 6%,transparent);text-align:left;cursor:pointer}
@@ -2929,12 +2933,18 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._attrSet(range, "min", p.soc.min);
       this._attrSet(range, "max", p.soc.max);
       this._attrSet(range, "step", p.soc.step);
-      if (!this._dragSoc) {
+      const pending = this._socPending;
+      if (!this._dragSoc && pending == null) {
         if (range.value !== String(p.soc.value)) range.value = String(p.soc.value);
         this._t("socCtlVal", p.soc.text);
         range.style.setProperty("--p", `${p.soc.percent}%`);
       }
-    }
+      this._hide("socOk", pending == null);
+      if (pending != null) {
+        this._t("socOkText", `Nyt mål ${this._format().number(pending, 0)} % (nu ${p.soc.text})`);
+        if (!this._dragSoc) this._t("socCtlVal", `${this._format().number(pending, 0)} %`);
+      }
+    } else this._hide("socOk", true);
     const dl = p.deadline;
     // EV Ledger with the week plan: "Klar senest" opens the ready-by popup instead of a single time field.
     const rb = m.rb;
@@ -3573,9 +3583,17 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
+    if (target.dataset.socok != null || target.dataset.socundo != null) {
+      const value = this._socPending;
+      this._socPending = null;
+      clearTimeout(this._socTimer);
+      if (target.dataset.socok != null && value != null) this._setTargetSoc(value);
+      this._queue(true);
+      return;
+    }
     if (target.dataset.qc) { if (!target.disabled) this._openQc(target.dataset.qc); return; }
     if (target.dataset.qcclose != null) { this._openQc(this._qcOpen); return; }
     if (target.dataset.qcpower != null) { this._qcPower(); return; }
@@ -3654,8 +3672,15 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._renderChart(true);
       this._loadStats(this._chartRange, false);
     } else if (el === r.socRange) {
+      // A new target is only sent after "Bekræft" (and forgotten after 20 s without it).
       this._dragSoc = false;
-      this._setTargetSoc(Number(el.value));
+      const value = Number(el.value);
+      const current = this._targetSoc();
+      clearTimeout(this._socTimer);
+      this._socPending = current != null && Math.round(current) === Math.round(value) ? null : value;
+      if (this._socPending != null) this._socTimer = setTimeout(() => { this._socPending = null; this._queue(true); }, 20000);
+      this._queue(true);
+      return;
     } else if (el === r.dlInput) {
       clearTimeout(this._dlTimer);
       this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);

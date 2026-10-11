@@ -289,6 +289,9 @@ dagens mål og hvor den kommer fra (Ugeplan, Engangstid, Lærte afgange, Samme t
 
 Popuppen er en rigtig dialog over hele siden (Esc eller tryk udenfor lukker), og intet gemmes før "Gem plan".
 
+**Mål SOC skal bekræftes:** Når skyderen slippes, sendes det nye mål først efter **Bekræft** ("Nyt mål 85 % (nu 80 %)",
+med Fortryd). Uden svar glemmes det efter 20 sekunder.
+
 **Kompakt visning (`layout: charge`):** Forsidens popup, når bilen er sat til, viser kun det, man hurtigt bruger:
 status, opladning, Billigst / Fast tid / Lad nu / Pause, tidslinjen, næste start, slut og pris, Mål SOC og Klar senest.
 Telefonvalg, prisloft, manuel, kvarter/time, midlertidig plan, standardplan og smarte valg ligger på Tesla-siden; med
