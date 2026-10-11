@@ -274,6 +274,11 @@ Kortet finder så selv:
 Det samme gælder med `smart_charge`: kortet finder altid selv det, der ikke er sat med hånden. Det, der sættes under
 `entities`, vinder over det fundne. Bilens knapper (`car_controls`) sættes stadig med hånden.
 
+**Ladeudgifter:** Et panel under de andre viser, hvad opladningen har kostet pr. måned de seneste 12 måneder
+(hjemme og ude i hver sin farve, denne måned fremhævet) og årets samlede udgift i kr. med kWh og pris pr. kWh. Hold
+musen over en måned for kr., kWh, kr/kWh og antal ladninger. Det kommer fra EV Ledgers "Ladeudgift i år"
+(EV Ledger 0.5.0 eller nyere) og vises kun, når den findes.
+
 **Offentlig ladning:** Under "Seneste opladning" kan kWh, pris og sted for en offentlig ladning skrives og gemmes i
 EV Ledger. Viser også, hvor mange opladninger der mangler pris.
 
@@ -381,6 +386,7 @@ otte sekunder og beder derefter `refresh_entities` om ny status.
 | `charging_price_estimate` | `estimated_kwh_needed`, `current_price` |
 | `monthly_performance` (EV Ledger) | `months[].month`, `months[].distance_km` |
 | `last_trip` (EV Ledger) | `started_at`, `ended_at` |
+| `cost_this_year` (EV Ledger) | `kwh`, `unpriced`, `previous_year`, `months[].month`, `months[].cost`, `months[].kwh`, `months[].home_cost`, `months[].public_cost`, `months[].charges`, `months[].unpriced` |
 | `last_charge` (EV Ledger) | `kwh`, `price`, `price_currency`, `started_at`, `ended_at`, `start_battery_pct`, `end_battery_pct`, `location_name` |
 | `monta_last_charge` | `consumedKwh`, `cost`, `currency.identifier`, `startedAt`, `stoppedAt`, `soc.percentage` |
 

@@ -652,4 +652,29 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(c._loc(), "device_tracker.gokart_location");
   assert.equal(c._id("tpms_front_left"), "sensor.gokart_tpms_front_left", "another device with the car's name (Tesla Custom)");
 }
+// The charging cost per month and the year's total from EV Ledger.
+{
+  const d = new Date();
+  const key = (back) => { const m = new Date(d.getFullYear(), d.getMonth() - back, 15); return `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`; };
+  const months = Array.from({ length: 12 }, (_, i) => ({ month: key(11 - i), cost: 0, kwh: 0, home_cost: 0, public_cost: 0, charges: 0, unpriced: 0 }));
+  Object.assign(months[10], { cost: 1240.5, kwh: 410, home_cost: 1000.5, public_cost: 240, charges: 22 });
+  Object.assign(months[11], { cost: 182.4, kwh: 96.2, home_cost: 182.4, public_cost: 0, charges: 6, unpriced: 1 });
+  const st = { "select.bil_charge_mode": s("smart", { options: ["smart"] }),
+    "sensor.bil_charging_cost_this_year": s("1422.9", { unit_of_measurement: "DKK", kwh: 506.2, unpriced: 1, previous_year: 3150, months }) };
+  const auto = { name: "Bil", ev_ledger: "select.bil_charge_mode" };
+  const c = card(st, auto)._model().cost;
+  assert.equal(c.year, "1.423 kr.");
+  assert.equal(c.yearSub, "i år · 506 kWh · 2,81 kr/kWh");
+  assert.equal(c.sub, "Denne måned 182 kr. · 96 kWh");
+  assert.equal(c.note, "Sidste år 3.150 kr. · 1 uden pris i år");
+  assert.equal(c.bars.length, 12);
+  assert.ok(c.bars[11].now && !c.bars[11].empty && c.bars[0].empty);
+  assert.equal(c.bars[10].value, "1,2k");
+  assert.equal(Math.round(c.bars[10].home + c.bars[10].pub), 100, "the dearest month fills the chart");
+  assert.match(c.bars[10].title, /1\.240,50 kr\. · 410,0 kWh · 3,03 kr\/kWh · 22 ladninger · ude 240,00 kr\.$/);
+  assert.match(c.bars[11].title, /6 ladninger · 1 uden pris$/);
+  assert.match(context.ttdTemplate(context.ttdNormalizeConfig(auto)), /data-r="costChart"/, "the cost panel");
+  delete st["sensor.bil_charging_cost_this_year"];
+  assert.equal(card(st, auto)._model().cost, null, "no panel without the sensor");
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

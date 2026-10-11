@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.13.3";
+const TTD_VERSION = "1.14.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -132,6 +132,7 @@ const TTD_SC_ROLES = {
   battery_efficiency_score: "sensor._battery_efficiency_score", distance_today: "sensor._distance_today",
   home_charging_power: "sensor._home_charging_power", home_cost_today: "sensor._home_charging_cost_today",
   charging_status: "sensor._charging_status", home_charging_energy: "sensor._home_charging_energy",
+  cost_this_year: "sensor._charging_cost_this_year",
   public_charge_energy: "number._public_charge_energy",
   public_charge_price: "number._public_charge_price", public_charge_location: "text._public_charge_location",
   log_public_charge: "button._log_public_charge",
@@ -694,7 +695,12 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
     <div class="tip" data-r="tip" hidden><span class="tip-l" data-r="tipL"></span><span class="tip-r" data-r="tipDRow"><i class="key key-d"></i><b data-r="tipD"></b></span><span class="tip-r" data-r="tipERow"><i class="key key-e"></i><b data-r="tipE"></b></span></div>
     <p class="chart-empty" data-r="chartEmpty" hidden></p>
   </div>
-</section>` : ""}
+</section>
+${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Ladeudgifter" hidden>
+  <header class="ph">${ttdIcon("mdi:calendar-month", "ph-i")}<div class="ph-t"><h3>Ladeudgifter <span class="light">(EV Ledger)</span></h3><p data-r="costSub">${TTD_DASH}</p></div><div class="cost-year"><b data-r="costYear">${TTD_DASH}</b><small data-r="costYearSub"></small></div></header>
+  <div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. måned"></div>
+  <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><em data-r="costNote"></em></div>
+</section>` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>Åbn hele Tesla-oversigten</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
 </div></div>`;
 }
@@ -724,6 +730,23 @@ h2,h3,p{margin:0}
 .dash{display:grid;gap:var(--tdc-gap);grid-template-columns:repeat(12,minmax(0,1fr));
   grid-template-areas:"hero hero hero hero hero hero hero map map map map map" "charge charge charge charge charge plan plan plan plan tpms tpms tpms" "drive drive drive econ econ econ last last last daily daily daily"}
 .panel{position:relative;min-width:0;container:panel / inline-size;padding:var(--tdc-pad);border-radius:var(--tdc-radius);background:var(--tdc-panel);border:1px solid var(--tdc-line);box-shadow:var(--tdc-shadow,none);overflow:hidden}
+/* The cost panel takes a full row of its own below the others, whatever the layout. */
+.cost{grid-column:1/-1;grid-row:-1}
+.cost .ph{align-items:flex-start}
+.cost-year{display:grid;justify-items:end;gap:1px;margin-left:auto;text-align:right}.cost-year b{font-size:22px;font-weight:750;line-height:1.1;white-space:nowrap}.cost-year small{font-size:12px;color:var(--tdc-muted);white-space:nowrap}
+.cost-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;height:150px;margin-top:8px}
+.cost-m{display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;gap:4px;min-width:0;height:100%}
+.cost-m em{font-style:normal;font-size:12px;font-weight:650;color:var(--tdc-muted);white-space:nowrap}
+.cost-col{display:flex;align-items:flex-end;justify-content:center;width:100%;min-height:0}
+.cost-bar{display:flex;flex-direction:column-reverse;width:min(100%,44px);border-radius:6px 6px 2px 2px;overflow:hidden;background:color-mix(in srgb,var(--tdc-text) 10%,transparent)}
+.cost-bar i{display:block;width:100%;min-height:0}.cost-bar .h{background:var(--tdc-blue)}.cost-bar .p{background:var(--tdc-amber)}
+.cost-m small{font-size:12px;color:var(--tdc-muted)}
+.cost-m[data-now] small,.cost-m[data-now] em{color:var(--tdc-text);font-weight:750}
+.cost-m[data-now] .cost-bar{box-shadow:0 0 0 2px color-mix(in srgb,var(--tdc-blue) 40%,transparent)}
+.cost-m[data-empty] em{opacity:.5}
+.cost-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--tdc-muted)}.cost-key span{display:inline-flex;align-items:center;gap:6px}.cost-key em{margin-left:auto;font-style:normal}
+.sw.cost-home{background:var(--tdc-blue)}.sw.cost-public{background:var(--tdc-amber)}
+@container ttd (max-width:699px){.cost .ph{flex-wrap:wrap}.cost-year{flex-basis:100%;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;margin:4px 0 0;text-align:left}.cost-year b{font-size:20px}.cost-chart{gap:3px;height:130px}.cost-m em{font-size:9px}.cost-m small{font-size:10px}}
 .hero{grid-area:hero}.map{grid-area:map}.charge{grid-area:charge}.plan{grid-area:plan}.tpms{grid-area:tpms}.drive{grid-area:drive}.econ{grid-area:econ}.last{grid-area:last}.daily{grid-area:daily}
 .ph{display:flex;align-items:center;gap:12px;margin-bottom:16px;min-width:0}
 .ph-i{--mdc-icon-size:28px;color:var(--tdc-text)}
@@ -1606,6 +1629,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       tpms: this._tpmsModel(f),
       drive: this._driveModel(f),
       econ: this._econModel(f),
+      cost: this._costModel(f),
       last: this._lastChargeModel(f),
       map: this._mapModel(f),
     };
@@ -2097,6 +2121,45 @@ class ThTeslaDashboardCard extends HTMLElement {
     const name = this._cfg.model || (attrs.vehicle_name ? ttdShortModel(attrs.vehicle_name) : "Tesla");
     const body = this._cfg.body || (TTD_BODIES[attrs.vehicle_body] ? attrs.vehicle_body : "model_3");
     return { name, body, paint: this._cfg.paint, image: this._cfg.image };
+  }
+
+  /** The charging cost per month and the year's total (EV Ledger's cost this year with its last 12 months). */
+  _costModel(f) {
+    const o = this._sc("cost_this_year");
+    if (!ttdHasValue(o)) return null;
+    const a = o.attributes || {};
+    const unit = ttdUnit(a.unit_of_measurement || "kr.");
+    const months = (Array.isArray(a.months) ? a.months : []).map((m) => ({
+      key: String(m.month || ""), cost: Number(m.cost) || 0, kwh: Number(m.kwh) || 0, home: Number(m.home_cost) || 0,
+      pub: Number(m.public_cost) || 0, charges: Number(m.charges) || 0, unpriced: Number(m.unpriced) || 0,
+    }));
+    const top = Math.max(1, ...months.map((m) => m.home + m.pub));
+    const d = new Date();
+    const nowKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const date = (key) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 15);
+    const kr = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
+    const perKwh = ttdUnit(`${a.unit_of_measurement || "DKK"}/kWh`);
+    const bars = months.map((m) => ({
+      now: m.key === nowKey, empty: m.charges === 0,
+      month: date(m.key).toLocaleDateString("da-DK", { month: "short" }).replace(".", ""),
+      value: m.cost >= 1000 ? `${f.number(m.cost / 1000, 1)}k` : f.number(m.cost, 0),
+      home: (m.home / top) * 100, pub: (m.pub / top) * 100,
+      title: [date(m.key).toLocaleDateString("da-DK", { month: "long", year: "numeric" }), kr(m.cost, 2), `${f.number(m.kwh, 1)} kWh`,
+        m.kwh > 0 && m.cost > 0 ? `${f.number(m.cost / m.kwh, 2)} ${perKwh}` : "",
+        `${m.charges} ${m.charges === 1 ? "ladning" : "ladninger"}`, m.pub > 0 ? `ude ${kr(m.pub, 2)}` : "",
+        m.unpriced ? `${m.unpriced} uden pris` : ""].filter(Boolean).join(" · "),
+    }));
+    const year = ttdToNumber(o.state) ?? 0;
+    const yearKwh = Number(a.kwh) || 0;
+    const month = months.find((m) => m.key === nowKey);
+    const previous = Number(a.previous_year) || 0;
+    return {
+      year: kr(year),
+      yearSub: `i år · ${f.number(yearKwh, 0)} kWh${yearKwh > 0 && year > 0 ? ` · ${f.number(year / yearKwh, 2)} ${perKwh}` : ""}`,
+      sub: month ? `Denne måned ${kr(month.cost)} · ${f.number(month.kwh, 0)} kWh` : "Pr. måned, det seneste år",
+      note: [previous > 0 ? `Sidste år ${kr(previous)}` : "", Number(a.unpriced) ? `${a.unpriced} uden pris i år` : ""].filter(Boolean).join(" · "),
+      bars,
+    };
   }
 
   _scModel(f) {
@@ -2612,6 +2675,20 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._t("lcDuration", l.duration);
     this._t("lcFoot", l.foot);
     this._t("lcMonta", l.montaLine);
+    // Charging cost per month (EV Ledger).
+    if (this._r.cost) {
+      const c = m.cost;
+      this._hide("cost", !c);
+      if (c) {
+        this._t("costYear", c.year);
+        this._t("costYearSub", c.yearSub);
+        this._t("costSub", c.sub);
+        this._t("costNote", c.note);
+        const html = c.bars.map((b) => `<div class="cost-m"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} title="${ttdEsc(b.title)}"><em>${b.empty ? "–" : b.value}</em><div class="cost-col"><div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
+        const chart = this._r.costChart;
+        if (chart && chart.dataset.sig !== html) { chart.dataset.sig = html; chart.innerHTML = html; }
+      }
+    }
     // Public charge form (EV Ledger): kWh, price and place, saved with the ledger's button.
     if (this._r.pc) {
       const ids = this._scIds();
