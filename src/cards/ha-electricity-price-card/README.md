@@ -34,6 +34,11 @@ kvarterpriser til timer med timens gennemsnitspris. `resolution_entity` (fx EV L
 `select.<bil>_price_resolution`) vinder over `resolution`, så kortet viser kvarterer eller timer ligesom
 ladeplanerne.
 
+**15 min / Time:** Når priserne findes i kvarterer, har kortet et lille skift "15 min | Time" ud for "Pris lige nu"
+(på de andre faner ud for datoen). Med EV Ledger (`ev_ledger` eller `resolution_entity`) sætter det EV Ledgers
+prisopløsning, så ladeplanerne følger med. Uden huskes valget i browseren og gælder kun visningen. Skjul det med
+`resolution_toggle: false`.
+
 **EV Ledger med én linje:** `ev_ledger: select.<bil>_charge_mode` (en vilkårlig entity fra bilens EV Ledger-enhed)
 er nok. Kortet finder selv ladeplanen (`sensor.<bil>_next_charge_start`) og kvarter/time-valget
 (`select.<bil>_price_resolution`), så bilens ladetider vises i grafen. `charge_plan_entity` og `resolution_entity`
