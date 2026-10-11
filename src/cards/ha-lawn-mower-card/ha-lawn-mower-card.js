@@ -1,4 +1,4 @@
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 
 class HALawnMowerCard extends HTMLElement {
   constructor() {
@@ -142,6 +142,25 @@ class HALawnMowerCard extends HTMLElement {
     const value = this._num(id);
     return `<div><label>${label}${unit ? ` (${this._esc(unit)})` : ""}</label><input type="number" min="${min}" max="${max}" step="${step}" value="${value ?? ""}" data-number="${this._esc(id)}"></div>`;
   }
+  // Runtime and distance follow the sensor's unit; without one they are read as minutes and metres.
+  _unit(id) {
+    return String(this._hass?.states?.[id]?.attributes?.unit_of_measurement || "").toLowerCase();
+  }
+
+  _hours(id) {
+    const v = this._num(id) || 0;
+    const u = this._unit(id);
+    if (u === "h") return v;
+    if (u === "s") return v / 3600;
+    if (u === "d") return v * 24;
+    return v / 60;
+  }
+
+  _km(id) {
+    const v = this._num(id) || 0;
+    return this._unit(id) === "km" ? v : v / 1000;
+  }
+
   _statItem(id, label, formatter) {
     if (!this._hasData(id)) return "";
     return `<div class="stat"><span>${label}</span><b>${formatter(id)}</b></div>`;
@@ -221,10 +240,10 @@ class HALawnMowerCard extends HTMLElement {
       this._statItem(this._config.battery_cycles_since_reset, "Siden nulstil", (id) => this._fmt(this._num(id))),
     ].filter(Boolean);
     const lifetimeStats = [
-      this._statItem(this._config.blade_runtime_total, "Knivtid total", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`),
-      this._statItem(this._config.mower_runtime_total, "Køretid total", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`),
-      this._statItem(this._config.distance_driven_total, "Kørt distance", (id) => `${this._fmt((this._num(id) || 0) / 1000, 1)} km`),
-      this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`),
+      this._statItem(this._config.blade_runtime_total, "Knivtid total", (id) => `${this._fmt(this._hours(id), 0)} t`),
+      this._statItem(this._config.mower_runtime_total, "Køretid total", (id) => `${this._fmt(this._hours(id), 0)} t`),
+      this._statItem(this._config.distance_driven_total, "Kørt distance", (id) => `${this._fmt(this._km(id), 1)} km`),
+      this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt(this._hours(id), 0)} t`),
     ].filter(Boolean);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.38 */
+/* MRDonnii Smart Home Cards v0.5.39 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6039,7 +6039,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-lawn-mower-card/ha-lawn-mower-card.js
-var VERSION5 = "0.4.0";
+var VERSION5 = "0.4.1";
 var HALawnMowerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -6177,6 +6177,22 @@ var HALawnMowerCard = class extends HTMLElement {
     const value = this._num(id);
     return `<div><label>${label}${unit ? ` (${this._esc(unit)})` : ""}</label><input type="number" min="${min}" max="${max}" step="${step}" value="${value ?? ""}" data-number="${this._esc(id)}"></div>`;
   }
+  // Runtime and distance follow the sensor's unit; without one they are read as minutes and metres.
+  _unit(id) {
+    return String(this._hass?.states?.[id]?.attributes?.unit_of_measurement || "").toLowerCase();
+  }
+  _hours(id) {
+    const v = this._num(id) || 0;
+    const u3 = this._unit(id);
+    if (u3 === "h") return v;
+    if (u3 === "s") return v / 3600;
+    if (u3 === "d") return v * 24;
+    return v / 60;
+  }
+  _km(id) {
+    const v = this._num(id) || 0;
+    return this._unit(id) === "km" ? v : v / 1e3;
+  }
   _statItem(id, label, formatter) {
     if (!this._hasData(id)) return "";
     return `<div class="stat"><span>${label}</span><b>${formatter(id)}</b></div>`;
@@ -6241,10 +6257,10 @@ var HALawnMowerCard = class extends HTMLElement {
       this._statItem(this._config.battery_cycles_since_reset, "Siden nulstil", (id) => this._fmt(this._num(id)))
     ].filter(Boolean);
     const lifetimeStats = [
-      this._statItem(this._config.blade_runtime_total, "Knivtid total", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`),
-      this._statItem(this._config.mower_runtime_total, "K\xF8retid total", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`),
-      this._statItem(this._config.distance_driven_total, "K\xF8rt distance", (id) => `${this._fmt((this._num(id) || 0) / 1e3, 1)} km`),
-      this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt((this._num(id) || 0) / 60, 0)} t`)
+      this._statItem(this._config.blade_runtime_total, "Knivtid total", (id) => `${this._fmt(this._hours(id), 0)} t`),
+      this._statItem(this._config.mower_runtime_total, "K\xF8retid total", (id) => `${this._fmt(this._hours(id), 0)} t`),
+      this._statItem(this._config.distance_driven_total, "K\xF8rt distance", (id) => `${this._fmt(this._km(id), 1)} km`),
+      this._statItem(this._config.blade_runtime_since_reset, "Knivtid siden nulstil", (id) => `${this._fmt(this._hours(id), 0)} t`)
     ].filter(Boolean);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
