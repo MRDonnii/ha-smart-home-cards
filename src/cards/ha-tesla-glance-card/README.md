@@ -10,12 +10,14 @@
 - Below 20 % the card turns orange, and an unlocked car shows an orange chip.
 - The car image switches to `image_charging` while the cable is in or the car charges. Transparent images work best.
 - Stat tiles appear only for the entities you set. Narrow cards show them in two columns.
+- `compact: true` places the stat tiles 2×2 beside the battery, so the card is about 40 % lower.
 
 Every option is optional except `battery`. All entity options can be set in the visual editor.
 
 ```yaml
 type: custom:ha-tesla-glance-card
 name: Model 3
+compact: false
 navigation_path: /lovelace/tesla
 image: /local/tesla/parked.webp
 image_charging: /local/tesla/charging.webp

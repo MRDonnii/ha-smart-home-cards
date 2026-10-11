@@ -2,14 +2,16 @@
 // Kun visning: ingen styring af bilen. Et tryk åbner bilens egen side (navigation_path)
 // eller more-info på batteriet.
 // 0.1.0 – første version.
+// 0.1.1 – compact: true lægger tallene 2×2 ved siden af batteriet (lavere kort).
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
 
 const DEFAULTS = {
   name: "Tesla",
+  compact: false,
   image: "",
   image_charging: "",
   navigation_path: "",
@@ -49,6 +51,7 @@ class HATeslaGlanceCard extends HTMLElement {
         { name: "navigation_path", selector: { text: {} } },
         { name: "image", selector: { text: {} } },
         { name: "image_charging", selector: { text: {} } },
+        { name: "compact", selector: { boolean: {} } },
         { type: "expandable", name: "", title: "Bil", schema: [
           e("battery", "sensor"), e("range", "sensor"), e("lock", "lock"), e("sentry", "switch"),
           e("inside_temperature", "sensor"), e("location", "device_tracker")] },
@@ -60,7 +63,7 @@ class HATeslaGlanceCard extends HTMLElement {
           e("cost_per_km", "sensor"), e("efficiency", "sensor")] },
       ],
       computeLabel: (s) => ({
-        name: "Navn", navigation_path: "Side ved tryk", image: "Billede (parkeret)", image_charging: "Billede (lader)",
+        name: "Navn", compact: "Kompakt (tal ved siden af batteriet)", navigation_path: "Side ved tryk", image: "Billede (parkeret)", image_charging: "Billede (lader)",
         battery: "Batteri", range: "Rækkevidde", lock: "Lås", sentry: "Sentry", inside_temperature: "Indetemperatur",
         location: "Lokation", charging: "Ladestatus", charger_power: "Ladeeffekt", energy_added: "Tilført energi",
         charge_finish: "Færdig kl.", plugged: "Kabel", target_soc: "Mål-SoC", next_charge_start: "Næste ladestart",
@@ -85,7 +88,7 @@ class HATeslaGlanceCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
+    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
     const sig = ids.map((id) => { const s = hass.states[id]; return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-"; }).join(";");
     if (sig === this._sig) return;
     this._sig = sig;
@@ -191,6 +194,14 @@ class HATeslaGlanceCard extends HTMLElement {
       .stat span{display:block;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b{display:block;margin-top:2px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b small{font-size:10px;font-weight:650;color:var(--muted);margin-left:2px}
+      .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
+      .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
+      .compact .car{grid-column:3;grid-row:1}
+      .compact .car img{max-height:84px;margin-bottom:-4px}
+      .compact .soc b{font-size:28px}
+      .compact .chips{gap:4px}
+      .compact .stat{padding:4px 7px}.compact .stat b{font-size:12px}
+      @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 30%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(4,minmax(0,1fr))}.compact .car{grid-column:2}}
       @keyframes flow{to{background-position:-220% 0}}
       @keyframes breathe{50%{opacity:.95;transform:scaleX(1.05)}}
       @container (max-width:420px){.grid{grid-template-columns:minmax(0,1fr) 36%}.soc b{font-size:28px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chips{display:none}}
@@ -236,6 +247,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const card = root.querySelector("ha-card");
     card.style.setProperty("--tone", tone);
     card.classList.toggle("charging", charging);
+    card.classList.toggle("compact", !!c.compact);
 
     root.querySelector(".name").textContent = c.name;
     let pillIcon = "mdi:parking", pillText = "Parkeret";
@@ -260,7 +272,7 @@ class HATeslaGlanceCard extends HTMLElement {
       line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` · +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` · færdig ${esc(fin)}` : ""}`;
     } else {
       const next = this._time(c.next_charge_start), cost = this._num(c.next_charge_cost);
-      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>Næste ladning <b>${esc(next)}</b>${cost != null ? ` · ${esc(this._fmt(cost, 2))} kr` : ""}${target != null ? ` · mål ${esc(this._fmt(target))} %` : ""}`;
+      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c.compact ? "Lader" : "Næste ladning"} <b>${esc(next)}</b>${cost != null ? ` · ${esc(this._fmt(cost, 2))} kr` : ""}${target != null && !c.compact ? ` · mål ${esc(this._fmt(target))} %` : ""}`;
       else if (plugged) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
       else line.innerHTML = "";
     }
