@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.42 */
+/* MRDonnii Smart Home Cards v0.5.43 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6039,7 +6039,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.1.1";
+var VERSION5 = "0.1.2";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6255,7 +6255,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .compact .soc b{font-size:28px}
       .compact .chips{gap:4px}
       .compact .stat{padding:4px 7px}.compact .stat b{font-size:12px}
-      @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 30%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(4,minmax(0,1fr))}.compact .car{grid-column:2}}
+      @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 34%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.compact .car{grid-column:2}.compact .car img{max-height:72px}}
       @keyframes flow{to{background-position:-220% 0}}
       @keyframes breathe{50%{opacity:.95;transform:scaleX(1.05)}}
       @container (max-width:420px){.grid{grid-template-columns:minmax(0,1fr) 36%}.soc b{font-size:28px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chips{display:none}}

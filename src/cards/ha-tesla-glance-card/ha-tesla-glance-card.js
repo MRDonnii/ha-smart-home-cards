@@ -3,8 +3,9 @@
 // eller more-info på batteriet.
 // 0.1.0 – første version.
 // 0.1.1 – compact: true lægger tallene 2×2 ved siden af batteriet (lavere kort).
+// 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -201,7 +202,7 @@ class HATeslaGlanceCard extends HTMLElement {
       .compact .soc b{font-size:28px}
       .compact .chips{gap:4px}
       .compact .stat{padding:4px 7px}.compact .stat b{font-size:12px}
-      @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 30%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(4,minmax(0,1fr))}.compact .car{grid-column:2}}
+      @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 34%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.compact .car{grid-column:2}.compact .car img{max-height:72px}}
       @keyframes flow{to{background-position:-220% 0}}
       @keyframes breathe{50%{opacity:.95;transform:scaleX(1.05)}}
       @container (max-width:420px){.grid{grid-template-columns:minmax(0,1fr) 36%}.soc b{font-size:28px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chips{display:none}}
