@@ -11,3 +11,10 @@ extra_tabs:
     icon: mdi:home-outline
     conditional: house   # id of the local-conditional-card to show
 ```
+
+Built-in tabs can be hidden with `hide_tabs`, for example in a home without ventilation:
+
+```yaml
+hide_tabs:
+  - air
+```

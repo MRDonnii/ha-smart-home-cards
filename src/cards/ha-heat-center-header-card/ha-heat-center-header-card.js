@@ -1,5 +1,5 @@
 (() => {
-const VERSION = '0.3.3';
+const VERSION = '0.3.4';
 const STORAGE_KEY = 'ha-heat-center-header-card:tab';
 const TAB_TTL_MS = 5 * 60 * 1000;
 const TABS = [
@@ -17,7 +17,7 @@ class HAHeatCenterHeaderCard extends HTMLElement {
   disconnectedCallback(){this._restoreTimers.forEach(clearTimeout);this._restoreTimers=[];}
   getCardSize(){return this._config.show_stats?3:1;}
   // Extra tabs from the config (key, label, icon, conditional) come after the built-in ones.
-  _tabs(){const extra=Array.isArray(this._config?.extra_tabs)?this._config.extra_tabs.filter(t=>t&&t.key&&t.conditional).map(t=>({key:String(t.key),label:String(t.label||t.key),icon:String(t.icon||'mdi:tab'),conditional:String(t.conditional)})):[];return [...TABS,...extra.filter(t=>!TABS.some(b=>b.key===t.key))];}
+  _tabs(){const extra=Array.isArray(this._config?.extra_tabs)?this._config.extra_tabs.filter(t=>t&&t.key&&t.conditional).map(t=>({key:String(t.key),label:String(t.label||t.key),icon:String(t.icon||'mdi:tab'),conditional:String(t.conditional)})):[];const hidden=new Set((Array.isArray(this._config?.hide_tabs)?this._config.hide_tabs:[]).map(String));return [...TABS,...extra.filter(t=>!TABS.some(b=>b.key===t.key))].filter(t=>!hidden.has(t.key));}
   _readTab(){try{const item=JSON.parse(sessionStorage.getItem(STORAGE_KEY)||'null');if(item&&Date.now()-item.at<TAB_TTL_MS&&Date.now()>=item.at&&this._tabs().some(t=>t.key===item.key))return item.key;}catch{}return null;}
   _writeTab(key){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify({key,at:Date.now()}));}catch{}}
   _dispatchTab(key){document.dispatchEvent(new CustomEvent('ll-custom',{detail:{local_conditional_card:{action:'set',ids:this._tabs().map(tab=>({[tab.conditional]:tab.key===key?'show':'hide'}))}}}));}

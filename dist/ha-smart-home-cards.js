@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.36 */
+/* MRDonnii Smart Home Cards v0.5.37 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -21757,7 +21757,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION51 = "0.3.3";
+  const VERSION51 = "0.3.4";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -21814,7 +21814,8 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
     // Extra tabs from the config (key, label, icon, conditional) come after the built-in ones.
     _tabs() {
       const extra = Array.isArray(this._config?.extra_tabs) ? this._config.extra_tabs.filter((t) => t && t.key && t.conditional).map((t) => ({ key: String(t.key), label: String(t.label || t.key), icon: String(t.icon || "mdi:tab"), conditional: String(t.conditional) })) : [];
-      return [...TABS3, ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))];
+      const hidden = new Set((Array.isArray(this._config?.hide_tabs) ? this._config.hide_tabs : []).map(String));
+      return [...TABS3, ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))].filter((t) => !hidden.has(t.key));
     }
     _readTab() {
       try {
