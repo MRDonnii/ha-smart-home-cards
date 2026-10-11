@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.44 */
+/* MRDonnii Smart Home Cards v0.5.45 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2516,7 +2516,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.14.0";
+var TTD_VERSION = "1.15.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3294,7 +3294,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Ladeudgifter" hidden>
   <header class="ph">${ttdIcon("mdi:calendar-month", "ph-i")}<div class="ph-t"><h3>Ladeudgifter <span class="light">(EV Ledger)</span></h3><p data-r="costSub">${TTD_DASH}</p></div><div class="cost-year"><b data-r="costYear">${TTD_DASH}</b><small data-r="costYearSub"></small></div></header>
   <div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. m\xE5ned"></div>
-  <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><em data-r="costNote"></em></div>
+  <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><span data-r="costBeforeKey" hidden><i class="sw cost-before"></i>Samme m\xE5ned \xE5ret f\xF8r</span><em data-r="costNote"></em></div>
 </section>` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>\xC5bn hele Tesla-oversigten</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
 </div></div>`;
@@ -3340,6 +3340,9 @@ h2,h3,p{margin:0}
 .cost-m[data-empty] em{opacity:.5}
 .cost-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--tdc-muted)}.cost-key span{display:inline-flex;align-items:center;gap:6px}.cost-key em{margin-left:auto;font-style:normal}
 .sw.cost-home{background:var(--tdc-blue)}.sw.cost-public{background:var(--tdc-amber)}
+.cost-before{display:block;flex:0 0 auto;width:min(26%,14px);border-radius:4px 4px 1px 1px;background:color-mix(in srgb,var(--tdc-text) 20%,transparent)}
+.sw.cost-before{background:color-mix(in srgb,var(--tdc-text) 20%,transparent)}
+.cost-chart[data-before] .cost-col{gap:3px}.cost-chart[data-before] .cost-bar{width:min(66%,36px)}
 @container ttd (max-width:699px){.cost .ph{flex-wrap:wrap}.cost-year{flex-basis:100%;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;margin:4px 0 0;text-align:left}.cost-year b{font-size:20px}.cost-chart{gap:3px;height:130px}.cost-m em{font-size:9px}.cost-m small{font-size:10px}}
 .hero{grid-area:hero}.map{grid-area:map}.charge{grid-area:charge}.plan{grid-area:plan}.tpms{grid-area:tpms}.drive{grid-area:drive}.econ{grid-area:econ}.last{grid-area:last}.daily{grid-area:daily}
 .ph{display:flex;align-items:center;gap:12px;margin-bottom:16px;min-width:0}
@@ -4738,7 +4741,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (!ttdHasValue(o)) return null;
     const a = o.attributes || {};
     const unit = ttdUnit(a.unit_of_measurement || "kr.");
-    const months = (Array.isArray(a.months) ? a.months : []).map((m) => ({
+    const read = (list) => (Array.isArray(list) ? list : []).map((m) => ({
       key: String(m.month || ""),
       cost: Number(m.cost) || 0,
       kwh: Number(m.kwh) || 0,
@@ -4747,15 +4750,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       charges: Number(m.charges) || 0,
       unpriced: Number(m.unpriced) || 0
     }));
-    const top = Math.max(1, ...months.map((m) => m.home + m.pub));
+    const months = read(a.months);
+    const before = read(a.months_year_before);
+    const hasBefore = before.some((m) => m.charges > 0);
+    const top = Math.max(1, ...months.map((m) => m.home + m.pub), ...hasBefore ? before.map((m) => m.home + m.pub) : []);
     const d = /* @__PURE__ */ new Date();
     const nowKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const date2 = (key) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 15);
     const kr = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
     const perKwh = ttdUnit(`${a.unit_of_measurement || "DKK"}/kWh`);
-    const bars = months.map((m) => ({
+    const bars = months.map((m, i) => ({
       now: m.key === nowKey,
       empty: m.charges === 0,
+      before: hasBefore ? ((before[i]?.home || 0) + (before[i]?.pub || 0)) / top * 100 : null,
       month: date2(m.key).toLocaleDateString("da-DK", { month: "short" }).replace(".", ""),
       value: m.cost >= 1e3 ? `${f.number(m.cost / 1e3, 1)}k` : f.number(m.cost, 0),
       home: m.home / top * 100,
@@ -4767,18 +4774,24 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         m.kwh > 0 && m.cost > 0 ? `${f.number(m.cost / m.kwh, 2)} ${perKwh}` : "",
         `${m.charges} ${m.charges === 1 ? "ladning" : "ladninger"}`,
         m.pub > 0 ? `ude ${kr(m.pub, 2)}` : "",
-        m.unpriced ? `${m.unpriced} uden pris` : ""
+        m.unpriced ? `${m.unpriced} uden pris` : "",
+        hasBefore && before[i] ? `\xE5ret f\xF8r ${before[i].charges ? `${kr(before[i].cost)} \xB7 ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : ""
       ].filter(Boolean).join(" \xB7 ")
     }));
     const year = ttdToNumber(o.state) ?? 0;
     const yearKwh = Number(a.kwh) || 0;
     const month = months.find((m) => m.key === nowKey);
     const previous = Number(a.previous_year) || 0;
+    const previousKwh = Number(a.previous_year_kwh) || 0;
     return {
       year: kr(year),
       yearSub: `i \xE5r \xB7 ${f.number(yearKwh, 0)} kWh${yearKwh > 0 && year > 0 ? ` \xB7 ${f.number(year / yearKwh, 2)} ${perKwh}` : ""}`,
       sub: month ? `Denne m\xE5ned ${kr(month.cost)} \xB7 ${f.number(month.kwh, 0)} kWh` : "Pr. m\xE5ned, det seneste \xE5r",
-      note: [previous > 0 ? `Sidste \xE5r ${kr(previous)}` : "", Number(a.unpriced) ? `${a.unpriced} uden pris i \xE5r` : ""].filter(Boolean).join(" \xB7 "),
+      note: [
+        previous > 0 ? `Sidste \xE5r ${kr(previous)}${previousKwh > 0 ? ` \xB7 ${f.number(previousKwh, 0)} kWh` : ""}` : "",
+        Number(a.unpriced) ? `${a.unpriced} uden pris i \xE5r` : ""
+      ].filter(Boolean).join(" \xB7 "),
+      before: hasBefore,
       bars
     };
   }
@@ -5295,7 +5308,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this._t("costYearSub", c3.yearSub);
         this._t("costSub", c3.sub);
         this._t("costNote", c3.note);
-        const html = c3.bars.map((b) => `<div class="cost-m"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} title="${ttdEsc(b.title)}"><em>${b.empty ? "\u2013" : b.value}</em><div class="cost-col"><div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
+        this._hide("costBeforeKey", !c3.before);
+        this._attrSet("costChart", "data-before", c3.before ? "" : null);
+        const html = c3.bars.map((b) => `<div class="cost-m"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} title="${ttdEsc(b.title)}"><em>${b.empty ? "\u2013" : b.value}</em><div class="cost-col">${b.before != null ? `<i class="cost-before" style="height:${Math.max(b.before, 2).toFixed(1)}%"></i>` : ""}<div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
         const chart = this._r.costChart;
         if (chart && chart.dataset.sig !== html) {
           chart.dataset.sig = html;
