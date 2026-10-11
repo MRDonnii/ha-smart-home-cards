@@ -747,4 +747,9 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.deepEqual(calls.map((x) => `${x[0]}.${x[1]}`), ["switch.turn_off", "time.set_value"]);
   assert.equal(calls[1][2].time, "06:45:00");
 }
+// A car that is not loaded yet: time 0 is no time.
+{
+  const st = { ...baseStates(), "sensor.last_update": s("1970-01-01T00:00:00+00:00") };
+  assert.equal(model(st, config).hero.updatedLong, "—");
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

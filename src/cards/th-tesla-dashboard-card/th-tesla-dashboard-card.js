@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.16.0";
+const TTD_VERSION = "1.16.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -702,7 +702,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 </section>
 ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Ladeudgifter" hidden>
   <header class="ph">${ttdIcon("mdi:calendar-month", "ph-i")}<div class="ph-t"><h3>Ladeudgifter <span class="light">(EV Ledger)</span></h3><p data-r="costSub">${TTD_DASH}</p></div><div class="cost-year"><b data-r="costYear">${TTD_DASH}</b><small data-r="costYearSub"></small></div></header>
-  <div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. måned"></div>
+  <div class="cost-wrap"><div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. måned"></div><div class="tip cost-tip" data-r="costTip" hidden></div></div>
   <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><span data-r="costBeforeKey" hidden><i class="sw cost-before"></i>Samme måned året før</span><em data-r="costNote"></em></div>
 </section>` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "Åbn hele Tesla-oversigten" : "Flere indstillinger på Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
@@ -738,6 +738,9 @@ h2,h3,p{margin:0}
 .cost{grid-column:1/-1;grid-row:-1}
 .cost .ph{align-items:flex-start}
 .cost-year{display:grid;justify-items:end;gap:1px;margin-left:auto;text-align:right}.cost-year b{font-size:22px;font-weight:750;line-height:1.1;white-space:nowrap}.cost-year small{font-size:12px;color:var(--tdc-muted);white-space:nowrap}
+.cost-wrap{position:relative}
+.tip.cost-tip{top:-10px;min-width:170px;max-width:240px;background:var(--tdc-dlg-bg,#121821);box-shadow:0 10px 28px rgba(0,0,0,.5)}.cost-tip b{font-size:15px}.cost-tip-r{color:var(--tdc-muted);font-size:12px}
+.cost-m{cursor:pointer}
 .cost-chart{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;height:150px;margin-top:8px}
 .cost-m{display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;gap:4px;min-width:0;height:100%}
 .cost-m em{font-style:normal;font-size:12px;font-weight:650;color:var(--tdc-muted);white-space:nowrap}
@@ -1666,7 +1669,9 @@ class ThTeslaDashboardCard extends HTMLElement {
     const soc = this._num("battery");
     const target = this._targetSoc();
     const socTone = soc == null ? "muted" : soc <= cfg.battery.critical ? "crit" : soc <= cfg.battery.low ? "warn" : "ok";
-    const lastUpdate = ttdToDate(this._text("last_update"));
+    // A car that is not loaded yet reports time 0 (1 Jan 1970): no time rather than a wrong one.
+    const reported = ttdToDate(this._text("last_update"));
+    const lastUpdate = reported && reported.getFullYear() >= 2000 ? reported : null;
     const hero = {
       status: status.label, tone: status.tone, charging: status.charging,
       updatedLong: lastUpdate ? f.dayTime(lastUpdate) : TTD_DASH,
@@ -1956,7 +1961,8 @@ class ThTeslaDashboardCard extends HTMLElement {
       const value = button.querySelector(`[data-qcv="${key}"]`);
       let shown = "";
       if (key === "climate" && o && !["off", "unknown", "unavailable"].includes(o.state) && o.attributes?.temperature != null && Number.isFinite(Number(o.attributes.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}°`;
-      else if (["charge_limit", "charge_current"].includes(key)) shown = dead ? TTD_DASH : label;
+      // Only a value: while the car is not loaded the button stays an icon (the explanation is in its title).
+      else if (["charge_limit", "charge_current"].includes(key)) shown = !dead && o && Number.isFinite(Number(o.state)) ? label : "";
       if (value && value.textContent !== shown) value.textContent = shown;
     }
     // One line above the buttons: "Tryk igen …", what is on its way, or how it went.
@@ -2200,6 +2206,15 @@ class ThTeslaDashboardCard extends HTMLElement {
     const kr = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
     const perKwh = ttdUnit(`${a.unit_of_measurement || "DKK"}/kWh`);
     const bars = months.map((m, i) => ({
+      tip: {
+        title: date(m.key).toLocaleDateString("da-DK", { month: "long", year: "numeric" }),
+        cost: m.charges ? kr(m.cost, 2) : "Ingen ladning",
+        parts: m.pub > 0 ? `Hjemme ${kr(m.home, 2)} · ude ${kr(m.pub, 2)}` : "",
+        energy: m.charges ? [`${f.number(m.kwh, 1)} kWh`, m.kwh > 0 && m.cost > 0 ? `${f.number(m.cost / m.kwh, 2)} ${perKwh}` : "",
+          `${m.charges} ${m.charges === 1 ? "ladning" : "ladninger"}`].filter(Boolean).join(" · ") : "",
+        unpriced: m.unpriced ? `${m.unpriced} uden pris` : "",
+        before: hasBefore && before[i] ? `Året før: ${before[i].charges ? `${kr(before[i].cost)} · ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : "",
+      },
       now: m.key === nowKey, empty: m.charges === 0,
       before: hasBefore ? ((before[i]?.home || 0) + (before[i]?.pub || 0)) / top * 100 : null,
       month: date(m.key).toLocaleDateString("da-DK", { month: "short" }).replace(".", ""),
@@ -2760,6 +2775,13 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (chart) {
       this._r.rangeSelect.value = this._chartRange;
       chart.addEventListener("pointermove", (event) => this._onChartPointer(event));
+      const cost = this._r.costChart;
+      if (cost && !cost.dataset.tipBound) {
+        cost.dataset.tipBound = "1";
+        cost.addEventListener("pointermove", (event) => this._costTip(event.target?.closest?.("[data-ci]")));
+        cost.addEventListener("pointerleave", (event) => { if (event.pointerType === "mouse") this._costTip(null); });
+        cost.addEventListener("click", (event) => this._costTip(event.target?.closest?.("[data-ci]"), true));
+      }
       chart.addEventListener("pointerleave", () => this._showTip(-1));
       chart.addEventListener("blur", () => this._showTip(-1));
     }
@@ -2983,7 +3005,8 @@ class ThTeslaDashboardCard extends HTMLElement {
         this._t("costNote", c.note);
         this._hide("costBeforeKey", !c.before);
         this._attrSet("costChart", "data-before", c.before ? "" : null);
-        const html = c.bars.map((b) => `<div class="cost-m"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} title="${ttdEsc(b.title)}"><em>${b.empty ? "–" : b.value}</em><div class="cost-col">${b.before != null ? `<i class="cost-before" style="height:${Math.max(b.before, 2).toFixed(1)}%"></i>` : ""}<div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
+        this._costBars = c.bars;
+        const html = c.bars.map((b, i) => `<div class="cost-m" data-ci="${i}"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} aria-label="${ttdEsc(b.title)}"><em>${b.empty ? "–" : b.value}</em><div class="cost-col">${b.before != null ? `<i class="cost-before" style="height:${Math.max(b.before, 2).toFixed(1)}%"></i>` : ""}<div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
         const chart = this._r.costChart;
         if (chart && chart.dataset.sig !== html) { chart.dataset.sig = html; chart.innerHTML = html; }
       }
@@ -3484,6 +3507,25 @@ class ThTeslaDashboardCard extends HTMLElement {
     const n = this._chart?.slots.length || 0;
     if (!n || rect.width <= 0) return;
     this._showTip(Math.floor(ttdClamp((event.clientX - rect.left) / rect.width, 0, 0.9999) * n));
+  }
+
+  /** The monthly cost chart's info box: hover with a mouse, tap on a phone (tap the same month again to close). */
+  _costTip(column, tap = false) {
+    const tip = this._r.costTip;
+    if (!tip) return;
+    const index = column ? Number(column.dataset.ci) : -1;
+    if (index < 0 || (tap && this._costTipAt === index && !tip.hidden)) { tip.hidden = true; this._costTipAt = -1; return; }
+    const bar = this._costBars?.[index];
+    if (!bar) return;
+    const t = bar.tip;
+    const html = `<span class="tip-l">${ttdEsc(t.title)}</span><b>${ttdEsc(t.cost)}</b>${[t.parts, t.energy, t.unpriced, t.before].filter(Boolean).map((line) => `<span class="cost-tip-r">${ttdEsc(line)}</span>`).join("")}`;
+    if (tip.dataset.html !== html) { tip.dataset.html = html; tip.innerHTML = html; }
+    this._costTipAt = index;
+    tip.hidden = false;
+    const wrap = tip.parentElement.getBoundingClientRect();
+    const col = column.getBoundingClientRect();
+    const left = col.left + col.width / 2 - wrap.left - tip.offsetWidth / 2;
+    tip.style.left = `${ttdClamp(left, 0, Math.max(0, wrap.width - tip.offsetWidth))}px`;
   }
 
   _showTip(index) {
