@@ -1,4 +1,4 @@
-const VERSION = "0.6.12";
+const VERSION = "0.6.13";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -453,7 +453,7 @@ class HASettingsCenterCard extends HTMLElement {
         <div class="head-spacer"></div>
         <div class="head-badge"><b data-health-summary>Kontrollerer…</b><small data-health-detail>—</small></div>
       </div>
-      <div class="tabs">${TABS.map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
+      <div class="tabs">${this._tabs().map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
       ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}${this._cards()}
     </ha-card>`;
     this._select(this._tab);
@@ -641,8 +641,14 @@ class HASettingsCenterCard extends HTMLElement {
     this.shadowRoot.querySelectorAll(".mode").forEach((n) => n.classList.toggle("active", n.dataset.option === state));
   }
 
+  // hide_tabs: [lighting, ...] hides tabs a home has no use for; Hjem always stays.
+  _tabs() {
+    const hidden = new Set((Array.isArray(this._config?.hide_tabs) ? this._config.hide_tabs : []).map(String));
+    return TABS.filter(([id]) => id === "home" || !hidden.has(id));
+  }
+
   _select(tab) {
-    if (!TABS.some(([id]) => id === tab)) tab = "home";
+    if (!this._tabs().some(([id]) => id === tab)) tab = "home";
     this._tab = tab;
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((b) => {
       const active = b.dataset.tab === tab;

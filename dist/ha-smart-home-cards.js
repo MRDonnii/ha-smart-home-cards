@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.40 */
+/* MRDonnii Smart Home Cards v0.5.41 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -800,7 +800,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION51 = "0.4.6";
+  const VERSION52 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -817,7 +817,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       return null;
     }
   };
-  const DEFAULTS = {
+  const DEFAULTS2 = {
     camera: "camera.terrasse_syd_medium_resolution_channel",
     water: "sensor.pool_vandtemperatur",
     rise: "sensor.pool_temperaturstigning_i_dag",
@@ -870,7 +870,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
-      this.config = { ...DEFAULTS };
+      this.config = { ...DEFAULTS2 };
       this.ha = null;
       this.signatures = /* @__PURE__ */ new Map();
       this.history = [];
@@ -883,7 +883,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       return {};
     }
     setConfig(config) {
-      this.config = { ...DEFAULTS, ...config };
+      this.config = { ...DEFAULTS2, ...config };
       this.signatures.clear();
       if (this.isConnected) this.mount();
     }
@@ -1218,12 +1218,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION51}`);
+  console.info(`HA POOL CARD v${VERSION52}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION51 = "0.3.5";
+  const VERSION52 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -1456,7 +1456,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION51}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION52}`);
 })();
 
 // src/cards/ha-roborock-vacuum-card/ha-roborock-vacuum-card.js
@@ -6038,8 +6038,325 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
   });
 }
 
+// src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
+var VERSION5 = "0.1.0";
+var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
+var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
+var DEFAULTS = {
+  name: "Tesla",
+  image: "",
+  image_charging: "",
+  navigation_path: "",
+  battery: "sensor.tesla_battery_level",
+  range: "sensor.tesla_battery_range",
+  charging: "sensor.tesla_charging",
+  charger_power: "sensor.tesla_charger_power",
+  energy_added: "sensor.tesla_charge_energy_added",
+  charge_finish: "",
+  plugged: "binary_sensor.tesla_charge_cable",
+  lock: "lock.tesla_lock",
+  sentry: "switch.tesla_sentry_mode",
+  inside_temperature: "sensor.tesla_inside_temperature",
+  location: "device_tracker.tesla_location",
+  target_soc: "",
+  next_charge_start: "",
+  next_charge_cost: "",
+  energy_today: "",
+  cost_today: "",
+  energy_month: "",
+  cost_per_km: "",
+  efficiency: ""
+};
+var esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var HATeslaGlanceCard = class extends HTMLElement {
+  static getStubConfig() {
+    return { ...DEFAULTS };
+  }
+  static getConfigForm() {
+    const e = (name, domain) => ({ name, selector: { entity: domain ? { domain } : {} } });
+    return {
+      schema: [
+        { name: "name", selector: { text: {} } },
+        { name: "navigation_path", selector: { text: {} } },
+        { name: "image", selector: { text: {} } },
+        { name: "image_charging", selector: { text: {} } },
+        { type: "expandable", name: "", title: "Bil", schema: [
+          e("battery", "sensor"),
+          e("range", "sensor"),
+          e("lock", "lock"),
+          e("sentry", "switch"),
+          e("inside_temperature", "sensor"),
+          e("location", "device_tracker")
+        ] },
+        { type: "expandable", name: "", title: "Opladning", schema: [
+          e("charging"),
+          e("charger_power", "sensor"),
+          e("energy_added", "sensor"),
+          e("charge_finish", "sensor"),
+          e("plugged", "binary_sensor"),
+          e("target_soc"),
+          e("next_charge_start", "sensor"),
+          e("next_charge_cost", "sensor")
+        ] },
+        { type: "expandable", name: "", title: "Forbrug", schema: [
+          e("energy_today", "sensor"),
+          e("cost_today", "sensor"),
+          e("energy_month", "sensor"),
+          e("cost_per_km", "sensor"),
+          e("efficiency", "sensor")
+        ] }
+      ],
+      computeLabel: (s) => ({
+        name: "Navn",
+        navigation_path: "Side ved tryk",
+        image: "Billede (parkeret)",
+        image_charging: "Billede (lader)",
+        battery: "Batteri",
+        range: "R\xE6kkevidde",
+        lock: "L\xE5s",
+        sentry: "Sentry",
+        inside_temperature: "Indetemperatur",
+        location: "Lokation",
+        charging: "Ladestatus",
+        charger_power: "Ladeeffekt",
+        energy_added: "Tilf\xF8rt energi",
+        charge_finish: "F\xE6rdig kl.",
+        plugged: "Kabel",
+        target_soc: "M\xE5l-SoC",
+        next_charge_start: "N\xE6ste ladestart",
+        next_charge_cost: "Pris for n\xE6ste ladning",
+        energy_today: "Energi i dag",
+        cost_today: "Pris i dag",
+        energy_month: "Energi denne m\xE5ned",
+        cost_per_km: "Kr pr. km",
+        efficiency: "Wh pr. km"
+      })[s.name] || s.title || s.name
+    };
+  }
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._sig = "";
+  }
+  setConfig(config) {
+    if (!config) throw new Error("Mangler konfiguration");
+    this._config = { ...DEFAULTS, ...config };
+    this._sig = "";
+    this._build();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
+    const sig = ids.map((id) => {
+      const s = hass.states[id];
+      return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-";
+    }).join(";");
+    if (sig === this._sig) return;
+    this._sig = sig;
+    this._update();
+  }
+  getCardSize() {
+    return 3;
+  }
+  getGridOptions() {
+    return { columns: 12, rows: 3, min_columns: 6, min_rows: 3 };
+  }
+  _st(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _val(id) {
+    const s = this._st(id);
+    return s && !DEAD.has(String(s.state).toLowerCase()) ? s.state : null;
+  }
+  _num(id) {
+    const v = Number.parseFloat(this._val(id));
+    return Number.isFinite(v) ? v : null;
+  }
+  _unit(id) {
+    return this._st(id)?.attributes?.unit_of_measurement || "";
+  }
+  _fmt(v, d = 0) {
+    return v == null ? "\u2014" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  _time(id) {
+    const v = this._val(id);
+    if (!v) return null;
+    const t = new Date(v);
+    if (Number.isNaN(t.getTime())) return v;
+    const now = /* @__PURE__ */ new Date();
+    const hm = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    if (t.toDateString() === now.toDateString()) return hm;
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    if (t.toDateString() === tomorrow.toDateString()) return `i morgen ${hm}`;
+    return `${t.toLocaleDateString("da-DK", { weekday: "short" })} ${hm}`;
+  }
+  _target() {
+    const t = this._config.target_soc;
+    if (t == null || t === "") return null;
+    if (typeof t === "number") return t;
+    return this._num(t);
+  }
+  _isCharging() {
+    const c2 = String(this._val(this._config.charging) || "").toLowerCase();
+    if (CHARGING.has(c2)) return true;
+    const p = this._num(this._config.charger_power);
+    return p != null && p > 0.1;
+  }
+  _build() {
+    this.shadowRoot.innerHTML = `<style>
+      :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));--good:var(--dashboard-success,var(--success-color,#20e3a2));--warn:var(--dashboard-warning,var(--warning-color,#fb923c));--muted:var(--secondary-text-color,#94a3b8);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)))}
+      *{box-sizing:border-box}
+      ha-card{display:block;position:relative;overflow:hidden;height:100%;min-height:0;padding:12px 14px 10px;border-radius:var(--ha-card-border-radius,18px);cursor:pointer;container-type:inline-size;
+        background:radial-gradient(120% 140% at 85% 0%,color-mix(in srgb,var(--tone,var(--accent)) 16%,transparent),transparent 55%),var(--ha-card-background,var(--card-background-color));transition:transform .2s ease}
+      ha-card:active{transform:scale(.99)}
+      .grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,38%);gap:4px 14px;height:100%}
+      .info{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:7px}
+      .top{display:flex;align-items:center;gap:8px;min-width:0}
+      .name{font-size:15px;font-weight:800;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;color:var(--tone,var(--accent));background:color-mix(in srgb,var(--tone,var(--accent)) 14%,transparent);border:1px solid color-mix(in srgb,var(--tone,var(--accent)) 30%,transparent)}
+      .pill ha-icon{--mdc-icon-size:14px}
+      .soc{display:flex;align-items:baseline;gap:10px}
+      .soc b{font-size:34px;line-height:1;font-weight:850;letter-spacing:-.02em}
+      .soc b small{font-size:16px;font-weight:700;margin-left:1px;color:var(--muted)}
+      .soc span{font-size:13px;color:var(--muted);font-weight:650}
+      .bar{position:relative;height:9px;border-radius:99px;background:color-mix(in srgb,var(--primary-text-color) 9%,transparent);overflow:visible}
+      .fill{position:absolute;inset:0 auto 0 0;width:var(--soc,0%);border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 55%,transparent),var(--tone));box-shadow:0 0 12px color-mix(in srgb,var(--tone) 45%,transparent);transition:width .8s ease}
+      .charging .fill{background:linear-gradient(90deg,color-mix(in srgb,var(--good) 40%,transparent),var(--good),color-mix(in srgb,var(--good) 40%,white),var(--good));background-size:220% 100%;animation:flow 2.4s linear infinite}
+      .marker{position:absolute;top:-4px;bottom:-4px;left:var(--target);width:2px;border-radius:2px;background:var(--primary-text-color);opacity:.7}
+      .marker[hidden]{display:none}
+      .line{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .line ha-icon{--mdc-icon-size:15px;color:var(--tone)}
+      .line b{color:var(--primary-text-color);font-weight:750}
+      .chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;align-content:flex-start}
+      .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:9px;font-size:10px;font-weight:700;color:var(--primary-text-color);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--edge)}
+      .chip ha-icon{--mdc-icon-size:13px;color:var(--muted)}
+      .chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}.chip.warn ha-icon{color:var(--warn)}
+      .chip.ok ha-icon{color:var(--good)}
+      .car{position:relative;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+      .car img{display:block;width:100%;max-height:118px;object-fit:contain;object-position:right bottom;margin:auto 0 -6px auto;filter:drop-shadow(0 14px 14px rgba(0,0,0,.45));transition:opacity .4s ease}
+      .car img[hidden]{display:none}
+      .car ha-icon.fallback{--mdc-icon-size:72px;color:color-mix(in srgb,var(--primary-text-color) 30%,transparent);margin:auto}
+      .glow{position:absolute;left:8%;right:0;bottom:-6px;height:26px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--tone) 55%,transparent),transparent);opacity:.55}
+      .charging .glow{animation:breathe 2.8s ease-in-out infinite}
+      .stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:6px;margin-top:2px}
+      .stats[hidden]{display:none}
+      .stat{min-width:0;padding:5px 8px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color) 4.5%,transparent);border:1px solid var(--edge)}
+      .stat span{display:block;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .stat b{display:block;margin-top:2px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .stat b small{font-size:10px;font-weight:650;color:var(--muted);margin-left:2px}
+      @keyframes flow{to{background-position:-220% 0}}
+      @keyframes breathe{50%{opacity:.95;transform:scaleX(1.05)}}
+      @container (max-width:420px){.grid{grid-template-columns:minmax(0,1fr) 36%}.soc b{font-size:28px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chips{display:none}}
+      @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+    </style>
+    <ha-card>
+      <div class="grid">
+        <div class="info">
+          <div class="top"><span class="name"></span><span class="pill"><ha-icon></ha-icon><span></span></span></div>
+          <div class="soc"><b></b><span class="range"></span></div>
+          <div class="bar"><div class="fill"></div><i class="marker" hidden></i></div>
+          <div class="line"></div>
+        </div>
+        <div class="car"><div class="chips"></div><img alt="" hidden><ha-icon class="fallback" icon="mdi:car-electric" hidden></ha-icon><i class="glow"></i></div>
+        <div class="stats"></div>
+      </div>
+    </ha-card>`;
+    this.shadowRoot.querySelector("ha-card").addEventListener("click", () => this._tap());
+    if (this._hass) this._update();
+  }
+  _tap() {
+    const path = this._config.navigation_path;
+    if (path) {
+      history.pushState(null, "", path);
+      window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+      return;
+    }
+    const ev = new Event("hass-more-info", { bubbles: true, composed: true });
+    ev.detail = { entityId: this._config.battery };
+    this.dispatchEvent(ev);
+  }
+  _update() {
+    const root = this.shadowRoot;
+    if (!this._hass || !root.querySelector("ha-card")) return;
+    const c2 = this._config;
+    const soc = this._num(c2.battery);
+    const charging = this._isCharging();
+    const plugged = ["on", "true", "connected"].includes(String(this._val(c2.plugged) || "").toLowerCase());
+    const where = this._val(c2.location);
+    const tone2 = charging ? "var(--good)" : soc != null && soc < 20 ? "var(--warn)" : "var(--accent)";
+    const card = root.querySelector("ha-card");
+    card.style.setProperty("--tone", tone2);
+    card.classList.toggle("charging", charging);
+    root.querySelector(".name").textContent = c2.name;
+    let pillIcon = "mdi:parking", pillText = "Parkeret";
+    if (charging) {
+      pillIcon = "mdi:lightning-bolt";
+      pillText = "Lader";
+    } else if (plugged) {
+      pillIcon = "mdi:power-plug";
+      pillText = "Tilsluttet";
+    }
+    if (!charging && where) pillText += ` \xB7 ${where === "home" ? "Hjemme" : where === "not_home" ? "Ude" : where}`;
+    root.querySelector(".pill ha-icon").setAttribute("icon", pillIcon);
+    root.querySelector(".pill span").textContent = pillText;
+    root.querySelector(".soc b").innerHTML = soc == null ? "\u2014" : `${this._fmt(soc)}<small>%</small>`;
+    const range = this._num(c2.range);
+    root.querySelector(".range").textContent = range == null ? "" : `${this._fmt(range)} ${this._unit(c2.range) || "km"}`;
+    root.querySelector(".fill").style.setProperty("--soc", `${Math.max(0, Math.min(100, soc ?? 0))}%`);
+    const target = this._target();
+    const marker = root.querySelector(".marker");
+    marker.hidden = target == null;
+    if (target != null) {
+      marker.style.setProperty("--target", `${Math.max(0, Math.min(100, target))}%`);
+      marker.title = `M\xE5l ${this._fmt(target)} %`;
+    }
+    const line = root.querySelector(".line");
+    if (charging) {
+      const p = this._num(c2.charger_power), added = this._num(c2.energy_added), fin = this._time(c2.charge_finish);
+      line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc(fin)}` : ""}`;
+    } else {
+      const next = this._time(c2.next_charge_start), cost = this._num(c2.next_charge_cost);
+      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>N\xE6ste ladning <b>${esc(next)}</b>${cost != null ? ` \xB7 ${esc(this._fmt(cost, 2))} kr` : ""}${target != null ? ` \xB7 m\xE5l ${esc(this._fmt(target))} %` : ""}`;
+      else if (plugged) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
+      else line.innerHTML = "";
+    }
+    const chips = [];
+    const lock = this._val(c2.lock);
+    if (lock) chips.push(lock === "locked" ? `<span class="chip ok"><ha-icon icon="mdi:lock"></ha-icon>L\xE5st</span>` : `<span class="chip warn"><ha-icon icon="mdi:lock-open-variant"></ha-icon>Ul\xE5st</span>`);
+    if (this._val(c2.sentry) === "on") chips.push(`<span class="chip ok"><ha-icon icon="mdi:shield-car"></ha-icon>Sentry</span>`);
+    const inside = this._num(c2.inside_temperature);
+    if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc(this._fmt(inside, 0))}\xB0</span>`);
+    root.querySelector(".chips").innerHTML = chips.join("");
+    const img = root.querySelector(".car img");
+    const src = (charging || plugged) && c2.image_charging ? c2.image_charging : c2.image;
+    img.hidden = !src;
+    if (src && img.getAttribute("src") !== src) img.setAttribute("src", src);
+    root.querySelector(".fallback").hidden = !!src;
+    const stats = [];
+    const stat = (label, id, digits, unitFallback) => {
+      const v = this._num(id);
+      if (v == null) return;
+      stats.push(`<div class="stat"><span>${esc(label)}</span><b>${esc(this._fmt(v, digits))}<small>${esc((this._unit(id) || unitFallback).replace(/^DKK/, "kr"))}</small></b></div>`);
+    };
+    const today = this._num(c2.energy_today), todayCost = this._num(c2.cost_today);
+    if (today != null) stats.push(`<div class="stat"><span>I dag</span><b>${esc(this._fmt(today, 1))}<small>kWh</small>${todayCost != null ? `<small> \xB7 ${esc(this._fmt(todayCost, 0))} kr</small>` : ""}</b></div>`);
+    stat("Denne m\xE5ned", c2.energy_month, 0, "kWh");
+    stat("Pris pr. km", c2.cost_per_km, 2, "kr/km");
+    stat("Forbrug", c2.efficiency, 0, "Wh/km");
+    const box = root.querySelector(".stats");
+    box.hidden = !stats.length;
+    box.style.setProperty("--n", String(Math.max(stats.length, 1)));
+    box.innerHTML = stats.join("");
+  }
+};
+if (!customElements.get("ha-tesla-glance-card")) customElements.define("ha-tesla-glance-card", HATeslaGlanceCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-tesla-glance-card", name: "HA Tesla Glance Card", description: "Lille forsidekort med batteri, r\xE6kkevidde, opladning og forbrug", preview: true });
+console.info(`%c HA TESLA GLANCE %c v${VERSION5} `, "color:white;background:#cc0000;font-weight:700", "color:#ffb4b4;background:#111827");
+
 // src/cards/ha-lawn-mower-card/ha-lawn-mower-card.js
-var VERSION5 = "0.4.1";
+var VERSION6 = "0.4.1";
 var HALawnMowerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -6395,13 +6712,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA LAWN MOWER CARD %c v${VERSION5} `,
+  `%c HA LAWN MOWER CARD %c v${VERSION6} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-light-scene-card/ha-light-scene-card.js
-var VERSION6 = "0.3.0";
+var VERSION7 = "0.3.0";
 var COLOR_SWATCH = {
   "Varm orange": "#ff9f43",
   Lilla: "#a463f2",
@@ -6582,13 +6899,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA LIGHT SCENE CARD %c v${VERSION6} `,
+  `%c HA LIGHT SCENE CARD %c v${VERSION7} `,
   "color:white;background:#b0559b;font-weight:700",
   "color:#f0c6e6;background:#161b22"
 );
 
 // src/cards/ha-number-grid-card/ha-number-grid-card.js
-var VERSION7 = "0.4.0";
+var VERSION8 = "0.4.0";
 var HANumberGridCard = class extends HTMLElement {
   constructor() {
     super();
@@ -6713,7 +7030,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NUMBER GRID CARD %c v${VERSION7} `,
+  `%c HA NUMBER GRID CARD %c v${VERSION8} `,
   "color:white;background:#8a5cc2;font-weight:700",
   "color:#dcc6f5;background:#161b22"
 );
@@ -7778,7 +8095,7 @@ if (!customElements.get("pool-water-quality-card")) customElements.define("pool-
 window.customCards.push({ type: "pool-water-quality-card", name: "Pool Water Quality Card", description: "pH and chlorine history in the pool dashboard style." });
 
 // src/cards/ha-simple-vacuum-card/ha-simple-vacuum-card.js
-var VERSION8 = "0.4.0";
+var VERSION9 = "0.4.0";
 var HASimpleVacuumCard = class extends HTMLElement {
   constructor() {
     super();
@@ -7968,13 +8285,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SIMPLE VACUUM CARD %c v${VERSION8} `,
+  `%c HA SIMPLE VACUUM CARD %c v${VERSION9} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-toggle-grid-card/ha-toggle-grid-card.js
-var VERSION9 = "0.5.0";
+var VERSION10 = "0.5.0";
 var ACTIVE_STATES = ["on", "open", "unlocked", "home", "cleaning", "playing"];
 var HAToggleGridCard = class extends HTMLElement {
   constructor() {
@@ -8136,7 +8453,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA TOGGLE GRID CARD %c v${VERSION9} `,
+  `%c HA TOGGLE GRID CARD %c v${VERSION10} `,
   "color:white;background:#4a8f5c;font-weight:700",
   "color:#a6e6b6;background:#161b22"
 );
@@ -8253,7 +8570,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION10 = "0.5.1";
+var VERSION11 = "0.5.1";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -8506,7 +8823,7 @@ var HAACClimateCard = class extends HTMLElement {
 if (!customElements.get("ha-ac-climate-card")) customElements.define("ha-ac-climate-card", HAACClimateCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ac-climate-card", name: "HA AC Climate Card", description: "Animeret og interaktiv styring af AC og varmepumper", preview: true });
-console.info(`%c HA AC CLIMATE CARD %c v${VERSION10} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AC CLIMATE CARD %c v${VERSION11} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ac-temperature-control-card/ac-temperature-control-card.js
 var AcTemperatureControlCard = class extends HTMLElement {
@@ -9030,7 +9347,7 @@ if (!window.customCards.some((card) => card.type === "calefa-number-control-card
 }
 
 // src/cards/ha-fjernvarme-card/ha-fjernvarme-card.js
-var VERSION11 = "0.2.0";
+var VERSION12 = "0.2.0";
 var CONTROL_FIELDS = [
   ["auto_standby", "Automatisk standby", "switch"],
   ["auto_standby_status", "Automatisk standby status", "sensor"],
@@ -9328,10 +9645,10 @@ if (!customElements.get("ha-calefa-details-card")) customElements.define("ha-cal
 if (!customElements.get("ha-calefa-details-card-editor")) customElements.define("ha-calefa-details-card-editor", HACalefaDetailsCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-calefa-details-card", name: "HA Calefa Details Card", description: "Samlet styring af varmekurve, returbegr\xE6nser, RUM og Calefa-drift", preview: true });
-console.info(`%c HA-FJERNVARME-CARD (Calefa details) %c ${VERSION11} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
+console.info(`%c HA-FJERNVARME-CARD (Calefa details) %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-fjernvarme-house-card/ha-fjernvarme-house-card.js
-var VERSION12 = "0.3.3";
+var VERSION13 = "0.3.3";
 var FIELDS = [
   ["primary_supply", "Fjernvarme freml\xF8b"],
   ["primary_return", "Fjernvarme retur"],
@@ -9943,10 +10260,10 @@ if (!customElements.get("ha-fjernvarme-house-card-v2")) customElements.define("h
 if (!customElements.get("ha-fjernvarme-house-card-editor")) customElements.define("ha-fjernvarme-house-card-editor", HAFjernvarmeHouseCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernvarme House Card", description: "Fjernvarmeunit med temperaturstyrede r\xF8r, radiator, varmt vand og bypass", preview: true });
-console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
+console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION13} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.12.1";
+var VERSION14 = "0.12.1";
 var EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
 var EPC_LEDGER_ENDINGS = [
   "charge_mode",
@@ -10662,13 +10979,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ELECTRICITY PRICE CARD %c v${VERSION13} `,
+  `%c HA ELECTRICITY PRICE CARD %c v${VERSION14} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-ventilation-card/ha-ventilation-card.js
-var VERSION14 = "0.7.8";
+var VERSION15 = "0.7.8";
 var ENTITY_FIELDS = [
   ["outdoor_temperature", "Udeluft"],
   ["supply_temperature", "Indbl\xE6sning"],
@@ -11702,7 +12019,7 @@ if (!customElements.get("ha-ventilation-details-card-editor")) customElements.de
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ventilation-card", name: "HA Ventilation Card", description: "Temperature-aware heat-recovery ventilation card", preview: true });
 window.customCards.push({ type: "ha-ventilation-details-card", name: "HA Ventilation Details Card", description: "Samlet Dantherm drift, eftervarme, diagnose og historik", preview: true });
-console.info(`%c HA-VENTILATION-CARD %c ${VERSION14} `, "color:#fff;background:#28789f;font-weight:700", "color:#28789f;background:#fff");
+console.info(`%c HA-VENTILATION-CARD %c ${VERSION15} `, "color:#fff;background:#28789f;font-weight:700", "color:#28789f;background:#fff");
 
 // src/cards/ha-hch5-live-card/ha-hch5-live-card.js
 var Rb = Object.create;
@@ -21785,7 +22102,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION51 = "0.3.4";
+  const VERSION52 = "0.3.4";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -21897,11 +22214,11 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION51}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION52}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
-var VERSION15 = "0.2.0";
+var VERSION16 = "0.2.0";
 var HAHeatEconomyCard = class extends HTMLElement {
   constructor() {
     super();
@@ -22089,7 +22406,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HEAT ECONOMY CARD %c v${VERSION15} `,
+  `%c HA HEAT ECONOMY CARD %c v${VERSION16} `,
   "color:white;background:#c2694a;font-weight:700",
   "color:#f5cdb8;background:#161b22"
 );
@@ -22177,7 +22494,7 @@ var HACardListEditor3 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor3);
 
 // src/cards/ha-heat-pump-overview-card/ha-heat-pump-overview-card.js
-var VERSION16 = "0.3.0";
+var VERSION17 = "0.3.0";
 var HAHeatPumpOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -22339,7 +22656,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
 if (!customElements.get("ha-heat-pump-overview-card")) customElements.define("ha-heat-pump-overview-card", HAHeatPumpOverviewCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-heat-pump-overview-card", name: "HA Heat Pump Overview Card", description: "Animeret energi- og diagnosekort til varmepumper", preview: true });
-console.info(`%c HA HEAT PUMP OVERVIEW %c v${VERSION16} `, "color:white;background:#de762e;font-weight:700", "color:#ffad68;background:#161b22");
+console.info(`%c HA HEAT PUMP OVERVIEW %c v${VERSION17} `, "color:white;background:#de762e;font-weight:700", "color:#ffad68;background:#161b22");
 
 // src/cards/ha-heating-diagnostics-card/ha-card-list-editor.js
 var HACardListEditor4 = class extends HTMLElement {
@@ -22424,7 +22741,7 @@ var HACardListEditor4 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor4);
 
 // src/cards/ha-heating-diagnostics-card/ha-heating-diagnostics-card.js
-var VERSION17 = "0.4.7";
+var VERSION18 = "0.4.7";
 var HAHeatingDiagnosticsCard = class extends HTMLElement {
   constructor() {
     super();
@@ -22894,7 +23211,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
 if (!customElements.get("ha-heating-diagnostics-card")) customElements.define("ha-heating-diagnostics-card", HAHeatingDiagnosticsCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-heating-diagnostics-card", name: "HA Heating Diagnostics Card", description: "Animeret rumdiagnose til Room Energy Optimizer", preview: true });
-console.info(`%c HA HEATING DIAGNOSTICS %c v${VERSION17} `, "color:white;background:#5d77ed;font-weight:700", "color:#8fa6ff;background:#161b22");
+console.info(`%c HA HEATING DIAGNOSTICS %c v${VERSION18} `, "color:white;background:#5d77ed;font-weight:700", "color:#8fa6ff;background:#161b22");
 
 // src/cards/ha-hrv-card/ha-hrv-card.js
 var _hrvRebuiltCardKeys = /* @__PURE__ */ new Set();
@@ -25341,7 +25658,7 @@ window.__HRV_CARD_VERSION__ = "2.13.4-afterheat-status-layout";
 console.info("%c HRV Card %c loaded v2.12.1 ", "color: white; background: #1976d2; font-weight: 700; padding: 2px 4px; border-radius: 3px 0 0 3px;", "color: white; background: #43a047; font-weight: 700; padding: 2px 4px; border-radius: 0 3px 3px 0;");
 
 // src/cards/ha-power-flow-card/ha-power-flow-card.js
-var VERSION18 = "0.5.1";
+var VERSION19 = "0.5.1";
 var HAPowerFlowCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -25693,7 +26010,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA POWER FLOW CARD %c v${VERSION18} `,
+  `%c HA POWER FLOW CARD %c v${VERSION19} `,
   "color:white;background:#2f9e6e;font-weight:700",
   "color:#b6f0d6;background:#161b22"
 );
@@ -25781,7 +26098,7 @@ var HACardListEditor5 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor5);
 
 // src/cards/ha-radiator-overview-card/ha-radiator-overview-card.js
-var VERSION19 = "0.6.1";
+var VERSION20 = "0.6.1";
 var HARadiatorOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -26374,7 +26691,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
 if (!customElements.get("ha-radiator-overview-card")) customElements.define("ha-radiator-overview-card", HARadiatorOverviewCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-radiator-overview-card", name: "HA Radiator Overview Card", description: "Animeret radiator- og temperaturkort", preview: true });
-console.info(`%c HA RADIATOR OVERVIEW CARD %c v${VERSION19} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
+console.info(`%c HA RADIATOR OVERVIEW CARD %c v${VERSION20} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-card-list-editor.js
 var HACardListEditor6 = class extends HTMLElement {
@@ -26498,7 +26815,7 @@ var AIR_COLORS = {
   bad: "#ff5d73"
 };
 var QUALITY_RANK = { good: 0, excellent: 0, fair: 1, moderate: 2, poor: 3, very_poor: 4, extremely_poor: 5, unhealthy: 4, hazardous: 5 };
-var DEAD = /* @__PURE__ */ new Set(["unknown", "unavailable", ""]);
+var DEAD2 = /* @__PURE__ */ new Set(["unknown", "unavailable", ""]);
 var AIR_DEFAULTS = { co2_good: 800, co2_warning: 1e3, co2_critical: 1400, pm25_good: 15, pm25_moderate: 25, pm25_poor: 35, pm25_bad: 55 };
 function co2Rank(value, cfg = {}) {
   if (!Number.isFinite(value)) return void 0;
@@ -26527,7 +26844,7 @@ function airQuality(hass, cfg = {}) {
   if (!ids.length) return { configured: false };
   const live = (id) => {
     const entity = id ? hass?.states?.[id] : void 0;
-    return entity && !DEAD.has(String(entity.state)) ? entity : void 0;
+    return entity && !DEAD2.has(String(entity.state)) ? entity : void 0;
   };
   const number2 = (id) => {
     const value = Number(live(id)?.state);
@@ -26544,7 +26861,7 @@ function airQuality(hass, cfg = {}) {
 }
 
 // src/cards/ha-air-quality-card/ha-air-quality-card.js
-var VERSION20 = "1.0.0";
+var VERSION21 = "1.0.0";
 var TAG = "ha-air-quality-card";
 var DASH = "\u2014";
 var W = 400;
@@ -26943,10 +27260,10 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === TAG)) {
   window.customCards.push({ type: TAG, name: "HA Air Quality Card", description: "Luftkvalitet i et rum: CO\u2082, PM2,5 og m\xE5lerens vurdering med 24-timers kurver", preview: true });
 }
-console.info(`%c HA AIR QUALITY CARD %c v${VERSION20} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
+console.info(`%c HA AIR QUALITY CARD %c v${VERSION21} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION21 = "2.1.6";
+var VERSION22 = "2.1.6";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -28119,7 +28436,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === TAG2)) {
   window.customCards.push({ type: TAG2, name: "HA Radiator Overview Card v2", description: "Rumklima-overblik med termostat-skiver, 24-timers kurver og AC-animation", preview: true });
 }
-console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION21} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
+console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-temperature-target-card/ha-card-list-editor.js
 var HACardListEditor7 = class extends HTMLElement {
@@ -28204,7 +28521,7 @@ var HACardListEditor7 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor7);
 
 // src/cards/ha-temperature-target-card/ha-temperature-target-card.js
-var VERSION22 = "0.5.1";
+var VERSION23 = "0.5.1";
 var HATemperatureTargetCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28499,10 +28816,10 @@ var HATemperatureTargetCard = class extends HTMLElement {
 if (!customElements.get("ha-temperature-target-card")) customElements.define("ha-temperature-target-card", HATemperatureTargetCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-temperature-target-card", name: "HA Temperature Target Card", description: "Temperaturgrafer med dynamiske termostatm\xE5l", preview: true });
-console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION22} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
+console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION23} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
 
 // src/cards/ha-water-meter-card/ha-water-meter-card.js
-var VERSION23 = "0.2.0";
+var VERSION24 = "0.2.0";
 var HAWaterMeterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28713,7 +29030,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WATER METER CARD %c v${VERSION23} `,
+  `%c HA WATER METER CARD %c v${VERSION24} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -28883,7 +29200,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.69";
+var VERSION25 = "0.8.69";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -30451,10 +30768,10 @@ if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-
 });
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Card", description: "Samlet statusheader med vejr, alarmer og lokale vejreffekter", preview: true });
-console.info(`%c HA HOME HEADER CARD %c v${VERSION24} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA HOME HEADER CARD %c v${VERSION25} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION25 = "0.8.72";
+var VERSION26 = "0.8.72";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -31227,7 +31544,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc3 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc4 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -31239,14 +31556,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc3(item2.value));
+    setText(".value", esc4(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc3(item2.detail || " "));
+    setText(".detail", esc4(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -31961,13 +32278,13 @@ window.customCards.push({
 window.customCards.push({ type: "ha-home-summary-card", name: "HA Home Summary Card", description: "Samlet husstatus, forbrug, kalender og kameraoverblik", preview: true });
 window.customCards.push({ type: "ha-home-desktop-layout-card", name: "HA Home Desktop Layout", description: "Balancerede responsive kolonner til PC-forsiden", preview: false });
 console.info(
-  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION25} `,
+  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION26} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#102030"
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION26 = "0.2.5";
+var VERSION27 = "0.2.5";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -32115,7 +32432,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA PERSON OVERVIEW CARD %c v${VERSION26} `,
+  `%c HA PERSON OVERVIEW CARD %c v${VERSION27} `,
   "color:white;background:#2687b8;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -32203,7 +32520,7 @@ var HACardListEditor9 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION27 = "0.3.0";
+var VERSION28 = "0.3.0";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -32406,13 +32723,13 @@ var HAPetCareCard = class extends HTMLElement {
 if (!customElements.get("ha-pet-care-card")) customElements.define("ha-pet-care-card", HAPetCareCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-pet-care-card", name: "HA Pet Care Card", description: "Samlet k\xE6ledyrs-, vand- og foderoversigt", preview: true });
-console.info(`%c HA PET CARE CARD %c v${VERSION27} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA PET CARE CARD %c v${VERSION28} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-weather-card/ha-weather-card-assets.js
 window.HAWeatherCardAssets = Object.freeze({ "weather": { "clear-night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "clear-night_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "fog": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "fog_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "hail": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "hail_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "lightning-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjYuNzQiIHkxPSIzNy44OCIgeDI9IjM1Ljc2IiB5Mj0iNTMuNTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGxpbmUgeDE9IjI0LjM5IiB5MT0iNDMuMDMiIHgyPSIyMy42MSIgeTI9IjQ3Ljk3IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMzkiIHkxPSI0My4wMyIgeDI9IjMwLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuNHMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC40cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMzkiIHkxPSI0My4wMyIgeDI9IjM3LjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuMnMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC4ycyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8cG9seWdvbiBwb2ludHM9IjMwIDM2IDI2IDQ4IDMwIDQ4IDI4IDU4IDM4IDQ0IDMyIDQ0IDM2IDM2IDMwIDM2IiBzdHJva2U9IiNmNmE4MjMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjZSkiPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMTsgMTsgMTsgMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDE7IDE7IDAuMTsgMTsgMC4xOyAxIiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wb2x5Z29uPgo8L3N2Zz4K", "lightning-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMTMuNTgiIHkxPSIxNS41NyIgeDI9IjI0LjE1IiB5Mj0iMzMuODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0iZ3JhZGllbnRUcmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIxMCAxOS4yMiAyNC4yOTM7IC0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIyLjUzIiB5MT0iNDIuOTUiIHgyPSIyNS40NyIgeTI9IjQ4LjA1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIyOS41MyIgeTE9IjQyLjk1IiB4Mj0iMzIuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImUiIHgxPSIzNi41MyIgeTE9IjQyLjk1IiB4Mj0iMzkuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImYiIHgxPSIyNi43NCIgeTE9IjM3Ljg4IiB4Mj0iMzUuNzYiIHkyPSI1My41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Zz4KCQk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2IpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2UpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNmKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "not-available": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8cGF0aCBkPSJNMjYuMSwyNC4wOGEuODMuODMsMCwwLDEsLjE2LjU2VjM4LjEyYS41OS41OSwwLDAsMS0uNzIuNzFoLTEuMmEuNzUuNzUsMCwwLDEtLjY5LS4zNWwtNS4xNC03LjZhMTEuNjIsMTEuNjIsMCwwLDEtLjg1LTEuNWMtLjI4LS41Ny0uNDktMS4wNS0uNjQtMS40M3MtLjIzLS41OS0uMjMtLjZoLS4xM3MwLC4yMy4xMi42Ni4xNSwxLC4yMywxLjY0YTE4LDE4LDAsMCwxLC4xMSwxLjg4djYuNTlhLjc3Ljc3LDAsMCwxLS4xNi41Ni43OS43OSwwLDAsMS0uNTUuMTVIMTUuM2EuODUuODUsMCwwLDEtLjU3LS4xNS43Ni43NiwwLDAsMS0uMTctLjU2VjI0LjY0YS43OC43OCwwLDAsMSwuMTctLjU2Ljg1Ljg1LDAsMCwxLC41Ny0uMTVoMS4xOWEuODEuODEsMCwwLDEsLjcuMzNsNS4xLDcuNTZhMTMsMTMsMCwwLDEsLjg5LDEuNTZjLjI3LjU1LjQ4LDEsLjYzLDEuNDFzLjIzLjU5LjI0LjZoLjEzczAtLjI1LS4xMi0uNjctLjE1LTEtLjIzLTEuNjNhMTYuMTEsMTYuMTEsMCwwLDEtLjExLTEuOTRWMjQuNjRhLjgzLjgzLDAsMCwxLC4xNS0uNTYuODIuODIsMCwwLDEsLjU2LS4xNWgxLjExQS44Mi44MiwwLDAsMSwyNi4xLDI0LjA4WiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTMwLjQ3LDQwYTEsMSwwLDAsMS0uNTQuMTJIMjguNzZjLS4yNCwwLS40LS4wNS0uNDYtLjE0YS40My40MywwLDAsMSwwLS40NGw1LjU4LTE1YTEuMTYsMS4xNiwwLDAsMSwuMzMtLjQ2Ljk0Ljk0LDAsMCwxLC41My0uMTJIMzZjLjI0LDAsLjM5LjA1LjQ1LjE0YS41LjUsMCwwLDEsMCwuNDRsLTUuNTksMTVBMS4wNiwxLjA2LDAsMCwxLDMwLjQ3LDQwWiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTQ4Ljg5LDM4LjgzSDQ3LjhhMi40LDIuNCwwLDAsMS0uOTEtLjEyLjc4Ljc4LDAsMCwxLS4zOS0uNTFsLTEtMi43SDM5Ljc0bC0xLDIuN2EuNzguNzgsMCwwLDEtLjM5LjUxLDIuNCwyLjQsMCwwLDEtLjkxLjEyaC0xcS0uNzMsMC0uNDgtLjY5bDUuMjUtMTMuNjVhMS4wNywxLjA3LDAsMCwxLC4zMy0uNDcsMSwxLDAsMCwxLC41NS0uMTFoMS4xMWExLjA2LDEuMDYsMCwwLDEsLjU3LjExLjkuOSwwLDAsMSwuMzIuNDVsNS4yNCwxMy42N1E0OS42MywzOC44Myw0OC44OSwzOC44M1ptLTYtMTEuMTNjLS4wOS0uNDMtLjE0LS43Ni0uMTctMWwwLS4zNmgtLjE1YTcuNzMsNy43MywwLDAsMS0uNDYsMi41NGwtMS42Miw0LjQ1SDQ0LjhMNDMuMiwyOC45QTEwLDEwLDAsMCwxLDQyLjg5LDI3LjdaIiBmaWxsPSIjMzc0MTUxIi8+Cjwvc3ZnPgo=", "partlycloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxNi41IiB5MT0iMTkuNjciIHgyPSIyMS41IiB5Mj0iMjguMzMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIxOSIgY3k9IjI0IiByPSI1IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0xOSwxNS42N1YxMi41bTAsMjNWMzIuMzNtNS44OS0xNC4yMiwyLjI0LTIuMjRNMTAuODcsMzIuMTNsMi4yNC0yLjI0bTAtMTEuNzgtMi4yNC0yLjI0TTI3LjEzLDMyLjEzbC0yLjI0LTIuMjRNNy41LDI0aDMuMTdNMzAuNSwyNEgyNy4zMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDE5IDI0OyAzNjAgMTkgMjQiIGR1cj0iNDVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSIvPgo8L3N2Zz4K", "partlycloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxMy41OCIgeTE9IjE1LjU3IiB4Mj0iMjQuMTUiIHkyPSIzMy44NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzOyAtMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KPC9zdmc+Cg==", "pouring": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "pouring_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "smoke-particles": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMzAuMjUiIHkxPSIzOS40IiB4Mj0iMzMuMjUiIHkyPSI0NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNiOGJkYzYiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYTVhYWIyIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy41IiB5MT0iMjkuMSIgeDI9IjI4IiB5Mj0iMzYuOSIgeGxpbms6aHJlZj0iI2EiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImMiIHgxPSIzMy43NSIgeTE9IjE5LjgiIHgyPSIzOS43NSIgeTI9IjMwLjIiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMS43NSIgY3k9IjQyIiByPSIzIiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMjUuNzUiIGN5PSI0MiIgcj0iNC41IiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJjeCIgdmFsdWVzPSIzMS43NTsgMjUuNzUiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2NpcmNsZT4KCTxjaXJjbGUgY3g9IjM2Ljc1IiBjeT0iNDIiIHI9IjYiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAzNi43NSIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgo8L3N2Zz4K", "smoke": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4yNSIgeTE9IjQ4LjQiIHgyPSIzMy4yNSIgeTI9IjUzLjYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYjhiZGM2Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhNWFhYjIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIzLjUiIHkxPSIzOC4xIiB4Mj0iMjgiIHkyPSI0NS45IiB4bGluazpocmVmPSIjYiIvPgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iZCIgeDE9IjMzLjc1IiB5MT0iMjguOCIgeDI9IjM5Ljc1IiB5Mj0iMzkuMiIgeGxpbms6aHJlZj0iI2IiLz4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxjaXJjbGUgY3g9IjMxLjc1IiBjeT0iNTEiIHI9IjMiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cgk8Y2lyY2xlIGN4PSIyNS43NSIgY3k9IjUxIiByPSI0LjUiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAyNS43NSIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMzYuNzUiIGN5PSI1MSIgcj0iNiIgc3Ryb2tlPSIjYWZiNGJjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwIDA7IDAgLTE3OyIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7IDE7IDE7IDE7IDAiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iciIgdmFsdWVzPSIzOyA0LjU7IDYiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iY3giIHZhbHVlcz0iMzEuNzU7IDM2Ljc1IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cjwvc3ZnPgo=", "snowy-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "snowy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "sunny": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunny_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunrise": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgMzggMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "sunset": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgNDcgMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "windy-variant": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy-variant_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K" } });
 
 // src/cards/ha-weather-card/ha-weather-card.js
-var VERSION28 = "0.6.1";
+var VERSION29 = "0.6.1";
 var CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
   cloudy: "Overskyet",
@@ -33055,7 +33372,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WEATHER CARD %c v${VERSION28} `,
+  `%c HA WEATHER CARD %c v${VERSION29} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#161b22"
 );
@@ -33435,7 +33752,7 @@ var ROOM_OVERVIEW_VERSION2 = "3.1.0";
 var OPEN_STATES = /* @__PURE__ */ new Set(["on", "open", "opening"]);
 var PRESENT_STATES = /* @__PURE__ */ new Set(["on", "home", "detected"]);
 var MEDIA_OFF = /* @__PURE__ */ new Set(["off", "standby", "unavailable", "unknown"]);
-var DEAD2 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
+var DEAD3 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
 var TONE_RANK = { critical: 0, danger: 1, warn: 2, active: 3, info: 4 };
 var OPENING_LABEL = { door: "D\xF8r", window: "Vindue", garage_door: "Port", garage: "Port", gate: "L\xE5ge", opening: "\xC5bning" };
 var WEATHER = {
@@ -33468,7 +33785,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc2 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -33796,7 +34113,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _num(id) {
     const st = typeof id === "string" ? this._state(id) : id;
-    if (!st || DEAD2.has(st.state)) return null;
+    if (!st || DEAD3.has(st.state)) return null;
     const value = Number(st.state);
     return Number.isFinite(value) ? value : null;
   }
@@ -33818,7 +34135,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     return Number.isFinite(time) ? (Date.now() - time) / 6e4 : null;
   }
   _minutes(st) {
-    if (!st || DEAD2.has(st.state)) return null;
+    if (!st || DEAD3.has(st.state)) return null;
     if (st.attributes?.device_class === "timestamp") {
       const end = Date.parse(st.state);
       return Number.isFinite(end) ? Math.max(0, (end - Date.now()) / 6e4) : null;
@@ -33837,7 +34154,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const domain = id.split(".")[0];
     if (domain === "media_player") return !MEDIA_OFF.has(st.state);
     if (domain === "lock") return st.state !== "locked";
-    if (domain === "climate") return st.state !== "off" && !DEAD2.has(st.state);
+    if (domain === "climate") return st.state !== "off" && !DEAD3.has(st.state);
     if (domain === "vacuum") return ["cleaning", "returning"].includes(st.state);
     return ["on", "open", "opening", "playing", "home", "active"].includes(st.state);
   }
@@ -33888,7 +34205,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _statusChip(cfg, index) {
     const st = this._state(cfg.entity);
-    if (!st || DEAD2.has(st.state)) return null;
+    if (!st || DEAD3.has(st.state)) return null;
     const domain = cfg.entity.split(".")[0];
     const dc2 = st.attributes?.device_class;
     const name = cfg.name || st.attributes?.friendly_name || cfg.entity;
@@ -33964,7 +34281,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _line(room, ctx) {
     if (room.weather) {
       const w = this._state(room.weather);
-      if (w && !DEAD2.has(w.state)) {
+      if (w && !DEAD3.has(w.state)) {
         const label = WEATHER[w.state]?.[0] || w.state;
         const wind = Number(w.attributes?.wind_speed);
         const unit = String(w.attributes?.wind_speed_unit || "km/h").replace("km/h", "km/t");
@@ -33973,7 +34290,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     }
     const presence = this._state(room.presence);
     if (presence) {
-      if (DEAD2.has(presence.state)) return { text: "Sensor offline", cls: "off" };
+      if (DEAD3.has(presence.state)) return { text: "Sensor offline", cls: "off" };
       const motion = presence.attributes?.device_class === "motion";
       if (ctx.present) return { text: motion ? "Bev\xE6gelse nu" : "Aktivitet nu", cls: "live" };
       const since = this._since(presence);
@@ -33981,7 +34298,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       return { text: since == null ? motion ? "Stille" : "Tomt" : `${motion ? "Stille" : "Tomt"} i ${this._dur(since)}`, cls: "" };
     }
     const info = this._state(room.info);
-    if (info && !DEAD2.has(info.state)) {
+    if (info && !DEAD3.has(info.state)) {
       const unit = info.attributes?.unit_of_measurement;
       const value = ["h", "min", "s", "d"].includes(unit) ? this._dur(this._minutes(info)) : `${info.state}${unit ? ` ${unit}` : ""}`;
       return { text: `${room.info_name || info.attributes?.friendly_name || ""} ${value}`.trim(), cls: "" };
@@ -34000,7 +34317,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const climate = this._state(room.climate);
     const target = Number(climate?.attributes?.temperature);
     const open = this._openParts(room);
-    const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD2.has(tempState.state) };
+    const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD3.has(tempState.state) };
     const chips = this._chips(room, ctx);
     const mediaOn = [...room.actions, ...room.status].some((x) => x.entity?.startsWith("media_player.") && this._isOn(x.entity));
     return {
@@ -34028,7 +34345,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE3}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc2(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc2(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -34048,16 +34365,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc2(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc2(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc2(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc2(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc2(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc2(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -34295,7 +34612,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _patchActions(t, m) {
     const { room } = t;
     if (t.light) {
-      const dead = !m.light || DEAD2.has(m.light.state);
+      const dead = !m.light || DEAD3.has(m.light.state);
       t.light.classList.toggle("on", m.lightOn);
       t.light.classList.toggle("unavail", dead);
       t.light.classList.toggle("pending", this._isPending(room.light));
@@ -34311,7 +34628,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       const cfg = room.actions[index];
       const st = this._state(cfg.entity);
       const domain = cfg.entity?.split(".")[0];
-      const dead = !!cfg.entity && (!st || DEAD2.has(st.state));
+      const dead = !!cfg.entity && (!st || DEAD3.has(st.state));
       const on = cfg.entity ? this._isOn(cfg.entity) : false;
       const lock = domain === "lock";
       const armed = this._armed?.key === `${room.index}:${index}`;
@@ -34452,7 +34769,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (!st) return;
     const domain = entity.split(".")[0];
     const call = (service, svcDomain = domain) => this._call(svcDomain, service, { entity_id: entity }, void 0, entity, entity, el);
-    if (DEAD2.has(st.state)) return this._moreInfo(entity);
+    if (DEAD3.has(st.state)) return this._moreInfo(entity);
     switch (domain) {
       case "lock":
         return call(st.state === "locked" ? "unlock" : "lock");
@@ -34519,7 +34836,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const cfg = t.room.actions[index];
     const button = t.acts[index];
     const key = `${t.room.index}:${index}`;
-    if (cfg.entity && DEAD2.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
+    if (cfg.entity && DEAD3.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
     if (this._needsConfirm(cfg) && this._armed?.key !== key) {
       const label = cfg.entity?.startsWith("lock.") ? "L\xE5s op?" : cfg.confirm_text || "Sluk?";
       this._armed = { key, label };
@@ -34546,7 +34863,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tapLight(t) {
     const st = this._state(t.room.light);
-    if (!st || DEAD2.has(st.state)) return this._moreInfo(t.room.light);
+    if (!st || DEAD3.has(st.state)) return this._moreInfo(t.room.light);
     this._call("light", "toggle", { entity_id: t.room.light }, void 0, t.room.light, t.room.light, t.light);
     this._update();
   }
@@ -35032,7 +35349,7 @@ window.customCards.push({
 });
 
 // src/cards/ha-house-mode-card/ha-house-mode-card.js
-var VERSION29 = "0.3.0";
+var VERSION30 = "0.3.0";
 var DEFAULT_ICONS = {
   Normal: "mdi:home",
   Stille: "mdi:volume-mute",
@@ -35207,13 +35524,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HOUSE MODE CARD %c v${VERSION29} `,
+  `%c HA HOUSE MODE CARD %c v${VERSION30} `,
   "color:white;background:#c27a3f;font-weight:700",
   "color:#f5d3ab;background:#161b22"
 );
 
 // src/cards/ha-kid-tracker-card/ha-kid-tracker-card.js
-var VERSION30 = "0.5.0";
+var VERSION31 = "0.5.0";
 var HAKidTrackerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -35531,13 +35848,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KID TRACKER CARD %c v${VERSION30} `,
+  `%c HA KID TRACKER CARD %c v${VERSION31} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/smart-home-overview-card/smart-home-overview-card.js
-var VERSION31 = "1.0.1";
+var VERSION32 = "1.0.1";
 var DEFAULT_ENTITIES = {
   houseMode: "input_select.house_mode",
   guestOverride: "input_boolean.house_mode_guest_override",
@@ -36215,11 +36532,11 @@ var SmartHomeOverviewCardEditor = class extends HTMLElement {
 if (!customElements.get("smart-home-overview-card")) customElements.define("smart-home-overview-card", SmartHomeOverviewCard);
 if (!customElements.get("smart-home-overview-card-editor")) customElements.define("smart-home-overview-card-editor", SmartHomeOverviewCardEditor);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION31}`, preview: true });
-console.info(`SMART HOME OVERVIEW CARD ${VERSION31}`);
+window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION32}`, preview: true });
+console.info(`SMART HOME OVERVIEW CARD ${VERSION32}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION32 = "0.4.0";
+var VERSION33 = "0.4.0";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -36541,13 +36858,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ALARM CENTER CARD %c v${VERSION32} `,
+  `%c HA ALARM CENTER CARD %c v${VERSION33} `,
   "color:white;background:#d9534f;font-weight:700",
   "color:#ff9d9d;background:#161b22"
 );
 
 // src/cards/ha-camera-hub-card/ha-camera-hub-card.js
-var VERSION33 = "0.7.0";
+var VERSION34 = "0.7.0";
 var EVENTS_REFRESH_MS = 30 * 1e3;
 var SYSTEM_TICK_MS = 30 * 1e3;
 var EVENTS_WINDOW_HOURS = 36;
@@ -38002,13 +38319,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CAMERA HUB CARD %c v${VERSION33} `,
+  `%c HA CAMERA HUB CARD %c v${VERSION34} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-door-window-card/ha-door-window-card.js
-var VERSION34 = "0.4.0";
+var VERSION35 = "0.4.0";
 var HISTORY_REFRESH_MS = 5 * 60 * 1e3;
 var TICK_MS = 30 * 1e3;
 var LONG_OPEN_MS = 30 * 60 * 1e3;
@@ -38300,13 +38617,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA DOOR/WINDOW CARD %c v${VERSION34} `,
+  `%c HA DOOR/WINDOW CARD %c v${VERSION35} `,
   "color:#fff;background:#f59e0b;font-weight:700",
   "color:#f59e0b;background:#161b22"
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION35 = "0.8.10";
+var VERSION36 = "0.8.10";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -39122,7 +39439,7 @@ if (!customElements.get("ha-home-camera-card")) customElements.define("ha-home-c
 if (!customElements.get("ha-home-camera-card-editor")) customElements.define("ha-home-camera-card-editor", HaHomeCameraCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Card", description: "Responsive camera overview with automatic and manual camera selection", preview: true });
-console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION35} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
+console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION36} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
 // src/cards/ha-license-plate-card/ha-license-plate-card.js
 var HaLicensePlateCard = class extends HTMLElement {
@@ -39898,7 +40215,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-security-center-card", name: "HA Security Center", description: `Security center ${SECURITY_CENTER_VERSION}` });
 
 // src/cards/ha-control-center-card/ha-control-center-card.js
-var VERSION36 = "0.3.0";
+var VERSION37 = "0.3.0";
 var HAControlCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -40104,13 +40421,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CONTROL CENTER CARD %c v${VERSION36} `,
+  `%c HA CONTROL CENTER CARD %c v${VERSION37} `,
   "color:white;background:#3f7fbf;font-weight:700",
   "color:#9dc8ff;background:#161b22"
 );
 
 // src/cards/ha-ai-usage-card/ha-ai-usage-card.js
-var VERSION37 = "0.4.1";
+var VERSION38 = "0.4.1";
 var HAAIUsageCard = class extends HTMLElement {
   constructor() {
     super();
@@ -40332,10 +40649,10 @@ var HAAIUsageCard = class extends HTMLElement {
 if (!customElements.get("ha-ai-usage-card")) customElements.define("ha-ai-usage-card", HAAIUsageCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", description: "Samlet og animeret overblik over AI-forbrugsgr\xE6nser", preview: true });
-console.info(`%c HA AI USAGE CARD %c v${VERSION37} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AI USAGE CARD %c v${VERSION38} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION38 = "0.6.12";
+var VERSION39 = "0.6.13";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -40736,7 +41053,7 @@ var HASettingsCenterCard = class extends HTMLElement {
         <div class="head-spacer"></div>
         <div class="head-badge"><b data-health-summary>Kontrollerer\u2026</b><small data-health-detail>\u2014</small></div>
       </div>
-      <div class="tabs">${TABS.map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
+      <div class="tabs">${this._tabs().map(([id, n, i]) => `<button class="tab" data-action="tab" data-tab="${id}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("")}</div>
       ${this._home()}${this._lighting()}${this._routines()}${this._equipment()}${this._system()}${this._cards()}
     </ha-card>`;
     this._select(this._tab);
@@ -40916,8 +41233,13 @@ var HASettingsCenterCard = class extends HTMLElement {
     if (current) current.textContent = state;
     this.shadowRoot.querySelectorAll(".mode").forEach((n) => n.classList.toggle("active", n.dataset.option === state));
   }
+  // hide_tabs: [lighting, ...] hides tabs a home has no use for; Hjem always stays.
+  _tabs() {
+    const hidden = new Set((Array.isArray(this._config?.hide_tabs) ? this._config.hide_tabs : []).map(String));
+    return TABS.filter(([id]) => id === "home" || !hidden.has(id));
+  }
   _select(tab) {
-    if (!TABS.some(([id]) => id === tab)) tab = "home";
+    if (!this._tabs().some(([id]) => id === tab)) tab = "home";
     this._tab = tab;
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((b) => {
       const active = b.dataset.tab === tab;
@@ -41186,13 +41508,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SETTINGS CENTER %c v${VERSION38} `,
+  `%c HA SETTINGS CENTER %c v${VERSION39} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-kiosk-server-card/ha-kiosk-server-card.js
-var VERSION39 = "0.2.0";
+var VERSION40 = "0.2.0";
 var HAKioskServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -41534,13 +41856,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KIOSK SERVER CARD %c v${VERSION39} `,
+  `%c HA KIOSK SERVER CARD %c v${VERSION40} `,
   "color:white;background:#5a3ea8;font-weight:700",
   "color:#d3c6f5;background:#161b22"
 );
 
 // src/cards/ha-ops-status-card/ha-ops-status-card.js
-var VERSION40 = "0.3.0";
+var VERSION41 = "0.3.0";
 var BAD_STATES = ["off", "critical", "error", "unavailable"];
 var WARN_STATES = ["warn", "warning"];
 var HAOpsStatusCard = class extends HTMLElement {
@@ -41728,13 +42050,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA OPS STATUS CARD %c v${VERSION40} `,
+  `%c HA OPS STATUS CARD %c v${VERSION41} `,
   "color:white;background:#4f6d8f;font-weight:700",
   "color:#b8d0e8;background:#161b22"
 );
 
 // src/cards/ha-unraid-server-card/ha-unraid-server-card.js
-var VERSION41 = "0.2.0";
+var VERSION42 = "0.2.0";
 var HAUnraidServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -42019,13 +42341,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA UNRAID SERVER CARD %c v${VERSION41} `,
+  `%c HA UNRAID SERVER CARD %c v${VERSION42} `,
   "color:white;background:#f15a24;font-weight:700",
   "color:#ffcbb0;background:#161b22"
 );
 
 // src/cards/ha-tts-center-card/ha-tts-center-card.js
-var VERSION42 = "0.1.0";
+var VERSION43 = "0.1.0";
 var DAYS = [["mon", "Man"], ["tue", "Tir"], ["wed", "Ons"], ["thu", "Tor"], ["fri", "Fre"], ["sat", "L\xF8r"], ["sun", "S\xF8n"]];
 var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
   constructor() {
@@ -42189,10 +42511,10 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
 if (!customElements.get("ha-tts-center-card")) customElements.define("ha-tts-center-card", HATtsCenterCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tts-center-card", name: "HA TTS Center Card", description: "Samlet center til direkte og planlagte TTS-beskeder", preview: true });
-console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION42} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
+console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION43} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
 
 // src/cards/ha-light-automation-card/ha-light-automation-card.js
-var VERSION43 = "0.1.2";
+var VERSION44 = "0.1.2";
 var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
   constructor() {
     super();
@@ -42372,10 +42694,10 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
 if (!customElements.get("ha-light-automation-card")) customElements.define("ha-light-automation-card", HALightAutomationCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Automation Card", description: "Samlet styring af dagvindue og rumbaseret lysautomatik", preview: true });
-console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION43} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
+console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION44} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION44 = "0.1.0";
+var VERSION45 = "0.1.1";
 var DAY_NAMES = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH_NAMES = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
 var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk", MUS: "Musik", KRI: "Kristendom", "N/T": "Natur/teknologi", UDE: "Udeskole", TB: "Temab\xE5nd", "FL-D": "Fagdage", "Klp\xE6d": "Klassens tid", "2-l\xE6rer": "To-l\xE6rer" };
@@ -42436,6 +42758,11 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   _calendar(entity) {
     return this._config.calendars.find((c2) => c2.entity === entity) || {};
   }
+  _toolbar() {
+    const groups = this._groups();
+    if (groups.length + (this._config.school_entity ? 1 : 0) < 2) return "";
+    return `<nav class="toolbar"><button class="filter active" data-filter="all">Alt</button>${this._groups().map((group) => `<button class="filter" data-filter="${this._esc(group)}">${this._esc(group)}</button>`).join("")}${this._config.school_entity ? '<button class="filter" data-filter="school">Skoleskema</button>' : ""}</nav>`;
+  }
   _groups() {
     return [...new Set(this._config.calendars.map((c2) => c2.group).filter(Boolean))];
   }
@@ -42469,7 +42796,7 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
     if (!this._config) return;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#22c9ff));--muted:var(--secondary-text-color,#8d9baa);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11161d)));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--green:var(--dashboard-success,var(--success-color,#00e69a))}*{box-sizing:border-box}button{font:inherit;color:inherit}ha-card{overflow:hidden;border:1px solid var(--edge);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:25px;background:radial-gradient(circle at 92% -8%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 27%),linear-gradient(145deg,color-mix(in srgb,var(--surface) 97%,var(--accent) 3%),var(--surface));box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow))}.shell{padding:20px}header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);animation:pulse 2.2s ease-in-out infinite}h2{margin:5px 0 3px;font-size:29px;line-height:1.05}.sub{color:var(--muted);font-size:13px}.weather{display:grid;grid-template-columns:auto auto;align-items:center;gap:4px 10px;padding:9px 13px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.035)}.weather ha-icon{grid-row:1/3;--mdc-icon-size:31px;color:var(--accent)}.weather b{font-size:18px}.weather small{color:var(--muted);font-size:9px}.toolbar{display:flex;align-items:center;gap:7px;margin:16px 0 13px;padding:5px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.12);overflow-x:auto}.filter{flex:1;min-width:max-content;min-height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:11px;font-weight:900;cursor:pointer}.filter.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}.stat{padding:10px 12px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}.stat span,.stat b{display:block}.stat span{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}.stat b{margin-top:4px;font-size:18px}.legend{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.legend-item{display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:6px 9px;border:1px solid var(--edge);border-radius:999px;color:var(--muted);font-size:9px}.legend-item i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 7px var(--c)}.agenda{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));align-items:start;gap:10px;min-height:390px}.day{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.11)}.day.today{border-color:color-mix(in srgb,var(--accent) 48%,var(--edge));background:color-mix(in srgb,var(--accent) 6%,transparent)}.day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.day-head div{display:flex;align-items:baseline;gap:6px}.day-head b{font-size:16px}.day-head strong{font-size:25px;line-height:1}.day-head span{color:var(--muted);font-size:10px}.today-tag{padding:4px 7px;border-radius:999px;background:var(--accent);color:#00131c!important;font-weight:900}.events{display:grid;gap:7px}.event{--c:var(--accent);display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;width:100%;padding:9px;border:1px solid color-mix(in srgb,var(--c) 24%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:12px;background:color-mix(in srgb,var(--c) 8%,transparent);text-align:left;cursor:pointer}.event:hover{filter:brightness(1.1);transform:translateY(-1px)}.event-time{color:var(--c);font-size:10px;font-weight:900;line-height:1.25}.event-copy{min-width:0}.event-copy b{display:block;font-size:12px;line-height:1.25}.meta{display:flex;flex-wrap:wrap;gap:5px 9px;margin-top:4px;color:var(--muted);font-size:9px}.meta span{display:flex;align-items:center;gap:3px}.meta ha-icon{--mdc-icon-size:11px}.desc{display:-webkit-box;overflow:hidden;margin-top:5px;color:var(--muted);font-size:9px;line-height:1.35;-webkit-line-clamp:2;-webkit-box-orient:vertical}.empty,.loading{grid-column:1/-1;display:grid;place-items:center;min-height:300px;color:var(--muted);text-align:center}.loading i{width:35px;height:35px;margin-bottom:10px;border:3px solid var(--edge);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}.school{grid-column:1/-1}.school-person{margin-bottom:14px}.school-title{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:15px;font-weight:900}.school-title i{width:4px;height:20px;border-radius:4px;background:var(--c)}.school-grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto}.school-day{min-width:150px;padding:9px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}.school-day>header{display:block;margin-bottom:7px}.school-day>header b{font-size:12px}.lesson{--c:var(--accent);margin-top:6px;padding:7px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 9%,transparent)}.lesson b{display:block;font-size:10px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--muted);font-size:8px}.foot{display:flex;justify-content:space-between;margin-top:12px;color:var(--muted);font-size:9px}@keyframes pulse{50%{opacity:.4;transform:scale(.7)}}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:700px){.shell{padding:13px}header{display:block}.weather{display:inline-grid;margin-top:11px}.stats{grid-template-columns:repeat(2,1fr)}.agenda{grid-template-columns:1fr}.day{padding:10px}h2{font-size:24px}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-    </style><ha-card><div class="shell"><header><div><div class="eyebrow"><i class="dot"></i>Familieplan</div><h2>${this._esc(this._config.title)}</h2><div class="sub">${this._esc(this._config.subtitle)}</div></div><div class="weather"><ha-icon data-weather-icon icon="mdi:weather-cloudy"></ha-icon><b data-temperature>\u2014</b><small data-weather-text>Vejr hentes</small></div></header><nav class="toolbar"><button class="filter active" data-filter="all">Alt</button>${this._groups().map((group) => `<button class="filter" data-filter="${this._esc(group)}">${this._esc(group)}</button>`).join("")}${this._config.school_entity ? '<button class="filter" data-filter="school">Skoleskema</button>' : ""}</nav><div class="stats"><div class="stat"><span>I dag</span><b data-stat="today">\u2014</b></div><div class="stat"><span>Denne uge</span><b data-stat="week">\u2014</b></div><div class="stat"><span>N\xE6ste aftale</span><b data-stat="next">\u2014</b></div><div class="stat"><span>Kalendere</span><b data-stat="calendars">\u2014</b></div></div><div class="legend">${this._config.calendars.map((c2) => `<span class="legend-item" style="--c:${this._esc(c2.color || "#22c9ff")}"><i></i>${this._esc(c2.name)}</span>`).join("")}</div><main class="agenda"></main><div class="foot"><span>Viser ${Number(this._config.days) || 30} dage frem</span><span data-updated>Opdaterer \u2026</span></div></div></ha-card>`;
+    </style><ha-card><div class="shell"><header><div><div class="eyebrow"><i class="dot"></i>Familieplan</div><h2>${this._esc(this._config.title)}</h2><div class="sub">${this._esc(this._config.subtitle)}</div></div><div class="weather"><ha-icon data-weather-icon icon="mdi:weather-cloudy"></ha-icon><b data-temperature>\u2014</b><small data-weather-text>Vejr hentes</small></div></header>${this._toolbar()}<div class="stats"><div class="stat"><span>I dag</span><b data-stat="today">\u2014</b></div><div class="stat"><span>Denne uge</span><b data-stat="week">\u2014</b></div><div class="stat"><span>N\xE6ste aftale</span><b data-stat="next">\u2014</b></div><div class="stat"><span>Kalendere</span><b data-stat="calendars">\u2014</b></div></div><div class="legend">${this._config.calendars.map((c2) => `<span class="legend-item" style="--c:${this._esc(c2.color || "#22c9ff")}"><i></i>${this._esc(c2.name)}</span>`).join("")}</div><main class="agenda"></main><div class="foot"><span>Viser ${Number(this._config.days) || 30} dage frem</span><span data-updated>Opdaterer \u2026</span></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
       this._filter = button.dataset.filter;
       this.shadowRoot.querySelectorAll("[data-filter]").forEach((node) => node.classList.toggle("active", node === button));
@@ -42584,10 +42911,10 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
 if (!customElements.get("ha-family-calendar-card")) customElements.define("ha-family-calendar-card", HAFamilyCalendarCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Stor familieagenda med kalenderfiltre, detaljer, vejr og skoleskema", preview: true });
-console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION44} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
+console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION45} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
 
 // src/cards/ha-waste-journey-card/ha-waste-journey-card.js
-var VERSION45 = "0.1.0";
+var VERSION46 = "0.1.0";
 var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   constructor() {
     super();
@@ -42674,7 +43001,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
 if (!customElements.get("ha-waste-journey-card")) customElements.define("ha-waste-journey-card", HAWasteJourneyCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-waste-journey-card", name: "HA Waste Journey Card", description: "Animeret affaldskalender med skraldebil p\xE5 vej mod huset", preview: true });
-console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION45} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
+console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION46} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
 
 // src/cards/ha-calefa-flow-card/ha-calefa-flow-card.js
 var CALEFA_FLOW_CARD_VERSION = "0.9.9";
@@ -44969,7 +45296,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION46 = "0.1.11";
+var VERSION47 = "0.1.11";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -45399,10 +45726,10 @@ if (!customElements.get("ha-home-desktop-layout-card-front")) customElements.def
 if (!customElements.get("ha-home-desktop-layout-card-front-editor")) customElements.define("ha-home-desktop-layout-card-front-editor", HaHomeDesktopLayoutCardEditor2);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-desktop-layout-card-front", name: "HA Home Front Layout", description: "Forside med valg mellem kort og samlet flade", preview: false });
-console.info(`HA HOME FRONT LAYOUT v${VERSION46}`);
+console.info(`HA HOME FRONT LAYOUT v${VERSION47}`);
 
 // src/cards/ha-navbar-card/ha-navbar-card.js
-var VERSION47 = "0.10.4";
+var VERSION48 = "0.10.4";
 var PULSE_FARVER = ["--error-color", "--warning-color"];
 var NB_STOERRELSER = {
   max_width: "--nb-maxbredde",
@@ -46657,13 +46984,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NAVBAR CARD %c v${VERSION47} `,
+  `%c HA NAVBAR CARD %c v${VERSION48} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#222"
 );
 
 // src/cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js
-var VERSION48 = "0.1.5";
+var VERSION49 = "0.1.5";
 var TAG3 = "ha-roborock-room-map-card";
 var ROOM_PALETTE = {
   1: [240, 178, 122],
@@ -46819,7 +47146,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc2 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc3 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -47645,8 +47972,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc2(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc2(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc3(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc3(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -47665,8 +47992,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc2(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc2(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc3(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc3(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -47743,7 +48070,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon3] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc2(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc2(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc3(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc3(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -47809,7 +48136,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc2(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc3(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -47824,29 +48151,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc2(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc2(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc3(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc3(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc2(title)}</h2><p>${esc2(subtitle)}</p></div>
+          <div><h2>${esc3(title)}</h2><p>${esc3(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc2(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc2(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc2(t)}</b>${s ? `<span>${esc2(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc2(l)}</span><b>${esc2(v)}</b>${x ? `<small>${esc2(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc3(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc3(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc3(t)}</b>${s ? `<span>${esc3(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc3(l)}</span><b>${esc3(v)}</b>${x ? `<small>${esc3(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc2(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc2(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc2(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc2(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc3(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc3(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc3(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc3(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc2(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc3(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -47860,7 +48187,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc2(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc3(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
@@ -48014,7 +48341,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === TAG3)) {
   window.customCards.push({ type: TAG3, name: "HA Roborock Room Map Card", description: "V\xE6lg rum direkte p\xE5 Roborock-kortet og reng\xF8r dem i valgt r\xE6kkef\xF8lge", preview: false });
 }
-console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION48} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
+console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION49} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
 
 // src/cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js
 var ACCOUNTS = [
@@ -48200,7 +48527,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashboard", description: "AI-forbrug og kvoter" });
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
-var VERSION49 = "1.1.1";
+var VERSION50 = "1.1.1";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -50031,7 +50358,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG)) {
     preview: false
   });
 }
-console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION49} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
+console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION50} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
 
 // src/cards/ha-energy-center-card/defaults.js
 var DEFAULT_ENTITIES2 = {
@@ -51912,7 +52239,7 @@ var EvSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION50 = "0.3.0";
+var VERSION51 = "0.3.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
@@ -52414,7 +52741,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
     preview: false
   });
 }
-console.info(`%c ENERGY CENTER %c v${VERSION50} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+console.info(`%c ENERGY CENTER %c v${VERSION51} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/shared/motion-rest-end.js
 motionRestEnd();

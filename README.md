@@ -24,6 +24,12 @@ The full Tesla page (`custom:th-tesla-dashboard-card`) with example data. The ca
 |---|---|
 | ![Tesla dashboard on desktop](docs/screenshots/tesla-dashboard-desktop.webp) | <img src="docs/screenshots/tesla-dashboard-mobile.webp" alt="Tesla dashboard on mobile" width="260"> |
 
+### Tesla glance
+
+A small front page card for one car (`custom:ha-tesla-glance-card`): battery, range, charging and consumption. See the [card's README](src/cards/ha-tesla-glance-card).
+
+![Tesla glance card, parked and charging](docs/screenshots/tesla-glance-card.webp)
+
 ## Install with HACS
 
 1. Open HACS.
@@ -37,7 +43,7 @@ HACS adds the bundled resource `ha-smart-home-cards.js`. Do not load a standalon
 
 The generated [catalog](docs/CARDS.md) groups all cards by purpose. Entries for cards migrated from standalone repositories still link to the archived original repositories for detailed configuration examples.
 
-Recent additions include the Tesla dashboard, TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
+Recent additions include the Tesla glance card, the Tesla dashboard, TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
 
 ### Room Overview V2
 

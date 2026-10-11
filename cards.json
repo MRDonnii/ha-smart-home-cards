@@ -56,6 +56,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-tesla-glance-card",
+    "name": "HA Tesla Glance Card",
+    "filename": "ha-tesla-glance-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-lawn-mower-card",
     "name": "Lawn Mower Card",
     "filename": "ha-lawn-mower-card.js",
