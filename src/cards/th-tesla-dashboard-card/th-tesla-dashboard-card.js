@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.13.2";
+const TTD_VERSION = "1.13.3";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -124,6 +124,7 @@ const TTD_SC_ROLES = {
   wait_cheaper_day: "switch._wait_for_a_cheaper_day", learn_departure: "switch._learn_departure_times",
   prefer_green: "switch._prefer_green_power", ask_public_price: "switch._ask_for_the_price_of_public_charges",
   morning_check: "switch._message_if_the_target_is_not_reached", low_price_alert: "switch._message_when_power_is_cheap",
+  quiet_night: "switch._silent_messages_at_night", quiet_from: "time._silent_from", quiet_until: "time._silent_until",
   // The ledger's own entities on the same device.
   trips: "sensor._trips", last_trip: "sensor._last_trip", total_distance: "sensor._total_distance",
   cost_per_km: "sensor._cost_per_km", monthly_performance: "sensor._monthly_performance", charges: "sensor._charges",
@@ -140,6 +141,7 @@ const TTD_SC_OPTIONS = [
   ["wait_cheaper_day", "Vent på billigere dag", "mdi:calendar-arrow-right"], ["learn_departure", "Lær køretider", "mdi:clock-start"],
   ["prefer_green", "Grøn strøm", "mdi:leaf"], ["ask_public_price", "Spørg om pris ude", "mdi:message-reply-text-outline"],
   ["morning_check", "Morgentjek", "mdi:alarm-check"], ["low_price_alert", "Billig strøm-besked", "mdi:cash-check"],
+  ["quiet_night", "Lydløs om natten", "mdi:bell-sleep"],
 ];
 // ev_ledger: the card's entities from EV Ledger alone. Card key -> EV Ledger role ...
 const TTD_LEDGER_KEYS = {
@@ -639,6 +641,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="sc-trip-h" data-scopt data-r="scOptHead" aria-expanded="false">${ttdIcon("mdi:tune-variant", "ic green")}<span><b>Smarte valg</b><small data-r="scOptSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scOptBody" hidden>
       <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon)}<span>${label}</span></button>`).join("")}</div>
+      <div class="ctl2" data-r="scQuiet" hidden>${ttdIcon("mdi:bell-sleep-outline", "ic blue")}<span>Lydløs</span><input type="time" data-r="scQuietFrom" aria-label="Lydløs fra"><span>–</span><input type="time" data-r="scQuietUntil" aria-label="Lydløs til"></div>
       <p class="sc-note" data-r="scOptNote"></p>
     </div>
   </div>
@@ -2185,6 +2188,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       } else if (option.role === "wait_cheaper_day" && !waiting) {
         notes.push(option.attrs.daily_use_kwh == null ? "Venter på mindst en uges ture for at kende dagligt forbrug" : `Ingen billigere dag lige nu · forbrug ca. ${f.number(Number(option.attrs.daily_use_kwh), 1)} kWh/dag`);
       } else if (option.role === "prefer_green" && !option.attrs.price_area) notes.push("Grøn strøm: CO₂-prognosen findes kun for Danmark");
+      else if (option.role === "quiet_night" && option.attrs.from && option.attrs.until) notes.push(`Ladestart, færdig og planbeskeder kommer uden lyd ${option.attrs.from}–${option.attrs.until}${option.attrs.silent_now ? " (lydløs nu)" : ""}`);
     }
     return {
       badge: { text: label, tone }, sub: sub.join(" · ") || TTD_DASH,
@@ -2722,6 +2726,16 @@ class ThTeslaDashboardCard extends HTMLElement {
         if (option) this._attrSet(button, "aria-pressed", String(option.on));
       }
       this._t("scOptNote", sc.options.note);
+      // The silent window for the messages at night (EV Ledger), editable while the choice is on.
+      const quietOn = sc.options.list.find((o) => o.role === "quiet_night")?.on;
+      const from = this._sc("quiet_from")?.state; const until = this._sc("quiet_until")?.state;
+      const hasWindow = quietOn && ttdIsClock(from) && ttdIsClock(until);
+      this._hide("scQuiet", !hasWindow);
+      if (hasWindow) {
+        const active = this.shadowRoot.activeElement;
+        if (active !== r.scQuietFrom && r.scQuietFrom.value !== ttdClock(from)) r.scQuietFrom.value = ttdClock(from);
+        if (active !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until)) r.scQuietUntil.value = ttdClock(until);
+      }
     }
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
@@ -3225,7 +3239,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);
     }
     else if (el === r.modeSelect) this._setChargerMode(el.value);
-    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep].includes(el)) this._deferInput(el);
+    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
   }
 
   /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
@@ -3242,6 +3256,8 @@ class ThTeslaDashboardCard extends HTMLElement {
     const r = this._r;
     if (el === r.scFixedStart && el.value) this._scCall("fixed_start", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scFixedEnd && el.value) this._scCall("fixed_end", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scQuietFrom && el.value) this._scCall("quiet_from", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scQuietUntil && el.value) this._scCall("quiet_until", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });

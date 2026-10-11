@@ -616,6 +616,12 @@ console.log("th-tesla-dashboard-card tests passed");
   const html = context.ttdTemplate(context.ttdNormalizeConfig(auto));
   assert.match(html, /data-r="pc"/, "the public charge form");
   assert.match(html, /data-scoptrole="wait_cheaper_day"/, "the smarter choices");
+  // Silent messages at night: a choice with its window.
+  st["switch.bil_silent_messages_at_night"] = s("on", { from: "22:00", until: "07:00", silent_now: false });
+  const q = card(st, auto)._model();
+  assert.equal(q.sc.options.summary, "3 af 4 slået til");
+  assert.match(q.sc.options.note, /Ladestart, færdig og planbeskeder kommer uden lyd 22:00–07:00$/);
+  delete st["switch.bil_silent_messages_at_night"];
   // smart_charge does the same: the card always finds what is not set by hand.
   assert.equal(card(st, { name: "Bil", smart_charge: "select.bil_charge_mode" })._id("range"), "sensor.car_range");
 }

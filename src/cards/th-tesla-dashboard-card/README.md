@@ -278,7 +278,8 @@ Det samme gælder med `smart_charge`: kortet finder altid selv det, der ikke er 
 EV Ledger. Viser også, hvor mange opladninger der mangler pris.
 
 **Smarte valg:** En sektion i "Smart opladning" slår EV Ledgers valg til og fra: Vent på billigere dag, Lær
-køretider, Grøn strøm, Spørg om pris ude, Morgentjek og Billig strøm-besked. Den viser de lærte afgange. Venter
+køretider, Grøn strøm, Spørg om pris ude, Morgentjek, Billig strøm-besked og Lydløs om natten (med tidsrummet, fx
+22:00–07:00, hvor ladestart, færdig og planbeskeder kommer uden lyd). Den viser de lærte afgange. Venter
 planen på en billigere dag, står det under tidslinjen med pris, besparelse og batteriniveau, og med Grøn strøm også
 planens CO₂ pr. kWh.
 

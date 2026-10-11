@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.29 */
+/* MRDonnii Smart Home Cards v0.5.30 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2504,7 +2504,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.13.2";
+var TTD_VERSION = "1.13.3";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2668,6 +2668,9 @@ var TTD_SC_ROLES = {
   ask_public_price: "switch._ask_for_the_price_of_public_charges",
   morning_check: "switch._message_if_the_target_is_not_reached",
   low_price_alert: "switch._message_when_power_is_cheap",
+  quiet_night: "switch._silent_messages_at_night",
+  quiet_from: "time._silent_from",
+  quiet_until: "time._silent_until",
   // The ledger's own entities on the same device.
   trips: "sensor._trips",
   last_trip: "sensor._last_trip",
@@ -2694,7 +2697,8 @@ var TTD_SC_OPTIONS = [
   ["prefer_green", "Gr\xF8n str\xF8m", "mdi:leaf"],
   ["ask_public_price", "Sp\xF8rg om pris ude", "mdi:message-reply-text-outline"],
   ["morning_check", "Morgentjek", "mdi:alarm-check"],
-  ["low_price_alert", "Billig str\xF8m-besked", "mdi:cash-check"]
+  ["low_price_alert", "Billig str\xF8m-besked", "mdi:cash-check"],
+  ["quiet_night", "Lydl\xF8s om natten", "mdi:bell-sleep"]
 ];
 var TTD_LEDGER_KEYS = {
   trips: "trips",
@@ -3220,6 +3224,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="sc-trip-h" data-scopt data-r="scOptHead" aria-expanded="false">${ttdIcon("mdi:tune-variant", "ic green")}<span><b>Smarte valg</b><small data-r="scOptSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scOptBody" hidden>
       <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon3]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
+      <div class="ctl2" data-r="scQuiet" hidden>${ttdIcon("mdi:bell-sleep-outline", "ic blue")}<span>Lydl\xF8s</span><input type="time" data-r="scQuietFrom" aria-label="Lydl\xF8s fra"><span>\u2013</span><input type="time" data-r="scQuietUntil" aria-label="Lydl\xF8s til"></div>
       <p class="sc-note" data-r="scOptNote"></p>
     </div>
   </div>
@@ -4782,6 +4787,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       } else if (option.role === "wait_cheaper_day" && !waiting) {
         notes.push(option.attrs.daily_use_kwh == null ? "Venter p\xE5 mindst en uges ture for at kende dagligt forbrug" : `Ingen billigere dag lige nu \xB7 forbrug ca. ${f.number(Number(option.attrs.daily_use_kwh), 1)} kWh/dag`);
       } else if (option.role === "prefer_green" && !option.attrs.price_area) notes.push("Gr\xF8n str\xF8m: CO\u2082-prognosen findes kun for Danmark");
+      else if (option.role === "quiet_night" && option.attrs.from && option.attrs.until) notes.push(`Ladestart, f\xE6rdig og planbeskeder kommer uden lyd ${option.attrs.from}\u2013${option.attrs.until}${option.attrs.silent_now ? " (lydl\xF8s nu)" : ""}`);
     }
     return {
       badge: { text: label, tone: tone2 },
@@ -5310,6 +5316,16 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         if (option) this._attrSet(button, "aria-pressed", String(option.on));
       }
       this._t("scOptNote", sc.options.note);
+      const quietOn = sc.options.list.find((o) => o.role === "quiet_night")?.on;
+      const from = this._sc("quiet_from")?.state;
+      const until = this._sc("quiet_until")?.state;
+      const hasWindow = quietOn && ttdIsClock(from) && ttdIsClock(until);
+      this._hide("scQuiet", !hasWindow);
+      if (hasWindow) {
+        const active2 = this.shadowRoot.activeElement;
+        if (active2 !== r.scQuietFrom && r.scQuietFrom.value !== ttdClock(from)) r.scQuietFrom.value = ttdClock(from);
+        if (active2 !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until)) r.scQuietUntil.value = ttdClock(until);
+      }
     }
     const signature = JSON.stringify([sc.segments, sc.marks]);
     if (r.scTrack && r.scTrack.dataset.sig !== signature) {
@@ -5817,7 +5833,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       clearTimeout(this._dlTimer);
       this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);
     } else if (el === r.modeSelect) this._setChargerMode(el.value);
-    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep].includes(el)) this._deferInput(el);
+    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
   }
   /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
   _deferInput(el) {
@@ -5832,6 +5848,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const r = this._r;
     if (el === r.scFixedStart && el.value) this._scCall("fixed_start", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scFixedEnd && el.value) this._scCall("fixed_end", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scQuietFrom && el.value) this._scCall("quiet_from", "time", "set_value", { time: `${el.value}:00` });
+    else if (el === r.scQuietUntil && el.value) this._scCall("quiet_until", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });
