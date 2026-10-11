@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.32 */
+/* MRDonnii Smart Home Cards v0.5.33 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -51798,7 +51798,7 @@ var EvSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION50 = "0.2.1";
+var VERSION50 = "0.3.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
@@ -51851,7 +51851,35 @@ var HaEnergyCenterCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    if (this.config) this._schedule();
+    if (this.config) {
+      this._applyTabVisibility();
+      this._schedule();
+    }
+  }
+  /* Heat, water and EV tabs only appear when one of their entities exists in this HA (or when listed in
+   * `tabs:`). An installation without district heating, a water meter or a car then gets no empty tabs
+   * full of dashes (Claude AI). */
+  _visibleTabKeys() {
+    const listed = Array.isArray(this.config?.tabs) ? this.config.tabs.map(String) : null;
+    if (listed && listed.length) return /* @__PURE__ */ new Set(["overview", ...listed]);
+    const states = this._hass?.states || {};
+    const has = (prefix) => Object.entries(this.config?.entities || {}).some(([key, id]) => key.startsWith(prefix) && id && states[id]);
+    const keys = /* @__PURE__ */ new Set(["overview", "power"]);
+    if (has("heat_")) keys.add("heat");
+    if (has("water_")) keys.add("water");
+    if (has("ev_")) keys.add("ev");
+    return keys;
+  }
+  _applyTabVisibility() {
+    if (!this.shadowRoot || !this._hass) return;
+    const keys = this._visibleTabKeys();
+    const sig = [...keys].sort().join(",");
+    if (sig === this._tabSig) return;
+    this._tabSig = sig;
+    this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) => {
+      button.hidden = !keys.has(button.dataset.tab);
+    });
+    if (!keys.has(this._tab)) this.switchTab("overview");
   }
   get hass() {
     return this._hass;
@@ -51997,6 +52025,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     const c2 = this.config;
     const saved = this._readTab();
     this._tab = TABS2.some((t) => t.key === saved) ? saved : TABS2.some((t) => t.key === c2.default_tab) ? c2.default_tab : "overview";
+    this._tabSig = "";
     this._lazy.clear();
     this._lazyIo?.disconnect();
     for (const s of this._sections.values()) s.section.hidden?.();
@@ -52027,6 +52056,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     }
     this._dlg = root.querySelector("dialog");
     this._bindEvents();
+    this._applyTabVisibility();
   }
   _bindEvents() {
     const root = this.shadowRoot;

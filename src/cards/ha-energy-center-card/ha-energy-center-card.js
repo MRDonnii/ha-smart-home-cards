@@ -26,7 +26,7 @@ import { HeatSection } from "./sections/heat.js";
 import { WaterSection } from "./sections/water.js";
 import { EvSection } from "./sections/ev.js";
 
-const VERSION = "0.2.1";
+const VERSION = "0.3.0";
 const CARD_TAG = "ha-energy-center-card";
 
 const TABS = [
@@ -87,7 +87,38 @@ class HaEnergyCenterCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (this.config) this._schedule();
+    if (this.config) {
+      this._applyTabVisibility();
+      this._schedule();
+    }
+  }
+
+  /* Heat, water and EV tabs only appear when one of their entities exists in this HA (or when listed in
+   * `tabs:`). An installation without district heating, a water meter or a car then gets no empty tabs
+   * full of dashes (Claude AI). */
+  _visibleTabKeys() {
+    const listed = Array.isArray(this.config?.tabs) ? this.config.tabs.map(String) : null;
+    if (listed && listed.length) return new Set(["overview", ...listed]);
+    const states = this._hass?.states || {};
+    const has = (prefix) =>
+      Object.entries(this.config?.entities || {}).some(([key, id]) => key.startsWith(prefix) && id && states[id]);
+    const keys = new Set(["overview", "power"]);
+    if (has("heat_")) keys.add("heat");
+    if (has("water_")) keys.add("water");
+    if (has("ev_")) keys.add("ev");
+    return keys;
+  }
+
+  _applyTabVisibility() {
+    if (!this.shadowRoot || !this._hass) return;
+    const keys = this._visibleTabKeys();
+    const sig = [...keys].sort().join(",");
+    if (sig === this._tabSig) return;
+    this._tabSig = sig;
+    this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) => {
+      button.hidden = !keys.has(button.dataset.tab);
+    });
+    if (!keys.has(this._tab)) this.switchTab("overview");
   }
 
   get hass() {
@@ -252,6 +283,7 @@ class HaEnergyCenterCard extends HTMLElement {
     const c = this.config;
     const saved = this._readTab();
     this._tab = TABS.some((t) => t.key === saved) ? saved : TABS.some((t) => t.key === c.default_tab) ? c.default_tab : "overview";
+    this._tabSig = "";
     this._lazy.clear();
     this._lazyIo?.disconnect();
     for (const s of this._sections.values()) s.section.hidden?.();
@@ -282,6 +314,7 @@ class HaEnergyCenterCard extends HTMLElement {
     }
     this._dlg = root.querySelector("dialog");
     this._bindEvents();
+    this._applyTabVisibility();
   }
 
   _bindEvents() {

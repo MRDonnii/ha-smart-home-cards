@@ -7,6 +7,8 @@
  *
  * `entities` flettes nøgle for nøgle, `groups` og `phases` erstattes helt hvis de angives.
  * Entities der ikke findes i HA vises som "—" — kortet fejler aldrig på en manglende sensor.
+ * Fanerne Fjernvarme, Vand og Billader vises kun, når mindst én af deres entities findes i HA;
+ * `tabs: [power, heat, water, ev]` vælger fanerne eksplicit (Oversigt vises altid).
  */
 
 export const DEFAULT_ENTITIES = {
