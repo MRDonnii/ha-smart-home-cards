@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.27 */
+/* MRDonnii Smart Home Cards v0.5.28 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -28711,7 +28711,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION24 = "0.8.67";
+var VERSION24 = "0.8.68";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -29544,7 +29544,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._hass = h;
     this.style.setProperty("--header-accent-width", h?.states?.["input_boolean.dashboard_venstre_accent"]?.state === "on" ? "4px" : "0px");
     if (this._popupCard) this._popupCard.hass = h;
-    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error])].filter(Boolean);
+    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.wind_speed_entity, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error])].filter(Boolean);
     const states = h?.states || {};
     const values = ids.map((id) => {
       const entity = states[id];
@@ -29594,7 +29594,23 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const temp = rawTemp == null || rawTemp === "" || ["unknown", "unavailable"].includes(String(rawTemp).toLowerCase()) ? NaN : Number(rawTemp);
     const labels = { sunny: "Solrigt", "clear-night": "Klart", cloudy: "Overskyet", partlycloudy: "Let overskyet", rainy: "Regn", pouring: "Kraftig regn", snowy: "Sne", "snowy-rainy": "Slud", fog: "T\xE5get", windy: "Bl\xE6sende", "windy-variant": "Bl\xE6sende", lightning: "Torden", "lightning-rainy": "Regn og torden", hail: "Hagl", exceptional: "Ekstremt vejr" };
     const icons = { sunny: "clear-day", "clear-night": "clear-night", cloudy: "cloudy", partlycloudy: "partly-cloudy-day", rainy: "rain", pouring: "rain", snowy: "snow", "snowy-rainy": "sleet", fog: "fog", windy: "wind", "windy-variant": "wind", lightning: "thunderstorms", "lightning-rainy": "thunderstorms-rain", hail: "hail", exceptional: "solar-eclipse" };
-    return { state, label: labels[state] || state, temp, humidity: a.humidity, wind: a.wind_speed, icon: icons[state] || "not-available" };
+    return { state, label: labels[state] || state, temp, humidity: a.humidity, wind: a.wind_speed, windMs: this._windMs(a), icon: icons[state] || "not-available" };
+  }
+  // Wind is always shown in m/s (Claude AI, 2026-10-11; user: m/s, not km/t, in the header): from wind_speed_entity
+  // when set (e.g. DMI's m/s sensor), else the weather entity's wind_speed converted from its unit.
+  _windMs(a) {
+    const conv = (v, u3) => {
+      const n = Number(v);
+      if (v == null || v === "" || !Number.isFinite(n)) return NaN;
+      u3 = String(u3 || "km/h").toLowerCase();
+      return u3.includes("km") ? n / 3.6 : u3.includes("mph") ? n * 0.44704 : u3.includes("kn") || u3 === "kt" ? n * 0.514444 : u3.includes("ft") ? n * 0.3048 : n;
+    };
+    const id = this._config.wind_speed_entity, e = id ? this._e(id) : null;
+    const ms = e ? conv(e.state, e.attributes?.unit_of_measurement || "m/s") : NaN;
+    return Number.isFinite(ms) ? ms : conv(a.wind_speed, a.wind_speed_unit);
+  }
+  _windText(w) {
+    return Number.isFinite(w.windMs) ? `${w.windMs.toLocaleString("da-DK", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m/s` : "\u2014 m/s";
   }
   _moonPhase(date2 = /* @__PURE__ */ new Date()) {
     const cycle = 29.53058867, epoch = Date.UTC(2e3, 0, 6, 18, 14), age = ((date2.getTime() - epoch) / 864e5 % cycle + cycle) % cycle, index = Math.round(age / (cycle / 8)) % 8;
@@ -29808,7 +29824,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     return url ? `<img class="snapshot" src="${this._esc(url)}" alt="">` : `<div class="media-icon"><ha-icon icon="${this._esc(mediaAlert?.icon || "mdi:bell-ring")}"></ha-icon></div>`;
   }
   _weatherHtml(w) {
-    return `<img src="/local/weather-icons/${this._esc(w.icon)}.svg" alt=""><div class="weather-copy"><span>${this._esc(w.label)}</span><b>${Number.isFinite(w.temp) ? w.temp.toLocaleString("da-DK", { maximumFractionDigits: 1 }) : "\u2014"}<small>\xB0C</small></b><strong>${w.humidity ?? "\u2014"}% \xB7 ${w.wind ?? "\u2014"} km/t</strong></div>`;
+    return `<img src="/local/weather-icons/${this._esc(w.icon)}.svg" alt=""><div class="weather-copy"><span>${this._esc(w.label)}</span><b>${Number.isFinite(w.temp) ? w.temp.toLocaleString("da-DK", { maximumFractionDigits: 1 }) : "\u2014"}<small>\xB0C</small></b><strong>${w.humidity ?? "\u2014"}% \xB7 ${this._windText(w)}</strong></div>`;
   }
   _updateMediaCount(container, mediaAlerts) {
     let counter = container.querySelector(".media-count");
@@ -29832,7 +29848,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const w = this._weather(), alerts = this._alerts(), mediaAlerts = alerts.filter((a) => a.media), mediaAlert = mediaAlerts.length ? mediaAlerts[this._mediaIndex % mediaAlerts.length] : null;
     this._currentMediaAlert = mediaAlert;
     const url = mediaAlert ? this._snapshotUrl(mediaAlert.snapshot) : "";
-    const sig = mediaAlert ? JSON.stringify(["m", mediaAlert.entity, url, mediaAlerts.length, mediaAlerts.length ? this._mediaIndex % mediaAlerts.length : 0]) : JSON.stringify(["w", w.label, w.temp, w.humidity, w.wind, w.icon]);
+    const sig = mediaAlert ? JSON.stringify(["m", mediaAlert.entity, url, mediaAlerts.length, mediaAlerts.length ? this._mediaIndex % mediaAlerts.length : 0]) : JSON.stringify(["w", w.label, w.temp, w.humidity, w.windMs, w.icon]);
     if (sig === this._mediaSig) return;
     const prevWasMedia = container.classList.contains("media");
     this._mediaSig = sig;
@@ -29872,7 +29888,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
         const bEl = container.querySelector(".weather-copy b");
         if (bEl) bEl.firstChild.nodeValue = Number.isFinite(w.temp) ? w.temp.toLocaleString("da-DK", { maximumFractionDigits: 1 }) : "\u2014";
         const strongEl = container.querySelector(".weather-copy strong");
-        if (strongEl) strongEl.textContent = `${w.humidity ?? "\u2014"}% \xB7 ${w.wind ?? "\u2014"} km/t`;
+        if (strongEl) strongEl.textContent = `${w.humidity ?? "\u2014"}% \xB7 ${this._windText(w)}`;
       }
     }
   }
