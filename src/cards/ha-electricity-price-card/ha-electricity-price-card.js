@@ -1,4 +1,4 @@
-const VERSION = "0.10.0";
+const VERSION = "0.10.1";
 
 class HAElectricityPriceCardEditor extends HTMLElement {
   setConfig(config) {
@@ -583,16 +583,13 @@ class HAElectricityPriceCard extends HTMLElement {
       if (fillHeight) {
         chart.style.flex = "1"; chart.style.height = "auto"; chart.style.minHeight = compactDesktop ? "98px" : "167px";
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = "100%"; });
-      } else if (!compactMobile && extraHeight) {
-        chart.style.height = `${167 + extraHeight + headerGain}px`;
+      } else if (!compactMobile) {
+        // Fixed card height on a desktop or tablet (no fill_height): the chart takes whatever height the
+        // card has left, as on a phone, so the bars always reach the card's bottom (Claude AI).
+        card.style.display = "flex"; card.style.flexDirection = "column";
+        chart.style.flex = "1 1 0"; chart.style.height = "auto"; chart.style.minHeight = "167px";
         chart.style.paddingTop = `${40 + Math.round((extraHeight + headerGain) * 0.28)}px`;
-        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
-          bar.style.height = `${126 + Math.round((extraHeight + headerGain) * 0.72)}px`;
-        });
-      } else if (!compactMobile && headerGain) {
-        chart.style.height = `${183 + headerGain}px`;
-        chart.style.paddingTop = `${40 + Math.round(headerGain * 0.28)}px`;
-        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = `${142 + Math.round(headerGain * 0.72)}px`; });
+        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => { bar.style.height = "100%"; });
       } else if (compactMobile) {
         // Phone: the chart takes whatever height the card has left, so the bars
         // end at the card's bottom padding and follow the surrounding edge.

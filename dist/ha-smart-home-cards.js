@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.28 */
+/* MRDonnii Smart Home Cards v0.5.29 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9900,7 +9900,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.10.0";
+var VERSION13 = "0.10.1";
 var HAElectricityPriceCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -10437,17 +10437,15 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
           bar.style.height = "100%";
         });
-      } else if (!compactMobile && extraHeight) {
-        chart.style.height = `${167 + extraHeight + headerGain}px`;
+      } else if (!compactMobile) {
+        card.style.display = "flex";
+        card.style.flexDirection = "column";
+        chart.style.flex = "1 1 0";
+        chart.style.height = "auto";
+        chart.style.minHeight = "167px";
         chart.style.paddingTop = `${40 + Math.round((extraHeight + headerGain) * 0.28)}px`;
         this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
-          bar.style.height = `${126 + Math.round((extraHeight + headerGain) * 0.72)}px`;
-        });
-      } else if (!compactMobile && headerGain) {
-        chart.style.height = `${183 + headerGain}px`;
-        chart.style.paddingTop = `${40 + Math.round(headerGain * 0.28)}px`;
-        this.shadowRoot.querySelectorAll(".bar-wrap").forEach((bar) => {
-          bar.style.height = `${142 + Math.round(headerGain * 0.72)}px`;
+          bar.style.height = "100%";
         });
       } else if (compactMobile) {
         chart.style.flex = "1 1 0";
