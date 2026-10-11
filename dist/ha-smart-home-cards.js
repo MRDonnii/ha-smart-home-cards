@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.34 */
+/* MRDonnii Smart Home Cards v0.5.35 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9918,7 +9918,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION13 = "0.12.0";
+var VERSION13 = "0.12.1";
 var EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
 var EPC_LEDGER_ENDINGS = [
   "charge_mode",
@@ -10081,13 +10081,19 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
   }
   /** Quarters or whole hours from the card: EV Ledger's select when there is one (the plans follow), else only this view. */
   _setResolution(minutes) {
+    if (minutes === 15 && !this._hasQuarters && this._source() === "stromligning") {
+      this._enableStromligningQuarters();
+      return;
+    }
     const id = this._resolutionEntity();
     const entity = this._entity(id);
     if (entity && ["select", "input_select"].includes(id.split(".")[0])) {
       const wanted = minutes === 60 ? ["hour", "time", "60", "1h", "hourly"] : ["quarter", "kvarter", "15", "15m"];
       const option = (entity.attributes?.options || []).find((o) => wanted.includes(String(o).toLowerCase()));
-      if (option) this._hass.callService(id.split(".")[0], "select_option", { entity_id: id, option });
-      return;
+      if (option) {
+        this._hass.callService(id.split(".")[0], "select_option", { entity_id: id, option });
+        return;
+      }
     }
     try {
       localStorage.setItem("ha-electricity-price-card:resolution", minutes === 60 ? "hour" : "quarter");
@@ -10095,9 +10101,44 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     }
     this._render();
   }
+  _notify(message) {
+    this.dispatchEvent(new CustomEvent("hass-notification", { detail: { message, duration: 8e3 }, bubbles: true, composed: true }));
+  }
+  /** Switch Strømligning to 15-minute prices through its own options flow (admins only, after a confirm). */
+  async _enableStromligningQuarters() {
+    const hass = this._hass;
+    const id = this._config.stromligning_current;
+    if (!hass?.user?.is_admin) {
+      this._notify("Str\xF8mligning leverer timepriser. En administrator kan v\xE6lge 15 minutter under Indstillinger \u2192 Enheder og tjenester \u2192 Str\xF8mligning \u2192 Konfigurer.");
+      return;
+    }
+    if (!window.confirm("Str\xF8mligning leverer kun timepriser.\n\nSkal Str\xF8mligning skifte til 15-minutters priser? Det g\xE6lder hele Home Assistant, og integrationen genindl\xE6ses.")) return;
+    try {
+      const entry = await hass.callWS({ type: "config/entity_registry/get", entity_id: id });
+      if (!entry?.config_entry_id) throw new Error("fandt ikke Str\xF8mligning-integrationen");
+      const flow = await hass.callApi("POST", "config/config_entries/options/flow", { handler: entry.config_entry_id });
+      const data = {};
+      (flow?.data_schema || []).forEach((field) => {
+        if (field.default !== void 0) data[field.name] = field.default;
+      });
+      if (!("aggregation" in data) && !(flow?.data_schema || []).some((f) => f.name === "aggregation")) throw new Error("Str\xF8mligning har ingen prisopl\xF8sning");
+      data.aggregation = "15m";
+      const result = await hass.callApi("POST", `config/config_entries/options/flow/${flow.flow_id}`, data);
+      if (result?.type !== "create_entry") throw new Error("indstillingen blev ikke gemt");
+      try {
+        localStorage.setItem("ha-electricity-price-card:resolution", "quarter");
+      } catch (_err) {
+      }
+      this._notify("Str\xF8mligning skifter til 15-minutters priser. Kortet opdateres om et \xF8jeblik.");
+    } catch (err) {
+      this._notify(`Kunne ikke skifte Str\xF8mligning til 15 minutter: ${err?.message || err}`);
+    }
+  }
   _resToggle() {
-    if (this._config.resolution_toggle === false || !this._hasQuarters) return "";
-    const hour = this._resolution() === 60;
+    if (this._config.resolution_toggle === false) return "";
+    const hourlyStromligning = !this._hasQuarters && this._source() === "stromligning";
+    if (!this._hasQuarters && !hourlyStromligning) return "";
+    const hour = hourlyStromligning || this._resolution() === 60;
     return `<span class="res" role="radiogroup" aria-label="Prisvisning"><button type="button" role="radio" data-res="15" aria-checked="${!hour}" class="${hour ? "" : "on"}">15 min</button><button type="button" role="radio" data-res="60" aria-checked="${hour}" class="${hour ? "on" : ""}">Time</button></span>`;
   }
   _planEntity() {
@@ -10131,9 +10172,11 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       local = localStorage.getItem("ha-electricity-price-card:resolution");
     } catch (_err) {
     }
-    const value = String(entity?.attributes?.price_resolution ?? entity?.state ?? local ?? this._config.resolution ?? "auto").toLowerCase();
-    if (["hour", "time", "60", "1h", "hourly"].includes(value)) return 60;
-    if (["quarter", "kvarter", "15", "15m"].includes(value)) return 15;
+    for (const raw of [entity?.attributes?.price_resolution, entity?.state, local, this._config.resolution]) {
+      const value = String(raw ?? "").toLowerCase();
+      if (["hour", "time", "60", "1h", "hourly"].includes(value)) return 60;
+      if (["quarter", "kvarter", "15", "15m"].includes(value)) return 15;
+    }
     return 0;
   }
   // Each point gets its end (the next start, at most an hour), and quarters become hours (mean price) when asked.
