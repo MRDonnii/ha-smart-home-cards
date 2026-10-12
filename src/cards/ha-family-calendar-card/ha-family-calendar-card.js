@@ -4,7 +4,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 // Family calendar, rebuilt (Claude AI, 2026-10-13; user: "Den kalender side er virkelig dårlig – lav den langt federe og
 // bedre"). Now / next with a countdown, today's timeline, agenda, a real week grid with times and the school timetable;
 // calendars switch on and off with their chips, events open a detail sheet. Same config as 0.1.x.
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 const DAY = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 const DAY_SHORT = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
 const MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -23,6 +23,21 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const monday = (d) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
 const dur = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); if (m < 60) return `${m} min`; const h = Math.floor(m / 60); return m % 60 ? `${h} t ${m % 60} min` : `${h} t`; };
 const until = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); if (m < 1) return "nu"; if (m < 60) return `om ${m} min`; if (m < 24 * 60) { const h = Math.floor(m / 60); return `om ${h} t${m % 60 ? ` ${m % 60} min` : ""}`; } const d = Math.round(m / 1440); return d === 1 ? "i morgen" : `om ${d} dage`; };
+
+// The detail sheet sits on the page itself (document.body): inside the card it landed mid-card, off screen on a long
+// agenda, and a hover transform on ha-card would also pin a fixed overlay to the card.
+const SHEET_CSS = `:host{--a:${LUX_ACCENT};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa);--soft:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);font-family:var(--primary-font-family,inherit)}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+.sheet{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fade .2s ease-out}
+@keyframes fade{from{opacity:0}}
+.sheet .box{--c:var(--a);width:min(460px,100%);max-height:100%;overflow:auto;padding:20px 22px;border-radius:22px;background:var(--ha-card-background,var(--card-background-color,#161a21));box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);animation:luxGum .5s ease-out}
+.sheet .box .hd2{display:flex;align-items:flex-start;gap:12px}.sheet .box .hd2 .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.sheet h4{margin:0;font-size:20px;line-height:1.2}.sheet .cal{font-size:12px;font-weight:800;color:var(--c)}
+.sheet .x{margin-left:auto;width:36px;height:36px;flex:none;border:0;border-radius:50%;background:var(--soft);cursor:pointer;display:grid;place-items:center}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:14px}.sheet dt{color:var(--mut)}.sheet dt ha-icon{--mdc-icon-size:18px}.sheet dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.sheet .open{margin-top:16px;width:100%;padding:11px;border:0;border-radius:13px;font-weight:800;cursor:pointer;color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent)}
+${LUX_KEYFRAMES}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
 
 class HAFamilyCalendarCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); this._events = []; this._range = null; this._loading = false; }
@@ -53,7 +68,7 @@ class HAFamilyCalendarCard extends HTMLElement {
     if (this._view === "school") { const s = hass.states[this._config.school_entity]; if (s !== this._schoolState) { this._schoolState = s; this._render(); } }
   }
   connectedCallback() { if (this._config && this._hass) this._ensure(); clearInterval(this._clock); this._clock = setInterval(() => this._tick(), 30000); }
-  disconnectedCallback() { clearInterval(this._clock); clearTimeout(this._refresh); }
+  disconnectedCallback() { clearInterval(this._clock); clearTimeout(this._refresh); this._closeSheet(); }
   getCardSize() { return 12; }
   getGridOptions() { return { columns: 12, rows: "auto" }; }
 
@@ -204,14 +219,6 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .dpick button.on{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 28%,transparent),color-mix(in srgb,var(--a) 7%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 45%,transparent),0 8px 24px -8px color-mix(in srgb,var(--a) 60%,transparent);animation:luxGum .6s ease-out}
 .msg{display:grid;place-items:center;min-height:180px;color:var(--mut);font-size:14px;text-align:center}
 .spin{width:28px;height:28px;margin:0 auto 10px;border-radius:50%;border:3px solid var(--soft);border-top-color:var(--a);animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.sheet{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fade .2s ease-out}
-@keyframes fade{from{opacity:0}}
-.sheet .box{--c:var(--a);width:min(460px,100%);max-height:100%;overflow:auto;padding:20px 22px;border-radius:22px;background:var(--ha-card-background,var(--card-background-color,#161a21));box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);animation:luxGum .5s ease-out}
-.sheet .box .hd2{display:flex;align-items:flex-start;gap:12px}.sheet .box .hd2 .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
-.sheet h4{margin:0;font-size:20px;line-height:1.2}.sheet .cal{font-size:12px;font-weight:800;color:var(--c)}
-.sheet .x{margin-left:auto;width:36px;height:36px;flex:none;border:0;border-radius:50%;background:var(--soft);cursor:pointer;display:grid;place-items:center}
-.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:14px}.sheet dt{color:var(--mut)}.sheet dt ha-icon{--mdc-icon-size:18px}.sheet dd{margin:0;white-space:pre-wrap;word-break:break-word}
-.sheet .open{margin-top:16px;width:100%;padding:11px;border:0;border-radius:13px;font-weight:800;cursor:pointer;color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent)}
 .school{display:grid;gap:14px}
 .school-person{padding:14px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
 .school-title{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:16px;font-weight:900}.school-title i{width:5px;height:22px;border-radius:4px;background:var(--c)}
@@ -220,7 +227,7 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .school-day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent)}
 .school-day>header{margin-bottom:6px;font-size:12px;font-weight:800;text-transform:capitalize}
 .lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:3px solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
-.lesson.live{animation:live 2.4s ease-in-out infinite}
+.lesson{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1)}.lesson:active{transform:scale(.96)}.lesson.live{animation:live 2.4s ease-in-out infinite}
 .lesson b{display:block;font-size:12px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--mut);font-size:10.5px}
 .foot{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:var(--mut)}
 ${luxCss({ base: ".seg button", active: ".seg button.on" })}
@@ -409,18 +416,27 @@ ${LUX_KEYFRAMES}
   }
 
   _sheet(e) {
-    if (!e) return; const c = this._cal(e.calendar_entity); const s = new Date(e.s); const en = new Date(e.e);
+    if (!e) return; const c = e._color ? { color: e._color, name: e._name, icon: e._icon } : this._cal(e.calendar_entity); const s = new Date(e.s); const en = new Date(e.e);
     const when = e.allDay ? `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` – ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} · hele dagen` : `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} · ${hhmm(s)}–${hhmm(en)} (${dur(e.e - e.s)})`;
     const live = this._on(e, Date.now());
+    this._closeSheet();
+    const host = document.createElement("div"); host.className = "ha-family-calendar-sheet"; const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div"); div.className = "sheet";
     div.innerHTML = `<div class="box" style="--c:${esc(c.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc(c.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc(c.name || e.calendar_entity)}${live ? ' · <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd style="text-transform:capitalize">${esc(when)}</dd>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
       ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc(e.location)}</dd>` : ""}
       ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc(e.description)}</dd>` : ""}</dl>
-      <button type="button" class="open" data-more="${esc(e.calendar_entity)}">Åbn kalenderen</button></div>`;
-    this.shadowRoot.querySelector(".sheet")?.remove(); this.shadowRoot.querySelector("ha-card").appendChild(div);
+      <button type="button" class="open" data-more="${esc(e.calendar_entity)}">${e._color ? "Åbn skoleskema" : "Åbn kalenderen"}</button></div>`;
+    root.innerHTML = `<style>${SHEET_CSS}</style>`; root.appendChild(div); document.body.appendChild(host); this._sheetHost = host;
+    div.addEventListener("click", (ev) => {
+      if (ev.target === div || ev.target.closest("[data-close]")) { this._closeSheet(); return; }
+      const mi = ev.target.closest("[data-more]"); if (mi) { this._closeSheet(); this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: mi.dataset.more }, bubbles: true, composed: true })); }
+    });
+    this._escKey = this._escKey || ((ev) => { if (ev.key === "Escape") this._closeSheet(); });
+    document.addEventListener("keydown", this._escKey);
   }
+  _closeSheet() { this._sheetHost?.remove(); this._sheetHost = null; if (this._escKey) document.removeEventListener("keydown", this._escKey); }
 
   // ---------- school ----------
   _schoolHtml(now) {
@@ -429,7 +445,7 @@ ${LUX_KEYFRAMES}
     if (!people.length) return '<div class="msg">Skoleskemaet har ingen data</div>';
     const m = monday(now); const t = +now;
     return `<div class="school">${people.map(([name, list], pi) => {
-      const color = pi % 2 ? "#f7b942" : "#28df9d";
+      const color = pi % 2 ? "#f7b942" : "#28df9d"; this._lessonWho = `Skoleskema · ${name[0].toUpperCase()}${name.slice(1)}`;
       const days = [0, 1, 2, 3, 4].map((o) => { const d = addDays(m, o); const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`; });
       return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
@@ -437,7 +453,10 @@ ${LUX_KEYFRAMES}
   }
   _lesson(e, t) {
     const [code, ...teacher] = String(e.summary || "").split(","); const k = code.trim(); const s = new Date(e.start); const en = new Date(e.end);
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" style="--c:${this._subjectColor(k)}"><b>${esc(SUBJECTS[k] || k)}</b><span>${hhmm(s)}–${hhmm(en)}${e.location ? ` · ${esc(e.location)}` : ""}</span>${teacher.length ? `<small>${esc(teacher.join(",").trim())}</small>` : ""}</div>`;
+    // A lesson opens the same sheet (user: no popup in the timetable): subject, time, room and teacher.
+    const id = `l${+s}-${k}-${this._byId.size}`;
+    this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `Lærer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc(SUBJECTS[k] || k)}</b><span>${hhmm(s)}–${hhmm(en)}${e.location ? ` · ${esc(e.location)}` : ""}</span>${teacher.length ? `<small>${esc(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) { const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" }; if (fixed[code]) return fixed[code]; let h = 0; for (const ch of code) h = (h * 31 + ch.charCodeAt(0)) % 360; return `hsl(${h} 65% 58%)`; }
 }
