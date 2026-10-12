@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.62 */
+/* MRDonnii Smart Home Cards v0.5.63 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -47039,6 +47039,9 @@ var nbGlasCss = (accent, anim = "gum") => {
   return `
 :host{--nb-radius:24px;--nb-knapradius:13px;--nb-hoejde:70px;--nb-knaphoejde:54px;--nb-knapbredde:64px;--nb-mellemrum:4px;--nb-ikon:25px;--nb-etiket:10.5px;
   --nb-accent:${a};--nb-indikator-luft:7px}
+/* Samme luft over, under og i siderne af knapperne (Claude AI, 2026-10-13; brugeren: h\xF8jere end bred "driller mit syn"):
+   barens h\xF8jde f\xF8lger knapperne + luften, s\xE5 den ogs\xE5 passer n\xE5r knapperne krymper p\xE5 mobil. */
+:host(:not([placering="left"]):not([placering="right"])) .bar{height:auto!important;padding:var(--nb-luft,7px)!important}
 .bar{padding:0 7px;backdrop-filter:blur(26px) saturate(1.4);-webkit-backdrop-filter:blur(26px) saturate(1.4);overflow:hidden;
   box-shadow:0 30px 60px -20px rgba(0,0,0,.95),0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)!important}
 .bar::before{background:radial-gradient(120% 140% at 50% -40%,color-mix(in srgb,${a} 12%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.012)),var(--nb-flade-farve,rgba(12,14,20,.88))!important;opacity:1!important}
