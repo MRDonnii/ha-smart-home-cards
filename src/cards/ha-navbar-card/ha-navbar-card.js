@@ -114,12 +114,12 @@ function nbHentDeltConfig(url) {
 }
 
 // Glas-looket (style: glass): mørkt glas, lysende kant og en indikator i
-// accentfarven (accent, ellers temaets --dashboard-accent). Var en separat
+// accentfarven (accent, ellers temaets --lux-accent / --dashboard-accent). Var en separat
 // /local-fil, men skal være med fra første billede, ikke lagt på bagefter
 // (Claude AI, 2026-10-13).
 // active_animation: "gum" (standard, tyggegummi-squash), "wobble" (vralter som Among Us) eller "none".
 const nbGlasCss = (accent, anim = "gum") => {
-  const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--dashboard-accent,var(--primary-color,#62b5ff))";
+  const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
   return `
 :host{--nb-radius:24px;--nb-knapradius:13px;--nb-hoejde:70px;--nb-knaphoejde:54px;--nb-knapbredde:64px;--nb-mellemrum:4px;--nb-ikon:25px;--nb-etiket:10.5px;
   --nb-accent:${a};--nb-indikator-luft:7px}

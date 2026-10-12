@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.53 */
+/* MRDonnii Smart Home Cards v0.5.54 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -39287,8 +39287,27 @@ console.info(
   "color:#f59e0b;background:#161b22"
 );
 
+// src/shared/lux.js
+var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
+function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true }) {
+  const a = LUX_ACCENT;
+  return `
+${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
+${base}:active{transform:scale(.9);transition-duration:.08s}
+${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
+  color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
+  animation:luxGum .7s ease-out}
+${underline ? `${active}::after{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
+${active} ${icon3}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+${LUX_KEYFRAMES}
+@media (prefers-reduced-motion:reduce){${base},${active},${active} ${icon3}{animation:none!important;transition:none!important}}`;
+}
+var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
+@keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
+
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION36 = "0.8.10";
+var VERSION36 = "0.8.11";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -39608,6 +39627,14 @@ var HaHomeCameraCard = class extends HTMLElement {
       .choice-row{display:flex;gap:6px;align-items:stretch}.choice-row .choice{flex:1;min-width:0}.pin,.auto-pin{display:grid;flex:0 0 auto;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:11px;padding:0;background:transparent;color:var(--muted);cursor:pointer}.pin{width:42px}.pin ha-icon{--mdc-icon-size:18px}.pin.active{border-color:color-mix(in srgb,#f5b942 45%,var(--edge));color:#f5b942}.auto-pin{width:48px;font-size:9px;font-weight:850}.auto-pin.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 24%,transparent)}.hint{margin:2px 2px 0;padding:0 2px;color:var(--muted);font-size:10px;line-height:1.4}
       @media(max-width:900px){.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr))}.feed{aspect-ratio:16/9}}
       @media(max-width:600px){header{padding:10px 10px 3px}.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:5px}.chips{display:none}.choose{display:grid;width:27px;height:27px}.choose ha-icon{--mdc-icon-size:15px}.bar{padding:5px;gap:3px}.name b{font-size:10px}.name span,.activity span{display:none}.activity ha-icon{--mdc-icon-size:13px}.feed{aspect-ratio:16/9}}
+      ${luxCss({ base: ".chip,.choice,.pin,.auto-pin", active: ".chip.active,.choice.active,.pin.active,.auto-pin.active" })}
+      /* The navbar's look (Claude AI, 2026-10-13): the camera switch glows in the accent and squishes when tapped; a
+         detection makes the status icon bounce like the navbar's active icon. */
+      .choose{border-color:color-mix(in srgb,${LUX_ACCENT} 45%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 16px -6px color-mix(in srgb,${LUX_ACCENT} 60%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+      .choose ha-icon{color:color-mix(in srgb,${LUX_ACCENT} 80%,#fff);filter:drop-shadow(0 0 5px color-mix(in srgb,${LUX_ACCENT} 55%,transparent))}
+      .choose:active{transform:scale(.86);transition-duration:.08s}.choose:active ha-icon{animation:luxGum .5s ease-out}
+      .panel:not(.quiet) .activity ha-icon{transform-origin:50% 90%;animation:luxGumLoop 1.8s ease-in-out infinite}
+      @media (prefers-reduced-motion:reduce){.panel .activity ha-icon,.choose ha-icon{animation:none!important}}
     </style><ha-card>${this.config.show_header ? `<header><div class="heading"><ha-icon icon="mdi:cctv"></ha-icon><div><h2>${this._escape(this.config.title)}</h2><div class="sub">Automatisk valg med manuel overstyring</div></div></div><button class="all" data-nav><ha-icon icon="mdi:view-dashboard-outline"></ha-icon><span>Alle kameraer</span></button></header>` : ""}<div class="grid" style="--columns:${Math.min(3, this.config.groups.length)}">${this.config.groups.map((group, index) => `<section class="panel quiet" data-panel="${index}"><div class="bar"><div class="name"><b data-name></b><span>${this._escape(group.name || `Felt ${index + 1}`)}</span></div><div class="activity"><ha-icon data-activity-icon></ha-icon><span data-activity-text></span></div><button class="choose" data-choose="${index}" aria-label="V\xE6lg kamera"><ha-icon icon="mdi:camera-switch-outline"></ha-icon></button></div><div class="feed" data-feed="${index}"></div><div class="chips"><button class="chip" data-auto="${index}">Auto</button>${this._groupCameras(group).map((camera) => `<button class="chip" data-group="${index}" data-camera="${this._escape(camera.key)}">${this._escape(camera.name || camera.key)}</button>`).join("")}</div></section>`).join("")}</div></ha-card><dialog data-dialog><div class="sheet-head"><b data-dialog-title>V\xE6lg kamera</b><button class="close" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div><div class="choices" data-choices></div></dialog>`;
     this.shadowRoot.querySelector("[data-nav]")?.addEventListener("click", () => this._navigate(this.config.navigation_path));
     this.shadowRoot.querySelectorAll("[data-camera]").forEach((button) => button.addEventListener("click", () => {
@@ -43390,6 +43417,7 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
+    this._liveCheck();
     if (!this.shadowRoot?.querySelector("ha-card")) this._build();
     this._syncHeader();
     const day = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), key = `${day}|${this._config?.days}|${this._config?.calendars.map((c2) => c2.entity).join("|")}`;
@@ -43428,6 +43456,16 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
     if (groups.length + (this._config.school_entity ? 1 : 0) < 2) return "";
     return `<nav class="toolbar"><button class="filter active" data-filter="all">Alt</button>${this._groups().map((group) => `<button class="filter" data-filter="${this._esc(group)}">${this._esc(group)}</button>`).join("")}${this._config.school_entity ? '<button class="filter" data-filter="school">Skoleskema</button>' : ""}</nav>`;
   }
+  // Re-draws the agenda when an event starts or ends, so "live" follows the clock (only then, so it doesn't replay).
+  _liveCheck() {
+    const m = Math.floor(Date.now() / 6e4);
+    if (m === this._liveMin || !this._events.length) return;
+    this._liveMin = m;
+    const now = Date.now(), key = this._events.filter((e) => !this._allDay(e) && this._dateValue(e.start) <= now && this._dateValue(e.end) > now).map((e) => `${e.calendar_entity}|${e.start}|${e.summary}`).join("~");
+    if (key === this._liveKey) return;
+    this._liveKey = key;
+    if (this._filter !== "school") this._renderAgenda();
+  }
   _groups() {
     return [...new Set(this._config.calendars.map((c2) => c2.group).filter(Boolean))];
   }
@@ -43461,6 +43499,15 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
     if (!this._config) return;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#22c9ff));--muted:var(--secondary-text-color,#8d9baa);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11161d)));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--green:var(--dashboard-success,var(--success-color,#00e69a))}*{box-sizing:border-box}button{font:inherit;color:inherit}ha-card{overflow:hidden;border:1px solid var(--edge);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:25px;background:radial-gradient(circle at 92% -8%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 27%),linear-gradient(145deg,color-mix(in srgb,var(--surface) 97%,var(--accent) 3%),var(--surface));box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow))}.shell{padding:20px}header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);animation:pulse 2.2s ease-in-out infinite}h2{margin:5px 0 3px;font-size:29px;line-height:1.05}.sub{color:var(--muted);font-size:13px}.weather{display:grid;grid-template-columns:auto auto;align-items:center;gap:4px 10px;padding:9px 13px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.035)}.weather ha-icon{grid-row:1/3;--mdc-icon-size:31px;color:var(--accent)}.weather b{font-size:18px}.weather small{color:var(--muted);font-size:9px}.toolbar{display:flex;align-items:center;gap:7px;margin:16px 0 13px;padding:5px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.12);overflow-x:auto}.filter{flex:1;min-width:max-content;min-height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:11px;font-weight:900;cursor:pointer}.filter.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}.stat{padding:10px 12px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}.stat span,.stat b{display:block}.stat span{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}.stat b{margin-top:4px;font-size:18px}.legend{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.legend-item{display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:6px 9px;border:1px solid var(--edge);border-radius:999px;color:var(--muted);font-size:9px}.legend-item i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 7px var(--c)}.agenda{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));align-items:start;gap:10px;min-height:390px}.day{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.11)}.day.today{border-color:color-mix(in srgb,var(--accent) 48%,var(--edge));background:color-mix(in srgb,var(--accent) 6%,transparent)}.day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.day-head div{display:flex;align-items:baseline;gap:6px}.day-head b{font-size:16px}.day-head strong{font-size:25px;line-height:1}.day-head span{color:var(--muted);font-size:10px}.today-tag{padding:4px 7px;border-radius:999px;background:var(--accent);color:#00131c!important;font-weight:900}.events{display:grid;gap:7px}.event{--c:var(--accent);display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;width:100%;padding:9px;border:1px solid color-mix(in srgb,var(--c) 24%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:12px;background:color-mix(in srgb,var(--c) 8%,transparent);text-align:left;cursor:pointer}.event:hover{filter:brightness(1.1);transform:translateY(-1px)}.event-time{color:var(--c);font-size:10px;font-weight:900;line-height:1.25}.event-copy{min-width:0}.event-copy b{display:block;font-size:12px;line-height:1.25}.meta{display:flex;flex-wrap:wrap;gap:5px 9px;margin-top:4px;color:var(--muted);font-size:9px}.meta span{display:flex;align-items:center;gap:3px}.meta ha-icon{--mdc-icon-size:11px}.desc{display:-webkit-box;overflow:hidden;margin-top:5px;color:var(--muted);font-size:9px;line-height:1.35;-webkit-line-clamp:2;-webkit-box-orient:vertical}.empty,.loading{grid-column:1/-1;display:grid;place-items:center;min-height:300px;color:var(--muted);text-align:center}.loading i{width:35px;height:35px;margin-bottom:10px;border:3px solid var(--edge);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}.school{grid-column:1/-1}.school-person{margin-bottom:14px}.school-title{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:15px;font-weight:900}.school-title i{width:4px;height:20px;border-radius:4px;background:var(--c)}.school-grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto}.school-day{min-width:150px;padding:9px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}.school-day>header{display:block;margin-bottom:7px}.school-day>header b{font-size:12px}.lesson{--c:var(--accent);margin-top:6px;padding:7px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 9%,transparent)}.lesson b{display:block;font-size:10px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--muted);font-size:8px}.foot{display:flex;justify-content:space-between;margin-top:12px;color:var(--muted);font-size:9px}@keyframes pulse{50%{opacity:.4;transform:scale(.7)}}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:700px){.shell{padding:13px}header{display:block}.weather{display:inline-grid;margin-top:11px}.stats{grid-template-columns:repeat(2,1fr)}.agenda{grid-template-columns:1fr}.day{padding:10px}h2{font-size:24px}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+${luxCss({ base: ".filter", active: ".filter.active" })}
+/* An event happening now (Claude AI, 2026-10-13; user: "n\xE5r en Kalender er aktiv eller rammes skal der ogs\xE5 laves noget
+   animation"): it squishes when it starts, then glows in its calendar's colour with a "NU" tag. */
+.event.live{border-color:color-mix(in srgb,var(--c) 65%,var(--edge));background:color-mix(in srgb,var(--c) 17%,transparent);animation:luxGum .8s ease-out,calLive 2.4s ease-in-out .8s infinite}
+@keyframes calLive{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent),0 0 24px -4px color-mix(in srgb,var(--c) 75%,transparent)}}
+.event.live .event-time{display:inline-block;transform-origin:50% 90%;animation:luxGumLoop 3.2s ease-in-out infinite}
+.live-tag{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--c);vertical-align:1px}
+.live-tag i{width:5px;height:5px;border-radius:50%;background:#fff;animation:calDot 1.2s ease-in-out infinite}@keyframes calDot{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.event.live,.event.live .event-time,.live-tag i{animation:none!important}}
     </style><ha-card><div class="shell"><header><div><div class="eyebrow"><i class="dot"></i>Familieplan</div><h2>${this._esc(this._config.title)}</h2><div class="sub">${this._esc(this._config.subtitle)}</div></div><div class="weather"><ha-icon data-weather-icon icon="mdi:weather-cloudy"></ha-icon><b data-temperature>\u2014</b><small data-weather-text>Vejr hentes</small></div></header>${this._toolbar()}<div class="stats"><div class="stat"><span>I dag</span><b data-stat="today">\u2014</b></div><div class="stat"><span>Denne uge</span><b data-stat="week">\u2014</b></div><div class="stat"><span>N\xE6ste aftale</span><b data-stat="next">\u2014</b></div><div class="stat"><span>Kalendere</span><b data-stat="calendars">\u2014</b></div></div><div class="legend">${this._config.calendars.map((c2) => `<span class="legend-item" style="--c:${this._esc(c2.color || "#22c9ff")}"><i></i>${this._esc(c2.name)}</span>`).join("")}</div><main class="agenda"></main><div class="foot"><span>Viser ${Number(this._config.days) || 30} dage frem</span><span data-updated>Opdaterer \u2026</span></div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
       this._filter = button.dataset.filter;
@@ -43509,7 +43556,8 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   }
   _event(event) {
     const cal = this._calendar(event.calendar_entity), start = this._dateValue(event.start), end = this._dateValue(event.end), allDay = this._allDay(event), duration2 = Math.max(0, Math.round((end - start) / 6e4)), durationText = allDay ? "Hele dagen" : duration2 >= 60 ? `${Math.floor(duration2 / 60)} t${duration2 % 60 ? ` ${duration2 % 60} min` : ""}` : `${duration2} min`;
-    return `<button class="event" data-entity="${this._esc(event.calendar_entity)}" style="--c:${this._esc(cal.color || "#22c9ff")}"><span class="event-time">${allDay ? "HELE\nDAGEN" : this._fmtTime(start)}</span><span class="event-copy"><b>${this._esc(event.summary || "Uden titel")}</b><span class="meta"><span><ha-icon icon="mdi:calendar-blank"></ha-icon>${this._esc(cal.name || event.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${durationText}</span>${event.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._esc(event.location.split("\n")[0])}</span>` : ""}</span>${event.description ? `<span class="desc">${this._esc(event.description)}</span>` : ""}</span></button>`;
+    const now = Date.now(), live = !allDay && start <= now && end > now;
+    return `<button class="event${live ? " live" : ""}" data-entity="${this._esc(event.calendar_entity)}" style="--c:${this._esc(cal.color || "#22c9ff")}"><span class="event-time">${allDay ? "HELE\nDAGEN" : this._fmtTime(start)}</span><span class="event-copy"><b>${this._esc(event.summary || "Uden titel")}${live ? '<span class="live-tag"><i></i>NU</span>' : ""}</b><span class="meta"><span><ha-icon icon="mdi:calendar-blank"></ha-icon>${this._esc(cal.name || event.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${durationText}</span>${event.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._esc(event.location.split("\n")[0])}</span>` : ""}</span>${event.description ? `<span class="desc">${this._esc(event.description)}</span>` : ""}</span></button>`;
   }
   _relative(date2, now) {
     const days = Math.floor((new Date(date2.getFullYear(), date2.getMonth(), date2.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
@@ -46462,7 +46510,7 @@ function nbHentDeltConfig(url) {
   return NB_DELT_CACHE.get(url);
 }
 var nbGlasCss = (accent, anim = "gum") => {
-  const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--dashboard-accent,var(--primary-color,#62b5ff))";
+  const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
   return `
 :host{--nb-radius:24px;--nb-knapradius:13px;--nb-hoejde:70px;--nb-knaphoejde:54px;--nb-knapbredde:64px;--nb-mellemrum:4px;--nb-ikon:25px;--nb-etiket:10.5px;
   --nb-accent:${a};--nb-indikator-luft:7px}
