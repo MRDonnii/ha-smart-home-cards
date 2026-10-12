@@ -546,7 +546,7 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.match(html, /data-qc="charge_limit"/);
   assert.match(html, /class="qc" data-r="qc"/);
   assert.doesNotMatch(html, /panel carctl/, "no separate panel: the card does not grow");
-  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-cc=|data-qc=/, "not in the charge popup");
+  assert.match(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-qc="climate"|data-cc="lock"/, "also in the charge popup");
   assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Bilstyring/);
 }
 // Monta only where it is configured.
