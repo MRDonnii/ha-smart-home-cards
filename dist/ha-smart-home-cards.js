@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.52 */
+/* MRDonnii Smart Home Cards v0.5.53 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -46461,7 +46461,7 @@ function nbHentDeltConfig(url) {
   }
   return NB_DELT_CACHE.get(url);
 }
-var nbGlasCss = (accent) => {
+var nbGlasCss = (accent, anim = "gum") => {
   const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--dashboard-accent,var(--primary-color,#62b5ff))";
   return `
 :host{--nb-radius:24px;--nb-knapradius:13px;--nb-hoejde:70px;--nb-knaphoejde:54px;--nb-knapbredde:64px;--nb-mellemrum:4px;--nb-ikon:25px;--nb-etiket:10.5px;
@@ -46482,12 +46482,15 @@ var nbGlasCss = (accent) => {
 .rute.aktiv .nbikon,.rute.aktiv ha-icon{filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
 .rute.aktiv .ikonboks{animation:tnbPop .6s cubic-bezier(.2,1.6,.4,1)}
 @keyframes tnbPop{40%{transform:translateY(-3px) scale(1.16)}}
+${anim === "none" ? "" : `.rute.aktiv .nbikon{transform-origin:50% 90%;animation:${anim === "wobble" ? "nbWobble 1.6s" : "nbGum 3.2s"} ease-in-out .7s infinite}`}
+@keyframes nbGum{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-4px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}
+@keyframes nbWobble{0%,100%{transform:rotate(0) translateY(0)}20%{transform:rotate(-8deg) translateY(-2px)}40%{transform:rotate(0) translateY(0)}60%{transform:rotate(8deg) translateY(-2px)}80%{transform:rotate(0) translateY(0)}}
 .rute:active .ikonboks{transform:scale(.86);transition:transform .1s}
 .etiket{font-weight:600;letter-spacing:.06em;opacity:.85}
 .rute.aktiv .etiket{opacity:1}
 .badge{box-shadow:none!important}.badge:empty:not(.tom),.badge[hidden]{display:none!important}
 @media(max-width:520px){:host{--nb-knapbredde:56px;--nb-hoejde:66px}}
-@media (prefers-reduced-motion:reduce){.bar::after,.rute.aktiv .ikonboks{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.bar::after,.rute.aktiv .ikonboks,.rute.aktiv .nbikon{animation:none!important}}
 `;
 };
 var HaNavbarCard = class extends HTMLElement {
@@ -47246,7 +47249,7 @@ svg.nbikon{display:block;fill:currentColor}
 @media(prefers-reduced-motion:reduce){
   .indikator,.punkt,.ark,.overlay{transition:none}
   .badge.puls,.p-badge.puls,.badge.pop,.notif.ring .ikonboks{animation:none}}
-${this.config?.style === "glass" ? nbGlasCss(this.config.accent) : ""}`;
+${this.config?.style === "glass" ? nbGlasCss(this.config.accent, this.config.active_animation) : ""}`;
   }
 };
 var NB_BADGE_STANDARD = {
