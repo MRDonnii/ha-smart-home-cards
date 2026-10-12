@@ -179,6 +179,12 @@ function nbKort(visning) {
   });
   return ud;
 }
+// Lytter globalt (ikke pr. navbar), så alle sideskift fader: navbaren, kort-knapper, tilbage-knappen. Slås til af den
+// første navbar med page_transition: "fade".
+let nbFadeTil = false;
+const nbFadeLyt = () => { if (nbFadeTil) nbSideFade(); };
+window.addEventListener("location-changed", nbFadeLyt);
+window.addEventListener("popstate", nbFadeLyt);
 function nbSideFade() {
   const t0 = performance.now(); if (t0 - nbFadeAt < 300) return; nbFadeAt = t0;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -205,7 +211,7 @@ class HaNavbarCard extends HTMLElement {
     this._sporedeEntiteter = [];
     this._notifikationerAabne = false;
     this._sidsteAntalNotifikationer = 0;
-    this._onNavigation = () => { this._opdaterAktiv(); if (this.config?.page_transition === "fade") nbSideFade(); };
+    this._onNavigation = () => this._opdaterAktiv();
   }
 
   setConfig(config) {
@@ -322,6 +328,7 @@ class HaNavbarCard extends HTMLElement {
       : Array.isArray(delt.routes) ? delt.routes : [];
 
     this.config = flettet;
+    if (flettet.page_transition === "fade") nbFadeTil = true;
     this._sporedeEntiteter = this._findEntiteter(flettet.routes);
     this._udtrykCache.clear();
 

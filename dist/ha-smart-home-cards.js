@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.60 */
+/* MRDonnii Smart Home Cards v0.5.61 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -43390,7 +43390,7 @@ window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Auto
 console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION44} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION45 = "0.2.2";
+var VERSION45 = "0.2.3";
 var DAY = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
 var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -43598,7 +43598,12 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
 :host{display:block;--a:${a};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--soft:color-mix(in srgb,var(--ink) 5%,transparent)}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
-ha-card{position:relative;overflow:hidden;padding:22px 24px 24px;color:var(--ink)}
+/* The page's own cards (Claude AI, 2026-10-13; user: "de rigtige baggrundsfarver s\xE5 det matcher mine andre sider"): the
+   outer frame is invisible, every panel is a card in the theme's ha-card background, border and shadow. */
+ha-card{position:relative;padding:4px 0 8px;color:var(--ink);background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+.panel,.day,.wk,.school-person,.wx{background:var(--ha-card-background,var(--card-background-color,#161a21))!important;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-radius:var(--ha-card-border-radius,20px);box-shadow:var(--ha-card-box-shadow,none)!important}
+.day.today{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 10%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color,#161a21))!important;border-color:color-mix(in srgb,var(--a) 55%,transparent)}
+.top{padding:0 4px}
 .top{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
 .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--a)}
 .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:blink 2.4s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
@@ -47079,6 +47084,12 @@ function nbKort(visning) {
   });
   return ud;
 }
+var nbFadeTil = false;
+var nbFadeLyt = () => {
+  if (nbFadeTil) nbSideFade();
+};
+window.addEventListener("location-changed", nbFadeLyt);
+window.addEventListener("popstate", nbFadeLyt);
 function nbSideFade() {
   const t0 = performance.now();
   if (t0 - nbFadeAt < 300) return;
@@ -47111,10 +47122,7 @@ var HaNavbarCard = class extends HTMLElement {
     this._sporedeEntiteter = [];
     this._notifikationerAabne = false;
     this._sidsteAntalNotifikationer = 0;
-    this._onNavigation = () => {
-      this._opdaterAktiv();
-      if (this.config?.page_transition === "fade") nbSideFade();
-    };
+    this._onNavigation = () => this._opdaterAktiv();
   }
   setConfig(config) {
     if (!config) throw new Error("ha-navbar-card: config mangler");
@@ -47206,6 +47214,7 @@ var HaNavbarCard = class extends HTMLElement {
     const egneRuter = Array.isArray(egen.routes) ? egen.routes : [];
     flettet.routes = egneRuter.length ? egneRuter : Array.isArray(delt.routes) ? delt.routes : [];
     this.config = flettet;
+    if (flettet.page_transition === "fade") nbFadeTil = true;
     this._sporedeEntiteter = this._findEntiteter(flettet.routes);
     this._udtrykCache.clear();
     if (flettet.fixed === false) this.removeAttribute("fastgjort");

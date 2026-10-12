@@ -4,7 +4,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 // Family calendar, rebuilt (Claude AI, 2026-10-13; user: "Den kalender side er virkelig dårlig – lav den langt federe og
 // bedre"). Now / next with a countdown, today's timeline, agenda, a real week grid with times and the school timetable;
 // calendars switch on and off with their chips, events open a detail sheet. Same config as 0.1.x.
-const VERSION = "0.2.2";
+const VERSION = "0.2.3";
 const DAY = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 const DAY_SHORT = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
 const MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -125,7 +125,12 @@ class HAFamilyCalendarCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
 :host{display:block;--a:${a};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--soft:color-mix(in srgb,var(--ink) 5%,transparent)}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
-ha-card{position:relative;overflow:hidden;padding:22px 24px 24px;color:var(--ink)}
+/* The page's own cards (Claude AI, 2026-10-13; user: "de rigtige baggrundsfarver så det matcher mine andre sider"): the
+   outer frame is invisible, every panel is a card in the theme's ha-card background, border and shadow. */
+ha-card{position:relative;padding:4px 0 8px;color:var(--ink);background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+.panel,.day,.wk,.school-person,.wx{background:var(--ha-card-background,var(--card-background-color,#161a21))!important;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-radius:var(--ha-card-border-radius,20px);box-shadow:var(--ha-card-box-shadow,none)!important}
+.day.today{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 10%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color,#161a21))!important;border-color:color-mix(in srgb,var(--a) 55%,transparent)}
+.top{padding:0 4px}
 .top{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
 .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--a)}
 .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:blink 2.4s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
