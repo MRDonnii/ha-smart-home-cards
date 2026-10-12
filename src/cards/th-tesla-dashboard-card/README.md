@@ -289,6 +289,10 @@ dagens mål og hvor den kommer fra (Ugeplan, Engangstid, Lærte afgange, Samme t
 
 Popuppen er en rigtig dialog over hele siden (Esc eller tryk udenfor lukker), og intet gemmes før "Gem plan".
 
+**Hold batteriet på målet under opvarmning:** I klima-popuppen (EV Ledger 0.6.4 eller nyere) slår en kontakt til, at
+laderen holder batteriet på målet, mens bilen varmes og er sat til laderen, og et felt sætter den højeste pris pr. kWh.
+Linjen under fortæller, om den lader nu, eller hvorfor ikke (fx "Venter: strømmen koster 2,42 kr (højst 2,00 kr)").
+
 **Mål SOC skal bekræftes:** Når skyderen slippes, sendes det nye mål først efter **Bekræft** ("Nyt mål 85 % (nu 80 %)",
 med Fortryd). Uden svar glemmes det efter 20 sekunder.
 
