@@ -297,7 +297,7 @@ Linjen under fortæller, om den lader nu, eller hvorfor ikke (fx "Venter: strøm
 med Fortryd). Uden svar glemmes det efter 20 sekunder.
 
 **Kompakt visning (`layout: charge`):** Forsidens popup, når bilen er sat til, viser kun det, man hurtigt bruger:
-status, opladning, Billigst / Fast tid / Lad nu / Pause, tidslinjen, næste start, slut og pris, Mål SOC og Klar senest.
+status, bilstyringen (`car_controls`, med klima-popuppen), opladning, Billigst / Fast tid / Lad nu / Pause, tidslinjen, næste start, slut og pris, Mål SOC og Klar senest.
 Telefonvalg, prisloft, manuel, kvarter/time, midlertidig plan, standardplan og smarte valg ligger på Tesla-siden; med
 `navigation_path` vises "Flere indstillinger på Tesla-siden" nederst.
 
