@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.56 */
+/* MRDonnii Smart Home Cards v0.5.57 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -4984,23 +4984,23 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const trip = ttdToDate(this._sc("trip_departure")?.state);
     const target = this._scNum("plan_target_soc");
     const waiting = plan.waiting_for && typeof plan.waiting_for === "object" ? plan.waiting_for : null;
-    const until = Math.min(now + (waiting ? 96 : 48) * 36e5, Math.max(now + 36e5, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
-    const at = (date2) => ttdClamp((date2.getTime() - now) / (until - now) * 100, 0, 100);
-    const segments = blocks.filter((block) => block.start.getTime() < until).map((block) => {
+    const until2 = Math.min(now + (waiting ? 96 : 48) * 36e5, Math.max(now + 36e5, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
+    const at = (date2) => ttdClamp((date2.getTime() - now) / (until2 - now) * 100, 0, 100);
+    const segments = blocks.filter((block) => block.start.getTime() < until2).map((block) => {
       const left = at(new Date(Math.max(block.start.getTime(), now)));
       return { left, width: Math.max(at(block.end) - left, 0.6), estimated: block.estimated, title: `${f.time(block.start)}\u2013${f.time(block.end)}` };
     });
-    const marks = [deadline && deadline.getTime() <= until ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
+    const marks = [deadline && deadline.getTime() <= until2 ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until2 ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
     const next = blocks[0];
     const minutes = Number(plan.slot_minutes) || 15;
-    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until);
+    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until2);
     const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
     const chart = slots.map((x) => {
       const left = at(new Date(Math.max(x.s, now)));
       const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
       return {
         left,
-        width: at(new Date(Math.min(x.e, until))) - left,
+        width: at(new Date(Math.min(x.e, until2))) - left,
         h: 0.22 + 0.78 * (hi > lo ? (x.p - lo) / (hi - lo) : 0.5),
         on,
         est: x.est,
@@ -5072,7 +5072,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       segments,
       marks,
       chart,
-      axisRight: f.dayTime(new Date(until)),
+      axisRight: f.dayTime(new Date(until2)),
       axisMid: next ? `${f.time(next.start)}\u2013${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
       hint: statusKey === "disconnected" && next ? `S\xE6ttes bilen til nu, lader den ${f.dayTime(next.start)}\u2013${f.time(blocks.length === 1 ? lastEnd : next.end)}${blocks.length > 1 ? ` (+${blocks.length - 1} perioder)` : ""}${cost != null ? ` \xB7 ${ttdJoin(f.number(cost, 2), costUnit)}` : ""}` : "",
       start: next ? next.start.getTime() <= now ? "Nu" : f.time(next.start) : TTD_DASH,
@@ -5885,13 +5885,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._t("scOptNote", sc.options.note);
       const quietOn = sc.options.list.find((o) => o.role === "quiet_night")?.on;
       const from = this._sc("quiet_from")?.state;
-      const until = this._sc("quiet_until")?.state;
-      const hasWindow = quietOn && ttdIsClock(from) && ttdIsClock(until);
+      const until2 = this._sc("quiet_until")?.state;
+      const hasWindow = quietOn && ttdIsClock(from) && ttdIsClock(until2);
       this._hide("scQuiet", !hasWindow);
       if (hasWindow) {
         const active2 = this.shadowRoot.activeElement;
         if (active2 !== r.scQuietFrom && r.scQuietFrom.value !== ttdClock(from)) r.scQuietFrom.value = ttdClock(from);
-        if (active2 !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until)) r.scQuietUntil.value = ttdClock(until);
+        if (active2 !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until2)) r.scQuietUntil.value = ttdClock(until2);
       }
     }
     const signature = JSON.stringify([sc.segments, sc.marks]);
@@ -6632,8 +6632,8 @@ function ttdRbWhen(f, date2, long = false) {
   return `${day} ${TTD_TEXT.at} ${f.time(date2)}`;
 }
 function ttdLocalInput(date2) {
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${date2.getFullYear()}-${pad(date2.getMonth() + 1)}-${pad(date2.getDate())}T${pad(date2.getHours())}:${pad(date2.getMinutes())}`;
+  const pad3 = (value) => String(value).padStart(2, "0");
+  return `${date2.getFullYear()}-${pad3(date2.getMonth() + 1)}-${pad3(date2.getDate())}T${pad3(date2.getHours())}:${pad3(date2.getMinutes())}`;
 }
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
@@ -8640,9 +8640,9 @@ var PoolWaterQualityCard = class extends HTMLElement {
     for (const point of [...measurements.values()].sort((a, b) => a.ts - b.ts)) {
       if (point.ts < cutoff.getTime()) continue;
       const date2 = new Date(point.ts);
-      const dayKey = `${date2.getFullYear()}-${date2.getMonth()}-${date2.getDate()}`;
-      const previous = dailyMeasurements.get(dayKey);
-      if (!previous || point.ts >= previous.ts) dailyMeasurements.set(dayKey, point);
+      const dayKey2 = `${date2.getFullYear()}-${date2.getMonth()}-${date2.getDate()}`;
+      const previous = dailyMeasurements.get(dayKey2);
+      if (!previous || point.ts >= previous.ts) dailyMeasurements.set(dayKey2, point);
     }
     return [...dailyMeasurements.values()].sort((a, b) => a.ts - b.ts).map((point) => {
       const date2 = new Date(point.ts);
@@ -28847,9 +28847,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       let lo = Math.floor(Math.min(...values, ...targets) - 0.6);
       let hi = Math.ceil(Math.max(...values, ...targets) + 0.6);
       if (hi - lo < 4) {
-        const pad = (4 - (hi - lo)) / 2;
-        lo -= pad;
-        hi += pad;
+        const pad3 = (4 - (hi - lo)) / 2;
+        lo -= pad3;
+        hi += pad3;
       }
       const pos = (value) => (value - lo) / (hi - lo) * 100;
       if (targets.length) {
@@ -30791,9 +30791,9 @@ var HAHomeHeaderCard = class extends HTMLElement {
         ids.add(token);
         continue;
       }
-      const id = token.slice(0, at), until = Number(token.slice(at + 1));
+      const id = token.slice(0, at), until2 = Number(token.slice(at + 1));
       if (["unknown", "unavailable"].includes(id)) continue;
-      if (Number.isFinite(until) && until > now) ids.add(id);
+      if (Number.isFinite(until2) && until2 > now) ids.add(id);
     }
     return ids;
   }
@@ -32209,7 +32209,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc4 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc5 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -32221,14 +32221,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc4(item2.value));
+    setText(".value", esc5(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc4(item2.detail || " "));
+    setText(".detail", esc5(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -37300,8 +37300,8 @@ var HAAlarmCenterCard = class extends HTMLElement {
       }
       const entity = token.slice(0, at);
       if (["unknown", "unavailable"].includes(entity)) continue;
-      const until = Number(token.slice(at + 1));
-      if (entity && Number.isFinite(until) && until > now) entries.set(entity, until);
+      const until2 = Number(token.slice(at + 1));
+      if (entity && Number.isFinite(until2) && until2 > now) entries.set(entity, until2);
     }
     return entries;
   }
@@ -37320,7 +37320,7 @@ var HAAlarmCenterCard = class extends HTMLElement {
     }
   }
   _writeSnooze(entries) {
-    let values = [...entries.entries()].sort((a, b) => a[1] - b[1]).map(([id, until]) => `${id}@${until}`);
+    let values = [...entries.entries()].sort((a, b) => a[1] - b[1]).map(([id, until2]) => `${id}@${until2}`);
     let joined = values.join(",");
     while (joined.length > 250 && values.length > 1) {
       values.shift();
@@ -37330,14 +37330,14 @@ var HAAlarmCenterCard = class extends HTMLElement {
   }
   _snoozeUntil(entityId, kind) {
     const now = /* @__PURE__ */ new Date();
-    let until;
+    let until2;
     if (kind === "tomorrow") {
-      until = new Date(now);
-      until.setDate(until.getDate() + 1);
-      until.setHours(7, 0, 0, 0);
-    } else until = new Date(now.getTime() + (kind === "week" ? 7 * 24 : 12) * 60 * 60 * 1e3);
+      until2 = new Date(now);
+      until2.setDate(until2.getDate() + 1);
+      until2.setHours(7, 0, 0, 0);
+    } else until2 = new Date(now.getTime() + (kind === "week" ? 7 * 24 : 12) * 60 * 60 * 1e3);
     const entries = this._snoozeEntries();
-    entries.set(entityId, until.getTime());
+    entries.set(entityId, until2.getTime());
     this._writeSnooze(entries);
     this._closeSnoozeDialog();
   }
@@ -37397,7 +37397,7 @@ var HAAlarmCenterCard = class extends HTMLElement {
   _esc(v) {
     return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
-  _row(a, snoozed, until) {
+  _row(a, snoozed, until2) {
     const icon3 = a.icon?.startsWith("mdi:") ? a.icon : null;
     const emoji = !icon3 ? a.icon || "\u26A0\uFE0F" : null;
     return `<div class="row priority-${a.priority} ${snoozed ? "snoozed" : ""}" data-entity="${this._esc(a.entity)}">
@@ -37411,7 +37411,7 @@ var HAAlarmCenterCard = class extends HTMLElement {
       </button>
       <button class="snooze-btn ${snoozed ? "active" : ""}" data-snooze="${this._esc(a.entity)}" title="${snoozed ? "Vis alarmen igen" : "Skjul alarmen midlertidigt"}">
         <ha-icon icon="${snoozed ? "mdi:bell" : "mdi:bell-off-outline"}"></ha-icon>
-        <span>${snoozed ? `Skjult til ${new Date(until).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : "Skjul"}</span>
+        <span>${snoozed ? `Skjult til ${new Date(until2).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : "Skjul"}</span>
       </button>
       ${a.acknowledge_action && !snoozed ? `<button class="ack-btn" data-ack="${this._esc(a.entity)}" title="Godkend og ryd advarslen"><ha-icon icon="mdi:check-circle-outline"></ha-icon><span>Godkend</span></button>` : ""}
     </div>`;
@@ -43390,241 +43390,710 @@ window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Auto
 console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION44} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION45 = "0.1.1";
-var DAY_NAMES = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
-var MONTH_NAMES = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
-var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk", MUS: "Musik", KRI: "Kristendom", "N/T": "Natur/teknologi", UDE: "Udeskole", TB: "Temab\xE5nd", "FL-D": "Fagdage", "Klp\xE6d": "Klassens tid", "2-l\xE6rer": "To-l\xE6rer" };
+var VERSION45 = "0.2.0";
+var DAY = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
+var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
+var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+var MONTH_SHORT = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
+var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk", MUS: "Musik", KRI: "Kristendom", "N/T": "Natur/teknologi", UDE: "Udeskole", TB: "Temab\xE5nd", "FL-D": "Fagdage", Klp\u00E6d: "Klassens tid", "2-l\xE6rer": "To-l\xE6rer" };
+var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
+var HOUR = 36e5;
+var STORE = "ha-family-calendar-card";
+var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var pad = (n) => String(n).padStart(2, "0");
+var hhmm = (d) => `${pad(d.getHours())}.${pad(d.getMinutes())}`;
+var dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+var startOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+var addDays = (d, n) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+var monday = (d) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
+var dur = (ms) => {
+  const m = Math.max(0, Math.round(ms / 6e4));
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  return m % 60 ? `${h} t ${m % 60} min` : `${h} t`;
+};
+var until = (ms) => {
+  const m = Math.max(0, Math.round(ms / 6e4));
+  if (m < 1) return "nu";
+  if (m < 60) return `om ${m} min`;
+  if (m < 24 * 60) {
+    const h = Math.floor(m / 60);
+    return `om ${h} t${m % 60 ? ` ${m % 60} min` : ""}`;
+  }
+  const d = Math.round(m / 1440);
+  return d === 1 ? "i morgen" : `om ${d} dage`;
+};
 var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this._events = [];
-    this._filter = "all";
+    this._range = null;
     this._loading = false;
-    this._loadedKey = "";
   }
   static getStubConfig() {
     return { title: "Familiekalender", subtitle: "Alt det n\xE6ste, samlet og overskueligt", days: 30, weather_entity: "", school_entity: "", calendars: [] };
   }
   static getConfigElement() {
     const editor = document.createElement("ha-card-list-editor");
-    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "school_entity", label: "Skoleskema", type: "entity" }], collections: [{ key: "calendars", label: "Kalendere", itemLabel: "kalender", defaults: { name: "Kalender", entity: "", group: "Familie", color: "#22c9ff", icon: "mdi:calendar" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "group", label: "Gruppe" }, { key: "color", label: "Farve" }, { key: "icon", label: "Ikon" }] }] };
+    editor.definition = {
+      roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "school_entity", label: "Skoleskema", type: "entity" }],
+      collections: [{ key: "calendars", label: "Kalendere", itemLabel: "kalender", defaults: { name: "Kalender", entity: "", group: "Familie", color: "#22c9ff", icon: "mdi:calendar" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "group", label: "Gruppe" }, { key: "color", label: "Farve" }, { key: "icon", label: "Ikon" }] }]
+    };
     return editor;
   }
   setConfig(config) {
     this._config = { ..._HAFamilyCalendarCard.getStubConfig(), ...config, calendars: Array.isArray(config?.calendars) ? structuredClone(config.calendars) : [] };
-    this._loadedKey = "";
-    this._build();
+    const saved = this._store();
+    this._view = ["agenda", "week", "school"].includes(saved.view) ? saved.view : "agenda";
+    if (this._view === "school" && !this._config.school_entity) this._view = "agenda";
+    this._hidden = new Set(Array.isArray(saved.hidden) ? saved.hidden : []);
+    this._week = monday(/* @__PURE__ */ new Date());
+    this._mobileDay = startOfDay(/* @__PURE__ */ new Date());
+    this._range = null;
+    this._built = false;
+    if (this._hass) this._build();
   }
   set hass(hass) {
+    const first = !this._hass;
     this._hass = hass;
-    this._liveCheck();
-    if (!this.shadowRoot?.querySelector("ha-card")) this._build();
-    this._syncHeader();
-    const day = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), key = `${day}|${this._config?.days}|${this._config?.calendars.map((c2) => c2.entity).join("|")}`;
-    if (key !== this._loadedKey && !this._loading) {
-      this._loadedKey = key;
-      this._load();
+    if (!this._config) return;
+    if (!this._built) this._build();
+    this._weather();
+    if (first || !this._range || dayKey(/* @__PURE__ */ new Date()) !== this._loadedDay) this._ensure();
+    this._tick();
+    if (this._view === "school") {
+      const s = hass.states[this._config.school_entity];
+      if (s !== this._schoolState) {
+        this._schoolState = s;
+        this._render();
+      }
     }
-    if (this._filter === "school") this._renderSchool();
+  }
+  connectedCallback() {
+    if (this._config && this._hass) this._ensure();
+    clearInterval(this._clock);
+    this._clock = setInterval(() => this._tick(), 3e4);
   }
   disconnectedCallback() {
-    clearTimeout(this._refreshTimer);
-  }
-  _esc(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-  }
-  _dateValue(value) {
-    return new Date(value?.dateTime || `${value?.date}T00:00:00`);
-  }
-  _allDay(event) {
-    return Boolean(event.start?.date && !event.start?.dateTime);
-  }
-  _fmtTime(date2) {
-    return date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-  }
-  _dayKey(date2) {
-    return `${date2.getFullYear()}-${String(date2.getMonth() + 1).padStart(2, "0")}-${String(date2.getDate()).padStart(2, "0")}`;
-  }
-  _sameDay(a, b) {
-    return this._dayKey(a) === this._dayKey(b);
-  }
-  _calendar(entity) {
-    return this._config.calendars.find((c2) => c2.entity === entity) || {};
-  }
-  _toolbar() {
-    const groups = this._groups();
-    if (groups.length + (this._config.school_entity ? 1 : 0) < 2) return "";
-    return `<nav class="toolbar"><button class="filter active" data-filter="all">Alt</button>${this._groups().map((group) => `<button class="filter" data-filter="${this._esc(group)}">${this._esc(group)}</button>`).join("")}${this._config.school_entity ? '<button class="filter" data-filter="school">Skoleskema</button>' : ""}</nav>`;
-  }
-  // Re-draws the agenda when an event starts or ends, so "live" follows the clock (only then, so it doesn't replay).
-  _liveCheck() {
-    const m = Math.floor(Date.now() / 6e4);
-    if (m === this._liveMin || !this._events.length) return;
-    this._liveMin = m;
-    const now = Date.now(), key = this._events.filter((e) => !this._allDay(e) && this._dateValue(e.start) <= now && this._dateValue(e.end) > now).map((e) => `${e.calendar_entity}|${e.start}|${e.summary}`).join("~");
-    if (key === this._liveKey) return;
-    this._liveKey = key;
-    if (this._filter !== "school") this._renderAgenda();
-  }
-  _groups() {
-    return [...new Set(this._config.calendars.map((c2) => c2.group).filter(Boolean))];
-  }
-  async _load() {
-    if (!this._hass?.callApi) return;
-    this._loading = true;
-    this._renderAgenda();
-    const start = /* @__PURE__ */ new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + Math.max(7, Number(this._config.days) || 30));
-    try {
-      const rows = await Promise.all(this._config.calendars.filter((c2) => c2.entity).map(async (calendar) => {
-        const path = `calendars/${encodeURIComponent(calendar.entity)}?start=${encodeURIComponent(start.toISOString())}&end=${encodeURIComponent(end.toISOString())}`;
-        const events = await this._hass.callApi("GET", path);
-        return (events || []).map((event) => ({ ...event, calendar_entity: calendar.entity }));
-      }));
-      this._events = rows.flat().sort((a, b) => this._dateValue(a.start) - this._dateValue(b.start));
-    } catch (error) {
-      this._error = error?.message || "Kalenderdata kunne ikke hentes";
-    }
-    this._loading = false;
-    this._renderAgenda();
-    clearTimeout(this._refreshTimer);
-    this._refreshTimer = setTimeout(() => {
-      this._loadedKey = "";
-      this._load();
-    }, 3e5);
-  }
-  _build() {
-    if (!this._config) return;
-    this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#22c9ff));--muted:var(--secondary-text-color,#8d9baa);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11161d)));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--green:var(--dashboard-success,var(--success-color,#00e69a))}*{box-sizing:border-box}button{font:inherit;color:inherit}ha-card{overflow:hidden;border:1px solid var(--edge);border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:25px;background:radial-gradient(circle at 92% -8%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 27%),linear-gradient(145deg,color-mix(in srgb,var(--surface) 97%,var(--accent) 3%),var(--surface));box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow))}.shell{padding:20px}header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);animation:pulse 2.2s ease-in-out infinite}h2{margin:5px 0 3px;font-size:29px;line-height:1.05}.sub{color:var(--muted);font-size:13px}.weather{display:grid;grid-template-columns:auto auto;align-items:center;gap:4px 10px;padding:9px 13px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.035)}.weather ha-icon{grid-row:1/3;--mdc-icon-size:31px;color:var(--accent)}.weather b{font-size:18px}.weather small{color:var(--muted);font-size:9px}.toolbar{display:flex;align-items:center;gap:7px;margin:16px 0 13px;padding:5px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.12);overflow-x:auto}.filter{flex:1;min-width:max-content;min-height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:11px;font-weight:900;cursor:pointer}.filter.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}.stat{padding:10px 12px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}.stat span,.stat b{display:block}.stat span{color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}.stat b{margin-top:4px;font-size:18px}.legend{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.legend-item{display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:6px 9px;border:1px solid var(--edge);border-radius:999px;color:var(--muted);font-size:9px}.legend-item i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 7px var(--c)}.agenda{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));align-items:start;gap:10px;min-height:390px}.day{min-width:0;padding:11px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.11)}.day.today{border-color:color-mix(in srgb,var(--accent) 48%,var(--edge));background:color-mix(in srgb,var(--accent) 6%,transparent)}.day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.day-head div{display:flex;align-items:baseline;gap:6px}.day-head b{font-size:16px}.day-head strong{font-size:25px;line-height:1}.day-head span{color:var(--muted);font-size:10px}.today-tag{padding:4px 7px;border-radius:999px;background:var(--accent);color:#00131c!important;font-weight:900}.events{display:grid;gap:7px}.event{--c:var(--accent);display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;width:100%;padding:9px;border:1px solid color-mix(in srgb,var(--c) 24%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:12px;background:color-mix(in srgb,var(--c) 8%,transparent);text-align:left;cursor:pointer}.event:hover{filter:brightness(1.1);transform:translateY(-1px)}.event-time{color:var(--c);font-size:10px;font-weight:900;line-height:1.25}.event-copy{min-width:0}.event-copy b{display:block;font-size:12px;line-height:1.25}.meta{display:flex;flex-wrap:wrap;gap:5px 9px;margin-top:4px;color:var(--muted);font-size:9px}.meta span{display:flex;align-items:center;gap:3px}.meta ha-icon{--mdc-icon-size:11px}.desc{display:-webkit-box;overflow:hidden;margin-top:5px;color:var(--muted);font-size:9px;line-height:1.35;-webkit-line-clamp:2;-webkit-box-orient:vertical}.empty,.loading{grid-column:1/-1;display:grid;place-items:center;min-height:300px;color:var(--muted);text-align:center}.loading i{width:35px;height:35px;margin-bottom:10px;border:3px solid var(--edge);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}.school{grid-column:1/-1}.school-person{margin-bottom:14px}.school-title{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:15px;font-weight:900}.school-title i{width:4px;height:20px;border-radius:4px;background:var(--c)}.school-grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto}.school-day{min-width:150px;padding:9px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}.school-day>header{display:block;margin-bottom:7px}.school-day>header b{font-size:12px}.lesson{--c:var(--accent);margin-top:6px;padding:7px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 9%,transparent)}.lesson b{display:block;font-size:10px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--muted);font-size:8px}.foot{display:flex;justify-content:space-between;margin-top:12px;color:var(--muted);font-size:9px}@keyframes pulse{50%{opacity:.4;transform:scale(.7)}}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:700px){.shell{padding:13px}header{display:block}.weather{display:inline-grid;margin-top:11px}.stats{grid-template-columns:repeat(2,1fr)}.agenda{grid-template-columns:1fr}.day{padding:10px}h2{font-size:24px}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-${luxCss({ base: ".filter", active: ".filter.active" })}
-/* An event happening now (Claude AI, 2026-10-13; user: "n\xE5r en Kalender er aktiv eller rammes skal der ogs\xE5 laves noget
-   animation"): it squishes when it starts, then glows in its calendar's colour with a "NU" tag. */
-.event.live{border-color:color-mix(in srgb,var(--c) 65%,var(--edge));background:color-mix(in srgb,var(--c) 17%,transparent);animation:luxGum .8s ease-out,calLive 2.4s ease-in-out .8s infinite}
-@keyframes calLive{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent),0 0 24px -4px color-mix(in srgb,var(--c) 75%,transparent)}}
-.event.live .event-time{display:inline-block;transform-origin:50% 90%;animation:luxGumLoop 3.2s ease-in-out infinite}
-.live-tag{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--c);vertical-align:1px}
-.live-tag i{width:5px;height:5px;border-radius:50%;background:#fff;animation:calDot 1.2s ease-in-out infinite}@keyframes calDot{50%{opacity:.25}}
-@media (prefers-reduced-motion:reduce){.event.live,.event.live .event-time,.live-tag i{animation:none!important}}
-    </style><ha-card><div class="shell"><header><div><div class="eyebrow"><i class="dot"></i>Familieplan</div><h2>${this._esc(this._config.title)}</h2><div class="sub">${this._esc(this._config.subtitle)}</div></div><div class="weather"><ha-icon data-weather-icon icon="mdi:weather-cloudy"></ha-icon><b data-temperature>\u2014</b><small data-weather-text>Vejr hentes</small></div></header>${this._toolbar()}<div class="stats"><div class="stat"><span>I dag</span><b data-stat="today">\u2014</b></div><div class="stat"><span>Denne uge</span><b data-stat="week">\u2014</b></div><div class="stat"><span>N\xE6ste aftale</span><b data-stat="next">\u2014</b></div><div class="stat"><span>Kalendere</span><b data-stat="calendars">\u2014</b></div></div><div class="legend">${this._config.calendars.map((c2) => `<span class="legend-item" style="--c:${this._esc(c2.color || "#22c9ff")}"><i></i>${this._esc(c2.name)}</span>`).join("")}</div><main class="agenda"></main><div class="foot"><span>Viser ${Number(this._config.days) || 30} dage frem</span><span data-updated>Opdaterer \u2026</span></div></div></ha-card>`;
-    this.shadowRoot.querySelectorAll("[data-filter]").forEach((button) => button.addEventListener("click", () => {
-      this._filter = button.dataset.filter;
-      this.shadowRoot.querySelectorAll("[data-filter]").forEach((node) => node.classList.toggle("active", node === button));
-      this._filter === "school" ? this._renderSchool() : this._renderAgenda();
-    }));
-    this._syncHeader();
-    this._renderAgenda();
-  }
-  _filtered() {
-    return this._filter === "all" ? this._events : this._events.filter((event) => this._calendar(event.calendar_entity).group === this._filter);
-  }
-  _renderAgenda() {
-    const root = this.shadowRoot?.querySelector(".agenda");
-    if (!root || this._filter === "school") return;
-    if (this._loading && !this._events.length) {
-      root.innerHTML = '<div class="loading"><div><i></i><br>Henter kalenderaftaler \u2026</div></div>';
-      return;
-    }
-    if (this._error && !this._events.length) {
-      root.innerHTML = `<div class="empty">${this._esc(this._error)}</div>`;
-      return;
-    }
-    const events = this._filtered(), now = /* @__PURE__ */ new Date(), groups = /* @__PURE__ */ new Map();
-    events.forEach((event) => {
-      const date2 = this._dateValue(event.start), key = this._dayKey(date2);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(event);
-    });
-    const days = [...groups.entries()].map(([key, list]) => [/* @__PURE__ */ new Date(`${key}T12:00:00`), list]);
-    root.innerHTML = days.length ? days.map(([date2, list]) => this._day(date2, list, now)).join("") : '<div class="empty">Ingen aftaler i den valgte periode</div>';
-    root.querySelectorAll("[data-entity]").forEach((button) => button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: button.dataset.entity }, bubbles: true, composed: true }))));
-    const weekEnd = new Date(now);
-    weekEnd.setDate(now.getDate() + (7 - now.getDay()));
-    const today = events.filter((e) => this._sameDay(this._dateValue(e.start), now)).length, week = events.filter((e) => this._dateValue(e.start) <= weekEnd).length, next = events.find((e) => this._dateValue(e.end) >= now);
-    this._stat("today", today);
-    this._stat("week", week);
-    this._stat("next", next ? this._relative(this._dateValue(next.start), now) : "Ingen");
-    this._stat("calendars", new Set(events.map((e) => e.calendar_entity)).size);
-    const updated = this.shadowRoot.querySelector("[data-updated]");
-    if (updated) updated.textContent = `Opdateret ${this._fmtTime(/* @__PURE__ */ new Date())}`;
-  }
-  _day(date2, events, now) {
-    const today = this._sameDay(date2, now);
-    return `<section class="day ${today ? "today" : ""}"><div class="day-head"><div><strong>${date2.getDate()}</strong><b>${DAY_NAMES[date2.getDay()]}</b><span>${MONTH_NAMES[date2.getMonth()]}</span></div>${today ? '<span class="today-tag">I dag</span>' : ""}</div><div class="events">${events.map((event) => this._event(event)).join("")}</div></section>`;
-  }
-  _event(event) {
-    const cal = this._calendar(event.calendar_entity), start = this._dateValue(event.start), end = this._dateValue(event.end), allDay = this._allDay(event), duration2 = Math.max(0, Math.round((end - start) / 6e4)), durationText = allDay ? "Hele dagen" : duration2 >= 60 ? `${Math.floor(duration2 / 60)} t${duration2 % 60 ? ` ${duration2 % 60} min` : ""}` : `${duration2} min`;
-    const now = Date.now(), live = !allDay && start <= now && end > now;
-    return `<button class="event${live ? " live" : ""}" data-entity="${this._esc(event.calendar_entity)}" style="--c:${this._esc(cal.color || "#22c9ff")}"><span class="event-time">${allDay ? "HELE\nDAGEN" : this._fmtTime(start)}</span><span class="event-copy"><b>${this._esc(event.summary || "Uden titel")}${live ? '<span class="live-tag"><i></i>NU</span>' : ""}</b><span class="meta"><span><ha-icon icon="mdi:calendar-blank"></ha-icon>${this._esc(cal.name || event.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${durationText}</span>${event.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${this._esc(event.location.split("\n")[0])}</span>` : ""}</span>${event.description ? `<span class="desc">${this._esc(event.description)}</span>` : ""}</span></button>`;
-  }
-  _relative(date2, now) {
-    const days = Math.floor((new Date(date2.getFullYear(), date2.getMonth(), date2.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
-    return days === 0 ? this._fmtTime(date2) : days === 1 ? "I morgen" : `Om ${days} dage`;
-  }
-  _stat(key, value) {
-    const node = this.shadowRoot?.querySelector(`[data-stat="${key}"]`);
-    if (node) node.textContent = value;
-  }
-  _renderSchool() {
-    const root = this.shadowRoot?.querySelector(".agenda");
-    if (!root) return;
-    const state = this._hass?.states?.[this._config.school_entity], data = state?.attributes || {};
-    const now = /* @__PURE__ */ new Date(), monday = new Date(now);
-    monday.setDate(now.getDate() - (now.getDay() + 6) % 7);
-    monday.setHours(0, 0, 0, 0);
-    const people = Object.entries(data).filter(([, events]) => Array.isArray(events));
-    root.innerHTML = people.length ? `<div class="school">${people.map(([name, events], personIndex) => this._schoolPerson(name, events, monday, personIndex)).join("")}</div>` : '<div class="empty">Skoleskemaet har ingen data</div>';
-    this._stat("today", people.reduce((sum, [, events]) => sum + events.filter((e) => this._sameDay(new Date(e.start), now)).length, 0));
-    this._stat("week", people.reduce((sum, [, events]) => sum + events.filter((e) => {
-      const d = new Date(e.start);
-      return d >= monday && d < new Date(monday.getTime() + 7 * 864e5);
-    }).length, 0));
-    this._stat("next", "Skole");
-    this._stat("calendars", people.length);
-  }
-  _schoolPerson(name, events, monday, index) {
-    const color = index % 2 ? "#f7b942" : "#28df9d";
-    const days = [0, 1, 2, 3, 4].map((offset) => {
-      const date2 = new Date(monday);
-      date2.setDate(date2.getDate() + offset);
-      const lessons = events.filter((e) => this._sameDay(new Date(e.start), date2)).sort((a, b) => new Date(a.start) - new Date(b.start));
-      return `<section class="school-day"><header><b>${DAY_NAMES[date2.getDay()]} ${date2.getDate()}. ${MONTH_NAMES[date2.getMonth()]}</b></header>${lessons.map((e) => this._lesson(e)).join("") || '<div class="desc">Ingen timer</div>'}</section>`;
-    });
-    return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${this._esc(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
-  }
-  _lesson(event) {
-    const [code, ...teacher] = String(event.summary || "").split(",");
-    const hue = this._subjectColor(code.trim());
-    return `<div class="lesson" style="--c:${hue}"><b>${this._esc(SUBJECTS[code.trim()] || code.trim())}</b><span>${this._fmtTime(new Date(event.start))}\u2013${this._fmtTime(new Date(event.end))}${event.location ? ` \xB7 ${this._esc(event.location)}` : ""}</span>${teacher.length ? `<small>${this._esc(teacher.join(",").trim())}</small>` : ""}</div>`;
-  }
-  _subjectColor(code) {
-    const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
-    if (fixed[code]) return fixed[code];
-    let hash = 0;
-    for (const char of code) hash = (hash * 31 + char.charCodeAt(0)) % 360;
-    return `hsl(${hash} 65% 58%)`;
-  }
-  _syncHeader() {
-    if (!this._config || !this.shadowRoot) return;
-    const state = this._hass?.states?.[this._config.weather_entity], temperature = state?.attributes?.temperature, unit = state?.attributes?.temperature_unit || "\xB0C";
-    const temp = this.shadowRoot.querySelector("[data-temperature]"), text = this.shadowRoot.querySelector("[data-weather-text]"), icon3 = this.shadowRoot.querySelector("[data-weather-icon]");
-    if (temp) temp.textContent = temperature == null ? "\u2014" : `${Math.round(Number(temperature))}${unit}`;
-    if (text) text.textContent = state?.attributes?.friendly_name || state?.state || "Vejr";
-    if (icon3) icon3.setAttribute("icon", state?.attributes?.icon || this._weatherIcon(state?.state));
-  }
-  _weatherIcon(state) {
-    return { sunny: "mdi:weather-sunny", cloudy: "mdi:weather-cloudy", rainy: "mdi:weather-rainy", pouring: "mdi:weather-pouring", snowy: "mdi:weather-snowy", fog: "mdi:weather-fog", windy: "mdi:weather-windy", "partlycloudy": "mdi:weather-partly-cloudy" }[state] || "mdi:weather-cloudy";
+    clearInterval(this._clock);
+    clearTimeout(this._refresh);
   }
   getCardSize() {
     return 12;
   }
+  getGridOptions() {
+    return { columns: 12, rows: "auto" };
+  }
+  // ---------- state ----------
+  _store(patch) {
+    let s = {};
+    try {
+      s = JSON.parse(localStorage.getItem(STORE) || "{}");
+    } catch {
+    }
+    if (patch) {
+      s = { ...s, ...patch };
+      try {
+        localStorage.setItem(STORE, JSON.stringify(s));
+      } catch {
+      }
+    }
+    return s;
+  }
+  _cal(entity) {
+    return this._config.calendars.find((c2) => c2.entity === entity) || {};
+  }
+  _groups() {
+    return [...new Set(this._config.calendars.map((c2) => c2.group).filter(Boolean))];
+  }
+  _val(v) {
+    return new Date(v?.dateTime || `${v?.date}T00:00:00`);
+  }
+  _allDay(e) {
+    return Boolean(e.start?.date && !e.start?.dateTime);
+  }
+  _visible() {
+    return this._events.filter((e) => !this._hidden.has(e.calendar_entity));
+  }
+  _on(e, now) {
+    return !e.allDay && e.s <= now && e.e > now;
+  }
+  // Loads from Monday of the shown week (or this week) to `days` ahead; a week outside it widens the range.
+  async _ensure(wantStart, wantEnd) {
+    if (!this._hass?.callApi || this._loading) return;
+    const today = startOfDay(/* @__PURE__ */ new Date());
+    const start = wantStart || (this._range && dayKey(today) === this._loadedDay ? this._range.start : monday(today));
+    const end = wantEnd || addDays(today, Math.max(14, Number(this._config.days) || 30));
+    if (this._range && dayKey(today) === this._loadedDay && start >= this._range.start && end <= this._range.end) return;
+    const s = this._range && dayKey(today) === this._loadedDay ? new Date(Math.min(start, this._range.start)) : start;
+    const e = this._range && dayKey(today) === this._loadedDay ? new Date(Math.max(end, this._range.end)) : end;
+    this._loading = true;
+    if (!this._events.length) this._render();
+    try {
+      const rows = await Promise.all(this._config.calendars.filter((c2) => c2.entity).map(async (c2) => {
+        const list = await this._hass.callApi("GET", `calendars/${encodeURIComponent(c2.entity)}?start=${encodeURIComponent(s.toISOString())}&end=${encodeURIComponent(e.toISOString())}`).catch(() => []);
+        return (list || []).map((ev) => ({ ...ev, calendar_entity: c2.entity }));
+      }));
+      this._events = rows.flat().map((ev) => {
+        const allDay = this._allDay(ev);
+        const st = this._val(ev.start);
+        let en = this._val(ev.end);
+        if (!(en > st)) en = new Date(+st + (allDay ? 864e5 : HOUR));
+        return { ...ev, allDay, s: +st, e: +en };
+      }).sort((a, b) => a.s - b.s || b.allDay - a.allDay);
+      this._range = { start: s, end: e };
+      this._loadedDay = dayKey(today);
+      this._error = null;
+    } catch (err) {
+      this._error = err?.message || "Kalenderdata kunne ikke hentes";
+    }
+    this._loading = false;
+    this._liveKey = null;
+    this._render();
+    clearTimeout(this._refresh);
+    this._refresh = setTimeout(() => {
+      this._range = null;
+      this._ensure();
+    }, 5 * 6e4);
+  }
+  // Every half minute: countdowns and the now line move; a full redraw only when an event starts or ends.
+  _tick() {
+    if (!this._built) return;
+    const now = Date.now();
+    const key = this._visible().filter((e) => this._on(e, now)).map((e) => `${e.calendar_entity}|${e.s}`).join("~") + `|${dayKey(/* @__PURE__ */ new Date())}`;
+    if (key !== this._liveKey) {
+      this._liveKey = key;
+      this._render();
+      return;
+    }
+    this._paintNow();
+  }
+  // ---------- shell ----------
+  _build() {
+    if (!this._config) return;
+    this._built = true;
+    const a = LUX_ACCENT;
+    this.shadowRoot.innerHTML = `<style>
+:host{display:block;--a:${a};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(135,155,175,.2)));--soft:color-mix(in srgb,var(--ink) 5%,transparent)}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+ha-card{position:relative;overflow:hidden;padding:22px 24px 24px;color:var(--ink)}
+.top{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--a)}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:blink 2.4s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
+h2{margin:4px 0 0;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-.02em}
+h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spacing:0;color:var(--mut)}
+.wx{margin-left:auto;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.wx ha-icon{--mdc-icon-size:34px;color:var(--a);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--a) 45%,transparent))}
+.wx b{display:block;font-size:24px;font-weight:800;line-height:1}.wx span{display:block;margin-top:3px;font-size:12px;color:var(--mut)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;margin-top:18px}
+.panel{position:relative;padding:16px 18px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);min-width:0}
+.panel h3{margin:0 0 10px;font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:8px}
+.panel h3 em{margin-left:auto;font-style:normal;letter-spacing:.04em;text-transform:none;font-weight:700;color:var(--mut)}
+.nx{--c:var(--a);display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;width:100%;padding:0;border:0;background:none;text-align:left;cursor:pointer}
+.nx+.nx{margin-top:12px;padding-top:12px;border-top:1px solid var(--edge)}
+.nx .ic{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent)}
+.nx .ic ha-icon{--mdc-icon-size:24px}
+.nx.live .ic{animation:luxGumLoop 3.2s ease-in-out infinite;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 20px -4px var(--c)}
+.nx b{display:block;font-size:19px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx small{display:block;margin-top:3px;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx .cd{color:var(--c);font-weight:800}
+.prog{grid-column:1/-1;height:6px;border-radius:6px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.prog i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 70%,transparent),var(--c));box-shadow:0 0 12px var(--c);transition:width 1s linear}
+.empty-nx{color:var(--mut);font-size:14px;padding:6px 0}
+.tl{position:relative;height:74px;margin-top:4px}
+.tl .hr{position:absolute;top:0;bottom:16px;border-left:1px dashed color-mix(in srgb,var(--ink) 10%,transparent)}
+.tl .hr span{position:absolute;bottom:-16px;left:0;transform:translateX(-50%);font-size:10px;color:var(--mut)}
+.tl .blk{--c:var(--a);position:absolute;height:22px;border-radius:7px;padding:0 7px;display:flex;align-items:center;font-size:11px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 85%,#fff 0%),color-mix(in srgb,var(--c) 65%,#000));border:0;cursor:pointer;box-shadow:0 4px 14px -6px var(--c)}
+.tl .blk.past{opacity:.38}
+.tl .now,.wk .now{position:absolute;z-index:3;pointer-events:none}
+.tl .now{top:-4px;bottom:12px;width:2px;background:var(--a);box-shadow:0 0 10px var(--a)}
+.tl .now::before{content:"";position:absolute;top:-3px;left:-4px;width:10px;height:10px;border-radius:50%;background:var(--a);box-shadow:0 0 12px var(--a)}
+.sum{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--mut)}.sum b{color:var(--ink);font-size:15px;margin-right:4px}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 12px}
+.seg{display:inline-flex;gap:3px;padding:4px;border-radius:15px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.seg button{display:flex;align-items:center;gap:7px;padding:9px 16px;border:0;border-radius:11px;background:transparent;color:var(--mut);font-size:13px;font-weight:800;cursor:pointer}
+.seg button ha-icon{--mdc-icon-size:18px}
+.chips{display:flex;gap:7px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px}.chips::-webkit-scrollbar{display:none}
+.chip{--c:var(--a);flex:none;display:flex;align-items:center;gap:7px;padding:7px 12px 7px 8px;border-radius:999px;border:0;background:color-mix(in srgb,var(--c) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 38%,transparent);font-size:12px;font-weight:800;cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),opacity .25s,filter .25s}
+.chip:active{transform:scale(.9)}
+.chip ha-icon{--mdc-icon-size:16px;color:var(--c)}
+.chip .n{min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:grid;place-items:center;font-size:10px;background:var(--c);color:#111}
+.chip.off{opacity:.42;filter:saturate(.2);box-shadow:inset 0 0 0 1px var(--edge);background:transparent}
+.chip.off .n{background:var(--soft);color:var(--mut)}
+.chip.grp{--c:var(--a);padding-left:12px}
+.chip.flash{animation:luxGum .6s ease-out}
+.sep{flex:none;width:1px;height:22px;background:var(--edge);margin:0 2px}
+.wknav{display:flex;align-items:center;gap:6px;margin-left:auto}
+.wknav button{display:grid;place-items:center;min-width:38px;height:38px;padding:0 12px;border:0;border-radius:12px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);font-size:12px;font-weight:800;cursor:pointer}
+.wknav b{min-width:150px;text-align:center;font-size:14px}
+.body{min-height:120px}
+.agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;align-items:start}
+.day{padding:14px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent),0 10px 30px -14px color-mix(in srgb,var(--a) 60%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--a) 9%,transparent),var(--soft))}
+.dh{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.dh strong{font-size:28px;font-weight:850;line-height:1}.dh b{font-size:15px;text-transform:capitalize}.dh span{font-size:12px;color:var(--mut)}
+.dh .tag{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:900;color:color-mix(in srgb,var(--a) 70%,#fff);background:color-mix(in srgb,var(--a) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 45%,transparent)}
+.alld{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.alld button{--c:var(--a);padding:4px 10px;border:0;border-radius:999px;font-size:11px;font-weight:800;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent);cursor:pointer}
+.ev{--c:var(--a);position:relative;display:grid;grid-template-columns:52px 4px minmax(0,1fr);gap:10px;width:100%;padding:9px 10px;border:0;border-radius:14px;background:transparent;text-align:left;cursor:pointer;transition:background .2s,transform .25s cubic-bezier(.2,1.4,.4,1)}
+.ev:hover{background:color-mix(in srgb,var(--c) 9%,transparent)}.ev:active{transform:scale(.97)}
+.ev+.ev{margin-top:2px}
+.ev .t{font-size:13px;font-weight:850;line-height:1.25;color:var(--c)}.ev .t small{display:block;font-size:11px;font-weight:600;color:var(--mut)}
+.ev .ln{border-radius:4px;background:var(--c);box-shadow:0 0 10px -2px var(--c)}
+.ev .x b{display:block;font-size:14px;font-weight:800;line-height:1.25}
+.ev .x>span{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px;font-size:11.5px;color:var(--mut)}
+.ev .x ha-icon{--mdc-icon-size:13px;margin-right:3px;vertical-align:-2px}
+.ev.past{opacity:.45}
+.ev.live{background:color-mix(in srgb,var(--c) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent);animation:luxGum .8s ease-out,live 2.4s ease-in-out .8s infinite}
+@keyframes live{0%,100%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent)}50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 80%,transparent),0 0 24px -4px var(--c)}}
+.nu{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:9.5px;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--c);vertical-align:2px}
+.nu i{width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s ease-in-out infinite}
+.wk{position:relative;display:grid;grid-template-columns:46px repeat(7,minmax(0,1fr));border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);overflow:hidden}
+.wk .hd{padding:10px 8px;text-align:center;border-bottom:1px solid var(--edge);font-size:12px;color:var(--mut)}
+.wk .hd b{display:block;font-size:20px;color:var(--ink);line-height:1.1}.wk .hd.today b{color:var(--a);text-shadow:0 0 14px color-mix(in srgb,var(--a) 60%,transparent)}
+.wk .ad{min-height:30px;padding:4px;border-bottom:1px solid var(--edge);display:flex;flex-direction:column;gap:3px}
+.wk .ad button{--c:var(--a);padding:2px 6px;border:0;border-radius:6px;font-size:10.5px;font-weight:800;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:color-mix(in srgb,var(--c) 22%,transparent);cursor:pointer}
+.wk .ax{position:relative;border-right:1px solid var(--edge)}
+.wk .ax span{position:absolute;right:6px;transform:translateY(-50%);font-size:10px;color:var(--mut)}
+.wk .col{position:relative;border-left:1px solid color-mix(in srgb,var(--edge) 60%,transparent)}
+.wk .col.today{background:color-mix(in srgb,var(--a) 6%,transparent)}
+.wk .gl{position:absolute;left:0;right:0;border-top:1px solid color-mix(in srgb,var(--ink) 6%,transparent)}
+.wk .blk{--c:var(--a);position:absolute;display:flex;flex-direction:column;justify-content:flex-start;padding:4px 6px;border:0;border-radius:9px;overflow:hidden;text-align:left;font-size:11px;line-height:1.2;cursor:pointer;color:var(--ink);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 30%,transparent),color-mix(in srgb,var(--c) 16%,transparent));box-shadow:inset 3px 0 0 var(--c),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}
+.wk .blk:hover{filter:brightness(1.15);z-index:2}.wk .blk:active{transform:scale(.96)}
+.wk .blk b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wk .blk small{display:block;color:var(--mut);font-size:10px}
+.wk .blk.past{opacity:.5}.wk .blk.live{animation:luxGum .8s ease-out,live 2.4s ease-in-out .8s infinite}
+.wk .now{left:0;right:0;height:2px;background:var(--a);box-shadow:0 0 10px var(--a)}.wk .now::before{content:"";position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--a)}
+.dpick{display:none;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.dpick button{flex:1;min-width:44px;padding:7px 0 8px;border:0;border-radius:13px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);font-size:11px;color:var(--mut);cursor:pointer}
+.dpick button b{display:block;font-size:17px;color:var(--ink)}.dpick button i{display:block;width:5px;height:5px;margin:3px auto 0;border-radius:50%;background:var(--a)}.dpick button i.no{visibility:hidden}
+.dpick button.on{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 28%,transparent),color-mix(in srgb,var(--a) 7%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 45%,transparent),0 8px 24px -8px color-mix(in srgb,var(--a) 60%,transparent);animation:luxGum .6s ease-out}
+.msg{display:grid;place-items:center;min-height:180px;color:var(--mut);font-size:14px;text-align:center}
+.spin{width:28px;height:28px;margin:0 auto 10px;border-radius:50%;border:3px solid var(--soft);border-top-color:var(--a);animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.sheet{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fade .2s ease-out}
+@keyframes fade{from{opacity:0}}
+.sheet .box{--c:var(--a);width:min(460px,100%);max-height:100%;overflow:auto;padding:20px 22px;border-radius:22px;background:var(--ha-card-background,var(--card-background-color,#161a21));box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);animation:luxGum .5s ease-out}
+.sheet .box .hd2{display:flex;align-items:flex-start;gap:12px}.sheet .box .hd2 .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.sheet h4{margin:0;font-size:20px;line-height:1.2}.sheet .cal{font-size:12px;font-weight:800;color:var(--c)}
+.sheet .x{margin-left:auto;width:36px;height:36px;flex:none;border:0;border-radius:50%;background:var(--soft);cursor:pointer;display:grid;place-items:center}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:14px}.sheet dt{color:var(--mut)}.sheet dt ha-icon{--mdc-icon-size:18px}.sheet dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.sheet .open{margin-top:16px;width:100%;padding:11px;border:0;border-radius:13px;font-weight:800;cursor:pointer;color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent)}
+.school{display:grid;gap:14px}
+.school-person{padding:14px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.school-title{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:16px;font-weight:900}.school-title i{width:5px;height:22px;border-radius:4px;background:var(--c)}
+.school-grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto}
+.school-day{min-width:150px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent);box-shadow:inset 0 0 0 1px var(--edge)}
+.school-day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent)}
+.school-day>header{margin-bottom:6px;font-size:12px;font-weight:800;text-transform:capitalize}
+.lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:3px solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
+.lesson.live{animation:live 2.4s ease-in-out infinite}
+.lesson b{display:block;font-size:12px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--mut);font-size:10.5px}
+.foot{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:var(--mut)}
+${luxCss({ base: ".seg button", active: ".seg button.on" })}
+${LUX_KEYFRAMES}
+@media (max-width:900px){.hero{grid-template-columns:1fr}}
+@media (max-width:700px){ha-card{padding:16px 14px 18px}h2{font-size:24px}h2 small{display:none}.wx{padding:8px 12px}.wx ha-icon{--mdc-icon-size:26px}.wx b{font-size:19px}
+  .tlp{display:none}.nx b{font-size:17px}.bar{gap:8px}.seg{width:100%}.seg button{flex:1;justify-content:center;padding:9px 6px}.seg button span{display:none}
+  .wknav{width:100%;margin-left:0}.wknav b{flex:1;min-width:0}.agenda{grid-template-columns:1fr}
+  .dpick{display:flex}.wk{display:none}.wkday{display:block}}
+@media (min-width:701px){.wkday{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style><ha-card>
+<div class="top"><div><div class="eyebrow"><i></i>${esc3(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="wx" data-wx hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
+<div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
+<section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
+<div class="bar"><div class="seg" data-seg></div><div class="chips" data-chips></div></div>
+<div class="body" data-body></div>
+<div class="foot"><span data-range></span><span data-upd></span></div>
+</ha-card>`;
+    const r = this.shadowRoot;
+    r.querySelector("[data-seg]").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-view]");
+      if (!b) return;
+      this._view = b.dataset.view;
+      this._store({ view: this._view });
+      this._render();
+    });
+    r.querySelector("[data-chips]").addEventListener("click", (ev) => this._chipClick(ev));
+    r.querySelector("ha-card").addEventListener("click", (ev) => {
+      const nav = ev.target.closest("[data-wk]");
+      if (nav) {
+        this._weekNav(Number(nav.dataset.wk));
+        return;
+      }
+      const dp = ev.target.closest("[data-dpick]");
+      if (dp) {
+        this._mobileDay = new Date(Number(dp.dataset.dpick));
+        this._render();
+        return;
+      }
+      if (ev.target.closest("[data-close]") || ev.target.classList.contains("sheet")) {
+        r.querySelector(".sheet")?.remove();
+        return;
+      }
+      const mi = ev.target.closest("[data-more]");
+      if (mi) {
+        this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: mi.dataset.more }, bubbles: true, composed: true }));
+        return;
+      }
+      const e = ev.target.closest("[data-ev]");
+      if (e) this._sheet(this._byId.get(e.dataset.ev));
+    });
+    this._render();
+  }
+  _weather() {
+    const r = this.shadowRoot;
+    const box = r?.querySelector("[data-wx]");
+    if (!box) return;
+    const st = this._hass?.states?.[this._config.weather_entity];
+    box.hidden = !st;
+    if (!st) return;
+    const [txt, icon3] = WEATHER2[st.state] || [st.state, "mdi:weather-cloudy"];
+    const t = Number(st.attributes?.temperature);
+    const u3 = st.attributes?.temperature_unit || "\xB0C";
+    const k = `${st.state}|${t}`;
+    if (k === this._wxKey) return;
+    this._wxKey = k;
+    r.querySelector("[data-wxi]").setAttribute("icon", icon3);
+    r.querySelector("[data-wxt]").textContent = Number.isFinite(t) ? `${Math.round(t)}${u3}` : "\u2013";
+    r.querySelector("[data-wxs]").textContent = txt;
+  }
+  // ---------- render ----------
+  _render() {
+    if (!this._built) return;
+    const r = this.shadowRoot;
+    const now = /* @__PURE__ */ new Date();
+    const t = +now;
+    const d = r.querySelector("[data-date]");
+    const ds = `${DAY[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
+    d.innerHTML = `${esc3(ds[0].toUpperCase() + ds.slice(1))}<small>${esc3(this._config.subtitle || "")}</small>`;
+    this._byId = /* @__PURE__ */ new Map();
+    this._visible().forEach((e, i) => {
+      e._id = e._id || `e${i}-${e.s}`;
+      this._byId.set(e._id, e);
+    });
+    this._renderSeg();
+    this._renderChips();
+    this._renderHero(t);
+    const body = r.querySelector("[data-body]");
+    if (this._view === "school") body.innerHTML = this._schoolHtml(now);
+    else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc3(this._error)}</div>`;
+    else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
+    const rg = r.querySelector("[data-range]");
+    rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
+    r.querySelector("[data-upd]").textContent = this._range ? `Opdateret ${hhmm(/* @__PURE__ */ new Date())}` : "";
+    this._paintNow();
+  }
+  _renderSeg() {
+    const views = [["agenda", "mdi:format-list-text", "Agenda"], ["week", "mdi:calendar-week", "Uge"], ...this._config.school_entity ? [["school", "mdi:school-outline", "Skoleskema"]] : []];
+    const html = views.map(([k, i, n]) => `<button type="button" data-view="${k}" class="${this._view === k ? "on" : ""}"><ha-icon icon="${i}"></ha-icon><span>${n}</span></button>`).join("");
+    const seg = this.shadowRoot.querySelector("[data-seg]");
+    if (seg._h !== html) {
+      seg._h = html;
+      seg.innerHTML = html;
+    }
+  }
+  _renderChips() {
+    const today = dayKey(/* @__PURE__ */ new Date());
+    const counts = /* @__PURE__ */ new Map();
+    this._events.forEach((e) => {
+      if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
+    });
+    const groups = this._groups();
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc3(g)}">${esc3(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+      const n = counts.get(c2.entity) || 0;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc3(c2.entity)}" style="--c:${esc3(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc3(c2.name || c2.entity)}"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon>${esc3(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+    }).join("");
+    const box = this.shadowRoot.querySelector("[data-chips]");
+    if (box._h !== html) {
+      const sl = box.scrollLeft;
+      box._h = html;
+      box.innerHTML = html;
+      box.scrollLeft = sl;
+    }
+  }
+  _chipClick(ev) {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    const all = this._config.calendars.filter((c2) => c2.entity).map((c2) => c2.entity);
+    if (b.dataset.grp) {
+      const g = b.dataset.grp;
+      this._hidden = new Set(g === "*" ? [] : all.filter((e) => this._cal(e).group !== g));
+    } else if (b.dataset.cal) {
+      const e = b.dataset.cal;
+      if (this._hidden.has(e)) this._hidden.delete(e);
+      else this._hidden.add(e);
+      if (this._hidden.size === all.length) this._hidden.delete(e);
+    }
+    this._store({ hidden: [...this._hidden] });
+    this._liveKey = null;
+    this._render();
+    const again = this.shadowRoot.querySelector(b.dataset.grp ? `[data-grp="${CSS.escape(b.dataset.grp)}"]` : `[data-cal="${CSS.escape(b.dataset.cal)}"]`);
+    again?.classList.add("flash");
+    setTimeout(() => again?.classList.remove("flash"), 650);
+  }
+  // Now (with progress) or the next ones (with countdown), then today's timeline.
+  _renderHero(t) {
+    const r = this.shadowRoot;
+    const ev = this._visible();
+    const live = ev.filter((e) => this._on(e, t));
+    const next = ev.filter((e) => !e.allDay && e.s > t).slice(0, live.length ? 1 : 2);
+    r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
+    const item2 = (e, isLive) => {
+      const c2 = this._cal(e.calendar_entity);
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc3(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc3(c2.name || "")}${e.location ? ` \xB7 ${esc3(e.location)}` : ""}</small></span>
+      ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
+    };
+    r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
+    const d0 = +startOfDay(new Date(t));
+    const d1 = d0 + 864e5;
+    const todays = ev.filter((e) => !e.allDay && e.e > d0 && e.s < d1);
+    let h0 = 7;
+    let h1 = 22;
+    todays.forEach((e) => {
+      h0 = Math.min(h0, new Date(Math.max(e.s, d0)).getHours());
+      h1 = Math.max(h1, Math.ceil((Math.min(e.e, d1) - d0) / HOUR));
+    });
+    h1 = Math.min(24, h1);
+    const span = (h1 - h0) * HOUR;
+    const x = (ms) => Math.max(0, Math.min(100, (ms - d0 - h0 * HOUR) / span * 100));
+    const lanes = [];
+    const blocks = todays.map((e) => {
+      let l = lanes.findIndex((end) => end <= e.s);
+      if (l < 0) {
+        l = lanes.length;
+        lanes.push(0);
+      }
+      lanes[l] = e.e;
+      const c2 = this._cal(e.calendar_entity);
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc3(e.summary || "")}">${esc3(e.summary || "")}</button>`;
+    });
+    const hrs = [];
+    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad(h)}</span></div>`);
+    r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR}|${span}"></div>`;
+    r.querySelector("[data-tlh]").textContent = todays.length ? `${todays.length} ${todays.length === 1 ? "aftale" : "aftaler"}` : "Fri";
+    const wkEnd = +addDays(monday(new Date(t)), 7);
+    const week = ev.filter((e) => e.s >= d0 && e.s < wkEnd).length;
+    const left = todays.filter((e) => e.s > t).length;
+    r.querySelector("[data-sum]").innerHTML = `<span><b>${left}</b>tilbage i dag</span><span><b>${week}</b>resten af ugen</span>`;
+  }
+  _agendaHtml(t) {
+    const days = /* @__PURE__ */ new Map();
+    const ev = this._visible();
+    const today = startOfDay(new Date(t));
+    const put = (d, e, kind) => {
+      const k = dayKey(d);
+      if (!days.has(k)) days.set(k, { d, all: [], timed: [] });
+      days.get(k)[kind].push(e);
+    };
+    ev.forEach((e) => {
+      if (e.e <= +today) return;
+      if (e.allDay) {
+        for (let d = startOfDay(new Date(Math.max(e.s, +today))); +d < e.e; d = addDays(d, 1)) put(d, e, "all");
+      } else put(startOfDay(new Date(Math.max(e.s, +today))), e, "timed");
+    });
+    const list = [...days.values()].filter((x) => +x.d >= +today).sort((a, b) => a.d - b.d);
+    if (!list.length) return '<div class="msg">Ingen aftaler i de valgte kalendere \u{1F389}</div>';
+    return `<div class="agenda">${list.map((x) => {
+      const isToday = +x.d === +today;
+      const tomorrow = +x.d === +addDays(today, 1);
+      return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc3(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc3(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
+    }).join("")}</div>`;
+  }
+  _evHtml(e, t) {
+    const c2 = this._cal(e.calendar_entity);
+    const live = this._on(e, t);
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc3(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon>${esc3(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc3(e.location)}</span>` : ""}</span></span></button>`;
+  }
+  // A real week: hours down the side, each day a column, overlapping events side by side.
+  _weekHtml(t) {
+    const w0 = this._week;
+    const days = [...Array(7)].map((_, i) => addDays(w0, i));
+    const w1 = +addDays(w0, 7);
+    const ev = this._visible().filter((e) => e.e > +w0 && e.s < w1);
+    let h0 = 7;
+    let h1 = 21;
+    ev.filter((e) => !e.allDay).forEach((e) => {
+      const s = new Date(e.s);
+      const en = new Date(e.e);
+      if (dayKey(s) === dayKey(en) || en - s < 864e5) {
+        h0 = Math.min(h0, s.getHours());
+        h1 = Math.max(h1, en.getHours() + (en.getMinutes() ? 1 : 0) || 24);
+      }
+    });
+    h0 = Math.max(0, h0);
+    h1 = Math.min(24, Math.max(h1, h0 + 6));
+    const PX = 46;
+    const H3 = (h1 - h0) * PX;
+    const today = dayKey(new Date(t));
+    const nav = `<div class="bar" style="margin-top:0"><div class="wknav"><button type="button" data-wk="-1" aria-label="Forrige uge">\u2039</button><button type="button" data-wk="0">I dag</button><b>Uge ${this._weekNo(w0)} \xB7 ${w0.getDate()}. ${MONTH_SHORT[w0.getMonth()]} \u2013 ${addDays(w0, 6).getDate()}. ${MONTH_SHORT[addDays(w0, 6).getMonth()]}</b><button type="button" data-wk="1" aria-label="N\xE6ste uge">\u203A</button></div></div>`;
+    const colHtml = (d, extraCls = "") => {
+      const ds = +d;
+      const de2 = ds + 864e5;
+      const items = ev.filter((e) => !e.allDay && e.e > ds && e.s < de2).map((e) => ({ e, s: Math.max(e.s, ds), en: Math.min(e.e, de2) })).sort((a, b) => a.s - b.s || b.en - a.en);
+      const out = [];
+      let cluster = [];
+      let cEnd = 0;
+      const flush = () => {
+        const lanes = [];
+        cluster.forEach((it) => {
+          let l = lanes.findIndex((end) => end <= it.s);
+          if (l < 0) {
+            l = lanes.length;
+            lanes.push(0);
+          }
+          lanes[l] = it.en;
+          it.l = l;
+        });
+        cluster.forEach((it) => {
+          it.n = lanes.length;
+          out.push(it);
+        });
+        cluster = [];
+      };
+      items.forEach((it) => {
+        if (cluster.length && it.s >= cEnd) flush();
+        cluster.push(it);
+        cEnd = Math.max(cEnd, it.en);
+      });
+      flush();
+      const y = (ms) => ((ms - ds) / HOUR - h0) * PX;
+      const blocks = out.map(({ e, s, en, l, n }) => {
+        const c2 = this._cal(e.calendar_entity);
+        const top = Math.max(0, y(s));
+        const h = Math.max(20, Math.min(H3, y(en)) - top - 2);
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc3(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
+      }).join("");
+      const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
+      return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
+    };
+    const allDay = (d) => {
+      const ds = +d;
+      const de2 = ds + 864e5;
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc3(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc3(e.summary || "")}</button>`).join("");
+    };
+    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad(h0 + i)}</span>` : "").join("")}</div>`;
+    const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
+      <div class="ad" style="border-right:1px solid var(--edge)"></div>${days.map((d) => `<div class="ad">${allDay(d)}</div>`).join("")}
+      ${axis}${days.map((d) => colHtml(d)).join("")}</div>`;
+    if (+this._mobileDay < +w0 || +this._mobileDay >= w1) this._mobileDay = days.find((d) => dayKey(d) === today) || w0;
+    const pick = `<div class="dpick">${days.map((d) => {
+      const has = ev.some((e) => e.e > +d && e.s < +d + 864e5);
+      return `<button type="button" data-dpick="${+d}" class="${dayKey(d) === dayKey(this._mobileDay) ? "on" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b><i class="${has ? "" : "no"}"></i></button>`;
+    }).join("")}</div>`;
+    const md = this._mobileDay;
+    const mAll = allDay(md);
+    const mob = `<div class="wkday">${pick}<div class="wk" style="display:grid;grid-template-columns:46px minmax(0,1fr)">${mAll ? `<div class="ad" style="grid-column:1/-1">${mAll}</div>` : ""}${axis}${colHtml(md)}</div></div>`;
+    return nav + desk + mob;
+  }
+  _weekNav(dir) {
+    this._week = dir === 0 ? monday(/* @__PURE__ */ new Date()) : addDays(this._week, dir * 7);
+    if (dir === 0) this._mobileDay = startOfDay(/* @__PURE__ */ new Date());
+    else this._mobileDay = addDays(this._mobileDay, dir * 7);
+    this._render();
+    this._ensure(this._week, addDays(this._week, 7));
+  }
+  _weekNo(d) {
+    const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = x.getUTCDay() || 7;
+    x.setUTCDate(x.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+    return Math.ceil(((x - y0) / 864e5 + 1) / 7);
+  }
+  // Countdowns, progress bars and now lines, without a redraw.
+  _paintNow() {
+    const r = this.shadowRoot;
+    const t = Date.now();
+    r.querySelectorAll("[data-cd]").forEach((el) => {
+      const ms = Number(el.dataset.cd) - t;
+      el.textContent = el.hasAttribute("data-end") ? until(ms).replace("om ", "slutter om ") : until(ms);
+    });
+    r.querySelectorAll("[data-prog]").forEach((el) => {
+      const [s, e] = el.dataset.prog.split("|").map(Number);
+      el.style.width = `${Math.min(100, (t - s) / (e - s) * 100).toFixed(1)}%`;
+    });
+    r.querySelectorAll("[data-now-tl]").forEach((el) => {
+      const [a, span] = el.dataset.nowTl.split("|").map(Number);
+      const p = (t - a) / span * 100;
+      el.style.display = p < 0 || p > 100 ? "none" : "";
+      el.style.left = `${p}%`;
+    });
+    r.querySelectorAll("[data-now-wk]").forEach((el) => {
+      const [ds, h0, px] = el.dataset.nowWk.split("|").map(Number);
+      const y = ((t - ds) / HOUR - h0) * px;
+      el.style.display = y < 0 || y > el.parentElement.offsetHeight ? "none" : "";
+      el.style.top = `${y}px`;
+    });
+  }
+  _sheet(e) {
+    if (!e) return;
+    const c2 = this._cal(e.calendar_entity);
+    const s = new Date(e.s);
+    const en = new Date(e.e);
+    const when = e.allDay ? `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` \u2013 ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} \xB7 hele dagen` : `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} \xB7 ${hhmm(s)}\u2013${hhmm(en)} (${dur(e.e - e.s)})`;
+    const live = this._on(e, Date.now());
+    const div = document.createElement("div");
+    div.className = "sheet";
+    div.innerHTML = `<div class="box" style="--c:${esc3(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc3(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc3(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd style="text-transform:capitalize">${esc3(when)}</dd>
+      ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc3(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc3(e.description)}</dd>` : ""}</dl>
+      <button type="button" class="open" data-more="${esc3(e.calendar_entity)}">\xC5bn kalenderen</button></div>`;
+    this.shadowRoot.querySelector(".sheet")?.remove();
+    this.shadowRoot.querySelector("ha-card").appendChild(div);
+  }
+  // ---------- school ----------
+  _schoolHtml(now) {
+    const st = this._hass?.states?.[this._config.school_entity];
+    const data = st?.attributes || {};
+    const people = Object.entries(data).filter(([, list]) => Array.isArray(list));
+    if (!people.length) return '<div class="msg">Skoleskemaet har ingen data</div>';
+    const m = monday(now);
+    const t = +now;
+    return `<div class="school">${people.map(([name, list], pi) => {
+      const color = pi % 2 ? "#f7b942" : "#28df9d";
+      const days = [0, 1, 2, 3, 4].map((o) => {
+        const d = addDays(m, o);
+        const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
+        return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
+      });
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc3(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+    }).join("")}</div>`;
+  }
+  _lesson(e, t) {
+    const [code, ...teacher] = String(e.summary || "").split(",");
+    const k = code.trim();
+    const s = new Date(e.start);
+    const en = new Date(e.end);
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" style="--c:${this._subjectColor(k)}"><b>${esc3(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc3(e.location)}` : ""}</span>${teacher.length ? `<small>${esc3(teacher.join(",").trim())}</small>` : ""}</div>`;
+  }
+  _subjectColor(code) {
+    const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
+    if (fixed[code]) return fixed[code];
+    let h = 0;
+    for (const ch2 of code) h = (h * 31 + ch2.charCodeAt(0)) % 360;
+    return `hsl(${h} 65% 58%)`;
+  }
 };
 if (!customElements.get("ha-family-calendar-card")) customElements.define("ha-family-calendar-card", HAFamilyCalendarCard);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Stor familieagenda med kalenderfiltre, detaljer, vejr og skoleskema", preview: true });
+window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Familiekalender med nu/n\xE6ste, tidslinje, agenda, ugeskema, kalenderfiltre og skoleskema", preview: true });
 console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION45} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
 
 // src/cards/ha-waste-journey-card/ha-waste-journey-card.js
@@ -47892,7 +48361,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc3 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc4 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -48721,8 +49190,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc3(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc3(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc4(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc4(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -48744,8 +49213,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc3(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc3(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc4(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc4(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -48822,7 +49291,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon3] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc3(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc3(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc4(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc4(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -48891,7 +49360,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc3(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc4(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -48906,29 +49375,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc3(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc3(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc4(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc4(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc3(title)}</h2><p>${esc3(subtitle)}</p></div>
+          <div><h2>${esc4(title)}</h2><p>${esc4(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc3(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc3(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc3(t)}</b>${s ? `<span>${esc3(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc3(l)}</span><b>${esc3(v)}</b>${x ? `<small>${esc3(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc4(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc4(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc4(t)}</b>${s ? `<span>${esc4(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc4(l)}</span><b>${esc4(v)}</b>${x ? `<small>${esc4(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc3(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc3(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc3(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc3(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc4(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc4(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc4(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc4(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc3(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc4(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -48942,7 +49411,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc3(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc4(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
@@ -51673,12 +52142,12 @@ function escapeHtml3(value) {
 }
 var icon2 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
 var pad22 = (n) => String(n).padStart(2, "0");
-function startOfDay(ms = Date.now()) {
+function startOfDay2(ms = Date.now()) {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
 }
-function addDays(ms, days) {
+function addDays2(ms, days) {
   const d = new Date(ms);
   d.setDate(d.getDate() + days);
   return d.getTime();
@@ -52005,10 +52474,10 @@ var BarChart = class {
 // src/cards/ha-energy-center-card/components/history.js
 var PERIOD_LABELS = { day: "Dag", week: "Uge", month: "M\xE5ned", year: "\xC5r" };
 function periodRange(key, now = Date.now()) {
-  const sod = startOfDay(now);
+  const sod = startOfDay2(now);
   const buckets = [];
   if (key === "day") {
-    const end = addDays(sod, 1);
+    const end = addDays2(sod, 1);
     for (let t = sod; t < end; t += HOUR_MS2) {
       const h = new Date(t).getHours();
       buckets.push({ start: t, end: t + HOUR_MS2, label: pad22(h), tip: `I dag kl. ${pad22(h)}\u2013${pad22((h + 1) % 24)}` });
@@ -52018,11 +52487,11 @@ function periodRange(key, now = Date.now()) {
   if (key === "week" || key === "month") {
     const days = key === "week" ? 7 : 30;
     for (let i = days - 1; i >= 0; i--) {
-      const t = addDays(sod, -i);
+      const t = addDays2(sod, -i);
       const label = key === "week" ? fmtDay(t).split(" ")[0].replace(".", "") : String(new Date(t).getDate());
-      buckets.push({ start: t, end: addDays(t, 1), label, tip: i === 0 ? "I dag" : fmtDay(t) });
+      buckets.push({ start: t, end: addDays2(t, 1), label, tip: i === 0 ? "I dag" : fmtDay(t) });
     }
-    return { stat: "day", fetchStart: buckets[0].start, end: addDays(sod, 1), buckets, caption: `Seneste ${days} dage` };
+    return { stat: "day", fetchStart: buckets[0].start, end: addDays2(sod, 1), buckets, caption: `Seneste ${days} dage` };
   }
   const som = startOfMonth(now);
   for (let i = 11; i >= 0; i--) {
@@ -52359,11 +52828,11 @@ var EnergyFlow = class {
       const w = v[a === "home" ? b : a];
       const active = Number.isFinite(w) && w > ACTIVE_W;
       const dash = this.dashes[`${a}-${b}`];
-      const dur = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
-      if (dash.__dur === dur) continue;
-      dash.__dur = dur;
+      const dur2 = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
+      if (dash.__dur === dur2) continue;
+      dash.__dur = dur2;
       dash.classList.toggle("on", active);
-      if (active) dash.style.setProperty("--dur", `${dur}s`);
+      if (active) dash.style.setProperty("--dur", `${dur2}s`);
     }
   }
 };
@@ -53445,17 +53914,17 @@ var HaEnergyCenterCard = class extends HTMLElement {
   loadToday(pairs, done) {
     const ids = pairs.map(([k]) => this.id(k)).filter(Boolean);
     if (!ids.length || !this._hass) return;
-    const sod = startOfDay();
+    const sod = startOfDay2();
     const range = periodRange("day");
     this.stats.get(ids, range.stat, range.fetchStart, range.end).then((map) => {
-      if (sod !== startOfDay()) return;
+      if (sod !== startOfDay2()) return;
       for (const id of ids) this._today.set(id, { sod, rows: map.get(id) || [] });
       this._safe("today", done);
     });
   }
   today(key, kind) {
     const t = this._today.get(this.id(key));
-    if (!t || t.sod !== startOfDay()) return void 0;
+    if (!t || t.sod !== startOfDay2()) return void 0;
     return sumSince(t.rows, t.sod, this.statLive(key, kind));
   }
   waterFlowState(lpm) {
