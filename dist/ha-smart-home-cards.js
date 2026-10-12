@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.58 */
+/* MRDonnii Smart Home Cards v0.5.59 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -43390,7 +43390,7 @@ window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Auto
 console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION44} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION45 = "0.2.1";
+var VERSION45 = "0.2.2";
 var DAY = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
 var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -44063,7 +44063,7 @@ ${LUX_KEYFRAMES}
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
       ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc3(e.location)}</dd>` : ""}
       ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc3(e.description)}</dd>` : ""}</dl>
-      <button type="button" class="open" data-more="${esc3(e.calendar_entity)}">${e._color ? "\xC5bn skoleskema" : "\xC5bn kalenderen"}</button></div>`;
+      <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
     document.body.appendChild(host);
@@ -47045,6 +47045,59 @@ ${anim === "none" ? "" : `.rute.aktiv .nbikon{transform-origin:50% 90%;animation
 @media (prefers-reduced-motion:reduce){.bar::after,.rute.aktiv .ikonboks,.rute.aktiv .nbikon{animation:none!important}}
 `;
 };
+var nbFadeAt = 0;
+var nbDyb = (root, fn) => {
+  const q = [root];
+  let n = 0;
+  while (q.length && n++ < 4e3) {
+    const el = q.shift();
+    if (!el) continue;
+    if (el !== root && fn(el) === false) continue;
+    if (el.shadowRoot) q.push(...el.shadowRoot.children);
+    q.push(...el.children || []);
+  }
+};
+function nbVisning() {
+  const main = document.querySelector("home-assistant")?.shadowRoot?.querySelector("home-assistant-main")?.shadowRoot;
+  const panel = main?.querySelector("partial-panel-resolver")?.lastElementChild;
+  const root = panel?.shadowRoot?.querySelector("hui-root")?.shadowRoot;
+  return root?.querySelector("#view")?.firstElementChild || panel || null;
+}
+function nbKort(visning) {
+  const ud = [];
+  nbDyb(visning, (el) => {
+    const n = el.localName || "";
+    if (n.includes("navbar") || n === "style" || n === "script") return false;
+    const kort = n === "hui-card" || n.endsWith("-card");
+    if (!kort) return true;
+    if (/layout|stack|grid|swipe|tabbed|conditional/.test(n) || n === "hui-card" && el.firstElementChild && /layout|stack|grid/.test(el.firstElementChild.localName)) return true;
+    if (el.querySelector?.("ha-navbar-card")) return false;
+    const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.bottom > 0 && r.top < innerHeight) ud.push(el);
+    return false;
+  });
+  return ud;
+}
+function nbSideFade() {
+  const t0 = performance.now();
+  if (t0 - nbFadeAt < 300) return;
+  nbFadeAt = t0;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const foer = nbVisning();
+  let forsoeg = 0;
+  const koer = () => {
+    const v = nbVisning();
+    if ((!v || v === foer) && forsoeg++ < 30) {
+      requestAnimationFrame(koer);
+      return;
+    }
+    requestAnimationFrame(() => nbKort(nbVisning()).slice(0, 40).forEach((el, i) => el.animate(
+      [{ opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "none" }],
+      { duration: 560, delay: Math.min(i * 40, 440), easing: "cubic-bezier(.16,1,.3,1)", fill: "backwards" }
+    )));
+  };
+  requestAnimationFrame(koer);
+}
 var HaNavbarCard = class extends HTMLElement {
   constructor() {
     super();
@@ -47057,7 +47110,10 @@ var HaNavbarCard = class extends HTMLElement {
     this._sporedeEntiteter = [];
     this._notifikationerAabne = false;
     this._sidsteAntalNotifikationer = 0;
-    this._onNavigation = () => this._opdaterAktiv();
+    this._onNavigation = () => {
+      this._opdaterAktiv();
+      if (this.config?.page_transition === "fade") nbSideFade();
+    };
   }
   setConfig(config) {
     if (!config) throw new Error("ha-navbar-card: config mangler");

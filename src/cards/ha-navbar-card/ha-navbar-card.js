@@ -151,6 +151,47 @@ ${anim === "none" ? "" : `.rute.aktiv .nbikon{transform-origin:50% 90%;animation
 `;
 };
 
+// Fade ved sideskift (page_transition: "fade", Claude AI 2026-10-13; brugeren: "lækker fade animation når man skifter
+// sider"): kortene på den nye side toner ind og glider lidt op, et efter et; navbaren selv står stille. Ligger på
+// modulniveau, så navbaren på siden man forlader kan starte den. Kun kort der kan ses, og aldrig med reduceret bevægelse.
+let nbFadeAt = 0;
+const nbDyb = (root, fn) => { const q = [root]; let n = 0; while (q.length && n++ < 4000) { const el = q.shift(); if (!el) continue; if (el !== root && fn(el) === false) continue; if (el.shadowRoot) q.push(...el.shadowRoot.children); q.push(...(el.children || [])); } };
+function nbVisning() {
+  const main = document.querySelector("home-assistant")?.shadowRoot?.querySelector("home-assistant-main")?.shadowRoot;
+  const panel = main?.querySelector("partial-panel-resolver")?.lastElementChild;
+  const root = panel?.shadowRoot?.querySelector("hui-root")?.shadowRoot;
+  return root?.querySelector("#view")?.firstElementChild || panel || null;
+}
+function nbKort(visning) {
+  const ud = [];
+  nbDyb(visning, (el) => {
+    const n = el.localName || "";
+    if (n.includes("navbar") || n === "style" || n === "script") return false;
+    const kort = n === "hui-card" || n.endsWith("-card");
+    if (!kort) return true;
+    // Layoutkort (fx forsidens layout, stacks, grids) er kun rammer: gå ind i dem og tag kortene indeni.
+    if (/layout|stack|grid|swipe|tabbed|conditional/.test(n) || (n === "hui-card" && el.firstElementChild && /layout|stack|grid/.test(el.firstElementChild.localName))) return true;
+    if (el.querySelector?.("ha-navbar-card")) return false;
+    const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.bottom > 0 && r.top < innerHeight) ud.push(el);
+    return false;
+  });
+  return ud;
+}
+function nbSideFade() {
+  const t0 = performance.now(); if (t0 - nbFadeAt < 300) return; nbFadeAt = t0;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const foer = nbVisning(); let forsoeg = 0;
+  const koer = () => {
+    const v = nbVisning();
+    if ((!v || v === foer) && forsoeg++ < 30) { requestAnimationFrame(koer); return; }
+    requestAnimationFrame(() => nbKort(nbVisning()).slice(0, 40).forEach((el, i) => el.animate(
+      [{ opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "none" }],
+      { duration: 560, delay: Math.min(i * 40, 440), easing: "cubic-bezier(.16,1,.3,1)", fill: "backwards" })));
+  };
+  requestAnimationFrame(koer);
+}
+
 class HaNavbarCard extends HTMLElement {
   constructor() {
     super();
@@ -163,7 +204,7 @@ class HaNavbarCard extends HTMLElement {
     this._sporedeEntiteter = [];
     this._notifikationerAabne = false;
     this._sidsteAntalNotifikationer = 0;
-    this._onNavigation = () => this._opdaterAktiv();
+    this._onNavigation = () => { this._opdaterAktiv(); if (this.config?.page_transition === "fade") nbSideFade(); };
   }
 
   setConfig(config) {

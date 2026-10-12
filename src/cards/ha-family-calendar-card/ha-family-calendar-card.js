@@ -4,7 +4,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 // Family calendar, rebuilt (Claude AI, 2026-10-13; user: "Den kalender side er virkelig dårlig – lav den langt federe og
 // bedre"). Now / next with a countdown, today's timeline, agenda, a real week grid with times and the school timetable;
 // calendars switch on and off with their chips, events open a detail sheet. Same config as 0.1.x.
-const VERSION = "0.2.1";
+const VERSION = "0.2.2";
 const DAY = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 const DAY_SHORT = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
 const MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -427,7 +427,7 @@ ${LUX_KEYFRAMES}
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
       ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc(e.location)}</dd>` : ""}
       ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc(e.description)}</dd>` : ""}</dl>
-      <button type="button" class="open" data-more="${esc(e.calendar_entity)}">${e._color ? "Åbn skoleskema" : "Åbn kalenderen"}</button></div>`;
+      <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`; root.appendChild(div); document.body.appendChild(host); this._sheetHost = host;
     div.addEventListener("click", (ev) => {
       if (ev.target === div || ev.target.closest("[data-close]")) { this._closeSheet(); return; }
