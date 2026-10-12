@@ -125,7 +125,12 @@ const nbGlasCss = (accent, anim = "gum") => {
   --nb-accent:${a};--nb-indikator-luft:7px}
 /* Samme luft over, under og i siderne af knapperne (Claude AI, 2026-10-13; brugeren: højere end bred "driller mit syn"):
    barens højde følger knapperne + luften, så den også passer når knapperne krymper på mobil. */
-:host(:not([placering="left"]):not([placering="right"])) .bar{height:auto!important;padding:var(--nb-luft,7px)!important}
+:host(:not([placering="left"]):not([placering="right"])) .bar{height:auto!important;padding:var(--nb-luft,7px)!important;max-width:min(96vw, var(--nb-maxbredde, 900px))}
+/* Kvadratiske knapper der fylder baren (brugeren: "knapperne skal være firkantede og fylde mere"): pladsen pr. knap
+   regnes af den faktiske luft og kant, og bredde = højde = den mindste af pladsen og item_min_width. */
+:host{--nb-plads:calc((min(96vw, var(--nb-maxbredde,900px)) - 2 * var(--nb-luft,7px) - 3px - (var(--nb-antal) - 1) * var(--nb-mellemrum,4px)) / var(--nb-antal));--nb-kvadrat:min(var(--nb-knapbredde,56px), var(--nb-plads))}
+:host(:not([placering="left"]):not([placering="right"])) .rute{width:var(--nb-kvadrat)!important;height:var(--nb-kvadrat)!important;min-width:0!important}
+:host(:not([placering="left"]):not([placering="right"])) .rute ha-icon,:host(:not([placering="left"]):not([placering="right"])) .rute .nbikon{--mdc-icon-size:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important;width:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important;height:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important}
 .bar{padding:0 7px;backdrop-filter:blur(26px) saturate(1.4);-webkit-backdrop-filter:blur(26px) saturate(1.4);overflow:hidden;
   box-shadow:0 30px 60px -20px rgba(0,0,0,.95),0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)!important}
 .bar::before{background:radial-gradient(120% 140% at 50% -40%,color-mix(in srgb,${a} 12%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.012)),var(--nb-flade-farve,rgba(12,14,20,.88))!important;opacity:1!important}
