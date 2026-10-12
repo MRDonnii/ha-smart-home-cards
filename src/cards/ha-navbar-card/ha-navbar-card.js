@@ -113,6 +113,40 @@ function nbHentDeltConfig(url) {
   return NB_DELT_CACHE.get(url);
 }
 
+// Glas-looket (style: glass): mørkt glas, lysende kant og en indikator i
+// accentfarven (accent, ellers temaets --dashboard-accent). Var en separat
+// /local-fil, men skal være med fra første billede, ikke lagt på bagefter
+// (Claude AI, 2026-10-13).
+const nbGlasCss = (accent) => {
+  const a = accent ? String(accent).replace(/[;{}<>]/g, "") : "var(--dashboard-accent,var(--primary-color,#62b5ff))";
+  return `
+:host{--nb-radius:24px;--nb-knapradius:13px;--nb-hoejde:70px;--nb-knaphoejde:54px;--nb-knapbredde:64px;--nb-mellemrum:4px;--nb-ikon:25px;--nb-etiket:10.5px;
+  --nb-accent:${a};--nb-indikator-luft:7px}
+.bar{padding:0 7px;backdrop-filter:blur(26px) saturate(1.4);-webkit-backdrop-filter:blur(26px) saturate(1.4);overflow:hidden;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.95),0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)!important}
+.bar::before{background:radial-gradient(120% 140% at 50% -40%,color-mix(in srgb,${a} 12%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.012)),var(--nb-flade-farve,rgba(12,14,20,.88))!important;opacity:1!important}
+.bar::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:linear-gradient(110deg,rgba(255,255,255,.24),rgba(255,255,255,.04) 30%,color-mix(in srgb,${a} 55%,transparent) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));background-size:250% 100%;
+  animation:tnbSheen 9s ease-in-out infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+@keyframes tnbSheen{0%,100%{background-position:100% 0}50%{background-position:0 0}}
+.indikator{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)}
+.indikator::after{content:"";position:absolute;left:50%;bottom:3px;width:18px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a}}
+.rute{transition:color .3s ease,transform .3s cubic-bezier(.2,1.4,.4,1)}
+.rute:hover{transform:translateY(calc(var(--dashboard-card-highlight,1) * -2px));color:var(--primary-text-color,rgba(244,241,234,.92))}
+.rute.aktiv{color:color-mix(in srgb,${a} 70%,#fff)}
+.rute.aktiv .nbikon,.rute.aktiv ha-icon{filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+.rute.aktiv .ikonboks{animation:tnbPop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes tnbPop{40%{transform:translateY(-3px) scale(1.16)}}
+.rute:active .ikonboks{transform:scale(.86);transition:transform .1s}
+.etiket{font-weight:600;letter-spacing:.06em;opacity:.85}
+.rute.aktiv .etiket{opacity:1}
+.badge{box-shadow:none!important}.badge:empty:not(.tom),.badge[hidden]{display:none!important}
+@media(max-width:520px){:host{--nb-knapbredde:56px;--nb-hoejde:66px}}
+@media (prefers-reduced-motion:reduce){.bar::after,.rute.aktiv .ikonboks{animation:none!important}}
+`;
+};
+
 class HaNavbarCard extends HTMLElement {
   constructor() {
     super();
@@ -961,7 +995,7 @@ svg.nbikon{display:block;fill:currentColor}
 @media(prefers-reduced-motion:reduce){
   .indikator,.punkt,.ark,.overlay{transition:none}
   .badge.puls,.p-badge.puls,.badge.pop,.notif.ring .ikonboks{animation:none}}
-`;
+${this.config?.style === "glass" ? nbGlasCss(this.config.accent) : ""}`;
   }
 }
 
