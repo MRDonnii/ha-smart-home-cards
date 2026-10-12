@@ -160,7 +160,8 @@ function nbVisning() {
   const main = document.querySelector("home-assistant")?.shadowRoot?.querySelector("home-assistant-main")?.shadowRoot;
   const panel = main?.querySelector("partial-panel-resolver")?.lastElementChild;
   const root = panel?.shadowRoot?.querySelector("hui-root")?.shadowRoot;
-  return root?.querySelector("#view")?.firstElementChild || panel || null;
+  const view = root?.querySelector("#view");
+  return (view && [...view.children].find((c) => c.localName !== "hui-view-background")) || panel || null;
 }
 function nbKort(visning) {
   const ud = [];
