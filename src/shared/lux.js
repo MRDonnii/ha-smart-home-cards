@@ -4,8 +4,9 @@
 export const LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
 
 // base: every button of the kind; active: the active ones; icon: what inside them glows; underline: the lit line under
-// an active button (off for round buttons).
-export function luxCss({ base, active, icon = "ha-icon", underline = true }) {
+// an active button (off for round buttons); gum: the squash when it turns active (off in lists, where many rows are
+// active at once and would squash over each other).
+export function luxCss({ base, active, icon = "ha-icon", underline = true, gum = true }) {
   const a = LUX_ACCENT;
   return `
 ${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
@@ -13,7 +14,7 @@ ${base}:active{transform:scale(.9);transition-duration:.08s}
 ${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
   color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
   box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
-  animation:luxGum .7s ease-out}
+  ${gum ? "animation:luxGum .7s ease-out" : ""}}
 ${underline ? `${active}::after{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
 ${active} ${icon}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
 ${LUX_KEYFRAMES}

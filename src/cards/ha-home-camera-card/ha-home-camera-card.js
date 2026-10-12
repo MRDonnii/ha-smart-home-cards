@@ -1,5 +1,5 @@
 import { luxCss, LUX_ACCENT } from "../../shared/lux.js";
-const VERSION = "0.8.11";
+const VERSION = "0.8.12";
 
 // Shared by desktop/mobile card instances. This warms only still images;
 // live streams are still opened exclusively for the visible camera views.
@@ -353,7 +353,7 @@ class HaHomeCameraCard extends HTMLElement {
       .choice-row{display:flex;gap:6px;align-items:stretch}.choice-row .choice{flex:1;min-width:0}.pin,.auto-pin{display:grid;flex:0 0 auto;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:11px;padding:0;background:transparent;color:var(--muted);cursor:pointer}.pin{width:42px}.pin ha-icon{--mdc-icon-size:18px}.pin.active{border-color:color-mix(in srgb,#f5b942 45%,var(--edge));color:#f5b942}.auto-pin{width:48px;font-size:9px;font-weight:850}.auto-pin.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 24%,transparent)}.hint{margin:2px 2px 0;padding:0 2px;color:var(--muted);font-size:10px;line-height:1.4}
       @media(max-width:900px){.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr))}.feed{aspect-ratio:16/9}}
       @media(max-width:600px){header{padding:10px 10px 3px}.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:5px}.chips{display:none}.choose{display:grid;width:27px;height:27px}.choose ha-icon{--mdc-icon-size:15px}.bar{padding:5px;gap:3px}.name b{font-size:10px}.name span,.activity span{display:none}.activity ha-icon{--mdc-icon-size:13px}.feed{aspect-ratio:16/9}}
-      ${luxCss({ base: ".chip,.choice,.pin,.auto-pin", active: ".chip.active,.choice.active,.pin.active,.auto-pin.active" })}
+      ${luxCss({ base: ".chip,.choice,.pin,.auto-pin", active: ".chip.active,.choice.active,.pin.active,.auto-pin.active", gum: false })}
       /* The navbar's look (Claude AI, 2026-10-13): the camera switch glows in the accent and squishes when tapped; a
          detection makes the status icon bounce like the navbar's active icon. */
       .choose{border-color:color-mix(in srgb,${LUX_ACCENT} 45%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 16px -6px color-mix(in srgb,${LUX_ACCENT} 60%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}

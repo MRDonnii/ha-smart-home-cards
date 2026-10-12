@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.54 */
+/* MRDonnii Smart Home Cards v0.5.55 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -39289,7 +39289,7 @@ console.info(
 
 // src/shared/lux.js
 var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
-function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true }) {
+function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true, gum = true }) {
   const a = LUX_ACCENT;
   return `
 ${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
@@ -39297,7 +39297,7 @@ ${base}:active{transform:scale(.9);transition-duration:.08s}
 ${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
   color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
   box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
-  animation:luxGum .7s ease-out}
+  ${gum ? "animation:luxGum .7s ease-out" : ""}}
 ${underline ? `${active}::after{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
 ${active} ${icon3}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
 ${LUX_KEYFRAMES}
@@ -39307,7 +39307,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 @keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION36 = "0.8.11";
+var VERSION36 = "0.8.12";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -39627,7 +39627,7 @@ var HaHomeCameraCard = class extends HTMLElement {
       .choice-row{display:flex;gap:6px;align-items:stretch}.choice-row .choice{flex:1;min-width:0}.pin,.auto-pin{display:grid;flex:0 0 auto;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:11px;padding:0;background:transparent;color:var(--muted);cursor:pointer}.pin{width:42px}.pin ha-icon{--mdc-icon-size:18px}.pin.active{border-color:color-mix(in srgb,#f5b942 45%,var(--edge));color:#f5b942}.auto-pin{width:48px;font-size:9px;font-weight:850}.auto-pin.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 24%,transparent)}.hint{margin:2px 2px 0;padding:0 2px;color:var(--muted);font-size:10px;line-height:1.4}
       @media(max-width:900px){.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr))}.feed{aspect-ratio:16/9}}
       @media(max-width:600px){header{padding:10px 10px 3px}.grid{grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:5px}.chips{display:none}.choose{display:grid;width:27px;height:27px}.choose ha-icon{--mdc-icon-size:15px}.bar{padding:5px;gap:3px}.name b{font-size:10px}.name span,.activity span{display:none}.activity ha-icon{--mdc-icon-size:13px}.feed{aspect-ratio:16/9}}
-      ${luxCss({ base: ".chip,.choice,.pin,.auto-pin", active: ".chip.active,.choice.active,.pin.active,.auto-pin.active" })}
+      ${luxCss({ base: ".chip,.choice,.pin,.auto-pin", active: ".chip.active,.choice.active,.pin.active,.auto-pin.active", gum: false })}
       /* The navbar's look (Claude AI, 2026-10-13): the camera switch glows in the accent and squishes when tapped; a
          detection makes the status icon bounce like the navbar's active icon. */
       .choose{border-color:color-mix(in srgb,${LUX_ACCENT} 45%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 16px -6px color-mix(in srgb,${LUX_ACCENT} 60%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
