@@ -4,7 +4,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 // Family calendar, rebuilt (Claude AI, 2026-10-13; user: "Den kalender side er virkelig dårlig – lav den langt federe og
 // bedre"). Now / next with a countdown, today's timeline, agenda, a real week grid with times and the school timetable;
 // calendars switch on and off with their chips, events open a detail sheet. Same config as 0.1.x.
-const VERSION = "0.2.3";
+const VERSION = "0.2.4";
 const DAY = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 const DAY_SHORT = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
 const MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -44,7 +44,7 @@ class HAFamilyCalendarCard extends HTMLElement {
   static getStubConfig() { return { title: "Familiekalender", subtitle: "Alt det næste, samlet og overskueligt", days: 30, weather_entity: "", school_entity: "", calendars: [] }; }
   static getConfigElement() {
     const editor = document.createElement("ha-card-list-editor");
-    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "school_entity", label: "Skoleskema", type: "entity" }],
+    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "weather_path", label: "Vejrside (sti)" }, { key: "school_entity", label: "Skoleskema", type: "entity" }],
       collections: [{ key: "calendars", label: "Kalendere", itemLabel: "kalender", defaults: { name: "Kalender", entity: "", group: "Familie", color: "#22c9ff", icon: "mdi:calendar" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "group", label: "Gruppe" }, { key: "color", label: "Farve" }, { key: "icon", label: "Ikon" }] }] };
     return editor;
   }
@@ -136,8 +136,8 @@ ha-card{position:relative;padding:4px 0 8px;color:var(--ink);background:none!imp
 .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:blink 2.4s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
 h2{margin:4px 0 0;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-.02em}
 h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spacing:0;color:var(--mut)}
-.wx{margin-left:auto;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
-.wx ha-icon{--mdc-icon-size:34px;color:var(--a);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--a) 45%,transparent))}
+.wx{margin-left:auto;cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.wx:hover{filter:brightness(1.12)}.wx:active{transform:scale(.94)}.wx ha-icon{--mdc-icon-size:34px;color:var(--a);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--a) 45%,transparent))}
 .wx b{display:block;font-size:24px;font-weight:800;line-height:1}.wx span{display:block;margin-top:3px;font-size:12px;color:var(--mut)}
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;margin-top:18px}
 .panel{position:relative;padding:16px 18px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);min-width:0}
@@ -246,7 +246,7 @@ ${LUX_KEYFRAMES}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
 <div class="top"><div><div class="eyebrow"><i></i>${esc(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
-<div class="wx" data-wx hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
+<div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>Næste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
 <div class="bar"><div class="seg" data-seg></div><div class="chips" data-chips></div></div>
@@ -260,6 +260,8 @@ ${LUX_KEYFRAMES}
       const nav = ev.target.closest("[data-wk]"); if (nav) { this._weekNav(Number(nav.dataset.wk)); return; }
       const dp = ev.target.closest("[data-dpick]"); if (dp) { this._mobileDay = new Date(Number(dp.dataset.dpick)); this._render(); return; }
       if (ev.target.closest("[data-close]") || ev.target.classList.contains("sheet")) { r.querySelector(".sheet")?.remove(); return; }
+      // The weather opens the weather page (`weather_path`), else its details (Claude AI, 2026-10-13).
+      if (ev.target.closest("[data-wx]")) { const path = this._config.weather_path; if (path) { history.pushState(null, "", path); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); } else this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._config.weather_entity }, bubbles: true, composed: true })); return; }
       const mi = ev.target.closest("[data-more]"); if (mi) { this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: mi.dataset.more }, bubbles: true, composed: true })); return; }
       const e = ev.target.closest("[data-ev]"); if (e) this._sheet(this._byId.get(e.dataset.ev));
     });
@@ -436,6 +438,8 @@ ${LUX_KEYFRAMES}
     root.innerHTML = `<style>${SHEET_CSS}</style>`; root.appendChild(div); document.body.appendChild(host); this._sheetHost = host;
     div.addEventListener("click", (ev) => {
       if (ev.target === div || ev.target.closest("[data-close]")) { this._closeSheet(); return; }
+      // The weather opens the weather page (`weather_path`), else its details (Claude AI, 2026-10-13).
+      if (ev.target.closest("[data-wx]")) { const path = this._config.weather_path; if (path) { history.pushState(null, "", path); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); } else this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._config.weather_entity }, bubbles: true, composed: true })); return; }
       const mi = ev.target.closest("[data-more]"); if (mi) { this._closeSheet(); this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: mi.dataset.more }, bubbles: true, composed: true })); }
     });
     this._escKey = this._escKey || ((ev) => { if (ev.key === "Escape") this._closeSheet(); });

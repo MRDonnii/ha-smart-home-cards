@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.61 */
+/* MRDonnii Smart Home Cards v0.5.62 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -43390,7 +43390,7 @@ window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Auto
 console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION44} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION45 = "0.2.3";
+var VERSION45 = "0.2.4";
 var DAY = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
 var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -43457,7 +43457,7 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   static getConfigElement() {
     const editor = document.createElement("ha-card-list-editor");
     editor.definition = {
-      roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "school_entity", label: "Skoleskema", type: "entity" }],
+      roots: [{ key: "title", label: "Titel" }, { key: "subtitle", label: "Undertitel" }, { key: "days", label: "Dage frem", type: "number" }, { key: "weather_entity", label: "Vejr", type: "entity" }, { key: "weather_path", label: "Vejrside (sti)" }, { key: "school_entity", label: "Skoleskema", type: "entity" }],
       collections: [{ key: "calendars", label: "Kalendere", itemLabel: "kalender", defaults: { name: "Kalender", entity: "", group: "Familie", color: "#22c9ff", icon: "mdi:calendar" }, fields: [{ key: "name", label: "Navn" }, { key: "entity", label: "Entity", type: "entity" }, { key: "group", label: "Gruppe" }, { key: "color", label: "Farve" }, { key: "icon", label: "Ikon" }] }]
     };
     return editor;
@@ -43609,8 +43609,8 @@ ha-card{position:relative;padding:4px 0 8px;color:var(--ink);background:none!imp
 .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:blink 2.4s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}
 h2{margin:4px 0 0;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-.02em}
 h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spacing:0;color:var(--mut)}
-.wx{margin-left:auto;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
-.wx ha-icon{--mdc-icon-size:34px;color:var(--a);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--a) 45%,transparent))}
+.wx{margin-left:auto;cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge)}
+.wx:hover{filter:brightness(1.12)}.wx:active{transform:scale(.94)}.wx ha-icon{--mdc-icon-size:34px;color:var(--a);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--a) 45%,transparent))}
 .wx b{display:block;font-size:24px;font-weight:800;line-height:1}.wx span{display:block;margin-top:3px;font-size:12px;color:var(--mut)}
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;margin-top:18px}
 .panel{position:relative;padding:16px 18px;border-radius:20px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--edge);min-width:0}
@@ -43719,7 +43719,7 @@ ${LUX_KEYFRAMES}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
 <div class="top"><div><div class="eyebrow"><i></i>${esc3(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
-<div class="wx" data-wx hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
+<div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
 <div class="bar"><div class="seg" data-seg></div><div class="chips" data-chips></div></div>
@@ -43749,6 +43749,14 @@ ${LUX_KEYFRAMES}
       }
       if (ev.target.closest("[data-close]") || ev.target.classList.contains("sheet")) {
         r.querySelector(".sheet")?.remove();
+        return;
+      }
+      if (ev.target.closest("[data-wx]")) {
+        const path = this._config.weather_path;
+        if (path) {
+          history.pushState(null, "", path);
+          window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+        } else this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._config.weather_entity }, bubbles: true, composed: true }));
         return;
       }
       const mi = ev.target.closest("[data-more]");
@@ -44076,6 +44084,14 @@ ${LUX_KEYFRAMES}
     div.addEventListener("click", (ev) => {
       if (ev.target === div || ev.target.closest("[data-close]")) {
         this._closeSheet();
+        return;
+      }
+      if (ev.target.closest("[data-wx]")) {
+        const path = this._config.weather_path;
+        if (path) {
+          history.pushState(null, "", path);
+          window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
+        } else this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._config.weather_entity }, bubbles: true, composed: true }));
         return;
       }
       const mi = ev.target.closest("[data-more]");
