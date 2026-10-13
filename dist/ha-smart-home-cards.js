@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.82 */
+/* MRDonnii Smart Home Cards v0.5.83 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.1.4";
+var VERSION5 = "0.1.5";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6684,6 +6684,7 @@ var DEFAULTS = {
   sentry: "switch.tesla_sentry_mode",
   inside_temperature: "sensor.tesla_inside_temperature",
   location: "device_tracker.tesla_location",
+  shift_state: "",
   target_soc: "",
   next_charge_start: "",
   next_charge_cost: "",
@@ -6713,7 +6714,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
           e("lock", "lock"),
           e("sentry", "switch"),
           e("inside_temperature", "sensor"),
-          e("location", "device_tracker")
+          e("location", "device_tracker"),
+          e("shift_state", "sensor")
         ] },
         { type: "expandable", name: "", title: "Opladning", schema: [
           e("charging"),
@@ -6886,6 +6888,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
       :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
       :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
       :host([v2]) .glow{opacity:.8;height:30px}
+      .driving .pill{animation:drivePulse 1.6s ease-in-out infinite}.driving .car img{animation:driveSway 2.2s ease-in-out infinite}
+      @keyframes drivePulse{50%{box-shadow:0 0 0 1px var(--tone,var(--accent)),0 0 16px -2px var(--tone,var(--accent))}}@keyframes driveSway{50%{transform:translateX(-3px)}}
+      @media(prefers-reduced-motion:reduce){.driving .pill,.driving .car img{animation:none}}
       @media(max-width:600px){:host([v2]) .stats{display:none!important}}
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
@@ -6941,13 +6946,24 @@ var HATeslaGlanceCard = class extends HTMLElement {
     card.classList.toggle("compact", !!c2.compact);
     root.querySelector(".name").textContent = c2.name;
     let pillIcon = "mdi:parking", pillText = "Parkeret";
+    const gear = String(this._val(c2.shift_state) || "").toUpperCase();
     if (charging) {
       pillIcon = "mdi:lightning-bolt";
       pillText = "Lader";
+    } else if (gear === "D") {
+      pillIcon = "mdi:car-arrow-right";
+      pillText = "K\xF8rer";
+    } else if (gear === "R") {
+      pillIcon = "mdi:car-arrow-left";
+      pillText = "Bakker";
+    } else if (gear === "N") {
+      pillIcon = "mdi:alpha-n-circle-outline";
+      pillText = "Neutral";
     } else if (plugged) {
       pillIcon = "mdi:power-plug";
       pillText = "Tilsluttet";
     }
+    card.classList.toggle("driving", !charging && ["D", "R", "N"].includes(gear));
     if (!charging && where) pillText += ` \xB7 ${where === "home" ? "Hjemme" : where === "not_home" ? "Ude" : where}`;
     root.querySelector(".pill ha-icon").setAttribute("icon", pillIcon);
     root.querySelector(".pill span").textContent = pillText;

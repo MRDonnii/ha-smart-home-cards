@@ -6,7 +6,7 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.1.4";
+const VERSION = "0.1.5";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -28,6 +28,7 @@ const DEFAULTS = {
   sentry: "switch.tesla_sentry_mode",
   inside_temperature: "sensor.tesla_inside_temperature",
   location: "device_tracker.tesla_location",
+  shift_state: "",
   target_soc: "",
   next_charge_start: "",
   next_charge_cost: "",
@@ -56,7 +57,7 @@ class HATeslaGlanceCard extends HTMLElement {
         { name: "compact", selector: { boolean: {} } },
         { type: "expandable", name: "", title: "Bil", schema: [
           e("battery", "sensor"), e("range", "sensor"), e("lock", "lock"), e("sentry", "switch"),
-          e("inside_temperature", "sensor"), e("location", "device_tracker")] },
+          e("inside_temperature", "sensor"), e("location", "device_tracker"), e("shift_state", "sensor")] },
         { type: "expandable", name: "", title: "Opladning", schema: [
           e("charging"), e("charger_power", "sensor"), e("energy_added", "sensor"), e("charge_finish", "sensor"),
           e("plugged", "binary_sensor"), e("target_soc"), e("next_charge_start", "sensor"), e("next_charge_cost", "sensor")] },
@@ -210,6 +211,9 @@ class HATeslaGlanceCard extends HTMLElement {
       :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
       :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
       :host([v2]) .glow{opacity:.8;height:30px}
+      .driving .pill{animation:drivePulse 1.6s ease-in-out infinite}.driving .car img{animation:driveSway 2.2s ease-in-out infinite}
+      @keyframes drivePulse{50%{box-shadow:0 0 0 1px var(--tone,var(--accent)),0 0 16px -2px var(--tone,var(--accent))}}@keyframes driveSway{50%{transform:translateX(-3px)}}
+      @media(prefers-reduced-motion:reduce){.driving .pill,.driving .car img{animation:none}}
       @media(max-width:600px){:host([v2]) .stats{display:none!important}}
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
@@ -268,8 +272,14 @@ class HATeslaGlanceCard extends HTMLElement {
 
     root.querySelector(".name").textContent = c.name;
     let pillIcon = "mdi:parking", pillText = "Parkeret";
+    // The gear (shift_state: P/D/R/N) – the card showed "Parkeret" all through a drive (Claude AI, 2026-10-13).
+    const gear = String(this._val(c.shift_state) || "").toUpperCase();
     if (charging) { pillIcon = "mdi:lightning-bolt"; pillText = "Lader"; }
+    else if (gear === "D") { pillIcon = "mdi:car-arrow-right"; pillText = "Kører"; }
+    else if (gear === "R") { pillIcon = "mdi:car-arrow-left"; pillText = "Bakker"; }
+    else if (gear === "N") { pillIcon = "mdi:alpha-n-circle-outline"; pillText = "Neutral"; }
     else if (plugged) { pillIcon = "mdi:power-plug"; pillText = "Tilsluttet"; }
+    card.classList.toggle("driving", !charging && ["D", "R", "N"].includes(gear));
     if (!charging && where) pillText += ` · ${where === "home" ? "Hjemme" : where === "not_home" ? "Ude" : where}`;
     root.querySelector(".pill ha-icon").setAttribute("icon", pillIcon);
     root.querySelector(".pill span").textContent = pillText;
