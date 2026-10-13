@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.75 */
+/* MRDonnii Smart Home Cards v0.5.76 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -31978,6 +31978,19 @@ var HaHomeStatusCard = class extends HTMLElement {
       const windowColor = windows ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
       const doorColor = doors ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
       label = `<span class="security-row"><span><img src="/local/billeder/security-status/verisure-brand-icon.png"><ha-icon icon="${vIcon}" style="color:${vColor}"></ha-icon></span><span><img src="/local/billeder/security-status/ajax-brand-icon.png"><ha-icon icon="${aIcon}" style="color:${aColor}"></ha-icon></span><span><ha-icon icon="${windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}" style="color:${windowColor}"></ha-icon><b style="color:${windowColor}">${windows}</b></span><span><ha-icon icon="${doors ? "mdi:door-open" : "mdi:door-closed"}" style="color:${doorColor}"></ha-icon><b style="color:${doorColor}">${doors}</b></span></span>`;
+      const alarmName = (id) => {
+        const st = this.text(id, "unknown");
+        return { armed_away: "Tilkoblet", armed_home: "Hjemme", armed_night: "Nat", disarmed: "Fra", triggered: "ALARM", arming: "Tilkobler", pending: "Venter" }[st] || "Ukendt";
+      };
+      cfg.secV2 = {
+        locked,
+        total: segStates.length,
+        hasError,
+        windows,
+        doors,
+        triggered,
+        alarms: [["/local/billeder/security-status/verisure-brand-icon.png", vIcon, vColor, alarmName(cfg.alarm_entity), "Verisure"], ["/local/billeder/security-status/ajax-brand-icon.png", aIcon, aColor, alarmName(cfg.secondary_alarm_entity), "Ajax"]]
+      };
     } else if (type === "heating") {
       const heating = /opvarm|til|heat/.test(
         this.text(cfg.heating_entity, "").toLowerCase()
@@ -32231,9 +32244,16 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .ring .pr{stroke:var(--accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--accent) 70%,transparent));transition:stroke-dasharray .9s cubic-bezier(.16,1,.3,1)}
       :host([v2]) .item.has-error .ring .pr{stroke:var(--error-color,#ef4444)}
       :host([v2]) .item.security{padding:11px 12px 9px}:host([v2]) .item.security .value{position:static;width:auto;height:auto;line-height:21px;padding:0}
-      :host([v2]) .item.security .meter{display:flex;position:static;grid-column:2/4;grid-row:2;height:8px;margin:5px 0 0}
-      :host([v2]) .item.security .ring{display:none}
-      :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;border-top:0;padding-top:0}
+      :host([v2]) .item.security .meter{display:none}
+      :host([v2]) .item.security .detail{display:block;position:static}
+      :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;overflow:visible}
+      :host([v2]) .sec2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%}
+      :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
+      :host([v2]) .sec2 .sp.on{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 10px -3px var(--c);animation:secWarn 2s ease-in-out infinite}
+      @keyframes secWarn{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}}
+      :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:13px;width:13px;height:13px;flex:none}
+      :host([v2]) .sec2 b{font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+      :host([v2]) .sec2 .alarm b{display:none}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
       @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
@@ -32244,7 +32264,7 @@ var HaHomeStatusCard = class extends HTMLElement {
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
-        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .meter{grid-column:1/-1;grid-row:3;margin:3px 0 0}:host([v2]) .item.security .label{grid-row:4}}
+        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{grid-template-columns:repeat(2,minmax(0,1fr))}}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile2 = this.shadowRoot.querySelector(".item");
@@ -32316,9 +32336,26 @@ var HaHomeStatusCard = class extends HTMLElement {
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
     const v22 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
     this.toggleAttribute("v2", v22);
+    if (v22 && item2.type === "security" && item2.secV2) {
+      const q = item2.secV2;
+      const open = q.windows + q.doors;
+      const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc5(title)}">${inner}</span>`;
+      const warn = "var(--warning-color,#f59e0b)";
+      const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
+      const rows = q.alarms.map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc5(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const d = this.shadowRoot.querySelector(".detail");
+      d._marqueeHtml = void 0;
+      d.classList.remove("marquee");
+      d.textContent = det;
+      const l = this.shadowRoot.querySelector(".label");
+      l._marqueeHtml = void 0;
+      l.classList.remove("marquee");
+      l.innerHTML = `<span class="sec2">${rows}</span>`;
+    }
     if (v22) {
       this.shadowRoot.querySelector(".chip ha-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
-      const on = segmentStates.filter((x) => x && x !== "").length;
+      const on = segmentStates.filter((x) => x === "on" || x === "locked").length;
       const frac = segmentStates.length ? on / segmentStates.length : 0;
       const C = 2 * Math.PI * 15;
       this.shadowRoot.querySelector(".ring .pr").setAttribute("stroke-dasharray", `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
