@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.117 */
+/* MRDonnii Smart Home Cards v0.5.118 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9579,7 +9579,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.5.4";
+var VERSION11 = "0.5.5";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9599,7 +9599,7 @@ var HAACClimateCard = class extends HTMLElement {
   }
   static getConfigElement() {
     const e = document.createElement("ha-card-list-editor");
-    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: [{ key: "name", label: "Navn" }, { key: "climate", label: "Climate", type: "entity" }, { key: "output", label: "Termisk output", type: "entity" }, { key: "input", label: "Elforbrug", type: "entity" }, { key: "cop", label: "COP", type: "entity" }, { key: "daily_energy", label: "Dagligt forbrug", type: "entity" }, { key: "daily_cost", label: "Daglig pris", type: "entity" }, { key: "heat_price", label: "Varmepris", type: "entity" }, { key: "hour_cost", label: "Pris pr. time", type: "entity" }, { key: "unit", label: "Fysisk anl\xE6g (climate)", type: "entity" }, { key: "status", label: "Status-sensor", type: "entity" }, { key: "next_change", label: "N\xE6ste skift", type: "entity" }, { key: "release", label: "Frigiv-knap", type: "entity" }, { key: "program", label: "Program (select)", type: "entity" }, { key: "outdoor", label: "Udetemperatur", type: "entity" }, { key: "unit_temp", label: "Anl\xE6ggets f\xF8ler", type: "entity" }, { key: "follow_me", label: "Follow Me", type: "entity" }, { key: "filter_hours", label: "Driftstimer siden filterrens", type: "entity" }, { key: "filter_reset", label: "Nulstil filter-knap", type: "entity" }, { key: "online", label: "Anl\xE6g svarer", type: "entity" }, { key: "swing_toggle", label: "Sving til/fra (IR-knap)", type: "entity" }, { key: "swing_step", label: "Lamel \xE9t trin (knap)", type: "entity" }, { key: "display", label: "Display til/fra (knap)", type: "entity" }, { key: "beep", label: "Bip (switch)", type: "entity" }] }] };
+    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: [{ key: "name", label: "Navn" }, { key: "climate", label: "Climate", type: "entity" }, { key: "output", label: "Termisk output", type: "entity" }, { key: "input", label: "Elforbrug", type: "entity" }, { key: "cop", label: "COP", type: "entity" }, { key: "daily_energy", label: "Dagligt forbrug", type: "entity" }, { key: "daily_cost", label: "Daglig pris", type: "entity" }, { key: "heat_price", label: "Varmepris", type: "entity" }, { key: "hour_cost", label: "Pris pr. time", type: "entity" }, { key: "unit", label: "Fysisk anl\xE6g (climate)", type: "entity" }, { key: "status", label: "Status-sensor", type: "entity" }, { key: "next_change", label: "N\xE6ste skift", type: "entity" }, { key: "release", label: "Frigiv-knap", type: "entity" }, { key: "program", label: "Program (select)", type: "entity" }, { key: "outdoor", label: "Udetemperatur", type: "entity" }, { key: "unit_temp", label: "Anl\xE6ggets f\xF8ler", type: "entity" }, { key: "follow_me", label: "Follow Me", type: "entity" }, { key: "filter_hours", label: "Driftstimer siden filterrens", type: "entity" }, { key: "filter_reset", label: "Nulstil filter-knap", type: "entity" }, { key: "online", label: "Anl\xE6g svarer", type: "entity" }, { key: "swing_toggle", label: "Sving til/fra (IR-knap)", type: "entity" }, { key: "swing_step", label: "Lamel \xE9t trin (knap)", type: "entity" }, { key: "display", label: "Display til/fra (knap)", type: "entity" }, { key: "beep", label: "Bip (switch)", type: "entity" }, { key: "supply", label: "Str\xF8m til anl\xE6g (switch)", type: "entity" }, { key: "restart", label: "Genstart anl\xE6g (knap)", type: "entity" }] }] };
     return e;
   }
   setConfig(config) {
@@ -9719,6 +9719,9 @@ var HAACClimateCard = class extends HTMLElement {
       if (this._exists(unit.display)) fn.push(`<button data-action="display"><ha-icon icon="mdi:monitor"></ha-icon><span>Display</span></button>`);
       const beep = this._entity(unit.beep);
       if (beep) fn.push(`<button class="${beep.state === "on" ? "selected" : ""}" data-action="beep"><ha-icon icon="${beep.state === "on" ? "mdi:volume-high" : "mdi:volume-off"}"></ha-icon><span>Bip ${beep.state === "on" ? "til" : "fra"}</span></button>`);
+      const supply = this._entity(unit.supply);
+      if (supply) fn.push(`<button class="${supply.state === "on" ? "selected" : ""}" data-action="supply"><ha-icon icon="mdi:power-plug${supply.state === "on" ? "" : "-off"}"></ha-icon><span>Str\xF8m ${supply.state === "on" ? "til" : "fra"}</span></button>`);
+      if (this._exists(unit.restart)) fn.push(`<button data-action="restart"><ha-icon icon="mdi:restart-alert"></ha-icon><span>Genstart</span></button>`);
       if (fn.length) out += `<div class="program functions"><span>Funktioner</span><div>${fn.join("")}</div></div>`;
     }
     if (part === "chips") return chips.join("");
@@ -9755,6 +9758,17 @@ var HAACClimateCard = class extends HTMLElement {
       if (action === "filter-reset" && unit.filter_reset) {
         if (!confirm("Nulstil filtert\xE6lleren? G\xF8r det kun efter filterrens.")) return;
         await this._hass.callService("button", "press", { entity_id: unit.filter_reset });
+        return;
+      }
+      if (action === "supply" && unit.supply) {
+        const on = this._entity(unit.supply)?.state === "on";
+        if (on && !confirm("Sl\xE5 str\xF8mmen til anl\xE6gget fra?")) return;
+        await this._hass.callService("homeassistant", on ? "turn_off" : "turn_on", { entity_id: unit.supply });
+        return;
+      }
+      if (action === "restart" && unit.restart) {
+        if (!confirm("Genstart anl\xE6gget? Str\xF8mmen slukkes i 30 sekunder.")) return;
+        await this._hass.callService("button", "press", { entity_id: unit.restart });
         return;
       }
       if (action === "swing-step" && unit.swing_step) {
@@ -33411,7 +33425,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION27 = "1.0.3";
+var VERSION27 = "1.0.5";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -34512,9 +34526,15 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
     const sub = [Number.isFinite(r.humidity) ? `${f(r.humidity, 0)} %` : "", Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "m\xE5l"} ${f(r.target)}\xB0` : ""].filter(Boolean).join(" \xB7 ");
     const act = icons.map(([cls, ic, t]) => `<span class="${cls}" title="${this._esc(t)}"><ha-icon icon="${ic}"></ha-icon></span>`).join("");
-    return `<div class="rt s-${st}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}">
-      <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div>
-      <div class="rt-r2"><em><i></i>${this._esc(status)}</em>${act ? `<span class="rt-act">${act}</span>` : ""}<small class="rt-sub">${this._esc(sub)}</small></div></div>`;
+    return `<div class="rt s-${st}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>
+      ${(() => {
+      const acHeat = r.ac?.running && r.ac.mode !== "cool";
+      const cool = r.ac?.running && r.ac.mode === "cool";
+      const ic = cool ? "mdi:snowflake" : acHeat ? "mdi:heat-pump-outline" : r.heating ? "mdi:fire" : room.icon || "mdi:thermometer";
+      return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`;
+    })()}
+      <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i>${this._esc(status)}</em></div>
+      <div class="rt-r2"><span class="rt-lft">${act ? `<span class="rt-act">${act}</span>` : ""}<small class="rt-sub">${this._esc(sub)}</small></span><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div></div>`;
   }
   _roomInfo(room) {
     const cl = this._state(room.climate);
@@ -35084,7 +35104,11 @@ ${LUX_KEYFRAMES}
         .rooms .rt{--sc:#20e3a2;container-type:inline-size;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:8px 10px 8px;border-radius:16px;cursor:pointer;--ch:.5;
           background:radial-gradient(130% 120% at 0% 0%,color-mix(in srgb,var(--sc) 16%,transparent),transparent 60%),var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));
           box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15))),inset 0 0 0 1px color-mix(in srgb,var(--sc) 20%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}
-        .rooms .rt::before{content:"";position:absolute;left:14%;right:14%;top:0;height:2px;border-radius:0 0 2px 2px;background:var(--sc);box-shadow:0 0 12px var(--sc);opacity:.85}
+        /* Same edge light as Varme Center's Room Climate tiles: it runs around the tile while someone is in the room (Claude AI). */
+        .rt .sheen{position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1.6px;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .4s ease;
+          -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+        .rt .sheen::before{content:"";position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;translate:-50% -50%;background:conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--sc) 40%,transparent) 76%,var(--sc) 88%,#fff 91%,var(--sc) 94%,transparent 100%);animation:rtOrbit 4.5s linear infinite}
+        .rt.is-present .sheen{opacity:1}@keyframes rtOrbit{to{rotate:360deg}}
         .rooms .rt:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--sc) 45%,transparent),0 0 22px -8px var(--sc)}.rooms .rt:active{transform:scale(.97)}
         .rt.s-ok{--sc:#20e3a2}.rt.s-warm{--sc:#f2c14e}.rt.s-cold,.rt.s-cool{--sc:#4fb3ff}.rt.s-heat{--sc:#ff8a3d}.rt.s-open{--sc:#a78bfa}.rt.s-out{--sc:#38bdf8}.rt.s-plain{--sc:#7fd4b0}.rt.s-na{--sc:#ef4444}
         .rt.s-heat{animation:rtHeat 2.6s ease-in-out infinite}@keyframes rtHeat{50%{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--sc) 55%,transparent),0 0 26px -6px var(--sc)}}
@@ -35103,15 +35127,21 @@ ${LUX_KEYFRAMES}
         .rt-curve .a{fill:color-mix(in srgb,var(--sc) 18%,transparent)}.rt-curve .l{fill:none;stroke:var(--sc);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 60%,transparent))}
         .rt-curve .g{stroke:rgba(255,255,255,.4);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
         .rt-dot{position:absolute;right:3px;z-index:1;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--sc),0 0 10px var(--sc);pointer-events:none}
-        @container (max-width:200px){.rt-r2 .rt-sub{display:none}}
-        .rooms .rt{justify-content:center;gap:5px;padding:8px 11px}
-        .rt-r1{display:flex;align-items:baseline;gap:8px;min-width:0}.rt-n{flex:1;min-width:0;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .rt-v{flex:none;display:flex;align-items:flex-start;font-size:23px;font-weight:850;line-height:1;letter-spacing:-.02em}.rt-v small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
-        .rt-r2{display:flex;align-items:center;gap:6px;min-width:0}
-        .rt-r2 em{display:flex;align-items:center;gap:4px;min-width:0;font-style:normal;font-size:9px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .rt-r2 em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
-        .rt-r2 .rt-act{position:static;display:flex;gap:3px;flex:none}.rt-r2 .rt-sub{margin-left:auto;flex:none;font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}
-        @media(prefers-reduced-motion:reduce){.rt.s-heat,.rt-act span{animation:none!important}}
+
+        .rooms .rt{justify-content:space-between;gap:4px;padding:8px 11px 7px}
+        .rt-r1{position:relative;z-index:1;display:flex;flex-direction:column;gap:1px;min-width:0}.rt-n{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-r1 em{display:flex;align-items:center;gap:4px;min-width:0;font-style:normal;font-size:9px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-r1 em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
+        .rt-r2{position:relative;z-index:1;display:flex;align-items:flex-end;gap:6px;min-width:0}
+        .rt-lft{flex:1;min-width:0;display:flex;align-items:center;gap:6px}.rt-lft .rt-act{position:static;display:flex;gap:3px;flex:none}
+        .rt-lft .rt-sub{min-width:0;font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-v{flex:none;display:flex;align-items:flex-start;font-size:25px;font-weight:850;line-height:.9;letter-spacing:-.02em;text-shadow:0 2px 8px rgba(0,0,0,.35)}.rt-v small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
+        .rt-bg{position:absolute;z-index:0;right:-8px;top:50%;width:76px;height:76px;--mdc-icon-size:76px;transform:translateY(-50%) rotate(-8deg);color:var(--sc);opacity:.09;pointer-events:none}
+        .rt-bg.hot{color:#ff8a3d;opacity:.2;animation:rtBgHot 2.6s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,138,61,.5))}
+        .rt-bg.cool{color:#4fb3ff;opacity:.2;animation:rtBgCool 6s linear infinite;filter:drop-shadow(0 0 10px rgba(79,179,255,.5))}
+        @keyframes rtBgHot{50%{opacity:.3;transform:translateY(-52%) rotate(-8deg) scale(1.05)}}@keyframes rtBgCool{to{transform:translateY(-50%) rotate(352deg)}}
+        @container (max-width:200px){.rt-lft .rt-sub{display:none}}
+        @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat,.rt-act span{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
