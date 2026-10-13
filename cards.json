@@ -224,6 +224,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-room-climate-card",
+    "name": "HA Room Climate Card",
+    "filename": "ha-room-climate-card.js",
+    "category": "Heating and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-temperature-target-card",
     "name": "Temperature Target Card",
     "filename": "ha-temperature-target-card.js",

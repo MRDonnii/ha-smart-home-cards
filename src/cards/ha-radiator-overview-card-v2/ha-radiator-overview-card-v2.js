@@ -284,7 +284,7 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 :host([compact]) .z-room{display:none!important}
 `;
 
-class HARadiatorOverviewCardV2 extends HTMLElement {
+export class HARadiatorOverviewCardV2 extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });

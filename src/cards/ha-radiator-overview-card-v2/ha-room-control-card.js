@@ -98,6 +98,42 @@ const STYLE = `
 .empty{padding:22px;border-radius:15px;background:var(--tile);color:var(--mut);font-size:13px;text-align:center}
 @keyframes drift{50%{transform:translate(-4px,-3px) scale(1.05) rotate(-4deg);opacity:.18}}
 @media(max-width:480px){.prof{grid-template-columns:repeat(3,1fr)}.lights,.tgs{grid-template-columns:1fr 1fr}.lt{height:56px;padding:0 10px;gap:8px}.lt .li{width:30px;height:30px}.lt .pct{font-size:13px}.media{grid-template-columns:1fr}}
+/* Exclusive look (Claude AI, 2026-10-13; user: "noget helt nyt eksklusivt ... popup-styringssiderne"): glass tiles, glowing
+   scene buttons, big dimmers and a slim status strip, matching ha-room-climate-card's popup. */
+.wrap{gap:22px}
+.sh h4{font-size:10.5px;letter-spacing:.18em}.sh .rule{background:linear-gradient(90deg,rgba(255,255,255,.12),transparent)}
+.tile{border-left:0;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.018)),var(--surf);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px rgba(255,255,255,.06),0 14px 30px -20px rgba(0,0,0,.85)}
+.tile:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 0 0 1px color-mix(in srgb,var(--c,#fff) 30%,rgba(255,255,255,.08)),0 18px 34px -20px rgba(0,0,0,.9)}
+.hero{grid-template-columns:1fr;padding:16px 16px 14px;background:radial-gradient(120% 120% at 0% 0%,color-mix(in srgb,var(--c) 16%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),var(--surf)}
+.hero .ic{display:none}.hero .t strong{font-size:15px}.pill{padding:4px 11px;font-size:10.5px}
+.hero .btns{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.btn{min-height:48px;border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink);font-size:13px}
+.btn ha-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;--mdc-icon-size:17px;color:var(--bc);background:color-mix(in srgb,var(--bc) 18%,transparent)}
+.btn:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bc) 45%,transparent),0 0 22px -10px var(--bc)}
+.prof{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.pf{min-height:96px;padding:12px;gap:10px;justify-content:space-between}
+.pf ha-icon.i{display:grid;place-items:center;width:40px;height:40px;border-radius:14px;--mdc-icon-size:21px;color:var(--mut);background:rgba(255,255,255,.07);transition:all .25s ease}
+.pf b{font-size:13px}
+.pf.on{background:radial-gradient(120% 100% at 0% 0%,color-mix(in srgb,var(--c) 42%,transparent),color-mix(in srgb,var(--c) 10%,transparent) 70%),var(--surf);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 14px 30px -14px color-mix(in srgb,var(--c) 75%,transparent)}
+.pf.on ha-icon.i{color:#1b1206;background:var(--c);box-shadow:0 0 22px -2px var(--c);filter:none}
+.pf.on::after{content:"";position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.lights{gap:10px}
+.lt{height:72px;padding:0 16px;gap:13px;border-radius:20px}
+.lt .fill{background:linear-gradient(90deg,color-mix(in srgb,var(--lc) 12%,transparent),color-mix(in srgb,var(--lc) 34%,transparent));box-shadow:inset -2px 0 0 color-mix(in srgb,var(--lc) 70%,transparent)}
+.lt .li{width:42px;height:42px;border-radius:14px;--mdc-icon-size:22px}
+.lt.on .li{color:#1b1206;background:var(--lc);box-shadow:0 0 22px -4px var(--lc);filter:none}
+.lt .n b{font-size:14px}.lt .pct{font-size:19px;letter-spacing:-.02em}
+.tgs{gap:10px}
+.tg{min-height:62px;padding:10px 14px;border-radius:18px}
+.tg .ti{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.06);--mdc-icon-size:19px}
+.tg.on .ti{background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.sw{width:40px;height:24px}.sw::after{top:4px;left:4px;width:16px;height:16px}.tg.on .sw::after{transform:translateX(16px)}
+.tg.on .sw{box-shadow:0 0 14px -3px var(--ok)}
+.media{gap:10px}.md{padding:14px;border-radius:20px}.md .cov{width:56px;height:56px;border-radius:15px}
+.ib{width:40px;height:38px;border-radius:12px}
+@media(max-width:480px){.prof{grid-template-columns:repeat(3,minmax(0,1fr))}.pf{min-height:84px;padding:10px}.pf ha-icon.i{width:34px;height:34px}.lt{height:64px;padding:0 11px;gap:9px}.lt .li{width:34px;height:34px}.lt .pct{font-size:15px}.tg{padding:9px 10px;gap:8px}.tg .ti{width:30px;height:30px}.tg .n b{font-size:12px}.lights{grid-template-columns:1fr}
+  .hero .btns{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.btn{flex-direction:column;gap:5px;min-height:64px;padding:8px 4px;font-size:11.5px;text-align:center;line-height:1.15}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
