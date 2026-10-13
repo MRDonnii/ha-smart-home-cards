@@ -1,4 +1,4 @@
-const VERSION = "0.5.3";
+const VERSION = "0.5.6";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -147,9 +147,9 @@ class HAPersonOverviewCard extends HTMLElement {
     const initial = esc((p.name || "?").trim()[0] || "?");
     return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b>${esc(p.name || person?.attributes?.friendly_name || "Person")}</b>
-        <span class="st"><i></i>${esc(status)}</span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>${esc(trip)}` : esc(place)}</small></span>
+      <span class="tx"><b><span class="mq"><span>${esc(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -210,7 +210,10 @@ class HAPersonOverviewCard extends HTMLElement {
       + ".pv2 .bat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px}.pv2 .bat b{font-size:13px;font-weight:800}.pv2 .bb{position:relative;width:34px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent);padding:2px}.pv2 .bb::after{content:'';position:absolute;right:-4px;top:4px;width:2.5px;height:6px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent)}.pv2 .bb i{display:block;height:100%;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}"
       + ".pv2 .bat.chg .bb i{animation:pvChg 1.6s ease-in-out infinite}@keyframes pvChg{50%{opacity:.5}}.pv2 .bat ha-icon{--mdc-icon-size:14px;color:#ffd166;margin-top:-2px}"
       + "@media(min-width:1101px) and (max-height:950px){.pv2{height:72px;padding:6px 12px 6px 10px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}}"
-      + ".pv2 .st{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + ".pv2 .st{max-width:100%;overflow:hidden;white-space:nowrap}.pv2 .tx b,.pv2 small{min-width:0;max-width:100%;text-overflow:clip}.pv2 .tx>*{min-width:0}"
+      // A zone name too long for its chip scrolls back and forth (user, 2026-10-13: "så skal det bare være en rulletekst").
+      + ".mq{display:block;min-width:0;overflow:hidden}.mq>span{display:inline-block;white-space:nowrap}.mq.run{mask-image:linear-gradient(90deg,#000 85%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}.mq.run>span{animation:mqRoll var(--mqd,5s) ease-in-out infinite alternate}"
+      + "@keyframes mqRoll{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(calc(-1 * var(--mqx,0px)))}}@media(prefers-reduced-motion:reduce){.mq.run>span{animation:none}}"
       + "@media(max-width:600px){.pv2{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:48px;height:48px}.pv2 .tx b{font-size:15px;padding-right:46px}.pv2 .st{font-size:10px;padding:1px 7px 1px 6px}.pv2 small{font-size:10.5px}"
       + ".pv2 .bat{position:absolute;right:9px;top:9px;flex-direction:row;align-items:center;gap:4px}.pv2 .bb{width:20px;height:10px;padding:1.5px}.pv2 .bb::after{top:3px;height:4px}.pv2 .bat b{font-size:10.5px}.pv2 .bat ha-icon{--mdc-icon-size:12px;margin:0}}"
       + ".grid.combined{display:block}.combo{display:grid;grid-template-columns:repeat(var(--pn,4),minmax(0,1fr));gap:4px;padding:8px;border-radius:20px;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--presence-home,#37e69a) 9%,transparent),transparent 55%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
@@ -225,7 +228,7 @@ class HAPersonOverviewCard extends HTMLElement {
       // Phones: all four in one row – portrait, name and status; no battery, a critical one (<20 %) shows as a faint red
       // pulse around the portrait (user, 2026-10-13).
       // … with the name and status to the right of the portrait (user: "Info skal der være plads til højre for billedet").
-      + "@media(max-width:600px){.combo{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:7px 3px}.pv2.mini{grid-template-columns:auto minmax(0,1fr);align-items:center;text-align:left;padding:4px 3px;gap:5px;border-radius:12px}.pv2.mini .av{width:32px;height:32px;font-size:13px;box-shadow:0 0 0 2px var(--pc),0 0 0 4px color-mix(in srgb,var(--pc) 16%,transparent)}.pv2.mini .tx{align-items:flex-start;gap:2px}.pv2.mini .tx b{font-size:11.5px;padding-right:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}.pv2.mini .st{font-size:8.5px;padding:1px 5px 1px 4px;gap:3px;max-width:100%}.pv2.mini .st i{width:5px;height:5px}.pv2.mini small,.pv2.mini .bat{display:none!important}"
+      + "@media(max-width:600px){.combo{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:7px 3px}.pv2.mini{grid-template-columns:auto minmax(0,1fr);align-items:center;text-align:left;padding:4px 3px;gap:5px;border-radius:12px}.pv2.mini .av{width:32px;height:32px;font-size:13px;box-shadow:0 0 0 2px var(--pc),0 0 0 4px color-mix(in srgb,var(--pc) 16%,transparent)}.pv2.mini .tx{align-items:flex-start;gap:2px}.pv2.mini .tx b{font-size:11.5px;padding-right:0;max-width:100%}.pv2.mini .st{font-size:8.5px;padding:1px 5px 1px 4px;gap:3px;max-width:100%}.pv2.mini .st i{width:5px;height:5px;flex:none}.pv2.mini .bat{display:none!important}.pv2.mini small{display:flex;font-size:9px;gap:2px;max-width:100%}.pv2.mini small ha-icon{--mdc-icon-size:11px}"
       + ".pv2 .av.low{animation:avLow 2.4s ease-in-out infinite}@keyframes avLow{0%,100%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 5px rgba(255,70,101,.25),0 0 10px 2px rgba(255,70,101,.25)}50%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 6px rgba(255,70,101,.55),0 0 16px 5px rgba(255,70,101,.45)}}"
       + "}"
       + ".cline{display:none}"
@@ -245,7 +248,14 @@ class HAPersonOverviewCard extends HTMLElement {
       `repeat(${window.matchMedia("(max-width: 600px)").matches ? this._config.mobile_columns || 2 : this._config.columns || 2},minmax(0,1fr))`;
     this._wire();
   }
+  _marquee() {
+    requestAnimationFrame(() => this.shadowRoot?.querySelectorAll(".mq").forEach((m) => {
+      const over = (m.firstElementChild?.scrollWidth || 0) - m.clientWidth; const run = over > 2;
+      m.classList.toggle("run", run); if (run) { m.style.setProperty("--mqx", `${over + 6}px`); m.style.setProperty("--mqd", `${Math.max(3.5, over / 10).toFixed(1)}s`); }
+    }));
+  }
   _wire() {
+    this._marquee();
     this.shadowRoot.querySelectorAll(".portrait").forEach((portrait) => {
       portrait.style.left = "50%";
       portrait.style.right = "auto";
