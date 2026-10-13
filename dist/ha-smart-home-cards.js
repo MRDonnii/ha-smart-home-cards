@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.68 */
+/* MRDonnii Smart Home Cards v0.5.69 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -31477,7 +31477,9 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 @keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
-var VERSION26 = "0.9.0";
+var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
+var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
+var VERSION26 = "0.9.1";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -32381,7 +32383,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       this.config?.water_flow_entity,
       this.config?.storage_entity,
       ...this.config?.hdd_entities || [],
-      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence]),
+      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence, room.ac]),
       ...(this.config?.calendars || []).map((x) => x.entity)
     ].filter(Boolean);
     const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
@@ -32391,7 +32393,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       hass.states?.[id]?.last_changed,
       hass.states?.[id]?.attributes?.message,
       hass.states?.[id]?.attributes?.start_time,
-      ...id.startsWith("climate.") ? [hass.states?.[id]?.attributes?.temperature, hass.states?.[id]?.attributes?.hvac_action, hass.states?.[id]?.attributes?.window_open, hass.states?.[id]?.attributes?.door_open, hass.states?.[id]?.attributes?.batteries] : []
+      ...id.startsWith("climate.") ? [hass.states?.[id]?.attributes?.temperature, hass.states?.[id]?.attributes?.hvac_action, hass.states?.[id]?.attributes?.window_open, hass.states?.[id]?.attributes?.door_open, hass.states?.[id]?.attributes?.batteries, hass.states?.[id]?.attributes?.fan_mode, hass.states?.[id]?.attributes?.preset_mode, hass.states?.[id]?.attributes?.opening_pause_active] : []
     ]));
     this._roomStats();
     if (this._roomHost) this._roomSheetPaint();
@@ -32457,13 +32459,18 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const valves = Object.values(json(a.calibration_balance) || {}).map((v) => Number(v?.["valve%"])).filter(Number.isFinite);
     const series = this._roomSeries?.get(room.temperature) || [];
     const prev = series.length ? series[series.length - 1].v : Number.NaN;
+    const ac = this._acInfo(room.acEntity || room.ac);
+    const acOn = ac && ac.mode !== "off" && Number.isFinite(Number(ac.a.temperature));
+    const goal = acOn ? Number(ac.a.temperature) : target;
     return {
       cl,
       a,
       temp,
       humidity,
-      target,
-      delta: Number.isFinite(temp) && Number.isFinite(target) ? temp - target : Number.NaN,
+      target: goal,
+      btTarget: target,
+      acTarget: acOn,
+      delta: Number.isFinite(temp) && Number.isFinite(goal) ? temp - goal : Number.NaN,
       heating: a.hvac_action === "heating",
       present: room.presence ? this._state(room.presence)?.state === "on" : false,
       window: a.window_open === true || a.door_open === true,
@@ -32471,8 +32478,19 @@ var HaHomeSummaryCard = class extends HTMLElement {
       lowBattery: Number.isFinite(battery) && battery < 20,
       valve: valves.length ? valves.reduce((x, y) => x + y, 0) / valves.length : Number.NaN,
       trend: Number.isFinite(temp) && Number.isFinite(prev) ? temp - prev : Number.NaN,
-      series
+      series,
+      ac
     };
+  }
+  // The room's AC / heat pump (`ac`, e.g. Heat Pump Thermostat's wrapper): its mode, whether it runs, fan and control.
+  _acInfo(id) {
+    const st = this._state(id);
+    if (!st) return null;
+    const a = st.attributes || {};
+    const mode = st.state;
+    const action = a.hvac_action || (mode === "off" ? "off" : mode);
+    const running = !["off", "idle", "unavailable", "unknown"].includes(String(action)) && mode !== "off";
+    return { id, st, a, mode, running, paused: a.opening_pause_active === true, action };
   }
   // The faint curve behind a tile: the last 24 hourly means and the reading now.
   _spark(series) {
@@ -32513,7 +32531,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     if (!room) return;
     this._closeRoom();
     this._roomIdx = i;
-    this._pendingTarget = null;
+    this._pending = {};
     const host = document.createElement("div");
     host.className = "ha-home-room-sheet";
     const root = host.attachShadow({ mode: "open" });
@@ -32540,6 +32558,9 @@ var HaHomeSummaryCard = class extends HTMLElement {
 .tgt{text-align:center}.tgt b{display:block;font-size:30px;font-weight:700}.tgt span{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}.tgt.pend b{color:color-mix(in srgb,var(--a) 75%,#fff)}
 .modes{display:flex;gap:6px;margin-top:10px}.modes button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border:0;border-radius:13px;background:var(--soft);font-weight:800;font-size:13px;cursor:pointer;color:var(--mut)}.modes ha-icon{--mdc-icon-size:18px}
 .rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+h5{display:flex;align-items:center;gap:8px;margin:18px 0 0;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}h5 ha-icon{--mdc-icon-size:18px}h5 span{margin-left:auto;letter-spacing:0;text-transform:none;font-weight:700;font-size:12.5px}
+h5.ach.run ha-icon{animation:pulse 1.6s ease-in-out infinite}h5.ach.run.m-heat{color:#fb923c}h5.ach.run.m-cool{color:#38bdf8}h5.ach.run.m-fan_only ha-icon{animation:spin 1.6s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.modes{flex-wrap:wrap}.modes button{min-width:0}.modes.fans button{flex:1 1 calc(33% - 6px);padding:8px}.ctl.sm{padding:9px}.ctl.sm .step{width:44px;height:44px;font-size:22px}.ctl.sm .tgt b{font-size:24px}
 .row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:13px;background:var(--soft);font-size:12.5px;min-width:0}.row ha-icon{--mdc-icon-size:18px;color:var(--mut);flex:none}.row b{display:block;font-size:13.5px}.row span{color:var(--mut);font-size:11px}
 .row.hot ha-icon{color:#fb923c;animation:pulse 1.6s ease-in-out infinite}.row.warn ha-icon{color:#38bdf8}.row.bad ha-icon{color:#ef4444}@keyframes pulse{50%{opacity:.4}}
 .close{margin-top:16px;width:100%;padding:12px;border:0;border-radius:14px;font-weight:800;cursor:pointer;background:var(--soft)}
@@ -32557,13 +32578,22 @@ ${LUX_KEYFRAMES}
       }
       const st = e.target.closest("[data-step]");
       if (st) {
-        this._stepTarget(Number(st.dataset.step));
+        this._stepTarget(Number(st.dataset.step), st.dataset.ent);
         return;
       }
       const md = e.target.closest("[data-mode]");
       if (md) {
-        const r = this.config.rooms[this._roomIdx];
-        this._hass.callService("climate", "set_hvac_mode", { entity_id: r.climate, hvac_mode: md.dataset.mode });
+        this._hass.callService("climate", "set_hvac_mode", { entity_id: md.dataset.ent, hvac_mode: md.dataset.mode });
+        return;
+      }
+      const fn = e.target.closest("[data-fan]");
+      if (fn) {
+        this._hass.callService("climate", "set_fan_mode", { entity_id: fn.dataset.ent, fan_mode: fn.dataset.fan });
+        return;
+      }
+      const pr = e.target.closest("[data-preset]");
+      if (pr) {
+        this._hass.callService("climate", "set_preset_mode", { entity_id: pr.dataset.ent, preset_mode: pr.dataset.preset });
         return;
       }
       const mi = e.target.closest("[data-more]");
@@ -32578,33 +32608,56 @@ ${LUX_KEYFRAMES}
   _closeRoom() {
     this._roomHost?.remove();
     this._roomHost = null;
-    clearTimeout(this._targetTimer);
+    Object.values(this._targetTimers || {}).forEach(clearTimeout);
     if (this._roomKeyH) document.removeEventListener("keydown", this._roomKeyH);
   }
   // Setpoint: steps add up while tapping and are sent 0.8 s after the last tap.
-  _stepTarget(dir) {
+  _stepTarget(dir, ent) {
     const room = this.config.rooms[this._roomIdx];
-    const r = this._roomInfo(room);
-    if (!r.cl) return;
-    const step = Number(r.a.target_temp_step) || 0.5;
-    const lo = Number(r.a.min_temp) || 5;
-    const hi = Number(r.a.max_temp) || 30;
-    const base = Number.isFinite(this._pendingTarget) ? this._pendingTarget : Number(r.a.temperature);
+    const id = ent || room.climate;
+    const st = this._state(id);
+    if (!st) return;
+    const a = st.attributes || {};
+    const step = Number(a.target_temp_step) || 0.5;
+    const lo = Number(a.min_temp) || 5;
+    const hi = Number(a.max_temp) || 30;
+    this._pending = this._pending || {};
+    const base = Number.isFinite(this._pending[id]) ? this._pending[id] : Number(a.temperature);
     if (!Number.isFinite(base)) return;
-    this._pendingTarget = Math.min(hi, Math.max(lo, Math.round((base + dir * step) / step) * step));
+    const next = Math.min(hi, Math.max(lo, Math.round((base + dir * step) / step) * step));
+    this._pending[id] = next;
     this._roomSheetPaint(true);
-    clearTimeout(this._targetTimer);
-    this._targetTimer = setTimeout(() => {
-      const t = this._pendingTarget;
-      this._hass.callService("climate", "set_temperature", { entity_id: room.climate, temperature: t }).finally(() => {
+    clearTimeout(this._targetTimers?.[id]);
+    this._targetTimers = this._targetTimers || {};
+    this._targetTimers[id] = setTimeout(() => {
+      const t = this._pending[id];
+      this._hass.callService("climate", "set_temperature", { entity_id: id, temperature: t }).finally(() => {
         setTimeout(() => {
-          if (this._pendingTarget === t) {
-            this._pendingTarget = null;
+          if (this._pending[id] === t) {
+            delete this._pending[id];
             this._roomSheetPaint(true);
           }
         }, 1500);
       });
     }, 800);
+  }
+  // The AC part of the room panel: what it does now, its modes, its own setpoint (whole degrees on the Qlimas), fan and
+  // whether it runs by itself (Heat Pump Thermostat's preset auto) or by hand.
+  _acSection(ac, pend) {
+    if (!ac) return "";
+    const a = ac.a;
+    const off = ac.mode === "off";
+    const f = (v, d = 1) => this._fmt(v, d);
+    const target = Number.isFinite(pend[ac.id]) ? pend[ac.id] : Number(a.temperature);
+    const modes = (a.hvac_modes || []).filter((m) => AC_MODES[m]);
+    const fans = a.fan_modes || [];
+    const presets = (a.preset_modes || []).filter((p) => ["auto", "manual"].includes(p));
+    const status = ac.paused ? "Pause \xB7 d\xF8r eller vindue st\xE5r \xE5bent" : off ? "Slukket" : ac.running ? `K\xF8rer \xB7 ${AC_MODES[ac.mode]?.[0] || ac.mode}` : `Venter \xB7 ${AC_MODES[ac.mode]?.[0] || ac.mode}`;
+    return `<h5 class="ach ${ac.running ? `run m-${ac.mode}` : ""}"><ha-icon icon="${off ? "mdi:air-conditioner" : AC_MODES[ac.mode]?.[1] || "mdi:air-conditioner"}"></ha-icon>AC<span>${this._esc(status)}</span></h5>
+      <div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" data-ent="${ac.id}" class="${ac.mode === m ? "on" : ""}"><ha-icon icon="${AC_MODES[m][1]}"></ha-icon>${AC_MODES[m][0]}</button>`).join("")}</div>
+      ${off ? "" : `<div class="ctl sm"><button type="button" class="step" data-step="-1" data-ent="${ac.id}" aria-label="S\xE6nk AC">\u2212</button><div class="tgt ${Number.isFinite(pend[ac.id]) ? "pend" : ""}"><span>AC setpunkt</span><b>${Number.isFinite(target) ? `${f(target)}\xB0` : "\u2013"}</b></div><button type="button" class="step" data-step="1" data-ent="${ac.id}" aria-label="H\xE6v AC">+</button></div>
+      ${fans.length ? `<div class="modes fans">${fans.map((m) => `<button type="button" data-fan="${this._esc(m)}" data-ent="${ac.id}" class="${a.fan_mode === m ? "on" : ""}">${this._esc(AC_FANS[String(m).toLowerCase()] || m)}</button>`).join("")}</div>` : ""}`}
+      ${presets.length === 2 ? `<div class="modes"><button type="button" data-preset="auto" data-ent="${ac.id}" class="${a.preset_mode === "auto" ? "on" : ""}"><ha-icon icon="mdi:robot-outline"></ha-icon>Automatisk</button><button type="button" data-preset="manual" data-ent="${ac.id}" class="${a.preset_mode === "manual" ? "on" : ""}"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon>Manuel</button></div>` : ""}`;
   }
   _roomSheetPaint(force = false) {
     const box = this._roomHost?.shadowRoot?.querySelector(".box");
@@ -32612,7 +32665,7 @@ ${LUX_KEYFRAMES}
     if (!box || !room) return;
     const r = this._roomInfo(room);
     const f = (v, d = 1) => this._fmt(v, d);
-    const key = JSON.stringify([r.temp, r.humidity, r.target, r.heating, r.window, r.battery, r.valve, r.present, r.cl?.state, this._pendingTarget, r.series.length]);
+    const key = JSON.stringify([r.temp, r.humidity, r.target, r.heating, r.window, r.battery, r.valve, r.present, r.cl?.state, JSON.stringify(this._pending || {}), r.series.length, r.ac && [r.ac.mode, r.ac.running, r.ac.a.temperature, r.ac.a.fan_mode, r.ac.a.preset_mode, r.ac.paused]]);
     if (!force && key === this._roomSheetKey) return;
     this._roomSheetKey = key;
     box.className = `box ${!Number.isFinite(r.temp) ? "na" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : ""}`;
@@ -32634,8 +32687,9 @@ ${LUX_KEYFRAMES}
     }
     const mins = r.series.length ? r.series.map((p) => p.v) : [];
     const range = mins.length ? `${f(Math.min(...mins))}\u2013${f(Math.max(...mins))}\xB0 i d\xF8gnet` : "";
-    const trend = Number.isFinite(r.trend) ? `${r.trend > 0 ? "+" : ""}${f(r.trend)}\xB0 siden sidste time` : "";
-    const target = Number.isFinite(this._pendingTarget) ? this._pendingTarget : Number(r.a.temperature);
+    const trend = !Number.isFinite(r.trend) ? "" : Math.abs(r.trend) < 0.05 ? "u\xE6ndret siden sidste time" : `${r.trend > 0 ? "+" : "\u2212"}${f(Math.abs(r.trend))}\xB0 siden sidste time`;
+    const pend = this._pending || {};
+    const target = Number.isFinite(pend[room.climate]) ? pend[room.climate] : Number(r.a.temperature);
     const modes = (r.a.hvac_modes || []).filter((m) => ["heat", "off", "auto", "cool", "heat_cool"].includes(m));
     const MODE = { heat: ["Varme", "mdi:fire"], off: ["Fra", "mdi:power"], auto: ["Auto", "mdi:thermostat-auto"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Varme/k\xF8l", "mdi:sun-snowflake-variant"] };
     const rows = [];
@@ -32644,11 +32698,12 @@ ${LUX_KEYFRAMES}
     if (Number.isFinite(r.valve)) rows.push(["", "mdi:valve", `${f(r.valve, 0)} %`, "ventil\xE5bning"]);
     if (Number.isFinite(r.battery)) rows.push([r.lowBattery ? "bad" : "", r.lowBattery ? "mdi:battery-alert-variant-outline" : "mdi:battery-high", `${f(r.battery, 0)} %`, "laveste batteri"]);
     if (room.presence) rows.push([r.present ? "warn" : "", r.present ? "mdi:motion-sensor" : "mdi:motion-sensor-off", r.present ? "Nogen er her" : "Tomt", "tilstedev\xE6relse"]);
-    box.innerHTML = `<div class="hd"><span class="ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span><div><h4>${this._esc(room.name)}</h4><small>${Number.isFinite(r.target) ? `M\xE5l ${f(r.target)}\xB0` : "Ingen termostat"}${Number.isFinite(r.delta) ? ` \xB7 ${r.delta > 0 ? "+" : ""}${f(r.delta)}\xB0 fra m\xE5let` : ""}</small></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+    box.innerHTML = `<div class="hd"><span class="ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span><div><h4>${this._esc(room.name)}</h4><small>${Number.isFinite(r.target) ? `${r.acTarget ? "AC-m\xE5l" : "M\xE5l"} ${f(r.target)}\xB0` : "Ingen termostat"}${Number.isFinite(r.delta) ? ` \xB7 ${r.delta > 0 ? "+" : ""}${f(r.delta)}\xB0 fra m\xE5let` : ""}</small></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
       <div class="hero"><div class="now"><b>${f(r.temp)}\xB0</b><span>${this._esc(trend)}</span></div><div class="side">${Number.isFinite(r.humidity) ? `<span><b>${f(r.humidity, 0)} %</b> fugt</span>` : ""}${range ? `<span>${range}</span>` : ""}</div></div>
       <div class="chart">${chart}</div>
-      ${r.cl ? `<div class="ctl"><button type="button" class="step" data-step="-1" aria-label="S\xE6nk" ${r.cl.state === "off" ? "disabled" : ""}>\u2212</button><div class="tgt ${Number.isFinite(this._pendingTarget) ? "pend" : ""}"><span>Setpunkt</span><b>${r.cl.state === "off" ? "Fra" : `${f(target)}\xB0`}</b></div><button type="button" class="step" data-step="1" aria-label="H\xE6v" ${r.cl.state === "off" ? "disabled" : ""}>+</button></div>
-        ${modes.length > 1 ? `<div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" class="${r.cl.state === m ? "on" : ""}"><ha-icon icon="${MODE[m][1]}"></ha-icon>${MODE[m][0]}</button>`).join("")}</div>` : ""}` : ""}
+      ${r.cl ? `${r.ac ? '<h5><ha-icon icon="mdi:radiator"></ha-icon>Radiatorer</h5>' : ""}<div class="ctl"><button type="button" class="step" data-step="-1" data-ent="${room.climate}" aria-label="S\xE6nk" ${r.cl.state === "off" ? "disabled" : ""}>\u2212</button><div class="tgt ${Number.isFinite(pend[room.climate]) ? "pend" : ""}"><span>Setpunkt</span><b>${r.cl.state === "off" ? "Fra" : `${f(target)}\xB0`}</b></div><button type="button" class="step" data-step="1" data-ent="${room.climate}" aria-label="H\xE6v" ${r.cl.state === "off" ? "disabled" : ""}>+</button></div>
+        ${modes.length > 1 ? `<div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" data-ent="${room.climate}" class="${r.cl.state === m ? "on" : ""}"><ha-icon icon="${MODE[m][1]}"></ha-icon>${MODE[m][0]}</button>`).join("")}</div>` : ""}` : ""}
+      ${this._acSection(r.ac, pend)}
       ${rows.length ? `<div class="rows">${rows.map(([cls, ic, b, sub]) => `<div class="row ${cls}"><ha-icon icon="${ic}"></ha-icon><div><b>${b}</b><span>${sub}</span></div></div>`).join("")}</div>` : ""}
       <button type="button" class="close" data-close>Luk</button>`;
   }
@@ -32773,6 +32828,7 @@ ${LUX_KEYFRAMES}
         .room-bar .dot{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--room-accent),0 0 8px var(--room-accent);transition:left .6s ease}
         .room-status.window,.room-status.battery{display:flex}.room-status.window{color:var(--info-color,#38bdf8);animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.battery{color:var(--error-color,#ef4444)}
         .room.is-heating .room-bg{color:var(--orange,#fb923c);opacity:.2}
+        .room-status.ac{display:flex;color:var(--secondary-text-color,#a7b2c2)}.room-status.ac.run{animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.ac.run.m-heat{color:#fb923c}.room-status.ac.run.m-cool{color:#38bdf8}.room-status.ac.run.m-dry{color:#5ad1e6}.room-status.ac.run.m-fan_only ha-icon{animation:acSpin 1.6s linear infinite}.room-status.ac.run.m-heat_cool{color:#a78bfa}@keyframes acSpin{to{transform:rotate(360deg)}}
 
         @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
@@ -32834,10 +32890,10 @@ ${LUX_KEYFRAMES}
       const r = this._roomInfo(room);
       const tone2 = !Number.isFinite(r.temp) ? "unavailable" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : "";
       const icon3 = this._esc(room.icon || "mdi:thermometer");
-      const targetText = Number.isFinite(r.target) ? `M\xE5l <b>${this._fmt(r.target, 1)}\xB0</b>` : "";
+      const targetText = Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "M\xE5l"} <b>${this._fmt(r.target, 1)}\xB0</b>` : "";
       const humidityText = Number.isFinite(r.humidity) ? `<span class="room-humidity">${targetText ? "\xB7 " : ""}${this._fmt(r.humidity, 0)}%</span>` : "";
       const badge = (cls, ic, title) => `<span class="room-status ${cls}" title="${title}"><ha-icon icon="${ic}"></ha-icon></span>`;
-      const badges = (r.window ? badge("window", "mdi:window-open-variant", "Vindue eller d\xF8r er \xE5ben") : "") + (r.lowBattery ? badge("battery", "mdi:battery-alert-variant-outline", `Lavt batteri (${r.battery} %)`) : "") + (r.present ? badge("presence", "mdi:motion-sensor", "Der er nogen i rummet") : "") + (r.heating ? badge("heating", "mdi:fire", "Kalder p\xE5 varme") : "");
+      const badges = (r.window ? badge("window", "mdi:window-open-variant", "Vindue eller d\xF8r er \xE5ben") : "") + (r.lowBattery ? badge("battery", "mdi:battery-alert-variant-outline", `Lavt batteri (${r.battery} %)`) : "") + (r.present ? badge("presence", "mdi:motion-sensor", "Der er nogen i rummet") : "") + (r.heating ? badge("heating", "mdi:fire", "Kalder p\xE5 varme") : "") + (r.ac && r.ac.mode !== "off" ? badge(`ac ${r.ac.running ? "run" : ""} m-${r.ac.mode}`, AC_MODES[r.ac.mode]?.[1] || "mdi:air-conditioner", `AC: ${AC_MODES[r.ac.mode]?.[0] || r.ac.mode}${r.ac.running ? " \xB7 k\xF8rer" : " \xB7 venter"}`) : "");
       const trend = r.trend > 0.15 ? '<ha-icon class="room-trend up" icon="mdi:arrow-top-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="room-trend down" icon="mdi:arrow-bottom-right"></ha-icon>' : "";
       const bar = Number.isFinite(r.target) && Number.isFinite(r.temp) ? `<div class="room-bar"><i class="mid"></i><i class="dot" style="left:${(50 + Math.max(-1, Math.min(1, r.delta / 2.5)) * 46).toFixed(1)}%"></i></div>` : "";
       return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
