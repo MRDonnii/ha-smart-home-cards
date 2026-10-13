@@ -2,7 +2,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "0.9.3";
+const VERSION = "0.9.4";
 
 const PRESETS = {
   "home_energy": {
@@ -1035,6 +1035,7 @@ class HaHomeSummaryCard extends HTMLElement {
       hass.states?.[id]?.attributes?.start_time, ...(id.startsWith("climate.") ? [hass.states?.[id]?.attributes?.temperature, hass.states?.[id]?.attributes?.hvac_action, hass.states?.[id]?.attributes?.window_open, hass.states?.[id]?.attributes?.door_open, hass.states?.[id]?.attributes?.batteries, hass.states?.[id]?.attributes?.fan_mode, hass.states?.[id]?.attributes?.preset_mode, hass.states?.[id]?.attributes?.opening_pause_active] : [])]));
     this._roomStats();
     if (this._roomHost) this._roomSheetPaint();
+    if (this._radCard) this._radCard.hass = hass;
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -1064,7 +1065,7 @@ class HaHomeSummaryCard extends HTMLElement {
         : ["cleaning", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping"]);
     return states.map((value) => String(value).toLowerCase()).includes(state);
   }
-  disconnectedCallback() { this._closeRoom(); }
+  disconnectedCallback() { this._closeRoom(); this._radCard?._closeRoomPopup?.(); }
   // ---------- rooms (Claude AI, 2026-10-13) ----------
   // Everything a room tile and the room panel show: the room sensor first, the thermostat (Better Thermostat or any
   // climate) for the setpoint, heating, window/door, valves and batteries; the last 24 h from the recorder.
@@ -1118,8 +1119,31 @@ class HaHomeSummaryCard extends HTMLElement {
   }
 
   // The room panel: on the page itself (document.body), like the calendar's detail sheet.
-  _openRoom(i) {
+  // Varme Center's own room popup (user, 2026-10-13: "den samme popup menu til rumkort som er i varmecenter"): with
+  // `room_popup_dashboard` the tiles open ha-radiator-overview-card-v2's popup with that dashboard's room config, from a
+  // hidden copy of the card kept in this card. A room it doesn't know falls back to the panel below.
+  async _radiatorCard() {
+    const url = this.config?.room_popup_dashboard; if (!url || !this._hass?.callWS) return null;
+    if (this._radCard) return this._radCard;
+    if (!this._radCfgP) this._radCfgP = this._hass.callWS({ type: "lovelace/config", url_path: url }).then((lc) => {
+      let found = null; const walk = (o) => { if (found || !o || typeof o !== "object") return; if (o.type === "custom:ha-radiator-overview-card-v2" && Array.isArray(o.rooms)) { found = o; return; } Object.values(o).forEach(walk); }; walk(lc); return found;
+    }).catch(() => null);
+    const cfg = await this._radCfgP; if (!cfg) { this._radCfgP = null; return null; }
+    await customElements.whenDefined("ha-radiator-overview-card-v2");
+    const el = document.createElement("ha-radiator-overview-card-v2"); el.style.display = "none"; el.setAttribute("aria-hidden", "true");
+    el.setConfig(cfg); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
+  }
+  _radiatorIndex(card, room) {
+    const rooms = card?._config?.rooms || []; const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
+    let i = room.climate ? rooms.findIndex((r) => r.climate === room.climate) : -1;
+    if (i < 0 && room.temperature) i = rooms.findIndex((r) => r.temperature === room.temperature);
+    if (i < 0) i = rooms.findIndex((r) => n(r.name) === n(room.name));
+    return i;
+  }
+  async _openRoom(i) {
     const room = this.config?.rooms?.[i]; if (!room) return;
+    const rad = await this._radiatorCard().catch(() => null);
+    if (rad) { const k = this._radiatorIndex(rad, room); if (k >= 0) { rad.hass = this._hass; rad._openRoomPopup(k); return; } }
     this._closeRoom(); this._roomIdx = i; this._pending = {};
     const host = document.createElement("div"); host.className = "ha-home-room-sheet"; const root = host.attachShadow({ mode: "open" });
     const a = LUX_ACCENT;
@@ -1455,7 +1479,7 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
