@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.118 */
+/* MRDonnii Smart Home Cards v0.5.119 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -33425,7 +33425,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION27 = "1.0.5";
+var VERSION27 = "1.1.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -34533,7 +34533,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       const ic = cool ? "mdi:snowflake" : acHeat ? "mdi:heat-pump-outline" : r.heating ? "mdi:fire" : room.icon || "mdi:thermometer";
       return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`;
     })()}
-      <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i>${this._esc(status)}</em></div>
+      <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i><span class="rt-st">${this._esc(status)}</span></em></div>
       <div class="rt-r2"><span class="rt-lft">${act ? `<span class="rt-act">${act}</span>` : ""}<small class="rt-sub">${this._esc(sub)}</small></span><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div></div>`;
   }
   _roomInfo(room) {
@@ -35079,7 +35079,7 @@ ${LUX_KEYFRAMES}
     this._observeMarquees();
   }
   _observeMarquees() {
-    observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span");
+    observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span, .rt-n, .rt-st, .rt-sub");
   }
   _render() {
     if (!this.config) return;
@@ -35132,7 +35132,7 @@ ${LUX_KEYFRAMES}
         .rt-r1{position:relative;z-index:1;display:flex;flex-direction:column;gap:1px;min-width:0}.rt-n{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-r1 em{display:flex;align-items:center;gap:4px;min-width:0;font-style:normal;font-size:9px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-r1 em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
-        .rt-r2{position:relative;z-index:1;display:flex;align-items:flex-end;gap:6px;min-width:0}
+        .rt-r2{position:static;display:flex;align-items:flex-end;gap:6px;min-width:0}.rt-lft{position:relative;z-index:1}
         .rt-lft{flex:1;min-width:0;display:flex;align-items:center;gap:6px}.rt-lft .rt-act{position:static;display:flex;gap:3px;flex:none}
         .rt-lft .rt-sub{min-width:0;font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-v{flex:none;display:flex;align-items:flex-start;font-size:25px;font-weight:850;line-height:.9;letter-spacing:-.02em;text-shadow:0 2px 8px rgba(0,0,0,.35)}.rt-v small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
@@ -35140,7 +35140,14 @@ ${LUX_KEYFRAMES}
         .rt-bg.hot{color:#ff8a3d;opacity:.2;animation:rtBgHot 2.6s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,138,61,.5))}
         .rt-bg.cool{color:#4fb3ff;opacity:.2;animation:rtBgCool 6s linear infinite;filter:drop-shadow(0 0 10px rgba(79,179,255,.5))}
         @keyframes rtBgHot{50%{opacity:.3;transform:translateY(-52%) rotate(-8deg) scale(1.05)}}@keyframes rtBgCool{to{transform:translateY(-50%) rotate(352deg)}}
-        @container (max-width:200px){.rt-lft .rt-sub{display:none}}
+
+        /* Temperature pinned bottom-right; the text left of it scrolls when it does not fit (user, 2026-10-13). */
+        .rooms .rt{container-type:size}
+        .rt .rt-v{position:absolute;z-index:1;right:11px;bottom:7px}
+        .rt-r1{padding-right:4px}.rt-n,.rt-st,.rt-lft .rt-sub{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:clip}
+        .rt-r1 em .rt-st{flex:1}
+        .rt-r2{padding-right:78px;min-height:16px}
+        @container (max-height:66px){.rt-lft{display:none}.rt .rt-v{font-size:21px}.rt-r1{padding-right:70px}.rt .rt-v{bottom:auto;top:50%;transform:translateY(-50%)}}
         @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat,.rt-act span{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
