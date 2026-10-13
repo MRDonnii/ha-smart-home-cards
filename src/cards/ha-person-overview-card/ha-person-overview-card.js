@@ -1,4 +1,4 @@
-const VERSION = "0.5.2";
+const VERSION = "0.5.3";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -224,8 +224,9 @@ class HAPersonOverviewCard extends HTMLElement {
       // Phones: built like the desktop tile, two per row (user, 2026-10-13: "kan vel godt bygges mere som det på desktop").
       // Phones: all four in one row – portrait, name and status; no battery, a critical one (<20 %) shows as a faint red
       // pulse around the portrait (user, 2026-10-13).
-      + "@media(max-width:600px){.combo{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:6px 3px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:5px 2px 6px;gap:5px}.pv2.mini .av{width:44px;height:44px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{font-size:13px;padding-right:0}.pv2.mini .st{font-size:9px;padding:1px 6px 1px 5px;gap:4px}.pv2.mini small,.pv2.mini .bat{display:none!important}"
-      + ".pv2 .av.low{animation:avLow 2.4s ease-in-out infinite}@keyframes avLow{0%,100%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 5px rgba(255,70,101,.25),0 0 10px 2px rgba(255,70,101,.25)}50%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 6px rgba(255,70,101,.55),0 0 18px 6px rgba(255,70,101,.45)}}"
+      // … with the name and status to the right of the portrait (user: "Info skal der være plads til højre for billedet").
+      + "@media(max-width:600px){.combo{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:7px 3px}.pv2.mini{grid-template-columns:auto minmax(0,1fr);align-items:center;text-align:left;padding:4px 3px;gap:5px;border-radius:12px}.pv2.mini .av{width:32px;height:32px;font-size:13px;box-shadow:0 0 0 2px var(--pc),0 0 0 4px color-mix(in srgb,var(--pc) 16%,transparent)}.pv2.mini .tx{align-items:flex-start;gap:2px}.pv2.mini .tx b{font-size:11.5px;padding-right:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}.pv2.mini .st{font-size:8.5px;padding:1px 5px 1px 4px;gap:3px;max-width:100%}.pv2.mini .st i{width:5px;height:5px}.pv2.mini small,.pv2.mini .bat{display:none!important}"
+      + ".pv2 .av.low{animation:avLow 2.4s ease-in-out infinite}@keyframes avLow{0%,100%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 5px rgba(255,70,101,.25),0 0 10px 2px rgba(255,70,101,.25)}50%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 6px rgba(255,70,101,.55),0 0 16px 5px rgba(255,70,101,.45)}}"
       + "}"
       + ".cline{display:none}"
       + "@media(max-width:0px){.grid.combined .combo{display:none}.cline{display:flex;align-items:center;gap:8px;min-height:58px;padding:7px 9px;border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
