@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.121 */
+/* MRDonnii Smart Home Cards v0.5.122 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9579,7 +9579,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.6.1";
+var VERSION11 = "0.6.2";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9801,7 +9801,7 @@ var HAACClimateCard = class extends HTMLElement {
     const tile2 = (icon3, label, value) => `<div class="tile"><ha-icon icon="${icon3}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
     const tiles = [];
     if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct2}%"></b></i></div></div>`);
-    if (unit.output) tiles.push(tile2("mdi:radiator", "Varmeeffekt", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
+    if (unit.output) tiles.push(tile2("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
     if (unit.cop) tiles.push(`<div class="tile gauge"><svg viewBox="0 0 80 46"><path d="M8 40 A32 32 0 0 1 72 40" class="track"/><path d="M8 40 A32 32 0 0 1 ${end}" class="val"/></svg><div><strong>${this._format(s.cop, 1)}</strong><span>COP</span></div></div>`);
     if (unit.outdoor) tiles.push(tile2("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}\xB0`));
     if (unit.unit_temp) tiles.push(tile2("mdi:thermometer-lines", "Anl\xE6g", `${this._format(s.unitTemp, 1)}\xB0`));
@@ -10005,7 +10005,7 @@ h3{margin:0 0 6px;font-size:19px;letter-spacing:-.02em}
 .live{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
 .tile{display:flex;align-items:center;gap:8px;min-height:56px;padding:9px 11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}
 .tile>ha-icon{--mdc-icon-size:19px;color:var(--tone)}.tile>div{min-width:0;flex:1}
-.tile span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.tile strong{display:block;font-size:15px;white-space:nowrap}
+.tile span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.tile strong{display:block;overflow:hidden;text-overflow:ellipsis;font-size:15px;white-space:nowrap}
 .tile.wide{grid-column:span 2}
 .bar{display:block;height:5px;margin-top:5px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}.bar b{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 55%,transparent),var(--tone));transition:width .6s}
 .gauge{flex-direction:column;justify-content:center;gap:0;padding:6px}.gauge svg{width:74px;height:40px}.gauge .track{fill:none;stroke:rgba(255,255,255,.09);stroke-width:7;stroke-linecap:round}.gauge .val{fill:none;stroke:var(--tone);stroke-width:7;stroke-linecap:round}
