@@ -22,7 +22,7 @@ import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 
-const VERSION = "2.5.0";
+const VERSION = "2.6.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -261,10 +261,15 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 :host([compact]) .tile{padding:8px 10px}
 
 .z-room{display:none}
-.zone.has-room{grid-template-rows:auto auto auto 1fr;grid-template-areas:"top top" "dial metrics" "room room" "foot foot"}
-.zone.has-room .z-room{grid-area:room;display:flex;flex-wrap:wrap;gap:5px}
-.rc{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 7px;border-radius:999px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px var(--rc-edge)}
-.rc ha-icon{--mdc-icon-size:14px}
+.zone.has-room{grid-template-rows:auto auto 1fr auto;grid-template-areas:"top top" "dial metrics" "foot foot" "room room"}
+.zone.has-room .z-room{grid-area:room;display:flex;flex-wrap:wrap;gap:5px;margin:2px -16px -13px;padding:10px 16px 12px;border-top:1px solid color-mix(in srgb,var(--rc-edge) 80%,transparent);background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.18))}
+.zone.has-room .z-foot{border-top:0;padding-top:4px}
+.rc{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:4px 9px 4px 7px;overflow:hidden;border-radius:999px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px var(--rc-edge);white-space:nowrap;text-overflow:ellipsis}
+.rc ha-icon{flex:none;--mdc-icon-size:14px}
+.rc.prof{color:#ffb454;background:rgba(255,180,84,.11);box-shadow:inset 0 0 0 1px rgba(255,180,84,.32)}
+.rc.manual{color:#a78bfa;background:rgba(167,139,250,.13);box-shadow:inset 0 0 0 1px rgba(167,139,250,.38)}
+.qrow .qa.more{margin-left:auto;color:var(--rc-accent)}
+@container (max-width:560px){.zone.has-room{grid-template-rows:auto auto auto 1fr auto;grid-template-areas:"top" "dial" "metrics" "foot" "room"}.zone.has-room .z-room{margin:2px -11px -10px;padding:8px 11px 10px}.rc{font-size:9.5px;padding:3px 7px 3px 5px}.qa{flex-basis:32px;height:30px}.qa.light{padding:0 8px;font-size:11px}}
 .rc.on{color:color-mix(in srgb,var(--rc-ok) 80%,var(--primary-text-color));background:color-mix(in srgb,var(--rc-ok) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 35%,transparent)}
 .rc.media{color:color-mix(in srgb,#a78bfa 85%,var(--primary-text-color));background:rgba(167,139,250,.14);box-shadow:inset 0 0 0 1px rgba(167,139,250,.38)}
 .rc.warn{color:var(--rc-warm);background:color-mix(in srgb,var(--rc-warm) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-warm) 38%,transparent)}
@@ -305,6 +310,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     this._bodyOverflow = undefined;
     // Én delegeret lytter pr. hændelsestype for hele kortet - aldrig pr. rum.
     this.shadowRoot.addEventListener("click", (event) => {
+      const ctl = event.target?.closest?.("[data-ctl]");
+      if (ctl) { event.stopPropagation(); this._openRoomPopup(Number(ctl.dataset.ctl)); this._selectPopupTab("controls"); return; }
       const target = event.target?.closest?.("[data-room]");
       if (target) this._openRoomPopup(Number(target.dataset.room));
     });
@@ -325,6 +332,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     this._stats = {};
     this._statsFetchedAt = 0;
     this._build();
+    this._applyControls();
     if (this._hass && this.isConnected) {
       this._dirtyAll();
       this._ensureStats();
@@ -851,7 +859,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   }
 
   _renderZone(room, refs, model) {
-    refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}`;
+    // has-room belongs to _paintRoomInfo; keep it, or the room dock vanishes on every repaint.
+    refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}${refs.host.querySelector('[data-f="roominfo"]')?._h ? " has-room" : ""}`;
     this._setText(refs.status, model.status);
     this._setText(refs.temp, this._format(model.current));
     this._setText(refs.target, model.target === undefined ? "Intet mål" : `Mål ${this._format(model.target)}°`);
@@ -1162,8 +1171,9 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const tabs = [{ id: "temperature", label: "Temperatur" }];
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
-    if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
-    const hasControls = !!(room.controls && (room.controls.cards?.length || room.controls.light || room.controls.actions?.length || room.controls.alert));
+    // Luftkvalitet has its own tab in Varme Center, so the room popup no longer repeats it (user, 2026-10-13).
+    if (hasAir(room) && this._config.popup_air === true) tabs.push({ id: "air", label: "Luftkvalitet" });
+    const hasControls = !!(room.controls && (room.controls.model || room.controls.light || room.controls.actions?.length || room.controls.alert));
     if (hasControls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
@@ -1218,22 +1228,49 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard });
       let v3 = null; const pops = {}; const walk = (o) => { if (!o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms) && !v3) v3 = o.rooms; if (o.type === "custom:bubble-card" && o.card_type === "pop-up" && o.hash && Array.isArray(o.cards)) pops[o.hash] = o; Object.values(o).forEach(walk); }; walk(lc);
       if (!v3) return;
-      const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/(en|et)$/, "");
-      this._config = { ...this._config, rooms: this._config.rooms.map((r) => {
-        if (r.controls) return r;
-        const m = v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || key(x.name) === key(r.name));
-        if (!m) return r;
-        const pop = m.popup ? pops[m.popup] : Object.values(pops).find((x) => key(x.name) === key(r.name));
-        const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening, co2: m.co2 };
-        return { ...r, roomInfo: info, controls: pop ? { cards: structuredClone(pop.cards) } : (m.light || m.actions?.length || m.alert) ? { light: m.light, actions: m.actions, alert: m.alert } : undefined };
-      }) };
-      this._roomInfoSig = ""; this._paintRoomInfo();
+      this._ctlSource = { v3, pops };
+      this._applyControls();
     } catch (e) { console.warn("HA Radiator Overview Card: room controls", e); this._ctlLoaded = false; }
+  }
+  // Kept apart from the config so a new setConfig (dashboard re-render) does not drop the room data again.
+  _applyControls() {
+    const src = this._ctlSource; if (!src || !this._config?.rooms) return;
+    const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/(en|et)$/, "");
+    this._config = { ...this._config, rooms: this._config.rooms.map((r) => {
+      if (r.controls || r.outdoor) return r;
+      const m = src.v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || key(x.name) === key(r.name));
+      if (!m) return r;
+      const pop = m.popup ? src.pops[m.popup] : Object.values(src.pops).find((x) => key(x.name) === key(r.name));
+      const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening, co2: m.co2 };
+      const ctl = { name: r.name, icon: r.icon, light: m.light, actions: m.actions, alert: m.alert, ...(pop ? this._popupControls(pop) : {}) };
+      if (ctl.model?.profile) info.profile = ctl.model.profile;
+      if (ctl.model) info.model = ctl.model;
+      const has = ctl.model || ctl.light || ctl.actions?.length || ctl.alert;
+      return { ...r, roomInfo: info, controls: has ? ctl : undefined };
+    }) };
+    this._roomInfoSig = ""; this._paintRoomInfo();
+  }
+  // What the room's pop-up on the rooms page controls: its Rumstatus model, the light profile buttons and the toggles.
+  _popupControls(pop) {
+    const found = []; const walk = (o) => { if (!o || typeof o !== "object") return; if (Array.isArray(o)) return o.forEach(walk); found.push(o); Object.values(o).forEach(walk); }; walk(pop.cards);
+    const model = found.find((o) => o.variables?.room_status_system)?.variables;
+    const profiles = []; const profileIcons = {}; const toggles = [];
+    for (const o of found) {
+      if (o.type !== "custom:button-card" || !o.entity) continue;
+      const tap = o.tap_action || {}; const svc = tap.perform_action || tap.service;
+      const scene = /scene/.test(String(o.template || ""));
+      if (svc === "input_select.select_option" && tap.data?.option !== undefined) { if (!profiles.some((p) => p.option === tap.data.option)) profiles.push({ option: tap.data.option, name: typeof o.name === "string" ? o.name : tap.data.option, icon: o.icon }); continue; }
+      if (scene) { profileIcons[o.entity] = o.icon; continue; }
+      if (typeof o.name !== "string" || o.name.includes("[[[") || !/^(automation|input_boolean|switch|script|scene|fan)\./.test(o.entity)) continue;
+      if (model && [model.override].includes(o.entity)) continue;
+      if (!toggles.some((t) => t.entity === o.entity)) toggles.push({ entity: o.entity, name: o.name, icon: typeof o.icon === "string" && !o.icon.includes("[[[") ? o.icon : undefined });
+    }
+    return { model, profiles, profileIcons, toggles };
   }
   _paintRoomInfo() {
     if (!this._built || !this._hass || !this._config?.rooms?.some((r) => r.roomInfo)) return;
     const st = (id) => (id ? this._hass.states[id] : undefined);
-    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.co2)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)]; }));
+    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)]; }));
     if (sig === this._roomInfoSig) return; this._roomInfoSig = sig;
     const ago = (t) => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`; };
     this._config.rooms.forEach((r, i) => {
@@ -1248,12 +1285,16 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
           chips.push(["media", x.icon || (x.kind === "media" ? (s.state === "paused" ? "mdi:pause-circle-outline" : "mdi:play-circle-outline") : "mdi:power"), x.text || (what ? `${x.name || ""}${x.name ? " · " : ""}${what}` : `${x.name || s.attributes?.friendly_name} ${s.state === "playing" ? "spiller" : s.state === "paused" ? "pause" : "tændt"}`)]); });
         const a = st(info.alert?.entity); if (a?.state === "on") chips.push(["on", info.alert.icon || "mdi:star", info.alert.active || "Aktiv"]);
         const o = st(info.opening); if (o?.state === "on") chips.push(["warn", "mdi:window-open-variant", "Åbent"]);
-        const c = Number(st(info.co2)?.state); if (!r.co2 && Number.isFinite(c)) chips.push([c > 1200 ? "warn" : "", "mdi:molecule-co2", `${c > 1200 ? "Luft ud" : "God luft"} ${Math.round(c)} ppm`]);
+        const pf = st(info.profile); if (pf && !["unknown", "unavailable"].includes(pf.state)) chips.push(["prof", "mdi:palette-outline", pf.state]);
+        if (st(info.model?.override)?.state === "on" || st(info.model?.timer)?.state === "active") chips.push(["manual", "mdi:hand-back-right-outline", "Manuel"]);
+        // Luftkvalitet has its own tab; only a real warning is repeated here.
+        const c = Number(st(info.co2)?.state); if (!r.co2 && Number.isFinite(c) && c > 1200) chips.push(["warn", "mdi:molecule-co2", `Luft ud ${Math.round(c)} ppm`]);
       }
       // Quick buttons like the Alle rum cards: the light (tap toggles) and the room's actions; they act without opening the popup.
       const acts = [];
       if (info?.light && st(info.light)) { const l = st(info.light); const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? Math.round(((l.attributes?.brightness ?? 255) / 255) * 100) : 0}%"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %` : "Lys"}</span></button>`); }
       (info?.actions || []).slice(0, 4).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
+      if (r.controls) acts.push(`<button type="button" class="qa more" data-ctl="${i}" title="Styring"><ha-icon icon="mdi:tune-variant"></ha-icon></button>`);
       const html = chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
       if (host._h !== html) { host._h = html; host.innerHTML = html; }
       host.closest(".zone")?.classList.toggle("has-room", !!html);
@@ -1269,8 +1310,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const definitions = {
       temperature: { type:"custom:ha-temperature-target-card", title:`Temperatur · ${room.name}`, hours:this._config.history_hours || 24, animation:this._config.animation, rooms:[{ name:room.name, icon:room.icon, temperature:room.temperature, climate:room.climate }] },
       ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
-      controls: room.controls ? (room.controls.cards?.length ? { type:"vertical-stack", cards:room.controls.cards } : { type:"custom:ha-room-control-card", ...room.controls }) : null,
-      air: hasAir(room) ? { type:"custom:ha-air-quality-card", name:room.name, co2:room.co2, pm25:room.pm25, air_quality:room.air_quality, co2_warning:room.co2_warning, co2_critical:room.co2_critical, hours:this._config.history_hours || 24, animation:this._config.animation } : null,
+      controls: room.controls ? { type:"custom:ha-room-control-card", ...room.controls } : null,
+      air: hasAir(room) && this._config.popup_air === true ? { type:"custom:ha-air-quality-card", name:room.name, co2:room.co2, pm25:room.pm25, air_quality:room.air_quality, co2_warning:room.co2_warning, co2_critical:room.co2_critical, hours:this._config.history_hours || 24, animation:this._config.animation } : null,
       optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
     };
     try {
