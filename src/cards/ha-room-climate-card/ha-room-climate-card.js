@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -135,9 +135,6 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
 .spark-range{position:absolute;left:18px;right:18px;bottom:6px;display:flex;justify-content:space-between;color:var(--rc-muted);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 .zone .spark-box{margin:0 -1px}
-.zone.is-heating .band::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(0deg,rgba(255,138,61,.22),transparent 80%);animation:heat 2.6s ease-in-out infinite}
-.zone.is-heating .band::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(255,180,100,.10) 22px 24px);-webkit-mask:linear-gradient(0deg,#000,transparent);mask:linear-gradient(0deg,#000,transparent);animation:rise 3.2s linear infinite;background-size:100% 200%}
-.zone.is-ac .band::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(100deg,transparent 0 30px,color-mix(in srgb,var(--room-color) 16%,transparent) 30px 32px);background-size:200% 100%;animation:wind 2.4s linear infinite;-webkit-mask:linear-gradient(0deg,#000,transparent);mask:linear-gradient(0deg,#000,transparent)}
 
 /* room dock */
 .z-room{display:none}
@@ -228,9 +225,6 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 @keyframes chipScroll{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1 * var(--cd,0px)))}}
 @keyframes ring{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.18)}}
 @keyframes badge{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent),0 0 0 5px color-mix(in srgb,var(--room-color) 16%,transparent)}}
-@keyframes heat{50%{opacity:.45}}
-@keyframes rise{from{background-position:0 0}to{background-position:0 -100%}}
-@keyframes wind{from{background-position:200% 0}to{background-position:0 0}}
 @container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @container (max-width:760px){.shell{padding:14px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:42px}.legend{display:none}}
 @container (max-width:560px){.zones{grid-template-columns:1fr;gap:12px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-column:1/-1!important;grid-template-rows:none!important;grid-auto-flow:row!important}
