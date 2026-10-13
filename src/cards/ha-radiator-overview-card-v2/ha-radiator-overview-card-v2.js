@@ -22,7 +22,7 @@ import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 
-const VERSION = "2.4.0";
+const VERSION = "2.5.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -266,6 +266,15 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .rc{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 7px;border-radius:999px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px var(--rc-edge)}
 .rc ha-icon{--mdc-icon-size:14px}
 .rc.on{color:color-mix(in srgb,var(--rc-ok) 80%,var(--primary-text-color));background:color-mix(in srgb,var(--rc-ok) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 35%,transparent)}
+.rc.media{color:color-mix(in srgb,#a78bfa 85%,var(--primary-text-color));background:rgba(167,139,250,.14);box-shadow:inset 0 0 0 1px rgba(167,139,250,.38)}
+.rc.warn{color:var(--rc-warm);background:color-mix(in srgb,var(--rc-warm) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-warm) 38%,transparent)}
+.qrow{display:flex;gap:6px;width:100%;margin-top:3px}
+.qa{position:relative;display:grid;place-items:center;flex:0 0 36px;height:34px;padding:0;border:0;border-radius:11px;overflow:hidden;cursor:pointer;color:var(--rc-muted);background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);box-shadow:inset 0 0 0 1px var(--rc-edge);transition:transform .2s cubic-bezier(.2,1.4,.4,1)}
+.qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:18px}
+.qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 12px -4px var(--rc-ok)}
+.qa.light{flex:1;display:flex;justify-content:flex-start;gap:7px;padding:0 11px;font-size:12px;font-weight:800}
+.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.18),rgba(255,190,110,.45));transition:width .4s ease}
+.qa.light span{position:relative}.qa.light.on{color:#ffc46b;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5)}
 .rc.lit{color:#ffc46b;background:rgba(255,190,110,.13);box-shadow:inset 0 0 0 1px rgba(255,190,110,.35)}.rc.lit ha-icon{filter:drop-shadow(0 0 5px rgba(255,190,110,.7))}
 :host([compact]) .z-room{display:none!important}
 `;
@@ -344,7 +353,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   set hass(hass) {
     const previous = this._hass;
     this._hass = hass;
-    if (this._config?.room_controls_dashboard && !this._ctlLoaded) this._loadControls();
+    if (hass && this._config?.room_controls_dashboard && !this._ctlLoaded) this._loadControls();
     this._paintRoomInfo();
     this._updateRoomPopup();
     this._popupCards.forEach((card) => { card.hass = hass; });
@@ -667,6 +676,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
         </div>
       </ha-card>`;
     const root = this.shadowRoot;
+    if (!this._qaBound) { this._qaBound = true; this.shadowRoot.addEventListener("click", (e) => { const b = e.target.closest?.("[data-act]"); if (!b) return; e.stopPropagation(); e.preventDefault(); const id = b.dataset.act; const d = id.split(".")[0];
+      if (d === "media_player") this._hass.callService("media_player", "toggle", { entity_id: id }); else if (["scene", "script"].includes(d)) this._hass.callService(d, "turn_on", { entity_id: id }); else if (["button", "input_button"].includes(d)) this._hass.callService(d, "press", { entity_id: id }); else this._hass.callService("homeassistant", "toggle", { entity_id: id }); }, true); }
     const sparkRefs = (host) => {
       const wrap = host.querySelector(".spark-wrap");
       if (!wrap) return undefined;
@@ -1201,6 +1212,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   // The rooms get the whole Bubble pop-up of their room from that dashboard (a "Styring" tab in the popup) and the room
   // data of its "Alle rum" card (presence, light, media, scene) shown on the zone.
   async _loadControls() {
+    if (!this._hass?.callWS) return;
     this._ctlLoaded = true;
     try {
       const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard });
@@ -1212,7 +1224,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
         const m = v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || key(x.name) === key(r.name));
         if (!m) return r;
         const pop = m.popup ? pops[m.popup] : Object.values(pops).find((x) => key(x.name) === key(r.name));
-        const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert };
+        const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening, co2: m.co2 };
         return { ...r, roomInfo: info, controls: pop ? { cards: structuredClone(pop.cards) } : (m.light || m.actions?.length || m.alert) ? { light: m.light, actions: m.actions, alert: m.alert } : undefined };
       }) };
       this._roomInfoSig = ""; this._paintRoomInfo();
@@ -1221,7 +1233,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   _paintRoomInfo() {
     if (!this._built || !this._hass || !this._config?.rooms?.some((r) => r.roomInfo)) return;
     const st = (id) => (id ? this._hass.states[id] : undefined);
-    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => st(x.entity)?.state), st(i.alert?.entity)?.state]; }));
+    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.co2)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)]; }));
     if (sig === this._roomInfoSig) return; this._roomInfoSig = sig;
     const ago = (t) => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`; };
     this._config.rooms.forEach((r, i) => {
@@ -1230,10 +1242,19 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
       if (info) {
         const p = st(info.presence); if (p) chips.push(p.state === "on" ? ["on", "mdi:motion-sensor", "Tilstede"] : ["", "mdi:motion-sensor-off", `Tomt ${ago(p.last_changed)}`]);
         const l = st(info.light); if (l) chips.push(l.state === "on" ? ["lit", "mdi:lightbulb-on", `Lys ${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %`] : ["", "mdi:lightbulb-outline", "Lys fra"]);
-        (info.status || []).forEach((x) => { const s = st(x.entity); if (s && ["on", "playing"].includes(s.state)) chips.push(["on", x.icon || (x.kind === "media" ? "mdi:play-circle-outline" : "mdi:power"), x.text || `${x.name || s.attributes?.friendly_name} ${s.state === "playing" ? "spiller" : "tændt"}`]); });
+        (info.status || []).forEach((x) => { const s = st(x.entity); if (!s || !["on", "playing", "paused"].includes(s.state)) return;
+          // Media say what plays (title or app), like the Alle rum cards.
+          const what = x.kind === "media" ? (s.attributes?.media_title || s.attributes?.app_name || s.attributes?.source) : "";
+          chips.push(["media", x.icon || (x.kind === "media" ? (s.state === "paused" ? "mdi:pause-circle-outline" : "mdi:play-circle-outline") : "mdi:power"), x.text || (what ? `${x.name || ""}${x.name ? " · " : ""}${what}` : `${x.name || s.attributes?.friendly_name} ${s.state === "playing" ? "spiller" : s.state === "paused" ? "pause" : "tændt"}`)]); });
         const a = st(info.alert?.entity); if (a?.state === "on") chips.push(["on", info.alert.icon || "mdi:star", info.alert.active || "Aktiv"]);
+        const o = st(info.opening); if (o?.state === "on") chips.push(["warn", "mdi:window-open-variant", "Åbent"]);
+        const c = Number(st(info.co2)?.state); if (!r.co2 && Number.isFinite(c)) chips.push([c > 1200 ? "warn" : "", "mdi:molecule-co2", `${c > 1200 ? "Luft ud" : "God luft"} ${Math.round(c)} ppm`]);
       }
-      const html = chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("");
+      // Quick buttons like the Alle rum cards: the light (tap toggles) and the room's actions; they act without opening the popup.
+      const acts = [];
+      if (info?.light && st(info.light)) { const l = st(info.light); const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? Math.round(((l.attributes?.brightness ?? 255) / 255) * 100) : 0}%"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %` : "Lys"}</span></button>`); }
+      (info?.actions || []).slice(0, 4).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
+      const html = chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
       if (host._h !== html) { host._h = html; host.innerHTML = html; }
       host.closest(".zone")?.classList.toggle("has-room", !!html);
     });
