@@ -876,7 +876,7 @@ class HaHomeStatusCard extends HTMLElement {
         background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 58%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));
         box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent);
         display:grid;grid-template-columns:34px minmax(0,1fr) 36px;grid-template-rows:auto auto 1fr;column-gap:10px;align-content:start;text-align:left}
-      :host([v2]) .item:hover{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 0 24px -10px var(--accent)}
+      :host([v2]) .item:hover{transform:none;box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 0 24px -10px var(--accent)}
       :host([v2]) .bg-icon{display:none}
       :host([v2]) .chip{display:grid;grid-row:1/3;grid-column:1;place-items:center;width:34px;height:34px;border-radius:11px;color:var(--accent);
         background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 30%,transparent),color-mix(in srgb,var(--accent) 10%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),0 6px 16px -8px var(--accent);position:relative;z-index:2}
@@ -1476,6 +1476,8 @@ ${LUX_KEYFRAMES}
         .ubars i.now{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:uNow 2.4s ease-in-out infinite}.ubars i.fut{background:color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}
         @keyframes uNow{50%{opacity:.55}}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
+        /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
+        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,104px)!important;align-content:start}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}

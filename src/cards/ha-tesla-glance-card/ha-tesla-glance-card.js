@@ -6,7 +6,7 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.1.3";
+const VERSION = "0.1.4";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -210,6 +210,7 @@ class HATeslaGlanceCard extends HTMLElement {
       :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
       :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
       :host([v2]) .glow{opacity:.8;height:30px}
+      @media(max-width:600px){:host([v2]) .stats{display:none!important}}
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
       .compact .car{grid-column:3;grid-row:1}

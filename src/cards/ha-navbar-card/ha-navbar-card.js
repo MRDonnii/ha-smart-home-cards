@@ -522,6 +522,13 @@ class HaNavbarCard extends HTMLElement {
 
   /* ---------- opbygning ---------- */
 
+  // The bell is left out on phones with mobile_notifications: false (user, 2026-10-13: "notifikationer skal ikke være
+  // der på mobilen, den får den til at fylde for meget i bredden"); the bar is rebuilt when it crosses 600 px.
+  _visKlokke() {
+    if (this.config.show_notifications === false) return false;
+    if (this.config.mobile_notifications === false && window.matchMedia("(max-width: 600px)").matches) return false;
+    return true;
+  }
   _byg() {
     const r = this.shadowRoot;
     r.innerHTML = `<style>${this._css()}</style>
@@ -550,7 +557,7 @@ class HaNavbarCard extends HTMLElement {
     });
 
     // Notifikationsknap sidst i baren - kan slaas fra i opsaetningen.
-    if (this.config.show_notifications !== false) {
+    if (this._visKlokke()) {
       const notif = document.createElement("button");
       notif.className = "rute notif";
       notif.type = "button";
@@ -568,11 +575,12 @@ class HaNavbarCard extends HTMLElement {
     // +1 for notifikationsknappen. Bruges af --nb-plads til at regne ud
     // hvor meget plads hver knap kan faa uden at baren loeber ud over
     // skaermkanten.
-    this.style.setProperty("--nb-antal", String((this.config.routes || []).length + 1));
+    this.style.setProperty("--nb-antal", String((this.config.routes || []).length + (this._visKlokke() ? 1 : 0)));
+    if (!this._mqMobil) { this._mqMobil = window.matchMedia("(max-width: 600px)"); this._mqMobil.addEventListener?.("change", () => { if (this.config?.mobile_notifications === false && this._hass) { this._byg(); this.hass = this._hass; } }); }
     this._observerBar();
     this._opdaterAktiv();
     this._hoestIkoner();
-    if (this.config.show_notifications !== false) this._bindSwipe(r.querySelector(".bar"));
+    if (this._visKlokke()) this._bindSwipe(r.querySelector(".bar"));
     this._bindPiletaster(ruter);
   }
 
@@ -1349,7 +1357,7 @@ class HaNavbarCardEditor extends HTMLElement {
             ${this._tal("Gennemsigtighed af baggrund (%)", "opacity", c.opacity, "root", -1, -1, false, 0, 100)}
           </div>
           <div class="tjekrk">
-            ${this._bool("Vis notifikationsklokke", "show_notifications", c.show_notifications !== false, "root")}
+            ${this._bool("Vis notifikationsklokke", "show_notifications", c.show_notifications !== false, "root")}${this._bool("Klokke på mobil", "mobile_notifications", c.mobile_notifications !== false, "root")}
           </div>
           <p class="hj">Tomme felter bruger kortets standard. En vaerdi her gaelder ogsaa
             paa mobil og tilsidesaetter den automatiske nedskalering. Naar "Automatisk stoerrelse"
