@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -99,7 +99,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .step{display:flex;align-items:center;gap:6px;margin-top:14px}
 .sb{display:grid;place-items:center;flex:none;width:34px;height:34px;padding:0;border:0;border-radius:12px;cursor:pointer;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);--mdc-icon-size:18px;transition:transform .15s ease,background .2s ease}
 .sb:hover{background:color-mix(in srgb,var(--room-color) 20%,transparent)}.sb:active{transform:scale(.88)}
-.step .tv{flex:1;min-width:0;text-align:center;white-space:nowrap}
+.step .tv{flex:1;min-width:0;text-align:left;white-space:nowrap}
+.step .tv{display:flex;align-items:baseline;gap:8px}.step .tv strong{margin:0}
 .step .tv span{display:block;color:var(--rc-muted);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .step .tv strong{display:block;margin-top:1px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
 .step.pending .tv strong{color:var(--room-color)}
@@ -302,14 +303,23 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
 
   // ---------- setpoint (tile and popup) ----------
   // Presses add up and are sent once the finger rests, so 3 taps = one service call of +1.5°.
+  // What the room is steered by right now: the AC's setpoint while the AC runs (it also switches the radiator off),
+  // otherwise the radiator thermostat (user: "Når AC kører skal det være dens setpoint der vises og styres efter").
+  _control(room, model) {
+    if (model?.acActive && model.ac?.climate) { const c = model.ac.climate; return { ac: true, climate: c, target: this._number(c.attributes?.temperature) }; }
+    return { ac: false, climate: model?.climate, target: model?.target };
+  }
+
   _step(index, dir) {
-    const room = this._config.rooms?.[index]; if (!room?.climate) return;
-    const state = this._roomState(room); if (!state.climate) return;
-    const stepSize = this._number(state.climate.attributes?.target_temp_step) ?? 0.5;
-    const base = this._pending[index]?.value ?? state.target ?? state.current ?? 20;
-    const value = this._clampTarget(state.climate, base + dir * stepSize);
+    const room = this._config.rooms?.[index]; if (!room) return;
+    const model = this._roomModel(room); const ctl = this._control(room, model);
+    if (!ctl.climate) return;
+    const stepSize = this._number(ctl.climate.attributes?.target_temp_step) ?? (ctl.ac ? 1 : 0.5);
+    const base = (this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : undefined) ?? ctl.target ?? model.current ?? 20;
+    const value = this._clampTarget(ctl.climate, base + dir * stepSize);
     clearTimeout(this._pending[index]?.timer);
-    const entry = { value, timer: setTimeout(async () => { try { await this._setTarget(room, value); } finally { setTimeout(() => { if (this._pending[index] === entry) { delete this._pending[index]; this._dirty.add(index); this._schedule(); this._updateRoomPopup(); } }, 2500); } }, 700) };
+    const send = () => ctl.ac ? this._hass.callService("climate", "set_temperature", { entity_id: ctl.climate.entity_id, temperature: value }) : this._setTarget(room, value);
+    const entry = { value, ac: ctl.ac, timer: setTimeout(async () => { try { await send(); } finally { setTimeout(() => { if (this._pending[index] === entry) { delete this._pending[index]; this._dirty.add(index); this._schedule(); this._updateRoomPopup(); } }, 2500); } }, 700) };
     this._pending[index] = entry;
     this._dirty.add(index); this._schedule(); this._updateRoomPopup();
   }
@@ -351,7 +361,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
           <div class="z-temp">
             <div class="t-big"><span data-f="temp">${DASH}</span><small>°C</small></div>
             <div class="rail na" data-f="rail"><i class="tgt"></i><i class="cur"></i></div>
-            <div class="step" data-f="step"><button type="button" class="sb" data-step="-1" aria-label="Sænk mål"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span>Mål</span><strong data-f="target">${DASH}</strong></div><button type="button" class="sb" data-step="1" aria-label="Hæv mål"><ha-icon icon="mdi:plus"></ha-icon></button></div>
+            <div class="step" data-f="step"><div class="tv"><span data-f="tlabel">Mål</span><strong data-f="target">${DASH}</strong></div></div>
           </div>
           <div class="gauges">${gauge("humidity", "mdi:water-percent", "Fugt")}${gauge("valve", "mdi:valve", "Ventil")}${gauge("feels", "mdi:thermometer", "Føles")}${gauge("battery", "mdi:battery-outline", "Batteri")}</div>
         </div>
@@ -460,11 +470,12 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}${keepRoom}`;
     this._setText(refs.status, model.status);
     this._setText(refs.temp, this._format(model.current));
-    const pending = this._pending[index]?.value;
-    const target = pending ?? model.target;
+    const ctl = this._control(room, model);
+    const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : undefined;
+    const target = pending ?? ctl.target;
     this._setText(refs.target, target === undefined ? "Intet mål" : `${this._format(target)}°`);
+    this._setText(refs.host.querySelector('[data-f="tlabel"]'), ctl.ac ? "AC-mål" : "Mål");
     refs.step?.classList.toggle("pending", pending !== undefined);
-    refs.step?.classList.toggle("none", !model.climate || model.target === undefined);
     // Rail: target ± 3° with the room's temperature on it.
     if (refs.rail) {
       const ok = model.current !== undefined && target !== undefined;
@@ -616,7 +627,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
             </div>
             <div class="ph-main">
               <div class="ph-temp"><span data-v="temp">${DASH}</span><small>°C</small></div>
-              <div class="ph-step" data-v="step"${room.climate ? "" : " hidden"}><button type="button" class="sb" data-pstep="-1" aria-label="Sænk mål"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span>Mål</span><strong data-v="target">${DASH}</strong></div><button type="button" class="sb" data-pstep="1" aria-label="Hæv mål"><ha-icon icon="mdi:plus"></ha-icon></button></div>
+              <div class="ph-step" data-v="step"${room.climate ? "" : " hidden"}><button type="button" class="sb" data-pstep="-1" aria-label="Sænk mål"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span data-v="tlabel">Mål</span><strong data-v="target">${DASH}</strong></div><button type="button" class="sb" data-pstep="1" aria-label="Hæv mål"><ha-icon icon="mdi:plus"></ha-icon></button></div>
               <div class="ph-chips">
                 <span class="pc" data-c="humidity" style="--pcc:#60a5fa"><ha-icon icon="mdi:water-percent"></ha-icon><span></span></span>
                 <span class="pc" data-c="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span></span></span>
@@ -639,8 +650,11 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const set = (k, v) => { const n = content.querySelector(`[data-v="${k}"]`); if (n && n.textContent !== v) n.textContent = v; };
     set("status", model.status);
     set("temp", this._format(model.current));
-    const pending = this._pending[index]?.value; const target = pending ?? model.target;
+    const ctl = this._control(room, model);
+    const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : undefined; const target = pending ?? ctl.target;
     set("target", target === undefined ? DASH : `${this._format(target)}°`);
+    set("tlabel", ctl.ac ? "AC-mål" : "Mål");
+    const stepEl = content.querySelector('[data-v="step"]'); if (stepEl) stepEl.hidden = !ctl.climate;
     content.querySelector('[data-v="step"]')?.classList.toggle("pending", pending !== undefined);
     const chip = (k, text) => { const n = content.querySelector(`[data-c="${k}"]`); if (!n) return; n.hidden = text === undefined; if (text !== undefined) { const s = n.querySelector("span"); if (s.textContent !== text) s.textContent = text; } };
     chip("humidity", model.humidity === undefined ? undefined : `${this._format(model.humidity, 0)} % fugt`);

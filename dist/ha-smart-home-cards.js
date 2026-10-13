@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.108 */
+/* MRDonnii Smart Home Cards v0.5.109 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -30112,7 +30112,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION23 = "1.2.0";
+var VERSION23 = "1.3.0";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -30196,7 +30196,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .step{display:flex;align-items:center;gap:6px;margin-top:14px}
 .sb{display:grid;place-items:center;flex:none;width:34px;height:34px;padding:0;border:0;border-radius:12px;cursor:pointer;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);--mdc-icon-size:18px;transition:transform .15s ease,background .2s ease}
 .sb:hover{background:color-mix(in srgb,var(--room-color) 20%,transparent)}.sb:active{transform:scale(.88)}
-.step .tv{flex:1;min-width:0;text-align:center;white-space:nowrap}
+.step .tv{flex:1;min-width:0;text-align:left;white-space:nowrap}
+.step .tv{display:flex;align-items:baseline;gap:8px}.step .tv strong{margin:0}
 .step .tv span{display:block;color:var(--rc-muted);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .step .tv strong{display:block;margin-top:1px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
 .step.pending .tv strong{color:var(--room-color)}
@@ -30404,18 +30405,29 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- setpoint (tile and popup) ----------
   // Presses add up and are sent once the finger rests, so 3 taps = one service call of +1.5°.
+  // What the room is steered by right now: the AC's setpoint while the AC runs (it also switches the radiator off),
+  // otherwise the radiator thermostat (user: "Når AC kører skal det være dens setpoint der vises og styres efter").
+  _control(room, model) {
+    if (model?.acActive && model.ac?.climate) {
+      const c2 = model.ac.climate;
+      return { ac: true, climate: c2, target: this._number(c2.attributes?.temperature) };
+    }
+    return { ac: false, climate: model?.climate, target: model?.target };
+  }
   _step(index, dir) {
     const room = this._config.rooms?.[index];
-    if (!room?.climate) return;
-    const state = this._roomState(room);
-    if (!state.climate) return;
-    const stepSize = this._number(state.climate.attributes?.target_temp_step) ?? 0.5;
-    const base = this._pending[index]?.value ?? state.target ?? state.current ?? 20;
-    const value = this._clampTarget(state.climate, base + dir * stepSize);
+    if (!room) return;
+    const model = this._roomModel(room);
+    const ctl = this._control(room, model);
+    if (!ctl.climate) return;
+    const stepSize = this._number(ctl.climate.attributes?.target_temp_step) ?? (ctl.ac ? 1 : 0.5);
+    const base = (this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : void 0) ?? ctl.target ?? model.current ?? 20;
+    const value = this._clampTarget(ctl.climate, base + dir * stepSize);
     clearTimeout(this._pending[index]?.timer);
-    const entry = { value, timer: setTimeout(async () => {
+    const send = () => ctl.ac ? this._hass.callService("climate", "set_temperature", { entity_id: ctl.climate.entity_id, temperature: value }) : this._setTarget(room, value);
+    const entry = { value, ac: ctl.ac, timer: setTimeout(async () => {
       try {
-        await this._setTarget(room, value);
+        await send();
       } finally {
         setTimeout(() => {
           if (this._pending[index] === entry) {
@@ -30468,7 +30480,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
           <div class="z-temp">
             <div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div>
             <div class="rail na" data-f="rail"><i class="tgt"></i><i class="cur"></i></div>
-            <div class="step" data-f="step"><button type="button" class="sb" data-step="-1" aria-label="S\xE6nk m\xE5l"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span>M\xE5l</span><strong data-f="target">${DASH3}</strong></div><button type="button" class="sb" data-step="1" aria-label="H\xE6v m\xE5l"><ha-icon icon="mdi:plus"></ha-icon></button></div>
+            <div class="step" data-f="step"><div class="tv"><span data-f="tlabel">M\xE5l</span><strong data-f="target">${DASH3}</strong></div></div>
           </div>
           <div class="gauges">${gauge("humidity", "mdi:water-percent", "Fugt")}${gauge("valve", "mdi:valve", "Ventil")}${gauge("feels", "mdi:thermometer", "F\xF8les")}${gauge("battery", "mdi:battery-outline", "Batteri")}</div>
         </div>
@@ -30618,11 +30630,12 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}${keepRoom}`;
     this._setText(refs.status, model.status);
     this._setText(refs.temp, this._format(model.current));
-    const pending = this._pending[index]?.value;
-    const target = pending ?? model.target;
+    const ctl = this._control(room, model);
+    const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : void 0;
+    const target = pending ?? ctl.target;
     this._setText(refs.target, target === void 0 ? "Intet m\xE5l" : `${this._format(target)}\xB0`);
+    this._setText(refs.host.querySelector('[data-f="tlabel"]'), ctl.ac ? "AC-m\xE5l" : "M\xE5l");
     refs.step?.classList.toggle("pending", pending !== void 0);
-    refs.step?.classList.toggle("none", !model.climate || model.target === void 0);
     if (refs.rail) {
       const ok = model.current !== void 0 && target !== void 0;
       refs.rail.classList.toggle("na", !ok);
@@ -30835,7 +30848,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
             </div>
             <div class="ph-main">
               <div class="ph-temp"><span data-v="temp">${DASH3}</span><small>\xB0C</small></div>
-              <div class="ph-step" data-v="step"${room.climate ? "" : " hidden"}><button type="button" class="sb" data-pstep="-1" aria-label="S\xE6nk m\xE5l"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span>M\xE5l</span><strong data-v="target">${DASH3}</strong></div><button type="button" class="sb" data-pstep="1" aria-label="H\xE6v m\xE5l"><ha-icon icon="mdi:plus"></ha-icon></button></div>
+              <div class="ph-step" data-v="step"${room.climate ? "" : " hidden"}><button type="button" class="sb" data-pstep="-1" aria-label="S\xE6nk m\xE5l"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span data-v="tlabel">M\xE5l</span><strong data-v="target">${DASH3}</strong></div><button type="button" class="sb" data-pstep="1" aria-label="H\xE6v m\xE5l"><ha-icon icon="mdi:plus"></ha-icon></button></div>
               <div class="ph-chips">
                 <span class="pc" data-c="humidity" style="--pcc:#60a5fa"><ha-icon icon="mdi:water-percent"></ha-icon><span></span></span>
                 <span class="pc" data-c="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span></span></span>
@@ -30862,9 +30875,13 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     };
     set("status", model.status);
     set("temp", this._format(model.current));
-    const pending = this._pending[index]?.value;
-    const target = pending ?? model.target;
+    const ctl = this._control(room, model);
+    const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : void 0;
+    const target = pending ?? ctl.target;
     set("target", target === void 0 ? DASH3 : `${this._format(target)}\xB0`);
+    set("tlabel", ctl.ac ? "AC-m\xE5l" : "M\xE5l");
+    const stepEl = content.querySelector('[data-v="step"]');
+    if (stepEl) stepEl.hidden = !ctl.climate;
     content.querySelector('[data-v="step"]')?.classList.toggle("pending", pending !== void 0);
     const chip = (k, text) => {
       const n = content.querySelector(`[data-c="${k}"]`);
