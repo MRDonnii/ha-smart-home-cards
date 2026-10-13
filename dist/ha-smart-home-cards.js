@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.90 */
+/* MRDonnii Smart Home Cards v0.5.91 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.2.2";
+var VERSION5 = "0.3.0";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6672,6 +6672,7 @@ var DEFAULTS = {
   compact: false,
   image: "",
   image_charging: "",
+  image_driving: "",
   navigation_path: "",
   battery: "sensor.tesla_battery_level",
   range: "sensor.tesla_battery_range",
@@ -6707,6 +6708,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         { name: "navigation_path", selector: { text: {} } },
         { name: "image", selector: { text: {} } },
         { name: "image_charging", selector: { text: {} } },
+        { name: "image_driving", selector: { text: {} } },
         { name: "compact", selector: { boolean: {} } },
         { type: "expandable", name: "", title: "Bil", schema: [
           e("battery", "sensor"),
@@ -6741,6 +6743,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         navigation_path: "Side ved tryk",
         image: "Billede (parkeret)",
         image_charging: "Billede (lader)",
+        image_driving: "Billede (k\xF8rer)",
         battery: "Batteri",
         range: "R\xE6kkevidde",
         lock: "L\xE5s",
@@ -6776,7 +6779,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
+    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "image_driving", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
     const sv = this._config.style_entity ? hass.states[this._config.style_entity]?.state : "";
     const cp = this._config.charge_plan || {};
     const planSig = Object.values(cp).filter((v) => typeof v === "string" && v.includes(".")).map((id) => `${hass.states[id]?.state}|${hass.states[id]?.last_updated}`).join(";");
@@ -6890,6 +6893,27 @@ var HATeslaGlanceCard = class extends HTMLElement {
       :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
       :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
       :host([v2]) .glow{opacity:.8;height:30px}
+      /* V2 (Claude AI, 2026-10-13; user: "design om til en V2 \u2026 der matcher min forside \u2026 bil billeder der skifter"). */
+      .vchip,.fx{display:none}
+      :host([v2]) .vchip{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px;color:var(--tone,var(--accent));background:linear-gradient(160deg,color-mix(in srgb,var(--tone,var(--accent)) 30%,transparent),color-mix(in srgb,var(--tone,var(--accent)) 10%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 38%,transparent),0 6px 16px -8px var(--tone,var(--accent))}
+      :host([v2]) .vchip ha-icon{--mdc-icon-size:18px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--tone,var(--accent)) 55%,transparent))}
+      :host([v2]) .soc b{font-size:32px}
+      :host([v2]) .car img{transition:opacity .26s ease,transform .26s ease}:host([v2]) .car img.swap{opacity:0;transform:translateX(10px) scale(.97)}
+      :host([v2]) .compact .car img{max-height:98px}
+      :host([v2]) .parked .car img{animation:carFloat 6s ease-in-out infinite}@keyframes carFloat{50%{transform:translateY(-3px)}}
+      :host([v2]) .fx{display:block;position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:12px}
+      :host([v2]) .fx i{position:absolute;opacity:0}
+      :host([v2]) .driving .fx .ln{opacity:1;left:0;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--tone,var(--accent)) 70%,#fff),transparent);animation:speed 0.9s linear infinite}
+      :host([v2]) .fx .l1{top:38%;width:46%}:host([v2]) .fx .l2{top:58%;width:30%;animation-delay:-.35s!important}:host([v2]) .fx .l3{top:76%;width:54%;animation-delay:-.6s!important}
+      @keyframes speed{from{transform:translateX(160%)}to{transform:translateX(-120%)}}
+      :host([v2]) .charging .fx .sp{opacity:1;bottom:18%;width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px 2px var(--good);animation:spark 2.4s ease-out infinite}
+      :host([v2]) .fx .s1{left:28%}:host([v2]) .fx .s2{left:52%;animation-delay:-.8s!important}:host([v2]) .fx .s3{left:74%;animation-delay:-1.6s!important}
+      @keyframes spark{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:1}100%{transform:translateY(-60px) scale(.2);opacity:0}}
+      :host([v2]) .charging .glow{background:radial-gradient(closest-side,color-mix(in srgb,var(--good) 70%,transparent),transparent);opacity:.95}
+      :host([v2]) .driving .glow{animation:roadGlow 1.2s ease-in-out infinite}@keyframes roadGlow{50%{opacity:.4;transform:scaleX(.9)}}
+      @media(max-width:600px){:host([v2]) .vchip{display:none}:host([v2]) .pill{font-size:10px;padding:2px 8px 2px 6px}:host([v2]) .name{flex:none}}
+      :host([v2]) .has-plan .car{margin-right:6px}
+      @media (prefers-reduced-motion:reduce){:host([v2]) .fx i,:host([v2]) .parked .car img{animation:none!important}}
       .driving .pill{animation:drivePulse 1.6s ease-in-out infinite}.driving .car img{animation:driveSway 2.2s ease-in-out infinite}
       @keyframes drivePulse{50%{box-shadow:0 0 0 1px var(--tone,var(--accent)),0 0 16px -2px var(--tone,var(--accent))}}@keyframes driveSway{50%{transform:translateX(-3px)}}
       @media(prefers-reduced-motion:reduce){.driving .pill,.driving .car img{animation:none}}
@@ -6941,12 +6965,12 @@ var HATeslaGlanceCard = class extends HTMLElement {
     <ha-card>
       <div class="grid">
         <div class="info">
-          <div class="top"><span class="name"></span><span class="pill"><ha-icon></ha-icon><span></span></span></div>
+          <div class="top"><span class="vchip"><ha-icon icon="mdi:car-electric"></ha-icon></span><span class="name"></span><span class="pill"><ha-icon></ha-icon><span></span></span></div>
           <div class="soc"><b></b><span class="range"></span></div>
           <div class="bar"><div class="fill"></div><i class="marker" hidden></i></div>
           <div class="line"></div>
         </div>
-        <div class="car"><div class="chips"></div><img alt="" hidden><ha-icon class="fallback" icon="mdi:car-electric" hidden></ha-icon><i class="glow"></i></div>
+        <div class="car"><div class="chips"></div><div class="fx" aria-hidden="true"><i class="ln l1"></i><i class="ln l2"></i><i class="ln l3"></i><i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i></div><img alt="" hidden><ha-icon class="fallback" icon="mdi:car-electric" hidden></ha-icon><i class="glow"></i></div>
         <div class="stats"></div>
       </div>
       <div class="plan" aria-hidden="true"></div>
@@ -7200,9 +7224,24 @@ var HATeslaGlanceCard = class extends HTMLElement {
     if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc(this._fmt(inside, 0))}\xB0</span>`);
     root.querySelector(".chips").innerHTML = chips.join("");
     const img = root.querySelector(".car img");
-    const src = (charging || plugged) && c2.image_charging ? c2.image_charging : c2.image;
+    const gearNow = String(this._val(c2.shift_state) || "").toUpperCase();
+    const drivingNow = !charging && ["D", "R", "N"].includes(gearNow);
+    const src = drivingNow && c2.image_driving ? c2.image_driving : (charging || plugged) && c2.image_charging ? c2.image_charging : c2.image;
     img.hidden = !src;
-    if (src && img.getAttribute("src") !== src) img.setAttribute("src", src);
+    card.classList.toggle("plugged", !!plugged && !charging);
+    card.classList.toggle("parked", !charging && !plugged && !drivingNow);
+    if (src && img.dataset.want !== src) {
+      img.dataset.want = src;
+      if (!img.getAttribute("src")) img.setAttribute("src", src);
+      else {
+        img.classList.add("swap");
+        clearTimeout(this._swapT);
+        this._swapT = setTimeout(() => {
+          img.onload = () => img.classList.remove("swap");
+          img.setAttribute("src", img.dataset.want);
+        }, 260);
+      }
+    }
     root.querySelector(".fallback").hidden = !!src;
     const stats = [];
     const stat = (label, id, digits, unitFallback) => {
