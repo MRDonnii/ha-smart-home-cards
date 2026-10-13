@@ -1140,7 +1140,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
-    const hasControls = !!(room.controls && (room.controls.light || room.controls.actions?.length || room.controls.alert));
+    const hasControls = !!(room.controls && (room.controls.cards?.length || room.controls.light || room.controls.actions?.length || room.controls.alert));
     if (hasControls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
@@ -1195,7 +1195,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const definitions = {
       temperature: { type:"custom:ha-temperature-target-card", title:`Temperatur · ${room.name}`, hours:this._config.history_hours || 24, animation:this._config.animation, rooms:[{ name:room.name, icon:room.icon, temperature:room.temperature, climate:room.climate }] },
       ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
-      controls: room.controls ? { type:"custom:ha-room-control-card", ...room.controls } : null,
+      controls: room.controls ? (room.controls.cards?.length ? { type:"vertical-stack", cards:room.controls.cards } : { type:"custom:ha-room-control-card", ...room.controls }) : null,
       air: hasAir(room) ? { type:"custom:ha-air-quality-card", name:room.name, co2:room.co2, pm25:room.pm25, air_quality:room.air_quality, co2_warning:room.co2_warning, co2_critical:room.co2_critical, hours:this._config.history_hours || 24, animation:this._config.animation } : null,
       optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
     };

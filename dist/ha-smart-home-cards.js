@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.94 */
+/* MRDonnii Smart Home Cards v0.5.95 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -29467,7 +29467,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
-    const hasControls = !!(room.controls && (room.controls.light || room.controls.actions?.length || room.controls.alert));
+    const hasControls = !!(room.controls && (room.controls.cards?.length || room.controls.light || room.controls.actions?.length || room.controls.alert));
     if (hasControls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
@@ -29531,7 +29531,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const definitions = {
       temperature: { type: "custom:ha-temperature-target-card", title: `Temperatur \xB7 ${room.name}`, hours: this._config.history_hours || 24, animation: this._config.animation, rooms: [{ name: room.name, icon: room.icon, temperature: room.temperature, climate: room.climate }] },
       ac: room.ac ? { type: "custom:ha-ac-climate-card", title: `AC \xB7 ${room.name}`, animation: this._config.animation, units: [room.ac] } : null,
-      controls: room.controls ? { type: "custom:ha-room-control-card", ...room.controls } : null,
+      controls: room.controls ? room.controls.cards?.length ? { type: "vertical-stack", cards: room.controls.cards } : { type: "custom:ha-room-control-card", ...room.controls } : null,
       air: hasAir(room) ? { type: "custom:ha-air-quality-card", name: room.name, co2: room.co2, pm25: room.pm25, air_quality: room.air_quality, co2_warning: room.co2_warning, co2_critical: room.co2_critical, hours: this._config.history_hours || 24, animation: this._config.animation } : null,
       optimization: room.optimization ? { type: "custom:ha-heating-diagnostics-card", title: `Optimering \xB7 ${room.name}`, animation: this._config.animation, learning_hours: this._config.learning_hours || 48, total_demand: this._config.total_demand, data_problem: this._config.data_problem, rooms: [room.optimization] } : null
     };
@@ -33119,12 +33119,11 @@ var HaHomeSummaryCard = class extends HTMLElement {
     try {
       const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url });
       let v3 = null;
+      const pops = {};
       const walk = (o) => {
-        if (v3 || !o || typeof o !== "object") return;
-        if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms)) {
-          v3 = o.rooms;
-          return;
-        }
+        if (!o || typeof o !== "object") return;
+        if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms) && !v3) v3 = o.rooms;
+        if (o.type === "custom:bubble-card" && o.card_type === "pop-up" && o.hash && Array.isArray(o.cards)) pops[o.hash] = o;
         Object.values(o).forEach(walk);
       };
       walk(lc);
@@ -33132,6 +33131,8 @@ var HaHomeSummaryCard = class extends HTMLElement {
       const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
       const rooms = cfg.rooms.map((r) => {
         const m = v3.find((x) => r.climate && x.climate === r.climate || r.temperature && x.temperature === r.temperature || n(x.name) === n(r.name));
+        const pop = m?.popup ? pops[m.popup] : Object.values(pops).find((x) => n(x.name) === n(r.name));
+        if (pop) return { ...r, controls: { cards: structuredClone(pop.cards) } };
         return m && (m.light || m.actions?.length || m.alert) ? { ...r, controls: { light: m.light, actions: m.actions, alert: m.alert } } : r;
       });
       return { ...cfg, rooms };

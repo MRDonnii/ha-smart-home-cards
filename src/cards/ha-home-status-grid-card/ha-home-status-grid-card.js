@@ -1228,11 +1228,14 @@ class HaHomeSummaryCard extends HTMLElement {
     const url = this.config?.room_controls_dashboard; if (!url) return cfg;
     try {
       const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url });
-      let v3 = null; const walk = (o) => { if (v3 || !o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms)) { v3 = o.rooms; return; } Object.values(o).forEach(walk); }; walk(lc);
+      // The room's whole Bubble pop-up from the rooms page (user, 2026-10-13: "tag hele popup siden og byg ind som styring").
+      let v3 = null; const pops = {}; const walk = (o) => { if (!o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms) && !v3) v3 = o.rooms; if (o.type === "custom:bubble-card" && o.card_type === "pop-up" && o.hash && Array.isArray(o.cards)) pops[o.hash] = o; Object.values(o).forEach(walk); }; walk(lc);
       if (!v3) return cfg;
       const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
       const rooms = cfg.rooms.map((r) => {
         const m = v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || n(x.name) === n(r.name));
+        const pop = m?.popup ? pops[m.popup] : Object.values(pops).find((x) => n(x.name) === n(r.name));
+        if (pop) return { ...r, controls: { cards: structuredClone(pop.cards) } };
         return m && (m.light || m.actions?.length || m.alert) ? { ...r, controls: { light: m.light, actions: m.actions, alert: m.alert } } : r;
       });
       return { ...cfg, rooms };
