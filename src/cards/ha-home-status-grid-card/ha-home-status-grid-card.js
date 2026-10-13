@@ -1493,7 +1493,7 @@ ${LUX_KEYFRAMES}
         @keyframes uNow{50%{opacity:.55}}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
-        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,104px)!important;align-content:start}
+        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}

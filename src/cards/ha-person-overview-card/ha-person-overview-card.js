@@ -1,4 +1,4 @@
-const VERSION = "0.5.1";
+const VERSION = "0.5.2";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -146,7 +146,7 @@ class HAPersonOverviewCard extends HTMLElement {
     const pic = p.image || person?.attributes?.entity_picture || "";
     const initial = esc((p.name || "?").trim()[0] || "?");
     return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
-      <span class="av"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
+      <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
       <span class="tx"><b>${esc(p.name || person?.attributes?.friendly_name || "Person")}</b>
         <span class="st"><i></i>${esc(status)}</span>
         <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>${esc(trip)}` : esc(place)}</small></span>
@@ -222,8 +222,11 @@ class HAPersonOverviewCard extends HTMLElement {
       // Phones: a strip – portrait (its ring is the status colour), the name, and the battery; the status chip and place go
       // (user, 2026-10-13: "person kort på mobilen … så det hele kan være der").
       // Phones: built like the desktop tile, two per row (user, 2026-10-13: "kan vel godt bygges mere som det på desktop").
-      + "@media(max-width:600px){.combo{grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:5px}.pv2.mini{padding:7px 8px;gap:8px}.pv2.mini .av{width:42px;height:42px}.pv2.mini .tx b{font-size:14px;padding-right:34px}.pv2.mini .st{font-size:9.5px}.pv2.mini small{font-size:10px}"
-      + ".pv2.mini .bat{top:6px;right:7px}.pv2.mini .bat b{font-size:9.5px}}"
+      // Phones: all four in one row – portrait, name and status; no battery, a critical one (<20 %) shows as a faint red
+      // pulse around the portrait (user, 2026-10-13).
+      + "@media(max-width:600px){.combo{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:6px 3px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:5px 2px 6px;gap:5px}.pv2.mini .av{width:44px;height:44px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{font-size:13px;padding-right:0}.pv2.mini .st{font-size:9px;padding:1px 6px 1px 5px;gap:4px}.pv2.mini small,.pv2.mini .bat{display:none!important}"
+      + ".pv2 .av.low{animation:avLow 2.4s ease-in-out infinite}@keyframes avLow{0%,100%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 5px rgba(255,70,101,.25),0 0 10px 2px rgba(255,70,101,.25)}50%{box-shadow:0 0 0 2.5px var(--pc),0 0 0 6px rgba(255,70,101,.55),0 0 18px 6px rgba(255,70,101,.45)}}"
+      + "}"
       + ".cline{display:none}"
       + "@media(max-width:0px){.grid.combined .combo{display:none}.cline{display:flex;align-items:center;gap:8px;min-height:58px;padding:7px 9px;border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
       + ".lg{display:flex;align-items:center;gap:6px;min-width:0}.lg.home{flex:0 0 auto}.lg.out{flex:1;justify-content:flex-end;gap:5px;overflow:hidden}"

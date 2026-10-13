@@ -6,7 +6,7 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.2.1";
+const VERSION = "0.2.2";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -218,6 +218,7 @@ class HATeslaGlanceCard extends HTMLElement {
       @media(max-width:600px){:host([v2]) .stats{display:none!important}}
       /* Charge plan overlay: the car fades back, the plan lies on top; dots on the right show which view is up. */
       .grid{transition:opacity .45s ease,filter .45s ease,transform .45s cubic-bezier(.16,1,.3,1)}
+      ha-card.has-plan{touch-action:pan-y;user-select:none;-webkit-user-select:none}ha-card.dragging .grid,ha-card.dragging .plan{transition:none;animation:none}
       .show-plan .grid{opacity:.12;filter:blur(2px) saturate(.6);transform:scale(.97) translateY(-6px);pointer-events:none}
       .plan{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 34px 10px 14px;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .45s ease,transform .45s cubic-bezier(.16,1,.3,1);--ev:var(--dashboard-ev,#b7a4ff)}
       .show-plan .plan{opacity:1;transform:none;pointer-events:auto}
@@ -275,14 +276,39 @@ class HATeslaGlanceCard extends HTMLElement {
     </ha-card>`;
     const hc = this.shadowRoot.querySelector("ha-card");
     hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } this._tap(); });
-    // Swipe up/down (or the wheel) switches between the charge plan and the car (user, 2026-10-13).
-    hc.addEventListener("touchstart", (e) => { this._ty = e.touches[0].clientY; this._tx = e.touches[0].clientX; }, { passive: true });
-    hc.addEventListener("touchend", (e) => { if (this._ty == null || !this._planOn) return; const dy = e.changedTouches[0].clientY - this._ty; const dx = e.changedTouches[0].clientX - this._tx; this._ty = null; if (Math.abs(dy) > 28 && Math.abs(dy) > Math.abs(dx)) { this._swiped = true; this._setView(this._view === "plan" ? "car" : "plan"); } }, { passive: true });
-    hc.addEventListener("wheel", (e) => { if (!this._planOn || Math.abs(e.deltaY) < 20 || Date.now() - (this._wheelAt || 0) < 600) return; e.preventDefault(); this._wheelAt = Date.now(); this._setView(e.deltaY > 0 ? "car" : "plan"); }, { passive: false });
+    // Switching between the overlay and the car (user, 2026-10-13: "swipe virker ikke så godt på PC og mobilen får hele siden
+    // til at følge med"): a sideways drag on touch – the page keeps its vertical scrolling – and any drag with a mouse; the
+    // card follows the finger/pointer and snaps over past 40 px. The wheel/touchpad adds up its deltas.
+    hc.addEventListener("pointerdown", (e) => {
+      if (!this._planOn || (e.pointerType === "mouse" && e.button !== 0)) return;
+      this._drag = { x: e.clientX, y: e.clientY, id: e.pointerId, type: e.pointerType, axis: null, d: 0 };
+    });
+    hc.addEventListener("pointermove", (e) => {
+      const g = this._drag; if (!g || g.id !== e.pointerId) return;
+      const dx = e.clientX - g.x; const dy = e.clientY - g.y;
+      if (!g.axis) { if (Math.hypot(dx, dy) < 8) return; g.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y"; if (g.type !== "mouse" && g.axis === "y") { this._drag = null; return; } try { hc.setPointerCapture(e.pointerId); } catch { /* gone */ } }
+      g.d = g.axis === "x" ? dx : dy; this._dragPaint(g.d, g.axis);
+    });
+    const end = (e) => { const g = this._drag; if (!g || g.id !== e.pointerId) return; this._drag = null; this._dragPaint(0); if (g.axis && Math.abs(g.d) > 40) { this._swiped = true; this._setView(this._view === "plan" ? "car" : "plan"); } else if (g.axis) this._swiped = true; };
+    hc.addEventListener("pointerup", end); hc.addEventListener("pointercancel", end);
+    hc.addEventListener("wheel", (e) => {
+      if (!this._planOn) return; e.preventDefault();
+      clearTimeout(this._wheelT); this._wheelT = setTimeout(() => { this._wacc = 0; }, 250);
+      if (Date.now() - (this._wheelAt || 0) < 650) return;
+      this._wacc = (this._wacc || 0) + (Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX);
+      if (Math.abs(this._wacc) > 60) { this._wheelAt = Date.now(); this._wacc = 0; this._setView(this._view === "plan" ? "car" : "plan"); }
+    }, { passive: false });
     if (this._hass) this._update();
   }
 
   _setView(v) { this._view = v; this._paintView(); }
+  // The visible layer follows a drag (dampened), the other one fades in behind it.
+  _dragPaint(d, axis = "x") {
+    const r = this.shadowRoot; const top = r.querySelector(this._view === "plan" ? ".plan" : ".grid"); if (!top) return;
+    const hc = r.querySelector("ha-card"); hc.classList.toggle("dragging", !!d);
+    if (!d) { top.style.transform = ""; top.style.opacity = ""; return; }
+    const m = Math.max(-140, Math.min(140, d * 0.6)); top.style.transform = axis === "x" ? `translateX(${m}px)` : `translateY(${m}px)`; top.style.opacity = String(Math.max(0.25, 1 - Math.abs(m) / 180));
+  }
   _paintView() {
     const hc = this.shadowRoot.querySelector("ha-card"); if (!hc) return;
     const show = this._planOn && this._view === "plan";
