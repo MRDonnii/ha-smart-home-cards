@@ -1,4 +1,4 @@
-const VERSION = "0.3.2";
+const VERSION = "0.4.0";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -153,6 +153,16 @@ class HAPersonOverviewCard extends HTMLElement {
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
+  // combined (v2 only): every person in one tile, side by side (user, 2026-10-13: "de 4 person kort … i én flise").
+  _combined() { return this._v2() && this._config?.combined === true; }
+  _personMini(p) {
+    const full = this._personV2(p);
+    return full.replace('class="pv2 ', 'class="pv2 mini ');
+  }
+  _gridHtml() {
+    if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>`;
+    const v2 = this._v2(); return this._config.persons.map((p) => (v2 ? this._personV2(p) : this._person(p))).join("");
+  }
   _render() {
     if (!this.shadowRoot || !this._config) return;
     // The shell (styles and ha-card) is built once per config. A state update only refreshes the person
@@ -160,8 +170,8 @@ class HAPersonOverviewCard extends HTMLElement {
     // ones (and their document listeners) alive, so a dashboard tab grew until it froze (Claude AI).
     const grid = this._built ? this.shadowRoot.querySelector(".grid") : null;
     if (grid) {
-      const v2 = this._v2(); grid.classList.toggle("v2", v2);
-      grid.innerHTML = this._config.persons.map((p) => (v2 ? this._personV2(p) : this._person(p))).join("");
+      const v2 = this._v2(); grid.classList.toggle("v2", v2); grid.classList.toggle("combined", this._combined());
+      grid.innerHTML = this._gridHtml();
       this._wire();
       return;
     }
@@ -183,9 +193,17 @@ class HAPersonOverviewCard extends HTMLElement {
       + ".pv2 .st{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
       + "@media(max-width:600px){.pv2{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:48px;height:48px}.pv2 .tx b{font-size:15px;padding-right:46px}.pv2 .st{font-size:10px;padding:1px 7px 1px 6px}.pv2 small{font-size:10.5px}"
       + ".pv2 .bat{position:absolute;right:9px;top:9px;flex-direction:row;align-items:center;gap:4px}.pv2 .bb{width:20px;height:10px;padding:1.5px}.pv2 .bb::after{top:3px;height:4px}.pv2 .bat b{font-size:10.5px}.pv2 .bat ha-icon{--mdc-icon-size:12px;margin:0}}"
+      + ".grid.combined{display:block}.combo{display:grid;grid-template-columns:repeat(var(--pn,4),minmax(0,1fr));gap:4px;padding:8px;border-radius:20px;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--presence-home,#37e69a) 9%,transparent),transparent 55%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
+      + ".pv2.mini{grid-template-columns:1fr;grid-template-rows:auto auto;justify-items:center;text-align:center;height:auto;gap:7px;padding:10px 6px 9px;background:none;box-shadow:none;border-radius:16px}"
+      + ".pv2.mini:hover{background:color-mix(in srgb,var(--pc) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 30%,transparent)}"
+      + ".pv2.mini .av{width:56px;height:56px}.pv2.mini .tx{align-items:center;gap:3px;min-width:0;max-width:100%}.pv2.mini .tx b{font-size:15px}.pv2.mini .st{font-size:10px;padding:1px 7px 1px 6px}.pv2.mini small{font-size:10.5px;justify-content:center;max-width:100%}"
+      + ".pv2.mini .bat{position:absolute;top:8px;right:8px;flex-direction:row;align-items:center;gap:3px}.pv2.mini .bb{width:18px;height:9px;padding:1.5px}.pv2.mini .bb::after{top:2.5px;height:4px}.pv2.mini .bat b{font-size:10px}.pv2.mini .bat ha-icon{--mdc-icon-size:11px;margin:0}"
+      + "@media(min-width:1101px) and (max-height:950px){.pv2.mini{padding:6px 4px;gap:4px}.pv2.mini .av{width:44px;height:44px}.pv2.mini .tx b{font-size:13.5px}}"
+      + "@media(max-width:600px){.combo{gap:2px;padding:8px 4px}.pv2.mini{padding:6px 2px 7px;gap:5px}.pv2.mini .av{width:46px;height:46px;font-size:18px}.pv2.mini .tx b{padding-right:0;font-size:13px}.pv2.mini .st{font-size:9px;padding:1px 6px 1px 5px;gap:4px}.pv2.mini small{font-size:9px}.pv2.mini small ha-icon{--mdc-icon-size:12px}"
+      + ".pv2.mini .bat{position:static;grid-row:auto;justify-content:center;margin-top:-1px}.pv2.mini .bb{width:16px;height:8px}.pv2.mini .bat b{font-size:9.5px}}"
       + "@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);
-    if (this._v2()) { const g = this.shadowRoot.querySelector(".grid"); g.classList.add("v2"); g.innerHTML = this._config.persons.map((p) => this._personV2(p)).join(""); }
+    if (this._v2()) { const g = this.shadowRoot.querySelector(".grid"); g.classList.add("v2"); g.classList.toggle("combined", this._combined()); g.innerHTML = this._gridHtml(); }
     this.shadowRoot.querySelector(".grid").style.gridTemplateColumns =
       `repeat(${window.matchMedia("(max-width: 600px)").matches ? this._config.mobile_columns || 2 : this._config.columns || 2},minmax(0,1fr))`;
     this._wire();

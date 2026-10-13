@@ -4,8 +4,9 @@
 // 0.1.0 – første version.
 // 0.1.1 – compact: true lægger tallene 2×2 ved siden af batteriet (lavere kort).
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
+// 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -90,9 +91,12 @@ class HATeslaGlanceCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
-    const sig = ids.map((id) => { const s = hass.states[id]; return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-"; }).join(";");
+    const sv = this._config.style_entity ? hass.states[this._config.style_entity]?.state : "";
+    const sig = ids.map((id) => { const s = hass.states[id]; return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-"; }).join(";") + `|${sv}`;
     if (sig === this._sig) return;
     this._sig = sig;
+    // v2 look (Claude AI, 2026-10-13): follows `style_entity` (on = new) or `style: v2`, like the front page's tiles.
+    this.toggleAttribute("v2", this._config.style_entity ? sv === "on" : this._config.style === "v2");
     this._update();
   }
 
@@ -195,6 +199,17 @@ class HATeslaGlanceCard extends HTMLElement {
       .stat span{display:block;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b{display:block;margin-top:2px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b small{font-size:10px;font-weight:650;color:var(--muted);margin-left:2px}
+      :host([v2]) ha-card{border-radius:18px;border:0;background:radial-gradient(90% 160% at 100% 100%,color-mix(in srgb,var(--tone,var(--accent)) 22%,transparent),transparent 55%),radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),transparent 50%),var(--surface,var(--ha-card-background,var(--card-background-color)));
+        box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
+      :host([v2]) ha-card:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 26px -10px var(--tone,var(--accent))}
+      :host([v2]) .name{font-size:16px}
+      :host([v2]) .pill{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 12px -4px var(--tone,var(--accent))}
+      :host([v2]) .stat{border:0;background:linear-gradient(160deg,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),color-mix(in srgb,var(--primary-text-color) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
+      :host([v2]) .stat b{font-size:13.5px}
+      :host([v2]) .chip{border:0;background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 12%,transparent)}
+      :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
+      :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
+      :host([v2]) .glow{opacity:.8;height:30px}
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
       .compact .car{grid-column:3;grid-row:1}

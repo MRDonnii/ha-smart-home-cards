@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.80 */
+/* MRDonnii Smart Home Cards v0.5.81 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.1.2";
+var VERSION5 = "0.1.3";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6775,12 +6775,14 @@ var HATeslaGlanceCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
+    const sv = this._config.style_entity ? hass.states[this._config.style_entity]?.state : "";
     const sig = ids.map((id) => {
       const s = hass.states[id];
       return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-";
-    }).join(";");
+    }).join(";") + `|${sv}`;
     if (sig === this._sig) return;
     this._sig = sig;
+    this.toggleAttribute("v2", this._config.style_entity ? sv === "on" : this._config.style === "v2");
     this._update();
   }
   getCardSize() {
@@ -6873,6 +6875,17 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .stat span{display:block;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b{display:block;margin-top:2px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .stat b small{font-size:10px;font-weight:650;color:var(--muted);margin-left:2px}
+      :host([v2]) ha-card{border-radius:18px;border:0;background:radial-gradient(90% 160% at 100% 100%,color-mix(in srgb,var(--tone,var(--accent)) 22%,transparent),transparent 55%),radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),transparent 50%),var(--surface,var(--ha-card-background,var(--card-background-color)));
+        box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
+      :host([v2]) ha-card:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 26px -10px var(--tone,var(--accent))}
+      :host([v2]) .name{font-size:16px}
+      :host([v2]) .pill{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 12px -4px var(--tone,var(--accent))}
+      :host([v2]) .stat{border:0;background:linear-gradient(160deg,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),color-mix(in srgb,var(--primary-text-color) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
+      :host([v2]) .stat b{font-size:13.5px}
+      :host([v2]) .chip{border:0;background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 12%,transparent)}
+      :host([v2]) .chip.ok{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 10px -4px var(--good)}
+      :host([v2]) .bar{height:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
+      :host([v2]) .glow{opacity:.8;height:30px}
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
       .compact .car{grid-column:3;grid-row:1}
@@ -33516,7 +33529,7 @@ console.info(
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION27 = "0.3.2";
+var VERSION27 = "0.4.0";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -33632,25 +33645,40 @@ var HAPersonOverviewCard = class extends HTMLElement {
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
+  // combined (v2 only): every person in one tile, side by side (user, 2026-10-13: "de 4 person kort … i én flise").
+  _combined() {
+    return this._v2() && this._config?.combined === true;
+  }
+  _personMini(p) {
+    const full = this._personV2(p);
+    return full.replace('class="pv2 ', 'class="pv2 mini ');
+  }
+  _gridHtml() {
+    if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>`;
+    const v22 = this._v2();
+    return this._config.persons.map((p) => v22 ? this._personV2(p) : this._person(p)).join("");
+  }
   _render() {
     if (!this.shadowRoot || !this._config) return;
     const grid = this._built ? this.shadowRoot.querySelector(".grid") : null;
     if (grid) {
       const v22 = this._v2();
       grid.classList.toggle("v2", v22);
-      grid.innerHTML = this._config.persons.map((p) => v22 ? this._personV2(p) : this._person(p)).join("");
+      grid.classList.toggle("combined", this._combined());
+      grid.innerHTML = this._gridHtml();
       this._wire();
       return;
     }
     this._built = true;
     this.shadowRoot.innerHTML = `<style>:host{display:block}*{box-sizing:border-box}ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}.grid{display:grid;grid-template-columns:repeat(${this._config.columns || 2},minmax(0,1fr));gap:10px}.person{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 104px;grid-template-rows:1fr 1fr;grid-template-areas:'main battery' 'main trip';height:92px;overflow:hidden;padding:10px 14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--person-color);border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#142332)));box-shadow:var(--state-card-shadow,var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.18))));color:var(--primary-text-color);text-align:left;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.person:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.person:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.person{transition:none}.person:hover{transform:none}}.portrait{position:absolute;z-index:-1;right:66px;top:50%;width:122px;height:122px;transform:translateY(-50%);border-radius:50%;background-position:center;background-size:cover;opacity:.28;filter:saturate(1.04) contrast(1.03)}.main{grid-area:main;display:flex;min-width:0;flex-direction:column;justify-content:center;gap:5px}.main b{overflow:hidden;font-size:16px;text-overflow:ellipsis;white-space:nowrap;color:var(--gray800,var(--primary-text-color))}.main strong{font-size:11px}.main small,.mini small{overflow:hidden;color:var(--gray600,var(--secondary-text-color));text-overflow:ellipsis;white-space:nowrap}.main small{font-size:11px}.mini{display:flex;min-width:0;flex-direction:column;align-items:flex-end;justify-content:center}.battery{grid-area:battery}.trip{grid-area:trip}.mini b{font-size:12px}.mini small{font-size:8px}.segments{display:flex;gap:2px;margin:3px 0}.segments i{width:9px;height:5px;border-radius:999px}@media(max-width:600px){.grid{gap:8px}.person{grid-template-columns:minmax(0,1fr) 88px;height:92px;padding:9px 11px}.portrait{right:49px}.main b{font-size:15px}.segments i{width:8px}}@media(max-width:430px){.grid{grid-template-columns:1fr}}</style><ha-card><div class="grid">${this._config.persons.map((p) => this._person(p)).join("")}</div></ha-card>`;
     const viewportStyle = document.createElement("style");
-    viewportStyle.textContent = "@media(min-width:1101px) and (max-height:950px){.grid{gap:6px}.person{height:70px;padding:5px 12px}.portrait{width:98px;height:98px}.main{gap:2px}}.pv2{position:relative;isolation:isolate;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;height:92px;padding:10px 14px 10px 12px;border:0;border-radius:18px;overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:var(--primary-text-color,#fff);background:radial-gradient(90% 140% at 0% 50%,color-mix(in srgb,var(--pc) 14%,transparent),transparent 62%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--pc) 16%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}.pv2:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--pc) 40%,transparent),0 0 26px -10px var(--pc)}.pv2:active{transform:scale(.97)}.pv2 .av{width:64px;height:64px;border-radius:50%;background:center 18%/cover no-repeat color-mix(in srgb,var(--pc) 18%,#111);display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--pc);box-shadow:0 0 0 3px var(--pc),0 0 0 6px color-mix(in srgb,var(--pc) 18%,transparent),0 8px 22px -6px var(--pc)}.pv2.away .av{filter:saturate(.75)}.pv2 .tx{min-width:0;display:flex;flex-direction:column;gap:3px}.pv2 .tx b{font-size:18px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 .st{display:inline-flex;align-items:center;gap:6px;width:max-content;padding:2px 9px 2px 7px;border-radius:999px;font-size:11px;font-weight:800;color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}.pv2 .st i{width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc);animation:pvBlink 2.4s ease-in-out infinite}@keyframes pvBlink{50%{opacity:.35}}.pv2 small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 small ha-icon{--mdc-icon-size:15px;color:var(--pc);flex:none}.pv2 .bat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px}.pv2 .bat b{font-size:13px;font-weight:800}.pv2 .bb{position:relative;width:34px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent);padding:2px}.pv2 .bb::after{content:'';position:absolute;right:-4px;top:4px;width:2.5px;height:6px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent)}.pv2 .bb i{display:block;height:100%;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}.pv2 .bat.chg .bb i{animation:pvChg 1.6s ease-in-out infinite}@keyframes pvChg{50%{opacity:.5}}.pv2 .bat ha-icon{--mdc-icon-size:14px;color:#ffd166;margin-top:-2px}@media(min-width:1101px) and (max-height:950px){.pv2{height:72px;padding:6px 12px 6px 10px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}}.pv2 .st{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:600px){.pv2{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:48px;height:48px}.pv2 .tx b{font-size:15px;padding-right:46px}.pv2 .st{font-size:10px;padding:1px 7px 1px 6px}.pv2 small{font-size:10.5px}.pv2 .bat{position:absolute;right:9px;top:9px;flex-direction:row;align-items:center;gap:4px}.pv2 .bb{width:20px;height:10px;padding:1.5px}.pv2 .bb::after{top:3px;height:4px}.pv2 .bat b{font-size:10.5px}.pv2 .bat ha-icon{--mdc-icon-size:12px;margin:0}}@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
+    viewportStyle.textContent = "@media(min-width:1101px) and (max-height:950px){.grid{gap:6px}.person{height:70px;padding:5px 12px}.portrait{width:98px;height:98px}.main{gap:2px}}.pv2{position:relative;isolation:isolate;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;height:92px;padding:10px 14px 10px 12px;border:0;border-radius:18px;overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:var(--primary-text-color,#fff);background:radial-gradient(90% 140% at 0% 50%,color-mix(in srgb,var(--pc) 14%,transparent),transparent 62%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--pc) 16%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}.pv2:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--pc) 40%,transparent),0 0 26px -10px var(--pc)}.pv2:active{transform:scale(.97)}.pv2 .av{width:64px;height:64px;border-radius:50%;background:center 18%/cover no-repeat color-mix(in srgb,var(--pc) 18%,#111);display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--pc);box-shadow:0 0 0 3px var(--pc),0 0 0 6px color-mix(in srgb,var(--pc) 18%,transparent),0 8px 22px -6px var(--pc)}.pv2.away .av{filter:saturate(.75)}.pv2 .tx{min-width:0;display:flex;flex-direction:column;gap:3px}.pv2 .tx b{font-size:18px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 .st{display:inline-flex;align-items:center;gap:6px;width:max-content;padding:2px 9px 2px 7px;border-radius:999px;font-size:11px;font-weight:800;color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}.pv2 .st i{width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc);animation:pvBlink 2.4s ease-in-out infinite}@keyframes pvBlink{50%{opacity:.35}}.pv2 small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 small ha-icon{--mdc-icon-size:15px;color:var(--pc);flex:none}.pv2 .bat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px}.pv2 .bat b{font-size:13px;font-weight:800}.pv2 .bb{position:relative;width:34px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent);padding:2px}.pv2 .bb::after{content:'';position:absolute;right:-4px;top:4px;width:2.5px;height:6px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent)}.pv2 .bb i{display:block;height:100%;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}.pv2 .bat.chg .bb i{animation:pvChg 1.6s ease-in-out infinite}@keyframes pvChg{50%{opacity:.5}}.pv2 .bat ha-icon{--mdc-icon-size:14px;color:#ffd166;margin-top:-2px}@media(min-width:1101px) and (max-height:950px){.pv2{height:72px;padding:6px 12px 6px 10px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}}.pv2 .st{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:600px){.pv2{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:48px;height:48px}.pv2 .tx b{font-size:15px;padding-right:46px}.pv2 .st{font-size:10px;padding:1px 7px 1px 6px}.pv2 small{font-size:10.5px}.pv2 .bat{position:absolute;right:9px;top:9px;flex-direction:row;align-items:center;gap:4px}.pv2 .bb{width:20px;height:10px;padding:1.5px}.pv2 .bb::after{top:3px;height:4px}.pv2 .bat b{font-size:10.5px}.pv2 .bat ha-icon{--mdc-icon-size:12px;margin:0}}.grid.combined{display:block}.combo{display:grid;grid-template-columns:repeat(var(--pn,4),minmax(0,1fr));gap:4px;padding:8px;border-radius:20px;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--presence-home,#37e69a) 9%,transparent),transparent 55%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}.pv2.mini{grid-template-columns:1fr;grid-template-rows:auto auto;justify-items:center;text-align:center;height:auto;gap:7px;padding:10px 6px 9px;background:none;box-shadow:none;border-radius:16px}.pv2.mini:hover{background:color-mix(in srgb,var(--pc) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 30%,transparent)}.pv2.mini .av{width:56px;height:56px}.pv2.mini .tx{align-items:center;gap:3px;min-width:0;max-width:100%}.pv2.mini .tx b{font-size:15px}.pv2.mini .st{font-size:10px;padding:1px 7px 1px 6px}.pv2.mini small{font-size:10.5px;justify-content:center;max-width:100%}.pv2.mini .bat{position:absolute;top:8px;right:8px;flex-direction:row;align-items:center;gap:3px}.pv2.mini .bb{width:18px;height:9px;padding:1.5px}.pv2.mini .bb::after{top:2.5px;height:4px}.pv2.mini .bat b{font-size:10px}.pv2.mini .bat ha-icon{--mdc-icon-size:11px;margin:0}@media(min-width:1101px) and (max-height:950px){.pv2.mini{padding:6px 4px;gap:4px}.pv2.mini .av{width:44px;height:44px}.pv2.mini .tx b{font-size:13.5px}}@media(max-width:600px){.combo{gap:2px;padding:8px 4px}.pv2.mini{padding:6px 2px 7px;gap:5px}.pv2.mini .av{width:46px;height:46px;font-size:18px}.pv2.mini .tx b{padding-right:0;font-size:13px}.pv2.mini .st{font-size:9px;padding:1px 6px 1px 5px;gap:4px}.pv2.mini small{font-size:9px}.pv2.mini small ha-icon{--mdc-icon-size:12px}.pv2.mini .bat{position:static;grid-row:auto;justify-content:center;margin-top:-1px}.pv2.mini .bb{width:16px;height:8px}.pv2.mini .bat b{font-size:9.5px}}@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);
     if (this._v2()) {
       const g = this.shadowRoot.querySelector(".grid");
       g.classList.add("v2");
-      g.innerHTML = this._config.persons.map((p) => this._personV2(p)).join("");
+      g.classList.toggle("combined", this._combined());
+      g.innerHTML = this._gridHtml();
     }
     this.shadowRoot.querySelector(".grid").style.gridTemplateColumns = `repeat(${window.matchMedia("(max-width: 600px)").matches ? this._config.mobile_columns || 2 : this._config.columns || 2},minmax(0,1fr))`;
     this._wire();
