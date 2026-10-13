@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.78 */
+/* MRDonnii Smart Home Cards v0.5.79 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -33516,7 +33516,7 @@ console.info(
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION27 = "0.3.1";
+var VERSION27 = "0.3.2";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -33576,6 +33576,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
   _valid(v) {
     return v && !["unknown", "unavailable", "none"].includes(String(v).toLowerCase());
   }
+  // iOS reports "Charging", "Not Charging" or "Full": only a real charge counts (Claude AI, 2026-10-13 – "Not Charging"
+  // matched /charg/ and showed both phones as charging).
+  _charging(p) {
+    const v = String(this._s(p.charging)?.state || "").trim().toLowerCase();
+    return ["charging", "lader", "oplader", "on", "true"].includes(v);
+  }
   _segments(active, color, glow) {
     return `<span class="segments">${[1, 2, 3, 4, 5].map((i) => `<i style="background:${i <= active ? color : "var(--presence-segment-off,rgba(120,140,160,.22))"};box-shadow:${i <= active ? `0 0 7px ${glow}` : "none"}"></i>`).join("")}</span>`;
   }
@@ -33585,7 +33591,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const status = home ? "Hjemme" : away ? "Ude" : this._valid(state) ? state : "Ukendt";
     const city = this._s(p.city)?.state;
     const place = this._valid(city) ? city : home ? p.home_label || "Hjemme" : status;
-    const level = Number(this._s(p.battery)?.state), battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null, charging = /charg|lader/i.test(this._s(p.charging)?.state || "");
+    const level = Number(this._s(p.battery)?.state), battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null, charging = this._charging(p);
     const bColor = battery === null ? "var(--presence-unknown,#8795a5)" : battery < 20 ? "var(--battery-critical,#ff4665)" : battery < 40 ? "var(--battery-low,#ffb347)" : battery < 80 ? "var(--battery-good,#41d98d)" : "var(--battery-full,#23e6b3)";
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = Number(this._s(p.distance)?.state), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
@@ -33611,7 +33617,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const place = this._valid(city) ? city : home ? p.home_label || "Hjemme" : "";
     const level = Number(this._s(p.battery)?.state);
     const battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null;
-    const charging = /charg|lader/i.test(this._s(p.charging)?.state || "");
+    const charging = this._charging(p);
     const bColor = battery === null ? "var(--presence-unknown,#8795a5)" : battery < 20 ? "var(--battery-critical,#ff4665)" : battery < 40 ? "var(--battery-low,#ffb347)" : "var(--battery-good,#41d98d)";
     const dist = Number(this._s(p.distance)?.state);
     const travel = Number(this._s(p.travel_time)?.state);

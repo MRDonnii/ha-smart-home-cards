@@ -1,4 +1,4 @@
-const VERSION = "0.3.1";
+const VERSION = "0.3.2";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -64,6 +64,9 @@ class HAPersonOverviewCard extends HTMLElement {
       v && !["unknown", "unavailable", "none"].includes(String(v).toLowerCase())
     );
   }
+  // iOS reports "Charging", "Not Charging" or "Full": only a real charge counts (Claude AI, 2026-10-13 – "Not Charging"
+  // matched /charg/ and showed both phones as charging).
+  _charging(p) { const v = String(this._s(p.charging)?.state || "").trim().toLowerCase(); return ["charging", "lader", "oplader", "on", "true"].includes(v); }
   _segments(active, color, glow) {
     return `<span class="segments">${[1, 2, 3, 4, 5].map((i) => `<i style="background:${i <= active ? color : "var(--presence-segment-off,rgba(120,140,160,.22))"};box-shadow:${i <= active ? `0 0 7px ${glow}` : "none"}"></i>`).join("")}</span>`;
   }
@@ -98,7 +101,7 @@ class HAPersonOverviewCard extends HTMLElement {
       battery = Number.isFinite(level)
         ? Math.max(0, Math.min(100, level))
         : null,
-      charging = /charg|lader/i.test(this._s(p.charging)?.state || "");
+      charging = this._charging(p);
     const bColor =
       battery === null
         ? "var(--presence-unknown,#8795a5)"
@@ -136,7 +139,7 @@ class HAPersonOverviewCard extends HTMLElement {
     const status = home ? "Hjemme" : away ? "Ude" : this._valid(state) ? state : "Ukendt";
     const city = this._s(p.city)?.state; const place = this._valid(city) ? city : home ? p.home_label || "Hjemme" : "";
     const level = Number(this._s(p.battery)?.state); const battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null;
-    const charging = /charg|lader/i.test(this._s(p.charging)?.state || "");
+    const charging = this._charging(p);
     const bColor = battery === null ? "var(--presence-unknown,#8795a5)" : battery < 20 ? "var(--battery-critical,#ff4665)" : battery < 40 ? "var(--battery-low,#ffb347)" : "var(--battery-good,#41d98d)";
     const dist = Number(this._s(p.distance)?.state); const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? (dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1).replace(".", ",")} km`) : ""].filter(Boolean).join(" · ");
