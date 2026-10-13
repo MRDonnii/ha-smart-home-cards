@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.107 */
+/* MRDonnii Smart Home Cards v0.5.108 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -30112,11 +30112,12 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION23 = "1.0.1";
+var VERSION23 = "1.2.0";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
 var SPARK_H2 = 44;
+var RADIATOR_MARKUP2 = '<div class="radiator" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>';
 var STYLE4 = `
 :host{display:block;--rc-accent:var(--dashboard-accent,var(--info-color,#38bdf8));--rc-ok:var(--dashboard-success,var(--success-color,#5bc99a));--rc-hot:#ff8a3d;--rc-hot2:#ffca62;--rc-warm:#f2c14e;--rc-cool:var(--state-cool-icon,var(--info-color,#58aaf8));--rc-open:#a78bfa;--rc-danger:var(--dashboard-danger,var(--error-color,#ef4444));
   --rc-edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.11)));--rc-muted:var(--secondary-text-color,#93a1b0);--rc-ink:var(--primary-text-color,#eef3f8);--rc-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#141a22)))}
@@ -30293,6 +30294,24 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .stat strong{display:block;margin-top:3px;font-size:19px;font-weight:800;line-height:1.1}
 .stat em{display:-webkit-box;margin-top:2px;overflow:hidden;color:var(--rc-muted);font-size:11px;font-style:normal;line-height:1.35;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
+/* heat visual in the tile corner (user: "en radiator der viser om der kommer varme ... n\xE5r AC k\xF8rer den animation fra
+   popup-siden"): the radiator glows and flows while it heats; a running AC shows the shared AC unit animation. */
+.hv{flex:none;display:flex;align-items:center;justify-content:center;width:70px;height:48px;margin-left:2px}
+.radiator{position:relative;display:flex;align-items:flex-end;gap:3px;height:40px;padding:0 4px 6px;color:color-mix(in srgb,var(--rc-muted) 60%,transparent)}
+.radiator::before{content:"";position:absolute;left:2px;right:2px;bottom:3px;height:3px;border-radius:9px;background:currentColor;opacity:.45}
+.radiator::after{content:"";display:none;position:absolute;left:2px;bottom:2px;width:13px;height:5px;border-radius:9px;background:linear-gradient(90deg,transparent,var(--rc-hot2),#fff,var(--rc-hot2),transparent);filter:drop-shadow(0 0 5px var(--rc-hot))}
+.radiator i{display:block;width:7px;height:29px;border:1px solid currentColor;border-radius:3px;background:rgba(145,158,171,.10)}
+.zone.is-heating .radiator{color:var(--rc-hot);filter:drop-shadow(0 0 10px rgba(255,138,61,.35))}
+.zone.is-heating .radiator::before{opacity:.85;box-shadow:0 0 6px rgba(255,138,61,.5)}
+.zone.is-heating .radiator::after{display:block;animation:radiatorFlow 1.25s linear infinite}
+.zone.is-heating .radiator i{background:linear-gradient(180deg,rgba(255,202,98,.75),rgba(255,138,61,.14) 46%,rgba(255,138,61,.03) 72%);background-size:100% 230%;box-shadow:inset 0 0 7px rgba(255,202,98,.45),0 0 7px rgba(255,138,61,.24);animation:radiatorFill 1.8s ease-in-out infinite}
+.zone.is-heating .radiator i:nth-child(2){animation-delay:.12s}.zone.is-heating .radiator i:nth-child(3){animation-delay:.24s}.zone.is-heating .radiator i:nth-child(4){animation-delay:.36s}.zone.is-heating .radiator i:nth-child(5){animation-delay:.48s}
+.ac-mini{position:relative;width:67px;height:50px;overflow:hidden}
+.ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
+@keyframes radiatorFlow{from{transform:translateX(-13px)}to{transform:translateX(43px)}}
+@keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
+@container (max-width:560px){.hv{width:60px}}
+
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 8px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
@@ -30347,8 +30366,11 @@ var POPUP_STYLE = `
 .tabs .ind{position:absolute;left:5px;top:5px;bottom:5px;width:calc((100% - 10px) / var(--n));border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--room-color) 30%,transparent),color-mix(in srgb,var(--room-color) 12%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent),0 6px 18px -8px var(--room-color);transform:translateX(calc(var(--i) * 100%));transition:transform .38s cubic-bezier(.2,1.1,.3,1)}
 .tab{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 6px;border:0;border-radius:13px;background:none;color:var(--rc-muted);font-size:12.5px;font-weight:800;cursor:pointer;transition:color .25s}
 .tab ha-icon{--mdc-icon-size:18px}.tab.active{color:var(--rc-ink)}.tab.active ha-icon{color:var(--room-color)}
-.body{padding:18px 24px 24px}
-.panel[hidden]{display:none}.panel{animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
+/* All tabs share one grid cell, so the popup is as tall as its tallest tab and does not jump when switching
+   (user: "lav popup i hvert rum s\xE5 det bare er h\xF8jden af det st\xF8rste"). */
+.body{display:grid;padding:18px 24px 24px}
+.panel{grid-area:1/1;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
+.panel[hidden]{display:block;visibility:hidden;pointer-events:none;animation:none}
 .empty{padding:30px 18px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--rc-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -30439,8 +30461,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
-            ${room.ac ? '<span class="badge ac show" data-b="ac" title="AC tilknyttet"><ha-icon icon="mdi:air-conditioner"></ha-icon></span>' : ""}
           </span>
+          <span class="hv" data-f="visual" title="Varme"></span>
         </div>
         <div class="z-body">
           <div class="z-temp">
@@ -30479,7 +30501,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc6(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
-      <style>${STYLE4}</style>
+      <style>${STYLE4}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
@@ -30538,6 +30560,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
         day: f("day"),
         rail: f("rail"),
         step: f("step"),
+        visual: f("visual"),
+        visualKind: "",
         gauges: Object.fromEntries(["humidity", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
         badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]') },
         spark: sparkRefs(host)
@@ -30575,7 +30599,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const refs = this._refs[index];
     if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
     if (refs.view === view) return;
     refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
@@ -30614,7 +30638,12 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._gauge(refs.gauges.battery, model.batteryMin === void 0 ? DASH3 : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === void 0, model.batteryLow);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
-    refs.badges.ac?.classList.toggle("on", model.acActive);
+    const kind = model.acActive ? "ac" : "radiator";
+    if (refs.visual && refs.visualKind !== kind) {
+      refs.visual.innerHTML = model.acActive ? this._acMiniMarkup(model) : RADIATOR_MARKUP2;
+      refs.visualKind = kind;
+    } else if (model.acActive) this._setText(refs.visual?.querySelector('[data-role="ac-unit-display"]'), this._acMiniLabel(model));
+    if (refs.visual) refs.visual.title = model.acActive ? model.status : model.heating ? "Radiatoren varmer" : "Radiatoren hviler";
     this._renderSpark(refs.spark, this._sparkPoints(room, model), target);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. \xC5bn detaljer`);
   }
