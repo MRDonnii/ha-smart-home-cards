@@ -1,4 +1,4 @@
-const VERSION = "0.4.2";
+const VERSION = "0.5.0";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -159,8 +159,28 @@ class HAPersonOverviewCard extends HTMLElement {
     const full = this._personV2(p);
     return full.replace('class="pv2 ', 'class="pv2 mini ');
   }
+  // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
+  // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
+  _personLine() {
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const info = this._config.persons.map((p) => {
+      const person = this._s(p.entity); const tracker = this._s(p.tracker) || person; const state = tracker?.state || person?.state || "unknown";
+      const home = state === "home"; const away = state === "not_home";
+      const color = home ? "var(--presence-home,#37e69a)" : away ? "var(--presence-away,#ff5d8f)" : this._valid(state) ? "var(--presence-zone,#58b9ff)" : "var(--presence-unknown,#8795a5)";
+      const level = Number(this._s(p.battery)?.state); const low = Number.isFinite(level) && level < 20;
+      const travel = Number(this._s(p.travel_time)?.state);
+      const where = home ? "" : away ? (Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude") : this._valid(state) ? state : "Ukendt";
+      const pic = p.image || person?.attributes?.entity_picture || "";
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc((p.name || "?")[0])}</span>`;
+      return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
+    });
+    const homes = info.filter((x) => x.home); const outs = info.filter((x) => !x.home);
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc(x.p.navigation_path || "")}" title="${esc(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc(x.name)}</b><small>${esc(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+  }
   _gridHtml() {
-    if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>`;
+    if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
     const v2 = this._v2(); return this._config.persons.map((p) => (v2 ? this._personV2(p) : this._person(p))).join("");
   }
   _render() {
@@ -203,6 +223,16 @@ class HAPersonOverviewCard extends HTMLElement {
       // (user, 2026-10-13: "person kort på mobilen … så det hele kan være der").
       + "@media(max-width:600px){.combo{gap:0;padding:5px 3px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:4px 2px;gap:3px}.pv2.mini .av{width:36px;height:36px;font-size:14px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{padding-right:0;font-size:12px}.pv2.mini .st,.pv2.mini small{display:none}"
       + ".pv2.mini .bat{position:static;grid-row:auto;justify-content:center;margin-top:-1px}.pv2.mini .bb{width:16px;height:8px}.pv2.mini .bat b{font-size:9.5px}}"
+      + ".cline{display:none}"
+      + "@media(max-width:600px){.grid.combined .combo{display:none}.cline{display:flex;align-items:center;gap:8px;min-height:58px;padding:7px 9px;border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
+      + ".lg{display:flex;align-items:center;gap:6px;min-width:0}.lg.home{flex:0 0 auto}.lg.out{flex:1;justify-content:flex-end;gap:5px;overflow:hidden}"
+      + ".ll{display:flex;flex-direction:column;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--presence-home,#37e69a)}.ll i{display:none}.ll b{font-size:15px;letter-spacing:0;color:var(--primary-text-color,#fff)}"
+      + ".lavs{display:flex;padding-left:8px}.lavs .lp{margin-left:-8px}.lp{display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;min-width:0}"
+      + ".lav{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:center 18%/cover no-repeat color-mix(in srgb,var(--pc) 20%,#111);font-weight:800;font-size:14px;color:var(--pc);box-shadow:0 0 0 2px var(--pc),0 0 0 4px var(--surface-solid,#151a21);position:relative}"
+      + ".lav.low::after{content:'';position:absolute;right:-1px;top:-1px;width:9px;height:9px;border-radius:50%;background:#ff4665;box-shadow:0 0 0 2px #151a21}"
+      + ".lp.wide{padding:3px 9px 3px 3px;border-radius:999px;background:color-mix(in srgb,var(--pc) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 35%,transparent)}.lp.wide .lav{width:30px;height:30px;box-shadow:0 0 0 2px var(--pc)}"
+      + ".lt{display:flex;flex-direction:column;min-width:0;text-align:left;line-height:1.15}.lt b{font-size:12px;white-space:nowrap}.lt small{font-size:10px;color:var(--pc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+      + ".all,.none{font-size:11.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2)}}"
       + "@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);
     if (this._v2()) { const g = this.shadowRoot.querySelector(".grid"); g.classList.add("v2"); g.classList.toggle("combined", this._combined()); g.innerHTML = this._gridHtml(); }

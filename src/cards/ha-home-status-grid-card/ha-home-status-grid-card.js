@@ -922,7 +922,7 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2][compact]) .ring{width:30px;height:30px}
       :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:16px;line-height:18px}
       :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:10.5px}
-      :host([v2][compact]) .item:not(.security) .label{display:none}
+      :host([v2][compact]) .item:not(.security) .label{grid-column:1/-1;grid-row:3;margin-top:5px;padding-top:4px}
       :host([v2][compact]) .item.security .label{grid-row:3;margin-top:5px;padding-top:4px}
       :host([v2][compact]) .item.security .value{grid-row:1}
       @media(max-width:600px){:host([v2][compact]) .item{min-height:58px;padding:7px 7px;grid-template-columns:24px minmax(0,1fr) 24px;grid-template-rows:auto auto;column-gap:6px}
@@ -930,7 +930,7 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2][compact]) .ring{grid-row:1/3;grid-column:3;width:24px;height:24px}
         :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:13.5px;line-height:16px}
         :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:9.5px}
-        :host([v2][compact]) .item.security .label{grid-column:1/-1;grid-row:3}}
+        :host([v2][compact]) .item .label{grid-column:1/-1;grid-row:3;margin-top:4px;padding-top:3px;font-size:9px}}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
