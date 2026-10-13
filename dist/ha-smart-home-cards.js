@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.73 */
+/* MRDonnii Smart Home Cards v0.5.74 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -31765,7 +31765,7 @@ var HaHomeStatusCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._popupCard) this._popupCard.hass = hass;
-    const ids = this._watchedIds();
+    const ids = [...this._watchedIds(), this.config?.style_entity].filter(Boolean);
     const sig = JSON.stringify(
       ids.map((id) => [id, hass?.states?.[id]?.state])
     );
@@ -32207,7 +32207,38 @@ var HaHomeStatusCard = class extends HTMLElement {
       @media(min-width:1101px) and (max-height:950px){.item{height:66px;padding:5px 10px}.value{font-size:16px;line-height:18px}.meter{margin:2px 0}.detail,.label{font-size:10px;line-height:11px}.bg-icon{width:48px;height:48px;--mdc-icon-size:48px}.security-row{grid-template-columns:repeat(4,38px);grid-template-rows:repeat(1,18px);width:164px;height:18px}.item.security .label{width:164px;height:18px}}
       @media(max-width:600px){.item{padding:9px 9px}.value{font-size:16px}.detail,.label{font-size:10px}.meter{gap:3px}.seg{width:12px}}
       ${MARQUEE_CSS}.label .source-row{display:inline-flex}
-    </style><button class="item"><span class="decoration"></span><div class="value"></div><div class="meter"></div><div class="detail"></div><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
+      /* v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt til disse kort med samme mulighed for at skifte tilbage"):
+         the same data in a new tile: a glowing icon chip, the value large beside it, a ring for the meter, the label
+         along the bottom and a soft accent glow; the decorations (phase waves, price bars) stay faint behind. */
+      .chip,.ring{display:none}
+      :host([v2]) .item{height:88px;padding:11px 12px 9px;border-left:0;border-radius:18px;
+        background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 58%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));
+        box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent);
+        display:grid;grid-template-columns:34px minmax(0,1fr) 36px;grid-template-rows:auto auto 1fr;column-gap:10px;align-content:start;text-align:left}
+      :host([v2]) .item:hover{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 0 24px -10px var(--accent)}
+      :host([v2]) .bg-icon{display:none}
+      :host([v2]) .chip{display:grid;grid-row:1/3;grid-column:1;place-items:center;width:34px;height:34px;border-radius:11px;color:var(--accent);
+        background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 30%,transparent),color-mix(in srgb,var(--accent) 10%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),0 6px 16px -8px var(--accent);position:relative;z-index:2}
+      :host([v2]) .chip ha-icon{--mdc-icon-size:19px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 55%,transparent));animation:chipFloat 4.5s ease-in-out infinite}
+      @keyframes chipFloat{50%{transform:translateY(-1.5px) scale(1.05)}}
+      :host([v2]) .value{grid-column:2;grid-row:1;font-size:19px;line-height:21px;font-weight:800;letter-spacing:-.01em}
+      :host([v2]) .detail{grid-column:2;grid-row:2;padding-right:0;font-size:11px;line-height:14px;margin-top:1px}
+      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:end;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
+      :host([v2]) .meter{display:none}
+      :host([v2]) .ring{display:block;grid-column:3;grid-row:1/3;width:36px;height:36px;position:relative;z-index:2;transform:rotate(-90deg)}
+      :host([v2]) .ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+      :host([v2]) .ring .tr{stroke:color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent)}
+      :host([v2]) .ring .pr{stroke:var(--accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--accent) 70%,transparent));transition:stroke-dasharray .9s cubic-bezier(.16,1,.3,1)}
+      :host([v2]) .item.has-error .ring .pr{stroke:var(--error-color,#ef4444)}
+      :host([v2]) .item.security{padding:11px 12px 9px}:host([v2]) .item.security .value{position:static;width:auto;height:auto;line-height:21px;padding:0}
+      :host([v2]) .item.security .meter{display:flex;position:static;grid-column:2/4;grid-row:2;height:8px;margin:5px 0 0}
+      :host([v2]) .item.security .ring{display:none}
+      :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;border-top:0;padding-top:0}
+      :host([v2]) .decoration{opacity:.45}
+      :host([v2]) .appliances{top:auto;bottom:6px}
+      @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
+      @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
+    </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile2 = this.shadowRoot.querySelector(".item");
       tile2.addEventListener("click", () => {
         if (this._heldOpen) {
@@ -32275,6 +32306,15 @@ var HaHomeStatusCard = class extends HTMLElement {
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
+    const v22 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
+    this.toggleAttribute("v2", v22);
+    if (v22) {
+      this.shadowRoot.querySelector(".chip ha-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
+      const on = segmentStates.filter((x) => x && x !== "").length;
+      const frac = segmentStates.length ? on / segmentStates.length : 0;
+      const C = 2 * Math.PI * 15;
+      this.shadowRoot.querySelector(".ring .pr").setAttribute("stroke-dasharray", `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
+    }
   }
   getCardSize() {
     return 2;
@@ -33429,7 +33469,7 @@ console.info(
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION27 = "0.2.5";
+var VERSION27 = "0.3.0";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -33471,7 +33511,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
       p.charging,
       p.distance,
       p.travel_time
-    ]).filter(Boolean) || [];
+    ]).concat(this._config?.style_entity || []).filter(Boolean) || [];
     const sig = JSON.stringify(
       ids.map((id) => [id, h.states[id]?.state, h.states[id]?.last_updated])
     );
@@ -33505,19 +33545,60 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const pic = p.image || person?.attributes?.entity_picture || "";
     return `<button class="person" data-path="${p.navigation_path || ""}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${pic.replaceAll("'", "%27")}')` : ""}"></span><span class="main"><b>${p.name || person?.attributes?.friendly_name || "Person"}</b><strong style="color:${color}">${status}</strong><small>${place}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
+  // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
+  // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
+  _v2() {
+    const id = this._config?.style_entity;
+    return id ? this._hass?.states?.[id]?.state === "on" : this._config?.style === "v2";
+  }
+  _personV2(p) {
+    const esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const person = this._s(p.entity);
+    const tracker = this._s(p.tracker) || person;
+    const state = tracker?.state || person?.state || "unknown";
+    const home = state === "home";
+    const away = state === "not_home";
+    const color = home ? "var(--presence-home,#37e69a)" : away ? "var(--presence-away,#ffb347)" : this._valid(state) ? "var(--presence-zone,#58b9ff)" : "var(--presence-unknown,#8795a5)";
+    const status = home ? "Hjemme" : away ? "Ude" : this._valid(state) ? state : "Ukendt";
+    const city = this._s(p.city)?.state;
+    const place = this._valid(city) ? city : home ? p.home_label || "Hjemme" : "";
+    const level = Number(this._s(p.battery)?.state);
+    const battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null;
+    const charging = /charg|lader/i.test(this._s(p.charging)?.state || "");
+    const bColor = battery === null ? "var(--presence-unknown,#8795a5)" : battery < 20 ? "var(--battery-critical,#ff4665)" : battery < 40 ? "var(--battery-low,#ffb347)" : "var(--battery-good,#41d98d)";
+    const dist = Number(this._s(p.distance)?.state);
+    const travel = Number(this._s(p.travel_time)?.state);
+    const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
+    const pic = p.image || person?.attributes?.entity_picture || "";
+    const initial = esc5((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc5(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+      <span class="av"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
+      <span class="tx"><b>${esc5(p.name || person?.attributes?.friendly_name || "Person")}</b>
+        <span class="st"><i></i>${esc5(status)}</span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>${esc5(trip)}` : esc5(place)}</small></span>
+      ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
+    </button>`;
+  }
   _render() {
     if (!this.shadowRoot || !this._config) return;
     const grid = this._built ? this.shadowRoot.querySelector(".grid") : null;
     if (grid) {
-      grid.innerHTML = this._config.persons.map((p) => this._person(p)).join("");
+      const v22 = this._v2();
+      grid.classList.toggle("v2", v22);
+      grid.innerHTML = this._config.persons.map((p) => v22 ? this._personV2(p) : this._person(p)).join("");
       this._wire();
       return;
     }
     this._built = true;
     this.shadowRoot.innerHTML = `<style>:host{display:block}*{box-sizing:border-box}ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}.grid{display:grid;grid-template-columns:repeat(${this._config.columns || 2},minmax(0,1fr));gap:10px}.person{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) 104px;grid-template-rows:1fr 1fr;grid-template-areas:'main battery' 'main trip';height:92px;overflow:hidden;padding:10px 14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--person-color);border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#142332)));box-shadow:var(--state-card-shadow,var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.18))));color:var(--primary-text-color);text-align:left;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}.person:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.person:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.person{transition:none}.person:hover{transform:none}}.portrait{position:absolute;z-index:-1;right:66px;top:50%;width:122px;height:122px;transform:translateY(-50%);border-radius:50%;background-position:center;background-size:cover;opacity:.28;filter:saturate(1.04) contrast(1.03)}.main{grid-area:main;display:flex;min-width:0;flex-direction:column;justify-content:center;gap:5px}.main b{overflow:hidden;font-size:16px;text-overflow:ellipsis;white-space:nowrap;color:var(--gray800,var(--primary-text-color))}.main strong{font-size:11px}.main small,.mini small{overflow:hidden;color:var(--gray600,var(--secondary-text-color));text-overflow:ellipsis;white-space:nowrap}.main small{font-size:11px}.mini{display:flex;min-width:0;flex-direction:column;align-items:flex-end;justify-content:center}.battery{grid-area:battery}.trip{grid-area:trip}.mini b{font-size:12px}.mini small{font-size:8px}.segments{display:flex;gap:2px;margin:3px 0}.segments i{width:9px;height:5px;border-radius:999px}@media(max-width:600px){.grid{gap:8px}.person{grid-template-columns:minmax(0,1fr) 88px;height:92px;padding:9px 11px}.portrait{right:49px}.main b{font-size:15px}.segments i{width:8px}}@media(max-width:430px){.grid{grid-template-columns:1fr}}</style><ha-card><div class="grid">${this._config.persons.map((p) => this._person(p)).join("")}</div></ha-card>`;
     const viewportStyle = document.createElement("style");
-    viewportStyle.textContent = "@media(min-width:1101px) and (max-height:950px){.grid{gap:6px}.person{height:70px;padding:5px 12px}.portrait{width:98px;height:98px}.main{gap:2px}}";
+    viewportStyle.textContent = "@media(min-width:1101px) and (max-height:950px){.grid{gap:6px}.person{height:70px;padding:5px 12px}.portrait{width:98px;height:98px}.main{gap:2px}}.pv2{position:relative;isolation:isolate;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;height:92px;padding:10px 14px 10px 12px;border:0;border-radius:18px;overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:var(--primary-text-color,#fff);background:radial-gradient(90% 140% at 0% 50%,color-mix(in srgb,var(--pc) 14%,transparent),transparent 62%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--pc) 16%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}.pv2:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--pc) 40%,transparent),0 0 26px -10px var(--pc)}.pv2:active{transform:scale(.97)}.pv2 .av{width:64px;height:64px;border-radius:50%;background:center 18%/cover no-repeat color-mix(in srgb,var(--pc) 18%,#111);display:grid;place-items:center;font-size:24px;font-weight:800;color:var(--pc);box-shadow:0 0 0 3px var(--pc),0 0 0 6px color-mix(in srgb,var(--pc) 18%,transparent),0 8px 22px -6px var(--pc)}.pv2.away .av{filter:saturate(.75)}.pv2 .tx{min-width:0;display:flex;flex-direction:column;gap:3px}.pv2 .tx b{font-size:18px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 .st{display:inline-flex;align-items:center;gap:6px;width:max-content;padding:2px 9px 2px 7px;border-radius:999px;font-size:11px;font-weight:800;color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent)}.pv2 .st i{width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc);animation:pvBlink 2.4s ease-in-out infinite}@keyframes pvBlink{50%{opacity:.35}}.pv2 small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv2 small ha-icon{--mdc-icon-size:15px;color:var(--pc);flex:none}.pv2 .bat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px}.pv2 .bat b{font-size:13px;font-weight:800}.pv2 .bb{position:relative;width:34px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent);padding:2px}.pv2 .bb::after{content:'';position:absolute;right:-4px;top:4px;width:2.5px;height:6px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent)}.pv2 .bb i{display:block;height:100%;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}.pv2 .bat.chg .bb i{animation:pvChg 1.6s ease-in-out infinite}@keyframes pvChg{50%{opacity:.5}}.pv2 .bat ha-icon{--mdc-icon-size:14px;color:#ffd166;margin-top:-2px}@media(min-width:1101px) and (max-height:950px){.pv2{height:72px;padding:6px 12px 6px 10px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}}@media(max-width:600px){.pv2{gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}.pv2 .bat b{font-size:12px}}@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);
+    if (this._v2()) {
+      const g = this.shadowRoot.querySelector(".grid");
+      g.classList.add("v2");
+      g.innerHTML = this._config.persons.map((p) => this._personV2(p)).join("");
+    }
     this.shadowRoot.querySelector(".grid").style.gridTemplateColumns = `repeat(${window.matchMedia("(max-width: 600px)").matches ? this._config.mobile_columns || 2 : this._config.columns || 2},minmax(0,1fr))`;
     this._wire();
   }

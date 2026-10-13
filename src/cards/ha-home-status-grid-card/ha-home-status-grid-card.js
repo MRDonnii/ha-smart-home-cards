@@ -300,7 +300,7 @@ class HaHomeStatusCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._popupCard) this._popupCard.hass = hass;
-    const ids = this._watchedIds();
+    const ids = [...this._watchedIds(), this.config?.style_entity].filter(Boolean);
     const sig = JSON.stringify(
       ids.map((id) => [id, hass?.states?.[id]?.state]),
     );
@@ -864,7 +864,38 @@ class HaHomeStatusCard extends HTMLElement {
       @media(min-width:1101px) and (max-height:950px){.item{height:66px;padding:5px 10px}.value{font-size:16px;line-height:18px}.meter{margin:2px 0}.detail,.label{font-size:10px;line-height:11px}.bg-icon{width:48px;height:48px;--mdc-icon-size:48px}.security-row{grid-template-columns:repeat(4,38px);grid-template-rows:repeat(1,18px);width:164px;height:18px}.item.security .label{width:164px;height:18px}}
       @media(max-width:600px){.item{padding:9px 9px}.value{font-size:16px}.detail,.label{font-size:10px}.meter{gap:3px}.seg{width:12px}}
       ${MARQUEE_CSS}.label .source-row{display:inline-flex}
-    </style><button class="item"><span class="decoration"></span><div class="value"></div><div class="meter"></div><div class="detail"></div><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
+      /* v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt til disse kort med samme mulighed for at skifte tilbage"):
+         the same data in a new tile: a glowing icon chip, the value large beside it, a ring for the meter, the label
+         along the bottom and a soft accent glow; the decorations (phase waves, price bars) stay faint behind. */
+      .chip,.ring{display:none}
+      :host([v2]) .item{height:88px;padding:11px 12px 9px;border-left:0;border-radius:18px;
+        background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 58%),var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));
+        box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent);
+        display:grid;grid-template-columns:34px minmax(0,1fr) 36px;grid-template-rows:auto auto 1fr;column-gap:10px;align-content:start;text-align:left}
+      :host([v2]) .item:hover{box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,none)),inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 0 24px -10px var(--accent)}
+      :host([v2]) .bg-icon{display:none}
+      :host([v2]) .chip{display:grid;grid-row:1/3;grid-column:1;place-items:center;width:34px;height:34px;border-radius:11px;color:var(--accent);
+        background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 30%,transparent),color-mix(in srgb,var(--accent) 10%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),0 6px 16px -8px var(--accent);position:relative;z-index:2}
+      :host([v2]) .chip ha-icon{--mdc-icon-size:19px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 55%,transparent));animation:chipFloat 4.5s ease-in-out infinite}
+      @keyframes chipFloat{50%{transform:translateY(-1.5px) scale(1.05)}}
+      :host([v2]) .value{grid-column:2;grid-row:1;font-size:19px;line-height:21px;font-weight:800;letter-spacing:-.01em}
+      :host([v2]) .detail{grid-column:2;grid-row:2;padding-right:0;font-size:11px;line-height:14px;margin-top:1px}
+      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:end;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
+      :host([v2]) .meter{display:none}
+      :host([v2]) .ring{display:block;grid-column:3;grid-row:1/3;width:36px;height:36px;position:relative;z-index:2;transform:rotate(-90deg)}
+      :host([v2]) .ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+      :host([v2]) .ring .tr{stroke:color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent)}
+      :host([v2]) .ring .pr{stroke:var(--accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--accent) 70%,transparent));transition:stroke-dasharray .9s cubic-bezier(.16,1,.3,1)}
+      :host([v2]) .item.has-error .ring .pr{stroke:var(--error-color,#ef4444)}
+      :host([v2]) .item.security{padding:11px 12px 9px}:host([v2]) .item.security .value{position:static;width:auto;height:auto;line-height:21px;padding:0}
+      :host([v2]) .item.security .meter{display:flex;position:static;grid-column:2/4;grid-row:2;height:8px;margin:5px 0 0}
+      :host([v2]) .item.security .ring{display:none}
+      :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;border-top:0;padding-top:0}
+      :host([v2]) .decoration{opacity:.45}
+      :host([v2]) .appliances{top:auto;bottom:6px}
+      @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
+      @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
+    </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
       tile.addEventListener("click", () => {
         // A completed long-press already opened the popup; swallow the click that follows it.
@@ -918,6 +949,14 @@ class HaHomeStatusCard extends HTMLElement {
     this.shadowRoot
       .querySelector(".bg-icon")
       .setAttribute("icon", item.icon || "mdi:information-outline");
+    // v2 follows `style_entity` (an input_boolean, on = new look) or `style: v2`.
+    const v2 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
+    this.toggleAttribute("v2", v2);
+    if (v2) {
+      this.shadowRoot.querySelector(".chip ha-icon").setAttribute("icon", item.icon || "mdi:information-outline");
+      const on = segmentStates.filter((x) => x && x !== "").length; const frac = segmentStates.length ? on / segmentStates.length : 0;
+      const C = 2 * Math.PI * 15; this.shadowRoot.querySelector(".ring .pr").setAttribute("stroke-dasharray", `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
+    }
   }
 
   getCardSize() {
