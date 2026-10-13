@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.6.0";
+const VERSION = "1.7.0";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -69,11 +69,11 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .zone:hover,.tile:hover{transform:translateY(-3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px color-mix(in srgb,var(--room-color) 34%,rgba(255,255,255,.06)),0 28px 54px -24px rgba(0,0,0,.9),0 0 40px -22px var(--room-color)}
 .zone:focus-visible,.tile:focus-visible{outline:2px solid var(--rc-accent);outline-offset:3px}
 .zone .mark{position:absolute;right:-34px;bottom:58px;z-index:-1;--mdc-icon-size:170px;width:170px;height:170px;color:var(--room-color);opacity:.035;pointer-events:none}
-/* A light that runs around the tile's edge while the room heats or the AC runs (user: "løbe rundt ... ligesom navbaren"). */
+/* A light runs around the tile's edge while someone is in the room (user: "løbe rundt ... ligesom navbaren"; "jeg tænkte det skulle være presence"). */
 .zone .sheen{position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1.6px;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .4s ease;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .zone .sheen::before{content:"";position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;translate:-50% -50%;background:conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--room-color) 40%,transparent) 76%,var(--glow2,var(--room-color)) 88%,#fff 91%,var(--room-color) 94%,transparent 100%);animation:orbit 4.5s linear infinite}
-.zone.is-heating .sheen{opacity:1;--glow2:var(--rc-hot2)}.zone.is-ac .sheen{opacity:1}
+.zone.is-present .sheen{opacity:1}
 
 .z-head{display:flex;align-items:center;gap:12px;padding:18px 18px 0;min-width:0}
 .z-icon{position:relative;flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:16px;color:var(--room-color);
@@ -533,7 +533,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   }
 
   _renderZone(room, refs, model, index) {
-    const keepRoom = refs.host.querySelector('[data-f="roominfo"]')?._h ? " has-room" : "";
+    const keepRoom = (refs.host.querySelector('[data-f="roominfo"]')?._h ? " has-room" : "") + (refs.host.classList.contains("is-present") ? " is-present" : "");
     refs.host.className = `zone a-${model.accent}${model.heating && !model.acActive ? " is-heating" : ""}${model.acActive ? " is-ac" : ""}${keepRoom}`;
     this._setText(refs.status, model.status);
     this._setText(refs.temp, this._format(model.current));
@@ -621,6 +621,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       const html = (chips.length ? `<div class="chips"><div class="ct">${chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("")}</div></div>` : "") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
       if (host._h !== html) { host._h = html; host.innerHTML = html; }
       host.closest(".zone")?.classList.toggle("has-room", !!html);
+      host.closest(".zone")?.classList.toggle("is-present", st(info?.presence)?.state === "on");
     });
     this._fitChips();
   }
