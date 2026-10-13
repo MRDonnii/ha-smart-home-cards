@@ -29865,7 +29865,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION25 = "0.8.69";
+var VERSION25 = "0.8.70";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -30698,7 +30698,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._hass = h;
     this.style.setProperty("--header-accent-width", h?.states?.["input_boolean.dashboard_venstre_accent"]?.state === "on" ? "4px" : "0px");
     if (this._popupCard) this._popupCard.hass = h;
-    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.wind_speed_entity, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error])].filter(Boolean);
+    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.wind_speed_entity, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error]), ...(this._config.notes || []).map((n) => n?.entity)].filter(Boolean);
     const states = h?.states || {};
     const values = ids.map((id) => {
       const entity = states[id];
@@ -30947,6 +30947,16 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const skyOn = this._skyCloudsOn() && cat !== "unknown", behind = ["rain", "snow", "storm"].includes(cat);
     return `${bgHtml}${this._nightSkyOn() ? `<canvas class="v3-nightsky" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>` : ""}${this._v3Effects(cat, tD)}${skyOn ? `<canvas class="v3-skyclouds" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:${behind ? 0 : 1};opacity:.92"></canvas>` : ""}${this._fxParticlesOn() && (V3_PARTICLE_FX[this._condition()] || this._config.snow_ground_entity || this._config.snow_depth_entity) ? `<canvas class="v3-particles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>` : ""}`;
   }
+  // notes: quiet one-line hints under the house mode while no alert shows, e.g.
+  // {entity: calendar.school_holiday, state: "on", text: "Skolefri · vækning holder pause"}. The first match wins.
+  _note() {
+    for (const n of this._config.notes || []) {
+      if (!n?.entity || !n.text) continue;
+      const st = this._s(n.entity);
+      if (st != null && String(st) === String(n.state ?? "on")) return String(n.text);
+    }
+    return null;
+  }
   _mode() {
     const s = this._s(this._config.mode_entity);
     const m = { "Hjemme": ["mdi:home-heart", "Hjemme"], "Ingen hjemme": ["mdi:home-export-outline", "Ingen hjemme"], Nat: ["mdi:weather-night", "Nat"], Stille: ["mdi:volume-mute", "Stille"], G\u00E6ster: ["mdi:account-group", "G\xE6ster"], Ferie: ["mdi:palm-tree", "Ferie"] };
@@ -31090,12 +31100,17 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const strong = textWrap?.querySelector("strong");
     if (strong) strong.textContent = activeAlert ? activeAlert.name : mode[1];
     let small = textWrap?.querySelector("small");
-    if (activeAlert?.secondary_text) {
+    const note = activeAlert ? null : this._note();
+    const smallText = activeAlert ? activeAlert.secondary_text : note;
+    if (smallText) {
       if (!small && textWrap) {
         small = document.createElement("small");
         textWrap.appendChild(small);
       }
-      if (small) small.textContent = activeAlert.secondary_text;
+      if (small) {
+        small.textContent = smallText;
+        small.classList.toggle("note", !!note);
+      }
     } else if (small) {
       small.remove();
     }
