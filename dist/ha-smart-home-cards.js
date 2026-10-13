@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.91 */
+/* MRDonnii Smart Home Cards v0.5.92 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.3.0";
+var VERSION5 = "0.3.1";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6680,6 +6680,8 @@ var DEFAULTS = {
   charger_power: "sensor.tesla_charger_power",
   energy_added: "sensor.tesla_charge_energy_added",
   charge_finish: "",
+  away_charger_power: "",
+  away_energy_added: "",
   plugged: "binary_sensor.tesla_charge_cable",
   lock: "lock.tesla_lock",
   sentry: "switch.tesla_sentry_mode",
@@ -6837,7 +6839,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   _isCharging() {
     const c2 = String(this._val(this._config.charging) || "").toLowerCase();
     if (CHARGING.has(c2)) return true;
-    const p = this._num(this._config.charger_power);
+    const p = this._num(this._pw());
     return p != null && p > 0.1;
   }
   _build() {
@@ -7043,6 +7045,17 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }, { passive: false });
     if (this._hass) this._update();
   }
+  // Away from home the car's own charge sensors (away_*) tell the story; at home the home charger's (user, 2026-10-13).
+  _away() {
+    const w = this._val(this._config.location);
+    return !!w && w !== "home";
+  }
+  _pw() {
+    return this._away() && this._config.away_charger_power ? this._config.away_charger_power : this._config.charger_power;
+  }
+  _added() {
+    return this._away() && this._config.away_energy_added ? this._config.away_energy_added : this._config.energy_added;
+  }
   _setView(v) {
     this._view = v;
     this._paintView();
@@ -7117,16 +7130,17 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c2.battery) ?? 0;
     const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
-    const raw = this._num(c2.charger_power);
-    const kw = raw == null ? null : this._unit(c2.charger_power) === "W" || raw > 100 ? raw / 1e3 : raw;
-    const added = this._num(c2.energy_added);
+    const pw = this._pw();
+    const raw = this._num(pw);
+    const kw = raw == null ? null : this._unit(pw) === "W" || raw > 100 ? raw / 1e3 : raw;
+    const added = this._num(this._added());
     const fin = this._val(c2.charge_finish);
     const finT = fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 6e4) : null;
     const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
     const stat = (k, v, cls = "") => `<div class="ps ${cls}"><span>${k}</span><b>${v}</b></div>`;
     return `<div class="ph"><span class="pic chg"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span>
-      <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c2.name)} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
+      <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
       <div class="pmeta">${leftTxt ? `fuld om ${esc(leftTxt)}` : ""}${Number.isFinite(finT) ? `<br>kl. ${hm(finT)}` : ""}</div><span class="psoc">${Math.round(soc)}<small>%</small></span></div>
       <div class="pbar live"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
       <div class="pstats">${stat("Effekt", kw != null ? `${this._fmt(kw, 1)} <small>kW</small>` : "\u2014")}${stat("Ladet", added != null ? `+${this._fmt(added, 1)} <small>kWh</small>` : "\u2014")}${p ? stat("Plan", `${this._fmt(p.cost, 2)} <small>kr</small>`) : ""}${Number.isFinite(p?.save) && p.save > 0.5 ? stat("Sparer", `${this._fmt(p.save, 2)} <small>kr</small>`, "g") : ""}</div>`;
@@ -7159,7 +7173,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const plan = this._plan();
     const was = this._planOn;
     const wasKind = this._overlayKind;
-    const kind = charging && c2.charge_plan ? "charge" : plan ? "plan" : null;
+    const kind = charging && (c2.charge_plan || this._away()) ? "charge" : plan ? "plan" : null;
     this._planOn = !!kind;
     this._overlayKind = kind;
     if (kind) {
@@ -7208,7 +7222,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }
     const line = root.querySelector(".line");
     if (charging) {
-      const p = this._num(c2.charger_power), added = this._num(c2.energy_added), fin = this._time(c2.charge_finish);
+      const p = this._num(this._pw()), added = this._num(this._added()), fin = this._time(c2.charge_finish);
       line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc(fin)}` : ""}`;
     } else {
       const next = this._time(c2.next_charge_start), cost = this._num(c2.next_charge_cost);
@@ -28201,7 +28215,7 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION21} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION22 = "2.1.6";
+var VERSION22 = "2.2.0";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -28418,6 +28432,22 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes fpDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
 @container (max-width:560px){.zone{border-radius:15px}.tile,.tiles .tile,.stat{padding:9px}.tile .t-temp,.tiles .t-temp,.stat strong{font-size:16px}.tile .t-meta,.tile .t-air,.tile .t-top strong,.stat em,.stat span{font-size:10px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* compact (Claude AI, 2026-10-13; user: "et kompakt Varme Center-kort: kun bue, temperatur og kurve"): the rooms only,
+   each with its name, the dial and the 24 h curve beside it; the header, hero, legend and number fields go. */
+:host([compact]) .shell{padding:0}
+:host([compact]) .head,:host([compact]) .notice,:host([compact]) .hero,:host([compact]) .group-head{display:none!important}
+:host([compact]) .zones{grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:8px}
+:host([compact]) .zone{grid-template-columns:86px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"top top" "dial foot";gap:2px 8px;padding:9px 11px 9px}
+:host([compact]) .zone:hover,:host([compact]) .tile:hover{transform:none}
+:host([compact]) .metrics,:host([compact]) .zone .visual,:host([compact]) .z-icon{display:none!important}
+:host([compact]) .z-top{min-height:24px;gap:8px}:host([compact]) .z-title strong{font-size:13.5px}:host([compact]) .z-status{margin-top:1px;font-size:9.5px}
+:host([compact]) .badge{width:22px;height:22px;border-radius:7px}:host([compact]) .badge ha-icon{--mdc-icon-size:13px}
+:host([compact]) .dial{width:86px;height:68px;align-self:end}:host([compact]) .dial svg{width:86px;height:68px}
+:host([compact]) .dial-center{top:27px}:host([compact]) .dial-center strong{font-size:20px}:host([compact]) .dial-target{margin-top:4px;font-size:8.5px}
+:host([compact]) .z-foot{align-self:end;padding-top:0;border-top:0;--spark-h:48px}
+:host([compact]) .tiles{grid-column:1/-1;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
+:host([compact]) .tile{padding:8px 10px}
 `;
 var HARadiatorOverviewCardV2 = class extends HTMLElement {
   constructor() {
@@ -28461,6 +28491,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   setConfig(config) {
     if (!config || !Array.isArray(config.rooms)) throw new Error("Radiatoroverblik kr\xE6ver en rooms-liste");
     this._config = { title: "Radiatorer & rumklima", animation: true, history_hours: 24, dial_min: 14, dial_max: 30, ...config };
+    this.toggleAttribute("compact", this._config.compact === true);
     this._stats = {};
     this._statsFetchedAt = 0;
     this._build();
@@ -32775,6 +32806,11 @@ var HaHomeSummaryCard = class extends HTMLElement {
     this._roomStats();
     if (this._roomHost) this._roomSheetPaint();
     if (this._radCard) this._radCard.hass = hass;
+    if (this.config?.rooms_style_entity && hass.states?.[this.config.rooms_style_entity]?.state !== this._vcState) {
+      this._vcState = hass.states?.[this.config.rooms_style_entity]?.state;
+      this._sig = "";
+      this._render();
+    }
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -33213,6 +33249,27 @@ ${LUX_KEYFRAMES}
     const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m\xB3" ? todayUse * 1e3 : todayUse, unit === "m\xB3" ? 0 : 1)} ${unit === "m\xB3" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele m\xE5neden ender p\xE5 i samme tempo">Forventet \u2248 <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
     return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
   }
+  async _vcRooms(host) {
+    if (host._vc) {
+      host._vc.hass = this._hass;
+      return;
+    }
+    if (this._vcBusy) return;
+    this._vcBusy = true;
+    try {
+      const src = await this._radiatorCard();
+      if (!src) return;
+      const el = document.createElement("ha-radiator-overview-card-v2");
+      el.setConfig({ ...src._config, compact: true });
+      host.innerHTML = "";
+      host._html = "";
+      host.appendChild(el);
+      host._vc = el;
+      el.hass = this._hass;
+    } finally {
+      this._vcBusy = false;
+    }
+  }
   _robotRoom(robot) {
     const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
     if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
@@ -33333,7 +33390,7 @@ ${LUX_KEYFRAMES}
         @keyframes uNow{50%{opacity:.55}}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
-        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
+        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel.vc .rooms{display:block;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -33418,6 +33475,20 @@ ${LUX_KEYFRAMES}
       return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
     }).join("");
     const rooms = this.shadowRoot.querySelector(".rooms");
+    const vc2 = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard;
+    this.shadowRoot.querySelector(".temperature-panel")?.classList.toggle("vc", !!vc2);
+    if (vc2) {
+      this._vcRooms(rooms);
+      this._updateRobots();
+      this._renderEvents();
+      this._observeMarquees();
+      return;
+    }
+    if (rooms._vc) {
+      rooms._vc.remove();
+      rooms._vc = null;
+      rooms._html = "";
+    }
     if (rooms._html !== roomsHtml) {
       rooms._html = roomsHtml;
       for (const node of this._robotNodes.values()) node.remove();
@@ -33447,7 +33518,7 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
     this._hass = hass;
   }
   render() {
-    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
     this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));

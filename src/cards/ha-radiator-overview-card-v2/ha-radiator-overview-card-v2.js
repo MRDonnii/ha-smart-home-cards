@@ -21,7 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 
-const VERSION = "2.1.6";
+const VERSION = "2.2.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -242,6 +242,22 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 @keyframes fpDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
 @container (max-width:560px){.zone{border-radius:15px}.tile,.tiles .tile,.stat{padding:9px}.tile .t-temp,.tiles .t-temp,.stat strong{font-size:16px}.tile .t-meta,.tile .t-air,.tile .t-top strong,.stat em,.stat span{font-size:10px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* compact (Claude AI, 2026-10-13; user: "et kompakt Varme Center-kort: kun bue, temperatur og kurve"): the rooms only,
+   each with its name, the dial and the 24 h curve beside it; the header, hero, legend and number fields go. */
+:host([compact]) .shell{padding:0}
+:host([compact]) .head,:host([compact]) .notice,:host([compact]) .hero,:host([compact]) .group-head{display:none!important}
+:host([compact]) .zones{grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:8px}
+:host([compact]) .zone{grid-template-columns:86px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"top top" "dial foot";gap:2px 8px;padding:9px 11px 9px}
+:host([compact]) .zone:hover,:host([compact]) .tile:hover{transform:none}
+:host([compact]) .metrics,:host([compact]) .zone .visual,:host([compact]) .z-icon{display:none!important}
+:host([compact]) .z-top{min-height:24px;gap:8px}:host([compact]) .z-title strong{font-size:13.5px}:host([compact]) .z-status{margin-top:1px;font-size:9.5px}
+:host([compact]) .badge{width:22px;height:22px;border-radius:7px}:host([compact]) .badge ha-icon{--mdc-icon-size:13px}
+:host([compact]) .dial{width:86px;height:68px;align-self:end}:host([compact]) .dial svg{width:86px;height:68px}
+:host([compact]) .dial-center{top:27px}:host([compact]) .dial-center strong{font-size:20px}:host([compact]) .dial-target{margin-top:4px;font-size:8.5px}
+:host([compact]) .z-foot{align-self:end;padding-top:0;border-top:0;--spark-h:48px}
+:host([compact]) .tiles{grid-column:1/-1;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
+:host([compact]) .tile{padding:8px 10px}
 `;
 
 class HARadiatorOverviewCardV2 extends HTMLElement {
@@ -286,6 +302,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   setConfig(config) {
     if (!config || !Array.isArray(config.rooms)) throw new Error("Radiatoroverblik kræver en rooms-liste");
     this._config = { title: "Radiatorer & rumklima", animation: true, history_hours: 24, dial_min: 14, dial_max: 30, ...config };
+    this.toggleAttribute("compact", this._config.compact === true);
     this._stats = {};
     this._statsFetchedAt = 0;
     this._build();

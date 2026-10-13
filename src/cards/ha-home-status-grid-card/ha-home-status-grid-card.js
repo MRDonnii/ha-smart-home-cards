@@ -1124,6 +1124,7 @@ class HaHomeSummaryCard extends HTMLElement {
     this._roomStats();
     if (this._roomHost) this._roomSheetPaint();
     if (this._radCard) this._radCard.hass = hass;
+    if (this.config?.rooms_style_entity && hass.states?.[this.config.rooms_style_entity]?.state !== this._vcState) { this._vcState = hass.states?.[this.config.rooms_style_entity]?.state; this._sig = ""; this._render(); }
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -1397,6 +1398,15 @@ ${LUX_KEYFRAMES}
     const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m³" ? todayUse * 1000 : todayUse, unit === "m³" ? 0 : 1)} ${unit === "m³" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele måneden ender på i samme tempo">Forventet ≈ <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
     return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
   }
+  async _vcRooms(host) {
+    if (host._vc) { host._vc.hass = this._hass; return; }
+    if (this._vcBusy) return; this._vcBusy = true;
+    try {
+      const src = await this._radiatorCard(); if (!src) return;
+      const el = document.createElement("ha-radiator-overview-card-v2"); el.setConfig({ ...src._config, compact: true });
+      host.innerHTML = ""; host._html = ""; host.appendChild(el); host._vc = el; el.hass = this._hass;
+    } finally { this._vcBusy = false; }
+  }
   _robotRoom(robot) {
     const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
     if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
@@ -1493,7 +1503,7 @@ ${LUX_KEYFRAMES}
         @keyframes uNow{50%{opacity:.55}}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
-        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
+        .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel.vc .rooms{display:block;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -1559,6 +1569,11 @@ ${LUX_KEYFRAMES}
     }).join("");
 
     const rooms=this.shadowRoot.querySelector(".rooms");
+    // Varme Center's rooms, compact, in place of the tiles (rooms_style_entity on, user 2026-10-13); a test next to the tiles.
+    const vc=c.rooms_style_entity&&this._hass?.states?.[c.rooms_style_entity]?.state==="on"&&c.room_popup_dashboard;
+    this.shadowRoot.querySelector(".temperature-panel")?.classList.toggle("vc",!!vc);
+    if(vc){this._vcRooms(rooms);this._updateRobots();this._renderEvents();this._observeMarquees();return;}
+    if(rooms._vc){rooms._vc.remove();rooms._vc=null;rooms._html="";}
     if(rooms._html!==roomsHtml){rooms._html=roomsHtml;for(const node of this._robotNodes.values())node.remove();this._robotNodes.clear();rooms.innerHTML=roomsHtml;}
     this._updateRobots();
     this._renderEvents();
@@ -1573,7 +1588,7 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["rooms_style_entity","Kontakt: Varme Center-rum i stedet for fliser"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));

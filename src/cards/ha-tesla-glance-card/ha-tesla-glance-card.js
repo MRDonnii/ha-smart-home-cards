@@ -6,7 +6,7 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -24,6 +24,8 @@ const DEFAULTS = {
   charger_power: "sensor.tesla_charger_power",
   energy_added: "sensor.tesla_charge_energy_added",
   charge_finish: "",
+  away_charger_power: "",
+  away_energy_added: "",
   plugged: "binary_sensor.tesla_charge_cable",
   lock: "lock.tesla_lock",
   sentry: "switch.tesla_sentry_mode",
@@ -157,7 +159,7 @@ class HATeslaGlanceCard extends HTMLElement {
   _isCharging() {
     const c = String(this._val(this._config.charging) || "").toLowerCase();
     if (CHARGING.has(c)) return true;
-    const p = this._num(this._config.charger_power);
+    const p = this._num(this._pw());
     return p != null && p > 0.1;
   }
 
@@ -324,6 +326,10 @@ class HATeslaGlanceCard extends HTMLElement {
     if (this._hass) this._update();
   }
 
+  // Away from home the car's own charge sensors (away_*) tell the story; at home the home charger's (user, 2026-10-13).
+  _away() { const w = this._val(this._config.location); return !!w && w !== "home"; }
+  _pw() { return this._away() && this._config.away_charger_power ? this._config.away_charger_power : this._config.charger_power; }
+  _added() { return this._away() && this._config.away_energy_added ? this._config.away_energy_added : this._config.energy_added; }
   _setView(v) { this._view = v; this._paintView(); }
   // The visible layer follows a drag (dampened), the other one fades in behind it.
   _dragPaint(d, axis = "x") {
@@ -370,13 +376,13 @@ class HATeslaGlanceCard extends HTMLElement {
   _chargeHtml(p) {
     const c = this._config; const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c.battery) ?? 0; const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
-    const raw = this._num(c.charger_power); const kw = raw == null ? null : (this._unit(c.charger_power) === "W" || raw > 100 ? raw / 1000 : raw);
-    const added = this._num(c.energy_added); const fin = this._val(c.charge_finish); const finT = fin ? Date.parse(fin) : NaN;
+    const pw = this._pw(); const raw = this._num(pw); const kw = raw == null ? null : (this._unit(pw) === "W" || raw > 100 ? raw / 1000 : raw);
+    const added = this._num(this._added()); const fin = this._val(c.charge_finish); const finT = fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 60000) : null;
     const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
     const stat = (k, v, cls = "") => `<div class="ps ${cls}"><span>${k}</span><b>${v}</b></div>`;
     return `<div class="ph"><span class="pic chg"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span>
-      <div class="pt"><b>Lader nu${kw != null ? ` · <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c.name)} · ${Math.round(soc)} % → ${Math.round(tg)} %</span></div>
+      <div class="pt"><b>Lader nu${kw != null ? ` · <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} · ${Math.round(soc)} % → ${Math.round(tg)} %</span></div>
       <div class="pmeta">${leftTxt ? `fuld om ${esc(leftTxt)}` : ""}${Number.isFinite(finT) ? `<br>kl. ${hm(finT)}` : ""}</div><span class="psoc">${Math.round(soc)}<small>%</small></span></div>
       <div class="pbar live"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
       <div class="pstats">${stat("Effekt", kw != null ? `${this._fmt(kw, 1)} <small>kW</small>` : "—")}${stat("Ladet", added != null ? `+${this._fmt(added, 1)} <small>kWh</small>` : "—")}${p ? stat("Plan", `${this._fmt(p.cost, 2)} <small>kr</small>`) : ""}${Number.isFinite(p?.save) && p.save > 0.5 ? stat("Sparer", `${this._fmt(p.save, 2)} <small>kr</small>`, "g") : ""}</div>`;
@@ -411,7 +417,7 @@ class HATeslaGlanceCard extends HTMLElement {
     // While it charges the overlay is a charging card; otherwise the plan when one is active (user, 2026-10-13: "når den
     // går i gang med ladning skal ladeplan kortet skiftes ud med et ladningskort … først, men man kan swipe").
     const plan = this._plan(); const was = this._planOn; const wasKind = this._overlayKind;
-    const kind = charging && c.charge_plan ? "charge" : plan ? "plan" : null; this._planOn = !!kind; this._overlayKind = kind;
+    const kind = charging && (c.charge_plan || this._away()) ? "charge" : plan ? "plan" : null; this._planOn = !!kind; this._overlayKind = kind;
     if (kind) { const h = kind === "charge" ? this._chargeHtml(plan) : this._planHtml(plan); const box = root.querySelector(".plan"); box.classList.toggle("is-charge", kind === "charge"); if (box._h !== h) { box._h = h; box.innerHTML = h; } }
     if (kind && (!was || kind !== wasKind)) this._view = "plan"; // a new overlay is shown first
     this._paintView();
@@ -439,7 +445,7 @@ class HATeslaGlanceCard extends HTMLElement {
 
     const line = root.querySelector(".line");
     if (charging) {
-      const p = this._num(c.charger_power), added = this._num(c.energy_added), fin = this._time(c.charge_finish);
+      const p = this._num(this._pw()), added = this._num(this._added()), fin = this._time(c.charge_finish);
       line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` · +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` · færdig ${esc(fin)}` : ""}`;
     } else {
       const next = this._time(c.next_charge_start), cost = this._num(c.next_charge_cost);
