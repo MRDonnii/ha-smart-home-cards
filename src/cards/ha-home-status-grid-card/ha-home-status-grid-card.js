@@ -906,7 +906,9 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .appliances{top:auto;bottom:6px}
       @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
       /* Phones: four tiles a row leave ~100 px – chip and ring on top, the value and detail under them. */
-      @media(max-width:600px){:host([v2]) .item{height:auto;min-height:96px;padding:8px 8px 7px;grid-template-columns:26px minmax(0,1fr) 26px;grid-template-rows:26px auto auto 1fr;column-gap:6px;border-radius:15px}
+      /* Tiles in one row line up: the host and tile take the row's height (the security tile is a little taller). */
+      :host([v2]){height:100%}
+      @media(max-width:600px){:host([v2]) .item{height:100%;min-height:96px;padding:8px 8px 7px;grid-template-columns:26px minmax(0,1fr) 26px;grid-template-rows:26px auto auto 1fr;column-gap:6px;border-radius:15px}
         :host([v2]) .chip{grid-row:1;width:26px;height:26px;border-radius:8px}:host([v2]) .chip ha-icon{--mdc-icon-size:15px}
         :host([v2]) .ring{grid-row:1;grid-column:3;width:26px;height:26px}
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
