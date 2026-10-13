@@ -6,7 +6,7 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -295,9 +295,15 @@ class HATeslaGlanceCard extends HTMLElement {
       .ckw{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}.ckw b{font-size:28px;font-weight:850;color:var(--good);text-shadow:0 0 18px color-mix(in srgb,var(--good) 55%,transparent);animation:kwPulse 2.2s ease-in-out infinite}.ckw small{font-size:13px;color:var(--muted)}.ckw span{margin-left:6px;font-size:11px;color:var(--muted)}
       @keyframes kwPulse{50%{opacity:.75}}
       .cnums{display:flex;flex-wrap:wrap;gap:3px 14px;margin-top:4px;font-size:11.5px;color:var(--muted)}.cnums b{color:var(--primary-text-color)}.cnums .save b{color:var(--good)}
-      .plan.is-charge{justify-content:center}
-      @media(max-width:600px){.cg{grid-template-columns:1fr;gap:8px}.batt{height:46px}.bsoc{font-size:22px}.ckw b{font-size:24px}.pstart b{font-size:19px}.pnums{gap:4px 10px}.pnums .save{margin-left:0}}
+      
+      @media(max-width:600px){.pstart b{font-size:19px}.pnums{flex-wrap:nowrap;gap:9px;font-size:10px}.pnums b{font-size:12.5px}.pnums span{white-space:nowrap}.pnums .save{margin-left:auto;padding:3px 8px 3px 6px}.pnums .save ha-icon{display:none}.ring{width:38px;height:38px}.pt b{font-size:13px}.pt span{font-size:10px}}
       @media (prefers-reduced-motion:reduce){.nowdot,.bfill .flow,.bbolt,.ckw b{animation:none}}
+      .plan.is-charge .pstart b{color:var(--good);text-shadow:0 0 16px color-mix(in srgb,var(--good) 55%,transparent)}
+      .ring.chg{--ev:var(--good)}.ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
+      .cbar{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
+      .cfill{position:relative;height:100%;border-radius:7px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--good) 55%,transparent),var(--good));box-shadow:0 0 14px -2px var(--good);transition:width 1s ease}
+      .cfill i{position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 10px,rgba(255,255,255,.3) 10px 16px);animation:flowIn 1.1s linear infinite}
+      .ctg{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:2px;background:#fff;opacity:.75}
       .dots{position:absolute;right:11px;top:50%;z-index:4;display:flex;flex-direction:column;gap:6px;transform:translateY(-50%)}.dots[hidden]{display:none}
       .dots i{width:7px;height:7px;border-radius:50%;background:color-mix(in srgb,var(--primary-text-color) 28%,transparent);cursor:pointer;transition:height .3s,background .3s}.dots i.on{height:18px;border-radius:4px;background:var(--dashboard-ev,#b7a4ff)}
       .has-plan .grid{padding-right:18px}
@@ -412,17 +418,21 @@ class HATeslaGlanceCard extends HTMLElement {
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl)}</span>` : ""}</div></div>
       <div class="pnums"><span><b>${this._fmt(avg, 2)}</b> kr/kWh</span><span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>${Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
+  // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
+  // a live bar towards the target, the numbers with the savings badge to the right.
   _chargeHtml(p) {
     const c = this._config; const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c.battery) ?? 0; const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
     const pw = this._pw(); const raw = this._num(pw); const kw = raw == null ? null : (this._unit(pw) === "W" || raw > 100 ? raw / 1000 : raw);
     const added = this._num(this._added()); const fin = this._val(c.charge_finish); const finT = fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 60000) : null;
-    const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
-    return `<div class="cg">
-      <div class="batt"><div class="bfill" style="width:${Math.max(3, Math.min(100, soc))}%"><i class="flow"></i></div><i class="btarget" style="left:${Math.min(100, tg)}%"></i><span class="bsoc">${Math.round(soc)}<small>%</small></span><ha-icon class="bbolt" icon="mdi:lightning-bolt"></ha-icon></div>
-      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "—"}</b><small>kW</small><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} ${c.preview === "charge" ? "· forhåndsvisning" : "lader"}</span></div>
-        <div class="cnums">${leftTxt ? `<span>Fuld om <b>${esc(leftTxt)}</b>${Number.isFinite(finT) ? ` · kl. ${hm(finT)}` : ""}</span>` : `<span>Mod <b>${Math.round(tg)} %</b></span>`}${added != null ? `<span>Ladet <b>+${this._fmt(added, 1)} kWh</b></span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save">Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div></div></div>`;
+    const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
+    const prev = c.preview === "charge";
+    return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
+        <div class="pt"><b>Lader nu${kw != null ? ` · <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} · ${Math.round(soc)} % → ${Math.round(tg)} %${prev ? " · forhåndsvisning" : ""}</span></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc(leftTxt)}</em></div></div>
+      <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
+      <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   _tap() {
     const path = this._config.navigation_path;

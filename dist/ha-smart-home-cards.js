@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.100 */
+/* MRDonnii Smart Home Cards v0.5.101 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.4.0";
+var VERSION5 = "0.4.1";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6974,9 +6974,15 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .ckw{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}.ckw b{font-size:28px;font-weight:850;color:var(--good);text-shadow:0 0 18px color-mix(in srgb,var(--good) 55%,transparent);animation:kwPulse 2.2s ease-in-out infinite}.ckw small{font-size:13px;color:var(--muted)}.ckw span{margin-left:6px;font-size:11px;color:var(--muted)}
       @keyframes kwPulse{50%{opacity:.75}}
       .cnums{display:flex;flex-wrap:wrap;gap:3px 14px;margin-top:4px;font-size:11.5px;color:var(--muted)}.cnums b{color:var(--primary-text-color)}.cnums .save b{color:var(--good)}
-      .plan.is-charge{justify-content:center}
-      @media(max-width:600px){.cg{grid-template-columns:1fr;gap:8px}.batt{height:46px}.bsoc{font-size:22px}.ckw b{font-size:24px}.pstart b{font-size:19px}.pnums{gap:4px 10px}.pnums .save{margin-left:0}}
+
+      @media(max-width:600px){.pstart b{font-size:19px}.pnums{flex-wrap:nowrap;gap:9px;font-size:10px}.pnums b{font-size:12.5px}.pnums span{white-space:nowrap}.pnums .save{margin-left:auto;padding:3px 8px 3px 6px}.pnums .save ha-icon{display:none}.ring{width:38px;height:38px}.pt b{font-size:13px}.pt span{font-size:10px}}
       @media (prefers-reduced-motion:reduce){.nowdot,.bfill .flow,.bbolt,.ckw b{animation:none}}
+      .plan.is-charge .pstart b{color:var(--good);text-shadow:0 0 16px color-mix(in srgb,var(--good) 55%,transparent)}
+      .ring.chg{--ev:var(--good)}.ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
+      .cbar{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
+      .cfill{position:relative;height:100%;border-radius:7px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--good) 55%,transparent),var(--good));box-shadow:0 0 14px -2px var(--good);transition:width 1s ease}
+      .cfill i{position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 10px,rgba(255,255,255,.3) 10px 16px);animation:flowIn 1.1s linear infinite}
+      .ctg{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:2px;background:#fff;opacity:.75}
       .dots{position:absolute;right:11px;top:50%;z-index:4;display:flex;flex-direction:column;gap:6px;transform:translateY(-50%)}.dots[hidden]{display:none}
       .dots i{width:7px;height:7px;border-radius:50%;background:color-mix(in srgb,var(--primary-text-color) 28%,transparent);cursor:pointer;transition:height .3s,background .3s}.dots i.on{height:18px;border-radius:4px;background:var(--dashboard-ev,#b7a4ff)}
       .has-plan .grid{padding-right:18px}
@@ -7173,6 +7179,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl2)}</span>` : ""}</div></div>
       <div class="pnums"><span><b>${this._fmt(avg, 2)}</b> kr/kWh</span><span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>${Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
+  // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
+  // a live bar towards the target, the numbers with the savings badge to the right.
   _chargeHtml(p) {
     const c2 = this._config;
     const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
@@ -7185,11 +7193,13 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const fin = this._val(c2.charge_finish);
     const finT = fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 6e4) : null;
-    const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
-    return `<div class="cg">
-      <div class="batt"><div class="bfill" style="width:${Math.max(3, Math.min(100, soc))}%"><i class="flow"></i></div><i class="btarget" style="left:${Math.min(100, tg)}%"></i><span class="bsoc">${Math.round(soc)}<small>%</small></span><ha-icon class="bbolt" icon="mdi:lightning-bolt"></ha-icon></div>
-      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "\u2014"}</b><small>kW</small><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} ${c2.preview === "charge" ? "\xB7 forh\xE5ndsvisning" : "lader"}</span></div>
-        <div class="cnums">${leftTxt ? `<span>Fuld om <b>${esc(leftTxt)}</b>${Number.isFinite(finT) ? ` \xB7 kl. ${hm(finT)}` : ""}</span>` : `<span>Mod <b>${Math.round(tg)} %</b></span>`}${added != null ? `<span>Ladet <b>+${this._fmt(added, 1)} kWh</b></span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save">Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div></div></div>`;
+    const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
+    const prev = c2.preview === "charge";
+    return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
+        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc(leftTxt)}</em></div></div>
+      <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
+      <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   _tap() {
     const path = this._config.navigation_path;
@@ -9566,7 +9576,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.5.1";
+var VERSION11 = "0.5.2";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9586,7 +9596,7 @@ var HAACClimateCard = class extends HTMLElement {
   }
   static getConfigElement() {
     const e = document.createElement("ha-card-list-editor");
-    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: [{ key: "name", label: "Navn" }, { key: "climate", label: "Climate", type: "entity" }, { key: "output", label: "Termisk output", type: "entity" }, { key: "input", label: "Elforbrug", type: "entity" }, { key: "cop", label: "COP", type: "entity" }, { key: "daily_energy", label: "Dagligt forbrug", type: "entity" }, { key: "daily_cost", label: "Daglig pris", type: "entity" }, { key: "heat_price", label: "Varmepris", type: "entity" }, { key: "hour_cost", label: "Pris pr. time", type: "entity" }, { key: "unit", label: "Fysisk anl\xE6g (climate)", type: "entity" }, { key: "status", label: "Status-sensor", type: "entity" }, { key: "next_change", label: "N\xE6ste skift", type: "entity" }, { key: "release", label: "Frigiv-knap", type: "entity" }, { key: "program", label: "Program (select)", type: "entity" }, { key: "outdoor", label: "Udetemperatur", type: "entity" }, { key: "unit_temp", label: "Anl\xE6ggets f\xF8ler", type: "entity" }, { key: "follow_me", label: "Follow Me", type: "entity" }, { key: "filter_hours", label: "Driftstimer siden filterrens", type: "entity" }, { key: "filter_reset", label: "Nulstil filter-knap", type: "entity" }, { key: "online", label: "Anl\xE6g svarer", type: "entity" }] }] };
+    e.definition = { roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }], collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: [{ key: "name", label: "Navn" }, { key: "climate", label: "Climate", type: "entity" }, { key: "output", label: "Termisk output", type: "entity" }, { key: "input", label: "Elforbrug", type: "entity" }, { key: "cop", label: "COP", type: "entity" }, { key: "daily_energy", label: "Dagligt forbrug", type: "entity" }, { key: "daily_cost", label: "Daglig pris", type: "entity" }, { key: "heat_price", label: "Varmepris", type: "entity" }, { key: "hour_cost", label: "Pris pr. time", type: "entity" }, { key: "unit", label: "Fysisk anl\xE6g (climate)", type: "entity" }, { key: "status", label: "Status-sensor", type: "entity" }, { key: "next_change", label: "N\xE6ste skift", type: "entity" }, { key: "release", label: "Frigiv-knap", type: "entity" }, { key: "program", label: "Program (select)", type: "entity" }, { key: "outdoor", label: "Udetemperatur", type: "entity" }, { key: "unit_temp", label: "Anl\xE6ggets f\xF8ler", type: "entity" }, { key: "follow_me", label: "Follow Me", type: "entity" }, { key: "filter_hours", label: "Driftstimer siden filterrens", type: "entity" }, { key: "filter_reset", label: "Nulstil filter-knap", type: "entity" }, { key: "online", label: "Anl\xE6g svarer", type: "entity" }, { key: "swing_toggle", label: "Sving til/fra (IR-knap)", type: "entity" }] }] };
     return e;
   }
   setConfig(config) {
@@ -9716,7 +9726,7 @@ var HAACClimateCard = class extends HTMLElement {
     return `<article class="unit ${s.tone} ${s.active ? "active" : ""} ${s.problem ? "problem" : ""} ${fanMenu ? "menu-open" : ""}" data-index="${index}"><div class="glow"></div><div class="head"><div><h3>${this._escape(unit.name)}</h3><span class="status"><i></i>${s.status}</span></div><div class="room-temp"><strong>${this._format(s.current, 1)}\xB0</strong><span>Rumtemperatur</span></div></div><div class="note">${s.detail}</div>${this._extras(unit, s, "status")}
   <div class="ac-visual">${acUnitVisualMarkup(acLabel, s.active)}<div class="mode-mark"><ha-icon icon="${s.mode === "heat" ? "mdi:white-balance-sunny" : s.mode === "cool" ? "mdi:snowflake" : s.mode === "dry" ? "mdi:water-percent" : "mdi:fan"}"></ha-icon><strong>${s.status}</strong><span>${s.fan ? `Bl\xE6ser ${s.fan}` : "Bl\xE6ser \u2014"}</span></div></div>
   <div class="temperature-control"><button data-action="temp-down" aria-label="S\xE6nk temperatur">\u2212</button><div><span>M\xE5ltemperatur</span><strong>${this._format(s.target, 0)}\xB0</strong></div><button data-action="temp-up" aria-label="H\xE6v temperatur">+</button></div>
-  <div class="modes"><button class="${s.mode === "heat" ? "selected" : ""}" data-mode="heat"><ha-icon icon="mdi:fire"></ha-icon><span>Varme</span></button><button class="${s.mode === "cool" ? "selected" : ""}" data-mode="cool"><ha-icon icon="mdi:snowflake"></ha-icon><span>K\xF8l</span></button><button class="${s.mode === "off" ? "selected" : ""}" data-mode="off"><ha-icon icon="mdi:power"></ha-icon><span>Sluk</span></button>${hasFan ? `<button class="${fanMenu ? "selected" : ""}" data-action="fan-menu" aria-expanded="${fanMenu}"><ha-icon icon="mdi:fan"></ha-icon><span>${this._escape(this._fanLabel(s.fan) || "Bl\xE6ser")}</span></button>` : ""}${hasSwing ? `<button class="${s.swing && s.swing !== "off" ? "selected" : ""}" data-action="swing"><ha-icon icon="${s.swing === "horizontal" ? "mdi:swap-horizontal" : s.swing === "both" ? "mdi:arrow-all" : "mdi:swap-vertical"}"></ha-icon><span>${this._escape(SWING_LABELS[s.swing] || "Sving")}</span></button>` : ""}</div>
+  <div class="modes"><button class="${s.mode === "heat" ? "selected" : ""}" data-mode="heat"><ha-icon icon="mdi:fire"></ha-icon><span>Varme</span></button><button class="${s.mode === "cool" ? "selected" : ""}" data-mode="cool"><ha-icon icon="mdi:snowflake"></ha-icon><span>K\xF8l</span></button><button class="${s.mode === "off" ? "selected" : ""}" data-mode="off"><ha-icon icon="mdi:power"></ha-icon><span>Sluk</span></button>${hasFan ? `<button class="${fanMenu ? "selected" : ""}" data-action="fan-menu" aria-expanded="${fanMenu}"><ha-icon icon="mdi:fan"></ha-icon><span>${this._escape(this._fanLabel(s.fan) || "Bl\xE6ser")}</span></button>` : ""}${!hasSwing && this._exists(unit.swing_toggle) ? `<button data-action="swing-ir" title="Automatisk sving til/fra (IR)"><ha-icon icon="mdi:arrow-up-down"></ha-icon><span>Sving</span></button>` : ""}${hasSwing ? `<button class="${s.swing && s.swing !== "off" ? "selected" : ""}" data-action="swing"><ha-icon icon="${s.swing === "horizontal" ? "mdi:swap-horizontal" : s.swing === "both" ? "mdi:arrow-all" : "mdi:swap-vertical"}"></ha-icon><span>${this._escape(SWING_LABELS[s.swing] || "Sving")}</span></button>` : ""}</div>
   ${fanMenu ? `<div class="fan-popover" role="menu"><div class="fan-popover-title"><ha-icon icon="mdi:fan"></ha-icon><span>Bl\xE6serhastighed</span></div>${fanModes.map((mode) => `<button class="fan-option ${mode === s.fan ? "selected" : ""}" data-fan-mode="${this._escape(mode)}" role="menuitem"><span>${this._escape(this._fanLabel(mode))}</span>${mode === s.fan ? '<ha-icon icon="mdi:check"></ha-icon>' : ""}</button>`).join("")}</div>` : ""}
   ${this._extras(unit, s, "controls")}
   <div class="metrics">${this._extras(unit, s, "chips")}${this._metric("Output", `${this._format(s.output)} W`, "mdi:heat-wave")}${this._metric("Elforbrug", `${this._format(s.input)} W`, "mdi:lightning-bolt")}${this._metric("COP", this._format(s.cop, 1), "mdi:gauge")}${this._metric("I dag", `${this._format(s.daily, 2)} kWh`, "mdi:counter")}${this._metric("Pris i dag", `${this._format(s.dailyCost, 2)} kr.`, "mdi:cash")}${this._metric("Varmepris", `${this._format(s.heatPrice, 3)} kr/kWh`, "mdi:tag-outline")}</div><button class="details" data-action="details">Flere indstillinger <ha-icon icon="mdi:chevron-right"></ha-icon></button></article>`;
@@ -9734,6 +9744,10 @@ var HAACClimateCard = class extends HTMLElement {
       if (action === "filter-reset" && unit.filter_reset) {
         if (!confirm("Nulstil filtert\xE6lleren? G\xF8r det kun efter filterrens.")) return;
         await this._hass.callService("button", "press", { entity_id: unit.filter_reset });
+        return;
+      }
+      if (action === "swing-ir" && unit.swing_toggle) {
+        await this._hass.callService("button", "press", { entity_id: unit.swing_toggle });
         return;
       }
       if (action === "follow-me" && unit.follow_me) {
