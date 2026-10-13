@@ -1,41 +1,391 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
-const VERSION="0.5.5";
-const STATUS_LABELS={off:"Slukket",manual:"Manuel overstyring",opening_off:"Slukket – dør/vindue åben",opening_reduced:"Skruet ned – dør/vindue åben",opening_resume_wait:"Venter på at genoptage",opening_reduce_wait:"Dør/vindue åben",sensor_lost:"Sensor væk",start_wait:"Venter på start",heating:"Varmer",cooling:"Køler",drying:"Affugter",fan_only:"Kun blæser",idle:"Tomgang"};
-const WAITING=["manual","opening_off","opening_reduced","opening_resume_wait","opening_reduce_wait","start_wait","sensor_lost"];
-const EVENT_LABELS={manual_override:"Manuel overstyring slutter",opening_reduce:"Skrues ned",opening_off:"Slukker",opening_resume:"Genoptager",start_allowed:"Starter",min_run:"Min. kørsel slutter",sensor_loss:"Pause pga. sensor"};
-const PROGRAM_LABELS={none:"Normal",eco:"Eco",comfort:"Komfort",boost:"Boost",sleep:"Nat","freeze protection":"Frostvagt 8°",freeze_protection:"Frostvagt 8°"};
-const SWING_LABELS={off:"Sving fra",on:"Sving",vertical:"Lodret",horizontal:"Vandret",both:"Begge"};
-class HAACClimateCard extends HTMLElement{
- constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=undefined;this._signature="";this._fanMenuIndex=null;}
- static getStubConfig(){return{title:"AC & varmepumper",units:[]};}
- static getConfigElement(){const e=document.createElement("ha-card-list-editor");e.definition={roots:[{key:"title",label:"Titel"},{key:"animation",label:"Animation",type:"boolean"}],collections:[{key:"units",label:"AC-anlæg",itemLabel:"anlæg",defaults:{name:"Nyt anlæg"},fields:[{key:"name",label:"Navn"},{key:"climate",label:"Climate",type:"entity"},{key:"output",label:"Termisk output",type:"entity"},{key:"input",label:"Elforbrug",type:"entity"},{key:"cop",label:"COP",type:"entity"},{key:"daily_energy",label:"Dagligt forbrug",type:"entity"},{key:"daily_cost",label:"Daglig pris",type:"entity"},{key:"heat_price",label:"Varmepris",type:"entity"},{key:"hour_cost",label:"Pris pr. time",type:"entity"},{key:"unit",label:"Fysisk anlæg (climate)",type:"entity"},{key:"status",label:"Status-sensor",type:"entity"},{key:"next_change",label:"Næste skift",type:"entity"},{key:"release",label:"Frigiv-knap",type:"entity"},{key:"program",label:"Program (select)",type:"entity"},{key:"outdoor",label:"Udetemperatur",type:"entity"},{key:"unit_temp",label:"Anlæggets føler",type:"entity"},{key:"follow_me",label:"Follow Me",type:"entity"},{key:"filter_hours",label:"Driftstimer siden filterrens",type:"entity"},{key:"filter_reset",label:"Nulstil filter-knap",type:"entity"},{key:"online",label:"Anlæg svarer",type:"entity"},{key:"swing_toggle",label:"Sving til/fra (IR-knap)",type:"entity"},{key:"swing_step",label:"Lamel ét trin (knap)",type:"entity"},{key:"display",label:"Display til/fra (knap)",type:"entity"},{key:"beep",label:"Bip (switch)",type:"entity"},{key:"supply",label:"Strøm til anlæg (switch)",type:"entity"},{key:"restart",label:"Genstart anlæg (knap)",type:"entity"}]}]};return e;}
- setConfig(config){if(!config||!Array.isArray(config.units))throw new Error("AC-kortet kræver en units-liste");this._config={title:"AC & varmepumper",animation:true,...config};this._signature="";this._render();}
- set hass(hass){this._hass=hass;const ids=(this._config.units||[]).flatMap(u=>Object.values(u)).filter(v=>typeof v==="string"&&v.includes("."));const sig=JSON.stringify(ids.map(id=>{const e=hass?.states?.[id];return[id,e?.state,e?.attributes?.current_temperature,e?.attributes?.temperature,e?.attributes?.fan_mode,e?.attributes?.swing_mode,e?.attributes?.event,e?.attributes?.preset_mode]}).concat(Math.floor(Date.now()/30000)));if(sig===this._signature)return;this._signature=sig;this._render();}
- getCardSize(){return 7;}getGridOptions(){return{rows:"auto",columns:12,min_columns:6};}
- _entity(id){const e=id?this._hass?.states?.[id]:undefined;return e&&!["unknown","unavailable",""] .includes(e.state)?e:undefined;}
- _num(id){const n=Number(this._entity(id)?.state);return Number.isFinite(n)?n:undefined;}
- _format(v,d=0){if(v===undefined)return"—";const l=this._hass?.locale?.language||this._hass?.language||"da";return v.toLocaleString(l,{minimumFractionDigits:d,maximumFractionDigits:d});}
- _escape(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
- _fanLabel(mode){const value=String(mode??"");const labels={auto:"Auto",low:"Lav",medium:"Mellem",mid:"Mellem",high:"Høj",quiet:"Stille",silent:"Stille",turbo:"Turbo",max:"Maksimum"};return labels[value.toLowerCase()]||value.replace(/_/g," ").replace(/^./,letter=>letter.toUpperCase());}
- _state(unit){const climate=this._entity(unit.climate),mode=String(climate?.state||"unknown").toLowerCase(),current=Number.isFinite(Number(climate?.attributes?.current_temperature))?Number(climate.attributes.current_temperature):undefined,target=Number.isFinite(Number(climate?.attributes?.temperature))?Number(climate.attributes.temperature):undefined,fan=climate?.attributes?.fan_mode,swing=climate?.attributes?.swing_mode,output=this._num(unit.output),input=this._num(unit.input),cop=this._num(unit.cop),daily=this._num(unit.daily_energy),dailyCost=this._num(unit.daily_cost),heatPrice=this._num(unit.heat_price),hourCost=this._num(unit.hour_cost);const active=!["off","unknown","unavailable"].includes(mode);let tone="off",status="Slukket",detail="Klar til varme eller køling";if(!climate){tone="problem";status="Utilgængelig";detail="Forbindelsen til anlægget mangler";}else if(mode==="heat"){tone="heat";status="Varmer";detail=`Varm luft mod ${this._format(target,0)}°`;}else if(mode==="cool"){tone="cool";status="Køler";detail=`Kold luft mod ${this._format(target,0)}°`;}else if(mode==="fan_only"){tone="fan";status="Ventilerer";detail="Cirkulerer luften uden temperaturstyring";}else if(mode==="dry"){tone="dry";status="Affugter";detail="Reducerer luftfugtigheden";}else if(mode==="heat_cool"){tone="auto";status="Auto";detail="Skifter automatisk mellem varme og køling";}const problem=active&&((input!==undefined&&input<1)||(output!==undefined&&output<1));return{climate,mode,current,target,fan,swing,output,input,cop,daily,dailyCost,heatPrice,hourCost,active,tone,problem,status:problem?"Kontrollér drift":status,detail:problem?"Anlægget er aktivt uden målbar effekt":detail};}
- _exists(id){const e=id?this._hass?.states?.[id]:undefined;return!!e&&e.state!=="unavailable";}
- _statusText(id){const e=this._entity(id);if(!e)return undefined;return STATUS_LABELS[e.state]||this._hass?.formatEntityState?.(e)||e.state;}
- _nextText(id){const e=this._entity(id);if(!e)return undefined;const at=Date.parse(e.state);if(!Number.isFinite(at))return undefined;const mins=Math.round((at-Date.now())/60000),event=EVENT_LABELS[e.attributes?.event]||"Næste skift",clock=new Date(at).toLocaleTimeString(this._hass?.locale?.language||"da",{hour:"2-digit",minute:"2-digit"});return`${event} ${mins<=0?"nu":mins<60?`om ${mins} min`:`kl. ${clock}`}`;}
- _programLabel(v){const k=String(v??"").toLowerCase();return PROGRAM_LABELS[k]||String(v??"").replace(/_/g," ").replace(/^./,c=>c.toUpperCase());}
- _extras(unit,s,part){const status=this._entity(unit.status),statusKey=status?.state,waiting=WAITING.includes(statusKey),next=this._nextText(unit.next_change),release=this._exists(unit.release),selectProgram=this._entity(unit.program),climateObj=selectProgram?undefined:this._entity(unit.unit||unit.climate),program=selectProgram||(climateObj?{state:climateObj.attributes?.preset_mode}:undefined),options=selectProgram?(Array.isArray(selectProgram.attributes?.options)?selectProgram.attributes.options:[]):(Array.isArray(climateObj?.attributes?.preset_modes)?climateObj.attributes.preset_modes:[]),online=this._entity(unit.online),offline=online&&online.state==="off",follow=this._entity(unit.follow_me),outdoor=this._num(unit.outdoor),unitTemp=this._num(unit.unit_temp),filter=this._num(unit.filter_hours);let out="";if(part==="status"&&(status||next||release||offline)){out+=`<div class="ctl-status ${waiting?"waiting":""} ${offline?"offline":""}"><div><span>Termostat</span><strong>${this._escape(offline?"Anlægget svarer ikke":this._statusText(unit.status)||"—")}</strong>${next?`<em>${this._escape(next)}</em>`:""}</div>${release?`<button class="release ${waiting?"ready":""}" data-action="release" title="Frigiv: fjern ventetider og pauser"><ha-icon icon="mdi:play-circle-outline"></ha-icon><span>Frigiv</span></button>`:""}</div>`;}if(part==="controls"&&options.length){out+=`<div class="program"><span>Program</span><div>${options.map(o=>`<button class="${o===program.state?"selected":""}" data-program="${this._escape(o)}">${this._escape(this._programLabel(o))}</button>`).join("")}</div></div>`;}const chips=[];if(outdoor!==undefined)chips.push(this._metric("Ude",`${this._format(outdoor,1)}°`,"mdi:thermometer"));if(unitTemp!==undefined)chips.push(this._metric("Anlæg",`${this._format(unitTemp,1)}°`,"mdi:thermometer-lines"));if(filter!==undefined)chips.push(`<div class="metric ${filter>=500?"warn":""}"><ha-icon icon="mdi:air-filter"></ha-icon><div><span>Filter</span><strong>${this._format(filter)} t</strong></div>${this._exists(unit.filter_reset)?`<button class="mini" data-action="filter-reset" title="Nulstil filtertæller"><ha-icon icon="mdi:restore"></ha-icon></button>`:""}</div>`);if(follow)chips.push(`<button class="metric toggle ${follow.state==="on"?"on":""}" data-action="follow-me"><ha-icon icon="mdi:home-thermometer"></ha-icon><div><span>Follow Me</span><strong>${follow.state==="on"?"Til":"Fra"}</strong></div></button>`);if(part==="controls"){const fn=[];if(this._exists(unit.swing_step))fn.push(`<button data-action="swing-step"><ha-icon icon="mdi:arrow-up-down"></ha-icon><span>Lamel trin</span></button>`);if(this._exists(unit.display))fn.push(`<button data-action="display"><ha-icon icon="mdi:monitor"></ha-icon><span>Display</span></button>`);const beep=this._entity(unit.beep);if(beep)fn.push(`<button class="${beep.state==="on"?"selected":""}" data-action="beep"><ha-icon icon="${beep.state==="on"?"mdi:volume-high":"mdi:volume-off"}"></ha-icon><span>Bip ${beep.state==="on"?"til":"fra"}</span></button>`);const supply=this._entity(unit.supply);if(supply)fn.push(`<button class="${supply.state==="on"?"selected":""}" data-action="supply"><ha-icon icon="mdi:power-plug${supply.state==="on"?"":"-off"}"></ha-icon><span>Strøm ${supply.state==="on"?"til":"fra"}</span></button>`);if(this._exists(unit.restart))fn.push(`<button data-action="restart"><ha-icon icon="mdi:restart-alert"></ha-icon><span>Genstart</span></button>`);if(fn.length)out+=`<div class="program functions"><span>Funktioner</span><div>${fn.join("")}</div></div>`;}if(part==="chips")return chips.join("");return out;}
- _metric(label,value,icon){return`<div class="metric"><ha-icon icon="${icon}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;}
- _unit(unit,index){const s=this._state(unit);const fanModes=Array.isArray(s.climate?.attributes?.fan_modes)?s.climate.attributes.fan_modes:[];const hasFan=fanModes.length;const hasSwing=Array.isArray(s.climate?.attributes?.swing_modes)&&s.climate.attributes.swing_modes.length;const fanMenu=this._fanMenuIndex===index;const acLabel=s.mode==="off"?"OFF":this._format(s.target,0)+"°";return`<article class="unit ${s.tone} ${s.active?"active":""} ${s.problem?"problem":""} ${fanMenu?"menu-open":""}" data-index="${index}"><div class="glow"></div><div class="head"><div><h3>${this._escape(unit.name)}</h3><span class="status"><i></i>${s.status}</span></div><div class="room-temp"><strong>${this._format(s.current,1)}°</strong><span>Rumtemperatur</span></div></div><div class="note">${s.detail}</div>${this._extras(unit,s,"status")}\n  <div class="ac-visual">${acUnitVisualMarkup(acLabel,s.active)}<div class="mode-mark"><ha-icon icon="${s.mode==="heat"?"mdi:white-balance-sunny":s.mode==="cool"?"mdi:snowflake":s.mode==="dry"?"mdi:water-percent":"mdi:fan"}"></ha-icon><strong>${s.status}</strong><span>${s.fan?`Blæser ${s.fan}`:"Blæser —"}</span></div></div>\n  <div class="temperature-control"><button data-action="temp-down" aria-label="Sænk temperatur">−</button><div><span>Måltemperatur</span><strong>${this._format(s.target,0)}°</strong></div><button data-action="temp-up" aria-label="Hæv temperatur">+</button></div>\n  <div class="modes"><button class="${s.mode==="heat"?"selected":""}" data-mode="heat"><ha-icon icon="mdi:fire"></ha-icon><span>Varme</span></button><button class="${s.mode==="cool"?"selected":""}" data-mode="cool"><ha-icon icon="mdi:snowflake"></ha-icon><span>Køl</span></button><button class="${s.mode==="off"?"selected":""}" data-mode="off"><ha-icon icon="mdi:power"></ha-icon><span>Sluk</span></button>${hasFan?`<button class="${fanMenu?"selected":""}" data-action="fan-menu" aria-expanded="${fanMenu}"><ha-icon icon="mdi:fan"></ha-icon><span>${this._escape(this._fanLabel(s.fan)||"Blæser")}</span></button>`:""}${!hasSwing&&this._exists(unit.swing_toggle)?`<button data-action="swing-ir" title="Automatisk sving til/fra (IR)"><ha-icon icon="mdi:arrow-up-down"></ha-icon><span>Sving</span></button>`:""}${hasSwing?`<button class="${s.swing&&s.swing!=="off"?"selected":""}" data-action="swing"><ha-icon icon="${s.swing==="horizontal"?"mdi:swap-horizontal":s.swing==="both"?"mdi:arrow-all":"mdi:swap-vertical"}"></ha-icon><span>${this._escape(SWING_LABELS[s.swing]||"Sving")}</span></button>`:""}</div>\n  ${fanMenu?`<div class="fan-popover" role="menu"><div class="fan-popover-title"><ha-icon icon="mdi:fan"></ha-icon><span>Blæserhastighed</span></div>${fanModes.map(mode=>`<button class="fan-option ${mode===s.fan?"selected":""}" data-fan-mode="${this._escape(mode)}" role="menuitem"><span>${this._escape(this._fanLabel(mode))}</span>${mode===s.fan?'<ha-icon icon="mdi:check"></ha-icon>':""}</button>`).join("")}</div>`:""}\n  ${this._extras(unit,s,"controls")}\n  <div class="metrics">${this._extras(unit,s,"chips")}${this._metric("Output",`${this._format(s.output)} W`,"mdi:heat-wave")}${this._metric("Elforbrug",`${this._format(s.input)} W`,"mdi:lightning-bolt")}${this._metric("COP",this._format(s.cop,1),"mdi:gauge")}${this._metric("I dag",`${this._format(s.daily,2)} kWh`,"mdi:counter")}${this._metric("Pris i dag",`${this._format(s.dailyCost,2)} kr.`,"mdi:cash")}${this._metric("Varmepris",`${this._format(s.heatPrice,3)} kr/kWh`,"mdi:tag-outline")}</div><button class="details" data-action="details">Flere indstillinger <ha-icon icon="mdi:chevron-right"></ha-icon></button></article>`;}
- _open(id){if(id)this.dispatchEvent(new CustomEvent("hass-more-info",{bubbles:true,composed:true,detail:{entityId:id}}));}
- async _action(unit,button){const action=button.dataset.action,program=button.dataset.program;try{if(action==="release"&&unit.release){await this._hass.callService("button","press",{entity_id:unit.release});return;}if(action==="filter-reset"&&unit.filter_reset){if(!confirm("Nulstil filtertælleren? Gør det kun efter filterrens."))return;await this._hass.callService("button","press",{entity_id:unit.filter_reset});return;}if(action==="supply"&&unit.supply){const on=this._entity(unit.supply)?.state==="on";if(on&&!confirm("Slå strømmen til anlægget fra?"))return;await this._hass.callService("homeassistant",on?"turn_off":"turn_on",{entity_id:unit.supply});return;}if(action==="restart"&&unit.restart){if(!confirm("Genstart anlægget? Strømmen slukkes i 30 sekunder."))return;await this._hass.callService("button","press",{entity_id:unit.restart});return;}if(action==="swing-step"&&unit.swing_step){await this._hass.callService("button","press",{entity_id:unit.swing_step});return;}if(action==="display"&&unit.display){await this._hass.callService("button","press",{entity_id:unit.display});return;}if(action==="beep"&&unit.beep){await this._hass.callService("switch","toggle",{entity_id:unit.beep});return;}if(action==="swing-ir"&&unit.swing_toggle){await this._hass.callService("button","press",{entity_id:unit.swing_toggle});return;}if(action==="follow-me"&&unit.follow_me){await this._hass.callService("switch","toggle",{entity_id:unit.follow_me});return;}if(program!==undefined&&unit.program&&this._entity(unit.program)){await this._hass.callService("select","select_option",{entity_id:unit.program,option:program});return;}if(program!==undefined){await this._hass.callService("climate","set_preset_mode",{entity_id:unit.unit||unit.climate,preset_mode:program});return;}}catch(error){console.warn("HA AC Climate Card action failed",error);return;}const climate=this._entity(unit.climate);if(!climate)return;const mode=button.dataset.mode,fanMode=button.dataset.fanMode;try{if(fanMode!==undefined){this._fanMenuIndex=null;this._render();await this._hass.callService("climate","set_fan_mode",{entity_id:unit.climate,fan_mode:fanMode});return;}if(mode){await this._hass.callService("climate","set_hvac_mode",{entity_id:unit.climate,hvac_mode:mode});return;}if(action==="temp-down"||action==="temp-up"){const current=Number(climate.attributes.temperature);if(!Number.isFinite(current))return;const min=Number(climate.attributes.min_temp??16),max=Number(climate.attributes.max_temp??30),temperature=Math.max(min,Math.min(max,current+(action==="temp-up"?1:-1)));await this._hass.callService("climate","set_temperature",{entity_id:unit.climate,temperature});return;}if(action==="swing"){const modes=climate.attributes.swing_modes||[];if(!modes.length)return;const next=modes[(modes.indexOf(climate.attributes.swing_mode)+1)%modes.length];await this._hass.callService("climate","set_swing_mode",{entity_id:unit.climate,swing_mode:next});return;}if(action==="details")this._open(unit.climate);}catch(error){console.warn("HA AC Climate Card action failed",error);}}
- _render(){const units=this._config.units||[],states=units.map(u=>this._state(u)),active=states.filter(s=>s.active).length,heating=states.filter(s=>s.mode==="heat").length,cooling=states.filter(s=>s.mode==="cool").length,power=states.reduce((sum,s)=>sum+(s.input||0),0),noAnimation=this._config.animation===false?"no-animation":"";this.shadowRoot.innerHTML=`<style>
-  :host{display:block;--heat:#ff9850;--cool:#55b9ff;--fan:#63d4c1;--dry:#917eff;--auto:#ffc65c;--off:#8390a2;--bad:#ff667a;--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(255,255,255,.11)));--card-surface:var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))))}*{box-sizing:border-box}ha-card{overflow:hidden;border-radius:24px;background:var(--card-surface);color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}.shell{position:relative;padding:22px;isolation:isolate}.backdrop{position:absolute;inset:-18%;z-index:-1;background:radial-gradient(circle at 8% 0,rgba(85,185,255,.15),transparent 25%),radial-gradient(circle at 94% 4%,rgba(255,152,80,.16),transparent 27%)}
-  header{display:flex;justify-content:space-between;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.eyebrow i{width:7px;height:7px;border-radius:50%;background:${active?"var(--heat)":"var(--fan)"};box-shadow:0 0 12px currentColor;animation:pulse 2s ease-in-out infinite}h2{margin:5px 0 0;font-size:25px;letter-spacing:-.035em}.summary{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.summary>div{min-width:82px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.1)}.summary span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase}.summary strong{display:block;margin-top:3px;font-size:16px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
-  .unit{--tone:var(--off);position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;padding:16px;border:1px solid color-mix(in srgb,var(--tone) 25%,var(--dashboard-border-neutral, var(--divider-color, var(--edge))));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--tone);border-radius:19px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 5%,transparent),rgba(0,0,0,.035));box-shadow:0 8px 25px rgba(0,0,0,.08)}.unit.menu-open{z-index:51;overflow:visible}.unit.heat{--tone:var(--heat)}.unit.cool{--tone:var(--cool)}.unit.fan{--tone:var(--fan)}.unit.dry{--tone:var(--dry)}.unit.auto{--tone:var(--auto)}.unit.problem{--tone:var(--bad)}.glow{position:absolute;right:-55px;top:-65px;width:160px;height:160px;border-radius:50%;background:var(--tone);opacity:.08;filter:blur(27px)}.active .glow{animation:breathe 2.3s ease-in-out infinite}.head{display:flex;justify-content:space-between;gap:10px}h3{margin:2px 0 5px;font-size:16px}.status{display:flex;align-items:center;gap:6px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase}.status i{width:7px;height:7px;border-radius:50%;background:var(--tone);box-shadow:0 0 8px var(--tone)}.room-temp{text-align:right}.room-temp strong{display:block;font-size:22px}.room-temp span{display:block;color:var(--secondary-text-color);font-size:8px}.note{margin-top:4px;color:color-mix(in srgb,var(--tone) 75%,var(--primary-text-color));font-size:10px}
-  .ac-visual{position:relative;height:100px;margin:2px 0 10px;padding:10px;border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-radius:14px;background:linear-gradient(90deg,rgba(0,0,0,.07),color-mix(in srgb,var(--tone) 7%,transparent));overflow:hidden}.ac-visual>.ac-unit-visual{position:absolute;left:13px;top:12px}${AC_UNIT_VISUAL_STYLE}.mode-mark{position:absolute;right:14px;top:20px;text-align:right}.mode-mark ha-icon{width:28px;height:28px;--mdc-icon-size:28px;color:var(--tone)}.mode-mark strong{display:block;font-size:13px}.mode-mark span{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:8px;text-transform:capitalize}
-  .temperature-control{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:8px;margin-bottom:10px}.temperature-control button{height:34px;border:1px solid color-mix(in srgb,var(--tone) 20%,var(--edge));border-radius:11px;background:rgba(255,255,255,.05);color:var(--primary-text-color);font-size:22px;cursor:pointer}.temperature-control button:hover{border-color:var(--tone);color:var(--tone)}.temperature-control div{text-align:center}.temperature-control span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase}.temperature-control strong{display:block;margin-top:2px;font-size:18px}.modes{display:flex;gap:6px;flex-wrap:wrap}.modes button{flex:1;min-width:52px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-radius:10px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);cursor:pointer}.modes button.selected{border-color:color-mix(in srgb,var(--tone) 58%,transparent);background:color-mix(in srgb,var(--tone) 12%,transparent);color:var(--tone)}.modes ha-icon{width:18px;height:18px;--mdc-icon-size:18px}.modes span{max-width:64px;overflow:hidden;text-overflow:ellipsis;font-size:8px;text-transform:capitalize;white-space:nowrap}.fan-backdrop{position:fixed;inset:0;z-index:50;background:transparent}.fan-popover{position:absolute;left:12px;top:0;z-index:52;width:min(190px,calc(100% - 24px));padding:8px;border:1px solid var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 32%,var(--edge)));border-radius:15px;background:var(--popupBG,var(--ha-card-background));box-shadow:var(--dashboard-shadow-deep,0 18px 45px rgba(0,0,0,.4));animation:fanMenuIn .16s ease-out}.fan-popover:after{content:"";position:absolute;right:28px;bottom:-6px;width:11px;height:11px;border-right:1px solid var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 32%,var(--edge)));border-bottom:1px solid var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 32%,var(--edge)));background:var(--popupBG,var(--ha-card-background));transform:rotate(45deg)}.fan-popover.below:after{top:-6px;bottom:auto;border:0;border-top:1px solid var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 32%,var(--edge)));border-left:1px solid var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 32%,var(--edge)))}.fan-popover-title{display:flex;align-items:center;gap:7px;padding:4px 7px 8px;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.fan-popover-title ha-icon{width:16px;height:16px;--mdc-icon-size:16px;color:var(--tone)}.fan-option{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:36px;margin-top:4px;padding:7px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--primary-text-color);font:inherit;font-size:11px;font-weight:700;cursor:pointer}.fan-option:hover{background:color-mix(in srgb,var(--tone) 8%,transparent)}.fan-option.selected{border-color:var(--dashboard-tab-selected-border,color-mix(in srgb,var(--tone) 35%,transparent));background:var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--tone) 13%,transparent));color:var(--dashboard-accent, var(--primary-color, var(--tone)))}.fan-option ha-icon{width:17px;height:17px;--mdc-icon-size:17px}
-  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px;margin-top:10px}.metric{position:relative;display:flex;align-items:center;gap:7px;min-width:0;min-height:40px;padding:6px 8px;border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:10px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 8%,transparent),rgba(0,0,0,.03));box-shadow:0 3px 10px rgba(0,0,0,.08)}.metric ha-icon{flex:0 0 17px;width:17px;height:17px;--mdc-icon-size:17px;color:var(--tone)}.metric>div{min-width:0}.metric span{display:block;overflow:hidden;text-overflow:ellipsis;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase;white-space:nowrap}.metric strong{display:block;margin-top:3px;font-size:11px;white-space:nowrap}.details{display:flex;align-items:center;justify-content:flex-end;width:100%;margin-top:auto;padding:13px 0 0;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:9px;cursor:pointer}.details:hover{color:var(--tone)}.details ha-icon{width:16px;height:16px;--mdc-icon-size:16px;margin-left:4px}.no-animation *{animation:none!important}.ctl-status{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 8px;padding:6px 8px 6px 10px;border:1px solid color-mix(in srgb,var(--tone) 20%,var(--edge));border-radius:12px;background:rgba(0,0,0,.06)}.ctl-status>div>span{display:none;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.ctl-status strong{display:inline;font-size:12px}.ctl-status em{display:inline;margin-left:8px;color:var(--secondary-text-color);font-size:10px;font-style:normal}.ctl-status.waiting{border-color:color-mix(in srgb,var(--auto) 45%,var(--edge))}.ctl-status.waiting strong{color:var(--auto)}.ctl-status.offline{border-color:color-mix(in srgb,var(--bad) 50%,var(--edge))}.ctl-status.offline strong{color:var(--bad)}.release{display:flex;flex-direction:row;align-items:center;gap:4px;padding:4px 9px;border:1px solid var(--edge);border-radius:10px;background:rgba(255,255,255,.04);color:var(--secondary-text-color);font:inherit;font-size:9px;font-weight:800;cursor:pointer}.release ha-icon{--mdc-icon-size:15px}.release.ready{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 14%,transparent);color:var(--auto)}.program{display:flex;align-items:center;gap:8px;margin:8px 0 0}.program>span{flex:0 0 auto;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.program>div{display:flex;flex:1;gap:4px;flex-wrap:wrap}.program button{flex:1;min-width:48px;min-height:26px;padding:0 6px;border:1px solid color-mix(in srgb,var(--tone) 16%,var(--edge));border-radius:9px;background:rgba(255,255,255,.035);color:var(--secondary-text-color);font:inherit;font-size:10px;font-weight:700;cursor:pointer}.functions button{display:flex;align-items:center;justify-content:center;gap:5px}.functions ha-icon{--mdc-icon-size:15px}.program button.selected{border-color:color-mix(in srgb,var(--tone) 58%,transparent);background:color-mix(in srgb,var(--tone) 12%,transparent);color:var(--tone)}.metrics.extra{margin-top:8px}.metric.warn strong{color:var(--bad)}.metric .mini{margin-left:auto;padding:3px;border:0;background:none;color:var(--secondary-text-color);cursor:pointer}.metric.toggle{font:inherit;color:inherit;text-align:left;cursor:pointer}.metric.toggle.on{border-color:color-mix(in srgb,var(--tone) 55%,transparent);background:color-mix(in srgb,var(--tone) 14%,transparent)}
-  @keyframes pulse{50%{opacity:.4;transform:scale(1.45)}}@keyframes breathe{50%{opacity:.18;transform:scale(1.15)}}@keyframes fanMenuIn{from{opacity:0;transform:translateY(7px) scale(.97)}to{opacity:1;transform:none}}@media(max-width:760px){.shell{padding:15px}header{display:block}.summary{justify-content:flex-start;margin-top:12px}.summary>div{flex:1}.fan-popover{right:8px;width:min(210px,calc(100% - 16px))}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
- </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div>${this._fanMenuIndex!==null?'<div class="fan-backdrop"></div>':""}<header><div><div class="eyebrow"><i></i>Smart klimastyring</div><h2>${this._escape(this._config.title)}</h2></div><div class="summary"><div><span>Aktive</span><strong>${active} / ${units.length}</strong></div><div><span>Varmer</span><strong>${heating}</strong></div><div><span>Køler</span><strong>${cooling}</strong></div><div><span>El nu</span><strong>${this._format(power)} W</strong></div></div></header><div class="grid">${units.map((u,i)=>this._unit(u,i)).join("")}</div></div></ha-card>`;this.shadowRoot.querySelector(".fan-backdrop")?.addEventListener("click",()=>{this._fanMenuIndex=null;this._render()});this.shadowRoot.querySelectorAll(".unit").forEach(article=>article.querySelectorAll("button").forEach(button=>button.addEventListener("click",event=>{event.stopPropagation();const index=Number(article.dataset.index);if(button.dataset.action==="fan-menu"){this._fanMenuIndex=this._fanMenuIndex===index?null:index;this._render();return;}this._action(units[index],button)})));if(this._fanMenuIndex!==null)requestAnimationFrame(()=>{const article=this.shadowRoot.querySelector(`.unit[data-index="${this._fanMenuIndex}"]`),trigger=article?.querySelector('[data-action="fan-menu"]'),popover=article?.querySelector(".fan-popover");if(!article||!trigger||!popover)return;const cardRect=article.getBoundingClientRect(),buttonRect=trigger.getBoundingClientRect(),menuRect=popover.getBoundingClientRect(),above=buttonRect.top-cardRect.top,showBelow=above<menuRect.height+10,top=showBelow?buttonRect.bottom-cardRect.top+8:above-menuRect.height-8,left=Math.max(8,Math.min(buttonRect.right-cardRect.left-menuRect.width,cardRect.width-menuRect.width-8));popover.style.top=`${top}px`;popover.style.left=`${left}px`;popover.classList.toggle("below",showBelow)});}
+
+const VERSION = "0.6.0";
+
+const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
+const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
+const EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. kørsel slutter", sensor_loss: "Pause pga. sensor" };
+const PROGRAM_LABELS = { none: "Normal", eco: "Eco", comfort: "Komfort", boost: "Boost", sleep: "Nat", "freeze protection": "Frost 8°", freeze_protection: "Frost 8°" };
+const FAN_LABELS = { auto: "Auto", low: "Lav", medium: "Mellem", mid: "Mellem", high: "Høj", quiet: "Stille", silent: "Stille", turbo: "Turbo", max: "Maks" };
+const MODES = [
+  { id: "heat", label: "Varme", icon: "mdi:fire" },
+  { id: "cool", label: "Køl", icon: "mdi:snowflake" },
+  { id: "heat_cool", label: "Auto", icon: "mdi:thermostat-auto" },
+  { id: "dry", label: "Affugt", icon: "mdi:water-percent" },
+  { id: "fan_only", label: "Blæser", icon: "mdi:fan" },
+  { id: "off", label: "Sluk", icon: "mdi:power" },
+];
+const TONES = { heat: "heat", cool: "cool", heat_cool: "auto", dry: "dry", fan_only: "fan" };
+const FIELDS = [
+  ["name", "Navn"], ["climate", "Climate", "entity"], ["output", "Varmeeffekt", "entity"], ["input", "Elforbrug (W)", "entity"], ["cop", "COP", "entity"],
+  ["daily_energy", "Dagligt forbrug", "entity"], ["daily_cost", "Daglig pris", "entity"], ["heat_price", "Varmepris", "entity"], ["hour_cost", "Pris pr. time", "entity"],
+  ["unit", "Fysisk anlæg (climate)", "entity"], ["status", "Status-sensor", "entity"], ["next_change", "Næste skift", "entity"], ["release", "Frigiv-knap", "entity"],
+  ["program", "Program (select)", "entity"], ["outdoor", "Udetemperatur", "entity"], ["unit_temp", "Anlæggets føler", "entity"], ["humidity", "Rumfugtighed", "entity"],
+  ["follow_me", "Follow Me", "entity"], ["filter_hours", "Timer siden filterrens", "entity"], ["filter_reset", "Nulstil filter-knap", "entity"], ["online", "Anlæg svarer", "entity"],
+  ["swing_toggle", "Sving til/fra (knap)", "entity"], ["swing_step", "Lamel ét trin (knap)", "entity"], ["display", "Display (knap)", "entity"], ["beep", "Bip (switch)", "entity"],
+  ["supply", "Strøm til anlæg (switch)", "entity"], ["restart", "Genstart anlæg (knap)", "entity"], ["openings", "Reagér på døre/vinduer (switch)", "entity"],
+  ["reduce_after", "Skru ned efter (number)", "entity"], ["off_after", "Sluk efter (number)", "entity"], ["resume_after", "Genoptag efter (number)", "entity"],
+  ["max_power", "Maks. effekt (W)"], ["filter_alarm", "Filter-påmindelse (timer)"],
+];
+
+class HAACClimateCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = undefined;
+    this._signature = "";
+  }
+
+  static getStubConfig() { return { title: "AC & varmepumper", units: [] }; }
+
+  static getConfigElement() {
+    const e = document.createElement("ha-card-list-editor");
+    e.definition = {
+      roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }],
+      collections: [{ key: "units", label: "AC-anlæg", itemLabel: "anlæg", defaults: { name: "Nyt anlæg" }, fields: FIELDS.map(([key, label, type]) => ({ key, label, ...(type ? { type } : {}) })) }],
+    };
+    return e;
+  }
+
+  setConfig(config) {
+    if (!config || !Array.isArray(config.units)) throw new Error("AC-kortet kræver en units-liste");
+    this._config = { title: "AC & varmepumper", animation: true, ...config };
+    this._signature = "";
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    const ids = (this._config.units || []).flatMap((u) => Object.values(u)).filter((v) => typeof v === "string" && v.includes("."));
+    const sig = JSON.stringify(ids.map((id) => {
+      const e = hass?.states?.[id];
+      const a = e?.attributes || {};
+      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event];
+    }).concat(Math.floor(Date.now() / 30000)));
+    if (sig === this._signature) return;
+    this._signature = sig;
+    this._render();
+  }
+
+  getCardSize() { return 9; }
+  getGridOptions() { return { rows: "auto", columns: 12, min_columns: 6 }; }
+
+  // --- helpers -----------------------------------------------------------
+  _raw(id) { return id ? this._hass?.states?.[id] : undefined; }
+  _entity(id) { const e = this._raw(id); return e && !["unknown", "unavailable", ""].includes(e.state) ? e : undefined; }
+  _exists(id) { const e = this._raw(id); return !!e && e.state !== "unavailable"; }
+  _num(id) { const n = Number(this._entity(id)?.state); return Number.isFinite(n) ? n : undefined; }
+  _format(v, d = 0) { if (v === undefined || v === null || !Number.isFinite(v)) return "—"; const l = this._hass?.locale?.language || "da"; return v.toLocaleString(l, { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  _esc(v) { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+  _label(map, v) { const k = String(v ?? "").toLowerCase(); return map[k] || String(v ?? "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()); }
+
+  _state(unit) {
+    const climate = this._entity(unit.climate);
+    const a = climate?.attributes || {};
+    const mode = String(climate?.state || "unknown").toLowerCase();
+    const num = (v) => (v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined);
+    const status = this._entity(unit.status)?.state;
+    const online = this._entity(unit.online);
+    const offline = !!online && online.state === "off";
+    const active = !["off", "unknown", "unavailable"].includes(mode);
+    let tone = active ? TONES[mode] || "fan" : "off";
+    if (!climate || offline) tone = "problem";
+    const statusText = !climate ? "Utilgængelig" : offline ? "Anlægget svarer ikke" : STATUS_LABELS[status] || this._hass?.formatEntityState?.(climate) || mode;
+    return {
+      climate, mode, active, tone, offline, status, waiting: WAITING.includes(status), statusText,
+      current: num(a.current_temperature), target: num(a.temperature), fan: a.fan_mode,
+      fans: Array.isArray(a.fan_modes) ? a.fan_modes : [],
+      power: this._num(unit.input), output: this._num(unit.output), cop: this._num(unit.cop),
+      daily: this._num(unit.daily_energy), dailyCost: this._num(unit.daily_cost), heatPrice: this._num(unit.heat_price), hourCost: this._num(unit.hour_cost),
+      outdoor: this._num(unit.outdoor), unitTemp: this._num(unit.unit_temp), humidity: this._num(unit.humidity), filter: this._num(unit.filter_hours),
+    };
+  }
+
+  _nextText(id) {
+    const e = this._entity(id);
+    if (!e) return "";
+    const at = Date.parse(e.state);
+    if (!Number.isFinite(at)) return "";
+    const mins = Math.round((at - Date.now()) / 60000);
+    const clock = new Date(at).toLocaleTimeString(this._hass?.locale?.language || "da", { hour: "2-digit", minute: "2-digit" });
+    return `${EVENT_LABELS[e.attributes?.event] || "Næste skift"} ${mins <= 0 ? "nu" : mins < 60 ? `om ${mins} min` : `kl. ${clock}`}`;
+  }
+
+  // --- sections ----------------------------------------------------------
+  _hero(unit, s) {
+    const label = s.mode === "off" ? "OFF" : `${this._format(s.target)}°`;
+    const next = this._nextText(unit.next_change);
+    const release = this._exists(unit.release);
+    const modeIcon = (MODES.find((m) => m.id === s.mode) || {}).icon || "mdi:power";
+    return `<section class="hero">
+      <div class="stage">
+        <div class="halo"></div>
+        <div class="unit-art">${acUnitVisualMarkup(this._esc(label), s.active && !s.offline)}</div>
+      </div>
+      <div class="hero-main">
+        <div class="hero-top">
+          <div>
+            <h3>${this._esc(unit.name)}</h3>
+            <div class="pill ${s.waiting ? "wait" : ""} ${s.offline ? "bad" : ""}"><ha-icon icon="${s.offline ? "mdi:lan-disconnect" : modeIcon}"></ha-icon><span>${this._esc(s.statusText)}</span></div>
+          </div>
+          <div class="room"><strong>${this._format(s.current, 1)}<small>°</small></strong><span>i rummet</span></div>
+        </div>
+        ${next || release ? `<div class="next"><span>${this._esc(next)}</span>${release ? `<button class="release ${s.waiting ? "ready" : ""}" data-action="release"><ha-icon icon="mdi:play-circle-outline"></ha-icon>Frigiv</button>` : ""}</div>` : ""}
+        <div class="target">
+          <button data-action="temp-down" aria-label="Sænk">−</button>
+          <div><span>Mål</span><strong>${this._format(s.target)}°</strong></div>
+          <button data-action="temp-up" aria-label="Hæv">+</button>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  _controls(unit, s) {
+    const modes = Array.isArray(s.climate?.attributes?.hvac_modes) ? s.climate.attributes.hvac_modes : MODES.map((m) => m.id);
+    const shown = MODES.filter((m) => modes.includes(m.id));
+    const modeRow = shown.map((m) => `<button class="seg ${s.mode === m.id ? "on" : ""}" data-mode="${m.id}"><ha-icon icon="${m.icon}"></ha-icon><span>${m.label}</span></button>`).join("");
+    const fanRow = s.fans.map((f) => `<button class="chip ${f === s.fan ? "on" : ""}" data-fan-mode="${this._esc(f)}">${this._esc(this._label(FAN_LABELS, f))}</button>`).join("");
+    const select = this._entity(unit.program);
+    const climateObj = select ? undefined : this._entity(unit.unit || unit.climate);
+    const options = select ? select.attributes?.options || [] : climateObj?.attributes?.preset_modes || [];
+    const current = select ? select.state : climateObj?.attributes?.preset_mode;
+    const progRow = options.map((o) => `<button class="chip ${o === current ? "on" : ""}" data-program="${this._esc(o)}">${this._esc(this._label(PROGRAM_LABELS, o))}</button>`).join("");
+    return `<section class="controls">
+      <div class="segs" style="--n:${shown.length}">${modeRow}</div>
+      ${fanRow ? `<div class="row"><span class="lbl"><ha-icon icon="mdi:fan"></ha-icon>Blæser</span><div class="chips">${fanRow}</div></div>` : ""}
+      ${progRow ? `<div class="row"><span class="lbl"><ha-icon icon="mdi:tune-variant"></ha-icon>Program</span><div class="chips">${progRow}</div></div>` : ""}
+    </section>`;
+  }
+
+  _live(unit, s) {
+    const maxPower = Number(unit.max_power) || 1500;
+    const pct = s.power !== undefined ? Math.max(2, Math.min(100, (s.power / maxPower) * 100)) : 0;
+    const copPct = s.cop !== undefined ? Math.max(0.001, Math.min(1, s.cop / 6)) : 0.001;
+    const a = Math.PI * (1 - copPct);
+    const end = `${(40 + 32 * Math.cos(a)).toFixed(1)} ${(40 - 32 * Math.sin(a)).toFixed(1)}`;
+    const tile = (icon, label, value) => `<div class="tile"><ha-icon icon="${icon}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+    const tiles = [];
+    if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct}%"></b></i></div></div>`);
+    if (unit.output) tiles.push(tile("mdi:radiator", "Varmeeffekt", s.output !== undefined ? `${this._format(s.output / 1000, 1)} kW` : "—"));
+    if (unit.cop) tiles.push(`<div class="tile gauge"><svg viewBox="0 0 80 46"><path d="M8 40 A32 32 0 0 1 72 40" class="track"/><path d="M8 40 A32 32 0 0 1 ${end}" class="val"/></svg><div><strong>${this._format(s.cop, 1)}</strong><span>COP</span></div></div>`);
+    if (unit.outdoor) tiles.push(tile("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}°`));
+    if (unit.unit_temp) tiles.push(tile("mdi:thermometer-lines", "Anlæg", `${this._format(s.unitTemp, 1)}°`));
+    if (unit.humidity) tiles.push(tile("mdi:water-percent", "Fugt", `${this._format(s.humidity)} %`));
+    return tiles.length ? `<section class="live">${tiles.join("")}</section>` : "";
+  }
+
+  _functions(unit) {
+    const btn = (action, icon, label, on, show) => (show ? `<button class="fn ${on ? "on" : ""}" data-action="${action}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span></button>` : "");
+    const follow = this._entity(unit.follow_me);
+    const beep = this._entity(unit.beep);
+    const supply = this._entity(unit.supply);
+    const items = [
+      btn("swing-ir", "mdi:arrow-up-down", "Sving", false, this._exists(unit.swing_toggle)),
+      btn("swing-step", "mdi:arrow-up-down-bold-outline", "Lamel trin", false, this._exists(unit.swing_step)),
+      btn("display", "mdi:monitor", "Display", false, this._exists(unit.display)),
+      btn("follow-me", "mdi:home-thermometer", "Follow Me", follow?.state === "on", !!follow),
+      btn("beep", beep?.state === "on" ? "mdi:volume-high" : "mdi:volume-off", "Bip", beep?.state === "on", !!beep),
+      btn("supply", supply?.state === "on" ? "mdi:power-plug" : "mdi:power-plug-off", "Strøm", supply?.state === "on", !!supply),
+      btn("restart", "mdi:restart-alert", "Genstart", false, this._exists(unit.restart)),
+    ].join("");
+    return items ? `<section class="block"><h4><ha-icon icon="mdi:gesture-tap-button"></ha-icon>Funktioner</h4><div class="fns">${items}</div></section>` : "";
+  }
+
+  _openings(unit) {
+    const sw = this._entity(unit.openings);
+    const delays = [["reduce_after", "Skru ned efter"], ["off_after", "Sluk efter"], ["resume_after", "Genoptag efter lukket"]].filter(([k]) => this._entity(unit[k]));
+    if (!sw && !delays.length) return "";
+    const on = sw ? sw.state === "on" : true;
+    return `<section class="block doors ${on ? "" : "muted"}">
+      <h4><ha-icon icon="mdi:door-open"></ha-icon>Døre og vinduer${sw ? `<button class="toggle ${on ? "on" : ""}" data-action="openings" aria-pressed="${on}" title="Reagér på døre og vinduer"><i></i></button>` : ""}</h4>
+      <div class="delays">${delays.map(([k, label]) => `<div class="delay"><span>${label}</span><div class="step"><button data-step="${k}" data-delta="-1">−</button><strong>${this._format(this._num(unit[k]))}<small> min</small></strong><button data-step="${k}" data-delta="1">+</button></div></div>`).join("")}</div>
+    </section>`;
+  }
+
+  _economy(unit, s) {
+    const cell = (label, value) => `<div><span>${label}</span><strong>${value}</strong></div>`;
+    const cells = [];
+    if (unit.daily_energy) cells.push(cell("I dag", `${this._format(s.daily, 2)} kWh`));
+    if (unit.daily_cost) cells.push(cell("Pris i dag", `${this._format(s.dailyCost, 2)} kr.`));
+    if (unit.heat_price) cells.push(cell("Varmepris", `${this._format(s.heatPrice, 2)} kr/kWh`));
+    if (unit.hour_cost) cells.push(cell("Pris pr. time", `${this._format(s.hourCost, 2)} kr.`));
+    const alarm = Number(unit.filter_alarm) || 500;
+    const fpct = s.filter !== undefined ? Math.min(100, (s.filter / alarm) * 100) : 0;
+    const filter = unit.filter_hours ? `<div class="filter ${fpct >= 100 ? "due" : ""}"><span><ha-icon icon="mdi:air-filter"></ha-icon>Filter ${this._format(s.filter)} / ${this._format(alarm)} t</span><i class="bar"><b style="width:${Math.max(2, fpct)}%"></b></i>${this._exists(unit.filter_reset) ? `<button data-action="filter-reset" title="Nulstil efter filterrens"><ha-icon icon="mdi:restore"></ha-icon></button>` : ""}</div>` : "";
+    return cells.length || filter ? `<section class="block econ">${cells.length ? `<div class="cells">${cells.join("")}</div>` : ""}${filter}</section>` : "";
+  }
+
+  _unit(unit, index) {
+    const s = this._state(unit);
+    return `<article class="unit t-${s.tone} ${s.active ? "active" : ""}" data-index="${index}">
+      ${this._hero(unit, s)}
+      ${this._controls(unit, s)}
+      ${this._live(unit, s)}
+      ${this._functions(unit)}
+      ${this._openings(unit)}
+      ${this._economy(unit, s)}
+      <button class="details" data-action="details">Flere indstillinger<ha-icon icon="mdi:chevron-right"></ha-icon></button>
+    </article>`;
+  }
+
+  // --- actions -----------------------------------------------------------
+  async _action(unit, button) {
+    const d = button.dataset;
+    const call = (domain, service, data) => this._hass.callService(domain, service, data);
+    try {
+      if (d.step) {
+        const id = unit[d.step];
+        const cur = this._num(id) ?? 0;
+        const delta = Number(d.delta) * (cur >= 30 ? 5 : 1);
+        return await call("number", "set_value", { entity_id: id, value: Math.max(0, cur + delta) });
+      }
+      if (d.fanMode !== undefined) return await call("climate", "set_fan_mode", { entity_id: unit.climate, fan_mode: d.fanMode });
+      if (d.program !== undefined) {
+        if (unit.program && this._entity(unit.program)) return await call("select", "select_option", { entity_id: unit.program, option: d.program });
+        return await call("climate", "set_preset_mode", { entity_id: unit.unit || unit.climate, preset_mode: d.program });
+      }
+      if (d.mode) return await call("climate", "set_hvac_mode", { entity_id: unit.climate, hvac_mode: d.mode });
+      switch (d.action) {
+        case "release": return await call("button", "press", { entity_id: unit.release });
+        case "swing-ir": return await call("button", "press", { entity_id: unit.swing_toggle });
+        case "swing-step": return await call("button", "press", { entity_id: unit.swing_step });
+        case "display": return await call("button", "press", { entity_id: unit.display });
+        case "follow-me": return await call("switch", "toggle", { entity_id: unit.follow_me });
+        case "beep": return await call("switch", "toggle", { entity_id: unit.beep });
+        case "openings": return await call("switch", "toggle", { entity_id: unit.openings });
+        case "supply": {
+          const on = this._entity(unit.supply)?.state === "on";
+          if (on && !confirm("Slå strømmen til anlægget fra?")) return;
+          return await call("homeassistant", on ? "turn_off" : "turn_on", { entity_id: unit.supply });
+        }
+        case "restart":
+          if (!confirm("Genstart anlægget? Strømmen slukkes i 30 sekunder.")) return;
+          return await call("button", "press", { entity_id: unit.restart });
+        case "filter-reset":
+          if (!confirm("Nulstil filtertælleren? Gør det kun efter filterrens.")) return;
+          return await call("button", "press", { entity_id: unit.filter_reset });
+        case "temp-down": case "temp-up": {
+          const c = this._entity(unit.climate);
+          const cur = Number(c?.attributes?.temperature);
+          if (!Number.isFinite(cur)) return;
+          const step = Number(c.attributes.target_temp_step) || 1;
+          const min = Number(c.attributes.min_temp ?? 16), max = Number(c.attributes.max_temp ?? 30);
+          const temperature = Math.max(min, Math.min(max, cur + (d.action === "temp-up" ? step : -step)));
+          return await call("climate", "set_temperature", { entity_id: unit.climate, temperature });
+        }
+        case "details":
+          this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: unit.climate } }));
+          return;
+        default:
+          return;
+      }
+    } catch (error) {
+      console.warn("HA AC Climate Card action failed", error);
+    }
+  }
+
+  // --- render ------------------------------------------------------------
+  _render() {
+    const units = this._config.units || [];
+    const states = units.map((u) => this._state(u));
+    const single = units.length === 1;
+    const active = states.filter((s) => s.active).length;
+    const power = states.reduce((sum, s) => sum + (s.power || 0), 0);
+    this.shadowRoot.innerHTML = `<style>${STYLE}${AC_UNIT_VISUAL_STYLE}</style>
+      <ha-card class="${this._config.animation === false ? "no-animation" : ""} ${single ? "single" : ""}">
+        <div class="shell">
+          <header>
+            <div><div class="eyebrow"><i class="${active ? "on" : ""}"></i>Smart klimastyring</div><h2>${this._esc(this._config.title)}</h2></div>
+            ${single ? "" : `<div class="summary"><div><span>Aktive</span><strong>${active} / ${units.length}</strong></div><div><span>El nu</span><strong>${this._format(power)} W</strong></div></div>`}
+          </header>
+          <div class="grid">${units.map((u, i) => this._unit(u, i)).join("")}</div>
+        </div>
+      </ha-card>`;
+    this.shadowRoot.querySelectorAll(".unit").forEach((article) => {
+      const unit = units[Number(article.dataset.index)];
+      article.querySelectorAll("button").forEach((button) => button.addEventListener("click", (ev) => { ev.stopPropagation(); this._action(unit, button); }));
+    });
+  }
 }
-if(!customElements.get("ha-ac-climate-card"))customElements.define("ha-ac-climate-card",HAACClimateCard);window.customCards=window.customCards||[];window.customCards.push({type:"ha-ac-climate-card",name:"HA AC Climate Card",description:"Animeret og interaktiv styring af AC og varmepumper",preview:true});console.info(`%c HA AC CLIMATE CARD %c v${VERSION} `,"color:white;background:#357fc4;font-weight:700","color:#69c4ff;background:#161b22");
+
+const STYLE = `
+:host{display:block;--heat:#ff9850;--cool:#55b9ff;--fan:#63d4c1;--dry:#a28bff;--auto:#ffc65c;--off:#8390a2;--bad:#ff667a;--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)));--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)))}
+*{box-sizing:border-box}
+ha-card{overflow:hidden;border-radius:24px;background:var(--surface);color:var(--primary-text-color)}
+.shell{padding:20px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px}
+.eyebrow{display:flex;align-items:center;gap:8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--off)}.eyebrow i.on{background:var(--heat);box-shadow:0 0 10px var(--heat);animation:pulse 2s ease-in-out infinite}
+h2{margin:4px 0 0;font-size:23px;letter-spacing:-.03em}
+.summary{display:flex;gap:8px}.summary div{padding:8px 12px;border:1px solid var(--edge);border-radius:12px;background:rgba(0,0,0,.08)}.summary span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase}.summary strong{font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.unit{--tone:var(--off);position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid color-mix(in srgb,var(--tone) 22%,var(--edge));border-radius:22px;background:radial-gradient(120% 70% at 0% 0%,color-mix(in srgb,var(--tone) 12%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.025),rgba(0,0,0,.06));container-type:inline-size}
+.t-heat{--tone:var(--heat)}.t-cool{--tone:var(--cool)}.t-fan{--tone:var(--fan)}.t-dry{--tone:var(--dry)}.t-auto{--tone:var(--auto)}.t-problem{--tone:var(--bad)}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.stage{position:relative;width:190px;height:150px;display:grid;place-items:center}
+.halo{position:absolute;inset:6px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone) 30%,transparent),transparent 65%);filter:blur(10px);opacity:.55}
+.unit.active .halo{animation:breathe 3.2s ease-in-out infinite}
+.unit-art{position:relative;transform:scale(1.32);transform-origin:center;margin-top:-6px}
+.hero-main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h3{margin:0 0 6px;font-size:19px;letter-spacing:-.02em}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone);font-size:12px;font-weight:800}
+.pill ha-icon{--mdc-icon-size:15px}.pill.wait{background:color-mix(in srgb,var(--auto) 18%,transparent);color:var(--auto)}.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.room{text-align:right}.room strong{display:block;font-size:40px;font-weight:700;line-height:1;letter-spacing:-.04em}.room small{font-size:20px;opacity:.7}.room span{color:var(--secondary-text-color);font-size:10px}
+.next{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;color:var(--secondary-text-color);font-size:12px}
+.release{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--edge);border-radius:999px;background:rgba(255,255,255,.04);color:var(--primary-text-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.release ha-icon{--mdc-icon-size:16px}
+.release.ready{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 16%,transparent);color:var(--auto)}
+.target{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;padding:5px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.12)}
+.target button{height:40px;border:0;border-radius:12px;background:rgba(255,255,255,.06);color:var(--primary-text-color);font-size:22px;cursor:pointer}.target button:hover{background:color-mix(in srgb,var(--tone) 22%,transparent)}
+.target div{text-align:center}.target span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.target strong{font-size:22px}
+.controls{display:flex;flex-direction:column;gap:8px}
+.segs{display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:rgba(0,0,0,.14)}
+.seg{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border:0;border-radius:12px;background:transparent;color:var(--secondary-text-color);font:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:background .2s,color .2s}
+.seg ha-icon{--mdc-icon-size:19px}.seg.on{background:color-mix(in srgb,var(--tone) 22%,transparent);color:var(--tone);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone) 45%,transparent)}
+.row{display:flex;align-items:center;gap:10px}
+.lbl{display:flex;align-items:center;gap:5px;min-width:78px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.lbl ha-icon{--mdc-icon-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:rgba(255,255,255,.03);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.chip.on{border-color:color-mix(in srgb,var(--tone) 55%,transparent);background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone)}
+.live{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
+.tile{display:flex;align-items:center;gap:8px;min-height:56px;padding:9px 11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}
+.tile>ha-icon{--mdc-icon-size:19px;color:var(--tone)}.tile>div{min-width:0;flex:1}
+.tile span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.tile strong{display:block;font-size:15px;white-space:nowrap}
+.tile.wide{grid-column:span 2}
+.bar{display:block;height:5px;margin-top:5px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}.bar b{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 55%,transparent),var(--tone));transition:width .6s}
+.gauge{flex-direction:column;justify-content:center;gap:0;padding:6px}.gauge svg{width:74px;height:40px}.gauge .track{fill:none;stroke:rgba(255,255,255,.09);stroke-width:7;stroke-linecap:round}.gauge .val{fill:none;stroke:var(--tone);stroke-width:7;stroke-linecap:round}
+.gauge div{text-align:center;margin-top:-16px}.gauge strong{font-size:15px}
+.block{padding:12px;border:1px solid var(--edge);border-radius:16px;background:rgba(0,0,0,.08)}
+h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}h4 ha-icon{--mdc-icon-size:16px}
+.fns{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px}
+.fn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.03);color:var(--primary-text-color);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.fn ha-icon{--mdc-icon-size:20px;color:var(--secondary-text-color)}.fn:hover{border-color:color-mix(in srgb,var(--tone) 45%,transparent)}
+.fn.on{border-color:color-mix(in srgb,var(--tone) 50%,transparent);background:color-mix(in srgb,var(--tone) 13%,transparent)}.fn.on ha-icon{color:var(--tone)}
+.toggle{margin-left:auto;width:40px;height:22px;padding:0;border:0;border-radius:999px;background:rgba(255,255,255,.14);cursor:pointer;position:relative}
+.toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}.toggle.on{background:var(--tone)}.toggle.on i{transform:translateX(18px)}
+.doors.muted .delays{opacity:.4;pointer-events:none}
+.delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
+.delay span{display:block;margin-bottom:4px;color:var(--secondary-text-color);font-size:11px}
+.step{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
+.step button{height:34px;border:0;background:rgba(255,255,255,.05);color:var(--primary-text-color);font-size:18px;cursor:pointer}.step strong{text-align:center;font-size:15px}.step small{font-size:10px;color:var(--secondary-text-color)}
+.econ{display:flex;flex-direction:column;gap:10px}
+.cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.cells span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase}.cells strong{font-size:14px}
+.filter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color)}
+.filter span{display:flex;align-items:center;gap:5px}.filter ha-icon{--mdc-icon-size:16px}.filter .bar{margin:0}.filter.due .bar b{background:var(--bad)}.filter.due span{color:var(--bad)}
+.filter button{border:0;background:none;color:var(--secondary-text-color);cursor:pointer;padding:2px}
+.details{display:flex;align-items:center;justify-content:flex-end;gap:2px;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:11px;cursor:pointer;padding:0}.details ha-icon{--mdc-icon-size:16px}
+button:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
+@container (max-width:520px){.hero{grid-template-columns:1fr}.stage{width:100%;height:130px}.row{flex-direction:column;align-items:flex-start;gap:5px}.seg{font-size:10px;padding:7px 0}.seg ha-icon{--mdc-icon-size:17px}}
+@keyframes pulse{50%{opacity:.4;transform:scale(1.4)}}
+@keyframes breathe{50%{opacity:.85;transform:scale(1.08)}}
+.no-animation *{animation:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+`;
+
+if (!customElements.get("ha-ac-climate-card")) customElements.define("ha-ac-climate-card", HAACClimateCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-ac-climate-card", name: "HA AC Climate Card", description: "Animeret og interaktiv styring af AC og varmepumper", preview: true });
+console.info(`%c HA AC CLIMATE CARD %c v${VERSION} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
