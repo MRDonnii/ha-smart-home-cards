@@ -1,4 +1,4 @@
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -221,10 +221,11 @@ class HAPersonOverviewCard extends HTMLElement {
       + "@media(min-width:1101px) and (max-height:950px){.pv2.mini{padding:5px 8px;gap:8px}.pv2.mini .av{width:40px;height:40px}.pv2.mini .tx b{font-size:13.5px}}"
       // Phones: a strip – portrait (its ring is the status colour), the name, and the battery; the status chip and place go
       // (user, 2026-10-13: "person kort på mobilen … så det hele kan være der").
-      + "@media(max-width:600px){.combo{gap:0;padding:5px 3px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:4px 2px;gap:3px}.pv2.mini .av{width:36px;height:36px;font-size:14px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{padding-right:0;font-size:12px}.pv2.mini .st,.pv2.mini small{display:none}"
-      + ".pv2.mini .bat{position:static;grid-row:auto;justify-content:center;margin-top:-1px}.pv2.mini .bb{width:16px;height:8px}.pv2.mini .bat b{font-size:9.5px}}"
+      // Phones: built like the desktop tile, two per row (user, 2026-10-13: "kan vel godt bygges mere som det på desktop").
+      + "@media(max-width:600px){.combo{grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:5px}.pv2.mini{padding:7px 8px;gap:8px}.pv2.mini .av{width:42px;height:42px}.pv2.mini .tx b{font-size:14px;padding-right:34px}.pv2.mini .st{font-size:9.5px}.pv2.mini small{font-size:10px}"
+      + ".pv2.mini .bat{top:6px;right:7px}.pv2.mini .bat b{font-size:9.5px}}"
       + ".cline{display:none}"
-      + "@media(max-width:600px){.grid.combined .combo{display:none}.cline{display:flex;align-items:center;gap:8px;min-height:58px;padding:7px 9px;border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
+      + "@media(max-width:0px){.grid.combined .combo{display:none}.cline{display:flex;align-items:center;gap:8px;min-height:58px;padding:7px 9px;border-radius:18px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}"
       + ".lg{display:flex;align-items:center;gap:6px;min-width:0}.lg.home{flex:0 0 auto}.lg.out{flex:1;justify-content:flex-end;gap:5px;overflow:hidden}"
       + ".ll{display:flex;flex-direction:column;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--presence-home,#37e69a)}.ll i{display:none}.ll b{font-size:15px;letter-spacing:0;color:var(--primary-text-color,#fff)}"
       + ".lavs{display:flex;padding-left:8px}.lavs .lp{margin-left:-8px}.lp{display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;min-width:0}"

@@ -917,7 +917,7 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:9px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
       /* compact: a low tile (user, 2026-10-13: "hund, alarm og indstillinger lidt mindre") – chip, value and ring on one line,
          the detail under the value; only the security tile keeps its pill row. */
-      :host([v2][compact]) .item{height:100%;min-height:62px;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
+      :host([v2][compact]) .item{height:100%;min-height:62px;align-content:center;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
       :host([v2][compact]) .chip{width:30px;height:30px;border-radius:10px}:host([v2][compact]) .chip ha-icon{--mdc-icon-size:17px}
       :host([v2][compact]) .ring{width:30px;height:30px}
       :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:16px;line-height:18px}
