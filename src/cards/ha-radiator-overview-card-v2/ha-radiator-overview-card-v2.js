@@ -22,7 +22,7 @@ import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 
-const VERSION = "2.3.0";
+const VERSION = "2.4.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -259,6 +259,15 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 :host([compact]) .z-foot{align-self:end;padding-top:0;border-top:0;--spark-h:48px}
 :host([compact]) .tiles{grid-column:1/-1;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
 :host([compact]) .tile{padding:8px 10px}
+
+.z-room{display:none}
+.zone.has-room{grid-template-rows:auto auto auto 1fr;grid-template-areas:"top top" "dial metrics" "room room" "foot foot"}
+.zone.has-room .z-room{grid-area:room;display:flex;flex-wrap:wrap;gap:5px}
+.rc{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 7px;border-radius:999px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px var(--rc-edge)}
+.rc ha-icon{--mdc-icon-size:14px}
+.rc.on{color:color-mix(in srgb,var(--rc-ok) 80%,var(--primary-text-color));background:color-mix(in srgb,var(--rc-ok) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 35%,transparent)}
+.rc.lit{color:#ffc46b;background:rgba(255,190,110,.13);box-shadow:inset 0 0 0 1px rgba(255,190,110,.35)}.rc.lit ha-icon{filter:drop-shadow(0 0 5px rgba(255,190,110,.7))}
+:host([compact]) .z-room{display:none!important}
 `;
 
 class HARadiatorOverviewCardV2 extends HTMLElement {
@@ -335,6 +344,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
   set hass(hass) {
     const previous = this._hass;
     this._hass = hass;
+    if (this._config?.room_controls_dashboard && !this._ctlLoaded) this._loadControls();
+    this._paintRoomInfo();
     this._updateRoomPopup();
     this._popupCards.forEach((card) => { card.hass = hass; });
     if (!this._built || !this.isConnected) return;
@@ -594,6 +605,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
           <div class="metric na" data-m="battery"><span>Batteri</span><strong>${DASH}</strong><ha-icon class="m-ic" icon="mdi:battery-outline"></ha-icon></div>
           ${hasAir(room) ? `<div class="metric air na" data-m="air"><span>Luft</span><strong>${DASH}</strong><ha-icon class="m-ic" icon="mdi:leaf"></ha-icon></div>` : ""}
         </div>
+        <div class="z-room" data-f="roominfo"></div>
         <div class="z-foot">${spark()}<div class="visual" data-f="visual"></div></div>
       </button>`;
     const outdoorMarkup = ({ room, index }) => `
@@ -1185,6 +1197,47 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     content.querySelectorAll("[data-mode]").forEach((button) => { button.disabled = !modes.includes(button.dataset.mode); button.classList.toggle("on", button.dataset.mode === "heat" && !state.off); });
   }
 
+  // ---------- room controls and room data (opt-in: room_controls_dashboard; Claude AI, 2026-10-13) ----------
+  // The rooms get the whole Bubble pop-up of their room from that dashboard (a "Styring" tab in the popup) and the room
+  // data of its "Alle rum" card (presence, light, media, scene) shown on the zone.
+  async _loadControls() {
+    this._ctlLoaded = true;
+    try {
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard });
+      let v3 = null; const pops = {}; const walk = (o) => { if (!o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms) && !v3) v3 = o.rooms; if (o.type === "custom:bubble-card" && o.card_type === "pop-up" && o.hash && Array.isArray(o.cards)) pops[o.hash] = o; Object.values(o).forEach(walk); }; walk(lc);
+      if (!v3) return;
+      const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/(en|et)$/, "");
+      this._config = { ...this._config, rooms: this._config.rooms.map((r) => {
+        if (r.controls) return r;
+        const m = v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || key(x.name) === key(r.name));
+        if (!m) return r;
+        const pop = m.popup ? pops[m.popup] : Object.values(pops).find((x) => key(x.name) === key(r.name));
+        const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert };
+        return { ...r, roomInfo: info, controls: pop ? { cards: structuredClone(pop.cards) } : (m.light || m.actions?.length || m.alert) ? { light: m.light, actions: m.actions, alert: m.alert } : undefined };
+      }) };
+      this._roomInfoSig = ""; this._paintRoomInfo();
+    } catch (e) { console.warn("HA Radiator Overview Card: room controls", e); this._ctlLoaded = false; }
+  }
+  _paintRoomInfo() {
+    if (!this._built || !this._hass || !this._config?.rooms?.some((r) => r.roomInfo)) return;
+    const st = (id) => (id ? this._hass.states[id] : undefined);
+    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => st(x.entity)?.state), st(i.alert?.entity)?.state]; }));
+    if (sig === this._roomInfoSig) return; this._roomInfoSig = sig;
+    const ago = (t) => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`; };
+    this._config.rooms.forEach((r, i) => {
+      const host = this.shadowRoot.querySelector(`.zone[data-room="${i}"] [data-f="roominfo"]`); if (!host) return;
+      const info = r.roomInfo; const chips = [];
+      if (info) {
+        const p = st(info.presence); if (p) chips.push(p.state === "on" ? ["on", "mdi:motion-sensor", "Tilstede"] : ["", "mdi:motion-sensor-off", `Tomt ${ago(p.last_changed)}`]);
+        const l = st(info.light); if (l) chips.push(l.state === "on" ? ["lit", "mdi:lightbulb-on", `Lys ${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %`] : ["", "mdi:lightbulb-outline", "Lys fra"]);
+        (info.status || []).forEach((x) => { const s = st(x.entity); if (s && ["on", "playing"].includes(s.state)) chips.push(["on", x.icon || (x.kind === "media" ? "mdi:play-circle-outline" : "mdi:power"), x.text || `${x.name || s.attributes?.friendly_name} ${s.state === "playing" ? "spiller" : "tændt"}`]); });
+        const a = st(info.alert?.entity); if (a?.state === "on") chips.push(["on", info.alert.icon || "mdi:star", info.alert.active || "Aktiv"]);
+      }
+      const html = chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("");
+      if (host._h !== html) { host._h = html; host.innerHTML = html; }
+      host.closest(".zone")?.classList.toggle("has-room", !!html);
+    });
+  }
   _selectPopupTab(selected) {
     const content = this._popupEl?.querySelector(".room-popup-content");
     content?.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === selected));

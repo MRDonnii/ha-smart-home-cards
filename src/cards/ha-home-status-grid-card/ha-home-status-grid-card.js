@@ -1220,7 +1220,7 @@ class HaHomeSummaryCard extends HTMLElement {
     const cfg = await this._radCfgP; if (!cfg) { this._radCfgP = null; return null; }
     await customElements.whenDefined("ha-radiator-overview-card-v2");
     const el = document.createElement("ha-radiator-overview-card-v2"); el.style.display = "none"; el.setAttribute("aria-hidden", "true");
-    el.setConfig(await this._withControls(cfg)); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
+    el.setConfig(this.config?.room_controls_dashboard ? { ...cfg, room_controls_dashboard: this.config.room_controls_dashboard } : cfg); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
   }
   // Each heating room also gets its controls (light, actions, scene) from the "Alle rum" card (ha-home-room-overview-card-v3)
   // on `room_controls_dashboard`, so the popup's Styring tab has them (user, 2026-10-13: "popup med alt styring").
