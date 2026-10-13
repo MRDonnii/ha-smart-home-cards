@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.70 */
+/* MRDonnii Smart Home Cards v0.5.71 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -31479,7 +31479,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION26 = "0.9.2";
+var VERSION26 = "0.9.3";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -32779,7 +32779,7 @@ ${LUX_KEYFRAMES}
     const elapsed = (now - m0) / 864e5;
     const proj = Number.isFinite(cost) && elapsed > 1.5 ? cost / elapsed * dim : Number.NaN;
     const digits = unit === "m\xB3" ? 3 : 1;
-    const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m\xB3" ? todayUse * 1e3 : todayUse, unit === "m\xB3" ? 0 : 1)} ${unit === "m\xB3" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span>\u2248 <b>${this._fmt(proj, 0)} kr</b> i alt</span>` : ""}</div>`;
+    const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m\xB3" ? todayUse * 1e3 : todayUse, unit === "m\xB3" ? 0 : 1)} ${unit === "m\xB3" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele m\xE5neden ender p\xE5 i samme tempo">Forventet \u2248 <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
     return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
   }
   _robotRoom(robot) {
@@ -32964,7 +32964,7 @@ ${LUX_KEYFRAMES}
       if (tile2.hidden) return;
       tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
       const x = this._utilMonth(c2[utilityKeys[sel]], c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
-      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>${x.foot}`;
+      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
     };
     this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));

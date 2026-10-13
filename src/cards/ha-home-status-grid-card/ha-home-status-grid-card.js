@@ -2,7 +2,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "0.9.2";
+const VERSION = "0.9.3";
 
 const PRESETS = {
   "home_energy": {
@@ -1282,7 +1282,7 @@ ${LUX_KEYFRAMES}
     const todayUse = clean[today - 1];
     const elapsed = (now - m0) / 864e5; const proj = Number.isFinite(cost) && elapsed > 1.5 ? (cost / elapsed) * dim : Number.NaN;
     const digits = unit === "m³" ? 3 : 1;
-    const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m³" ? todayUse * 1000 : todayUse, unit === "m³" ? 0 : 1)} ${unit === "m³" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span>≈ <b>${this._fmt(proj, 0)} kr</b> i alt</span>` : ""}</div>`;
+    const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m³" ? todayUse * 1000 : todayUse, unit === "m³" ? 0 : 1)} ${unit === "m³" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele måneden ender på i samme tempo">Forventet ≈ <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
     return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
   }
   _robotRoom(robot) {
@@ -1419,7 +1419,7 @@ ${LUX_KEYFRAMES}
     this.shadowRoot.querySelector(".title").textContent=c.title;
     const card=this.shadowRoot.querySelector(".card"); card.style.setProperty("--summary-status",healthy?"var(--success-color,#20e3a2)":"var(--warning-color,#fb923c)");
     const health=this.shadowRoot.querySelector(".health"); health.textContent=healthy?"Alt ser normalt ud":"Kræver opmærksomhed"; health.style.color=healthy?"var(--success-color,#20e3a2)":"var(--warning-color,#fb923c)";
-    const utilityKeys={".electricity":"monthly_energy_entity",".water":"water_month_entity",".heat":"heat_month_entity"};const shown=Object.values(utilityKeys).filter((k)=>c[k]!=="").length;this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count",String(Math.max(shown,1)));const utility=(sel,icon,label,value,unit,cost,valid)=>{const tile=this.shadowRoot.querySelector(sel);tile.hidden=c[utilityKeys[sel]]==="";if(tile.hidden)return;tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");const x=this._utilMonth(c[utilityKeys[sel]],c[{".electricity":"electric_month_cost_entity",".water":"water_month_cost_entity",".heat":"heat_month_cost_entity"}[sel]],unit);tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">Månedspris<b>${cost} kr</b></div>${x.foot}`;};
+    const utilityKeys={".electricity":"monthly_energy_entity",".water":"water_month_entity",".heat":"heat_month_entity"};const shown=Object.values(utilityKeys).filter((k)=>c[k]!=="").length;this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count",String(Math.max(shown,1)));const utility=(sel,icon,label,value,unit,cost,valid)=>{const tile=this.shadowRoot.querySelector(sel);tile.hidden=c[utilityKeys[sel]]==="";if(tile.hidden)return;tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");const x=this._utilMonth(c[utilityKeys[sel]],c[{".electricity":"electric_month_cost_entity",".water":"water_month_cost_entity",".heat":"heat_month_cost_entity"}[sel]],unit);tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "Månedspris"}<b>${cost} kr</b></div>${x.foot}`;};
     this._utilStats();
     utility(".electricity","mdi:lightning-bolt","Strøm",this._fmt(monthly,0),"kWh",this._fmt(electricCost,0),Number.isFinite(monthly)&&Number.isFinite(electricCost));
     utility(".water","mdi:water","Vand",this._fmt(water,3),"m³",this._fmt(waterCost,0),Number.isFinite(water)&&Number.isFinite(waterCost));
