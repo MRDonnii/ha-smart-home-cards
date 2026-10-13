@@ -1,4 +1,4 @@
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -177,7 +177,9 @@ class HAPersonOverviewCard extends HTMLElement {
       + ".pv2 .bat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px}.pv2 .bat b{font-size:13px;font-weight:800}.pv2 .bb{position:relative;width:34px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent);padding:2px}.pv2 .bb::after{content:'';position:absolute;right:-4px;top:4px;width:2.5px;height:6px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--primary-text-color,#fff) 35%,transparent)}.pv2 .bb i{display:block;height:100%;border-radius:2px;background:var(--bc);box-shadow:0 0 6px var(--bc)}"
       + ".pv2 .bat.chg .bb i{animation:pvChg 1.6s ease-in-out infinite}@keyframes pvChg{50%{opacity:.5}}.pv2 .bat ha-icon{--mdc-icon-size:14px;color:#ffd166;margin-top:-2px}"
       + "@media(min-width:1101px) and (max-height:950px){.pv2{height:72px;padding:6px 12px 6px 10px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}}"
-      + "@media(max-width:600px){.pv2{gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:50px;height:50px}.pv2 .tx b{font-size:16px}.pv2 .bat b{font-size:12px}}"
+      + ".pv2 .st{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + "@media(max-width:600px){.pv2{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:9px 10px;height:84px}.pv2 .av{width:48px;height:48px}.pv2 .tx b{font-size:15px;padding-right:46px}.pv2 .st{font-size:10px;padding:1px 7px 1px 6px}.pv2 small{font-size:10.5px}"
+      + ".pv2 .bat{position:absolute;right:9px;top:9px;flex-direction:row;align-items:center;gap:4px}.pv2 .bb{width:20px;height:10px;padding:1.5px}.pv2 .bb::after{top:3px;height:4px}.pv2 .bat b{font-size:10.5px}.pv2 .bat ha-icon{--mdc-icon-size:12px;margin:0}}"
       + "@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);
     if (this._v2()) { const g = this.shadowRoot.querySelector(".grid"); g.classList.add("v2"); g.innerHTML = this._config.persons.map((p) => this._personV2(p)).join(""); }

@@ -894,6 +894,14 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
       @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
+      /* Phones: four tiles a row leave ~100 px – chip and ring on top, the value and detail under them. */
+      @media(max-width:600px){:host([v2]) .item{height:auto;min-height:96px;padding:8px 8px 7px;grid-template-columns:26px minmax(0,1fr) 26px;grid-template-rows:26px auto auto 1fr;column-gap:6px;border-radius:15px}
+        :host([v2]) .chip{grid-row:1;width:26px;height:26px;border-radius:8px}:host([v2]) .chip ha-icon{--mdc-icon-size:15px}
+        :host([v2]) .ring{grid-row:1;grid-column:3;width:26px;height:26px}
+        :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
+        :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
+        :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
+        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .meter{grid-column:1/-1;grid-row:3;margin:3px 0 0}:host([v2]) .item.security .label{grid-row:4}}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
