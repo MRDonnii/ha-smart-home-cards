@@ -20,8 +20,9 @@ import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
+import "./ha-room-control-card.js";
 
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -1139,6 +1140,8 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
+    const hasControls = !!(room.controls && (room.controls.light || room.controls.actions?.length || room.controls.alert));
+    if (hasControls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
       // When AC is running it also switches the radiator off, so lead with the
@@ -1192,6 +1195,7 @@ class HARadiatorOverviewCardV2 extends HTMLElement {
     const definitions = {
       temperature: { type:"custom:ha-temperature-target-card", title:`Temperatur · ${room.name}`, hours:this._config.history_hours || 24, animation:this._config.animation, rooms:[{ name:room.name, icon:room.icon, temperature:room.temperature, climate:room.climate }] },
       ac: room.ac ? { type:"custom:ha-ac-climate-card", title:`AC · ${room.name}`, animation:this._config.animation, units:[room.ac] } : null,
+      controls: room.controls ? { type:"custom:ha-room-control-card", ...room.controls } : null,
       air: hasAir(room) ? { type:"custom:ha-air-quality-card", name:room.name, co2:room.co2, pm25:room.pm25, air_quality:room.air_quality, co2_warning:room.co2_warning, co2_critical:room.co2_critical, hours:this._config.history_hours || 24, animation:this._config.animation } : null,
       optimization: room.optimization ? { type:"custom:ha-heating-diagnostics-card", title:`Optimering · ${room.name}`, animation:this._config.animation, learning_hours:this._config.learning_hours || 48, total_demand:this._config.total_demand, data_problem:this._config.data_problem, rooms:[room.optimization] } : null,
     };

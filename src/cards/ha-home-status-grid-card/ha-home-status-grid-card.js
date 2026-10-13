@@ -2,7 +2,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "0.9.5";
+const VERSION = "0.9.6";
 
 const PRESETS = {
   "home_energy": {
@@ -1220,7 +1220,23 @@ class HaHomeSummaryCard extends HTMLElement {
     const cfg = await this._radCfgP; if (!cfg) { this._radCfgP = null; return null; }
     await customElements.whenDefined("ha-radiator-overview-card-v2");
     const el = document.createElement("ha-radiator-overview-card-v2"); el.style.display = "none"; el.setAttribute("aria-hidden", "true");
-    el.setConfig(cfg); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
+    el.setConfig(await this._withControls(cfg)); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
+  }
+  // Each heating room also gets its controls (light, actions, scene) from the "Alle rum" card (ha-home-room-overview-card-v3)
+  // on `room_controls_dashboard`, so the popup's Styring tab has them (user, 2026-10-13: "popup med alt styring").
+  async _withControls(cfg) {
+    const url = this.config?.room_controls_dashboard; if (!url) return cfg;
+    try {
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url });
+      let v3 = null; const walk = (o) => { if (v3 || !o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms)) { v3 = o.rooms; return; } Object.values(o).forEach(walk); }; walk(lc);
+      if (!v3) return cfg;
+      const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
+      const rooms = cfg.rooms.map((r) => {
+        const m = v3.find((x) => (r.climate && x.climate === r.climate) || (r.temperature && x.temperature === r.temperature) || n(x.name) === n(r.name));
+        return m && (m.light || m.actions?.length || m.alert) ? { ...r, controls: { light: m.light, actions: m.actions, alert: m.alert } } : r;
+      });
+      return { ...cfg, rooms };
+    } catch { return cfg; }
   }
   _radiatorIndex(card, room) {
     const rooms = card?._config?.rooms || []; const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
@@ -1507,7 +1523,12 @@ ${LUX_KEYFRAMES}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
-        .room-temp{display:flex;align-items:center;gap:1px}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
+        .room-temp{display:flex;align-items:center;gap:1px}
+        .room-arc{width:26px;height:26px;margin-right:4px;flex:none}.room-arc path{fill:none;stroke-width:4.5;stroke-linecap:round}.room-arc .t{stroke:color-mix(in srgb,var(--room-accent) 18%,rgba(255,255,255,.08))}.room-arc .v{stroke:var(--room-accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--room-accent) 60%,transparent));transition:stroke-dasharray .6s ease}
+        .room.is-heating .room-arc .v{animation:roomHeatPulse 1.8s ease-in-out infinite}
+        .room-name em.room-st{display:flex;align-items:center;gap:4px;margin-top:1px;line-height:1.45;padding-top:1px;font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--room-accent) 75%,var(--secondary-text-color,#a7b2c2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .room-name em.room-st i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--room-accent);box-shadow:0 0 6px var(--room-accent)}
+        .room.is-heating{--room-accent:var(--orange,#fb923c)}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
         .room-bar{position:relative;height:4px;margin-top:1px;border-radius:4px;background:linear-gradient(90deg,#38bdf8 0%,#20e3a2 38%,#20e3a2 62%,#fb923c 100%);opacity:.85}
         .room-bar.soft{opacity:.6}.room-bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;margin-left:-1px;border-radius:2px;background:rgba(255,255,255,.75)}
         .room-bar .dot{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--room-accent),0 0 8px var(--room-accent);transition:left .6s ease}
@@ -1566,7 +1587,11 @@ ${LUX_KEYFRAMES}
       const barGoal=Number.isFinite(r.target)?r.target:room.outdoor?Number.NaN:Number(room.target??c.default_target??22);
       const barDelta=Number.isFinite(r.temp)&&Number.isFinite(barGoal)?r.temp-barGoal:Number.NaN;
       const bar=Number.isFinite(barDelta)?`<div class="room-bar${Number.isFinite(r.target)?"":" soft"}" title="${Number.isFinite(r.target)?"":"Mod "+this._fmt(barGoal,1)+"° (standard)"}"><i class="mid"></i><i class="dot" style="left:${(50+Math.max(-1,Math.min(1,barDelta/2.5))*46).toFixed(1)}%"></i></div>`:"";
-      return `<div class="room ${tone}${r.heating?" is-heating":""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp,1)}°${trend}</strong></div>${bar}</div>`;
+      // From Varme Center (Claude AI, 2026-10-13): a status line and a small arc around the temperature (14–30°).
+      const status=room.outdoor?"Ude nu":r.heating?"Varmer nu":r.window?"Vindue åbent":Number.isFinite(r.delta)?(r.delta>0.7?`Over mål +${this._fmt(r.delta,1)}°`:r.delta<-0.7?`Under mål ${this._fmt(r.delta,1)}°`:"På mål"):"";
+      const frac=Number.isFinite(r.temp)?Math.max(0,Math.min(1,(r.temp-14)/16)):0;
+      const arc=Number.isFinite(r.temp)?`<svg class="room-arc" viewBox="0 0 40 40" aria-hidden="true"><path class="t" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100"/><path class="v" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100" stroke-dasharray="${(frac*100).toFixed(1)} 100"/></svg>`:"";
+      return `<div class="room ${tone}${r.heating?" is-heating":""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}${status?`<em class="room-st"><i></i>${this._esc(status)}</em>`:""}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${arc}${this._fmt(r.temp,1)}°${trend}</strong></div>${bar}</div>`;
     }).join("");
 
     const rooms=this.shadowRoot.querySelector(".rooms");
@@ -1589,7 +1614,7 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["rooms_style_entity","Kontakt: Varme Center-rum i stedet for fliser"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["rooms_style_entity","Kontakt: Varme Center-rum i stedet for fliser"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["room_controls_dashboard","Styring til rum-popup fra dashboard"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));

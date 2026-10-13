@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.93 */
+/* MRDonnii Smart Home Cards v0.5.94 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -28214,8 +28214,160 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 }
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION21} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
+// src/shared/lux.js
+var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
+function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true, gum = true }) {
+  const a = LUX_ACCENT;
+  const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
+  return `
+${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
+${each(base, ":active")}{transform:scale(.9);transition-duration:.08s}
+${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
+  color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
+  ${gum ? "animation:luxGum .7s ease-out" : ""}}
+${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
+${each(active, ` ${icon3}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+${LUX_KEYFRAMES}
+@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon3}`)}{animation:none!important;transition:none!important}}`;
+}
+var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
+@keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
+
+// src/cards/ha-radiator-overview-card-v2/ha-room-control-card.js
+var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var ON = /* @__PURE__ */ new Set(["on", "playing", "paused", "open", "heat", "cool", "home", "active"]);
+var HARoomControlCard = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+  }
+  setConfig(c2) {
+    this._config = c2 || {};
+    this._key = "";
+    this._built = false;
+    this._render();
+  }
+  set hass(h) {
+    this._hass = h;
+    this._render();
+  }
+  getCardSize() {
+    return 3;
+  }
+  _st(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _on(id) {
+    const s = this._st(id)?.state;
+    return ON.has(String(s));
+  }
+  _items() {
+    const c2 = this._config;
+    const out = [];
+    for (const a of c2.actions || []) if (a?.entity) out.push({ entity: a.entity, name: a.name || this._st(a.entity)?.attributes?.friendly_name || a.entity, icon: a.icon });
+    if (c2.alert?.entity && !out.some((x) => x.entity === c2.alert.entity)) out.push({ entity: c2.alert.entity, name: c2.alert.active || "Scene", icon: c2.alert.icon });
+    return out;
+  }
+  _render() {
+    if (!this._config || !this._hass) return;
+    const c2 = this._config;
+    const light = this._st(c2.light);
+    const items = this._items();
+    const key = JSON.stringify([light?.state, light?.attributes?.brightness, ...items.map((i) => this._st(i.entity)?.state)]);
+    if (key === this._key) return;
+    this._key = key;
+    const lOn = light?.state === "on";
+    const pct2 = lOn ? Math.round((light.attributes?.brightness ?? 255) / 255 * 100) : 0;
+    const dimmable = light && (light.attributes?.supported_color_modes || []).some((m) => m !== "onoff");
+    if (!this._built) {
+      this._built = true;
+      this.shadowRoot.innerHTML = `<style>
+:host{display:block;--a:${LUX_ACCENT};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa)}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+.wrap{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;background:var(--ha-card-background,var(--card-background-color,#161a21));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
+h4{margin:0 0 2px;font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.light{position:relative;display:flex;align-items:center;gap:12px;height:58px;padding:0 14px;border-radius:16px;overflow:hidden;cursor:pointer;touch-action:pan-y;user-select:none;
+  background:color-mix(in srgb,var(--ink) 6%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent)}
+.light .fill{position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:linear-gradient(90deg,rgba(255,190,110,.18),rgba(255,190,110,.45));transition:width .4s ease}
+.light ha-icon{position:relative;--mdc-icon-size:24px;color:var(--mut)}.light.on ha-icon{color:#ffc46b;filter:drop-shadow(0 0 8px rgba(255,190,110,.7))}
+.light b{position:relative;font-size:15px}.light span{position:relative;margin-left:auto;font-size:14px;font-weight:800;color:var(--mut)}.light.on span{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.act{display:flex;align-items:center;gap:9px;min-height:52px;padding:8px 12px;border:0;border-radius:15px;cursor:pointer;text-align:left;background:color-mix(in srgb,var(--ink) 6%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent)}
+.act ha-icon{--mdc-icon-size:21px;color:var(--mut);flex:none}.act b{display:block;font-size:13px}.act small{display:block;font-size:11px;color:var(--mut)}
+.empty{color:var(--mut);font-size:13px;padding:6px 2px}
+${luxCss({ base: ".act", active: ".act.on" })}
+</style><div class="wrap"></div>`;
+      const wrap = this.shadowRoot.querySelector(".wrap");
+      wrap.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-toggle]");
+        if (b && !this._held) this._toggle(b.dataset.toggle);
+        this._held = false;
+      });
+      wrap.addEventListener("contextmenu", (e) => {
+        const b = e.target.closest("[data-toggle]");
+        if (!b) return;
+        e.preventDefault();
+        this._more(b.dataset.toggle);
+      });
+      let t = null;
+      wrap.addEventListener("pointerdown", (e) => {
+        const b = e.target.closest("[data-toggle]");
+        if (!b) return;
+        t = setTimeout(() => {
+          this._held = true;
+          this._more(b.dataset.toggle);
+        }, 550);
+        if (b.classList.contains("light") && dimmable) this._drag = { x: e.clientX, el: b, id: b.dataset.toggle, moved: false };
+      });
+      wrap.addEventListener("pointermove", (e) => {
+        const d = this._drag;
+        if (!d) return;
+        if (Math.abs(e.clientX - d.x) > 6) {
+          clearTimeout(t);
+          d.moved = true;
+          const r = d.el.getBoundingClientRect();
+          d.pct = Math.max(1, Math.min(100, Math.round((e.clientX - r.left) / r.width * 100)));
+          d.el.style.setProperty("--p", `${d.pct}%`);
+          d.el.querySelector("span").textContent = `${d.pct}%`;
+        }
+      });
+      const end = () => {
+        clearTimeout(t);
+        const d = this._drag;
+        this._drag = null;
+        if (d?.moved) {
+          this._held = true;
+          this._hass.callService("light", "turn_on", { entity_id: d.id, brightness_pct: d.pct });
+        }
+      };
+      wrap.addEventListener("pointerup", end);
+      wrap.addEventListener("pointercancel", end);
+      wrap.addEventListener("pointerleave", end);
+    }
+    const lightHtml = light ? `<h4>Lys</h4><div class="light ${lOn ? "on" : ""}" data-toggle="${esc2(c2.light)}" style="--p:${pct2}%"><i class="fill"></i><ha-icon icon="${lOn ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><b>${esc2(light.attributes?.friendly_name || "Lys")}</b><span>${lOn ? `${pct2}%` : "Fra"}</span></div>` : "";
+    const actHtml = items.length ? `<h4>Styring</h4><div class="grid">${items.map((i) => {
+      const on = this._on(i.entity);
+      const st = this._st(i.entity)?.state;
+      return `<button type="button" class="act ${on ? "on" : ""}" data-toggle="${esc2(i.entity)}"><ha-icon icon="${esc2(i.icon || this._st(i.entity)?.attributes?.icon || "mdi:toggle-switch-outline")}"></ha-icon><span><b>${esc2(i.name)}</b><small>${st === "playing" ? "Spiller" : st === "paused" ? "Pause" : on ? "Til" : st === "unavailable" ? "Utilg\xE6ngelig" : "Fra"}</small></span></button>`;
+    }).join("")}</div>` : "";
+    this.shadowRoot.querySelector(".wrap").innerHTML = lightHtml + actHtml || '<div class="empty">Ingen styring er tilknyttet dette rum</div>';
+  }
+  _toggle(id) {
+    const d = id.split(".")[0];
+    if (d === "media_player") return this._hass.callService("media_player", "toggle", { entity_id: id });
+    if (["scene", "script"].includes(d)) return this._hass.callService(d, "turn_on", { entity_id: id });
+    if (d === "button" || d === "input_button") return this._hass.callService(d, "press", { entity_id: id });
+    this._hass.callService("homeassistant", "toggle", { entity_id: id });
+  }
+  _more(id) {
+    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: id }, bubbles: true, composed: true }));
+  }
+};
+if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-control-card", HARoomControlCard);
+
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION22 = "2.2.0";
+var VERSION22 = "2.3.0";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -29315,6 +29467,8 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (hasAir(room)) tabs.push({ id: "air", label: "Luftkvalitet" });
+    const hasControls = !!(room.controls && (room.controls.light || room.controls.actions?.length || room.controls.alert));
+    if (hasControls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
       content.dataset.defaultTab = acActive ? "ac" : "temperature";
@@ -29377,6 +29531,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const definitions = {
       temperature: { type: "custom:ha-temperature-target-card", title: `Temperatur \xB7 ${room.name}`, hours: this._config.history_hours || 24, animation: this._config.animation, rooms: [{ name: room.name, icon: room.icon, temperature: room.temperature, climate: room.climate }] },
       ac: room.ac ? { type: "custom:ha-ac-climate-card", title: `AC \xB7 ${room.name}`, animation: this._config.animation, units: [room.ac] } : null,
+      controls: room.controls ? { type: "custom:ha-room-control-card", ...room.controls } : null,
       air: hasAir(room) ? { type: "custom:ha-air-quality-card", name: room.name, co2: room.co2, pm25: room.pm25, air_quality: room.air_quality, co2_warning: room.co2_warning, co2_critical: room.co2_critical, hours: this._config.history_hours || 24, animation: this._config.animation } : null,
       optimization: room.optimization ? { type: "custom:ha-heating-diagnostics-card", title: `Optimering \xB7 ${room.name}`, animation: this._config.animation, learning_hours: this._config.learning_hours || 48, total_demand: this._config.total_demand, data_problem: this._config.data_problem, rooms: [room.optimization] } : null
     };
@@ -31760,30 +31915,10 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Card", description: "Samlet statusheader med vejr, alarmer og lokale vejreffekter", preview: true });
 console.info(`%c HA HOME HEADER CARD %c v${VERSION25} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
-// src/shared/lux.js
-var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
-function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true, gum = true }) {
-  const a = LUX_ACCENT;
-  const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
-  return `
-${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
-${each(base, ":active")}{transform:scale(.9);transition-duration:.08s}
-${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
-  color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
-  ${gum ? "animation:luxGum .7s ease-out" : ""}}
-${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
-${each(active, ` ${icon3}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
-${LUX_KEYFRAMES}
-@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon3}`)}{animation:none!important;transition:none!important}}`;
-}
-var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
-@keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
-
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION26 = "0.9.5";
+var VERSION26 = "0.9.6";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -32633,7 +32768,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc5 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc6 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -32645,14 +32780,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc5(item2.value));
+    setText(".value", esc6(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc5(item2.detail || " "));
+    setText(".detail", esc6(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -32663,10 +32798,10 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc5(title)}">${inner}</span>`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc6(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)";
       const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc5(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc6(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -32970,11 +33105,39 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const el = document.createElement("ha-radiator-overview-card-v2");
     el.style.display = "none";
     el.setAttribute("aria-hidden", "true");
-    el.setConfig(cfg);
+    el.setConfig(await this._withControls(cfg));
     this.shadowRoot.appendChild(el);
     el.hass = this._hass;
     this._radCard = el;
     return el;
+  }
+  // Each heating room also gets its controls (light, actions, scene) from the "Alle rum" card (ha-home-room-overview-card-v3)
+  // on `room_controls_dashboard`, so the popup's Styring tab has them (user, 2026-10-13: "popup med alt styring").
+  async _withControls(cfg) {
+    const url = this.config?.room_controls_dashboard;
+    if (!url) return cfg;
+    try {
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url });
+      let v3 = null;
+      const walk = (o) => {
+        if (v3 || !o || typeof o !== "object") return;
+        if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms)) {
+          v3 = o.rooms;
+          return;
+        }
+        Object.values(o).forEach(walk);
+      };
+      walk(lc);
+      if (!v3) return cfg;
+      const n = (v) => this._roomKey(v).replace(/(en|et)$/, "");
+      const rooms = cfg.rooms.map((r) => {
+        const m = v3.find((x) => r.climate && x.climate === r.climate || r.temperature && x.temperature === r.temperature || n(x.name) === n(r.name));
+        return m && (m.light || m.actions?.length || m.alert) ? { ...r, controls: { light: m.light, actions: m.actions, alert: m.alert } } : r;
+      });
+      return { ...cfg, rooms };
+    } catch {
+      return cfg;
+    }
   }
   _radiatorIndex(card, room) {
     const rooms = card?._config?.rooms || [];
@@ -33394,7 +33557,12 @@ ${LUX_KEYFRAMES}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
-        .room-temp{display:flex;align-items:center;gap:1px}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
+        .room-temp{display:flex;align-items:center;gap:1px}
+        .room-arc{width:26px;height:26px;margin-right:4px;flex:none}.room-arc path{fill:none;stroke-width:4.5;stroke-linecap:round}.room-arc .t{stroke:color-mix(in srgb,var(--room-accent) 18%,rgba(255,255,255,.08))}.room-arc .v{stroke:var(--room-accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--room-accent) 60%,transparent));transition:stroke-dasharray .6s ease}
+        .room.is-heating .room-arc .v{animation:roomHeatPulse 1.8s ease-in-out infinite}
+        .room-name em.room-st{display:flex;align-items:center;gap:4px;margin-top:1px;line-height:1.45;padding-top:1px;font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--room-accent) 75%,var(--secondary-text-color,#a7b2c2));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .room-name em.room-st i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--room-accent);box-shadow:0 0 6px var(--room-accent)}
+        .room.is-heating{--room-accent:var(--orange,#fb923c)}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
         .room-bar{position:relative;height:4px;margin-top:1px;border-radius:4px;background:linear-gradient(90deg,#38bdf8 0%,#20e3a2 38%,#20e3a2 62%,#fb923c 100%);opacity:.85}
         .room-bar.soft{opacity:.6}.room-bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;margin-left:-1px;border-radius:2px;background:rgba(255,255,255,.75)}
         .room-bar .dot{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--room-accent),0 0 8px var(--room-accent);transition:left .6s ease}
@@ -33476,7 +33644,10 @@ ${LUX_KEYFRAMES}
       const barGoal = Number.isFinite(r.target) ? r.target : room.outdoor ? Number.NaN : Number(room.target ?? c2.default_target ?? 22);
       const barDelta = Number.isFinite(r.temp) && Number.isFinite(barGoal) ? r.temp - barGoal : Number.NaN;
       const bar = Number.isFinite(barDelta) ? `<div class="room-bar${Number.isFinite(r.target) ? "" : " soft"}" title="${Number.isFinite(r.target) ? "" : "Mod " + this._fmt(barGoal, 1) + "\xB0 (standard)"}"><i class="mid"></i><i class="dot" style="left:${(50 + Math.max(-1, Math.min(1, barDelta / 2.5)) * 46).toFixed(1)}%"></i></div>` : "";
-      return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
+      const status = room.outdoor ? "Ude nu" : r.heating ? "Varmer nu" : r.window ? "Vindue \xE5bent" : Number.isFinite(r.delta) ? r.delta > 0.7 ? `Over m\xE5l +${this._fmt(r.delta, 1)}\xB0` : r.delta < -0.7 ? `Under m\xE5l ${this._fmt(r.delta, 1)}\xB0` : "P\xE5 m\xE5l" : "";
+      const frac = Number.isFinite(r.temp) ? Math.max(0, Math.min(1, (r.temp - 14) / 16)) : 0;
+      const arc = Number.isFinite(r.temp) ? `<svg class="room-arc" viewBox="0 0 40 40" aria-hidden="true"><path class="t" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100"/><path class="v" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100" stroke-dasharray="${(frac * 100).toFixed(1)} 100"/></svg>` : "";
+      return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}${status ? `<em class="room-st"><i></i>${this._esc(status)}</em>` : ""}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${arc}${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
     }).join("");
     const rooms = this.shadowRoot.querySelector(".rooms");
     const vc2 = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard;
@@ -33522,7 +33693,7 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
     this._hass = hass;
   }
   render() {
-    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
     this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
@@ -33972,7 +34143,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return id ? this._hass?.states?.[id]?.state === "on" : this._config?.style === "v2";
   }
   _personV2(p) {
-    const esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -33990,12 +34161,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc5((p.name || "?").trim()[0] || "?");
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc5(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    const initial = esc6((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc6(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc5(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc5(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc5(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc6(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc6(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc6(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -34010,7 +34181,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -34023,14 +34194,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const travel = Number(this._s(p.travel_time)?.state);
       const where = home ? "" : away ? Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc5((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc6((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc5(x.p.navigation_path || "")}" title="${esc5(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc6(x.p.navigation_path || "")}" title="${esc6(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc5(x.name)}</b><small>${esc5(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc6(x.name)}</b><small>${esc6(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -35483,7 +35654,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc2 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc3 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -36043,7 +36214,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE3}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc2(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc2(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc3(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc3(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -36063,16 +36234,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc2(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc2(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc2(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc3(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc3(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc3(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc2(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc2(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc3(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc3(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc2(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc3(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -44412,7 +44583,7 @@ var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk"
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
 var HOUR = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc4 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var pad = (n) => String(n).padStart(2, "0");
 var hhmm = (d) => `${pad(d.getHours())}.${pad(d.getMinutes())}`;
 var dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -44731,7 +44902,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc3(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc4(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -44807,7 +44978,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc3(ds[0].toUpperCase() + ds.slice(1))}<small>${esc3(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc4(ds[0].toUpperCase() + ds.slice(1))}<small>${esc4(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -44819,7 +44990,7 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc3(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc4(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
@@ -44842,9 +45013,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc3(g)}">${esc3(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc4(g)}">${esc4(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc3(c2.entity)}" style="--c:${esc3(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc3(c2.name || c2.entity)}"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon>${esc3(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc4(c2.entity)}" style="--c:${esc4(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc4(c2.name || c2.entity)}"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon>${esc4(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -44883,8 +45054,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc3(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc3(c2.name || "")}${e.location ? ` \xB7 ${esc3(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc4(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc4(c2.name || "")}${e.location ? ` \xB7 ${esc4(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -44909,7 +45080,7 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc3(e.summary || "")}">${esc3(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc4(e.summary || "")}">${esc4(e.summary || "")}</button>`;
     });
     const hrs = [];
     for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad(h)}</span></div>`);
@@ -44941,15 +45112,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc3(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc3(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc4(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc4(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc3(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon>${esc3(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc3(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc4(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon>${esc4(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc4(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -45008,7 +45179,7 @@ ${LUX_KEYFRAMES}
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H3, y(en)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc3(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc3(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc4(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -45016,7 +45187,7 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de2 = ds + 864e5;
-      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc3(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc3(e.summary || "")}</button>`).join("");
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc4(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc4(e.summary || "")}</button>`).join("");
     };
     const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
@@ -45084,11 +45255,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc3(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc3(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc3(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc3(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc3(when[0].toUpperCase() + when.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc4(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc4(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc4(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc4(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc3(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc3(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc4(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc4(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -45139,7 +45310,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc3(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc4(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -45149,7 +45320,7 @@ ${LUX_KEYFRAMES}
     const en = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc3(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc3(e.location)}` : ""}</span>${teacher.length ? `<small>${esc3(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc4(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc4(e.location)}` : ""}</span>${teacher.length ? `<small>${esc4(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -49514,7 +49685,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc4 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc5 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -50343,8 +50514,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc4(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc4(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc5(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc5(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -50366,8 +50537,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc4(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc4(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc5(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc5(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -50444,7 +50615,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon3] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc4(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc4(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc5(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc5(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -50513,7 +50684,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc4(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc5(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -50528,29 +50699,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc4(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc4(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc5(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc5(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc4(title)}</h2><p>${esc4(subtitle)}</p></div>
+          <div><h2>${esc5(title)}</h2><p>${esc5(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc4(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc4(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc4(t)}</b>${s ? `<span>${esc4(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc4(l)}</span><b>${esc4(v)}</b>${x ? `<small>${esc4(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc5(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc5(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc5(t)}</b>${s ? `<span>${esc5(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc5(l)}</span><b>${esc5(v)}</b>${x ? `<small>${esc5(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc4(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc4(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc4(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc4(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc5(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc5(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc5(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc5(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc4(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc5(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -50564,7 +50735,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc4(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc5(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
