@@ -2,7 +2,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "0.9.4";
+const VERSION = "0.9.5";
 
 const PRESETS = {
   "home_energy": {
@@ -1409,7 +1409,7 @@ ${LUX_KEYFRAMES}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
         .room-temp{display:flex;align-items:center;gap:1px}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
         .room-bar{position:relative;height:4px;margin-top:1px;border-radius:4px;background:linear-gradient(90deg,#38bdf8 0%,#20e3a2 38%,#20e3a2 62%,#fb923c 100%);opacity:.85}
-        .room-bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;margin-left:-1px;border-radius:2px;background:rgba(255,255,255,.75)}
+        .room-bar.soft{opacity:.6}.room-bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;margin-left:-1px;border-radius:2px;background:rgba(255,255,255,.75)}
         .room-bar .dot{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--room-accent),0 0 8px var(--room-accent);transition:left .6s ease}
         .room-status.window,.room-status.battery{display:flex}.room-status.window{color:var(--info-color,#38bdf8);animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.battery{color:var(--error-color,#ef4444)}
         .room.is-heating .room-bg{color:var(--orange,#fb923c);opacity:.2}
@@ -1460,7 +1460,11 @@ ${LUX_KEYFRAMES}
       const badge=(cls,ic,title)=>`<span class="room-status ${cls}" title="${title}"><ha-icon icon="${ic}"></ha-icon></span>`;
       const badges=(r.window?badge("window","mdi:window-open-variant","Vindue eller dør er åben"):"")+(r.lowBattery?badge("battery","mdi:battery-alert-variant-outline",`Lavt batteri (${r.battery} %)`):"")+(r.present?badge("presence","mdi:motion-sensor","Der er nogen i rummet"):"")+(r.heating?badge("heating","mdi:fire","Kalder på varme"):"")+(r.ac&&r.ac.mode!=="off"?badge(`ac ${r.ac.running?"run":""} m-${r.ac.mode}`,AC_MODES[r.ac.mode]?.[1]||"mdi:air-conditioner",`AC: ${AC_MODES[r.ac.mode]?.[0]||r.ac.mode}${r.ac.running?" · kører":" · venter"}`):"");
       const trend=r.trend>0.15?'<ha-icon class="room-trend up" icon="mdi:arrow-top-right"></ha-icon>':r.trend<-0.15?'<ha-icon class="room-trend down" icon="mdi:arrow-bottom-right"></ha-icon>':"";
-      const bar=Number.isFinite(r.target)&&Number.isFinite(r.temp)?`<div class="room-bar"><i class="mid"></i><i class="dot" style="left:${(50+Math.max(-1,Math.min(1,r.delta/2.5))*46).toFixed(1)}%"></i></div>`:"";
+      // The bar on every indoor room (user: "det er jo 22 der normalt er setpoint"): rooms without a thermostat are measured
+      // against `target` on the room or the card's `default_target` (22°); outdoor rooms (`outdoor: true`) get none.
+      const barGoal=Number.isFinite(r.target)?r.target:room.outdoor?Number.NaN:Number(room.target??c.default_target??22);
+      const barDelta=Number.isFinite(r.temp)&&Number.isFinite(barGoal)?r.temp-barGoal:Number.NaN;
+      const bar=Number.isFinite(barDelta)?`<div class="room-bar${Number.isFinite(r.target)?"":" soft"}" title="${Number.isFinite(r.target)?"":"Mod "+this._fmt(barGoal,1)+"° (standard)"}"><i class="mid"></i><i class="dot" style="left:${(50+Math.max(-1,Math.min(1,barDelta/2.5))*46).toFixed(1)}%"></i></div>`:"";
       return `<div class="room ${tone}${r.heating?" is-heating":""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp,1)}°${trend}</strong></div>${bar}</div>`;
     }).join("");
 
@@ -1479,7 +1483,7 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
