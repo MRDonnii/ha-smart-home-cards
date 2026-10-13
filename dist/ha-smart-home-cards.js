@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.69 */
+/* MRDonnii Smart Home Cards v0.5.70 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -31479,7 +31479,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION26 = "0.9.1";
+var VERSION26 = "0.9.2";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -32707,6 +32707,81 @@ ${LUX_KEYFRAMES}
       ${rows.length ? `<div class="rows">${rows.map(([cls, ic, b, sub]) => `<div class="row ${cls}"><ha-icon icon="${ic}"></ha-icon><div><b>${b}</b><span>${sub}</span></div></div>`).join("")}</div>` : ""}
       <button type="button" class="close" data-close>Luk</button>`;
   }
+  // ---------- month tiles (Claude AI, 2026-10-13; user: "Hvad med mine måneds forbrug kort") ----------
+  // Daily end-of-day states of the month meters from the recorder (this month and last), every 30 minutes.
+  async _utilStats() {
+    const c2 = this.config || {};
+    const ids = [c2.monthly_energy_entity, c2.water_month_entity, c2.heat_month_entity].filter(Boolean);
+    if (!ids.length || !this._hass?.callWS || this._utilBusy || Date.now() - (this._utilAt || 0) < 30 * 6e4) return;
+    this._utilBusy = true;
+    this._utilAt = Date.now();
+    try {
+      const now = /* @__PURE__ */ new Date();
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), statistic_ids: ids, period: "day", types: ["state"] });
+      this._utilDays = new Map(ids.map((id) => [id, (res?.[id] || []).map((r) => ({ t: typeof r.start === "number" ? r.start : Date.parse(r.start), v: Number(r.state) })).filter((p) => Number.isFinite(p.v))]));
+      this._sig = "";
+      this._render();
+    } catch {
+      this._utilAt = Date.now() - 25 * 6e4;
+    } finally {
+      this._utilBusy = false;
+    }
+  }
+  // Per tile: use per day this month (bars), today's use, the change against last month at the same day, and what the
+  // whole month will cost at this pace. The meters count from the 1st, so a day's use is its state minus the day before;
+  // a negative or absurd step (a meter glitch) counts as unknown.
+  _utilMonth(id, costId, unit) {
+    const empty = { chip: "", bars: "", foot: "" };
+    const days = this._utilDays?.get(id);
+    const now = /* @__PURE__ */ new Date();
+    const cur = this._num(id);
+    const cost = this._num(costId);
+    if (!days?.length || !Number.isFinite(cur)) return empty;
+    const m0 = new Date(now.getFullYear(), now.getMonth(), 1);
+    const p0 = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const today = now.getDate();
+    const thisM = days.filter((d) => d.t >= +m0);
+    const lastM = days.filter((d) => d.t >= +p0 && d.t < +m0);
+    const byDay = new Map(thisM.map((d) => [new Date(d.t).getDate(), d.v]));
+    const uses = [];
+    let prev = 0;
+    for (let d = 1; d <= dim; d++) {
+      if (d > today) {
+        uses.push(null);
+        continue;
+      }
+      const v = d === today ? cur : byDay.get(d);
+      if (!Number.isFinite(v)) {
+        uses.push(null);
+        continue;
+      }
+      const u3 = v - prev;
+      prev = v;
+      uses.push(u3 >= 0 ? u3 : null);
+    }
+    const known = uses.filter((u3) => Number.isFinite(u3)).sort((a, b) => a - b);
+    const med = known.length ? known[Math.floor(known.length / 2)] : 0;
+    const clean = uses.map((u3) => Number.isFinite(u3) && med > 0 && u3 > med * 12 ? null : u3);
+    const max = Math.max(...clean.filter(Number.isFinite), 1e-4);
+    const bars = `<span class="ubars" aria-hidden="true">${clean.map((u3, i) => `<i class="${i + 1 === today ? "now" : i + 1 > today ? "fut" : ""}" style="height:${Number.isFinite(u3) ? Math.max(8, u3 / max * 100).toFixed(0) : 8}%"></i>`).join("")}</span>`;
+    let chip = "";
+    const yDay = today - 1;
+    const ours = yDay >= 1 ? byDay.get(yDay) : void 0;
+    const theirs = lastM.find((d) => new Date(d.t).getDate() === yDay)?.v;
+    if (Number.isFinite(ours) && Number.isFinite(theirs) && theirs > 0) {
+      const pct2 = (ours - theirs) / theirs * 100;
+      if (Math.abs(pct2) < 3) chip = `<span class="uchip same" title="Som sidste m\xE5ned p\xE5 samme tid">\u2248 sidste md.</span>`;
+      else chip = `<span class="uchip ${pct2 > 0 ? "up" : "down"}" title="Mod sidste m\xE5ned p\xE5 samme tid">${pct2 > 0 ? "\u25B2" : "\u25BC"} ${this._fmt(Math.abs(pct2), 0)} %</span>`;
+    }
+    const todayUse = clean[today - 1];
+    const elapsed = (now - m0) / 864e5;
+    const proj = Number.isFinite(cost) && elapsed > 1.5 ? cost / elapsed * dim : Number.NaN;
+    const digits = unit === "m\xB3" ? 3 : 1;
+    const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m\xB3" ? todayUse * 1e3 : todayUse, unit === "m\xB3" ? 0 : 1)} ${unit === "m\xB3" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span>\u2248 <b>${this._fmt(proj, 0)} kr</b> i alt</span>` : ""}</div>`;
+    return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
+  }
   _robotRoom(robot) {
     const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
     if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
@@ -32819,6 +32894,13 @@ ${LUX_KEYFRAMES}
         .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(64px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:5px;min-width:0;padding:9px 10px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*{position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-8px;bottom:-8px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.room-name{min-width:0;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-badges{display:flex;align-items:center;gap:4px;flex:0 0 auto}.room-status{display:none;flex:0 0 auto;align-items:center;color:#fb923c}.room-status.heating,.room-status.presence{display:flex;animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.presence{color:var(--dashboard-accent,var(--info-color,#38bdf8))}.room-status ha-icon{--mdc-icon-size:14px}.room-body{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}.room-temp{flex:0 0 auto;margin-left:auto;font-size:20px;font-weight:900;line-height:1}.room-target{min-width:0;font-size:10px;line-height:1.25;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-target:empty,.room-target:has(>.marquee-track:empty){display:none}.room-target b{color:var(--room-accent);font-size:11px}@keyframes roomHeatPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
         .room-robot{position:absolute!important;z-index:3!important;left:0;top:24%;width:100%;height:calc(76% - 29px);pointer-events:none;animation:roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot-x{position:absolute;left:8%;top:0;width:calc(92% - 30px);height:0;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate}.room-robot-icon{position:absolute;left:0;top:0;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor)}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;width:22px;height:22px;offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot.outdoors .room-robot-x{left:0;width:22px;animation:none}.room-robot.outdoors .room-robot-icon{color:var(--success-color,#20e3a2)}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{transform:translateX(0)}to{transform:translateX(100%)}}@keyframes roomRobotY{from{transform:translateY(0)}to{transform:translateY(100%)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
         @keyframes summaryIconDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-11deg);opacity:.22}}
+        .utility-head{justify-content:flex-start}.uchip{margin-left:auto;padding:2px 7px;border-radius:999px;font-size:9.5px;font-weight:900;letter-spacing:.02em;text-transform:none;white-space:nowrap}
+        .uchip.up{color:#fb923c;background:color-mix(in srgb,#fb923c 15%,transparent)}.uchip.down{color:#20e3a2;background:color-mix(in srgb,#20e3a2 15%,transparent)}.uchip.same{color:var(--secondary-text-color,#a7b2c2);background:color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}
+        .use{align-items:flex-end}.ubars{display:flex;align-items:flex-end;gap:1.5px;flex:1;height:26px;margin-left:10px;min-width:0}
+        .ubars i{flex:1;min-width:1px;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--accent) 55%,transparent);transition:height .5s ease}
+        .ubars i.now{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:uNow 2.4s ease-in-out infinite}.ubars i.fut{background:color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}
+        @keyframes uNow{50%{opacity:.55}}
+        .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -32881,8 +32963,10 @@ ${LUX_KEYFRAMES}
       tile2.hidden = c2[utilityKeys[sel]] === "";
       if (tile2.hidden) return;
       tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
-      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}</div><div class="use"><b>${value}</b><span>${unit}</span></div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>`;
+      const x = this._utilMonth(c2[utilityKeys[sel]], c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
+      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">M\xE5nedspris<b>${cost} kr</b></div>${x.foot}`;
     };
+    this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
     utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
