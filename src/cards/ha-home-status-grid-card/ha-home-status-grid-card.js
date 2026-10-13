@@ -895,7 +895,7 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .item.security .meter{display:none}
       :host([v2]) .item.security .detail{display:block;position:static}
       :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;overflow:visible}
-      :host([v2]) .sec2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%}
+      :host([v2]) .sec2{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;width:100%}
       :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
       :host([v2]) .sec2 .sp.on{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 10px -3px var(--c);animation:secWarn 2s ease-in-out infinite}
       @keyframes secWarn{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}}
@@ -912,7 +912,7 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
-        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:9px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
@@ -976,7 +976,8 @@ class HaHomeStatusCard extends HTMLElement {
       const det = q.triggered ? "Alarmen er udløst" : q.hasError ? "En lås svarer ikke" : `${q.locked} af ${q.total} låst${open ? ` · ${open} åben${open > 1 ? "e" : ""}` : ""}`;
       const pill = (cls, c, inner, title) => `<span class="sp ${cls}" style="--c:${c}" title="${esc(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)"; const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc(name)}</b>`, `${brand}: ${name}`)).join("")
+      // Only the main alarm (user: "Du behøver ikke vise Ajax alarmen i det kort"); `show_secondary_alarm: true` adds it back.
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc(name)}</b>`, `${brand}: ${name}`)).join("")
         + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer åbne`)
         + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} døre åbne`);
       const d = this.shadowRoot.querySelector(".detail"); d._marqueeHtml = undefined; d.classList.remove("marquee"); d.textContent = det;
