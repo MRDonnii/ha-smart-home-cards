@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.98 */
+/* MRDonnii Smart Home Cards v0.5.99 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6948,7 +6948,13 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .pstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px}
       .ps{padding:4px 8px;border-radius:10px;background:color-mix(in srgb,var(--ev) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 22%,transparent)}
       .ps span{display:block;font-size:9px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps b{display:block;font-size:13px;font-weight:800;white-space:nowrap}.ps b small{font-size:10px;color:var(--muted)}.ps.g b{color:var(--good)}
-      .ph{gap:11px}.pstart{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}.pstart small{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.pstart b{font-size:24px;font-weight:850;color:var(--ev);text-shadow:0 0 16px color-mix(in srgb,var(--ev) 55%,transparent)}.pstart em{font-style:normal;font-size:10.5px;color:var(--muted)}
+      .ph{gap:11px}
+      .ring{position:relative;flex:none;width:44px;height:44px;border-radius:50%;padding:3px;
+        background:conic-gradient(var(--ev) calc(var(--s) * 1%),color-mix(in srgb,var(--ev) 32%,transparent) 0 calc(var(--t) * 1%),color-mix(in srgb,var(--primary-text-color) 10%,transparent) 0);
+        box-shadow:0 0 18px -6px var(--ev)}
+      .ring .core{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;color:color-mix(in srgb,var(--ev) 85%,#fff);
+        background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.14),transparent 55%),linear-gradient(160deg,#1d1f2b,#121319);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -6px 12px rgba(0,0,0,.35)}
+      .ring .core ha-icon{--mdc-icon-size:19px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ev) 60%,transparent))}.pstart{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}.pstart small{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.pstart b{font-size:24px;font-weight:850;color:var(--ev);text-shadow:0 0 16px color-mix(in srgb,var(--ev) 55%,transparent)}.pstart em{font-style:normal;font-size:10.5px;color:var(--muted)}
       .tl{position:relative;padding:2px 0 12px}.track{position:relative;height:10px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
       .tb{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(180deg,color-mix(in srgb,var(--ev) 95%,#fff),var(--ev));box-shadow:0 0 12px -1px var(--ev)}
       .nowdot{position:absolute;left:0;top:50%;width:12px;height:12px;margin:-6px 0 0 -2px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--ev) 45%,transparent);animation:nowPing 2s ease-out infinite}
@@ -7161,7 +7167,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       if (h % 6 === 0 && xx > 7 && (!p.deadline || Math.abs(xx - X(dlT)) > 16)) ticks.push(`<span class="tt" style="left:${X(t).toFixed(2)}%">${String(h).padStart(2, "0")}</span>`);
     }
     const dl2 = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
-    return `<div class="ph"><span class="pic"><ha-icon icon="mdi:calendar-clock"></ha-icon><em><ha-icon icon="mdi:lightning-bolt"></ha-icon></em></span>
+    return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
         <div class="pt"><b>Ladeplan \xB7 ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
         <div class="pstart"><small>${running ? "I gang" : "Starter"}</small><b>${running ? "nu" : hm(first.t)}</b><em>${esc(until2)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl2)}</span>` : ""}</div></div>
