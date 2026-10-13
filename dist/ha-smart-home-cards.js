@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.99 */
+/* MRDonnii Smart Home Cards v0.5.100 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -7188,7 +7188,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
     return `<div class="cg">
       <div class="batt"><div class="bfill" style="width:${Math.max(3, Math.min(100, soc))}%"><i class="flow"></i></div><i class="btarget" style="left:${Math.min(100, tg)}%"></i><span class="bsoc">${Math.round(soc)}<small>%</small></span><ha-icon class="bbolt" icon="mdi:lightning-bolt"></ha-icon></div>
-      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "\u2014"}</b><small>kW</small><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} lader</span></div>
+      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "\u2014"}</b><small>kW</small><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} ${c2.preview === "charge" ? "\xB7 forh\xE5ndsvisning" : "lader"}</span></div>
         <div class="cnums">${leftTxt ? `<span>Fuld om <b>${esc(leftTxt)}</b>${Number.isFinite(finT) ? ` \xB7 kl. ${hm(finT)}` : ""}</span>` : `<span>Mod <b>${Math.round(tg)} %</b></span>`}${added != null ? `<span>Ladet <b>+${this._fmt(added, 1)} kWh</b></span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save">Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div></div></div>`;
   }
   _tap() {
@@ -7219,9 +7219,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const plan = this._plan();
     const was = this._planOn;
     const wasKind = this._overlayKind;
-    const kind = charging && (c2.charge_plan || this._away()) ? "charge" : plan ? "plan" : null;
-    this._planOn = !!kind;
-    this._overlayKind = kind;
+    const kind = c2.preview === "charge" || charging && (c2.charge_plan || this._away()) ? "charge" : plan ? "plan" : null;
     if (kind) {
       const h = kind === "charge" ? this._chargeHtml(plan) : this._planHtml(plan);
       const box2 = root.querySelector(".plan");

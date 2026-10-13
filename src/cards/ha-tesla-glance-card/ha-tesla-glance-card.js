@@ -421,7 +421,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const leftTxt = left == null ? "" : left >= 60 ? `${Math.floor(left / 60)} t ${left % 60} min` : `${left} min`;
     return `<div class="cg">
       <div class="batt"><div class="bfill" style="width:${Math.max(3, Math.min(100, soc))}%"><i class="flow"></i></div><i class="btarget" style="left:${Math.min(100, tg)}%"></i><span class="bsoc">${Math.round(soc)}<small>%</small></span><ha-icon class="bbolt" icon="mdi:lightning-bolt"></ha-icon></div>
-      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "—"}</b><small>kW</small><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} lader</span></div>
+      <div class="cinfo"><div class="ckw"><b>${kw != null ? this._fmt(kw, 1) : "—"}</b><small>kW</small><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} ${c.preview === "charge" ? "· forhåndsvisning" : "lader"}</span></div>
         <div class="cnums">${leftTxt ? `<span>Fuld om <b>${esc(leftTxt)}</b>${Number.isFinite(finT) ? ` · kl. ${hm(finT)}` : ""}</span>` : `<span>Mod <b>${Math.round(tg)} %</b></span>`}${added != null ? `<span>Ladet <b>+${this._fmt(added, 1)} kWh</b></span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save">Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div></div></div>`;
   }
   _tap() {
@@ -454,7 +454,7 @@ class HATeslaGlanceCard extends HTMLElement {
     // While it charges the overlay is a charging card; otherwise the plan when one is active (user, 2026-10-13: "når den
     // går i gang med ladning skal ladeplan kortet skiftes ud med et ladningskort … først, men man kan swipe").
     const plan = this._plan(); const was = this._planOn; const wasKind = this._overlayKind;
-    const kind = charging && (c.charge_plan || this._away()) ? "charge" : plan ? "plan" : null; this._planOn = !!kind; this._overlayKind = kind;
+    const kind = c.preview === "charge" || (charging && (c.charge_plan || this._away())) ? "charge" : plan ? "plan" : null; // preview: charge|plan shows a view on demand this._planOn = !!kind; this._overlayKind = kind;
     if (kind) { const h = kind === "charge" ? this._chargeHtml(plan) : this._planHtml(plan); const box = root.querySelector(".plan"); box.classList.toggle("is-charge", kind === "charge"); if (box._h !== h) { box._h = h; box.innerHTML = h; } }
     if (kind && (!was || kind !== wasKind)) this._view = "plan"; // a new overlay is shown first
     this._paintView();
