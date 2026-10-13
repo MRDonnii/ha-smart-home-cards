@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.109 */
+/* MRDonnii Smart Home Cards v0.5.110 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -30112,7 +30112,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION23 = "1.3.0";
+var VERSION23 = "1.4.0";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -30606,6 +30606,58 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._observeLayout();
   }
   _fitMetrics() {
+  }
+  // Columns fill the page (user: "bredere så de passer med at fylde siden ud ... selv justere men have en minimum
+  // bredde"): as many columns as tile_min_width (default 340 px) allows, or one fewer when that leaves a cleaner last row;
+  // the measuring points fill the cells after the last room, two stacked per cell (four when only one cell is free).
+  _layoutTiles() {
+    const grid = this._zonesEl, block = this._tilesEl;
+    if (!grid?.isConnected) return;
+    const width = grid.clientWidth;
+    if (!width) return;
+    if (width <= 560) {
+      grid.style.gridTemplateColumns = "";
+      if (block) {
+        block.dataset.layout = "";
+        block.removeAttribute("style");
+      }
+      return;
+    }
+    const gap = 16, min = Math.max(220, Number(this._config.tile_min_width) || 340);
+    const zones = grid.children.length - (block ? 1 : 0), sensors = block ? block.children.length : 0;
+    const maxCols = Math.max(1, Math.floor((width + gap) / (min + gap)));
+    let best;
+    for (let cols2 = maxCols; cols2 >= Math.max(1, maxCols - 2); cols2--) {
+      const used = zones % cols2, empty2 = used ? cols2 - used : 0;
+      let score = (maxCols - cols2) * 0.6;
+      if (!sensors) score += empty2 ? 1 : 0;
+      else if (empty2) {
+        const need = Math.ceil(sensors / 2);
+        score += sensors > empty2 * 4 ? 9 : Math.abs(empty2 - need) * (empty2 < need ? 0.8 : 1);
+      } else score += sensors % cols2 ? 1.2 : 0.4;
+      if (!best || score < best.score) best = { cols: cols2, empty: empty2, score };
+    }
+    const { cols, empty } = best;
+    const tracks = `repeat(${cols}, minmax(0, 1fr))`;
+    if (grid.style.gridTemplateColumns !== tracks) grid.style.gridTemplateColumns = tracks;
+    if (!block) return;
+    let span = cols, columns = Math.min(sensors, cols), rows = 0;
+    if (empty && sensors <= empty * 2) {
+      span = empty;
+      columns = Math.ceil(sensors / 2);
+      rows = 2;
+    } else if (empty && sensors <= empty * 4) {
+      span = empty;
+      columns = Math.ceil(sensors / 2);
+      rows = 2;
+    }
+    const layout = `${span}|${columns}|${rows}`;
+    if (block.dataset.layout === layout) return;
+    block.dataset.layout = layout;
+    block.style.gridColumn = `span ${span}`;
+    block.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+    block.style.gridTemplateRows = rows ? "repeat(2, minmax(0, 1fr))" : "";
+    block.style.gridAutoFlow = rows ? "column" : "row";
   }
   _renderRoom(index, model) {
     const refs = this._refs[index];

@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -447,6 +447,42 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   }
 
   _fitMetrics() { /* the gauges have room for their values */ }
+
+  // Columns fill the page (user: "bredere så de passer med at fylde siden ud ... selv justere men have en minimum
+  // bredde"): as many columns as tile_min_width (default 340 px) allows, or one fewer when that leaves a cleaner last row;
+  // the measuring points fill the cells after the last room, two stacked per cell (four when only one cell is free).
+  _layoutTiles() {
+    const grid = this._zonesEl, block = this._tilesEl;
+    if (!grid?.isConnected) return;
+    const width = grid.clientWidth; if (!width) return;
+    if (width <= 560) { grid.style.gridTemplateColumns = ""; if (block) { block.dataset.layout = ""; block.removeAttribute("style"); } return; }
+    const gap = 16, min = Math.max(220, Number(this._config.tile_min_width) || 340);
+    const zones = grid.children.length - (block ? 1 : 0), sensors = block ? block.children.length : 0;
+    const maxCols = Math.max(1, Math.floor((width + gap) / (min + gap)));
+    let best;
+    for (let cols = maxCols; cols >= Math.max(1, maxCols - 2); cols--) {
+      const used = zones % cols, empty = used ? cols - used : 0;
+      let score = (maxCols - cols) * 0.6;
+      if (!sensors) score += empty ? 1 : 0;
+      else if (empty) { const need = Math.ceil(sensors / 2); score += sensors > empty * 4 ? 9 : Math.abs(empty - need) * (empty < need ? 0.8 : 1); }
+      else score += sensors % cols ? 1.2 : 0.4;
+      if (!best || score < best.score) best = { cols, empty, score };
+    }
+    const { cols, empty } = best;
+    const tracks = `repeat(${cols}, minmax(0, 1fr))`;
+    if (grid.style.gridTemplateColumns !== tracks) grid.style.gridTemplateColumns = tracks;
+    if (!block) return;
+    let span = cols, columns = Math.min(sensors, cols), rows = 0;
+    if (empty && sensors <= empty * 2) { span = empty; columns = Math.ceil(sensors / 2); rows = 2; }
+    else if (empty && sensors <= empty * 4) { span = empty; columns = Math.ceil(sensors / 2); rows = 2; }
+    const layout = `${span}|${columns}|${rows}`;
+    if (block.dataset.layout === layout) return;
+    block.dataset.layout = layout;
+    block.style.gridColumn = `span ${span}`;
+    block.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+    block.style.gridTemplateRows = rows ? "repeat(2, minmax(0, 1fr))" : "";
+    block.style.gridAutoFlow = rows ? "column" : "row";
+  }
 
   _renderRoom(index, model) {
     const refs = this._refs[index]; if (!refs) return;
