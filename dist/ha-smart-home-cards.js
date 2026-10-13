@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.116 */
+/* MRDonnii Smart Home Cards v0.5.117 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -33411,7 +33411,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION27 = "1.0.0";
+var VERSION27 = "1.0.3";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -34507,15 +34507,14 @@ var HaHomeSummaryCard = class extends HTMLElement {
       const hi = Math.max(...all) + 0.3;
       const Y = (v) => 38 - (v - lo) / (hi - lo) * 34;
       const line = pts.map((v, k) => `${k ? "L" : "M"}${(k / (pts.length - 1) * 100).toFixed(2)} ${Y(v).toFixed(2)}`).join("");
-      curve = `<svg class="rt-curve" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="${line}L100 40L0 40Z"/><path class="l" d="${line}"/>${Number.isFinite(goal) ? `<line class="g" x1="0" x2="100" y1="${Y(goal).toFixed(2)}" y2="${Y(goal).toFixed(2)}"/>` : ""}</svg><i class="rt-dot" style="top:calc(100% - ${((40 - Y(pts[pts.length - 1])) / 40 * 100).toFixed(1)}% * var(--ch))"></i>`;
+      curve = `<div class="rt-cw"><svg class="rt-curve" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="${line}L100 40L0 40Z"/><path class="l" d="${line}"/>${Number.isFinite(goal) ? `<line class="g" x1="0" x2="100" y1="${Y(goal).toFixed(2)}" y2="${Y(goal).toFixed(2)}"/>` : ""}</svg><i class="rt-dot" style="top:${(Y(pts[pts.length - 1]) / 40 * 100).toFixed(1)}%"></i></div>`;
     }
     const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
     const sub = [Number.isFinite(r.humidity) ? `${f(r.humidity, 0)} %` : "", Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "m\xE5l"} ${f(r.target)}\xB0` : ""].filter(Boolean).join(" \xB7 ");
+    const act = icons.map(([cls, ic, t]) => `<span class="${cls}" title="${this._esc(t)}"><ha-icon icon="${ic}"></ha-icon></span>`).join("");
     return `<div class="rt s-${st}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}">
-      ${curve}<div class="rt-top"><span class="rt-ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span>
-      <span class="rt-nm"><b>${this._esc(room.name)}</b><em><i></i>${this._esc(status)}</em></span>
-      </div><div class="rt-mid"><span class="rt-t"><b>${f(r.temp)}<small>\xB0</small>${trend}</b></span><small class="rt-sub">${this._esc(sub)}</small></div>
-      ${icons.length ? `<div class="rt-act">${icons.map(([cls, ic, t]) => `<span class="${cls}" title="${this._esc(t)}"><ha-icon icon="${ic}"></ha-icon></span>`).join("")}</div>` : ""}</div>`;
+      <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div>
+      <div class="rt-r2"><em><i></i>${this._esc(status)}</em>${act ? `<span class="rt-act">${act}</span>` : ""}<small class="rt-sub">${this._esc(sub)}</small></div></div>`;
   }
   _roomInfo(room) {
     const cl = this._state(room.climate);
@@ -35082,7 +35081,7 @@ ${LUX_KEYFRAMES}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
         .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel.vc .rooms{display:block;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
-        .rooms .rt{--sc:#20e3a2;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:9px 10px 8px;border-radius:16px;cursor:pointer;--ch:.5;
+        .rooms .rt{--sc:#20e3a2;container-type:inline-size;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:8px 10px 8px;border-radius:16px;cursor:pointer;--ch:.5;
           background:radial-gradient(130% 120% at 0% 0%,color-mix(in srgb,var(--sc) 16%,transparent),transparent 60%),var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));
           box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15))),inset 0 0 0 1px color-mix(in srgb,var(--sc) 20%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}
         .rooms .rt::before{content:"";position:absolute;left:14%;right:14%;top:0;height:2px;border-radius:0 0 2px 2px;background:var(--sc);box-shadow:0 0 12px var(--sc);opacity:.85}
@@ -35095,15 +35094,23 @@ ${LUX_KEYFRAMES}
         .rt-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.rt-nm b{font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-nm em{display:flex;align-items:center;gap:4px;font-style:normal;font-size:8.5px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-nm em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
-        .rt-mid{position:relative;z-index:1;display:flex;align-items:baseline;gap:7px;margin-top:3px}.rt-sub{font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rt-t{flex:none;display:flex;line-height:1}.rt-t b{display:flex;align-items:flex-start;font-size:24px;text-shadow:0 1px 6px rgba(0,0,0,.4);font-weight:850;letter-spacing:-.02em}.rt-t b small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
+        .rt-mid{position:relative;z-index:1;display:flex;align-items:baseline;gap:7px;margin-top:4px;min-width:0}.rt-sub{font-size:9.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rt-t{flex:none;display:flex;flex-direction:column;align-items:flex-end;line-height:1;gap:2px}.rt-t b{display:flex;align-items:flex-start;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.4);font-weight:850;letter-spacing:-.02em}.rt-t b small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
         .rt-t>small{margin-top:3px;font-size:9.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}
         .rt-tr{--mdc-icon-size:13px;margin-left:1px}.rt-tr.up{color:#ff8a3d}.rt-tr.dn{color:#4fb3ff}
-        .rt-act{position:absolute;z-index:1;right:8px;top:9px;display:flex;gap:3px}.rt-act span{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(10,12,18,.45);backdrop-filter:blur(4px);color:var(--secondary-text-color,#a7b2c2)}.rt-act ha-icon{--mdc-icon-size:13px}
+        .rt-act{position:absolute;z-index:2;left:48px;bottom:5px;display:flex;gap:3px}.rt-act span{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(10,12,18,.45);backdrop-filter:blur(4px);color:var(--secondary-text-color,#a7b2c2)}.rt-act ha-icon{--mdc-icon-size:13px}
         .rt-act .pres{color:#20e3a2}.rt-act .heat{color:#ff8a3d;animation:roomHeatPulse 1.6s ease-in-out infinite}.rt-act .ac.on{color:#4fb3ff;animation:roomHeatPulse 1.8s ease-in-out infinite}.rt-act .open{color:#a78bfa}.rt-act .bat{color:#ef4444}
-        .rt-curve{position:absolute;left:0;right:0;bottom:0;z-index:0;width:100%;height:calc(var(--ch) * 100%);pointer-events:none}
+        .rt-cw{position:relative;flex:1 1 0;min-height:0;margin:5px -10px -8px;border-top:1px solid color-mix(in srgb,var(--sc) 10%,transparent)}.rt-curve{position:absolute;inset:3px 0 0 0;width:100%;height:calc(100% - 3px);pointer-events:none}
         .rt-curve .a{fill:color-mix(in srgb,var(--sc) 18%,transparent)}.rt-curve .l{fill:none;stroke:var(--sc);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 60%,transparent))}
         .rt-curve .g{stroke:rgba(255,255,255,.4);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
-        .rt-dot{position:absolute;right:-4px;z-index:0;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--sc),0 0 10px var(--sc);pointer-events:none}
+        .rt-dot{position:absolute;right:3px;z-index:1;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--sc),0 0 10px var(--sc);pointer-events:none}
+        @container (max-width:200px){.rt-r2 .rt-sub{display:none}}
+        .rooms .rt{justify-content:center;gap:5px;padding:8px 11px}
+        .rt-r1{display:flex;align-items:baseline;gap:8px;min-width:0}.rt-n{flex:1;min-width:0;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-v{flex:none;display:flex;align-items:flex-start;font-size:23px;font-weight:850;line-height:1;letter-spacing:-.02em}.rt-v small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
+        .rt-r2{display:flex;align-items:center;gap:6px;min-width:0}
+        .rt-r2 em{display:flex;align-items:center;gap:4px;min-width:0;font-style:normal;font-size:9px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-r2 em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
+        .rt-r2 .rt-act{position:static;display:flex;gap:3px;flex:none}.rt-r2 .rt-sub{margin-left:auto;flex:none;font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}
         @media(prefers-reduced-motion:reduce){.rt.s-heat,.rt-act span{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
@@ -35127,7 +35134,7 @@ ${LUX_KEYFRAMES}
         @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}.card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}.card.portrait .event{padding:5px 0}}
         @media(max-width:700px){.utilities{grid-template-columns:1fr}.body{grid-template-columns:1fr}.card{padding:14px}}
         ${MARQUEE_CSS}
-      </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}"><header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header><div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
+      </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}">${this.config.show_header === false ? "" : `<header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header>`}<div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
       const navigate = (path) => {
         if (!path) return;
         history.pushState(null, "", path);
@@ -35162,10 +35169,11 @@ ${LUX_KEYFRAMES}
     const co2 = this._num(c2.co2_entity);
     const diskProblem = (c2.hdd_entities || []).some((id) => this._state(id)?.state === "on");
     const healthy = !diskProblem && (!Number.isFinite(co2) || co2 < 1e3);
-    this.shadowRoot.querySelector(".title").textContent = c2.title;
+    const ttl = this.shadowRoot.querySelector(".title");
+    if (ttl) ttl.textContent = c2.title;
     const card = this.shadowRoot.querySelector(".card");
     card.style.setProperty("--summary-status", healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)");
-    const health = this.shadowRoot.querySelector(".health");
+    const health = this.shadowRoot.querySelector(".health") || document.createElement("span");
     health.textContent = healthy ? "Alt ser normalt ud" : "Kr\xE6ver opm\xE6rksomhed";
     health.style.color = healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)";
     const utilityKeys = { ".electricity": "monthly_energy_entity", ".water": "water_month_entity", ".heat": "heat_month_entity" };
