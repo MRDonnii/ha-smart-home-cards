@@ -1,4 +1,4 @@
-const VERSION = "0.4.1";
+const VERSION = "0.4.2";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -199,7 +199,9 @@ class HAPersonOverviewCard extends HTMLElement {
       + ".pv2.mini .av{width:46px;height:46px;box-shadow:0 0 0 2.5px var(--pc),0 0 0 5px color-mix(in srgb,var(--pc) 16%,transparent),0 6px 16px -6px var(--pc)}.pv2.mini .tx{gap:2px;min-width:0}.pv2.mini .tx b{font-size:14.5px;padding-right:38px}.pv2.mini .st{font-size:10px;padding:1px 7px 1px 6px}.pv2.mini small{font-size:10.5px}"
       + ".pv2.mini .bat{position:absolute;top:8px;right:8px;flex-direction:row;align-items:center;gap:3px}.pv2.mini .bb{width:18px;height:9px;padding:1.5px}.pv2.mini .bb::after{top:2.5px;height:4px}.pv2.mini .bat b{font-size:10px}.pv2.mini .bat ha-icon{--mdc-icon-size:11px;margin:0}"
       + "@media(min-width:1101px) and (max-height:950px){.pv2.mini{padding:5px 8px;gap:8px}.pv2.mini .av{width:40px;height:40px}.pv2.mini .tx b{font-size:13.5px}}"
-      + "@media(max-width:600px){.combo{gap:2px;padding:6px 4px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:5px 2px 6px;gap:4px}.pv2.mini .av{width:38px;height:38px;font-size:15px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{padding-right:0;font-size:12.5px}.pv2.mini .st{font-size:9px;padding:1px 6px 1px 5px;gap:4px}.pv2.mini small{display:none}"
+      // Phones: a strip – portrait (its ring is the status colour), the name, and the battery; the status chip and place go
+      // (user, 2026-10-13: "person kort på mobilen … så det hele kan være der").
+      + "@media(max-width:600px){.combo{gap:0;padding:5px 3px}.pv2.mini{grid-template-columns:1fr;justify-items:center;text-align:center;padding:4px 2px;gap:3px}.pv2.mini .av{width:36px;height:36px;font-size:14px}.pv2.mini .tx{align-items:center}.pv2.mini .tx b{padding-right:0;font-size:12px}.pv2.mini .st,.pv2.mini small{display:none}"
       + ".pv2.mini .bat{position:static;grid-row:auto;justify-content:center;margin-top:-1px}.pv2.mini .bb{width:16px;height:8px}.pv2.mini .bat b{font-size:9.5px}}"
       + "@media(prefers-reduced-motion:reduce){.pv2 .st i,.pv2 .bat.chg .bb i{animation:none}}";
     this.shadowRoot.append(viewportStyle);

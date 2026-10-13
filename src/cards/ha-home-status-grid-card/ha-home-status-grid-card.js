@@ -915,6 +915,22 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
         :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:9px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
+      /* compact: a low tile (user, 2026-10-13: "hund, alarm og indstillinger lidt mindre") – chip, value and ring on one line,
+         the detail under the value; only the security tile keeps its pill row. */
+      :host([v2][compact]) .item{height:100%;min-height:62px;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
+      :host([v2][compact]) .chip{width:30px;height:30px;border-radius:10px}:host([v2][compact]) .chip ha-icon{--mdc-icon-size:17px}
+      :host([v2][compact]) .ring{width:30px;height:30px}
+      :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:16px;line-height:18px}
+      :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:10.5px}
+      :host([v2][compact]) .item:not(.security) .label{display:none}
+      :host([v2][compact]) .item.security .label{grid-row:3;margin-top:5px;padding-top:4px}
+      :host([v2][compact]) .item.security .value{grid-row:1}
+      @media(max-width:600px){:host([v2][compact]) .item{min-height:58px;padding:7px 7px;grid-template-columns:24px minmax(0,1fr) 24px;grid-template-rows:auto auto;column-gap:6px}
+        :host([v2][compact]) .chip{grid-row:1/3;width:24px;height:24px;border-radius:8px}:host([v2][compact]) .chip ha-icon{--mdc-icon-size:14px}
+        :host([v2][compact]) .ring{grid-row:1/3;grid-column:3;width:24px;height:24px}
+        :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:13.5px;line-height:16px}
+        :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:9.5px}
+        :host([v2][compact]) .item.security .label{grid-column:1/-1;grid-row:3}}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
@@ -972,7 +988,7 @@ class HaHomeStatusCard extends HTMLElement {
       .setAttribute("icon", item.icon || "mdi:information-outline");
     // v2 follows `style_entity` (an input_boolean, on = new look) or `style: v2`.
     const v2 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
-    this.toggleAttribute("v2", v2);
+    this.toggleAttribute("v2", v2); this.toggleAttribute("compact", this.config.compact === true);
     if (v2 && item.type === "security" && item.secV2) {
       const q = item.secV2; const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udløst" : q.hasError ? "En lås svarer ikke" : `${q.locked} af ${q.total} låst${open ? ` · ${open} åben${open > 1 ? "e" : ""}` : ""}`;
