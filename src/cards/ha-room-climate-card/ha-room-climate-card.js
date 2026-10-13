@@ -13,7 +13,7 @@
  */
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -149,7 +149,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .qa{position:relative;display:grid;place-items:center;flex:0 0 40px;height:40px;padding:0;border:0;border-radius:14px;overflow:hidden;cursor:pointer;color:var(--rc-muted);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .15s ease,background .2s ease}
 .qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:19px}
 .qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 14px -5px var(--rc-ok)}
-.qa.light{flex:1;min-width:0;display:flex;justify-content:flex-start;gap:8px;padding:0 13px;font-size:12.5px;font-weight:800;white-space:nowrap}
+.qa.light{flex:1;min-width:84px;display:flex;justify-content:flex-start;gap:8px;padding:0 13px;font-size:12.5px;font-weight:800;white-space:nowrap}
 .qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.16),rgba(255,190,110,.42));transition:width .4s ease}
 .qa.light span{position:relative}.qa.light.on{color:#ffd28a;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5),0 0 18px -8px rgba(255,190,110,.9)}
 .qa.more{flex:0 0 auto;display:flex;gap:6px;padding:0 13px;color:var(--rc-accent);font-size:12px;font-weight:800;background:color-mix(in srgb,var(--rc-accent) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-accent) 40%,transparent)}
@@ -511,7 +511,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       const acts = [];
       const l = st(info?.light);
       if (l) { const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? pct(l) : 0}%" title="Tænd/sluk lys"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct(l)} %` : "Fra"}</span></button>`); }
-      (info?.actions || []).slice(0, 3).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || s2.attributes?.friendly_name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
+      (info?.actions || []).slice(0, 2).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || s2.attributes?.friendly_name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
       if (r.controls) acts.push(`<button type="button" class="qa more" data-ctl="${i}" title="Styring"><ha-icon icon="mdi:tune-variant"></ha-icon><span>Styring</span></button>`);
       const html = (chips.length ? `<div class="chips">${chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("")}</div>` : "") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
       if (host._h !== html) { host._h = html; host.innerHTML = html; }

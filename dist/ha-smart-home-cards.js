@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.106 */
+/* MRDonnii Smart Home Cards v0.5.107 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -30112,7 +30112,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION23 = "1.0.0";
+var VERSION23 = "1.0.1";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -30247,7 +30247,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .qa{position:relative;display:grid;place-items:center;flex:0 0 40px;height:40px;padding:0;border:0;border-radius:14px;overflow:hidden;cursor:pointer;color:var(--rc-muted);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .15s ease,background .2s ease}
 .qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:19px}
 .qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 14px -5px var(--rc-ok)}
-.qa.light{flex:1;min-width:0;display:flex;justify-content:flex-start;gap:8px;padding:0 13px;font-size:12.5px;font-weight:800;white-space:nowrap}
+.qa.light{flex:1;min-width:84px;display:flex;justify-content:flex-start;gap:8px;padding:0 13px;font-size:12.5px;font-weight:800;white-space:nowrap}
 .qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.16),rgba(255,190,110,.42));transition:width .4s ease}
 .qa.light span{position:relative}.qa.light.on{color:#ffd28a;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5),0 0 18px -8px rgba(255,190,110,.9)}
 .qa.more{flex:0 0 auto;display:flex;gap:6px;padding:0 13px;color:var(--rc-accent);font-size:12px;font-weight:800;background:color-mix(in srgb,var(--rc-accent) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-accent) 40%,transparent)}
@@ -30685,7 +30685,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
         const on = l.state === "on";
         acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? pct2(l) : 0}%" title="T\xE6nd/sluk lys"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct2(l)} %` : "Fra"}</span></button>`);
       }
-      (info?.actions || []).slice(0, 3).forEach((x) => {
+      (info?.actions || []).slice(0, 2).forEach((x) => {
         const s2 = st(x.entity);
         if (!s2) return;
         const on = ["on", "playing", "paused"].includes(s2.state);
