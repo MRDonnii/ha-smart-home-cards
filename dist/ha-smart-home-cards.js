@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.102 */
+/* MRDonnii Smart Home Cards v0.5.103 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9579,7 +9579,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.5.2";
+var VERSION11 = "0.5.3";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9700,7 +9700,7 @@ var HAACClimateCard = class extends HTMLElement {
     return PROGRAM_LABELS[k] || String(v ?? "").replace(/_/g, " ").replace(/^./, (c2) => c2.toUpperCase());
   }
   _extras(unit, s, part) {
-    const status = this._entity(unit.status), statusKey = status?.state, waiting = WAITING.includes(statusKey), next = this._nextText(unit.next_change), release = this._exists(unit.release), program = this._entity(unit.program), options = Array.isArray(program?.attributes?.options) ? program.attributes.options : [], online = this._entity(unit.online), offline = online && online.state === "off", follow = this._entity(unit.follow_me), outdoor = this._num(unit.outdoor), unitTemp = this._num(unit.unit_temp), filter = this._num(unit.filter_hours);
+    const status = this._entity(unit.status), statusKey = status?.state, waiting = WAITING.includes(statusKey), next = this._nextText(unit.next_change), release = this._exists(unit.release), selectProgram = this._entity(unit.program), climateObj = selectProgram ? void 0 : this._entity(unit.unit || unit.climate), program = selectProgram || (climateObj ? { state: climateObj.attributes?.preset_mode } : void 0), options = selectProgram ? Array.isArray(selectProgram.attributes?.options) ? selectProgram.attributes.options : [] : Array.isArray(climateObj?.attributes?.preset_modes) ? climateObj.attributes.preset_modes : [], online = this._entity(unit.online), offline = online && online.state === "off", follow = this._entity(unit.follow_me), outdoor = this._num(unit.outdoor), unitTemp = this._num(unit.unit_temp), filter = this._num(unit.filter_hours);
     let out = "";
     if (part === "status" && (status || next || release || offline)) {
       out += `<div class="ctl-status ${waiting ? "waiting" : ""} ${offline ? "offline" : ""}"><div><span>Termostat</span><strong>${this._escape(offline ? "Anl\xE6gget svarer ikke" : this._statusText(unit.status) || "\u2014")}</strong>${next ? `<em>${this._escape(next)}</em>` : ""}</div>${release ? `<button class="release ${waiting ? "ready" : ""}" data-action="release" title="Frigiv: fjern ventetider og pauser"><ha-icon icon="mdi:play-circle-outline"></ha-icon><span>Frigiv</span></button>` : ""}</div>`;
@@ -9757,8 +9757,12 @@ var HAACClimateCard = class extends HTMLElement {
         await this._hass.callService("switch", "toggle", { entity_id: unit.follow_me });
         return;
       }
-      if (program !== void 0 && unit.program) {
+      if (program !== void 0 && unit.program && this._entity(unit.program)) {
         await this._hass.callService("select", "select_option", { entity_id: unit.program, option: program });
+        return;
+      }
+      if (program !== void 0) {
+        await this._hass.callService("climate", "set_preset_mode", { entity_id: unit.unit || unit.climate, preset_mode: program });
         return;
       }
     } catch (error) {
