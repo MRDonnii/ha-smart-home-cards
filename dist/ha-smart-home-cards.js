@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.120 */
+/* MRDonnii Smart Home Cards v0.5.121 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -9579,7 +9579,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.6.0";
+var VERSION11 = "0.6.1";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9779,16 +9779,17 @@ var HAACClimateCard = class extends HTMLElement {
     const modes = Array.isArray(s.climate?.attributes?.hvac_modes) ? s.climate.attributes.hvac_modes : MODES.map((m) => m.id);
     const shown = MODES.filter((m) => modes.includes(m.id));
     const modeRow = shown.map((m) => `<button class="seg ${s.mode === m.id ? "on" : ""}" data-mode="${m.id}"><ha-icon icon="${m.icon}"></ha-icon><span>${m.label}</span></button>`).join("");
-    const fanRow = s.fans.map((f) => `<button class="chip ${f === s.fan ? "on" : ""}" data-fan-mode="${this._esc(f)}">${this._esc(this._label(FAN_LABELS, f))}</button>`).join("");
+    const opt = (v, cur, map) => `<option value="${this._esc(v)}" ${v === cur ? "selected" : ""}>${this._esc(this._label(map, v))}</option>`;
+    const dropdown = (kind, icon3, label, values, cur, map) => values.length ? `<label class="dd"><span><ha-icon icon="${icon3}"></ha-icon>${label}</span><div class="dd-box"><select data-select="${kind}">${values.map((v) => opt(v, cur, map)).join("")}</select><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div></label>` : "";
     const select = this._entity(unit.program);
     const climateObj = select ? void 0 : this._entity(unit.unit || unit.climate);
     const options = select ? select.attributes?.options || [] : climateObj?.attributes?.preset_modes || [];
     const current = select ? select.state : climateObj?.attributes?.preset_mode;
-    const progRow = options.map((o) => `<button class="chip ${o === current ? "on" : ""}" data-program="${this._esc(o)}">${this._esc(this._label(PROGRAM_LABELS, o))}</button>`).join("");
+    const fanDd = dropdown("fan", "mdi:fan", "Bl\xE6ser", s.fans, s.fan, FAN_LABELS);
+    const progDd = dropdown("program", "mdi:tune-variant", "Program", options, current, PROGRAM_LABELS);
     return `<section class="controls">
       <div class="segs" style="--n:${shown.length}">${modeRow}</div>
-      ${fanRow ? `<div class="row"><span class="lbl"><ha-icon icon="mdi:fan"></ha-icon>Bl\xE6ser</span><div class="chips">${fanRow}</div></div>` : ""}
-      ${progRow ? `<div class="row"><span class="lbl"><ha-icon icon="mdi:tune-variant"></ha-icon>Program</span><div class="chips">${progRow}</div></div>` : ""}
+      ${fanDd || progDd ? `<div class="dds">${fanDd}${progDd}</div>` : ""}
     </section>`;
   }
   _live(unit, s) {
@@ -9943,6 +9944,14 @@ var HAACClimateCard = class extends HTMLElement {
         ev.stopPropagation();
         this._action(unit, button);
       }));
+      article.querySelectorAll("select").forEach((select) => {
+        select.addEventListener("click", (ev) => ev.stopPropagation());
+        select.addEventListener("change", (ev) => {
+          ev.stopPropagation();
+          const value = select.value;
+          this._action(unit, { dataset: select.dataset.select === "fan" ? { fanMode: value } : { program: value } });
+        });
+      });
     });
   }
 };
@@ -9985,6 +9994,14 @@ h3{margin:0 0 6px;font-size:19px;letter-spacing:-.02em}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{padding:6px 11px;border:1px solid var(--edge);border-radius:999px;background:rgba(255,255,255,.03);color:var(--secondary-text-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .chip.on{border-color:color-mix(in srgb,var(--tone) 55%,transparent);background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone)}
+.dds{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.dd{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dd>span{display:flex;align-items:center;gap:5px;color:var(--secondary-text-color);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.dd>span ha-icon{--mdc-icon-size:15px}
+.dd-box{position:relative}
+.dd select{width:100%;appearance:none;-webkit-appearance:none;padding:10px 36px 10px 12px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--edge));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,var(--tone) 10%,transparent),rgba(0,0,0,.12));color:var(--primary-text-color);font:inherit;font-size:14px;font-weight:700;cursor:pointer;color-scheme:dark}
+.dd select:focus{outline:2px solid var(--tone);outline-offset:1px}
+.dd option{background:var(--surface,#121a24);color:var(--primary-text-color)}
+.dd .chev{position:absolute;right:10px;top:50%;transform:translateY(-50%);--mdc-icon-size:18px;color:var(--tone);pointer-events:none}
 .live{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:7px}
 .tile{display:flex;align-items:center;gap:8px;min-height:56px;padding:9px 11px;border:1px solid var(--edge);border-radius:14px;background:rgba(0,0,0,.1)}
 .tile>ha-icon{--mdc-icon-size:19px;color:var(--tone)}.tile>div{min-width:0;flex:1}
