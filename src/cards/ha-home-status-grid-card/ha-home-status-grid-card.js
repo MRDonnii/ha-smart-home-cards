@@ -1527,7 +1527,8 @@ ${LUX_KEYFRAMES}
       this.shadowRoot.querySelector(".utility.water").onclick=()=>navigate(this.config.water_path);
       this.shadowRoot.querySelector(".utility.heat").onclick=()=>navigate(this.config.heat_path);
       const roomsEl=this.shadowRoot.querySelector(".rooms");
-      const openRoom=(e)=>{const t=e.target.closest(".room[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
+      // Varme Center rooms open their own heating popup; the panel link to the rooms page must not fire (user, 2026-10-13).
+      const openRoom=(e)=>{if(roomsEl._vc){e.preventDefault();return;}const t=e.target.closest(".room[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
       roomsEl.addEventListener("click",openRoom);
       roomsEl.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openRoom(e);});
       this._rendered = true;

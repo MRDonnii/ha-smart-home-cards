@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.92 */
+/* MRDonnii Smart Home Cards v0.5.93 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -33419,6 +33419,10 @@ ${LUX_KEYFRAMES}
       this.shadowRoot.querySelector(".utility.heat").onclick = () => navigate(this.config.heat_path);
       const roomsEl = this.shadowRoot.querySelector(".rooms");
       const openRoom = (e) => {
+        if (roomsEl._vc) {
+          e.preventDefault();
+          return;
+        }
         const t = e.target.closest(".room[data-room]");
         if (!t) return;
         e.preventDefault();
