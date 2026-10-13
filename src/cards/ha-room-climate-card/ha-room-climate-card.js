@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -69,8 +69,11 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .zone:hover,.tile:hover{transform:translateY(-3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px color-mix(in srgb,var(--room-color) 34%,rgba(255,255,255,.06)),0 28px 54px -24px rgba(0,0,0,.9),0 0 40px -22px var(--room-color)}
 .zone:focus-visible,.tile:focus-visible{outline:2px solid var(--rc-accent);outline-offset:3px}
 .zone .mark{position:absolute;right:-34px;bottom:58px;z-index:-1;--mdc-icon-size:170px;width:170px;height:170px;color:var(--room-color);opacity:.035;pointer-events:none}
-.zone .sheen{position:absolute;left:0;right:0;top:0;height:2px;z-index:1;background:linear-gradient(90deg,transparent,var(--room-color),transparent);opacity:0;pointer-events:none}
-.zone.is-heating .sheen,.zone.is-ac .sheen{opacity:.9;background-size:200% 100%;background-image:linear-gradient(90deg,transparent 0 30%,var(--rc-hot2) 45%,var(--room-color) 55%,transparent 70% 100%);animation:sheen 2.8s linear infinite}
+/* A light that runs around the tile's edge while the room heats or the AC runs (user: "løbe rundt ... ligesom navbaren"). */
+.zone .sheen{position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1.6px;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .4s ease;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.zone .sheen::before{content:"";position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;translate:-50% -50%;background:conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--room-color) 40%,transparent) 76%,var(--glow2,var(--room-color)) 88%,#fff 91%,var(--room-color) 94%,transparent 100%);animation:orbit 4.5s linear infinite}
+.zone.is-heating .sheen{opacity:1;--glow2:var(--rc-hot2)}.zone.is-ac .sheen{opacity:1}
 
 .z-head{display:flex;align-items:center;gap:12px;padding:18px 18px 0;min-width:0}
 .z-icon{position:relative;flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:16px;color:var(--room-color);
@@ -139,8 +142,10 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 /* room dock */
 .z-room{display:none}
 .zone.has-room .z-room{display:flex;flex-direction:column;gap:9px;padding:12px 14px 14px;background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.26));box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.rc{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:4px 10px 4px 7px;overflow:hidden;border-radius:99px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:rgba(255,255,255,.06);white-space:nowrap;text-overflow:ellipsis}
+.chips{overflow:hidden;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent)}
+.chips:not(.mq){-webkit-mask:none;mask:none}
+.ct{display:inline-flex;gap:6px;white-space:nowrap}.chips.mq .ct{animation:chipScroll var(--cdur,8s) ease-in-out infinite alternate}
+.rc{flex:none;display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 7px;overflow:hidden;border-radius:99px;font-size:10.5px;font-weight:750;color:var(--rc-muted);background:rgba(255,255,255,.06);white-space:nowrap;text-overflow:ellipsis}
 .rc ha-icon{flex:none;--mdc-icon-size:14px}
 .rc.on{color:color-mix(in srgb,var(--rc-ok) 85%,var(--rc-ink));background:color-mix(in srgb,var(--rc-ok) 14%,transparent)}
 .rc.lit{color:#ffc46b;background:rgba(255,190,110,.13)}.rc.lit ha-icon{filter:drop-shadow(0 0 5px rgba(255,190,110,.7))}
@@ -219,7 +224,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 8px transparent}}
 @keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
-@keyframes sheen{from{background-position:200% 0}to{background-position:-100% 0}}
+@keyframes orbit{to{rotate:360deg}}
+@keyframes chipScroll{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1 * var(--cd,0px)))}}
 @keyframes ring{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.18)}}
 @keyframes badge{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent),0 0 0 5px color-mix(in srgb,var(--room-color) 16%,transparent)}}
 @keyframes heat{50%{opacity:.45}}
@@ -454,6 +460,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   _layoutTiles() {
     const grid = this._zonesEl, block = this._tilesEl;
     if (!grid?.isConnected) return;
+    this._fitChips();
     const width = grid.clientWidth; if (!width) return;
     if (width <= 560) { grid.style.gridTemplateColumns = ""; if (block) { block.dataset.layout = ""; block.removeAttribute("style"); } return; }
     const gap = 16, min = Math.max(220, Number(this._config.tile_min_width) || 340);
@@ -586,10 +593,23 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       if (l) { const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? pct(l) : 0}%" title="Tænd/sluk lys"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct(l)} %` : "Fra"}</span></button>`); }
       (info?.actions || []).slice(0, 2).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || s2.attributes?.friendly_name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
       if (r.controls) acts.push(`<button type="button" class="qa more" data-ctl="${i}" title="Styring"><ha-icon icon="mdi:tune-variant"></ha-icon><span>Styring</span></button>`);
-      const html = (chips.length ? `<div class="chips">${chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("")}</div>` : "") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
+      const html = (chips.length ? `<div class="chips"><div class="ct">${chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("")}</div></div>` : "") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");
       if (host._h !== html) { host._h = html; host.innerHTML = html; }
       host.closest(".zone")?.classList.toggle("has-room", !!html);
     });
+    this._fitChips();
+  }
+
+  // Too many or too long chips stay on one line and scroll back and forth instead of wrapping.
+  _fitChips() {
+    cancelAnimationFrame(this._chipRaf);
+    this._chipRaf = requestAnimationFrame(() => this.shadowRoot?.querySelectorAll(".chips").forEach((box) => {
+      const track = box.firstElementChild; if (!track) return;
+      const dist = Math.ceil(track.scrollWidth - box.clientWidth);
+      const on = box.clientWidth > 0 && dist > 2;
+      box.classList.toggle("mq", on);
+      if (on) { box.style.setProperty("--cd", `${dist + 18}px`); box.style.setProperty("--cdur", `${Math.max(5, 3 + dist / 18).toFixed(1)}s`); }
+    }));
   }
 
   // ---------- popup ----------
