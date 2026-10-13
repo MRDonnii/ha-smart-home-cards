@@ -2,7 +2,7 @@ import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "0.9.6";
+const VERSION = "1.0.0";
 
 const PRESETS = {
   "home_energy": {
@@ -1158,6 +1158,37 @@ class HaHomeSummaryCard extends HTMLElement {
   // ---------- rooms (Claude AI, 2026-10-13) ----------
   // Everything a room tile and the room panel show: the room sensor first, the thermostat (Better Thermostat or any
   // climate) for the setpoint, heating, window/door, valves and batteries; the last 24 h from the recorder.
+  // ---------- room tiles, rebuilt (Claude AI, 2026-10-13; user: "Rum-kortene skal redesignes totalt fra bunden") ----------
+  // The compact sibling of Varme Center's Room Climate tiles: a tile tinted in the room's state colour, a glass icon chip,
+  // name with an upper-case status, the temperature large with humidity under it, small glowing activity icons, and the
+  // 24 h curve across the whole bottom with the setpoint dashed and a glowing dot at "now". `room_tiles: classic` = old.
+  _roomTileV2(room, i) {
+    const r = this._roomInfo(room); const f = (v, d = 1) => this._fmt(v, d);
+    const st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? (r.ac.mode === "cool" ? "cool" : "heat") : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
+    const status = { na: "Ingen data", out: "Ude nu", open: "Vindue åbent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "Køler via AC", warm: `Over mål +${f(r.delta)}°`, cold: `Under mål ${f(r.delta)}°`, ok: "På mål", plain: "Måling" }[st];
+    const icons = [];
+    if (r.present) icons.push(["pres", "mdi:account", "Der er nogen i rummet"]);
+    if (r.heating) icons.push(["heat", "mdi:fire", "Kalder på varme"]);
+    if (r.ac && r.ac.mode !== "off") icons.push([r.ac.running ? "ac on" : "ac", r.ac.mode === "cool" ? "mdi:snowflake" : "mdi:heat-pump-outline", `AC: ${r.ac.running ? "kører" : "venter"}`]);
+    if (r.window) icons.push(["open", "mdi:window-open-variant", "Vindue eller dør er åben"]);
+    if (r.lowBattery) icons.push(["bat", "mdi:battery-alert-variant-outline", `Lavt batteri (${r.battery} %)`]);
+    // the curve: hourly means + now, scaled to include the setpoint
+    const pts = [...r.series.map((p) => p.v), ...(Number.isFinite(r.temp) ? [r.temp] : [])];
+    let curve = "";
+    if (pts.length > 2) {
+      const goal = Number.isFinite(r.target) ? r.target : room.outdoor ? NaN : Number(room.target ?? this.config.default_target ?? 22);
+      const all = pts.concat(Number.isFinite(goal) ? [goal] : []); const lo = Math.min(...all) - 0.3; const hi = Math.max(...all) + 0.3; const Y = (v) => 38 - ((v - lo) / (hi - lo)) * 34;
+      const line = pts.map((v, k) => `${k ? "L" : "M"}${((k / (pts.length - 1)) * 100).toFixed(2)} ${Y(v).toFixed(2)}`).join("");
+      curve = `<svg class="rt-curve" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="${line}L100 40L0 40Z"/><path class="l" d="${line}"/>${Number.isFinite(goal) ? `<line class="g" x1="0" x2="100" y1="${Y(goal).toFixed(2)}" y2="${Y(goal).toFixed(2)}"/>` : ""}</svg><i class="rt-dot" style="top:calc(100% - ${(((40 - Y(pts[pts.length - 1])) / 40) * 100).toFixed(1)}% * var(--ch))"></i>`;
+    }
+    const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
+    const sub = [Number.isFinite(r.humidity) ? `${f(r.humidity, 0)} %` : "", Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "mål"} ${f(r.target)}°` : ""].filter(Boolean).join(" · ");
+    return `<div class="rt s-${st}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}">
+      ${curve}<div class="rt-top"><span class="rt-ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span>
+      <span class="rt-nm"><b>${this._esc(room.name)}</b><em><i></i>${this._esc(status)}</em></span>
+      </div><div class="rt-mid"><span class="rt-t"><b>${f(r.temp)}<small>°</small>${trend}</b></span><small class="rt-sub">${this._esc(sub)}</small></div>
+      ${icons.length ? `<div class="rt-act">${icons.map(([cls, ic, t]) => `<span class="${cls}" title="${this._esc(t)}"><ha-icon icon="${ic}"></ha-icon></span>`).join("")}</div>` : ""}</div>`;
+  }
   _roomInfo(room) {
     const cl = this._state(room.climate); const a = cl?.attributes || {};
     const temp = Number.isFinite(this._num(room.temperature)) ? this._num(room.temperature) : Number(a.current_temperature);
@@ -1523,6 +1554,29 @@ ${LUX_KEYFRAMES}
         .ufoot{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden}.ufoot b{color:var(--primary-text-color,#fff);font-weight:800}
         /* The rooms fill exactly what is left under the heading (the last row was cut 7 px) and stay low (Claude AI). */
         .temperature-panel{display:flex;flex-direction:column;min-height:0}.temperature-panel.vc .rooms{display:block;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.temperature-panel .rooms{flex:1;height:auto!important;min-height:0;grid-auto-rows:minmax(46px,1fr)!important}
+        .rooms .rt{--sc:#20e3a2;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:9px 10px 8px;border-radius:16px;cursor:pointer;--ch:.5;
+          background:radial-gradient(130% 120% at 0% 0%,color-mix(in srgb,var(--sc) 16%,transparent),transparent 60%),var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));
+          box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15))),inset 0 0 0 1px color-mix(in srgb,var(--sc) 20%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s}
+        .rooms .rt::before{content:"";position:absolute;left:14%;right:14%;top:0;height:2px;border-radius:0 0 2px 2px;background:var(--sc);box-shadow:0 0 12px var(--sc);opacity:.85}
+        .rooms .rt:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--sc) 45%,transparent),0 0 22px -8px var(--sc)}.rooms .rt:active{transform:scale(.97)}
+        .rt.s-ok{--sc:#20e3a2}.rt.s-warm{--sc:#f2c14e}.rt.s-cold,.rt.s-cool{--sc:#4fb3ff}.rt.s-heat{--sc:#ff8a3d}.rt.s-open{--sc:#a78bfa}.rt.s-out{--sc:#38bdf8}.rt.s-plain{--sc:#7fd4b0}.rt.s-na{--sc:#ef4444}
+        .rt.s-heat{animation:rtHeat 2.6s ease-in-out infinite}@keyframes rtHeat{50%{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--sc) 55%,transparent),0 0 26px -6px var(--sc)}}
+        .rt-top{position:relative;z-index:1;display:flex;align-items:flex-start;gap:8px;min-width:0}
+        .rt-ic{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:10px;color:var(--sc);background:linear-gradient(160deg,color-mix(in srgb,var(--sc) 28%,transparent),color-mix(in srgb,var(--sc) 8%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sc) 35%,transparent)}
+        .rt-ic ha-icon{--mdc-icon-size:17px;filter:drop-shadow(0 0 5px color-mix(in srgb,var(--sc) 55%,transparent))}
+        .rt-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.rt-nm b{font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-nm em{display:flex;align-items:center;gap:4px;font-style:normal;font-size:8.5px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rt-nm em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
+        .rt-mid{position:relative;z-index:1;display:flex;align-items:baseline;gap:7px;margin-top:3px}.rt-sub{font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rt-t{flex:none;display:flex;line-height:1}.rt-t b{display:flex;align-items:flex-start;font-size:24px;text-shadow:0 1px 6px rgba(0,0,0,.4);font-weight:850;letter-spacing:-.02em}.rt-t b small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
+        .rt-t>small{margin-top:3px;font-size:9.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}
+        .rt-tr{--mdc-icon-size:13px;margin-left:1px}.rt-tr.up{color:#ff8a3d}.rt-tr.dn{color:#4fb3ff}
+        .rt-act{position:absolute;z-index:1;right:8px;top:9px;display:flex;gap:3px}.rt-act span{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(10,12,18,.45);backdrop-filter:blur(4px);color:var(--secondary-text-color,#a7b2c2)}.rt-act ha-icon{--mdc-icon-size:13px}
+        .rt-act .pres{color:#20e3a2}.rt-act .heat{color:#ff8a3d;animation:roomHeatPulse 1.6s ease-in-out infinite}.rt-act .ac.on{color:#4fb3ff;animation:roomHeatPulse 1.8s ease-in-out infinite}.rt-act .open{color:#a78bfa}.rt-act .bat{color:#ef4444}
+        .rt-curve{position:absolute;left:0;right:0;bottom:0;z-index:0;width:100%;height:calc(var(--ch) * 100%);pointer-events:none}
+        .rt-curve .a{fill:color-mix(in srgb,var(--sc) 18%,transparent)}.rt-curve .l{fill:none;stroke:var(--sc);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 60%,transparent))}
+        .rt-curve .g{stroke:rgba(255,255,255,.4);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+        .rt-dot{position:absolute;right:-4px;z-index:0;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--sc),0 0 10px var(--sc);pointer-events:none}
+        @media(prefers-reduced-motion:reduce){.rt.s-heat,.rt-act span{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -1552,7 +1606,7 @@ ${LUX_KEYFRAMES}
       this.shadowRoot.querySelector(".utility.heat").onclick=()=>navigate(this.config.heat_path);
       const roomsEl=this.shadowRoot.querySelector(".rooms");
       // Varme Center rooms open their own heating popup; the panel link to the rooms page must not fire (user, 2026-10-13).
-      const openRoom=(e)=>{if(roomsEl._vc){e.preventDefault();return;}const t=e.target.closest(".room[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
+      const openRoom=(e)=>{if(roomsEl._vc){e.preventDefault();return;}const t=e.target.closest(".room[data-room],.rt[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
       roomsEl.addEventListener("click",openRoom);
       roomsEl.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openRoom(e);});
       this._rendered = true;
@@ -1576,7 +1630,7 @@ ${LUX_KEYFRAMES}
     // Room tiles (Claude AI, 2026-10-13; user: "mere grafisk pænt op med flere funktioner"): a faint 24 h curve behind,
     // a comfort bar (temperature against the setpoint), a trend arrow, badges for heating, presence, an open window and
     // a low battery. A tap opens the room panel (_openRoom) instead of the rooms page; the heading still goes there.
-    const roomsHtml=(c.rooms||[]).map((room,i)=>{
+    const roomsHtml=c.room_tiles!=="classic"?(c.rooms||[]).map((room,i)=>this._roomTileV2(room,i)).join(""):(c.rooms||[]).map((room,i)=>{
       const r=this._roomInfo(room);
       const tone=!Number.isFinite(r.temp)?"unavailable":r.delta>0.7?"warm":r.delta<-.7?"cold":"";
       const icon=this._esc(room.icon||'mdi:thermometer');
