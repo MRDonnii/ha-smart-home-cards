@@ -298,6 +298,7 @@ class HATeslaGlanceCard extends HTMLElement {
       
       @media(max-width:600px){.pstart b{font-size:19px}.pnums{flex-wrap:nowrap;gap:9px;font-size:10px}.pnums b{font-size:12.5px}.pnums span{white-space:nowrap}.pnums .save{margin-left:auto;padding:3px 8px 3px 6px}.pnums .save ha-icon{display:none}.ring{width:38px;height:38px}.pt b{font-size:13px}.pt span{font-size:10px}}
       @media (prefers-reduced-motion:reduce){.nowdot,.bfill .flow,.bbolt,.ckw b{animation:none}}
+      .pt b .kw{display:inline;font-size:inherit;color:var(--good)}
       .plan.is-charge .pstart b{color:var(--good);text-shadow:0 0 16px color-mix(in srgb,var(--good) 55%,transparent)}
       .ring.chg{--ev:var(--good)}.ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
       .cbar{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
@@ -464,7 +465,8 @@ class HATeslaGlanceCard extends HTMLElement {
     // While it charges the overlay is a charging card; otherwise the plan when one is active (user, 2026-10-13: "når den
     // går i gang med ladning skal ladeplan kortet skiftes ud med et ladningskort … først, men man kan swipe").
     const plan = this._plan(); const was = this._planOn; const wasKind = this._overlayKind;
-    const kind = c.preview === "charge" || (charging && (c.charge_plan || this._away())) ? "charge" : plan ? "plan" : null; // preview: charge|plan shows a view on demand this._planOn = !!kind; this._overlayKind = kind;
+    // preview: charge shows the charging view on demand
+    const kind = c.preview === "charge" || (charging && (c.charge_plan || this._away())) ? "charge" : plan ? "plan" : null; this._planOn = !!kind; this._overlayKind = kind;
     if (kind) { const h = kind === "charge" ? this._chargeHtml(plan) : this._planHtml(plan); const box = root.querySelector(".plan"); box.classList.toggle("is-charge", kind === "charge"); if (box._h !== h) { box._h = h; box.innerHTML = h; } }
     if (kind && (!was || kind !== wasKind)) this._view = "plan"; // a new overlay is shown first
     this._paintView();

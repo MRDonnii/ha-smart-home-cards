@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.101 */
+/* MRDonnii Smart Home Cards v0.5.102 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6977,6 +6977,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
 
       @media(max-width:600px){.pstart b{font-size:19px}.pnums{flex-wrap:nowrap;gap:9px;font-size:10px}.pnums b{font-size:12.5px}.pnums span{white-space:nowrap}.pnums .save{margin-left:auto;padding:3px 8px 3px 6px}.pnums .save ha-icon{display:none}.ring{width:38px;height:38px}.pt b{font-size:13px}.pt span{font-size:10px}}
       @media (prefers-reduced-motion:reduce){.nowdot,.bfill .flow,.bbolt,.ckw b{animation:none}}
+      .pt b .kw{display:inline;font-size:inherit;color:var(--good)}
       .plan.is-charge .pstart b{color:var(--good);text-shadow:0 0 16px color-mix(in srgb,var(--good) 55%,transparent)}
       .ring.chg{--ev:var(--good)}.ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
       .cbar{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
@@ -7230,6 +7231,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const was = this._planOn;
     const wasKind = this._overlayKind;
     const kind = c2.preview === "charge" || charging && (c2.charge_plan || this._away()) ? "charge" : plan ? "plan" : null;
+    this._planOn = !!kind;
+    this._overlayKind = kind;
     if (kind) {
       const h = kind === "charge" ? this._chargeHtml(plan) : this._planHtml(plan);
       const box2 = root.querySelector(".plan");
