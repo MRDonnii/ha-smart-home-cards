@@ -1,4 +1,5 @@
-const VERSION = "0.8.72";
+import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
+const VERSION = "0.9.0";
 
 const PRESETS = {
   "home_energy": {
@@ -1028,7 +1029,9 @@ class HaHomeSummaryCard extends HTMLElement {
     const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
     const sig = JSON.stringify(ids.map((id) => [id, hass.states?.[id]?.state,
       hass.states?.[id]?.last_changed, hass.states?.[id]?.attributes?.message,
-      hass.states?.[id]?.attributes?.start_time]));
+      hass.states?.[id]?.attributes?.start_time, ...(id.startsWith("climate.") ? [hass.states?.[id]?.attributes?.temperature, hass.states?.[id]?.attributes?.hvac_action, hass.states?.[id]?.attributes?.window_open, hass.states?.[id]?.attributes?.door_open, hass.states?.[id]?.attributes?.batteries] : [])]));
+    this._roomStats();
+    if (this._roomHost) this._roomSheetPaint();
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -1057,6 +1060,147 @@ class HaHomeSummaryCard extends HTMLElement {
       : (String(robot.entity || "").startsWith("lawn_mower.") ? ["mowing", "edgecut", "starting", "leaving"]
         : ["cleaning", "segment_cleaning", "zoned_cleaning", "spot_cleaning", "mopping"]);
     return states.map((value) => String(value).toLowerCase()).includes(state);
+  }
+  disconnectedCallback() { this._closeRoom(); }
+  // ---------- rooms (Claude AI, 2026-10-13) ----------
+  // Everything a room tile and the room panel show: the room sensor first, the thermostat (Better Thermostat or any
+  // climate) for the setpoint, heating, window/door, valves and batteries; the last 24 h from the recorder.
+  _roomInfo(room) {
+    const cl = this._state(room.climate); const a = cl?.attributes || {};
+    const temp = Number.isFinite(this._num(room.temperature)) ? this._num(room.temperature) : Number(a.current_temperature);
+    const humidity = Number.isFinite(this._num(room.humidity)) ? this._num(room.humidity) : Number(a.current_humidity);
+    const target = cl && cl.state !== "off" ? Number(a.temperature) : Number.NaN;
+    const json = (v) => { if (v && typeof v === "object") return v; try { return JSON.parse(v); } catch { return null; } };
+    const bats = Object.values(json(a.batteries) || {}).map((b) => Number(b?.battery)).filter(Number.isFinite);
+    const battery = bats.length ? Math.min(...bats) : Number.NaN;
+    const valves = Object.values(json(a.calibration_balance) || {}).map((v) => Number(v?.["valve%"])).filter(Number.isFinite);
+    const series = this._roomSeries?.get(room.temperature) || [];
+    const prev = series.length ? series[series.length - 1].v : Number.NaN;
+    return { cl, a, temp, humidity, target, delta: Number.isFinite(temp) && Number.isFinite(target) ? temp - target : Number.NaN,
+      heating: a.hvac_action === "heating", present: room.presence ? this._state(room.presence)?.state === "on" : false,
+      window: a.window_open === true || a.door_open === true, battery, lowBattery: Number.isFinite(battery) && battery < 20,
+      valve: valves.length ? valves.reduce((x, y) => x + y, 0) / valves.length : Number.NaN,
+      trend: Number.isFinite(temp) && Number.isFinite(prev) ? temp - prev : Number.NaN, series };
+  }
+  // The faint curve behind a tile: the last 24 hourly means and the reading now.
+  _spark(series) {
+    if (!series || series.length < 3) return "";
+    const v = series.map((p) => p.v); const lo = Math.min(...v); const hi = Math.max(...v); const span = Math.max(hi - lo, 0.6);
+    const pts = v.map((y, i) => [(i / (v.length - 1)) * 100, 30 - ((y - lo) / span) * 26 - 2]);
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join("");
+    return `<svg class="room-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="${line}L100 32L0 32Z"/><path class="l" d="${line}"/></svg>`;
+  }
+  // Hourly means for every room sensor, one recorder call every 15 minutes.
+  async _roomStats() {
+    const ids = [...new Set((this.config?.rooms || []).map((r) => r.temperature).filter(Boolean))];
+    if (!ids.length || !this._hass?.callWS || this._roomStatsBusy || Date.now() - (this._roomStatsAt || 0) < 15 * 60000) return;
+    this._roomStatsBusy = true; this._roomStatsAt = Date.now();
+    try {
+      const end = new Date(); const start = new Date(+end - 24 * 3600000);
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(), statistic_ids: ids, period: "hour", types: ["mean"] });
+      const m = new Map();
+      ids.forEach((id) => m.set(id, (res?.[id] || []).map((r) => ({ t: typeof r.start === "number" ? r.start : Date.parse(r.start), v: Number(r.mean) })).filter((p) => Number.isFinite(p.v))));
+      this._roomSeries = m; this._sig = ""; this._render(); if (this._roomHost) this._roomSheetPaint(true);
+    } catch { this._roomStatsAt = Date.now() - 10 * 60000; } finally { this._roomStatsBusy = false; }
+  }
+
+  // The room panel: on the page itself (document.body), like the calendar's detail sheet.
+  _openRoom(i) {
+    const room = this.config?.rooms?.[i]; if (!room) return;
+    this._closeRoom(); this._roomIdx = i; this._pendingTarget = null;
+    const host = document.createElement("div"); host.className = "ha-home-room-sheet"; const root = host.attachShadow({ mode: "open" });
+    const a = LUX_ACCENT;
+    root.innerHTML = `<style>
+:host{--a:${a};--ink:var(--primary-text-color,#eef3f8);--mut:var(--secondary-text-color,#8d9baa);--soft:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);font-family:var(--primary-font-family,inherit)}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+.sheet{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fade .2s ease-out}@keyframes fade{from{opacity:0}}
+.box{--c:#20e3a2;width:min(480px,100%);max-height:100%;overflow:auto;padding:20px 22px 18px;border-radius:24px;background:var(--ha-card-background,var(--card-background-color,#161a21));box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 0 0 1px color-mix(in srgb,var(--c) 35%,transparent);animation:luxGum .5s ease-out}
+.box.warm{--c:#fb923c}.box.cold{--c:#38bdf8}.box.na{--c:#ef4444}
+.hd{display:flex;align-items:center;gap:12px}.hd .ic{width:46px;height:46px;flex:none;border-radius:15px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.hd h4{margin:0;font-size:20px}.hd small{display:block;color:var(--mut);font-size:12.5px;margin-top:2px}
+.x{margin-left:auto;width:38px;height:38px;flex:none;border:0;border-radius:50%;background:var(--soft);cursor:pointer;display:grid;place-items:center}
+.hero{display:flex;align-items:flex-end;gap:18px;margin:18px 0 6px}
+.now b{display:block;font-size:52px;font-weight:300;letter-spacing:-.04em;line-height:.95}.now span{font-size:12px;color:var(--mut)}
+.side{display:flex;flex-direction:column;gap:5px;margin-left:auto;text-align:right;font-size:13px;color:var(--mut)}.side b{color:var(--ink)}
+.chart{position:relative;height:120px;margin:14px 0 22px}.chart svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.chart .ar{fill:color-mix(in srgb,var(--c) 18%,transparent)}.chart .ln{fill:none;stroke:var(--c);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.chart .tg{stroke:rgba(255,255,255,.55);stroke-width:1.2;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.chart .lb{position:absolute;font-size:10.5px;color:var(--mut)}.chart .nd{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--c),0 0 10px var(--c)}
+.empty{display:grid;place-items:center;height:100%;color:var(--mut);font-size:13px}
+.ctl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin-top:14px;padding:12px;border-radius:18px;background:var(--soft)}
+.step{width:52px;height:52px;border:0;border-radius:16px;font-size:26px;font-weight:300;cursor:pointer;background:color-mix(in srgb,var(--ink) 7%,transparent);transition:transform .2s cubic-bezier(.2,1.4,.4,1)}.step:active{transform:scale(.88)}.step:disabled{opacity:.3}
+.tgt{text-align:center}.tgt b{display:block;font-size:30px;font-weight:700}.tgt span{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}.tgt.pend b{color:color-mix(in srgb,var(--a) 75%,#fff)}
+.modes{display:flex;gap:6px;margin-top:10px}.modes button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border:0;border-radius:13px;background:var(--soft);font-weight:800;font-size:13px;cursor:pointer;color:var(--mut)}.modes ha-icon{--mdc-icon-size:18px}
+.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:13px;background:var(--soft);font-size:12.5px;min-width:0}.row ha-icon{--mdc-icon-size:18px;color:var(--mut);flex:none}.row b{display:block;font-size:13.5px}.row span{color:var(--mut);font-size:11px}
+.row.hot ha-icon{color:#fb923c;animation:pulse 1.6s ease-in-out infinite}.row.warn ha-icon{color:#38bdf8}.row.bad ha-icon{color:#ef4444}@keyframes pulse{50%{opacity:.4}}
+.close{margin-top:16px;width:100%;padding:12px;border:0;border-radius:14px;font-weight:800;cursor:pointer;background:var(--soft)}
+${luxCss({ base: ".modes button", active: ".modes button.on" })}
+${LUX_KEYFRAMES}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style><div class="sheet"><div class="box"></div></div>`;
+    document.body.appendChild(host); this._roomHost = host;
+    const sheet = root.querySelector(".sheet");
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet || e.target.closest("[data-close]")) { this._closeRoom(); return; }
+      const st = e.target.closest("[data-step]"); if (st) { this._stepTarget(Number(st.dataset.step)); return; }
+      const md = e.target.closest("[data-mode]"); if (md) { const r = this.config.rooms[this._roomIdx]; this._hass.callService("climate", "set_hvac_mode", { entity_id: r.climate, hvac_mode: md.dataset.mode }); return; }
+      const mi = e.target.closest("[data-more]"); if (mi) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: mi.dataset.more }, bubbles: true, composed: true }));
+    });
+    this._roomKeyH = this._roomKeyH || ((e) => { if (e.key === "Escape") this._closeRoom(); });
+    document.addEventListener("keydown", this._roomKeyH);
+    this._roomSheetPaint(true);
+  }
+  _closeRoom() { this._roomHost?.remove(); this._roomHost = null; clearTimeout(this._targetTimer); if (this._roomKeyH) document.removeEventListener("keydown", this._roomKeyH); }
+  // Setpoint: steps add up while tapping and are sent 0.8 s after the last tap.
+  _stepTarget(dir) {
+    const room = this.config.rooms[this._roomIdx]; const r = this._roomInfo(room); if (!r.cl) return;
+    const step = Number(r.a.target_temp_step) || 0.5; const lo = Number(r.a.min_temp) || 5; const hi = Number(r.a.max_temp) || 30;
+    const base = Number.isFinite(this._pendingTarget) ? this._pendingTarget : Number(r.a.temperature);
+    if (!Number.isFinite(base)) return;
+    this._pendingTarget = Math.min(hi, Math.max(lo, Math.round((base + dir * step) / step) * step));
+    this._roomSheetPaint(true);
+    clearTimeout(this._targetTimer);
+    this._targetTimer = setTimeout(() => { const t = this._pendingTarget; this._hass.callService("climate", "set_temperature", { entity_id: room.climate, temperature: t }).finally(() => { setTimeout(() => { if (this._pendingTarget === t) { this._pendingTarget = null; this._roomSheetPaint(true); } }, 1500); }); }, 800);
+  }
+  _roomSheetPaint(force = false) {
+    const box = this._roomHost?.shadowRoot?.querySelector(".box"); const room = this.config?.rooms?.[this._roomIdx]; if (!box || !room) return;
+    const r = this._roomInfo(room); const f = (v, d = 1) => this._fmt(v, d);
+    const key = JSON.stringify([r.temp, r.humidity, r.target, r.heating, r.window, r.battery, r.valve, r.present, r.cl?.state, this._pendingTarget, r.series.length]);
+    if (!force && key === this._roomSheetKey) return; this._roomSheetKey = key;
+    box.className = `box ${!Number.isFinite(r.temp) ? "na" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : ""}`;
+    // chart: hourly means + now, the setpoint dashed
+    const pts = [...r.series.map((p) => ({ t: p.t + 1800000, v: p.v })), ...(Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp }] : [])];
+    let chart = '<div class="empty">Ingen historik endnu</div>';
+    if (pts.length > 2) {
+      const t0 = Date.now() - 24 * 3600000; const t1 = Date.now(); const vs = pts.map((p) => p.v).concat(Number.isFinite(r.target) ? [r.target] : []);
+      const lo = Math.floor(Math.min(...vs) - 0.3); const hi = Math.ceil(Math.max(...vs) + 0.3);
+      const X = (t) => Math.max(0, ((t - t0) / (t1 - t0)) * 100); const Y = (v) => 100 - ((v - lo) / (hi - lo)) * 100;
+      const line = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(2)} ${Y(p.v).toFixed(2)}`).join("");
+      const last = pts[pts.length - 1];
+      chart = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="ar" d="${line}L${X(last.t)} 100L${X(pts[0].t)} 100Z"/><path class="ln" d="${line}"/>${Number.isFinite(r.target) ? `<line class="tg" x1="0" x2="100" y1="${Y(r.target)}" y2="${Y(r.target)}"/>` : ""}</svg>
+        <span class="lb" style="left:4px;top:2px">${f(hi, 0)}°</span><span class="lb" style="left:4px;bottom:3px">${f(lo, 0)}°</span><span class="lb" style="left:0;bottom:-16px">for 24 t</span><span class="lb" style="left:50%;bottom:-16px;transform:translateX(-50%)">for 12 t</span><span class="lb" style="right:0;bottom:-16px">nu</span>
+        <i class="nd" style="left:${X(last.t)}%;top:${Y(last.v)}%"></i>`;
+    }
+    const mins = r.series.length ? r.series.map((p) => p.v) : [];
+    const range = mins.length ? `${f(Math.min(...mins))}–${f(Math.max(...mins))}° i døgnet` : "";
+    const trend = Number.isFinite(r.trend) ? `${r.trend > 0 ? "+" : ""}${f(r.trend)}° siden sidste time` : "";
+    const target = Number.isFinite(this._pendingTarget) ? this._pendingTarget : Number(r.a.temperature);
+    const modes = (r.a.hvac_modes || []).filter((m) => ["heat", "off", "auto", "cool", "heat_cool"].includes(m));
+    const MODE = { heat: ["Varme", "mdi:fire"], off: ["Fra", "mdi:power"], auto: ["Auto", "mdi:thermostat-auto"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Varme/køl", "mdi:sun-snowflake-variant"] };
+    const rows = [];
+    if (r.cl) rows.push(r.heating ? ["hot", "mdi:fire", "Varmer nu", "kalder på varme"] : ["", "mdi:fire-off", "Hviler", r.cl.state === "off" ? "termostaten er slukket" : "målet er nået"]);
+    if (r.window) rows.push(["warn", "mdi:window-open-variant", "Vindue åbent", "varmen holder pause"]);
+    if (Number.isFinite(r.valve)) rows.push(["", "mdi:valve", `${f(r.valve, 0)} %`, "ventilåbning"]);
+    if (Number.isFinite(r.battery)) rows.push([r.lowBattery ? "bad" : "", r.lowBattery ? "mdi:battery-alert-variant-outline" : "mdi:battery-high", `${f(r.battery, 0)} %`, "laveste batteri"]);
+    if (room.presence) rows.push([r.present ? "warn" : "", r.present ? "mdi:motion-sensor" : "mdi:motion-sensor-off", r.present ? "Nogen er her" : "Tomt", "tilstedeværelse"]);
+    box.innerHTML = `<div class="hd"><span class="ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span><div><h4>${this._esc(room.name)}</h4><small>${Number.isFinite(r.target) ? `Mål ${f(r.target)}°` : "Ingen termostat"}${Number.isFinite(r.delta) ? ` · ${r.delta > 0 ? "+" : ""}${f(r.delta)}° fra målet` : ""}</small></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <div class="hero"><div class="now"><b>${f(r.temp)}°</b><span>${this._esc(trend)}</span></div><div class="side">${Number.isFinite(r.humidity) ? `<span><b>${f(r.humidity, 0)} %</b> fugt</span>` : ""}${range ? `<span>${range}</span>` : ""}</div></div>
+      <div class="chart">${chart}</div>
+      ${r.cl ? `<div class="ctl"><button type="button" class="step" data-step="-1" aria-label="Sænk" ${r.cl.state === "off" ? "disabled" : ""}>−</button><div class="tgt ${Number.isFinite(this._pendingTarget) ? "pend" : ""}"><span>Setpunkt</span><b>${r.cl.state === "off" ? "Fra" : `${f(target)}°`}</b></div><button type="button" class="step" data-step="1" aria-label="Hæv" ${r.cl.state === "off" ? "disabled" : ""}>+</button></div>
+        ${modes.length > 1 ? `<div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" class="${r.cl.state === m ? "on" : ""}"><ha-icon icon="${MODE[m][1]}"></ha-icon>${MODE[m][0]}</button>`).join("")}</div>` : ""}` : ""}
+      ${rows.length ? `<div class="rows">${rows.map(([cls, ic, b, sub]) => `<div class="row ${cls}"><ha-icon icon="${ic}"></ha-icon><div><b>${b}</b><span>${sub}</span></div></div>`).join("")}</div>` : ""}
+      <button type="button" class="close" data-close>Luk</button>`;
   }
   _robotRoom(robot) {
     const raw = robot.room_entity ? this._state(robot.room_entity)?.state : robot.room;
@@ -1146,6 +1290,16 @@ class HaHomeSummaryCard extends HTMLElement {
         .rooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));grid-auto-rows:minmax(64px,1fr);gap:7px;height:calc(100% - 22px)}.room{--room-accent:var(--success-color,#20e3a2);position:relative;isolation:isolate;display:flex;flex-direction:column;justify-content:space-between;gap:5px;min-width:0;padding:9px 10px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--room-accent);border-radius:12px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 6px 16px rgba(0,0,0,.15)));overflow:hidden}.room>*{position:relative;z-index:1}.room.warm{--room-accent:var(--orange,#fb923c)}.room.cold{--room-accent:var(--info-color,#38bdf8)}.room.unavailable{--room-accent:var(--error-color,#ef4444)}.room-bg{position:absolute;right:-8px;bottom:-8px;z-index:0;width:58px;height:58px;--mdc-icon-size:58px;color:var(--room-accent);opacity:.12;transform:rotate(-7deg);animation:summaryIconDrift 5s ease-in-out infinite;pointer-events:none}.room-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}.room-name{min-width:0;font-size:11px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-badges{display:flex;align-items:center;gap:4px;flex:0 0 auto}.room-status{display:none;flex:0 0 auto;align-items:center;color:#fb923c}.room-status.heating,.room-status.presence{display:flex;animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.presence{color:var(--dashboard-accent,var(--info-color,#38bdf8))}.room-status ha-icon{--mdc-icon-size:14px}.room-body{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}.room-temp{flex:0 0 auto;margin-left:auto;font-size:20px;font-weight:900;line-height:1}.room-target{min-width:0;font-size:10px;line-height:1.25;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-target:empty,.room-target:has(>.marquee-track:empty){display:none}.room-target b{color:var(--room-accent);font-size:11px}@keyframes roomHeatPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
         .room-robot{position:absolute!important;z-index:3!important;left:0;top:24%;width:100%;height:calc(76% - 29px);pointer-events:none;animation:roomRobotY var(--robot-speed-y,12s) linear infinite alternate}.room-robot-x{position:absolute;left:8%;top:0;width:calc(92% - 30px);height:0;animation:roomRobotX var(--robot-speed,16s) linear infinite alternate}.room-robot-icon{position:absolute;left:0;top:0;width:22px;height:22px;--mdc-icon-size:22px;color:var(--dashboard-accent,var(--info-color,#38bdf8));opacity:.72;filter:drop-shadow(0 0 7px currentColor)}.room-robot.outdoors{z-index:4!important;left:12px;top:12px;width:22px;height:22px;offset-path:inset(8px round 13px);offset-distance:0;animation:outdoorRobotLap 25s linear infinite}.room-robot.outdoors .room-robot-x{left:0;width:22px;animation:none}.room-robot.outdoors .room-robot-icon{color:var(--success-color,#20e3a2)}.room-robot[hidden]{display:none}@keyframes roomRobotX{from{transform:translateX(0)}to{transform:translateX(100%)}}@keyframes roomRobotY{from{transform:translateY(0)}to{transform:translateY(100%)}}@keyframes outdoorRobotLap{to{offset-distance:100%}}
         @keyframes summaryIconDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-11deg);opacity:.22}}
+        .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
+        .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
+        .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
+        .room-temp{display:flex;align-items:center;gap:1px}.room-trend{--mdc-icon-size:14px;opacity:.9}.room-trend.up{color:var(--orange,#fb923c)}.room-trend.down{color:var(--info-color,#38bdf8)}
+        .room-bar{position:relative;height:4px;margin-top:1px;border-radius:4px;background:linear-gradient(90deg,#38bdf8 0%,#20e3a2 38%,#20e3a2 62%,#fb923c 100%);opacity:.85}
+        .room-bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;margin-left:-1px;border-radius:2px;background:rgba(255,255,255,.75)}
+        .room-bar .dot{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--room-accent),0 0 8px var(--room-accent);transition:left .6s ease}
+        .room-status.window,.room-status.battery{display:flex}.room-status.window{color:var(--info-color,#38bdf8);animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.battery{color:var(--error-color,#ef4444)}
+        .room.is-heating .room-bg{color:var(--orange,#fb923c);opacity:.2}
+
         @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
@@ -1157,6 +1311,10 @@ class HaHomeSummaryCard extends HTMLElement {
       this.shadowRoot.querySelector(".utility.electricity").onclick=()=>navigate(this.config.electricity_path);
       this.shadowRoot.querySelector(".utility.water").onclick=()=>navigate(this.config.water_path);
       this.shadowRoot.querySelector(".utility.heat").onclick=()=>navigate(this.config.heat_path);
+      const roomsEl=this.shadowRoot.querySelector(".rooms");
+      const openRoom=(e)=>{const t=e.target.closest(".room[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
+      roomsEl.addEventListener("click",openRoom);
+      roomsEl.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" ")openRoom(e);});
       this._rendered = true;
     }
     if (!this._hass) return;
@@ -1174,20 +1332,22 @@ class HaHomeSummaryCard extends HTMLElement {
     utility(".electricity","mdi:lightning-bolt","Strøm",this._fmt(monthly,0),"kWh",this._fmt(electricCost,0),Number.isFinite(monthly)&&Number.isFinite(electricCost));
     utility(".water","mdi:water","Vand",this._fmt(water,3),"m³",this._fmt(waterCost,0),Number.isFinite(water)&&Number.isFinite(waterCost));
     utility(".heat","mdi:radiator","Fjernvarme",this._fmt(heat,1),"kWh",this._fmt(heatCost,0),Number.isFinite(heat)&&Number.isFinite(heatCost));
-    const roomsHtml=(c.rooms||[]).map((room)=>{
-      const temp=this._num(room.temperature), humidity=this._num(room.humidity), target=Number(this._state(room.climate)?.attributes?.temperature);
-      const delta=Number.isFinite(temp)&&Number.isFinite(target)?temp-target:Number.NaN;
-      const tone=!Number.isFinite(temp)?"unavailable":delta>0.7?"warm":delta<-.7?"cold":"";
+    // Room tiles (Claude AI, 2026-10-13; user: "mere grafisk pænt op med flere funktioner"): a faint 24 h curve behind,
+    // a comfort bar (temperature against the setpoint), a trend arrow, badges for heating, presence, an open window and
+    // a low battery. A tap opens the room panel (_openRoom) instead of the rooms page; the heading still goes there.
+    const roomsHtml=(c.rooms||[]).map((room,i)=>{
+      const r=this._roomInfo(room);
+      const tone=!Number.isFinite(r.temp)?"unavailable":r.delta>0.7?"warm":r.delta<-.7?"cold":"";
       const icon=this._esc(room.icon||'mdi:thermometer');
-      const targetText=Number.isFinite(target)?`Mål <b>${this._fmt(target,1)}°</b>`:"";
-      const humidityText=Number.isFinite(humidity)?`<span class="room-humidity">${targetText?"· ":""}${this._fmt(humidity,0)}%</span>`:"";
-      const hvacAction=room.climate?this._state(room.climate)?.attributes?.hvac_action:undefined;
-      const heating=hvacAction==="heating";
-      const present=room.presence?this._state(room.presence)?.state==="on":false;
-      const heatBadge=heating?`<span class="room-status heating" title="Kalder på varme"><ha-icon icon="mdi:fire"></ha-icon></span>`:"";
-      const presenceBadge=present?`<span class="room-status presence" title="Der er nogen i rummet"><ha-icon icon="mdi:motion-sensor"></ha-icon></span>`:"";
-      return `<div class="room ${tone}" data-room-key="${this._esc(this._roomKey(room.name))}"><ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${presenceBadge}${heatBadge}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(temp,1)}°</strong></div></div>`;
+      const targetText=Number.isFinite(r.target)?`Mål <b>${this._fmt(r.target,1)}°</b>`:"";
+      const humidityText=Number.isFinite(r.humidity)?`<span class="room-humidity">${targetText?"· ":""}${this._fmt(r.humidity,0)}%</span>`:"";
+      const badge=(cls,ic,title)=>`<span class="room-status ${cls}" title="${title}"><ha-icon icon="${ic}"></ha-icon></span>`;
+      const badges=(r.window?badge("window","mdi:window-open-variant","Vindue eller dør er åben"):"")+(r.lowBattery?badge("battery","mdi:battery-alert-variant-outline",`Lavt batteri (${r.battery} %)`):"")+(r.present?badge("presence","mdi:motion-sensor","Der er nogen i rummet"):"")+(r.heating?badge("heating","mdi:fire","Kalder på varme"):"");
+      const trend=r.trend>0.15?'<ha-icon class="room-trend up" icon="mdi:arrow-top-right"></ha-icon>':r.trend<-0.15?'<ha-icon class="room-trend down" icon="mdi:arrow-bottom-right"></ha-icon>':"";
+      const bar=Number.isFinite(r.target)&&Number.isFinite(r.temp)?`<div class="room-bar"><i class="mid"></i><i class="dot" style="left:${(50+Math.max(-1,Math.min(1,r.delta/2.5))*46).toFixed(1)}%"></i></div>`:"";
+      return `<div class="room ${tone}${r.heating?" is-heating":""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${this._fmt(r.temp,1)}°${trend}</strong></div>${bar}</div>`;
     }).join("");
+
     const rooms=this.shadowRoot.querySelector(".rooms");
     if(rooms._html!==roomsHtml){rooms._html=roomsHtml;for(const node of this._robotNodes.values())node.remove();this._robotNodes.clear();rooms.innerHTML=roomsHtml;}
     this._updateRobots();
