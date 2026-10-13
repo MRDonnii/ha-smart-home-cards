@@ -111,7 +111,7 @@ const STYLE = `
 .btn{min-height:48px;border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink);font-size:13px}
 .btn ha-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;--mdc-icon-size:17px;color:var(--bc);background:color-mix(in srgb,var(--bc) 18%,transparent)}
 .btn:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bc) 45%,transparent),0 0 22px -10px var(--bc)}
-.prof{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.prof{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
 .pf{min-height:96px;padding:12px;gap:10px;justify-content:space-between}
 .pf ha-icon.i{display:grid;place-items:center;width:40px;height:40px;border-radius:14px;--mdc-icon-size:21px;color:var(--mut);background:rgba(255,255,255,.07);transition:all .25s ease}
 .pf b{font-size:13px}
