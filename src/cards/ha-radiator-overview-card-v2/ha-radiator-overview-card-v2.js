@@ -1225,7 +1225,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     if (!this._hass?.callWS) return;
     this._ctlLoaded = true;
     try {
-      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard });
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard === "lovelace" ? null : this._config.room_controls_dashboard });
       let v3 = null; const pops = {}; const walk = (o) => { if (!o || typeof o !== "object") return; if (o.type === "custom:ha-home-room-overview-card-v3" && Array.isArray(o.rooms) && !v3) v3 = o.rooms; if (o.type === "custom:bubble-card" && o.card_type === "pop-up" && o.hash && Array.isArray(o.cards)) pops[o.hash] = o; Object.values(o).forEach(walk); }; walk(lc);
       if (!v3) return;
       this._ctlSource = { v3, pops };

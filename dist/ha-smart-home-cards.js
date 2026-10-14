@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.130 */
+/* MRDonnii Smart Home Cards v0.5.131 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -30876,7 +30876,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (!this._hass?.callWS) return;
     this._ctlLoaded = true;
     try {
-      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard });
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: this._config.room_controls_dashboard === "lovelace" ? null : this._config.room_controls_dashboard });
       let v3 = null;
       const pops = {};
       const walk = (o) => {
