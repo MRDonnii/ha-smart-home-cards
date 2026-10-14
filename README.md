@@ -28,6 +28,8 @@ The full Tesla page (`custom:th-tesla-dashboard-card`) with example data. The ca
 
 A small front page card for one car (`custom:ha-tesla-glance-card`): battery, range, charging and consumption. See the [card's README](src/cards/ha-tesla-glance-card).
 
+Tyre sets from EV Ledger 0.7+ (`custom:ha-ev-tyre-card`, `entity: sensor.<car>_tyres`): which set is on the car, tyre and rim size, use per set and season, the sets compared at the same outside temperature, tread wear and a change reminder; change tyres, log tread depth and add sets in the card. The Tesla dashboard card shows it as its own panel (`tyres: false` hides it). See the [card's README](src/cards/ha-ev-tyre-card).
+
 ![Tesla glance card, parked and charging](docs/screenshots/tesla-glance-card.webp)
 
 ## Install with HACS

@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.18.1";
+const TTD_VERSION = "1.19.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -132,7 +132,7 @@ const TTD_SC_ROLES = {
   battery_efficiency_score: "sensor._battery_efficiency_score", distance_today: "sensor._distance_today",
   home_charging_power: "sensor._home_charging_power", home_cost_today: "sensor._home_charging_cost_today",
   charging_status: "sensor._charging_status", home_charging_energy: "sensor._home_charging_energy",
-  cost_this_year: "sensor._charging_cost_this_year",
+  cost_this_year: "sensor._charging_cost_this_year", tyres: "sensor._tyres",
   // Ready-by times: the week plan, the one-time time and the weekend time (EV Ledger).
   week_plan: "switch._week_plan", ready_by_once: "datetime._ready_by_once",
   // Keep the battery at the target while the car heats on the charger, up to a price (EV Ledger).
@@ -475,6 +475,8 @@ function ttdNormalizeConfig(raw) {
 
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
+    // The tyre sets panel (EV Ledger's tyres sensor, shown with ha-ev-tyre-card); tyres: false hides it.
+    tyres: config.tyres !== false,
     location: config.location_entity || entities.location || null,
     entities, controls, map, chart, tpms, battery, precision,
     // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
@@ -708,7 +710,8 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
   <header class="ph">${ttdIcon("mdi:calendar-month", "ph-i")}<div class="ph-t"><h3>Ladeudgifter <span class="light">(EV Ledger)</span></h3><p data-r="costSub">${TTD_DASH}</p></div><div class="cost-year"><b data-r="costYear">${TTD_DASH}</b><small data-r="costYearSub"></small></div></header>
   <div class="cost-wrap"><div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. måned"></div><div class="tip cost-tip" data-r="costTip" hidden></div></div>
   <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><span data-r="costBeforeKey" hidden><i class="sw cost-before"></i>Samme måned året før</span><em data-r="costNote"></em></div>
-</section>` : ""}` : ""}
+</section>
+${cfg.tyres !== false ? `<section class="panel tyres" data-r="tyres" aria-label="Hjul" hidden><div data-r="tyresHost"></div></section>` : ""}` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "Åbn hele Tesla-oversigten" : "Flere indstillinger på Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
 </div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}</div>`;
 }
@@ -740,6 +743,8 @@ h2,h3,p{margin:0}
 .panel{position:relative;min-width:0;container:panel / inline-size;padding:var(--tdc-pad);border-radius:var(--tdc-radius);background:var(--tdc-panel);border:1px solid var(--tdc-line);box-shadow:var(--tdc-shadow,none);overflow:hidden}
 /* The cost panel takes a full row of its own below the others, whatever the layout. */
 .cost{grid-column:1/-1;grid-row:-1}
+/* The tyre sets (EV Ledger, ha-ev-tyre-card inside) take a full row too. */
+.tyres{grid-column:1/-1}
 .cost .ph{align-items:flex-start}
 .cost-year{display:grid;justify-items:end;gap:1px;margin-left:auto;text-align:right}.cost-year b{font-size:22px;font-weight:750;line-height:1.1;white-space:nowrap}.cost-year small{font-size:12px;color:var(--tdc-muted);white-space:nowrap}
 .cost-wrap{position:relative}
@@ -3060,6 +3065,22 @@ class ThTeslaDashboardCard extends HTMLElement {
         const html = c.bars.map((b, i) => `<div class="cost-m" data-ci="${i}"${b.now ? " data-now" : ""}${b.empty ? " data-empty" : ""} aria-label="${ttdEsc(b.title)}"><em>${b.empty ? "–" : b.value}</em><div class="cost-col">${b.before != null ? `<i class="cost-before" style="height:${Math.max(b.before, 2).toFixed(1)}%"></i>` : ""}<div class="cost-bar" style="height:${Math.max(b.home + b.pub, b.empty ? 2 : 4).toFixed(1)}%">${b.home > 0 ? `<i class="h" style="flex:${b.home.toFixed(2)}"></i>` : ""}${b.pub > 0 ? `<i class="p" style="flex:${b.pub.toFixed(2)}"></i>` : ""}</div></div><small>${ttdEsc(b.month)}</small></div>`).join("");
         const chart = this._r.costChart;
         if (chart && chart.dataset.sig !== html) { chart.dataset.sig = html; chart.innerHTML = html; }
+      }
+    }
+    // Tyre sets (EV Ledger 0.7+): the tyre card inside its own panel.
+    if (this._r.tyres) {
+      const id = this._scIds().tyres;
+      const stateObj = id ? this._hass?.states?.[id] : undefined;
+      this._hide("tyres", !stateObj || !customElements.get("ha-ev-tyre-card"));
+      if (stateObj && customElements.get("ha-ev-tyre-card")) {
+        let card = this._r.tyresHost.firstElementChild;
+        if (!card || card.dataset.entity !== id) {
+          card = document.createElement("ha-ev-tyre-card");
+          card.setConfig({ entity: id, embedded: true });
+          card.dataset.entity = id;
+          this._r.tyresHost.replaceChildren(card);
+        }
+        card.hass = this._hass;
       }
     }
     // Public charge form (EV Ledger): kWh, price and place, saved with the ledger's button.

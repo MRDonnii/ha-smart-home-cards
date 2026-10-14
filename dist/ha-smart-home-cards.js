@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.124 */
+/* MRDonnii Smart Home Cards v0.5.125 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -800,7 +800,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION53 = "0.4.6";
+  const VERSION54 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -967,8 +967,8 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       this.signatures.set(id, html);
       el.innerHTML = html;
     }
-    kpi(icon3, label, value, detail, tone2 = "") {
-      return `<article class="kpi ${tone2}">${this.icon(icon3)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
+    kpi(icon4, label, value, detail, tone2 = "") {
+      return `<article class="kpi ${tone2}">${this.icon(icon4)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
     }
     update() {
       if (!this.shadowRoot.getElementById("kpis") || !this.ha) return;
@@ -1025,7 +1025,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     }
     adviceView() {
       const rows = [["filter", "Filtreringsfremdrift", "progress-check"], ["warning", "Statusadvarsel", "alert-circle-outline"], ["next", "N\xE6ste handling", "calendar-check"], ["swim", "Bedste badetid", "weather-sunny"], ["cover", "Coverstatus", "pool"], ["maintenance", "Vedligeholdelse", "wrench"]];
-      return `<div class="advice-grid">${rows.map(([key, label, icon3]) => `<div class="advice-row">${this.icon(icon3)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
+      return `<div class="advice-grid">${rows.map(([key, label, icon4]) => `<div class="advice-row">${this.icon(icon4)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
     }
     winterView() {
       const s = this.state("winter");
@@ -1054,12 +1054,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
           for (const item2 of series) {
             const date2 = new Date(item2.last_changed || item2.last_updated);
             if (Number.isNaN(date2.getTime())) continue;
-            const day = days.find((d) => d.key === date2.toISOString().slice(0, 10));
-            if (!day) continue;
+            const day2 = days.find((d) => d.key === date2.toISOString().slice(0, 10));
+            if (!day2) continue;
             const n = number2(item2.state);
             if (n == null) continue;
-            if (entity === this.config.water) day.temps.push(n);
-            if (entity === this.config.runtime) day.pump = n;
+            if (entity === this.config.water) day2.temps.push(n);
+            if (entity === this.config.runtime) day2.pump = n;
           }
         }
         this.history = days.map((d) => ({ ...d, temp: d.temps.length ? d.temps.at(-1) : null }));
@@ -1218,12 +1218,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION53}`);
+  console.info(`HA POOL CARD v${VERSION54}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION53 = "0.3.5";
+  const VERSION54 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -1456,7 +1456,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION53}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION54}`);
 })();
 
 // src/cards/shared/keep-scroll.js
@@ -1675,10 +1675,10 @@ var HARoborockVacuumCard = class extends HTMLElement {
       <div class="track"><i style="width:${pct2}%"></i></div>
     </div>`;
   }
-  _switchChip(id, label, icon3) {
+  _switchChip(id, label, icon4) {
     if (!id) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon3}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon4}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _call(service, data = {}) {
     if (!this._config.vacuum) return;
@@ -2239,7 +2239,7 @@ var HaTeslaVehicleCard = class extends HTMLElement {
       <ha-card><ha-icon class="watermark" icon="mdi:car-sports"></ha-icon>
         <header><div class="title"><span class="eyebrow">TESLA \xB7 SAMLET BILCENTER</span><h1>${this.config.title}</h1><div class="headline" data-v="headline"></div></div>
           <div class="battery"><div class="battery-value" data-v="battery">\u2014</div><div class="battery-track"><i data-v="batteryBar"></i></div><small data-v="rangeHeader">\u2014</small></div></header>
-        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon3]) => `<button data-tab="${id}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
+        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon4]) => `<button data-tab="${id}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
         <main>
           <section data-panel="overview">${this._overviewHtml()}</section>
           <section data-panel="vehicle">${this._vehicleInfoHtml()}</section>
@@ -2276,8 +2276,8 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   _historyHtml() {
     return `<div class="history-grid"><article><div class="list-head"><div><small>LADNINGER</small><h2>Ladehistorik</h2></div><div class="pager"><button data-page="charge-prev">\u2039</button><span data-v="chargePage"></span><button data-page="charge-next">\u203A</button></div></div><div class="record" data-v="chargeRecord"></div></article><article><div class="section-head"><div><small>\xD8KONOMI</small><h2>Samlet status</h2></div><ha-icon icon="mdi:chart-donut"></ha-icon></div><div class="history-stats">${this._fact("chargesTotal", "Ladninger")}${this._fact("kwhTotal", "Energi")}${this._fact("priceTotalHistory", "Pris")}${this._fact("lastCharge", "Seneste")}</div><div class="months" data-v="months"></div></article></div>`;
   }
-  _metric(id, icon3, label) {
-    return `<article class="metric"><ha-icon icon="${icon3}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
+  _metric(id, icon4, label) {
+    return `<article class="metric"><ha-icon icon="${icon4}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
   }
   _fact(id, label) {
     return `<div class="fact"><small>${label}</small><strong data-v="${id}">\u2014</strong></div>`;
@@ -2572,7 +2572,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.18.1";
+var TTD_VERSION = "1.19.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -2755,6 +2755,7 @@ var TTD_SC_ROLES = {
   charging_status: "sensor._charging_status",
   home_charging_energy: "sensor._home_charging_energy",
   cost_this_year: "sensor._charging_cost_this_year",
+  tyres: "sensor._tyres",
   // Ready-by times: the week plan, the one-time time and the weekend time (EV Ledger).
   week_plan: "switch._week_plan",
   ready_by_once: "datetime._ready_by_once",
@@ -3140,6 +3141,8 @@ function ttdNormalizeConfig(raw) {
     smart_charge: typeof config.smart_charge === "string" && config.smart_charge.includes(".") ? config.smart_charge.trim() : typeof config.ev_ledger === "string" && config.ev_ledger.includes(".") ? config.ev_ledger.trim() : null,
     charger_label: typeof config.charger_label === "string" && config.charger_label.trim() ? config.charger_label.trim() : null,
     confirm_mode_change: config.confirm_mode_change !== false,
+    // The tyre sets panel (EV Ledger's tyres sensor, shown with ha-ev-tyre-card); tyres: false hides it.
+    tyres: config.tyres !== false,
     location: config.location_entity || entities.location || null,
     entities,
     controls,
@@ -3221,22 +3224,22 @@ function ttdShortModel(name) {
   const drive = /performance/i.test(text) ? "Performance" : /long range/i.test(text) ? "Long Range" : /\bAWD\b/i.test(text) ? "AWD" : /\bRWD\b|standard range/i.test(text) ? "RWD" : "";
   return ["Tesla", model, drive].filter(Boolean).join(" ");
 }
-function ttdIcon(icon3, cls = "") {
-  return `<ha-icon icon="${icon3}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
+function ttdIcon(icon4, cls = "") {
+  return `<ha-icon icon="${icon4}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 }
 function ttdTemplate(cfg) {
   const e = ttdEsc;
-  const stat = (key, icon3, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon3)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
-  const kpi = (key, icon3, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon3, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
-  const cell = (key, icon3, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon3, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
+  const stat = (key, icon4, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon4)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
+  const kpi = (key, icon4, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon4, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
+  const cell = (key, icon4, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon4, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
   const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><small>${label}</small><b data-r="${ref}V">${TTD_DASH}</b><em data-r="${ref}S"></em></button>`;
-  const item2 = (key, icon3, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon3)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
+  const item2 = (key, icon4, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon4)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
   const quick = TTD_CAR_CONTROLS.filter(([key]) => cfg.carControls[key]);
-  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon3, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon3)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
+  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon4, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon4)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
   return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
@@ -3269,7 +3272,7 @@ function ttdTemplate(cfg) {
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
-  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon3)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
+  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon4]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon4)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "N\xE6ste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
@@ -3296,13 +3299,13 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="sc-trip-h" data-scdef data-r="scDefHead" aria-expanded="false">${ttdIcon("mdi:calendar-star", "ic amber")}<span><b>Standardplan</b><small data-r="scDefSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scDefBody" hidden>
       <p class="sc-note">K\xF8rer n\xE5r kablet s\xE6ttes i. V\xE6lger du en anden plan, k\xF8rer den \xE9n gang og g\xE5r s\xE5 tilbage hertil.</p>
-      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon3]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
+      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon4]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon4)}<span>${label}</span></button>`).join("")}</div>
     </div>
   </div>
   <div class="sc-trip sc-opt" data-r="scOpt" hidden>
     <button type="button" class="sc-trip-h" data-scopt data-r="scOptHead" aria-expanded="false">${ttdIcon("mdi:tune-variant", "ic green")}<span><b>Smarte valg</b><small data-r="scOptSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scOptBody" hidden>
-      <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon3]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon3)}<span>${label}</span></button>`).join("")}</div>
+      <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon4]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon4)}<span>${label}</span></button>`).join("")}</div>
       <div class="ctl2" data-r="scQuiet" hidden>${ttdIcon("mdi:bell-sleep-outline", "ic blue")}<span>Lydl\xF8s</span><input type="time" data-r="scQuietFrom" aria-label="Lydl\xF8s fra"><span>\u2013</span><input type="time" data-r="scQuietUntil" aria-label="Lydl\xF8s til"></div>
       <p class="sc-note" data-r="scOptNote"></p>
     </div>
@@ -3362,7 +3365,8 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
   <header class="ph">${ttdIcon("mdi:calendar-month", "ph-i")}<div class="ph-t"><h3>Ladeudgifter <span class="light">(EV Ledger)</span></h3><p data-r="costSub">${TTD_DASH}</p></div><div class="cost-year"><b data-r="costYear">${TTD_DASH}</b><small data-r="costYearSub"></small></div></header>
   <div class="cost-wrap"><div class="cost-chart" data-r="costChart" role="img" aria-label="Ladeudgifter pr. m\xE5ned"></div><div class="tip cost-tip" data-r="costTip" hidden></div></div>
   <div class="cost-key"><span><i class="sw cost-home"></i>Hjemme</span><span><i class="sw cost-public"></i>Ude</span><span data-r="costBeforeKey" hidden><i class="sw cost-before"></i>Samme m\xE5ned \xE5ret f\xF8r</span><em data-r="costNote"></em></div>
-</section>` : ""}` : ""}
+</section>
+${cfg.tyres !== false ? `<section class="panel tyres" data-r="tyres" aria-label="Hjul" hidden><div data-r="tyresHost"></div></section>` : ""}` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "\xC5bn hele Tesla-oversigten" : "Flere indstillinger p\xE5 Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
 </div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}</div>`;
 }
@@ -3393,6 +3397,8 @@ h2,h3,p{margin:0}
 .panel{position:relative;min-width:0;container:panel / inline-size;padding:var(--tdc-pad);border-radius:var(--tdc-radius);background:var(--tdc-panel);border:1px solid var(--tdc-line);box-shadow:var(--tdc-shadow,none);overflow:hidden}
 /* The cost panel takes a full row of its own below the others, whatever the layout. */
 .cost{grid-column:1/-1;grid-row:-1}
+/* The tyre sets (EV Ledger, ha-ev-tyre-card inside) take a full row too. */
+.tyres{grid-column:1/-1}
 .cost .ph{align-items:flex-start}
 .cost-year{display:grid;justify-items:end;gap:1px;margin-left:auto;text-align:right}.cost-year b{font-size:22px;font-weight:750;line-height:1.1;white-space:nowrap}.cost-year small{font-size:12px;color:var(--tdc-muted);white-space:nowrap}
 .cost-wrap{position:relative}
@@ -4628,8 +4634,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._applyCarControls();
       return;
     }
-    const [, label, icon3] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
-    const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon3)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
+    const [, label, icon4] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+    const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon4)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
     pop.innerHTML = key === "climate" ? `${head(true)}<div class="qcp-row"><button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
         <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div></div>
         <div class="qcp-chips" data-qcp="chips"></div>${this._sc("heat_hold") ? `
@@ -4736,7 +4742,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const pool = Object.values(registry).filter((entry) => entry.device_id && (entry.device_id === own?.device_id || carName && name(devices[entry.device_id]) === carName) && !entry.hidden);
     pool.sort((a, b) => (a.device_id === own?.device_id ? 0 : 1) - (b.device_id === own?.device_id ? 0 : 1));
     const known = (id) => states[id] && !["unknown", "unavailable"].includes(states[id].state);
-    return TTD_QC_CHIPS.map(([role, label, icon3, domain, pattern]) => {
+    return TTD_QC_CHIPS.map(([role, label, icon4, domain, pattern]) => {
       const found = pool.filter((entry) => entry.entity_id.startsWith(`${domain}.`) && pattern.test(entry.entity_id)).map((entry) => entry.entity_id);
       if (!found.length) return null;
       const target = found.find((id) => states[id] && states[id].state !== "unavailable") || found[0];
@@ -4744,7 +4750,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const value = String(shown?.state || "").toLowerCase();
       const on = domain === "switch" ? value === "on" : !!value && !["off", "unknown", "unavailable"].includes(value);
       const level = domain === "switch" ? on ? "Til" : "Fra" : TTD_HEAT_LEVELS[value] || TTD_DASH;
-      return { role, label, icon: icon3, domain, target, value, on, level, dead: !states[target] || states[target].state === "unavailable" };
+      return { role, label, icon: icon4, domain, target, value, on, level, dead: !states[target] || states[target].state === "unavailable" };
     }).filter(Boolean);
   }
   _qcChip(role) {
@@ -5058,7 +5064,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     for (const option of options.filter((o) => o.on)) {
       if (option.role === "learn_departure") {
         const days = option.attrs.departures;
-        notes.push(days ? `L\xE6rte afgange: ${Object.entries(days).map(([day, at2]) => `${day} ${at2 || "\u2013"}`).join(" \xB7 ")}` : `L\xE6rer stadig k\xF8retider (${option.attrs.history_days || 0} af 21 dages ture)`);
+        notes.push(days ? `L\xE6rte afgange: ${Object.entries(days).map(([day2, at2]) => `${day2} ${at2 || "\u2013"}`).join(" \xB7 ")}` : `L\xE6rer stadig k\xF8retider (${option.attrs.history_days || 0} af 21 dages ture)`);
       } else if (option.role === "wait_cheaper_day" && !waiting) {
         notes.push(option.attrs.daily_use_kwh == null ? "Venter p\xE5 mindst en uges ture for at kende dagligt forbrug" : `Ingen billigere dag lige nu \xB7 forbrug ca. ${f.number(Number(option.attrs.daily_use_kwh), 1)} kWh/dag`);
       } else if (option.role === "prefer_green" && !option.attrs.price_area) notes.push("Gr\xF8n str\xF8m: CO\u2082-prognosen findes kun for Danmark");
@@ -5161,8 +5167,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const weekendOn = this._sc("weekend_ready_by")?.state === "on";
     const days = {};
     for (const [key] of TTD_RB_DAYS) {
-      const day = a.days?.[key];
-      days[key] = day ? { on: true, time: ttdClock(day.time) || same, target: day.target ?? "" } : a.days ? { on: false, time: same, target: "" } : { on: true, time: weekendOn && (key === "sat" || key === "sun") ? weekend : same, target: "" };
+      const day2 = a.days?.[key];
+      days[key] = day2 ? { on: true, time: ttdClock(day2.time) || same, target: day2.target ?? "" } : a.days ? { on: false, time: same, target: "" } : { on: true, time: weekendOn && (key === "sat" || key === "sun") ? weekend : same, target: "" };
     }
     const next = ttdToDate(a.next_ready_by);
     this._rbDraft = {
@@ -5243,10 +5249,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
           </div>
           <p class="rb-note">M\xE5let er ${Math.round(normal)} % (M\xE5l SOC). Med ugeplanen kan hver dag f\xE5 sin egen tid og sit eget m\xE5l, og dage uden k\xF8rsel kan springes over.</p>` : `
           <div class="rb-week">${TTD_RB_DAYS.map(([key, name]) => {
-      const day = d.days[key];
-      return `<div class="rb-wd${day.on ? "" : " off"}">
-              <button type="button" class="rb-tog" data-rbday="${key}" aria-pressed="${day.on}" aria-label="${name} ${day.on ? "til" : "fri"}">${ttdIcon(day.on ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>${name}</span></button>
-              ${day.on ? `<input type="time" step="60" data-rbin="time:${key}" value="${ttdEsc(day.time)}" aria-label="${name} klar senest"><select data-rbin="target:${key}" aria-label="${name} m\xE5l">${targets(day.target)}</select>` : `<span class="rb-free">Fri dag \u2013 ingen klar-tid</span>`}
+      const day2 = d.days[key];
+      return `<div class="rb-wd${day2.on ? "" : " off"}">
+              <button type="button" class="rb-tog" data-rbday="${key}" aria-pressed="${day2.on}" aria-label="${name} ${day2.on ? "til" : "fri"}">${ttdIcon(day2.on ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>${name}</span></button>
+              ${day2.on ? `<input type="time" step="60" data-rbin="time:${key}" value="${ttdEsc(day2.time)}" aria-label="${name} klar senest"><select data-rbin="target:${key}" aria-label="${name} m\xE5l">${targets(day2.target)}</select>` : `<span class="rb-free">Fri dag \u2013 ingen klar-tid</span>`}
             </div>`;
     }).join("")}</div>
           <div class="rb-tools">
@@ -5280,8 +5286,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     d.error = "";
     if (target.dataset.rbmode) d.mode = target.dataset.rbmode;
     else if (target.dataset.rbday) {
-      const day = d.days[target.dataset.rbday];
-      day.on = !day.on;
+      const day2 = d.days[target.dataset.rbday];
+      day2.on = !day2.on;
     } else if (target.dataset.rbweekend != null) d.weekendOn = !d.weekendOn;
     else if (target.dataset.rbcopy != null) {
       for (const key of ["tue", "wed", "thu", "fri"]) d.days[key] = { ...d.days.mon };
@@ -5339,13 +5345,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (d.mode === "week") {
       const days = {};
       for (const [key, name] of TTD_RB_DAYS) {
-        const day = d.days[key];
-        if (day.on && !ttdIsClock(day.time)) {
+        const day2 = d.days[key];
+        if (day2.on && !ttdIsClock(day2.time)) {
           d.error = `V\xE6lg en tid for ${name.toLowerCase()}.`;
           this._rbRender();
           return;
         }
-        days[key] = day.on ? { time: day.time, ...day.target !== "" && day.target != null ? { target: Number(day.target) } : {} } : null;
+        days[key] = day2.on ? { time: day2.time, ...day2.target !== "" && day2.target != null ? { target: Number(day2.target) } : {} } : null;
       }
       if (!Object.values(days).some(Boolean)) {
         d.error = "Mindst \xE9n dag skal have en klar-senest-tid.";
@@ -5766,6 +5772,21 @@ var ThTeslaDashboardCard = class extends HTMLElement {
           chart.dataset.sig = html;
           chart.innerHTML = html;
         }
+      }
+    }
+    if (this._r.tyres) {
+      const id = this._scIds().tyres;
+      const stateObj = id ? this._hass?.states?.[id] : void 0;
+      this._hide("tyres", !stateObj || !customElements.get("ha-ev-tyre-card"));
+      if (stateObj && customElements.get("ha-ev-tyre-card")) {
+        let card = this._r.tyresHost.firstElementChild;
+        if (!card || card.dataset.entity !== id) {
+          card = document.createElement("ha-ev-tyre-card");
+          card.setConfig({ entity: id, embedded: true });
+          card.dataset.entity = id;
+          this._r.tyresHost.replaceChildren(card);
+        }
+        card.hass = this._hass;
       }
     }
     if (this._r.pc) {
@@ -6628,8 +6649,8 @@ var TTD_RB_DAYS = [["mon", "Mandag"], ["tue", "Tirsdag"], ["wed", "Onsdag"], ["t
 var TTD_RB_LEARNED = ["man", "tir", "ons", "tor", "fre", "l\xF8r", "s\xF8n"];
 function ttdRbWhen(f, date2, long = false) {
   const diff = f.dayDiff(date2);
-  const day = diff === 0 ? TTD_TEXT.today : diff === 1 ? TTD_TEXT.tomorrow : `${f.weekday(date2, long ? "long" : "short").replace(/\.$/, "")}${long ? ` ${date2.getDate()}/${date2.getMonth() + 1}` : ""}`;
-  return `${day} ${TTD_TEXT.at} ${f.time(date2)}`;
+  const day2 = diff === 0 ? TTD_TEXT.today : diff === 1 ? TTD_TEXT.tomorrow : `${f.weekday(date2, long ? "long" : "short").replace(/\.$/, "")}${long ? ` ${date2.getDate()}/${date2.getMonth() + 1}` : ""}`;
+  return `${day2} ${TTD_TEXT.at} ${f.time(date2)}`;
 }
 function ttdLocalInput(date2) {
   const pad3 = (value) => String(value).padStart(2, "0");
@@ -7403,8 +7424,605 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-glance-card", name: "HA Tesla Glance Card", description: "Lille forsidekort med batteri, r\xE6kkevidde, opladning og forbrug", preview: true });
 console.info(`%c HA TESLA GLANCE %c v${VERSION5} `, "color:white;background:#cc0000;font-weight:700", "color:#ffb4b4;background:#111827");
 
+// src/shared/lux.js
+var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
+function luxCss({ base, active, icon: icon4 = "ha-icon", underline = true, gum = true }) {
+  const a = LUX_ACCENT;
+  const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
+  return `
+${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
+${each(base, ":active")}{transform:scale(.9);transition-duration:.08s}
+${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
+  color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
+  ${gum ? "animation:luxGum .7s ease-out" : ""}}
+${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
+${each(active, ` ${icon4}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+${LUX_KEYFRAMES}
+@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon4}`)}{animation:none!important;transition:none!important}}`;
+}
+var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
+@keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
+
+// src/cards/ha-ev-tyre-card/ha-ev-tyre-card.js
+var VERSION6 = "0.1.0";
+var KINDS = {
+  summer: { label: "Sommer", icon: "mdi:weather-sunny", color: "#f2b545" },
+  winter: { label: "Vinter", icon: "mdi:snowflake", color: "#5fb8ff" },
+  studded: { label: "Pigd\xE6k", icon: "mdi:snowflake-alert", color: "#8fa8ff" },
+  all_season: { label: "Hel\xE5r", icon: "mdi:weather-partly-snowy-rainy", color: "#6fd19a" }
+};
+var kindOf = (kind) => KINDS[kind] || KINDS.summer;
+var BAND_ORDER = ["under 0", "0\u20135", "5\u201310", "10\u201315", "15\u201320", "20+"];
+var BAND_LABEL = { "under 0": "Under 0\xB0", "0\u20135": "0\u20135\xB0", "5\u201310": "5\u201310\xB0", "10\u201315": "10\u201315\xB0", "15\u201320": "15\u201320\xB0", "20+": "Over 20\xB0" };
+var TYRES = [["fl", "VF"], ["fr", "HF"], ["rl", "VB"], ["rr", "HB"]];
+var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var num = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+var day = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
+var dayShort = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
+var pad = (n) => String(n).padStart(2, "0");
+var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad(date2.getMonth() + 1)}-${pad(date2.getDate())}T${pad(date2.getHours())}:${pad(date2.getMinutes())}`;
+var icon = (name, cls = "") => `<ha-icon icon="${name}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
+function dotAge(dot) {
+  const m = /^(\d{2})(\d{2})$/.exec(String(dot || "").trim());
+  if (!m) return null;
+  const made = new Date(2e3 + Number(m[2]), 0, 1 + (Number(m[1]) - 1) * 7);
+  const years = (Date.now() - made) / (365.25 * 864e5);
+  return years < 0 ? null : years;
+}
+var HAEvTyreCard = class extends HTMLElement {
+  static getStubConfig(hass) {
+    const found = Object.keys(hass?.states || {}).find((id) => /^sensor\..+_tyres$/.test(id) && hass.states[id].attributes.sets);
+    return { entity: found || "sensor.bil_tyres" };
+  }
+  static getConfigForm() {
+    return {
+      schema: [
+        { name: "entity", required: true, selector: { entity: { domain: "sensor", integration: "evledger" } } },
+        { name: "title", selector: { text: {} } }
+      ],
+      computeLabel: (s) => ({ entity: "Hjul-sensor (EV Ledger)", title: "Titel" })[s.name] || s.name
+    };
+  }
+  setConfig(config) {
+    if (!config?.entity) throw new Error("entity mangler (sensor.<bil>_tyres fra EV Ledger)");
+    this._config = { title: "Hjul", embedded: false, ...config };
+    this._view = this._view || "main";
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    this._render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    const st = hass?.states?.[this._config?.entity];
+    if (st === this._st) return;
+    this._st = st;
+    if (this._view === "main") this._render();
+  }
+  getCardSize() {
+    return 6;
+  }
+  getGridOptions() {
+    return { columns: 12, min_columns: 6, rows: "auto" };
+  }
+  // ------------------------------------------------------------------ data
+  get _a() {
+    return this._st?.attributes || {};
+  }
+  _sets() {
+    return Array.isArray(this._a.sets) ? this._a.sets : [];
+  }
+  _set(id) {
+    return this._sets().find((s) => s.id === id);
+  }
+  async _call(service, data) {
+    this._busy = true;
+    this._err = "";
+    this._paint();
+    try {
+      await this._hass.callService("evledger", service, { entity_id: this._config.entity, ...data });
+      this._busy = false;
+      return true;
+    } catch (err) {
+      this._busy = false;
+      this._err = err?.message || String(err);
+      this._paint();
+      return false;
+    }
+  }
+  _open(view, extra = {}) {
+    this._view = view;
+    this._err = "";
+    this._confirm = "";
+    Object.assign(this, extra);
+    this._render();
+  }
+  // ---------------------------------------------------------------- render
+  _render() {
+    if (!this.shadowRoot || !this._config) return;
+    const body = !this._st ? `<p class="empty">${icon("mdi:alert-circle-outline")}<span>${esc2(this._config.entity)} findes ikke. Den kommer med EV Ledger 0.7.0 (genstart Home Assistant efter opdateringen).</span></p>` : this._view === "change" ? this._changeHtml() : this._view === "tread" ? this._treadHtml() : this._view === "edit" ? this._editHtml() : this._view === "season" ? this._seasonHtml() : this._mainHtml();
+    const html = `<style>${STYLES}</style>${this._config.embedded ? `<div class="tc embedded">${body}</div>` : `<ha-card><div class="tc">${body}</div></ha-card>`}`;
+    const scroller = this.shadowRoot.querySelector(".tc");
+    const keep = scroller ? scroller.scrollTop : 0;
+    this.shadowRoot.innerHTML = html;
+    const next = this.shadowRoot.querySelector(".tc");
+    if (next && keep) next.scrollTop = keep;
+    this._wire();
+    this._paint();
+  }
+  /** Busy/error state without a redraw (forms keep what was typed). */
+  _paint() {
+    const root = this.shadowRoot;
+    if (!root) return;
+    root.querySelectorAll("[data-save]").forEach((b) => {
+      b.disabled = !!this._busy;
+      b.classList.toggle("busy", !!this._busy);
+    });
+    const err = root.querySelector("[data-err]");
+    if (err) {
+      err.textContent = this._err || "";
+      err.hidden = !this._err;
+    }
+  }
+  _header(sub, actions = "") {
+    const active = this._set(this._a.set_id);
+    const k = active ? kindOf(active.kind) : null;
+    return `<header class="th"><span class="th-i" style="--k:${k ? k.color : "var(--tc-muted)"}">${icon("mdi:tire")}</span>
+      <div class="th-t"><h3>${esc2(this._config.title)}</h3><p>${sub}</p></div>${actions}</header>`;
+  }
+  _mainHtml() {
+    const a = this._a;
+    const sets = this._sets();
+    if (!sets.length) {
+      return `${this._header("Ingen hjuls\xE6t endnu")}
+        <div class="intro">${icon("mdi:tire", "intro-i")}<div><b>Tilf\xF8j dine hjuls\xE6t</b><p>Fx sommer- og vinterhjul med d\xE6k- og f\xE6lgst\xF8rrelse. S\xE5 viser kortet hvilket s\xE6t der sidder p\xE5, forbruget p\xE5 hvert s\xE6t \u2014 ogs\xE5 sammenlignet ved samme udetemperatur \u2014 slid og hvorn\xE5r det er tid til at skifte.</p>
+        <button type="button" class="btn go" data-new>${icon("mdi:plus")}Tilf\xF8j hjuls\xE6t</button></div></div>`;
+    }
+    const active = this._set(a.set_id);
+    const k = active ? kindOf(active.kind) : null;
+    const sub = active ? `${esc2(active.name)} p\xE5 siden ${esc2(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
+    const actions = `<div class="th-a"><button type="button" class="btn go" data-change>${icon("mdi:swap-horizontal")}<span>Skift hjul</span></button><button type="button" class="ib" data-new title="Nyt hjuls\xE6t" aria-label="Nyt hjuls\xE6t">${icon("mdi:plus")}</button></div>`;
+    return `${this._header(sub, actions)}${this._tipHtml()}${active ? this._currentHtml(active, k) : `<p class="note">Tryk <b>Skift hjul</b> og v\xE6lg det s\xE6t, der sidder p\xE5 nu (du kan v\xE6lge en dato tilbage i tiden).</p>`}
+      ${this._setsHtml()}${this._compareHtml()}${this._historyHtml()}`;
+  }
+  _tipHtml() {
+    const tip = this._a.suggestion;
+    if (!tip) return "";
+    const to = kindOf(tip.to === "summer" ? "summer" : "winter");
+    const goal = tip.to === "summer" ? "sommerhjul" : "vinterhjul";
+    return `<div class="tip${tip.urgent ? " urgent" : ""}" style="--k:${to.color}">${icon(to.icon, "tip-i")}<div><b>Tid til ${goal}${tip.set ? ` (${esc2(tip.set)})` : ""}</b><p>${esc2(tip.reason)}</p></div>
+      ${tip.set_id ? `<button type="button" class="btn" data-change="${esc2(tip.set_id)}">Skift nu</button>` : ""}</div>`;
+  }
+  _treadBar(set) {
+    if (set.tread_mm == null) return "";
+    const max = Math.max(8, set.tread_mm);
+    const pct2 = Math.min(100, set.tread_mm / max * 100);
+    const minPct = set.tread_min_mm / max * 100;
+    const tone2 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
+    const left = set.km_left != null ? ` \xB7 ca. ${num(set.km_left)} km tilbage` : "";
+    return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num(set.tread_mm, 1)} mm</b></div>
+      <div class="tread-bar"><i style="width:${pct2.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num(set.tread_min_mm, 1)} mm"></em></div>
+      <small>Anbefalet min. ${num(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc2(dayShort(set.tread_at))}</small></div>`;
+  }
+  _currentHtml(set, k) {
+    const a = this._a;
+    const season = (a.seasons || [])[0];
+    const age = dotAge(set.dot);
+    const tyre = [set.brand, set.model].filter(Boolean).join(" ");
+    const facts = [
+      set.rim ? `${icon("mdi:circle-double")}<span>${esc2(set.rim)}</span>` : "",
+      tyre ? `${icon("mdi:tire")}<span>${esc2(tyre)}</span>` : "",
+      set.dot ? `${icon("mdi:calendar")}<span>DOT ${esc2(set.dot)}${age != null ? ` \xB7 ${num(age, age < 10 ? 1 : 0)} \xE5r` : ""}</span>` : ""
+    ].filter(Boolean).map((f) => `<span class="fact">${f}</span>`).join("");
+    const kpi = (value, unit, label, title = "") => `<div class="kpi"${title ? ` title="${esc2(title)}"` : ""}><b>${value}<small>${unit}</small></b><span>${label}</span></div>`;
+    return `<section class="cur" style="--k:${k.color}">
+      <div class="cur-top"><span class="kind">${icon(k.icon)}${k.label}</span><h4>${esc2(set.name)}</h4><p class="size">${esc2(set.size || "St\xF8rrelse ikke angivet")}</p>
+        <div class="facts">${facts}</div></div>
+      <div class="kpis">${kpi(num(season?.km ?? a.season_km), "km", "denne s\xE6son")}${kpi(num(season?.wh_per_km), "Wh/km", "k\xF8rsel", "Ud fra batteriets fald p\xE5 turene")}${kpi(num(season?.charged_kwh_per_100_km, 1), "kWh/100 km", "opladet", "Ladet energi pr. 100 km (med tab og standby)")}${kpi(num(season?.cost_per_km, 2), "kr/km", "ladeudgift")}</div>
+      ${this._treadBar(set)}
+      ${season?.mean_temp_c != null ? `<p class="mini">${icon("mdi:thermometer")}Gennemsnitlig udetemperatur p\xE5 turene: ${num(season.mean_temp_c, 1)} \xB0C \xB7 ${num(season.days)} dage \xB7 ${num(season.trips)} ture</p>` : ""}
+    </section>`;
+  }
+  _setsHtml() {
+    const sets = this._sets();
+    const tiles = sets.filter((s) => !s.retired || s.mounted).map((s) => {
+      const k = kindOf(s.kind);
+      const where = s.mounted ? `<span class="on">P\xE5 bilen</span>` : s.storage ? `<span class="off">${icon("mdi:warehouse")}${esc2(s.storage)}</span>` : "";
+      return `<article class="set${s.mounted ? " mounted" : ""}" style="--k:${k.color}">
+        <header>${icon(k.icon, "set-i")}<div><b>${esc2(s.name)}</b><small>${esc2(s.size || k.label)}</small></div>${where}</header>
+        <dl><div><dt>I alt</dt><dd>${num(s.total_km)} km</dd></div><div><dt>K\xF8rsel</dt><dd>${num(s.wh_per_km)} Wh/km</dd></div>
+          <div><dt>Opladet</dt><dd>${num(s.charged_kwh_per_100_km, 1)} kWh/100</dd></div><div><dt>M\xF8nster</dt><dd>${s.tread_mm != null ? `${num(s.tread_mm, 1)} mm` : "\u2013"}</dd></div></dl>
+        <footer><button type="button" class="lnk" data-tread="${esc2(s.id)}">${icon("mdi:ruler")}M\xE5l m\xF8nster</button><button type="button" class="lnk" data-edit="${esc2(s.id)}">${icon("mdi:pencil")}Ret</button></footer>
+      </article>`;
+    }).join("");
+    const retired = sets.filter((s) => s.retired && !s.mounted);
+    const old = retired.length ? `<p class="mini">${icon("mdi:archive-outline")}Udfasede: ${retired.map((s) => `<button type="button" class="lnk inline" data-edit="${esc2(s.id)}">${esc2(s.name)}</button>`).join(", ")}</p>` : "";
+    return `<section class="sets">${tiles}</section>${old}`;
+  }
+  _compareHtml() {
+    const sets = this._sets().filter((s) => s.bands && Object.keys(s.bands).length);
+    if (sets.length < 1) return "";
+    const cmp = this._a.comparison;
+    const max = Math.max(1, ...sets.flatMap((s) => Object.values(s.bands).map((b) => b.wh_per_km || 0)));
+    const bands = BAND_ORDER.filter((b) => sets.some((s) => s.bands[b]));
+    const rows = bands.map((band) => `<div class="band"><span class="band-l">${BAND_LABEL[band]}</span><div class="band-b">${sets.map((s) => {
+      const v = s.bands[band];
+      const k = kindOf(s.kind);
+      return v ? `<div class="bar" style="--k:${k.color};--w:${(v.wh_per_km / max * 100).toFixed(1)}%" title="${esc2(s.name)}: ${num(v.wh_per_km)} Wh/km over ${num(v.km)} km"><i></i><em>${num(v.wh_per_km)}</em></div>` : `<div class="bar none" title="${esc2(s.name)}: ingen ture"><i></i><em>\u2013</em></div>`;
+    }).join("")}</div></div>`).join("");
+    const lines = (cmp?.sets || []).map((c2) => {
+      const s = this._set(c2.set_id);
+      if (c2.difference_pct == null) return `<p class="verdict muted">${icon("mdi:scale-balance")}<span><b>${esc2(c2.set)}</b> mod <b>${esc2(cmp.reference)}</b>: k\xF8r mindst 100 km p\xE5 begge s\xE6t i samme temperaturinterval, s\xE5 kan de sammenlignes \xE6rligt.</span></p>`;
+      const more = c2.difference_pct > 0;
+      const sure = { low: "forel\xF8bigt tal \u2014 bliver mere sikkert med flere km", medium: "rimeligt sikkert", high: "sikkert" }[c2.confidence];
+      return `<p class="verdict${c2.confidence === "low" ? " soft" : ""}" style="--k:${kindOf(s?.kind).color}">${icon(more ? "mdi:trending-up" : "mdi:trending-down")}<span><b>${esc2(c2.set)}</b> bruger <b>${num(Math.abs(c2.difference_pct), 1)} % ${more ? "mere" : "mindre"}</b> end ${esc2(cmp.reference)} ved samme udetemperatur (${c2.bands.map((b) => BAND_LABEL[b]).join(", ")} \xB7 ${num(c2.km_compared)} km${sure ? ` \xB7 ${sure}` : ""}).</span></p>`;
+    }).join("");
+    const legend = sets.map((s) => `<span style="--k:${kindOf(s.kind).color}"><i></i>${esc2(s.name)}</span>`).join("");
+    return `<section class="cmp"><header class="sh"><h4>Forbrug ved udetemperatur</h4><span class="legend">${legend}</span></header>
+      <div class="bands">${rows}</div>${lines}<p class="mini">Wh/km ud fra batteriets fald p\xE5 turene. Kulde koster mest \u2014 derfor sammenlignes s\xE6ttene kun i samme temperatur.</p></section>`;
+  }
+  _historyHtml() {
+    const seasons = this._a.seasons || [];
+    if (!seasons.length) return "";
+    const rows = seasons.map((s) => {
+      const set = this._set(s.set_id);
+      const k = kindOf(set?.kind || s.kind);
+      return `<button type="button" class="hrow" data-season="${esc2(s.change_id)}" style="--k:${k.color}">${icon(k.icon, "h-i")}
+        <span class="h-n"><b>${esc2(s.set || "Slettet s\xE6t")}</b><small>${esc2(day(s.from))} \u2013 ${s.to ? esc2(day(s.to)) : "nu"}</small></span>
+        <span class="h-v"><b>${s.km != null ? `${num(s.km)} km` : "\u2013"}</b><small>${s.wh_per_km != null ? `${num(s.wh_per_km)} Wh/km` : ""}${s.cost_per_km != null ? ` \xB7 ${num(s.cost_per_km, 2)} kr/km` : ""}</small></span>${icon("mdi:chevron-right", "h-c")}</button>`;
+    }).join("");
+    return `<section class="hist"><header class="sh"><h4>S\xE6soner</h4></header>${rows}</section>`;
+  }
+  // ----------------------------------------------------------------- forms
+  _form(title, sub, body, save, extra = "") {
+    return `${this._header(sub)}<section class="form"><header class="fh"><button type="button" class="ib" data-back aria-label="Tilbage">${icon("mdi:arrow-left")}</button><h4>${title}</h4></header>
+      ${body}<p class="err" data-err hidden></p><div class="fa">${extra}<span class="sp"></span><button type="button" class="btn" data-back>Annuller</button><button type="button" class="btn go" data-save>${save}</button></div></section>`;
+  }
+  _changeHtml() {
+    const sets = this._sets().filter((s) => !s.retired || s.mounted);
+    const pick = this._pick || sets.find((s) => !s.mounted)?.id || sets[0]?.id;
+    this._pick = pick;
+    const choices = sets.map((s) => {
+      const k = kindOf(s.kind);
+      return `<button type="button" class="choice" role="radio" aria-checked="${s.id === pick}" data-pick="${esc2(s.id)}" style="--k:${k.color}"${s.mounted ? " disabled" : ""}>${icon(k.icon)}<span><b>${esc2(s.name)}</b><small>${s.mounted ? "Sidder p\xE5 nu" : esc2(s.size || k.label)}</small></span></button>`;
+    }).join("");
+    return this._form("Skift hjul", "Hvilket s\xE6t kommer p\xE5?", `<div class="choices" role="radiogroup">${choices}</div>
+      <div class="grid2"><label class="f"><span>Hvorn\xE5r</span><input type="datetime-local" data-f="at" value="${localInput()}" max="${localInput()}"></label>
+      <label class="f"><span>Kilometerstand</span><input type="number" inputmode="numeric" min="0" step="1" data-f="odometer_km" placeholder="Hentes automatisk"></label></div>
+      <label class="f"><span>Note (valgfri)</span><input type="text" data-f="note" placeholder="Fx skiftet hos d\xE6khotellet" autocomplete="off"></label>
+      <p class="mini">Kilometerstanden findes ud fra turene, hvis du ikke skriver den. Du kan v\xE6lge en dato tilbage i tiden, fx sidste efter\xE5r.</p>`, "Gem skift");
+  }
+  _treadHtml() {
+    const set = this._set(this._treadId) || this._set(this._a.set_id) || this._sets()[0];
+    this._treadId = set?.id;
+    const options = this._sets().map((s) => `<option value="${esc2(s.id)}"${s.id === set?.id ? " selected" : ""}>${esc2(s.name)}</option>`).join("");
+    const last = (set?.treads || []).slice(-1)[0];
+    const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc2(day(r.at))}</span><b>${num(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc2(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
+    return this._form("M\xE5l m\xF8nsterdybde", "M\xE5l i midten af slidbanen med en dybdem\xE5ler", `
+      <label class="f"><span>Hjuls\xE6t</span><select data-treadset>${options}</select></label>
+      <div class="tyres">${TYRES.map(([key, label]) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="0.1" min="0" max="20" data-tyre="${key}" placeholder="${last?.each ? "" : "mm"}"></label>`).join("")}</div>
+      <label class="f"><span>Hvorn\xE5r</span><input type="datetime-local" data-f="at" value="${localInput()}" max="${localInput()}"></label>
+      <p class="mini">Udfyld \xE9t eller alle fire d\xE6k \u2014 det laveste t\xE6ller. To m\xE5linger med nogle tusinde km imellem giver slid pr. 1000 km og hvor langt s\xE6ttet r\xE6kker.</p>
+      ${history2 ? `<ul class="treads">${history2}</ul>` : ""}`, "Gem m\xE5ling");
+  }
+  _editHtml() {
+    const s = this._set(this._editId) || { kind: this._newKind || "winter" };
+    const isNew = !s.id;
+    const v = (key) => s[key] == null ? "" : esc2(s[key]);
+    const text = (key, label, ph = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc2(ph)}" autocomplete="off"></label>`;
+    const n = (key, label, ph = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc2(ph)}"></label>`;
+    const kinds = Object.entries(KINDS).map(([key, k]) => `<button type="button" class="choice sm" role="radio" aria-checked="${(s.kind || "summer") === key}" data-kind="${key}" style="--k:${k.color}">${icon(k.icon)}<span><b>${k.label}</b></span></button>`).join("");
+    const del = isNew ? "" : `<button type="button" class="btn stop" data-delset>${this._confirm === "set" ? "Tryk igen for at slette" : "Slet"}</button>`;
+    return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc2(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc2(s.size || ""), `
+      ${text("name", "Navn", 'Fx Vinter 18"')}
+      <div class="choices kinds" role="radiogroup" aria-label="Type">${kinds}</div>
+      <h5>D\xE6k</h5>
+      <div class="grid2">${text("brand", "M\xE6rke", "Fx Nokian")}${text("model", "Model", "Fx Hakkapeliitta R5 EV")}</div>
+      <div class="grid4">${n("width_mm", "Bredde", "235", "5")}${n("aspect_pct", "Profil %", "45", "5")}${n("rim_inch", 'F\xE6lg "', "18", "1")}${text("load_speed", "Index", "98T")}</div>
+      <div class="grid2">${text("dot", "DOT (uge+\xE5r)", "Fx 2324")}${n("km_before", "Km f\xF8r EV Ledger", "0", "100")}</div>
+      <h5>F\xE6lge</h5>
+      <div class="grid3">${text("rim_name", "Navn", "Fx Aero 18")}${n("rim_width_in", "Bredde (J)", "8.5", "0.5")}${n("rim_offset_mm", "ET", "40", "1")}</div>
+      <h5>\xD8vrigt</h5>
+      <div class="grid2"><label class="f"><span>K\xF8bt</span><input type="date" data-f="purchased" value="${v("purchased")}"></label>${n("price", "Pris (kr.)", "", "1")}</div>
+      ${text("storage", "Opbevares", "Fx D\xE6khotel, garagen")}${text("note", "Note")}
+      ${isNew ? "" : `<label class="chk"><input type="checkbox" data-f="retired"${s.retired ? " checked" : ""}><span>Udfaset (slidt op / solgt) \u2014 beholdes i historikken</span></label>`}`, isNew ? "Opret" : "Gem", del);
+  }
+  _seasonHtml() {
+    const season = (this._a.seasons || []).find((s) => s.change_id === this._seasonId);
+    if (!season) return this._mainHtml();
+    const at = new Date(season.from);
+    return this._form(
+      `${esc2(season.set || "Skift")} p\xE5 bilen`,
+      `${esc2(day(season.from))} \u2013 ${season.to ? esc2(day(season.to)) : "nu"}`,
+      `
+      <div class="kpis">${[[num(season.km), "km"], [num(season.wh_per_km), "Wh/km"], [num(season.charged_kwh_per_100_km, 1), "kWh/100 km"], [num(season.mean_temp_c, 1), "\xB0C snit"]].map(([vv, u3]) => `<div class="kpi"><b>${vv}<small>${u3}</small></b></div>`).join("")}</div>
+      <div class="grid2"><label class="f"><span>Skiftet</span><input type="datetime-local" data-f="at" value="${localInput(at)}" max="${localInput()}"></label>
+      <label class="f"><span>Kilometerstand ved skift</span><input type="number" inputmode="numeric" step="1" min="0" data-f="odometer_km" value="${season.odometer_from ?? ""}" placeholder="Ukendt"></label></div>
+      <p class="mini">Ret dato eller kilometerstand, hvis skiftet blev registreret forkert. Uden kilometerstand kan km og forbrug ikke regnes for s\xE6sonen.</p>`,
+      "Gem",
+      `<button type="button" class="btn stop" data-delseason>${this._confirm === "season" ? "Tryk igen for at slette" : "Slet skift"}</button>`
+    );
+  }
+  // ------------------------------------------------------------------ wire
+  _val(key) {
+    const el = this.shadowRoot.querySelector(`[data-f="${key}"]`);
+    if (!el) return void 0;
+    if (el.type === "checkbox") return el.checked;
+    const raw = el.value.trim();
+    if (el.hasAttribute("data-num")) return raw === "" ? null : Number(raw.replace(",", "."));
+    return raw === "" ? null : raw;
+  }
+  _wire() {
+    const root = this.shadowRoot;
+    const on = (sel, fn) => root.querySelectorAll(sel).forEach((el) => el.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      fn(el, ev);
+    }));
+    on("[data-back]", () => this._open("main"));
+    on("[data-change]", (el) => this._open("change", { _pick: el.dataset.change || null }));
+    on("[data-new]", () => this._open("edit", { _editId: null, _newKind: this._sets().some((s) => s.kind === "summer") ? "winter" : "summer" }));
+    on("[data-edit]", (el) => this._open("edit", { _editId: el.dataset.edit }));
+    on("[data-tread]", (el) => this._open("tread", { _treadId: el.dataset.tread }));
+    on("[data-season]", (el) => this._open("season", { _seasonId: el.dataset.season }));
+    on("[data-pick]", (el) => {
+      this._pick = el.dataset.pick;
+      root.querySelectorAll("[data-pick]").forEach((b) => b.setAttribute("aria-checked", String(b === el)));
+    });
+    on("[data-kind]", (el) => {
+      root.querySelectorAll("[data-kind]").forEach((b) => b.setAttribute("aria-checked", String(b === el)));
+    });
+    root.querySelector("[data-treadset]")?.addEventListener("change", (ev) => {
+      this._treadId = ev.target.value;
+      this._render();
+    });
+    on("[data-deltread]", async (el) => {
+      const key = `t:${el.dataset.deltread}`;
+      if (this._confirm !== key) {
+        this._confirm = key;
+        this._render();
+        return;
+      }
+      this._confirm = "";
+      if (await this._call("delete_tread_depth", { set_id: this._treadId, reading_id: el.dataset.deltread })) this._render();
+    });
+    on("[data-delset]", async () => {
+      if (this._confirm !== "set") {
+        this._confirm = "set";
+        root.querySelector("[data-delset]").textContent = "Tryk igen for at slette";
+        return;
+      }
+      if (await this._call("delete_tyre_set", { set_id: this._editId })) this._open("main");
+    });
+    on("[data-delseason]", async () => {
+      if (this._confirm !== "season") {
+        this._confirm = "season";
+        root.querySelector("[data-delseason]").textContent = "Tryk igen for at slette";
+        return;
+      }
+      if (await this._call("delete_tyre_change", { change_id: this._seasonId })) this._open("main");
+    });
+    on("[data-save]", () => this._save());
+  }
+  async _save() {
+    if (this._busy) return;
+    const when = this._val("at");
+    const at = when ? new Date(when).toISOString() : void 0;
+    let ok = false;
+    if (this._view === "change") {
+      if (!this._pick) {
+        this._err = "V\xE6lg et hjuls\xE6t.";
+        this._paint();
+        return;
+      }
+      const data = { set_id: this._pick };
+      if (at && Math.abs(new Date(at) - Date.now()) > 12e4) data.at = at;
+      const odo = this._val("odometer_km");
+      if (odo) data.odometer_km = Number(odo);
+      const note = this._val("note");
+      if (note) data.note = note;
+      ok = await this._call("change_tyres", data);
+    } else if (this._view === "tread") {
+      const each = TYRES.map(([key]) => this.shadowRoot.querySelector(`[data-tyre="${key}"]`).value.trim().replace(",", ".")).filter((v) => v !== "").map(Number);
+      if (!each.length || each.some((v) => Number.isNaN(v))) {
+        this._err = "Skriv mindst \xE9n dybde i mm.";
+        this._paint();
+        return;
+      }
+      ok = await this._call("log_tread_depth", { set_id: this._treadId, each, ...at ? { at } : {} });
+    } else if (this._view === "edit") {
+      const name = this._val("name");
+      if (!name) {
+        this._err = "Giv s\xE6ttet et navn.";
+        this._paint();
+        return;
+      }
+      const kind = this.shadowRoot.querySelector('[data-kind][aria-checked="true"]')?.dataset.kind || "summer";
+      const data = { name, kind };
+      for (const key of ["brand", "model", "load_speed", "dot", "rim_name", "storage", "note", "purchased"]) data[key] = this._val(key);
+      for (const key of ["width_mm", "aspect_pct", "rim_inch", "rim_width_in", "rim_offset_mm", "price", "km_before"]) data[key] = this._val(key);
+      if (data.km_before == null) data.km_before = 0;
+      if (this._editId) {
+        data.set_id = this._editId;
+        data.retired = this._val("retired");
+      }
+      ok = await this._call("save_tyre_set", data);
+    } else if (this._view === "season") {
+      const data = { change_id: this._seasonId };
+      if (at) data.at = at;
+      const odo = this._val("odometer_km");
+      if (odo) data.odometer_km = Number(odo);
+      ok = await this._call("update_tyre_change", data);
+    }
+    if (ok) this._open("main");
+  }
+};
+var STYLES = `
+:host{display:block;--tc-text:var(--primary-text-color,#eef2f7);--tc-muted:var(--secondary-text-color,#94a3b8);
+  --tc-line:color-mix(in srgb,var(--tc-text) 10%,transparent);--tc-tile:color-mix(in srgb,var(--tc-text) 4%,transparent);
+  --tc-accent:${LUX_ACCENT}}
+*{box-sizing:border-box}
+ha-card{overflow:hidden}
+.tc{padding:16px;color:var(--tc-text);display:grid;gap:14px;container:tc / inline-size}
+.tc.embedded{padding:0}
+h3,h4,h5,p{margin:0}
+ha-icon{--mdc-icon-size:20px;flex:none}
+.th{display:flex;align-items:center;gap:12px;min-width:0}
+.th-i{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--k);background:color-mix(in srgb,var(--k) 16%,transparent);flex:none}
+.th-t{min-width:0;flex:1}
+.th-t h3{font-size:16px;font-weight:700}
+.th-t p{font-size:12.5px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th-a{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:11px;border:1px solid var(--tc-line);background:var(--tc-tile);
+  color:var(--tc-text);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;white-space:nowrap;transition:transform .15s ease,background .2s ease}
+.btn:active{transform:scale(.95)}
+.btn ha-icon{--mdc-icon-size:18px}
+.btn.go{background:color-mix(in srgb,var(--tc-accent) 22%,transparent);border-color:color-mix(in srgb,var(--tc-accent) 45%,transparent);color:color-mix(in srgb,var(--tc-accent) 75%,var(--tc-text))}
+.btn.stop{color:var(--error-color,#ef4444);border-color:color-mix(in srgb,var(--error-color,#ef4444) 40%,transparent)}
+.btn:disabled{opacity:.55;cursor:progress}
+.ib{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;border:1px solid var(--tc-line);background:var(--tc-tile);color:var(--tc-text);cursor:pointer;flex:none}
+.ib.sm{width:30px;height:30px;border-radius:9px}
+.lnk{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:var(--tc-muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 2px}
+.lnk ha-icon{--mdc-icon-size:16px}
+.lnk:hover{color:var(--tc-text)}
+.lnk.inline{padding:0;text-decoration:underline}
+.mini{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--tc-muted);line-height:1.4}
+.mini ha-icon{--mdc-icon-size:15px}
+.note{font-size:13.5px;color:var(--tc-muted)}
+.empty{display:flex;gap:10px;align-items:center;color:var(--tc-muted);font-size:13.5px}
+.intro{display:flex;gap:14px;padding:16px;border-radius:14px;background:var(--tc-tile);border:1px dashed var(--tc-line)}
+.intro-i{--mdc-icon-size:34px;color:var(--tc-accent)}
+.intro p{font-size:13px;color:var(--tc-muted);margin:6px 0 12px;line-height:1.45}
+.tip{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--k) 13%,transparent);border:1px solid color-mix(in srgb,var(--k) 35%,transparent)}
+.tip.urgent{animation:tipPulse 2.4s ease-in-out infinite}
+.tip-i{--mdc-icon-size:26px;color:var(--k)}
+.tip>div{flex:1;min-width:0}
+.tip b{font-size:14px}
+.tip p{font-size:12.5px;color:var(--tc-muted);margin-top:2px}
+@keyframes tipPulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--k) 18%,transparent)}}
+.cur{position:relative;overflow:hidden;display:grid;gap:12px;padding:16px;border-radius:16px;
+  background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--k) 16%,transparent),transparent 60%),var(--tc-tile);border:1px solid color-mix(in srgb,var(--k) 28%,var(--tc-line))}
+.cur::after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--k) 22%,transparent) 0 6deg,transparent 6deg 15deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 52%,#000 54%,#000 98%,transparent);mask:radial-gradient(closest-side,transparent 52%,#000 54%,#000 98%,transparent);
+  opacity:.55;pointer-events:none}
+.cur-top{position:relative;z-index:1;display:grid;gap:3px;padding-right:90px}
+.kind{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:3px 9px 3px 7px;border-radius:999px;font-size:11.5px;font-weight:750;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--k);background:color-mix(in srgb,var(--k) 15%,transparent)}
+.kind ha-icon{--mdc-icon-size:14px}
+.cur h4{font-size:22px;font-weight:750;letter-spacing:-.01em;margin-top:4px}
+.size{font-size:15px;font-weight:650;color:color-mix(in srgb,var(--tc-text) 85%,transparent);font-variant-numeric:tabular-nums}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px}
+.fact{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--tc-muted)}
+.fact ha-icon{--mdc-icon-size:15px}
+.kpis{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.kpi{display:grid;gap:2px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--tc-text) 4%,transparent);min-width:0}
+.kpi b{font-size:19px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.kpi b small{font-size:11px;font-weight:600;color:var(--tc-muted);margin-left:3px}
+.kpi span{font-size:11.5px;color:var(--tc-muted)}
+.tread{position:relative;z-index:1;display:grid;gap:6px;--t:#34d399}
+.tread.low{--t:#facc15}.tread.warn{--t:#fb923c}.tread.crit{--t:var(--error-color,#ef4444)}
+.tread-h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tc-muted)}
+.tread-h b{color:var(--t);font-size:13.5px}
+.tread-bar{position:relative;height:8px;border-radius:99px;background:color-mix(in srgb,var(--tc-text) 8%,transparent)}
+.tread-bar i{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--t) 60%,transparent),var(--t));box-shadow:0 0 10px color-mix(in srgb,var(--t) 50%,transparent)}
+.tread-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:2px;background:var(--tc-text);opacity:.5}
+.tread small{font-size:11.5px;color:var(--tc-muted)}
+.sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.set{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--tc-tile);border:1px solid var(--tc-line);border-left:3px solid color-mix(in srgb,var(--k) 75%,transparent)}
+.set.mounted{background:color-mix(in srgb,var(--k) 7%,var(--tc-tile))}
+.set header{display:flex;align-items:center;gap:10px;min-width:0}
+.set header>div{flex:1;min-width:0;display:grid}
+.set header b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set header small{font-size:12px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set-i{color:var(--k)}
+.on,.off{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+.on{color:var(--k);background:color-mix(in srgb,var(--k) 16%,transparent)}
+.off{color:var(--tc-muted);background:color-mix(in srgb,var(--tc-text) 6%,transparent)}
+.off ha-icon{--mdc-icon-size:13px}
+.set dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin:0}
+.set dl div{min-width:0}
+.set dt{font-size:11px;color:var(--tc-muted)}
+.set dd{margin:0;font-size:13.5px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.set footer{display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--tc-line);padding-top:6px}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sh h4{font-size:14px;font-weight:700}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--tc-muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:3px;background:var(--k)}
+.cmp{display:grid;gap:10px}
+.bands{display:grid;gap:7px}
+.band{display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:center}
+.band-l{font-size:12px;color:var(--tc-muted);font-variant-numeric:tabular-nums}
+.band-b{display:grid;gap:3px}
+.bar{position:relative;height:14px;display:flex;align-items:center}
+.bar i{display:block;height:100%;width:var(--w);min-width:3px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--k) 45%,transparent),var(--k));transition:width .6s cubic-bezier(.2,.9,.3,1)}
+.bar em{font-style:normal;font-size:11px;font-weight:700;margin-left:6px;font-variant-numeric:tabular-nums}
+.bar.none i{width:3px;background:var(--tc-line)}
+.bar.none em{color:var(--tc-muted)}
+.verdict{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--k,var(--tc-text)) 9%,transparent)}
+.verdict ha-icon{color:var(--k,var(--tc-muted));--mdc-icon-size:18px;margin-top:1px}
+.verdict.soft{opacity:.8}
+.verdict.muted{color:var(--tc-muted);background:var(--tc-tile)}
+.hist{display:grid;gap:6px}
+.hrow{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:12px;border:1px solid var(--tc-line);background:var(--tc-tile);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.hrow:hover{background:color-mix(in srgb,var(--tc-text) 7%,transparent)}
+.h-i{color:var(--k)}
+.h-n,.h-v{display:grid;min-width:0}
+.h-n{flex:1}
+.h-v{text-align:right}
+.hrow b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hrow small{font-size:11.5px;color:var(--tc-muted);white-space:nowrap}
+.h-c{color:var(--tc-muted);--mdc-icon-size:18px}
+.form{display:grid;gap:12px}
+.fh{display:flex;align-items:center;gap:10px}
+.fh h4{font-size:16px;font-weight:700}
+.form h5{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.06em;color:var(--tc-muted);margin-top:4px}
+.f{display:grid;gap:5px;min-width:0}
+.f span{font-size:12px;color:var(--tc-muted);font-weight:600}
+.f input,.f select{width:100%;min-width:0;height:40px;padding:0 11px;border-radius:10px;border:1px solid var(--tc-line);background:color-mix(in srgb,var(--tc-text) 5%,transparent);
+  color:var(--tc-text);font:inherit;font-size:14px;color-scheme:light dark}
+.f input:focus,.f select:focus{outline:2px solid color-mix(in srgb,var(--tc-accent) 60%,transparent);outline-offset:1px}
+.grid2,.grid3,.grid4,.tyres{display:grid;gap:10px}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:2fr 1fr 1fr}
+.grid4,.tyres{grid-template-columns:repeat(4,minmax(0,1fr))}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.choices.kinds{grid-template-columns:repeat(4,minmax(0,1fr))}
+.choice{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--tc-line);background:var(--tc-tile);color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.choice ha-icon{color:var(--k)}
+.choice span{display:grid;min-width:0}
+.choice b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.choice small{font-size:11.5px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.choice.sm{padding:9px 10px;gap:7px;justify-content:center}
+.choice[aria-checked="true"]{border-color:color-mix(in srgb,var(--k) 70%,transparent);background:color-mix(in srgb,var(--k) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 45%,transparent)}
+.choice:disabled{opacity:.5;cursor:default}
+.chk{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--tc-muted)}
+.chk input{width:18px;height:18px;accent-color:var(--tc-accent)}
+.treads{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.treads li{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:center;font-size:12.5px;padding:6px 8px;border-radius:10px;background:var(--tc-tile)}
+.treads li span,.treads li small{color:var(--tc-muted)}
+.err{font-size:13px;color:var(--error-color,#ef4444)}
+.fa{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+@container tc (max-width:460px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@container tc (max-width:560px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid4,.tyres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3{grid-template-columns:1fr 1fr}.grid3>.f:first-child{grid-column:1/-1}
+  .choices.kinds{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .th-a .btn span{display:none}.th-a .btn{padding:0 10px}
+  .cur-top{padding-right:40px}.cur h4{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){.tip.urgent{animation:none}.bar i{transition:none}}
+`;
+if (!customElements.get("ha-ev-tyre-card")) customElements.define("ha-ev-tyre-card", HAEvTyreCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c2) => c2.type === "ha-ev-tyre-card")) {
+  window.customCards.push({ type: "ha-ev-tyre-card", name: "EV Tyre Card", description: "Hjuls\xE6t fra EV Ledger: skift, forbrug pr. s\xE6t, slid og p\xE5mindelse.", preview: false });
+}
+console.info(`%c HA-EV-TYRE-CARD %c ${VERSION6} `, "background:#5fb8ff;color:#06121f;font-weight:700", "background:#1f2937;color:#fff");
+
 // src/cards/ha-lawn-mower-card/ha-lawn-mower-card.js
-var VERSION6 = "0.4.2";
+var VERSION7 = "0.4.2";
 var HALawnMowerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -7520,10 +8138,10 @@ var HALawnMowerCard = class extends HTMLElement {
     const s = this._s(id);
     return s !== void 0 && !["unknown", "unavailable", ""].includes(s);
   }
-  _switchChip(id, label, icon3) {
+  _switchChip(id, label, icon4) {
     if (!this._hasData(id)) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon3}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon4}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _select(id, label) {
     if (!this._hasData(id)) return "";
@@ -7715,7 +8333,7 @@ var HALawnMowerCard = class extends HTMLElement {
       ${selectFields.length ? `<div class="section-title">Indstillinger</div><div class="fields">${selectFields.join("")}</div>` : ""}
       ${numberFields.length ? `<div class="section-title">Justeringer</div><div class="fields">${numberFields.join("")}</div>` : ""}
       ${systemChips.length ? `<div class="section-title">System</div><div class="chips">${systemChips.join("")}</div>` : ""}
-      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon3]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
+      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon4]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
       <div class="controls">
         <button data-action="start_mowing" ${canStart ? "" : "disabled"}><ha-icon icon="mdi:play"></ha-icon>Start</button>
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
@@ -7774,13 +8392,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA LAWN MOWER CARD %c v${VERSION6} `,
+  `%c HA LAWN MOWER CARD %c v${VERSION7} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-light-scene-card/ha-light-scene-card.js
-var VERSION7 = "0.3.0";
+var VERSION8 = "0.3.0";
 var COLOR_SWATCH = {
   "Varm orange": "#ff9f43",
   Lilla: "#a463f2",
@@ -7961,13 +8579,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA LIGHT SCENE CARD %c v${VERSION7} `,
+  `%c HA LIGHT SCENE CARD %c v${VERSION8} `,
   "color:white;background:#b0559b;font-weight:700",
   "color:#f0c6e6;background:#161b22"
 );
 
 // src/cards/ha-number-grid-card/ha-number-grid-card.js
-var VERSION8 = "0.4.0";
+var VERSION9 = "0.4.0";
 var HANumberGridCard = class extends HTMLElement {
   constructor() {
     super();
@@ -8092,7 +8710,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NUMBER GRID CARD %c v${VERSION8} `,
+  `%c HA NUMBER GRID CARD %c v${VERSION9} `,
   "color:white;background:#8a5cc2;font-weight:700",
   "color:#dcc6f5;background:#161b22"
 );
@@ -8273,12 +8891,12 @@ var PoolForecastCard = class extends HTMLElement {
     const days = points.filter((point) => Number.isFinite(point.high)).slice(0, 5);
     if (!days.length) return "";
     return `<div class="weather-days">${days.map((point) => {
-      const icon3 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
+      const icon4 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
       const wind = Number.isFinite(point.wind) ? `<span>${this._fmt(point.wind)} m/s</span>` : "";
       return `
         <div class="weather-day">
           <div class="weather-day-name">${this._escape(this._label(point.ts, true))}</div>
-          ${icon3}
+          ${icon4}
           <div class="weather-range-text"><b>${this._fmt(point.high, 0)}&deg;</b><span>${this._fmt(point.low, 0)}&deg;</span></div>
           <div class="weather-meta"><span>${this._fmt(point.rain, 1)} mm</span>${wind}</div>
           <div class="weather-condition">${this._escape(point.condition)}</div>
@@ -8452,7 +9070,7 @@ var PoolHistoryCard = class extends HTMLElement {
       });
       cursor.setDate(cursor.getDate() + 1);
     }
-    return days.filter((day) => day.high !== null || day.low !== null || day.pump !== null);
+    return days.filter((day2) => day2.high !== null || day2.low !== null || day2.pump !== null);
   }
   _valuesInRange(series, start, end) {
     const startMs = start.getTime();
@@ -8481,8 +9099,8 @@ var PoolHistoryCard = class extends HTMLElement {
     if (!days?.length) {
       return `<div class="empty">Ingen historik fundet endnu</div>`;
     }
-    const tempValues = days.flatMap((day) => [day.high, day.low]).filter(Number.isFinite);
-    const pumpValues = days.map((day) => day.pump).filter(Number.isFinite);
+    const tempValues = days.flatMap((day2) => [day2.high, day2.low]).filter(Number.isFinite);
+    const pumpValues = days.map((day2) => day2.pump).filter(Number.isFinite);
     const minTemp = tempValues.length ? Math.min(...tempValues) : 0;
     const maxTemp = tempValues.length ? Math.max(...tempValues) : 1;
     const yMin = Math.floor(Math.max(0, minTemp - 1));
@@ -8501,27 +9119,27 @@ var PoolHistoryCard = class extends HTMLElement {
     const y = (value) => Math.round((top + (1 - (value - yMin) / Math.max(1, yMax - yMin)) * plotH) * 10) / 10;
     const highPath = this._path(days, x, y, "high");
     const lowPath = this._path(days, x, y, "low");
-    const bandPoints = days.map((day, index) => ({ day, index })).filter(({ day }) => Number.isFinite(day.high) && Number.isFinite(day.low));
-    const bandPath = bandPoints.length > 1 ? `${bandPoints.map(({ day, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(day.high)}`).join(" ")} ${bandPoints.slice().reverse().map(({ day, index }) => `L ${x(index)} ${y(day.low)}`).join(" ")} Z` : "";
-    const bars = days.map((day, index) => {
-      if (!Number.isFinite(day.pump)) return "";
-      const barH = Math.max(4, day.pump / pumpMax * 34);
-      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"><title>${day.label}: ${this._fmt(day.pump)} timers sandfilter</title></rect>`;
+    const bandPoints = days.map((day2, index) => ({ day: day2, index })).filter(({ day: day2 }) => Number.isFinite(day2.high) && Number.isFinite(day2.low));
+    const bandPath = bandPoints.length > 1 ? `${bandPoints.map(({ day: day2, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(day2.high)}`).join(" ")} ${bandPoints.slice().reverse().map(({ day: day2, index }) => `L ${x(index)} ${y(day2.low)}`).join(" ")} Z` : "";
+    const bars = days.map((day2, index) => {
+      if (!Number.isFinite(day2.pump)) return "";
+      const barH = Math.max(4, day2.pump / pumpMax * 34);
+      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"><title>${day2.label}: ${this._fmt(day2.pump)} timers sandfilter</title></rect>`;
     }).join("");
-    const labels = days.map((day, index) => {
+    const labels = days.map((day2, index) => {
       const show = days.length <= 8 || index % 2 === 0;
       if (!show) return "";
-      return `<text class="date-label" x="${x(index)}" y="${height - 11}" text-anchor="middle">${day.label}</text>`;
+      return `<text class="date-label" x="${x(index)}" y="${height - 11}" text-anchor="middle">${day2.label}</text>`;
     }).join("");
-    const dots = days.map((day, index) => {
+    const dots = days.map((day2, index) => {
       const items = [];
-      if (Number.isFinite(day.high)) {
-        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day.high)}" r="4"><title>${day.label}: h\xF8j ${this._fmt(day.high)} \xB0C</title></circle>`);
-        items.push(`<text class="value high-value" x="${x(index)}" y="${y(day.high) - 8}" text-anchor="middle">${Math.round(day.high)}&deg;</text>`);
+      if (Number.isFinite(day2.high)) {
+        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day2.high)}" r="4"><title>${day2.label}: h\xF8j ${this._fmt(day2.high)} \xB0C</title></circle>`);
+        items.push(`<text class="value high-value" x="${x(index)}" y="${y(day2.high) - 8}" text-anchor="middle">${Math.round(day2.high)}&deg;</text>`);
       }
-      if (Number.isFinite(day.low)) {
-        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day.low)}" r="3.5"><title>${day.label}: lav ${this._fmt(day.low)} \xB0C</title></circle>`);
-        items.push(`<text class="value low-value" x="${x(index)}" y="${y(day.low) + 16}" text-anchor="middle">${Math.round(day.low)}&deg;</text>`);
+      if (Number.isFinite(day2.low)) {
+        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day2.low)}" r="3.5"><title>${day2.label}: lav ${this._fmt(day2.low)} \xB0C</title></circle>`);
+        items.push(`<text class="value low-value" x="${x(index)}" y="${y(day2.low) + 16}" text-anchor="middle">${Math.round(day2.low)}&deg;</text>`);
       }
       return items.join("");
     }).join("");
@@ -8556,9 +9174,9 @@ var PoolHistoryCard = class extends HTMLElement {
     const days = this._data || [];
     const currentTemp = Number(this._hass?.states?.[this.config?.temp_entity]?.state);
     const currentPump = Number(this._hass?.states?.[this.config?.pump_entity]?.state);
-    const highs = days.map((day) => day.high).filter(Number.isFinite);
-    const lows = days.map((day) => day.low).filter(Number.isFinite);
-    const pumpDays = days.map((day) => day.pump).filter(Number.isFinite);
+    const highs = days.map((day2) => day2.high).filter(Number.isFinite);
+    const lows = days.map((day2) => day2.low).filter(Number.isFinite);
+    const pumpDays = days.map((day2) => day2.pump).filter(Number.isFinite);
     const weekHigh = highs.length ? Math.max(...highs) : null;
     const weekLow = lows.length ? Math.min(...lows) : null;
     const totalPump = pumpDays.length ? pumpDays.reduce((sum, value) => sum + value, 0) : null;
@@ -9057,8 +9675,8 @@ var PoolWaterQualityCard = class extends HTMLElement {
     }
     return [...dailyMeasurements.values()].sort((a, b) => a.ts - b.ts).map((point) => {
       const date2 = new Date(point.ts);
-      const day = `${date2.getDate()}/${date2.getMonth() + 1}`;
-      return { ...point, label: day };
+      const day2 = `${date2.getDate()}/${date2.getMonth() + 1}`;
+      return { ...point, label: day2 };
     });
   }
   _num(value) {
@@ -9157,7 +9775,7 @@ if (!customElements.get("pool-water-quality-card")) customElements.define("pool-
 window.customCards.push({ type: "pool-water-quality-card", name: "Pool Water Quality Card", description: "pH and chlorine history in the pool dashboard style." });
 
 // src/cards/ha-simple-vacuum-card/ha-simple-vacuum-card.js
-var VERSION9 = "0.4.1";
+var VERSION10 = "0.4.1";
 var HASimpleVacuumCard = class extends HTMLElement {
   constructor() {
     super();
@@ -9361,13 +9979,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SIMPLE VACUUM CARD %c v${VERSION9} `,
+  `%c HA SIMPLE VACUUM CARD %c v${VERSION10} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-toggle-grid-card/ha-toggle-grid-card.js
-var VERSION10 = "0.5.0";
+var VERSION11 = "0.5.0";
 var ACTIVE_STATES = ["on", "open", "unlocked", "home", "cleaning", "playing"];
 var HAToggleGridCard = class extends HTMLElement {
   constructor() {
@@ -9529,7 +10147,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA TOGGLE GRID CARD %c v${VERSION10} `,
+  `%c HA TOGGLE GRID CARD %c v${VERSION11} `,
   "color:white;background:#4a8f5c;font-weight:700",
   "color:#a6e6b6;background:#161b22"
 );
@@ -9646,7 +10264,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION11 = "0.7.0";
+var VERSION12 = "0.7.0";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -9778,7 +10396,7 @@ var HAACClimateCard = class extends HTMLElement {
     const climate = this._entity(unit.climate);
     const a = climate?.attributes || {};
     const mode = String(climate?.state || "unknown").toLowerCase();
-    const num = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
+    const num2 = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
     const status = this._entity(unit.status)?.state;
     const online = this._entity(unit.online);
     const offline = !!online && online.state === "off";
@@ -9795,8 +10413,8 @@ var HAACClimateCard = class extends HTMLElement {
       status,
       waiting: WAITING.includes(status),
       statusText,
-      current: num(a.current_temperature),
-      target: num(a.temperature),
+      current: num2(a.current_temperature),
+      target: num2(a.temperature),
       fan: a.fan_mode,
       fans: Array.isArray(a.fan_modes) ? a.fan_modes : [],
       power: this._num(unit.input),
@@ -9854,7 +10472,7 @@ var HAACClimateCard = class extends HTMLElement {
     const shown = MODES.filter((m) => modes.includes(m.id));
     const modeRow = shown.map((m) => `<button class="seg ${s.mode === m.id ? "on" : ""}" data-mode="${m.id}"><ha-icon icon="${m.icon}"></ha-icon><span>${m.label}</span></button>`).join("");
     const opt = (v, cur, map) => `<option value="${this._esc(v)}" ${v === cur ? "selected" : ""}>${this._esc(this._label(map, v))}</option>`;
-    const dropdown = (kind, icon3, label, values, cur, map) => values.length ? `<label class="dd"><span><ha-icon icon="${icon3}"></ha-icon>${label}</span><div class="dd-box"><select data-select="${kind}">${values.map((v) => opt(v, cur, map)).join("")}</select><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div></label>` : "";
+    const dropdown = (kind, icon4, label, values, cur, map) => values.length ? `<label class="dd"><span><ha-icon icon="${icon4}"></ha-icon>${label}</span><div class="dd-box"><select data-select="${kind}">${values.map((v) => opt(v, cur, map)).join("")}</select><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div></label>` : "";
     const select = this._entity(unit.program);
     const climateObj = select ? void 0 : this._entity(unit.unit || unit.climate);
     const options = select ? select.attributes?.options || [] : climateObj?.attributes?.preset_modes || [];
@@ -9872,7 +10490,7 @@ var HAACClimateCard = class extends HTMLElement {
     const copPct = s.cop !== void 0 ? Math.max(1e-3, Math.min(1, s.cop / 6)) : 1e-3;
     const a = Math.PI * (1 - copPct);
     const end = `${(40 + 32 * Math.cos(a)).toFixed(1)} ${(40 - 32 * Math.sin(a)).toFixed(1)}`;
-    const tile2 = (icon3, label, value) => `<div class="tile"><ha-icon icon="${icon3}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+    const tile2 = (icon4, label, value) => `<div class="tile"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
     const tiles = [];
     if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct2}%"></b></i></div></div>`);
     if (unit.output) tiles.push(tile2("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
@@ -9883,7 +10501,7 @@ var HAACClimateCard = class extends HTMLElement {
     return tiles.length ? `<section class="live">${tiles.join("")}</section>` : "";
   }
   _functions(unit) {
-    const btn = (action, icon3, label, on, show) => show ? `<button class="fn ${on ? "on" : ""}" data-action="${action}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>` : "";
+    const btn = (action, icon4, label, on, show) => show ? `<button class="fn ${on ? "on" : ""}" data-action="${action}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>` : "";
     const follow = this._entity(unit.follow_me);
     const beep = this._entity(unit.beep);
     const supply = this._entity(unit.supply);
@@ -10169,7 +10787,7 @@ button:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
 if (!customElements.get("ha-ac-climate-card")) customElements.define("ha-ac-climate-card", HAACClimateCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ac-climate-card", name: "HA AC Climate Card", description: "Animeret og interaktiv styring af AC og varmepumper", preview: true });
-console.info(`%c HA AC CLIMATE CARD %c v${VERSION11} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AC CLIMATE CARD %c v${VERSION12} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ac-temperature-control-card/ac-temperature-control-card.js
 var AcTemperatureControlCard = class extends HTMLElement {
@@ -10693,7 +11311,7 @@ if (!window.customCards.some((card) => card.type === "calefa-number-control-card
 }
 
 // src/cards/ha-fjernvarme-card/ha-fjernvarme-card.js
-var VERSION12 = "0.2.0";
+var VERSION13 = "0.2.0";
 var CONTROL_FIELDS = [
   ["auto_standby", "Automatisk standby", "switch"],
   ["auto_standby_status", "Automatisk standby status", "sensor"],
@@ -10807,10 +11425,10 @@ var HACalefaDetailsCard = class extends HTMLElement {
   }
   _renderStructure() {
     if (!this.shadowRoot) return;
-    const number2 = (key, label, icon3) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
-    const toggle = (key, label, description, icon3) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon3}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
-    const select = (key, label, icon3) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
-    const metric = (key, label, icon3, tone2) => `<button class="data-metric ${tone2}" data-more="${key}"><ha-icon icon="${icon3}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+    const number2 = (key, label, icon4) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
+    const toggle = (key, label, description, icon4) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon4}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
+    const select = (key, label, icon4) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
+    const metric = (key, label, icon4, tone2) => `<button class="data-metric ${tone2}" data-more="${key}"><ha-icon icon="${icon4}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card>
       <header><div><small>WAVIN CALEFA</small><h2>${this._escape(this._config.title)}</h2><p>Styring, m\xE5lerdata og historik samlet</p></div><div class="status" data-summary>Indl\xE6ser\u2026</div></header>
       <nav class="category-tabs" aria-label="Detaljekategori"><button class="active" data-tab="control"><ha-icon icon="mdi:tune-variant"></ha-icon>Styring</button><button data-tab="meter"><ha-icon icon="mdi:meter-gas"></ha-icon>M\xE5lerdata</button><button data-tab="history"><ha-icon icon="mdi:chart-line"></ha-icon>Historik</button></nav>
@@ -10991,10 +11609,10 @@ if (!customElements.get("ha-calefa-details-card")) customElements.define("ha-cal
 if (!customElements.get("ha-calefa-details-card-editor")) customElements.define("ha-calefa-details-card-editor", HACalefaDetailsCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-calefa-details-card", name: "HA Calefa Details Card", description: "Samlet styring af varmekurve, returbegr\xE6nser, RUM og Calefa-drift", preview: true });
-console.info(`%c HA-FJERNVARME-CARD (Calefa details) %c ${VERSION12} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
+console.info(`%c HA-FJERNVARME-CARD (Calefa details) %c ${VERSION13} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-fjernvarme-house-card/ha-fjernvarme-house-card.js
-var VERSION13 = "0.3.3";
+var VERSION14 = "0.3.3";
 var FIELDS2 = [
   ["primary_supply", "Fjernvarme freml\xF8b"],
   ["primary_return", "Fjernvarme retur"],
@@ -11606,10 +12224,10 @@ if (!customElements.get("ha-fjernvarme-house-card-v2")) customElements.define("h
 if (!customElements.get("ha-fjernvarme-house-card-editor")) customElements.define("ha-fjernvarme-house-card-editor", HAFjernvarmeHouseCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernvarme House Card", description: "Fjernvarmeunit med temperaturstyrede r\xF8r, radiator, varmt vand og bypass", preview: true });
-console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION13} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
+console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION14} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION14 = "0.12.1";
+var VERSION15 = "0.12.1";
 var EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
 var EPC_LEDGER_ENDINGS = [
   "charge_mode",
@@ -11963,7 +12581,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       this._tab,
       this._forecastDay,
       selected.map((point) => point.start),
-      forecastDays.map((day) => day[0]?.start)
+      forecastDays.map((day2) => day2[0]?.start)
     ]);
   }
   _days(points) {
@@ -12058,12 +12676,12 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       const dayEnd = new Date(points[points.length - 1].end).getTime();
       const next = plan.map(([s]) => s).filter((s) => s >= dayEnd).sort((a, b) => a - b)[0];
       if (!Number.isFinite(next)) return null;
-      const day = new Date(dayEnd);
-      day.setHours(0, 0, 0, 0);
+      const day2 = new Date(dayEnd);
+      day2.setHours(0, 0, 0, 0);
       const when = new Date(next);
       const startDay = new Date(next);
       startDay.setHours(0, 0, 0, 0);
-      const title = startDay.getTime() === day.getTime() ? "BIL \xB7 I MORGEN" : `BIL \xB7 ${when.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "").toUpperCase()}`;
+      const title = startDay.getTime() === day2.getTime() ? "BIL \xB7 I MORGEN" : `BIL \xB7 ${when.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "").toUpperCase()}`;
       return { index: points.length - 1, title, text: this._label({ start: next }), later: true };
     }
     let last = first;
@@ -12135,13 +12753,13 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     this._updateLiveStatus();
     const tomorrowLabel = this.shadowRoot.querySelector('[data-tab="tomorrow"] .tab-copy small');
     if (tomorrowLabel) tomorrowLabel.textContent = data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast";
-    const day = this.shadowRoot.querySelector(".day");
-    if (day) {
+    const day2 = this.shadowRoot.querySelector(".day");
+    if (day2) {
       if (this._tab === "today") {
-        const nowValue = day.querySelector(".now-value");
+        const nowValue = day2.querySelector(".now-value");
         if (nowValue) nowValue.innerHTML = `${this._fmt(data.current)}<small>kr/kWh</small>`;
       } else {
-        const date2 = day.querySelector(".day-date");
+        const date2 = day2.querySelector(".day-date");
         if (date2) date2.textContent = this._date(points);
       }
     }
@@ -12195,13 +12813,13 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
   _render() {
     if (!this.shadowRoot) return;
     const data = this._data(), forecast = this._days(data.forecast), points = this._selected(data), values = points.map((p) => p.price), min = values.length ? Math.min(...values) : NaN, max = values.length ? Math.max(...values) : NaN, avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : NaN;
-    const dayPicker = `<div class="week-slot">${this._tab === "forecast" ? `<div class="week-nav"><div class="days">${forecast.map((day, index) => {
-      const label = this._dayLabel(day);
+    const dayPicker = `<div class="week-slot">${this._tab === "forecast" ? `<div class="week-nav"><div class="days">${forecast.map((day2, index) => {
+      const label = this._dayLabel(day2);
       return `<button data-day="${index}" class="day-choice ${index === this._forecastDay ? "active" : ""}"><b>${label.weekday}</b><span>${label.date}</span></button>`;
     }).join(
       ""
     )}</div></div>` : ""}</div>`;
-    const tab = (id, name, label, icon3) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
+    const tab = (id, name, label, icon4) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon4}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.res{display:inline-flex;gap:1px;margin-left:8px;padding:2px;border-radius:999px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);vertical-align:middle;letter-spacing:0;text-transform:none}.res button{border:0;padding:2px 8px;border-radius:999px;background:transparent;color:var(--secondary-text-color);font-size:10px;font-weight:700;line-height:1.4;cursor:pointer;text-transform:none}.res button:hover{color:var(--primary-text-color)}.res button.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px color-mix(in srgb,var(--accent) 35%,transparent)}.day .day-date{text-transform:capitalize}.day .res{margin-left:8px}
@@ -12325,13 +12943,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ELECTRICITY PRICE CARD %c v${VERSION14} `,
+  `%c HA ELECTRICITY PRICE CARD %c v${VERSION15} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/ha-ventilation-card/ha-ventilation-card.js
-var VERSION15 = "0.7.8";
+var VERSION16 = "0.7.8";
 var ENTITY_FIELDS = [
   ["outdoor_temperature", "Udeluft"],
   ["supply_temperature", "Indbl\xE6sning"],
@@ -13245,16 +13863,16 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   _esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
-  _metric(key, label, icon3) {
-    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon3}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon3}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+  _metric(key, label, icon4) {
+    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon4}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon4}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
   }
-  _section(title, subtitle, icon3, content) {
-    return `<section><div class="section-title"><ha-icon icon="${icon3}"></ha-icon><div><h3>${title}</h3><p>${subtitle}</p></div></div>${content}</section>`;
+  _section(title, subtitle, icon4, content) {
+    return `<section><div class="section-title"><ha-icon icon="${icon4}"></ha-icon><div><h3>${title}</h3><p>${subtitle}</p></div></div>${content}</section>`;
   }
   _render() {
     const m = (...args) => this._metric(...args);
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card><header><div><small>DANTHERM HCH</small><h2>${this._esc(this._config.title)}</h2><p>Drift, ydelse, eftervarme og diagnose samlet</p></div><span class="health" data-health>Indl\xE6ser\u2026</span></header>
-      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon3, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`).join("")}</nav>
+      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon4, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`).join("")}</nav>
       <div class="panel active" data-panel="overview"><div class="sections two">${this._section("Luft og temperatur", "Indeklima og temperaturbalance", "mdi:home-thermometer-outline", `<div class="metrics">${m("house_temperature", "Hustemperatur", "mdi:home-thermometer-outline")}${m("temperature_delta", "Ind/ud delta", "mdi:swap-vertical")}${m("heat_recovery_status", "Varmegenvinding", "mdi:heat-wave")}${m("heat_recovery_trend", "Udvikling", "mdi:chart-timeline-variant")}</div>`)}${this._section("Balance og filter", "Ydelse og vedligeholdelse", "mdi:air-filter", `<div class="metrics">${m("fan_control_balance", "Styringsbalance", "mdi:fan-chevron-down")}${m("fan_speed_balance", "Omdrejningsbalance", "mdi:fan-speed-2")}${m("last_filter_change", "Seneste filterskift", "mdi:air-filter")}${m("filter_changes", "Filterhistorik", "mdi:history")}</div>`)}</div></div>
       <div class="panel" data-panel="fans"><div class="sections two">${this._section("Ventilatorer", "Styring og aktuelle omdrejninger", "mdi:fan", `<div class="metrics">${m("extract_control", "Udsugning styring", "mdi:gauge")}${m("supply_control", "Indbl\xE6sning styring", "mdi:gauge")}${m("extract_speed", "Udsugning RPM", "mdi:fan-speed-2")}${m("supply_speed", "Indbl\xE6sning RPM", "mdi:fan-speed-2")}</div>`)}${this._section("Driftstilstand", "Aktive specialfunktioner", "mdi:hvac", `<div class="metrics">${m("night_mode", "Natdrift", "mdi:weather-night")}${m("fireplace_mode", "Pejsefunktion", "mdi:fireplace")}${m("standby", "Standby", "mdi:power-sleep")}</div>`)}</div></div>
       <div class="panel" data-panel="heat"><div class="sections two">${this._section("Setpunkter", "M\xE5l for luft og rum", "mdi:thermostat", `<div class="metrics">${m("afterheat_setpoint", "Indbl\xE6sning", "mdi:thermostat")}${m("room_setpoint", "Rum", "mdi:home-thermometer-outline")}${m("extract_setpoint", "Udsugning", "mdi:thermometer-off")}${m("afterheat_active", "Eftervarme", "mdi:radiator")}</div>`)}${this._section("Varmeflade", "Aktuelle luft- og vandtemperaturer", "mdi:heating-coil", `<div class="metrics">${m("air_before_coil", "Luft f\xF8r", "mdi:thermometer-low")}${m("air_after_coil", "Luft efter", "mdi:thermometer-high")}${m("air_delta", "Luft delta-T", "mdi:delta")}${m("water_flow", "Vand freml\xF8b", "mdi:thermometer-chevron-up")}${m("water_return", "Vand retur", "mdi:thermometer-chevron-down")}${m("water_delta", "Vand delta-T", "mdi:delta")}</div>`)}</div></div>
@@ -13365,7 +13983,7 @@ if (!customElements.get("ha-ventilation-details-card-editor")) customElements.de
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ventilation-card", name: "HA Ventilation Card", description: "Temperature-aware heat-recovery ventilation card", preview: true });
 window.customCards.push({ type: "ha-ventilation-details-card", name: "HA Ventilation Details Card", description: "Samlet Dantherm drift, eftervarme, diagnose og historik", preview: true });
-console.info(`%c HA-VENTILATION-CARD %c ${VERSION15} `, "color:#fff;background:#28789f;font-weight:700", "color:#28789f;background:#fff");
+console.info(`%c HA-VENTILATION-CARD %c ${VERSION16} `, "color:#fff;background:#28789f;font-weight:700", "color:#28789f;background:#fff");
 
 // src/cards/ha-hch5-live-card/ha-hch5-live-card.js
 var Rb = Object.create;
@@ -23448,7 +24066,7 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION53 = "0.3.5";
+  const VERSION54 = "0.3.5";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -23561,11 +24179,11 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION53}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION54}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
-var VERSION16 = "0.2.0";
+var VERSION17 = "0.2.0";
 var HAHeatEconomyCard = class extends HTMLElement {
   constructor() {
     super();
@@ -23753,7 +24371,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HEAT ECONOMY CARD %c v${VERSION16} `,
+  `%c HA HEAT ECONOMY CARD %c v${VERSION17} `,
   "color:white;background:#c2694a;font-weight:700",
   "color:#f5cdb8;background:#161b22"
 );
@@ -23841,7 +24459,7 @@ var HACardListEditor3 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor3);
 
 // src/cards/ha-heat-pump-overview-card/ha-heat-pump-overview-card.js
-var VERSION17 = "0.3.0";
+var VERSION18 = "0.3.0";
 var HAHeatPumpOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -23943,8 +24561,8 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const efficiency = input && output !== void 0 ? output / input : cop;
     return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current, target, level, title, detail };
   }
-  _metric(label, value, icon3) {
-    return `<div class="metric"><ha-icon icon="${icon3}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon4) {
+    return `<div class="metric"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _pump(pump, index) {
     const s = this._state(pump);
@@ -24003,7 +24621,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
 if (!customElements.get("ha-heat-pump-overview-card")) customElements.define("ha-heat-pump-overview-card", HAHeatPumpOverviewCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-heat-pump-overview-card", name: "HA Heat Pump Overview Card", description: "Animeret energi- og diagnosekort til varmepumper", preview: true });
-console.info(`%c HA HEAT PUMP OVERVIEW %c v${VERSION17} `, "color:white;background:#de762e;font-weight:700", "color:#ffad68;background:#161b22");
+console.info(`%c HA HEAT PUMP OVERVIEW %c v${VERSION18} `, "color:white;background:#de762e;font-weight:700", "color:#ffad68;background:#161b22");
 
 // src/cards/ha-heating-diagnostics-card/ha-card-list-editor.js
 var HACardListEditor4 = class extends HTMLElement {
@@ -24088,7 +24706,7 @@ var HACardListEditor4 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor4);
 
 // src/cards/ha-heating-diagnostics-card/ha-heating-diagnostics-card.js
-var VERSION18 = "0.4.7";
+var VERSION19 = "0.4.7";
 var HAHeatingDiagnosticsCard = class extends HTMLElement {
   constructor() {
     super();
@@ -24418,8 +25036,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       ${actions ? `<div class="explain-actions">${actions}</div>` : ""}
     </section>`;
   }
-  _metric(label, value, icon3 = "") {
-    return `<div class="metric">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon4 = "") {
+    return `<div class="metric">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _room(room, index, compact) {
     const s = this._state(room);
@@ -24558,7 +25176,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
 if (!customElements.get("ha-heating-diagnostics-card")) customElements.define("ha-heating-diagnostics-card", HAHeatingDiagnosticsCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-heating-diagnostics-card", name: "HA Heating Diagnostics Card", description: "Animeret rumdiagnose til Room Energy Optimizer", preview: true });
-console.info(`%c HA HEATING DIAGNOSTICS %c v${VERSION18} `, "color:white;background:#5d77ed;font-weight:700", "color:#8fa6ff;background:#161b22");
+console.info(`%c HA HEATING DIAGNOSTICS %c v${VERSION19} `, "color:white;background:#5d77ed;font-weight:700", "color:#8fa6ff;background:#161b22");
 
 // src/cards/ha-hrv-card/ha-hrv-card.js
 var _hrvRebuiltCardKeys = /* @__PURE__ */ new Set();
@@ -27005,7 +27623,7 @@ window.__HRV_CARD_VERSION__ = "2.13.4-afterheat-status-layout";
 console.info("%c HRV Card %c loaded v2.12.1 ", "color: white; background: #1976d2; font-weight: 700; padding: 2px 4px; border-radius: 3px 0 0 3px;", "color: white; background: #43a047; font-weight: 700; padding: 2px 4px; border-radius: 0 3px 3px 0;");
 
 // src/cards/ha-power-flow-card/ha-power-flow-card.js
-var VERSION19 = "0.5.1";
+var VERSION20 = "0.5.1";
 var HAPowerFlowCardEditor = class extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -27357,7 +27975,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA POWER FLOW CARD %c v${VERSION19} `,
+  `%c HA POWER FLOW CARD %c v${VERSION20} `,
   "color:white;background:#2f9e6e;font-weight:700",
   "color:#b6f0d6;background:#161b22"
 );
@@ -27445,7 +28063,7 @@ var HACardListEditor5 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor5);
 
 // src/cards/ha-radiator-overview-card/ha-radiator-overview-card.js
-var VERSION20 = "0.6.1";
+var VERSION21 = "0.6.1";
 var HARadiatorOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -28038,7 +28656,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
 if (!customElements.get("ha-radiator-overview-card")) customElements.define("ha-radiator-overview-card", HARadiatorOverviewCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-radiator-overview-card", name: "HA Radiator Overview Card", description: "Animeret radiator- og temperaturkort", preview: true });
-console.info(`%c HA RADIATOR OVERVIEW CARD %c v${VERSION20} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
+console.info(`%c HA RADIATOR OVERVIEW CARD %c v${VERSION21} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-card-list-editor.js
 var HACardListEditor6 = class extends HTMLElement {
@@ -28208,7 +28826,7 @@ function airQuality(hass, cfg = {}) {
 }
 
 // src/cards/ha-air-quality-card/ha-air-quality-card.js
-var VERSION21 = "1.0.0";
+var VERSION22 = "1.0.0";
 var TAG = "ha-air-quality-card";
 var DASH = "\u2014";
 var W = 400;
@@ -28607,10 +29225,10 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === TAG)) {
   window.customCards.push({ type: TAG, name: "HA Air Quality Card", description: "Luftkvalitet i et rum: CO\u2082, PM2,5 og m\xE5lerens vurdering med 24-timers kurver", preview: true });
 }
-console.info(`%c HA AIR QUALITY CARD %c v${VERSION21} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
+console.info(`%c HA AIR QUALITY CARD %c v${VERSION22} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-room-control-card.js
-var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var ON = /* @__PURE__ */ new Set(["on", "playing", "paused", "buffering", "open", "heat", "cool", "home", "active"]);
 var DEAD3 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
 var DOMAIN_ICON = { automation: "mdi:robot-outline", input_boolean: "mdi:toggle-switch-outline", switch: "mdi:power-socket-eu", script: "mdi:play-circle-outline", scene: "mdi:palette-outline", light: "mdi:lightbulb-outline", fan: "mdi:fan", media_player: "mdi:speaker" };
@@ -28867,14 +29485,14 @@ var HARoomControlCard = class extends HTMLElement {
       <button type="button" class="btn" style="--bc:var(--danger)" data-script="rum_sluk_midlertidigt"><ha-icon icon="mdi:power"></ha-icon>Sluk rummet</button>
       <button type="button" class="btn" style="--bc:var(--a)" data-script="rum_nulstil_automatisk"><ha-icon icon="mdi:restore"></ha-icon>Nulstil automatik</button>
       ${lit ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="off"><ha-icon icon="mdi:lightbulb-off-outline"></ha-icon>Sluk alt lys</button>` : d.lights.length ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="on"><ha-icon icon="mdi:lightbulb-on-outline"></ha-icon>T\xE6nd alt lys</button>` : ""}</div>` : "";
-    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc2(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
-      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc2(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
+    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc3(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
+      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc3(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
   }
   _profilesHtml(d) {
     if (!d.profiles.length && !d.specials.length) return "";
     const cur = this._st(d.m.profile)?.state;
-    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc2(p.option)}"><ha-icon class="i" icon="${esc2(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc2(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc2(s.id)}"><ha-icon class="i" icon="${esc2(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc2(s.label)}</b></button>`));
-    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc2(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
+    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc3(p.option)}"><ha-icon class="i" icon="${esc3(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc3(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc3(s.id)}"><ha-icon class="i" icon="${esc3(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc3(s.label)}</b></button>`));
+    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc3(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
   }
   _lightsHtml(d) {
     if (!d.lights.length) return "";
@@ -28885,15 +29503,15 @@ var HARoomControlCard = class extends HTMLElement {
       const pct2 = this._pct(s);
       const dead = DEAD3.has(s.state);
       const dim = (s.attributes?.supported_color_modes || []).some((x) => x !== "onoff");
-      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc2(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc2(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc2(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
+      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc3(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc3(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc3(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Lys</h4><span class="cnt">${lit}/${d.lights.length}</span><i class="rule"></i></div><div class="lights">${tiles.join("")}</div></section>`;
   }
   _togglesHtml(d) {
     const m = d.m;
     const list = [...d.toggles];
-    const add = (entity, name, icon3) => {
-      if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon: icon3 });
+    const add = (entity, name, icon4) => {
+      if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon: icon4 });
     };
     add(m.automation, "Presence-automatik", "mdi:motion-sensor");
     add(m.ambient, "Ambient lys", "mdi:lamp-outline");
@@ -28907,7 +29525,7 @@ var HARoomControlCard = class extends HTMLElement {
       const dom = t.entity.split(".")[0];
       const dead = DEAD3.has(s.state);
       const sub = dead ? "Utilg\xE6ngelig" : dom === "script" || dom === "scene" || dom === "button" ? "K\xF8r" : on ? dom === "automation" ? "Aktiv" : "Til" : dom === "automation" ? "Sl\xE5et fra" : "Fra";
-      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc2(t.entity)}"><ha-icon class="ti" icon="${esc2(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc2(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
+      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc3(t.entity)}"><ha-icon class="ti" icon="${esc3(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc3(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Automatik &amp; enheder</h4><i class="rule"></i></div><div class="tgs">${tiles.join("")}</div></section>`;
   }
@@ -28923,13 +29541,13 @@ var HARoomControlCard = class extends HTMLElement {
       const sub = off ? st === "idle" ? "Klar" : st === "unavailable" ? "Utilg\xE6ngelig" : "Slukket" : [a.media_artist || a.media_album_name, st === "paused" ? "Pause" : st === "playing" ? "Spiller" : st].filter(Boolean).join(" \xB7 ");
       const vol = Number.isFinite(a.volume_level) ? Math.round(a.volume_level * 100) : null;
       return `<div class="tile md ${off ? "off" : ""}" style="${pic ? `--img:${pic}` : ""}">${pic && !off ? '<i class="art"></i>' : ""}<span class="cov">${pic && !off ? "" : `<ha-icon icon="${st === "playing" ? "mdi:music" : "mdi:speaker"}"></ha-icon>`}</span>
-        <span class="n"><b>${esc2(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc2(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
-        <div class="ctl"><button type="button" class="ib" data-media="${esc2(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc2(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
-          <button type="button" class="ib main x" data-media="${esc2(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc2(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
-          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc2(x.id)}" aria-label="Lydstyrke">` : ""}
-          <button type="button" class="ib" data-more="${esc2(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
+        <span class="n"><b>${esc3(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc3(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
+        <div class="ctl"><button type="button" class="ib" data-media="${esc3(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc3(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+          <button type="button" class="ib main x" data-media="${esc3(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc3(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
+          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc3(x.id)}" aria-label="Lydstyrke">` : ""}
+          <button type="button" class="ib" data-more="${esc3(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
     });
     return `<section class="sec"><div class="sh"><h4>Medier</h4><i class="rule"></i></div><div class="media">${tiles.join("")}</div></section>`;
   }
@@ -29037,7 +29655,7 @@ var HARoomControlCard = class extends HTMLElement {
 if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-control-card", HARoomControlCard);
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION22 = "2.6.0";
+var VERSION23 = "2.6.0";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -30418,10 +31036,10 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === TAG2)) {
   window.customCards.push({ type: TAG2, name: "HA Radiator Overview Card v2", description: "Rumklima-overblik med termostat-skiver, 24-timers kurver og AC-animation", preview: true });
 }
-console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION22} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
+console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION23} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION23 = "1.7.0";
+var VERSION24 = "1.7.0";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -30826,15 +31444,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc6 = (v) => this._escape(v);
+    const esc7 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
-    const gauge = (key, icon3, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
+    const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc6(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc7(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc6(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc6(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc7(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc7(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -30854,10 +31472,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc6(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc7(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc6(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc6(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc7(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc7(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div></div>
@@ -30871,18 +31489,18 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc6(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc6(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc7(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc7(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc6(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc7(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc6(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc7(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -31342,7 +31960,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === TAG3)) {
   window.customCards.push({ type: TAG3, name: "HA Room Climate Card", description: "Varme Centers rum: eksklusive rumfliser med m\xE5l-justering, kurve og rumstyring, og en ny rum-popup", preview: true });
 }
-console.info(`%c HA ROOM CLIMATE CARD %c v${VERSION23} `, "color:white;background:#ff8a3d;font-weight:700", "color:#ff8a3d;background:#161b22");
+console.info(`%c HA ROOM CLIMATE CARD %c v${VERSION24} `, "color:white;background:#ff8a3d;font-weight:700", "color:#ff8a3d;background:#161b22");
 
 // src/cards/ha-temperature-target-card/ha-card-list-editor.js
 var HACardListEditor7 = class extends HTMLElement {
@@ -31427,7 +32045,7 @@ var HACardListEditor7 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor7);
 
 // src/cards/ha-temperature-target-card/ha-temperature-target-card.js
-var VERSION24 = "0.5.1";
+var VERSION25 = "0.5.1";
 var HATemperatureTargetCard = class extends HTMLElement {
   constructor() {
     super();
@@ -31722,10 +32340,10 @@ var HATemperatureTargetCard = class extends HTMLElement {
 if (!customElements.get("ha-temperature-target-card")) customElements.define("ha-temperature-target-card", HATemperatureTargetCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-temperature-target-card", name: "HA Temperature Target Card", description: "Temperaturgrafer med dynamiske termostatm\xE5l", preview: true });
-console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION24} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
+console.info(`%c HA TEMPERATURE TARGET CARD %c v${VERSION25} `, "color:white;background:#4b8ed8;font-weight:700", "color:#80bfff;background:#161b22");
 
 // src/cards/ha-water-meter-card/ha-water-meter-card.js
-var VERSION25 = "0.2.0";
+var VERSION26 = "0.2.0";
 var HAWaterMeterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -31936,7 +32554,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WATER METER CARD %c v${VERSION25} `,
+  `%c HA WATER METER CARD %c v${VERSION26} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -32106,7 +32724,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION26 = "0.8.72";
+var VERSION27 = "0.8.72";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -33321,12 +33939,12 @@ var HAHomeHeaderCard = class extends HTMLElement {
       this._runwaySig = sig;
       el.innerHTML = activity.map((a, i) => a.error ? `<ha-icon class="error" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="left:${8 + i * 22}%;top:${35 + i * 10}%"></ha-icon>` : `<ha-icon class="roaming" data-index="${i}" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="animation-delay:${i * -5}s,${i * -3}s"></ha-icon>`).join("");
     }
-    el.querySelectorAll(".roaming").forEach((icon3) => {
-      const i = Number(icon3.dataset.index);
-      icon3.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
-      icon3.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
-      icon3.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
-      icon3.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
+    el.querySelectorAll(".roaming").forEach((icon4) => {
+      const i = Number(icon4.dataset.index);
+      icon4.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
+      icon4.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
+      icon4.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
+      icon4.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
     });
   }
   _updateStatusGroup() {
@@ -33337,8 +33955,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._currentActiveAlert = activeAlert;
     const v3Class = this._config.weather_style_v3 === true ? " v3-active" : "";
     sg.className = `status-group${v3Class} ${activeAlert ? `has-alert priority-${activeAlert.priority}` : ""}`;
-    const icon3 = sg.querySelector("ha-icon");
-    if (icon3) icon3.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
+    const icon4 = sg.querySelector("ha-icon");
+    if (icon4) icon4.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
     const textWrap = sg.querySelector(":scope>div");
     const span = textWrap?.querySelector("span");
     if (span) span.textContent = activeAlert ? "Alarm" : this._config.title;
@@ -33541,8 +34159,8 @@ HAHomeHeaderCard.prototype._skyParams = function() {
   const condCloud = /pouring|rainy|snowy|hail|lightning|fog|cloudy$/.test(cond) && !/partly/.test(cond) ? 1 : /partly/.test(cond) ? 0.45 : 0;
   const cc = Number(a.cloud_coverage), cover = Number.isFinite(cc) ? clamp5(cc / 100) : condCloud;
   const el0 = Number(this._e(this._config.sun_entity || "sun.sun")?.attributes?.elevation), el = Number.isFinite(el0) ? el0 : cond === "clear-night" ? -20 : 30;
-  const day = clamp5((el + 6) / 14), dusk = clamp5(1 - Math.abs(el - 2) / 10) * day;
-  const night = Math.pow(1 - day, 2);
+  const day2 = clamp5((el + 6) / 14), dusk = clamp5(1 - Math.abs(el - 2) / 10) * day2;
+  const night = Math.pow(1 - day2, 2);
   const lit = mix(mix(hex(16777215), hex(16757898), dusk * 0.85), hex(2765120), night);
   const dark = mix(mix(mix(hex(9279136), hex(5923440), Math.min(1, Math.max(0, cover - 0.5) * 1.6)), hex(12089990), dusk * 0.55), hex(856088), night);
   const unit = String(a.wind_speed_unit || "km/h").toLowerCase();
@@ -33554,7 +34172,7 @@ HAHomeHeaderCard.prototype._skyParams = function() {
     lit.splice(0, 3, ...mix(hex(15659509), hex(6976386), night));
     dark.splice(0, 3, ...mix(hex(11450049), hex(3488840), night));
   }
-  return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: cond === "fog" ? 0 : day * (1 - 0.6 * cover), mist: cond === "fog" ? 1 : 0, still };
+  return { cover, drift: [Math.sin(to) * k, Math.cos(to) * k], lit, dark, sun: [0.97, 0.86], sunK: cond === "fog" ? 0 : day2 * (1 - 0.6 * cover), mist: cond === "fog" ? 1 : 0, still };
 };
 HAHomeHeaderCard.prototype._nightSkyOn = function() {
   return this._config?.weather_style_v3 === true && this._config.show_weather_fx !== false && this._config.weather_v3_stars !== "css";
@@ -33695,32 +34313,12 @@ if (!customElements.get("ha-home-header-card-front")) customElements.define("ha-
 });
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Card", description: "Samlet statusheader med vejr, alarmer og lokale vejreffekter", preview: true });
-console.info(`%c HA HOME HEADER CARD %c v${VERSION26} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
-
-// src/shared/lux.js
-var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
-function luxCss({ base, active, icon: icon3 = "ha-icon", underline = true, gum = true }) {
-  const a = LUX_ACCENT;
-  const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
-  return `
-${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
-${each(base, ":active")}{transform:scale(.9);transition-duration:.08s}
-${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
-  color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
-  ${gum ? "animation:luxGum .7s ease-out" : ""}}
-${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
-${each(active, ` ${icon3}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
-${LUX_KEYFRAMES}
-@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon3}`)}{animation:none!important;transition:none!important}}`;
-}
-var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
-@keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
+console.info(`%c HA HOME HEADER CARD %c v${VERSION27} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION27 = "1.1.0";
+var VERSION28 = "1.1.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -34570,7 +35168,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc6 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc7 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -34582,14 +35180,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc6(item2.value));
+    setText(".value", esc7(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc6(item2.detail || " "));
+    setText(".detail", esc7(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -34600,10 +35198,10 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc6(title)}">${inner}</span>`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc7(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)";
       const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc6(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc7(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -35355,8 +35953,8 @@ ${LUX_KEYFRAMES}
     if (!raw) return "";
     const date2 = new Date(raw);
     const allDay = Boolean(event.start?.date && !event.start?.dateTime);
-    const day = date2.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
-    return allDay ? day : `${day} \xB7 ${date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+    const day2 = date2.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+    return allDay ? day2 : `${day2} \xB7 ${date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
   }
   _renderEvents() {
     const host = this.shadowRoot?.querySelector(".events");
@@ -35367,9 +35965,9 @@ ${LUX_KEYFRAMES}
     this._eventsSig = sig;
     host.innerHTML = events.length ? events.map((event) => {
       const raw = event.start?.dateTime || event.start?.date, date2 = raw ? new Date(raw) : /* @__PURE__ */ new Date();
-      const day = date2.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "");
+      const day2 = date2.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "");
       const number2 = date2.toLocaleDateString("da-DK", { day: "numeric" });
-      return `<div class="event" style="--event:${this._esc(event.calendar?.color || "var(--dashboard-accent,#38bdf8)")}"><div class="date"><span>${this._esc(day)}</span><b>${this._esc(number2)}</b></div><i></i><div class="event-copy"><b>${this._esc(event.summary || "Aftale")}</b><span>${this._esc(this._eventTime(event))} \xB7 ${this._esc(event.calendar?.name || "Kalender")}</span></div></div>`;
+      return `<div class="event" style="--event:${this._esc(event.calendar?.color || "var(--dashboard-accent,#38bdf8)")}"><div class="date"><span>${this._esc(day2)}</span><b>${this._esc(number2)}</b></div><i></i><div class="event-copy"><b>${this._esc(event.summary || "Aftale")}</b><span>${this._esc(this._eventTime(event))} \xB7 ${this._esc(event.calendar?.name || "Kalender")}</span></div></div>`;
     }).join("") : `<div class="empty">Ingen aftaler de n\xE6ste 7 dage</div>`;
     this._observeMarquees();
   }
@@ -35511,13 +36109,13 @@ ${LUX_KEYFRAMES}
     const utilityKeys = { ".electricity": "monthly_energy_entity", ".water": "water_month_entity", ".heat": "heat_month_entity" };
     const shown = Object.values(utilityKeys).filter((k) => c2[k] !== "").length;
     this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count", String(Math.max(shown, 1)));
-    const utility = (sel, icon3, label, value, unit, cost, valid2) => {
+    const utility = (sel, icon4, label, value, unit, cost, valid2) => {
       const tile2 = this.shadowRoot.querySelector(sel);
       tile2.hidden = c2[utilityKeys[sel]] === "";
       if (tile2.hidden) return;
       tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
       const x = this._utilMonth(c2[utilityKeys[sel]], c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
-      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon3}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
+      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon4}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
     };
     this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
@@ -35526,7 +36124,7 @@ ${LUX_KEYFRAMES}
     const roomsHtml = c2.room_tiles !== "classic" ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const r = this._roomInfo(room);
       const tone2 = !Number.isFinite(r.temp) ? "unavailable" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : "";
-      const icon3 = this._esc(room.icon || "mdi:thermometer");
+      const icon4 = this._esc(room.icon || "mdi:thermometer");
       const targetText = Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "M\xE5l"} <b>${this._fmt(r.target, 1)}\xB0</b>` : "";
       const humidityText = Number.isFinite(r.humidity) ? `<span class="room-humidity">${targetText ? "\xB7 " : ""}${this._fmt(r.humidity, 0)}%</span>` : "";
       const badge = (cls, ic, title) => `<span class="room-status ${cls}" title="${title}"><ha-icon icon="${ic}"></ha-icon></span>`;
@@ -35538,7 +36136,7 @@ ${LUX_KEYFRAMES}
       const status = room.outdoor ? "Ude nu" : r.heating ? "Varmer nu" : r.window ? "Vindue \xE5bent" : Number.isFinite(r.delta) ? r.delta > 0.7 ? `Over m\xE5l +${this._fmt(r.delta, 1)}\xB0` : r.delta < -0.7 ? `Under m\xE5l ${this._fmt(r.delta, 1)}\xB0` : "P\xE5 m\xE5l" : "";
       const frac = Number.isFinite(r.temp) ? Math.max(0, Math.min(1, (r.temp - 14) / 16)) : 0;
       const arc = Number.isFinite(r.temp) ? `<svg class="room-arc" viewBox="0 0 40 40" aria-hidden="true"><path class="t" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100"/><path class="v" d="M8.7 31.3A16 16 0 1 1 31.3 31.3" pathLength="100" stroke-dasharray="${(frac * 100).toFixed(1)} 100"/></svg>` : "";
-      return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon3}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}${status ? `<em class="room-st"><i></i>${this._esc(status)}</em>` : ""}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${arc}${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
+      return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon4}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}${status ? `<em class="room-st"><i></i>${this._esc(status)}</em>` : ""}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${arc}${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
     }).join("");
     const rooms = this.shadowRoot.querySelector(".rooms");
     const vc2 = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard;
@@ -35939,13 +36537,13 @@ window.customCards.push({
 window.customCards.push({ type: "ha-home-summary-card", name: "HA Home Summary Card", description: "Samlet husstatus, forbrug, kalender og kameraoverblik", preview: true });
 window.customCards.push({ type: "ha-home-desktop-layout-card", name: "HA Home Desktop Layout", description: "Balancerede responsive kolonner til PC-forsiden", preview: false });
 console.info(
-  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION27} `,
+  `%c HA-HOME-STATUS-GRID-CARD %c ${VERSION28} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#102030"
 );
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION28 = "0.5.6";
+var VERSION29 = "0.5.6";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -36034,7 +36632,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return id ? this._hass?.states?.[id]?.state === "on" : this._config?.style === "v2";
   }
   _personV2(p) {
-    const esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -36052,12 +36650,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc6((p.name || "?").trim()[0] || "?");
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc6(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    const initial = esc7((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc7(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc6(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc6(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc6(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc7(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc7(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc7(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -36072,7 +36670,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -36085,14 +36683,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const travel = Number(this._s(p.travel_time)?.state);
       const where = home ? "" : away ? Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc6((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc7((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc6(x.p.navigation_path || "")}" title="${esc6(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc7(x.p.navigation_path || "")}" title="${esc7(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc6(x.name)}</b><small>${esc6(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc7(x.name)}</b><small>${esc7(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -36192,7 +36790,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA PERSON OVERVIEW CARD %c v${VERSION28} `,
+  `%c HA PERSON OVERVIEW CARD %c v${VERSION29} `,
   "color:white;background:#2687b8;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
@@ -36280,7 +36878,7 @@ var HACardListEditor9 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION29 = "0.3.0";
+var VERSION30 = "0.3.0";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -36483,13 +37081,13 @@ var HAPetCareCard = class extends HTMLElement {
 if (!customElements.get("ha-pet-care-card")) customElements.define("ha-pet-care-card", HAPetCareCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-pet-care-card", name: "HA Pet Care Card", description: "Samlet k\xE6ledyrs-, vand- og foderoversigt", preview: true });
-console.info(`%c HA PET CARE CARD %c v${VERSION29} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA PET CARE CARD %c v${VERSION30} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-weather-card/ha-weather-card-assets.js
 window.HAWeatherCardAssets = Object.freeze({ "weather": { "clear-night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "clear-night_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "fog": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "fog_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "hail": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "hail_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "lightning-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjYuNzQiIHkxPSIzNy44OCIgeDI9IjM1Ljc2IiB5Mj0iNTMuNTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGxpbmUgeDE9IjI0LjM5IiB5MT0iNDMuMDMiIHgyPSIyMy42MSIgeTI9IjQ3Ljk3IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMzkiIHkxPSI0My4wMyIgeDI9IjMwLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuNHMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC40cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMzkiIHkxPSI0My4wMyIgeDI9IjM3LjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuMnMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC4ycyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8cG9seWdvbiBwb2ludHM9IjMwIDM2IDI2IDQ4IDMwIDQ4IDI4IDU4IDM4IDQ0IDMyIDQ0IDM2IDM2IDMwIDM2IiBzdHJva2U9IiNmNmE4MjMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjZSkiPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMTsgMTsgMTsgMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDE7IDE7IDAuMTsgMTsgMC4xOyAxIiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wb2x5Z29uPgo8L3N2Zz4K", "lightning-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMTMuNTgiIHkxPSIxNS41NyIgeDI9IjI0LjE1IiB5Mj0iMzMuODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0iZ3JhZGllbnRUcmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIxMCAxOS4yMiAyNC4yOTM7IC0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIyLjUzIiB5MT0iNDIuOTUiIHgyPSIyNS40NyIgeTI9IjQ4LjA1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIyOS41MyIgeTE9IjQyLjk1IiB4Mj0iMzIuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImUiIHgxPSIzNi41MyIgeTE9IjQyLjk1IiB4Mj0iMzkuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImYiIHgxPSIyNi43NCIgeTE9IjM3Ljg4IiB4Mj0iMzUuNzYiIHkyPSI1My41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Zz4KCQk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2IpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2UpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNmKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "not-available": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8cGF0aCBkPSJNMjYuMSwyNC4wOGEuODMuODMsMCwwLDEsLjE2LjU2VjM4LjEyYS41OS41OSwwLDAsMS0uNzIuNzFoLTEuMmEuNzUuNzUsMCwwLDEtLjY5LS4zNWwtNS4xNC03LjZhMTEuNjIsMTEuNjIsMCwwLDEtLjg1LTEuNWMtLjI4LS41Ny0uNDktMS4wNS0uNjQtMS40M3MtLjIzLS41OS0uMjMtLjZoLS4xM3MwLC4yMy4xMi42Ni4xNSwxLC4yMywxLjY0YTE4LDE4LDAsMCwxLC4xMSwxLjg4djYuNTlhLjc3Ljc3LDAsMCwxLS4xNi41Ni43OS43OSwwLDAsMS0uNTUuMTVIMTUuM2EuODUuODUsMCwwLDEtLjU3LS4xNS43Ni43NiwwLDAsMS0uMTctLjU2VjI0LjY0YS43OC43OCwwLDAsMSwuMTctLjU2Ljg1Ljg1LDAsMCwxLC41Ny0uMTVoMS4xOWEuODEuODEsMCwwLDEsLjcuMzNsNS4xLDcuNTZhMTMsMTMsMCwwLDEsLjg5LDEuNTZjLjI3LjU1LjQ4LDEsLjYzLDEuNDFzLjIzLjU5LjI0LjZoLjEzczAtLjI1LS4xMi0uNjctLjE1LTEtLjIzLTEuNjNhMTYuMTEsMTYuMTEsMCwwLDEtLjExLTEuOTRWMjQuNjRhLjgzLjgzLDAsMCwxLC4xNS0uNTYuODIuODIsMCwwLDEsLjU2LS4xNWgxLjExQS44Mi44MiwwLDAsMSwyNi4xLDI0LjA4WiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTMwLjQ3LDQwYTEsMSwwLDAsMS0uNTQuMTJIMjguNzZjLS4yNCwwLS40LS4wNS0uNDYtLjE0YS40My40MywwLDAsMSwwLS40NGw1LjU4LTE1YTEuMTYsMS4xNiwwLDAsMSwuMzMtLjQ2Ljk0Ljk0LDAsMCwxLC41My0uMTJIMzZjLjI0LDAsLjM5LjA1LjQ1LjE0YS41LjUsMCwwLDEsMCwuNDRsLTUuNTksMTVBMS4wNiwxLjA2LDAsMCwxLDMwLjQ3LDQwWiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTQ4Ljg5LDM4LjgzSDQ3LjhhMi40LDIuNCwwLDAsMS0uOTEtLjEyLjc4Ljc4LDAsMCwxLS4zOS0uNTFsLTEtMi43SDM5Ljc0bC0xLDIuN2EuNzguNzgsMCwwLDEtLjM5LjUxLDIuNCwyLjQsMCwwLDEtLjkxLjEyaC0xcS0uNzMsMC0uNDgtLjY5bDUuMjUtMTMuNjVhMS4wNywxLjA3LDAsMCwxLC4zMy0uNDcsMSwxLDAsMCwxLC41NS0uMTFoMS4xMWExLjA2LDEuMDYsMCwwLDEsLjU3LjExLjkuOSwwLDAsMSwuMzIuNDVsNS4yNCwxMy42N1E0OS42MywzOC44Myw0OC44OSwzOC44M1ptLTYtMTEuMTNjLS4wOS0uNDMtLjE0LS43Ni0uMTctMWwwLS4zNmgtLjE1YTcuNzMsNy43MywwLDAsMS0uNDYsMi41NGwtMS42Miw0LjQ1SDQ0LjhMNDMuMiwyOC45QTEwLDEwLDAsMCwxLDQyLjg5LDI3LjdaIiBmaWxsPSIjMzc0MTUxIi8+Cjwvc3ZnPgo=", "partlycloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxNi41IiB5MT0iMTkuNjciIHgyPSIyMS41IiB5Mj0iMjguMzMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIxOSIgY3k9IjI0IiByPSI1IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0xOSwxNS42N1YxMi41bTAsMjNWMzIuMzNtNS44OS0xNC4yMiwyLjI0LTIuMjRNMTAuODcsMzIuMTNsMi4yNC0yLjI0bTAtMTEuNzgtMi4yNC0yLjI0TTI3LjEzLDMyLjEzbC0yLjI0LTIuMjRNNy41LDI0aDMuMTdNMzAuNSwyNEgyNy4zMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDE5IDI0OyAzNjAgMTkgMjQiIGR1cj0iNDVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSIvPgo8L3N2Zz4K", "partlycloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxMy41OCIgeTE9IjE1LjU3IiB4Mj0iMjQuMTUiIHkyPSIzMy44NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzOyAtMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KPC9zdmc+Cg==", "pouring": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "pouring_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "smoke-particles": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMzAuMjUiIHkxPSIzOS40IiB4Mj0iMzMuMjUiIHkyPSI0NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNiOGJkYzYiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYTVhYWIyIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy41IiB5MT0iMjkuMSIgeDI9IjI4IiB5Mj0iMzYuOSIgeGxpbms6aHJlZj0iI2EiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImMiIHgxPSIzMy43NSIgeTE9IjE5LjgiIHgyPSIzOS43NSIgeTI9IjMwLjIiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMS43NSIgY3k9IjQyIiByPSIzIiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMjUuNzUiIGN5PSI0MiIgcj0iNC41IiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJjeCIgdmFsdWVzPSIzMS43NTsgMjUuNzUiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2NpcmNsZT4KCTxjaXJjbGUgY3g9IjM2Ljc1IiBjeT0iNDIiIHI9IjYiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAzNi43NSIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgo8L3N2Zz4K", "smoke": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4yNSIgeTE9IjQ4LjQiIHgyPSIzMy4yNSIgeTI9IjUzLjYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYjhiZGM2Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhNWFhYjIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIzLjUiIHkxPSIzOC4xIiB4Mj0iMjgiIHkyPSI0NS45IiB4bGluazpocmVmPSIjYiIvPgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iZCIgeDE9IjMzLjc1IiB5MT0iMjguOCIgeDI9IjM5Ljc1IiB5Mj0iMzkuMiIgeGxpbms6aHJlZj0iI2IiLz4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxjaXJjbGUgY3g9IjMxLjc1IiBjeT0iNTEiIHI9IjMiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cgk8Y2lyY2xlIGN4PSIyNS43NSIgY3k9IjUxIiByPSI0LjUiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAyNS43NSIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMzYuNzUiIGN5PSI1MSIgcj0iNiIgc3Ryb2tlPSIjYWZiNGJjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwIDA7IDAgLTE3OyIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7IDE7IDE7IDE7IDAiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iciIgdmFsdWVzPSIzOyA0LjU7IDYiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iY3giIHZhbHVlcz0iMzEuNzU7IDM2Ljc1IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cjwvc3ZnPgo=", "snowy-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "snowy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "sunny": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunny_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunrise": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgMzggMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "sunset": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgNDcgMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "windy-variant": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy-variant_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K" } });
 
 // src/cards/ha-weather-card/ha-weather-card.js
-var VERSION30 = "0.6.1";
+var VERSION31 = "0.6.1";
 var CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
   cloudy: "Overskyet",
@@ -36755,8 +37353,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     if (!Number.isFinite(bearing)) return "";
     return `<svg class="wind-arrow" width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${(bearing + 180) % 360}deg)"><path d="M12 2L6 12h4v10h4V12h4L12 2z"/></svg>`;
   }
-  _chip(icon3, label, value, extra = "") {
-    return `<div class="chip"${extra}><ha-icon icon="${icon3}"></ha-icon><div><span>${this._esc(label)}</span><b>${value}</b></div></div>`;
+  _chip(icon4, label, value, extra = "") {
+    return `<div class="chip"${extra}><ha-icon icon="${icon4}"></ha-icon><div><span>${this._esc(label)}</span><b>${value}</b></div></div>`;
   }
   _heroHtml() {
     const n = this._now();
@@ -36764,7 +37362,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const today = (this._daily || [])[0];
     const hi = this._num(today?.temperature);
     const lo = this._num(today?.templow);
-    const icon3 = this._iconPath(n.condition, this._isDaytimeNow());
+    const icon4 = this._iconPath(n.condition, this._isDaytimeNow());
     const uv = this._uvTone(n.uv);
     const chips = [];
     if (Number.isFinite(n.wind)) {
@@ -36779,7 +37377,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     if (Number.isFinite(n.uv)) chips.push(this._chip("mdi:weather-sunny-alert", "UV-indeks", `${this._fmt(n.uv, 0)} <small>${uv.label}</small>`, ` style="--tone:${uv.color}"`));
     return `<div class="hero" data-more="${this._esc(this._config.more_info_entity || this._config.weather_entity)}">
         <div class="hero-main">
-          <img class="hero-icon" src="${icon3}" alt="">
+          <img class="hero-icon" src="${icon4}" alt="">
           <div class="hero-text">
             <div class="hero-temp">${this._fmt(n.temp, 1)}<sup>\xB0</sup></div>
             <div class="hero-cond">${this._esc(this._conditionLabel(n.condition))}</div>
@@ -36858,8 +37456,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
   _factsHtml() {
     return (this._config.radar_details || []).map((item2) => {
       const state = this._s(item2.entity);
-      const icon3 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
-      return `<div class="fact" data-more="${this._esc(item2.entity)}"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span>${this._esc(item2.name || state?.attributes?.friendly_name || item2.entity)}</span><b>${this._esc(this._detailValue(item2.entity))}</b></div>`;
+      const icon4 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
+      return `<div class="fact" data-more="${this._esc(item2.entity)}"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span>${this._esc(item2.name || state?.attributes?.friendly_name || item2.entity)}</span><b>${this._esc(this._detailValue(item2.entity))}</b></div>`;
     }).join("");
   }
   _imageUrl(entity) {
@@ -36914,18 +37512,18 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     return (section?.items || []).map((item2) => {
       const state = this._s(item2.entity);
       const name = item2.name || state?.attributes?.friendly_name || item2.entity;
-      const icon3 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
+      const icon4 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
       const value = this._detailValue(item2.entity);
       const note = this._detailNote(state);
       return `<div class="row${value === "\u2014" ? " off" : ""}" data-more="${this._esc(item2.entity)}">
-          <ha-icon icon="${this._esc(icon3)}"></ha-icon>
+          <ha-icon icon="${this._esc(icon4)}"></ha-icon>
           <span class="row-label">${this._esc(name)}${note ? `<small>${this._esc(note)}</small>` : ""}</span>
           <b>${this._esc(value)}</b>
         </div>`;
     }).join("");
   }
-  _panel(icon3, title, body, extra = "") {
-    return `<section class="panel"${extra}><div class="panel-head"><ha-icon icon="${icon3}"></ha-icon><span>${this._esc(title)}</span></div>${body}</section>`;
+  _panel(icon4, title, body, extra = "") {
+    return `<section class="panel"${extra}><div class="panel-head"><ha-icon icon="${icon4}"></ha-icon><span>${this._esc(title)}</span></div>${body}</section>`;
   }
   _pollenRows() {
     return (this._config.pollen || []).map((p) => {
@@ -37132,7 +37730,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WEATHER CARD %c v${VERSION30} `,
+  `%c HA WEATHER CARD %c v${VERSION31} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#161b22"
 );
@@ -37545,7 +38143,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc3 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc4 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -38015,9 +38613,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const out = [];
     if (ctx.open.length) {
       const first = ctx.open[0];
-      const icon3 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
+      const icon4 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
       const text = ctx.open.length > 1 ? `${ctx.open.length} \xE5bninger` : `${first.label} \xE5ben`;
-      out.push({ key: "open", tone: "danger", icon: icon3, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
+      out.push({ key: "open", tone: "danger", icon: icon4, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
     }
     if (room.temperature && ctx.tempDead) out.push({ key: "offline", tone: "warn", icon: "mdi:thermometer-off", text: "Sensor offline" });
     if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "H\xF8j fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
@@ -38105,7 +38703,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE6}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc3(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc3(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc4(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc4(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -38125,16 +38723,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc3(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc3(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc3(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc4(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc4(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc4(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc3(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc3(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc4(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc4(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc3(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc4(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -38303,8 +38901,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     el.style.setProperty("--level", String(m.level / 100));
     if (room.weather) {
       const w = this._state(room.weather);
-      const icon3 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
-      if (t.badgeIcon.getAttribute("icon") !== icon3) t.badgeIcon.setAttribute("icon", icon3);
+      const icon4 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
+      if (t.badgeIcon.getAttribute("icon") !== icon4) t.badgeIcon.setAttribute("icon", icon4);
     }
     t.line.className = `line ${m.line.cls}`;
     this._setText(t.lt, m.line.text);
@@ -38361,8 +38959,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       else el.style.removeProperty("--p");
       if (chip.color) el.style.setProperty("--cc", chip.color);
       else el.style.removeProperty("--cc");
-      const icon3 = el.querySelector("ha-icon");
-      if (icon3.getAttribute("icon") !== chip.icon) icon3.setAttribute("icon", chip.icon);
+      const icon4 = el.querySelector("ha-icon");
+      if (icon4.getAttribute("icon") !== chip.icon) icon4.setAttribute("icon", chip.icon);
       this._setText(el.querySelector(".ct"), chip.text);
       this._setText(el.querySelector(".cm"), chip.meta || "");
       const at = container.children[index];
@@ -38377,8 +38975,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       t.light.classList.toggle("unavail", dead);
       t.light.classList.toggle("pending", this._isPending(room.light));
       t.light.setAttribute("aria-pressed", String(m.lightOn));
-      const icon3 = m.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
-      if (t.lightIcon.getAttribute("icon") !== icon3) t.lightIcon.setAttribute("icon", icon3);
+      const icon4 = m.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
+      if (t.lightIcon.getAttribute("icon") !== icon4) t.lightIcon.setAttribute("icon", icon4);
       this._setText(t.lv, m.lightOn ? `${m.level}%` : dead ? "Offline" : "Fra");
       const members = Array.isArray(m.light?.attributes?.entity_id) ? m.light.attributes.entity_id : [];
       const onCount = members.filter((id) => this._state(id)?.state === "on").length;
@@ -38403,9 +39001,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       else button.style.removeProperty("--bc");
       const anim = cfg.animation || (domain === "fan" ? "spin" : domain === "valve" ? "bob" : domain === "media_player" ? "glow" : "");
       ["spin", "flame", "bob", "glow", "wiggle"].forEach((name2) => button.classList.toggle(`anim-${name2}`, anim === name2));
-      const icon3 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON2[domain] || "mdi:gesture-tap";
+      const icon4 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON2[domain] || "mdi:gesture-tap";
       const iconEl = button.querySelector("ha-icon");
-      if (iconEl.getAttribute("icon") !== icon3) iconEl.setAttribute("icon", icon3);
+      if (iconEl.getAttribute("icon") !== icon4) iconEl.setAttribute("icon", icon4);
       this._setText(button.querySelector(".arm"), armed ? this._armed.label : "");
       const name = cfg.name || (cfg.entity ? this._name(cfg.entity) : "Handling");
       const stateText = dead ? "ikke tilg\xE6ngelig" : lock ? st.state === "locked" ? "l\xE5st" : st.state === "unlocked" ? "ul\xE5st" : st.state : on ? "til" : "fra";
@@ -39109,7 +39707,7 @@ window.customCards.push({
 });
 
 // src/cards/ha-house-mode-card/ha-house-mode-card.js
-var VERSION31 = "0.3.0";
+var VERSION32 = "0.3.0";
 var DEFAULT_ICONS = {
   Normal: "mdi:home",
   Stille: "mdi:volume-mute",
@@ -39284,13 +39882,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HOUSE MODE CARD %c v${VERSION31} `,
+  `%c HA HOUSE MODE CARD %c v${VERSION32} `,
   "color:white;background:#c27a3f;font-weight:700",
   "color:#f5d3ab;background:#161b22"
 );
 
 // src/cards/ha-kid-tracker-card/ha-kid-tracker-card.js
-var VERSION32 = "0.5.0";
+var VERSION33 = "0.5.0";
 var HAKidTrackerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -39499,7 +40097,7 @@ var HAKidTrackerCard = class extends HTMLElement {
       ...Array.isArray(this._config.details) ? this._config.details.map((item2) => [item2.entity, item2.label || "Status", item2.icon || "mdi:information-outline", item2.format]) : []
     ].filter(([id]) => this._hasData(id));
     const deviceDetailsHtml = deviceDetails.map(
-      ([id, label, icon3, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
+      ([id, label, icon4, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
     ).join("");
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:${color};--good:var(--dashboard-success,var(--success-color,#54d9aa));--warn:var(--dashboard-warning,var(--warning-color,#ffbd59));--danger:var(--dashboard-danger,var(--error-color,#ff667a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.2)));--panel:var(--surface,var(--ha-card-background,var(--card-background-color,#1c1f26)));--text:var(--primary-text-color,#f5f7fb);--muted:var(--secondary-text-color,#aeb7c4);--shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}
@@ -39608,13 +40206,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KID TRACKER CARD %c v${VERSION32} `,
+  `%c HA KID TRACKER CARD %c v${VERSION33} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/smart-home-overview-card/smart-home-overview-card.js
-var VERSION33 = "1.0.1";
+var VERSION34 = "1.0.1";
 var DEFAULT_ENTITIES = {
   houseMode: "input_select.house_mode",
   guestOverride: "input_boolean.house_mode_guest_override",
@@ -39803,13 +40401,13 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const e = this.config.entities;
     const result = [];
     for (const alert2 of this.config.alerts || []) {
-      const { entity, kind, title, detail, icon: icon3, action } = alert2;
+      const { entity, kind, title, detail, icon: icon4, action } = alert2;
       const state = this._s(entity)?.state;
       let active = false;
       if (kind === "on") active = state === "on";
       if (kind === "battery") active = Number(state) < action && Number.isFinite(Number(state));
       if (kind === "not-clear") active = state != null && !["none", "no_error", "unknown", "unavailable", "ok", "idle"].includes(String(state).toLowerCase());
-      if (active) result.push({ entity, title, detail, icon: icon3, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
+      if (active) result.push({ entity, title, detail, icon: icon4, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
     }
     for (const state of Object.values(this._hass?.states || {})) {
       const id = state?.entity_id || "";
@@ -39964,8 +40562,8 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const activeWater = !heating && !bypass && (water.includes("opvarm") || water.includes("vand") || water.includes("varm"));
     const value = critical ? "Tryk kritisk" : faults ? "Fejl" : heating ? "Varme" : bypass ? "Bypass" : activeWater ? "Vand" : "Idle";
     const valve = this._num(heating ? e.heatingValveHeating : e.heatingValveIdle) || 0;
-    const day = this._num(e.heatingEnergyToday);
-    return { value, valve, pressure, day, cheapest: this._state(e.cheapestHeatingStatus, "Afventer"), warning: critical || faults };
+    const day2 = this._num(e.heatingEnergyToday);
+    return { value, valve, pressure, day: day2, cheapest: this._state(e.cheapestHeatingStatus, "Afventer"), warning: critical || faults };
   }
   _priceData(tab = this._priceTab) {
     const e = this.config.entities;
@@ -40292,11 +40890,11 @@ var SmartHomeOverviewCardEditor = class extends HTMLElement {
 if (!customElements.get("smart-home-overview-card")) customElements.define("smart-home-overview-card", SmartHomeOverviewCard);
 if (!customElements.get("smart-home-overview-card-editor")) customElements.define("smart-home-overview-card-editor", SmartHomeOverviewCardEditor);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION33}`, preview: true });
-console.info(`SMART HOME OVERVIEW CARD ${VERSION33}`);
+window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION34}`, preview: true });
+console.info(`SMART HOME OVERVIEW CARD ${VERSION34}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION34 = "0.4.0";
+var VERSION35 = "0.4.0";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -40493,11 +41091,11 @@ var HAAlarmCenterCard = class extends HTMLElement {
     return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   _row(a, snoozed, until2) {
-    const icon3 = a.icon?.startsWith("mdi:") ? a.icon : null;
-    const emoji = !icon3 ? a.icon || "\u26A0\uFE0F" : null;
+    const icon4 = a.icon?.startsWith("mdi:") ? a.icon : null;
+    const emoji = !icon4 ? a.icon || "\u26A0\uFE0F" : null;
     return `<div class="row priority-${a.priority} ${snoozed ? "snoozed" : ""}" data-entity="${this._esc(a.entity)}">
       <button class="row-main" data-tap>
-        <span class="row-icon">${icon3 ? `<ha-icon icon="${this._esc(icon3)}"></ha-icon>` : this._esc(emoji)}</span>
+        <span class="row-icon">${icon4 ? `<ha-icon icon="${this._esc(icon4)}"></ha-icon>` : this._esc(emoji)}</span>
         <span class="row-text">
           <strong>${this._esc(a.name)}</strong>
           ${a.secondary_text ? `<span class="sub">${this._esc(a.secondary_text)}</span>` : ""}
@@ -40618,13 +41216,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ALARM CENTER CARD %c v${VERSION34} `,
+  `%c HA ALARM CENTER CARD %c v${VERSION35} `,
   "color:white;background:#d9534f;font-weight:700",
   "color:#ff9d9d;background:#161b22"
 );
 
 // src/cards/ha-camera-hub-card/ha-camera-hub-card.js
-var VERSION35 = "0.7.0";
+var VERSION36 = "0.7.0";
 var EVENTS_REFRESH_MS = 30 * 1e3;
 var SYSTEM_TICK_MS = 30 * 1e3;
 var EVENTS_WINDOW_HOURS = 36;
@@ -41359,7 +41957,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     }
     this._eventsRenderSig = signature;
     mount.innerHTML = `<div class="filters">${FILTERS.map(
-      ([key, label, icon3]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon3}"></ha-icon>${label}</button>`
+      ([key, label, icon4]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`
     ).join("")}</div>${this._eventsHtml()}`;
     if (!mount.dataset.bound) {
       mount.dataset.bound = "true";
@@ -41401,7 +41999,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     const hddIssues = (c2.hdd_entities || []).filter((id) => this._s(id)?.state === "on").length;
     const online = (this._cameras || []).filter((cam) => this._s(cam.camera_entity) && this._s(cam.camera_entity)?.state !== "unavailable").length;
     const total = (this._cameras || []).length;
-    const row = (icon3, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon3}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
+    const row = (icon4, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon4}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
     const html = `
       <div class="row-list">
         ${row("mdi:cctv", "Kameraer online", `${online} / ${total}`, online < total)}
@@ -41620,7 +42218,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         <ha-icon icon="mdi:cctv"></ha-icon>
         <div><strong>${this._esc(c2.title)}</strong><span>${this._esc(c2.subtitle)}</span></div>
       </div>
-      <div class="tabs">${tabs.map(([key, label, icon3]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`).join("")}</div>
+      <div class="tabs">${tabs.map(([key, label, icon4]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`).join("")}</div>
       <div class="panel" data-panel="live" ${this._tab === "live" ? "" : "hidden"}><div class="live-grid">${(this._cameras || []).map(
       (cam) => `<section class="cam-tile" data-cam-tile="${this._esc(cam.key)}">
             <div class="cam-bar">
@@ -42079,13 +42677,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CAMERA HUB CARD %c v${VERSION35} `,
+  `%c HA CAMERA HUB CARD %c v${VERSION36} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-door-window-card/ha-door-window-card.js
-var VERSION36 = "0.4.0";
+var VERSION37 = "0.4.0";
 var HISTORY_REFRESH_MS = 5 * 60 * 1e3;
 var TICK_MS = 30 * 1e3;
 var LONG_OPEN_MS = 30 * 60 * 1e3;
@@ -42267,14 +42865,14 @@ var HADoorWindowCard = class extends HTMLElement {
   }
   _tile(item2) {
     const stats = this._statsFor(item2);
-    const icon3 = this._iconFor(item2, stats.isOpen);
+    const icon4 = this._iconFor(item2, stats.isOpen);
     const longThreshold = (this._config.long_open_minutes ?? 30) * 6e4;
     const isLongOpen = stats.isOpen && Number.isFinite(stats.openSinceMs) && stats.openSinceMs >= longThreshold;
     const battery = this._num(this._s(item2.battery_entity)?.state);
     const batteryChip = Number.isFinite(battery) ? `<span class="chip"><ha-icon icon="${battery <= 20 ? "mdi:battery-alert-variant-outline" : "mdi:battery"}"></ha-icon>${battery}%</span>` : "";
     return `<div class="tile ${stats.isOpen ? "open" : "closed"} ${isLongOpen ? "long-open" : ""}" data-more="${this._esc(item2.entity)}">
       <div class="tile-top">
-        <div class="tile-icon"><ha-icon icon="${icon3}"></ha-icon></div>
+        <div class="tile-icon"><ha-icon icon="${icon4}"></ha-icon></div>
         <div class="tile-name">
           <b>${this._esc(item2.name)}</b>
           <span class="state-pill">${stats.isOpen ? "\xC5ben" : "Lukket"}</span>
@@ -42288,7 +42886,7 @@ var HADoorWindowCard = class extends HTMLElement {
       ${batteryChip ? `<div class="tile-foot">${batteryChip}</div>` : ""}
     </div>`;
   }
-  _section(title, icon3, items) {
+  _section(title, icon4, items) {
     if (!items.length) return "";
     const sorted = [...items].sort((a, b) => {
       const sa = this._statsFor(a);
@@ -42297,7 +42895,7 @@ var HADoorWindowCard = class extends HTMLElement {
       if (sa.isOpen && sb2.isOpen) return (sb2.openSinceMs ?? 0) - (sa.openSinceMs ?? 0);
       return (sb2.lastOpenedTs ?? 0) - (sa.lastOpenedTs ?? 0);
     });
-    return `<div class="section-heading"><ha-icon icon="${icon3}"></ha-icon><span>${this._esc(title)}</span></div>
+    return `<div class="section-heading"><ha-icon icon="${icon4}"></ha-icon><span>${this._esc(title)}</span></div>
       <div class="grid">${sorted.map((item2) => this._tile(item2)).join("")}</div>`;
   }
   _render() {
@@ -42377,13 +42975,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA DOOR/WINDOW CARD %c v${VERSION36} `,
+  `%c HA DOOR/WINDOW CARD %c v${VERSION37} `,
   "color:#fff;background:#f59e0b;font-weight:700",
   "color:#f59e0b;background:#161b22"
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION37 = "0.8.12";
+var VERSION38 = "0.8.12";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -43207,7 +43805,7 @@ if (!customElements.get("ha-home-camera-card")) customElements.define("ha-home-c
 if (!customElements.get("ha-home-camera-card-editor")) customElements.define("ha-home-camera-card-editor", HaHomeCameraCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Card", description: "Responsive camera overview with automatic and manual camera selection", preview: true });
-console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION37} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
+console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION38} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
 // src/cards/ha-license-plate-card/ha-license-plate-card.js
 var HaLicensePlateCard = class extends HTMLElement {
@@ -43983,7 +44581,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-security-center-card", name: "HA Security Center", description: `Security center ${SECURITY_CENTER_VERSION}` });
 
 // src/cards/ha-control-center-card/ha-control-center-card.js
-var VERSION38 = "0.3.0";
+var VERSION39 = "0.3.0";
 var HAControlCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -44189,13 +44787,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CONTROL CENTER CARD %c v${VERSION38} `,
+  `%c HA CONTROL CENTER CARD %c v${VERSION39} `,
   "color:white;background:#3f7fbf;font-weight:700",
   "color:#9dc8ff;background:#161b22"
 );
 
 // src/cards/ha-ai-usage-card/ha-ai-usage-card.js
-var VERSION39 = "0.4.1";
+var VERSION40 = "0.4.1";
 var HAAIUsageCard = class extends HTMLElement {
   constructor() {
     super();
@@ -44350,7 +44948,7 @@ var HAAIUsageCard = class extends HTMLElement {
       <div class="account-foot"><div><span>Senest opdateret</span><strong>${this._age(account.last_update)}</strong></div><div><span>Ekstra kapacitet</span><strong>${this._escape(secondary)}</strong></div><button data-refresh="${this._escape(account.refresh)}" aria-label="Genopfrisk ${this._escape(account.name)}"><ha-icon icon="mdi:refresh"></ha-icon><span>Opdat\xE9r</span></button></div>
     </article>`;
   }
-  _window(label, icon3, remaining, reset, tone2, unit, max) {
+  _window(label, icon4, remaining, reset, tone2, unit, max) {
     const unitLabel = this._unitLabel(unit);
     const digits = this._unitDigits(unit);
     let value;
@@ -44364,7 +44962,7 @@ var HAAIUsageCard = class extends HTMLElement {
     const display = unit ? `${this._format(remaining, digits)}` : this._format(remaining);
     return `<div class="window ${tone2}" style="--value:${value}">
       <div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"></circle><circle class="progress" cx="22" cy="22" r="18"></circle></svg><strong>${display}<small>${unitLabel}</small></strong></div>
-      <div class="window-copy"><span><ha-icon icon="${icon3}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
+      <div class="window-copy"><span><ha-icon icon="${icon4}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
     </div>`;
   }
   async _refresh(entityId, button) {
@@ -44417,10 +45015,10 @@ var HAAIUsageCard = class extends HTMLElement {
 if (!customElements.get("ha-ai-usage-card")) customElements.define("ha-ai-usage-card", HAAIUsageCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", description: "Samlet og animeret overblik over AI-forbrugsgr\xE6nser", preview: true });
-console.info(`%c HA AI USAGE CARD %c v${VERSION39} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AI USAGE CARD %c v${VERSION40} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION40 = "0.6.13";
+var VERSION41 = "0.6.13";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -44642,9 +45240,9 @@ var HASettingsCenterCard = class extends HTMLElement {
       <span class="row-text"><b>Nulstil til automatisk</b><small>Fjerner manuel override i ${this._esc(r.name)}</small></span>
     </button>`;
   }
-  _panelHead(icon3, title, subtitle) {
+  _panelHead(icon4, title, subtitle) {
     return `<div class="panel-head">
-      <ha-icon icon="${this._esc(icon3 || "mdi:cog-outline")}"></ha-icon>
+      <ha-icon icon="${this._esc(icon4 || "mdi:cog-outline")}"></ha-icon>
       <div><b>${this._esc(title)}</b>${subtitle ? `<small>${subtitle}</small>` : ""}</div>
     </div>`;
   }
@@ -45054,9 +45652,9 @@ var HASettingsCenterCard = class extends HTMLElement {
     close.setAttribute("aria-label", "Luk problemoversigt");
     close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:var(--card-background-color,rgba(8,12,18,.92));color:var(--primary-text-color,#fff);font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const title = this._esc(item2.name || "Systemstatus");
-    const icon3 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
+    const icon4 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem ? `<div style="display:grid;gap:8px;margin-top:16px">${details.map((value) => `<div style="padding:11px 12px;border:1px solid color-mix(in srgb,var(--error-color,#ef4444) 28%,transparent);border-radius:12px;background:color-mix(in srgb,var(--error-color,#ef4444) 9%,transparent);font-size:13px;line-height:1.45">${this._esc(value)}</div>`).join("")}</div>` : `<div style="margin-top:16px;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--success-color,#20e3a2) 10%,transparent);color:var(--success-color,#20e3a2);font-weight:800">Ingen aktive problemer.</div>`;
-    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon3}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
+    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon4}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
     panel.appendChild(close);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => {
@@ -45276,13 +45874,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SETTINGS CENTER %c v${VERSION40} `,
+  `%c HA SETTINGS CENTER %c v${VERSION41} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-kiosk-server-card/ha-kiosk-server-card.js
-var VERSION41 = "0.2.0";
+var VERSION42 = "0.2.0";
 var HAKioskServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -45421,8 +46019,8 @@ var HAKioskServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
     return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon3) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon4) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -45446,12 +46044,12 @@ var HAKioskServerCard = class extends HTMLElement {
       <span>${this._esc(action.name)}</span>
     </button>`;
   }
-  _selectRow(label, id, icon3) {
+  _selectRow(label, id, icon4) {
     const e = this._e(id);
     const options = e?.attributes?.options || [];
     if (!options.length) return "";
     return `<div class="select-row">
-      <ha-icon icon="${this._esc(icon3)}"></ha-icon>
+      <ha-icon icon="${this._esc(icon4)}"></ha-icon>
       <span class="select-label">${this._esc(label)}</span>
       <select data-select="${this._esc(id)}">${options.map((o) => `<option value="${this._esc(o)}" ${o === e?.state ? "selected" : ""}>${this._esc(o)}</option>`).join("")}</select>
     </div>`;
@@ -45624,13 +46222,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KIOSK SERVER CARD %c v${VERSION41} `,
+  `%c HA KIOSK SERVER CARD %c v${VERSION42} `,
   "color:white;background:#5a3ea8;font-weight:700",
   "color:#d3c6f5;background:#161b22"
 );
 
 // src/cards/ha-ops-status-card/ha-ops-status-card.js
-var VERSION42 = "0.3.0";
+var VERSION43 = "0.3.0";
 var BAD_STATES = ["off", "critical", "error", "unavailable"];
 var WARN_STATES = ["warn", "warning"];
 var HAOpsStatusCard = class extends HTMLElement {
@@ -45745,10 +46343,10 @@ var HAOpsStatusCard = class extends HTMLElement {
   _healthTile(item2) {
     const e = this._e(item2.entity);
     const level = this._healthState(e);
-    const icon3 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
+    const icon4 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
     const label = item2.state_labels?.[e?.state] || e?.state || "\u2014";
     return `<button class="htile ${level}" data-entity="${this._esc(item2.entity)}">
-      <ha-icon icon="${this._esc(item2.icon || icon3)}"></ha-icon>
+      <ha-icon icon="${this._esc(item2.icon || icon4)}"></ha-icon>
       <span class="htile-text"><b>${this._esc(item2.name)}</b><span>${this._esc(label)}</span></span>
     </button>`;
   }
@@ -45818,13 +46416,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA OPS STATUS CARD %c v${VERSION42} `,
+  `%c HA OPS STATUS CARD %c v${VERSION43} `,
   "color:white;background:#4f6d8f;font-weight:700",
   "color:#b8d0e8;background:#161b22"
 );
 
 // src/cards/ha-unraid-server-card/ha-unraid-server-card.js
-var VERSION43 = "0.2.0";
+var VERSION44 = "0.2.0";
 var HAUnraidServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -45955,8 +46553,8 @@ var HAUnraidServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
     return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon3) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon3)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon4) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -46109,13 +46707,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA UNRAID SERVER CARD %c v${VERSION43} `,
+  `%c HA UNRAID SERVER CARD %c v${VERSION44} `,
   "color:white;background:#f15a24;font-weight:700",
   "color:#ffcbb0;background:#161b22"
 );
 
 // src/cards/ha-tts-center-card/ha-tts-center-card.js
-var VERSION44 = "0.1.0";
+var VERSION45 = "0.1.0";
 var DAYS = [["mon", "Man"], ["tue", "Tir"], ["wed", "Ons"], ["thu", "Tor"], ["fri", "Fre"], ["sat", "L\xF8r"], ["sun", "S\xF8n"]];
 var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
   constructor() {
@@ -46279,10 +46877,10 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
 if (!customElements.get("ha-tts-center-card")) customElements.define("ha-tts-center-card", HATtsCenterCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tts-center-card", name: "HA TTS Center Card", description: "Samlet center til direkte og planlagte TTS-beskeder", preview: true });
-console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION44} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
+console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION45} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
 
 // src/cards/ha-light-automation-card/ha-light-automation-card.js
-var VERSION45 = "0.1.2";
+var VERSION46 = "0.1.2";
 var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
   constructor() {
     super();
@@ -46363,17 +46961,17 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
       ["vacuum_exception_entity", "mdi:robot-vacuum-variant-off", "Undtag ved st\xF8vsugning"]
     ].filter(([key]) => room[key]);
     return `<section class="room ${index === this._activeRoom ? "active" : ""}" data-room="${index}">
-      <div class="switches">${switches.map(([key, icon3, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon3}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>
+      <div class="switches">${switches.map(([key, icon4, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon4}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>
       <div class="settings">
         ${this._slider(room.delay_entity, "mdi:timer-outline", "T\xE6nd-forsinkelse", "sek")}
         ${this._slider(room.lux_threshold_entity, "mdi:brightness-5", "Lux-t\xE6rskel", "lx")}
       </div>
     </section>`;
   }
-  _slider(entity, icon3, label, unit) {
+  _slider(entity, icon4, label, unit) {
     if (!entity) return "";
     const state = this._state(entity), min = state?.attributes?.min ?? 0, max = state?.attributes?.max ?? 100, step = state?.attributes?.step ?? 1;
-    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon3}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
+    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon4}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
   }
   _build() {
     if (!this._config) return;
@@ -46462,10 +47060,10 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
 if (!customElements.get("ha-light-automation-card")) customElements.define("ha-light-automation-card", HALightAutomationCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Automation Card", description: "Samlet styring af dagvindue og rumbaseret lysautomatik", preview: true });
-console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION45} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
+console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION46} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION46 = "0.2.4";
+var VERSION47 = "0.2.4";
 var DAY = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
 var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -46474,10 +47072,10 @@ var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk"
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
 var HOUR = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc4 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var pad = (n) => String(n).padStart(2, "0");
-var hhmm = (d) => `${pad(d.getHours())}.${pad(d.getMinutes())}`;
-var dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var pad2 = (n) => String(n).padStart(2, "0");
+var hhmm = (d) => `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
+var dayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 var startOfDay = (d) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -46793,7 +47391,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc4(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc5(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -46851,13 +47449,13 @@ ${LUX_KEYFRAMES}
     const st = this._hass?.states?.[this._config.weather_entity];
     box.hidden = !st;
     if (!st) return;
-    const [txt, icon3] = WEATHER2[st.state] || [st.state, "mdi:weather-cloudy"];
+    const [txt, icon4] = WEATHER2[st.state] || [st.state, "mdi:weather-cloudy"];
     const t = Number(st.attributes?.temperature);
     const u3 = st.attributes?.temperature_unit || "\xB0C";
     const k = `${st.state}|${t}`;
     if (k === this._wxKey) return;
     this._wxKey = k;
-    r.querySelector("[data-wxi]").setAttribute("icon", icon3);
+    r.querySelector("[data-wxi]").setAttribute("icon", icon4);
     r.querySelector("[data-wxt]").textContent = Number.isFinite(t) ? `${Math.round(t)}${u3}` : "\u2013";
     r.querySelector("[data-wxs]").textContent = txt;
   }
@@ -46869,7 +47467,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc4(ds[0].toUpperCase() + ds.slice(1))}<small>${esc4(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc5(ds[0].toUpperCase() + ds.slice(1))}<small>${esc5(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -46881,7 +47479,7 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc4(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc5(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
@@ -46904,9 +47502,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc4(g)}">${esc4(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc5(g)}">${esc5(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc4(c2.entity)}" style="--c:${esc4(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc4(c2.name || c2.entity)}"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon>${esc4(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc5(c2.entity)}" style="--c:${esc5(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc5(c2.name || c2.entity)}"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon>${esc5(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -46945,8 +47543,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc4(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc4(c2.name || "")}${e.location ? ` \xB7 ${esc4(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc5(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc5(c2.name || "")}${e.location ? ` \xB7 ${esc5(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -46971,10 +47569,10 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc4(e.summary || "")}">${esc4(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc5(e.summary || "")}">${esc5(e.summary || "")}</button>`;
     });
     const hrs = [];
-    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad(h)}</span></div>`);
+    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad2(h)}</span></div>`);
     r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR}|${span}"></div>`;
     r.querySelector("[data-tlh]").textContent = todays.length ? `${todays.length} ${todays.length === 1 ? "aftale" : "aftaler"}` : "Fri";
     const wkEnd = +addDays(monday(new Date(t)), 7);
@@ -47003,15 +47601,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc4(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc4(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc5(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc5(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc4(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon>${esc4(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc4(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc5(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon>${esc5(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc5(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -47070,7 +47668,7 @@ ${LUX_KEYFRAMES}
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H3, y(en)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc4(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc4(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc5(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -47078,9 +47676,9 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de2 = ds + 864e5;
-      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc4(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc4(e.summary || "")}</button>`).join("");
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc5(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc5(e.summary || "")}</button>`).join("");
     };
-    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad(h0 + i)}</span>` : "").join("")}</div>`;
+    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad2(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
       <div class="ad" style="border-right:1px solid var(--edge)"></div>${days.map((d) => `<div class="ad">${allDay(d)}</div>`).join("")}
       ${axis}${days.map((d) => colHtml(d)).join("")}</div>`;
@@ -47103,8 +47701,8 @@ ${LUX_KEYFRAMES}
   }
   _weekNo(d) {
     const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const day = x.getUTCDay() || 7;
-    x.setUTCDate(x.getUTCDate() + 4 - day);
+    const day2 = x.getUTCDay() || 7;
+    x.setUTCDate(x.getUTCDate() + 4 - day2);
     const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
     return Math.ceil(((x - y0) / 864e5 + 1) / 7);
   }
@@ -47146,11 +47744,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc4(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc4(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc4(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc4(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc4(when[0].toUpperCase() + when.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc5(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc5(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc5(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc5(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc4(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc4(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc5(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc5(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -47201,7 +47799,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc4(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc5(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -47211,7 +47809,7 @@ ${LUX_KEYFRAMES}
     const en = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc4(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc4(e.location)}` : ""}</span>${teacher.length ? `<small>${esc4(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc5(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc5(e.location)}` : ""}</span>${teacher.length ? `<small>${esc5(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -47224,10 +47822,10 @@ ${LUX_KEYFRAMES}
 if (!customElements.get("ha-family-calendar-card")) customElements.define("ha-family-calendar-card", HAFamilyCalendarCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Familiekalender med nu/n\xE6ste, tidslinje, agenda, ugeskema, kalenderfiltre og skoleskema", preview: true });
-console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION46} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
+console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION47} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
 
 // src/cards/ha-waste-journey-card/ha-waste-journey-card.js
-var VERSION47 = "0.1.0";
+var VERSION48 = "0.1.0";
 var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   constructor() {
     super();
@@ -47314,7 +47912,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
 if (!customElements.get("ha-waste-journey-card")) customElements.define("ha-waste-journey-card", HAWasteJourneyCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-waste-journey-card", name: "HA Waste Journey Card", description: "Animeret affaldskalender med skraldebil p\xE5 vej mod huset", preview: true });
-console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION47} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
+console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION48} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
 
 // src/cards/ha-calefa-flow-card/ha-calefa-flow-card.js
 var CALEFA_FLOW_CARD_VERSION = "0.9.9";
@@ -48267,7 +48865,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!this._config.show_footer) return "";
     const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key]) => this._config[key]);
     if (!items.length) return "";
-    return `<footer class="cf-footer">${items.map(([key, label, icon3]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon3}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
+    return `<footer class="cf-footer">${items.map(([key, label, icon4]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon4}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
   }
   // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
   _markersMarkup(track2, level, variant = "") {
@@ -48591,7 +49189,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
     const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><title></title><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
-    const stat = (key, label, ref, unit, sub = "", icon3 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon3}"></ha-icon></button>`;
+    const stat = (key, label, ref, unit, sub = "", icon4 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon4}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
         ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>M\xE5lt \xB7 Kamstrup</i>` : "", "mdi:radiator")}
@@ -49609,7 +50207,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION48 = "0.1.11";
+var VERSION49 = "0.1.11";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -50039,10 +50637,10 @@ if (!customElements.get("ha-home-desktop-layout-card-front")) customElements.def
 if (!customElements.get("ha-home-desktop-layout-card-front-editor")) customElements.define("ha-home-desktop-layout-card-front-editor", HaHomeDesktopLayoutCardEditor2);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-desktop-layout-card-front", name: "HA Home Front Layout", description: "Forside med valg mellem kort og samlet flade", preview: false });
-console.info(`HA HOME FRONT LAYOUT v${VERSION48}`);
+console.info(`HA HOME FRONT LAYOUT v${VERSION49}`);
 
 // src/cards/ha-navbar-card/ha-navbar-card.js
-var VERSION49 = "0.10.4";
+var VERSION50 = "0.10.4";
 var PULSE_FARVER = ["--error-color", "--warning-color"];
 var NB_STOERRELSER = {
   max_width: "--nb-maxbredde",
@@ -51414,13 +52012,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NAVBAR CARD %c v${VERSION49} `,
+  `%c HA NAVBAR CARD %c v${VERSION50} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#222"
 );
 
 // src/cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js
-var VERSION50 = "0.1.6";
+var VERSION51 = "0.1.6";
 var TAG4 = "ha-roborock-room-map-card";
 var ROOM_PALETTE = {
   1: [240, 178, 122],
@@ -51576,7 +52174,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc5 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc6 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -52405,8 +53003,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc5(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc5(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc6(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc6(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -52428,8 +53026,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc5(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc5(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc6(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc6(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -52485,7 +53083,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const s = new Date(this._s(this._ent.last_clean_start));
     const e = new Date(this._s(this._ent.last_clean_end));
     if (Number.isNaN(s.getTime())) return "";
-    const day = (d) => {
+    const day2 = (d) => {
       const today = /* @__PURE__ */ new Date();
       today.setHours(0, 0, 0, 0);
       const dd = new Date(d);
@@ -52496,7 +53094,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       return d.toLocaleDateString("da-DK", { day: "numeric", month: "short" });
     };
     const t = (d) => d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-    return `${day(s)} ${t(s)}${Number.isNaN(e.getTime()) || e < s ? "" : `\u2013${t(e)}`}`;
+    return `${day2(s)} ${t(s)}${Number.isNaN(e.getTime()) || e < s ? "" : `\u2013${t(e)}`}`;
   }
   _duration(min) {
     if (!Number.isFinite(min)) return "";
@@ -52505,8 +53103,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   }
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
-      const [label, icon3] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc5(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon3 ? `<ha-icon icon="${icon3}"></ha-icon>` : ""}<span>${esc5(label)}</span></button>`;
+      const [label, icon4] = labels[o] || [human(o)];
+      return `<button data-a="${action}" data-v="${esc6(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc6(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -52575,7 +53173,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon3, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc5(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon3}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc6(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -52590,29 +53188,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc5(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc5(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc6(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc6(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc5(title)}</h2><p>${esc5(subtitle)}</p></div>
+          <div><h2>${esc6(title)}</h2><p>${esc6(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc5(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc5(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon3, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon3}"></ha-icon><div><b>${esc5(t)}</b>${s ? `<span>${esc5(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon3, l, v, x]) => `<div><ha-icon icon="${icon3}"></ha-icon><span>${esc5(l)}</span><b>${esc5(v)}</b>${x ? `<small>${esc5(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc6(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc6(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc6(t)}</b>${s ? `<span>${esc6(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc6(l)}</span><b>${esc6(v)}</b>${x ? `<small>${esc6(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc5(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc5(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc5(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc5(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc6(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc6(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc6(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc6(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc5(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc6(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -52626,7 +53224,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc5(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc6(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
@@ -52780,7 +53378,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === TAG4)) {
   window.customCards.push({ type: TAG4, name: "HA Roborock Room Map Card", description: "V\xE6lg rum direkte p\xE5 Roborock-kortet og reng\xF8r dem i valgt r\xE6kkef\xF8lge", preview: false });
 }
-console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION50} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
+console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION51} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
 
 // src/cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js
 var ACCOUNTS = [
@@ -52931,8 +53529,8 @@ var AIUsageDashboardCard = class extends HTMLElement {
     if (detail.innerHTML !== content) detail.innerHTML = content;
   }
   _week() {
-    const date2 = /* @__PURE__ */ new Date(), day = (date2.getDay() + 6) % 7;
-    date2.setDate(date2.getDate() - day + 3);
+    const date2 = /* @__PURE__ */ new Date(), day2 = (date2.getDay() + 6) % 7;
+    date2.setDate(date2.getDate() - day2 + 3);
     const first = new Date(date2.getFullYear(), 0, 4);
     return 1 + Math.round(((date2 - first) / 864e5 - 3 + (first.getDay() + 6) % 7) / 7);
   }
@@ -52966,7 +53564,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashboard", description: "AI-forbrug og kvoter" });
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
-var VERSION51 = "1.1.1";
+var VERSION52 = "1.1.1";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -53022,7 +53620,7 @@ function toNumber2(value) {
   return Number.isFinite(n) ? n : void 0;
 }
 var clamp4 = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-var pad2 = (n) => String(n).padStart(2, "0");
+var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
@@ -53074,7 +53672,7 @@ var Clock = class {
 function shiftDateKey(dateKey, days) {
   const [y, m, d] = dateKey.split("-").map(Number);
   const t = new Date(Date.UTC(y, m - 1, d + days));
-  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
+  return `${t.getUTCFullYear()}-${pad22(t.getUTCMonth() + 1)}-${pad22(t.getUTCDate())}`;
 }
 function parsePriceList(raw) {
   if (!Array.isArray(raw)) return [];
@@ -53207,7 +53805,7 @@ function splitOnGaps(entries) {
 function statTime(value) {
   return typeof value === "number" ? value : Date.parse(value);
 }
-var icon = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${name}"></ha-icon>`;
+var icon2 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${name}"></ha-icon>`;
 var STYLE7 = `
 :host{
   /* Alle tokens peger p\xE5 det aktive temas variabler; hex-v\xE6rdierne er kun fallback. */
@@ -53873,40 +54471,40 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
 <div class="dash" data-ref="dash">
   <header class="header">
     <div class="brand">
-      <div class="brand-mark">${icon("mdi:chart-bar")}</div>
+      <div class="brand-mark">${icon2("mdi:chart-bar")}</div>
       <div><h1>${escapeHtml2(c2.title)}</h1><p>${escapeHtml2(c2.subtitle)}</p></div>
     </div>
     <div class="chips">
-      <div class="chip">${icon("mdi:calendar-clock")}<div><b data-ref="hdrDate">\u2014</b><small data-ref="hdrTime">\u2014</small></div></div>
-      <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
-      <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">\u2014</small></div></div>
+      <div class="chip">${icon2("mdi:calendar-clock")}<div><b data-ref="hdrDate">\u2014</b><small data-ref="hdrTime">\u2014</small></div></div>
+      <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon2("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
+      <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon2("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">\u2014</small></div></div>
     </div>
   </header>
 
   <section class="card kpi kpi-price a-price clickable" data-entity="${escapeHtml2(this._id("price"))}" tabindex="0">
-    <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon("mdi:lightning-bolt")}<h3>Str\xF8mpris nu</h3></div>
+    <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon2("mdi:lightning-bolt")}<h3>Str\xF8mpris nu</h3></div>
     <div class="big" data-ref="priceBig"><span class="glow"></span><span class="v num" data-ref="priceNow" data-v>\u2014</span><span class="u">kr/kWh</span></div>
     <div class="delta" data-ref="priceDelta"><span class="pill" data-ref="priceDeltaPill">\u2014</span><span class="sub">i forhold til dagsgennemsnit</span></div>
   </section>
 
   <section class="card kpi a-range">
-    <div class="card-head" style="--head-ic:var(--energy-blue)">${icon("mdi:chart-bar")}<h3>Dagens min / max / gennemsnit</h3></div>
+    <div class="card-head" style="--head-ic:var(--energy-blue)">${icon2("mdi:chart-bar")}<h3>Dagens min / max / gennemsnit</h3></div>
     <div class="range">
-      <div class="tone-green">${icon("mdi:arrow-down-bold")}<span class="rv num" data-ref="minVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">\u2014</span></div>
-      <div class="tone-red">${icon("mdi:arrow-up-bold")}<span class="rv num" data-ref="maxVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">\u2014</span></div>
-      <div class="range-avg" style="--tone:var(--energy-text)">${icon("mdi:approximately-equal")}<span class="rv num" data-ref="avgVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
+      <div class="tone-green">${icon2("mdi:arrow-down-bold")}<span class="rv num" data-ref="minVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Min</span><span class="rt" data-ref="minTime">\u2014</span></div>
+      <div class="tone-red">${icon2("mdi:arrow-up-bold")}<span class="rv num" data-ref="maxVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Max</span><span class="rt" data-ref="maxTime">\u2014</span></div>
+      <div class="range-avg" style="--tone:var(--energy-text)">${icon2("mdi:approximately-equal")}<span class="rv num" data-ref="avgVal" data-v>\u2014</span><span class="ru">kr/kWh</span><span class="rl">Gennemsnit</span><span class="rt">i dag</span></div>
     </div>
   </section>
 
   <section class="card kpi a-advice" data-ref="advice">
-    <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:ev-plug-type2")}<h3>Ladeanbefaling</h3><span class="info-btn" title="Vejledende \u2013 baseret alene p\xE5 den aktuelle pris' placering blandt dagens priser. Styrer ikke laderen.">${icon("mdi:information-outline")}</span></div>
-    <div class="advice-box" data-ref="adviceBox">${icon("mdi:power-plug-outline")}<div><b data-ref="adviceTitle" data-v>\u2014</b><small data-ref="adviceLevel">\u2014</small></div></div>
-    <div class="advice-note" data-ref="adviceNote1">${icon("mdi:check-circle")}<span data-ref="adviceText">\u2014</span></div>
-    <div class="advice-note" data-ref="adviceNote2" style="--tone:var(--energy-cyan)">${icon("mdi:clock-outline")}<span data-ref="adviceNext">\u2014</span></div>
+    <div class="card-head" style="--head-ic:var(--energy-green)">${icon2("mdi:ev-plug-type2")}<h3>Ladeanbefaling</h3><span class="info-btn" title="Vejledende \u2013 baseret alene p\xE5 den aktuelle pris' placering blandt dagens priser. Styrer ikke laderen.">${icon2("mdi:information-outline")}</span></div>
+    <div class="advice-box" data-ref="adviceBox">${icon2("mdi:power-plug-outline")}<div><b data-ref="adviceTitle" data-v>\u2014</b><small data-ref="adviceLevel">\u2014</small></div></div>
+    <div class="advice-note" data-ref="adviceNote1">${icon2("mdi:check-circle")}<span data-ref="adviceText">\u2014</span></div>
+    <div class="advice-note" data-ref="adviceNote2" style="--tone:var(--energy-cyan)">${icon2("mdi:clock-outline")}<span data-ref="adviceNext">\u2014</span></div>
   </section>
 
   <section class="card kpi a-charger clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0" ${has("charger_power") ? "" : "hidden"}>
-    <div class="card-head">${icon("mdi:car-electric")}<h3>Billader effekt</h3></div>
+    <div class="card-head">${icon2("mdi:car-electric")}<h3>Billader effekt</h3></div>
     <div class="ring-wrap idle" data-ref="ring">
       <svg viewBox="0 0 136 136"><circle class="ring-track" cx="68" cy="68" r="58"/><circle class="ring-val" data-ref="ringVal" cx="68" cy="68" r="58" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 68 68)"/></svg>
       <div class="ring-spin"><svg viewBox="0 0 136 136"><circle cx="68" cy="68" r="58" pathLength="100" stroke-dasharray="7 93" transform="rotate(-90 68 68)"/></svg></div>
@@ -53916,40 +54514,40 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   </section>
 
   <section class="card kpi a-house clickable tone-green" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0" ${has("house_power") ? "" : "hidden"}>
-    <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>Husforbrug uden billader</h3></div>
+    <div class="card-head" style="--head-ic:var(--energy-green)">${icon2("mdi:home")}<h3>Husforbrug uden billader</h3></div>
     <div class="big"><span class="v num" data-ref="houseKpi" data-v>\u2014</span><span class="u">kW</span></div>
     <div data-ref="houseSparkWrap" hidden><div class="spark" data-ref="houseSpark"></div><div class="spark-caption"><span>\u22126 t</span><span>nu</span></div></div>
   </section>
 
   <section class="card a-main">
     <div class="panel-head">
-      <div class="panel-title">${icon("mdi:lightning-bolt", "lead")}<div><h2>Str\xF8m &amp; forbrug</h2><div class="sub">Aktuel str\xF8mpris og forbrug i dag</div></div></div>
-      <span class="tag">${icon("mdi:calendar-today")}I dag</span>
+      <div class="panel-title">${icon2("mdi:lightning-bolt", "lead")}<div><h2>Str\xF8m &amp; forbrug</h2><div class="sub">Aktuel str\xF8mpris og forbrug i dag</div></div></div>
+      <span class="tag">${icon2("mdi:calendar-today")}I dag</span>
     </div>
     <div class="chart-box">
-      <h4>${icon("mdi:chart-bell-curve-cumulative")}Str\xF8mkort \u2013 dagspris</h4>
+      <h4>${icon2("mdi:chart-bell-curve-cumulative")}Str\xF8mkort \u2013 dagspris</h4>
       <div data-ref="todayChart"></div>
       <div class="composition" data-ref="composition" hidden></div>
     </div>
     <div class="mini-grid">
       <div class="mini tone-green clickable" data-entity="${escapeHtml2(this._id("house_energy_today"))}" tabindex="0" ${has("house_energy_today") ? "" : "hidden"}>
-        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>Dagens husforbrug uden bil</h3></div>
+        <div class="card-head" style="--head-ic:var(--energy-green)">${icon2("mdi:home")}<h3>Dagens husforbrug uden bil</h3></div>
         <div class="big"><span class="v num" data-ref="houseDay" data-v>\u2014</span><span class="u">kWh</span></div>
         <div class="spark" data-ref="houseDaySpark" hidden></div>
         <div class="mini-foot" data-ref="houseDayCompare" hidden><span class="pill" data-ref="houseDayComparePill"></span><span>ift. samme tid i g\xE5r</span></div>
       </div>
       <div class="mini tone-blue clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0" ${has("charger_power") ? "" : "hidden"}>
-        <div class="card-head">${icon("mdi:car-electric")}<h3>Billader effekt</h3></div>
+        <div class="card-head">${icon2("mdi:car-electric")}<h3>Billader effekt</h3></div>
         <div class="big"><span class="v num" data-ref="chargerMini" data-v>\u2014</span><span class="u">kW</span></div>
         <div class="spark" data-ref="chargerSpark" hidden></div>
       </div>
       <div class="mini tone-green clickable" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0" ${has("house_power") ? "" : "hidden"}>
-        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home-lightning-bolt")}<h3>Husforbrug uden billader</h3></div>
+        <div class="card-head" style="--head-ic:var(--energy-green)">${icon2("mdi:home-lightning-bolt")}<h3>Husforbrug uden billader</h3></div>
         <div class="big"><span class="v num" data-ref="houseMini" data-v>\u2014</span><span class="u">kW</span></div>
         <div class="spark" data-ref="houseMiniSpark" hidden></div>
       </div>
       <div class="mini" data-ref="vsMini">
-        <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon("mdi:percent")}<h3>Pris lige nu vs. gennemsnit</h3></div>
+        <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon2("mdi:percent")}<h3>Pris lige nu vs. gennemsnit</h3></div>
         <div class="big"><span class="v num" data-ref="vsPrice" data-v>\u2014</span><span class="u">kr/kWh</span></div>
         <div class="mini-foot"><span class="pill" data-ref="vsPill">\u2014</span></div>
         <svg class="mini-line" data-ref="vsLine" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
@@ -53959,7 +54557,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
 
   <section class="card a-flow" ${has("house_power") || has("charger_power") ? "" : "hidden"}>
     <div class="panel-head" style="margin-bottom:0">
-      <div class="panel-title">${icon("mdi:power-plug", "lead")}<div><h2>Elforbrug lige nu</h2><div class="sub">Fordeling af aktuelt elforbrug</div></div></div>
+      <div class="panel-title">${icon2("mdi:power-plug", "lead")}<div><h2>Elforbrug lige nu</h2><div class="sub">Fordeling af aktuelt elforbrug</div></div></div>
     </div>
     <div class="flow-body">
       <div class="donut">
@@ -53970,14 +54568,14 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         <div class="donut-center"><span class="v num" data-ref="flowTotal" data-v>\u2014</span><span class="u">kW</span></div>
       </div>
       <div class="legend">
-        <div class="leg tone-blue clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">\u2014</span></div>
-        <div class="leg tone-green clickable" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">\u2014</span></div>
+        <div class="leg tone-blue clickable" data-entity="${escapeHtml2(this._id("charger_power"))}" tabindex="0">${icon2("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">\u2014</span></div>
+        <div class="leg tone-green clickable" data-entity="${escapeHtml2(this._id("house_power"))}" tabindex="0">${icon2("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>\u2014</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">\u2014</span></div>
       </div>
     </div>
   </section>
 
   <section class="card a-charge" ${has("charger_power") ? "" : "hidden"}>
-    <div class="card-head">${icon("mdi:car-electric")}<h3 style="font-size:19px;font-weight:700">Opladning</h3><span class="status-chip tone-neutral" data-ref="chargeChip">${icon("mdi:power-plug-off-outline")}<span data-ref="chargeChipText">\u2014</span></span></div>
+    <div class="card-head">${icon2("mdi:car-electric")}<h3 style="font-size:19px;font-weight:700">Opladning</h3><span class="status-chip tone-neutral" data-ref="chargeChip">${icon2("mdi:power-plug-off-outline")}<span data-ref="chargeChipText">\u2014</span></span></div>
     <div class="charge-body">
       <svg class="charger-art" data-ref="chargerArt" viewBox="0 0 140 196" aria-hidden="true">
         <path class="cable" d="M57 160 C57 188 96 192 108 170 L112 132"/>
@@ -53992,10 +54590,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         <rect class="pin" x="106" y="92" width="4" height="10" rx="1.5"/><rect class="pin" x="114" y="92" width="4" height="10" rx="1.5"/>
       </svg>
       <div class="facts">
-        <div class="fact" style="--tone:var(--energy-blue)">${icon("mdi:flash")}<small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>\u2014</span> <span class="unit">kW</span></b></div>
-        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:battery-charging")}<small>Tilf\xF8rt i dag</small><b class="num"><span data-ref="chargeToday" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
-        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}>${icon("mdi:counter")}<small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
-        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}>${icon("mdi:ev-station")}<small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>\u2014</b></div>
+        <div class="fact" style="--tone:var(--energy-blue)">${icon2("mdi:flash")}<small>Aktuel effekt</small><b class="num"><span data-ref="chargePower" data-v>\u2014</span> <span class="unit">kW</span></b></div>
+        <div class="fact" data-ref="chargeTodayRow" style="--tone:var(--energy-green)" ${has("charger_energy_today") ? "" : "hidden"}>${icon2("mdi:battery-charging")}<small>Tilf\xF8rt i dag</small><b class="num"><span data-ref="chargeToday" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeSessionRow" style="--tone:var(--energy-cyan)" ${has("charger_session_energy") ? "" : "hidden"}>${icon2("mdi:counter")}<small>Denne session</small><b class="num"><span data-ref="chargeSession" data-v>\u2014</span> <span class="unit">kWh</span></b></div>
+        <div class="fact" data-ref="chargeModeRow" ${has("charger_mode") ? "" : "hidden"}>${icon2("mdi:ev-station")}<small>Opladningsstatus</small><b class="txt" data-ref="chargeMode" data-v>\u2014</b></div>
         <div class="bar-row" data-ref="chargeUtilRow" hidden><div class="bar tone-green"><i data-ref="chargeUtil"></i></div><span data-ref="chargeUtilText">\u2014</span></div>
       </div>
     </div>
@@ -54003,26 +54601,26 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
 
   <section class="card a-energy" ${has("house_energy_today") ? "" : "hidden"}>
     <div class="panel-head" style="margin-bottom:0">
-      <div class="panel-title">${icon("mdi:chart-bar", "lead")}<div><h2>Dagens elforbrug</h2><div class="sub">Akkumuleret forbrug indtil nu i dag</div></div></div>
-      <span class="tag">${icon("mdi:calendar-today")}I dag</span>
+      <div class="panel-title">${icon2("mdi:chart-bar", "lead")}<div><h2>Dagens elforbrug</h2><div class="sub">Akkumuleret forbrug indtil nu i dag</div></div></div>
+      <span class="tag">${icon2("mdi:calendar-today")}I dag</span>
     </div>
     <div class="energy-rows">
-      <div class="erow tone-green clickable" data-entity="${escapeHtml2(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">\u2014</span></div>
-      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml2(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">\u2014</span></div>
-      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
+      <div class="erow tone-green clickable" data-entity="${escapeHtml2(this._id("house_energy_today"))}" tabindex="0">${icon2("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">\u2014</span></div>
+      <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml2(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon2("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">\u2014</span></div>
+      <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon2("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>\u2014</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
     </div>
   </section>
 
   <section class="card a-tomorrow">
     <div class="panel-head" style="margin-bottom:0">
-      <div class="panel-title">${icon("mdi:calendar-arrow-right", "lead")}<div><h2>I morgen</h2><div class="sub">Forventede elpriser \u2013 brug dem til planl\xE6gning af opladning</div></div></div>
+      <div class="panel-title">${icon2("mdi:calendar-arrow-right", "lead")}<div><h2>I morgen</h2><div class="sub">Forventede elpriser \u2013 brug dem til planl\xE6gning af opladning</div></div></div>
     </div>
     <div data-ref="tomorrowBody"></div>
   </section>
 
   <footer class="footer">
-    <span>${icon("mdi:information-outline")}Denne visning bruger direkte el-entiteter fra Home Assistant. Elpriser, forbrug og opladningsdata beregnes ud fra dine m\xE5lere og prisdata.</span>
-    <span>${icon("mdi:database-outline")}<span data-ref="footerCounts">\u2014</span></span>
+    <span>${icon2("mdi:information-outline")}Denne visning bruger direkte el-entiteter fra Home Assistant. Elpriser, forbrug og opladningsdata beregnes ud fra dine m\xE5lere og prisdata.</span>
+    <span>${icon2("mdi:database-outline")}<span data-ref="footerCounts">\u2014</span></span>
   </footer>
 </div>`;
     this._refs = {};
@@ -54185,7 +54783,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const devTone = !Number.isFinite(dev) ? "neutral" : dev <= 0 ? "green" : dev >= STRONG_DEVIATION_PCT ? "red" : "orange";
     this._toneClass(this._refs.priceBig, band?.tone || "blue");
     this._toneClass(this._refs.priceDeltaPill, devTone);
-    this._setHtml("priceDeltaPill", Number.isFinite(dev) ? `${icon(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${fmtPct(Math.abs(dev))} %` : "\u2014");
+    this._setHtml("priceDeltaPill", Number.isFinite(dev) ? `${icon2(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${fmtPct(Math.abs(dev))} %` : "\u2014");
     this._text("minVal", fmtPrice(a?.min));
     this._text("maxVal", fmtPrice(a?.max));
     this._text("avgVal", fmtPrice(a?.avg));
@@ -54239,7 +54837,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._tweenNumber("vsPrice", nowPrice, fmtPrice);
     this._toneClass(this._refs.vsMini, devTone === "neutral" ? "blue" : devTone);
     this._toneClass(this._refs.vsPill, devTone);
-    this._setHtml("vsPill", Number.isFinite(dev) ? `${icon(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${Math.round(Math.abs(dev)) < NEUTRAL_DEVIATION_PCT ? "P\xE5 niveau" : `${fmtPct(Math.abs(dev))} % ${dev < 0 ? "lavere" : "h\xF8jere"}`}` : "\u2014");
+    this._setHtml("vsPill", Number.isFinite(dev) ? `${icon2(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${Math.round(Math.abs(dev)) < NEUTRAL_DEVIATION_PCT ? "P\xE5 niveau" : `${fmtPct(Math.abs(dev))} % ${dev < 0 ? "lavere" : "h\xF8jere"}`}` : "\u2014");
     const a = m.todayAnalysis;
     const svg = this._refs.vsLine;
     if (!a || !m.todayDomain) {
@@ -54282,7 +54880,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const host = this._refs.todayChart;
     const a = m.todayAnalysis;
     if (!a || !m.todayDomain) {
-      host.innerHTML = `<div class="empty">${icon("mdi:chart-line-variant")}<b>Dagens priser er ikke tilg\xE6ngelige lige nu</b><span>Grafen vises igen, s\xE5 snart prislisten er opdateret.</span></div>`;
+      host.innerHTML = `<div class="empty">${icon2("mdi:chart-line-variant")}<b>Dagens priser er ikke tilg\xE6ngelige lige nu</b><span>Grafen vises igen, s\xE5 snart prislisten er opdateret.</span></div>`;
       this._chartGeom = void 0;
       return;
     }
@@ -54480,7 +55078,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const a = m.tomorrowAnalysis;
     if (!a || !m.tomorrowDomain) {
       const hint = /^\d{2}:\d{2}/.test(m.availableAt || "") ? `Forventes offentliggjort omkring kl. ${m.availableAt.slice(0, 5)}.` : "Vises automatisk, n\xE5r priserne er offentliggjort.";
-      host.innerHTML = `<div class="empty" style="min-height:130px">${icon("mdi:calendar-clock")}<b>Morgendagens priser er ikke tilg\xE6ngelige endnu</b><span>${hint}</span></div>`;
+      host.innerHTML = `<div class="empty" style="min-height:130px">${icon2("mdi:calendar-clock")}<b>Morgendagens priser er ikke tilg\xE6ngelige endnu</b><span>${hint}</span></div>`;
       this._tomorrowGeom = void 0;
       return;
     }
@@ -54517,8 +55115,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     <div class="x-axis">${xLabels}</div>
   </div>
   <div class="extremes">
-    <div class="ext tone-green"><span class="badge">${icon("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} <span class="unit">kr/kWh</span></b><span>kl. ${a.minEntry.label}</span></div></div>
-    <div class="ext tone-red"><span class="badge">${icon("mdi:arrow-up")}</span><div><small>H\xF8jeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} <span class="unit">kr/kWh</span></b><span>kl. ${a.maxEntry.label}</span></div></div>
+    <div class="ext tone-green"><span class="badge">${icon2("mdi:arrow-down")}</span><div><small>Laveste pris i morgen</small><b class="num" data-v>${fmtPrice(a.min)} <span class="unit">kr/kWh</span></b><span>kl. ${a.minEntry.label}</span></div></div>
+    <div class="ext tone-red"><span class="badge">${icon2("mdi:arrow-up")}</span><div><small>H\xF8jeste pris i morgen</small><b class="num" data-v>${fmtPrice(a.max)} <span class="unit">kr/kWh</span></b><span>kl. ${a.maxEntry.label}</span></div></div>
   </div>
 </div>`;
     this._tomorrowGeom = { entries: m.tomorrow, analysis: a, xPct, start, end };
@@ -54774,7 +55372,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     if (!Number.isFinite(dev)) return;
     const pill = this._refs.houseDayComparePill;
     this._toneClass(pill, dev <= 0 ? "green" : "orange");
-    this._setHtml("houseDayComparePill", `${icon(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${fmtPct(Math.abs(dev))} %`);
+    this._setHtml("houseDayComparePill", `${icon2(dev <= 0 ? "mdi:arrow-down" : "mdi:arrow-up")}${fmtPct(Math.abs(dev))} %`);
   }
   /* ---------- footer ---------- */
   _updateFooter() {
@@ -54797,7 +55395,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG)) {
     preview: false
   });
 }
-console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION51} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
+console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION52} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
 
 // src/cards/ha-energy-center-card/defaults.js
 var DEFAULT_ENTITIES2 = {
@@ -55355,8 +55953,8 @@ var fmtKr = (v) => Number.isFinite(v) ? `${fmt(v, 2)} kr` : "\u2014";
 function escapeHtml3(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-var icon2 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
-var pad22 = (n) => String(n).padStart(2, "0");
+var icon3 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
+var pad23 = (n) => String(n).padStart(2, "0");
 function startOfDay2(ms = Date.now()) {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
@@ -55695,7 +56293,7 @@ function periodRange(key, now = Date.now()) {
     const end = addDays2(sod, 1);
     for (let t = sod; t < end; t += HOUR_MS2) {
       const h = new Date(t).getHours();
-      buckets.push({ start: t, end: t + HOUR_MS2, label: pad22(h), tip: `I dag kl. ${pad22(h)}\u2013${pad22((h + 1) % 24)}` });
+      buckets.push({ start: t, end: t + HOUR_MS2, label: pad23(h), tip: `I dag kl. ${pad23(h)}\u2013${pad23((h + 1) % 24)}` });
     }
     return { stat: "hour", fetchStart: sod - HOUR_MS2, end, buckets, caption: "I dag, pr. time" };
   }
@@ -55748,7 +56346,7 @@ var HistoryPanel = class {
     return `
 <div class="card chart-card tone-${o.tone} ${extraClass}" data-panel="${o.key}">
   <div class="chart-head">
-    <div class="card-head">${icon2(o.icon)}<div><h3>${escapeHtml3(o.title)}</h3><small data-cap>\u2014</small></div></div>
+    <div class="card-head">${icon3(o.icon)}<div><h3>${escapeHtml3(o.title)}</h3><small data-cap>\u2014</small></div></div>
     ${seg}
   </div>
   <div class="chart-sum"><span class="num" data-total>\u2014</span><span class="sum-cost" data-cost></span>${o.line ? `<span class="legend-line">${escapeHtml3(o.line.label)}</span>` : ""}</div>
@@ -55980,7 +56578,7 @@ var EnergyFlow = class {
     ).join("")}</svg>
       ${NODES.map(
       (n) => `<div class="fnode tone-${n.tone} ${n.big ? "big" : ""} ${entities[n.key] ? "clickable" : ""}" ${entities[n.key] ? `data-entity="${escapeHtml3(entities[n.key])}" tabindex="0" role="button"` : ""} style="left:${n.x}%;top:${n.y}%">
-        <span class="fbubble">${icon2(n.icon)}</span>
+        <span class="fbubble">${icon3(n.icon)}</span>
         <span class="fval num"><b data-v="${n.key}">\u2014</b><small data-u="${n.key}">W</small></span>
         <span class="flabel">${n.label}</span>
       </div>`
@@ -56129,21 +56727,21 @@ var OverviewSection = class extends Section {
     const c2 = this.card;
     const heroItem = (ref, tone2, ic, label, key) => `
       <button type="button" class="hero-item tone-${tone2} clickable" data-entity="${escapeHtml3(c2.id(key) || "")}">
-        <span class="badge">${icon2(ic)}</span>
+        <span class="badge">${icon3(ic)}</span>
         <span class="hi-label">${label}</span>
         <span class="hi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
         <span class="hi-sub" data-ref="${ref}Sub">\u2014</span>
       </button>`;
     const kpi = (ref, tone2, ic, label, tab) => `
       <button type="button" class="card kpi tone-${tone2} clickable" data-goto="${tab}">
-        <span class="kpi-top"><span class="badge sm">${icon2(ic)}</span><span class="kpi-label">${label}</span>${icon2("mdi:chevron-right", "chev")}</span>
+        <span class="kpi-top"><span class="badge sm">${icon3(ic)}</span><span class="kpi-label">${label}</span>${icon3("mdi:chevron-right", "chev")}</span>
         <span class="kpi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
         <span class="kpi-foot"><span class="num" data-ref="${ref}Cost">\u2014</span><span data-ref="${ref}Note">i dag</span></span>
       </button>`;
     return `
 <div class="layout ov">
   <section class="card hero a-full">
-    <div class="hero-head"><div class="card-head">${icon2("mdi:pulse")}<h3>Aktuel status lige nu</h3></div><span class="live"><i></i>Live</span></div>
+    <div class="hero-head"><div class="card-head">${icon3("mdi:pulse")}<h3>Aktuel status lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="hero-grid">
       ${heroItem("hEl", "el", "mdi:flash", "Str\xF8m", "grid_power")}
       ${heroItem("hHeat", "heat", "mdi:radiator", "Fjernvarme", "heat_power")}
@@ -56158,7 +56756,7 @@ var OverviewSection = class extends Section {
     ${kpi("kEv", "ev", "mdi:car-electric", "Billader i dag", "ev")}
   </div>
   <section class="card a-half">
-    <div class="card-head">${icon2("mdi:transit-connection-variant")}<div><h3>Energiflow</h3><small>Live effekt gennem huset</small></div></div>
+    <div class="card-head">${icon3("mdi:transit-connection-variant")}<div><h3>Energiflow</h3><small>Live effekt gennem huset</small></div></div>
     <div data-ref="flow"></div>
   </section>
   ${this.panels[0].html("a-half")}
@@ -56293,7 +56891,7 @@ var PowerSection = class extends Section {
     const groups = c2.config.groups.map(
       (g, i) => `
       <button type="button" class="grow clickable" data-group="${i}" data-ref="g${i}">
-        <span class="badge sm">${icon2(g.icon || "mdi:flash")}</span>
+        <span class="badge sm">${icon3(g.icon || "mdi:flash")}</span>
         <span class="gname">${escapeHtml3(g.name)}<i class="gwarn" data-ref="g${i}Warn" hidden></i></span>
         <span class="gbar"><i data-ref="g${i}Bar"></i></span>
         <span class="gval num" data-ref="g${i}Val">\u2014</span>
@@ -56304,7 +56902,7 @@ var PowerSection = class extends Section {
       (p, i) => `
       <div class="phase clickable" data-ref="ph${i}" data-entity="${escapeHtml3(p.power || p.current || "")}" tabindex="0" role="button">
         <div class="ph-head"><span class="ph-name">Fase ${escapeHtml3(p.name)}</span><span class="ph-flag" data-ref="ph${i}Flag" hidden>Afviger</span></div>
-        ${icon2("mdi:sine-wave", "tile-ic")}
+        ${icon3("mdi:sine-wave", "tile-ic")}
         <div class="ph-val num"><b data-ref="ph${i}V">\u2014</b><small data-ref="ph${i}U">W</small></div>
         <div class="meter"><i data-ref="ph${i}Bar"></i></div>
         <dl>
@@ -56318,20 +56916,20 @@ var PowerSection = class extends Section {
     ).join("");
     const mini = (ref, label, ic, key, extra = "") => `
       <div class="card mini tone-el ${key ? "clickable" : ""}" ${key ? `data-entity="${ent(key)}" tabindex="0" role="button"` : ""}>
-        <div class="card-head">${icon2(ic)}<h3>${label}</h3></div>
+        <div class="card-head">${icon3(ic)}<h3>${label}</h3></div>
         <div class="mini-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></div>
         ${extra}
       </div>`;
     return `
 <div class="layout pw">
   <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button">
-    <div class="hero-head"><div class="card-head">${icon2("mdi:flash")}<h3>Str\xF8m lige nu</h3></div><span class="live"><i></i>Live</span></div>
+    <div class="hero-head"><div class="card-head">${icon3("mdi:flash")}<h3>Str\xF8m lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">\u2014</b><small data-ref="mainU">W</small></div>
     <div class="facts">
-      <div class="st-el"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">\u2014</b>${icon2("mdi:sine-wave", "tile-ic")}</div>
-      <div class="st-warm"><small>Pris nu</small><b class="num" data-ref="mainPrice">\u2014</b>${icon2("mdi:cash", "tile-ic")}</div>
-      <div class="st-muted"><small>M\xE5lertemperatur</small><b class="num" data-ref="mainTemp">\u2014</b>${icon2("mdi:thermometer", "tile-ic")}</div>
-      <div class="st-ok"><small>Returneret i alt</small><b class="num" data-ref="mainRet">\u2014</b>${icon2("mdi:transmission-tower-export", "tile-ic")}</div>
+      <div class="st-el"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">\u2014</b>${icon3("mdi:sine-wave", "tile-ic")}</div>
+      <div class="st-warm"><small>Pris nu</small><b class="num" data-ref="mainPrice">\u2014</b>${icon3("mdi:cash", "tile-ic")}</div>
+      <div class="st-muted"><small>M\xE5lertemperatur</small><b class="num" data-ref="mainTemp">\u2014</b>${icon3("mdi:thermometer", "tile-ic")}</div>
+      <div class="st-ok"><small>Returneret i alt</small><b class="num" data-ref="mainRet">\u2014</b>${icon3("mdi:transmission-tower-export", "tile-ic")}</div>
     </div>
   </section>
   <div class="quad a-half">
@@ -56339,7 +56937,7 @@ var PowerSection = class extends Section {
     ${mini("mMeas", "M\xE5lt total", "mdi:chart-donut", "measured_power", `<div class="mini-sub"><span class="num" data-ref="mMeasPct">\u2014</span><span>af hovedm\xE5ler</span></div>`)}
     ${mini("mUnm", "Um\xE5lt", "mdi:help-circle-outline", "unmeasured_power", `<div class="mini-sub"><span class="num" data-ref="mUnmPct">\u2014</span><span>af hovedm\xE5ler</span></div>`)}
     <div class="card mini acct" data-ref="acct">
-      <div class="card-head">${icon2("mdi:scale-balance")}<h3>Str\xF8mregnskab</h3></div>
+      <div class="card-head">${icon3("mdi:scale-balance")}<h3>Str\xF8mregnskab</h3></div>
       <div class="stack"><i class="s-meas" data-ref="acctMeas"></i><i class="s-unm" data-ref="acctUnm"></i></div>
       <div class="acct-rows">
         <span><i class="dot el"></i>M\xE5lt <b class="num" data-ref="acctMeasPct">\u2014</b></span>
@@ -56351,14 +56949,14 @@ var PowerSection = class extends Section {
   </div>
   <section class="card a-full">
     <div class="sect-head">
-      <div class="card-head">${icon2("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">\u2014</small></div></div>
+      <div class="card-head">${icon3("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">\u2014</small></div></div>
       <span class="hint">Tryk p\xE5 en gruppe for detaljer</span>
     </div>
     <div class="groups">${groups}</div>
   </section>
   <section class="card a-full">
     <div class="sect-head">
-      <div class="card-head">${icon2("mdi:sine-wave")}<div><h3>3-faset m\xE5ling</h3><small>Effekt, str\xF8m, sp\xE6nding og frekvens pr. fase</small></div></div>
+      <div class="card-head">${icon3("mdi:sine-wave")}<div><h3>3-faset m\xE5ling</h3><small>Effekt, str\xF8m, sp\xE6nding og frekvens pr. fase</small></div></div>
       <span class="chip" data-ref="bal">Balance \u2014</span>
     </div>
     <div class="phases">${phases}</div>
@@ -56481,7 +57079,7 @@ var TODAY_KEYS3 = [
 ];
 var tile = (ref, label, entity = "", ic = "") => `
   <div class="tile ${entity ? "clickable" : ""}" ${entity ? `data-entity="${escapeHtml3(entity)}" tabindex="0" role="button"` : ""} data-ref="${ref}Tile">
-    <small>${label}</small><b class="num"><span data-ref="${ref}V">\u2014</span> <span class="u" data-ref="${ref}U"></span></b>${ic ? icon2(ic, "tile-ic") : ""}
+    <small>${label}</small><b class="num"><span data-ref="${ref}V">\u2014</span> <span class="u" data-ref="${ref}U"></span></b>${ic ? icon3(ic, "tile-ic") : ""}
   </div>`;
 var HeatSection = class extends Section {
   constructor(card) {
@@ -56499,13 +57097,13 @@ var HeatSection = class extends Section {
     return `
 <div class="layout">
   <section class="card utility tone-heat a-full">
-    <div class="hero-head"><div class="card-head">${icon2("mdi:radiator")}<div><h3>Fjernvarme</h3><small>Kamstrup MULTICAL \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
+    <div class="hero-head"><div class="card-head">${icon3("mdi:radiator")}<div><h3>Fjernvarme</h3><small>Kamstrup MULTICAL \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
     <div class="util-body">
       <div class="util-main clickable" data-entity="${escapeHtml3(c2.id("heat_power") || "")}" tabindex="0" role="button">
         <small>Aktuel effekt</small>
         <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">\u2014</span>
-        ${icon2("mdi:radiator", "tile-ic")}
+        ${icon3("mdi:radiator", "tile-ic")}
       </div>
       <div class="tiles">
         ${tile("today", "Forbrug i dag", c2.id("heat_energy"), "mdi:fire")}
@@ -56514,10 +57112,10 @@ var HeatSection = class extends Section {
       </div>
     </div>
     <div class="subtiles">
-      <div class="subtile st-warm" ${opt("heat_supply")}><small>Freml\xF8b</small><b class="num" data-ref="sup">\u2014</b>${icon2("mdi:thermometer-chevron-up", "tile-ic")}</div>
-      <div class="subtile st-info" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">\u2014</b>${icon2("mdi:thermometer-chevron-down", "tile-ic")}</div>
-      <div class="subtile st-info" ${opt("heat_cooling")}><small>Afk\xF8ling (\u0394T)</small><b class="num" data-ref="cool">\u2014</b>${icon2("mdi:thermometer-minus", "tile-ic")}</div>
-      <div class="subtile st-info" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">\u2014</b>${icon2("mdi:waves-arrow-right", "tile-ic")}</div>
+      <div class="subtile st-warm" ${opt("heat_supply")}><small>Freml\xF8b</small><b class="num" data-ref="sup">\u2014</b>${icon3("mdi:thermometer-chevron-up", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_return")}><small>Retur</small><b class="num" data-ref="ret">\u2014</b>${icon3("mdi:thermometer-chevron-down", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_cooling")}><small>Afk\xF8ling (\u0394T)</small><b class="num" data-ref="cool">\u2014</b>${icon3("mdi:thermometer-minus", "tile-ic")}</div>
+      <div class="subtile st-info" ${opt("heat_flow")}><small>Flow</small><b class="num" data-ref="flow">\u2014</b>${icon3("mdi:waves-arrow-right", "tile-ic")}</div>
     </div>
   </section>
   ${this.panels[0].html("a-full tall")}
@@ -56575,13 +57173,13 @@ var WaterSection = class extends Section {
     return `
 <div class="layout">
   <section class="card utility tone-water a-full">
-    <div class="hero-head"><div class="card-head">${icon2("mdi:water")}<div><h3>Vand</h3><small>Vandm\xE5ler \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
+    <div class="hero-head"><div class="card-head">${icon3("mdi:water")}<div><h3>Vand</h3><small>Vandm\xE5ler \xB7 live</small></div></div><span class="live"><i></i>Live</span></div>
     <div class="util-body">
       <div class="util-main clickable" data-entity="${escapeHtml3(c2.id("water_flow") || "")}" tabindex="0" role="button">
         <small>Flow lige nu</small>
         <div class="mega num"><b data-ref="flowV">\u2014</b><small>L/min</small></div>
         <span class="status" data-ref="status">\u2014</span>
-        ${icon2("mdi:water", "tile-ic")}
+        ${icon3("mdi:water", "tile-ic")}
       </div>
       <div class="tiles">
         ${tile("today", "Forbrug i dag", c2.id("water_total"), "mdi:water-outline")}
@@ -56639,13 +57237,13 @@ var EvSection = class extends Section {
     return `
 <div class="layout">
   <section class="card utility tone-ev a-full">
-    <div class="hero-head"><div class="card-head">${icon2("mdi:ev-station")}<div><h3>Billader</h3><small>Ladeboks \xB7 live</small></div></div><span class="chip" data-ref="chip">\u2014</span></div>
+    <div class="hero-head"><div class="card-head">${icon3("mdi:ev-station")}<div><h3>Billader</h3><small>Ladeboks \xB7 live</small></div></div><span class="chip" data-ref="chip">\u2014</span></div>
     <div class="util-body">
       <div class="util-main clickable" data-entity="${escapeHtml3(c2.id("ev_power") || "")}" tabindex="0" role="button">
         <small>Aktuel ladeeffekt</small>
         <div class="mega num"><b data-ref="powV">\u2014</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">\u2014</span>
-        ${icon2("mdi:car-electric", "tile-ic")}
+        ${icon3("mdi:car-electric", "tile-ic")}
       </div>
       <div class="tiles four">
         ${tile("today", "Energi i dag", c2.id("ev_energy_today"), "mdi:lightning-bolt")}
@@ -56678,7 +57276,7 @@ var EvSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION52 = "0.3.0";
+var VERSION53 = "0.3.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
@@ -56916,18 +57514,18 @@ var HaEnergyCenterCard = class extends HTMLElement {
 <div class="shell">
   <header class="top">
     <div class="brand">
-      <span class="brand-mark">${icon2("mdi:lightning-bolt-circle")}</span>
+      <span class="brand-mark">${icon3("mdi:lightning-bolt-circle")}</span>
       <div><h1>${escapeHtml3(c2.title)}</h1><p>${escapeHtml3(c2.subtitle)}</p></div>
     </div>
     <nav class="tabs" role="tablist">${TABS2.map(
-      (t) => `<button type="button" role="tab" class="tab tone-${t.tone} ${t.key === this._tab ? "on" : ""}" data-tab="${t.key}" aria-selected="${t.key === this._tab}">${icon2(t.icon)}<span>${t.label}</span></button>`
+      (t) => `<button type="button" role="tab" class="tab tone-${t.tone} ${t.key === this._tab ? "on" : ""}" data-tab="${t.key}" aria-selected="${t.key === this._tab}">${icon3(t.icon)}<span>${t.label}</span></button>`
     ).join("")}</nav>
   </header>
   <main>${TABS2.map((t) => `<div class="panel" data-sec="${t.key}" role="tabpanel" ${t.key === this._tab ? "" : "hidden"}></div>`).join("")}</main>
 </div>
 <dialog class="detail">
   <div class="dlg-head"><span class="badge tone-el" data-dlg-icon></span><div><h3 data-dlg-title>\u2014</h3><small data-dlg-sum>\u2014</small></div>
-    <button type="button" class="dlg-close" data-close aria-label="Luk">${icon2("mdi:close")}</button></div>
+    <button type="button" class="dlg-close" data-close aria-label="Luk">${icon3("mdi:close")}</button></div>
   <div class="dlg-rows" data-dlg-rows></div>
 </dialog>`;
     const root = this.shadowRoot;
@@ -57010,12 +57608,12 @@ var HaEnergyCenterCard = class extends HTMLElement {
     if (!g || !this._dlg) return;
     this._dlgGroup = index;
     const root = this._dlg;
-    root.querySelector("[data-dlg-icon]").innerHTML = icon2(g.icon || "mdi:flash");
+    root.querySelector("[data-dlg-icon]").innerHTML = icon3(g.icon || "mdi:flash");
     root.querySelector("[data-dlg-title]").textContent = g.name;
     root.querySelector("[data-dlg-rows]").innerHTML = g.entities.map(
       (m, i) => `
       <button type="button" class="drow" data-entity="${escapeHtml3(m.entity)}" data-i="${i}">
-        <span class="badge sm">${icon2(m.icon || this._hass?.states[m.entity]?.attributes?.icon || "mdi:flash")}</span>
+        <span class="badge sm">${icon3(m.icon || this._hass?.states[m.entity]?.attributes?.icon || "mdi:flash")}</span>
         <span class="dn">${escapeHtml3(m.name || this._hass?.states[m.entity]?.attributes?.friendly_name || m.entity)}</span>
         <span class="dv num">\u2014</span>
         <span class="gbar"><i></i></span>
@@ -57180,7 +57778,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
     preview: false
   });
 }
-console.info(`%c ENERGY CENTER %c v${VERSION52} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+console.info(`%c ENERGY CENTER %c v${VERSION53} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/shared/motion-rest-end.js
 motionRestEnd();

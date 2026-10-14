@@ -63,6 +63,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-ev-tyre-card",
+    "name": "HA EV Tyre Card",
+    "filename": "ha-ev-tyre-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-lawn-mower-card",
     "name": "Lawn Mower Card",
     "filename": "ha-lawn-mower-card.js",
