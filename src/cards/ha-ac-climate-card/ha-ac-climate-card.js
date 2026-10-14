@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.8.0";
+const VERSION = "0.9.0";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -27,9 +27,11 @@ const FIELDS = [
   ["supply", "Strøm til anlæg (switch)", "entity"], ["restart", "Genstart anlæg (knap)", "entity"], ["openings", "Reagér på døre/vinduer (switch)", "entity"],
   ["reduce_after", "Skru ned efter (number)", "entity"], ["off_after", "Sluk efter (number)", "entity"], ["resume_after", "Genoptag efter (number)", "entity"],
   ["turbo", "Turbo 30 min (switch)", "entity"], ["price_control", "Prisstyring (switch)", "entity"], ["price_level", "Prisniveau (sensor)", "entity"],
-  ["auto_wake", "Vækning ved slumring (switch)", "entity"], ["wake_status", "Vækning (sensor)", "entity"], ["firmware", "Firmware (update)", "entity"],
+  ["auto_wake", "Vækning ved slumring (switch)", "entity"], ["wake_status", "Vækning (sensor)", "entity"], ["firmware", "Firmware (update)", "entity"], ["esp_status", "ESP32-status (sensor)", "entity"],
   ["max_power", "Maks. effekt (W)"], ["filter_alarm", "Filter-påmindelse (timer)"],
 ];
+const ESP_TEXT = { online: "Forbundet", unit_silent: "Anlægget svarer ikke", update: "Ny firmware klar", offline: "Ikke forbundet" };
+const ESP_ICON = { online: "mdi:chip", unit_silent: "mdi:lan-disconnect", update: "mdi:update", offline: "mdi:chip-off" };
 const PRICE_TEXT = { cheap: "Billig strøm", normal: "Normal pris", expensive: "Dyr strøm", unknown: "Ingen prisprognose", off: "Slået fra" };
 const WAKE_TEXT = { off: "Slået fra", busy: "Genstarter anlægget", not_running: "Venter – varmer ikke nu", unit_not_on: "Anlægget er ikke tændt", defrosting: "Afrimer", no_data: "Mangler målinger", on_target: "Rummet er på mål", working: "Anlægget arbejder", stalled: "Slumrer" };
 
@@ -266,8 +268,9 @@ class HAACClimateCard extends HTMLElement {
     const alarm = Number(unit.filter_alarm) || 500;
     const fpct = s.filter !== undefined ? Math.min(100, (s.filter / alarm) * 100) : 0;
     const filter = unit.filter_hours ? `<div class="filter ${fpct >= 100 ? "due" : ""}"><span><ha-icon icon="mdi:air-filter"></ha-icon>Filter ${this._format(s.filter)} / ${this._format(alarm)} t</span><i class="bar"><b style="width:${Math.max(2, fpct)}%"></b></i>${this._exists(unit.filter_reset) ? `<button data-action="filter-reset" title="Nulstil efter filterrens"><ha-icon icon="mdi:restore"></ha-icon></button>` : ""}</div>` : "";
-    const fwEntity = this._raw(unit.firmware);
-    let firmware = "";
+    const esp = this._espBlock(unit);
+    const fwEntity = esp ? undefined : this._raw(unit.firmware);
+    let firmware = esp;
     if (fwEntity) {
       const a = fwEntity.attributes || {};
       const update = fwEntity.state === "on";
@@ -279,6 +282,34 @@ class HAACClimateCard extends HTMLElement {
       firmware = `<div class="filter fw ${update ? "due" : ""}"><span><ha-icon icon="${update ? "mdi:update" : "mdi:check-decagram-outline"}"></ha-icon>${this._esc(text)}</span><i></i>${install ? `<button data-action="firmware" title="Installér firmware ${this._esc(a.latest_version)}"><ha-icon icon="mdi:download"></ha-icon></button>` : ""}</div>`;
     }
     return cells.length || filter || firmware ? `<section class="block econ">${cells.length ? `<div class="cells">${cells.join("")}</div>` : ""}${filter}${firmware}</section>` : "";
+  }
+
+  _espBlock(unit) {
+    const st = this._raw(unit.esp_status);
+    if (!st) return "";
+    const a = st.attributes || {};
+    const status = st.state === "unavailable" ? "offline" : st.state;
+    const fw = this._raw(unit.firmware)?.attributes || {};
+    const busy = !!fw.in_progress;
+    const label = busy ? "Opdaterer firmware…" : ESP_TEXT[status] || status;
+    const install = status === "update" && !busy && (Number(fw.supported_features) & 1);
+    const wifi = Number(a.wifi_signal);
+    const bars = Number.isFinite(wifi) ? (wifi >= -55 ? 4 : wifi >= -65 ? 3 : wifi >= -75 ? 2 : 1) : 0;
+    const up = Number(a.uptime_hours);
+    const upTxt = !Number.isFinite(up) ? "–" : up >= 48 ? `${this._format(up / 24)} d` : up >= 1 ? `${this._format(up, 1)} t` : `${this._format(up * 60)} min`;
+    const fwTxt = a.firmware ? (a.firmware_up_to_date === false ? `${a.firmware} → ${a.newest_firmware}` : `${a.firmware} · nyeste`) : "ukendt";
+    const cell = (k, v, cls = "") => `<div class="${cls}"><span>${k}</span><strong>${this._esc(v)}</strong></div>`;
+    return `<div class="esp s-${status}">
+      <div class="esp-head"><ha-icon icon="${ESP_ICON[status] || "mdi:chip"}"></ha-icon><strong>ESP32</strong><span class="esp-pill">${this._esc(label)}</span>${install ? `<button data-action="firmware" title="Installér firmware ${this._esc(a.newest_firmware)}"><ha-icon icon="mdi:download"></ha-icon>Installér</button>` : ""}</div>
+      <div class="esp-grid">
+        ${cell("Firmware", fwTxt, a.firmware_up_to_date === false ? "warn" : "")}
+        ${cell("ESPHome", a.esphome || "–")}
+        <div><span>WiFi</span><strong><i class="wifi b${bars}"><b></b><b></b><b></b><b></b></i>${Number.isFinite(wifi) ? `${wifi} dBm` : "–"}</strong></div>
+        ${cell("IP", a.ip || "–")}
+        ${cell("Oppe", upTxt)}
+        ${cell("Anlæg", a.unit_responding === false ? "svarer ikke" : a.unit_responding ? "svarer" : "–", a.unit_responding === false ? "bad" : "")}
+      </div>
+    </div>`;
   }
 
   _unit(unit, index) {
@@ -472,6 +503,17 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .filter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color)}
 .filter span{display:flex;align-items:center;gap:5px}.filter ha-icon{--mdc-icon-size:16px}.filter .bar{margin:0}.filter.due .bar b{background:var(--bad)}.filter.due span{color:var(--bad)}
 .fw.due span{color:var(--tone)}
+.esp{--st:var(--good);display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--st) 30%,var(--edge));border-radius:13px;background:color-mix(in srgb,var(--st) 6%,transparent)}
+.esp.s-update{--st:var(--auto)}.esp.s-unit_silent,.esp.s-offline{--st:var(--bad)}
+.esp-head{display:flex;align-items:center;gap:7px;font-size:13px}.esp-head>ha-icon{--mdc-icon-size:18px;color:var(--st)}
+.esp-pill{padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--st) 18%,transparent);color:var(--st);font-size:11px;font-weight:800}
+.esp-pill::before{content:"";display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:var(--st);vertical-align:1px}
+.esp-head button{margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid color-mix(in srgb,var(--st) 60%,transparent);border-radius:999px;background:color-mix(in srgb,var(--st) 16%,transparent);color:var(--st);font:inherit;font-size:11px;font-weight:800;cursor:pointer}.esp-head button ha-icon{--mdc-icon-size:15px}
+.esp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px 10px}
+.esp-grid span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.esp-grid strong{display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esp-grid .warn strong{color:var(--auto)}.esp-grid .bad strong{color:var(--bad)}
+.wifi{display:inline-flex;align-items:flex-end;gap:1px;height:11px}.wifi b{width:3px;border-radius:1px;background:rgba(255,255,255,.18)}.wifi b:nth-child(1){height:4px}.wifi b:nth-child(2){height:6px}.wifi b:nth-child(3){height:8px}.wifi b:nth-child(4){height:11px}
+.wifi.b1 b:nth-child(-n+1),.wifi.b2 b:nth-child(-n+2),.wifi.b3 b:nth-child(-n+3),.wifi.b4 b{background:var(--st)}
 .filter button{border:0;background:none;color:var(--secondary-text-color);cursor:pointer;padding:2px}
 .details{display:flex;align-items:center;justify-content:flex-end;gap:2px;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:11px;cursor:pointer;padding:0}.details ha-icon{--mdc-icon-size:16px}
 button:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
