@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.7.0";
+const VERSION = "0.7.1";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -181,7 +181,7 @@ class HAACClimateCard extends HTMLElement {
     return tiles.length ? `<section class="live">${tiles.join("")}</section>` : "";
   }
 
-  _functions(unit) {
+  _functions(unit, s) {
     const btn = (action, icon, label, on, show) => (show ? `<button class="fn ${on ? "on" : ""}" data-action="${action}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span></button>` : "");
     const follow = this._entity(unit.follow_me);
     const beep = this._entity(unit.beep);
@@ -194,15 +194,17 @@ class HAACClimateCard extends HTMLElement {
       btn("beep", beep?.state === "on" ? "mdi:volume-high" : "mdi:volume-off", "Bip", beep?.state === "on", !!beep),
       btn("supply", supply?.state === "on" ? "mdi:power-plug" : "mdi:power-plug-off", "Strøm", supply?.state === "on", !!supply),
       btn("restart", "mdi:restart-alert", "Genstart", false, this._exists(unit.restart)),
-      this._turboButton(unit),
+      this._turboButton(unit, s),
     ].join("");
     return items ? `<section class="block"><h4><ha-icon icon="mdi:gesture-tap-button"></ha-icon>Funktioner</h4><div class="fns">${items}</div></section>` : "";
   }
 
-  _turboButton(unit) {
+  _turboButton(unit, s) {
     const turbo = this._raw(unit.turbo);
     if (!turbo || turbo.state === "unavailable") return "";
     const on = turbo.state === "on";
+    const running = ["heat", "cool"].includes(String(this._raw(unit.unit)?.state || s?.mode || ""));
+    if (!on && !running) return `<button class="fn turbo idle" disabled title="Turbo virker kun, mens anlægget varmer eller køler"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>Turbo</span></button>`;
     const until = Date.parse(turbo.attributes?.until || "");
     const left = on && Number.isFinite(until) ? Math.max(1, Math.round((until - Date.now()) / 60000)) : 0;
     return `<button class="fn turbo ${on ? "on" : ""}" data-action="turbo" title="${on ? "Stop turbo" : "Anlæggets boost i 30 minutter"}"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>${on ? `Turbo ${left} min` : "Turbo"}</span></button>`;
@@ -273,7 +275,7 @@ class HAACClimateCard extends HTMLElement {
       ${this._hero(unit, s)}
       ${this._controls(unit, s)}
       ${this._live(unit, s)}
-      ${this._functions(unit)}
+      ${this._functions(unit, s)}
       ${this._smart(unit, s)}
       ${this._openings(unit)}
       ${this._economy(unit, s)}
@@ -441,7 +443,7 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
 .srow .toggle{margin-left:0}
 .p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--tone)}
-.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
+.fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
 .delay span{display:block;margin-bottom:4px;color:var(--secondary-text-color);font-size:11px}
 .step{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
