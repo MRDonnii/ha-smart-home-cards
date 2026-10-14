@@ -1,5 +1,5 @@
 import "./ha-weather-card-assets.js";
-const VERSION = "0.6.1";
+const VERSION = "0.6.2";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -201,6 +201,7 @@ class HAWeatherCard extends HTMLElement {
     return id ? this._hass?.states?.[id] : undefined;
   }
   _num(v) {
+    if (v === null || v === undefined || v === "") return undefined;
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
   }
@@ -400,7 +401,8 @@ class HAWeatherCard extends HTMLElement {
       ? [
           ["nedbor", "Nedbør og lyn", "mdi:weather-pouring", null, image],
           ...(satellite ? [["satellit", "Satellit", "mdi:satellite-variant", null, satellite]] : []),
-          ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
+          // show_external_maps: false hides the external wind map (Windy, ECMWF).
+          ...(this._config.show_external_maps !== false ? [["vind", "Vind (ECMWF)", "mdi:weather-windy", windyUrl("wind")]] : []),
         ]
       : [
           ["nedbor", "Nedbør", "mdi:weather-pouring", windyUrl("radar")],
@@ -446,7 +448,9 @@ class HAWeatherCard extends HTMLElement {
     const id = this._config.warnings_entity;
     if (!id) return "";
     const state = this._s(id);
-    if (!state || state.state === "unavailable") return "";
+    if (!state || state.state === "unavailable" || state.state === "unknown") {
+      return `<div class="warn-none"><ha-icon icon="mdi:cloud-alert"></ha-icon>Varselsdata er midlertidigt utilgængelige</div>`;
+    }
     const list = state.attributes?.varsler || state.attributes?.warnings || [];
     if (!list.length) {
       return `<div class="warn-none" data-more="${this._esc(id)}"><ha-icon icon="mdi:shield-check-outline"></ha-icon>Ingen aktive vejrvarsler</div>`;
@@ -470,6 +474,9 @@ class HAWeatherCard extends HTMLElement {
   _detailValue(id) {
     const state = this._s(id);
     if (!state || state.state === "unavailable" || state.state === "unknown") return "—";
+    if (!state.attributes?.device_class && state.attributes?.unit_of_measurement && Number.isFinite(Number(state.state))) {
+      return `${Number(state.state).toLocaleString("da-DK", {maximumFractionDigits: 1})} ${state.attributes.unit_of_measurement}`;
+    }
     if (typeof this._hass?.formatEntityState === "function") return this._hass.formatEntityState(state);
     const unit = state.attributes?.unit_of_measurement;
     return unit ? `${state.state} ${unit}` : state.state;

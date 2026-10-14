@@ -280,6 +280,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-trueguard-status-card",
+    "name": "HA Trueguard Status Card",
+    "filename": "ha-trueguard-status-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-person-overview-card",
     "name": "HA Person Overview Card",
     "filename": "ha-person-overview-card.js",
