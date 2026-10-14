@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.125 */
+/* MRDonnii Smart Home Cards v0.5.126 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6685,7 +6685,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.5.0";
+var VERSION5 = "0.5.1";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6874,8 +6874,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,38%);gap:4px 14px;height:100%}
       .info{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:7px}
       .top{display:flex;align-items:center;gap:8px;min-width:0}
-      .name{font-size:15px;font-weight:800;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;color:var(--tone,var(--accent));background:color-mix(in srgb,var(--tone,var(--accent)) 14%,transparent);border:1px solid color-mix(in srgb,var(--tone,var(--accent)) 30%,transparent)}
+      .name{flex:none;max-width:60%;font-size:15px;font-weight:800;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .pill{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;padding:3px 9px 3px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;color:var(--tone,var(--accent));background:color-mix(in srgb,var(--tone,var(--accent)) 14%,transparent);border:1px solid color-mix(in srgb,var(--tone,var(--accent)) 30%,transparent)}
       .pill ha-icon{--mdc-icon-size:14px}
       .soc{display:flex;align-items:baseline;gap:10px}
       .soc b{font-size:34px;line-height:1;font-weight:850;letter-spacing:-.02em}
@@ -6910,6 +6910,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
         box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.18))),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
       :host([v2]) ha-card:hover{box-shadow:var(--dashboard-shadow-strong,none),inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 26px -10px var(--tone,var(--accent))}
       :host([v2]) .name{font-size:16px}
+      /* The car's name keeps its room; a long place in the status pill is cut instead (Claude AI, 2026-10-14). */
+      .pill>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
       :host([v2]) .pill{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 12px -4px var(--tone,var(--accent))}
       :host([v2]) .stat{border:0;background:linear-gradient(160deg,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),color-mix(in srgb,var(--primary-text-color) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
       :host([v2]) .stat b{font-size:13.5px}
