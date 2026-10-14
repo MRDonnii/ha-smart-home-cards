@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.128 */
+/* MRDonnii Smart Home Cards v0.5.129 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2572,7 +2572,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.19.0";
+var TTD_VERSION = "1.19.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3922,6 +3922,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .dash .tire[data-tone=warn]{--tile-accent:var(--ttd-warn)}
 .dash .tire[data-tone=crit]{--tile-accent:var(--ttd-err)}
 .dash .tire small{padding-right:0}
+/* The tyre status lines up with the pressure and the label: no room for a tile icon, no dot, and the right-hand tyres
+   end at the tile's edge whatever the width (Claude AI, 2026-10-14). */
+.dash .tire em{padding-right:0;width:max-content;max-width:100%}
+.dash .tire em::before{display:none}
+.dash .tpms-body>.tire:nth-child(2) em,.dash .tpms-body>.tire:nth-child(5) em{align-self:flex-end;justify-self:end;margin-left:auto}
 .dash .tpms-body{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
 .dash .tpms-body>.tire:nth-child(2),.dash .tpms-body>.tire:nth-child(5){border-left:0;border-right:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent)}
 @container panel (max-width:360px){.dash .tire{padding:9px}.dash .tire b{font-size:16px;line-height:19px}}
