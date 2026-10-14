@@ -161,6 +161,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "th-electricity-price-card",
+    "name": "TH Electricity Price Card",
+    "filename": "th-electricity-price-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-ventilation-card",
     "name": "HA Ventilation Card",
     "filename": "ha-ventilation-card.js",

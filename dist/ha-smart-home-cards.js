@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.131 */
+/* MRDonnii Smart Home Cards v0.5.132 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6689,8 +6689,46 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
   });
 }
 
+// src/shared/look.js
+function isNewLook(hass, config, { entity = "style_entity", key = "style", fallback = false } = {}) {
+  const id = config?.[entity];
+  const state = id ? hass?.states?.[id]?.state : void 0;
+  if (state === "on" || state === "off") return state === "on";
+  const value = config?.[key];
+  if (value === "new" || value === "v2") return true;
+  if (value === "classic") return false;
+  return fallback;
+}
+var esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+function lookEditorHtml(config, { entity = "style_entity", key = "style", fallback = false, label = "Udseende" } = {}) {
+  const value = config?.[key] === "v2" ? "new" : config?.[key] || (fallback ? "new" : "classic");
+  return `<div class="look-editor" style="margin:12px 0;padding:10px;border:1px solid var(--divider-color);border-radius:10px">
+    <label style="display:block;font-weight:600;margin:0 0 4px">${esc(label)}</label>
+    <select data-look-key="${esc(key)}" style="box-sizing:border-box;width:100%;padding:9px">
+      <option value="new"${value === "new" ? " selected" : ""}>Ny</option><option value="classic"${value === "classic" ? " selected" : ""}>Klassisk</option></select>
+    <label style="display:block;font-weight:600;margin:10px 0 4px">Skifteknap (valgfri input_boolean)</label>
+    <input data-look-key="${esc(entity)}" value="${esc(config?.[entity] || "")}" placeholder="input_boolean.dashboard_\u2026" style="box-sizing:border-box;width:100%;padding:9px">
+    <div style="margin-top:5px;font-size:12px;color:var(--secondary-text-color)">Til = ny, fra = klassisk. S\xE5 l\xE6nge hj\xE6lperen findes, styrer den udseendet.</div></div>`;
+}
+function wireLookEditor(root, editor, getConfig) {
+  root.querySelectorAll("[data-look-key]").forEach((el) => el.addEventListener("change", () => {
+    const config = { ...getConfig() };
+    const value = el.value.trim();
+    if (value) config[el.dataset.lookKey] = value;
+    else delete config[el.dataset.lookKey];
+    editor.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
+  }));
+}
+function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
+  return [
+    { name: key, selector: { select: { mode: "dropdown", options: [{ value: "new", label: "Ny" }, { value: "classic", label: "Klassisk" }] } } },
+    { name: entity, selector: { entity: { domain: "input_boolean" } } }
+  ];
+}
+var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
+
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.5.1";
+var VERSION5 = "0.5.2";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6724,7 +6762,7 @@ var DEFAULTS = {
   cost_per_km: "",
   efficiency: ""
 };
-var esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var HATeslaGlanceCard = class extends HTMLElement {
   static getStubConfig() {
     return { ...DEFAULTS };
@@ -6739,6 +6777,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         { name: "image_charging", selector: { text: {} } },
         { name: "image_driving", selector: { text: {} } },
         { name: "compact", selector: { boolean: {} } },
+        ...lookFormSchema(),
         { type: "expandable", name: "", title: "Bil", schema: [
           e("battery", "sensor"),
           e("range", "sensor"),
@@ -6767,6 +6806,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         ] }
       ],
       computeLabel: (s) => ({
+        ...LOOK_LABELS,
         name: "Navn",
         compact: "Kompakt (tal ved siden af batteriet)",
         navigation_path: "Side ved tryk",
@@ -6818,7 +6858,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }).join(";") + `|${sv}|${planSig}`;
     if (sig === this._sig) return;
     this._sig = sig;
-    this.toggleAttribute("v2", this._config.style_entity ? sv === "on" : this._config.style === "v2");
+    this.toggleAttribute("v2", isNewLook(hass, this._config));
     this._update();
   }
   getCardSize() {
@@ -7210,9 +7250,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }
     const dl2 = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
-        <div class="pt"><b>Ladeplan \xB7 ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
-        <div class="pstart"><small>${running ? "I gang" : "Starter"}</small><b>${running ? "nu" : hm(first.t)}</b><em>${esc(until2)}</em></div></div>
-      <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl2)}</span>` : ""}</div></div>
+        <div class="pt"><b>Ladeplan \xB7 ${esc2(MODE[p.mode] || p.mode)}</b><span>${esc2(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
+        <div class="pstart"><small>${running ? "I gang" : "Starter"}</small><b>${running ? "nu" : hm(first.t)}</b><em>${esc2(until2)}</em></div></div>
+      <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc2(dl2)}</span>` : ""}</div></div>
       <div class="pnums"><span><b>${this._fmt(avg, 2)}</b> kr/kWh</span><span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>${Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
@@ -7232,8 +7272,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
     const prev = c2.preview === "charge";
     return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
-        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
-        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc(leftTxt)}</em></div></div>
+        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc2(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc2(leftTxt)}</em></div></div>
       <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
@@ -7374,10 +7414,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const line = root.querySelector(".line");
     if (charging) {
       const p = this._num(this._pw()), added = this._num(this._added()), fin = this._time(c2.charge_finish);
-      line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc(fin)}` : ""}`;
+      line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc2(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc2(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc2(fin)}` : ""}`;
     } else {
       const next = this._time(c2.next_charge_start), cost = this._num(c2.next_charge_cost);
-      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc(next)}</b>${cost != null ? ` \xB7 ${esc(this._fmt(cost, 2))} kr` : ""}${target != null && !c2.compact ? ` \xB7 m\xE5l ${esc(this._fmt(target))} %` : ""}`;
+      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc2(next)}</b>${cost != null ? ` \xB7 ${esc2(this._fmt(cost, 2))} kr` : ""}${target != null && !c2.compact ? ` \xB7 m\xE5l ${esc2(this._fmt(target))} %` : ""}`;
       else if (plugged) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
       else line.innerHTML = "";
     }
@@ -7386,7 +7426,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     if (lock) chips.push(lock === "locked" ? `<span class="chip ok"><ha-icon icon="mdi:lock"></ha-icon>L\xE5st</span>` : `<span class="chip warn"><ha-icon icon="mdi:lock-open-variant"></ha-icon>Ul\xE5st</span>`);
     if (this._val(c2.sentry) === "on") chips.push(`<span class="chip ok"><ha-icon icon="mdi:shield-car"></ha-icon>Sentry</span>`);
     const inside = this._num(c2.inside_temperature);
-    if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc(this._fmt(inside, 0))}\xB0</span>`);
+    if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc2(this._fmt(inside, 0))}\xB0</span>`);
     root.querySelector(".chips").innerHTML = chips.join("");
     const img = root.querySelector(".car img");
     const gearNow = String(this._val(c2.shift_state) || "").toUpperCase();
@@ -7413,10 +7453,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const stat = (label, id, digits, unitFallback) => {
       const v = this._num(id);
       if (v == null) return;
-      stats.push(`<div class="stat"><span>${esc(label)}</span><b>${esc(this._fmt(v, digits))}<small>${esc((this._unit(id) || unitFallback).replace(/^DKK/, "kr"))}</small></b></div>`);
+      stats.push(`<div class="stat"><span>${esc2(label)}</span><b>${esc2(this._fmt(v, digits))}<small>${esc2((this._unit(id) || unitFallback).replace(/^DKK/, "kr"))}</small></b></div>`);
     };
     const today = this._num(c2.energy_today), todayCost = this._num(c2.cost_today);
-    if (today != null) stats.push(`<div class="stat"><span>I dag</span><b>${esc(this._fmt(today, 1))}<small>kWh</small>${todayCost != null ? `<small> \xB7 ${esc(this._fmt(todayCost, 0))} kr</small>` : ""}</b></div>`);
+    if (today != null) stats.push(`<div class="stat"><span>I dag</span><b>${esc2(this._fmt(today, 1))}<small>kWh</small>${todayCost != null ? `<small> \xB7 ${esc2(this._fmt(todayCost, 0))} kr</small>` : ""}</b></div>`);
     stat("Denne m\xE5ned", c2.energy_month, 0, "kWh");
     stat("Pris pr. km", c2.cost_per_km, 2, "kr/km");
     stat("Forbrug", c2.efficiency, 0, "Wh/km");
@@ -7464,7 +7504,7 @@ var kindOf = (kind) => KINDS[kind] || KINDS.summer;
 var BAND_ORDER = ["under 0", "0\u20135", "5\u201310", "10\u201315", "15\u201320", "20+"];
 var BAND_LABEL = { "under 0": "Under 0\xB0", "0\u20135": "0\u20135\xB0", "5\u201310": "5\u201310\xB0", "10\u201315": "10\u201315\xB0", "15\u201320": "15\u201320\xB0", "20+": "Over 20\xB0" };
 var TYRES = [["fl", "VF"], ["fr", "HF"], ["rl", "VB"], ["rr", "HB"]];
-var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var num = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 var day = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
 var dayShort = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
@@ -7547,7 +7587,7 @@ var HAEvTyreCard = class extends HTMLElement {
   // ---------------------------------------------------------------- render
   _render() {
     if (!this.shadowRoot || !this._config) return;
-    const body = !this._st ? `<p class="empty">${icon("mdi:alert-circle-outline")}<span>${esc2(this._config.entity)} findes ikke. Den kommer med EV Ledger 0.7.0 (genstart Home Assistant efter opdateringen).</span></p>` : this._view === "change" ? this._changeHtml() : this._view === "tread" ? this._treadHtml() : this._view === "edit" ? this._editHtml() : this._view === "season" ? this._seasonHtml() : this._mainHtml();
+    const body = !this._st ? `<p class="empty">${icon("mdi:alert-circle-outline")}<span>${esc3(this._config.entity)} findes ikke. Den kommer med EV Ledger 0.7.0 (genstart Home Assistant efter opdateringen).</span></p>` : this._view === "change" ? this._changeHtml() : this._view === "tread" ? this._treadHtml() : this._view === "edit" ? this._editHtml() : this._view === "season" ? this._seasonHtml() : this._mainHtml();
     const html = `<style>${STYLES}</style>${this._config.embedded ? `<div class="tc embedded">${body}</div>` : `<ha-card><div class="tc">${body}</div></ha-card>`}`;
     const scroller = this.shadowRoot.querySelector(".tc");
     const keep = scroller ? scroller.scrollTop : 0;
@@ -7575,7 +7615,7 @@ var HAEvTyreCard = class extends HTMLElement {
     const active = this._set(this._a.set_id);
     const k = active ? kindOf(active.kind) : null;
     return `<header class="th"><span class="th-i" style="--k:${k ? k.color : "var(--tc-muted)"}">${icon("mdi:tire")}</span>
-      <div class="th-t"><h3>${esc2(this._config.title)}</h3><p>${sub}</p></div>${actions}</header>`;
+      <div class="th-t"><h3>${esc3(this._config.title)}</h3><p>${sub}</p></div>${actions}</header>`;
   }
   _mainHtml() {
     const a = this._a;
@@ -7587,7 +7627,7 @@ var HAEvTyreCard = class extends HTMLElement {
     }
     const active = this._set(a.set_id);
     const k = active ? kindOf(active.kind) : null;
-    const sub = active ? `${esc2(active.name)} p\xE5 siden ${esc2(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
+    const sub = active ? `${esc3(active.name)} p\xE5 siden ${esc3(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
     const actions = `<div class="th-a"><button type="button" class="btn go" data-change>${icon("mdi:swap-horizontal")}<span>Skift hjul</span></button><button type="button" class="ib" data-new title="Nyt hjuls\xE6t" aria-label="Nyt hjuls\xE6t">${icon("mdi:plus")}</button></div>`;
     return `${this._header(sub, actions)}${this._tipHtml()}${active ? this._currentHtml(active, k) : `<p class="note">Tryk <b>Skift hjul</b> og v\xE6lg det s\xE6t, der sidder p\xE5 nu (du kan v\xE6lge en dato tilbage i tiden).</p>`}
       ${this._setsHtml()}${this._compareHtml()}${this._historyHtml()}`;
@@ -7597,8 +7637,8 @@ var HAEvTyreCard = class extends HTMLElement {
     if (!tip) return "";
     const to = kindOf(tip.to === "summer" ? "summer" : "winter");
     const goal = tip.to === "summer" ? "sommerhjul" : "vinterhjul";
-    return `<div class="tip${tip.urgent ? " urgent" : ""}" style="--k:${to.color}">${icon(to.icon, "tip-i")}<div><b>Tid til ${goal}${tip.set ? ` (${esc2(tip.set)})` : ""}</b><p>${esc2(tip.reason)}</p></div>
-      ${tip.set_id ? `<button type="button" class="btn" data-change="${esc2(tip.set_id)}">Skift nu</button>` : ""}</div>`;
+    return `<div class="tip${tip.urgent ? " urgent" : ""}" style="--k:${to.color}">${icon(to.icon, "tip-i")}<div><b>Tid til ${goal}${tip.set ? ` (${esc3(tip.set)})` : ""}</b><p>${esc3(tip.reason)}</p></div>
+      ${tip.set_id ? `<button type="button" class="btn" data-change="${esc3(tip.set_id)}">Skift nu</button>` : ""}</div>`;
   }
   _treadBar(set) {
     if (set.tread_mm == null) return "";
@@ -7609,7 +7649,7 @@ var HAEvTyreCard = class extends HTMLElement {
     const left = set.km_left != null ? ` \xB7 ca. ${num(set.km_left)} km tilbage` : "";
     return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num(set.tread_mm, 1)} mm</b></div>
       <div class="tread-bar"><i style="width:${pct2.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num(set.tread_min_mm, 1)} mm"></em></div>
-      <small>Anbefalet min. ${num(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc2(dayShort(set.tread_at))}</small></div>`;
+      <small>Anbefalet min. ${num(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc3(dayShort(set.tread_at))}</small></div>`;
   }
   _currentHtml(set, k) {
     const a = this._a;
@@ -7617,13 +7657,13 @@ var HAEvTyreCard = class extends HTMLElement {
     const age = dotAge(set.dot);
     const tyre = [set.brand, set.model].filter(Boolean).join(" ");
     const facts = [
-      set.rim ? `${icon("mdi:circle-double")}<span>${esc2(set.rim)}</span>` : "",
-      tyre ? `${icon("mdi:tire")}<span>${esc2(tyre)}</span>` : "",
-      set.dot ? `${icon("mdi:calendar")}<span>DOT ${esc2(set.dot)}${age != null ? ` \xB7 ${num(age, age < 10 ? 1 : 0)} \xE5r` : ""}</span>` : ""
+      set.rim ? `${icon("mdi:circle-double")}<span>${esc3(set.rim)}</span>` : "",
+      tyre ? `${icon("mdi:tire")}<span>${esc3(tyre)}</span>` : "",
+      set.dot ? `${icon("mdi:calendar")}<span>DOT ${esc3(set.dot)}${age != null ? ` \xB7 ${num(age, age < 10 ? 1 : 0)} \xE5r` : ""}</span>` : ""
     ].filter(Boolean).map((f) => `<span class="fact">${f}</span>`).join("");
-    const kpi = (value, unit, label, title = "") => `<div class="kpi"${title ? ` title="${esc2(title)}"` : ""}><b>${value}<small>${unit}</small></b><span>${label}</span></div>`;
+    const kpi = (value, unit, label, title = "") => `<div class="kpi"${title ? ` title="${esc3(title)}"` : ""}><b>${value}<small>${unit}</small></b><span>${label}</span></div>`;
     return `<section class="cur" style="--k:${k.color}">
-      <div class="cur-top"><span class="kind">${icon(k.icon)}${k.label}</span><h4>${esc2(set.name)}</h4><p class="size">${esc2(set.size || "St\xF8rrelse ikke angivet")}</p>
+      <div class="cur-top"><span class="kind">${icon(k.icon)}${k.label}</span><h4>${esc3(set.name)}</h4><p class="size">${esc3(set.size || "St\xF8rrelse ikke angivet")}</p>
         <div class="facts">${facts}</div></div>
       <div class="kpis">${kpi(num(season?.km ?? a.season_km), "km", "denne s\xE6son")}${kpi(num(season?.wh_per_km), "Wh/km", "k\xF8rsel", "Ud fra batteriets fald p\xE5 turene")}${kpi(num(season?.charged_kwh_per_100_km, 1), "kWh/100 km", "opladet", "Ladet energi pr. 100 km (med tab og standby)")}${kpi(num(season?.cost_per_km, 2), "kr/km", "ladeudgift")}</div>
       ${this._treadBar(set)}
@@ -7634,16 +7674,16 @@ var HAEvTyreCard = class extends HTMLElement {
     const sets = this._sets();
     const tiles = sets.filter((s) => !s.retired || s.mounted).map((s) => {
       const k = kindOf(s.kind);
-      const where = s.mounted ? `<span class="on">P\xE5 bilen</span>` : s.storage ? `<span class="off">${icon("mdi:warehouse")}${esc2(s.storage)}</span>` : "";
+      const where = s.mounted ? `<span class="on">P\xE5 bilen</span>` : s.storage ? `<span class="off">${icon("mdi:warehouse")}${esc3(s.storage)}</span>` : "";
       return `<article class="set${s.mounted ? " mounted" : ""}" style="--k:${k.color}">
-        <header>${icon(k.icon, "set-i")}<div><b>${esc2(s.name)}</b><small>${esc2(s.size || k.label)}</small></div>${where}</header>
+        <header>${icon(k.icon, "set-i")}<div><b>${esc3(s.name)}</b><small>${esc3(s.size || k.label)}</small></div>${where}</header>
         <dl><div><dt>I alt</dt><dd>${num(s.total_km)} km</dd></div><div><dt>K\xF8rsel</dt><dd>${num(s.wh_per_km)} Wh/km</dd></div>
           <div><dt>Opladet</dt><dd>${num(s.charged_kwh_per_100_km, 1)} kWh/100</dd></div><div><dt>M\xF8nster</dt><dd>${s.tread_mm != null ? `${num(s.tread_mm, 1)} mm` : "\u2013"}</dd></div></dl>
-        <footer><button type="button" class="lnk" data-tread="${esc2(s.id)}">${icon("mdi:ruler")}M\xE5l m\xF8nster</button><button type="button" class="lnk" data-edit="${esc2(s.id)}">${icon("mdi:pencil")}Ret</button></footer>
+        <footer><button type="button" class="lnk" data-tread="${esc3(s.id)}">${icon("mdi:ruler")}M\xE5l m\xF8nster</button><button type="button" class="lnk" data-edit="${esc3(s.id)}">${icon("mdi:pencil")}Ret</button></footer>
       </article>`;
     }).join("");
     const retired = sets.filter((s) => s.retired && !s.mounted);
-    const old = retired.length ? `<p class="mini">${icon("mdi:archive-outline")}Udfasede: ${retired.map((s) => `<button type="button" class="lnk inline" data-edit="${esc2(s.id)}">${esc2(s.name)}</button>`).join(", ")}</p>` : "";
+    const old = retired.length ? `<p class="mini">${icon("mdi:archive-outline")}Udfasede: ${retired.map((s) => `<button type="button" class="lnk inline" data-edit="${esc3(s.id)}">${esc3(s.name)}</button>`).join(", ")}</p>` : "";
     return `<section class="sets">${tiles}</section>${old}`;
   }
   _compareHtml() {
@@ -7655,16 +7695,16 @@ var HAEvTyreCard = class extends HTMLElement {
     const rows = bands.map((band) => `<div class="band"><span class="band-l">${BAND_LABEL[band]}</span><div class="band-b">${sets.map((s) => {
       const v = s.bands[band];
       const k = kindOf(s.kind);
-      return v ? `<div class="bar" style="--k:${k.color};--w:${(v.wh_per_km / max * 100).toFixed(1)}%" title="${esc2(s.name)}: ${num(v.wh_per_km)} Wh/km over ${num(v.km)} km"><i></i><em>${num(v.wh_per_km)}</em></div>` : `<div class="bar none" title="${esc2(s.name)}: ingen ture"><i></i><em>\u2013</em></div>`;
+      return v ? `<div class="bar" style="--k:${k.color};--w:${(v.wh_per_km / max * 100).toFixed(1)}%" title="${esc3(s.name)}: ${num(v.wh_per_km)} Wh/km over ${num(v.km)} km"><i></i><em>${num(v.wh_per_km)}</em></div>` : `<div class="bar none" title="${esc3(s.name)}: ingen ture"><i></i><em>\u2013</em></div>`;
     }).join("")}</div></div>`).join("");
     const lines = (cmp?.sets || []).map((c2) => {
       const s = this._set(c2.set_id);
-      if (c2.difference_pct == null) return `<p class="verdict muted">${icon("mdi:scale-balance")}<span><b>${esc2(c2.set)}</b> mod <b>${esc2(cmp.reference)}</b>: k\xF8r mindst 100 km p\xE5 begge s\xE6t i samme temperaturinterval, s\xE5 kan de sammenlignes \xE6rligt.</span></p>`;
+      if (c2.difference_pct == null) return `<p class="verdict muted">${icon("mdi:scale-balance")}<span><b>${esc3(c2.set)}</b> mod <b>${esc3(cmp.reference)}</b>: k\xF8r mindst 100 km p\xE5 begge s\xE6t i samme temperaturinterval, s\xE5 kan de sammenlignes \xE6rligt.</span></p>`;
       const more = c2.difference_pct > 0;
       const sure = { low: "forel\xF8bigt tal \u2014 bliver mere sikkert med flere km", medium: "rimeligt sikkert", high: "sikkert" }[c2.confidence];
-      return `<p class="verdict${c2.confidence === "low" ? " soft" : ""}" style="--k:${kindOf(s?.kind).color}">${icon(more ? "mdi:trending-up" : "mdi:trending-down")}<span><b>${esc2(c2.set)}</b> bruger <b>${num(Math.abs(c2.difference_pct), 1)} % ${more ? "mere" : "mindre"}</b> end ${esc2(cmp.reference)} ved samme udetemperatur (${c2.bands.map((b) => BAND_LABEL[b]).join(", ")} \xB7 ${num(c2.km_compared)} km${sure ? ` \xB7 ${sure}` : ""}).</span></p>`;
+      return `<p class="verdict${c2.confidence === "low" ? " soft" : ""}" style="--k:${kindOf(s?.kind).color}">${icon(more ? "mdi:trending-up" : "mdi:trending-down")}<span><b>${esc3(c2.set)}</b> bruger <b>${num(Math.abs(c2.difference_pct), 1)} % ${more ? "mere" : "mindre"}</b> end ${esc3(cmp.reference)} ved samme udetemperatur (${c2.bands.map((b) => BAND_LABEL[b]).join(", ")} \xB7 ${num(c2.km_compared)} km${sure ? ` \xB7 ${sure}` : ""}).</span></p>`;
     }).join("");
-    const legend = sets.map((s) => `<span style="--k:${kindOf(s.kind).color}"><i></i>${esc2(s.name)}</span>`).join("");
+    const legend = sets.map((s) => `<span style="--k:${kindOf(s.kind).color}"><i></i>${esc3(s.name)}</span>`).join("");
     return `<section class="cmp"><header class="sh"><h4>Forbrug ved udetemperatur</h4><span class="legend">${legend}</span></header>
       <div class="bands">${rows}</div>${lines}<p class="mini">Wh/km ud fra batteriets fald p\xE5 turene. Kulde koster mest \u2014 derfor sammenlignes s\xE6ttene kun i samme temperatur.</p></section>`;
   }
@@ -7674,8 +7714,8 @@ var HAEvTyreCard = class extends HTMLElement {
     const rows = seasons.map((s) => {
       const set = this._set(s.set_id);
       const k = kindOf(set?.kind || s.kind);
-      return `<button type="button" class="hrow" data-season="${esc2(s.change_id)}" style="--k:${k.color}">${icon(k.icon, "h-i")}
-        <span class="h-n"><b>${esc2(s.set || "Slettet s\xE6t")}</b><small>${esc2(day(s.from))} \u2013 ${s.to ? esc2(day(s.to)) : "nu"}</small></span>
+      return `<button type="button" class="hrow" data-season="${esc3(s.change_id)}" style="--k:${k.color}">${icon(k.icon, "h-i")}
+        <span class="h-n"><b>${esc3(s.set || "Slettet s\xE6t")}</b><small>${esc3(day(s.from))} \u2013 ${s.to ? esc3(day(s.to)) : "nu"}</small></span>
         <span class="h-v"><b>${s.km != null ? `${num(s.km)} km` : "\u2013"}</b><small>${s.wh_per_km != null ? `${num(s.wh_per_km)} Wh/km` : ""}${s.cost_per_km != null ? ` \xB7 ${num(s.cost_per_km, 2)} kr/km` : ""}</small></span>${icon("mdi:chevron-right", "h-c")}</button>`;
     }).join("");
     return `<section class="hist"><header class="sh"><h4>S\xE6soner</h4></header>${rows}</section>`;
@@ -7691,7 +7731,7 @@ var HAEvTyreCard = class extends HTMLElement {
     this._pick = pick;
     const choices = sets.map((s) => {
       const k = kindOf(s.kind);
-      return `<button type="button" class="choice" role="radio" aria-checked="${s.id === pick}" data-pick="${esc2(s.id)}" style="--k:${k.color}"${s.mounted ? " disabled" : ""}>${icon(k.icon)}<span><b>${esc2(s.name)}</b><small>${s.mounted ? "Sidder p\xE5 nu" : esc2(s.size || k.label)}</small></span></button>`;
+      return `<button type="button" class="choice" role="radio" aria-checked="${s.id === pick}" data-pick="${esc3(s.id)}" style="--k:${k.color}"${s.mounted ? " disabled" : ""}>${icon(k.icon)}<span><b>${esc3(s.name)}</b><small>${s.mounted ? "Sidder p\xE5 nu" : esc3(s.size || k.label)}</small></span></button>`;
     }).join("");
     return this._form("Skift hjul", "Hvilket s\xE6t kommer p\xE5?", `<div class="choices" role="radiogroup">${choices}</div>
       <div class="grid2"><label class="f"><span>Hvorn\xE5r</span><input type="datetime-local" data-f="at" value="${localInput()}" max="${localInput()}"></label>
@@ -7702,9 +7742,9 @@ var HAEvTyreCard = class extends HTMLElement {
   _treadHtml() {
     const set = this._set(this._treadId) || this._set(this._a.set_id) || this._sets()[0];
     this._treadId = set?.id;
-    const options = this._sets().map((s) => `<option value="${esc2(s.id)}"${s.id === set?.id ? " selected" : ""}>${esc2(s.name)}</option>`).join("");
+    const options = this._sets().map((s) => `<option value="${esc3(s.id)}"${s.id === set?.id ? " selected" : ""}>${esc3(s.name)}</option>`).join("");
     const last = (set?.treads || []).slice(-1)[0];
-    const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc2(day(r.at))}</span><b>${num(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc2(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
+    const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc3(day(r.at))}</span><b>${num(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc3(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
     return this._form("M\xE5l m\xF8nsterdybde", "M\xE5l i midten af slidbanen med en dybdem\xE5ler", `
       <label class="f"><span>Hjuls\xE6t</span><select data-treadset>${options}</select></label>
       <div class="tyres">${TYRES.map(([key, label]) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="0.1" min="0" max="20" data-tyre="${key}" placeholder="${last?.each ? "" : "mm"}"></label>`).join("")}</div>
@@ -7715,12 +7755,12 @@ var HAEvTyreCard = class extends HTMLElement {
   _editHtml() {
     const s = this._set(this._editId) || { kind: this._newKind || "winter" };
     const isNew = !s.id;
-    const v = (key) => s[key] == null ? "" : esc2(s[key]);
-    const text = (key, label, ph = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc2(ph)}" autocomplete="off"></label>`;
-    const n = (key, label, ph = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc2(ph)}"></label>`;
+    const v = (key) => s[key] == null ? "" : esc3(s[key]);
+    const text = (key, label, ph = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc3(ph)}" autocomplete="off"></label>`;
+    const n = (key, label, ph = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc3(ph)}"></label>`;
     const kinds = Object.entries(KINDS).map(([key, k]) => `<button type="button" class="choice sm" role="radio" aria-checked="${(s.kind || "summer") === key}" data-kind="${key}" style="--k:${k.color}">${icon(k.icon)}<span><b>${k.label}</b></span></button>`).join("");
     const del = isNew ? "" : `<button type="button" class="btn stop" data-delset>${this._confirm === "set" ? "Tryk igen for at slette" : "Slet"}</button>`;
-    return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc2(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc2(s.size || ""), `
+    return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc3(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc3(s.size || ""), `
       ${text("name", "Navn", 'Fx Vinter 18"')}
       <div class="choices kinds" role="radiogroup" aria-label="Type">${kinds}</div>
       <h5>D\xE6k</h5>
@@ -7739,8 +7779,8 @@ var HAEvTyreCard = class extends HTMLElement {
     if (!season) return this._mainHtml();
     const at = new Date(season.from);
     return this._form(
-      `${esc2(season.set || "Skift")} p\xE5 bilen`,
-      `${esc2(day(season.from))} \u2013 ${season.to ? esc2(day(season.to)) : "nu"}`,
+      `${esc3(season.set || "Skift")} p\xE5 bilen`,
+      `${esc3(day(season.from))} \u2013 ${season.to ? esc3(day(season.to)) : "nu"}`,
       `
       <div class="kpis">${[[num(season.km), "km"], [num(season.wh_per_km), "Wh/km"], [num(season.charged_kwh_per_100_km, 1), "kWh/100 km"], [num(season.mean_temp_c, 1), "\xB0C snit"]].map(([vv, u3]) => `<div class="kpi"><b>${vv}<small>${u3}</small></b></div>`).join("")}</div>
       <div class="grid2"><label class="f"><span>Skiftet</span><input type="datetime-local" data-f="at" value="${localInput(at)}" max="${localInput()}"></label>
@@ -12960,6 +13000,491 @@ console.info(
   "color:#69c4ff;background:#161b22"
 );
 
+// src/cards/th-electricity-price-card/th-electricity-price-card.js
+var TEP_VER = "1.7.0";
+var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
+var TI = {
+  bolt: '<path d="M13 2.5 5.5 13.5H11L9.8 21.5 18.5 9.5H13l1-7Z"/>',
+  line: '<path d="M3 17l5-6 4 3 6-8 3 3"/>',
+  bars: '<path d="M5 20v-7M10 20V8M15 20v-5M20 20V5"/>',
+  car: '<path d="M5 16.5V12l2-5.2A2 2 0 0 1 8.9 5.5h6.2a2 2 0 0 1 1.9 1.3l2 5.2v4.5"/><path d="M3.5 16.5h17v2.5a1 1 0 0 1-1 1H18a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1Z"/><path d="M5 12h14M7.5 14.5h1M15.5 14.5h1"/>',
+  plug: '<path d="M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/>'
+};
+var ti = (k, s = 16, sw = 1.7) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none" aria-hidden="true">${TI[k] || ""}</svg>`;
+var TEP_CSS = `
+:host{display:block;--acc:var(--dashboard-accent,#e8c37e);--good:var(--dashboard-success,#6be3a8);--warn:var(--dashboard-warning,#e8c37e);--bad:var(--dashboard-danger,#ff9e7a);
+  --ev:var(--dashboard-ev,#b7a4ff);--ink:var(--primary-text-color,#f4f1ea);--mut:var(--secondary-text-color,rgba(244,241,234,.58));--hair:var(--dashboard-border-neutral,rgba(127,145,165,.18));
+  color:var(--ink);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+:host([fill]){height:100%}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+/* Rammen er et rigtigt ha-card, s\xE5 baggrund, kant, skygge og hover er temaets \u2013 ens med alle de andre kort (Claude AI, 2026-10-12) */
+.c{position:relative;overflow:hidden;isolation:isolate;display:flex;flex-direction:column;height:100%;padding:14px 16px 12px;
+  border-left:calc(var(--dashboard-left-accent-width,0) * 4px) solid var(--acc)}
+@keyframes gl{50%{transform:translate(-24px,18px) scale(1.08)}}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}}
+.hd{display:flex;align-items:center;gap:10px}
+.ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent);flex:none}
+.ic svg{animation:zap 4s ease-in-out infinite}@keyframes zap{0%,86%,100%{opacity:1}88%,92%{opacity:.35}}
+.ttl b{display:block;font-size:17px;font-weight:700;letter-spacing:-.01em;line-height:1.1}.ttl small{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--mut);margin-top:2px}
+.ttl small i{width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good);animation:bl 2s infinite}.ttl small.off i{background:var(--mut);box-shadow:none;animation:none}
+@keyframes bl{50%{opacity:.35}}
+.sp{flex:1}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 5%,transparent);box-shadow:inset 0 0 0 1px var(--hair);flex:none}
+.seg button{appearance:none;border:0;cursor:pointer;position:relative;display:grid;place-items:center;min-width:34px;padding:6px 10px;border-radius:9px;background:transparent;color:var(--mut);font-size:12px;font-weight:700;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s,box-shadow .3s,color .3s}
+.seg button:active{transform:scale(.9);transition-duration:.08s}
+.seg button:hover{color:var(--ink)}
+/* Navbarens look p\xE5 den aktive knap (Claude AI, 2026-10-13): glas i temaets lux-accent, lysende streg og et tyggegummi-squash n\xE5r den v\xE6lges */
+.seg button.on{background:linear-gradient(180deg,color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 28%,transparent),color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 7%,transparent));color:color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 70%,#fff);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 60%,transparent);animation:luxGum .7s ease-out}
+.seg button.on::after{content:"";position:absolute;left:50%;bottom:2px;width:14px;height:2px;border-radius:2px;transform:translateX(-50%);background:var(--lux-accent,var(--dashboard-accent,#e8c37e));box-shadow:0 0 10px var(--lux-accent,var(--dashboard-accent,#e8c37e));pointer-events:none}
+@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
+.seg button.on svg{color:color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 80%,#fff);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 60%,transparent))}
+.pt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'chip . ctl' 'big comp comp';gap:6px 20px;align-items:end}
+.pt .chip{grid-area:chip;justify-self:start;align-self:center}.pt .ctl{grid-area:ctl;display:flex;gap:6px;align-self:start}.pt .big{grid-area:big}.pt .comp{grid-area:comp}
+.lv{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:8px;vertical-align:.55em;background:var(--good);box-shadow:0 0 8px var(--good);animation:bl 2s infinite}.lv.off{background:var(--mut);box-shadow:none;animation:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent)}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite}
+.big{font-size:40px;font-weight:300;letter-spacing:-.045em;line-height:1;white-space:nowrap}.big small{font-size:14px;font-weight:600;letter-spacing:0;color:var(--mut);margin-left:5px}
+.comp{min-width:0;margin-bottom:4px}
+.comp .bar{display:flex;height:7px;border-radius:7px;overflow:hidden;gap:2px}
+/* Tarif-bj\xE6lken st\xE5r stille \u2013 den voksede ind igen ved hver \xE6ndring og s\xE5 ud som et hop (Claude AI, 2026-10-12) */
+.comp .bar b{display:block;height:100%;border-radius:2px;transition:width .6s ease}
+@keyframes grow{from{transform:scaleX(0)}}
+.comp .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;font-size:11px;color:var(--mut)}
+.comp .lg span{display:inline-flex;align-items:center;gap:5px}.comp .lg i{width:7px;height:7px;border-radius:2px}
+/* ladeplan */
+.ev{display:none;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:15px;
+  background:linear-gradient(100deg,color-mix(in srgb,var(--ev) 16%,transparent),color-mix(in srgb,var(--ev) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 32%,transparent);animation:tin .7s cubic-bezier(.16,1,.3,1) both}
+.ev.on{display:grid}
+.ev .car{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,transparent)}
+.ev .car em{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ev);color:#141018;animation:pz 2s ease-in-out infinite}
+@keyframes pz{50%{transform:scale(1.15);box-shadow:0 0 14px var(--ev)}}
+.ev .t{font-size:13px;font-weight:700}.ev .t span{font-weight:500;color:var(--mut)}
+.ev .soc{position:relative;height:6px;border-radius:6px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-top:7px;overflow:hidden}
+.ev .soc i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--ev);opacity:.9}
+.ev .soc u{position:absolute;top:0;bottom:0;border-radius:6px;background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--ev) 55%,transparent) 0 6px,transparent 6px 10px);animation:fl 1.2s linear infinite;text-decoration:none}
+@keyframes fl{to{background-position:10px 0}}
+.ev .m{display:flex;gap:16px;flex-wrap:wrap;justify-content:flex-end;text-align:right}
+.ev .m div{font-size:10px;color:var(--mut);white-space:nowrap}.ev .m b{display:block;font-size:14px;font-weight:600;color:var(--ink)}.ev .m b.g{color:var(--good)}
+/* graf */
+.pc{position:relative;flex:1;min-height:90px;margin-top:10px}
+/* Bundstriben under grafen (--gb) = kortets sidemargen; dagsnavnet st\xE5r midt i den, og uden dagsfirkanter er striben kortets bundmargen (Claude AI, 2026-10-12) */
+/* P\xE5 mobil vokser grafen ned til navbaren med forsidens --front-mobile-fill, som det klassiske kort */
+.pc{--gb:16px;min-height:calc(90px + var(--front-mobile-fill,0px))}.pc svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
+.pc .dl{position:absolute;bottom:calc((var(--gb) - 10px) / 2);line-height:10px;font-size:10px;color:var(--mut);transform:translateX(4px);white-space:nowrap;text-transform:capitalize}
+.pc .now{position:absolute;top:0;bottom:var(--gb);width:1px;background:color-mix(in srgb,var(--ink) 40%,transparent)}
+.pc .nd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%);animation:pu 2s infinite}
+@keyframes pu{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 60%,transparent)}70%{box-shadow:0 0 0 11px transparent}}
+.pc .band{position:absolute;top:0;bottom:var(--gb);border-radius:10px;background:color-mix(in srgb,var(--good) 9%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 35%,transparent)}
+.pc .band span{position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:9.5px;font-weight:800;letter-spacing:.14em;color:var(--good);white-space:nowrap}
+/* Ladetiden som et bl\xF8dt, flydende lilla sk\xE6r (Claude AI, 2026-10-13; brugeren: "noget flydende rart for \xF8jnene") */
+.pc .chg{position:absolute;top:0;bottom:var(--gb);pointer-events:none}
+.pc .chg::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:3px;border-radius:3px;background:var(--ev);box-shadow:0 0 10px 1px color-mix(in srgb,var(--ev) 60%,transparent);opacity:.8}
+.pc .chg span{position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,rgba(10,12,18,.6));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 40%,transparent);backdrop-filter:blur(4px);white-space:nowrap}
+.pc .tip{position:absolute;top:0;padding:7px 10px;border-radius:11px;background:var(--surface,rgba(14,16,24,.95));box-shadow:0 10px 30px -8px rgba(0,0,0,.6),inset 0 0 0 1px var(--hair);font-size:11px;color:var(--mut);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .15s;z-index:3}
+.pc .tip b{font-size:14px;color:var(--ink)}.pc .tip em{font-style:normal;color:var(--ev);font-weight:700}
+@keyframes barin{from{transform:scaleY(0)}}.pc svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc svg.still .fadein{opacity:1}
+.draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:drw 2s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
+.fadein{opacity:0;animation:fi 1.1s .3s forwards}@keyframes fi{to{opacity:1}}
+/* dage */
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px;flex:none}
+.day{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 4px 6px;border-radius:13px;font-size:11px;color:var(--mut);background:color-mix(in srgb,var(--ink) 3.5%,transparent);box-shadow:inset 0 0 0 1px var(--hair);
+  transition:transform .3s cubic-bezier(.16,1,.3,1);animation:tin .6s cubic-bezier(.16,1,.3,1) both}
+.day:hover{transform:translateY(calc(var(--dashboard-card-highlight,1) * -2px))}
+.day span{text-transform:capitalize}.day strong{font-size:13px;color:var(--ink);font-weight:600}
+.day .col{width:100%;height:4px;border-radius:4px;background:color-mix(in srgb,var(--ink) 7%,transparent);overflow:hidden;order:3}
+.day .col b{display:block;height:100%;border-radius:4px;transform-origin:left;animation:grow 1.2s cubic-bezier(.16,1,.3,1) both}
+.day.best{background:color-mix(in srgb,var(--good) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 35%,transparent)}.day.best strong{color:var(--good)}
+.day.fc{opacity:.8}
+/* Dagsgennemsnittene kun p\xE5 store sk\xE6rme; p\xE5 mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
+:host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
+.empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+  .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+`;
+var ThElectricityPriceCard = class extends HTMLElement {
+  static getStubConfig() {
+    return { style: "new", charge: {} };
+  }
+  // Part of Smart Home Cards since 1.7.0 (Claude AI, 2026-10-14): new/classic like the other cards' looks.
+  static getConfigForm() {
+    return {
+      schema: [...lookFormSchema(), { name: "days", selector: { boolean: {} } }, { name: "fill_height", selector: { boolean: {} } }],
+      computeLabel: (s) => ({ ...LOOK_LABELS, days: "Dagsgennemsnit i bunden (kun store sk\xE6rme)", fill_height: "Fyld h\xF8jden" })[s.name] || s.name
+    };
+  }
+  setConfig(c2) {
+    this.cfg = { current: "sensor.stromligning_current_price_vat", tomorrow: "binary_sensor.stromligning_tomorrow_available_vat", forecast: "sensor.stromligning_forecasts_vat", mean: "sensor.stromligning_today_mean_vat", ...c2 };
+    this.toggleAttribute("fill", c2.fill_height !== false);
+    this.toggleAttribute("nodays", c2.days === false);
+    this._mode = null;
+  }
+  getCardSize() {
+    return 6;
+  }
+  getGridOptions() {
+    return { columns: 12, rows: 6, min_columns: 6 };
+  }
+  set hass(h) {
+    this._h = h;
+    const mode = isNewLook(h, this.cfg, { entity: this.cfg.style_entity ? "style_entity" : "switch_entity", fallback: true }) ? "new" : "classic";
+    if (mode !== this._mode) {
+      this._mode = mode;
+      this.mount();
+    }
+    if (mode === "classic") {
+      if (this._cl) this._cl.hass = h;
+      return;
+    }
+    const t = Date.now();
+    if (!this._t || t - this._t > 900) {
+      this._t = t;
+      this.update();
+    } else if (!this._q) this._q = setTimeout(() => {
+      this._q = null;
+      this._t = Date.now();
+      this.update();
+    }, 900);
+  }
+  mount() {
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    const r = this.shadowRoot;
+    this._pk = this._ck = this._ek = null;
+    if (this._mode === "classic") {
+      r.innerHTML = "<style>:host{display:block}:host([fill]){height:100%}</style>";
+      this._cl = document.createElement("ha-electricity-price-card");
+      try {
+        this._cl.setConfig(this.cfg.classic || {});
+      } catch (e) {
+        r.innerHTML += `<div style="padding:16px">Klassisk elpriskort mangler: ${e.message}</div>`;
+        return;
+      }
+      if (this.hasAttribute("fill")) this._cl.style.height = "100%";
+      r.appendChild(this._cl);
+      if (this._h) this._cl.hass = this._h;
+      return;
+    }
+    this._cl = null;
+    r.innerHTML = `<style>${TEP_CSS}</style><ha-card class="c">
+      <div class="pt"><span class="chip" id="chip"><i></i>\u2013</span>
+        <div class="ctl"><div class="seg" id="st"><button data-s="line" title="Linje" aria-label="Linje">${ti("line", 15)}</button><button data-s="bar" title="S\xF8jler" aria-label="S\xF8jler">${ti("bars", 15)}</button></div>
+          <div class="seg m" id="md"><button data-m="24">24 t</button><button data-m="48">48 t</button><button data-m="7">7 dage</button></div></div>
+        <div class="big"><span id="now">\u2013</span><i class="lv" id="live" title="Str\xF8mligning"></i></div><div class="comp"><div class="bar" id="cbar"></div><div class="lg" id="clg"></div></div></div>
+      <div class="ev" id="ev"></div>
+      <div class="pc" id="pc"><svg id="svg" preserveAspectRatio="none"></svg><div id="ov"></div><div class="tip" id="tip"></div></div>
+      <div class="days" id="days"></div></ha-card>`;
+    try {
+      this._ps = localStorage.getItem("th-price-style") || this.cfg.style || "bar";
+      this._pm = localStorage.getItem("th-price-range") || "24";
+    } catch (e) {
+      this._ps = "bar";
+      this._pm = "24";
+    }
+    const sync = () => {
+      r.querySelectorAll("#st button").forEach((b) => b.classList.toggle("on", b.dataset.s === this._ps));
+      r.querySelectorAll("#md button").forEach((b) => b.classList.toggle("on", b.dataset.m === this._pm));
+    };
+    sync();
+    r.querySelectorAll("#st button").forEach((b) => b.onclick = () => {
+      this._ps = b.dataset.s;
+      try {
+        localStorage.setItem("th-price-style", this._ps);
+      } catch (e) {
+      }
+      sync();
+      this._pk = null;
+      this.update();
+    });
+    r.querySelectorAll("#md button").forEach((b) => b.onclick = () => {
+      this._pm = b.dataset.m;
+      try {
+        localStorage.setItem("th-price-range", this._pm);
+      } catch (e) {
+      }
+      sync();
+      this._pk = null;
+      this.update();
+    });
+    if (!this._ro) {
+      this._ro = new ResizeObserver(() => {
+        this._pk = null;
+        this.update();
+      });
+    }
+    this._ro.disconnect();
+    this._ro.observe(r.getElementById("pc"));
+  }
+  disconnectedCallback() {
+    this._ro?.disconnect();
+  }
+  connectedCallback() {
+    if (this._ro && this.shadowRoot?.getElementById("pc")) this._ro.observe(this.shadowRoot.getElementById("pc"));
+  }
+  $(id) {
+    return this.shadowRoot.getElementById(id);
+  }
+  set(id, h) {
+    const e = this.$(id);
+    if (e && e._v !== h) {
+      e.innerHTML = h;
+      e._v = h;
+    }
+  }
+  s(e) {
+    const x = this._h?.states[e];
+    return x && !["unknown", "unavailable"].includes(x.state) ? x : null;
+  }
+  n(e) {
+    const v = parseFloat(this.s(e)?.state);
+    return Number.isFinite(v) ? v : NaN;
+  }
+  A(e, k) {
+    return this.s(e)?.attributes?.[k];
+  }
+  charge() {
+    const c2 = this.cfg.charge;
+    if (!c2 || !this._h) return null;
+    const st = (id) => id ? this._h.states[id]?.state : void 0;
+    const plan = this._h.states[c2.plan];
+    const blocks = (plan?.attributes?.blocks || []).map((b) => ({ t: new Date(b.start).getTime(), e: new Date(b.end).getTime(), kwh: b.kwh, cost: b.cost, est: b.estimated })).filter((b) => b.e > Date.now());
+    const mode = st(c2.mode) || plan?.attributes?.mode, cm = st(c2.charger_mode);
+    const plugged = st(c2.cable) === "on" && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm && !["disconnected", "unavailable", "unknown"].includes(cm));
+    const active = mode && !["off", "manual"].includes(mode) && blocks.length > 0;
+    if (!(c2.force || plugged && active)) return null;
+    const kwh = this.n(c2.energy), cost = this.n(c2.cost), alt = this.A(c2.cost, "alternatives") || {}, now = alt.now?.cost;
+    return {
+      blocks,
+      mode,
+      kwh: Number.isFinite(kwh) ? kwh : blocks.reduce((a, b) => a + (b.kwh || 0), 0),
+      cost: Number.isFinite(cost) ? cost : blocks.reduce((a, b) => a + (b.cost || 0), 0),
+      save: Number.isFinite(now) && Number.isFinite(cost) ? now - cost : NaN,
+      soc: this.n(c2.soc),
+      target: this.n(c2.target),
+      deadline: plan?.attributes?.deadline,
+      charging: st(c2.charging) === "on" || cm === "charging",
+      name: c2.name || "Bilen"
+    };
+  }
+  update() {
+    if (this._mode !== "new" || !this._h || !this.$("pc")) return;
+    const C = this.cfg, cur = this.n(C.current), mean = this.n(C.mean);
+    const live = this.s(C.current) && Date.now() - new Date(this.s(C.current).last_updated) < 2 * 36e5;
+    const lv = this.$("live");
+    lv.classList.toggle("off", !live);
+    lv.title = live ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
+    const rel = mean ? cur / mean : 1, col = rel < 0.9 ? "var(--good)" : rel > 1.1 ? "var(--bad)" : "var(--warn)";
+    this.$("chip").style.setProperty("--c", col);
+    this.set("chip", `<i></i>${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`);
+    this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
+    const parts = [
+      ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--acc)"],
+      ["Nettarif", "sensor.stromligning_distribution_vat", "#8ed1ff"],
+      ["Systemtarif", "sensor.stromligning_systemtariff_vat", "#b7a4ff"],
+      ["Transport", "sensor.stromligning_nettariff_vat", "#7fb0ff"],
+      ["Till\xE6g", "sensor.stromligning_surcharge_vat", "#ff9e7a"],
+      ["Elafgift", "sensor.stromligning_electricity_tax_vat", "#6be3a8"]
+    ].map(([n, e, c2]) => [n, this.n(e), c2]).filter((x) => Number.isFinite(x[1]) && x[1] > 0);
+    const sum = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
+    if (ck !== this._ck) {
+      this._ck = ck;
+      this.$("cbar").innerHTML = parts.map(([n, v, c2]) => `<b title="${n} ${tn(v)} kr" style="width:${v / sum * 100}%;background:${c2}"></b>`).join("");
+      this.$("clg").innerHTML = parts.map(([n, v, c2]) => `<span><i style="background:${c2}"></i>${n} ${tn(v)}</span>`).join("");
+    }
+    const ch2 = this.charge(), ev = this.$("ev"), ek = ch2 ? JSON.stringify([ch2.kwh, ch2.cost, ch2.blocks.length, ch2.soc, ch2.target, ch2.charging, ch2.mode]) : "";
+    if (ek !== this._ek) {
+      this._ek = ek;
+      this._pk = null;
+      ev.classList.toggle("on", !!ch2 && this.cfg.charge_panel !== false);
+      if (ch2) {
+        const avg = ch2.kwh ? ch2.cost / ch2.kwh : NaN, st = ch2.blocks[0], soc = Number.isFinite(ch2.soc) ? ch2.soc : 0, tg = Number.isFinite(ch2.target) ? ch2.target : 100;
+        const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
+        ev.innerHTML = `<div class="car">${ti("car", 22)}<em>${ti("bolt", 11, 2.2)}</em></div>
+          <div style="min-width:0"><div class="t">${ch2.charging ? "Lader nu" : "Ladeplan aktiv"} <span>\xB7 ${this.esc(ch2.name)} \xB7 ${MODE[ch2.mode] || ch2.mode}</span></div>
+            <div class="soc"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
+            <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % \u2192 ${Math.round(tg)} %${ch2.deadline ? ` \xB7 klar ${new Date(ch2.deadline).toLocaleDateString("da-DK", { weekday: "short" })} ${tt(new Date(ch2.deadline))}` : ""}</div></div>
+          <div class="m"><div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch2.kwh, 1)} kWh<b>${tn(ch2.cost)} kr</b></div><div>${st.t <= Date.now() ? "I gang" : "Start"}<b>${st.t <= Date.now() ? "nu" : tt(new Date(st.t))}</b></div>${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `<div>Sparer<b class="g">${tn(ch2.save)} kr</b></div>` : ""}</div>`;
+      }
+    }
+    this.chart(ch2);
+  }
+  esc(s) {
+    return String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+  }
+  chart(ch2) {
+    const C = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
+    const act = [...this.A(C.current, "prices") || [], ...this.A(C.tomorrow, "prices") || []].map((p) => toP(p, false));
+    const lastA = act.length ? act[act.length - 1].e : 0;
+    const fc2 = (this.A(C.forecast, "prices") || []).map((p) => toP(p, true)).filter((p) => p.t >= lastA);
+    const all = [...act, ...fc2];
+    const pc2 = this.$("pc");
+    if (!all.length) {
+      this.set("ov", '<div class="empty">Ingen prisdata endnu</div>');
+      return;
+    }
+    const first = Math.min(...all.map((p) => p.t)), last = Math.max(...all.map((p) => p.e));
+    const now = Date.now(), mode = this._pm || "24", t0 = Math.max(first, now - (mode === "24" ? 2 : 3) * 36e5), t1 = Math.min(last, mode === "24" ? now + 24 * 36e5 : mode === "48" ? now + 48 * 36e5 : last);
+    const pk = this._ps + mode + all.length + "|" + Math.floor(now / 9e5) + "|" + pc2.clientWidth + "x" + pc2.clientHeight + (this._ek || "");
+    if (pk === this._pk) return;
+    this._pk = pk;
+    let pts = all.filter((p) => p.e > t0 && p.t < t1);
+    if (mode === "7") {
+      const hr = {};
+      for (const p of pts) {
+        const h = Math.floor(p.t / 36e5);
+        (hr[h] = hr[h] || { t: h * 36e5, e: h * 36e5 + 36e5, s: 0, n: 0, f: p.f }).s += p.p;
+        hr[h].n++;
+        hr[h].f = hr[h].f && p.f;
+      }
+      pts = Object.values(hr).map((h) => ({ t: h.t, e: h.e, p: h.s / h.n, f: h.f })).sort((a, b) => a.t - b.t);
+    }
+    if (!pts.length) return;
+    const gb2 = parseFloat(getComputedStyle(pc2).getPropertyValue("--gb")) || 16;
+    const vmax = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p)), max = vmax * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05), W3 = 1e3, H3 = 100, base = 100;
+    const X = (t) => (t - t0) / (t1 - t0) * W3, Y = (v) => 8 + (1 - (v - min) / (max - min)) * (H3 - 14);
+    const inCh = (p) => ch2 && ch2.blocks.some((b) => b.t < p.e && b.e > p.t);
+    const line = (arr2) => arr2.map((p, i) => `${i ? "L" : "M"}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join("");
+    const A1 = pts.filter((p) => !p.f), F1 = pts.filter((p) => p.f);
+    if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
+    const cs = getComputedStyle(this), cv = (n) => cs.getPropertyValue(n).trim();
+    const cG = cv("--good") || "#6be3a8", cW = cv("--warn") || "#e8c37e", cB = cv("--bad") || "#ff9e7a", cE = cv("--ev") || "#b7a4ff";
+    const tone2 = (v) => {
+      const r = (v - vmin) / (vmax - vmin || 1);
+      return r < 0.33 ? cG : r < 0.66 ? cW : cB;
+    };
+    let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H3}"><stop offset="0" stop-color="${cB}"/><stop offset=".55" stop-color="${cW}"/><stop offset="1" stop-color="${cG}"/></linearGradient>
+      <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cW}" stop-opacity=".28"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient></defs>`;
+    const evBars = [];
+    if (this._ps === "bar") {
+      const gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7;
+      pts.forEach((p, i) => {
+        const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W3, X(p.e)) - x - gap), y = Y(p.p), past = p.e <= now, evp = inCh(p);
+        if (evp) evBars.push({ x, w, y });
+        g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone2(p.p)}" opacity="${past ? 0.25 : p.f ? 0.45 : 0.9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`;
+      });
+    } else {
+      if (A1.length) {
+        const d = line(A1);
+        g += `<path d="${d}L${X((A1[A1.length - 1].t + A1[A1.length - 1].e) / 2)} ${base}L${X((A1[0].t + A1[0].e) / 2)} ${base}Z" fill="url(#pa)" class="fadein"/><path d="${d}" fill="none" stroke="url(#pl)" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" class="draw"/>`;
+      }
+      if (F1.length > 1) g += `<path d="${line(F1)}" fill="none" stroke="url(#pl)" stroke-width="1.6" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" opacity=".7" class="fadein"/>`;
+    }
+    const ak = this._ps + mode, anim = this._ak !== ak;
+    this._ak = ak;
+    let liq = evBars, liqCol = cE, liqId = "ev";
+    if (!liq.length) {
+      const fut = act.filter((p) => p.t >= now - 9e5);
+      let best = null;
+      const win = Math.max(1, Math.round(3 * 36e5 / (fut[0]?.e - fut[0]?.t || 9e5)));
+      for (let i = 0; i + win <= fut.length; i++) {
+        const a2 = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win;
+        if (!best || a2 < best.a) best = { a: a2, t: fut[i].t, e: fut[i + win - 1].e };
+      }
+      if (best && this._ps === "bar") {
+        liq = pts.filter((p) => p.t < best.e && p.e > best.t).map((p) => {
+          const x = Math.max(0, X(p.t)), gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7;
+          return { x, w: Math.max(0.5, Math.min(W3, X(p.e)) - x - gap), y: Y(p.p) };
+        });
+        liqCol = "#2ee6d6";
+        liqId = "bs";
+      }
+    }
+    if (liq.length) {
+      const sx = Math.max(0.1, pc2.clientWidth / W3), sy = Math.max(0.1, (pc2.clientHeight - gb2) / H3);
+      let seed = liq.length * 7 + Math.floor(liq[0].x);
+      const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      const rise = H3 * 0.45;
+      g += `<defs><clipPath id="${liqId}c">${liq.map((b) => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join("")}</clipPath>
+        <linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W3}" height="${base}" fill="url(#${liqId}l)"/>
+        <rect x="0" y="0" width="${W3}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
+      liq.forEach((b) => {
+        const n = Math.max(2, Math.round((base - b.y) / 16));
+        for (let k = 0; k < n; k++) {
+          const r = 1.8 + rnd() * 2.4, cx = b.x + b.w * (0.2 + rnd() * 0.6), dur2 = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (0.35 + rnd() * 0.65));
+          g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${k % 3 ? "#fff" : liqCol}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
+        }
+      });
+    }
+    const svg = this.$("svg");
+    svg.classList.toggle("still", !anim);
+    this.$("days").classList.toggle("still", !anim);
+    svg.setAttribute("viewBox", `0 0 ${W3} ${H3}`);
+    svg.innerHTML = g;
+    let ov = "";
+    const day0 = new Date(t0);
+    day0.setHours(0, 0, 0, 0);
+    for (let d = new Date(day0.getTime() + 864e5); d.getTime() < t1; d = new Date(d.getTime() + 864e5)) {
+      const x = X(d.getTime()) / W3 * 100;
+      ov += `<div style="position:absolute;left:${x}%;top:0;bottom:var(--gb);border-left:1px dashed color-mix(in srgb,var(--ink) 14%,transparent)"></div>${x > 92 ? "" : `<div class="dl" style="left:${x}%">${d.toLocaleDateString("da-DK", { weekday: "short" })}${d.getTime() >= lastA ? " \xB7 prognose" : ""}</div>`}`;
+    }
+    if (ch2) {
+      const merged = [];
+      for (const b of ch2.blocks) {
+        const l = merged[merged.length - 1];
+        if (l && b.t - l.e < 20 * 6e4) l.e = Math.max(l.e, b.e);
+        else merged.push({ ...b });
+      }
+      const vis = merged.filter((b) => b.e > t0 && b.t < t1), wid = vis.reduce((m, b, i) => b.e - b.t > (vis[m]?.e - vis[m]?.t || 0) ? i : m, 0);
+      vis.forEach((b, i) => {
+        const l = Math.max(0, X(b.t) / W3 * 100), r = Math.min(100, X(b.e) / W3 * 100);
+        ov += `<div class="chg" style="left:${l}%;width:${Math.max(0.6, r - l)}%">${i === wid ? `<span>${ti("bolt", 9, 2.4)}LADER</span>` : ""}</div>`;
+      });
+    } else {
+      const fut = act.filter((p) => p.t >= now - 9e5);
+      let best = null;
+      const win = Math.max(1, Math.round(3 * 36e5 / (fut[0]?.e - fut[0]?.t || 9e5)));
+      for (let i = 0; i + win <= fut.length; i++) {
+        const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win;
+        if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e };
+      }
+      if (best && best.t < t1) {
+        const l = X(best.t) / W3 * 100, r = X(best.e) / W3 * 100;
+        ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`;
+      }
+    }
+    const nx2 = X(now) / W3 * 100, cp = all.find((p) => p.t <= now && p.e > now);
+    if (cp) ov += `<div class="now" style="left:${nx2}%"></div><div class="nd" style="left:${nx2}%;top:${Y(cp.p) / H3 * (pc2.clientHeight - gb2)}px"></div>`;
+    this.$("ov").innerHTML = ov;
+    const tip = this.$("tip");
+    pc2.onpointermove = pc2.onpointerdown = (e) => {
+      const b = pc2.getBoundingClientRect(), t = t0 + (e.clientX - b.left) / b.width * (t1 - t0), p = pts.find((q) => q.t <= t && q.e > t);
+      if (!p) {
+        tip.style.opacity = 0;
+        return;
+      }
+      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? " \xB7 <em>bilen lader</em>" : ""}`;
+      tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + "px";
+      tip.style.top = Y(p.p) / H3 * (b.height - gb2) + "px";
+      tip.style.opacity = 1;
+    };
+    pc2.onpointerleave = () => tip.style.opacity = 0;
+    const days = {};
+    for (const p of all) {
+      const d = new Date(p.t);
+      d.setHours(0, 0, 0, 0);
+      const k = d.getTime();
+      days[k] = days[k] || { k, s: 0, n: 0, min: 1e9, f: true };
+      days[k].s += p.p;
+      days[k].n++;
+      days[k].min = Math.min(days[k].min, p.p);
+      days[k].f = days[k].f && p.f;
+    }
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    const dl2 = Object.values(days).filter((d) => d.k >= today.getTime()).sort((a, b) => a.k - b.k).slice(0, 7).map((d) => ({ ...d, avg: d.s / d.n }));
+    const dmax = Math.max(...dl2.map((d) => d.avg)), dmin = Math.min(...dl2.map((d) => d.avg)), bi = dl2.findIndex((d) => d.avg === dmin);
+    this.$("days").innerHTML = dl2.map((d, i) => {
+      const r = (d.avg - dmin * 0.8) / (dmax - dmin * 0.8 || 1), c2 = d.avg === dmin ? "var(--good)" : r > 0.8 ? "var(--bad)" : "var(--warn)";
+      return `<div class="day ${i === bi ? "best" : ""} ${d.f ? "fc" : ""}" style="animation-delay:${i * 50}ms" title="${d.f ? "Prognose" : "Faktisk pris"} \xB7 laveste ${tn(d.min)} kr"><span>${i === 0 ? "I dag" : new Date(d.k).toLocaleDateString("da-DK", { weekday: "short" })}</span>
+        <div class="col"><b style="width:${Math.max(12, r * 100)}%;background:${c2};animation-delay:${i * 70}ms"></b></div><strong>${tn(d.avg)}</strong></div>`;
+    }).join("");
+  }
+};
+if (!customElements.get("th-electricity-price-card")) customElements.define("th-electricity-price-card", ThElectricityPriceCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c2) => c2.type === "th-electricity-price-card")) window.customCards.push({ type: "th-electricity-price-card", name: "TH elpris", description: "Elpris fra Str\xF8mligning med graf, sammens\xE6tning, billigste vindue og bilens ladeplan", preview: true });
+console.info(`%c TH-ELPRIS %c ${TEP_VER} `, "background:#e8c37e;color:#15110a;font-weight:700", "color:#e8c37e");
+
 // src/cards/ha-ventilation-card/ha-ventilation-card.js
 var VERSION16 = "0.7.8";
 var ENTITY_FIELDS = [
@@ -14046,7 +14571,7 @@ var Oh = Xe((H3) => {
   var xh = Array.isArray;
   function Uc() {
   }
-  var tt = { H: null, A: null, T: null, S: null }, Eh = Object.prototype.hasOwnProperty;
+  var tt2 = { H: null, A: null, T: null, S: null }, Eh = Object.prototype.hasOwnProperty;
   function Yc(t, e, a) {
     var l = a.ref;
     return { $$typeof: Bc, type: t, key: e, ref: l !== void 0 ? l : null, props: a };
@@ -14151,19 +14676,19 @@ var Oh = Xe((H3) => {
     console.error(t);
   };
   function Ah(t) {
-    var e = tt.T, a = {};
-    a.types = e !== null ? e.types : null, tt.T = a;
+    var e = tt2.T, a = {};
+    a.types = e !== null ? e.types : null, tt2.T = a;
     try {
-      var l = t(), n = tt.S;
+      var l = t(), n = tt2.S;
       n !== null && n(a, l), typeof l == "object" && l !== null && typeof l.then == "function" && l.then(Uc, _h);
     } catch (i) {
       _h(i);
     } finally {
-      e !== null && a.types !== null && (e.types = a.types), tt.T = e;
+      e !== null && a.types !== null && (e.types = a.types), tt2.T = e;
     }
   }
   function Ch(t) {
-    var e = tt.T;
+    var e = tt2.T;
     if (e !== null) {
       var a = e.types;
       a === null ? e.types = [t] : a.indexOf(t) === -1 && a.push(t);
@@ -14195,9 +14720,9 @@ var Oh = Xe((H3) => {
   H3.StrictMode = Lb;
   H3.Suspense = Kb;
   H3.ViewTransition = Fb;
-  H3.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = tt;
+  H3.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = tt2;
   H3.__COMPILER_RUNTIME = { __proto__: null, c: function(t) {
-    return tt.H.useMemoCache(t);
+    return tt2.H.useMemoCache(t);
   } };
   H3.addTransitionType = Ch;
   H3.cache = function(t) {
@@ -14250,63 +14775,63 @@ var Oh = Xe((H3) => {
   };
   H3.startTransition = Ah;
   H3.unstable_useCacheRefresh = function() {
-    return tt.H.useCacheRefresh();
+    return tt2.H.useCacheRefresh();
   };
   H3.use = function(t) {
-    return tt.H.use(t);
+    return tt2.H.use(t);
   };
   H3.useActionState = function(t, e, a) {
-    return tt.H.useActionState(t, e, a);
+    return tt2.H.useActionState(t, e, a);
   };
   H3.useCallback = function(t, e) {
-    return tt.H.useCallback(t, e);
+    return tt2.H.useCallback(t, e);
   };
   H3.useContext = function(t) {
-    return tt.H.useContext(t);
+    return tt2.H.useContext(t);
   };
   H3.useDebugValue = function() {
   };
   H3.useDeferredValue = function(t, e) {
-    return tt.H.useDeferredValue(t, e);
+    return tt2.H.useDeferredValue(t, e);
   };
   H3.useEffect = function(t, e) {
-    return tt.H.useEffect(t, e);
+    return tt2.H.useEffect(t, e);
   };
   H3.useEffectEvent = function(t) {
-    return tt.H.useEffectEvent(t);
+    return tt2.H.useEffectEvent(t);
   };
   H3.useId = function() {
-    return tt.H.useId();
+    return tt2.H.useId();
   };
   H3.useImperativeHandle = function(t, e, a) {
-    return tt.H.useImperativeHandle(t, e, a);
+    return tt2.H.useImperativeHandle(t, e, a);
   };
   H3.useInsertionEffect = function(t, e) {
-    return tt.H.useInsertionEffect(t, e);
+    return tt2.H.useInsertionEffect(t, e);
   };
   H3.useLayoutEffect = function(t, e) {
-    return tt.H.useLayoutEffect(t, e);
+    return tt2.H.useLayoutEffect(t, e);
   };
   H3.useMemo = function(t, e) {
-    return tt.H.useMemo(t, e);
+    return tt2.H.useMemo(t, e);
   };
   H3.useOptimistic = function(t, e) {
-    return tt.H.useOptimistic(t, e);
+    return tt2.H.useOptimistic(t, e);
   };
   H3.useReducer = function(t, e, a) {
-    return tt.H.useReducer(t, e, a);
+    return tt2.H.useReducer(t, e, a);
   };
   H3.useRef = function(t) {
-    return tt.H.useRef(t);
+    return tt2.H.useRef(t);
   };
   H3.useState = function(t) {
-    return tt.H.useState(t);
+    return tt2.H.useState(t);
   };
   H3.useSyncExternalStore = function(t, e, a) {
-    return tt.H.useSyncExternalStore(t, e, a);
+    return tt2.H.useSyncExternalStore(t, e, a);
   };
   H3.useTransition = function() {
-    return tt.H.useTransition();
+    return tt2.H.useTransition();
   };
   H3.version = "19.3.0";
 });
@@ -15571,13 +16096,13 @@ Error generating stack: ` + l.message + `
   }
   var wa = !(typeof window > "u" || typeof window.document > "u" || typeof window.document.createElement > "u"), js = false;
   if (wa) try {
-    tn = {}, Object.defineProperty(tn, "passive", { get: function() {
+    tn2 = {}, Object.defineProperty(tn2, "passive", { get: function() {
       js = true;
-    } }), window.addEventListener("test", tn, tn), window.removeEventListener("test", tn, tn);
+    } }), window.addEventListener("test", tn2, tn2), window.removeEventListener("test", tn2, tn2);
   } catch {
     js = false;
   }
-  var tn, Va = null, Qu = null, Wo = null;
+  var tn2, Va = null, Qu = null, Wo = null;
   function sp() {
     if (Wo) return Wo;
     var t, e = Qu, a = e.length, l, n = "value" in Va ? Va.value : Va.textContent, i = n.length;
@@ -23978,7 +24503,7 @@ function nx({ hass: t, config: e, host: a }) {
   }, T = (w) => {
     let U = l[w];
     U && a.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: U }, bubbles: true, composed: true }));
-  }, A = r("outdoor_temperature"), C = r("extract_temperature"), F = r("exhaust_temperature"), Vt = r("afterheat_before"), It = r("afterheat_after") ?? r("supply_temperature"), Tt = r("room_temperature"), ut = r("afterheat_frost"), ml = r("water_flow"), Le = r("water_return"), De = r("supply_fan_rpm"), pe = r("extract_fan_rpm"), Xt = r("supply_fan_percent"), Re = r("extract_fan_percent"), zt = r("humidity"), Pt = r("co2"), z = r("filter_life"), Bt = s("bypass"), He = String(o("bypass_request") ?? o("bypass_control") ?? "off"), ca = o("bypass_travel_direction"), sa = r("bypass_travel_seconds"), Ve = D ? sa !== null ? sa + (k("bypass_travel_seconds") ?? 0) : k("bypass_raw") : sa, Ma = r("bypass_travel_total"), te = oo({ raw: N, requestOn: He.toLowerCase() === "on", direction: ca, seconds: Ve, total: Ma }), wc = te ? [te.direction === "opening" ? "\xE5bner" : te.direction === "closing" ? "lukker" : "bev\xE6ger sig", te.percent === null ? null : `${te.percent} %`, te.awaitingEnd ? "afventer endestilling" : null, te.remainingSeconds === null ? null : `${ro(te.remainingSeconds)} tilbage`].filter(Boolean).join(" \xB7 ") : Bt ? "\xE5ben" : "lukket", ge = s("afterheat_active"), be = s("afterheat_lockout"), bo = Pn(e.afterheat_outdoor_cutoff) ?? 15, _c = ge ? "Aktiv" : be ? "Sp\xE6rret af sommerstop" : "Inaktiv", Kl = r("fireplace_remaining"), ft = (Kl ?? 0) > 0 || s("fireplace_active"), ee = i("fireplace_auto_signal"), ua = ee?.attributes?.automatik_aktiveret === true, ve = ee?.attributes?.automatik_aktiv === true, fa = String(o("mode_control") ?? ""), pl = r("effective_level") ?? 3, Jl = r(fa === "manual" ? "level_control" : "auto_normal"), M = (w) => v?.key === w ? v.target : o(w), bt = r("bonfire_remaining"), ye = (bt ?? 0) > 0 || (M("bonfire_control") ?? "Slukket") !== "Slukket", gl = M("standby_control"), xe = gl !== null && gl !== "T\xE6ndt" && gl !== "unavailable" && gl !== "unknown", uh = r("standby_remaining"), [xb, ti] = (0, L.useState)(false), [wb, ei] = (0, L.useState)(false), Sc = i("afterheat_climate"), fh = Pn(Sc?.attributes?.temperature) ?? 20, Nc = (Sc ? Sc.state !== "off" : true) ? fh : "off", hh = o("afterheat_selection"), dh = Pn(hh), _b = hh?.toLowerCase() === "off" ? "OFF" : dh !== null ? `${me(dh)} \xB0C` : "Afventer", Tc = s("rs485_healthy"), zc = o("cooling_state"), Sb = o("cooling_control") !== null ? s("cooling_control") : zc !== null && zc !== "disabled", Da = v?.key === "cooling_control" ? v.target === "on" : Sb, kc = r("boost_remaining") ?? 0, mh = kc > 0, ph = !!e.entities.cool_30, Ec = r("cool_remaining") ?? 0, ha = Ec > 0, Nb = Date.parse(i("boost_remaining")?.last_changed ?? "") + kc * 1e3, gh = mh ? pb.find((w) => Math.abs(Date.parse(o(`boost_${w}`) ?? "") + w * 6e4 - Nb) < 45e3) ?? null : null, Ac = i("active_master") !== void 0 && i("outdoor_temperature") !== void 0, Tb = (0, L.useMemo)(() => {
+  }, A = r("outdoor_temperature"), C = r("extract_temperature"), F = r("exhaust_temperature"), Vt = r("afterheat_before"), It = r("afterheat_after") ?? r("supply_temperature"), Tt = r("room_temperature"), ut = r("afterheat_frost"), ml = r("water_flow"), Le = r("water_return"), De = r("supply_fan_rpm"), pe = r("extract_fan_rpm"), Xt = r("supply_fan_percent"), Re = r("extract_fan_percent"), zt = r("humidity"), Pt = r("co2"), z = r("filter_life"), Bt = s("bypass"), He = String(o("bypass_request") ?? o("bypass_control") ?? "off"), ca = o("bypass_travel_direction"), sa = r("bypass_travel_seconds"), Ve = D ? sa !== null ? sa + (k("bypass_travel_seconds") ?? 0) : k("bypass_raw") : sa, Ma = r("bypass_travel_total"), te = oo({ raw: N, requestOn: He.toLowerCase() === "on", direction: ca, seconds: Ve, total: Ma }), wc = te ? [te.direction === "opening" ? "\xE5bner" : te.direction === "closing" ? "lukker" : "bev\xE6ger sig", te.percent === null ? null : `${te.percent} %`, te.awaitingEnd ? "afventer endestilling" : null, te.remainingSeconds === null ? null : `${ro(te.remainingSeconds)} tilbage`].filter(Boolean).join(" \xB7 ") : Bt ? "\xE5ben" : "lukket", ge = s("afterheat_active"), be = s("afterheat_lockout"), bo = Pn(e.afterheat_outdoor_cutoff) ?? 15, _c = ge ? "Aktiv" : be ? "Sp\xE6rret af sommerstop" : "Inaktiv", Kl = r("fireplace_remaining"), ft = (Kl ?? 0) > 0 || s("fireplace_active"), ee = i("fireplace_auto_signal"), ua = ee?.attributes?.automatik_aktiveret === true, ve = ee?.attributes?.automatik_aktiv === true, fa = String(o("mode_control") ?? ""), pl = r("effective_level") ?? 3, Jl = r(fa === "manual" ? "level_control" : "auto_normal"), M = (w) => v?.key === w ? v.target : o(w), bt = r("bonfire_remaining"), ye = (bt ?? 0) > 0 || (M("bonfire_control") ?? "Slukket") !== "Slukket", gl = M("standby_control"), xe = gl !== null && gl !== "T\xE6ndt" && gl !== "unavailable" && gl !== "unknown", uh = r("standby_remaining"), [xb, ti2] = (0, L.useState)(false), [wb, ei] = (0, L.useState)(false), Sc = i("afterheat_climate"), fh = Pn(Sc?.attributes?.temperature) ?? 20, Nc = (Sc ? Sc.state !== "off" : true) ? fh : "off", hh = o("afterheat_selection"), dh = Pn(hh), _b = hh?.toLowerCase() === "off" ? "OFF" : dh !== null ? `${me(dh)} \xB0C` : "Afventer", Tc = s("rs485_healthy"), zc = o("cooling_state"), Sb = o("cooling_control") !== null ? s("cooling_control") : zc !== null && zc !== "disabled", Da = v?.key === "cooling_control" ? v.target === "on" : Sb, kc = r("boost_remaining") ?? 0, mh = kc > 0, ph = !!e.entities.cool_30, Ec = r("cool_remaining") ?? 0, ha = Ec > 0, Nb = Date.parse(i("boost_remaining")?.last_changed ?? "") + kc * 1e3, gh = mh ? pb.find((w) => Math.abs(Date.parse(o(`boost_${w}`) ?? "") + w * 6e4 - Nb) < 45e3) ?? null : null, Ac = i("active_master") !== void 0 && i("outdoor_temperature") !== void 0, Tb = (0, L.useMemo)(() => {
     if (Bt || A === null || C === null || F === null || Math.abs(C - A) < 0.5) return null;
     let w = (C - F) / (C - A) * 100;
     return w >= 0 && w <= 105 ? Math.round(w) : null;
@@ -24006,7 +24531,7 @@ function nx({ hass: t, config: e, host: a }) {
   }, Ab = async (w) => xe && !await f("standby-stop", "standby_control", "select", "select_option", { option: "T\xE6ndt" }, `Anl\xE6gget er t\xE6ndt p\xE5 trin ${w}.`, "T\xE6ndt") ? false : Cb(w), Cb = (w) => fa === "manual" ? f(`level-${w}`, "level_control", "select", "select_option", { option: String(w) }, `Ventilation sat til trin ${w}.`, String(w)) : f(`level-${w}`, "auto_normal", "number", "set_value", { value: w }, `Ventilation sat til trin ${w}.`, String(w)), bh = (0, u.jsxs)(u.Fragment, { children: [(0, u.jsxs)("article", { className: "surface pro-control-card", children: [(0, u.jsxs)("div", { className: "pro-card-head compact", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Drift og styring" }), (0, u.jsx)("p", { children: "Daglige funktioner" })] }), (0, u.jsx)(Pf, { size: 22 })] }), (0, u.jsx)("label", { className: "control-label", children: "Ventilationstilstand" }), (0, u.jsx)("div", { className: "pro-segment three", children: ["local_auto", "smart_auto", "manual"].map((w) => (0, u.jsx)("button", { className: M("mode_control") === w ? "active" : "", "aria-pressed": M("mode_control") === w, disabled: h !== null, onClick: () => void f(`mode-${w}`, "mode_control", "select", "select_option", { option: w }, `${go(w)} valgt.`, w), children: go(w) }, w)) }), (0, u.jsx)("label", { className: "control-label", children: "Ventilatorniveau" }), (0, u.jsxs)("div", { className: `pro-levels${e.entities.standby_control ? " with-off" : ""}`, style: { "--levels": ch(t, l.level_control).length }, children: [ch(t, l.level_control).map((w) => {
     let U = fa === "manual" ? "level_control" : "auto_normal", da = xe ? null : v?.key === U ? Number(v.target) : pl, wo = fa !== "manual" && Number(M("auto_normal") ?? Jl) === w && da !== w;
     return (0, u.jsx)("button", { className: da === w ? "active" : wo ? "is-normal" : "", "aria-pressed": da === w, title: wo ? "Normaltrin" : void 0, disabled: h !== null, onClick: () => void Ab(w), children: w }, w);
-  }), e.entities.standby_control && (0, u.jsx)("button", { className: `level-off${xe ? " active" : ""}`, "aria-haspopup": "dialog", "aria-pressed": xe, disabled: h !== null, onClick: () => ti(true), children: "OFF" })] }), (0, u.jsxs)("div", { className: "active-decision", children: [(0, u.jsx)("span", { children: "Aktiv beslutning" }), (0, u.jsx)("strong", { children: xe ? "OFF \xB7 anl\xE6g slukket" : (0, u.jsxs)(u.Fragment, { children: ["Trin ", me(pl), " \xB7 ", dl(o("effective_source")).replaceAll("_", " ")] }) }), (0, u.jsx)("small", { children: dl(o("effective_reason"), "Afventer controllerens beslutning") })] })] }), (0, u.jsxs)("div", { className: "pro-control-pair", children: [(0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(eh, { size: 20 }), (0, u.jsx)("strong", { children: "Hurtig boost" })] }), (0, u.jsx)("div", { className: "mini-buttons three", children: pb.map((w) => (0, u.jsxs)("button", { className: gh === w || h === `boost-${w}` ? "active" : "", "aria-pressed": gh === w, disabled: h !== null || ft, onClick: () => void f(`boost-${w}`, `boost_${w}`, "button", "press", {}, `Quick Boost ${w} min startet.`), children: [w, " min"] }, w)) }), mh && (0, u.jsxs)("button", { className: "text-action", onClick: () => void f("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet."), children: [Zl(kc), " \xB7 stop"] })] }), (0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(rb, { size: 20 }), (0, u.jsx)("strong", { children: "Bypass-styring" })] }), (0, u.jsxs)("div", { className: "mini-buttons two", children: [(0, u.jsx)("button", { className: M("bypass_control") === "off" ? "active" : "", "aria-pressed": M("bypass_control") === "off", disabled: h !== null || D, onClick: () => void f("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.", "off"), children: "Auto" }), (0, u.jsx)("button", { className: M("bypass_control") === "on" ? "active" : "", "aria-pressed": M("bypass_control") === "on", disabled: h !== null || ft || D, onClick: () => void f("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass \xF8nskes \xE5ben.", "on"), children: "On" })] }), (0, u.jsxs)("small", { className: "control-footnote", children: ["Faktisk: ", wc] })] })] }), (0, u.jsxs)("div", { className: "pro-control-pair", children: [e.entities.bonfire_control && (0, u.jsxs)("article", { className: `surface status-action-card bonfire-card${ye ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon smoke", children: (0, u.jsx)(ub, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "B\xE5l i haven" }), (0, u.jsx)("strong", { children: ye ? "Aktiv \xB7 anl\xE6g slukket" : "Ikke aktiv" }), (0, u.jsx)("small", { children: ye ? `${Zl(bt)} \xB7 stopper selv` : ft ? "Ikke under pejsefunktion" : xe ? "Ikke mens anl\xE6gget er slukket" : "Slukker anl\xE6gget, t\xE6nder selv igen" })] }), (0, u.jsx)("div", { className: "fireplace-actions bonfire-actions", children: ye ? (0, u.jsx)("button", { disabled: h !== null, onClick: () => void f("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "B\xE5l-tilstand stoppet.", "Slukket"), children: "Stop" }) : I2.map(([w, U]) => (0, u.jsx)("button", { disabled: h !== null || ft || xe, onClick: () => void f(`bonfire-${w}`, "bonfire_control", "select", "select_option", { option: w }, `B\xE5l-tilstand startet i ${U}.`, w), children: U }, w)) })] }), (0, u.jsxs)("article", { className: "surface status-action-card", children: [(0, u.jsx)("div", { className: `status-action-icon flame${ve ? " auto-active" : ""}`, "aria-label": ve ? "Autopejs aktiv" : void 0, children: (0, u.jsx)(Fn, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Pejsefunktion" }), (0, u.jsx)("strong", { children: ve ? "Autopejs aktiv" : ft ? "Aktiv" : "Ikke aktiv" }), (0, u.jsx)("small", { children: ve ? `${Zl(Kl)} \xB7 automatisk` : ua ? "Autopejs klar" : ft ? Zl(Kl) : "15 eller 30 min" })] }), (0, u.jsx)("div", { className: "fireplace-actions", children: ft ? (0, u.jsx)("button", { disabled: h !== null, onClick: () => void f("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket"), children: "Stop" }) : (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("button", { className: M("fireplace_control") === "15 min" ? "active" : "", "aria-pressed": M("fireplace_control") === "15 min", disabled: h !== null, onClick: () => void f("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.", "15 min"), children: "15" }), (0, u.jsx)("button", { className: M("fireplace_control") === "30 min" ? "active" : "", "aria-pressed": M("fireplace_control") === "30 min", disabled: h !== null, onClick: () => void f("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.", "30 min"), children: "30" })] }) })] })] }), (0, u.jsxs)("article", { className: `surface status-action-card cooling-card${ha || Da ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon", children: (0, u.jsx)(fo, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Frik\xF8ling" }), (0, u.jsx)("strong", { children: ha ? "K\xF8l aktiv" : ax(zc) }), (0, u.jsx)("small", { children: ha ? `${Zl(Ec)} \xB7 bypass \xE5ben og boost` : Da ? "Automatik aktiv" : "Automatik sl\xE5et fra" })] }), (0, u.jsxs)("div", { className: "fireplace-actions cooling-actions", children: [ph && (0, u.jsx)("button", { className: ha ? "active" : "", "aria-haspopup": "dialog", disabled: h !== null || ft || xe, title: ft ? "Ikke under pejsefunktion" : "\xC5bn bypass og k\xF8r boost i en periode", onClick: () => ei(true), children: "K\xF8l" }), ph && ha && (0, u.jsx)("button", { className: "stop", disabled: h !== null, onClick: () => void f("cool-stop", "cool_stop", "button", "press", {}, "K\xF8l stoppet."), children: "Stop" }), (0, u.jsx)("button", { className: Da ? "active" : "", "aria-pressed": Da, disabled: h !== null, onClick: () => !Da && void f("cooling", "cooling_control", "switch", "turn_on", {}, "Frik\xF8ling aktiveret.", "on"), children: "Til" }), (0, u.jsx)("button", { className: Da ? "" : "active", "aria-pressed": !Da, disabled: h !== null, onClick: () => Da && void f("cooling", "cooling_control", "switch", "turn_off", {}, "Frik\xF8ling deaktiveret.", "off"), children: "Fra" })] })] })] });
+  }), e.entities.standby_control && (0, u.jsx)("button", { className: `level-off${xe ? " active" : ""}`, "aria-haspopup": "dialog", "aria-pressed": xe, disabled: h !== null, onClick: () => ti2(true), children: "OFF" })] }), (0, u.jsxs)("div", { className: "active-decision", children: [(0, u.jsx)("span", { children: "Aktiv beslutning" }), (0, u.jsx)("strong", { children: xe ? "OFF \xB7 anl\xE6g slukket" : (0, u.jsxs)(u.Fragment, { children: ["Trin ", me(pl), " \xB7 ", dl(o("effective_source")).replaceAll("_", " ")] }) }), (0, u.jsx)("small", { children: dl(o("effective_reason"), "Afventer controllerens beslutning") })] })] }), (0, u.jsxs)("div", { className: "pro-control-pair", children: [(0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(eh, { size: 20 }), (0, u.jsx)("strong", { children: "Hurtig boost" })] }), (0, u.jsx)("div", { className: "mini-buttons three", children: pb.map((w) => (0, u.jsxs)("button", { className: gh === w || h === `boost-${w}` ? "active" : "", "aria-pressed": gh === w, disabled: h !== null || ft, onClick: () => void f(`boost-${w}`, `boost_${w}`, "button", "press", {}, `Quick Boost ${w} min startet.`), children: [w, " min"] }, w)) }), mh && (0, u.jsxs)("button", { className: "text-action", onClick: () => void f("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet."), children: [Zl(kc), " \xB7 stop"] })] }), (0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(rb, { size: 20 }), (0, u.jsx)("strong", { children: "Bypass-styring" })] }), (0, u.jsxs)("div", { className: "mini-buttons two", children: [(0, u.jsx)("button", { className: M("bypass_control") === "off" ? "active" : "", "aria-pressed": M("bypass_control") === "off", disabled: h !== null || D, onClick: () => void f("bypass-auto", "bypass_control", "select", "select_option", { option: "off" }, "Bypass sat til Auto.", "off"), children: "Auto" }), (0, u.jsx)("button", { className: M("bypass_control") === "on" ? "active" : "", "aria-pressed": M("bypass_control") === "on", disabled: h !== null || ft || D, onClick: () => void f("bypass-on", "bypass_control", "select", "select_option", { option: "on" }, "Bypass \xF8nskes \xE5ben.", "on"), children: "On" })] }), (0, u.jsxs)("small", { className: "control-footnote", children: ["Faktisk: ", wc] })] })] }), (0, u.jsxs)("div", { className: "pro-control-pair", children: [e.entities.bonfire_control && (0, u.jsxs)("article", { className: `surface status-action-card bonfire-card${ye ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon smoke", children: (0, u.jsx)(ub, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "B\xE5l i haven" }), (0, u.jsx)("strong", { children: ye ? "Aktiv \xB7 anl\xE6g slukket" : "Ikke aktiv" }), (0, u.jsx)("small", { children: ye ? `${Zl(bt)} \xB7 stopper selv` : ft ? "Ikke under pejsefunktion" : xe ? "Ikke mens anl\xE6gget er slukket" : "Slukker anl\xE6gget, t\xE6nder selv igen" })] }), (0, u.jsx)("div", { className: "fireplace-actions bonfire-actions", children: ye ? (0, u.jsx)("button", { disabled: h !== null, onClick: () => void f("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "B\xE5l-tilstand stoppet.", "Slukket"), children: "Stop" }) : I2.map(([w, U]) => (0, u.jsx)("button", { disabled: h !== null || ft || xe, onClick: () => void f(`bonfire-${w}`, "bonfire_control", "select", "select_option", { option: w }, `B\xE5l-tilstand startet i ${U}.`, w), children: U }, w)) })] }), (0, u.jsxs)("article", { className: "surface status-action-card", children: [(0, u.jsx)("div", { className: `status-action-icon flame${ve ? " auto-active" : ""}`, "aria-label": ve ? "Autopejs aktiv" : void 0, children: (0, u.jsx)(Fn, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Pejsefunktion" }), (0, u.jsx)("strong", { children: ve ? "Autopejs aktiv" : ft ? "Aktiv" : "Ikke aktiv" }), (0, u.jsx)("small", { children: ve ? `${Zl(Kl)} \xB7 automatisk` : ua ? "Autopejs klar" : ft ? Zl(Kl) : "15 eller 30 min" })] }), (0, u.jsx)("div", { className: "fireplace-actions", children: ft ? (0, u.jsx)("button", { disabled: h !== null, onClick: () => void f("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket"), children: "Stop" }) : (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("button", { className: M("fireplace_control") === "15 min" ? "active" : "", "aria-pressed": M("fireplace_control") === "15 min", disabled: h !== null, onClick: () => void f("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.", "15 min"), children: "15" }), (0, u.jsx)("button", { className: M("fireplace_control") === "30 min" ? "active" : "", "aria-pressed": M("fireplace_control") === "30 min", disabled: h !== null, onClick: () => void f("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.", "30 min"), children: "30" })] }) })] })] }), (0, u.jsxs)("article", { className: `surface status-action-card cooling-card${ha || Da ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon", children: (0, u.jsx)(fo, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Frik\xF8ling" }), (0, u.jsx)("strong", { children: ha ? "K\xF8l aktiv" : ax(zc) }), (0, u.jsx)("small", { children: ha ? `${Zl(Ec)} \xB7 bypass \xE5ben og boost` : Da ? "Automatik aktiv" : "Automatik sl\xE5et fra" })] }), (0, u.jsxs)("div", { className: "fireplace-actions cooling-actions", children: [ph && (0, u.jsx)("button", { className: ha ? "active" : "", "aria-haspopup": "dialog", disabled: h !== null || ft || xe, title: ft ? "Ikke under pejsefunktion" : "\xC5bn bypass og k\xF8r boost i en periode", onClick: () => ei(true), children: "K\xF8l" }), ph && ha && (0, u.jsx)("button", { className: "stop", disabled: h !== null, onClick: () => void f("cool-stop", "cool_stop", "button", "press", {}, "K\xF8l stoppet."), children: "Stop" }), (0, u.jsx)("button", { className: Da ? "active" : "", "aria-pressed": Da, disabled: h !== null, onClick: () => !Da && void f("cooling", "cooling_control", "switch", "turn_on", {}, "Frik\xF8ling aktiveret.", "on"), children: "Til" }), (0, u.jsx)("button", { className: Da ? "" : "active", "aria-pressed": !Da, disabled: h !== null, onClick: () => Da && void f("cooling", "cooling_control", "switch", "turn_off", {}, "Frik\xF8ling deaktiveret.", "off"), children: "Fra" })] })] })] });
   return (0, u.jsxs)("section", { className: "dashboard-overview", children: [(0, u.jsxs)("header", { className: "overview-heading-row", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "OVERBLIK" }), (0, u.jsx)("h1", { children: "Aktuel drift og status" }), (0, u.jsx)("p", { children: "Live visning af HCH5, luftveje, sensorer og den styring der er aktiv lige nu." })] }), (0, u.jsxs)("div", { className: "overview-status-pills", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "status-led" }), (0, u.jsx)("small", { children: "Master" }), (0, u.jsx)("strong", { children: vb(o("active_master")) })] }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: `status-led ${Tc ? "" : "warn"}` }), (0, u.jsx)("small", { children: "Bus" }), (0, u.jsx)("strong", { children: Tc ? "Sund" : "Afventer" })] }), (0, u.jsxs)("div", { children: [(0, u.jsx)(Wn, { size: 18 }), (0, u.jsx)("small", { children: "Driftstilstand" }), (0, u.jsx)("strong", { children: go(o("mode_control")) })] }), e.entities.power && (0, u.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => T("power"), onKeyDown: (w) => {
     (w.key === "Enter" || w.key === " ") && (w.preventDefault(), T("power"));
   }, children: [(0, u.jsx)(th, { size: 18 }), (0, u.jsx)("small", { children: "Forbrug" }), (0, u.jsx)("strong", { children: bb(r("power")) })] }), e.entities.attic_temperature && (0, u.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => T("attic_temperature"), onKeyDown: (w) => {
@@ -24023,11 +24548,11 @@ function nx({ hass: t, config: e, host: a }) {
     let U = w.target.closest("[data-sensor]")?.getAttribute("data-sensor");
     U && T(U);
   }, children: [(0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "supply_recovery", children: [(0, u.jsx)(Wn, { size: 21 }), (0, u.jsx)("span", { children: "Genvinding \xB7 indbl\xE6sning" }), (0, u.jsxs)("strong", { children: [me(r("supply_recovery")), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: "(T2 \u2212 T1) / (T3 \u2212 T1)" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, r("supply_recovery") ?? 0))}%` } })] }), (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "recovered_heat", children: [(0, u.jsx)(eh, { size: 21 }), (0, u.jsx)("span", { children: "Genvundet varme" }), (0, u.jsxs)("strong", { children: [me(r("recovered_heat")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Veksler \u2192 indbl\xE6sning" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("recovered_heat") ?? 0) / 30)}%` } })] }), (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_lift", children: [(0, u.jsx)("span", { className: "metric-heat", children: "\u224B" }), (0, u.jsx)("span", { children: "Eftervarme l\xF8ft" }), (0, u.jsx)("strong", { children: hl(r("afterheat_lift")) }), (0, u.jsx)("em", { children: "T2AH \u2212 T2" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, (r("afterheat_lift") ?? 0) * 10))}%` } })] }), (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_power", children: [(0, u.jsx)(Fn, { size: 21 }), (0, u.jsx)("span", { children: "Eftervarme effekt" }), (0, u.jsxs)("strong", { children: [me(r("afterheat_power")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Varme tilf\xF8rt luften" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("afterheat_power") ?? 0) / 20)}%` } })] })] })] }) : null] })] }), xb && (0, u.jsx)("div", { className: "standby-backdrop", onMouseDown: (w) => {
-    w.target === w.currentTarget && ti(false);
-  }, children: (0, u.jsxs)("section", { className: "standby-dialog surface", role: "dialog", "aria-modal": "true", "aria-label": xe ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget", children: [(0, u.jsxs)("div", { className: "standby-dialog-heading", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "VENTILATION" }), (0, u.jsx)("h2", { children: xe ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget" })] }), (0, u.jsx)("button", { type: "button", "aria-label": "Luk", onClick: () => ti(false), children: "\xD7" })] }), (0, u.jsx)("p", { className: "standby-dialog-lead", children: xe ? uh === null ? "Begge ventilatorer st\xE5r stille, til du t\xE6nder igen." : `Begge ventilatorer st\xE5r stille \xB7 ${Zl(uh)}.` : "Begge ventilatorer stopper. Pejs, b\xE5l og boost kan ikke startes, mens anl\xE6gget er slukket." }), (0, u.jsx)("div", { className: "standby-choices", children: tx.map(([w, U, da]) => (0, u.jsxs)("button", { type: "button", className: gl === w ? "active" : "", disabled: h !== null, onClick: () => {
-    ti(false), f(`standby-${w}`, "standby_control", "select", "select_option", { option: w }, w === "Permanent" ? "Anl\xE6gget er slukket, til du t\xE6nder igen." : w === "Til i morgen kl. 07" ? "Anl\xE6gget er slukket til i morgen kl. 07:00." : `Anl\xE6gget er slukket i ${U}.`, w);
+    w.target === w.currentTarget && ti2(false);
+  }, children: (0, u.jsxs)("section", { className: "standby-dialog surface", role: "dialog", "aria-modal": "true", "aria-label": xe ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget", children: [(0, u.jsxs)("div", { className: "standby-dialog-heading", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "VENTILATION" }), (0, u.jsx)("h2", { children: xe ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget" })] }), (0, u.jsx)("button", { type: "button", "aria-label": "Luk", onClick: () => ti2(false), children: "\xD7" })] }), (0, u.jsx)("p", { className: "standby-dialog-lead", children: xe ? uh === null ? "Begge ventilatorer st\xE5r stille, til du t\xE6nder igen." : `Begge ventilatorer st\xE5r stille \xB7 ${Zl(uh)}.` : "Begge ventilatorer stopper. Pejs, b\xE5l og boost kan ikke startes, mens anl\xE6gget er slukket." }), (0, u.jsx)("div", { className: "standby-choices", children: tx.map(([w, U, da]) => (0, u.jsxs)("button", { type: "button", className: gl === w ? "active" : "", disabled: h !== null, onClick: () => {
+    ti2(false), f(`standby-${w}`, "standby_control", "select", "select_option", { option: w }, w === "Permanent" ? "Anl\xE6gget er slukket, til du t\xE6nder igen." : w === "Til i morgen kl. 07" ? "Anl\xE6gget er slukket til i morgen kl. 07:00." : `Anl\xE6gget er slukket i ${U}.`, w);
   }, children: [(0, u.jsx)("strong", { children: U }), (0, u.jsx)("small", { children: da })] }, w)) }), xe && (0, u.jsx)("button", { type: "button", className: "standby-on-action", disabled: h !== null, onClick: () => {
-    ti(false), f("standby-stop", "standby_control", "select", "select_option", { option: "T\xE6ndt" }, "Anl\xE6gget er t\xE6ndt igen.", "T\xE6ndt");
+    ti2(false), f("standby-stop", "standby_control", "select", "select_option", { option: "T\xE6ndt" }, "Anl\xE6gget er t\xE6ndt igen.", "T\xE6ndt");
   }, children: "T\xE6nd anl\xE6gget igen" })] }) }), wb && (0, u.jsx)("div", { className: "standby-backdrop", onMouseDown: (w) => {
     w.target === w.currentTarget && ei(false);
   }, children: (0, u.jsxs)("section", { className: "standby-dialog surface", role: "dialog", "aria-modal": "true", "aria-label": ha ? "K\xF8l k\xF8rer" : "K\xF8l huset", children: [(0, u.jsxs)("div", { className: "standby-dialog-heading", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "FRIK\xD8LING" }), (0, u.jsx)("h2", { children: ha ? "K\xF8l k\xF8rer" : "K\xF8l huset" })] }), (0, u.jsx)("button", { type: "button", "aria-label": "Luk", onClick: () => ei(false), children: "\xD7" })] }), (0, u.jsx)("p", { className: "standby-dialog-lead", children: ha ? `Bypass er \xE5ben og anl\xE6gget k\xF8rer boost \xB7 ${Zl(Ec)}. Derefter g\xE5r det tilbage til normal drift.` : `Bypass \xE5bnes, anl\xE6gget k\xF8rer boost, og eftervarmen holdes nede. Bagefter g\xE5r det selv tilbage til normal drift.${A === null ? "" : ` Udeluft lige nu ${hl(A)}.`}` }), (0, u.jsx)("div", { className: "standby-choices", children: P2.map(([w, U]) => (0, u.jsxs)("button", { type: "button", disabled: h !== null || !e.entities[w], onClick: () => {
@@ -29240,7 +29765,7 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION22} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-room-control-card.js
-var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc4 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var ON = /* @__PURE__ */ new Set(["on", "playing", "paused", "buffering", "open", "heat", "cool", "home", "active"]);
 var DEAD3 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
 var DOMAIN_ICON = { automation: "mdi:robot-outline", input_boolean: "mdi:toggle-switch-outline", switch: "mdi:power-socket-eu", script: "mdi:play-circle-outline", scene: "mdi:palette-outline", light: "mdi:lightbulb-outline", fan: "mdi:fan", media_player: "mdi:speaker" };
@@ -29497,14 +30022,14 @@ var HARoomControlCard = class extends HTMLElement {
       <button type="button" class="btn" style="--bc:var(--danger)" data-script="rum_sluk_midlertidigt"><ha-icon icon="mdi:power"></ha-icon>Sluk rummet</button>
       <button type="button" class="btn" style="--bc:var(--a)" data-script="rum_nulstil_automatisk"><ha-icon icon="mdi:restore"></ha-icon>Nulstil automatik</button>
       ${lit ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="off"><ha-icon icon="mdi:lightbulb-off-outline"></ha-icon>Sluk alt lys</button>` : d.lights.length ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="on"><ha-icon icon="mdi:lightbulb-on-outline"></ha-icon>T\xE6nd alt lys</button>` : ""}</div>` : "";
-    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc3(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
-      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc3(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
+    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc4(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
+      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc4(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
   }
   _profilesHtml(d) {
     if (!d.profiles.length && !d.specials.length) return "";
     const cur = this._st(d.m.profile)?.state;
-    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc3(p.option)}"><ha-icon class="i" icon="${esc3(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc3(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc3(s.id)}"><ha-icon class="i" icon="${esc3(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc3(s.label)}</b></button>`));
-    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc3(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
+    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc4(p.option)}"><ha-icon class="i" icon="${esc4(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc4(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc4(s.id)}"><ha-icon class="i" icon="${esc4(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc4(s.label)}</b></button>`));
+    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc4(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
   }
   _lightsHtml(d) {
     if (!d.lights.length) return "";
@@ -29515,7 +30040,7 @@ var HARoomControlCard = class extends HTMLElement {
       const pct2 = this._pct(s);
       const dead = DEAD3.has(s.state);
       const dim = (s.attributes?.supported_color_modes || []).some((x) => x !== "onoff");
-      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc3(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc3(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc3(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
+      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc4(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc4(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc4(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Lys</h4><span class="cnt">${lit}/${d.lights.length}</span><i class="rule"></i></div><div class="lights">${tiles.join("")}</div></section>`;
   }
@@ -29537,7 +30062,7 @@ var HARoomControlCard = class extends HTMLElement {
       const dom = t.entity.split(".")[0];
       const dead = DEAD3.has(s.state);
       const sub = dead ? "Utilg\xE6ngelig" : dom === "script" || dom === "scene" || dom === "button" ? "K\xF8r" : on ? dom === "automation" ? "Aktiv" : "Til" : dom === "automation" ? "Sl\xE5et fra" : "Fra";
-      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc3(t.entity)}"><ha-icon class="ti" icon="${esc3(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc3(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
+      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc4(t.entity)}"><ha-icon class="ti" icon="${esc4(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc4(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Automatik &amp; enheder</h4><i class="rule"></i></div><div class="tgs">${tiles.join("")}</div></section>`;
   }
@@ -29553,13 +30078,13 @@ var HARoomControlCard = class extends HTMLElement {
       const sub = off ? st === "idle" ? "Klar" : st === "unavailable" ? "Utilg\xE6ngelig" : "Slukket" : [a.media_artist || a.media_album_name, st === "paused" ? "Pause" : st === "playing" ? "Spiller" : st].filter(Boolean).join(" \xB7 ");
       const vol = Number.isFinite(a.volume_level) ? Math.round(a.volume_level * 100) : null;
       return `<div class="tile md ${off ? "off" : ""}" style="${pic ? `--img:${pic}` : ""}">${pic && !off ? '<i class="art"></i>' : ""}<span class="cov">${pic && !off ? "" : `<ha-icon icon="${st === "playing" ? "mdi:music" : "mdi:speaker"}"></ha-icon>`}</span>
-        <span class="n"><b>${esc3(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc3(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
-        <div class="ctl"><button type="button" class="ib" data-media="${esc3(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc3(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
-          <button type="button" class="ib main x" data-media="${esc3(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc3(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
-          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc3(x.id)}" aria-label="Lydstyrke">` : ""}
-          <button type="button" class="ib" data-more="${esc3(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
+        <span class="n"><b>${esc4(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc4(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
+        <div class="ctl"><button type="button" class="ib" data-media="${esc4(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc4(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+          <button type="button" class="ib main x" data-media="${esc4(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc4(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
+          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc4(x.id)}" aria-label="Lydstyrke">` : ""}
+          <button type="button" class="ib" data-more="${esc4(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
     });
     return `<section class="sec"><div class="sh"><h4>Medier</h4><i class="rule"></i></div><div class="media">${tiles.join("")}</div></section>`;
   }
@@ -31456,15 +31981,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc7 = (v) => this._escape(v);
+    const esc8 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc7(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc8(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc7(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc7(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc8(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc8(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -31484,10 +32009,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc7(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc8(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc7(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc7(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc8(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc8(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div></div>
@@ -31501,18 +32026,18 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc7(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc7(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc8(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc8(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc7(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc8(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc7(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc8(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -34330,7 +34855,7 @@ console.info(`%c HA HOME HEADER CARD %c v${VERSION27} `, "color:white;background
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION28 = "1.2.0";
+var VERSION28 = "1.2.1";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -35180,7 +35705,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc7 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc8 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -35192,28 +35717,28 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc7(item2.value));
+    setText(".value", esc8(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc7(item2.detail || " "));
+    setText(".detail", esc8(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
-    const v22 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
+    const v22 = isNewLook(this._hass, this.config);
     this.toggleAttribute("v2", v22);
     this.toggleAttribute("compact", this.config.compact === true);
     if (v22 && item2.type === "security" && item2.secV2) {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc7(title)}">${inner}</span>`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc8(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)";
       const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc7(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc8(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -35265,6 +35790,8 @@ var HaHomeStatusCardEditor = class extends HTMLElement {
         })
       )
     );
+    this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config));
+    wireLookEditor(this, this, () => this.config);
     this.querySelector("#gate-lock-inverted")?.addEventListener(
       "change",
       (event) => this.dispatchEvent(
@@ -35543,7 +36070,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       let found = null;
       const walk = (o) => {
         if (found || !o || typeof o !== "object") return;
-        if (o.type === "custom:ha-radiator-overview-card-v2" && Array.isArray(o.rooms)) {
+        if (["custom:ha-room-climate-card", "custom:ha-radiator-overview-card-v2"].includes(o.type) && Array.isArray(o.rooms)) {
           found = o;
           return;
         }
@@ -35555,10 +36082,17 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const cfg = await this._radCfgP;
     if (!cfg) {
       this._radCfgP = null;
+      if (!this._radMissing) {
+        this._radMissing = true;
+        this._sig = "";
+        this._render();
+      }
       return null;
     }
-    await customElements.whenDefined("ha-radiator-overview-card-v2");
-    const el = document.createElement("ha-radiator-overview-card-v2");
+    this._radMissing = false;
+    const tag = cfg.type.replace("custom:", "");
+    await customElements.whenDefined(tag);
+    const el = document.createElement(tag);
     el.style.display = "none";
     el.setAttribute("aria-hidden", "true");
     el.setConfig(this.config?.room_controls_dashboard ? { ...cfg, room_controls_dashboard: this.config.room_controls_dashboard } : cfg);
@@ -35879,8 +36413,9 @@ ${LUX_KEYFRAMES}
     try {
       const src = await this._radiatorCard();
       if (!src) return;
+      await customElements.whenDefined("ha-radiator-overview-card-v2");
       const el = document.createElement("ha-radiator-overview-card-v2");
-      el.setConfig({ ...src._config, compact: true });
+      el.setConfig({ ...src._config, type: "custom:ha-radiator-overview-card-v2", compact: true });
       host.innerHTML = "";
       host._html = "";
       host.appendChild(el);
@@ -36138,8 +36673,7 @@ ${LUX_KEYFRAMES}
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
     utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
-    const tilesSwitch = c2.room_tiles_entity ? this._hass?.states?.[c2.room_tiles_entity]?.state : void 0;
-    const classicTiles = tilesSwitch === "on" || tilesSwitch === "off" ? tilesSwitch === "off" : c2.room_tiles === "classic";
+    const classicTiles = !isNewLook(this._hass, c2, { entity: "room_tiles_entity", key: "room_tiles", fallback: true });
     const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const r = this._roomInfo(room);
       const tone2 = !Number.isFinite(r.temp) ? "unavailable" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : "";
@@ -36158,7 +36692,7 @@ ${LUX_KEYFRAMES}
       return `<div class="room ${tone2}${r.heating ? " is-heating" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0">${this._spark(r.series)}<ha-icon class="room-bg" icon="${icon4}"></ha-icon><div class="room-head"><span class="room-name">${this._esc(room.name)}${status ? `<em class="room-st"><i></i>${this._esc(status)}</em>` : ""}</span><div class="room-badges">${badges}</div></div><div class="room-body"><span class="room-target">${targetText}${humidityText}</span><strong class="room-temp">${arc}${this._fmt(r.temp, 1)}\xB0${trend}</strong></div>${bar}</div>`;
     }).join("");
     const rooms = this.shadowRoot.querySelector(".rooms");
-    const vc2 = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard;
+    const vc2 = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard && !this._radMissing;
     this.shadowRoot.querySelector(".temperature-panel")?.classList.toggle("vc", !!vc2);
     if (vc2) {
       this._vcRooms(rooms);
@@ -36201,10 +36735,12 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
     this._hass = hass;
   }
   render() {
-    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["room_tiles_entity", "Kontakt: nye rumfliser (til) / klassiske (fra)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser (valgfri)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
     this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
-    this.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
+    this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config, { entity: "room_tiles_entity", key: "room_tiles", fallback: true, label: "Rumfliser" }));
+    wireLookEditor(this, this, () => this.config);
+    this.querySelectorAll("input[data-key]").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
     this.querySelector("[data-robots]").addEventListener("change", (event) => {
       try {
         const robots2 = JSON.parse(event.target.value);
@@ -36647,11 +37183,10 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
   _v2() {
-    const id = this._config?.style_entity;
-    return id ? this._hass?.states?.[id]?.state === "on" : this._config?.style === "v2";
+    return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -36669,12 +37204,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc7((p.name || "?").trim()[0] || "?");
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc7(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    const initial = esc8((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc8(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc7(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc7(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc7(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc8(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc8(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc8(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -36689,7 +37224,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -36702,14 +37237,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const travel = Number(this._s(p.travel_time)?.state);
       const where = home ? "" : away ? Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc7((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc8((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc7(x.p.navigation_path || "")}" title="${esc7(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc8(x.p.navigation_path || "")}" title="${esc8(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc7(x.name)}</b><small>${esc7(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc8(x.name)}</b><small>${esc8(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -36779,6 +37314,8 @@ var HAPersonOverviewCardEditor = class extends HTMLElement {
   _render() {
     if (!this._config) return;
     this.innerHTML = `<p>Redig\xE9r personer som JSON. Hver person kan bruge name, entity, tracker, city, battery, charging, distance, travel_time, image og navigation_path.</p><textarea style="width:100%;min-height:260px">${JSON.stringify(this._config.persons || [], null, 2)}</textarea>`;
+    this.insertAdjacentHTML("beforeend", lookEditorHtml(this._config));
+    wireLookEditor(this, this, () => this._config);
     this.querySelector("textarea").onchange = (e) => {
       try {
         this.dispatchEvent(
@@ -38162,7 +38699,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc4 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc5 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -38722,7 +39259,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE6}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc4(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc4(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc5(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc5(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -38742,16 +39279,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc4(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc4(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc4(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc5(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc5(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc5(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc4(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc4(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc5(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc5(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc4(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc5(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -47091,7 +47628,7 @@ var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk"
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
 var HOUR = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var pad2 = (n) => String(n).padStart(2, "0");
 var hhmm = (d) => `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
 var dayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -47410,7 +47947,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc5(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc6(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -47486,7 +48023,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc5(ds[0].toUpperCase() + ds.slice(1))}<small>${esc5(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc6(ds[0].toUpperCase() + ds.slice(1))}<small>${esc6(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -47498,7 +48035,7 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc5(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc6(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
@@ -47521,9 +48058,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc5(g)}">${esc5(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc6(g)}">${esc6(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc5(c2.entity)}" style="--c:${esc5(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc5(c2.name || c2.entity)}"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon>${esc5(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc6(c2.entity)}" style="--c:${esc6(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc6(c2.name || c2.entity)}"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon>${esc6(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -47562,8 +48099,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc5(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc5(c2.name || "")}${e.location ? ` \xB7 ${esc5(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc6(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc6(c2.name || "")}${e.location ? ` \xB7 ${esc6(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -47588,7 +48125,7 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc5(e.summary || "")}">${esc5(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc6(e.summary || "")}">${esc6(e.summary || "")}</button>`;
     });
     const hrs = [];
     for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad2(h)}</span></div>`);
@@ -47620,15 +48157,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc5(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc5(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc6(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc6(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc5(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon>${esc5(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc5(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc6(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon>${esc6(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc6(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -47687,7 +48224,7 @@ ${LUX_KEYFRAMES}
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H3, y(en)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc5(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc5(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc6(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -47695,7 +48232,7 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de2 = ds + 864e5;
-      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc5(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc5(e.summary || "")}</button>`).join("");
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc6(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc6(e.summary || "")}</button>`).join("");
     };
     const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad2(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
@@ -47763,11 +48300,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc5(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc5(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc5(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc5(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc5(when[0].toUpperCase() + when.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc6(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc6(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc6(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc6(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc5(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc5(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc6(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc6(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -47818,7 +48355,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc5(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc6(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -47828,7 +48365,7 @@ ${LUX_KEYFRAMES}
     const en = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc5(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc5(e.location)}` : ""}</span>${teacher.length ? `<small>${esc5(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc6(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc6(e.location)}` : ""}</span>${teacher.length ? `<small>${esc6(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -52193,7 +52730,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc6 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc7 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -53022,8 +53559,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc6(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc6(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc7(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc7(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -53045,8 +53582,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc6(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc6(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc7(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc7(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -53123,7 +53660,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon4] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc6(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc6(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc7(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc7(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -53192,7 +53729,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc6(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc7(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -53207,29 +53744,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc6(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc6(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc7(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc7(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc6(title)}</h2><p>${esc6(subtitle)}</p></div>
+          <div><h2>${esc7(title)}</h2><p>${esc7(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc6(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc6(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc6(t)}</b>${s ? `<span>${esc6(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc6(l)}</span><b>${esc6(v)}</b>${x ? `<small>${esc6(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc7(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc7(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc7(t)}</b>${s ? `<span>${esc7(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc7(l)}</span><b>${esc7(v)}</b>${x ? `<small>${esc7(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc6(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc6(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc6(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc6(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc7(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc7(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc7(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc7(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc6(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc7(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -53243,7 +53780,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc6(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc7(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>

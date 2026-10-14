@@ -1,3 +1,4 @@
+import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
 const VERSION = "0.5.6";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
@@ -130,7 +131,7 @@ class HAPersonOverviewCard extends HTMLElement {
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
-  _v2() { const id = this._config?.style_entity; return id ? this._hass?.states?.[id]?.state === "on" : this._config?.style === "v2"; }
+  _v2() { return isNewLook(this._hass, this._config); }
   _personV2(p) {
     const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const person = this._s(p.entity); const tracker = this._s(p.tracker) || person; const state = tracker?.state || person?.state || "unknown";
@@ -282,6 +283,8 @@ class HAPersonOverviewCardEditor extends HTMLElement {
   _render() {
     if (!this._config) return;
     this.innerHTML = `<p>Redigér personer som JSON. Hver person kan bruge name, entity, tracker, city, battery, charging, distance, travel_time, image og navigation_path.</p><textarea style="width:100%;min-height:260px">${JSON.stringify(this._config.persons || [], null, 2)}</textarea>`;
+    this.insertAdjacentHTML("beforeend", lookEditorHtml(this._config));
+    wireLookEditor(this, this, () => this._config);
     this.querySelector("textarea").onchange = (e) => {
       try {
         this.dispatchEvent(

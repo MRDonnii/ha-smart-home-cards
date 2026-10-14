@@ -1,8 +1,9 @@
 import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
+import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "1.2.0";
+const VERSION = "1.2.1";
 
 const PRESETS = {
   "home_energy": {
@@ -987,7 +988,7 @@ class HaHomeStatusCard extends HTMLElement {
       .querySelector(".bg-icon")
       .setAttribute("icon", item.icon || "mdi:information-outline");
     // v2 follows `style_entity` (an input_boolean, on = new look) or `style: v2`.
-    const v2 = this.config.style_entity ? this._hass.states[this.config.style_entity]?.state === "on" : this.config.style === "v2";
+    const v2 = isNewLook(this._hass, this.config);
     this.toggleAttribute("v2", v2); this.toggleAttribute("compact", this.config.compact === true);
     if (v2 && item.type === "security" && item.secV2) {
       const q = item.secV2; const open = q.windows + q.doors;
@@ -1047,6 +1048,8 @@ class HaHomeStatusCardEditor extends HTMLElement {
         }),
       ),
     );
+    this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config));
+    wireLookEditor(this, this, () => this.config);
     this.querySelector("#gate-lock-inverted")?.addEventListener("change", (event) =>
       this.dispatchEvent(
         new CustomEvent("config-changed", {
@@ -1250,11 +1253,14 @@ class HaHomeSummaryCard extends HTMLElement {
     const url = this.config?.room_popup_dashboard; if (!url || !this._hass?.callWS) return null;
     if (this._radCard) return this._radCard;
     if (!this._radCfgP) this._radCfgP = this._hass.callWS({ type: "lovelace/config", url_path: url === "lovelace" ? null : url }).then((lc) => {
-      let found = null; const walk = (o) => { if (found || !o || typeof o !== "object") return; if (o.type === "custom:ha-radiator-overview-card-v2" && Array.isArray(o.rooms)) { found = o; return; } Object.values(o).forEach(walk); }; walk(lc); return found;
+      // Varme Center's rooms: the room climate card (its new look, same config) or the radiator card it is built on.
+      let found = null; const walk = (o) => { if (found || !o || typeof o !== "object") return; if (["custom:ha-room-climate-card", "custom:ha-radiator-overview-card-v2"].includes(o.type) && Array.isArray(o.rooms)) { found = o; return; } Object.values(o).forEach(walk); }; walk(lc); return found;
     }).catch(() => null);
-    const cfg = await this._radCfgP; if (!cfg) { this._radCfgP = null; return null; }
-    await customElements.whenDefined("ha-radiator-overview-card-v2");
-    const el = document.createElement("ha-radiator-overview-card-v2"); el.style.display = "none"; el.setAttribute("aria-hidden", "true");
+    const cfg = await this._radCfgP; if (!cfg) { this._radCfgP = null; if (!this._radMissing) { this._radMissing = true; this._sig = ""; this._render(); } return null; }
+    this._radMissing = false;
+    const tag = cfg.type.replace("custom:", "");
+    await customElements.whenDefined(tag);
+    const el = document.createElement(tag); el.style.display = "none"; el.setAttribute("aria-hidden", "true");
     el.setConfig(this.config?.room_controls_dashboard ? { ...cfg, room_controls_dashboard: this.config.room_controls_dashboard } : cfg); this.shadowRoot.appendChild(el); el.hass = this._hass; this._radCard = el; return el;
   }
   // Each heating room also gets its controls (light, actions, scene) from the "Alle rum" card (ha-home-room-overview-card-v3)
@@ -1457,7 +1463,9 @@ ${LUX_KEYFRAMES}
     if (this._vcBusy) return; this._vcBusy = true;
     try {
       const src = await this._radiatorCard(); if (!src) return;
-      const el = document.createElement("ha-radiator-overview-card-v2"); el.setConfig({ ...src._config, compact: true });
+      // Compact rooms come from the radiator card (the room climate card has no compact layout); same config.
+      await customElements.whenDefined("ha-radiator-overview-card-v2");
+      const el = document.createElement("ha-radiator-overview-card-v2"); el.setConfig({ ...src._config, type: "custom:ha-radiator-overview-card-v2", compact: true });
       host.innerHTML = ""; host._html = ""; host.appendChild(el); host._vc = el; el.hass = this._hass;
     } finally { this._vcBusy = false; }
   }
@@ -1659,8 +1667,7 @@ ${LUX_KEYFRAMES}
     // Room tiles (Claude AI, 2026-10-13; user: "mere grafisk pænt op med flere funktioner"): a faint 24 h curve behind,
     // a comfort bar (temperature against the setpoint), a trend arrow, badges for heating, presence, an open window and
     // a low battery. A tap opens the room panel (_openRoom) instead of the rooms page; the heading still goes there.
-    const tilesSwitch=c.room_tiles_entity?this._hass?.states?.[c.room_tiles_entity]?.state:undefined;
-    const classicTiles=tilesSwitch==="on"||tilesSwitch==="off"?tilesSwitch==="off":c.room_tiles==="classic";
+    const classicTiles=!isNewLook(this._hass,c,{entity:"room_tiles_entity",key:"room_tiles",fallback:true});
     const roomsHtml=!classicTiles?(c.rooms||[]).map((room,i)=>this._roomTileV2(room,i)).join(""):(c.rooms||[]).map((room,i)=>{
       const r=this._roomInfo(room);
       const tone=!Number.isFinite(r.temp)?"unavailable":r.delta>0.7?"warm":r.delta<-.7?"cold":"";
@@ -1684,7 +1691,8 @@ ${LUX_KEYFRAMES}
 
     const rooms=this.shadowRoot.querySelector(".rooms");
     // Varme Center's rooms, compact, in place of the tiles (rooms_style_entity on, user 2026-10-13); a test next to the tiles.
-    const vc=c.rooms_style_entity&&this._hass?.states?.[c.rooms_style_entity]?.state==="on"&&c.room_popup_dashboard;
+    // No Varme Center rooms to show (none found on room_popup_dashboard): keep the tiles rather than an empty panel.
+    const vc=c.rooms_style_entity&&this._hass?.states?.[c.rooms_style_entity]?.state==="on"&&c.room_popup_dashboard&&!this._radMissing;
     this.shadowRoot.querySelector(".temperature-panel")?.classList.toggle("vc",!!vc);
     if(vc){this._vcRooms(rooms);this._updateRobots();this._renderEvents();this._observeMarquees();return;}
     if(rooms._vc){rooms._vc.remove();rooms._vc=null;rooms._html="";}
@@ -1702,10 +1710,12 @@ class HaHomeSummaryCardEditor extends HTMLElement {
   setConfig(config){this.config=structuredClone(config);this.render();}
   set hass(hass){this._hass=hass;}
   render(){
-    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["rooms_style_entity","Kontakt: Varme Center-rum i stedet for fliser"],["room_tiles_entity","Kontakt: nye rumfliser (til) / klassiske (fra)"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["room_controls_dashboard","Styring til rum-popup fra dashboard"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
+    const fields=[["title","Titel"],["event_days","Kalenderdage"],["max_events","Maks. hændelser"],["rooms_navigation_path","Navigation til rum"],["rooms_style_entity","Kontakt: Varme Center-rum i stedet for fliser (valgfri)"],["default_target","Standard-setpunkt for rum uden termostat (°)"],["room_popup_dashboard","Rum-popup fra dashboard (Varme Center)"],["room_controls_dashboard","Styring til rum-popup fra dashboard"],["calendar_navigation_path","Navigation til kalender"],["monthly_energy_entity","Strøm denne måned"],["electric_month_cost_entity","Akkumuleret strømpris denne måned"],["water_month_entity","Vand denne måned"],["water_month_cost_entity","Vandpris denne måned"],["heat_month_entity","Fjernvarme denne måned"],["heat_month_cost_entity","Fjernvarmepris denne måned"],["co2_entity","CO₂"],["air_quality_entity","Luftkvalitet"],["water_flow_entity","Vandflow"],["storage_entity","Protect lager"]];
     const robots=JSON.stringify(this.config?.robots||[],null,2);
     this.innerHTML=`<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key,label])=>`<label>${label}</label><input data-key="${key}" value="${this.config?.[key]||SUMMARY_DEFAULTS[key]||''}">`).join('')}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udendørs. Rumkortet følger live-status uden genindlæsning.</div><div class="error"></div>`;
-    this.querySelectorAll("input").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
+    this.insertAdjacentHTML("beforeend",lookEditorHtml(this.config,{entity:"room_tiles_entity",key:"room_tiles",fallback:true,label:"Rumfliser"}));
+    wireLookEditor(this,this,()=>this.config);
+    this.querySelectorAll("input[data-key]").forEach((input)=>input.addEventListener("change",()=>this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,[input.dataset.key]:input.value}}}))));
     this.querySelector("[data-robots]").addEventListener("change",(event)=>{try{const robots=JSON.parse(event.target.value);if(!Array.isArray(robots))throw new Error("Robotter skal være en liste");this.querySelector(".error").textContent="";this.dispatchEvent(new CustomEvent("config-changed",{bubbles:true,composed:true,detail:{config:{...this.config,robots}}}));}catch(error){this.querySelector(".error").textContent=`Ugyldig robotopsætning: ${error.message}`;}});
   }
 }

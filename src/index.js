@@ -22,6 +22,7 @@ import "./cards/calefa-number-control-card/calefa-number-control-card.js";
 import "./cards/ha-fjernvarme-card/ha-fjernvarme-card.js";
 import "./cards/ha-fjernvarme-house-card/ha-fjernvarme-house-card.js";
 import "./cards/ha-electricity-price-card/ha-electricity-price-card.js";
+import "./cards/th-electricity-price-card/th-electricity-price-card.js";
 import "./cards/ha-ventilation-card/ha-ventilation-card.js";
 import "./cards/ha-hch5-live-card/ha-hch5-live-card.js";
 import "./cards/ha-heat-center-header-card/ha-heat-center-header-card.js";

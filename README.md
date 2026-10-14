@@ -8,6 +8,23 @@ The collection keeps every card as an independent source module, but publishes o
 
 This repository is the single, canonical home for all cards. New cards are developed, committed, pushed and released here — never as new standalone repositories. The old standalone card repositories are archived migration history and receive no new development. Do not remove an existing standalone HACS installation until the corresponding card is confirmed here.
 
+
+## New or classic look (all cards with two looks)
+
+Cards that have a new and a classic look can switch between them the same way:
+
+| Card | Choice in the card editor | Helper switch (input_boolean, on = new, off = classic) |
+|---|---|---|
+| `ha-home-status-card` | `style: new / classic` | `style_entity` |
+| `ha-person-overview-card` | `style: new / classic` | `style_entity` |
+| `ha-tesla-glance-card` | `style: new / classic` | `style_entity` |
+| `ha-home-summary-card` (room tiles) | `room_tiles: new / classic` | `room_tiles_entity` |
+| `th-electricity-price-card` (new) / `ha-electricity-price-card` (classic, configured under `classic:`) | `style: new / classic` | `style_entity` (or `switch_entity`) |
+
+Without a helper the editor's choice applies. With a helper (e.g. `input_boolean.dashboard_nye_statuskort`, created under
+Settings → Devices & services → Helpers → Toggle) the helper decides as long as it exists, so a button in a settings page
+can switch every card at once.
+
 ## Screenshots
 
 Rendered from the neutral demo dashboard used for compatibility testing — animated synthetic camera feeds and placeholder names only, no household data. The mobile preview is captured at the iPhone 17 Pro logical viewport (402 × 874) with Home Assistant Companion page zoom set to 75%.

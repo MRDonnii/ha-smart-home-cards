@@ -6,7 +6,9 @@
 // 0.1.2 – smal kompakt (mobil): tallene 2×2 under batteriet, så intet klippes.
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
-const VERSION = "0.5.1";
+import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
+
+const VERSION = "0.5.2";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -60,6 +62,7 @@ class HATeslaGlanceCard extends HTMLElement {
         { name: "image_charging", selector: { text: {} } },
         { name: "image_driving", selector: { text: {} } },
         { name: "compact", selector: { boolean: {} } },
+        ...lookFormSchema(),
         { type: "expandable", name: "", title: "Bil", schema: [
           e("battery", "sensor"), e("range", "sensor"), e("lock", "lock"), e("sentry", "switch"),
           e("inside_temperature", "sensor"), e("location", "device_tracker"), e("shift_state", "sensor")] },
@@ -70,7 +73,7 @@ class HATeslaGlanceCard extends HTMLElement {
           e("energy_today", "sensor"), e("cost_today", "sensor"), e("energy_month", "sensor"),
           e("cost_per_km", "sensor"), e("efficiency", "sensor")] },
       ],
-      computeLabel: (s) => ({
+      computeLabel: (s) => ({ ...LOOK_LABELS,
         name: "Navn", compact: "Kompakt (tal ved siden af batteriet)", navigation_path: "Side ved tryk", image: "Billede (parkeret)", image_charging: "Billede (lader)", image_driving: "Billede (kører)",
         battery: "Batteri", range: "Rækkevidde", lock: "Lås", sentry: "Sentry", inside_temperature: "Indetemperatur",
         location: "Lokation", charging: "Ladestatus", charger_power: "Ladeeffekt", energy_added: "Tilført energi",
@@ -103,7 +106,7 @@ class HATeslaGlanceCard extends HTMLElement {
     if (sig === this._sig) return;
     this._sig = sig;
     // v2 look (Claude AI, 2026-10-13): follows `style_entity` (on = new) or `style: v2`, like the front page's tiles.
-    this.toggleAttribute("v2", this._config.style_entity ? sv === "on" : this._config.style === "v2");
+    this.toggleAttribute("v2", isNewLook(hass, this._config));
     this._update();
   }
 
