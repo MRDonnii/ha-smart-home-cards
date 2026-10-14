@@ -9,6 +9,7 @@ import "./cards/ha-robot-fleet-card/ha-robot-fleet-card.js";
 import "./cards/ha-tesla-vehicle-card/ha-tesla-vehicle-card.js";
 import "./cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js";
 import "./cards/ha-tesla-glance-card/ha-tesla-glance-card.js";
+import "./cards/ha-text-input-card/ha-text-input-card.js";
 import "./cards/ha-ev-tyre-card/ha-ev-tyre-card.js";
 import "./cards/ha-lawn-mower-card/ha-lawn-mower-card.js";
 import "./cards/ha-light-scene-card/ha-light-scene-card.js";
