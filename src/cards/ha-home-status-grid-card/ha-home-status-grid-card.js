@@ -3,7 +3,7 @@ import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js"
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 
 const PRESETS = {
   "home_energy": {
@@ -637,7 +637,11 @@ class HaHomeStatusCard extends HTMLElement {
           ? "var(--state-info-icon, var(--info-color))"
           : "var(--dashboard-icon-muted, var(--disabled-text-color))";
       const waterTitle = blocked ? "Varmt vand: blokeret" : bypass ? "Varmt vand: bypass" : water ? "Varmt vand: opvarmer" : "Varmt vand: i ro";
-      label = `<span class="source-row"><span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
+      const acMode = this.acMode();
+      const acChip = acMode
+        ? `<span class="src-chip ac-chip m-${acMode}" title="AC ${acMode === "cool" ? "køler" : acMode === "heat" ? "varmer" : "blæser"}"><ha-icon icon="mdi:fan"></ha-icon><b>AC</b></span>`
+        : "";
+      label = `<span class="source-row">${acChip}<span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
       const valvePct = this.number(cfg.valve_entity);
       meter = Number.isFinite(valvePct)
         ? Math.max(1, Math.ceil(Math.min(100, Math.max(0, valvePct)) / 20))
@@ -684,6 +688,15 @@ class HaHomeStatusCard extends HTMLElement {
       color,
       pricePulse,
     };
+  }
+
+  // The heat pumps' combined state for the heating tile: null when none runs.
+  acMode() {
+    const v = this.text("sensor.ac_combined_state", "").toLowerCase();
+    if (/cool|køl/.test(v)) return "cool";
+    if (/heat|varm/.test(v)) return "heat";
+    if (/fan|blæs/.test(v)) return "fan";
+    return null;
   }
 
   decoration(item) {
@@ -764,13 +777,13 @@ class HaHomeStatusCard extends HTMLElement {
         ? `<div class="appliances">${icons.map(([, src]) => `<img src="${src}">`).join("")}</div>`
         : "";
     }
-    if (
-      item.type === "heating" &&
-      /cool|heat|fan/.test(
-        this.text("sensor.ac_combined_state", "").toLowerCase(),
-      )
-    ) {
-      return `<div class="airflow"><i></i><i></i><i></i></div>`;
+    // AC running (Claude AI, 2026-10-14; user: "ny animation til når AC er tændt"): soft air streams
+    // drifting across the lower part of the tile, behind the content, in the mode's colour.
+    const ac = item.type === "heating" ? this.acMode() : null;
+    if (ac) {
+      const wave = (y, a) => `M-20 ${y} C 30 ${y - a}, 70 ${y + a}, 120 ${y} S 210 ${y - a}, 260 ${y} S 330 ${y + a}, 340 ${y}`;
+      return `<svg class="ac-air m-${ac}" viewBox="0 0 300 85" preserveAspectRatio="none" aria-hidden="true">
+        <path d="${wave(52, 5)}"/><path d="${wave(64, 6)}"/><path d="${wave(76, 4)}"/></svg>`;
     }
     return "";
   }
@@ -872,7 +885,7 @@ class HaHomeStatusCard extends HTMLElement {
       .bg-icon{position:absolute;right:-10px;bottom:-10px;width:58px;height:58px;--mdc-icon-size:58px;color:var(--accent);opacity:.12;animation:drift 5s ease-in-out infinite;z-index:1;pointer-events:none;filter:saturate(1.05) drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 10%,transparent))}@keyframes drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
       .phase-waves,.pool-waves{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}.phase-waves .phase{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;animation:phaseBreathe 3s ease-in-out infinite}.phase-waves .phase-2{animation-delay:-1.4s}.phase-waves .phase-3{animation-delay:-2.8s}.phase-waves line{stroke:var(--secondary-text-color);stroke-width:1;stroke-dasharray:3 3;opacity:.16;vector-effect:non-scaling-stroke}@keyframes phaseBreathe{50%{filter:brightness(1.04) saturate(.85)}}.pool-waves{opacity:.2}.pool-waves path{fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;animation:linePulse 3s ease-in-out infinite}.pool-waves path+path{animation-delay:-1.4s;opacity:.65}@keyframes linePulse{50%{opacity:.35;transform:translateY(-2px)}}
       .price-bars{position:absolute;inset:10px 42px 8px 12px;display:flex;align-items:flex-end;gap:5px;opacity:.42;z-index:0}.price-bars i{display:block;width:4px;border-radius:9px 9px 0 0;background:var(--accent);transform-origin:center bottom;transition:background-color .9s ease,filter .9s ease}.item.price-alert .price-bars i,.item.price-alert .meter .seg.on{animation:priceDangerPulse var(--price-pulse-duration) ease-in-out infinite;transform-origin:center bottom}@keyframes priceDangerPulse{0%,100%{transform:scaleY(1);opacity:.86;filter:brightness(1) drop-shadow(0 0 2px var(--accent))}50%{transform:scaleY(var(--price-pulse-scale));opacity:var(--price-pulse-opacity);filter:brightness(var(--price-pulse-brightness)) drop-shadow(0 0 var(--price-pulse-glow) var(--accent))}}
-      .appliances{position:absolute;right:8px;top:4px;display:flex;gap:3px;z-index:3}.appliances img{width:24px;height:24px;object-fit:contain}.airflow{position:absolute;right:10px;top:8px;z-index:3;color:var(--accent)}.airflow i{display:block;border-top:2px solid currentColor;border-radius:50%;height:4px;margin:1px 0;animation:air 1.9s ease-in-out infinite}.airflow i:nth-child(1){width:11px}.airflow i:nth-child(2){width:17px;animation-delay:-.3s}.airflow i:nth-child(3){width:23px;animation-delay:-.6s}@keyframes air{50%{transform:translateX(-3px);opacity:.45}}
+      .appliances{position:absolute;right:8px;top:4px;display:flex;gap:3px;z-index:3}.appliances img{width:24px;height:24px;object-fit:contain}.ac-air{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;color:var(--ac);--ac:#fb923c}.ac-air.m-cool{--ac:#38bdf8}.ac-air.m-fan{--ac:#5eead4}.ac-air{-webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,rgba(0,0,0,.25));mask-image:linear-gradient(90deg,transparent,#000 35%,rgba(0,0,0,.25))}.ac-air path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:46 34;vector-effect:non-scaling-stroke;opacity:.8;animation:acFlow 3.2s linear infinite}.ac-air path:nth-of-type(2){animation-duration:4.1s;animation-delay:-1.3s;opacity:.6}.ac-air path:nth-of-type(3){animation-duration:3.6s;animation-delay:-2.2s;opacity:.45}@keyframes acFlow{to{stroke-dashoffset:-80}}.ac-chip{--c:#fb923c}.ac-chip.m-cool{--c:#38bdf8}.ac-chip.m-fan{--c:#5eead4}.ac-chip ha-icon{animation:acSpin 2.4s linear infinite}@keyframes acSpin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.ac-air path,.ac-chip ha-icon{animation:none}}
       @media(min-width:1101px) and (max-height:950px){.item{height:66px;padding:5px 10px}.value{font-size:16px;line-height:18px}.meter{margin:2px 0}.detail,.label{font-size:10px;line-height:11px}.bg-icon{width:48px;height:48px;--mdc-icon-size:48px}.security-row{grid-template-columns:repeat(4,38px);grid-template-rows:repeat(1,18px);width:164px;height:18px}.item.security .label{width:164px;height:18px}}
       @media(max-width:600px){.item{padding:9px 9px}.value{font-size:16px}.detail,.label{font-size:10px}.meter{gap:3px}.seg{width:12px}}
       ${MARQUEE_CSS}.label .source-row{display:inline-flex}
@@ -973,7 +986,12 @@ class HaHomeStatusCard extends HTMLElement {
     button.setAttribute("aria-label", item.name || item.type);
     const decoration = this.shadowRoot.querySelector(".decoration");
     if (this._decorationType !== item.type || item.type !== "electricity_price") {
-      decoration.innerHTML = this.decoration(item);
+      // Only when it changed – rewriting it restarts its animations on every update.
+      const html = this.decoration(item);
+      if (html !== this._decorationHtml) {
+        decoration.innerHTML = html;
+        this._decorationHtml = html;
+      }
       this._decorationType = item.type;
     }
     const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
