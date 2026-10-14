@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.122 */
+/* MRDonnii Smart Home Cards v0.5.123 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -6664,7 +6664,7 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.4.1";
+var VERSION5 = "0.5.0";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6673,6 +6673,7 @@ var DEFAULTS = {
   image: "",
   image_charging: "",
   image_driving: "",
+  image_driving_wheels: null,
   navigation_path: "",
   battery: "sensor.tesla_battery_level",
   range: "sensor.tesla_battery_range",
@@ -6781,7 +6782,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "image_driving", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
+    const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "image_driving", "image_driving_wheels", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
     const sv = this._config.style_entity ? hass.states[this._config.style_entity]?.state : "";
     const cp = this._config.charge_plan || {};
     const planSig = Object.values(cp).filter((v) => typeof v === "string" && v.includes(".")).map((id) => `${hass.states[id]?.state}|${hass.states[id]?.last_updated}`).join(";");
@@ -6916,6 +6917,12 @@ var HATeslaGlanceCard = class extends HTMLElement {
       @media(max-width:600px){:host([v2]) .vchip{display:none}:host([v2]) .pill{font-size:10px;padding:2px 8px 2px 6px}:host([v2]) .name{flex:none}}
       :host([v2]) .has-plan .car{margin-right:6px}
       @media (prefers-reduced-motion:reduce){:host([v2]) .fx i,:host([v2]) .parked .car img{animation:none!important}}
+      .wheels{position:absolute;inset:0;pointer-events:none;z-index:1}.wheels[hidden]{display:none}
+      .wh{position:absolute;border-radius:50%;overflow:hidden;-webkit-mask-image:radial-gradient(closest-side,#000 80%,transparent 97%);mask-image:radial-gradient(closest-side,#000 80%,transparent 97%)}.wh i{position:absolute;inset:0;display:block}
+      .w2{animation:wheelSpin .55s linear infinite}.w2.rev{animation-direction:reverse;animation-duration:1.1s}
+      @keyframes wheelSpin{to{transform:rotate(-360deg)}}
+      .has-wheels .car img,.driving.has-wheels .car img,.car.has-wheels img{animation:none!important}
+      @media (prefers-reduced-motion:reduce){.w2{animation:none}}
       .driving .pill{animation:drivePulse 1.6s ease-in-out infinite}.driving .car img{animation:driveSway 2.2s ease-in-out infinite}
       @keyframes drivePulse{50%{box-shadow:0 0 0 1px var(--tone,var(--accent)),0 0 16px -2px var(--tone,var(--accent))}}@keyframes driveSway{50%{transform:translateX(-3px)}}
       @media(prefers-reduced-motion:reduce){.driving .pill,.driving .car img{animation:none}}
@@ -7202,6 +7209,65 @@ var HATeslaGlanceCard = class extends HTMLElement {
       <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
+  // Spinning wheels while driving, like the Tesla app (Claude AI, 2026-10-14). `image_driving_wheels` lists each wheel in the
+  // driving picture's own pixels: [cx, cy, rx, ry, hubX, hubY] – the rim ellipse and its hub. Each wheel is a crop of the
+  // picture that turns in "unsquashed" space (scaleX(k) · rotate · scaleX(1/k)), so the rim keeps its perspective.
+  _wheels(dir, src) {
+    const car = this.shadowRoot.querySelector(".car");
+    const img = car?.querySelector("img");
+    if (!car || !img) return;
+    let box = car.querySelector(".wheels");
+    const list = Array.isArray(this._config.image_driving_wheels) ? this._config.image_driving_wheels : [];
+    if (!dir || !list.length || !img.naturalWidth || img.getAttribute("src") !== src) {
+      if (box) box.hidden = true;
+      car.classList.remove("has-wheels");
+      if (dir && list.length && !img._wheelHook) {
+        img._wheelHook = true;
+        img.addEventListener("load", () => {
+          this._sig = "";
+          this._update();
+        });
+      }
+      return;
+    }
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "wheels";
+      box.setAttribute("aria-hidden", "true");
+      car.appendChild(box);
+      new ResizeObserver(() => {
+        this._wheelKey = "";
+        this._wheels(this._wheelDir, img.getAttribute("src"));
+      }).observe(img);
+    }
+    this._wheelDir = dir;
+    box.hidden = false;
+    car.classList.add("has-wheels");
+    const ir = img.getBoundingClientRect();
+    const cr = car.getBoundingClientRect();
+    const nw = img.naturalWidth;
+    const nh2 = img.naturalHeight;
+    const sc = Math.min(ir.width / nw, ir.height / nh2);
+    const w = nw * sc;
+    const h = nh2 * sc;
+    const ox = ir.left - cr.left + (ir.width - w);
+    const oy = ir.top - cr.top + (ir.height - h);
+    const key = [dir, ox, oy, w, h, src].join("|");
+    if (key === this._wheelKey) return;
+    this._wheelKey = key;
+    box.innerHTML = list.map(([cx, cy, rx, ry, hx = cx, hy = cy]) => {
+      const k = rx / ry;
+      const L3 = ox + (cx - rx) * sc;
+      const T = oy + (cy - ry) * sc;
+      const W3 = 2 * rx * sc;
+      const H3 = 2 * ry * sc;
+      const hox = (hx - (cx - rx)) * sc;
+      const hoy = (hy - (cy - ry)) * sc;
+      const bg = `background:url('${String(src).replaceAll("'", "%27")}') ${(-(cx - rx) * sc).toFixed(2)}px ${(-(cy - ry) * sc).toFixed(2)}px/${w.toFixed(2)}px ${h.toFixed(2)}px no-repeat`;
+      const o = `transform-origin:${hox.toFixed(2)}px ${hoy.toFixed(2)}px`;
+      return `<i class="wh" style="left:${L3.toFixed(2)}px;top:${T.toFixed(2)}px;width:${W3.toFixed(2)}px;height:${H3.toFixed(2)}px"><i class="w1" style="${o};transform:scaleX(${k.toFixed(4)})"><i class="w2 ${dir < 0 ? "rev" : ""}" style="${o}"><i class="w3" style="${o};transform:scaleX(${(1 / k).toFixed(4)});${bg}"></i></i></i></i>`;
+    }).join("");
+  }
   _tap() {
     const path = this._config.navigation_path;
     if (path) {
@@ -7301,6 +7367,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     img.hidden = !src;
     card.classList.toggle("plugged", !!plugged && !charging);
     card.classList.toggle("parked", !charging && !plugged && !drivingNow);
+    this._wheels(drivingNow && src === c2.image_driving ? gearNow === "R" ? -1 : gearNow === "D" ? 1 : 0 : 0, src);
     if (src && img.dataset.want !== src) {
       img.dataset.want = src;
       if (!img.getAttribute("src")) img.setAttribute("src", src);
