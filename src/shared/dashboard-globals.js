@@ -3,7 +3,8 @@
 // resources ha-dashboard-accent-bridge.js and fonts/load-fonts.js on each HA).
 //   input_boolean.dashboard_venstre_accent → --dashboard-left-accent-width (1 = the left accent stripe, 0 = none)
 //   input_boolean.dashboard_kort_highlight → --dashboard-card-highlight (1 = hover highlight, 0 = off)
-//   input_select.dashboard_font           → the dashboard font, from /local/fonts/<Name>.ttf (only when the helper exists)
+//   input_select.dashboard_font           → the dashboard font, from /local/fonts/<Name>-VariableFont[_wght].ttf, <Name>-Regular.ttf
+//                                            or <Name>.ttf (only when the helper exists)
 // A missing helper leaves the default (on / the theme's font).
 (() => {
   if (window.__smartHomeDashboardGlobals) return;
@@ -25,7 +26,11 @@
     if (!fontsAdded) {
       fontsAdded = true;
       const style = document.createElement("style");
-      style.textContent = FONTS.map((n) => `@font-face{font-family:"${n}";src:url("/local/fonts/${n.replaceAll(" ", "")}.ttf") format("truetype");font-weight:${n === "Poppins" ? "400" : "100 900"};font-style:normal;font-display:swap}`).join("\n")
+      // Google Fonts' own file names first (Montserrat-VariableFont_wght.ttf, Inter-VariableFont.ttf, Poppins-Regular.ttf),
+      // then the short <Name>.ttf. The browser stops at the first file that loads, so no 404 for the usual file names.
+      const files = (f) => [`${f}-VariableFont_wght.ttf`, `${f}-VariableFont.ttf`, `${f}-Regular.ttf`, `${f}.ttf`]
+        .map((x) => `url("/local/fonts/${x}") format("truetype")`).join(",");
+      style.textContent = FONTS.map((n) => `@font-face{font-family:"${n}";src:${files(n.replaceAll(" ", ""))};font-weight:${n === "Poppins" ? "400" : "100 900"};font-style:normal;font-display:swap}`).join("\n")
         + "\n:root,html,body,home-assistant{font-family:var(--dashboard-font-family,system-ui,sans-serif)}";
       document.head.append(style);
     }

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.142 */
+/* MRDonnii Smart Home Cards v0.5.143 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -165,7 +165,8 @@ window.shcMotion = Object.freeze({ wake, rest, get resting() {
     if (!fontsAdded) {
       fontsAdded = true;
       const style = document.createElement("style");
-      style.textContent = FONTS.map((n) => `@font-face{font-family:"${n}";src:url("/local/fonts/${n.replaceAll(" ", "")}.ttf") format("truetype");font-weight:${n === "Poppins" ? "400" : "100 900"};font-style:normal;font-display:swap}`).join("\n") + "\n:root,html,body,home-assistant{font-family:var(--dashboard-font-family,system-ui,sans-serif)}";
+      const files = (f) => [`${f}-VariableFont_wght.ttf`, `${f}-VariableFont.ttf`, `${f}-Regular.ttf`, `${f}.ttf`].map((x) => `url("/local/fonts/${x}") format("truetype")`).join(",");
+      style.textContent = FONTS.map((n) => `@font-face{font-family:"${n}";src:${files(n.replaceAll(" ", ""))};font-weight:${n === "Poppins" ? "400" : "100 900"};font-style:normal;font-display:swap}`).join("\n") + "\n:root,html,body,home-assistant{font-family:var(--dashboard-font-family,system-ui,sans-serif)}";
       document.head.append(style);
     }
     const gen = ++fontGen;
