@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.6.2";
+const VERSION = "0.7.0";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -26,8 +26,12 @@ const FIELDS = [
   ["swing_toggle", "Sving til/fra (knap)", "entity"], ["swing_step", "Lamel ét trin (knap)", "entity"], ["display", "Display (knap)", "entity"], ["beep", "Bip (switch)", "entity"],
   ["supply", "Strøm til anlæg (switch)", "entity"], ["restart", "Genstart anlæg (knap)", "entity"], ["openings", "Reagér på døre/vinduer (switch)", "entity"],
   ["reduce_after", "Skru ned efter (number)", "entity"], ["off_after", "Sluk efter (number)", "entity"], ["resume_after", "Genoptag efter (number)", "entity"],
+  ["turbo", "Turbo 30 min (switch)", "entity"], ["price_control", "Prisstyring (switch)", "entity"], ["price_level", "Prisniveau (sensor)", "entity"],
+  ["auto_wake", "Vækning ved slumring (switch)", "entity"], ["wake_status", "Vækning (sensor)", "entity"],
   ["max_power", "Maks. effekt (W)"], ["filter_alarm", "Filter-påmindelse (timer)"],
 ];
+const PRICE_TEXT = { cheap: "Billig strøm", normal: "Normal pris", expensive: "Dyr strøm", unknown: "Ingen prisprognose", off: "Slået fra" };
+const WAKE_TEXT = { off: "Slået fra", busy: "Genstarter anlægget", not_running: "Venter – varmer ikke nu", unit_not_on: "Anlægget er ikke tændt", defrosting: "Afrimer", no_data: "Mangler målinger", on_target: "Rummet er på mål", working: "Anlægget arbejder", stalled: "Slumrer" };
 
 class HAACClimateCard extends HTMLElement {
   constructor() {
@@ -62,7 +66,7 @@ class HAACClimateCard extends HTMLElement {
     const sig = JSON.stringify(ids.map((id) => {
       const e = hass?.states?.[id];
       const a = e?.attributes || {};
-      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event];
+      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event, a.until, a.wake_at, a.wakes_today, a.offset_heat, a.offset_cool];
     }).concat(Math.floor(Date.now() / 30000)));
     if (sig === this._signature) return;
     this._signature = sig;
@@ -190,8 +194,53 @@ class HAACClimateCard extends HTMLElement {
       btn("beep", beep?.state === "on" ? "mdi:volume-high" : "mdi:volume-off", "Bip", beep?.state === "on", !!beep),
       btn("supply", supply?.state === "on" ? "mdi:power-plug" : "mdi:power-plug-off", "Strøm", supply?.state === "on", !!supply),
       btn("restart", "mdi:restart-alert", "Genstart", false, this._exists(unit.restart)),
+      this._turboButton(unit),
     ].join("");
     return items ? `<section class="block"><h4><ha-icon icon="mdi:gesture-tap-button"></ha-icon>Funktioner</h4><div class="fns">${items}</div></section>` : "";
+  }
+
+  _turboButton(unit) {
+    const turbo = this._raw(unit.turbo);
+    if (!turbo || turbo.state === "unavailable") return "";
+    const on = turbo.state === "on";
+    const until = Date.parse(turbo.attributes?.until || "");
+    const left = on && Number.isFinite(until) ? Math.max(1, Math.round((until - Date.now()) / 60000)) : 0;
+    return `<button class="fn turbo ${on ? "on" : ""}" data-action="turbo" title="${on ? "Stop turbo" : "Anlæggets boost i 30 minutter"}"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>${on ? `Turbo ${left} min` : "Turbo"}</span></button>`;
+  }
+
+  _clock(iso) {
+    const at = Date.parse(iso || "");
+    return Number.isFinite(at) ? new Date(at).toLocaleTimeString(this._hass?.locale?.language || "da", { hour: "2-digit", minute: "2-digit" }) : "";
+  }
+
+  _smart(unit, s) {
+    const rows = [];
+    const priceSw = this._entity(unit.price_control);
+    const level = this._entity(unit.price_level);
+    if (priceSw || level) {
+      const on = priceSw ? priceSw.state === "on" : level?.state !== "off";
+      const lvl = on ? level?.state || "unknown" : "off";
+      const a = level?.attributes || {};
+      const offset = s.mode === "cool" ? Number(a.offset_cool) : Number(a.offset_heat);
+      const shift = Number.isFinite(offset) && offset !== 0 ? ` · mål ${offset > 0 ? "+" : "−"}${Math.abs(offset)}°` : "";
+      const end = lvl !== "off" && a.period_end ? ` til ${this._clock(a.period_end)}` : "";
+      const price = Number(a.price);
+      const priceTxt = lvl !== "off" && Number.isFinite(price) ? ` · ${this._format(price, 2)} kr/kWh` : "";
+      rows.push(`<div class="srow p-${lvl}"><ha-icon icon="mdi:cash-sync"></ha-icon><div><strong>Prisstyring</strong><span>${PRICE_TEXT[lvl] || lvl}${shift}${end}${priceTxt}</span></div>${priceSw ? `<button class="toggle ${on ? "on" : ""}" data-action="price" aria-pressed="${on}" title="Prisstyring"><i></i></button>` : ""}</div>`);
+    }
+    const wakeSw = this._entity(unit.auto_wake);
+    const wake = this._entity(unit.wake_status);
+    if (wakeSw || wake) {
+      const on = wakeSw ? wakeSw.state === "on" : wake?.state !== "off";
+      const reason = on ? wake?.state || "off" : "off";
+      const a = wake?.attributes || {};
+      let text = WAKE_TEXT[reason] || reason;
+      if (reason === "stalled" && a.wake_at) text = `Slumrer – vækkes kl. ${this._clock(a.wake_at)}`;
+      const count = Number(a.wakes_today) || 0;
+      const last = count && a.last_wake ? ` · vækket ${count}× i dag, sidst ${this._clock(a.last_wake)}` : "";
+      rows.push(`<div class="srow w-${reason}"><ha-icon icon="mdi:alarm-light-outline"></ha-icon><div><strong>Vækning ved slumring</strong><span>${this._esc(text)}${last}</span></div>${wakeSw ? `<button class="toggle ${on ? "on" : ""}" data-action="wake" aria-pressed="${on}" title="Vækning ved slumring"><i></i></button>` : ""}</div>`);
+    }
+    return rows.length ? `<section class="block smart"><h4><ha-icon icon="mdi:brain"></ha-icon>Smart styring</h4>${rows.join("")}</section>` : "";
   }
 
   _openings(unit) {
@@ -225,6 +274,7 @@ class HAACClimateCard extends HTMLElement {
       ${this._controls(unit, s)}
       ${this._live(unit, s)}
       ${this._functions(unit)}
+      ${this._smart(unit, s)}
       ${this._openings(unit)}
       ${this._economy(unit, s)}
       <button class="details" data-action="details">Flere indstillinger<ha-icon icon="mdi:chevron-right"></ha-icon></button>
@@ -256,6 +306,9 @@ class HAACClimateCard extends HTMLElement {
         case "follow-me": return await call("switch", "toggle", { entity_id: unit.follow_me });
         case "beep": return await call("switch", "toggle", { entity_id: unit.beep });
         case "openings": return await call("switch", "toggle", { entity_id: unit.openings });
+        case "price": return await call("switch", "toggle", { entity_id: unit.price_control });
+        case "wake": return await call("switch", "toggle", { entity_id: unit.auto_wake });
+        case "turbo": return await call("switch", "toggle", { entity_id: unit.turbo });
         case "supply": {
           const on = this._entity(unit.supply)?.state === "on";
           if (on && !confirm("Slå strømmen til anlægget fra?")) return;
@@ -383,6 +436,12 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .toggle{margin-left:auto;width:40px;height:22px;padding:0;border:0;border-radius:999px;background:rgba(255,255,255,.14);cursor:pointer;position:relative}
 .toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}.toggle.on{background:var(--tone)}.toggle.on i{transform:translateX(18px)}
 .doors.muted .delays{opacity:.4;pointer-events:none}
+.smart{display:flex;flex-direction:column;gap:8px}.smart h4{margin-bottom:2px}
+.srow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}
+.srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
+.srow .toggle{margin-left:0}
+.p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--tone)}
+.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
 .delay span{display:block;margin-bottom:4px;color:var(--secondary-text-color);font-size:11px}
 .step{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
