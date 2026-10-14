@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.129 */
+/* MRDonnii Smart Home Cards v0.5.130 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -7452,7 +7452,7 @@ var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.1
 @keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
 
 // src/cards/ha-ev-tyre-card/ha-ev-tyre-card.js
-var VERSION6 = "0.1.1";
+var VERSION6 = "0.1.2";
 var KINDS = {
   // The theme's own colours (user, 2026-10-14: "sørg for de kort følger tema").
   summer: { label: "Sommer", icon: "mdi:weather-sunny", color: "var(--warning-color,#f2b545)" },
@@ -7937,7 +7937,7 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .tread-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:2px;background:var(--tc-text);opacity:.5}
 .tread small{font-size:11.5px;color:var(--tc-muted)}
 .sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.set{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--tc-tile);border:1px solid var(--tc-line);border-left:3px solid color-mix(in srgb,var(--k) 75%,transparent)}
+.set{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--tc-tile);border:1px solid var(--tc-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--k) 75%,transparent)}
 .set.mounted{background:color-mix(in srgb,var(--k) 7%,var(--tc-tile))}
 .set header{display:flex;align-items:center;gap:10px;min-width:0}
 .set header>div{flex:1;min-width:0;display:grid}
@@ -34330,7 +34330,7 @@ console.info(`%c HA HOME HEADER CARD %c v${VERSION27} `, "color:white;background
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION28 = "1.1.0";
+var VERSION28 = "1.2.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -35358,6 +35358,11 @@ var HaHomeSummaryCard = class extends HTMLElement {
       this._sig = "";
       this._render();
     }
+    if (this.config?.room_tiles_entity && hass.states?.[this.config.room_tiles_entity]?.state !== this._rtState) {
+      this._rtState = hass.states?.[this.config.room_tiles_entity]?.state;
+      this._sig = "";
+      this._render();
+    }
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -35534,7 +35539,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const url = this.config?.room_popup_dashboard;
     if (!url || !this._hass?.callWS) return null;
     if (this._radCard) return this._radCard;
-    if (!this._radCfgP) this._radCfgP = this._hass.callWS({ type: "lovelace/config", url_path: url }).then((lc) => {
+    if (!this._radCfgP) this._radCfgP = this._hass.callWS({ type: "lovelace/config", url_path: url === "lovelace" ? null : url }).then((lc) => {
       let found = null;
       const walk = (o) => {
         if (found || !o || typeof o !== "object") return;
@@ -35568,7 +35573,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const url = this.config?.room_controls_dashboard;
     if (!url) return cfg;
     try {
-      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url });
+      const lc = await this._hass.callWS({ type: "lovelace/config", url_path: url === "lovelace" ? null : url });
       let v3 = null;
       const pops = {};
       const walk = (o) => {
@@ -36133,7 +36138,9 @@ ${LUX_KEYFRAMES}
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
     utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
-    const roomsHtml = c2.room_tiles !== "classic" ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
+    const tilesSwitch = c2.room_tiles_entity ? this._hass?.states?.[c2.room_tiles_entity]?.state : void 0;
+    const classicTiles = tilesSwitch === "on" || tilesSwitch === "off" ? tilesSwitch === "off" : c2.room_tiles === "classic";
+    const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const r = this._roomInfo(room);
       const tone2 = !Number.isFinite(r.temp) ? "unavailable" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : "";
       const icon4 = this._esc(room.icon || "mdi:thermometer");
@@ -36194,7 +36201,7 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
     this._hass = hass;
   }
   render() {
-    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser"], ["room_tiles_entity", "Kontakt: nye rumfliser (til) / klassiske (fra)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
     this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
     this.querySelectorAll("input").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
@@ -47371,7 +47378,7 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .wk .col.today{background:color-mix(in srgb,var(--a) 6%,transparent)}
 .wk .gl{position:absolute;left:0;right:0;border-top:1px solid color-mix(in srgb,var(--ink) 6%,transparent)}
 .wk .blk{--c:var(--a);position:absolute;display:flex;flex-direction:column;justify-content:flex-start;padding:4px 6px;border:0;border-radius:9px;overflow:hidden;text-align:left;font-size:11px;line-height:1.2;cursor:pointer;color:var(--ink);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 30%,transparent),color-mix(in srgb,var(--c) 16%,transparent));box-shadow:inset 3px 0 0 var(--c),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 30%,transparent),color-mix(in srgb,var(--c) 16%,transparent));box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--c),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}
 .wk .blk:hover{filter:brightness(1.15);z-index:2}.wk .blk:active{transform:scale(.96)}
 .wk .blk b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wk .blk small{display:block;color:var(--mut);font-size:10px}
 .wk .blk.past{opacity:.5}.wk .blk.live{animation:luxGum .8s ease-out,live 2.4s ease-in-out .8s infinite}
@@ -47389,7 +47396,7 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .school-day{min-width:150px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent);box-shadow:inset 0 0 0 1px var(--edge)}
 .school-day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent)}
 .school-day>header{margin-bottom:6px;font-size:12px;font-weight:800;text-transform:capitalize}
-.lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:3px solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
+.lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
 .lesson{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1)}.lesson:active{transform:scale(.96)}.lesson.live{animation:live 2.4s ease-in-out infinite}
 .lesson b{display:block;font-size:12px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--mut);font-size:10.5px}
 .foot{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:var(--mut)}

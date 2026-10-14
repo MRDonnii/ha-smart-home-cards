@@ -213,7 +213,7 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .wk .col.today{background:color-mix(in srgb,var(--a) 6%,transparent)}
 .wk .gl{position:absolute;left:0;right:0;border-top:1px solid color-mix(in srgb,var(--ink) 6%,transparent)}
 .wk .blk{--c:var(--a);position:absolute;display:flex;flex-direction:column;justify-content:flex-start;padding:4px 6px;border:0;border-radius:9px;overflow:hidden;text-align:left;font-size:11px;line-height:1.2;cursor:pointer;color:var(--ink);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 30%,transparent),color-mix(in srgb,var(--c) 16%,transparent));box-shadow:inset 3px 0 0 var(--c),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 30%,transparent),color-mix(in srgb,var(--c) 16%,transparent));box-shadow:inset calc(var(--dashboard-left-accent-width, 1) * 3px) 0 0 var(--c),inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent);transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}
 .wk .blk:hover{filter:brightness(1.15);z-index:2}.wk .blk:active{transform:scale(.96)}
 .wk .blk b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wk .blk small{display:block;color:var(--mut);font-size:10px}
 .wk .blk.past{opacity:.5}.wk .blk.live{animation:luxGum .8s ease-out,live 2.4s ease-in-out .8s infinite}
@@ -231,7 +231,7 @@ h2 small{display:block;margin-top:4px;font-size:14px;font-weight:500;letter-spac
 .school-day{min-width:150px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--ink) 3%,transparent);box-shadow:inset 0 0 0 1px var(--edge)}
 .school-day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent)}
 .school-day>header{margin-bottom:6px;font-size:12px;font-weight:800;text-transform:capitalize}
-.lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:3px solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
+.lesson{--c:var(--a);margin-top:6px;padding:7px 8px;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--c);border-radius:9px;background:color-mix(in srgb,var(--c) 11%,transparent)}
 .lesson{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1)}.lesson:active{transform:scale(.96)}.lesson.live{animation:live 2.4s ease-in-out infinite}
 .lesson b{display:block;font-size:12px}.lesson span,.lesson small{display:block;margin-top:2px;color:var(--mut);font-size:10.5px}
 .foot{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:var(--mut)}

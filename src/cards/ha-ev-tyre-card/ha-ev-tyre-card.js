@@ -5,7 +5,7 @@
 
 import { LUX_ACCENT } from "../../shared/lux.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 
 const KINDS = {
   // The theme's own colours (user, 2026-10-14: "sørg for de kort følger tema").
@@ -490,7 +490,7 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .tread-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:2px;background:var(--tc-text);opacity:.5}
 .tread small{font-size:11.5px;color:var(--tc-muted)}
 .sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.set{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--tc-tile);border:1px solid var(--tc-line);border-left:3px solid color-mix(in srgb,var(--k) 75%,transparent)}
+.set{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--tc-tile);border:1px solid var(--tc-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--k) 75%,transparent)}
 .set.mounted{background:color-mix(in srgb,var(--k) 7%,var(--tc-tile))}
 .set header{display:flex;align-items:center;gap:10px;min-width:0}
 .set header>div{flex:1;min-width:0;display:grid}
