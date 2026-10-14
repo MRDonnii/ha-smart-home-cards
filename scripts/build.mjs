@@ -21,6 +21,8 @@ const cards = JSON.parse(await readFile(path.join(root, "cards.json"), "utf8"));
 // rest when nobody uses the screen); see src/cards/shared/motion-rest.js.
 const entry = [
   `import "./cards/shared/motion-rest.js";`,
+  // Dashboard-wide helpers (left accent, card highlight, font) that used to be a /local resource on each HA.
+  `import "./shared/dashboard-globals.js";`,
   ...cards.map((card) => `import ${JSON.stringify(`./cards/${card.slug}/${card.filename}`)};`),
   `import "./cards/shared/motion-rest-end.js";`,
 ].join("\n");

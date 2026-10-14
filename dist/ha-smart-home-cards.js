@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.134 */
+/* MRDonnii Smart Home Cards v0.5.135 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -126,6 +126,82 @@ window.shcMotion = Object.freeze({ wake, rest, get resting() {
 }, get cards() {
   return hosts.size;
 } });
+
+// src/shared/dashboard-globals.js
+(() => {
+  if (window.__smartHomeDashboardGlobals) return;
+  window.__smartHomeDashboardGlobals = true;
+  const SWITCHES = [
+    ["input_boolean.dashboard_venstre_accent", "--dashboard-left-accent-width"],
+    ["input_boolean.dashboard_kort_highlight", "--dashboard-card-highlight"]
+  ];
+  const FONTS = ["Montserrat", "Inter", "Poppins", "DM Sans", "Nunito", "Outfit", "Figtree"];
+  const FONT_VARS = [
+    "--dashboard-font-family",
+    "--ha-font-family",
+    "--primary-font-family",
+    "--mdc-typography-font-family",
+    "--paper-font-common-base_-_font-family",
+    "--paper-font-common-code_-_font-family",
+    "--paper-font-body1_-_font-family",
+    "--paper-font-body2_-_font-family",
+    "--paper-font-caption_-_font-family",
+    "--paper-font-title_-_font-family",
+    "--paper-font-headline_-_font-family",
+    "--paper-font-subhead_-_font-family",
+    "--paper-font-button_-_font-family"
+  ];
+  const root = document.documentElement;
+  const last = {};
+  let fontsAdded = false;
+  let fontNow = "";
+  let fontGen = 0;
+  const set = (name, value) => {
+    if (last[name] === value) return;
+    last[name] = value;
+    root.style.setProperty(name, value);
+  };
+  async function font(name) {
+    if (!fontsAdded) {
+      fontsAdded = true;
+      const style = document.createElement("style");
+      style.textContent = FONTS.map((n) => `@font-face{font-family:"${n}";src:url("/local/fonts/${n.replaceAll(" ", "")}.ttf") format("truetype");font-weight:${n === "Poppins" ? "400" : "100 900"};font-style:normal;font-display:swap}`).join("\n") + "\n:root,html,body,home-assistant{font-family:var(--dashboard-font-family,system-ui,sans-serif)}";
+      document.head.append(style);
+    }
+    const gen = ++fontGen;
+    let family = "system-ui,sans-serif";
+    try {
+      const loaded = await document.fonts.load(`16px "${name}"`);
+      if (loaded.length) family = `"${name}",system-ui,sans-serif`;
+    } catch {
+    }
+    if (gen !== fontGen) return;
+    for (const key of FONT_VARS) root.style.setProperty(key, family);
+    root.style.fontFamily = family;
+  }
+  function tick() {
+    const hass = document.querySelector("home-assistant")?.hass;
+    if (!hass?.states) return;
+    for (const [entity, varName] of SWITCHES) set(varName, (hass.states[entity]?.state ?? "on") === "off" ? "0" : "1");
+    const wanted = hass.states["input_select.dashboard_font"]?.state;
+    if (FONTS.includes(wanted) && wanted !== fontNow) {
+      fontNow = wanted;
+      font(wanted);
+    }
+  }
+  let timer = setInterval(tick, 1e3);
+  tick();
+  addEventListener("pagehide", () => {
+    clearInterval(timer);
+    timer = null;
+  });
+  addEventListener("pageshow", () => {
+    if (!timer) {
+      timer = setInterval(tick, 1e3);
+      tick();
+    }
+  });
+})();
 
 // src/cards/ha-ai-usage-card/ha-card-list-editor.js
 var HACardListEditor = class extends HTMLElement {
