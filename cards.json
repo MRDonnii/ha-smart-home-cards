@@ -308,6 +308,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "th-weather-card",
+    "name": "TH Weather Card",
+    "filename": "th-weather-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-home-room-overview-card",
     "name": "Home Room Overview Card",
     "filename": "ha-home-room-overview-card.js",

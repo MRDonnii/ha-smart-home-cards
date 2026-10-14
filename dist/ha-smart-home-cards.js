@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.135 */
+/* MRDonnii Smart Home Cards v0.5.136 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -15419,7 +15419,7 @@ var Ug = Xe((cc) => {
     }
     return null;
   }
-  var P = Object.assign, h1 = Symbol.for("react.element"), Eo = Symbol.for("react.transitional.element"), mi = Symbol.for("react.portal"), cn = Symbol.for("react.fragment"), Lm = Symbol.for("react.strict_mode"), As = Symbol.for("react.profiler"), Vm = Symbol.for("react.consumer"), We = Symbol.for("react.context"), Gu = Symbol.for("react.forward_ref"), Cs = Symbol.for("react.suspense"), Os = Symbol.for("react.suspense_list"), qu = Symbol.for("react.memo"), qa = Symbol.for("react.lazy");
+  var P3 = Object.assign, h1 = Symbol.for("react.element"), Eo = Symbol.for("react.transitional.element"), mi = Symbol.for("react.portal"), cn = Symbol.for("react.fragment"), Lm = Symbol.for("react.strict_mode"), As = Symbol.for("react.profiler"), Vm = Symbol.for("react.consumer"), We = Symbol.for("react.context"), Gu = Symbol.for("react.forward_ref"), Cs = Symbol.for("react.suspense"), Os = Symbol.for("react.suspense_list"), qu = Symbol.for("react.memo"), qa = Symbol.for("react.lazy");
   Symbol.for("react.scope");
   var Ms = Symbol.for("react.activity"), d1 = Symbol.for("react.legacy_hidden");
   Symbol.for("react.tracing_marker");
@@ -16227,7 +16227,7 @@ Error generating stack: ` + l.message + `
       for (var r in t) t.hasOwnProperty(r) && (a = t[r], this[r] = a ? a(i) : i[r]);
       return this.isDefaultPrevented = (i.defaultPrevented != null ? i.defaultPrevented : i.returnValue === false) ? Do : fd, this.isPropagationStopped = fd, this;
     }
-    return P(e.prototype, { preventDefault: function() {
+    return P3(e.prototype, { preventDefault: function() {
       this.defaultPrevented = true;
       var a = this.nativeEvent;
       a && (a.preventDefault ? a.preventDefault() : typeof a.returnValue != "unknown" && (a.returnValue = false), this.isDefaultPrevented = Do);
@@ -16239,15 +16239,15 @@ Error generating stack: ` + l.message + `
   }
   var sl = { eventPhase: 0, bubbles: 0, cancelable: 0, timeStamp: function(t) {
     return t.timeStamp || Date.now();
-  }, defaultPrevented: 0, isTrusted: 0 }, Qr = Lt(sl), Pi = P({}, sl, { view: 0, detail: 0 }), G1 = Lt(Pi), ls, ns, si, Zr = P({}, Pi, { screenX: 0, screenY: 0, clientX: 0, clientY: 0, pageX: 0, pageY: 0, ctrlKey: 0, shiftKey: 0, altKey: 0, metaKey: 0, getModifierState: Zu, button: 0, buttons: 0, relatedTarget: function(t) {
+  }, defaultPrevented: 0, isTrusted: 0 }, Qr = Lt(sl), Pi = P3({}, sl, { view: 0, detail: 0 }), G1 = Lt(Pi), ls, ns, si, Zr = P3({}, Pi, { screenX: 0, screenY: 0, clientX: 0, clientY: 0, pageX: 0, pageY: 0, ctrlKey: 0, shiftKey: 0, altKey: 0, metaKey: 0, getModifierState: Zu, button: 0, buttons: 0, relatedTarget: function(t) {
     return t.relatedTarget === void 0 ? t.fromElement === t.srcElement ? t.toElement : t.fromElement : t.relatedTarget;
   }, movementX: function(t) {
     return "movementX" in t ? t.movementX : (t !== si && (si && t.type === "mousemove" ? (ls = t.screenX - si.screenX, ns = t.screenY - si.screenY) : ns = ls = 0, si = t), ls);
   }, movementY: function(t) {
     return "movementY" in t ? t.movementY : ns;
-  } }), hd = Lt(Zr), q1 = P({}, Zr, { dataTransfer: 0 }), Y1 = Lt(q1), j1 = P({}, Pi, { relatedTarget: 0 }), is = Lt(j1), L1 = P({}, sl, { animationName: 0, elapsedTime: 0, pseudoElement: 0 }), V1 = Lt(L1), X1 = P({}, sl, { clipboardData: function(t) {
+  } }), hd = Lt(Zr), q1 = P3({}, Zr, { dataTransfer: 0 }), Y1 = Lt(q1), j1 = P3({}, Pi, { relatedTarget: 0 }), is = Lt(j1), L1 = P3({}, sl, { animationName: 0, elapsedTime: 0, pseudoElement: 0 }), V1 = Lt(L1), X1 = P3({}, sl, { clipboardData: function(t) {
     return "clipboardData" in t ? t.clipboardData : window.clipboardData;
-  } }), Q1 = Lt(X1), Z1 = P({}, sl, { data: 0 }), dd = Lt(Z1), K1 = { Esc: "Escape", Spacebar: " ", Left: "ArrowLeft", Up: "ArrowUp", Right: "ArrowRight", Down: "ArrowDown", Del: "Delete", Win: "OS", Menu: "ContextMenu", Apps: "ContextMenu", Scroll: "ScrollLock", MozPrintableKey: "Unidentified" }, J1 = { 8: "Backspace", 9: "Tab", 12: "Clear", 13: "Enter", 16: "Shift", 17: "Control", 18: "Alt", 19: "Pause", 20: "CapsLock", 27: "Escape", 32: " ", 33: "PageUp", 34: "PageDown", 35: "End", 36: "Home", 37: "ArrowLeft", 38: "ArrowUp", 39: "ArrowRight", 40: "ArrowDown", 45: "Insert", 46: "Delete", 112: "F1", 113: "F2", 114: "F3", 115: "F4", 116: "F5", 117: "F6", 118: "F7", 119: "F8", 120: "F9", 121: "F10", 122: "F11", 123: "F12", 144: "NumLock", 145: "ScrollLock", 224: "Meta" }, $1 = { Alt: "altKey", Control: "ctrlKey", Meta: "metaKey", Shift: "shiftKey" };
+  } }), Q1 = Lt(X1), Z1 = P3({}, sl, { data: 0 }), dd = Lt(Z1), K1 = { Esc: "Escape", Spacebar: " ", Left: "ArrowLeft", Up: "ArrowUp", Right: "ArrowRight", Down: "ArrowDown", Del: "Delete", Win: "OS", Menu: "ContextMenu", Apps: "ContextMenu", Scroll: "ScrollLock", MozPrintableKey: "Unidentified" }, J1 = { 8: "Backspace", 9: "Tab", 12: "Clear", 13: "Enter", 16: "Shift", 17: "Control", 18: "Alt", 19: "Pause", 20: "CapsLock", 27: "Escape", 32: " ", 33: "PageUp", 34: "PageDown", 35: "End", 36: "Home", 37: "ArrowLeft", 38: "ArrowUp", 39: "ArrowRight", 40: "ArrowDown", 45: "Insert", 46: "Delete", 112: "F1", 113: "F2", 114: "F3", 115: "F4", 116: "F5", 117: "F6", 118: "F7", 119: "F8", 120: "F9", 121: "F10", 122: "F11", 123: "F12", 144: "NumLock", 145: "ScrollLock", 224: "Meta" }, $1 = { Alt: "altKey", Control: "ctrlKey", Meta: "metaKey", Shift: "shiftKey" };
   function F1(t) {
     var e = this.nativeEvent;
     return e.getModifierState ? e.getModifierState(t) : (t = $1[t]) ? !!e[t] : false;
@@ -16255,7 +16255,7 @@ Error generating stack: ` + l.message + `
   function Zu() {
     return F1;
   }
-  var W1 = P({}, Pi, { key: function(t) {
+  var W1 = P3({}, Pi, { key: function(t) {
     if (t.key) {
       var e = K1[t.key] || t.key;
       if (e !== "Unidentified") return e;
@@ -16267,11 +16267,11 @@ Error generating stack: ` + l.message + `
     return t.type === "keydown" || t.type === "keyup" ? t.keyCode : 0;
   }, which: function(t) {
     return t.type === "keypress" ? Io(t) : t.type === "keydown" || t.type === "keyup" ? t.keyCode : 0;
-  } }), I1 = Lt(W1), P1 = P({}, Zr, { pointerId: 0, width: 0, height: 0, pressure: 0, tangentialPressure: 0, tiltX: 0, tiltY: 0, twist: 0, pointerType: 0, isPrimary: 0 }), md = Lt(P1), tv = P({}, sl, { submitter: 0 }), ev = Lt(tv), av = P({}, Pi, { touches: 0, targetTouches: 0, changedTouches: 0, altKey: 0, metaKey: 0, ctrlKey: 0, shiftKey: 0, getModifierState: Zu }), lv = Lt(av), nv = P({}, sl, { propertyName: 0, elapsedTime: 0, pseudoElement: 0 }), iv = Lt(nv), ov = P({}, Zr, { deltaX: function(t) {
+  } }), I1 = Lt(W1), P1 = P3({}, Zr, { pointerId: 0, width: 0, height: 0, pressure: 0, tangentialPressure: 0, tiltX: 0, tiltY: 0, twist: 0, pointerType: 0, isPrimary: 0 }), md = Lt(P1), tv = P3({}, sl, { submitter: 0 }), ev = Lt(tv), av = P3({}, Pi, { touches: 0, targetTouches: 0, changedTouches: 0, altKey: 0, metaKey: 0, ctrlKey: 0, shiftKey: 0, getModifierState: Zu }), lv = Lt(av), nv = P3({}, sl, { propertyName: 0, elapsedTime: 0, pseudoElement: 0 }), iv = Lt(nv), ov = P3({}, Zr, { deltaX: function(t) {
     return "deltaX" in t ? t.deltaX : "wheelDeltaX" in t ? -t.wheelDeltaX : 0;
   }, deltaY: function(t) {
     return "deltaY" in t ? t.deltaY : "wheelDeltaY" in t ? -t.wheelDeltaY : "wheelDelta" in t ? -t.wheelDelta : 0;
-  }, deltaZ: 0, deltaMode: 0 }), rv = Lt(ov), cv = P({}, sl, { newState: 0, oldState: 0, source: 0 }), sv = Lt(cv), uv = [9, 13, 27, 32], Ku = wa && "CompositionEvent" in window, yi = null;
+  }, deltaZ: 0, deltaMode: 0 }), rv = Lt(ov), cv = P3({}, sl, { newState: 0, oldState: 0, source: 0 }), sv = Lt(cv), uv = [9, 13, 27, 32], Ku = wa && "CompositionEvent" in window, yi = null;
   wa && "documentMode" in document && (yi = document.documentMode);
   var fv = wa && "TextEvent" in window && !yi, up = wa && (!Ku || yi && 8 < yi && 11 >= yi), pd = " ", gd = false;
   function fp(t, e) {
@@ -17246,7 +17246,7 @@ Error generating stack: ` + l.message + `
                 _.flags = _.flags & -65537 | 128;
               case 0:
                 if (_ = S.payload, d = typeof _ == "function" ? _.call(O, v, d) : _, d == null) break t;
-                v = P({}, v, d);
+                v = P3({}, v, d);
                 break t;
               case 2:
                 Ya = true;
@@ -17942,7 +17942,7 @@ Error generating stack: ` + l.message + `
     return W3 !== null ? Qp(a, W3, t, e) : (a.baseState = t, [t, a.queue.dispatch]);
   }, useMemoCache: ff, useCacheRefresh: s0, useEffectEvent: Wp };
   function ds(t, e, a, l) {
-    e = t.memoizedState, a = a(l, e), a = a == null ? e : P({}, e, a), t.memoizedState = a, t.lanes === 0 && (t.updateQueue.baseState = a);
+    e = t.memoizedState, a = a(l, e), a = a == null ? e : P3({}, e, a), t.memoizedState = a, t.lanes === 0 && (t.updateQueue.baseState = a);
   }
   var lu = { enqueueSetState: function(t, e, a) {
     t = t._reactInternals;
@@ -17970,7 +17970,7 @@ Error generating stack: ` + l.message + `
       for (var l in e) l !== "ref" && (a[l] = e[l]);
     }
     if (t = t.defaultProps) {
-      a === e && (a = P({}, a));
+      a === e && (a = P3({}, a));
       for (var n in t) a[n] === void 0 && (a[n] = t[n]);
     }
     return a;
@@ -21760,7 +21760,7 @@ Error generating stack: ` + l.message + `
     this._scope = document.documentElement, this._selector = "::view-transition-" + t + "(" + e + ")";
   }
   Sl.prototype.animate = function(t, e) {
-    return e = typeof e == "number" ? { duration: e } : P({}, e), e.pseudoElement = this._selector, this._scope.animate(t, e);
+    return e = typeof e == "number" ? { duration: e } : P3({}, e), e.pseudoElement = this._selector, this._scope.animate(t, e);
   };
   Sl.prototype.getAnimations = function() {
     for (var t = this._scope, e = this._selector, a = t.getAnimations({ subtree: true }), l = [], n = 0; n < a.length; n++) {
@@ -22237,7 +22237,7 @@ Error generating stack: ` + l.message + `
         case "script":
           i = Jn(t);
       }
-      if (!(Oe.has(i) || (t = P({ rel: "preload", href: e === "image" && a && a.imageSrcSet ? void 0 : t, as: e }, a), Oe.set(i, t), l.querySelector(n) !== null || e === "style" && l.querySelector(no(i)) || e === "script" && l.querySelector(io(i))))) {
+      if (!(Oe.has(i) || (t = P3({ rel: "preload", href: e === "image" && a && a.imageSrcSet ? void 0 : t, as: e }, a), Oe.set(i, t), l.querySelector(n) !== null || e === "style" && l.querySelector(no(i)) || e === "script" && l.querySelector(io(i))))) {
         var o = l.createElement("link");
         Mt(o, "link", t), e === "style" && (o[vr] = true, o.onload = o.onerror = function() {
           Pm(o);
@@ -22259,7 +22259,7 @@ Error generating stack: ` + l.message + `
         case "script":
           i = Jn(t);
       }
-      if (!Oe.has(i) && (t = P({ rel: "modulepreload", href: t }, e), Oe.set(i, t), a.querySelector(n) === null)) {
+      if (!Oe.has(i) && (t = P3({ rel: "modulepreload", href: t }, e), Oe.set(i, t), a.querySelector(n) === null)) {
         switch (l) {
           case "audioworklet":
           case "paintworklet":
@@ -22284,7 +22284,7 @@ Error generating stack: ` + l.message + `
         var r = { loading: 0, preload: null };
         if (o = l.querySelector(no(i))) r.loading = 5;
         else {
-          t = P({ rel: "stylesheet", href: t, "data-precedence": e }, a), (a = Oe.get(i)) && Df(t, a);
+          t = P3({ rel: "stylesheet", href: t, "data-precedence": e }, a), (a = Oe.get(i)) && Df(t, a);
           var s = o = l.createElement("link");
           St(s), Mt(s, "link", t), s._p = new Promise(function(h, b) {
             s.onload = h, s.onerror = b;
@@ -22303,7 +22303,7 @@ Error generating stack: ` + l.message + `
     var a = Kn;
     if (a && t) {
       var l = yn(a).hoistableScripts, n = Jn(t), i = l.get(n);
-      i || (i = a.querySelector(io(n)), i || (t = P({ src: t, async: true }, e), (e = Oe.get(n)) && Rf(t, e), i = a.createElement("script"), St(i), Mt(i, "link", t), a.head.appendChild(i)), i = { type: "script", instance: i, count: 1, state: null }, l.set(n, i));
+      i || (i = a.querySelector(io(n)), i || (t = P3({ src: t, async: true }, e), (e = Oe.get(n)) && Rf(t, e), i = a.createElement("script"), St(i), Mt(i, "link", t), a.head.appendChild(i)), i = { type: "script", instance: i, count: 1, state: null }, l.set(n, i));
     }
   }
   function Fy(t, e) {
@@ -22311,7 +22311,7 @@ Error generating stack: ` + l.message + `
     var a = Kn;
     if (a && t) {
       var l = yn(a).hoistableScripts, n = Jn(t), i = l.get(n);
-      i || (i = a.querySelector(io(n)), i || (t = P({ src: t, async: true, type: "module" }, e), (e = Oe.get(n)) && Rf(t, e), i = a.createElement("script"), St(i), Mt(i, "link", t), a.head.appendChild(i)), i = { type: "script", instance: i, count: 1, state: null }, l.set(n, i));
+      i || (i = a.querySelector(io(n)), i || (t = P3({ src: t, async: true, type: "module" }, e), (e = Oe.get(n)) && Rf(t, e), i = a.createElement("script"), St(i), Mt(i, "link", t), a.head.appendChild(i)), i = { type: "script", instance: i, count: 1, state: null }, l.set(n, i));
     }
   }
   function Nm(t, e, a, l) {
@@ -22345,7 +22345,7 @@ Error generating stack: ` + l.message + `
     return 'link[rel="stylesheet"][' + t + "]";
   }
   function Tg(t) {
-    return P({}, t, { "data-precedence": t.precedence, precedence: null });
+    return P3({}, t, { "data-precedence": t.precedence, precedence: null });
   }
   function Wy(t, e, a, l) {
     if (e = t.querySelector('link[rel="preload"][as="style"][' + e + "]")) {
@@ -22371,7 +22371,7 @@ Error generating stack: ` + l.message + `
       case "style":
         var l = t.querySelector('style[data-href~="' + ke(a.href) + '"]');
         if (l) return e.instance = l, St(l), l;
-        var n = P({}, a, { "data-href": a.href, "data-precedence": a.precedence, href: null, precedence: null });
+        var n = P3({}, a, { "data-href": a.href, "data-precedence": a.precedence, href: null, precedence: null });
         return l = (t.ownerDocument || t).createElement("style"), St(l), Mt(l, "style", n), sr(l, a.precedence, t), e.instance = l;
       case "stylesheet":
         n = Gn(a.href);
@@ -22383,7 +22383,7 @@ Error generating stack: ` + l.message + `
           o.onload = r, o.onerror = s;
         }), Mt(i, "link", l), e.state.loading |= 4, sr(i, a.precedence, t), e.instance = i;
       case "script":
-        return i = Jn(a.src), (n = t.querySelector(io(i))) ? (e.instance = n, St(n), n) : (l = a, (n = Oe.get(i)) && (l = P({}, a), Rf(l, n)), t = t.ownerDocument || t, n = t.createElement("script"), St(n), Mt(n, "link", l), t.head.appendChild(n), e.instance = n);
+        return i = Jn(a.src), (n = t.querySelector(io(i))) ? (e.instance = n, St(n), n) : (l = a, (n = Oe.get(i)) && (l = P3({}, a), Rf(l, n)), t = t.ownerDocument || t, n = t.createElement("script"), St(n), Mt(n, "link", l), t.head.appendChild(n), e.instance = n);
       case "void":
         return null;
       default:
@@ -24761,8 +24761,8 @@ window.customCards.some((t) => t.type === "ha-hch5-live-card") || window.customC
     _tabs() {
       const extra = Array.isArray(this._config?.extra_tabs) ? this._config.extra_tabs.filter((t) => t && t.key && t.conditional).map((t) => ({ key: String(t.key), label: String(t.label || t.key), icon: String(t.icon || "mdi:tab"), conditional: String(t.conditional) })) : [];
       const hidden = new Set((Array.isArray(this._config?.hide_tabs) ? this._config.hide_tabs : []).map(String));
-      const lab = this._config?.tab_labels || {}, ico = this._config?.tab_icons || {};
-      return [...TABS3.map((t) => ({ ...t, label: lab[t.key] ? String(lab[t.key]) : t.label, icon: ico[t.key] ? String(ico[t.key]) : t.icon })), ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))].filter((t) => !hidden.has(t.key));
+      const lab = this._config?.tab_labels || {}, ico2 = this._config?.tab_icons || {};
+      return [...TABS3.map((t) => ({ ...t, label: lab[t.key] ? String(lab[t.key]) : t.label, icon: ico2[t.key] ? String(ico2[t.key]) : t.icon })), ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))].filter((t) => !hidden.has(t.key));
     }
     _readTab() {
       try {
@@ -32081,15 +32081,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc8 = (v) => this._escape(v);
+    const esc9 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc8(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc9(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc8(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc8(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc9(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc9(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -32109,10 +32109,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc8(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc9(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc8(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc8(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc9(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc9(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div></div>
@@ -32126,18 +32126,18 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc8(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc8(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc9(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc9(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc8(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc9(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc8(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc9(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -35805,7 +35805,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       decoration.innerHTML = this.decoration(item2);
       this._decorationType = item2.type;
     }
-    const esc8 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc9 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -35817,14 +35817,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc8(item2.value));
+    setText(".value", esc9(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc8(item2.detail || " "));
+    setText(".detail", esc9(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -35835,10 +35835,10 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc8(title)}">${inner}</span>`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc9(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)";
       const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc8(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc9(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -37331,7 +37331,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc9 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -37349,12 +37349,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc8((p.name || "?").trim()[0] || "?");
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc8(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    const initial = esc9((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc9(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc8(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc8(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc8(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc9(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc9(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc9(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -37369,7 +37369,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc9 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -37382,14 +37382,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const travel = Number(this._s(p.travel_time)?.state);
       const where = home ? "" : away ? Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc8((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc9((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc8(x.p.navigation_path || "")}" title="${esc8(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc9(x.p.navigation_path || "")}" title="${esc9(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc8(x.name)}</b><small>${esc8(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc9(x.name)}</b><small>${esc9(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -38443,6 +38443,887 @@ console.info(
   "color:#38bdf8;background:#161b22"
 );
 
+// src/cards/th-weather-card/th-weather-card.js
+var VWH_VER = "3.2.0";
+var fmt = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
+var esc5 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var DIR8 = ["N", "N\xD8", "\xD8", "S\xD8", "S", "SV", "V", "NV"];
+var P = {
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .6-8A6 6 0 0 0 6.5 11.6 3.5 3.5 0 0 0 7 18.5Z"/>',
+  pcloud: '<path d="M9 4.5v1.3M4.2 6.6l1 1M2.8 11.5h1.4M13.8 6.6l-1 1"/><path d="M6.4 10.4A3.6 3.6 0 0 1 12.6 9"/><path d="M8.5 19.5h9a3.5 3.5 0 0 0 .5-7 5 5 0 0 0-9.4 1.6A2.8 2.8 0 0 0 8.5 19.5Z"/>',
+  pmoon: '<path d="M12.5 9.2A4.2 4.2 0 0 1 7 4.3a4.6 4.6 0 1 0 5.5 4.9Z"/><path d="M8.5 19.5h9a3.5 3.5 0 0 0 .5-7 5 5 0 0 0-9.4 1.6A2.8 2.8 0 0 0 8.5 19.5Z"/>',
+  rain: '<path d="M7 15h10.5a4 4 0 0 0 .6-8A6 6 0 0 0 6.5 8.1 3.5 3.5 0 0 0 7 15Z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+  snow: '<path d="M7 14h10.5a4 4 0 0 0 .6-8A6 6 0 0 0 6.5 7.1 3.5 3.5 0 0 0 7 14Z"/><path d="M8 18h.01M12 20h.01M16 18h.01M10 22h.01M14 22h.01"/>',
+  bolt: '<path d="M7 14h10.5a4 4 0 0 0 .6-8A6 6 0 0 0 6.5 7.1 3.5 3.5 0 0 0 7 14Z"/><path d="m12.5 14-2 4h3l-2 4"/>',
+  fog: '<path d="M4 9h16M3 13h18M5 17h14"/>',
+  wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 17h7"/>',
+  drop: '<path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5Z"/>',
+  gauge: '<path d="M4 16a8 8 0 1 1 16 0"/><path d="m12 16 4-5"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+  dew: '<path d="M12 3.5s5 5.4 5 8.9a5 5 0 0 1-10 0c0-3.5 5-8.9 5-8.9Z"/><path d="M5 21h14"/>',
+  uv: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+  gust: '<path d="M3 8h9a2.5 2.5 0 1 0-2.5-2.5M3 12h14a3 3 0 1 1-3 3M3 16h6"/>',
+  alert: '<path d="M12 3 2.5 20h19Z"/><path d="M12 10v4M12 17h.01"/>',
+  flash: '<path d="M13 2 4 14h7l-1 8 9-12h-7Z"/>',
+  arrow: '<path d="M12 4v16M6 10l6-6 6 6"/>',
+  alert2: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>'
+};
+var ico = (k, s = 18, sw = 1.6) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none" aria-hidden="true">${P[k] || ""}</svg>`;
+var CND = {
+  "clear-night": ["Klart", "moon"],
+  sunny: ["Sol", "sun"],
+  partlycloudy: ["Let skyet", "pcloud"],
+  cloudy: ["Overskyet", "cloud"],
+  rainy: ["Regn", "rain"],
+  pouring: ["Kraftig regn", "rain"],
+  snowy: ["Sne", "snow"],
+  "snowy-rainy": ["Slud", "snow"],
+  fog: ["T\xE5ge", "fog"],
+  lightning: ["Torden", "bolt"],
+  "lightning-rainy": ["Torden og regn", "bolt"],
+  windy: ["Bl\xE6sende", "wind"],
+  "windy-variant": ["Bl\xE6sende", "wind"],
+  hail: ["Hagl", "snow"],
+  exceptional: ["Us\xE6dvanligt", "alert"]
+};
+var cnd = (c2, night) => {
+  const r = CND[c2] || [c2 || "\u2013", "cloud"];
+  if (night && c2 === "partlycloudy") return ["Let skyet", "pmoon"];
+  if (night && c2 === "sunny") return ["Klart", "moon"];
+  return r;
+};
+var BEAU = [[0.3, "Stille"], [1.6, "N\xE6sten stille"], [3.4, "Svag vind"], [5.5, "Let vind"], [8, "J\xE6vn vind"], [10.8, "Frisk vind"], [13.9, "H\xE5rd vind"], [17.2, "Stiv kuling"], [20.8, "H\xE5rd kuling"], [24.5, "Stormende kuling"], [28.5, "Storm"], [32.7, "St\xE6rk storm"], [1e9, "Orkan"]];
+var beau = (v) => (BEAU.find((b) => v < b[0]) || BEAU[12])[1];
+var MOON = ["Nym\xE5ne", "Tiltagende segl", "F\xF8rste kvarter", "Tiltagende m\xE5ne", "Fuldm\xE5ne", "Aftagende m\xE5ne", "Sidste kvarter", "Aftagende segl"];
+var moonPhase = (d = /* @__PURE__ */ new Date()) => {
+  const p = (d - Date.UTC(2e3, 0, 6, 18, 14)) / 864e5 / 29.530588853 % 1;
+  return p < 0 ? p + 1 : p;
+};
+var CLOUD = "M18 50h29a11 11 0 0 0 1.6-21.9A15.5 15.5 0 0 0 19 26.5 11.8 11.8 0 0 0 18 50Z";
+var bigIcon = (k, mp) => {
+  const defs = `<defs><radialGradient id="bs" cx=".38" cy=".35"><stop offset="0" stop-color="#fff7de"/><stop offset=".55" stop-color="#f6d58f"/><stop offset="1" stop-color="#e2a84e"/></radialGradient>
+    <linearGradient id="bc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fb"/><stop offset="1" stop-color="#aeb8cc"/></linearGradient>
+    <linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa6bd"/><stop offset="1" stop-color="#5d6a82"/></linearGradient>
+    <radialGradient id="bm" cx=".4" cy=".35"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d2ec"/></radialGradient></defs>`;
+  const sun = (x, y, r, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><circle r="${r + 10}" fill="#f6d58f" opacity=".16" class="pulse"/><g class="spin">${Array.from({ length: 12 }, (_, i) => `<path d="M0 ${-r - 5}v-6" stroke="#f6d58f" stroke-width="2.6" stroke-linecap="round" transform="rotate(${i * 30})" opacity="${i % 2 ? 0.55 : 0.95}"/>`).join("")}</g><circle r="${r}" fill="url(#bs)"/></g>`;
+  const moon = (x, y, r) => {
+    const p = mp ?? moonPhase(), k3 = Math.cos(2 * Math.PI * p), wax = p < 0.5, ex2 = Math.abs(k3) * r;
+    const lit = wax ? `M0 ${-r}A${r} ${r} 0 0 1 0 ${r}A${ex2} ${r} 0 0 ${k3 > 0 ? 0 : 1} 0 ${-r}Z` : `M0 ${-r}A${r} ${r} 0 0 0 0 ${r}A${ex2} ${r} 0 0 ${k3 > 0 ? 1 : 0} 0 ${-r}Z`;
+    return `<g transform="translate(${x} ${y})"><circle r="${r + 9}" fill="#c9d2ec" opacity=".12" class="pulse"/><circle r="${r}" fill="#2a3150" stroke="rgba(220,228,255,.28)" stroke-width="1"/><path d="${lit}" fill="url(#bm)"/><circle cx="${-r * 0.3}" cy="${-r * 0.2}" r="${r * 0.14}" fill="#000" opacity=".06"/><circle cx="${r * 0.25}" cy="${r * 0.35}" r="${r * 0.1}" fill="#000" opacity=".06"/></g>`;
+  };
+  const cloud = (x, y, s, fill = "url(#bc)", cls = "drift") => `<g class="${cls}"><path d="${CLOUD}" transform="translate(${x} ${y}) scale(${s})" fill="${fill}"/></g>`;
+  const drops = (col, snow) => [18, 30, 42].map((x, i) => snow ? `<circle cx="${x}" cy="54" r="2.2" fill="${col}" class="flake" style="animation-delay:${i * 0.45}s"/>` : `<path d="M${x} 52l-2.5 7" stroke="${col}" stroke-width="2.6" stroke-linecap="round" class="drop" style="animation-delay:${i * 0.3}s"/>`).join("");
+  let b = "";
+  if (k === "sun") b = sun(32, 32, 13);
+  else if (k === "moon") b = moon(32, 32, 15) + `<path d="M52 14l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1Z" fill="#fff" class="twk"/><path d="M12 46l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7Z" fill="#fff" class="twk" style="animation-delay:1.2s"/>`;
+  else if (k === "pcloud") b = sun(24, 24, 10) + cloud(6, 10, 0.92);
+  else if (k === "pmoon") b = moon(24, 23, 11) + cloud(6, 10, 0.92);
+  else if (k === "cloud") b = cloud(-4, -6, 0.8, "url(#bd)", "drift2") + cloud(4, 6, 0.92);
+  else if (k === "rain") b = cloud(2, -4, 0.95, "url(#bd)") + drops("#8ed1ff");
+  else if (k === "snow") b = cloud(2, -4, 0.95) + drops("#ffffff", 1);
+  else if (k === "bolt") b = cloud(2, -6, 0.95, "url(#bd)") + `<path d="M34 40l-7 11h6l-3 9 10-13h-6l3-7Z" fill="#ffd27a" class="flash"/>`;
+  else if (k === "fog") b = cloud(2, -8, 0.9) + [44, 51, 58].map((y, i) => `<path d="M${10 + i * 3} ${y}h${40 - i * 6}" stroke="#c7cfdd" stroke-width="3" stroke-linecap="round" class="fogl" style="animation-delay:${i * 0.6}s"/>`).join("");
+  else if (k === "wind") b = [20, 32, 44].map((y, i) => `<path d="M8 ${y}h${34 - i * 6}a6 6 0 1 0-6-6" fill="none" stroke="#c7cfdd" stroke-width="3" stroke-linecap="round" class="gustl" style="animation-delay:${i * 0.4}s"/>`).join("");
+  else b = cloud(4, 0, 0.92);
+  return `<svg viewBox="0 0 64 64" class="bi" aria-hidden="true">${defs}${b}</svg>`;
+};
+var CSS2 = `
+:host{display:block;--ink:#f4f1ea;--mut:rgba(244,241,234,.58);--faint:rgba(244,241,234,.32);--hair:rgba(244,241,234,.09);
+  --gold:#e8c37e;--ice:#8ed1ff;--emer:#6be3a8;--coral:#ff9e7a;--red:#ff6b7d;--amber:#ffd27a;--vio:#b7a4ff;
+  color:var(--ink);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}button{font:inherit;color:inherit}
+.c{position:relative;overflow:hidden;isolation:isolate;border-radius:26px;min-width:0;
+  background:rgba(10,12,18,.82);box-shadow:0 30px 60px -40px #000,inset 0 1px 0 rgba(255,255,255,.07);animation:tin 1s cubic-bezier(.16,1,.3,1) both}
+.c::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:5;
+  background:linear-gradient(150deg,rgba(255,255,255,.22),rgba(255,255,255,.03) 30%,rgba(255,255,255,.02) 70%,rgba(142,209,255,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+@keyframes tin{from{opacity:0;transform:translateY(16px);filter:blur(6px)}}
+/* himmel */
+.sky{position:absolute;inset:0;z-index:-1;transition:background 2.5s;overflow:hidden}
+.sky::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(8,9,14,.55) 70%,rgba(8,9,14,.9))}
+.glow{position:absolute;width:520px;height:520px;right:-120px;top:-260px;border-radius:50%;filter:blur(10px);animation:gl 14s ease-in-out infinite}
+@keyframes gl{50%{transform:translate(-20px,14px) scale(1.06)}}
+.st{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:tw 3.4s ease-in-out infinite}@keyframes tw{50%{opacity:.15}}
+.shoot{position:absolute;top:12%;left:70%;width:120px;height:1.5px;background:linear-gradient(90deg,#fff,transparent);opacity:0;transform:rotate(-24deg);animation:sh 11s 3s ease-in infinite}
+@keyframes sh{0%,92%{opacity:0;transform:rotate(-24deg) translateX(0)}93%{opacity:1}100%{opacity:0;transform:rotate(-24deg) translateX(-420px)}}
+.cl{position:absolute;opacity:.0;animation:cl linear infinite,fi 2s forwards}
+.cl svg{display:block;width:100%;height:auto;filter:blur(9px)}
+@keyframes cl{from{translate:-40% 0}to{translate:140vw 0}}
+.rd{position:absolute;top:-30px;width:1.2px;height:22px;background:linear-gradient(transparent,rgba(170,205,255,.65));animation:rd linear infinite;rotate:12deg}
+@keyframes rd{to{transform:translateY(760px)}}
+.sf{position:absolute;top:-10px;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.85);filter:blur(.4px);animation:sf linear infinite}
+@keyframes sf{to{transform:translate(40px,760px)}}
+.fogb{position:absolute;left:-20%;width:140%;height:70px;border-radius:50%;background:rgba(220,228,240,.07);filter:blur(16px);animation:fg 18s ease-in-out infinite alternate}
+@keyframes fg{to{transform:translateX(12%)}}
+.lt{position:absolute;inset:0;background:radial-gradient(70% 60% at 60% 10%,rgba(220,225,255,.5),transparent 60%);opacity:0;animation:lt 7s infinite}
+@keyframes lt{0%,88%,94%,100%{opacity:0}89%,92%{opacity:1}90%{opacity:.2}}
+/* top */
+.top{display:flex;align-items:center;gap:10px;padding:18px 22px 0;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.top .loc{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .loc i{width:7px;height:7px;border-radius:50%;background:var(--emer);box-shadow:0 0 0 3px rgba(107,227,168,.18);animation:bl 2.4s infinite;flex:none}@keyframes bl{50%{opacity:.35}}
+.top .r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;white-space:nowrap;color:var(--c,var(--emer));
+  background:color-mix(in srgb,var(--c,var(--emer)) 13%,rgba(0,0,0,.25));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--emer)) 30%,transparent);backdrop-filter:blur(8px)}
+.chip.pl i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite}
+/* nu */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;padding:10px 22px 0;align-items:center}
+.now{display:flex;align-items:center;gap:16px;min-width:0}
+.bi{width:clamp(78px,9vw,112px);height:auto;flex:none;overflow:visible;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45))}
+.big{font-size:clamp(66px,8vw,104px);font-weight:200;letter-spacing:-.055em;line-height:.9}
+.big sup{font-size:.42em;font-weight:300;vertical-align:.95em;margin-left:2px;color:var(--mut)}
+.cd{font-size:19px;font-weight:500;letter-spacing:-.01em}
+.meta{font-size:12.5px;color:var(--mut);margin-top:7px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.meta b{color:var(--ink);font-weight:500}
+.hl{display:inline-flex;gap:8px}.hl .u{color:var(--coral)}.hl .d{color:var(--ice)}
+.cast{display:flex;align-items:center;gap:10px;margin:14px 22px 0;padding:10px 14px;border-radius:15px;font-size:13px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--ice)) 14%,transparent),rgba(255,255,255,.02));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--ice)) 22%,transparent)}
+.cast .ic{color:var(--c,var(--ice));flex:none}.cast b{font-weight:600}.cast small{margin-left:auto;color:var(--mut);font-size:11.5px;white-space:nowrap}
+.cast .bar{display:flex;gap:2px;align-items:flex-end;height:18px;margin-left:auto;flex:none}.cast .bar i{width:4px;border-radius:2px;background:var(--ice);opacity:.85;transform-origin:bottom;animation:gr .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes gr{from{transform:scaleY(0)}}
+/* sol/m\xE5ne */
+.cel{position:relative;padding:12px 14px 10px;border-radius:20px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px var(--hair);backdrop-filter:blur(10px)}
+.cel svg{display:block;width:100%;height:auto;overflow:visible}
+.cel .row{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:2px}.cel .row b{display:block;color:var(--ink);font-size:13px;font-weight:500}
+.cel .ttl{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between}
+.cel .ttl span:last-child{letter-spacing:.02em;text-transform:none;color:var(--gold)}
+.mn{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}.mn svg{width:72px}
+.mn b{display:block;font-size:15px;font-weight:500}.mn small{display:block;font-size:11.5px;color:var(--mut);margin-top:3px}
+/* m\xE5linger */
+.tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:14px 22px 0}
+@media(max-width:1250px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tl{position:relative;padding:11px 12px 12px;border-radius:17px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--hair);min-width:0;overflow:hidden;
+  animation:tin .8s cubic-bezier(.16,1,.3,1) both;transition:transform .35s cubic-bezier(.16,1,.3,1),background .35s}
+.tl:hover{transform:translateY(-2px);background:rgba(255,255,255,.065)}
+.tl .k{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.tl .k svg{color:var(--a,var(--gold))}
+.tl .v{font-size:21px;font-weight:300;letter-spacing:-.03em;margin-top:8px;white-space:nowrap}.tl .v small{font-size:11px;font-weight:500;color:var(--mut);margin-left:3px;letter-spacing:0}
+.tl .s{font-size:10.5px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .vis{position:absolute;right:9px;top:26px;width:42px;height:42px}.tl.hv .v,.tl.hv .s{max-width:calc(100% - 48px)}
+.tl .meter{height:4px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:8px;position:relative;overflow:visible}
+.tl .meter i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--a);width:var(--p,0%);transition:width 1.4s cubic-bezier(.16,1,.3,1)}
+.tl .meter em{position:absolute;top:50%;left:var(--p,0%);width:9px;height:9px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 0 2px #0c0e14,0 0 10px var(--a);transition:left 1.4s cubic-bezier(.16,1,.3,1)}
+.tl .meter.uv{background:linear-gradient(90deg,#6be3a8,#ffd27a 30%,#ff9e7a 55%,#ff6b7d 75%,#b7a4ff)}
+.ndl{transition:transform 1.6s cubic-bezier(.3,1.4,.5,1);transform-origin:22px 22px}
+.ring{transition:stroke-dashoffset 1.6s cubic-bezier(.16,1,.3,1)}
+/* time for time */
+.hh{white-space:nowrap;display:flex;align-items:center;gap:10px;padding:18px 22px 6px;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.hh .sum{text-transform:none;letter-spacing:.01em;font-weight:500;font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{margin-left:auto;display:inline-flex;gap:2px;padding:3px;border-radius:11px;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px var(--hair);flex:none}
+.tabs button{appearance:none;border:0;cursor:pointer;padding:4px 11px;border-radius:8px;background:transparent;color:var(--mut);font-size:11px;font-weight:600;letter-spacing:0;transition:all .3s}
+.tabs button.on{background:rgba(255,255,255,.11);color:var(--ink)}
+.hs{position:relative;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:0 22px 18px;-webkit-mask:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.hs::-webkit-scrollbar{display:none}
+.hs .in{position:relative}
+.hs svg{display:block;overflow:visible;touch-action:pan-x}
+.hs text{font-family:inherit}
+.tip{position:absolute;top:4px;z-index:4;pointer-events:none;width:150px;padding:10px 12px;border-radius:14px;font-size:11px;line-height:1.55;color:var(--mut);
+  background:rgba(14,16,24,.92);box-shadow:0 16px 40px -10px #000,inset 0 0 0 1px rgba(255,255,255,.1);backdrop-filter:blur(10px);opacity:0;transition:opacity .2s,left .12s}
+.tip.on{opacity:1}.tip b{color:var(--ink);font-weight:500}.tip .t{color:var(--gold);font-weight:600;font-size:11.5px;margin-bottom:3px;display:flex;justify-content:space-between}
+.draw{stroke-dasharray:4000;stroke-dashoffset:4000;animation:drw 2.4s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
+.fi{opacity:0;animation:fi 1.2s .5s forwards}@keyframes fi{to{opacity:1}}
+.gbar{transform-box:fill-box;transform-origin:bottom;animation:gr .9s cubic-bezier(.16,1,.3,1) both}
+.nowdot{animation:pd 2s ease-in-out infinite}@keyframes pd{50%{r:9;opacity:.15}}
+/* ikon-animationer */
+.spin{animation:spin 26s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.pulse{animation:pls 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes pls{50%{transform:scale(1.18);opacity:.06}}
+.drift{animation:dr 7s ease-in-out infinite}.drift2{animation:dr 9s ease-in-out infinite reverse}@keyframes dr{50%{transform:translateX(3px)}}
+.drop{animation:dp 1.1s linear infinite}@keyframes dp{0%{transform:translateY(-6px);opacity:0}30%{opacity:1}100%{transform:translateY(8px);opacity:0}}
+.flake{animation:fk 2.2s linear infinite}@keyframes fk{0%{transform:translate(0,-8px);opacity:0}30%{opacity:1}100%{transform:translate(3px,8px);opacity:0}}
+.flash{animation:fl 3.2s infinite}@keyframes fl{0%,60%,70%,100%{opacity:1}64%,67%{opacity:.2}}
+.twk{animation:tk 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes tk{50%{transform:scale(.4);opacity:.3}}
+.fogl{animation:fo 4s ease-in-out infinite alternate}@keyframes fo{to{transform:translateX(5px)}}
+.gustl{stroke-dasharray:60;animation:gs 2.8s ease-in-out infinite}@keyframes gs{0%{stroke-dashoffset:60}60%,100%{stroke-dashoffset:0}}
+@media(max-width:820px){.main{grid-template-columns:1fr}}
+@media(max-width:600px){.top,.main,.hh{padding-left:16px;padding-right:16px}.cast{margin-left:16px;margin-right:16px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 16px 0;gap:8px}.hs{padding:0 16px 16px}
+  .now{flex-wrap:wrap;gap:6px 14px}.now>div:last-child{flex-basis:100%}.cd{font-size:17px}.meta{margin-top:4px}.hh .sum{display:none}
+  .cel{padding:10px 12px}.mn svg{width:52px!important}.mn small{display:inline;margin-right:8px}.cast small{display:none}.bi{width:80px}}
+/* detaljer */
+.c{border-left:calc(var(--dashboard-left-accent-width,0) * 4px) solid var(--dashboard-accent,var(--ice))}
+.warns{display:grid;gap:6px;margin:14px 22px 0}
+.wn{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;font-size:12px;color:var(--mut);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 32%,transparent)}
+.wn svg{color:var(--c);margin-top:1px}.wn b{display:block;color:var(--ink);font-size:13px;font-weight:600}
+.dt{border-top:1px solid var(--hair);margin-top:4px;padding:14px 22px 20px;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.05))}
+.dtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:3px;border-radius:13px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px var(--hair)}
+.dtabs::-webkit-scrollbar{display:none}
+.dtabs button{appearance:none;border:0;cursor:pointer;flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:10px;background:transparent;color:var(--mut);font-size:11.5px;font-weight:600;white-space:nowrap;transition:all .3s}
+.dtabs button ha-icon{--mdc-icon-size:15px}
+.dtabs button.on{background:rgba(255,255,255,.1);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.dtabs button.on ha-icon{color:var(--dashboard-accent,var(--gold))}
+.dbody{margin-top:12px;animation:tin .6s cubic-bezier(.16,1,.3,1) both}
+.dsub{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+.dsub span{margin-left:auto;letter-spacing:.02em;text-transform:none;font-weight:500;color:var(--faint)}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.dc{position:relative;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px var(--hair);min-width:0;animation:tin .6s cubic-bezier(.16,1,.3,1) both}
+.dc .n{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc .n ha-icon{--mdc-icon-size:14px;color:var(--dashboard-accent,var(--gold));opacity:.85;flex:none}
+.dc b{display:block;font-size:17px;font-weight:400;letter-spacing:-.02em;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dc b small{font-size:10.5px;color:var(--mut);margin-left:3px;font-weight:500}
+.dc em{display:block;font-style:normal;font-size:10px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc .rb{height:4px;border-radius:4px;background:rgba(255,255,255,.07);margin-top:7px;overflow:hidden}.dc .rb i{display:block;height:100%;border-radius:4px;background:var(--c);transform-origin:left;animation:grx 1.1s cubic-bezier(.16,1,.3,1) both}
+@keyframes grx{from{transform:scaleX(0)}}
+.dc.hot{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent),0 0 24px -12px var(--c)}
+.dt{container-type:inline-size}
+.rad{display:grid;gap:12px}
+.rimgs{display:grid;grid-template-columns:1fr;gap:12px}
+.rimg[data-k]:not(.on){display:none}
+
+/* "Nedb\xF8r og lyn lige nu" st\xE5r til venstre for kortene s\xE5 snart der er plads, ingen tom plads under (Claude AI, 2026-10-13) */
+@container (min-width:760px){.rad{grid-template-columns:clamp(240px,26%,380px) minmax(0,1fr);align-items:stretch}.rad .rside{order:-1;display:flex;flex-direction:column}.rad .rside .dg{flex:1;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:1fr}.rad .rside .dc{display:flex;flex-direction:column;justify-content:center}}
+@container (min-width:1200px){.rimgs{grid-template-columns:1fr 1fr}.rimg[data-k]:not(.on){display:block}.rimg .rtabs{display:none}}
+.rimg{position:relative;aspect-ratio:4/3;width:100%;border-radius:16px;overflow:hidden;background:#05060a;box-shadow:inset 0 0 0 1px var(--hair);cursor:zoom-in}
+.rimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .8s}
+.rimg .sw{position:absolute;left:50%;top:50%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:conic-gradient(from 0deg,rgba(142,209,255,.22),transparent 18%);animation:swp 6s linear infinite;pointer-events:none;mix-blend-mode:screen}
+@keyframes swp{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.rimg .pin{position:absolute;left:50%;top:50%;width:11px;height:11px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(232,195,126,.3)}
+.rimg .pin::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid var(--gold);animation:rng 2s ease-out infinite}@keyframes rng{from{opacity:1;transform:scale(.5)}to{opacity:0;transform:scale(2.2)}}
+.rimg .rt{position:absolute;left:10px;bottom:10px;padding:4px 9px;border-radius:99px;font-size:10.5px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+.rimg .rtabs{position:absolute;right:10px;top:10px;margin:0}
+.pl{display:grid;gap:6px}
+.pr{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px var(--hair);animation:tin .6s cubic-bezier(.16,1,.3,1) both}
+.pr b{font-size:13px;font-weight:500}.pr small{display:block;font-size:10.5px;color:var(--mut)}
+.pd{display:flex;gap:4px}.pd i{width:100%;max-width:34px;height:6px;border-radius:4px;background:rgba(255,255,255,.08)}.pd i.f{background:var(--c);box-shadow:0 0 8px -2px var(--c)}
+.pf{display:flex;gap:10px;font-size:10.5px;color:var(--mut)}.pf span{display:flex;align-items:center;gap:4px}.pf i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.full{position:fixed;inset:0;z-index:1000;background:rgba(3,4,8,.92);display:grid;place-items:center;backdrop-filter:blur(8px);animation:fi .25s both;opacity:1}
+.full img{max-width:94vw;max-height:84vh;border-radius:18px;box-shadow:0 30px 80px #000}
+.full button{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:20px}
+@media(max-width:600px){.dt{padding:12px 16px 16px}.warns{margin:12px 16px 0}.dg{grid-template-columns:repeat(2,minmax(0,1fr))}.pr{grid-template-columns:1fr auto}.pr .pd{grid-column:span 2;order:3}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+`;
+var ThWeatherCard = class extends HTMLElement {
+  static getStubConfig() {
+    return { weather: "weather.dmi_vejr" };
+  }
+  setConfig(c2) {
+    this.cfg = c2 || {};
+    this._hrs = this.cfg.hours === 48 ? 48 : 24;
+  }
+  getCardSize() {
+    return 9;
+  }
+  get W() {
+    return this.cfg.weather || "weather.dmi_vejr";
+  }
+  get PX() {
+    return this.cfg.prefix || "sensor.dmi_vejr_";
+  }
+  set hass(h) {
+    this._h = h;
+    if (!this._r) this.build();
+    const t = Date.now();
+    if (!this._t || t - this._t > 800) {
+      this._t = t;
+      this.update();
+    } else if (!this._q) this._q = setTimeout(() => {
+      this._q = null;
+      this._t = Date.now();
+      this.update();
+    }, 800);
+    if (!this._unsub && h.connection && this.isConnected) this.subscribe();
+  }
+  s(e) {
+    const x = this._h?.states[e];
+    return x && !["unknown", "unavailable"].includes(x.state) ? x : null;
+  }
+  n(e) {
+    const x = this.s(e), v = x ? parseFloat(x.state) : NaN;
+    return Number.isFinite(v) ? v : NaN;
+  }
+  d(k) {
+    return this.n(this.PX + k);
+  }
+  $(id) {
+    return this._r.getElementById(id);
+  }
+  set(id, h) {
+    const e = this.$(id);
+    if (e && e._v !== h) {
+      e.innerHTML = h;
+      e._v = h;
+    }
+  }
+  pick(...v) {
+    return v.find(Number.isFinite) ?? NaN;
+  }
+  build() {
+    this._r = this.attachShadow({ mode: "open" });
+    if (this.cfg.padding) this.style.padding = this.cfg.padding;
+    const tile2 = (id, k, ic, a, vis = "", meter = "") => `<div class="tl${vis ? " hv" : ""}" id="t-${id}" style="--a:${a};animation-delay:${180 + this._ti++ * 55}ms"><div class="k">${ico(ic, 13, 1.8)}${k}</div>${vis}<div class="v" id="v-${id}">\u2013</div>${meter}<div class="s" id="s-${id}"></div></div>`;
+    this._ti = 0;
+    const ring = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/><circle id="hum-r" class="ring" cx="22" cy="22" r="17" fill="none" stroke="#8ed1ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="106.8" transform="rotate(-90 22 22)"/></svg>`;
+    const comp = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>${[0, 90, 180, 270].map((a) => `<path d="M22 4v4" stroke="rgba(255,255,255,.4)" stroke-width="1.4" transform="rotate(${a} 22 22)"/>`).join("")}
+      <text x="22" y="13.5" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,.55)" font-weight="700">N</text><g id="w-ndl" class="ndl"><path d="M22 9l3.5 13h-7Z" fill="#e8c37e"/><path d="M22 35l3.5-13h-7Z" fill="rgba(255,255,255,.3)"/></g><circle cx="22" cy="22" r="2" fill="#0c0e14"/></svg>`;
+    const baro = `<svg class="vis" viewBox="0 0 44 44"><path d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4" stroke-linecap="round"/><path id="p-arc" class="ring" d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="#b7a4ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="47.1" stroke-dashoffset="47.1"/><g id="p-ndl" class="ndl" style="transform-origin:22px 30px"><path d="M22 30V17" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></g><circle cx="22" cy="30" r="2.4" fill="#fff"/></svg>`;
+    const spark = `<svg class="vis" viewBox="0 0 44 44" id="rr-sp"></svg>`;
+    this._r.innerHTML = `<style>${CSS2}</style><div class="c" id="c"><div class="sky" id="sky"></div>
+      <div class="top"><div class="loc"><i></i><span id="loc">Vejret nu</span></div><div class="r" id="chips"></div></div>
+      <div class="main"><div class="now"><div id="bi"></div><div><div class="big" id="temp">\u2013</div></div><div style="min-width:0"><div class="cd" id="cd">\u2013</div><div class="meta" id="meta"></div></div></div>
+        <div class="cel" id="cel"></div></div>
+      <div class="cast" id="cast"></div>
+      <div class="tiles">${tile2("wind", "Vind", "wind", "#e8c37e", comp)}${tile2("gust", "Vindst\xF8d", "gust", "#ff9e7a", "", '<div class="meter"><i></i></div>')}${tile2("hum", "Fugtighed", "drop", "#8ed1ff", ring)}${tile2("rain", "Regnrisiko", "rain", "#8ed1ff", spark)}
+        ${tile2("pres", "Lufttryk", "gauge", "#b7a4ff", baro)}${tile2("dew", "Dugpunkt", "dew", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile2("vis", "Sigtbarhed", "eye", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile2("uv", "UV\u2011indeks", "uv", "#ffd27a", "", '<div class="meter uv"><em></em></div>')}</div>
+      <div class="hh"><span>Time for time</span><span class="sum" id="hsum"></span><div class="tabs" id="tabs"><button data-h="24">24 t</button><button data-h="48">48 t</button></div></div>
+      <div class="hs" id="hs"><div class="in" id="hin"><svg id="hsvg"></svg><div class="tip" id="tip"></div></div></div>
+      <div class="warns" id="warns"></div><div class="dt" id="dt" hidden><div class="dtabs" id="dtabs"></div><div class="dbody" id="dbody"></div></div></div>`;
+    this._r.querySelectorAll("#tabs button").forEach((b) => {
+      b.classList.toggle("on", +b.dataset.h === this._hrs);
+      b.onclick = () => {
+        this._hrs = +b.dataset.h;
+        this._r.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
+        this._hk = null;
+        this.hourly();
+      };
+    });
+    const svg = this.$("hsvg"), tip = this.$("tip");
+    svg.addEventListener("pointermove", (e) => this.scrub(e));
+    svg.addEventListener("pointerleave", () => {
+      tip.classList.remove("on");
+      const h = this._r.getElementById("hl");
+      if (h) h.setAttribute("opacity", 0);
+    });
+    this._ro = new ResizeObserver(() => {
+      const w = this.$("hs").clientWidth;
+      if (Math.abs(w - (this._hw || 0)) > 20) {
+        this._hw = w;
+        this._hk = null;
+        this.hourly();
+      }
+    });
+    this._ro.observe(this.$("hs"));
+    this._tick = setInterval(() => {
+      this._ck = null;
+      this.update();
+    }, 6e4);
+    this._rtk = setInterval(() => {
+      if (this._dtab === "radar") {
+        this._dk = null;
+        this.details(true);
+      }
+    }, 5 * 6e4);
+  }
+  connectedCallback() {
+    if (this._h && !this._unsub) this.subscribe();
+    if (this._r && !this._rtk) this._rtk = setInterval(() => {
+      if (this._dtab === "radar") {
+        this._dk = null;
+        this.details(true);
+      }
+    }, 5 * 6e4);
+  }
+  disconnectedCallback() {
+    clearInterval(this._rtk);
+    this._rtk = null;
+    this._unsub?.forEach((u3) => Promise.resolve(u3).then((f) => typeof f === "function" && f()).catch(() => {
+    }));
+    this._unsub = null;
+  }
+  subscribe() {
+    if (!this._h?.connection) return;
+    this._unsub = [];
+    for (const type of ["hourly", "daily"]) {
+      try {
+        this._unsub.push(this._h.connection.subscribeMessage(
+          (m) => {
+            this["_" + type] = m.forecast || [];
+            if (type === "hourly") {
+              this._hk = null;
+              this.hourly();
+            }
+            this._ck = null;
+            this.update();
+          },
+          { type: "weather/subscribe_forecast", forecast_type: type, entity_id: this.W }
+        ));
+      } catch (e) {
+      }
+    }
+  }
+  sunTimes() {
+    const sun = this._h.states["sun.sun"];
+    if (!sun) return null;
+    const a = sun.attributes, now = Date.now();
+    let rise = new Date(a.next_rising), set = new Date(a.next_setting);
+    const night = sun.state === "below_horizon";
+    if (!night) rise = new Date(rise - 864e5);
+    else if (set > rise) set = new Date(set - 864e5);
+    const toM = (d) => d.getHours() * 60 + d.getMinutes();
+    return { night, rise, set, riseM: toM(rise), setM: toM(set), nextRise: new Date(a.next_rising), nextSet: new Date(a.next_setting), elev: a.elevation, now };
+  }
+  update() {
+    const w = this.s(this.W);
+    if (!w || !this._r) return;
+    const a = w.attributes, S = this.sunTimes(), night = S ? S.night : w.state === "clear-night";
+    const [txt, ic] = cnd(w.state, night);
+    const temp = this.pick(this.d("temperatur"), a.temperature), feels = this.pick(a.apparent_temperature, temp);
+    const ws = this.pick(this.d("vindhastighed"), (a.wind_speed ?? NaN) / 3.6), gust = this.pick(this.d("vindstod"), (a.wind_gust_speed ?? NaN) / 3.6);
+    const wb = this.pick(this.d("vindretning"), a.wind_bearing, 0);
+    const day0 = (this._daily || [])[0];
+    const hi = this.pick(day0?.temperature, this.d("hojeste_temperatur_i_dag")), lo = this.pick(day0?.templow, this.d("laveste_temperatur_i_dag"));
+    const st = this.s(this.PX + "temperatur");
+    this.set("loc", `Vejret nu${st?.attributes?.station ? " \xB7 " + st.attributes.station : ""}${st?.attributes?.m\u00E5lt ? " \xB7 m\xE5lt " + hhmm(new Date(st.attributes.m\u00E5lt)) : ""}`);
+    const nw = this.d("varsler"), lyn = this.d("lyn_sidste_30_min");
+    this.set("chips", (nw > 0 ? `<span class="chip pl" style="--c:var(--coral)"><i></i>${nw} varsel${nw > 1 ? "er" : ""}</span>` : "") + (lyn > 0 ? `<span class="chip pl" style="--c:var(--amber)">${ico("flash", 12, 2)}${fmt(lyn, 0)} lyn \xB7 30 min</span>` : "") + (!nw && !(lyn > 0) ? `<span class="chip" style="--c:var(--emer)">Ingen varsler</span>` : ""));
+    const ik = ic + (ic === "moon" || ic === "pmoon" ? Math.round(moonPhase() * 28) : "");
+    if (this._ik !== ik) {
+      this._ik = ik;
+      this.$("bi").innerHTML = bigIcon(ic);
+    }
+    if (Number.isFinite(temp) && temp !== this._tv) this.countTo(temp);
+    this.set("cd", txt);
+    this.set("meta", `<span>F\xF8les som <b>${fmt(feels, 1)}\xB0</b></span>${Number.isFinite(hi) ? `<span class="hl"><span>H <b class="u">${Math.round(hi)}\xB0</b></span><span>L <b class="d">${Math.round(lo)}\xB0</b></span></span>` : ""}
+      ${Number.isFinite(ws) ? `<span>${beau(ws)} fra <b>${DIR8[Math.round(wb / 45) % 8]}</b></span>` : ""}`);
+    this.sky(w.state, night, S);
+    if (S && this._ck !== Math.floor(Date.now() / 6e4)) {
+      this._ck = Math.floor(Date.now() / 6e4);
+      this.celestial(S);
+    }
+    this.nowcast();
+    this.tiles({ a, ws, gust, wb, temp });
+    this.warnings();
+    this.details();
+  }
+  countTo(v) {
+    const el = this.$("temp"), from = Number.isFinite(this._tv) ? this._tv : v - 4, t0 = performance.now();
+    this._tv = v;
+    cancelAnimationFrame(this._raf);
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / 1400), e = 1 - Math.pow(1 - k, 4), x = from + (v - from) * e;
+      el.innerHTML = `${fmt(x, 1)}<sup>\xB0</sup>`;
+      if (k < 1) this._raf = requestAnimationFrame(step);
+    };
+    if (document.hidden) el.innerHTML = `${fmt(v, 1)}<sup>\xB0</sup>`;
+    else this._raf = requestAnimationFrame(step);
+  }
+  sky(state, night, S) {
+    const el = this.$("sky"), elev = S?.elev ?? (night ? -20 : 30), phase = night ? elev > -8 ? "dusk" : "night" : elev < 8 ? "golden" : "day";
+    const wet = ["rainy", "pouring", "lightning", "lightning-rainy", "snowy", "snowy-rainy", "hail"].includes(state), grey = wet || ["cloudy", "fog"].includes(state);
+    const key = state + phase;
+    if (el._k === key) return;
+    el._k = key;
+    const BG = {
+      night: "radial-gradient(120% 100% at 85% 0%,#1c2852 0%,#0d1430 40%,#080a14 75%)",
+      dusk: "radial-gradient(120% 100% at 85% 0%,#4a3a6a 0%,#22264a 40%,#0b0d18 78%)",
+      golden: "radial-gradient(120% 100% at 85% 0%,#8a6a46 0%,#3c3f5c 42%,#10131c 80%)",
+      day: "radial-gradient(120% 100% at 85% 0%,#4b78ad 0%,#22406a 42%,#0e1420 80%)"
+    };
+    let bg = BG[phase];
+    if (grey) bg = night ? "radial-gradient(120% 100% at 85% 0%,#262d3e 0%,#141824 50%,#090b11 80%)" : "radial-gradient(120% 100% at 85% 0%,#4a5568 0%,#262d3c 45%,#0e1118 80%)";
+    el.style.background = bg;
+    const R = Math.random;
+    let h = "";
+    const glow = night ? "radial-gradient(circle,rgba(200,212,255,.22),transparent 60%)" : grey ? "radial-gradient(circle,rgba(255,255,255,.08),transparent 60%)" : "radial-gradient(circle,rgba(255,214,140,.38),rgba(232,195,126,.08) 40%,transparent 62%)";
+    h += `<div class="glow" style="background:${glow}"></div>`;
+    if (night && !grey) {
+      for (let i = 0; i < 70; i++) h += `<i class="st" style="left:${R() * 100}%;top:${R() * 65}%;animation-delay:-${R() * 3.4}s;opacity:${0.25 + R() * 0.75};${R() > 0.85 ? "width:3px;height:3px;" : ""}"></i>`;
+      h += `<i class="shoot"></i>`;
+    }
+    const nc = grey ? 7 : state === "partlycloudy" ? 4 : 2;
+    for (let i = 0; i < nc; i++) {
+      const wd = 220 + R() * 260, op = grey ? 0.13 + R() * 0.1 : 0.06 + R() * 0.06;
+      h += `<div class="cl" style="top:${-4 + R() * 46}%;width:${wd}px;animation-duration:${60 + R() * 70}s,2s;animation-delay:-${R() * 120}s,0s"><svg viewBox="0 0 64 30"><path d="M10 28h44a8 8 0 0 0 0-16 12 12 0 0 0-22-6A9 9 0 0 0 16 12a8 8 0 0 0-6 16Z" fill="rgba(235,240,250,${op})"/></svg></div>`;
+    }
+    if (["rainy", "pouring", "lightning-rainy", "snowy-rainy"].includes(state)) {
+      const nr = state === "pouring" ? 120 : 70;
+      for (let i = 0; i < nr; i++) h += `<i class="rd" style="left:${R() * 104 - 2}%;animation-duration:${0.55 + R() * 0.45}s;animation-delay:-${R() * 1.2}s;opacity:${0.4 + R() * 0.6}"></i>`;
+    }
+    if (["snowy", "snowy-rainy", "hail"].includes(state)) for (let i = 0; i < 60; i++) {
+      const s = 2 + R() * 4;
+      h += `<i class="sf" style="left:${R() * 100}%;width:${s}px;height:${s}px;animation-duration:${5 + R() * 6}s;animation-delay:-${R() * 10}s"></i>`;
+    }
+    if (state === "fog") for (let i = 0; i < 4; i++) h += `<i class="fogb" style="top:${20 + i * 18}%;animation-delay:-${i * 4}s"></i>`;
+    if (state.startsWith("lightning")) h += `<i class="lt"></i>`;
+    el.innerHTML = h;
+  }
+  celestial(S) {
+    const el = this.$("cel"), now = Date.now();
+    const hdr = (a, b) => `<div class="ttl"><span>${a}</span><span>${b}</span></div>`;
+    if (!S.night) {
+      const dayLen = (S.set - S.rise) / 6e4, k = Math.max(0, Math.min(1, (now - S.rise) / (S.set - S.rise))), pre = now < S.rise;
+      const ang = Math.PI * (1 - k), cx = 130, cy = 92, rx = 110, ry = 74, sx = cx + rx * Math.cos(ang), sy = cy - ry * Math.sin(ang);
+      const left = Math.max(0, (S.set - now) / 6e4);
+      el.innerHTML = hdr("Solens bane", pre ? `op om ${Math.floor((S.rise - now) / 36e5)} t ${Math.round((S.rise - now) / 6e4) % 60} m` : `${Math.floor(left / 60)} t ${Math.round(left % 60)} m dagslys tilbage`) + `<svg viewBox="0 0 260 104"><defs><linearGradient id="sa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c37e" stop-opacity=".35"/><stop offset="1" stop-color="#e8c37e" stop-opacity="0"/></linearGradient>
+          <clipPath id="sc"><rect x="0" y="0" width="${sx}" height="104"/></clipPath><radialGradient id="sg"><stop offset="0" stop-color="#fff6dc"/><stop offset=".4" stop-color="#f6d58f"/><stop offset="1" stop-color="#f6d58f" stop-opacity="0"/></radialGradient></defs>
+          <path d="M${cx - rx} ${cy}A${rx} ${ry} 0 0 1 ${cx + rx} ${cy}" fill="none" stroke="rgba(255,255,255,.16)" stroke-dasharray="2 5" stroke-linecap="round"/>
+          <path d="M${cx - rx} ${cy}A${rx} ${ry} 0 0 1 ${cx + rx} ${cy}Z" fill="url(#sa)" clip-path="url(#sc)" class="fi"/>
+          <path d="M${cx - rx} ${cy}A${rx} ${ry} 0 0 1 ${cx + rx} ${cy}" fill="none" stroke="#e8c37e" stroke-width="2" clip-path="url(#sc)" class="draw"/>
+          <line x1="6" y1="${cy}" x2="254" y2="${cy}" stroke="rgba(255,255,255,.14)"/>
+          <circle cx="${sx}" cy="${sy}" r="20" fill="url(#sg)" opacity=".55" class="pulse"/><circle cx="${sx}" cy="${sy}" r="7" fill="#fff3d0"/></svg><div class="row"><span>Sol op<b>${hhmm(S.rise)}</b></span><span style="text-align:center">Dagslys<b>${Math.floor(dayLen / 60)} t ${Math.round(dayLen % 60)} m</b></span><span style="text-align:right">Sol ned<b>${hhmm(S.set)}</b></span></div>`;
+    } else {
+      const p = moonPhase(), idx = Math.round(p * 8) % 8, ill = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100), tl = (S.nextRise - now) / 6e4;
+      const nf = (0.5 - p + 1) % 1 * 29.53;
+      el.innerHTML = hdr("Natten", `sol op ${hhmm(S.nextRise)}`) + `<div class="mn" style="margin-top:8px">${bigIcon("moon", p).replace('class="bi"', 'class="bi" style="width:72px"')}<div><b>${MOON[idx]}</b><small>${ill} % oplyst</small>
+        <small>${nf < 1 ? "Fuldm\xE5ne i nat" : `Fuldm\xE5ne om ${Math.round(nf)} dage`}</small><small>Lyst om ${Math.floor(tl / 60)} t ${Math.round(tl % 60)} m</small></div></div>`;
+    }
+  }
+  nowcast() {
+    const fc2 = (this._hourly || []).filter((f) => new Date(f.datetime) >= Date.now() - 36e5).slice(0, 12);
+    const el = this.$("cast");
+    const rnow = this.d("nedbor_lige_nu"), raining = rnow > 0.05 || this._h.states["binary_sensor.dmi_vejr_regner_nu"]?.state === "on" || (fc2[0]?.precipitation || 0) >= 0.2;
+    const near = this.d("afstand_til_naermeste_regn"), H3 = (f) => String(new Date(f.datetime).getHours()).padStart(2, "0");
+    const bars = fc2.length ? `<span class="bar">${fc2.map((f, i2) => `<i style="height:${Math.max(2, Math.min(18, (f.precipitation || 0) * 7 + (f.precipitation_probability || 0) / 25))}px;opacity:${0.25 + (f.precipitation_probability || 0) / 140};animation-delay:${i2 * 40}ms"></i>`).join("")}</span>` : "";
+    let c2 = "var(--emer)", i = "sun", t;
+    if (!fc2.length) t = "<b>Henter prognose\u2026</b>";
+    else if (raining) {
+      const j = fc2.findIndex((f, k) => k > 0 && (f.precipitation || 0) < 0.1);
+      c2 = "var(--ice)";
+      i = "rain";
+      t = `<b>Det regner nu${rnow > 0 ? ` \xB7 ${fmt(rnow, 1)} mm/t` : ""}</b>&nbsp;${j > 0 ? `\u2013 ophold fra ca. kl. ${H3(fc2[j])}` : "\u2013 forts\xE6tter de n\xE6ste timer"}`;
+    } else {
+      const j = fc2.findIndex((f) => (f.precipitation || 0) >= 0.2 || (f.precipitation_probability || 0) >= 60);
+      if (j >= 0) {
+        const mm = fc2.slice(j, j + 4).reduce((s, f) => s + (f.precipitation || 0), 0);
+        c2 = "var(--ice)";
+        i = "drop";
+        t = `<b>Regn fra ca. kl. ${H3(fc2[j])}</b>&nbsp;\u2013 omkring ${fmt(mm, 1)} mm de f\xF8rste timer`;
+      } else {
+        const fr = fc2.find((f) => f.temperature <= 0);
+        t = `<b>T\xF8rvejr de n\xE6ste 12 timer</b>${fr ? `&nbsp;\u2013 frost fra ca. kl. ${H3(fr)}` : ""}`;
+        if (fr) {
+          c2 = "var(--ice)";
+          i = "snow";
+        }
+      }
+    }
+    const sub = Number.isFinite(near) && !raining ? `<small>n\xE6rmeste byge ${fmt(near, 0)} km</small>` : "";
+    el.style.setProperty("--c", c2);
+    this.set("cast", `<span class="ic">${ico(i, 17, 1.8)}</span><span>${t}</span>${sub || bars}`);
+  }
+  tiles({ a, ws, gust, wb, temp }) {
+    const tx2 = (id, v, s) => {
+      this.set("v-" + id, v);
+      this.set("s-" + id, s);
+    };
+    const hum = this.pick(this.d("luftfugtighed"), a.humidity), pres = this.pick(this.d("lufttryk"), a.pressure), dew = this.pick(this.d("dugpunkt"), a.dew_point);
+    const vis = this.pick(this.d("sigtbarhed"), a.visibility), uv = this.pick(a.uv_index, 0), gmax = this.d("kraftigste_vindstod_i_dag");
+    tx2("wind", `${fmt(ws, 1)}<small>m/s</small>`, `fra ${DIR8[Math.round(wb / 45) % 8]} \xB7 ${beau(ws).toLowerCase()}`);
+    const nd = this.$("w-ndl");
+    if (nd) nd.style.transform = `rotate(${wb + 180}deg)`;
+    tx2("gust", `${fmt(gust, 1)}<small>m/s</small>`, Number.isFinite(gmax) ? `kraftigste i dag ${fmt(gmax, 1)}` : beau(gust).toLowerCase());
+    this.$("t-gust").style.setProperty("--p", Math.min(100, gust / Math.max(15, gmax || 0) * 100) + "%");
+    tx2("hum", `${fmt(hum, 0)}<small>%</small>`, hum > 90 ? "meget fugtigt" : hum > 70 ? "fugtigt" : hum < 35 ? "t\xF8rt" : "behageligt");
+    const hr = this.$("hum-r");
+    if (hr) hr.style.strokeDashoffset = 106.8 * (1 - Math.min(1, hum / 100));
+    const fc2 = (this._hourly || []).filter((f) => new Date(f.datetime) >= Date.now() - 36e5).slice(0, 24);
+    if (fc2.length) {
+      const mx = Math.max(...fc2.map((f) => f.precipitation_probability || 0)), mm = fc2.reduce((s, f) => s + (f.precipitation || 0), 0);
+      tx2("rain", `${Math.round(mx)}<small>%</small>`, mm > 0 ? `${fmt(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
+      const k = fc2.map((f) => f.precipitation_probability || 0).join();
+      const sp = this.$("rr-sp");
+      if (sp && sp._k !== k) {
+        sp._k = k;
+        const pts = fc2.map((f, i) => `${i / (fc2.length - 1) * 44},${34 - (f.precipitation_probability || 0) / 100 * 22}`).join(" ");
+        sp.innerHTML = `<polygon points="0,34 ${pts} 44,34" fill="rgba(142,209,255,.18)" class="fi"/><polyline points="${pts}" fill="none" stroke="#8ed1ff" stroke-width="1.4" stroke-linejoin="round" class="draw"/>`;
+      }
+    }
+    const tr = this._ptr;
+    tx2("pres", `${fmt(pres, 0)}<small>hPa</small>`, Number.isFinite(tr) ? `${tr > 0.5 ? "\u2197 stigende" : tr < -0.5 ? "\u2198 faldende" : "\u2192 stabilt"} ${tr > 0 ? "+" : ""}${fmt(tr, 1)} / 3 t` : pres > 1020 ? "h\xF8jtryk" : pres < 1e3 ? "lavtryk" : "normalt");
+    const pk = Math.max(0, Math.min(1, (pres - 970) / 80));
+    const pa = this.$("p-arc");
+    if (pa) pa.style.strokeDashoffset = 47.1 * (1 - pk);
+    const pn = this.$("p-ndl");
+    if (pn) pn.style.transform = `rotate(${-90 + pk * 180}deg)`;
+    this.pressureTrend();
+    const spr = temp - dew;
+    tx2("dew", `${fmt(dew, 1)}<small>\xB0</small>`, Number.isFinite(spr) ? `${fmt(spr, 1)}\xB0 spredning \xB7 ${spr < 1.5 ? "t\xE5ge/dug mulig" : spr < 4 ? "fugtig luft" : "t\xF8r luft"}` : "");
+    this.$("t-dew").style.setProperty("--p", Math.max(4, 100 - Math.min(100, spr / 12 * 100)) + "%");
+    tx2("vis", `${fmt(vis, vis < 10 ? 1 : 0)}<small>km</small>`, vis >= 20 ? "fremragende" : vis >= 10 ? "god" : vis >= 4 ? "moderat" : vis >= 1 ? "d\xE5rlig" : "t\xE5ge");
+    this.$("t-vis").style.setProperty("--p", Math.min(100, vis / 50 * 100) + "%");
+    const fuv = Math.max(uv, ...fc2.map((f) => f.uv_index || 0));
+    tx2("uv", `${fmt(uv, 1)}`, `${uv < 3 ? "lav" : uv < 6 ? "moderat" : uv < 8 ? "h\xF8j" : "meget h\xF8j"}${fuv > uv + 0.4 ? ` \xB7 op til ${fmt(fuv, 1)}` : ""}`);
+    this.$("t-uv").style.setProperty("--p", Math.min(100, uv / 11 * 100) + "%");
+  }
+  /* ---------- varsler og detaljer ---------- */
+  warnings() {
+    const v = this.s(this.PX + "varsler"), list = (v?.attributes?.varsler || []).filter(Boolean);
+    const lvl = (n) => n >= 3 ? "var(--red)" : n >= 2 ? "var(--coral)" : "var(--amber)";
+    this.set("warns", list.slice(0, 4).map((w) => {
+      const t = typeof w === "string" ? w : w.headline || w.title || w.event || w.overskrift || w.type || "Varsel";
+      const d = typeof w === "string" ? "" : w.description || w.beskrivelse || "", n = Number(w.level ?? w.niveau ?? w.severity_level ?? 1) || 1;
+      const til = w.expires || w.ends || w.slut || w.til;
+      return `<div class="wn" style="--c:${lvl(n)}">${ico("alert", 17, 1.8)}<div><b>${esc5(t)}</b>${esc5(String(d).slice(0, 180))}${til ? ` \xB7 til ${hhmm(new Date(til))}` : ""}</div></div>`;
+    }).join(""));
+  }
+  dTabs() {
+    const c2 = this.cfg, t = [];
+    if (c2.radar_image_entity || c2.satellite_image_entity) t.push({ id: "radar", label: "Radar", icon: "mdi:radar" });
+    (c2.detail_sections || []).forEach((sec, i) => t.push({ id: "s" + i, label: String(sec.title || "Data").split(" \xB7 ")[0], icon: sec.icon || "mdi:information-outline", sec }));
+    if ((c2.pollen || []).length) t.push({ id: "pollen", label: "Pollen", icon: "mdi:flower-pollen" });
+    return t;
+  }
+  details(force) {
+    const tabs = this.dTabs(), dt = this.$("dt");
+    if (!tabs.length) return;
+    dt.hidden = false;
+    if (!tabs.find((t) => t.id === this._dtab)) {
+      try {
+        this._dtab = localStorage.getItem("th-weather-tab");
+      } catch (e) {
+      }
+      if (!tabs.find((t) => t.id === this._dtab)) this._dtab = tabs[0].id;
+    }
+    const tk = tabs.map((t) => t.id).join() + this._dtab;
+    if (this._dtk !== tk) {
+      this._dtk = tk;
+      this._dk = null;
+      this.$("dtabs").innerHTML = tabs.map((t) => `<button data-t="${t.id}" class="${t.id === this._dtab ? "on" : ""}"><ha-icon icon="${t.icon}"></ha-icon>${esc5(t.label)}</button>`).join("");
+      this.$("dtabs").querySelectorAll("button").forEach((b) => b.onclick = () => {
+        this._dtab = b.dataset.t;
+        try {
+          localStorage.setItem("th-weather-tab", this._dtab);
+        } catch (e) {
+        }
+        this._dtk = null;
+        this.details();
+      });
+    }
+    const tab = tabs.find((t) => t.id === this._dtab), body = this.$("dbody");
+    let html, key;
+    if (tab.id === "radar") {
+      key = "radar" + (force ? Date.now() : "");
+      if (this._dk && this._dk.startsWith("radar") && !force) {
+        this.radarCells();
+        return;
+      }
+    } else {
+      const ents = tab.id === "pollen" ? this.cfg.pollen.map((p) => p.entity) : tab.sec.items.map((i) => i.entity);
+      key = tab.id + ents.map((e) => this._h.states[e]?.state).join("|");
+    }
+    if (key === this._dk) return;
+    const fresh = this._dlast !== tab.id;
+    this._dlast = tab.id;
+    this._dk = key;
+    if (tab.id === "radar") html = this.dRadar();
+    else if (tab.id === "pollen") html = this.dPollen();
+    else html = this.dSection(tab.sec);
+    body.innerHTML = html;
+    if (fresh) {
+      body.style.animation = "none";
+      void body.offsetWidth;
+      body.style.animation = "";
+    }
+    if (tab.id === "radar") this.wireRadar();
+  }
+  val(e) {
+    const st = this._h.states[e];
+    if (!st || ["unknown", "unavailable"].includes(st.state)) return null;
+    const a = st.attributes, u3 = a.unit_of_measurement || "";
+    if (a.device_class === "timestamp") {
+      const d = new Date(st.state), diff = (d - Date.now()) / 6e4, day2 = d.toDateString() === (/* @__PURE__ */ new Date()).toDateString();
+      return { v: `${day2 ? "" : d.toLocaleDateString("da-DK", { weekday: "short" }) + " "}${hhmm(d)}`, u: "", sub: Math.abs(diff) < 1440 ? diff >= 0 ? `om ${diff < 60 ? Math.round(diff) + " min" : Math.floor(diff / 60) + " t " + Math.round(diff % 60) + " m"}` : `${-diff < 60 ? Math.round(-diff) + " min" : Math.floor(-diff / 60) + " t"} siden` : "", a };
+    }
+    const n = parseFloat(st.state);
+    if (Number.isFinite(n) && String(+st.state) === String(n)) {
+      const d = Math.abs(n) >= 100 || Number.isInteger(n) && !/°|mm|m\/s/.test(u3) ? 0 : 1;
+      return { v: fmt(n, d), n, u: u3, a };
+    }
+    return { v: esc5(st.state), u: "", a };
+  }
+  riskCol(p) {
+    return p < 10 ? "var(--emer)" : p < 30 ? "var(--amber)" : p < 60 ? "var(--coral)" : "var(--red)";
+  }
+  dSection(sec) {
+    const risk = /risiko/i.test(sec.title || "");
+    let items = sec.items.map((it) => ({ it, x: this.val(it.entity) })).filter((o) => o.x);
+    if (risk) items.sort((p, q) => (q.x.n ?? -1) - (p.x.n ?? -1));
+    if (!items.length) return `<div class="dsub">${esc5(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
+    const src = items.find((o) => o.x.a.station || o.x.a.kilde)?.x.a;
+    return `<div class="dsub">${esc5(sec.title)}<span>${esc5(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
+      const a = x.a, isR = (risk || x.u === "%" && /risiko/i.test(it.name)) && Number.isFinite(x.n), c2 = isR ? this.riskCol(x.n) : "";
+      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc5(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt(+a.i_g\u00E5r, 1)}` : "");
+      return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc5(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc5(it.name)}</div>
+        <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc5(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
+    }).join("")}</div>`;
+  }
+  dRadar() {
+    const c2 = this.cfg;
+    if (!this._rad) this._rad = c2.radar_image_entity ? "radar" : "sat";
+    const both = c2.radar_image_entity && c2.satellite_image_entity, ks = [c2.radar_image_entity && "radar", c2.satellite_image_entity && "sat"].filter(Boolean);
+    const tabs = both ? `<div class="tabs rtabs"><button data-r="radar" class="${this._rad === "radar" ? "on" : ""}">Radar</button><button data-r="sat" class="${this._rad === "sat" ? "on" : ""}">Satellit</button></div>` : "";
+    return `<div class="rad"><div class="rimgs">${ks.map((k) => `<div class="rimg ${k === this._rad ? "on" : ""}" data-k="${k}"><img alt=""><i class="sw"></i><i class="pin"></i><span class="rt"></span>${tabs}</div>`).join("")}</div>
+      <div class="rside"><div class="dsub">Nedb\xF8r og lyn lige nu</div><div class="dg" id="rcells" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div></div></div>`;
+  }
+  wireRadar() {
+    const c2 = this.cfg;
+    this._r.querySelectorAll(".rimg[data-k]").forEach((box) => {
+      const k = box.dataset.k, e = k === "sat" ? c2.satellite_image_entity : c2.radar_image_entity, st = this._h.states[e], img = box.querySelector("img");
+      if (st?.attributes?.entity_picture) {
+        const n = new Image();
+        n.onload = () => {
+          img.style.opacity = 0;
+          setTimeout(() => {
+            img.src = n.src;
+            img.style.opacity = 1;
+          }, 120);
+        };
+        n.src = st.attributes.entity_picture + (st.attributes.entity_picture.includes("?") ? "&" : "?") + "t=" + Math.floor(Date.now() / 3e5);
+        const ts = new Date(st.state);
+        box.querySelector(".rt").textContent = `${k === "sat" ? "Satellit" : "Radar"} \xB7 ${isNaN(ts) ? "" : hhmm(ts)} \xB7 DMI`;
+      }
+      box.onclick = (ev) => {
+        if (ev.target.closest(".rtabs")) return;
+        const d = document.createElement("div");
+        d.className = "full";
+        d.innerHTML = `<button aria-label="Luk">\xD7</button><img src="${img.src}">`;
+        d.onclick = () => d.remove();
+        this._r.appendChild(d);
+      };
+    });
+    this._r.querySelectorAll(".rtabs button").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      this._rad = b.dataset.r;
+      this._r.querySelectorAll(".rimg[data-k]").forEach((x) => x.classList.toggle("on", x.dataset.k === this._rad));
+      this._r.querySelectorAll(".rtabs button").forEach((x) => x.classList.toggle("on", x.dataset.r === this._rad));
+    });
+    this.radarCells();
+  }
+  radarCells() {
+    const items = [...this.cfg.radar_details || [], { name: "N\xE6rmeste lyn", entity: this.PX + "lyn_naermeste_afstand", icon: "mdi:flash-alert" }, { name: "M\xE5lt sidste time", entity: this.PX + "nedbor_malt_sidste_time", icon: "mdi:cup-water" }, { name: "Nedb\xF8r i dag", entity: this.PX + "nedbor_i_dag", icon: "mdi:weather-rainy" }].filter((it, i, arr2) => arr2.findIndex((x) => x.entity === it.entity) === i);
+    this.set("rcells", items.map((it, i) => {
+      const x = this.val(it.entity);
+      const near = /naermeste_regn/.test(it.entity);
+      return `<div class="dc" style="animation-delay:${i * 40}ms"><div class="n"><ha-icon icon="${esc5(it.icon || "mdi:information-outline")}"></ha-icon>${esc5(it.name)}</div><b>${x ? `${x.v}${x.u ? `<small>${esc5(x.u)}</small>` : ""}` : near ? '<small style="margin:0">ingen inden for 30 km</small>' : "\u2013"}</b></div>`;
+    }).join(""));
+  }
+  dPollen() {
+    const DA = { "no data": "Ingen data", none: "Ingen", "very low": "Meget lav", low: "Lav", moderate: "Moderat", high: "H\xF8j", "very high": "Meget h\xF8j" };
+    const col = (n) => n <= 0 ? "rgba(255,255,255,.25)" : n <= 1 ? "var(--emer)" : n <= 2 ? "#b8e07a" : n <= 3 ? "var(--amber)" : n <= 4 ? "var(--coral)" : "var(--red)";
+    const rows = this.cfg.pollen.map((p) => ({ p, st: this._h.states[p.entity] })).filter((o) => o.st);
+    rows.sort((x, y) => (+y.st.attributes.index_value || 0) - (+x.st.attributes.index_value || 0));
+    return `<div class="dsub">Pollen \xB7 Google<span>i dag og de n\xE6ste dage</span></div><div class="pl">${rows.map(({ p, st }, i) => {
+      const a = st.attributes, n = +a.index_value || 0, c2 = col(n);
+      const fut = [["I morgen", a.tomorrow], ["Dag 3", a["day 3"]], ["Dag 4", a["day 4"]]].filter((f) => f[1] != null);
+      return `<div class="pr" style="--c:${c2};animation-delay:${i * 50}ms"><div><b>${esc5(p.name)}</b><small>${DA[String(st.state).toLowerCase()] || esc5(st.state)}${a.in_season === "True" || a.in_season === true ? " \xB7 i s\xE6son" : ""}</small></div>
+        <div class="pd">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= n ? "f" : ""}"></i>`).join("")}</div><div class="pf">${fut.map(([l, v]) => `<span style="--c:${col(+v)}"><i></i>${l}</span>`).join("")}</div></div>`;
+    }).join("") || '<div class="dc">Ingen pollendata</div>'}</div>`;
+  }
+  async pressureTrend() {
+    if (!this._h.callWS || this._pt && Date.now() - this._pt < 10 * 6e4) return;
+    this._pt = Date.now();
+    const e = this.PX + "lufttryk";
+    if (!this.s(e)) return;
+    try {
+      const r = await this._h.callWS({ type: "history/history_during_period", start_time: new Date(Date.now() - 3 * 36e5).toISOString(), entity_ids: [e], minimal_response: true, no_attributes: true });
+      const arr2 = (r[e] || []).map((x) => parseFloat(x.s ?? x.state)).filter(Number.isFinite);
+      if (arr2.length) {
+        this._ptr = this.n(e) - arr2[0];
+        this.set("s-pres", "");
+        this.update();
+      }
+    } catch (er) {
+    }
+  }
+  hourly() {
+    if (!this._r) return;
+    const fc2 = (this._hourly || []).filter((f) => new Date(f.datetime) >= Date.now() - 36e5).slice(0, this._hrs);
+    if (fc2.length < 2) return;
+    const n = fc2.length, avail = (this.$("hs").clientWidth || 900) - 44, cw = Math.max(this._hrs > 24 ? 40 : 46, avail / n), W3 = n * cw, H3 = 196;
+    const k = n + "|" + Math.round(cw) + fc2.map((f) => f.temperature + f.condition + (f.precipitation || 0)).join();
+    if (k === this._hk) return;
+    this._hk = k;
+    this._fc = fc2;
+    this._cw = cw;
+    const S = this.sunTimes(), T = fc2.map((f) => f.temperature), mx = Math.max(...T), mn = Math.min(...T), rg = Math.max(4, mx - mn);
+    const mid = (mx + mn) / 2, X = (i) => (i + 0.5) * cw, Y = (v) => 99 - (v - mid) / rg * 46;
+    const isNight = (d2) => {
+      if (!S) return d2.getHours() < 7 || d2.getHours() >= 19;
+      const m = d2.getHours() * 60 + d2.getMinutes() + 30;
+      return m < S.riseM || m >= S.setM;
+    };
+    const pts = fc2.map((f, i) => [X(i), Y(f.temperature)]);
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p22 = pts[i + 1], p3 = pts[i + 2] || p22;
+      d += `C${p1[0] + (p22[0] - p0[0]) / 6} ${p1[1] + (p22[1] - p0[1]) / 6} ${p22[0] - (p3[0] - p1[0]) / 6} ${p22[1] - (p3[1] - p1[1]) / 6} ${p22[0]} ${p22[1]}`;
+    }
+    const tc = (t) => t <= 0 ? "#8ed1ff" : t < 8 ? "#9fd8c4" : t < 16 ? "#e8c37e" : t < 24 ? "#ffb27a" : "#ff8a7a";
+    let g = `<defs><linearGradient id="tl" x1="0" y1="0" x2="${W3}" y2="0" gradientUnits="userSpaceOnUse">${fc2.map((f, i) => `<stop offset="${(X(i) / W3).toFixed(4)}" stop-color="${tc(f.temperature)}"/>`).join("")}</linearGradient>
+      <linearGradient id="ta" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c37e" stop-opacity=".2"/><stop offset="1" stop-color="#e8c37e" stop-opacity="0"/></linearGradient>
+      <linearGradient id="pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9e3ff"/><stop offset="1" stop-color="#4f9fe0"/></linearGradient></defs>`;
+    let run = -1;
+    const bands = [];
+    fc2.forEach((f, i) => {
+      const nt = isNight(new Date(f.datetime));
+      if (nt && run < 0) run = i;
+      if ((!nt || i === n - 1) && run >= 0) {
+        bands.push([run, nt ? i : i - 1]);
+        run = -1;
+      }
+    });
+    bands.forEach(([a, b]) => g += `<rect x="${a * cw}" y="0" width="${(b - a + 1) * cw}" height="${H3}" rx="12" fill="rgba(110,130,220,.09)" class="fi"/>`);
+    fc2.forEach((f, i) => {
+      const dt = new Date(f.datetime);
+      if (i && dt.getHours() === 0) g += `<line x1="${i * cw}" y1="2" x2="${i * cw}" y2="${H3 - 4}" stroke="rgba(232,195,126,.25)" stroke-dasharray="2 4"/>`;
+    });
+    if (S) {
+      const t0 = new Date(fc2[0].datetime).getTime();
+      for (let dd = -1; dd <= 2; dd++) for (const [m, lbl, col] of [[S.riseM, "op", "#ffd27a"], [S.setM, "ned", "#ff9e7a"]]) {
+        const base = new Date(t0);
+        base.setHours(0, 0, 0, 0);
+        const tt2 = base.getTime() + dd * 864e5 + m * 6e4, x = ((tt2 - t0) / 36e5 + 0.5) * cw;
+        if (x > 4 && x < W3 - 4) {
+          const dt = new Date(tt2);
+          g += `<g class="fi"><line x1="${x}" y1="50" x2="${x}" y2="158" stroke="${col}" stroke-opacity=".55" stroke-dasharray="1 3"/><circle cx="${x}" cy="50" r="2.6" fill="${col}"/>
+          <text x="${x + 5}" y="53.5" font-size="9" fill="${col}" font-weight="600">${lbl} ${hhmm(dt)}</text></g>`;
+        }
+      }
+    }
+    const pmax = Math.max(1.5, ...fc2.map((f) => f.precipitation || 0));
+    fc2.forEach((f, i) => {
+      const p = f.precipitation || 0, pp = f.precipitation_probability || 0;
+      if (p > 0.04) {
+        const h = Math.max(3, p / pmax * 24), bw = Math.min(18, cw * 0.42);
+        g += `<rect x="${X(i) - bw / 2}" y="${158 - h}" width="${bw}" height="${h}" rx="${Math.min(4, bw / 3)}" fill="url(#pb)" opacity="${0.45 + pp / 200}" class="gbar" style="animation-delay:${0.6 + i * 0.02}s"/>
+          <text x="${X(i)}" y="${155 - h}" text-anchor="middle" font-size="8.5" fill="#8ed1ff" font-weight="600" class="fi">${p >= 1 ? fmt(p, 0) : fmt(p, 1)}</text>`;
+      } else if (pp >= 30) g += `<text x="${X(i)}" y="155" text-anchor="middle" font-size="8.5" fill="rgba(142,209,255,.7)" class="fi">${Math.round(pp)}%</text>`;
+    });
+    g += `<line x1="0" y1="158.5" x2="${W3}" y2="158.5" stroke="rgba(255,255,255,.07)"/>`;
+    g += `<path d="${d}L${pts[n - 1][0]} 158L${pts[0][0]} 158Z" fill="url(#ta)" class="fi"/><path d="${d}" fill="none" stroke="url(#tl)" stroke-width="2.6" stroke-linecap="round" class="draw"/>`;
+    const step = cw < 40 ? 2 : 1, iMax = T.indexOf(mx), iMin = T.indexOf(mn);
+    fc2.forEach((f, i) => {
+      const dt = new Date(f.datetime), [, ic] = cnd(f.condition, isNight(dt)), ext = i === iMax || i === iMin;
+      const lbl = i === 0 ? "Nu" : dt.getHours() === 0 ? dt.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "") : String(dt.getHours()).padStart(2, "0");
+      g += `<text x="${X(i)}" y="12" text-anchor="middle" font-size="10.5" font-weight="${i === 0 || dt.getHours() === 0 ? 700 : 500}" fill="${i === 0 ? "#f4f1ea" : dt.getHours() === 0 ? "#e8c37e" : "rgba(244,241,234,.55)"}" style="text-transform:capitalize">${lbl}</text>`;
+      if (i % step === 0) g += `<g transform="translate(${X(i) - 9} 20) scale(.75)" fill="none" stroke="${["sun", "pcloud"].includes(ic) ? "#f6d58f" : ic === "rain" ? "#8ed1ff" : "rgba(244,241,234,.85)"}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="fi" style="animation-delay:${0.3 + i * 0.015}s">${P[ic]}</g>`;
+      if (i % step === 0 || ext) g += `<text x="${X(i)}" y="${pts[i][1] - 9}" text-anchor="middle" font-size="${ext ? 12 : 11}" font-weight="${ext ? 600 : 500}" fill="${ext ? tc(f.temperature) : "#f4f1ea"}" class="fi" style="animation-delay:${0.8 + i * 0.02}s">${Math.round(f.temperature)}\xB0</text>`;
+      g += `<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="${i === 0 ? 3.6 : 1.8}" fill="${i === 0 ? "#fff" : tc(f.temperature)}" class="fi" style="animation-delay:${1 + i * 0.02}s"/>`;
+      const wv = (f.wind_speed || 0) / 3.6, wc = wv >= 10.8 ? "#ff9e7a" : wv >= 5.5 ? "#e8c37e" : "rgba(244,241,234,.5)";
+      if (i % step === 0) g += `<g transform="translate(${X(i)} 174) rotate(${(f.wind_bearing || 0) + 180})" class="fi"><path d="M0 -5.5 3.6 4 0 2 -3.6 4Z" fill="${wc}"/></g><text x="${X(i)}" y="192" text-anchor="middle" font-size="9.5" fill="${wc}">${Math.round(wv)}</text>`;
+    });
+    g += `<circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="4" fill="#fff" class="nowdot"/>`;
+    g += `<rect id="hl" x="0" y="0" width="${cw}" height="${H3}" rx="12" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" opacity="0" style="transition:x .12s,opacity .2s"/>`;
+    const sv = this.$("hsvg");
+    sv.setAttribute("viewBox", `0 0 ${W3} ${H3}`);
+    sv.setAttribute("width", W3);
+    sv.setAttribute("height", H3);
+    sv.innerHTML = g;
+    this.$("hin").style.width = W3 + "px";
+    const tot = fc2.reduce((s, f) => s + (f.precipitation || 0), 0);
+    this.set("hsum", `${Math.round(mn)}\xB0 \u2013 ${Math.round(mx)}\xB0 \xB7 ${tot > 0.05 ? fmt(tot, 1) + " mm nedb\xF8r" : "ingen nedb\xF8r"} \xB7 vind m/s`);
+  }
+  scrub(e) {
+    const fc2 = this._fc;
+    if (!fc2) return;
+    const r = this.$("hsvg").getBoundingClientRect(), x = e.clientX - r.left, i = Math.max(0, Math.min(fc2.length - 1, Math.floor(x / this._cw))), f = fc2[i];
+    const hl2 = this._r.getElementById("hl");
+    hl2.setAttribute("x", i * this._cw);
+    hl2.setAttribute("opacity", 1);
+    const dt = new Date(f.datetime), tip = this.$("tip"), [txt] = cnd(f.condition, false);
+    tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
+      F\xF8les som <b>${fmt(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
+      Vind <b>${fmt((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
+    const sc = this.$("hs").scrollLeft, vw = this.$("hs").clientWidth;
+    let L3 = (i + 1) * this._cw + 8;
+    if (L3 + 158 - sc > vw) L3 = i * this._cw - 158;
+    tip.style.left = Math.max(0, L3) + "px";
+    tip.classList.add("on");
+  }
+};
+if (!customElements.get("th-weather-card")) customElements.define("th-weather-card", ThWeatherCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c2) => c2.type === "th-weather-card")) window.customCards.push({ type: "th-weather-card", name: "TH vejr", description: "Animeret vejrkort med himmel, sol/m\xE5ne, nowcast, m\xE5linger og time-for-time", preview: true });
+console.info(`%c TH-WEATHER %c ${VWH_VER} `, "background:#8ed1ff;color:#0b0d12;font-weight:700", "color:#8ed1ff");
+
 // src/cards/ha-home-room-overview-card/ha-card-list-editor.js
 var HACardListEditor10 = class extends HTMLElement {
   constructor() {
@@ -38851,7 +39732,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc5 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc6 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -39411,7 +40292,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE6}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc5(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc5(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc6(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc6(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -39431,16 +40312,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc5(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc5(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc5(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc6(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc6(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc6(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc5(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc5(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc6(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc6(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc5(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc6(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -47780,9 +48661,9 @@ var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk"
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
 var HOUR = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var pad2 = (n) => String(n).padStart(2, "0");
-var hhmm = (d) => `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
+var hhmm2 = (d) => `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
 var dayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 var startOfDay = (d) => {
   const x = new Date(d);
@@ -48099,7 +48980,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc6(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc7(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -48175,7 +49056,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc6(ds[0].toUpperCase() + ds.slice(1))}<small>${esc6(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc7(ds[0].toUpperCase() + ds.slice(1))}<small>${esc7(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -48187,11 +49068,11 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc6(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc7(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
-    r.querySelector("[data-upd]").textContent = this._range ? `Opdateret ${hhmm(/* @__PURE__ */ new Date())}` : "";
+    r.querySelector("[data-upd]").textContent = this._range ? `Opdateret ${hhmm2(/* @__PURE__ */ new Date())}` : "";
     this._paintNow();
   }
   _renderSeg() {
@@ -48210,9 +49091,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc6(g)}">${esc6(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc7(g)}">${esc7(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc6(c2.entity)}" style="--c:${esc6(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc6(c2.name || c2.entity)}"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon>${esc6(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc7(c2.entity)}" style="--c:${esc7(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc7(c2.name || c2.entity)}"><ha-icon icon="${esc7(c2.icon || "mdi:calendar")}"></ha-icon>${esc7(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -48251,8 +49132,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc6(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc6(c2.name || "")}${e.location ? ` \xB7 ${esc6(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc7(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc7(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc7(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY[new Date(e.s).getDay()]}` : ""} \xB7 ${esc7(c2.name || "")}${e.location ? ` \xB7 ${esc7(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -48277,7 +49158,7 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc6(e.summary || "")}">${esc6(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc7(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc7(e.summary || "")}">${esc7(e.summary || "")}</button>`;
     });
     const hrs = [];
     for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad2(h)}</span></div>`);
@@ -48309,15 +49190,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc6(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc6(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc7(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc7(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")}"><span class="t">${hhmm(new Date(e.s))}<small>${hhmm(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc6(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon>${esc6(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc6(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc7(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc7(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc7(c2.icon || "mdi:calendar")}"></ha-icon>${esc7(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc7(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -48376,7 +49257,7 @@ ${LUX_KEYFRAMES}
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H3, y(en)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc6(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc6(e.summary || "")}</b>${h > 34 ? `<small>${hhmm(new Date(e.s))}\u2013${hhmm(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc7(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc7(e.summary || "")}</b>${h > 34 ? `<small>${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -48384,7 +49265,7 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de2 = ds + 864e5;
-      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc6(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc6(e.summary || "")}</button>`).join("");
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc7(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc7(e.summary || "")}</button>`).join("");
     };
     const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad2(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
@@ -48444,7 +49325,7 @@ ${LUX_KEYFRAMES}
     const c2 = e._color ? { color: e._color, name: e._name, icon: e._icon } : this._cal(e.calendar_entity);
     const s = new Date(e.s);
     const en = new Date(e.e);
-    const when = e.allDay ? `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` \u2013 ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} \xB7 hele dagen` : `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} \xB7 ${hhmm(s)}\u2013${hhmm(en)} (${dur(e.e - e.s)})`;
+    const when = e.allDay ? `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` \u2013 ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} \xB7 hele dagen` : `${DAY[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} \xB7 ${hhmm2(s)}\u2013${hhmm2(en)} (${dur(e.e - e.s)})`;
     const live = this._on(e, Date.now());
     this._closeSheet();
     const host = document.createElement("div");
@@ -48452,11 +49333,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc6(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc6(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc6(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc6(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc6(when[0].toUpperCase() + when.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc7(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc7(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc7(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc7(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc7(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc6(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc6(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc7(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc7(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -48507,7 +49388,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc6(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc7(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -48517,7 +49398,7 @@ ${LUX_KEYFRAMES}
     const en = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc6(SUBJECTS[k] || k)}</b><span>${hhmm(s)}\u2013${hhmm(en)}${e.location ? ` \xB7 ${esc6(e.location)}` : ""}</span>${teacher.length ? `<small>${esc6(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc7(SUBJECTS[k] || k)}</b><span>${hhmm2(s)}\u2013${hhmm2(en)}${e.location ? ` \xB7 ${esc7(e.location)}` : ""}</span>${teacher.length ? `<small>${esc7(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -52882,7 +53763,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc7 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc8 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -53711,8 +54592,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc7(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc7(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc8(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc8(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -53734,8 +54615,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc7(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc7(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc8(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc8(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -53812,7 +54693,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon4] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc7(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc7(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc8(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc8(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -53881,7 +54762,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc7(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc8(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -53896,29 +54777,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc7(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc7(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc8(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc8(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc7(title)}</h2><p>${esc7(subtitle)}</p></div>
+          <div><h2>${esc8(title)}</h2><p>${esc8(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc7(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc7(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc7(t)}</b>${s ? `<span>${esc7(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc7(l)}</span><b>${esc7(v)}</b>${x ? `<small>${esc7(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc8(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc8(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc8(t)}</b>${s ? `<span>${esc8(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc8(l)}</span><b>${esc8(v)}</b>${x ? `<small>${esc8(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc7(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc7(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc7(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc7(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc8(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc8(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc8(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc8(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc7(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc8(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -53932,7 +54813,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc7(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc8(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
@@ -54332,13 +55213,13 @@ var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt2 = numberFormats.get(digits);
-  if (!fmt2) {
-    fmt2 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt2);
+  let fmt3 = numberFormats.get(digits);
+  if (!fmt3) {
+    fmt3 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt3);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt2.format(rounded === 0 ? 0 : rounded);
+  return fmt3.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -56629,7 +57510,7 @@ function normalize(stateObj, kind) {
   return { value: n === void 0 ? void 0 : n * factor, known: true };
 }
 var numberFormats2 = /* @__PURE__ */ new Map();
-function fmt(value, digits = 1) {
+function fmt2(value, digits = 1) {
   if (!Number.isFinite(value)) return "\u2014";
   let f = numberFormats2.get(digits);
   if (!f) {
@@ -56642,22 +57523,22 @@ function fmt(value, digits = 1) {
 function fmtPower2(watts) {
   if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
   const abs = Math.abs(watts);
-  if (abs >= 1e3) return { v: fmt(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
-  return { v: fmt(watts, abs < 10 ? 1 : 0), u: "W" };
+  if (abs >= 1e3) return { v: fmt2(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
+  return { v: fmt2(watts, abs < 10 ? 1 : 0), u: "W" };
 }
 function fmtEnergy2(kwh) {
   if (!Number.isFinite(kwh)) return { v: "\u2014", u: "kWh" };
   const abs = Math.abs(kwh);
-  if (abs >= 1e4) return { v: fmt(kwh / 1e3, 1), u: "MWh" };
-  if (abs < 1 && abs > 0) return { v: fmt(kwh * 1e3, 0), u: "Wh" };
-  return { v: fmt(kwh, abs >= 100 ? 0 : 1), u: "kWh" };
+  if (abs >= 1e4) return { v: fmt2(kwh / 1e3, 1), u: "MWh" };
+  if (abs < 1 && abs > 0) return { v: fmt2(kwh * 1e3, 0), u: "Wh" };
+  return { v: fmt2(kwh, abs >= 100 ? 0 : 1), u: "kWh" };
 }
 function fmtVolume(m3) {
   if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
-  if (Math.abs(m3) < 10) return { v: fmt(m3 * 1e3, 0), u: "L" };
-  return { v: fmt(m3, 1), u: "m\xB3" };
+  if (Math.abs(m3) < 10) return { v: fmt2(m3 * 1e3, 0), u: "L" };
+  return { v: fmt2(m3, 1), u: "m\xB3" };
 }
-var fmtKr = (v) => Number.isFinite(v) ? `${fmt(v, 2)} kr` : "\u2014";
+var fmtKr = (v) => Number.isFinite(v) ? `${fmt2(v, 2)} kr` : "\u2014";
 function escapeHtml3(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -56902,7 +57783,7 @@ var BarChart = class {
     let grid = "";
     for (let v = 0; v <= hi + step / 2; v += step) {
       const pct2 = 100 - v / hi * 100;
-      y += `<span style="top:${pct2}%">${fmt(v, d)}</span>`;
+      y += `<span style="top:${pct2}%">${fmt2(v, d)}</span>`;
       grid += `<i style="top:${pct2}%"></i>`;
     }
     this.$("y").innerHTML = y;
@@ -56959,7 +57840,7 @@ var BarChart = class {
     svg.removeAttribute("hidden");
     const dec = decimalsFor(step);
     let labels = "";
-    for (let v = lo; v <= hi + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi - lo) * 100}%">${fmt(v, dec)}</span>`;
+    for (let v = lo; v <= hi + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi - lo) * 100}%">${fmt2(v, dec)}</span>`;
     y22.innerHTML = labels;
     y22.hidden = false;
     this.host.classList.add("has-line");
@@ -57145,7 +58026,7 @@ var HistoryPanel = class {
     const has = values.some(Number.isFinite);
     const total = values.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     const unit = this._unit();
-    this.totalEl.textContent = has ? `${fmt(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
+    this.totalEl.textContent = has ? `${fmt2(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
     const costTotal = cost?.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     this.costEl.textContent = cost && cost.some(Number.isFinite) ? fmtKr(costTotal) : "";
   }
@@ -57170,7 +58051,7 @@ var HistoryPanel = class {
     const c2 = this.current.cost?.[i];
     const unit = this._unit();
     const digits = unit === "L" ? 0 : v >= 100 ? 0 : v >= 10 ? 1 : 2;
-    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt(v, digits) : "\u2014"}</em> ${unit}</span>`;
+    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt2(v, digits) : "\u2014"}</em> ${unit}</span>`;
     if (Number.isFinite(c2)) html += `<span>${fmtKr(c2)}</span>`;
     const lv = this.current.line?.values[i];
     if (Number.isFinite(lv)) html += `<span class="tip-line">${escapeHtml3(this.o.line.format(lv))}</span>`;
@@ -57405,7 +58286,7 @@ var OverviewSection = class extends Section {
           key: "grid_price",
           label: "Timepris (kr/kWh)",
           values: (range) => hourlyPrices(card.stateObj("grid_price"), range.buckets),
-          format: (v) => `${fmt(v, 2)} kr/kWh`
+          format: (v) => `${fmt2(v, 2)} kr/kWh`
         }
       }),
       new HistoryPanel(card, { key: "ov-el", title: "Elforbrug", icon: "mdi:flash", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" }),
@@ -57507,13 +58388,13 @@ var OverviewSection = class extends Section {
     this.value("hEl", fmtPower2(grid), true);
     this.value("hHeat", fmtPower2(heat), true);
     this.value("hEv", fmtPower2(ev), true);
-    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt2(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
     this.text("hWaterU", "L/min");
     const price = c2.num("grid_price");
-    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt(price, 2)} kr/kWh` : "Ingen prisdata");
+    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt2(price, 2)} kr/kWh` : "Ingen prisdata");
     const sup = c2.num("heat_supply");
     const ret = c2.num("heat_return");
-    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt(sup, 0)}\xB0 \xB7 retur ${fmt(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
+    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt2(sup, 0)}\xB0 \xB7 retur ${fmt2(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
     const wf = c2.waterFlowState(flowLpm);
     this.text("hWaterSub", wf.label);
     this.tone(this.refs.hWaterSub, wf.tone);
@@ -57691,11 +58572,11 @@ var PowerSection = class extends Section {
     const unm = c2.watts("unmeasured_power");
     this.value("main", fmtPower2(grid), true);
     const va = c2.num("grid_apparent");
-    this.text("mainVa", Number.isFinite(va) ? `${fmt(va, 0)} VA` : "\u2014");
+    this.text("mainVa", Number.isFinite(va) ? `${fmt2(va, 0)} VA` : "\u2014");
     const price = c2.num("grid_price");
-    this.text("mainPrice", Number.isFinite(price) ? `${fmt(price, 2)} kr/kWh` : "\u2014");
+    this.text("mainPrice", Number.isFinite(price) ? `${fmt2(price, 2)} kr/kWh` : "\u2014");
     const temp = c2.num("meter_temperature");
-    this.text("mainTemp", Number.isFinite(temp) ? `${fmt(temp, 1)} \xB0C` : "\u2014");
+    this.text("mainTemp", Number.isFinite(temp) ? `${fmt2(temp, 1)} \xB0C` : "\u2014");
     const ret = fmtEnergy2(c2.kwh("grid_returned"));
     this.text("mainRet", `${ret.v} ${ret.u}`);
     this.value("mMeas", fmtPower2(meas));
@@ -57703,18 +58584,18 @@ var PowerSection = class extends Section {
     const pct2 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
     const measPct = pct2(meas);
     const unmPct = pct2(unm);
-    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt(measPct, 0)} %` : "\u2014");
-    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt(unmPct, 0)} %` : "\u2014");
-    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt(measPct, 0)} %` : "\u2014");
-    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt(unmPct, 0)} %` : "\u2014");
+    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt2(measPct, 0)} %` : "\u2014");
+    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt2(unmPct, 0)} %` : "\u2014");
+    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt2(measPct, 0)} %` : "\u2014");
+    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt2(unmPct, 0)} %` : "\u2014");
     this.bar("acctMeas", grid > 0 && Number.isFinite(meas) ? Math.min(meas / grid, 1) : 0);
     this.bar("acctUnm", grid > 0 && Number.isFinite(unm) ? Math.min(unm / grid, 1) : 0);
     const tol = c2.config.accounting_tolerance_w;
     if (Number.isFinite(grid) && Number.isFinite(meas)) {
       const diff = meas + (Number.isFinite(unm) ? unm : 0) - grid;
-      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt(diff, 0)} W`);
+      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt2(diff, 0)} W`);
       const off = meas - grid > tol;
-      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
+      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt2(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
       this.tone("acct", off ? "warn" : "");
     } else {
       this.text("acctDiff", "\u2014");
@@ -57741,7 +58622,7 @@ var PowerSection = class extends Section {
       total += s.sum || 0;
       const p3 = fmtPower2(s.sum);
       this.text(`g${i}Val`, `${p3.v} ${p3.u}`);
-      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt(s.sum / grid * 100, 0)} %` : "\u2014");
+      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt2(s.sum / grid * 100, 0)} %` : "\u2014");
       this.bar(`g${i}Bar`, (s.sum || 0) / max);
       const warn = this.refs[`g${i}Warn`];
       this.show(warn, s.missing > 0);
@@ -57751,7 +58632,7 @@ var PowerSection = class extends Section {
       }
     });
     const p = fmtPower2(total);
-    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
+    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt2(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
   }
   _updatePhases() {
     const c2 = this.card;
@@ -57764,15 +58645,15 @@ var PowerSection = class extends Section {
     phases.forEach((p, i) => {
       this.value(`ph${i}`, fmtPower2(c2.wattsOf(p.power)), true);
       const cur = currents[i];
-      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt(cur, 2)} A` : "\u2014");
+      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt2(cur, 2)} A` : "\u2014");
       const v = c2.numOf(p.voltage);
-      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt(v, 1)} V` : "\u2014");
+      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt2(v, 1)} V` : "\u2014");
       const hz = c2.numOf(p.frequency);
-      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt(hz, 2)} Hz` : "\u2014");
+      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt2(hz, 2)} Hz` : "\u2014");
       const pf = c2.numOf(p.power_factor);
-      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt(pf, 2) : "\u2014");
+      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt2(pf, 2) : "\u2014");
       const va = c2.numOf(p.apparent);
-      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt(va, 0)} VA` : "\u2014");
+      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt2(va, 0)} VA` : "\u2014");
       this.bar(`ph${i}Bar`, Number.isFinite(cur) ? cur / maxI : 0);
       this.show(`ph${i}Flag`, Boolean(bal.flagged[i]));
       this.tone(`ph${i}`, bal.flagged[i] ? bal.tone : "");
@@ -57844,22 +58725,22 @@ var HeatSection = class extends Section {
     this.text("status", !Number.isFinite(w) ? "Ingen data" : w > 0 ? "Varmer" : "Ingen varmeeffekt");
     this.tone("status", w > 0 ? "heat" : "");
     const price = c2.num("heat_price");
-    this.text("priceV", Number.isFinite(price) ? fmt(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt2(price, 2) : "\u2014");
     this.text("priceU", "kr/kWh");
-    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt(c2.num(k), 1)} \xB0C` : "\u2014";
+    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt2(c2.num(k), 1)} \xB0C` : "\u2014";
     this.text("sup", deg("heat_supply"));
     this.text("ret", deg("heat_return"));
     this.text("cool", deg("heat_cooling"));
     const flow = c2.num("heat_flow");
     const unit = c2.stateObj("heat_flow")?.attributes?.unit_of_measurement || "";
-    this.text("flow", Number.isFinite(flow) ? `${fmt(flow, 0)} ${unit}` : "\u2014");
+    this.text("flow", Number.isFinite(flow) ? `${fmt2(flow, 0)} ${unit}` : "\u2014");
     this._updateToday();
   }
   _updateToday() {
     const c2 = this.card;
     this.value("today", fmtEnergy2(c2.today("heat_energy", "energy")));
     const cost = c2.today("heat_cost", "monetary");
-    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt2(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -57910,15 +58791,15 @@ var WaterSection = class extends Section {
   update() {
     const c2 = this.card;
     const lpm = c2.flowLpm("water_flow");
-    this.text("flowV", Number.isFinite(lpm) ? fmt(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("flowV", Number.isFinite(lpm) ? fmt2(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
     const st = c2.waterFlowState(lpm);
     this.text("status", st.label);
     this.tone("status", st.tone);
     const cost = c2.num("water_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt2(cost, 2) : "\u2014");
     this.text("costU", "kr");
     const price = c2.num("water_price");
-    this.text("priceV", Number.isFinite(price) ? fmt(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt2(price, 2) : "\u2014");
     this.text("priceU", "kr/m\xB3");
     this._updateToday();
   }
@@ -57978,7 +58859,7 @@ var EvSection = class extends Section {
     this.value("month", fmtEnergy2(c2.kwh("ev_energy_month")));
     this.value("session", fmtEnergy2(c2.kwh("ev_session")));
     const cost = c2.num("ev_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt2(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -58358,7 +59239,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
       const row = this._dlgRows[i];
       const p3 = fmtPower2(w);
       row.v.textContent = Number.isFinite(w) ? `${p3.v} ${p3.u}` : "Ingen data";
-      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
+      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt2(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
       row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
       row.el.classList.toggle("off", !Number.isFinite(w));
       row.el.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);
