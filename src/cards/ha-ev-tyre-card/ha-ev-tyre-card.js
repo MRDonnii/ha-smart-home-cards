@@ -5,13 +5,14 @@
 
 import { LUX_ACCENT } from "../../shared/lux.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const KINDS = {
-  summer: { label: "Sommer", icon: "mdi:weather-sunny", color: "#f2b545" },
-  winter: { label: "Vinter", icon: "mdi:snowflake", color: "#5fb8ff" },
-  studded: { label: "Pigdæk", icon: "mdi:snowflake-alert", color: "#8fa8ff" },
-  all_season: { label: "Helår", icon: "mdi:weather-partly-snowy-rainy", color: "#6fd19a" },
+  // The theme's own colours (user, 2026-10-14: "sørg for de kort følger tema").
+  summer: { label: "Sommer", icon: "mdi:weather-sunny", color: "var(--warning-color,#f2b545)" },
+  winter: { label: "Vinter", icon: "mdi:snowflake", color: "var(--info-color,#5fb8ff)" },
+  studded: { label: "Pigdæk", icon: "mdi:snowflake-alert", color: "var(--primary-color,#8fa8ff)" },
+  all_season: { label: "Helår", icon: "mdi:weather-partly-snowy-rainy", color: "var(--success-color,#6fd19a)" },
 };
 const kindOf = (kind) => KINDS[kind] || KINDS.summer;
 const BAND_ORDER = ["under 0", "0–5", "5–10", "10–15", "15–20", "20+"];
@@ -419,6 +420,8 @@ const STYLES = `
 :host{display:block;--tc-text:var(--primary-text-color,#eef2f7);--tc-muted:var(--secondary-text-color,#94a3b8);
   --tc-line:color-mix(in srgb,var(--tc-text) 10%,transparent);--tc-tile:color-mix(in srgb,var(--tc-text) 4%,transparent);
   --tc-accent:${LUX_ACCENT}}
+/* Text and icons in a kind's colour are mixed with the theme's text colour, so they read on light and dark themes. */
+[style*="--k:"]{--kt:color-mix(in srgb,var(--k) 72%,var(--tc-text))}
 *{box-sizing:border-box}
 ha-card{overflow:hidden}
 .tc{padding:16px;color:var(--tc-text);display:grid;gap:14px;container:tc / inline-size}
@@ -426,7 +429,7 @@ ha-card{overflow:hidden}
 h3,h4,h5,p{margin:0}
 ha-icon{--mdc-icon-size:20px;flex:none}
 .th{display:flex;align-items:center;gap:12px;min-width:0}
-.th-i{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--k);background:color-mix(in srgb,var(--k) 16%,transparent);flex:none}
+.th-i{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:var(--kt);background:color-mix(in srgb,var(--k) 16%,transparent);flex:none}
 .th-t{min-width:0;flex:1}
 .th-t h3{font-size:16px;font-weight:700}
 .th-t p{font-size:12.5px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -453,7 +456,7 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .intro p{font-size:13px;color:var(--tc-muted);margin:6px 0 12px;line-height:1.45}
 .tip{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--k) 13%,transparent);border:1px solid color-mix(in srgb,var(--k) 35%,transparent)}
 .tip.urgent{animation:tipPulse 2.4s ease-in-out infinite}
-.tip-i{--mdc-icon-size:26px;color:var(--k)}
+.tip-i{--mdc-icon-size:26px;color:var(--kt)}
 .tip>div{flex:1;min-width:0}
 .tip b{font-size:14px}
 .tip p{font-size:12.5px;color:var(--tc-muted);margin-top:2px}
@@ -466,7 +469,7 @@ ha-icon{--mdc-icon-size:20px;flex:none}
   opacity:.55;pointer-events:none}
 .cur-top{position:relative;z-index:1;display:grid;gap:3px;padding-right:90px}
 .kind{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:3px 9px 3px 7px;border-radius:999px;font-size:11.5px;font-weight:750;letter-spacing:.02em;text-transform:uppercase;
-  color:var(--k);background:color-mix(in srgb,var(--k) 15%,transparent)}
+  color:var(--kt);background:color-mix(in srgb,var(--k) 15%,transparent)}
 .kind ha-icon{--mdc-icon-size:14px}
 .cur h4{font-size:22px;font-weight:750;letter-spacing:-.01em;margin-top:4px}
 .size{font-size:15px;font-weight:650;color:color-mix(in srgb,var(--tc-text) 85%,transparent);font-variant-numeric:tabular-nums}
@@ -478,10 +481,10 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .kpi b{font-size:19px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .kpi b small{font-size:11px;font-weight:600;color:var(--tc-muted);margin-left:3px}
 .kpi span{font-size:11.5px;color:var(--tc-muted)}
-.tread{position:relative;z-index:1;display:grid;gap:6px;--t:#34d399}
-.tread.low{--t:#facc15}.tread.warn{--t:#fb923c}.tread.crit{--t:var(--error-color,#ef4444)}
+.tread{position:relative;z-index:1;display:grid;gap:6px;--t:var(--success-color,#34d399)}
+.tread.low{--t:var(--warning-color,#facc15)}.tread.warn{--t:color-mix(in srgb,var(--warning-color,#f59e0b) 50%,var(--error-color,#ef4444))}.tread.crit{--t:var(--error-color,#ef4444)}
 .tread-h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tc-muted)}
-.tread-h b{color:var(--t);font-size:13.5px}
+.tread-h b{color:color-mix(in srgb,var(--t) 72%,var(--tc-text));font-size:13.5px}
 .tread-bar{position:relative;height:8px;border-radius:99px;background:color-mix(in srgb,var(--tc-text) 8%,transparent)}
 .tread-bar i{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--t) 60%,transparent),var(--t));box-shadow:0 0 10px color-mix(in srgb,var(--t) 50%,transparent)}
 .tread-bar em{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:2px;background:var(--tc-text);opacity:.5}
@@ -493,9 +496,9 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .set header>div{flex:1;min-width:0;display:grid}
 .set header b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .set header small{font-size:12px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.set-i{color:var(--k)}
+.set-i{color:var(--kt)}
 .on,.off{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
-.on{color:var(--k);background:color-mix(in srgb,var(--k) 16%,transparent)}
+.on{color:var(--kt);background:color-mix(in srgb,var(--k) 16%,transparent)}
 .off{color:var(--tc-muted);background:color-mix(in srgb,var(--tc-text) 6%,transparent)}
 .off ha-icon{--mdc-icon-size:13px}
 .set dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin:0}
@@ -519,13 +522,13 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .bar.none i{width:3px;background:var(--tc-line)}
 .bar.none em{color:var(--tc-muted)}
 .verdict{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--k,var(--tc-text)) 9%,transparent)}
-.verdict ha-icon{color:var(--k,var(--tc-muted));--mdc-icon-size:18px;margin-top:1px}
+.verdict ha-icon{color:var(--kt,var(--tc-muted));--mdc-icon-size:18px;margin-top:1px}
 .verdict.soft{opacity:.8}
 .verdict.muted{color:var(--tc-muted);background:var(--tc-tile)}
 .hist{display:grid;gap:6px}
 .hrow{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:12px;border:1px solid var(--tc-line);background:var(--tc-tile);color:inherit;font:inherit;text-align:left;cursor:pointer}
 .hrow:hover{background:color-mix(in srgb,var(--tc-text) 7%,transparent)}
-.h-i{color:var(--k)}
+.h-i{color:var(--kt)}
 .h-n,.h-v{display:grid;min-width:0}
 .h-n{flex:1}
 .h-v{text-align:right}
@@ -548,7 +551,7 @@ ha-icon{--mdc-icon-size:20px;flex:none}
 .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
 .choices.kinds{grid-template-columns:repeat(4,minmax(0,1fr))}
 .choice{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--tc-line);background:var(--tc-tile);color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
-.choice ha-icon{color:var(--k)}
+.choice ha-icon{color:var(--kt)}
 .choice span{display:grid;min-width:0}
 .choice b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .choice small{font-size:11.5px;color:var(--tc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
