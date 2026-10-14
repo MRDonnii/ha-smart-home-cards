@@ -8,7 +8,7 @@
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 
-const VERSION = "0.5.2";
+const VERSION = "0.5.3";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -192,8 +192,8 @@ class HATeslaGlanceCard extends HTMLElement {
       .line{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .line ha-icon{--mdc-icon-size:15px;color:var(--tone)}
       .line b{color:var(--primary-text-color);font-weight:750}
-      .chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;align-content:flex-start}
-      .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:9px;font-size:10px;font-weight:700;color:var(--primary-text-color);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--edge)}
+      .chips{display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;align-content:flex-start;flex:none}
+      .chip{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:9px;font-size:10px;font-weight:700;color:var(--primary-text-color);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--edge)}
       .chip ha-icon{--mdc-icon-size:13px;color:var(--muted)}
       .chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}.chip.warn ha-icon{color:var(--warn)}
       .chip.ok ha-icon{color:var(--good)}
@@ -326,6 +326,8 @@ class HATeslaGlanceCard extends HTMLElement {
       .compact .car img{max-height:84px;margin-bottom:-4px}
       .compact .soc b{font-size:28px}
       .compact .chips{gap:4px}
+      /* One row always (user, 2026-10-14: the card must not grow when Sentry comes on); a bit smaller on phones. */
+      @media(max-width:600px){.chips{gap:4px}.chip{padding:3px 6px;gap:3px}}
       .compact .stat{padding:4px 7px}.compact .stat b{font-size:12px}
       @container (max-width:520px){.compact .grid{grid-template-columns:minmax(0,1fr) 34%}.compact .stats{grid-column:1/-1;grid-row:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.compact .car{grid-column:2}.compact .car img{max-height:72px}}
       @keyframes flow{to{background-position:-220% 0}}
@@ -540,8 +542,8 @@ class HATeslaGlanceCard extends HTMLElement {
 
     const chips = [];
     const lock = this._val(c.lock);
-    if (lock) chips.push(lock === "locked" ? `<span class="chip ok"><ha-icon icon="mdi:lock"></ha-icon>Låst</span>` : `<span class="chip warn"><ha-icon icon="mdi:lock-open-variant"></ha-icon>Ulåst</span>`);
-    if (this._val(c.sentry) === "on") chips.push(`<span class="chip ok"><ha-icon icon="mdi:shield-car"></ha-icon>Sentry</span>`);
+    if (lock) chips.push(lock === "locked" ? `<span class="chip ok" title="Låst"><ha-icon icon="mdi:lock"></ha-icon><span class="cl">Låst</span></span>` : `<span class="chip warn" title="Ulåst"><ha-icon icon="mdi:lock-open-variant"></ha-icon><span class="cl">Ulåst</span></span>`);
+    if (this._val(c.sentry) === "on") chips.push(`<span class="chip ok" title="Sentry"><ha-icon icon="mdi:shield-car"></ha-icon><span class="cl">Sentry</span></span>`);
     const inside = this._num(c.inside_temperature);
     if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc(this._fmt(inside, 0))}°</span>`);
     root.querySelector(".chips").innerHTML = chips.join("");
