@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.7.1";
+const VERSION = "0.8.0";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -27,7 +27,7 @@ const FIELDS = [
   ["supply", "Strøm til anlæg (switch)", "entity"], ["restart", "Genstart anlæg (knap)", "entity"], ["openings", "Reagér på døre/vinduer (switch)", "entity"],
   ["reduce_after", "Skru ned efter (number)", "entity"], ["off_after", "Sluk efter (number)", "entity"], ["resume_after", "Genoptag efter (number)", "entity"],
   ["turbo", "Turbo 30 min (switch)", "entity"], ["price_control", "Prisstyring (switch)", "entity"], ["price_level", "Prisniveau (sensor)", "entity"],
-  ["auto_wake", "Vækning ved slumring (switch)", "entity"], ["wake_status", "Vækning (sensor)", "entity"],
+  ["auto_wake", "Vækning ved slumring (switch)", "entity"], ["wake_status", "Vækning (sensor)", "entity"], ["firmware", "Firmware (update)", "entity"],
   ["max_power", "Maks. effekt (W)"], ["filter_alarm", "Filter-påmindelse (timer)"],
 ];
 const PRICE_TEXT = { cheap: "Billig strøm", normal: "Normal pris", expensive: "Dyr strøm", unknown: "Ingen prisprognose", off: "Slået fra" };
@@ -182,7 +182,7 @@ class HAACClimateCard extends HTMLElement {
   }
 
   _functions(unit, s) {
-    const btn = (action, icon, label, on, show) => (show ? `<button class="fn ${on ? "on" : ""}" data-action="${action}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span></button>` : "");
+    const btn = (action, icon, label, on, show, toggle = false) => (show ? `<button class="fn ${toggle ? "tg" : ""} ${on ? "on" : ""}" data-action="${action}" ${toggle ? `aria-pressed="${!!on}"` : ""}><ha-icon icon="${icon}"></ha-icon><span>${label}</span></button>` : "");
     const follow = this._entity(unit.follow_me);
     const beep = this._entity(unit.beep);
     const supply = this._entity(unit.supply);
@@ -190,9 +190,9 @@ class HAACClimateCard extends HTMLElement {
       btn("swing-ir", "mdi:arrow-up-down", "Sving", false, this._exists(unit.swing_toggle)),
       btn("swing-step", "mdi:arrow-up-down-bold-outline", "Lamel trin", false, this._exists(unit.swing_step)),
       btn("display", "mdi:monitor", "Display", false, this._exists(unit.display)),
-      btn("follow-me", "mdi:home-thermometer", "Follow Me", follow?.state === "on", !!follow),
-      btn("beep", beep?.state === "on" ? "mdi:volume-high" : "mdi:volume-off", "Bip", beep?.state === "on", !!beep),
-      btn("supply", supply?.state === "on" ? "mdi:power-plug" : "mdi:power-plug-off", "Strøm", supply?.state === "on", !!supply),
+      btn("follow-me", "mdi:home-thermometer", "Follow Me", follow?.state === "on", !!follow, true),
+      btn("beep", beep?.state === "on" ? "mdi:volume-high" : "mdi:volume-off", "Bip", beep?.state === "on", !!beep, true),
+      btn("supply", supply?.state === "on" ? "mdi:power-plug" : "mdi:power-plug-off", "Strøm", supply?.state === "on", !!supply, true),
       btn("restart", "mdi:restart-alert", "Genstart", false, this._exists(unit.restart)),
       this._turboButton(unit, s),
     ].join("");
@@ -207,7 +207,7 @@ class HAACClimateCard extends HTMLElement {
     if (!on && !running) return `<button class="fn turbo idle" disabled title="Turbo virker kun, mens anlægget varmer eller køler"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>Turbo</span></button>`;
     const until = Date.parse(turbo.attributes?.until || "");
     const left = on && Number.isFinite(until) ? Math.max(1, Math.round((until - Date.now()) / 60000)) : 0;
-    return `<button class="fn turbo ${on ? "on" : ""}" data-action="turbo" title="${on ? "Stop turbo" : "Anlæggets boost i 30 minutter"}"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>${on ? `Turbo ${left} min` : "Turbo"}</span></button>`;
+    return `<button class="fn tg turbo ${on ? "on" : ""}" data-action="turbo" aria-pressed="${on}" title="${on ? "Stop turbo" : "Anlæggets boost i 30 minutter"}"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>${on ? `Turbo ${left} min` : "Turbo"}</span></button>`;
   }
 
   _clock(iso) {
@@ -266,7 +266,19 @@ class HAACClimateCard extends HTMLElement {
     const alarm = Number(unit.filter_alarm) || 500;
     const fpct = s.filter !== undefined ? Math.min(100, (s.filter / alarm) * 100) : 0;
     const filter = unit.filter_hours ? `<div class="filter ${fpct >= 100 ? "due" : ""}"><span><ha-icon icon="mdi:air-filter"></ha-icon>Filter ${this._format(s.filter)} / ${this._format(alarm)} t</span><i class="bar"><b style="width:${Math.max(2, fpct)}%"></b></i>${this._exists(unit.filter_reset) ? `<button data-action="filter-reset" title="Nulstil efter filterrens"><ha-icon icon="mdi:restore"></ha-icon></button>` : ""}</div>` : "";
-    return cells.length || filter ? `<section class="block econ">${cells.length ? `<div class="cells">${cells.join("")}</div>` : ""}${filter}</section>` : "";
+    const fwEntity = this._raw(unit.firmware);
+    let firmware = "";
+    if (fwEntity) {
+      const a = fwEntity.attributes || {};
+      const update = fwEntity.state === "on";
+      const text = !a.installed_version ? "Firmware ukendt"
+        : a.in_progress ? `Firmware ${a.installed_version} · opdaterer…`
+        : update ? `Firmware ${a.installed_version} · ${a.latest_version} er klar`
+        : `Firmware ${a.installed_version} · nyeste`;
+      const install = update && !a.in_progress && (Number(a.supported_features) & 1);
+      firmware = `<div class="filter fw ${update ? "due" : ""}"><span><ha-icon icon="${update ? "mdi:update" : "mdi:check-decagram-outline"}"></ha-icon>${this._esc(text)}</span><i></i>${install ? `<button data-action="firmware" title="Installér firmware ${this._esc(a.latest_version)}"><ha-icon icon="mdi:download"></ha-icon></button>` : ""}</div>`;
+    }
+    return cells.length || filter || firmware ? `<section class="block econ">${cells.length ? `<div class="cells">${cells.join("")}</div>` : ""}${filter}${firmware}</section>` : "";
   }
 
   _unit(unit, index) {
@@ -319,6 +331,9 @@ class HAACClimateCard extends HTMLElement {
         case "restart":
           if (!confirm("Genstart anlægget? Strømmen slukkes i 30 sekunder.")) return;
           return await call("button", "press", { entity_id: unit.restart });
+        case "firmware":
+          if (!confirm("Installér den nye firmware på ESP'en? Den genstarter undervejs.")) return;
+          return await call("update", "install", { entity_id: unit.firmware });
         case "filter-reset":
           if (!confirm("Nulstil filtertælleren? Gør det kun efter filterrens.")) return;
           return await call("button", "press", { entity_id: unit.filter_reset });
@@ -375,7 +390,7 @@ class HAACClimateCard extends HTMLElement {
 }
 
 const STYLE = `
-:host{display:block;--heat:#ff9850;--cool:#55b9ff;--fan:#63d4c1;--dry:#a28bff;--auto:#ffc65c;--off:#8390a2;--bad:#ff667a;--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)));--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)))}
+:host{display:block;--heat:#ff9850;--cool:#55b9ff;--fan:#63d4c1;--dry:#a28bff;--auto:#ffc65c;--off:#8390a2;--bad:#ff667a;--good:#4fd18b;--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)));--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)))}
 *{box-sizing:border-box}
 ha-card{overflow:hidden;border-radius:24px;background:var(--surface);color:var(--primary-text-color)}
 .shell{padding:20px}
@@ -386,6 +401,7 @@ h2{margin:4px 0 0;font-size:23px;letter-spacing:-.03em}
 .summary{display:flex;gap:8px}.summary div{padding:8px 12px;border:1px solid var(--edge);border-radius:12px;background:rgba(0,0,0,.08)}.summary span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase}.summary strong{font-size:15px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
 .unit{--tone:var(--off);position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid color-mix(in srgb,var(--tone) 22%,var(--edge));border-radius:22px;background:radial-gradient(120% 70% at 0% 0%,color-mix(in srgb,var(--tone) 12%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.025),rgba(0,0,0,.06));container-type:inline-size}
+.unit{--on:var(--tone)}.t-off,.t-problem{--on:var(--good)}
 .t-heat{--tone:var(--heat)}.t-cool{--tone:var(--cool)}.t-fan{--tone:var(--fan)}.t-dry{--tone:var(--dry)}.t-auto{--tone:var(--auto)}.t-problem{--tone:var(--bad)}
 .hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
 .stage{position:relative;width:190px;height:150px;display:grid;place-items:center}
@@ -434,15 +450,17 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .fns{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px}
 .fn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.03);color:var(--primary-text-color);font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .fn ha-icon{--mdc-icon-size:20px;color:var(--secondary-text-color)}.fn:hover{border-color:color-mix(in srgb,var(--tone) 45%,transparent)}
-.fn.on{border-color:color-mix(in srgb,var(--tone) 50%,transparent);background:color-mix(in srgb,var(--tone) 13%,transparent)}.fn.on ha-icon{color:var(--tone)}
+.fn{position:relative}.fn.tg:not(.on){color:var(--secondary-text-color);background:transparent}.fn.tg:not(.on) ha-icon{opacity:.7}
+.fn.on{border-color:color-mix(in srgb,var(--on) 70%,transparent);background:color-mix(in srgb,var(--on) 20%,transparent);color:var(--primary-text-color);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on) 35%,transparent)}.fn.on ha-icon{color:var(--on)}
+.fn.tg::after{content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.16)}.fn.tg.on::after{background:var(--on);box-shadow:0 0 6px var(--on)}
 .toggle{margin-left:auto;width:40px;height:22px;padding:0;border:0;border-radius:999px;background:rgba(255,255,255,.14);cursor:pointer;position:relative}
-.toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}.toggle.on{background:var(--tone)}.toggle.on i{transform:translateX(18px)}
+.toggle i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}.toggle.on{background:var(--on)}.toggle.on i{transform:translateX(18px)}
 .doors.muted .delays{opacity:.4;pointer-events:none}
 .smart{display:flex;flex-direction:column;gap:8px}.smart h4{margin-bottom:2px}
 .srow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}
 .srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
 .srow .toggle{margin-left:0}
-.p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--tone)}
+.p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--on)}
 .fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
 .delay span{display:block;margin-bottom:4px;color:var(--secondary-text-color);font-size:11px}
@@ -453,6 +471,7 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .cells span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase}.cells strong{font-size:14px}
 .filter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:12px;color:var(--secondary-text-color)}
 .filter span{display:flex;align-items:center;gap:5px}.filter ha-icon{--mdc-icon-size:16px}.filter .bar{margin:0}.filter.due .bar b{background:var(--bad)}.filter.due span{color:var(--bad)}
+.fw.due span{color:var(--tone)}
 .filter button{border:0;background:none;color:var(--secondary-text-color);cursor:pointer;padding:2px}
 .details{display:flex;align-items:center;justify-content:flex-end;gap:2px;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:11px;cursor:pointer;padding:0}.details ha-icon{--mdc-icon-size:16px}
 button:focus-visible{outline:2px solid var(--tone);outline-offset:2px}
