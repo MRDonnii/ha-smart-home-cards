@@ -119,7 +119,7 @@ const TTD_SC_ROLES = {
   trip_energy: "sensor._trip_energy", trip_target_soc: "sensor._trip_soc_needed", charge_now: "binary_sensor._charge_now",
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
-  price_cap_override: "switch._exceed_price_cap", smart_price_limit: "switch._price_limit_in_cheapest",
+  price_cap_override: "switch._exceed_price_cap", smart_price_limit: "switch._price_limit_in_cheapest", limit_wait: "switch._wait_above_the_price_limit",
   smart_max_price: "number._cheapest_max_price", smart_floor_soc: "number._always_charge_to", price_resolution: "select._price_resolution",
   // The smarter choices (EV Ledger), each on or off.
   wait_cheaper_day: "switch._wait_for_a_cheaper_day", learn_departure: "switch._learn_departure_times",
@@ -621,7 +621,8 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekræft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p></div>
-  <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small></span><button type="button" class="btn go" data-scanyway data-r="scAnyway">Lad alligevel</button></div>
+  <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small><small class="sc-later" data-r="scHoldW"></small></span>
+    <div class="sc-choice" role="radiogroup" aria-label="Ladning over prisgrænsen"><button type="button" role="radio" aria-checked="false" data-scwait="on" data-r="scWaitOn">Vent med resten</button><button type="button" role="radio" aria-checked="false" data-scwait="off" data-r="scWaitOff">Lad til målet</button></div></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>Mål SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="Mål SOC"></label>
@@ -978,8 +979,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-lim{position:absolute;right:0;transform:translateY(-115%);padding:0 4px;border-radius:4px;font-size:11px;font-weight:700;line-height:1.35;color:var(--tdc-orange);background:color-mix(in srgb,var(--tdc-orange) 14%,var(--tdc-tile));pointer-events:none}
 .sc-hold{display:flex;align-items:center;gap:10px;margin:-4px 0 14px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--tdc-orange) 11%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tdc-orange) 35%,transparent)}
 .sc-hold>span{display:grid;gap:2px;flex:1;min-width:0}.sc-hold b{font-size:14px;font-weight:700}.sc-hold small{font-size:12.5px;color:var(--tdc-muted)}
-.sc-hold .btn{flex:none}
-@media (max-width:420px){.sc-hold{flex-wrap:wrap}.sc-hold .btn{flex:1 1 100%}}
+.sc-chart rect.dear{fill:var(--tdc-orange);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tdc-orange) 55%,transparent))}
+.sc-hold{flex-wrap:wrap}.sc-later{white-space:pre-line;color:var(--tdc-green)!important}
+.sc-choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1 1 100%}
+.sc-choice button{min-height:38px;padding:0 10px;border-radius:10px;border:1px solid var(--tdc-line);background:var(--tdc-tile);font-size:14px;font-weight:600;white-space:nowrap}
+.sc-choice button[aria-checked=true]{background:color-mix(in srgb,var(--tdc-orange) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-orange) 60%,transparent)}
+.sc-choice button[data-scwait=off][aria-checked=true]{background:color-mix(in srgb,var(--tdc-blue) 24%,transparent);border-color:color-mix(in srgb,var(--tdc-blue) 65%,transparent)}
+.sc-choice button[data-armed]{outline:2px solid var(--tdc-orange);outline-offset:2px}
 .sc-hint{margin:6px 0 0;font-size:13px;color:var(--tdc-green)}
 .sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
 .sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
@@ -2345,9 +2351,9 @@ class ThTeslaDashboardCard extends HTMLElement {
     const hOf = (p) => 0.22 + 0.78 * (hi > lo ? (p - lo) / (hi - lo) : 0.5);
     const chart = slots.map((x) => {
       const left = at(new Date(Math.max(x.s, now))); const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
-      const over = limitP != null && !on && x.p > limitP;
-      return { left, width: at(new Date(Math.min(x.e, until))) - left, h: hOf(x.p), on, est: x.est, over,
-        title: `${f.time(new Date(x.s))} · ${f.number(x.p, 2)} kr/kWh${on ? " · lader" : over ? " · over grænsen" : ""}` };
+      const over = limitP != null && x.p > limitP;
+      return { left, width: at(new Date(Math.min(x.e, until))) - left, h: hOf(x.p), on, est: x.est, over: over && !on, dear: over && on,
+        title: `${f.time(new Date(x.s))} · ${f.number(x.p, 2)} kr/kWh${on ? (over ? " · lader over grænsen" : " · lader") : over ? " · over grænsen" : ""}` };
     });
     const limitLine = limitP != null && slots.length && limitP >= lo && limitP <= hi ? { h: hOf(limitP), label: `${f.number(limitP, 2)} kr` } : null;
     // The car's own "full at" time while it charges up to its limit (EV Ledger's next charge end), for the last period.
@@ -2426,22 +2432,29 @@ class ThTeslaDashboardCard extends HTMLElement {
         const a = this._sc("next_charge_start")?.attributes || {};
         const above = Number(a.above_limit_kwh) || 0;
         const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
-        const info = !on ? "" : above >= 0.5 ? (energy > 0 && reach != null ? `For dyrt over ca. ${f.number(reach, 0)} %` : "Prisen er over grænsen: venter")
-          : "Alt under grænsen";
-        // What the limit holds back, and what "Lad alligevel" (Charge now) costs instead (Claude AI, 2026-10-15).
-        let hold = null;
-        if (on && above >= 0.5 && statusKey !== "disconnected") {
-          const all = this._sc("planned_cost")?.attributes?.alternatives?.now;
-          const allCost = Number(all?.cost);
+        // EV Ledger 0.8: the plan charges to the target; the part above the limit can wait for a cheaper period
+        // (switch "Wait above the price limit", the phones' "Vent med resten") (Claude AI, 2026-10-15).
+        const waitObj = this._sc("limit_wait");
+        const waiting = waitObj?.state === "on";
+        const info = !on ? "" : above < 0.5 ? "Alt under grænsen" : waiting ? "Venter med resten" : `${f.number(above, 1)} kWh over grænsen`;
+        let choice = null;
+        if (on && above >= 0.5 && statusKey !== "disconnected" && waitObj && waitObj.state !== "unavailable") {
           const max = ttdHasValue(priceObj) ? `${f.number(ttdToNumber(priceObj.state), 2)} ${ttdUnit(priceObj.attributes?.unit_of_measurement ?? "kr/kWh")}` : "grænsen";
-          hold = {
-            title: `Venter med ${f.number(above, 1)} kWh`,
-            detail: [energy > 0 && reach != null ? `Lader til ca. ${f.number(reach, 0)} %, resten koster over ${max}` : `Alle kvarterer koster over ${max}`,
-              Number.isFinite(allCost) && allCost > 0 ? `lad alligevel ca. ${ttdJoin(f.number(allCost, 2), costUnit)}` : ""].filter(Boolean).join(" · "),
+          const later = (Array.isArray(a.limit_cheaper) ? a.limit_cheaper : []).map((w) => ({ ...w, at: ttdToDate(w.start) })).filter((w) => w.at);
+          const best = later.reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
+          const overCost = Number(a.above_limit_cost);
+          const windows = later.map((w) => `${w.kind === "day" ? "Dag" : "Nat"} ${f.dayTime(w.at)}: ca. ${f.number(Number(w.price), 2)} kr/kWh${w.estimated ? " (skøn)" : ""} · spar ca. ${ttdJoin(f.number(Number(w.saving), 0), costUnit)}`);
+          choice = {
+            wait: waiting,
+            title: waiting ? `Venter med ${f.number(above, 1)} kWh` : `${f.number(above, 1)} kWh koster over ${max}`,
+            detail: waiting
+              ? [reach != null ? `Lader til ca. ${f.number(reach, 0)} % under ${max}` : `Lader ikke over ${max}`, best ? `resten ${f.dayTime(best.at)}` : "resten i næste billige periode"].join(" · ")
+              : [Number.isFinite(overCost) && overCost > 0 ? `ca. ${ttdJoin(f.number(overCost, 2), costUnit)}` : "", reach != null ? `under grænsen når den ca. ${f.number(reach, 0)} %` : ""].filter(Boolean).join(" · "),
+            windows,
           };
         }
         return { on, value: ttdHasValue(priceObj) ? String(ttdToNumber(priceObj.state)) : "", unit: ttdUnit(priceObj?.attributes?.unit_of_measurement ?? ""),
-          floor: this._scNum("smart_floor_soc"), info, hold };
+          floor: this._scNum("smart_floor_soc"), info, choice };
       })() : null,
       limitLine,
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc"), over: (() => {
@@ -3227,7 +3240,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       const ly = sc.limitLine ? H - Math.max(3, sc.limitLine.h * (H - 4)) : null;
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H - 4));
-        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
       }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${((ly / H) * 100).toFixed(1)}%">Grænse ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
@@ -3307,14 +3320,18 @@ class ThTeslaDashboardCard extends HTMLElement {
       if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
       this._t("scLimitInfo", sc.limit.info);
     }
-    const hold = sc.limit?.hold;
-    this._hide("scHold", !hold);
-    if (hold) {
-      this._t("scHoldT", hold.title);
-      this._t("scHoldS", hold.detail);
-      const armed = this._armed === "anyway";
-      this._attrSet("scAnyway", "data-armed", armed);
-      this._t("scAnyway", armed ? "Bekræft: lad nu" : "Lad alligevel");
+    const choice = sc.limit?.choice;
+    this._hide("scHold", !choice);
+    if (choice) {
+      this._t("scHoldT", choice.title);
+      this._t("scHoldS", choice.detail);
+      this._t("scHoldW", choice.windows.join("\n"));
+      for (const [ref, on, label] of [["scWaitOn", true, "Vent med resten"], ["scWaitOff", false, "Lad til målet"]]) {
+        const armed = this._armed === `wait:${on}`;
+        this._attrSet(ref, "aria-checked", String(choice.wait === on));
+        this._attrSet(ref, "data-armed", armed);
+        this._t(ref, armed ? "Bekræft" : label);
+      }
     }
     this._hide("scCapX", !sc.cap?.over);
     if (sc.cap?.over) {
@@ -3713,7 +3730,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scanyway],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
     if (target.dataset.socok != null || target.dataset.socundo != null) {
@@ -3747,7 +3764,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
-    else if (target.dataset.scanyway != null) this._chargeAnyway();
+    else if (target.dataset.scwait) this._chooseWait(target.dataset.scwait === "on");
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
@@ -3932,17 +3949,19 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._scCall("charge_mode", "select", "select_option", { option: mode });
   }
 
-  /** "Lad alligevel" past the price limit: Charge now (EV Ledger goes back to the default plan at the target), second tap confirms. */
-  _chargeAnyway() {
-    if (this._armed !== "anyway") {
+  /** Over the price limit: wait with the rest (only below the limit this plug-in) or charge to the target; second tap confirms. */
+  _chooseWait(on) {
+    if ((this._sc("limit_wait")?.state === "on") === on) return;
+    const key = `wait:${on}`;
+    if (this._armed !== key) {
       this._disarm(false);
-      this._armed = "anyway";
+      this._armed = key;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
       this._queue(true);
       return;
     }
     this._disarm(true);
-    this._scCall("charge_mode", "select", "select_option", { option: "now" });
+    this._scCall("limit_wait", "switch", on ? "turn_on" : "turn_off");
   }
 
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */

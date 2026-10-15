@@ -516,7 +516,7 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(lm.on, true);
   assert.equal(lm.value, "2");
   assert.equal(lm.floor, 20);
-  assert.equal(lm.info, "Prisen er over grænsen: venter");
+  assert.equal(lm.info, "18,6 kWh over grænsen");
   const off = limitStates();
   off["switch.bil_price_limit_in_cheapest"] = s("off");
   assert.equal(model(off, scConfig).sc.limit.info, "", "off: just the set points");
@@ -525,22 +525,35 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(model(cap, scConfig).sc.limit, null, "only in the cheapest plan");
   const without = scStates();
   assert.equal(model(without, scConfig).sc.limit, null, "an EV Ledger without the setting");
-  // What the limit holds back, "Lad alligevel" with the cost of charging it all now, and the line in the price chart.
+  // EV Ledger 0.8: the plan charges to the target; the part above the limit can wait (switch), with the cheaper periods.
   const q = (h) => new Date(Math.floor(Date.now() / 900000) * 900000 + h * hour).toISOString();
   const held = limitStates();
-  held["sensor.bil_next_charge_start"] = s(q(1), { deadline: q(3), price_limit: 2, above_limit_kwh: 18.64, limit_soc: 69.5, slot_minutes: 15,
-    blocks: [{ start: q(1), end: q(1.5), kwh: 5.5, cost: 10.54, estimated: false }],
+  held["sensor.bil_next_charge_start"] = s(q(1), { deadline: q(3), price_limit: 2, above_limit_kwh: 18.64, above_limit_cost: 38.2, limit_soc: 69.5, limit_wait: false, slot_minutes: 15,
+    limit_cheaper: [{ kind: "day", start: q(18), end: q(20), price: 1.92, saving: 2.4, estimated: false }, { kind: "night", start: q(30), end: q(32), price: 1.7, saving: 6.5, estimated: true }],
+    blocks: [{ start: q(1), end: q(1.5), kwh: 5.5, cost: 10.54, estimated: false }, { start: q(2), end: q(2.25), kwh: 2.75, cost: 6.05, estimated: false }],
     prices: [{ t: q(0.25), p: 2.6 }, { t: q(0.5), p: 2.4 }, { t: q(1), p: 1.9 }, { t: q(1.25), p: 1.95 }, { t: q(2), p: 2.2 }] });
-  held["sensor.bil_planned_charge_energy"] = s("5.5", { unit_of_measurement: "kWh" });
-  held["sensor.bil_planned_charge_cost"] = s("10.54", { unit_of_measurement: "kr", alternatives: { now: { cost: 94.17, energy_kwh: 32.39 } } });
-  const hm = model(held, scConfig).sc;
-  assert.equal(hm.limit.hold.title, "Venter med 18,6 kWh");
-  assert.match(hm.limit.hold.detail, /Lader til ca\. 70 %, resten koster over 2,00 kr\/kWh · lad alligevel ca\. 94,17 kr/);
-  assert.deepEqual(hm.chart.map((b) => [b.on, b.over]), [[false, true], [false, true], [true, false], [true, false], [false, true]]);
+  held["sensor.bil_planned_charge_energy"] = s("24", { unit_of_measurement: "kWh" });
+  held["switch.bil_wait_above_the_price_limit"] = s("off");
+  let hm = model(held, scConfig).sc;
+  assert.equal(hm.limit.choice.wait, false);
+  assert.equal(hm.limit.choice.title, "18,6 kWh koster over 2,00 kr/kWh");
+  assert.match(hm.limit.choice.detail, /ca\. 38,20 kr\. · under grænsen når den ca\. 70 %/);
+  assert.equal(hm.limit.choice.windows.length, 2);
+  assert.match(hm.limit.choice.windows[1], /^Nat .*ca\. 1,70 kr\/kWh \(skøn\) · spar ca\. 7 kr\.$/);
+  assert.equal(hm.limit.info, "18,6 kWh over grænsen");
+  assert.deepEqual(hm.chart.map((b) => [b.on, b.over, b.dear]), [[false, true, false], [false, true, false], [true, false, false], [true, false, false], [true, false, true]]);
   assert.equal(hm.limitLine.label, "2,00 kr");
   assert.ok(hm.limitLine.h > 0.22 && hm.limitLine.h < 1);
+  const waiting = { ...held, "switch.bil_wait_above_the_price_limit": s("on") };
+  hm = model(waiting, scConfig).sc;
+  assert.equal(hm.limit.choice.wait, true);
+  assert.equal(hm.limit.choice.title, "Venter med 18,6 kWh");
+  assert.match(hm.limit.choice.detail, /^Lader til ca\. 70 % under 2,00 kr\/kWh · resten /);
+  assert.equal(hm.limit.info, "Venter med resten");
   const unplugged = { ...held, "sensor.bil_charge_status": s("disconnected") };
-  assert.equal(model(unplugged, scConfig).sc.limit.hold, null, "no charge-anyway button without the car");
+  assert.equal(model(unplugged, scConfig).sc.limit.choice, null, "no choice without the car");
+  const oldLedger = { ...held }; delete oldLedger["switch.bil_wait_above_the_price_limit"];
+  assert.equal(model(oldLedger, scConfig).sc.limit.choice, null, "an EV Ledger before 0.8");
   const offHeld = { ...held, "switch.bil_price_limit_in_cheapest": s("off") };
   assert.equal(model(offHeld, scConfig).sc.limitLine, null, "no line when the limit is off");
 }

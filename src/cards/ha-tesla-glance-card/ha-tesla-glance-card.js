@@ -8,7 +8,7 @@
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 
-const VERSION = "0.5.4";
+const VERSION = "0.6.0";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -99,9 +99,10 @@ class HATeslaGlanceCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._popupCard) this._popupCard.hass = hass;
     const ids = Object.keys(DEFAULTS).filter((k) => !["name", "compact", "image", "image_charging", "image_driving", "image_driving_wheels", "navigation_path"].includes(k)).map((k) => this._config[k]).filter(Boolean);
     const sv = this._config.style_entity ? hass.states[this._config.style_entity]?.state : "";
-    const cp = this._config.charge_plan || {}; const planSig = Object.values(cp).filter((v) => typeof v === "string" && v.includes(".")).map((id) => `${hass.states[id]?.state}|${hass.states[id]?.last_updated}`).join(";");
+    const cp = this._config.charge_plan || {}; const planSig = [...Object.values(cp), this._waitId()].filter((v) => typeof v === "string" && v.includes(".")).map((id) => `${hass.states[id]?.state}|${hass.states[id]?.last_updated}`).join(";");
     const sig = ids.map((id) => { const s = hass.states[id]; return s ? `${s.state}|${s.attributes?.unit_of_measurement || ""}` : "-"; }).join(";") + `|${sv}|${planSig}`;
     if (sig === this._sig) return;
     this._sig = sig;
@@ -298,6 +299,8 @@ class HATeslaGlanceCard extends HTMLElement {
       .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
       @container (max-width:640px){.pnums.has-btn .save{display:none}}
       .pnums.has-btn .save{margin-left:0}.pnow{margin-left:auto;flex:none;white-space:nowrap;font:inherit;font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
+      .tb.dear{background:linear-gradient(180deg,color-mix(in srgb,#ff6a3d 92%,#fff),#ff6a3d);box-shadow:0 0 12px -1px #ff6a3d}
+      .pnow.wait{background:color-mix(in srgb,var(--warn) 85%,#fff);box-shadow:0 0 14px -4px var(--warn)}
       .pnow.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
       .pnums{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:11px;color:var(--muted)}.pnums b{font-size:14px;font-weight:800;color:var(--primary-text-color)}
       .pnums .save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 7px;border-radius:999px;color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 40%,transparent),0 0 14px -5px var(--good)}.pnums .save b{color:var(--good)}.pnums .save ha-icon{--mdc-icon-size:15px}
@@ -355,7 +358,7 @@ class HATeslaGlanceCard extends HTMLElement {
       <div class="dots" hidden><i data-v="plan" title="Ladeplan"></i><i data-v="car" title="Bilen"></i></div>
     </ha-card>`;
     const hc = this.shadowRoot.querySelector("ha-card");
-    hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } if (e.target.closest("[data-pnow]")) { e.stopPropagation(); this._chargeAnyway(); return; } this._tap(); });
+    hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } const w = e.target.closest("[data-pwait]"); if (w) { e.stopPropagation(); this._chooseWait(w.dataset.pwait === "on"); return; } this._tap(); });
     // Switching between the overlay and the car (user, 2026-10-13: "swipe virker ikke så godt på PC og mobilen får hele siden
     // til at følge med"): a sideways drag on touch – the page keeps its vertical scrolling – and any drag with a mouse; the
     // card follows the finger/pointer and snaps over past 40 px. The wheel/touchpad adds up its deltas.
@@ -414,7 +417,10 @@ class HATeslaGlanceCard extends HTMLElement {
     const plugged = cable && (!c.tracker || st(c.tracker) === "home") && (!c.charger_mode || (cm && !["disconnected", "unavailable", "unknown"].includes(cm)));
     // EV Ledger's price limit on Cheapest: what it holds back above the limit, and the prices to show where (2026-10-15).
     const pa = plan?.attributes || {}; const lp = pa.price_limit == null ? NaN : Number(pa.price_limit); const above = Number(pa.above_limit_kwh) || 0;
+    const ws = this._hass.states[this._waitId()];
     const limit = mode === "smart" && Number.isFinite(lp) ? { price: lp, above, reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: Number(pa.price_limit_floor),
+      wait: ws?.state === "on", canWait: !!ws && ws.state !== "unavailable", overCost: Number(pa.above_limit_cost),
+      cheaper: (Array.isArray(pa.limit_cheaper) ? pa.limit_cheaper : []).map((w) => ({ ...w, t: Date.parse(w.start) })).filter((w) => Number.isFinite(w.t)),
       slots: (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)), minutes: Number(pa.slot_minutes) || 15 } : null;
     if (!(plugged && mode && !["off", "manual"].includes(mode) && (blocks.length || (limit && above >= 0.5)))) return null;
     const n = (id) => { const v = Number.parseFloat(st(id)); return Number.isFinite(v) ? v : NaN; };
@@ -423,7 +429,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const alt = this._hass.states[c.cost]?.attributes?.alternatives || {}; const nowCost = Number(alt.now?.cost);
     const soc = Number.isFinite(n(c.soc)) ? n(c.soc) : this._num(this._config.battery) ?? NaN;
     return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit,
-      canNow: !!c.mode && mode !== "now", soc, target: n(c.target), deadline: pa.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
+      soc, target: n(c.target), deadline: pa.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
@@ -437,10 +443,12 @@ class HATeslaGlanceCard extends HTMLElement {
     const left = first ? Math.max(0, first.t - now) : 0; const lh = Math.floor(left / 3600000); const lm = Math.round((left % 3600000) / 60000);
     const until = !first ? "over grænsen" : running ? "lader nu" : lh ? `om ${lh} t ${lm} min` : `om ${lm} min`;
     // The hours the price limit skips: faint stripes behind the charging blocks (Claude AI, 2026-10-15).
-    const L = p.limit; const held = !!L && L.above >= 0.5; const runs = [];
+    // Above the price limit (EV Ledger 0.8): waiting = the plan stops at the limit and the skipped hours are striped;
+    // otherwise the plan charges to the target and its blocks above the limit are warm.
+    const L = p.limit; const over = !!L && L.above >= 0.5; const held = over && L.wait; const runs = [];
     if (held) for (const x of L.slots) { const xe = x.t + L.minutes * 60000; if (xe <= now || x.t >= end || x.p <= L.price) continue; const last = runs[runs.length - 1]; if (last && x.t - last.e < 60000) last.e = xe; else runs.push({ t: Math.max(x.t, now), e: xe }); }
-    const over = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
-    const blocks = over + p.blocks.map((b) => `<i class="tb" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const stripes = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const blocks = stripes + p.blocks.map((b) => `<i class="tb${over && !held && b.kwh > 0 && b.cost / b.kwh > L.price + 1e-6 ? " dear" : ""}" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
     const ticks = []; const d0 = new Date(now); d0.setMinutes(0, 0, 0);
     for (let t = +d0 + 3600000; t < end; t += 3600000) { const h = new Date(t).getHours(); const xx = X(t); if (h % 6 === 0 && xx > 7 && (!p.deadline || Math.abs(xx - X(dlT)) > 16)) ticks.push(`<span class="tt" style="left:${X(t).toFixed(2)}%">${String(h).padStart(2, "0")}</span>`); }
     const dl = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
@@ -449,21 +457,31 @@ class HATeslaGlanceCard extends HTMLElement {
         <div class="pt"><b>Ladeplan · ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} · ${Math.round(soc)} % → ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % · mål ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc(until)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl)}</span>` : ""}</div></div>
-      <div class="pnums${p.canNow ? " has-btn" : ""}">${first && !held ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${held ? `<span class="held"><b>${this._fmt(L.above, 1)}</b> kWh venter · over ${this._fmt(L.price, 2)} kr</span>` : ""}${!held && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${this._anywayHtml(p)}</div>`;
+      <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held) : ""}</div>`;
   }
-  // "Lad alligevel" (user, 2026-10-15): Charge now past the plan and the price limit; the first tap arms, the second sends.
-  _anywayHtml(p) {
-    if (!p.canNow) return "";
+  _limitText(L, held) {
+    const best = L.cheaper.reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
+    if (held) return `<b>${this._fmt(L.above, 1)}</b> kWh venter · over ${this._fmt(L.price, 2)} kr`;
+    return `<b>${this._fmt(L.above, 1)}</b> kWh over ${this._fmt(L.price, 2)} kr${best ? ` · vent og spar ca. ${this._fmt(Number(best.saving), 0)} kr` : ""}`;
+  }
+  // The answer to EV Ledger's price question (user, 2026-10-15): wait with the rest, or charge to the target. First tap
+  // arms, the second sends.
+  _waitId() {
+    const c = this._config.charge_plan || {};
+    return c.limit_wait || (typeof c.mode === "string" && c.mode.endsWith("_charge_mode") ? c.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "");
+  }
+  _waitBtn(held) {
     const armed = this._armAt && Date.now() - this._armAt < 4000;
-    return `<button type="button" class="pnow${armed ? " armed" : ""}" data-pnow title="Lad nu i stedet for at vente${Number.isFinite(p.nowCost) && p.nowCost > 0 ? `: ca. ${this._fmt(p.nowCost, 2)} kr` : ""}">${armed ? "Tryk igen" : "Lad alligevel"}</button>`;
+    return `<button type="button" class="pnow${armed ? " armed" : ""}${held ? "" : " wait"}" data-pwait="${held ? "off" : "on"}">${armed ? "Tryk igen" : held ? "Lad til målet" : "Vent med resten"}</button>`;
   }
-  _chargeAnyway() {
-    const id = this._config.charge_plan?.mode; if (!id || !this._hass) return;
+  _chooseWait(on) {
+    const id = this._waitId(); if (!id || !this._hass) return;
     clearTimeout(this._armT);
     if (!(this._armAt && Date.now() - this._armAt < 4000)) { this._armAt = Date.now(); this._armT = setTimeout(() => { this._armAt = 0; this._update(); }, 4000); this._update(); return; }
     this._armAt = 0; this._update();
-    this._hass.callService("select", "select_option", { entity_id: id, option: "now" });
+    this._hass.callService("switch", on ? "turn_on" : "turn_off", { entity_id: id });
   }
+
   // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
   // a live bar towards the target, the numbers with the savings badge to the right.
   _chargeHtml(p) {
@@ -503,7 +521,49 @@ class HATeslaGlanceCard extends HTMLElement {
       return `<i class="wh" style="left:${L.toFixed(2)}px;top:${T.toFixed(2)}px;width:${W.toFixed(2)}px;height:${H.toFixed(2)}px"><i class="w1" style="${o};transform:scaleX(${k.toFixed(4)})"><i class="w2 ${dir < 0 ? "rev" : ""}" style="${o}"><i class="w3" style="${o};transform:scaleX(${(1 / k).toFixed(4)});${bg}"></i></i></i></i>`;
     }).join("");
   }
+  // When the car is plugged in, a tap opens the quick charge menu (the Tesla card's compact charge layout, `popup:`
+  // like the home status tile's) instead of the Tesla page (user, 2026-10-15).
+  _plugged() {
+    const c = this._config; const on = (id) => ["on", "true", "connected"].includes(String(this._val(id) || "").toLowerCase());
+    return on(c.plugged) || on(c.charge_plan?.cable);
+  }
+  _openPopup() {
+    const Card = customElements.get("th-tesla-dashboard-card"); if (!Card || this._popupEl) return !!Card;
+    const backdrop = document.createElement("div");
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;background:rgba(8,12,18,.68);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))";
+    const panel = document.createElement("div");
+    panel.style.cssText = "position:relative;width:100%;max-width:680px;display:flex;flex-direction:column;max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))";
+    const close = document.createElement("button");
+    close.textContent = "Luk ✕"; close.setAttribute("aria-label", "Luk ladeoverblik");
+    close.style.cssText = "align-self:flex-end;flex:none;margin:0 4px 8px 0;min-height:44px;padding:10px 18px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:var(--card-background-color,rgba(8,12,18,.92));color:var(--primary-text-color,#fff);font:inherit;font-weight:700;cursor:pointer";
+    const card = new Card();
+    card.setConfig({ layout: "charge", ...this._config.popup });
+    card.hass = this._hass;
+    const scroller = document.createElement("div");
+    scroller.style.cssText = "flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;border-radius:20px;padding:12px;background:var(--primary-background-color,#0b0f16);box-shadow:0 28px 70px rgba(0,0,0,.5)";
+    scroller.appendChild(card); panel.append(close, scroller); backdrop.appendChild(panel);
+    backdrop.addEventListener("click", (event) => { if (event.target === backdrop) this._closePopup(); });
+    // The popup lies outside Home Assistant's app element: send the cards' more-info on to the app.
+    backdrop.addEventListener("hass-more-info", (event) => {
+      const app = document.querySelector("home-assistant"); if (!app) return;
+      event.stopPropagation(); app.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: event.detail }));
+    });
+    card.addEventListener("tesla-popup-close", () => this._closePopup());
+    close.addEventListener("click", () => this._closePopup());
+    this._escHandler = (event) => { if (event.key === "Escape" && !document.querySelector("home-assistant")?.contains(event.target)) this._closePopup(); };
+    document.addEventListener("keydown", this._escHandler);
+    document.body.appendChild(backdrop);
+    this._popupEl = backdrop; this._popupCard = card;
+    return true;
+  }
+  _closePopup() {
+    this._popupEl?.remove(); this._popupEl = null; this._popupCard = null;
+    if (this._escHandler) document.removeEventListener("keydown", this._escHandler);
+    this._escHandler = null;
+  }
+  disconnectedCallback() { this._closePopup(); }
   _tap() {
+    if (this._config.popup && this._plugged() && this._openPopup()) return;
     const path = this._config.navigation_path;
     if (path) {
       history.pushState(null, "", path);
