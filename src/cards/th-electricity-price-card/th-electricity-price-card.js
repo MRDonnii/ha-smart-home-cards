@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.8.0';
+const TEP_VER = '1.8.1';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -309,10 +309,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W(S.lastA)}${S.fc.length ? ' · derefter prognose' : ''}` : 'Prognose';
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c) => (!m || c.avg < m.avg ? c : m), null), worst = win.reduce((m, c) => (!m || c.avg > m.avg ? c : m), null);
     // overblik
-    const nb = win.filter(c => c.s > now + 9e5 && c.avg < cur * .85).sort((a, b) => a.s - b.s)[0], soon = nb && nb.s <= now + 12 * 36e5;
+    const nb = win.filter(c => c.s > now + 9e5 && c.s <= now + 8 * 36e5 && c.avg < cur * .85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb;
     const sm = rel < .9 ? ['Billig strøm lige nu', `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit – kør gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * .85 ? ` Billigst bliver det ${W(best.s)} (Ø ${tn(best.avg)} kr).` : ''}`]
-      : rel > 1.1 ? ['Dyrt lige nu', `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigere fra ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
-      : ['Normal pris', `${tn(cur)} kr/kWh er ${pct(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere fra ${W(nb.s)}.` : 'Ingen markant billigere tid de næste timer – kør som du plejer.'}`];
+      : rel > 1.1 ? ['Dyrt lige nu', `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigst bliver det ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
+      : ['Normal pris', `${tn(cur)} kr/kWh er ${pct(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W(nb.s)}.` : 'Ingen markant billigere tid de næste timer – kør som du plejer.'}`];
     let h = `<div class="sm" style="--c:${col}">${ti(rel < .9 ? 'leaf' : rel > 1.1 ? 'peak' : 'clock', 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
     if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}–${tt(new Date(best.e))}</b><span>Ø ${tn(best.avg)} kr · ${pct(best.avg)}${best.fc ? ' · prognose' : ''}</span></div>
       <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}–${tt(new Date(worst.e))}</b><span>Ø ${tn(worst.avg)} kr · ${pct(worst.avg)}${worst.fc ? ' · prognose' : ''}</span></div></div>`;

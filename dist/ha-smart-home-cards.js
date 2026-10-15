@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.145 */
+/* MRDonnii Smart Home Cards v0.5.146 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13246,7 +13246,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.8.0";
+var TEP_VER = "1.8.1";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13716,8 +13716,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
     }
     const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W3(S.lastA)}${S.fc.length ? " \xB7 derefter prognose" : ""}` : "Prognose";
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null), worst = win.reduce((m, c2) => !m || c2.avg > m.avg ? c2 : m, null);
-    const nb2 = win.filter((c2) => c2.s > now + 9e5 && c2.avg < cur * 0.85).sort((a, b) => a.s - b.s)[0], soon = nb2 && nb2.s <= now + 12 * 36e5;
-    const sm = rel < 0.9 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W3(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : rel > 1.1 ? ["Dyrt lige nu", `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb2 ? ` Billigere fra ${W3(nb2.s)} (\xD8 ${tn(nb2.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det ca. ${Math.round((1 - nb2.avg / cur) * 100)} % billigere fra ${W3(nb2.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
+    const nb2 = win.filter((c2) => c2.s > now + 9e5 && c2.s <= now + 8 * 36e5 && c2.avg < cur * 0.85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb2;
+    const sm = rel < 0.9 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W3(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : rel > 1.1 ? ["Dyrt lige nu", `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb2 ? ` Billigst bliver det ${W3(nb2.s)} (\xD8 ${tn(nb2.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb2.avg / cur) * 100)} % billigere ved ${W3(nb2.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
     let h = `<div class="sm" style="--c:${col}">${ti(rel < 0.9 ? "leaf" : rel > 1.1 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
     if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct2(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
       <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct2(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
