@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.144 */
+/* MRDonnii Smart Home Cards v0.5.145 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13246,7 +13246,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.7.0";
+var TEP_VER = "1.8.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13254,9 +13254,28 @@ var TI = {
   line: '<path d="M3 17l5-6 4 3 6-8 3 3"/>',
   bars: '<path d="M5 20v-7M10 20V8M15 20v-5M20 20V5"/>',
   car: '<path d="M5 16.5V12l2-5.2A2 2 0 0 1 8.9 5.5h6.2a2 2 0 0 1 1.9 1.3l2 5.2v4.5"/><path d="M3.5 16.5h17v2.5a1 1 0 0 1-1 1H18a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1Z"/><path d="M5 12h14M7.5 14.5h1M15.5 14.5h1"/>',
-  plug: '<path d="M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/>'
+  plug: '<path d="M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/>',
+  wash: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="13.5" r="4.3"/><path d="M7.5 6.5h2M13 6.5h3.5"/>',
+  dry: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="13.5" r="4.3"/><path d="M9.7 13.8c.8-1.4 1.6-1.4 2.3 0s1.6 1.4 2.3 0"/><path d="M7.5 6.5h2M13 6.5h3.5"/>',
+  dish: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M4 8h16M7.5 5.5h.01M10.5 5.5h.01"/><circle cx="12" cy="14.5" r="3.4"/>',
+  heat: '<path d="M12 3.5c1 3-3.5 4.6-3.5 9a3.5 3.5 0 0 0 7 0c0-1.7-.7-2.7-1.4-3.7-.3 1-.9 1.6-1.6 1.7.5-2.5-.1-5-.5-7Z"/><path d="M8 20.5h8"/>',
+  tip: '<path d="M12 3.5a6 6 0 0 0-3.5 10.9c.7.6 1 1.3 1 2.1h5c0-.8.3-1.5 1-2.1A6 6 0 0 0 12 3.5Z"/><path d="M9.8 19.5h4.4M10.6 21.5h2.8"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  chev: '<path d="M6.5 9.5l5.5 5.5 5.5-5.5"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  peak: '<path d="M12 3.5 21 19.5H3Z"/><path d="M12 10v4.5M12 17.2v.01"/>',
+  leaf: '<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/><path d="M5 19c3-5 6-7.5 10-9"/>'
 };
 var ti = (k, s = 16, sw = 1.7) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none" aria-hidden="true">${TI[k] || ""}</svg>`;
+var tm = (m) => {
+  m = Math.round(m);
+  return m >= 60 ? `${Math.floor(m / 60)} t${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
+};
+var TEP_DEV = [
+  { name: "Vaskemaskine", icon: "wash", entity: "sensor.vaskemaskine_estimeret_pris", running: "binary_sensor.washing_machine_running", kwh: 1, minutes: 130, hours: [6, 23] },
+  { name: "T\xF8rretumbler", icon: "dry", entity: "sensor.torretumbler_estimeret_pris", running: "binary_sensor.torrertrumler_running", kwh: 2, minutes: 125, hours: [7, 22] },
+  { name: "Opvaskemaskine", icon: "dish", entity: "sensor.opvaskemaskine_estimeret_pris", running: "binary_sensor.opvaskemaskine_running", kwh: 1.3, minutes: 160 }
+];
 var TEP_CSS = `
 :host{display:block;--acc:var(--dashboard-accent,#e8c37e);--good:var(--dashboard-success,#6be3a8);--warn:var(--dashboard-warning,#e8c37e);--bad:var(--dashboard-danger,#ff9e7a);
   --ev:var(--dashboard-ev,#b7a4ff);--ink:var(--primary-text-color,#f4f1ea);--mut:var(--secondary-text-color,rgba(244,241,234,.58));--hair:var(--dashboard-border-neutral,rgba(127,145,165,.18));
@@ -13287,8 +13306,11 @@ var TEP_CSS = `
 .pt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'chip . ctl' 'big comp comp';gap:6px 20px;align-items:end}
 .pt .chip{grid-area:chip;justify-self:start;align-self:center}.pt .ctl{grid-area:ctl;display:flex;gap:6px;align-self:start}.pt .big{grid-area:big}.pt .comp{grid-area:comp}
 .lv{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:8px;vertical-align:.55em;background:var(--good);box-shadow:0 0 8px var(--good);animation:bl 2s infinite}.lv.off{background:var(--mut);box-shadow:none;animation:none}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent)}
-.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite}
+.chip{appearance:none;border:0;cursor:pointer;min-width:0;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);transition:background .2s,box-shadow .2s}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite;flex:none}
+.chip .ct{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip .chv{opacity:.75;transition:transform .25s}
+.chip:hover,.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent)}.chip.open .chv{transform:rotate(180deg)}
+.chip:focus-visible{outline:2px solid var(--c);outline-offset:2px}.chip.nb{cursor:default;pointer-events:none}.chip.nb .chv{display:none}
 .big{font-size:40px;font-weight:300;letter-spacing:-.045em;line-height:1;white-space:nowrap}.big small{font-size:14px;font-weight:600;letter-spacing:0;color:var(--mut);margin-left:5px}
 .comp{min-width:0;margin-bottom:4px}
 .comp .bar{display:flex;height:7px;border-radius:7px;overflow:hidden;gap:2px}
@@ -13328,6 +13350,30 @@ var TEP_CSS = `
 .pc .chg span{position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,rgba(10,12,18,.6));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 40%,transparent);backdrop-filter:blur(4px);white-space:nowrap}
 .pc .tip{position:absolute;top:0;padding:7px 10px;border-radius:11px;background:var(--surface,rgba(14,16,24,.95));box-shadow:0 10px 30px -8px rgba(0,0,0,.6),inset 0 0 0 1px var(--hair);font-size:11px;color:var(--mut);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .15s;z-index:3}
 .pc .tip b{font-size:14px;color:var(--ink)}.pc .tip em{font-style:normal;color:var(--ev);font-weight:700}
+/* Anbefalinger: popup inde i kortet under prisbadget (bliver i shadow-roden, s\xE5 tryk virker som p\xE5 resten af kortet) */
+.adv{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;isolation:isolate;
+  background:var(--popupBG,var(--card-background-color,#14161e));-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 18px 50px -12px rgba(0,0,0,.65),inset 0 0 0 1px var(--hair);animation:advin .22s cubic-bezier(.16,1,.3,1) both}
+.adv::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--surface,none);pointer-events:none}
+.adv[hidden]{display:none}@keyframes advin{from{opacity:0;transform:translateY(8px)}}
+.adv .ah{display:flex;align-items:center;gap:10px;padding:11px 10px 8px 14px;flex:none}.adv .ahl{flex:1;min-width:0}
+.adv .ah b{display:block;font-size:14px;font-weight:700}.adv .ah small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .x{appearance:none;border:0;cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--mut);flex:none}
+.adv .x:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.adv .ab{overflow:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain;min-height:0}
+.adv .sm{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:13px;font-size:12.5px;font-weight:600;line-height:1.35;
+  color:var(--ink);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}.adv .sm svg{color:var(--c)}
+.adv .sm small{display:block;font-weight:500;font-size:11px;color:var(--mut);margin-top:2px}
+.adv .win{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adv .w{padding:8px 10px;border-radius:13px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);box-shadow:inset 0 0 0 1px var(--hair);min-width:0}
+.adv .w small{display:block;font-size:10px;color:var(--mut)}.adv .w b{display:block;font-size:14px;font-weight:700;color:var(--c);margin-top:2px;white-space:nowrap}.adv .w span{display:block;font-size:10.5px;color:var(--mut);margin-top:1px}
+.adv .sl{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
+.adv .ar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:13px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);box-shadow:inset 0 0 0 1px var(--hair)}
+.adv .ai{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--c,var(--acc));background:color-mix(in srgb,var(--c,var(--acc)) 14%,transparent)}
+.adv .at{min-width:0}.adv .at b{display:block;font-size:13px;font-weight:700}.adv .at small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .av{text-align:right;white-space:nowrap}.adv .av b{display:block;font-size:12.5px;font-weight:800;color:var(--c)}.adv .av small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .tp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;font-size:11.5px;line-height:1.4;color:var(--mut);padding:1px 4px}.adv .tp svg{margin-top:1px;color:var(--c,var(--acc))}.adv .tp b{color:var(--ink);font-weight:700}
+.adv .af{font-size:10px;color:var(--mut);padding:0 4px;line-height:1.4}
 @keyframes barin{from{transform:scaleY(0)}}.pc svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc svg.still .fadein{opacity:1}
 .draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:drw 2s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
 .fadein{opacity:0;animation:fi 1.1s .3s forwards}@keyframes fi{to{opacity:1}}
@@ -13344,7 +13390,7 @@ var TEP_CSS = `
 /* Dagsgennemsnittene kun p\xE5 store sk\xE6rme; p\xE5 mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
 :host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
 .empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
-@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}.adv{left:8px;right:8px;bottom:8px}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
   .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
@@ -13355,8 +13401,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
   // Part of Smart Home Cards since 1.7.0 (Claude AI, 2026-10-14): new/classic like the other cards' looks.
   static getConfigForm() {
     return {
-      schema: [...lookFormSchema(), { name: "days", selector: { boolean: {} } }, { name: "fill_height", selector: { boolean: {} } }],
-      computeLabel: (s) => ({ ...LOOK_LABELS, days: "Dagsgennemsnit i bunden (kun store sk\xE6rme)", fill_height: "Fyld h\xF8jden" })[s.name] || s.name
+      schema: [...lookFormSchema(), { name: "days", selector: { boolean: {} } }, { name: "advice", selector: { boolean: {} } }, { name: "fill_height", selector: { boolean: {} } }],
+      computeLabel: (s) => ({ ...LOOK_LABELS, days: "Dagsgennemsnit i bunden (kun store sk\xE6rme)", advice: "Anbefalinger n\xE5r man trykker p\xE5 prisbadget", fill_height: "Fyld h\xF8jden" })[s.name] || s.name
     };
   }
   setConfig(c2) {
@@ -13412,13 +13458,22 @@ var ThElectricityPriceCard = class extends HTMLElement {
     }
     this._cl = null;
     r.innerHTML = `<style>${TEP_CSS}</style><ha-card class="c">
-      <div class="pt"><span class="chip" id="chip"><i></i>\u2013</span>
+      <div class="pt"><button type="button" class="chip" id="chip" aria-haspopup="dialog" aria-expanded="false"><i></i><span class="ct">\u2013</span>${ti("chev", 12, 2.4).replace("<svg ", '<svg class="chv" ')}</button>
         <div class="ctl"><div class="seg" id="st"><button data-s="line" title="Linje" aria-label="Linje">${ti("line", 15)}</button><button data-s="bar" title="S\xF8jler" aria-label="S\xF8jler">${ti("bars", 15)}</button></div>
           <div class="seg m" id="md"><button data-m="24">24 t</button><button data-m="48">48 t</button><button data-m="7">7 dage</button></div></div>
         <div class="big"><span id="now">\u2013</span><i class="lv" id="live" title="Str\xF8mligning"></i></div><div class="comp"><div class="bar" id="cbar"></div><div class="lg" id="clg"></div></div></div>
       <div class="ev" id="ev"></div>
       <div class="pc" id="pc"><svg id="svg" preserveAspectRatio="none"></svg><div id="ov"></div><div class="tip" id="tip"></div></div>
-      <div class="days" id="days"></div></ha-card>`;
+      <div class="days" id="days"></div>
+      <div class="adv" id="adv" role="dialog" aria-label="Anbefalinger ud fra elprisen" hidden></div></ha-card>`;
+    this.closeAdvice();
+    const chip = r.getElementById("chip");
+    chip.classList.toggle("nb", this.cfg.advice === false);
+    chip.tabIndex = this.cfg.advice === false ? -1 : 0;
+    chip.onclick = () => this._adv ? this.closeAdvice() : this.openAdvice();
+    r.getElementById("adv").addEventListener("click", (e) => {
+      if (e.target.closest(".x")) this.closeAdvice();
+    });
     try {
       this._ps = localStorage.getItem("th-price-style") || this.cfg.style || "bar";
       this._pm = localStorage.getItem("th-price-range") || "24";
@@ -13462,6 +13517,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
   }
   disconnectedCallback() {
     this._ro?.disconnect();
+    this.closeAdvice();
   }
   connectedCallback() {
     if (this._ro && this.shadowRoot?.getElementById("pc")) this._ro.observe(this.shadowRoot.getElementById("pc"));
@@ -13520,7 +13576,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     lv.title = live ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
     const rel = mean ? cur / mean : 1, col = rel < 0.9 ? "var(--good)" : rel > 1.1 ? "var(--bad)" : "var(--warn)";
     this.$("chip").style.setProperty("--c", col);
-    this.set("chip", `<i></i>${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`);
+    this.shadowRoot.querySelector("#chip .ct").textContent = `${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
     this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [
       ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--acc)"],
@@ -13552,16 +13608,160 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
     }
     this.chart(ch2);
+    if (this._adv) this.renderAdvice(ch2);
   }
   esc(s) {
     return String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
   }
-  chart(ch2) {
+  slots() {
     const C3 = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
     const act = [...this.A(C3.current, "prices") || [], ...this.A(C3.tomorrow, "prices") || []].map((p) => toP(p, false));
     const lastA = act.length ? act[act.length - 1].e : 0;
     const fc2 = (this.A(C3.forecast, "prices") || []).map((p) => toP(p, true)).filter((p) => p.t >= lastA);
-    const all = [...act, ...fc2];
+    return { act, lastA, fc: fc2, all: [...act, ...fc2] };
+  }
+  // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
+  openAdvice() {
+    const adv = this.$("adv"), chip = this.$("chip");
+    if (!adv || this.cfg.advice === false || this._mode !== "new") return;
+    this._adv = true;
+    adv.hidden = false;
+    chip.classList.add("open");
+    chip.setAttribute("aria-expanded", "true");
+    this._od = (e) => {
+      const p = e.composedPath();
+      if (!p.includes(adv) && !p.includes(chip)) this.closeAdvice();
+    };
+    this._ok = (e) => {
+      if (e.key === "Escape") this.closeAdvice();
+    };
+    document.addEventListener("pointerdown", this._od, true);
+    document.addEventListener("keydown", this._ok);
+    adv._v = null;
+    this.renderAdvice();
+  }
+  closeAdvice() {
+    this._adv = false;
+    if (this._od) {
+      document.removeEventListener("pointerdown", this._od, true);
+      document.removeEventListener("keydown", this._ok);
+      this._od = this._ok = null;
+    }
+    const adv = this.shadowRoot?.getElementById("adv"), chip = this.shadowRoot?.getElementById("chip");
+    if (adv) {
+      adv.hidden = true;
+      adv._v = null;
+    }
+    if (chip) {
+      chip.classList.remove("open");
+      chip.setAttribute("aria-expanded", "false");
+    }
+  }
+  // Gennemsnitspris over [s, s+dur], vægtet efter hvor meget af kørslen der ligger i hver prisperiode; null når priserne ikke dækker hele kørslen
+  avgOver(all, s, dur2) {
+    const e = s + dur2;
+    let sum = 0, cov = 0, fc2 = false;
+    for (const p of all) {
+      if (p.e <= s) continue;
+      if (p.t >= e) break;
+      const ov = Math.min(e, p.e) - Math.max(s, p.t);
+      if (ov > 0) {
+        sum += ov * p.p;
+        cov += ov;
+        fc2 = fc2 || p.f;
+      }
+    }
+    return cov >= dur2 * 0.98 ? { avg: sum / cov, fc: fc2 } : null;
+  }
+  // Alle mulige starttidspunkter de næste 24 t. Prisen er stykvis lineær i starttidspunktet, så det billigste ligger altid hvor kørslens start eller slutning rammer en periodegrænse
+  scan(all, dur2, now, ok = () => true) {
+    const hor = now + 24 * 36e5, c2 = /* @__PURE__ */ new Set([now]);
+    for (const p of all) {
+      if (p.t > now && p.t < hor) c2.add(p.t);
+      const x = p.e - dur2;
+      if (x > now && x < hor) c2.add(Math.ceil(x / 3e5) * 3e5);
+    }
+    const out = [];
+    for (const s of c2) {
+      if (!ok(s, dur2)) continue;
+      const a = this.avgOver(all, s, dur2);
+      if (a) out.push({ s, e: s + dur2, ...a });
+    }
+    return out;
+  }
+  dayWord(s, now) {
+    const d = new Date(s), dd = Math.round((new Date(s).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 864e5);
+    return dd <= 0 ? "" : dd === 1 ? d.getHours() < 6 ? " i nat" : " i morgen" : " " + d.toLocaleDateString("da-DK", { weekday: "short" });
+  }
+  renderAdvice(chIn) {
+    const adv = this.$("adv");
+    if (!adv || !this._h) return;
+    const C3 = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch2 = chIn === void 0 ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
+    const cur = this.n(C3.current), mean = this.n(C3.mean), rel = mean ? cur / mean : 1, col = rel < 0.9 ? "var(--good)" : rel > 1.1 ? "var(--bad)" : "var(--warn)";
+    const W3 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct2 = (v) => {
+      const r = mean ? Math.round((v / mean - 1) * 100) : 0;
+      return `${r >= 0 ? "+" : "\u2212"}${Math.abs(r)} %`;
+    };
+    const pt = this.shadowRoot.querySelector(".pt");
+    adv.style.top = `${pt.offsetTop + pt.offsetHeight + 8}px`;
+    const frame = (inner, sub2) => `<div class="ah"><div class="ahl"><b>Hvorn\xE5r er det smart?</b><small>${sub2}</small></div><button type="button" class="x" aria-label="Luk">${ti("x", 14, 2)}</button></div><div class="ab">${inner}</div>`;
+    const put = (h2) => {
+      const ab2 = adv.querySelector(".ab"), st = ab2 ? ab2.scrollTop : 0;
+      this.set("adv", h2);
+      if (st) adv.querySelector(".ab").scrollTop = st;
+    };
+    if (!Number.isFinite(cur) || !all.some((p) => p.e > now)) {
+      put(frame('<div class="af" style="padding:8px 4px 4px">Ingen prisdata endnu \u2013 anbefalingerne kommer, s\xE5 snart Str\xF8mligning har sendt priserne.</div>', "Venter p\xE5 priser"));
+      return;
+    }
+    const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W3(S.lastA)}${S.fc.length ? " \xB7 derefter prognose" : ""}` : "Prognose";
+    const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null), worst = win.reduce((m, c2) => !m || c2.avg > m.avg ? c2 : m, null);
+    const nb2 = win.filter((c2) => c2.s > now + 9e5 && c2.avg < cur * 0.85).sort((a, b) => a.s - b.s)[0], soon = nb2 && nb2.s <= now + 12 * 36e5;
+    const sm = rel < 0.9 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W3(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : rel > 1.1 ? ["Dyrt lige nu", `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb2 ? ` Billigere fra ${W3(nb2.s)} (\xD8 ${tn(nb2.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det ca. ${Math.round((1 - nb2.avg / cur) * 100)} % billigere fra ${W3(nb2.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
+    let h = `<div class="sm" style="--c:${col}">${ti(rel < 0.9 ? "leaf" : rel > 1.1 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
+    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct2(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
+      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct2(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
+    const hrOk = (hrs) => (s, dur2) => {
+      if (!hrs) return true;
+      const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5;
+      return hrs[0] <= hrs[1] ? s >= a && s + dur2 <= b : s >= a || s + dur2 <= b;
+    };
+    const cfgDev = Array.isArray(C3.advice?.devices), devs = (cfgDev ? C3.advice.devices : TEP_DEV).filter((d) => cfgDev || this._h.states[d.entity] || this._h.states[d.running]);
+    let rows = "", waits = 0;
+    for (const d of devs) {
+      const kwh = parseFloat(this.A(d.entity, "kwh_pr_koersel")) || d.kwh || 1, min = parseFloat(this.A(d.entity, "varighed_min")) || d.minutes || 120, dur2 = min * 6e4;
+      const ic = ti(TI[d.icon] ? d.icon : "bolt", 19), nm = this.esc(d.name || d.entity), facts = `${tn(kwh, 1)} kWh \xB7 ${tm(min)}`;
+      if (d.running && this._h.states[d.running]?.state === "on") {
+        rows += `<div class="ar" style="--c:var(--acc)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>K\xF8rer nu</b><small>allerede i gang</small></div></div>`;
+        continue;
+      }
+      const base = this.avgOver(all, now, dur2), cands = this.scan(all, dur2, now, hrOk(d.hours)), bst = cands.reduce((m, c2) => !m || c2.avg < m.avg - 1e-9 ? c2 : m, null);
+      if (!base || !bst) {
+        rows += `<div class="ar" style="--c:var(--mut)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>\u2013</b><small>priser mangler</small></div></div>`;
+        continue;
+      }
+      const nowOk = hrOk(d.hours)(now, dur2), cNow = base.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
+      const wait = bst.s - now > 9e5 && (!nowOk || save >= Math.max(0.3, cNow * 0.06));
+      if (wait) waits++;
+      rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} \xB7 nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W3(bst.s)}</b><small>${save > 0.05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? " \xB7 prognose" : ""}</small></div></div>` : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>K\xF8r nu</b><small>${tn(cNow)} kr</small></div></div>`;
+    }
+    if (ch2) {
+      const first = ch2.blocks[0], lastB = ch2.blocks[ch2.blocks.length - 1];
+      rows += `<div class="ar" style="--c:var(--ev)"><div class="ai">${ti("car", 19)}</div><div class="at"><b>${this.esc(ch2.name)}</b><small>${tn(ch2.kwh, 1)} kWh \xB7 ${tn(ch2.cost)} kr \xB7 ${tt(new Date(first.t))}\u2013${tt(new Date(lastB.e))}</small></div><div class="av"><b>${ch2.charging ? "Lader nu" : "Ladeplan"}</b><small>${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `spar ${tn(ch2.save)} kr` : "f\xF8lger billige timer"}</small></div></div>`;
+    }
+    if (rows) h += `<div class="sl">Dine enheder</div>${rows}`;
+    const tips = [];
+    if (worst && (worst.avg > mean * 1.15 || worst.avg > (best?.avg || 0) * 1.4)) tips.push(["peak", "var(--bad)", `<b>Undg\xE5 ${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}${this.dayWord(worst.s, now)}</b> (${tn(worst.avg)} kr/kWh). Udskyd ovn, kogeplade, varmtvand og anden tung brug.`]);
+    else tips.push(["leaf", "var(--good)", "<b>Ingen markante prispidser</b> de n\xE6ste 24 timer \u2013 brug str\xF8m som du plejer."]);
+    if (best && worst && (best.avg < mean * 0.9 || best.avg < worst.avg * 0.75)) tips.push(["heat", "var(--acc)", `<b>Varme og varmtvand:</b> lad varmepumper, gulvvarme og varmtvandsbeholder varme op ${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}${this.dayWord(best.s, now)}, og skru ned i de dyre timer.`]);
+    if (C3.charge && !ch2 && best) tips.push(["car", "var(--ev)", `<b>Elbil:</b> lad ${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}${this.dayWord(best.s, now)}, hvor str\xF8mmen er billigst \u2013 eller sl\xE5 ladeplanen til.`]);
+    if (waits) tips.push(["clock", "var(--warn)", "<b>Udskudt start:</b> s\xE6t maskinerne til at starte senere (eller lav en automation), s\xE5 k\xF8rer de selv, n\xE5r str\xF8mmen er billigst."]);
+    h += `<div class="sl">Tip til huset</div>${tips.map((t) => `<div class="tp" style="--c:${t[1]}">${ti(t[0], 16)}<div>${t[2]}</div></div>`).join("")}`;
+    h += `<div class="af">Beregnet ud fra hver enheds typiske forbrug og k\xF8rselstid, fordelt j\xE6vnt over k\xF8rslen.${this.s(C3.tomorrow)?.state === "off" ? " Morgendagens priser er ikke offentliggjort endnu (kommer typisk omkring kl. 13) \u2013 kom tilbage s\xE5 for flere billige timer." : ""}</div>`;
+    put(frame(h, sub));
+  }
+  chart(ch2) {
+    const C3 = this.cfg, { act, lastA, all } = this.slots();
     const pc2 = this.$("pc");
     if (!all.length) {
       this.set("ov", '<div class="empty">Ingen prisdata endnu</div>');
@@ -19100,7 +19300,7 @@ Error generating stack: ` + l.message + `
     }
   }
   var Dr = false, ie = null;
-  function tm(t) {
+  function tm2(t) {
     (t.tag === 30 || (t.subtreeFlags & 33554432) !== 0) && (Dr = true);
   }
   var Fe = null;
@@ -19275,14 +19475,14 @@ Error generating stack: ` + l.message + `
     } else l = null;
     for (Au = { focusedElem: t, selectionRange: l }, Yn = false, a = (a & 335544064) === a, _t = e, e = a ? 9270 : 1024; _t !== null; ) {
       if (t = _t, a && (l = t.deletions, l !== null)) for (i = 0; i < l.length; i++) a && mu(l[i]);
-      if (t.alternate === null && (t.flags & 2) !== 0) a && tm(t), Lo(a);
+      if (t.alternate === null && (t.flags & 2) !== 0) a && tm2(t), Lo(a);
       else {
         if (t.tag === 22) {
           if (l = t.alternate, t.memoizedState !== null) {
             l !== null && l.memoizedState === null && a && mu(l), Lo(a);
             continue;
           } else if (l !== null && l.memoizedState !== null) {
-            a && tm(t), Lo(a);
+            a && tm2(t), Lo(a);
             continue;
           }
         }
@@ -34966,13 +35166,13 @@ HAHomeHeaderCard.prototype._moonSpot = function(canvas) {
     const r2 = sr.querySelector(sel)?.getBoundingClientRect();
     return r2 && r2.width ? r2 : null;
   };
-  const wx = rect(".weather"), sg = rect(".status-group"), tm = rect(".time"), r = Math.round(Math.max(10, Math.min(15, cr.height * 0.12))), need = 2 * r + 36;
+  const wx = rect(".weather"), sg = rect(".status-group"), tm2 = rect(".time"), r = Math.round(Math.max(10, Math.min(15, cr.height * 0.12))), need = 2 * r + 36;
   let gap = null;
   if (wx) {
-    const left = sg && sg.right < wx.left ? sg.right : tm ? tm.right : cr.left;
+    const left = sg && sg.right < wx.left ? sg.right : tm2 ? tm2.right : cr.left;
     if (wx.left - left >= need) gap = [left, wx.left];
   }
-  if (!gap && sg && tm && sg.left - tm.right >= need) gap = [tm.right, sg.left];
+  if (!gap && sg && tm2 && sg.left - tm2.right >= need) gap = [tm2.right, sg.left];
   if (!gap) return null;
   return { x: Math.round(gap[1] - Math.max(r + 18, (gap[1] - gap[0]) * 0.28) - cr.left), y: Math.round(cr.height * 0.3), r };
 };

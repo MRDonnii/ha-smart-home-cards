@@ -4,20 +4,37 @@
  * style_entity (eller switch_entity): input_boolean der vælger mellem dette kort (til) og det klassiske kort (fra)
  * classic: konfiguration til custom:ha-electricity-price-card
  * days: false  – uden dagsgennemsnit i bunden (de vises aldrig på mobil)
+ * advice: false  – prisbadget kan ikke trykkes. Ellers åbner et tryk på badget en popup med anbefalinger: hvornår vaskemaskine, tørretumbler, opvasker, bil og huset i det hele taget bør køre ud fra de kommende priser
+ * advice: { devices: [{ name, icon: wash|dry|dish|car|bolt|heat, entity, running, kwh, minutes, hours: [fra, til] }] }  – egne enheder i stedet for standardlisten.
+ *   entity = sensor med attributterne kwh_pr_koersel og varighed_min (som HA WashData-prisfølerne), running = binary_sensor, hours = tidsrum som hele kørslen skal ligge inden for
  * charge: { plan, mode, cost, energy, cable, tracker, charger_mode, soc, target, name }  – vises kun når ladeplanen er aktiv og bilen er sat i laderen derhjemme
  * Bruger temaets variabler: --dashboard-accent/success/warning/danger, --dashboard-left-accent-width, --dashboard-card-highlight m.fl.
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.7.0';
+const TEP_VER = '1.8.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
   bolt: '<path d="M13 2.5 5.5 13.5H11L9.8 21.5 18.5 9.5H13l1-7Z"/>', line: '<path d="M3 17l5-6 4 3 6-8 3 3"/>', bars: '<path d="M5 20v-7M10 20V8M15 20v-5M20 20V5"/>',
   car: '<path d="M5 16.5V12l2-5.2A2 2 0 0 1 8.9 5.5h6.2a2 2 0 0 1 1.9 1.3l2 5.2v4.5"/><path d="M3.5 16.5h17v2.5a1 1 0 0 1-1 1H18a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1Z"/><path d="M5 12h14M7.5 14.5h1M15.5 14.5h1"/>',
   plug: '<path d="M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/>',
+  wash: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="13.5" r="4.3"/><path d="M7.5 6.5h2M13 6.5h3.5"/>',
+  dry: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="13.5" r="4.3"/><path d="M9.7 13.8c.8-1.4 1.6-1.4 2.3 0s1.6 1.4 2.3 0"/><path d="M7.5 6.5h2M13 6.5h3.5"/>',
+  dish: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M4 8h16M7.5 5.5h.01M10.5 5.5h.01"/><circle cx="12" cy="14.5" r="3.4"/>',
+  heat: '<path d="M12 3.5c1 3-3.5 4.6-3.5 9a3.5 3.5 0 0 0 7 0c0-1.7-.7-2.7-1.4-3.7-.3 1-.9 1.6-1.6 1.7.5-2.5-.1-5-.5-7Z"/><path d="M8 20.5h8"/>',
+  tip: '<path d="M12 3.5a6 6 0 0 0-3.5 10.9c.7.6 1 1.3 1 2.1h5c0-.8.3-1.5 1-2.1A6 6 0 0 0 12 3.5Z"/><path d="M9.8 19.5h4.4M10.6 21.5h2.8"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>', chev: '<path d="M6.5 9.5l5.5 5.5 5.5-5.5"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  peak: '<path d="M12 3.5 21 19.5H3Z"/><path d="M12 10v4.5M12 17.2v.01"/>', leaf: '<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/><path d="M5 19c3-5 6-7.5 10-9"/>',
 };
 const ti = (k, s = 16, sw = 1.7) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none" aria-hidden="true">${TI[k] || ''}</svg>`;
+const tm = m => { m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)} t${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`; };
+// Standardenhederne i anbefalingerne: vises kun når deres pris-/kørselsføler eller running-sensor findes i HA. entity = sensor med kwh_pr_koersel og varighed_min som attributter.
+const TEP_DEV = [
+  { name: 'Vaskemaskine', icon: 'wash', entity: 'sensor.vaskemaskine_estimeret_pris', running: 'binary_sensor.washing_machine_running', kwh: 1, minutes: 130, hours: [6, 23] },
+  { name: 'Tørretumbler', icon: 'dry', entity: 'sensor.torretumbler_estimeret_pris', running: 'binary_sensor.torrertrumler_running', kwh: 2, minutes: 125, hours: [7, 22] },
+  { name: 'Opvaskemaskine', icon: 'dish', entity: 'sensor.opvaskemaskine_estimeret_pris', running: 'binary_sensor.opvaskemaskine_running', kwh: 1.3, minutes: 160 },
+];
 
 const TEP_CSS = `
 :host{display:block;--acc:var(--dashboard-accent,#e8c37e);--good:var(--dashboard-success,#6be3a8);--warn:var(--dashboard-warning,#e8c37e);--bad:var(--dashboard-danger,#ff9e7a);
@@ -49,8 +66,11 @@ const TEP_CSS = `
 .pt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'chip . ctl' 'big comp comp';gap:6px 20px;align-items:end}
 .pt .chip{grid-area:chip;justify-self:start;align-self:center}.pt .ctl{grid-area:ctl;display:flex;gap:6px;align-self:start}.pt .big{grid-area:big}.pt .comp{grid-area:comp}
 .lv{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:8px;vertical-align:.55em;background:var(--good);box-shadow:0 0 8px var(--good);animation:bl 2s infinite}.lv.off{background:var(--mut);box-shadow:none;animation:none}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent)}
-.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite}
+.chip{appearance:none;border:0;cursor:pointer;min-width:0;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);transition:background .2s,box-shadow .2s}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite;flex:none}
+.chip .ct{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip .chv{opacity:.75;transition:transform .25s}
+.chip:hover,.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent)}.chip.open .chv{transform:rotate(180deg)}
+.chip:focus-visible{outline:2px solid var(--c);outline-offset:2px}.chip.nb{cursor:default;pointer-events:none}.chip.nb .chv{display:none}
 .big{font-size:40px;font-weight:300;letter-spacing:-.045em;line-height:1;white-space:nowrap}.big small{font-size:14px;font-weight:600;letter-spacing:0;color:var(--mut);margin-left:5px}
 .comp{min-width:0;margin-bottom:4px}
 .comp .bar{display:flex;height:7px;border-radius:7px;overflow:hidden;gap:2px}
@@ -90,6 +110,30 @@ const TEP_CSS = `
 .pc .chg span{position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,rgba(10,12,18,.6));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 40%,transparent);backdrop-filter:blur(4px);white-space:nowrap}
 .pc .tip{position:absolute;top:0;padding:7px 10px;border-radius:11px;background:var(--surface,rgba(14,16,24,.95));box-shadow:0 10px 30px -8px rgba(0,0,0,.6),inset 0 0 0 1px var(--hair);font-size:11px;color:var(--mut);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .15s;z-index:3}
 .pc .tip b{font-size:14px;color:var(--ink)}.pc .tip em{font-style:normal;color:var(--ev);font-weight:700}
+/* Anbefalinger: popup inde i kortet under prisbadget (bliver i shadow-roden, så tryk virker som på resten af kortet) */
+.adv{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;isolation:isolate;
+  background:var(--popupBG,var(--card-background-color,#14161e));-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 18px 50px -12px rgba(0,0,0,.65),inset 0 0 0 1px var(--hair);animation:advin .22s cubic-bezier(.16,1,.3,1) both}
+.adv::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--surface,none);pointer-events:none}
+.adv[hidden]{display:none}@keyframes advin{from{opacity:0;transform:translateY(8px)}}
+.adv .ah{display:flex;align-items:center;gap:10px;padding:11px 10px 8px 14px;flex:none}.adv .ahl{flex:1;min-width:0}
+.adv .ah b{display:block;font-size:14px;font-weight:700}.adv .ah small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .x{appearance:none;border:0;cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--mut);flex:none}
+.adv .x:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.adv .ab{overflow:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain;min-height:0}
+.adv .sm{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:13px;font-size:12.5px;font-weight:600;line-height:1.35;
+  color:var(--ink);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}.adv .sm svg{color:var(--c)}
+.adv .sm small{display:block;font-weight:500;font-size:11px;color:var(--mut);margin-top:2px}
+.adv .win{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adv .w{padding:8px 10px;border-radius:13px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);box-shadow:inset 0 0 0 1px var(--hair);min-width:0}
+.adv .w small{display:block;font-size:10px;color:var(--mut)}.adv .w b{display:block;font-size:14px;font-weight:700;color:var(--c);margin-top:2px;white-space:nowrap}.adv .w span{display:block;font-size:10.5px;color:var(--mut);margin-top:1px}
+.adv .sl{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
+.adv .ar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:13px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);box-shadow:inset 0 0 0 1px var(--hair)}
+.adv .ai{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--c,var(--acc));background:color-mix(in srgb,var(--c,var(--acc)) 14%,transparent)}
+.adv .at{min-width:0}.adv .at b{display:block;font-size:13px;font-weight:700}.adv .at small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .av{text-align:right;white-space:nowrap}.adv .av b{display:block;font-size:12.5px;font-weight:800;color:var(--c)}.adv .av small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.adv .tp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;font-size:11.5px;line-height:1.4;color:var(--mut);padding:1px 4px}.adv .tp svg{margin-top:1px;color:var(--c,var(--acc))}.adv .tp b{color:var(--ink);font-weight:700}
+.adv .af{font-size:10px;color:var(--mut);padding:0 4px;line-height:1.4}
 @keyframes barin{from{transform:scaleY(0)}}.pc svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc svg.still .fadein{opacity:1}
 .draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:drw 2s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
 .fadein{opacity:0;animation:fi 1.1s .3s forwards}@keyframes fi{to{opacity:1}}
@@ -106,7 +150,7 @@ const TEP_CSS = `
 /* Dagsgennemsnittene kun på store skærme; på mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
 :host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
 .empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
-@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}.adv{left:8px;right:8px;bottom:8px}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
   .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
@@ -116,8 +160,8 @@ class ThElectricityPriceCard extends HTMLElement {
   // Part of Smart Home Cards since 1.7.0 (Claude AI, 2026-10-14): new/classic like the other cards' looks.
   static getConfigForm() {
     return {
-      schema: [...lookFormSchema(), { name: 'days', selector: { boolean: {} } }, { name: 'fill_height', selector: { boolean: {} } }],
-      computeLabel: (s) => ({ ...LOOK_LABELS, days: 'Dagsgennemsnit i bunden (kun store skærme)', fill_height: 'Fyld højden' })[s.name] || s.name,
+      schema: [...lookFormSchema(), { name: 'days', selector: { boolean: {} } }, { name: 'advice', selector: { boolean: {} } }, { name: 'fill_height', selector: { boolean: {} } }],
+      computeLabel: (s) => ({ ...LOOK_LABELS, days: 'Dagsgennemsnit i bunden (kun store skærme)', advice: 'Anbefalinger når man trykker på prisbadget', fill_height: 'Fyld højden' })[s.name] || s.name,
     };
   }
   setConfig(c) {
@@ -146,13 +190,18 @@ class ThElectricityPriceCard extends HTMLElement {
     }
     this._cl = null;
     r.innerHTML = `<style>${TEP_CSS}</style><ha-card class="c">
-      <div class="pt"><span class="chip" id="chip"><i></i>–</span>
+      <div class="pt"><button type="button" class="chip" id="chip" aria-haspopup="dialog" aria-expanded="false"><i></i><span class="ct">–</span>${ti('chev', 12, 2.4).replace('<svg ', '<svg class="chv" ')}</button>
         <div class="ctl"><div class="seg" id="st"><button data-s="line" title="Linje" aria-label="Linje">${ti('line', 15)}</button><button data-s="bar" title="Søjler" aria-label="Søjler">${ti('bars', 15)}</button></div>
           <div class="seg m" id="md"><button data-m="24">24 t</button><button data-m="48">48 t</button><button data-m="7">7 dage</button></div></div>
         <div class="big"><span id="now">–</span><i class="lv" id="live" title="Strømligning"></i></div><div class="comp"><div class="bar" id="cbar"></div><div class="lg" id="clg"></div></div></div>
       <div class="ev" id="ev"></div>
       <div class="pc" id="pc"><svg id="svg" preserveAspectRatio="none"></svg><div id="ov"></div><div class="tip" id="tip"></div></div>
-      <div class="days" id="days"></div></ha-card>`;
+      <div class="days" id="days"></div>
+      <div class="adv" id="adv" role="dialog" aria-label="Anbefalinger ud fra elprisen" hidden></div></ha-card>`;
+    this.closeAdvice();
+    const chip = r.getElementById('chip'); chip.classList.toggle('nb', this.cfg.advice === false); chip.tabIndex = this.cfg.advice === false ? -1 : 0;
+    chip.onclick = () => (this._adv ? this.closeAdvice() : this.openAdvice());
+    r.getElementById('adv').addEventListener('click', e => { if (e.target.closest('.x')) this.closeAdvice(); });
     try { this._ps = localStorage.getItem('th-price-style') || this.cfg.style || 'bar'; this._pm = localStorage.getItem('th-price-range') || '24'; } catch (e) { this._ps = 'bar'; this._pm = '24'; }
     const sync = () => { r.querySelectorAll('#st button').forEach(b => b.classList.toggle('on', b.dataset.s === this._ps)); r.querySelectorAll('#md button').forEach(b => b.classList.toggle('on', b.dataset.m === this._pm)); };
     sync();
@@ -161,7 +210,7 @@ class ThElectricityPriceCard extends HTMLElement {
     if (!this._ro) { this._ro = new ResizeObserver(() => { this._pk = null; this.update(); }); }
     this._ro.disconnect(); this._ro.observe(r.getElementById('pc'));
   }
-  disconnectedCallback() { this._ro?.disconnect(); }
+  disconnectedCallback() { this._ro?.disconnect(); this.closeAdvice(); }
   connectedCallback() { if (this._ro && this.shadowRoot?.getElementById('pc')) this._ro.observe(this.shadowRoot.getElementById('pc')); }
   $(id) { return this.shadowRoot.getElementById(id); }
   set(id, h) { const e = this.$(id); if (e && e._v !== h) { e.innerHTML = h; e._v = h; } }
@@ -186,7 +235,7 @@ class ThElectricityPriceCard extends HTMLElement {
     const live = this.s(C.current) && Date.now() - new Date(this.s(C.current).last_updated) < 2 * 36e5; const lv = this.$('live'); lv.classList.toggle('off', !live); lv.title = live ? 'Strømligning live' : 'Strømligning ikke live';
     const rel = mean ? cur / mean : 1, col = rel < .9 ? 'var(--good)' : rel > 1.1 ? 'var(--bad)' : 'var(--warn)';
     this.$('chip').style.setProperty('--c', col);
-    this.set('chip', `<i></i>${rel < .9 ? 'Billig nu' : rel > 1.1 ? 'Dyr nu' : 'Normal pris'} · ${rel >= 1 ? '+' : '−'}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`);
+    this.shadowRoot.querySelector('#chip .ct').textContent = `${rel < .9 ? 'Billig nu' : rel > 1.1 ? 'Dyr nu' : 'Normal pris'} · ${rel >= 1 ? '+' : '−'}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
     this.set('now', `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [['Spotpris', 'sensor.stromligning_spotprice_vat', 'var(--acc)'], ['Nettarif', 'sensor.stromligning_distribution_vat', '#8ed1ff'], ['Systemtarif', 'sensor.stromligning_systemtariff_vat', '#b7a4ff'],
       ['Transport', 'sensor.stromligning_nettariff_vat', '#7fb0ff'], ['Tillæg', 'sensor.stromligning_surcharge_vat', '#ff9e7a'], ['Elafgift', 'sensor.stromligning_electricity_tax_vat', '#6be3a8']]
@@ -206,14 +255,99 @@ class ThElectricityPriceCard extends HTMLElement {
             <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % → ${Math.round(tg)} %${ch.deadline ? ` · klar ${new Date(ch.deadline).toLocaleDateString('da-DK', { weekday: 'short' })} ${tt(new Date(ch.deadline))}` : ''}</div></div>
           <div class="m"><div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch.kwh, 1)} kWh<b>${tn(ch.cost)} kr</b></div><div>${st.t <= Date.now() ? 'I gang' : 'Start'}<b>${st.t <= Date.now() ? 'nu' : tt(new Date(st.t))}</b></div>${Number.isFinite(ch.save) && ch.save > .5 ? `<div>Sparer<b class="g">${tn(ch.save)} kr</b></div>` : ''}</div>`; } }
     this.chart(ch);
+    if (this._adv) this.renderAdvice(ch);
   }
   esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-  chart(ch) {
+  slots() {
     const C = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
     const act = [...(this.A(C.current, 'prices') || []), ...(this.A(C.tomorrow, 'prices') || [])].map(p => toP(p, false));
     const lastA = act.length ? act[act.length - 1].e : 0;
     const fc = (this.A(C.forecast, 'prices') || []).map(p => toP(p, true)).filter(p => p.t >= lastA);
-    const all = [...act, ...fc]; const pc = this.$('pc');
+    return { act, lastA, fc, all: [...act, ...fc] };
+  }
+  // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
+  openAdvice() {
+    const adv = this.$('adv'), chip = this.$('chip'); if (!adv || this.cfg.advice === false || this._mode !== 'new') return;
+    this._adv = true; adv.hidden = false; chip.classList.add('open'); chip.setAttribute('aria-expanded', 'true');
+    this._od = e => { const p = e.composedPath(); if (!p.includes(adv) && !p.includes(chip)) this.closeAdvice(); };
+    this._ok = e => { if (e.key === 'Escape') this.closeAdvice(); };
+    document.addEventListener('pointerdown', this._od, true); document.addEventListener('keydown', this._ok);
+    adv._v = null; this.renderAdvice();
+  }
+  closeAdvice() {
+    this._adv = false;
+    if (this._od) { document.removeEventListener('pointerdown', this._od, true); document.removeEventListener('keydown', this._ok); this._od = this._ok = null; }
+    const adv = this.shadowRoot?.getElementById('adv'), chip = this.shadowRoot?.getElementById('chip');
+    if (adv) { adv.hidden = true; adv._v = null; }
+    if (chip) { chip.classList.remove('open'); chip.setAttribute('aria-expanded', 'false'); }
+  }
+  // Gennemsnitspris over [s, s+dur], vægtet efter hvor meget af kørslen der ligger i hver prisperiode; null når priserne ikke dækker hele kørslen
+  avgOver(all, s, dur) {
+    const e = s + dur; let sum = 0, cov = 0, fc = false;
+    for (const p of all) { if (p.e <= s) continue; if (p.t >= e) break; const ov = Math.min(e, p.e) - Math.max(s, p.t); if (ov > 0) { sum += ov * p.p; cov += ov; fc = fc || p.f; } }
+    return cov >= dur * .98 ? { avg: sum / cov, fc } : null;
+  }
+  // Alle mulige starttidspunkter de næste 24 t. Prisen er stykvis lineær i starttidspunktet, så det billigste ligger altid hvor kørslens start eller slutning rammer en periodegrænse
+  scan(all, dur, now, ok = () => true) {
+    const hor = now + 24 * 36e5, c = new Set([now]);
+    for (const p of all) { if (p.t > now && p.t < hor) c.add(p.t); const x = p.e - dur; if (x > now && x < hor) c.add(Math.ceil(x / 3e5) * 3e5); }
+    const out = [];
+    for (const s of c) { if (!ok(s, dur)) continue; const a = this.avgOver(all, s, dur); if (a) out.push({ s, e: s + dur, ...a }); }
+    return out;
+  }
+  dayWord(s, now) { const d = new Date(s), dd = Math.round((new Date(s).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 864e5);
+    return dd <= 0 ? '' : dd === 1 ? (d.getHours() < 6 ? ' i nat' : ' i morgen') : ' ' + d.toLocaleDateString('da-DK', { weekday: 'short' }); }
+  renderAdvice(chIn) {
+    const adv = this.$('adv'); if (!adv || !this._h) return;
+    const C = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch = chIn === undefined ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
+    const cur = this.n(C.current), mean = this.n(C.mean), rel = mean ? cur / mean : 1, col = rel < .9 ? 'var(--good)' : rel > 1.1 ? 'var(--bad)' : 'var(--warn)';
+    const W = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct = (v) => { const r = mean ? Math.round((v / mean - 1) * 100) : 0; return `${r >= 0 ? '+' : '−'}${Math.abs(r)} %`; };
+    const pt = this.shadowRoot.querySelector('.pt'); adv.style.top = `${pt.offsetTop + pt.offsetHeight + 8}px`;
+    const frame = (inner, sub) => `<div class="ah"><div class="ahl"><b>Hvornår er det smart?</b><small>${sub}</small></div><button type="button" class="x" aria-label="Luk">${ti('x', 14, 2)}</button></div><div class="ab">${inner}</div>`;
+    const put = (h) => { const ab = adv.querySelector('.ab'), st = ab ? ab.scrollTop : 0; this.set('adv', h); if (st) adv.querySelector('.ab').scrollTop = st; };
+    if (!Number.isFinite(cur) || !all.some(p => p.e > now)) { put(frame('<div class="af" style="padding:8px 4px 4px">Ingen prisdata endnu – anbefalingerne kommer, så snart Strømligning har sendt priserne.</div>', 'Venter på priser')); return; }
+    const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W(S.lastA)}${S.fc.length ? ' · derefter prognose' : ''}` : 'Prognose';
+    const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c) => (!m || c.avg < m.avg ? c : m), null), worst = win.reduce((m, c) => (!m || c.avg > m.avg ? c : m), null);
+    // overblik
+    const nb = win.filter(c => c.s > now + 9e5 && c.avg < cur * .85).sort((a, b) => a.s - b.s)[0], soon = nb && nb.s <= now + 12 * 36e5;
+    const sm = rel < .9 ? ['Billig strøm lige nu', `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit – kør gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * .85 ? ` Billigst bliver det ${W(best.s)} (Ø ${tn(best.avg)} kr).` : ''}`]
+      : rel > 1.1 ? ['Dyrt lige nu', `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigere fra ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
+      : ['Normal pris', `${tn(cur)} kr/kWh er ${pct(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere fra ${W(nb.s)}.` : 'Ingen markant billigere tid de næste timer – kør som du plejer.'}`];
+    let h = `<div class="sm" style="--c:${col}">${ti(rel < .9 ? 'leaf' : rel > 1.1 ? 'peak' : 'clock', 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
+    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}–${tt(new Date(best.e))}</b><span>Ø ${tn(best.avg)} kr · ${pct(best.avg)}${best.fc ? ' · prognose' : ''}</span></div>
+      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}–${tt(new Date(worst.e))}</b><span>Ø ${tn(worst.avg)} kr · ${pct(worst.avg)}${worst.fc ? ' · prognose' : ''}</span></div></div>`;
+    // enheder
+    const hrOk = hrs => (s, dur) => { if (!hrs) return true; const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5; return hrs[0] <= hrs[1] ? s >= a && s + dur <= b : s >= a || s + dur <= b; };
+    const cfgDev = Array.isArray(C.advice?.devices), devs = (cfgDev ? C.advice.devices : TEP_DEV).filter(d => cfgDev || this._h.states[d.entity] || this._h.states[d.running]);
+    let rows = '', waits = 0;
+    for (const d of devs) {
+      const kwh = parseFloat(this.A(d.entity, 'kwh_pr_koersel')) || d.kwh || 1, min = parseFloat(this.A(d.entity, 'varighed_min')) || d.minutes || 120, dur = min * 6e4;
+      const ic = ti(TI[d.icon] ? d.icon : 'bolt', 19), nm = this.esc(d.name || d.entity), facts = `${tn(kwh, 1)} kWh · ${tm(min)}`;
+      if (d.running && this._h.states[d.running]?.state === 'on') { rows += `<div class="ar" style="--c:var(--acc)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>Kører nu</b><small>allerede i gang</small></div></div>`; continue; }
+      const base = this.avgOver(all, now, dur), cands = this.scan(all, dur, now, hrOk(d.hours)), bst = cands.reduce((m, c) => (!m || c.avg < m.avg - 1e-9 ? c : m), null);
+      if (!base || !bst) { rows += `<div class="ar" style="--c:var(--mut)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>–</b><small>priser mangler</small></div></div>`; continue; }
+      const nowOk = hrOk(d.hours)(now, dur), cNow = base.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
+      const wait = bst.s - now > 9e5 && (!nowOk || save >= Math.max(.3, cNow * .06));
+      if (wait) waits++;
+      rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} · nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W(bst.s)}</b><small>${save > .05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? ' · prognose' : ''}</small></div></div>`
+        : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>Kør nu</b><small>${tn(cNow)} kr</small></div></div>`;
+    }
+    if (ch) { const first = ch.blocks[0], lastB = ch.blocks[ch.blocks.length - 1];
+      rows += `<div class="ar" style="--c:var(--ev)"><div class="ai">${ti('car', 19)}</div><div class="at"><b>${this.esc(ch.name)}</b><small>${tn(ch.kwh, 1)} kWh · ${tn(ch.cost)} kr · ${tt(new Date(first.t))}–${tt(new Date(lastB.e))}</small></div><div class="av"><b>${ch.charging ? 'Lader nu' : 'Ladeplan'}</b><small>${Number.isFinite(ch.save) && ch.save > .5 ? `spar ${tn(ch.save)} kr` : 'følger billige timer'}</small></div></div>`; }
+    if (rows) h += `<div class="sl">Dine enheder</div>${rows}`;
+    // huset
+    const tips = [];
+    if (worst && (worst.avg > mean * 1.15 || worst.avg > (best?.avg || 0) * 1.4)) tips.push(['peak', 'var(--bad)', `<b>Undgå ${tt(new Date(worst.s))}–${tt(new Date(worst.e))}${this.dayWord(worst.s, now)}</b> (${tn(worst.avg)} kr/kWh). Udskyd ovn, kogeplade, varmtvand og anden tung brug.`]);
+    else tips.push(['leaf', 'var(--good)', '<b>Ingen markante prispidser</b> de næste 24 timer – brug strøm som du plejer.']);
+    if (best && worst && (best.avg < mean * .9 || best.avg < worst.avg * .75)) tips.push(['heat', 'var(--acc)', `<b>Varme og varmtvand:</b> lad varmepumper, gulvvarme og varmtvandsbeholder varme op ${tt(new Date(best.s))}–${tt(new Date(best.e))}${this.dayWord(best.s, now)}, og skru ned i de dyre timer.`]);
+    if (C.charge && !ch && best) tips.push(['car', 'var(--ev)', `<b>Elbil:</b> lad ${tt(new Date(best.s))}–${tt(new Date(best.e))}${this.dayWord(best.s, now)}, hvor strømmen er billigst – eller slå ladeplanen til.`]);
+    if (waits) tips.push(['clock', 'var(--warn)', '<b>Udskudt start:</b> sæt maskinerne til at starte senere (eller lav en automation), så kører de selv, når strømmen er billigst.']);
+    h += `<div class="sl">Tip til huset</div>${tips.map(t => `<div class="tp" style="--c:${t[1]}">${ti(t[0], 16)}<div>${t[2]}</div></div>`).join('')}`;
+    h += `<div class="af">Beregnet ud fra hver enheds typiske forbrug og kørselstid, fordelt jævnt over kørslen.${this.s(C.tomorrow)?.state === 'off' ? ' Morgendagens priser er ikke offentliggjort endnu (kommer typisk omkring kl. 13) – kom tilbage så for flere billige timer.' : ''}</div>`;
+    put(frame(h, sub));
+  }
+  chart(ch) {
+    const C = this.cfg, { act, lastA, all } = this.slots(); const pc = this.$('pc');
     if (!all.length) { this.set('ov', '<div class="empty">Ingen prisdata endnu</div>'); return; }
     // Vinduet går fra lidt før nu, men aldrig før den første pris eller efter den sidste – ingen tom plads i siderne (Claude AI, 2026-10-13)
     const first = Math.min(...all.map(p => p.t)), last = Math.max(...all.map(p => p.e));
