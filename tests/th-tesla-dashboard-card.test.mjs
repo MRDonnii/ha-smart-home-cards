@@ -525,6 +525,24 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(model(cap, scConfig).sc.limit, null, "only in the cheapest plan");
   const without = scStates();
   assert.equal(model(without, scConfig).sc.limit, null, "an EV Ledger without the setting");
+  // What the limit holds back, "Lad alligevel" with the cost of charging it all now, and the line in the price chart.
+  const q = (h) => new Date(Math.floor(Date.now() / 900000) * 900000 + h * hour).toISOString();
+  const held = limitStates();
+  held["sensor.bil_next_charge_start"] = s(q(1), { deadline: q(3), price_limit: 2, above_limit_kwh: 18.64, limit_soc: 69.5, slot_minutes: 15,
+    blocks: [{ start: q(1), end: q(1.5), kwh: 5.5, cost: 10.54, estimated: false }],
+    prices: [{ t: q(0.25), p: 2.6 }, { t: q(0.5), p: 2.4 }, { t: q(1), p: 1.9 }, { t: q(1.25), p: 1.95 }, { t: q(2), p: 2.2 }] });
+  held["sensor.bil_planned_charge_energy"] = s("5.5", { unit_of_measurement: "kWh" });
+  held["sensor.bil_planned_charge_cost"] = s("10.54", { unit_of_measurement: "kr", alternatives: { now: { cost: 94.17, energy_kwh: 32.39 } } });
+  const hm = model(held, scConfig).sc;
+  assert.equal(hm.limit.hold.title, "Venter med 18,6 kWh");
+  assert.match(hm.limit.hold.detail, /Lader til ca\. 70 %, resten koster over 2,00 kr\/kWh · lad alligevel ca\. 94,17 kr/);
+  assert.deepEqual(hm.chart.map((b) => [b.on, b.over]), [[false, true], [false, true], [true, false], [true, false], [false, true]]);
+  assert.equal(hm.limitLine.label, "2,00 kr");
+  assert.ok(hm.limitLine.h > 0.22 && hm.limitLine.h < 1);
+  const unplugged = { ...held, "sensor.bil_charge_status": s("disconnected") };
+  assert.equal(model(unplugged, scConfig).sc.limit.hold, null, "no charge-anyway button without the car");
+  const offHeld = { ...held, "switch.bil_price_limit_in_cheapest": s("off") };
+  assert.equal(model(offHeld, scConfig).sc.limitLine, null, "no line when the limit is off");
 }
 }
 // Car controls while Tesla Fleet has no data yet (after a restart): the state comes from the car's Tesla Custom twin,

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.154 */
+/* MRDonnii Smart Home Cards v0.5.155 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -3355,6 +3355,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon4]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon4)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p></div>
+  <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small></span><button type="button" class="btn go" data-scanyway data-r="scAnyway">Lad alligevel</button></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "N\xE6ste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
   <div class="plan-ctl" data-r="planCtl">
     <label class="ctl" data-r="socCtl" hidden>${ttdIcon("mdi:target", "ic green")}<span>M\xE5l SOC</span><b data-r="socCtlVal">${TTD_DASH}</b><input type="range" data-r="socRange" aria-label="M\xE5l SOC"></label>
@@ -3704,6 +3705,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-chart rect.on{fill:var(--tdc-green);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tdc-green) 55%,transparent))}
 .sc-chart rect.est{opacity:.55}
 .sc-chart line{stroke:var(--tdc-text);stroke-width:2;vector-effect:non-scaling-stroke}.sc-chart line.trip{stroke:var(--tdc-blue)}
+.sc-chart{position:relative}
+.sc-chart rect.over{fill:color-mix(in srgb,var(--tdc-orange) 30%,transparent)}
+.sc-chart line.limit{stroke:var(--tdc-orange);stroke-width:1.5;stroke-dasharray:5 4}
+.sc-lim{position:absolute;right:0;transform:translateY(-115%);padding:0 4px;border-radius:4px;font-size:11px;font-weight:700;line-height:1.35;color:var(--tdc-orange);background:color-mix(in srgb,var(--tdc-orange) 14%,var(--tdc-tile));pointer-events:none}
+.sc-hold{display:flex;align-items:center;gap:10px;margin:-4px 0 14px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--tdc-orange) 11%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tdc-orange) 35%,transparent)}
+.sc-hold>span{display:grid;gap:2px;flex:1;min-width:0}.sc-hold b{font-size:14px;font-weight:700}.sc-hold small{font-size:12.5px;color:var(--tdc-muted)}
+.sc-hold .btn{flex:none}
+@media (max-width:420px){.sc-hold{flex-wrap:wrap}.sc-hold .btn{flex:1 1 100%}}
 .sc-hint{margin:6px 0 0;font-size:13px;color:var(--tdc-green)}
 .sc-track{position:relative;height:14px;border-radius:999px;background:color-mix(in srgb,var(--tdc-text) 11%,transparent)}
 .sc-seg{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--tdc-green);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-green) 45%,transparent)}
@@ -5087,18 +5096,24 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const minutes = Number(plan.slot_minutes) || 15;
     const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until2);
     const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
+    const limitOn = mode === "smart" && this._sc("smart_price_limit")?.state === "on";
+    const limitP = limitOn && plan.price_limit != null && Number.isFinite(Number(plan.price_limit)) ? Number(plan.price_limit) : null;
+    const hOf = (p) => 0.22 + 0.78 * (hi > lo ? (p - lo) / (hi - lo) : 0.5);
     const chart = slots.map((x) => {
       const left = at(new Date(Math.max(x.s, now)));
       const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
+      const over = limitP != null && !on && x.p > limitP;
       return {
         left,
         width: at(new Date(Math.min(x.e, until2))) - left,
-        h: 0.22 + 0.78 * (hi > lo ? (x.p - lo) / (hi - lo) : 0.5),
+        h: hOf(x.p),
         on,
         est: x.est,
-        title: `${f.time(new Date(x.s))} \xB7 ${f.number(x.p, 2)} kr/kWh${on ? " \xB7 lader" : ""}`
+        over,
+        title: `${f.time(new Date(x.s))} \xB7 ${f.number(x.p, 2)} kr/kWh${on ? " \xB7 lader" : over ? " \xB7 over gr\xE6nsen" : ""}`
       };
     });
+    const limitLine = limitP != null && slots.length && limitP >= lo && limitP <= hi ? { h: hOf(limitP), label: `${f.number(limitP, 2)} kr` } : null;
     const endSensor = ttdToDate(this._sc("next_charge_end")?.state);
     const lastEnd = blocks.length === 1 && endSensor ? endSensor : blocks[blocks.length - 1]?.end;
     const cost = this._scNum("planned_cost");
@@ -5183,14 +5198,29 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const above = Number(a.above_limit_kwh) || 0;
         const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
         const info = !on ? "" : above >= 0.5 ? energy > 0 && reach != null ? `For dyrt over ca. ${f.number(reach, 0)} %` : "Prisen er over gr\xE6nsen: venter" : "Alt under gr\xE6nsen";
+        let hold = null;
+        if (on && above >= 0.5 && statusKey !== "disconnected") {
+          const all = this._sc("planned_cost")?.attributes?.alternatives?.now;
+          const allCost = Number(all?.cost);
+          const max = ttdHasValue(priceObj) ? `${f.number(ttdToNumber(priceObj.state), 2)} ${ttdUnit(priceObj.attributes?.unit_of_measurement ?? "kr/kWh")}` : "gr\xE6nsen";
+          hold = {
+            title: `Venter med ${f.number(above, 1)} kWh`,
+            detail: [
+              energy > 0 && reach != null ? `Lader til ca. ${f.number(reach, 0)} %, resten koster over ${max}` : `Alle kvarterer koster over ${max}`,
+              Number.isFinite(allCost) && allCost > 0 ? `lad alligevel ca. ${ttdJoin(f.number(allCost, 2), costUnit)}` : ""
+            ].filter(Boolean).join(" \xB7 ")
+          };
+        }
         return {
           on,
           value: ttdHasValue(priceObj) ? String(ttdToNumber(priceObj.state)) : "",
           unit: ttdUnit(priceObj?.attributes?.unit_of_measurement ?? ""),
           floor: this._scNum("smart_floor_soc"),
-          info
+          info,
+          hold
         };
       })() : null,
+      limitLine,
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc"), over: (() => {
         const sw = this._sc("price_cap_override");
         if (!sw || sw.state === "unavailable") return null;
@@ -5981,14 +6011,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
-    const chartSig = JSON.stringify([sc.chart, sc.marks]);
+    const chartSig = JSON.stringify([sc.chart, sc.marks, sc.limitLine]);
     if (r.scChart && r.scChart.dataset.sig !== chartSig) {
       r.scChart.dataset.sig = chartSig;
       const H4 = 60;
+      const ly = sc.limitLine ? H4 - Math.max(3, sc.limitLine.h * (H4 - 4)) : null;
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H4}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H4 - 4));
-        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H4 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
-      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H4}" class="${m.kind}"/>`).join("")}</svg>` : "";
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H4 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H4}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${(ly / H4 * 100).toFixed(1)}%">Gr\xE6nse ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
     if (r.scTrack) r.scTrack.hidden = !!sc.chart.length;
@@ -6065,6 +6096,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const floor = sc.limit.floor == null ? "" : String(sc.limit.floor);
       if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
       this._t("scLimitInfo", sc.limit.info);
+    }
+    const hold = sc.limit?.hold;
+    this._hide("scHold", !hold);
+    if (hold) {
+      this._t("scHoldT", hold.title);
+      this._t("scHoldS", hold.detail);
+      const armed = this._armed === "anyway";
+      this._attrSet("scAnyway", "data-armed", armed);
+      this._t("scAnyway", armed ? "Bekr\xE6ft: lad nu" : "Lad alligevel");
     }
     this._hide("scCapX", !sc.cap?.over);
     if (sc.cap?.over) {
@@ -6447,7 +6487,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scanyway],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) {
       this._rbAction(target);
@@ -6507,6 +6547,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
+    else if (target.dataset.scanyway != null) this._chargeAnyway();
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
@@ -6695,6 +6736,18 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._disarm(true);
     this._scCall("charge_mode", "select", "select_option", { option: mode });
   }
+  /** "Lad alligevel" past the price limit: Charge now (EV Ledger goes back to the default plan at the target), second tap confirms. */
+  _chargeAnyway() {
+    if (this._armed !== "anyway") {
+      this._disarm(false);
+      this._armed = "anyway";
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    this._scCall("charge_mode", "select", "select_option", { option: "now" });
+  }
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */
   _chooseDefault(mode) {
     if (this._sc("default_charge_mode")?.state === mode) return;
@@ -6838,7 +6891,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.5.3";
+var VERSION5 = "0.5.4";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -7146,6 +7199,11 @@ var HATeslaGlanceCard = class extends HTMLElement {
       @keyframes nowPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ev) 70%,transparent)}80%,100%{box-shadow:0 0 0 9px transparent}}
       .flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;background:var(--good);box-shadow:0 0 8px var(--good)}
       .tticks{position:absolute;left:0;right:0;bottom:-2px;height:12px}.tt{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap}.tt[style*="left:0"]{transform:none}.tt.end{transform:translateX(-100%);color:var(--good);font-weight:700}
+      .tx{position:absolute;top:2px;bottom:2px;border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 32%,transparent) 0 3px,transparent 3px 6px)}
+      .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
+      @container (max-width:640px){.pnums.has-btn .save{display:none}}
+      .pnums.has-btn .save{margin-left:0}.pnow{margin-left:auto;flex:none;white-space:nowrap;font:inherit;font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
+      .pnow.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
       .pnums{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:11px;color:var(--muted)}.pnums b{font-size:14px;font-weight:800;color:var(--primary-text-color)}
       .pnums .save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 7px;border-radius:999px;color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 40%,transparent),0 0 14px -5px var(--good)}.pnums .save b{color:var(--good)}.pnums .save ha-icon{--mdc-icon-size:15px}
       .cg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;height:100%}
@@ -7211,6 +7269,11 @@ var HATeslaGlanceCard = class extends HTMLElement {
       if (d) {
         e.stopPropagation();
         this._setView(d.dataset.v);
+        return;
+      }
+      if (e.target.closest("[data-pnow]")) {
+        e.stopPropagation();
+        this._chargeAnyway();
         return;
       }
       this._tap();
@@ -7321,8 +7384,22 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const blocks = (plan?.attributes?.blocks || []).map((b) => ({ t: Date.parse(b.start), e: Date.parse(b.end), kwh: b.kwh, cost: b.cost })).filter((b) => b.e > now);
     const mode = st(c2.mode) || plan?.attributes?.mode;
     const cm = st(c2.charger_mode);
-    const plugged = st(c2.cable) === "on" && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm && !["disconnected", "unavailable", "unknown"].includes(cm));
-    if (!(plugged && mode && !["off", "manual"].includes(mode) && blocks.length)) return null;
+    const cs = st(c2.cable);
+    const plugAlt = ["on", "true", "connected"].includes(String(this._val(this._config.plugged) || "").toLowerCase());
+    const cable = cs === "on" || cs !== "off" && plugAlt;
+    const plugged = cable && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm && !["disconnected", "unavailable", "unknown"].includes(cm));
+    const pa = plan?.attributes || {};
+    const lp = pa.price_limit == null ? NaN : Number(pa.price_limit);
+    const above = Number(pa.above_limit_kwh) || 0;
+    const limit = mode === "smart" && Number.isFinite(lp) ? {
+      price: lp,
+      above,
+      reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc),
+      floor: Number(pa.price_limit_floor),
+      slots: (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)),
+      minutes: Number(pa.slot_minutes) || 15
+    } : null;
+    if (!(plugged && mode && !["off", "manual"].includes(mode) && (blocks.length || limit && above >= 0.5))) return null;
     const n = (id) => {
       const v = Number.parseFloat(st(id));
       return Number.isFinite(v) ? v : NaN;
@@ -7331,7 +7408,23 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const cost = Number.isFinite(n(c2.cost)) ? n(c2.cost) : blocks.reduce((a, b) => a + (b.cost || 0), 0);
     const alt = this._hass.states[c2.cost]?.attributes?.alternatives || {};
     const nowCost = Number(alt.now?.cost);
-    return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) ? nowCost - cost : NaN, soc: n(c2.soc), target: n(c2.target), deadline: plan?.attributes?.deadline, charging: st(c2.charging) === "on" || cm === "charging", name: c2.name || this._config.name };
+    const soc = Number.isFinite(n(c2.soc)) ? n(c2.soc) : this._num(this._config.battery) ?? NaN;
+    return {
+      blocks,
+      mode,
+      kwh,
+      cost,
+      save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN,
+      nowCost,
+      nowKwh: Number(alt.now?.energy_kwh),
+      limit,
+      canNow: !!c2.mode && mode !== "now",
+      soc,
+      target: n(c2.target),
+      deadline: pa.deadline,
+      charging: st(c2.charging) === "on" || cm === "charging",
+      name: c2.name || this._config.name
+    };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
@@ -7342,16 +7435,27 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const tg = Number.isFinite(p.target) ? p.target : 100;
     const first = p.blocks[0];
     const avg = p.kwh ? p.cost / p.kwh : NaN;
-    const running = first.t <= now;
-    const dlT = p.deadline ? Date.parse(p.deadline) : Math.max(...p.blocks.map((b) => b.e));
+    const running = !!first && first.t <= now;
+    const dlT = p.deadline ? Date.parse(p.deadline) : Math.max(now + 36e5, ...p.blocks.map((b) => b.e));
     const end = Math.max(dlT, ...p.blocks.map((b) => b.e));
     const span = Math.max(end - now, 36e5);
     const X = (t) => Math.max(0, Math.min(100, (t - now) / span * 100));
-    const left = Math.max(0, first.t - now);
+    const left = first ? Math.max(0, first.t - now) : 0;
     const lh2 = Math.floor(left / 36e5);
     const lm = Math.round(left % 36e5 / 6e4);
-    const until2 = running ? "lader nu" : lh2 ? `om ${lh2} t ${lm} min` : `om ${lm} min`;
-    const blocks = p.blocks.map((b) => `<i class="tb" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const until2 = !first ? "over gr\xE6nsen" : running ? "lader nu" : lh2 ? `om ${lh2} t ${lm} min` : `om ${lm} min`;
+    const L3 = p.limit;
+    const held = !!L3 && L3.above >= 0.5;
+    const runs = [];
+    if (held) for (const x of L3.slots) {
+      const xe = x.t + L3.minutes * 6e4;
+      if (xe <= now || x.t >= end || x.p <= L3.price) continue;
+      const last = runs[runs.length - 1];
+      if (last && x.t - last.e < 6e4) last.e = xe;
+      else runs.push({ t: Math.max(x.t, now), e: xe });
+    }
+    const over = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const blocks = over + p.blocks.map((b) => `<i class="tb" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
     const ticks2 = [];
     const d0 = new Date(now);
     d0.setMinutes(0, 0, 0);
@@ -7362,10 +7466,33 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }
     const dl2 = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
-        <div class="pt"><b>Ladeplan \xB7 ${esc2(MODE[p.mode] || p.mode)}</b><span>${esc2(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %</span></div>
-        <div class="pstart"><small>${running ? "I gang" : "Starter"}</small><b>${running ? "nu" : hm(first.t)}</b><em>${esc2(until2)}</em></div></div>
+        <div class="pt"><b>Ladeplan \xB7 ${esc2(MODE[p.mode] || p.mode)}</b><span>${esc2(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
+        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L3.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc2(until2)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks2.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc2(dl2)}</span>` : ""}</div></div>
-      <div class="pnums"><span><b>${this._fmt(avg, 2)}</b> kr/kWh</span><span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>${Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
+      <div class="pnums${p.canNow ? " has-btn" : ""}">${first && !held ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${held ? `<span class="held"><b>${this._fmt(L3.above, 1)}</b> kWh venter \xB7 over ${this._fmt(L3.price, 2)} kr</span>` : ""}${!held && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${this._anywayHtml(p)}</div>`;
+  }
+  // "Lad alligevel" (user, 2026-10-15): Charge now past the plan and the price limit; the first tap arms, the second sends.
+  _anywayHtml(p) {
+    if (!p.canNow) return "";
+    const armed = this._armAt && Date.now() - this._armAt < 4e3;
+    return `<button type="button" class="pnow${armed ? " armed" : ""}" data-pnow title="Lad nu i stedet for at vente${Number.isFinite(p.nowCost) && p.nowCost > 0 ? `: ca. ${this._fmt(p.nowCost, 2)} kr` : ""}">${armed ? "Tryk igen" : "Lad alligevel"}</button>`;
+  }
+  _chargeAnyway() {
+    const id = this._config.charge_plan?.mode;
+    if (!id || !this._hass) return;
+    clearTimeout(this._armT);
+    if (!(this._armAt && Date.now() - this._armAt < 4e3)) {
+      this._armAt = Date.now();
+      this._armT = setTimeout(() => {
+        this._armAt = 0;
+        this._update();
+      }, 4e3);
+      this._update();
+      return;
+    }
+    this._armAt = 0;
+    this._update();
+    this._hass.callService("select", "select_option", { entity_id: id, option: "now" });
   }
   // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
   // a live bar towards the target, the numbers with the savings badge to the right.
@@ -13279,7 +13406,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.9.0";
+var TEP_VER = "1.10.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13356,6 +13483,15 @@ var TEP_CSS = `
 .ev{display:none;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:15px;
   background:linear-gradient(100deg,color-mix(in srgb,var(--ev) 16%,transparent),color-mix(in srgb,var(--ev) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 32%,transparent);animation:tin .7s cubic-bezier(.16,1,.3,1) both}
 .ev.on{display:grid}
+.ev .hold{grid-column:1/-1;margin-top:-4px}
+.hold{display:flex;align-items:center;gap:10px;min-width:0;font-size:11px;color:var(--mut)}.hold>span{flex:1;min-width:0}.hold b{color:var(--ink);font-weight:700}
+.hold.on>span{color:color-mix(in srgb,var(--warn) 78%,var(--ink))}.hold.on b{color:var(--warn)}
+.any{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:99px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
+.any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
+.adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
+.pc .lim{position:absolute;right:0;border-top:1.5px dashed color-mix(in srgb,var(--warn) 85%,transparent);pointer-events:none}
+.pc .limz{position:absolute;right:0;top:0;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 3%,transparent),color-mix(in srgb,var(--warn) 11%,transparent))}
+.pc .liml{position:absolute;right:4px;transform:translateY(-118%);padding:1px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,rgba(10,12,18,.6));white-space:nowrap;pointer-events:none}
 .ev .car{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,transparent)}
 .ev .car em{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ev);color:#141018;animation:pz 2s ease-in-out infinite}
 @keyframes pz{50%{transform:scale(1.15);box-shadow:0 0 14px var(--ev)}}
@@ -13506,8 +13642,15 @@ var ThElectricityPriceCard = class extends HTMLElement {
     chip.classList.toggle("nb", this.cfg.advice === false);
     chip.tabIndex = this.cfg.advice === false ? -1 : 0;
     chip.onclick = () => this._adv ? this.closeAdvice() : this.openAdvice();
+    r.querySelector("ha-card").addEventListener("click", (e) => {
+      if (e.target.closest?.("[data-anyway]")) {
+        e.stopPropagation();
+        this.chargeAnyway();
+      }
+    });
     const adv = r.getElementById("adv");
     adv.addEventListener("click", (e) => {
+      if (e.target.closest?.("[data-anyway]") || e.detail === 0 && !e.target.closest?.(".x")) return;
       const b = adv.getBoundingClientRect();
       if (e.target.closest(".x") || e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) this.closeAdvice();
     });
@@ -13591,8 +13734,11 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const plan = this._h.states[c2.plan];
     const blocks = (plan?.attributes?.blocks || []).map((b) => ({ t: new Date(b.start).getTime(), e: new Date(b.end).getTime(), kwh: b.kwh, cost: b.cost, est: b.estimated })).filter((b) => b.e > Date.now());
     const mode = st(c2.mode) || plan?.attributes?.mode, cm = st(c2.charger_mode);
-    const plugged = st(c2.cable) === "on" && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm && !["disconnected", "unavailable", "unknown"].includes(cm));
-    const active = mode && !["off", "manual"].includes(mode) && blocks.length > 0;
+    const cmOk = !!cm && !["disconnected", "unavailable", "unknown"].includes(cm), cs = st(c2.cable);
+    const plugged = (cs === "on" || cs !== "off" && !!c2.charger_mode && cmOk) && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cmOk);
+    const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
+    const limit = mode === "smart" && Number.isFinite(lp) ? { price: lp, above, held: above >= 0.5, reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor) } : null;
+    const active = mode && !["off", "manual"].includes(mode) && (blocks.length > 0 || !!limit?.held);
     if (!(c2.force || plugged && active)) return null;
     const kwh = this.n(c2.energy), cost = this.n(c2.cost), alt = this.A(c2.cost, "alternatives") || {}, now = alt.now?.cost;
     return {
@@ -13600,13 +13746,53 @@ var ThElectricityPriceCard = class extends HTMLElement {
       mode,
       kwh: Number.isFinite(kwh) ? kwh : blocks.reduce((a, b) => a + (b.kwh || 0), 0),
       cost: Number.isFinite(cost) ? cost : blocks.reduce((a, b) => a + (b.cost || 0), 0),
-      save: Number.isFinite(now) && Number.isFinite(cost) ? now - cost : NaN,
+      save: Number.isFinite(now) && Number.isFinite(cost) && blocks.length && !limit?.held ? now - cost : NaN,
+      nowCost: Number.isFinite(now) ? now : NaN,
+      limit,
+      canNow: !!c2.mode && mode !== "now",
       soc: this.n(c2.soc),
       target: this.n(c2.target),
-      deadline: plan?.attributes?.deadline,
+      deadline: pa.deadline,
       charging: st(c2.charging) === "on" || cm === "charging",
       name: c2.name || "Bilen"
     };
+  }
+  armed() {
+    return !!this._armAt && Date.now() - this._armAt < 4e3;
+  }
+  // "Lad alligevel" (bruger, 2026-10-15): Lad nu forbi planen og prisgrænsen; første tryk gør klar, andet sender
+  chargeAnyway() {
+    const id = this.cfg.charge?.mode;
+    if (!id || !this._h) return;
+    clearTimeout(this._armT);
+    if (!this.armed()) {
+      this._armAt = Date.now();
+      this._armT = setTimeout(() => {
+        this._armAt = 0;
+        this.paintArm();
+      }, 4e3);
+      this.paintArm();
+      return;
+    }
+    this._armAt = 0;
+    this.paintArm();
+    this._h.callService("select", "select_option", { entity_id: id, option: "now" });
+  }
+  paintArm() {
+    const a = this.armed();
+    this.shadowRoot?.querySelectorAll("[data-anyway]").forEach((b) => {
+      b.classList.toggle("armed", a);
+      b.textContent = a ? "Tryk igen for at lade" : "Lad alligevel";
+    });
+  }
+  holdText(ch2) {
+    const L3 = ch2.limit;
+    if (!L3?.held) return "";
+    return `Venter med <b>${tn(L3.above, 1)} kWh</b> over ${tn(L3.price)} kr/kWh${ch2.blocks.length && Number.isFinite(L3.reach) ? ` \xB7 lader til ca. ${Math.round(L3.reach)} %` : ""}${Number.isFinite(L3.floor) && L3.floor > 0 ? ` \xB7 under ${Math.round(L3.floor)} % lader den altid` : ""}`;
+  }
+  anywayBtn() {
+    const a = this.armed();
+    return `<button type="button" class="any${a ? " armed" : ""}" data-anyway>${a ? "Tryk igen for at lade" : "Lad alligevel"}</button>`;
   }
   update() {
     if (this._mode !== "new" || !this._h || !this.$("pc")) return;
@@ -13633,19 +13819,20 @@ var ThElectricityPriceCard = class extends HTMLElement {
       this.$("cbar").innerHTML = parts.map(([n, v, c2]) => `<b title="${n} ${tn(v)} kr" style="width:${v / sum * 100}%;background:${c2}"></b>`).join("");
       this.$("clg").innerHTML = parts.map(([n, v, c2]) => `<span><i style="background:${c2}"></i>${n} ${tn(v)}</span>`).join("");
     }
-    const ch2 = this.charge(), ev = this.$("ev"), ek = ch2 ? JSON.stringify([ch2.kwh, ch2.cost, ch2.blocks.length, ch2.soc, ch2.target, ch2.charging, ch2.mode]) : "";
+    const ch2 = this.charge(), ev = this.$("ev"), ek = ch2 ? JSON.stringify([ch2.kwh, ch2.cost, ch2.blocks.length, ch2.soc, ch2.target, ch2.charging, ch2.mode, ch2.limit, ch2.nowCost]) : "";
     if (ek !== this._ek) {
       this._ek = ek;
       this._pk = null;
       ev.classList.toggle("on", !!ch2 && this.cfg.charge_panel !== false);
       if (ch2) {
-        const avg = ch2.kwh ? ch2.cost / ch2.kwh : NaN, st = ch2.blocks[0], soc = Number.isFinite(ch2.soc) ? ch2.soc : 0, tg = Number.isFinite(ch2.target) ? ch2.target : 100;
+        const avg = ch2.kwh ? ch2.cost / ch2.kwh : NaN, st = ch2.blocks[0], soc = Number.isFinite(ch2.soc) ? ch2.soc : 0, tg = Number.isFinite(ch2.target) ? ch2.target : 100, hold = this.holdText(ch2);
         const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
         ev.innerHTML = `<div class="car">${ti("car", 22)}<em>${ti("bolt", 11, 2.2)}</em></div>
           <div style="min-width:0"><div class="t">${ch2.charging ? "Lader nu" : "Ladeplan aktiv"} <span>\xB7 ${this.esc(ch2.name)} \xB7 ${MODE[ch2.mode] || ch2.mode}</span></div>
             <div class="soc"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
-            <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % \u2192 ${Math.round(tg)} %${ch2.deadline ? ` \xB7 klar ${new Date(ch2.deadline).toLocaleDateString("da-DK", { weekday: "short" })} ${tt(new Date(ch2.deadline))}` : ""}</div></div>
-          <div class="m"><div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch2.kwh, 1)} kWh<b>${tn(ch2.cost)} kr</b></div><div>${st.t <= Date.now() ? "I gang" : "Start"}<b>${st.t <= Date.now() ? "nu" : tt(new Date(st.t))}</b></div>${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `<div>Sparer<b class="g">${tn(ch2.save)} kr</b></div>` : ""}</div>`;
+            <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % \u2192 ${ch2.limit?.held && ch2.blocks.length && Number.isFinite(ch2.limit.reach) ? `${Math.round(ch2.limit.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}${ch2.deadline ? ` \xB7 klar ${new Date(ch2.deadline).toLocaleDateString("da-DK", { weekday: "short" })} ${tt(new Date(ch2.deadline))}` : ""}</div></div>
+          <div class="m">${st ? `<div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch2.kwh, 1)} kWh<b>${tn(ch2.cost)} kr</b></div><div>${st.t <= Date.now() ? "I gang" : "Start"}<b>${st.t <= Date.now() ? "nu" : tt(new Date(st.t))}</b></div>` : `<div>Venter<b>over ${tn(ch2.limit.price)} kr</b></div>`}${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `<div>Sparer<b class="g">${tn(ch2.save)} kr</b></div>` : ""}</div>
+          ${ch2.canNow && !ch2.charging ? `<div class="hold${hold ? " on" : ""}"><span>${hold || (Number.isFinite(ch2.nowCost) ? `Lad nu i stedet: ca. <b>${tn(ch2.nowCost)} kr</b>` : "Lad nu i stedet for at vente")}</span>${this.anywayBtn()}</div>` : ""}`;
       }
     }
     this.chart(ch2);
@@ -13777,8 +13964,9 @@ var ThElectricityPriceCard = class extends HTMLElement {
       rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} \xB7 nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W3(bst.s)}</b><small>${save > 0.05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? " \xB7 prognose" : ""}</small></div></div>` : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>K\xF8r nu</b><small>${tn(cNow)} kr</small></div></div>`;
     }
     if (ch2) {
-      const first = ch2.blocks[0], lastB = ch2.blocks[ch2.blocks.length - 1];
-      rows += `<div class="ar" style="--c:var(--ev)"><div class="ai">${ti("car", 19)}</div><div class="at"><b>${this.esc(ch2.name)}</b><small>${tn(ch2.kwh, 1)} kWh \xB7 ${tn(ch2.cost)} kr \xB7 ${tt(new Date(first.t))}\u2013${tt(new Date(lastB.e))}</small></div><div class="av"><b>${ch2.charging ? "Lader nu" : "Ladeplan"}</b><small>${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `spar ${tn(ch2.save)} kr` : "f\xF8lger billige timer"}</small></div></div>`;
+      const first = ch2.blocks[0], lastB = ch2.blocks[ch2.blocks.length - 1], hold = this.holdText(ch2);
+      rows += `<div class="ar" style="--c:${hold && !first ? "var(--warn)" : "var(--ev)"}"><div class="ai">${ti("car", 19)}</div><div class="at"><b>${this.esc(ch2.name)}</b><small>${first ? `${tn(ch2.kwh, 1)} kWh \xB7 ${tn(ch2.cost)} kr \xB7 ${tt(new Date(first.t))}\u2013${tt(new Date(lastB.e))}` : `ingen kvarterer under ${tn(ch2.limit.price)} kr`}</small></div><div class="av"><b>${ch2.charging ? "Lader nu" : first ? "Ladeplan" : "Venter"}</b><small>${Number.isFinite(ch2.save) && ch2.save > 0.5 ? `spar ${tn(ch2.save)} kr` : first ? "f\xF8lger billige timer" : "over prisgr\xE6nsen"}</small></div>
+        ${ch2.canNow && !ch2.charging ? `<div class="hold${hold ? " on" : ""}"><span>${hold || (Number.isFinite(ch2.nowCost) ? `Lad nu i stedet: ca. <b>${tn(ch2.nowCost)} kr</b>` : "Lad nu i stedet for at vente")}</span>${this.anywayBtn()}</div>` : ""}</div>`;
     }
     if (rows) h += `<div class="sl">Dine enheder</div>${rows}`;
     const tips = [];
@@ -13816,7 +14004,9 @@ var ThElectricityPriceCard = class extends HTMLElement {
     }
     if (!pts.length) return;
     const gb2 = parseFloat(getComputedStyle(pc2).getPropertyValue("--gb")) || 16;
-    const vmax = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p)), max = vmax * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05), W3 = 1e3, H4 = 100, base = 100;
+    const vmax0 = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p));
+    const lim = ch2?.limit && ch2.limit.price >= vmin - Math.max(0.3, (vmax0 - vmin) * 0.5) && ch2.limit.price <= vmax0 * 1.25 ? ch2.limit.price : null;
+    const vmax = vmax0, max = Math.max(vmax0, lim ?? -Infinity) * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05, lim != null ? lim - 0.08 : Infinity), W3 = 1e3, H4 = 100, base = 100;
     const X = (t) => (t - t0) / (t1 - t0) * W3, Y = (v) => 8 + (1 - (v - min) / (max - min)) * (H4 - 14);
     const inCh = (p) => ch2 && ch2.blocks.some((b) => b.t < p.e && b.e > p.t);
     const line = (arr2) => arr2.map((p, i) => `${i ? "L" : "M"}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join("");
@@ -13919,6 +14109,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
     }
     const nx2 = X(now) / W3 * 100, cp = all.find((p) => p.t <= now && p.e > now);
+    if (lim != null) {
+      const ly = Y(lim) / H4 * (pc2.clientHeight - gb2), lx2 = Math.max(0, Math.min(100, nx2));
+      ov += `<div class="limz" style="left:${lx2}%;height:${ly}px"></div><div class="lim" style="left:${lx2}%;top:${ly}px"></div><div class="liml" style="top:${ly}px">${ch2.limit.held ? "Venter over " : "Gr\xE6nse "}${tn(lim)} kr</div>`;
+    }
     if (cp) ov += `<div class="now" style="left:${nx2}%"></div><div class="nd" style="left:${nx2}%;top:${Y(cp.p) / H4 * (pc2.clientHeight - gb2)}px"></div>`;
     this.$("ov").innerHTML = ov;
     const tip = this.$("tip");
@@ -13928,7 +14122,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
         tip.style.opacity = 0;
         return;
       }
-      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? " \xB7 <em>bilen lader</em>" : ""}`;
+      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? " \xB7 <em>bilen lader</em>" : lim != null && p.p > lim && p.e > now ? " \xB7 over gr\xE6nsen" : ""}`;
       tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + "px";
       tip.style.top = Y(p.p) / H4 * (b.height - gb2) + "px";
       tip.style.opacity = 1;

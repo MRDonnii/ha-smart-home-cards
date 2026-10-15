@@ -8,7 +8,7 @@
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 
-const VERSION = "0.5.3";
+const VERSION = "0.5.4";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -294,6 +294,11 @@ class HATeslaGlanceCard extends HTMLElement {
       @keyframes nowPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ev) 70%,transparent)}80%,100%{box-shadow:0 0 0 9px transparent}}
       .flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;background:var(--good);box-shadow:0 0 8px var(--good)}
       .tticks{position:absolute;left:0;right:0;bottom:-2px;height:12px}.tt{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap}.tt[style*="left:0"]{transform:none}.tt.end{transform:translateX(-100%);color:var(--good);font-weight:700}
+      .tx{position:absolute;top:2px;bottom:2px;border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 32%,transparent) 0 3px,transparent 3px 6px)}
+      .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
+      @container (max-width:640px){.pnums.has-btn .save{display:none}}
+      .pnums.has-btn .save{margin-left:0}.pnow{margin-left:auto;flex:none;white-space:nowrap;font:inherit;font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
+      .pnow.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
       .pnums{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:11px;color:var(--muted)}.pnums b{font-size:14px;font-weight:800;color:var(--primary-text-color)}
       .pnums .save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 7px;border-radius:999px;color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 40%,transparent),0 0 14px -5px var(--good)}.pnums .save b{color:var(--good)}.pnums .save ha-icon{--mdc-icon-size:15px}
       .cg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;height:100%}
@@ -350,7 +355,7 @@ class HATeslaGlanceCard extends HTMLElement {
       <div class="dots" hidden><i data-v="plan" title="Ladeplan"></i><i data-v="car" title="Bilen"></i></div>
     </ha-card>`;
     const hc = this.shadowRoot.querySelector("ha-card");
-    hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } this._tap(); });
+    hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } if (e.target.closest("[data-pnow]")) { e.stopPropagation(); this._chargeAnyway(); return; } this._tap(); });
     // Switching between the overlay and the car (user, 2026-10-13: "swipe virker ikke så godt på PC og mobilen får hele siden
     // til at følge med"): a sideways drag on touch – the page keeps its vertical scrolling – and any drag with a mouse; the
     // card follows the finger/pointer and snaps over past 40 px. The wheel/touchpad adds up its deltas.
@@ -403,35 +408,61 @@ class HATeslaGlanceCard extends HTMLElement {
     const plan = this._hass.states[c.plan]; const now = Date.now();
     const blocks = (plan?.attributes?.blocks || []).map((b) => ({ t: Date.parse(b.start), e: Date.parse(b.end), kwh: b.kwh, cost: b.cost })).filter((b) => b.e > now);
     const mode = st(c.mode) || plan?.attributes?.mode; const cm = st(c.charger_mode);
-    const plugged = st(c.cable) === "on" && (!c.tracker || st(c.tracker) === "home") && (!c.charger_mode || (cm && !["disconnected", "unavailable", "unknown"].includes(cm)));
-    if (!(plugged && mode && !["off", "manual"].includes(mode) && blocks.length)) return null;
+    // An unknown cable sensor (Tesla Fleet after a restart) leaves it to the card's own plug sensor (Claude AI, 2026-10-15).
+    const cs = st(c.cable); const plugAlt = ["on", "true", "connected"].includes(String(this._val(this._config.plugged) || "").toLowerCase());
+    const cable = cs === "on" || (cs !== "off" && plugAlt);
+    const plugged = cable && (!c.tracker || st(c.tracker) === "home") && (!c.charger_mode || (cm && !["disconnected", "unavailable", "unknown"].includes(cm)));
+    // EV Ledger's price limit on Cheapest: what it holds back above the limit, and the prices to show where (2026-10-15).
+    const pa = plan?.attributes || {}; const lp = pa.price_limit == null ? NaN : Number(pa.price_limit); const above = Number(pa.above_limit_kwh) || 0;
+    const limit = mode === "smart" && Number.isFinite(lp) ? { price: lp, above, reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: Number(pa.price_limit_floor),
+      slots: (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)), minutes: Number(pa.slot_minutes) || 15 } : null;
+    if (!(plugged && mode && !["off", "manual"].includes(mode) && (blocks.length || (limit && above >= 0.5)))) return null;
     const n = (id) => { const v = Number.parseFloat(st(id)); return Number.isFinite(v) ? v : NaN; };
     const kwh = Number.isFinite(n(c.energy)) ? n(c.energy) : blocks.reduce((a, b) => a + (b.kwh || 0), 0);
     const cost = Number.isFinite(n(c.cost)) ? n(c.cost) : blocks.reduce((a, b) => a + (b.cost || 0), 0);
     const alt = this._hass.states[c.cost]?.attributes?.alternatives || {}; const nowCost = Number(alt.now?.cost);
-    return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) ? nowCost - cost : NaN, soc: n(c.soc), target: n(c.target), deadline: plan?.attributes?.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
+    const soc = Number.isFinite(n(c.soc)) ? n(c.soc) : this._num(this._config.battery) ?? NaN;
+    return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit,
+      canNow: !!c.mode && mode !== "now", soc, target: n(c.target), deadline: pa.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
     const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
     const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const now = Date.now(); const soc = Number.isFinite(p.soc) ? p.soc : 0; const tg = Number.isFinite(p.target) ? p.target : 100;
-    const first = p.blocks[0]; const avg = p.kwh ? p.cost / p.kwh : NaN; const running = first.t <= now;
-    const dlT = p.deadline ? Date.parse(p.deadline) : Math.max(...p.blocks.map((b) => b.e));
+    const first = p.blocks[0]; const avg = p.kwh ? p.cost / p.kwh : NaN; const running = !!first && first.t <= now;
+    const dlT = p.deadline ? Date.parse(p.deadline) : Math.max(now + 3600000, ...p.blocks.map((b) => b.e));
     const end = Math.max(dlT, ...p.blocks.map((b) => b.e)); const span = Math.max(end - now, 3600000);
     const X = (t) => Math.max(0, Math.min(100, ((t - now) / span) * 100));
-    const left = Math.max(0, first.t - now); const lh = Math.floor(left / 3600000); const lm = Math.round((left % 3600000) / 60000);
-    const until = running ? "lader nu" : lh ? `om ${lh} t ${lm} min` : `om ${lm} min`;
-    const blocks = p.blocks.map((b) => `<i class="tb" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const left = first ? Math.max(0, first.t - now) : 0; const lh = Math.floor(left / 3600000); const lm = Math.round((left % 3600000) / 60000);
+    const until = !first ? "over grænsen" : running ? "lader nu" : lh ? `om ${lh} t ${lm} min` : `om ${lm} min`;
+    // The hours the price limit skips: faint stripes behind the charging blocks (Claude AI, 2026-10-15).
+    const L = p.limit; const held = !!L && L.above >= 0.5; const runs = [];
+    if (held) for (const x of L.slots) { const xe = x.t + L.minutes * 60000; if (xe <= now || x.t >= end || x.p <= L.price) continue; const last = runs[runs.length - 1]; if (last && x.t - last.e < 60000) last.e = xe; else runs.push({ t: Math.max(x.t, now), e: xe }); }
+    const over = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
+    const blocks = over + p.blocks.map((b) => `<i class="tb" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
     const ticks = []; const d0 = new Date(now); d0.setMinutes(0, 0, 0);
     for (let t = +d0 + 3600000; t < end; t += 3600000) { const h = new Date(t).getHours(); const xx = X(t); if (h % 6 === 0 && xx > 7 && (!p.deadline || Math.abs(xx - X(dlT)) > 16)) ticks.push(`<span class="tt" style="left:${X(t).toFixed(2)}%">${String(h).padStart(2, "0")}</span>`); }
     const dl = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
     // The icon is a ring: battery now (solid) to the target (faint), the plan's clock inside (Claude AI, 2026-10-13).
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
-        <div class="pt"><b>Ladeplan · ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} · ${Math.round(soc)} % → ${Math.round(tg)} %</span></div>
-        <div class="pstart"><small>${running ? "I gang" : "Starter"}</small><b>${running ? "nu" : hm(first.t)}</b><em>${esc(until)}</em></div></div>
+        <div class="pt"><b>Ladeplan · ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} · ${Math.round(soc)} % → ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % · mål ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
+        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc(until)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl)}</span>` : ""}</div></div>
-      <div class="pnums"><span><b>${this._fmt(avg, 2)}</b> kr/kWh</span><span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>${Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
+      <div class="pnums${p.canNow ? " has-btn" : ""}">${first && !held ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${held ? `<span class="held"><b>${this._fmt(L.above, 1)}</b> kWh venter · over ${this._fmt(L.price, 2)} kr</span>` : ""}${!held && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${this._anywayHtml(p)}</div>`;
+  }
+  // "Lad alligevel" (user, 2026-10-15): Charge now past the plan and the price limit; the first tap arms, the second sends.
+  _anywayHtml(p) {
+    if (!p.canNow) return "";
+    const armed = this._armAt && Date.now() - this._armAt < 4000;
+    return `<button type="button" class="pnow${armed ? " armed" : ""}" data-pnow title="Lad nu i stedet for at vente${Number.isFinite(p.nowCost) && p.nowCost > 0 ? `: ca. ${this._fmt(p.nowCost, 2)} kr` : ""}">${armed ? "Tryk igen" : "Lad alligevel"}</button>`;
+  }
+  _chargeAnyway() {
+    const id = this._config.charge_plan?.mode; if (!id || !this._hass) return;
+    clearTimeout(this._armT);
+    if (!(this._armAt && Date.now() - this._armAt < 4000)) { this._armAt = Date.now(); this._armT = setTimeout(() => { this._armAt = 0; this._update(); }, 4000); this._update(); return; }
+    this._armAt = 0; this._update();
+    this._hass.callService("select", "select_option", { entity_id: id, option: "now" });
   }
   // Charging, built like the plan (user: "ikke vild med lader siden … heller ikke på mobilen"): ring + title + finish time,
   // a live bar towards the target, the numbers with the savings badge to the right.

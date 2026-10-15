@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.9.0';
+const TEP_VER = '1.10.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -83,6 +83,15 @@ const TEP_CSS = `
 .ev{display:none;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:15px;
   background:linear-gradient(100deg,color-mix(in srgb,var(--ev) 16%,transparent),color-mix(in srgb,var(--ev) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 32%,transparent);animation:tin .7s cubic-bezier(.16,1,.3,1) both}
 .ev.on{display:grid}
+.ev .hold{grid-column:1/-1;margin-top:-4px}
+.hold{display:flex;align-items:center;gap:10px;min-width:0;font-size:11px;color:var(--mut)}.hold>span{flex:1;min-width:0}.hold b{color:var(--ink);font-weight:700}
+.hold.on>span{color:color-mix(in srgb,var(--warn) 78%,var(--ink))}.hold.on b{color:var(--warn)}
+.any{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:99px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
+.any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
+.adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
+.pc .lim{position:absolute;right:0;border-top:1.5px dashed color-mix(in srgb,var(--warn) 85%,transparent);pointer-events:none}
+.pc .limz{position:absolute;right:0;top:0;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 3%,transparent),color-mix(in srgb,var(--warn) 11%,transparent))}
+.pc .liml{position:absolute;right:4px;transform:translateY(-118%);padding:1px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,rgba(10,12,18,.6));white-space:nowrap;pointer-events:none}
 .ev .car{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,transparent)}
 .ev .car em{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ev);color:#141018;animation:pz 2s ease-in-out infinite}
 @keyframes pz{50%{transform:scale(1.15);box-shadow:0 0 14px var(--ev)}}
@@ -203,8 +212,9 @@ class ThElectricityPriceCard extends HTMLElement {
     this.closeAdvice();
     const chip = r.getElementById('chip'); chip.classList.toggle('nb', this.cfg.advice === false); chip.tabIndex = this.cfg.advice === false ? -1 : 0;
     chip.onclick = () => (this._adv ? this.closeAdvice() : this.openAdvice());
+    r.querySelector('ha-card').addEventListener('click', e => { if (e.target.closest?.('[data-anyway]')) { e.stopPropagation(); this.chargeAnyway(); } });
     const adv = r.getElementById('adv');
-    adv.addEventListener('click', e => { const b = adv.getBoundingClientRect(); if (e.target.closest('.x') || e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) this.closeAdvice(); });
+    adv.addEventListener('click', e => { if (e.target.closest?.('[data-anyway]') || (e.detail === 0 && !e.target.closest?.('.x'))) return; const b = adv.getBoundingClientRect(); if (e.target.closest('.x') || e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) this.closeAdvice(); });
     adv.addEventListener('cancel', e => { e.preventDefault(); this.closeAdvice(); });
     try { this._ps = localStorage.getItem('th-price-style') || this.cfg.style || 'bar'; this._pm = localStorage.getItem('th-price-range') || '24'; } catch (e) { this._ps = 'bar'; this._pm = '24'; }
     const sync = () => { r.querySelectorAll('#st button').forEach(b => b.classList.toggle('on', b.dataset.s === this._ps)); r.querySelectorAll('#md button').forEach(b => b.classList.toggle('on', b.dataset.m === this._pm)); };
@@ -226,13 +236,30 @@ class ThElectricityPriceCard extends HTMLElement {
     const c = this.cfg.charge; if (!c || !this._h) return null; const st = id => id ? this._h.states[id]?.state : undefined;
     const plan = this._h.states[c.plan]; const blocks = (plan?.attributes?.blocks || []).map(b => ({ t: new Date(b.start).getTime(), e: new Date(b.end).getTime(), kwh: b.kwh, cost: b.cost, est: b.estimated })).filter(b => b.e > Date.now());
     const mode = st(c.mode) || plan?.attributes?.mode, cm = st(c.charger_mode);
-    const plugged = st(c.cable) === 'on' && (!c.tracker || st(c.tracker) === 'home') && (!c.charger_mode || (cm && !['disconnected', 'unavailable', 'unknown'].includes(cm)));
-    const active = mode && !['off', 'manual'].includes(mode) && blocks.length > 0;
+    // Et ukendt kabel-sensor (Tesla Fleet efter genstart) overlader det til laderen (Claude AI, 2026-10-15)
+    const cmOk = !!cm && !['disconnected', 'unavailable', 'unknown'].includes(cm), cs = st(c.cable);
+    const plugged = (cs === 'on' || (cs !== 'off' && !!c.charger_mode && cmOk)) && (!c.tracker || st(c.tracker) === 'home') && (!c.charger_mode || cmOk);
+    // EV Ledgers prisgrænse i Billigst: hvad den holder tilbage over grænsen (Claude AI, 2026-10-15; bruger: "illustrer hvad der sker med ladning ud fra disse settings")
+    const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
+    const limit = mode === 'smart' && Number.isFinite(lp) ? { price: lp, above, held: above >= .5, reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor) } : null;
+    const active = mode && !['off', 'manual'].includes(mode) && (blocks.length > 0 || !!limit?.held);
     if (!(c.force || (plugged && active))) return null;
     const kwh = this.n(c.energy), cost = this.n(c.cost), alt = this.A(c.cost, 'alternatives') || {}, now = alt.now?.cost;
     return { blocks, mode, kwh: Number.isFinite(kwh) ? kwh : blocks.reduce((a, b) => a + (b.kwh || 0), 0), cost: Number.isFinite(cost) ? cost : blocks.reduce((a, b) => a + (b.cost || 0), 0),
-      save: Number.isFinite(now) && Number.isFinite(cost) ? now - cost : NaN, soc: this.n(c.soc), target: this.n(c.target), deadline: plan?.attributes?.deadline, charging: st(c.charging) === 'on' || cm === 'charging', name: c.name || 'Bilen' };
+      save: Number.isFinite(now) && Number.isFinite(cost) && blocks.length && !limit?.held ? now - cost : NaN, nowCost: Number.isFinite(now) ? now : NaN, limit, canNow: !!c.mode && mode !== 'now',
+      soc: this.n(c.soc), target: this.n(c.target), deadline: pa.deadline, charging: st(c.charging) === 'on' || cm === 'charging', name: c.name || 'Bilen' };
   }
+  armed() { return !!this._armAt && Date.now() - this._armAt < 4000; }
+  // "Lad alligevel" (bruger, 2026-10-15): Lad nu forbi planen og prisgrænsen; første tryk gør klar, andet sender
+  chargeAnyway() {
+    const id = this.cfg.charge?.mode; if (!id || !this._h) return; clearTimeout(this._armT);
+    if (!this.armed()) { this._armAt = Date.now(); this._armT = setTimeout(() => { this._armAt = 0; this.paintArm(); }, 4000); this.paintArm(); return; }
+    this._armAt = 0; this.paintArm(); this._h.callService('select', 'select_option', { entity_id: id, option: 'now' });
+  }
+  paintArm() { const a = this.armed(); this.shadowRoot?.querySelectorAll('[data-anyway]').forEach(b => { b.classList.toggle('armed', a); b.textContent = a ? 'Tryk igen for at lade' : 'Lad alligevel'; }); }
+  holdText(ch) { const L = ch.limit; if (!L?.held) return '';
+    return `Venter med <b>${tn(L.above, 1)} kWh</b> over ${tn(L.price)} kr/kWh${ch.blocks.length && Number.isFinite(L.reach) ? ` · lader til ca. ${Math.round(L.reach)} %` : ''}${Number.isFinite(L.floor) && L.floor > 0 ? ` · under ${Math.round(L.floor)} % lader den altid` : ''}`; }
+  anywayBtn() { const a = this.armed(); return `<button type="button" class="any${a ? ' armed' : ''}" data-anyway>${a ? 'Tryk igen for at lade' : 'Lad alligevel'}</button>`; }
   update() {
     if (this._mode !== 'new' || !this._h || !this.$('pc')) return;
     const C = this.cfg, cur = this.n(C.current), mean = this.n(C.mean);
@@ -249,15 +276,16 @@ class ThElectricityPriceCard extends HTMLElement {
       this.$('cbar').innerHTML = parts.map(([n, v, c]) => `<b title="${n} ${tn(v)} kr" style="width:${v / sum * 100}%;background:${c}"></b>`).join('');
       this.$('clg').innerHTML = parts.map(([n, v, c]) => `<span><i style="background:${c}"></i>${n} ${tn(v)}</span>`).join(''); }
     // ladeplan
-    const ch = this.charge(), ev = this.$('ev'), ek = ch ? JSON.stringify([ch.kwh, ch.cost, ch.blocks.length, ch.soc, ch.target, ch.charging, ch.mode]) : '';
+    const ch = this.charge(), ev = this.$('ev'), ek = ch ? JSON.stringify([ch.kwh, ch.cost, ch.blocks.length, ch.soc, ch.target, ch.charging, ch.mode, ch.limit, ch.nowCost]) : '';
     if (ek !== this._ek) { this._ek = ek; this._pk = null; ev.classList.toggle('on', !!ch && this.cfg.charge_panel !== false); /* charge_panel: false – planen vises på Tesla-kortet i stedet (Claude AI, 2026-10-13) */
-      if (ch) { const avg = ch.kwh ? ch.cost / ch.kwh : NaN, st = ch.blocks[0], soc = Number.isFinite(ch.soc) ? ch.soc : 0, tg = Number.isFinite(ch.target) ? ch.target : 100;
+      if (ch) { const avg = ch.kwh ? ch.cost / ch.kwh : NaN, st = ch.blocks[0], soc = Number.isFinite(ch.soc) ? ch.soc : 0, tg = Number.isFinite(ch.target) ? ch.target : 100, hold = this.holdText(ch);
         const MODE = { smart: 'Smart', fixed: 'Fast tid', now: 'Lad nu', price_cap: 'Prisloft' };
         ev.innerHTML = `<div class="car">${ti('car', 22)}<em>${ti('bolt', 11, 2.2)}</em></div>
           <div style="min-width:0"><div class="t">${ch.charging ? 'Lader nu' : 'Ladeplan aktiv'} <span>· ${this.esc(ch.name)} · ${MODE[ch.mode] || ch.mode}</span></div>
             <div class="soc"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
-            <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % → ${Math.round(tg)} %${ch.deadline ? ` · klar ${new Date(ch.deadline).toLocaleDateString('da-DK', { weekday: 'short' })} ${tt(new Date(ch.deadline))}` : ''}</div></div>
-          <div class="m"><div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch.kwh, 1)} kWh<b>${tn(ch.cost)} kr</b></div><div>${st.t <= Date.now() ? 'I gang' : 'Start'}<b>${st.t <= Date.now() ? 'nu' : tt(new Date(st.t))}</b></div>${Number.isFinite(ch.save) && ch.save > .5 ? `<div>Sparer<b class="g">${tn(ch.save)} kr</b></div>` : ''}</div>`; } }
+            <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % → ${ch.limit?.held && ch.blocks.length && Number.isFinite(ch.limit.reach) ? `${Math.round(ch.limit.reach)} % · mål ${Math.round(tg)} %` : `${Math.round(tg)} %`}${ch.deadline ? ` · klar ${new Date(ch.deadline).toLocaleDateString('da-DK', { weekday: 'short' })} ${tt(new Date(ch.deadline))}` : ''}</div></div>
+          <div class="m">${st ? `<div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch.kwh, 1)} kWh<b>${tn(ch.cost)} kr</b></div><div>${st.t <= Date.now() ? 'I gang' : 'Start'}<b>${st.t <= Date.now() ? 'nu' : tt(new Date(st.t))}</b></div>` : `<div>Venter<b>over ${tn(ch.limit.price)} kr</b></div>`}${Number.isFinite(ch.save) && ch.save > .5 ? `<div>Sparer<b class="g">${tn(ch.save)} kr</b></div>` : ''}</div>
+          ${ch.canNow && !ch.charging ? `<div class="hold${hold ? ' on' : ''}"><span>${hold || (Number.isFinite(ch.nowCost) ? `Lad nu i stedet: ca. <b>${tn(ch.nowCost)} kr</b>` : 'Lad nu i stedet for at vente')}</span>${this.anywayBtn()}</div>` : ''}`; } }
     this.chart(ch);
     if (this._adv) this.renderAdvice(ch);
   }
@@ -332,8 +360,9 @@ class ThElectricityPriceCard extends HTMLElement {
       rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} · nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W(bst.s)}</b><small>${save > .05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? ' · prognose' : ''}</small></div></div>`
         : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>Kør nu</b><small>${tn(cNow)} kr</small></div></div>`;
     }
-    if (ch) { const first = ch.blocks[0], lastB = ch.blocks[ch.blocks.length - 1];
-      rows += `<div class="ar" style="--c:var(--ev)"><div class="ai">${ti('car', 19)}</div><div class="at"><b>${this.esc(ch.name)}</b><small>${tn(ch.kwh, 1)} kWh · ${tn(ch.cost)} kr · ${tt(new Date(first.t))}–${tt(new Date(lastB.e))}</small></div><div class="av"><b>${ch.charging ? 'Lader nu' : 'Ladeplan'}</b><small>${Number.isFinite(ch.save) && ch.save > .5 ? `spar ${tn(ch.save)} kr` : 'følger billige timer'}</small></div></div>`; }
+    if (ch) { const first = ch.blocks[0], lastB = ch.blocks[ch.blocks.length - 1], hold = this.holdText(ch);
+      rows += `<div class="ar" style="--c:${hold && !first ? 'var(--warn)' : 'var(--ev)'}"><div class="ai">${ti('car', 19)}</div><div class="at"><b>${this.esc(ch.name)}</b><small>${first ? `${tn(ch.kwh, 1)} kWh · ${tn(ch.cost)} kr · ${tt(new Date(first.t))}–${tt(new Date(lastB.e))}` : `ingen kvarterer under ${tn(ch.limit.price)} kr`}</small></div><div class="av"><b>${ch.charging ? 'Lader nu' : first ? 'Ladeplan' : 'Venter'}</b><small>${Number.isFinite(ch.save) && ch.save > .5 ? `spar ${tn(ch.save)} kr` : first ? 'følger billige timer' : 'over prisgrænsen'}</small></div>
+        ${ch.canNow && !ch.charging ? `<div class="hold${hold ? ' on' : ''}"><span>${hold || (Number.isFinite(ch.nowCost) ? `Lad nu i stedet: ca. <b>${tn(ch.nowCost)} kr</b>` : 'Lad nu i stedet for at vente')}</span>${this.anywayBtn()}</div>` : ''}</div>`; }
     if (rows) h += `<div class="sl">Dine enheder</div>${rows}`;
     // huset
     const tips = [];
@@ -359,7 +388,10 @@ class ThElectricityPriceCard extends HTMLElement {
       pts = Object.values(hr).map(h => ({ t: h.t, e: h.e, p: h.s / h.n, f: h.f })).sort((a, b) => a.t - b.t); }
     if (!pts.length) return;
     const gb = parseFloat(getComputedStyle(pc).getPropertyValue('--gb')) || 16;
-    const vmax = Math.max(...pts.map(p => p.p)), vmin = Math.min(...pts.map(p => p.p)), max = vmax * 1.06, min = Math.min(vmin * .9, vmin - .05), W = 1000, H = 100, base = 100;
+    const vmax0 = Math.max(...pts.map(p => p.p)), vmin = Math.min(...pts.map(p => p.p));
+    // Prisgrænsen som linje (Claude AI, 2026-10-15): med i skalaen, når den ligger tæt nok på priserne til at sige noget
+    const lim = ch?.limit && ch.limit.price >= vmin - Math.max(.3, (vmax0 - vmin) * .5) && ch.limit.price <= vmax0 * 1.25 ? ch.limit.price : null;
+    const vmax = vmax0, max = Math.max(vmax0, lim ?? -Infinity) * 1.06, min = Math.min(vmin * .9, vmin - .05, lim != null ? lim - .08 : Infinity), W = 1000, H = 100, base = 100;
     const X = t => (t - t0) / (t1 - t0) * W, Y = v => 8 + (1 - (v - min) / (max - min)) * (H - 14);
     const inCh = p => ch && ch.blocks.some(b => b.t < p.e && b.e > p.t);
     const line = arr => arr.map((p, i) => `${i ? 'L' : 'M'}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join('');
@@ -411,11 +443,13 @@ class ThElectricityPriceCard extends HTMLElement {
       for (let i = 0; i + win <= fut.length; i++) { const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e }; }
       if (best && best.t < t1) { const l = X(best.t) / W * 100, r = X(best.e) / W * 100; ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`; } }
     const nx = X(now) / W * 100, cp = all.find(p => p.t <= now && p.e > now);
+    if (lim != null) { const ly = Y(lim) / H * (pc.clientHeight - gb), lx = Math.max(0, Math.min(100, nx));
+      ov += `<div class="limz" style="left:${lx}%;height:${ly}px"></div><div class="lim" style="left:${lx}%;top:${ly}px"></div><div class="liml" style="top:${ly}px">${ch.limit.held ? 'Venter over ' : 'Grænse '}${tn(lim)} kr</div>`; }
     if (cp) ov += `<div class="now" style="left:${nx}%"></div><div class="nd" style="left:${nx}%;top:${Y(cp.p) / H * (pc.clientHeight - gb)}px"></div>`;
     this.$('ov').innerHTML = ov;
     const tip = this.$('tip');
     pc.onpointermove = pc.onpointerdown = e => { const b = pc.getBoundingClientRect(), t = t0 + (e.clientX - b.left) / b.width * (t1 - t0), p = pts.find(q => q.t <= t && q.e > t); if (!p) { tip.style.opacity = 0; return; }
-      tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ' · <em>bilen lader</em>' : ''}`;
+      tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ' · <em>bilen lader</em>' : lim != null && p.p > lim && p.e > now ? ' · over grænsen' : ''}`;
       tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + 'px'; tip.style.top = (Y(p.p) / H * (b.height - gb)) + 'px'; tip.style.opacity = 1; };
     pc.onpointerleave = () => tip.style.opacity = 0;
     // dage
