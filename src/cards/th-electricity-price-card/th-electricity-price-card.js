@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.8.1';
+const TEP_VER = '1.9.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -110,12 +110,14 @@ const TEP_CSS = `
 .pc .chg span{position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,rgba(10,12,18,.6));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 40%,transparent);backdrop-filter:blur(4px);white-space:nowrap}
 .pc .tip{position:absolute;top:0;padding:7px 10px;border-radius:11px;background:var(--surface,rgba(14,16,24,.95));box-shadow:0 10px 30px -8px rgba(0,0,0,.6),inset 0 0 0 1px var(--hair);font-size:11px;color:var(--mut);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .15s;z-index:3}
 .pc .tip b{font-size:14px;color:var(--ink)}.pc .tip em{font-style:normal;color:var(--ev);font-weight:700}
-/* Anbefalinger: popup inde i kortet under prisbadget (bliver i shadow-roden, så tryk virker som på resten af kortet) */
-.adv{position:absolute;left:10px;right:10px;bottom:10px;z-index:6;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;isolation:isolate;
-  background:var(--popupBG,var(--card-background-color,#14161e));-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
-  box-shadow:0 18px 50px -12px rgba(0,0,0,.65),inset 0 0 0 1px var(--hair);animation:advin .22s cubic-bezier(.16,1,.3,1) both}
+/* Anbefalinger: modal <dialog> i browserens top-lag, centreret midt på skærmen (ligger over navbar og uden for kortets afklipning) */
+dialog.adv{position:fixed;inset:0;margin:auto;padding:0;border:0;width:min(540px,calc(100vw - 20px));height:fit-content;max-height:min(700px,calc(100vh - 36px));max-height:min(700px,calc(100dvh - 36px));
+  flex-direction:column;border-radius:20px;overflow:hidden;isolation:isolate;color:var(--ink);font:inherit;
+  background:var(--popupBG,var(--card-background-color,#14161e));box-shadow:0 30px 80px -16px rgba(0,0,0,.8),inset 0 0 0 1px var(--hair)}
+dialog.adv[open]{display:flex;animation:advin .22s cubic-bezier(.16,1,.3,1) both}
+dialog.adv::backdrop{background:rgba(4,8,14,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:advfade .22s ease both}
 .adv::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--surface,none);pointer-events:none}
-.adv[hidden]{display:none}@keyframes advin{from{opacity:0;transform:translateY(8px)}}
+@keyframes advin{from{opacity:0;transform:translateY(10px) scale(.97)}}@keyframes advfade{from{opacity:0}}
 .adv .ah{display:flex;align-items:center;gap:10px;padding:11px 10px 8px 14px;flex:none}.adv .ahl{flex:1;min-width:0}
 .adv .ah b{display:block;font-size:14px;font-weight:700}.adv .ah small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
 .adv .x{appearance:none;border:0;cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--mut);flex:none}
@@ -150,7 +152,7 @@ const TEP_CSS = `
 /* Dagsgennemsnittene kun på store skærme; på mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
 :host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
 .empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
-@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}.adv{left:8px;right:8px;bottom:8px}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}dialog.adv{width:calc(100vw - 20px)}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
   .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
@@ -197,11 +199,13 @@ class ThElectricityPriceCard extends HTMLElement {
       <div class="ev" id="ev"></div>
       <div class="pc" id="pc"><svg id="svg" preserveAspectRatio="none"></svg><div id="ov"></div><div class="tip" id="tip"></div></div>
       <div class="days" id="days"></div>
-      <div class="adv" id="adv" role="dialog" aria-label="Anbefalinger ud fra elprisen" hidden></div></ha-card>`;
+      <dialog class="adv" id="adv" aria-label="Anbefalinger ud fra elprisen"></dialog></ha-card>`;
     this.closeAdvice();
     const chip = r.getElementById('chip'); chip.classList.toggle('nb', this.cfg.advice === false); chip.tabIndex = this.cfg.advice === false ? -1 : 0;
     chip.onclick = () => (this._adv ? this.closeAdvice() : this.openAdvice());
-    r.getElementById('adv').addEventListener('click', e => { if (e.target.closest('.x')) this.closeAdvice(); });
+    const adv = r.getElementById('adv');
+    adv.addEventListener('click', e => { const b = adv.getBoundingClientRect(); if (e.target.closest('.x') || e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) this.closeAdvice(); });
+    adv.addEventListener('cancel', e => { e.preventDefault(); this.closeAdvice(); });
     try { this._ps = localStorage.getItem('th-price-style') || this.cfg.style || 'bar'; this._pm = localStorage.getItem('th-price-range') || '24'; } catch (e) { this._ps = 'bar'; this._pm = '24'; }
     const sync = () => { r.querySelectorAll('#st button').forEach(b => b.classList.toggle('on', b.dataset.s === this._ps)); r.querySelectorAll('#md button').forEach(b => b.classList.toggle('on', b.dataset.m === this._pm)); };
     sync();
@@ -268,17 +272,14 @@ class ThElectricityPriceCard extends HTMLElement {
   // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
   openAdvice() {
     const adv = this.$('adv'), chip = this.$('chip'); if (!adv || this.cfg.advice === false || this._mode !== 'new') return;
-    this._adv = true; adv.hidden = false; chip.classList.add('open'); chip.setAttribute('aria-expanded', 'true');
-    this._od = e => { const p = e.composedPath(); if (!p.includes(adv) && !p.includes(chip)) this.closeAdvice(); };
-    this._ok = e => { if (e.key === 'Escape') this.closeAdvice(); };
-    document.addEventListener('pointerdown', this._od, true); document.addEventListener('keydown', this._ok);
+    this._adv = true; chip.classList.add('open'); chip.setAttribute('aria-expanded', 'true');
     adv._v = null; this.renderAdvice();
+    if (!adv.open) { if (adv.showModal) adv.showModal(); else adv.setAttribute('open', ''); }
   }
   closeAdvice() {
     this._adv = false;
-    if (this._od) { document.removeEventListener('pointerdown', this._od, true); document.removeEventListener('keydown', this._ok); this._od = this._ok = null; }
     const adv = this.shadowRoot?.getElementById('adv'), chip = this.shadowRoot?.getElementById('chip');
-    if (adv) { adv.hidden = true; adv._v = null; }
+    if (adv) { if (adv.open) { if (adv.close) adv.close(); else adv.removeAttribute('open'); } adv._v = null; }
     if (chip) { chip.classList.remove('open'); chip.setAttribute('aria-expanded', 'false'); }
   }
   // Gennemsnitspris over [s, s+dur], vægtet efter hvor meget af kørslen der ligger i hver prisperiode; null når priserne ikke dækker hele kørslen
@@ -302,7 +303,6 @@ class ThElectricityPriceCard extends HTMLElement {
     const C = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch = chIn === undefined ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
     const cur = this.n(C.current), mean = this.n(C.mean), rel = mean ? cur / mean : 1, col = rel < .9 ? 'var(--good)' : rel > 1.1 ? 'var(--bad)' : 'var(--warn)';
     const W = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct = (v) => { const r = mean ? Math.round((v / mean - 1) * 100) : 0; return `${r >= 0 ? '+' : '−'}${Math.abs(r)} %`; };
-    const pt = this.shadowRoot.querySelector('.pt'); adv.style.top = `${pt.offsetTop + pt.offsetHeight + 8}px`;
     const frame = (inner, sub) => `<div class="ah"><div class="ahl"><b>Hvornår er det smart?</b><small>${sub}</small></div><button type="button" class="x" aria-label="Luk">${ti('x', 14, 2)}</button></div><div class="ab">${inner}</div>`;
     const put = (h) => { const ab = adv.querySelector('.ab'), st = ab ? ab.scrollTop : 0; this.set('adv', h); if (st) adv.querySelector('.ab').scrollTop = st; };
     if (!Number.isFinite(cur) || !all.some(p => p.e > now)) { put(frame('<div class="af" style="padding:8px 4px 4px">Ingen prisdata endnu – anbefalingerne kommer, så snart Strømligning har sendt priserne.</div>', 'Venter på priser')); return; }
