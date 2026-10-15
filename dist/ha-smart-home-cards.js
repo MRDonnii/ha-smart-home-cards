@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.161 */
+/* MRDonnii Smart Home Cards v0.5.162 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2809,6 +2809,7 @@ var TTD_SC_ROLES = {
   price_limit_wait: "switch._wait_above_the_price_limit",
   smart_max_price: "number._cheapest_max_price",
   smart_floor_soc: "number._always_charge_to",
+  ask_min_saving: "number._ask_when_waiting_saves_at_least",
   price_resolution: "select._price_resolution",
   // The smarter choices (EV Ledger), each on or off.
   wait_cheaper_day: "switch._wait_for_a_cheaper_day",
@@ -3366,7 +3367,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="ctl rb-open" data-rbopen data-r="rbOpen" aria-haspopup="dialog" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span class="rb-open-t"><span>Klar senest</span><small data-r="rbSrc"></small></span><b data-r="rbVal">${TTD_DASH}</b>${ttdIcon("mdi:chevron-right", "rb-chev")}</button>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>\u2013</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
-    <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Prisgr\xE6nse</span></button><span>maks.</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>altid op til</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
+    <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Sp\xF8rg f\xF8r dyr ladning</span></button><span data-r="scLimitPre">spar mindst</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>behold</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
     <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
   </div>
@@ -5103,7 +5104,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const minutes = Number(plan.slot_minutes) || 15;
     const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until2);
     const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
-    const limitOn = mode === "smart" && this._sc("smart_price_limit")?.state === "on";
+    const limitOn = mode === "smart" && this._sc("smart_price_limit")?.state === "on" && (plan.limit_ask == null || plan.limit_ask === true || this._sc("price_limit_wait")?.state === "on");
     const limitP = limitOn && plan.price_limit != null && Number.isFinite(Number(plan.price_limit)) ? Number(plan.price_limit) : null;
     const hOf = (p) => 0.22 + 0.78 * (hi > lo ? (p - lo) / (hi - lo) : 0.5);
     const chart = slots.map((x) => {
@@ -5200,32 +5201,38 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       // EV Ledger's price limit on Cheapest: own set points, adjustable here.
       limit: mode === "smart" && this._sc("smart_price_limit") && this._sc("smart_price_limit").state !== "unavailable" ? (() => {
         const sw = this._sc("smart_price_limit");
-        const priceObj = this._sc("smart_max_price");
+        const savingObj = this._sc("ask_min_saving");
+        const priceObj = savingObj ? null : this._sc("smart_max_price");
         const on = sw.state === "on";
         const a = this._sc("next_charge_start")?.attributes || {};
         const above = Number(a.above_limit_kwh) || 0;
         const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
         const waitObj = this._sc("price_limit_wait");
         const waiting2 = waitObj?.state === "on";
-        const info = !on ? "" : above < 0.5 ? "Alt under gr\xE6nsen" : waiting2 ? "Venter med resten" : `${f.number(above, 1)} kWh over gr\xE6nsen`;
+        const relevant = on && above >= 0.5 && (a.limit_ask == null || a.limit_ask === true || waiting2);
+        const saved = Number(a.limit_saving);
+        const info = !on ? "" : waiting2 && above >= 0.5 ? "Venter med resten" : relevant ? Number.isFinite(saved) ? `Spar ca. ${ttdJoin(f.number(saved, 0), costUnit)} ved at vente` : `${f.number(above, 1)} kWh billigere senere` : "Intet at spare ved at vente";
         let choice = null;
-        if (on && above >= 0.5 && statusKey !== "disconnected" && waitObj && waitObj.state !== "unavailable") {
-          const max = ttdHasValue(priceObj) ? `${f.number(ttdToNumber(priceObj.state), 2)} ${ttdUnit(priceObj.attributes?.unit_of_measurement ?? "kr/kWh")}` : "gr\xE6nsen";
+        if (relevant && statusKey !== "disconnected" && waitObj && waitObj.state !== "unavailable") {
           const later = (Array.isArray(a.limit_cheaper) ? a.limit_cheaper : []).map((w) => ({ ...w, at: ttdToDate(w.start) })).filter((w) => w.at);
           const best = later.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
           const overCost = Number(a.above_limit_cost);
-          const windows = later.map((w) => `${w.kind === "day" ? "Dag" : "Nat"} ${f.dayTime(w.at)}: ca. ${f.number(Number(w.price), 2)} kr/kWh${w.estimated ? " (sk\xF8n)" : ""} \xB7 spar ca. ${ttdJoin(f.number(Number(w.saving), 0), costUnit)}`);
+          const use = Number(a.daily_use_kwh);
+          const drive = Number.isFinite(use) && use > 0 ? `I k\xF8rer ca. ${f.number(use, 1)} kWh om dagen` : "";
+          const windows = later.map((w) => `${w.kind === "day" ? "Dag" : "Nat"} ${f.dayTime(w.at)}: ca. ${f.number(Number(w.price), 2)} kr/kWh${w.estimated ? " (prognose)" : ""} \xB7 spar ca. ${ttdJoin(f.number(Number(w.saving), 0), costUnit)}`);
           choice = {
             wait: waiting2,
-            title: waiting2 ? `Venter med ${f.number(above, 1)} kWh` : `${f.number(above, 1)} kWh koster over ${max}`,
-            detail: waiting2 ? [reach != null ? `Lader til ca. ${f.number(reach, 0)} % under ${max}` : `Lader ikke over ${max}`, best ? `resten ${f.dayTime(best.at)}` : "resten i n\xE6ste billige periode"].join(" \xB7 ") : [Number.isFinite(overCost) && overCost > 0 ? `ca. ${ttdJoin(f.number(overCost, 2), costUnit)}` : "", reach != null ? `under gr\xE6nsen n\xE5r den ca. ${f.number(reach, 0)} %` : ""].filter(Boolean).join(" \xB7 "),
+            title: waiting2 ? `Venter med ${f.number(above, 1)} kWh` : `${f.number(above, 1)} kWh kan lades billigere senere`,
+            detail: waiting2 ? [reach != null ? `Lader til ca. ${f.number(reach, 0)} % i nat` : "Lader ikke i nat", best ? `resten ${f.dayTime(best.at)}` : "resten i n\xE6ste billige periode", drive].filter(Boolean).join(" \xB7 ") : [Number.isFinite(overCost) && overCost > 0 ? `ca. ${ttdJoin(f.number(overCost, 2), costUnit)} i nat` : "", reach != null ? `venter du, lader den til ca. ${f.number(reach, 0)} % i nat` : "", drive].filter(Boolean).join(" \xB7 "),
             windows
           };
         }
+        const valueObj = savingObj || priceObj;
         return {
           on,
-          value: ttdHasValue(priceObj) ? String(ttdToNumber(priceObj.state)) : "",
-          unit: ttdUnit(priceObj?.attributes?.unit_of_measurement ?? ""),
+          saving: !!savingObj,
+          value: ttdHasValue(valueObj) ? String(ttdToNumber(valueObj.state)) : "",
+          unit: ttdUnit(valueObj?.attributes?.unit_of_measurement ?? ""),
           floor: this._scNum("smart_floor_soc"),
           info,
           choice
@@ -6030,7 +6037,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H4}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H4 - 4));
         return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H4 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
-      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H4}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${(ly / H4 * 100).toFixed(1)}%">Gr\xE6nse ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
+      }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H4}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${(ly / H4 * 100).toFixed(1)}%">Senere ca. ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
     if (r.scTrack) r.scTrack.hidden = !!sc.chart.length;
@@ -6104,6 +6111,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet("scLimitChip", "aria-pressed", String(sc.limit.on));
       if (active !== r.scLimitInput && r.scLimitInput.value !== sc.limit.value) r.scLimitInput.value = sc.limit.value;
       this._t("scLimitUnit", sc.limit.unit);
+      this._t("scLimitPre", sc.limit.saving ? "spar mindst" : "maks.");
+      if (r.scLimitInput) {
+        r.scLimitInput.step = sc.limit.saving ? "1" : "0.05";
+        r.scLimitInput.setAttribute("aria-label", sc.limit.saving ? "Sp\xF8rg n\xE5r det sparer mindst" : "Maks. pris i Billigst");
+      }
       const floor = sc.limit.floor == null ? "" : String(sc.limit.floor);
       if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
       this._t("scLimitInfo", sc.limit.info);
@@ -6672,7 +6684,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     else if (el === r.scQuietUntil && el.value) this._scCall("quiet_until", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
-    else if (el === r.scLimitInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("smart_max_price", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scLimitInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall(this._sc("ask_min_saving") ? "ask_min_saving" : "smart_max_price", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scFloorInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("smart_floor_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });
     else if (el === r.scDep && el.value) {
@@ -6908,7 +6920,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.6.0";
+var VERSION5 = "0.7.0";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -7421,6 +7433,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
       wait: ws?.state === "on",
       canWait: !!ws && ws.state !== "unavailable",
       overCost: Number(pa.above_limit_cost),
+      ask: pa.limit_ask == null ? true : pa.limit_ask === true,
+      saving: Number(pa.limit_saving),
       cheaper: (Array.isArray(pa.limit_cheaper) ? pa.limit_cheaper : []).map((w) => ({ ...w, t: Date.parse(w.start) })).filter((w) => Number.isFinite(w.t)),
       slots: (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)),
       minutes: Number(pa.slot_minutes) || 15
@@ -7470,7 +7484,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const lm = Math.round(left % 36e5 / 6e4);
     const until2 = !first ? "over gr\xE6nsen" : running ? "lader nu" : lh2 ? `om ${lh2} t ${lm} min` : `om ${lm} min`;
     const L3 = p.limit;
-    const over = !!L3 && L3.above >= 0.5;
+    const over = !!L3 && L3.above >= 0.5 && (L3.ask || L3.wait);
     const held = over && L3.wait;
     const runs = [];
     if (held) for (const x of L3.slots) {
@@ -7499,8 +7513,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
   }
   _limitText(L3, held) {
     const best = L3.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
-    if (held) return `<b>${this._fmt(L3.above, 1)}</b> kWh venter \xB7 over ${this._fmt(L3.price, 2)} kr`;
-    return `<b>${this._fmt(L3.above, 1)}</b> kWh over ${this._fmt(L3.price, 2)} kr${best ? ` \xB7 vent og spar ca. ${this._fmt(Number(best.saving), 0)} kr` : ""}`;
+    const when = (t) => `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+    if (held) return `<b>${this._fmt(L3.above, 1)}</b> kWh venter${best ? ` \xB7 resten ${when(best.t)}` : ""}`;
+    const save = Number.isFinite(L3.saving) ? L3.saving : best ? Number(best.saving) : NaN;
+    return `<b>${this._fmt(L3.above, 1)}</b> kWh billigere senere${Number.isFinite(save) ? ` \xB7 spar ca. ${this._fmt(save, 0)} kr` : ""}`;
   }
   // The answer to EV Ledger's price question (user, 2026-10-15): wait with the rest, or charge to the target. First tap
   // arms, the second sends.
@@ -13506,7 +13522,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.12.2";
+var TEP_VER = "1.13.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13842,13 +13858,16 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const plugged = (cs === "on" || cs !== "off" && !!c2.charger_mode && cmOk) && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cmOk);
     const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
     const ws = this._h.states[this.waitId()];
+    const ask = pa.limit_ask == null ? true : pa.limit_ask === true, wt = ws?.state === "on";
     const limit = mode === "smart" && Number.isFinite(lp) ? {
       price: lp,
       above,
-      over: above >= 0.5,
-      wait: ws?.state === "on",
+      over: above >= 0.5 && (ask || wt),
+      wait: wt,
       canWait: !!ws && ws.state !== "unavailable",
-      held: above >= 0.5 && ws?.state === "on",
+      held: above >= 0.5 && wt,
+      saving: Number(pa.limit_saving),
+      use: Number(pa.daily_use_kwh),
       overCost: Number(pa.above_limit_cost),
       reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc),
       floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor),
@@ -13915,8 +13934,9 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const L3 = ch2.limit;
     if (!L3?.over) return "";
     const best = (L3.cheaper || []).reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
-    if (L3.wait) return `Venter med <b>${tn(L3.above, 1)} kWh</b> over ${tn(L3.price)} kr/kWh${ch2.blocks.length && Number.isFinite(L3.reach) ? ` \xB7 lader til ca. ${Math.round(L3.reach)} %` : ""}${best ? ` \xB7 resten ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())}` : ""}`;
-    return `<b>${tn(L3.above, 1)} kWh</b> koster over ${tn(L3.price)} kr/kWh${Number.isFinite(L3.overCost) && L3.overCost > 0 ? ` (ca. ${tn(L3.overCost)} kr)` : ""}${best ? ` \xB7 vent til ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())} og spar ca. <b>${tn(Number(best.saving), 0)} kr</b>` : ""}`;
+    const drive = Number.isFinite(L3.use) && L3.use > 0 ? ` \xB7 I k\xF8rer ca. ${tn(L3.use, 1)} kWh om dagen` : "";
+    if (L3.wait) return `Venter med <b>${tn(L3.above, 1)} kWh</b>${ch2.blocks.length && Number.isFinite(L3.reach) ? ` \xB7 lader til ca. ${Math.round(L3.reach)} % i nat` : ""}${best ? ` \xB7 resten ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())}` : ""}${drive}`;
+    return `<b>${tn(L3.above, 1)} kWh</b> kan lades billigere senere${best ? ` \xB7 vent til ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())} og spar ca. <b>${tn(Number(best.saving), 0)} kr</b>` : ""}${drive}`;
   }
   waitBtn(ch2) {
     const a = this.armed(), on = !ch2.limit.wait;
@@ -14139,7 +14159,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const vmax = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p)), max = vmax * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05), W3 = 1e3, H4 = 100, base = 100;
     const X = (t) => (t - t0) / (t1 - t0) * W3, Y = (v) => 8 + (1 - (v - min) / (max - min)) * (H4 - 14);
     const inCh = (p) => ch2 && ch2.blocks.some((b) => b.t < p.e && b.e > p.t);
-    const meanP = this.n(C3.mean), thr = ch2?.limit ? ch2.limit.price : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = (p) => p.p > thr;
+    const meanP = this.n(C3.mean), thr = ch2?.limit ? ch2.limit.over ? ch2.limit.price : Infinity : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = (p) => p.p > thr;
     const line = (arr2) => arr2.map((p, i) => `${i ? "L" : "M"}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join("");
     const A1 = pts.filter((p) => !p.f), F1 = pts.filter((p) => p.f);
     if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
@@ -14241,12 +14261,12 @@ var ThElectricityPriceCard = class extends HTMLElement {
         ov += `<div class="chg lbl${hot ? " x" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>${ti("bolt", 9, 2.4)}${hot ? "DYR LADNING" : "LADER"}</span></div>`;
       }
       const ex2 = all.filter((p) => p.e > now && inCh(p) && dear(p)), led = ch2.limit?.cheaper;
-      if (led && !ch2.limit.wait) for (const w of led) {
+      if (led && ch2.limit.over && !ch2.limit.wait) for (const w of led) {
         if (w.t >= t1 || w.e <= t0) continue;
         const l = Math.max(0, X(w.t) / W3 * 100), r = Math.min(100, X(w.e) / W3 * 100);
         ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.t))} \xB7 ${tn(Number(w.price))}</span></div>`;
       }
-      else if (ex2.length) {
+      else if (ex2.length && !ch2.limit) {
         const dur2 = ex2.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex2.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur2;
         const sorted = [...all].sort((a, b) => a.t - b.t), wins = this.scan(sorted, dur2, now, () => true, 40).filter((w) => w.e <= t1 && w.avg <= xa - Math.max(0.1, xa * 0.08) && (!ch2.limit || w.avg <= ch2.limit.price) && !ch2.blocks.some((b) => b.t < w.e && b.e > w.s));
         const dayW = (w) => {

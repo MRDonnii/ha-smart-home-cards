@@ -8,7 +8,7 @@
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -420,6 +420,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const ws = this._hass.states[this._waitId()];
     const limit = mode === "smart" && Number.isFinite(lp) ? { price: lp, above, reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: Number(pa.price_limit_floor),
       wait: ws?.state === "on", canWait: !!ws && ws.state !== "unavailable", overCost: Number(pa.above_limit_cost),
+      ask: pa.limit_ask == null ? true : pa.limit_ask === true, saving: Number(pa.limit_saving),
       cheaper: (Array.isArray(pa.limit_cheaper) ? pa.limit_cheaper : []).map((w) => ({ ...w, t: Date.parse(w.start) })).filter((w) => Number.isFinite(w.t)),
       slots: (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p)), minutes: Number(pa.slot_minutes) || 15 } : null;
     if (!(plugged && mode && !["off", "manual"].includes(mode) && (blocks.length || (limit && above >= 0.5)))) return null;
@@ -445,7 +446,7 @@ class HATeslaGlanceCard extends HTMLElement {
     // The hours the price limit skips: faint stripes behind the charging blocks (Claude AI, 2026-10-15).
     // Above the price limit (EV Ledger 0.8): waiting = the plan stops at the limit and the skipped hours are striped;
     // otherwise the plan charges to the target and its blocks above the limit are warm.
-    const L = p.limit; const over = !!L && L.above >= 0.5; const held = over && L.wait; const runs = [];
+    const L = p.limit; const over = !!L && L.above >= 0.5 && (L.ask || L.wait); const held = over && L.wait; const runs = [];
     if (held) for (const x of L.slots) { const xe = x.t + L.minutes * 60000; if (xe <= now || x.t >= end || x.p <= L.price) continue; const last = runs[runs.length - 1]; if (last && x.t - last.e < 60000) last.e = xe; else runs.push({ t: Math.max(x.t, now), e: xe }); }
     const stripes = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
     const blocks = stripes + p.blocks.map((b) => `<i class="tb${over && !held && b.kwh > 0 && b.cost / b.kwh > L.price + 1e-6 ? " dear" : ""}" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
@@ -461,8 +462,10 @@ class HATeslaGlanceCard extends HTMLElement {
   }
   _limitText(L, held) {
     const best = L.cheaper.reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
-    if (held) return `<b>${this._fmt(L.above, 1)}</b> kWh venter · over ${this._fmt(L.price, 2)} kr`;
-    return `<b>${this._fmt(L.above, 1)}</b> kWh over ${this._fmt(L.price, 2)} kr${best ? ` · vent og spar ca. ${this._fmt(Number(best.saving), 0)} kr` : ""}`;
+    const when = (t) => `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+    if (held) return `<b>${this._fmt(L.above, 1)}</b> kWh venter${best ? ` · resten ${when(best.t)}` : ""}`;
+    const save = Number.isFinite(L.saving) ? L.saving : best ? Number(best.saving) : NaN;
+    return `<b>${this._fmt(L.above, 1)}</b> kWh billigere senere${Number.isFinite(save) ? ` · spar ca. ${this._fmt(save, 0)} kr` : ""}`;
   }
   // The answer to EV Ledger's price question (user, 2026-10-15): wait with the rest, or charge to the target. First tap
   // arms, the second sends.

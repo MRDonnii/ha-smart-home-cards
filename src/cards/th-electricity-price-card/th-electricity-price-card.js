@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.12.2';
+const TEP_VER = '1.13.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -246,8 +246,9 @@ class ThElectricityPriceCard extends HTMLElement {
     const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
     // EV Ledger 0.8: the plan charges to the target; with the answer "Vent med resten" (switch) only below the limit
     const ws = this._h.states[this.waitId()];
-    const limit = mode === 'smart' && Number.isFinite(lp) ? { price: lp, above, over: above >= .5, wait: ws?.state === 'on', canWait: !!ws && ws.state !== 'unavailable',
-      held: above >= .5 && ws?.state === 'on', overCost: Number(pa.above_limit_cost), reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor),
+    const ask = pa.limit_ask == null ? true : pa.limit_ask === true, wt = ws?.state === 'on';
+    const limit = mode === 'smart' && Number.isFinite(lp) ? { price: lp, above, over: above >= .5 && (ask || wt), wait: wt, canWait: !!ws && ws.state !== 'unavailable',
+      held: above >= .5 && wt, saving: Number(pa.limit_saving), use: Number(pa.daily_use_kwh), overCost: Number(pa.above_limit_cost), reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor),
       cheaper: Array.isArray(pa.limit_cheaper) ? pa.limit_cheaper.map(w => ({ ...w, t: Date.parse(w.start), e: Date.parse(w.end) })).filter(w => Number.isFinite(w.t)) : null } : null;
     const active = mode && !['off', 'manual'].includes(mode) && (blocks.length > 0 || !!limit?.held);
     if (!(c.force || (plugged && active))) return null;
@@ -271,8 +272,9 @@ class ThElectricityPriceCard extends HTMLElement {
   paintArm() { const a = this.armed(); this.shadowRoot?.querySelectorAll('[data-wait]').forEach(b => { b.classList.toggle('armed', a); b.textContent = a ? 'Tryk igen' : b.dataset.wait === 'on' ? 'Vent med resten' : 'Lad til målet'; }); }
   holdText(ch) { const L = ch.limit; if (!L?.over) return '';
     const best = (L.cheaper || []).reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
-    if (L.wait) return `Venter med <b>${tn(L.above, 1)} kWh</b> over ${tn(L.price)} kr/kWh${ch.blocks.length && Number.isFinite(L.reach) ? ` · lader til ca. ${Math.round(L.reach)} %` : ''}${best ? ` · resten ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())}` : ''}`;
-    return `<b>${tn(L.above, 1)} kWh</b> koster over ${tn(L.price)} kr/kWh${Number.isFinite(L.overCost) && L.overCost > 0 ? ` (ca. ${tn(L.overCost)} kr)` : ''}${best ? ` · vent til ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())} og spar ca. <b>${tn(Number(best.saving), 0)} kr</b>` : ''}`; }
+    const drive = Number.isFinite(L.use) && L.use > 0 ? ` · I kører ca. ${tn(L.use, 1)} kWh om dagen` : '';
+    if (L.wait) return `Venter med <b>${tn(L.above, 1)} kWh</b>${ch.blocks.length && Number.isFinite(L.reach) ? ` · lader til ca. ${Math.round(L.reach)} % i nat` : ''}${best ? ` · resten ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())}` : ''}${drive}`;
+    return `<b>${tn(L.above, 1)} kWh</b> kan lades billigere senere${best ? ` · vent til ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())} og spar ca. <b>${tn(Number(best.saving), 0)} kr</b>` : ''}${drive}`; }
   waitBtn(ch) { const a = this.armed(), on = !ch.limit.wait; return `<button type="button" class="any${a ? ' armed' : ''}${on ? ' wait' : ''}" data-wait="${on ? 'on' : 'off'}">${a ? 'Tryk igen' : on ? 'Vent med resten' : 'Lad til målet'}</button>`; }
   holdRow(ch) { const hold = this.holdText(ch); return hold && !ch.charging ? `<div class="hold on"><span>${hold}</span>${ch.limit.canWait ? this.waitBtn(ch) : ''}</div>` : ''; }
   update() {
@@ -408,7 +410,7 @@ class ThElectricityPriceCard extends HTMLElement {
     const inCh = p => ch && ch.blocks.some(b => b.t < p.e && b.e > p.t);
     // Dyr ladning (Claude AI, 2026-10-15; bruger: "bare de bobler … hvis den er dyr skal de skifte farve og vis at der er et billigere
     // tidspunkt"): over EV Ledgers prisgrænse, eller over dagens snit +10 % uden grænse
-    const meanP = this.n(C.mean), thr = ch?.limit ? ch.limit.price : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = p => p.p > thr;
+    const meanP = this.n(C.mean), thr = ch?.limit ? (ch.limit.over ? ch.limit.price : Infinity) : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = p => p.p > thr;
     const line = arr => arr.map((p, i) => `${i ? 'L' : 'M'}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join('');
     const A1 = pts.filter(p => !p.f), F1 = pts.filter(p => p.f); if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = n => cs.getPropertyValue(n).trim();
@@ -468,9 +470,9 @@ class ThElectricityPriceCard extends HTMLElement {
         ov += `<div class="chg lbl${hot ? ' x' : ''}" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('bolt', 9, 2.4)}${hot ? 'DYR LADNING' : 'LADER'}</span></div>`; }
       // Billigere tidspunkt for den dyre del: det bedste om dagen og det bedste om natten (to niveauer), når de er tydeligt billigere
       const ex = all.filter(p => p.e > now && inCh(p) && dear(p)), led = ch.limit?.cheaper;
-      if (led && !ch.limit.wait) for (const w of led) { if (w.t >= t1 || w.e <= t0) continue; const l = Math.max(0, X(w.t) / W * 100), r = Math.min(100, X(w.e) / W * 100);
+      if (led && ch.limit.over && !ch.limit.wait) for (const w of led) { if (w.t >= t1 || w.e <= t0) continue; const l = Math.max(0, X(w.t) / W * 100), r = Math.min(100, X(w.e) / W * 100);
         ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.t))} · ${tn(Number(w.price))}</span></div>`; }
-      else if (ex.length) { const dur = ex.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur;
+      else if (ex.length && !ch.limit) { const dur = ex.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur;
         const sorted = [...all].sort((a, b) => a.t - b.t), wins = this.scan(sorted, dur, now, () => true, 40).filter(w => w.e <= t1 && w.avg <= xa - Math.max(.1, xa * .08) && (!ch.limit || w.avg <= ch.limit.price) && !ch.blocks.some(b => b.t < w.e && b.e > w.s));
         const dayW = w => { const h = new Date(w.s).getHours(); return h >= 8 && h < 17; }, best = arr => arr.reduce((m, c) => (!m || c.avg < m.avg ? c : m), null);
         for (const w of [best(wins.filter(dayW)), best(wins.filter(w => !dayW(w)))]) { if (!w) continue; const l = Math.max(0, X(w.s) / W * 100), r = Math.min(100, X(w.e) / W * 100);
