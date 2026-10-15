@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.156 */
+/* MRDonnii Smart Home Cards v0.5.157 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13406,7 +13406,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.10.0";
+var TEP_VER = "1.11.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13489,9 +13489,9 @@ var TEP_CSS = `
 .any{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:99px;border:0;cursor:pointer;color:#141018;background:var(--ev);box-shadow:0 0 14px -4px var(--ev)}
 .any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
 .adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
-.pc .lim{position:absolute;right:0;border-top:1.5px dashed color-mix(in srgb,var(--warn) 85%,transparent);pointer-events:none}
-.pc .limz{position:absolute;right:0;top:0;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 3%,transparent),color-mix(in srgb,var(--warn) 11%,transparent))}
-.pc .liml{position:absolute;right:4px;transform:translateY(-118%);padding:1px 6px;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,rgba(10,12,18,.6));white-space:nowrap;pointer-events:none}
+.pc .chg.x{--ev:#ff6a3d}
+.pc .band.cheaper{pointer-events:none;background:color-mix(in srgb,var(--good) 7%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 30%,transparent)}
+.pc .band.cheaper span{font-size:9px;letter-spacing:.06em;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,rgba(10,12,18,.6))}
 .ev .car{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,transparent)}
 .ev .car em{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ev);color:#141018;animation:pz 2s ease-in-out infinite}
 @keyframes pz{50%{transform:scale(1.15);box-shadow:0 0 14px var(--ev)}}
@@ -13894,8 +13894,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
     return cov >= dur2 * 0.98 ? { avg: sum / cov, fc: fc2 } : null;
   }
   // Alle mulige starttidspunkter de næste 24 t. Prisen er stykvis lineær i starttidspunktet, så det billigste ligger altid hvor kørslens start eller slutning rammer en periodegrænse
-  scan(all, dur2, now, ok = () => true) {
-    const hor = now + 24 * 36e5, c2 = /* @__PURE__ */ new Set([now]);
+  scan(all, dur2, now, ok = () => true, hours = 24) {
+    const hor = now + hours * 36e5, c2 = /* @__PURE__ */ new Set([now]);
     for (const p of all) {
       if (p.t > now && p.t < hor) c2.add(p.t);
       const x = p.e - dur2;
@@ -14004,11 +14004,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
     }
     if (!pts.length) return;
     const gb2 = parseFloat(getComputedStyle(pc2).getPropertyValue("--gb")) || 16;
-    const vmax0 = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p));
-    const lim = ch2?.limit && ch2.limit.price >= vmin - Math.max(0.3, (vmax0 - vmin) * 0.5) && ch2.limit.price <= vmax0 * 1.25 ? ch2.limit.price : null;
-    const vmax = vmax0, max = Math.max(vmax0, lim ?? -Infinity) * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05, lim != null ? lim - 0.08 : Infinity), W3 = 1e3, H4 = 100, base = 100;
+    const vmax = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p)), max = vmax * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05), W3 = 1e3, H4 = 100, base = 100;
     const X = (t) => (t - t0) / (t1 - t0) * W3, Y = (v) => 8 + (1 - (v - min) / (max - min)) * (H4 - 14);
     const inCh = (p) => ch2 && ch2.blocks.some((b) => b.t < p.e && b.e > p.t);
+    const meanP = this.n(C3.mean), thr = ch2?.limit ? ch2.limit.price : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = (p) => p.p > thr;
     const line = (arr2) => arr2.map((p, i) => `${i ? "L" : "M"}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join("");
     const A1 = pts.filter((p) => !p.f), F1 = pts.filter((p) => p.f);
     if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
@@ -14025,7 +14024,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       const gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7;
       pts.forEach((p, i) => {
         const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W3, X(p.e)) - x - gap), y = Y(p.p), past = p.e <= now, evp = inCh(p);
-        if (evp) evBars.push({ x, w, y });
+        if (evp) evBars.push({ x, w, y, x2: dear(p) });
         g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone2(p.p)}" opacity="${past ? 0.25 : p.f ? 0.45 : 0.9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`;
       });
     } else {
@@ -14034,11 +14033,17 @@ var ThElectricityPriceCard = class extends HTMLElement {
         g += `<path d="${d}L${X((A1[A1.length - 1].t + A1[A1.length - 1].e) / 2)} ${base}L${X((A1[0].t + A1[0].e) / 2)} ${base}Z" fill="url(#pa)" class="fadein"/><path d="${d}" fill="none" stroke="url(#pl)" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" class="draw"/>`;
       }
       if (F1.length > 1) g += `<path d="${line(F1)}" fill="none" stroke="url(#pl)" stroke-width="1.6" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" opacity=".7" class="fadein"/>`;
+      pts.forEach((p) => {
+        if (!inCh(p)) return;
+        const x = Math.max(0, X(p.t));
+        evBars.push({ x, w: Math.max(0.5, Math.min(W3, X(p.e)) - x), y: Y(p.p), x2: dear(p) });
+      });
     }
     const ak = this._ps + mode, anim = this._ak !== ak;
     this._ak = ak;
-    let liq = evBars, liqCol = cE, liqId = "ev";
-    if (!liq.length) {
+    const groups = evBars.length ? [{ bars: evBars.filter((b) => !b.x2), col: cE, id: "ev" }, { bars: evBars.filter((b) => b.x2), col: "#ff6a3d", id: "evx" }].filter((q) => q.bars.length) : [];
+    let liq = [], liqCol = cE, liqId = "ev";
+    if (!evBars.length) {
       const fut = act.filter((p) => p.t >= now - 9e5);
       let best = null;
       const win = Math.max(1, Math.round(3 * 36e5 / (fut[0]?.e - fut[0]?.t || 9e5)));
@@ -14055,19 +14060,20 @@ var ThElectricityPriceCard = class extends HTMLElement {
         liqId = "bs";
       }
     }
-    if (liq.length) {
+    if (liq.length) groups.push({ bars: liq, col: liqCol, id: liqId });
+    for (const { bars: liq2, col: liqCol2, id: liqId2 } of groups) {
       const sx = Math.max(0.1, pc2.clientWidth / W3), sy = Math.max(0.1, (pc2.clientHeight - gb2) / H4);
-      let seed = liq.length * 7 + Math.floor(liq[0].x);
+      let seed = liq2.length * 7 + Math.floor(liq2[0].x);
       const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
       const rise = H4 * 0.45;
-      g += `<defs><clipPath id="${liqId}c">${liq.map((b) => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join("")}</clipPath>
-        <linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W3}" height="${base}" fill="url(#${liqId}l)"/>
+      g += `<defs><clipPath id="${liqId2}c">${liq2.map((b) => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join("")}</clipPath>
+        <linearGradient id="${liqId2}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol2}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol2}" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#${liqId2}c)"><rect x="0" y="0" width="${W3}" height="${base}" fill="url(#${liqId2}l)"/>
         <rect x="0" y="0" width="${W3}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
-      liq.forEach((b) => {
+      liq2.forEach((b) => {
         const n = Math.max(2, Math.round((base - b.y) / 16));
         for (let k = 0; k < n; k++) {
           const r = 1.8 + rnd() * 2.4, cx = b.x + b.w * (0.2 + rnd() * 0.6), dur2 = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (0.35 + rnd() * 0.65));
-          g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${k % 3 ? "#fff" : liqCol}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
+          g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${k % 3 ? "#fff" : liqCol2}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
         }
       });
     }
@@ -14092,9 +14098,23 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
       const vis = merged.filter((b) => b.e > t0 && b.t < t1), wid = vis.reduce((m, b, i) => b.e - b.t > (vis[m]?.e - vis[m]?.t || 0) ? i : m, 0);
       vis.forEach((b, i) => {
-        const l = Math.max(0, X(b.t) / W3 * 100), r = Math.min(100, X(b.e) / W3 * 100);
-        ov += `<div class="chg" style="left:${l}%;width:${Math.max(0.6, r - l)}%">${i === wid ? `<span>${ti("bolt", 9, 2.4)}LADER</span>` : ""}</div>`;
+        const l = Math.max(0, X(b.t) / W3 * 100), r = Math.min(100, X(b.e) / W3 * 100), hot = pts.some((p) => p.t < b.e && p.e > b.t && inCh(p) && dear(p));
+        ov += `<div class="chg${hot ? " x" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%">${i === wid ? `<span>${ti("bolt", 9, 2.4)}${hot ? "DYR LADNING" : "LADER"}</span>` : ""}</div>`;
       });
+      const ex2 = all.filter((p) => p.e > now && inCh(p) && dear(p));
+      if (ex2.length) {
+        const dur2 = ex2.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex2.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur2;
+        const sorted = [...all].sort((a, b) => a.t - b.t), wins = this.scan(sorted, dur2, now, () => true, 40).filter((w) => w.e <= t1 && w.avg <= xa - Math.max(0.1, xa * 0.08) && (!ch2.limit || w.avg <= ch2.limit.price) && !ch2.blocks.some((b) => b.t < w.e && b.e > w.s));
+        const dayW = (w) => {
+          const h = new Date(w.s).getHours();
+          return h >= 8 && h < 17;
+        }, best = (arr2) => arr2.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null);
+        for (const w of [best(wins.filter(dayW)), best(wins.filter((w3) => !dayW(w3)))]) {
+          if (!w) continue;
+          const l = Math.max(0, X(w.s) / W3 * 100), r = Math.min(100, X(w.e) / W3 * 100);
+          ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.s))} \xB7 ${tn(w.avg)}</span></div>`;
+        }
+      }
     } else {
       const fut = act.filter((p) => p.t >= now - 9e5);
       let best = null;
@@ -14109,10 +14129,6 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
     }
     const nx2 = X(now) / W3 * 100, cp = all.find((p) => p.t <= now && p.e > now);
-    if (lim != null) {
-      const ly = Y(lim) / H4 * (pc2.clientHeight - gb2), lx2 = Math.max(0, Math.min(100, nx2));
-      ov += `<div class="limz" style="left:${lx2}%;height:${ly}px"></div><div class="lim" style="left:${lx2}%;top:${ly}px"></div><div class="liml" style="top:${ly}px">${ch2.limit.held ? "Venter over " : "Gr\xE6nse "}${tn(lim)} kr</div>`;
-    }
     if (cp) ov += `<div class="now" style="left:${nx2}%"></div><div class="nd" style="left:${nx2}%;top:${Y(cp.p) / H4 * (pc2.clientHeight - gb2)}px"></div>`;
     this.$("ov").innerHTML = ov;
     const tip = this.$("tip");
@@ -14122,7 +14138,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
         tip.style.opacity = 0;
         return;
       }
-      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? " \xB7 <em>bilen lader</em>" : lim != null && p.p > lim && p.e > now ? " \xB7 over gr\xE6nsen" : ""}`;
+      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` \xB7 <em>bilen lader${dear(p) ? " \u2013 dyrt" : ""}</em>` : ""}`;
       tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + "px";
       tip.style.top = Y(p.p) / H4 * (b.height - gb2) + "px";
       tip.style.opacity = 1;
