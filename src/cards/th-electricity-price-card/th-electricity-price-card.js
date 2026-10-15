@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.12.0';
+const TEP_VER = '1.12.1';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -90,8 +90,9 @@ const TEP_CSS = `
 .any.wait{background:color-mix(in srgb,var(--warn) 85%,#fff);box-shadow:0 0 14px -4px var(--warn)}
 .any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
 .adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
-.pc .chg.x{--ev:#ff6a3d}
-.pc .band.cheaper{pointer-events:none;background:color-mix(in srgb,var(--good) 7%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 30%,transparent)}
+.pc .chg.x{--ev:var(--bad)}
+.pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
+.pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
 .pc .band.cheaper span{font-size:9px;letter-spacing:.06em;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,rgba(10,12,18,.6))}
 .ev .car{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ev);background:color-mix(in srgb,var(--ev) 16%,transparent)}
 .ev .car em{position:absolute;right:-4px;top:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ev);color:#141018;animation:pz 2s ease-in-out infinite}
@@ -430,22 +431,24 @@ class ThElectricityPriceCard extends HTMLElement {
     const ak = this._ps + mode, anim = this._ak !== ak; this._ak = ak;
     // Boblende væske (Claude AI, 2026-10-13): ladetiden i lilla, ellers det billigste vindue i grønt. Søjlerne fyldes, og boblerne
     // stiger op over søjlen (højere op, så det er let at se). viewBox'en strækkes ulige, så boblerne tegnes som ellipser.
-    const groups = evBars.length ? [{ bars: evBars.filter(b => !b.x2), col: cE, id: 'ev' }, { bars: evBars.filter(b => b.x2), col: '#ff6a3d', id: 'evx' }].filter(q => q.bars.length) : [];
+    const groups = evBars.length ? [{ bars: evBars.filter(b => !b.x2), col: cE, id: 'ev' }, { bars: evBars.filter(b => b.x2), col: cE, id: 'evx', hot: cB }].filter(q => q.bars.length) : [];
     let liq = [], liqCol = cE, liqId = 'ev';
     if (!evBars.length) { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a2 = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a2 < best.a) best = { a: a2, t: fut[i].t, e: fut[i + win - 1].e }; }
       if (best && this._ps === 'bar') { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { const x = Math.max(0, X(p.t)), gap = mode === '48' ? .3 : mode === '7' ? .4 : .7; return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - gap), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
     if (liq.length) groups.push({ bars: liq, col: liqCol, id: liqId });
-    for (const { bars: liq, col: liqCol, id: liqId } of groups) {
+    // Dyr ladning (Claude AI, 2026-10-15; bruger: "grafen er ikke så pæn"): samme lilla væske, der glider over i rødt
+    // øverst, og bobler i væskens egne lyse toner i stedet for hvide/grå.
+    for (const { bars: liq, col: liqCol, id: liqId, hot } of groups) {
       const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
       let seed = liq.length * 7 + Math.floor(liq[0].x); const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-      const rise = H * .45;
+      const rise = H * .32, topY = Math.min(...liq.map(b => b.y)), tint = `color-mix(in srgb,${hot || liqCol} 45%,#fff)`;
       g += `<defs><clipPath id="${liqId}c">${liq.map(b => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
-        <linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
+        ${hot ? `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol}"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>`}</defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
         <rect x="0" y="0" width="${W}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
       liq.forEach((b) => { const n = Math.max(2, Math.round((base - b.y) / 16)); for (let k = 0; k < n; k++) {
         const r = 1.8 + rnd() * 2.4, cx = b.x + b.w * (.2 + rnd() * .6), dur = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (.35 + rnd() * .65));
-        g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${k % 3 ? '#fff' : liqCol}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`; } });
+        g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" style="fill:${k % 3 ? tint : (hot || liqCol)}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`; } });
     }
     const svg = this.$('svg'); svg.classList.toggle('still', !anim); this.$('days').classList.toggle('still', !anim); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = g;
     // overlay
