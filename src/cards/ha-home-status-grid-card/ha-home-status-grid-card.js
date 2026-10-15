@@ -1222,7 +1222,8 @@ class HaHomeSummaryCard extends HTMLElement {
       curve = `<div class="rt-cw"><svg class="rt-curve" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="${line}L100 40L0 40Z"/><path class="l" d="${line}"/>${Number.isFinite(goal) ? `<line class="g" x1="0" x2="100" y1="${Y(goal).toFixed(2)}" y2="${Y(goal).toFixed(2)}"/>` : ""}</svg><i class="rt-dot" style="top:${((Y(pts[pts.length - 1]) / 40) * 100).toFixed(1)}%"></i></div>`;
     }
     const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
-    const sub = [Number.isFinite(r.humidity) ? `${f(r.humidity, 0)} %` : "", Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "mål"} ${f(r.target)}°` : ""].filter(Boolean).join(" · ");
+    // Humidity and setpoint are two pieces: the humidity always has its place, the setpoint follows only when there is room (Claude AI, 2026-10-15).
+    const sub = `${Number.isFinite(r.humidity) ? `<span class="rt-rh"><ha-icon icon="mdi:water-percent"></ha-icon>${f(r.humidity, 0)} %</span>` : ""}${Number.isFinite(r.target) ? `<span class="rt-tg">${r.acTarget ? "AC" : "mål"} ${f(r.target)}°</span>` : ""}`;
     // No icon and no curve (user: "drop ikon og graf så der er plads til det der skal"): name and temperature on top,
     // status and humidity/target under. No small activity icons either (Claude AI, 2026-10-15; user: "De små ikoner i
     // bunden til venstre er heller ikke nødvendige, vi har jo det store og animation rundt i kanten"): the big background
@@ -1230,7 +1231,7 @@ class HaHomeSummaryCard extends HTMLElement {
     return `<div class="rt s-${st}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>
       ${(() => { const acHeat = r.ac?.running && r.ac.mode !== "cool"; const cool = r.ac?.running && r.ac.mode === "cool"; const ic = cool ? "mdi:snowflake" : acHeat ? "mdi:heat-pump-outline" : r.heating ? "mdi:fire" : (room.icon || "mdi:thermometer"); return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`; })()}
       <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i><span class="rt-st">${this._esc(status)}</span></em></div>
-      <div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${this._esc(sub)}</small></span><b class="rt-v">${f(r.temp)}<small>°</small>${trend}</b></div></div>`;
+      <div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${sub}</small></span><b class="rt-v">${f(r.temp)}<small>°</small>${trend}</b></div></div>`;
   }
   _roomInfo(room) {
     const cl = this._state(room.climate); const a = cl?.attributes || {};
@@ -1585,7 +1586,7 @@ ${LUX_KEYFRAMES}
     }).join("") : `<div class="empty">Ingen aftaler de næste 7 dage</div>`;
     this._observeMarquees();
   }
-  _observeMarquees() { observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span, .rt-n, .rt-st, .rt-sub"); }
+  _observeMarquees() { observeMarquees(this, this.shadowRoot, ".room-name, .room-target, .event-copy > b, .event-copy > span, .rt-n, .rt-st"); }
   _render() {
     if (!this.config) return;
     if (!this._rendered) {
@@ -1662,13 +1663,30 @@ ${LUX_KEYFRAMES}
         .rt-bg.cool{color:#4fb3ff;opacity:.2;animation:rtBgCool 6s linear infinite;filter:drop-shadow(0 0 10px rgba(79,179,255,.5))}
         @keyframes rtBgHot{50%{opacity:.3;transform:translateY(-52%) rotate(-8deg) scale(1.05)}}@keyframes rtBgCool{to{transform:translateY(-50%) rotate(352deg)}}
         
-        /* Temperature pinned bottom-right; the text left of it scrolls when it does not fit (user, 2026-10-13). */
+        /* Claude AI, 2026-10-15; user: "gør disse kort mere symmetriske og tag RH med". One structure in every tile: name and
+           status over the full width, humidity bottom left, temperature bottom right with the same right edge in every tile
+           (the trend arrow sits left of the number, outside the flow). Short or very narrow tiles put the humidity under the
+           temperature instead; the setpoint only shows when it fits. */
         .rooms .rt{container-type:size}
-        .rt .rt-v{position:absolute;z-index:1;right:11px;bottom:7px}
-        .rt-r1{padding-right:4px}.rt-n,.rt-st,.rt-lft .rt-sub{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:clip}
+        .rt-r1{padding-right:0}
+        .rt-n,.rt-st{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:clip}
         .rt-r1 em .rt-st{flex:1}
-        .rt-r2{padding-right:78px;min-height:16px}
-        @container (max-height:66px){.rt-lft{display:none}.rt .rt-v{font-size:21px}.rt-r1{padding-right:70px}.rt .rt-v{bottom:auto;top:50%;transform:translateY(-50%)}}
+        .rooms .rt{gap:2px}
+        .rt-r2{position:static;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:0;padding:0;min-height:23px}
+        .rt-lft{align-self:end;padding-right:15px;padding-bottom:1px}
+        .rt-lft .rt-sub{display:flex;flex-wrap:wrap;align-items:center;column-gap:5px;height:13px;overflow:hidden;font-size:10px;line-height:13px;white-space:nowrap}
+        .rt-rh{display:inline-flex;align-items:center;gap:1px}.rt-rh ha-icon{--mdc-icon-size:12px;margin-left:-2px;opacity:.8}
+        .rt-rh+.rt-tg::before{content:"·";margin-right:5px}
+        .rt .rt-v{position:relative;right:auto;bottom:auto;justify-content:flex-end}
+        .rt .rt-tr{position:absolute;right:100%;top:calc(50% - 8px);display:block;width:12px;height:12px;margin:0 2px 0 0;--mdc-icon-size:12px}
+        @container (max-width:130px){.rt .rt-v{font-size:23px}}
+        @container (max-height:53px) or (max-width:103px){
+          .rt-r2{display:block;min-height:0}
+          .rt .rt-v{position:absolute;right:11px;bottom:20px;font-size:21px}
+          .rt-lft{position:absolute;right:11px;bottom:6px;padding:0}
+          .rt-lft .rt-sub{justify-content:flex-end}.rt-tg{display:none}
+        }
+        @container (max-height:53px){.rt-r1{padding-right:74px}}
         @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
