@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.160 */
+/* MRDonnii Smart Home Cards v0.5.161 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13506,7 +13506,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.12.1";
+var TEP_VER = "1.12.2";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13591,6 +13591,7 @@ var TEP_CSS = `
 .any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
 .adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
 .pc .chg.x{--ev:var(--bad)}
+.pc .chg.lbl::after{display:none}
 .pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
 .pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
 .pc .band.cheaper span{font-size:9px;letter-spacing:.06em;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,rgba(10,12,18,.6))}
@@ -14228,10 +14229,17 @@ var ThElectricityPriceCard = class extends HTMLElement {
         else merged.push({ ...b });
       }
       const vis = merged.filter((b) => b.e > t0 && b.t < t1), wid = vis.reduce((m, b, i) => b.e - b.t > (vis[m]?.e - vis[m]?.t || 0) ? i : m, 0);
-      vis.forEach((b, i) => {
-        const l = Math.max(0, X(b.t) / W3 * 100), r = Math.min(100, X(b.e) / W3 * 100), hot = pts.some((p) => p.t < b.e && p.e > b.t && inCh(p) && dear(p));
-        ov += `<div class="chg${hot ? " x" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%">${i === wid ? `<span>${ti("bolt", 9, 2.4)}${hot ? "DYR LADNING" : "LADER"}</span>` : ""}</div>`;
-      });
+      const hotIn = (b) => pts.some((p) => p.t < b.e && p.e > b.t && inCh(p) && dear(p));
+      for (const b of ch2.blocks) {
+        if (b.e <= t0 || b.t >= t1) continue;
+        const l = Math.max(0, X(b.t) / W3 * 100), r = Math.min(100, X(b.e) / W3 * 100);
+        ov += `<div class="chg${hotIn(b) ? " x" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%"></div>`;
+      }
+      const lb2 = vis[wid];
+      if (lb2) {
+        const l = Math.max(0, X(lb2.t) / W3 * 100), r = Math.min(100, X(lb2.e) / W3 * 100), hot = hotIn(lb2);
+        ov += `<div class="chg lbl${hot ? " x" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>${ti("bolt", 9, 2.4)}${hot ? "DYR LADNING" : "LADER"}</span></div>`;
+      }
       const ex2 = all.filter((p) => p.e > now && inCh(p) && dear(p)), led = ch2.limit?.cheaper;
       if (led && !ch2.limit.wait) for (const w of led) {
         if (w.t >= t1 || w.e <= t0) continue;

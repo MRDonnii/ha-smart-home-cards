@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.12.1';
+const TEP_VER = '1.12.2';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -91,6 +91,7 @@ const TEP_CSS = `
 .any.armed{background:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 45%,transparent)}
 .adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
 .pc .chg.x{--ev:var(--bad)}
+.pc .chg.lbl::after{display:none}
 .pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
 .pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
 .pc .band.cheaper span{font-size:9px;letter-spacing:.06em;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,rgba(10,12,18,.6))}
@@ -457,8 +458,14 @@ class ThElectricityPriceCard extends HTMLElement {
       ov += `<div style="position:absolute;left:${x}%;top:0;bottom:var(--gb);border-left:1px dashed color-mix(in srgb,var(--ink) 14%,transparent)"></div>${x > 92 ? '' : `<div class="dl" style="left:${x}%">${d.toLocaleDateString('da-DK', { weekday: 'short' })}${d.getTime() >= lastA ? ' · prognose' : ''}</div>`}`; }
     if (ch) { const merged = []; for (const b of ch.blocks) { const l = merged[merged.length - 1]; if (l && b.t - l.e < 20 * 6e4) l.e = Math.max(l.e, b.e); else merged.push({ ...b }); }
       const vis = merged.filter(b => b.e > t0 && b.t < t1), wid = vis.reduce((m, b, i) => (b.e - b.t > (vis[m]?.e - vis[m]?.t || 0) ? i : m), 0);
-      vis.forEach((b, i) => { const l = Math.max(0, X(b.t) / W * 100), r = Math.min(100, X(b.e) / W * 100), hot = pts.some(p => p.t < b.e && p.e > b.t && inCh(p) && dear(p));
-        ov += `<div class="chg${hot ? ' x' : ''}" style="left:${l}%;width:${Math.max(.6, r - l)}%">${i === wid ? `<span>${ti('bolt', 9, 2.4)}${hot ? 'DYR LADNING' : 'LADER'}</span>` : ''}</div>`; });
+      // Stregen i bunden følger hver ladeperiode for sig, så en pause mellem to perioder ikke får lilla under sig
+      // (Claude AI, 2026-10-15; bruger: "Hvorfor er der lilla under den grønne"); mærket står over den længste samlede del.
+      const hotIn = b => pts.some(p => p.t < b.e && p.e > b.t && inCh(p) && dear(p));
+      for (const b of ch.blocks) { if (b.e <= t0 || b.t >= t1) continue; const l = Math.max(0, X(b.t) / W * 100), r = Math.min(100, X(b.e) / W * 100);
+        ov += `<div class="chg${hotIn(b) ? ' x' : ''}" style="left:${l}%;width:${Math.max(.6, r - l)}%"></div>`; }
+      const lb = vis[wid];
+      if (lb) { const l = Math.max(0, X(lb.t) / W * 100), r = Math.min(100, X(lb.e) / W * 100), hot = hotIn(lb);
+        ov += `<div class="chg lbl${hot ? ' x' : ''}" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('bolt', 9, 2.4)}${hot ? 'DYR LADNING' : 'LADER'}</span></div>`; }
       // Billigere tidspunkt for den dyre del: det bedste om dagen og det bedste om natten (to niveauer), når de er tydeligt billigere
       const ex = all.filter(p => p.e > now && inCh(p) && dear(p)), led = ch.limit?.cheaper;
       if (led && !ch.limit.wait) for (const w of led) { if (w.t >= t1 || w.e <= t0) continue; const l = Math.max(0, X(w.t) / W * 100), r = Math.min(100, X(w.e) / W * 100);
