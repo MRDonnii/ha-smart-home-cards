@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.19.2";
+const TTD_VERSION = "1.19.3";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -2453,7 +2453,13 @@ class ThTeslaDashboardCard extends HTMLElement {
           const use = Number(a.daily_use_kwh);
           const drive = Number.isFinite(use) && use > 0 ? `I kører ca. ${f.number(use, 1)} kWh om dagen` : "";
           const windows = later.map((w) => `${w.kind === "day" ? "Dag" : "Nat"} ${f.dayTime(w.at)}: ca. ${f.number(Number(w.price), 2)} kr/kWh${w.estimated ? " (prognose)" : ""} · spar ca. ${ttdJoin(f.number(Number(w.saving), 0), costUnit)}`);
+          // The answers say what they charge to tonight (user, 2026-10-15: "Vent med resten" should show it, so it is
+          // easy to judge whether that is enough).
+          const socNow = this._num("battery");
+          const goal = Number.isFinite(Number(a.deadline_target)) && a.deadline_target != null ? Number(a.deadline_target) : this._scNum("plan_target_soc");
           choice = {
+            waitLabel: reach == null ? "Vent med resten" : socNow != null && reach <= socNow + 0.5 ? "Lad ikke i nat" : `Lad kun til ${f.number(reach, 0)} %`,
+            fullLabel: goal != null ? `Lad til ${f.number(goal, 0)} %` : "Lad til målet",
             wait: waiting,
             title: waiting ? `Venter med ${f.number(above, 1)} kWh` : `${f.number(above, 1)} kWh kan lades billigere senere`,
             detail: waiting
@@ -3349,7 +3355,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._t("scHoldT", choice.title);
       this._t("scHoldS", choice.detail);
       this._t("scHoldW", choice.windows.join("\n"));
-      for (const [ref, on, label] of [["scWaitOn", true, "Vent med resten"], ["scWaitOff", false, "Lad til målet"]]) {
+      for (const [ref, on, label] of [["scWaitOn", true, choice.waitLabel], ["scWaitOff", false, choice.fullLabel]]) {
         const armed = this._armed === `wait:${on}`;
         this._attrSet(ref, "aria-checked", String(choice.wait === on));
         this._attrSet(ref, "data-armed", armed);

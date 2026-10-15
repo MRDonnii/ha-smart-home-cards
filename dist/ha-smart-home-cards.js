@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.163 */
+/* MRDonnii Smart Home Cards v0.5.164 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2649,7 +2649,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.19.2";
+var TTD_VERSION = "1.19.3";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -5221,7 +5221,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
           const use = Number(a.daily_use_kwh);
           const drive = Number.isFinite(use) && use > 0 ? `I k\xF8rer ca. ${f.number(use, 1)} kWh om dagen` : "";
           const windows = later.map((w) => `${w.kind === "day" ? "Dag" : "Nat"} ${f.dayTime(w.at)}: ca. ${f.number(Number(w.price), 2)} kr/kWh${w.estimated ? " (prognose)" : ""} \xB7 spar ca. ${ttdJoin(f.number(Number(w.saving), 0), costUnit)}`);
+          const socNow = this._num("battery");
+          const goal = Number.isFinite(Number(a.deadline_target)) && a.deadline_target != null ? Number(a.deadline_target) : this._scNum("plan_target_soc");
           choice = {
+            waitLabel: reach == null ? "Vent med resten" : socNow != null && reach <= socNow + 0.5 ? "Lad ikke i nat" : `Lad kun til ${f.number(reach, 0)} %`,
+            fullLabel: goal != null ? `Lad til ${f.number(goal, 0)} %` : "Lad til m\xE5let",
             wait: waiting2,
             title: waiting2 ? `Venter med ${f.number(above, 1)} kWh` : `${f.number(above, 1)} kWh kan lades billigere senere`,
             detail: waiting2 ? [reach != null ? `Lader til ca. ${f.number(reach, 0)} % i nat` : "Lader ikke i nat", best ? `resten ${f.dayTime(best.at)}` : "resten i n\xE6ste billige periode", drive].filter(Boolean).join(" \xB7 ") : [Number.isFinite(overCost) && overCost > 0 ? `ca. ${ttdJoin(f.number(overCost, 2), costUnit)} i nat` : "", reach != null ? `venter du, lader den til ca. ${f.number(reach, 0)} % i nat` : "", drive].filter(Boolean).join(" \xB7 "),
@@ -6136,7 +6140,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._t("scHoldT", choice.title);
       this._t("scHoldS", choice.detail);
       this._t("scHoldW", choice.windows.join("\n"));
-      for (const [ref, on, label] of [["scWaitOn", true, "Vent med resten"], ["scWaitOff", false, "Lad til m\xE5let"]]) {
+      for (const [ref, on, label] of [["scWaitOn", true, choice.waitLabel], ["scWaitOff", false, choice.fullLabel]]) {
         const armed = this._armed === `wait:${on}`;
         this._attrSet(ref, "aria-checked", String(choice.wait === on));
         this._attrSet(ref, "data-armed", armed);
@@ -6931,7 +6935,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.7.0";
+var VERSION5 = "0.7.1";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -7520,7 +7524,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         <div class="pt"><b>Ladeplan \xB7 ${esc2(MODE[p.mode] || p.mode)}</b><span>${esc2(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L3.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc2(until2)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks2.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc2(dl2)}</span>` : ""}</div></div>
-      <div class="pnums${over && L3.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L3, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L3.canWait ? this._waitBtn(held) : ""}</div>`;
+      <div class="pnums${over && L3.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L3, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L3.canWait ? this._waitBtn(held, L3, soc, tg) : ""}</div>`;
   }
   _limitText(L3, held) {
     const best = L3.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
@@ -7543,9 +7547,11 @@ var HATeslaGlanceCard = class extends HTMLElement {
     }
     return typeof c2.mode === "string" && c2.mode.endsWith("_charge_mode") ? c2.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "";
   }
-  _waitBtn(held) {
+  // The button says what it charges to tonight (user, 2026-10-15: "Vent med resten" should show it).
+  _waitBtn(held, L3, soc, tg) {
     const armed = this._armAt && Date.now() - this._armAt < 4e3;
-    return `<button type="button" class="pnow${armed ? " armed" : ""}${held ? "" : " wait"}" data-pwait="${held ? "off" : "on"}">${armed ? "Tryk igen" : held ? "Lad til m\xE5let" : "Vent med resten"}</button>`;
+    const label = held ? `Lad til ${Math.round(tg)} %` : !Number.isFinite(L3.reach) ? "Vent med resten" : L3.reach <= soc + 0.5 ? "Lad ikke i nat" : `Lad kun til ${Math.round(L3.reach)} %`;
+    return `<button type="button" class="pnow${armed ? " armed" : ""}${held ? "" : " wait"}" data-pwait="${held ? "off" : "on"}">${armed ? "Tryk igen" : label}</button>`;
   }
   _chooseWait(on) {
     const id = this._waitId();
@@ -13533,7 +13539,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.13.0";
+var TEP_VER = "1.14.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13877,6 +13883,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       wait: wt,
       canWait: !!ws && ws.state !== "unavailable",
       held: above >= 0.5 && wt,
+      goal: pa.deadline_target == null ? NaN : Number(pa.deadline_target),
       saving: Number(pa.limit_saving),
       use: Number(pa.daily_use_kwh),
       overCost: Number(pa.above_limit_cost),
@@ -13938,8 +13945,14 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const a = this.armed();
     this.shadowRoot?.querySelectorAll("[data-wait]").forEach((b) => {
       b.classList.toggle("armed", a);
-      b.textContent = a ? "Tryk igen" : b.dataset.wait === "on" ? "Vent med resten" : "Lad til m\xE5let";
+      b.textContent = a ? "Tryk igen" : b.dataset.label;
     });
+  }
+  // Knappen siger, hvad den lader til i nat (bruger, 2026-10-15: "Vent med resten" skal vise det)
+  waitLabel(ch2, on) {
+    const L3 = ch2.limit, goal = Number.isFinite(L3.goal) ? L3.goal : ch2.target;
+    if (!on) return Number.isFinite(goal) ? `Lad til ${Math.round(goal)} %` : "Lad til m\xE5let";
+    return !Number.isFinite(L3.reach) ? "Vent med resten" : Number.isFinite(ch2.soc) && L3.reach <= ch2.soc + 0.5 ? "Lad ikke i nat" : `Lad kun til ${Math.round(L3.reach)} %`;
   }
   holdText(ch2) {
     const L3 = ch2.limit;
@@ -13951,7 +13964,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
   }
   waitBtn(ch2) {
     const a = this.armed(), on = !ch2.limit.wait;
-    return `<button type="button" class="any${a ? " armed" : ""}${on ? " wait" : ""}" data-wait="${on ? "on" : "off"}">${a ? "Tryk igen" : on ? "Vent med resten" : "Lad til m\xE5let"}</button>`;
+    return `<button type="button" class="any${a ? " armed" : ""}${on ? " wait" : ""}" data-wait="${on ? "on" : "off"}" data-label="${this.waitLabel(ch2, on)}">${a ? "Tryk igen" : this.waitLabel(ch2, on)}</button>`;
   }
   holdRow(ch2) {
     const hold = this.holdText(ch2);

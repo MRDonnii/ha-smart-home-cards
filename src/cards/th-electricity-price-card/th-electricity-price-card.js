@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.13.0';
+const TEP_VER = '1.14.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -248,7 +248,7 @@ class ThElectricityPriceCard extends HTMLElement {
     const ws = this._h.states[this.waitId()];
     const ask = pa.limit_ask == null ? true : pa.limit_ask === true, wt = ws?.state === 'on';
     const limit = mode === 'smart' && Number.isFinite(lp) ? { price: lp, above, over: above >= .5 && (ask || wt), wait: wt, canWait: !!ws && ws.state !== 'unavailable',
-      held: above >= .5 && wt, saving: Number(pa.limit_saving), use: Number(pa.daily_use_kwh), overCost: Number(pa.above_limit_cost), reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor),
+      held: above >= .5 && wt, goal: pa.deadline_target == null ? NaN : Number(pa.deadline_target), saving: Number(pa.limit_saving), use: Number(pa.daily_use_kwh), overCost: Number(pa.above_limit_cost), reach: pa.limit_soc == null ? NaN : Number(pa.limit_soc), floor: pa.price_limit_floor == null ? NaN : Number(pa.price_limit_floor),
       cheaper: Array.isArray(pa.limit_cheaper) ? pa.limit_cheaper.map(w => ({ ...w, t: Date.parse(w.start), e: Date.parse(w.end) })).filter(w => Number.isFinite(w.t)) : null } : null;
     const active = mode && !['off', 'manual'].includes(mode) && (blocks.length > 0 || !!limit?.held);
     if (!(c.force || (plugged && active))) return null;
@@ -269,13 +269,17 @@ class ThElectricityPriceCard extends HTMLElement {
     if (!this.armed()) { this._armAt = Date.now(); this._armT = setTimeout(() => { this._armAt = 0; this.paintArm(); }, 4000); this.paintArm(); return; }
     this._armAt = 0; this.paintArm(); this._h.callService('switch', on ? 'turn_on' : 'turn_off', { entity_id: id });
   }
-  paintArm() { const a = this.armed(); this.shadowRoot?.querySelectorAll('[data-wait]').forEach(b => { b.classList.toggle('armed', a); b.textContent = a ? 'Tryk igen' : b.dataset.wait === 'on' ? 'Vent med resten' : 'Lad til målet'; }); }
+  paintArm() { const a = this.armed(); this.shadowRoot?.querySelectorAll('[data-wait]').forEach(b => { b.classList.toggle('armed', a); b.textContent = a ? 'Tryk igen' : b.dataset.label; }); }
+  // Knappen siger, hvad den lader til i nat (bruger, 2026-10-15: "Vent med resten" skal vise det)
+  waitLabel(ch, on) { const L = ch.limit, goal = Number.isFinite(L.goal) ? L.goal : ch.target;
+    if (!on) return Number.isFinite(goal) ? `Lad til ${Math.round(goal)} %` : 'Lad til målet';
+    return !Number.isFinite(L.reach) ? 'Vent med resten' : Number.isFinite(ch.soc) && L.reach <= ch.soc + .5 ? 'Lad ikke i nat' : `Lad kun til ${Math.round(L.reach)} %`; }
   holdText(ch) { const L = ch.limit; if (!L?.over) return '';
     const best = (L.cheaper || []).reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
     const drive = Number.isFinite(L.use) && L.use > 0 ? ` · I kører ca. ${tn(L.use, 1)} kWh om dagen` : '';
     if (L.wait) return `Venter med <b>${tn(L.above, 1)} kWh</b>${ch.blocks.length && Number.isFinite(L.reach) ? ` · lader til ca. ${Math.round(L.reach)} % i nat` : ''}${best ? ` · resten ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())}` : ''}${drive}`;
     return `<b>${tn(L.above, 1)} kWh</b> kan lades billigere senere${best ? ` · vent til ${tt(new Date(best.t))}${this.dayWord(best.t, Date.now())} og spar ca. <b>${tn(Number(best.saving), 0)} kr</b>` : ''}${drive}`; }
-  waitBtn(ch) { const a = this.armed(), on = !ch.limit.wait; return `<button type="button" class="any${a ? ' armed' : ''}${on ? ' wait' : ''}" data-wait="${on ? 'on' : 'off'}">${a ? 'Tryk igen' : on ? 'Vent med resten' : 'Lad til målet'}</button>`; }
+  waitBtn(ch) { const a = this.armed(), on = !ch.limit.wait; return `<button type="button" class="any${a ? ' armed' : ''}${on ? ' wait' : ''}" data-wait="${on ? 'on' : 'off'}" data-label="${this.waitLabel(ch, on)}">${a ? 'Tryk igen' : this.waitLabel(ch, on)}</button>`; }
   holdRow(ch) { const hold = this.holdText(ch); return hold && !ch.charging ? `<div class="hold on"><span>${hold}</span>${ch.limit.canWait ? this.waitBtn(ch) : ''}</div>` : ''; }
   update() {
     if (this._mode !== 'new' || !this._h || !this.$('pc')) return;

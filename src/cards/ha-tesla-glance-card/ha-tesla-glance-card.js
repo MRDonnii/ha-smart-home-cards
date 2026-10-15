@@ -8,7 +8,7 @@
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 
-const VERSION = "0.7.0";
+const VERSION = "0.7.1";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -458,7 +458,7 @@ class HATeslaGlanceCard extends HTMLElement {
         <div class="pt"><b>Ladeplan · ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} · ${Math.round(soc)} % → ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % · mål ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc(until)}</em></div></div>
       <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl)}</span>` : ""}</div></div>
-      <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held) : ""}</div>`;
+      <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held, L, soc, tg) : ""}</div>`;
   }
   _limitText(L, held) {
     const best = L.cheaper.reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
@@ -476,9 +476,11 @@ class HATeslaGlanceCard extends HTMLElement {
     if (own?.device_id) { const hit = Object.values(reg).find((e) => e.device_id === own.device_id && e.platform === own.platform && e.translation_key === "price_limit_wait"); if (hit) return hit.entity_id; }
     return typeof c.mode === "string" && c.mode.endsWith("_charge_mode") ? c.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "";
   }
-  _waitBtn(held) {
+  // The button says what it charges to tonight (user, 2026-10-15: "Vent med resten" should show it).
+  _waitBtn(held, L, soc, tg) {
     const armed = this._armAt && Date.now() - this._armAt < 4000;
-    return `<button type="button" class="pnow${armed ? " armed" : ""}${held ? "" : " wait"}" data-pwait="${held ? "off" : "on"}">${armed ? "Tryk igen" : held ? "Lad til målet" : "Vent med resten"}</button>`;
+    const label = held ? `Lad til ${Math.round(tg)} %` : !Number.isFinite(L.reach) ? "Vent med resten" : L.reach <= soc + 0.5 ? "Lad ikke i nat" : `Lad kun til ${Math.round(L.reach)} %`;
+    return `<button type="button" class="pnow${armed ? " armed" : ""}${held ? "" : " wait"}" data-pwait="${held ? "off" : "on"}">${armed ? "Tryk igen" : label}</button>`;
   }
   _chooseWait(on) {
     const id = this._waitId(); if (!id || !this._hass) return;
