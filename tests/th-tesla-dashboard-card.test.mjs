@@ -560,7 +560,14 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.match(hp.track, /class="ctl-p ctl-pause"[^>]*data-tip="Pause (?:i morgen |\S+ )?\d\d:\d\d–\d\d:\d\d \(30 min\)/, "the pause between the periods");
   assert.match(hp.track, /data-tip="Lader (?:i morgen |\S+ )?\d\d:\d\d–\d\d:\d\d · 5,5 kWh · 10,54 kr \(1,92 kr\/kWh\) · periode 1 af 2"/);
   assert.match(hp.line, /^2 perioder · lader 45 min · pauser 30 min · færdig ca\. /);
+  // The small battery in the Tesla colours: green, orange at 20 % and below, red at 10 % and below.
+  assert.match(hp.battery, /class="ctl-bat" data-tone="ok" style="--s:72\.0;--t:/);
+  assert.match(model({ ...held, "sensor.battery": s("18", { unit_of_measurement: "%" }) }, scConfig).charge.plan.battery, /data-tone="warn"/);
+  assert.match(model({ ...held, "sensor.battery": s("8", { unit_of_measurement: "%" }) }, scConfig).charge.plan.battery, /data-tone="crit"/);
   const waitHeld = { ...held, "switch.bil_wait_above_the_price_limit": s("on") };
+  const wm = model({ ...waitHeld, "sensor.battery": s("49", { unit_of_measurement: "%" }) }, scConfig).charge;
+  assert.match(wm.target, /^I nat ca\. 70 % · mål \d+ %$/, "waiting with the rest: what the plan aims for tonight");
+  assert.match(wm.plan.battery, /--t:69\.5"/, "the battery fills towards tonight's level");
   assert.equal(model(waitHeld, scConfig).charge.plan.acts.map((x) => x.key).join(), "full", "waiting with the rest: charge to the target after all");
   assert.equal(hm.limit.choice.waitLabel, "Lad ikke i nat", "the car (72 %) is above tonight's level: nothing tonight");
   hm = model({ ...held, "sensor.battery": s("49", { unit_of_measurement: "%" }) }, scConfig).sc;

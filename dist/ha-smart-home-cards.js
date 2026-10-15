@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.165 */
+/* MRDonnii Smart Home Cards v0.5.166 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2779,6 +2779,12 @@ function ctlStatus(parts, { now = Date.now(), charging = false } = {}) {
   const lead = first ? `Starter ${dayWord(next.t, now)}${hm(next.t)}` : `Pause til ${hm(next.t)}`;
   return `${lead}${of > 1 ? ` (periode ${next.n} af ${of})` : ""} \xB7 ${fin}`;
 }
+function ctlBattery(soc, target, charging = false, { low = 20, critical = 10 } = {}) {
+  const s = Math.max(0, Math.min(100, Number(soc) || 0));
+  const t = Math.max(s, Math.min(100, Number.isFinite(Number(target)) ? Number(target) : 100));
+  const tone2 = s <= critical ? "crit" : s <= low ? "warn" : "ok";
+  return `<span class="ctl-bat${charging ? " on" : ""}" data-tone="${tone2}" style="--s:${s.toFixed(1)};--t:${t.toFixed(1)}" role="img" aria-label="Batteri ${Math.round(s)} %${t > s ? `, m\xE5l ${Math.round(t)} %` : ""}"><i class="ctl-bat-f"></i><i class="ctl-bat-g"></i></span>`;
+}
 var CTL_CSS = `
 .ctl-tl{display:block;position:relative;padding:2px 0 14px}
 .ctl-track{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--ctl-text,currentColor) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ctl-text,currentColor) 6%,transparent)}
@@ -2801,7 +2807,19 @@ var CTL_CSS = `
   font-size:12px;line-height:1.35;font-weight:600;color:#f3f5f8;background:rgba(14,17,23,.94);border:1px solid rgba(255,255,255,.12);
   box-shadow:0 10px 26px -10px rgba(0,0,0,.7);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:normal}
 .ctl-tip.on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.ctl-now,.ctl-c.run{animation:none}}
+.ctl-bat{--ctl-bat:var(--ctl-bat-ok,var(--success-color,#22c55e));position:relative;display:inline-block;flex:none;width:30px;height:15px;margin-right:7px;vertical-align:-3px;border-radius:4px;box-sizing:border-box;
+  border:1.5px solid color-mix(in srgb,var(--ctl-text,currentColor) 55%,transparent)}
+.ctl-bat::after{content:"";position:absolute;right:-4.5px;top:3.5px;width:3px;height:5px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--ctl-text,currentColor) 55%,transparent)}
+.ctl-bat-f,.ctl-bat-g{position:absolute;top:1.5px;bottom:1.5px;border-radius:2px}
+.ctl-bat[data-tone=warn]{--ctl-bat:var(--ctl-bat-warn,var(--warning-color,#f59e0b))}
+.ctl-bat[data-tone=crit]{--ctl-bat:var(--ctl-bat-crit,var(--error-color,#ef4444))}
+.ctl-bat-f{left:1.5px;width:calc((100% - 3px) * var(--s) / 100);background:linear-gradient(90deg,color-mix(in srgb,var(--ctl-bat) 65%,transparent),var(--ctl-bat));box-shadow:0 0 8px -1px var(--ctl-bat);transition:width 1.2s ease}
+.ctl-bat-g{left:calc(1.5px + (100% - 3px) * var(--s) / 100);width:0;background:color-mix(in srgb,var(--ctl-bat) 55%,transparent)}
+.ctl-bat.on .ctl-bat-g{animation:ctlBatFill 2.4s ease-in-out infinite}
+.ctl-bat.on .ctl-bat-f{animation:ctlBatGlow 2.4s ease-in-out infinite}
+@keyframes ctlBatFill{0%{width:0;opacity:.95}75%{width:calc((100% - 3px) * (var(--t) - var(--s)) / 100);opacity:.55}100%{width:calc((100% - 3px) * (var(--t) - var(--s)) / 100);opacity:0}}
+@keyframes ctlBatGlow{50%{box-shadow:0 0 12px 0 var(--ctl-bat)}}
+@media (prefers-reduced-motion:reduce){.ctl-now,.ctl-c.run,.ctl-bat.on .ctl-bat-g,.ctl-bat.on .ctl-bat-f{animation:none}}
 `;
 function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ctl-tl")?.parentElement) {
   if (!root || root.__ctlTips) return;
@@ -3560,7 +3578,7 @@ function ttdTemplate(cfg) {
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
   <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
-  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h">${ttdIcon("mdi:timeline-clock-outline", "ptl-i")}<span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
+  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h"><span class="ptl-bat" data-r="ptlBat"></span><span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
   <div class="box monta">
     <button class="monta-main" data-more="${cfg.entities.monta_state ? "monta_state" : "charger_mode"}"><i class="mdot" data-r="montaDot"></i><span><b>${e(cfg.charger_label || (cfg.entities.monta_state ? "Monta" : "Lader"))}</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -3812,9 +3830,9 @@ button[data-dead]:hover{background:none}
 .bar-mark{position:absolute;top:-5px;bottom:-5px;width:3px;left:calc(var(--target,0) * 1% - 1.5px);border-radius:2px;background:var(--tdc-text)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 ${CTL_CSS}
-.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text)}
+.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text);--ctl-bat-ok:var(--tdc-green);--ctl-bat-warn:var(--tdc-orange);--ctl-bat-crit:var(--tdc-red)}
 .ptl-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
-.ptl-i{flex:none;width:20px;height:20px;color:var(--ctl-ev)}
+.ptl-bat{flex:none;display:flex}.ptl-bat .ctl-bat{width:36px;height:18px;margin-right:4px}
 .ptl-t{display:grid;min-width:0}.ptl-t b{font-size:15px;font-weight:650}
 .ptl-t small{font-size:13px;color:var(--tdc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptl-line{margin:6px 0 0;font-size:12.5px;color:var(--tdc-muted)}
@@ -4677,7 +4695,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
     const pluggedNow = !!(status.plugged || cable === true || plug === true);
-    const planTl = this._planTimeline(f, status, pluggedNow);
+    const planTl = this._planTimeline(f, status, pluggedNow, soc, target);
     const planEnd = planTl && Number.isFinite(planTl.end) ? new Date(planTl.end) : null;
     const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? planEnd || ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
@@ -4712,7 +4730,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`,
       socPercent: soc == null ? 0 : ttdClamp(soc, 0, 100),
       socTone,
-      target: target == null ? null : `M\xE5l ${f.number(target, 0)} %`,
+      target: target == null ? null : planTl?.aim != null ? `I nat ca. ${f.number(planTl.aim, 0)} % \xB7 m\xE5l ${f.number(target, 0)} %` : `M\xE5l ${f.number(target, 0)} %`,
       targetPercent: target == null ? null : ttdClamp(target, 0, 100),
       power: this._value("charger_power", 1),
       rate: rateText,
@@ -5231,7 +5249,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
    * charging periods, the pauses between them with a tooltip each, the plan in words and the buttons that override it
    * (Claude AI, 2026-10-16; user: "ladnings kortet … mere besked om hvornår den lader … ændre til fuld ladning og
    * overstyre det der er igang"). Only while the cable is in. */
-  _planTimeline(f, status, plugged) {
+  _planTimeline(f, status, plugged, soc = null, target = null) {
     if (!this._cfg.smart_charge || !plugged) return null;
     const modeObj = this._sc("charge_mode");
     const mode = modeObj?.state;
@@ -5273,7 +5291,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       track: track2,
       acts,
       goal,
-      end: charge ? ctlSummary(parts).end : NaN
+      end: charge ? ctlSummary(parts).end : NaN,
+      // Waiting with the dear rest, tonight's level is what the plan aims for.
+      aim: waiting && a.limit_soc != null && Number(a.limit_soc) > (soc ?? 0) ? Number(a.limit_soc) : null,
+      battery: soc == null ? "" : ctlBattery(soc, waiting && a.limit_soc != null ? Number(a.limit_soc) : goal ?? target ?? 100, !!status.charging, this._cfg.battery)
     };
   }
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
@@ -6060,6 +6081,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("ptl", !c2.plan);
     if (c2.plan && r.ptl) {
       this._t("ptlTitle", c2.plan.title);
+      if (r.ptlBat && r.ptlBat.dataset.sig !== c2.plan.battery) {
+        r.ptlBat.dataset.sig = c2.plan.battery;
+        r.ptlBat.innerHTML = c2.plan.battery;
+      }
       this._t("ptlStatus", c2.plan.status);
       this._t("ptlLine", c2.plan.line);
       if (r.ptlTrack.dataset.sig !== c2.plan.track) {
@@ -7439,7 +7464,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   }
   _build() {
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));--good:var(--dashboard-success,var(--success-color,#20e3a2));--warn:var(--dashboard-warning,var(--warning-color,#fb923c));--muted:var(--secondary-text-color,#94a3b8);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)))}
+      :host{display:block;--chg:var(--dashboard-ev,#b7a4ff);--accent:var(--dashboard-accent,var(--primary-color,#38bdf8));--good:var(--dashboard-success,var(--success-color,#20e3a2));--warn:var(--dashboard-warning,var(--warning-color,#fb923c));--muted:var(--secondary-text-color,#94a3b8);--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.1)))}
       *{box-sizing:border-box}
       ha-card{display:block;position:relative;overflow:hidden;height:100%;min-height:0;padding:12px 14px 10px;border-radius:var(--ha-card-border-radius,18px);cursor:pointer;container-type:inline-size;
         background:radial-gradient(120% 140% at 85% 0%,color-mix(in srgb,var(--tone,var(--accent)) 16%,transparent),transparent 55%),var(--ha-card-background,var(--card-background-color));transition:transform .2s ease}
@@ -7456,7 +7481,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .soc span{font-size:13px;color:var(--muted);font-weight:650}
       .bar{position:relative;height:9px;border-radius:99px;background:color-mix(in srgb,var(--primary-text-color) 9%,transparent);overflow:visible}
       .fill{position:absolute;inset:0 auto 0 0;width:var(--soc,0%);border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--tone) 55%,transparent),var(--tone));box-shadow:0 0 12px color-mix(in srgb,var(--tone) 45%,transparent);transition:width .8s ease}
-      .charging .fill{background:linear-gradient(90deg,color-mix(in srgb,var(--good) 40%,transparent),var(--good),color-mix(in srgb,var(--good) 40%,white),var(--good));background-size:220% 100%;animation:flow 2.4s linear infinite}
+      .charging .fill{background:linear-gradient(90deg,color-mix(in srgb,var(--chg) 40%,transparent),var(--chg),color-mix(in srgb,var(--chg) 40%,white),var(--chg));background-size:220% 100%;animation:flow 2.4s linear infinite}
       .marker{position:absolute;top:-4px;bottom:-4px;left:var(--target);width:2px;border-radius:2px;background:var(--primary-text-color);opacity:.7}
       .marker[hidden]{display:none}
       .line{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);min-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -7505,10 +7530,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
       :host([v2]) .driving .fx .ln{opacity:1;left:0;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--tone,var(--accent)) 70%,#fff),transparent);animation:speed 0.9s linear infinite}
       :host([v2]) .fx .l1{top:38%;width:46%}:host([v2]) .fx .l2{top:58%;width:30%;animation-delay:-.35s!important}:host([v2]) .fx .l3{top:76%;width:54%;animation-delay:-.6s!important}
       @keyframes speed{from{transform:translateX(160%)}to{transform:translateX(-120%)}}
-      :host([v2]) .charging .fx .sp{opacity:1;bottom:18%;width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px 2px var(--good);animation:spark 2.4s ease-out infinite}
+      :host([v2]) .charging .fx .sp{opacity:1;bottom:18%;width:7px;height:7px;border-radius:50%;background:var(--chg);box-shadow:0 0 10px 2px var(--chg);animation:spark 2.4s ease-out infinite}
       :host([v2]) .fx .s1{left:28%}:host([v2]) .fx .s2{left:52%;animation-delay:-.8s!important}:host([v2]) .fx .s3{left:74%;animation-delay:-1.6s!important}
       @keyframes spark{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:1}100%{transform:translateY(-60px) scale(.2);opacity:0}}
-      :host([v2]) .charging .glow{background:radial-gradient(closest-side,color-mix(in srgb,var(--good) 70%,transparent),transparent);opacity:.95}
+      :host([v2]) .charging .glow{background:radial-gradient(closest-side,color-mix(in srgb,var(--chg) 70%,transparent),transparent);opacity:.95}
       :host([v2]) .driving .glow{animation:roadGlow 1.2s ease-in-out infinite}@keyframes roadGlow{50%{opacity:.4;transform:scaleX(.9)}}
       @media(max-width:600px){:host([v2]) .vchip{display:none}:host([v2]) .pill{font-size:10px;padding:2px 8px 2px 6px}:host([v2]) .name{flex:none}}
       :host([v2]) .has-plan .car{margin-right:6px}
@@ -7529,10 +7554,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .show-plan .grid{opacity:.12;filter:blur(2px) saturate(.6);transform:scale(.97) translateY(-6px);pointer-events:none}
       .plan{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 34px 10px 14px;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .45s ease,transform .45s cubic-bezier(.16,1,.3,1);--ev:var(--dashboard-ev,#b7a4ff)}
       .show-plan .plan{opacity:1;transform:none;pointer-events:auto}
-      .plan.is-charge{--ev:var(--good)}
-      .pic.chg{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good);box-shadow:0 0 18px -4px var(--good)}.pic.chg ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
-      @keyframes boltPulse{50%{transform:scale(1.18);filter:drop-shadow(0 0 6px var(--good))}}
-      .pt .kw{color:var(--good)}.psoc{margin-left:10px;font-size:26px;font-weight:850;line-height:1}.psoc small{font-size:13px;color:var(--muted)}
+      .pic.chg{background:color-mix(in srgb,var(--chg) 20%,transparent);color:var(--chg);box-shadow:0 0 18px -4px var(--chg)}.pic.chg ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
+      @keyframes boltPulse{50%{transform:scale(1.18);filter:drop-shadow(0 0 6px var(--chg))}}
+      .pt .kw{color:var(--chg)}.psoc{margin-left:10px;font-size:26px;font-weight:850;line-height:1}.psoc small{font-size:13px;color:var(--muted)}
       .pbar.live i{background:linear-gradient(90deg,color-mix(in srgb,var(--ev) 40%,transparent),var(--ev),color-mix(in srgb,var(--ev) 40%,white),var(--ev));background-size:220% 100%;animation:flow 2.4s linear infinite}
       .grid{transform-origin:50% 0}
       ha-card:not(.show-plan) .plan{transform:translateY(-14px)}
@@ -7565,6 +7589,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;background:var(--good);box-shadow:0 0 8px var(--good)}
       .tticks{position:absolute;left:0;right:0;bottom:-2px;height:12px}.tt{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap}.tt[style*="left:0"]{transform:none}.tt.end{transform:translateX(-100%);color:var(--good);font-weight:700}
       ${CTL_CSS}
+      .plan .ctl-bat{--ctl-bat-ok:var(--good);--ctl-bat-warn:var(--warn);--ctl-text:var(--primary-text-color)}.pt span.ctl-bat{display:inline-block;overflow:visible;vertical-align:-3px}.pt span.ctl-bat{display:inline-block;overflow:visible;vertical-align:-3px}
       .plan .ctl-tl{--ctl-ev:var(--ev);--ctl-muted:var(--muted);--ctl-good:var(--good);--ctl-warn:var(--warn);--ctl-text:var(--primary-text-color)}
       .tx{position:absolute;top:2px;bottom:2px;border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 32%,transparent) 0 3px,transparent 3px 6px)}
       .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
@@ -7578,22 +7603,22 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .cg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:center;height:100%}
       .batt{position:relative;height:62px;border-radius:14px;padding:4px;background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary-text-color) 16%,transparent)}
       .batt::after{content:"";position:absolute;right:-7px;top:50%;width:5px;height:22px;margin-top:-11px;border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--primary-text-color) 22%,transparent)}
-      .bfill{position:relative;height:100%;border-radius:10px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--good) 55%,transparent),var(--good));box-shadow:0 0 22px -4px var(--good);transition:width 1s ease}
+      .bfill{position:relative;height:100%;border-radius:10px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--chg) 55%,transparent),var(--chg));box-shadow:0 0 22px -4px var(--chg);transition:width 1s ease}
       .bfill .flow{position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 14px,rgba(255,255,255,.28) 14px 22px);animation:flowIn 1.1s linear infinite}@keyframes flowIn{from{background-position:-44px 0}to{background-position:0 0}}
       .btarget{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#fff;opacity:.7;border-radius:2px}
       .bsoc{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:850;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}.bsoc small{font-size:14px;opacity:.85}
-      .bbolt{position:absolute;right:14px;top:50%;transform:translateY(-50%);--mdc-icon-size:26px;color:#fff;filter:drop-shadow(0 0 8px var(--good));animation:boltPulse 1.4s ease-in-out infinite}
-      .ckw{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}.ckw b{font-size:28px;font-weight:850;color:var(--good);text-shadow:0 0 18px color-mix(in srgb,var(--good) 55%,transparent);animation:kwPulse 2.2s ease-in-out infinite}.ckw small{font-size:13px;color:var(--muted)}.ckw span{margin-left:6px;font-size:11px;color:var(--muted)}
+      .bbolt{position:absolute;right:14px;top:50%;transform:translateY(-50%);--mdc-icon-size:26px;color:#fff;filter:drop-shadow(0 0 8px var(--chg));animation:boltPulse 1.4s ease-in-out infinite}
+      .ckw{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}.ckw b{font-size:28px;font-weight:850;color:var(--chg);text-shadow:0 0 18px color-mix(in srgb,var(--chg) 55%,transparent);animation:kwPulse 2.2s ease-in-out infinite}.ckw small{font-size:13px;color:var(--muted)}.ckw span{margin-left:6px;font-size:11px;color:var(--muted)}
       @keyframes kwPulse{50%{opacity:.75}}
       .cnums{display:flex;flex-wrap:wrap;gap:3px 14px;margin-top:4px;font-size:11.5px;color:var(--muted)}.cnums b{color:var(--primary-text-color)}.cnums .save b{color:var(--good)}
 
       @media(max-width:600px){.pstart b{font-size:19px}.pnums{flex-wrap:nowrap;gap:9px;font-size:10px}.pnums b{font-size:12.5px}.pnums span{white-space:nowrap}.pnums .save{margin-left:auto;padding:3px 8px 3px 6px}.pnums .save ha-icon{display:none}.ring{width:38px;height:38px}.pt b{font-size:13px}.pt span{font-size:10px}}
       @media (prefers-reduced-motion:reduce){.nowdot,.bfill .flow,.bbolt,.ckw b{animation:none}}
-      .pt b .kw{display:inline;font-size:inherit;color:var(--good)}
-      .plan.is-charge .pstart b{color:var(--good);text-shadow:0 0 16px color-mix(in srgb,var(--good) 55%,transparent)}
-      .ring.chg{--ev:var(--good)}.ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
+      .pt b .kw{display:inline;font-size:inherit;color:var(--chg)}
+      .plan.is-charge .pstart b{color:var(--chg);text-shadow:0 0 16px color-mix(in srgb,var(--chg) 55%,transparent)}
+      .ring.chg .core ha-icon{animation:boltPulse 1.4s ease-in-out infinite}
       .cbar{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary-text-color) 6%,transparent)}
-      .cfill{position:relative;height:100%;border-radius:7px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--good) 55%,transparent),var(--good));box-shadow:0 0 14px -2px var(--good);transition:width 1s ease}
+      .cfill{position:relative;height:100%;border-radius:7px;overflow:hidden;background:linear-gradient(90deg,color-mix(in srgb,var(--chg) 55%,transparent),var(--chg));box-shadow:0 0 14px -2px var(--chg);transition:width 1s ease}
       .cfill i{position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 10px,rgba(255,255,255,.3) 10px 16px);animation:flowIn 1.1s linear infinite}
       .ctg{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:2px;background:#fff;opacity:.75}
       .dots{position:absolute;right:11px;top:50%;z-index:4;display:flex;flex-direction:column;gap:6px;transform:translateY(-50%)}.dots[hidden]{display:none}
@@ -7849,8 +7874,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
       held: held && Number.isFinite(L3.reach) ? { reach: L3.reach, later } : null,
       dear: (part) => over && !held && part.kwh > 0 && part.cost / part.kwh > L3.price + 1e-6
     });
-    return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
-        <div class="pt"><b>Ladeplan \xB7 ${esc3(MODE[p.mode] || p.mode)}</b><span>${esc3(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
+    const aim = held && Number.isFinite(L3.reach) && p.blocks.length && L3.reach > soc ? L3.reach : tg;
+    return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, aim))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
+        <div class="pt"><b>Ladeplan \xB7 ${esc3(MODE[p.mode] || p.mode)}</b><span>${ctlBattery(soc, aim, false)}${esc3(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L3.price, 2)} kr` : running ? "nu" : hm2(first.t)}</b><em>${esc3(until2)}</em></div></div>
       <div class="ctl-tl">${track2}</div>
       <div class="pnums${over && L3.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L3, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L3.canWait ? this._waitBtn(held, L3, soc, tg) : ""}</div>`;
@@ -7906,6 +7932,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const hm2 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c2.battery) ?? 0;
     const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
+    const L3 = p?.limit;
+    const held = !!L3 && L3.wait && L3.above >= 0.5 && Number.isFinite(L3.reach) && L3.reach > soc;
+    const aim = held ? L3.reach : tg;
     const pw = this._pw();
     const raw = this._num(pw);
     const kw = raw == null ? null : this._unit(pw) === "W" || raw > 100 ? raw / 1e3 : raw;
@@ -7920,10 +7949,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 6e4) : null;
     const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
     const prev = c2.preview === "charge";
-    return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
-        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc3(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
-        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm2(finT) : `${Math.round(soc)} %`}</b><em>${esc3(leftTxt)}</em></div></div>
-      ${tl || `<div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>`}
+    return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, aim))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
+        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${ctlBattery(soc, aim, true)}${esc3(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(aim)} %${held ? ` \xB7 m\xE5l ${Math.round(tg)} %` : ""}${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? held || Number.isFinite(planEnd) ? "F\xE6rdig kl." : "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm2(finT) : `${Math.round(soc)} %`}</b><em>${esc3(leftTxt)}</em></div></div>
+      ${tl || `<div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, aim)}%"></i></div>`}
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   // Spinning wheels while driving, like the Tesla app (Claude AI, 2026-10-14). `image_driving_wheels` lists each wheel in the
@@ -8061,7 +8090,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const charging = this._isCharging();
     const plugged = ["on", "true", "connected"].includes(String(this._val(c2.plugged) || "").toLowerCase());
     const where = this._val(c2.location);
-    const tone2 = charging ? "var(--good)" : soc != null && soc < 20 ? "var(--warn)" : "var(--accent)";
+    const tone2 = charging ? "var(--chg)" : soc != null && soc < 20 ? "var(--warn)" : "var(--accent)";
     const card = root.querySelector("ha-card");
     card.style.setProperty("--tone", tone2);
     card.classList.toggle("charging", charging);

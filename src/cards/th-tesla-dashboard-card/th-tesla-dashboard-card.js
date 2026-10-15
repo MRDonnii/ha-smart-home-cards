@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-import { CTL_CSS, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
+import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
 const TTD_VERSION = "1.20.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
@@ -608,7 +608,7 @@ function ttdTemplate(cfg) {
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
   <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
-  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h">${ttdIcon("mdi:timeline-clock-outline", "ptl-i")}<span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
+  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h"><span class="ptl-bat" data-r="ptlBat"></span><span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
   <div class="box monta">
     <button class="monta-main" data-more="${cfg.entities.monta_state ? "monta_state" : "charger_mode"}"><i class="mdot" data-r="montaDot"></i><span><b>${e(cfg.charger_label || (cfg.entities.monta_state ? "Monta" : "Lader"))}</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -861,9 +861,9 @@ button[data-dead]:hover{background:none}
 .bar-mark{position:absolute;top:-5px;bottom:-5px;width:3px;left:calc(var(--target,0) * 1% - 1.5px);border-radius:2px;background:var(--tdc-text)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 ${CTL_CSS}
-.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text)}
+.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text);--ctl-bat-ok:var(--tdc-green);--ctl-bat-warn:var(--tdc-orange);--ctl-bat-crit:var(--tdc-red)}
 .ptl-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
-.ptl-i{flex:none;width:20px;height:20px;color:var(--ctl-ev)}
+.ptl-bat{flex:none;display:flex}.ptl-bat .ctl-bat{width:36px;height:18px;margin-right:4px}
 .ptl-t{display:grid;min-width:0}.ptl-t b{font-size:15px;font-weight:650}
 .ptl-t small{font-size:13px;color:var(--tdc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptl-line{margin:6px 0 0;font-size:12.5px;color:var(--tdc-muted)}
@@ -1775,7 +1775,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const pluggedNow = !!(status.plugged || cable === true || plug === true);
     // The plan as a timeline with its pauses (Claude AI, 2026-10-16): its last period's end is the expected end, not the
     // end of the next period (it said 01:00 for a plan that ran until 05:45).
-    const planTl = this._planTimeline(f, status, pluggedNow);
+    const planTl = this._planTimeline(f, status, pluggedNow, soc, target);
     const planEnd = planTl && Number.isFinite(planTl.end) ? new Date(planTl.end) : null;
     const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? planEnd || ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
@@ -1811,7 +1811,8 @@ class ThTeslaDashboardCard extends HTMLElement {
       sub: [cableText, activity].filter(Boolean).join(" · ") || TTD_DASH,
       badge: { text: TTD_TEXT.status[badgeKey], tone: TTD_STATUS_TONES[badgeKey], icon: TTD_STATUS_ICONS[badgeKey] },
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`, socPercent: soc == null ? 0 : ttdClamp(soc, 0, 100), socTone,
-      target: target == null ? null : `Mål ${f.number(target, 0)} %`, targetPercent: target == null ? null : ttdClamp(target, 0, 100),
+      target: target == null ? null : planTl?.aim != null ? `I nat ca. ${f.number(planTl.aim, 0)} % · mål ${f.number(target, 0)} %` : `Mål ${f.number(target, 0)} %`,
+      targetPercent: target == null ? null : ttdClamp(target, 0, 100),
       power: this._value("charger_power", 1), rate: rateText, finish, remaining,
       // The charger line says where in the plan it is ("Pause til 02:30 (periode 3 af 5)"); the plan box has the rest.
       monta: montaLabel ?? (mode ? (planTl?.status ? planTl.status.split(" · ")[0] : this._chargerText(mode)) : TTD_DASH),
@@ -2264,7 +2265,7 @@ class ThTeslaDashboardCard extends HTMLElement {
    * charging periods, the pauses between them with a tooltip each, the plan in words and the buttons that override it
    * (Claude AI, 2026-10-16; user: "ladnings kortet … mere besked om hvornår den lader … ændre til fuld ladning og
    * overstyre det der er igang"). Only while the cable is in. */
-  _planTimeline(f, status, plugged) {
+  _planTimeline(f, status, plugged, soc = null, target = null) {
     if (!this._cfg.smart_charge || !plugged) return null;
     const modeObj = this._sc("charge_mode");
     const mode = modeObj?.state;
@@ -2302,6 +2303,9 @@ class ThTeslaDashboardCard extends HTMLElement {
       status: status_ || (mode === "off" ? "På pause – planen er stoppet" : ""),
       line: charge ? `${ctlLine(parts, now)}${wait}` : "",
       track, acts, goal, end: charge ? ctlSummary(parts).end : NaN,
+      // Waiting with the dear rest, tonight's level is what the plan aims for.
+      aim: waiting && a.limit_soc != null && Number(a.limit_soc) > (soc ?? 0) ? Number(a.limit_soc) : null,
+      battery: soc == null ? "" : ctlBattery(soc, waiting && a.limit_soc != null ? Number(a.limit_soc) : goal ?? target ?? 100, !!status.charging, this._cfg.battery),
     };
   }
 
@@ -3055,6 +3059,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._hide("ptl", !c.plan);
     if (c.plan && r.ptl) {
       this._t("ptlTitle", c.plan.title);
+      if (r.ptlBat && r.ptlBat.dataset.sig !== c.plan.battery) { r.ptlBat.dataset.sig = c.plan.battery; r.ptlBat.innerHTML = c.plan.battery; }
       this._t("ptlStatus", c.plan.status);
       this._t("ptlLine", c.plan.line);
       if (r.ptlTrack.dataset.sig !== c.plan.track) { r.ptlTrack.dataset.sig = c.plan.track; r.ptlTrack.innerHTML = c.plan.track; }

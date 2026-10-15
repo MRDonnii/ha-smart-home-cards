@@ -152,6 +152,18 @@ export function ctlStatus(parts, { now = Date.now(), charging = false } = {}) {
   return `${lead}${of > 1 ? ` (periode ${next.n} af ${of})` : ""} · ${fin}`;
 }
 
+/**
+ * A small battery that shows the level and, while charging, keeps filling towards the target (user, 2026-10-16: "en lille
+ * batteri animation også i kortet som fyldes løbende"), in the Tesla battery colours: green, orange at 20 % and below, red
+ * at 10 % and below (user: "skal følge de normale tesla batteri farver"; the Tesla card's own limits). soc/target in %.
+ */
+export function ctlBattery(soc, target, charging = false, { low = 20, critical = 10 } = {}) {
+  const s = Math.max(0, Math.min(100, Number(soc) || 0));
+  const t = Math.max(s, Math.min(100, Number.isFinite(Number(target)) ? Number(target) : 100));
+  const tone = s <= critical ? "crit" : s <= low ? "warn" : "ok";
+  return `<span class="ctl-bat${charging ? " on" : ""}" data-tone="${tone}" style="--s:${s.toFixed(1)};--t:${t.toFixed(1)}" role="img" aria-label="Batteri ${Math.round(s)} %${t > s ? `, mål ${Math.round(t)} %` : ""}"><i class="ctl-bat-f"></i><i class="ctl-bat-g"></i></span>`;
+}
+
 export const CTL_CSS = `
 .ctl-tl{display:block;position:relative;padding:2px 0 14px}
 .ctl-track{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--ctl-text,currentColor) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ctl-text,currentColor) 6%,transparent)}
@@ -174,7 +186,19 @@ export const CTL_CSS = `
   font-size:12px;line-height:1.35;font-weight:600;color:#f3f5f8;background:rgba(14,17,23,.94);border:1px solid rgba(255,255,255,.12);
   box-shadow:0 10px 26px -10px rgba(0,0,0,.7);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:normal}
 .ctl-tip.on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.ctl-now,.ctl-c.run{animation:none}}
+.ctl-bat{--ctl-bat:var(--ctl-bat-ok,var(--success-color,#22c55e));position:relative;display:inline-block;flex:none;width:30px;height:15px;margin-right:7px;vertical-align:-3px;border-radius:4px;box-sizing:border-box;
+  border:1.5px solid color-mix(in srgb,var(--ctl-text,currentColor) 55%,transparent)}
+.ctl-bat::after{content:"";position:absolute;right:-4.5px;top:3.5px;width:3px;height:5px;border-radius:0 2px 2px 0;background:color-mix(in srgb,var(--ctl-text,currentColor) 55%,transparent)}
+.ctl-bat-f,.ctl-bat-g{position:absolute;top:1.5px;bottom:1.5px;border-radius:2px}
+.ctl-bat[data-tone=warn]{--ctl-bat:var(--ctl-bat-warn,var(--warning-color,#f59e0b))}
+.ctl-bat[data-tone=crit]{--ctl-bat:var(--ctl-bat-crit,var(--error-color,#ef4444))}
+.ctl-bat-f{left:1.5px;width:calc((100% - 3px) * var(--s) / 100);background:linear-gradient(90deg,color-mix(in srgb,var(--ctl-bat) 65%,transparent),var(--ctl-bat));box-shadow:0 0 8px -1px var(--ctl-bat);transition:width 1.2s ease}
+.ctl-bat-g{left:calc(1.5px + (100% - 3px) * var(--s) / 100);width:0;background:color-mix(in srgb,var(--ctl-bat) 55%,transparent)}
+.ctl-bat.on .ctl-bat-g{animation:ctlBatFill 2.4s ease-in-out infinite}
+.ctl-bat.on .ctl-bat-f{animation:ctlBatGlow 2.4s ease-in-out infinite}
+@keyframes ctlBatFill{0%{width:0;opacity:.95}75%{width:calc((100% - 3px) * (var(--t) - var(--s)) / 100);opacity:.55}100%{width:calc((100% - 3px) * (var(--t) - var(--s)) / 100);opacity:0}}
+@keyframes ctlBatGlow{50%{box-shadow:0 0 12px 0 var(--ctl-bat)}}
+@media (prefers-reduced-motion:reduce){.ctl-now,.ctl-c.run,.ctl-bat.on .ctl-bat-g,.ctl-bat.on .ctl-bat-f{animation:none}}
 `;
 
 /**
