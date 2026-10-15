@@ -210,7 +210,9 @@ function updateMarquees(root, selector) {
     const style = getComputedStyle(el);
     const available = el.clientWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0);
     const distance = Math.ceil(track.scrollWidth - available);
-    const scroll = available > 0 && distance > 1;
+    // Boxes that bleed into the padding (--bleed) let a few px of overflow show instead of scrolling.
+    const bleed = parseFloat(style.getPropertyValue("--bleed")) || 0;
+    const scroll = available > 0 && distance > Math.max(1, bleed * 0.5);
     el.classList.toggle("marquee", scroll);
     if (scroll) {
       el.style.setProperty("--marquee-distance", `${distance}px`);
@@ -952,6 +954,18 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:13.5px;line-height:16px}
         :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:9.5px}
         :host([v2][compact]) .item .label{grid-column:1/-1;grid-row:3;margin-top:4px;padding-top:3px;font-size:9px}}
+      /* Claude AI, 2026-10-15; user: "når tekst ruller er venstre side skåret af brat i stedet for at fylde ud til kortets kant":
+         in v2 a text box bleeds out into the tile's padding (label: to the card edge; value/detail: into the column gap),
+         so scrolling text runs out to the edge and fades there instead of being cut inside the padding. --px is the
+         tile's side padding, --vb the bleed beside the chip and ring. */
+      :host([v2]) .item{--px:12px;--vb:7px}
+      @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{--px:10px}}
+      @media(max-width:600px){:host([v2]) .item{--px:8px;--vb:8px}}
+      :host([v2][compact]) .item{--px:10px;--vb:7px}
+      @media(max-width:600px){:host([v2][compact]) .item{--px:7px;--vb:4px}}
+      :host([v2]) .item:not(.security) :is(.value,.detail){--bleed:var(--vb);margin-inline:calc(-1 * var(--vb));padding-inline:var(--vb);max-width:none;text-overflow:clip}
+      :host([v2]) .item:not(.security) .label{--bleed:var(--px);margin-inline:calc(-1 * var(--px));padding-inline:var(--px);max-width:none;text-overflow:clip;border-top-color:transparent;background:linear-gradient(color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent),color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)) var(--px) 0/calc(100% - 2 * var(--px)) 1px no-repeat;background-origin:border-box}
+      :host([v2]) .item:not(.security) .marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
