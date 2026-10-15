@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.155 */
+/* MRDonnii Smart Home Cards v0.5.156 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -35525,7 +35525,7 @@ console.info(`%c HA HOME HEADER CARD %c v${VERSION28} `, "color:white;background
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION29 = "1.5.0";
+var VERSION29 = "1.6.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -37033,9 +37033,20 @@ ${LUX_KEYFRAMES}
   }
   // ---------- month tiles (Claude AI, 2026-10-13; user: "Hvad med mine måneds forbrug kort") ----------
   // Daily end-of-day states of the month meters from the recorder (this month and last), every 30 minutes.
+  _carMonthCost() {
+    const c2 = this.config || {};
+    const direct = this._num(c2.car_month_cost_entity);
+    if (Number.isFinite(direct) && !Array.isArray(this._state(c2.car_month_cost_entity)?.attributes?.months)) return direct;
+    const months = this._state(c2.car_month_cost_entity)?.attributes?.months;
+    if (!Array.isArray(months)) return Number.NaN;
+    const now = /* @__PURE__ */ new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const m = months.find((x) => x?.month === key);
+    return m ? Number(m.cost) : Number.NaN;
+  }
   async _utilStats() {
     const c2 = this.config || {};
-    const ids = [c2.monthly_energy_entity, c2.water_month_entity, c2.heat_month_entity].filter(Boolean);
+    const ids = [c2.monthly_energy_entity, c2.water_month_entity, c2.heat_month_entity, c2.car_month_entity].filter(Boolean);
     if (!ids.length || !this._hass?.callWS || this._utilBusy || Date.now() - (this._utilAt || 0) < 30 * 6e4) return;
     this._utilBusy = true;
     this._utilAt = Date.now();
@@ -37060,7 +37071,7 @@ ${LUX_KEYFRAMES}
     const days = this._utilDays?.get(id);
     const now = /* @__PURE__ */ new Date();
     const cur = this._num(id);
-    const cost = this._num(costId);
+    const cost = costId === "__car" ? this._carMonthCost() : this._num(costId);
     if (!days?.length || !Number.isFinite(cur)) return empty;
     const m0 = new Date(now.getFullYear(), now.getMonth(), 1);
     const p0 = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -37322,13 +37333,26 @@ ${LUX_KEYFRAMES}
         .rt .rt-v{position:relative;right:auto;bottom:auto;justify-content:flex-end}
         .rt .rt-tr{position:absolute;right:100%;top:calc(50% - 8px);display:block;width:12px;height:12px;margin:0 2px 0 0;--mdc-icon-size:12px}
         @container (max-width:130px){.rt .rt-v{font-size:23px}}
-        @container (max-height:53px) or (max-width:103px){
+        /* Narrow tiles too keep humidity bottom left and temperature bottom right, only smaller; just tiny ones stack. */
+        @container (max-width:103px) and (min-width:80px){
+          .rt .rt-v{font-size:19px}.rt-tg{display:none}.rt-lft{padding-right:6px}
+          .rt-lft .rt-sub{font-size:9.5px}.rt-rh ha-icon{--mdc-icon-size:11px}
+        }
+        @container (max-width:79px){
           .rt-r2{display:block;min-height:0}
           .rt .rt-v{position:absolute;right:11px;bottom:20px;font-size:21px}
           .rt-lft{position:absolute;right:11px;bottom:6px;padding:0}
           .rt-lft .rt-sub{justify-content:flex-end}.rt-tg{display:none}
         }
-        @container (max-height:53px){.rt-r1{padding-right:74px}.rt-n{font-size:12.5px}}
+        /* Low tiles keep the same layout as tall ones (user, 2026-10-15: "mine er p\xE6ne og symmetriske" \u2013 the brother's low
+           tiles put the temperature up and the humidity under it): name, status, humidity bottom left, temperature bottom
+           right \u2013 only tighter and a little smaller. */
+        @container (max-height:62px) and (min-width:80px){
+          .rooms .rt{gap:0;padding-top:5px;padding-bottom:5px}
+          .rt-n{font-size:12px;line-height:1.15}.rt-r1 em{font-size:8.5px}
+          .rt-r2{min-height:0}.rt .rt-v{font-size:20px}.rt-tg{display:none}
+          .rt-lft{padding-bottom:0}.rt-lft .rt-sub{height:12px;line-height:12px;font-size:9.5px}
+        }
         /* Claude AI, 2026-10-15; user: the room tiles look good on his own front page but not on his brother's (long names such as
            "Master-badev\xE6relse" / "Udestue / havestue"). Tall tiles wrap the name over two lines instead of scrolling it; narrow
            tiles use a slightly smaller name and status. */
@@ -37364,7 +37388,7 @@ ${LUX_KEYFRAMES}
         @media(min-width:701px){.card.portrait .rooms{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 21px) / 4)),1fr))}}
         @media(max-width:700px){.utilities{grid-template-columns:1fr}.body{grid-template-columns:1fr}.card{padding:14px}}
         ${MARQUEE_CSS}
-      </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}">${this.config.show_header === false ? "" : `<header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header>`}<div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
+      </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}">${this.config.show_header === false ? "" : `<header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header>`}<div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section><section class="utility car" hidden></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
       const navigate = (path) => {
         if (!path) return;
         history.pushState(null, "", path);
@@ -37373,6 +37397,7 @@ ${LUX_KEYFRAMES}
       this.shadowRoot.querySelector(".utility.electricity").onclick = () => navigate(this.config.electricity_path);
       this.shadowRoot.querySelector(".utility.water").onclick = () => navigate(this.config.water_path);
       this.shadowRoot.querySelector(".utility.heat").onclick = () => navigate(this.config.heat_path);
+      this.shadowRoot.querySelector(".utility.car").onclick = () => navigate(this.config.car_path);
       const roomsEl = this.shadowRoot.querySelector(".rooms");
       const openRoom = (e) => {
         if (roomsEl._vc) {
@@ -37406,21 +37431,26 @@ ${LUX_KEYFRAMES}
     const health = this.shadowRoot.querySelector(".health") || document.createElement("span");
     health.textContent = healthy ? "Alt ser normalt ud" : "Kr\xE6ver opm\xE6rksomhed";
     health.style.color = healthy ? "var(--success-color,#20e3a2)" : "var(--warning-color,#fb923c)";
-    const utilityKeys = { ".electricity": "monthly_energy_entity", ".water": "water_month_entity", ".heat": "heat_month_entity" };
-    const shown = Object.values(utilityKeys).filter((k) => c2[k] !== "").length;
+    const utilityKeys = { ".electricity": "monthly_energy_entity", ".water": "water_month_entity", ".heat": "heat_month_entity", ".car": "car_month_entity" };
+    const off = (k) => k === "car_month_entity" ? !c2[k] : c2[k] === "";
+    const shown = Object.values(utilityKeys).filter((k) => !off(k)).length;
     this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count", String(Math.max(shown, 1)));
     const utility = (sel, icon4, label, value, unit, cost, valid2) => {
       const tile2 = this.shadowRoot.querySelector(sel);
-      tile2.hidden = c2[utilityKeys[sel]] === "";
+      tile2.hidden = off(utilityKeys[sel]);
       if (tile2.hidden) return;
       tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
-      const x = this._utilMonth(c2[utilityKeys[sel]], c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
+      const x = this._utilMonth(c2[utilityKeys[sel]], sel === ".car" ? "__car" : c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
       tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon4}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
     };
     this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
     utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
+    if (c2.car_month_entity) {
+      const carKwh = this._num(c2.car_month_entity);
+      utility(".car", "mdi:car-electric", "Bil", this._fmt(carKwh, 0), "kWh", this._fmt(this._carMonthCost(), 0), Number.isFinite(carKwh) && Number.isFinite(this._carMonthCost()));
+    }
     const classicTiles = !isNewLook(this._hass, c2, { entity: "room_tiles_entity", key: "room_tiles", fallback: true });
     const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const temp = this._num(room.temperature), humidity = this._num(room.humidity), target = Number(this._state(room.climate)?.attributes?.temperature);
@@ -37480,7 +37510,7 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
     this._hass = hass;
   }
   render() {
-    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser (valgfri)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
+    const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser (valgfri)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["car_month_entity", "Bil: kWh denne m\xE5ned (valgfri flise)"], ["car_month_cost_entity", "Bil: pris denne m\xE5ned (eller EV Ledgers ladeudgifter i \xE5r)"], ["car_path", "Bil: side ved tryk"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
     this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
     this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config, { entity: "room_tiles_entity", key: "room_tiles", fallback: true, label: "Rumfliser" }));
