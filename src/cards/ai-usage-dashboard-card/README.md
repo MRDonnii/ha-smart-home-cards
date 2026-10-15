@@ -1,11 +1,11 @@
 # AI Usage Dashboard Card
 
-Overview of the 5-hour and weekly quotas for four ChatGPT/Claude usage accounts, with a detail panel,
+Overview of the 5-hour and weekly quotas for one to four ChatGPT/Claude usage accounts, with a detail panel,
 a comparison row and refresh buttons.
 
 Each account reads `sensor.<prefix>…` and `binary_sensor.<prefix>…` entities from a usage integration and
 presses its `refresh` button. The built-in defaults are generic placeholders, so set your own accounts in
-the dashboard config (exactly four entries):
+the dashboard config (one to four entries; the grid follows the count):
 
 ```yaml
 type: custom:ai-usage-dashboard-card
