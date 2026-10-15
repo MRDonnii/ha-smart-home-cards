@@ -502,6 +502,30 @@ console.log("th-tesla-dashboard-card tests passed");
       assert.match(context.ttdCarArt(body, paint), /^data:image\/svg\+xml,/);
     }
   }
+// EV Ledger's price limit on Cheapest: shown with its set points in the cheapest plan only.
+{
+  const limitStates = () => ({
+    ...scStates(),
+    "switch.bil_price_limit_in_cheapest": s("on"),
+    "number.bil_cheapest_max_price": s("2", { unit_of_measurement: "kr/kWh" }),
+    "number.bil_always_charge_to": s("20", { unit_of_measurement: "%" }),
+    "sensor.bil_next_charge_start": s("unknown", { blocks: [], above_limit_kwh: 18.6, limit_soc: 49 }),
+    "sensor.bil_planned_charge_energy": s("0", { unit_of_measurement: "kWh" }),
+  });
+  let lm = model(limitStates(), scConfig).sc.limit;
+  assert.equal(lm.on, true);
+  assert.equal(lm.value, "2");
+  assert.equal(lm.floor, 20);
+  assert.equal(lm.info, "Prisen er over grænsen: venter");
+  const off = limitStates();
+  off["switch.bil_price_limit_in_cheapest"] = s("off");
+  assert.equal(model(off, scConfig).sc.limit.info, "", "off: just the set points");
+  const cap = limitStates();
+  cap["select.bil_charge_mode"] = s("price_cap", cap["select.bil_charge_mode"].attributes);
+  assert.equal(model(cap, scConfig).sc.limit, null, "only in the cheapest plan");
+  const without = scStates();
+  assert.equal(model(without, scConfig).sc.limit, null, "an EV Ledger without the setting");
+}
 }
 // Car controls while Tesla Fleet has no data yet (after a restart): the state comes from the car's Tesla Custom twin,
 // the command still goes to the configured (Fleet) entity, unknown is not "0°" and the buttons are not dead.
