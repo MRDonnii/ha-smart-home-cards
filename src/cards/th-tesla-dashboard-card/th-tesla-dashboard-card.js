@@ -15,7 +15,7 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.19.1";
+const TTD_VERSION = "1.19.2";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -631,7 +631,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="ctl rb-open" data-rbopen data-r="rbOpen" aria-haspopup="dialog" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span class="rb-open-t"><span>Klar senest</span><small data-r="rbSrc"></small></span><b data-r="rbVal">${TTD_DASH}</b>${ttdIcon("mdi:chevron-right", "rb-chev")}</button>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>–</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
-    <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Spørg før dyr ladning</span></button><span data-r="scLimitPre">spar mindst</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>behold</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
+    <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Spørg før dyr ladning</span></button><span class="sc-grp" data-r="scMax" hidden><span>maks.</span><input type="number" step="0.05" min="0" inputmode="decimal" placeholder="auto" data-r="scMaxInput" aria-label="Fast prisgrænse (tom eller 0 = kun besparelsen tæller)" title="Kvarterer op til denne pris lades altid i nat. Tom (0) = kun besparelsen tæller."><small data-r="scMaxUnit"></small></span><span data-r="scLimitPre">spar mindst</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>behold</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
     <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
   </div>
@@ -997,6 +997,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc .plan-ctl{margin-top:14px}
 .ctl2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--tdc-muted)}
 .ctl2 small{font-size:13px}
+.ctl2 .sc-grp{display:inline-flex;align-items:center;gap:8px}
 .ctl2 input,.sc-f input{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);font-size:15px;min-width:0}
 .ctl2 input[type=number]{width:86px}
 .sc-trip{margin-top:14px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));
@@ -2462,8 +2463,14 @@ class ThTeslaDashboardCard extends HTMLElement {
           };
         }
         const valueObj = savingObj || priceObj;
+        // The fixed price limit next to the saving (user, 2026-10-15: "nu kan jeg ikke justere maks kroner mere i
+        // popup"): empty / 0 = only the saving counts.
+        const maxObj = savingObj ? this._sc("smart_max_price") : null;
+        const maxNum = ttdHasValue(maxObj) ? ttdToNumber(maxObj.state) : null;
+        const max = maxObj && maxObj.state !== "unavailable"
+          ? { value: maxNum != null && maxNum > 0 ? String(maxNum) : "", unit: ttdUnit(maxObj.attributes?.unit_of_measurement ?? "") } : null;
         return { on, saving: !!savingObj, value: ttdHasValue(valueObj) ? String(ttdToNumber(valueObj.state)) : "",
-          unit: ttdUnit(valueObj?.attributes?.unit_of_measurement ?? ""), floor: this._scNum("smart_floor_soc"), info, choice };
+          unit: ttdUnit(valueObj?.attributes?.unit_of_measurement ?? ""), floor: this._scNum("smart_floor_soc"), max, info, choice };
       })() : null,
       limitLine,
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc"), over: (() => {
@@ -3327,6 +3334,11 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._t("scLimitUnit", sc.limit.unit);
       this._t("scLimitPre", sc.limit.saving ? "spar mindst" : "maks.");
       if (r.scLimitInput) { r.scLimitInput.step = sc.limit.saving ? "1" : "0.05"; r.scLimitInput.setAttribute("aria-label", sc.limit.saving ? "Spørg når det sparer mindst" : "Maks. pris i Billigst"); }
+      this._hide("scMax", !sc.limit.max);
+      if (sc.limit.max) {
+        if (active !== r.scMaxInput && r.scMaxInput.value !== sc.limit.max.value) r.scMaxInput.value = sc.limit.max.value;
+        this._t("scMaxUnit", sc.limit.max.unit);
+      }
       const floor = sc.limit.floor == null ? "" : String(sc.limit.floor);
       if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
       this._t("scLimitInfo", sc.limit.info);
@@ -3852,7 +3864,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);
     }
     else if (el === r.modeSelect) this._setChargerMode(el.value);
-    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scLimitInput, r.scFloorInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
+    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scLimitInput, r.scMaxInput, r.scFloorInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
   }
 
   /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
@@ -3874,6 +3886,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scLimitInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall(this._sc("ask_min_saving") ? "ask_min_saving" : "smart_max_price", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scMaxInput && !el.validity?.badInput && (el.value === "" || Number.isFinite(Number(el.value)))) this._scCall("smart_max_price", "number", "set_value", { value: el.value === "" ? 0 : Math.max(0, Number(el.value)) });
     else if (el === r.scFloorInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("smart_floor_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });
     else if (el === r.scDep && el.value) {
