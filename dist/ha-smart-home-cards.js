@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.149 */
+/* MRDonnii Smart Home Cards v0.5.150 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -36417,19 +36417,13 @@ var HaHomeSummaryCard = class extends HTMLElement {
   // climate) for the setpoint, heating, window/door, valves and batteries; the last 24 h from the recorder.
   // ---------- room tiles, rebuilt (Claude AI, 2026-10-13; user: "Rum-kortene skal redesignes totalt fra bunden") ----------
   // The compact sibling of Varme Center's Room Climate tiles: a tile tinted in the room's state colour, a glass icon chip,
-  // name with an upper-case status, the temperature large with humidity under it, small glowing activity icons, and the
+  // name with an upper-case status, the temperature large with humidity under it, and the
   // 24 h curve across the whole bottom with the setpoint dashed and a glowing dot at "now". `room_tiles: classic` = old.
   _roomTileV2(room, i) {
     const r = this._roomInfo(room);
     const f = (v, d = 1) => this._fmt(v, d);
     const st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? r.ac.mode === "cool" ? "cool" : "heat" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
     const status = { na: "Ingen data", out: "Ude nu", open: "Vindue \xE5bent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "K\xF8ler via AC", warm: `Over m\xE5l +${f(r.delta)}\xB0`, cold: `Under m\xE5l ${f(r.delta)}\xB0`, ok: "P\xE5 m\xE5l", plain: "M\xE5ling" }[st];
-    const icons = [];
-    if (r.present) icons.push(["pres", "mdi:account", "Der er nogen i rummet"]);
-    if (r.heating) icons.push(["heat", "mdi:fire", "Kalder p\xE5 varme"]);
-    if (r.ac && r.ac.mode !== "off") icons.push([r.ac.running ? "ac on" : "ac", r.ac.mode === "cool" ? "mdi:snowflake" : "mdi:heat-pump-outline", `AC: ${r.ac.running ? "k\xF8rer" : "venter"}`]);
-    if (r.window) icons.push(["open", "mdi:window-open-variant", "Vindue eller d\xF8r er \xE5ben"]);
-    if (r.lowBattery) icons.push(["bat", "mdi:battery-alert-variant-outline", `Lavt batteri (${r.battery} %)`]);
     const pts = [...r.series.map((p) => p.v), ...Number.isFinite(r.temp) ? [r.temp] : []];
     let curve = "";
     if (pts.length > 2) {
@@ -36443,7 +36437,6 @@ var HaHomeSummaryCard = class extends HTMLElement {
     }
     const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
     const sub = [Number.isFinite(r.humidity) ? `${f(r.humidity, 0)} %` : "", Number.isFinite(r.target) ? `${r.acTarget ? "AC" : "m\xE5l"} ${f(r.target)}\xB0` : ""].filter(Boolean).join(" \xB7 ");
-    const act = icons.map(([cls, ic, t]) => `<span class="${cls}" title="${this._esc(t)}"><ha-icon icon="${ic}"></ha-icon></span>`).join("");
     return `<div class="rt s-${st}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>
       ${(() => {
       const acHeat = r.ac?.running && r.ac.mode !== "cool";
@@ -36452,7 +36445,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`;
     })()}
       <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i><span class="rt-st">${this._esc(status)}</span></em></div>
-      <div class="rt-r2"><span class="rt-lft">${act ? `<span class="rt-act">${act}</span>` : ""}<small class="rt-sub">${this._esc(sub)}</small></span><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div></div>`;
+      <div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${this._esc(sub)}</small></span><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div></div>`;
   }
   _roomInfo(room) {
     const cl = this._state(room.climate);
@@ -37067,8 +37060,6 @@ ${LUX_KEYFRAMES}
         .rt-mid{position:relative;z-index:1;display:flex;align-items:baseline;gap:7px;margin-top:4px;min-width:0}.rt-sub{font-size:9.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rt-t{flex:none;display:flex;flex-direction:column;align-items:flex-end;line-height:1;gap:2px}.rt-t b{display:flex;align-items:flex-start;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.4);font-weight:850;letter-spacing:-.02em}.rt-t b small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
         .rt-t>small{margin-top:3px;font-size:9.5px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap}
         .rt-tr{--mdc-icon-size:13px;margin-left:1px}.rt-tr.up{color:#ff8a3d}.rt-tr.dn{color:#4fb3ff}
-        .rt-act{position:absolute;z-index:2;left:48px;bottom:5px;display:flex;gap:3px}.rt-act span{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(10,12,18,.45);backdrop-filter:blur(4px);color:var(--secondary-text-color,#a7b2c2)}.rt-act ha-icon{--mdc-icon-size:13px}
-        .rt-act .pres{color:#20e3a2}.rt-act .heat{color:#ff8a3d;animation:roomHeatPulse 1.6s ease-in-out infinite}.rt-act .ac.on{color:#4fb3ff;animation:roomHeatPulse 1.8s ease-in-out infinite}.rt-act .open{color:#a78bfa}.rt-act .bat{color:#ef4444}
         .rt-cw{position:relative;flex:1 1 0;min-height:0;margin:5px -10px -8px;border-top:1px solid color-mix(in srgb,var(--sc) 10%,transparent)}.rt-curve{position:absolute;inset:3px 0 0 0;width:100%;height:calc(100% - 3px);pointer-events:none}
         .rt-curve .a{fill:color-mix(in srgb,var(--sc) 18%,transparent)}.rt-curve .l{fill:none;stroke:var(--sc);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 60%,transparent))}
         .rt-curve .g{stroke:rgba(255,255,255,.4);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
@@ -37079,7 +37070,7 @@ ${LUX_KEYFRAMES}
         .rt-r1 em{display:flex;align-items:center;gap:4px;min-width:0;font-style:normal;font-size:9px;line-height:1.45;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-r1 em i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--sc);box-shadow:0 0 6px var(--sc)}
         .rt-r2{position:static;display:flex;align-items:flex-end;gap:6px;min-width:0}.rt-lft{position:relative;z-index:1}
-        .rt-lft{flex:1;min-width:0;display:flex;align-items:center;gap:6px}.rt-lft .rt-act{position:static;display:flex;gap:3px;flex:none}
+        .rt-lft{flex:1;min-width:0;display:flex;align-items:center}
         .rt-lft .rt-sub{min-width:0;font-size:10px;font-weight:700;color:var(--secondary-text-color,#a7b2c2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .rt-v{flex:none;display:flex;align-items:flex-start;font-size:25px;font-weight:850;line-height:.9;letter-spacing:-.02em;text-shadow:0 2px 8px rgba(0,0,0,.35)}.rt-v small{font-size:12px;margin-top:1px;color:var(--secondary-text-color,#a7b2c2)}
         .rt-bg{position:absolute;z-index:0;right:-8px;top:50%;width:76px;height:76px;--mdc-icon-size:76px;transform:translateY(-50%) rotate(-8deg);color:var(--sc);opacity:.09;pointer-events:none}
@@ -37094,7 +37085,7 @@ ${LUX_KEYFRAMES}
         .rt-r1 em .rt-st{flex:1}
         .rt-r2{padding-right:78px;min-height:16px}
         @container (max-height:66px){.rt-lft{display:none}.rt .rt-v{font-size:21px}.rt-r1{padding-right:70px}.rt .rt-v{bottom:auto;top:50%;transform:translateY(-50%)}}
-        @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat,.rt-act span{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
