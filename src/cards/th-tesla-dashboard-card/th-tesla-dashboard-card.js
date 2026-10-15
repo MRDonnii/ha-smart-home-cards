@@ -119,7 +119,8 @@ const TTD_SC_ROLES = {
   trip_energy: "sensor._trip_energy", trip_target_soc: "sensor._trip_soc_needed", charge_now: "binary_sensor._charge_now",
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
-  price_cap_override: "switch._exceed_price_cap", price_resolution: "select._price_resolution",
+  price_cap_override: "switch._exceed_price_cap", smart_price_limit: "switch._price_limit_in_cheapest",
+  smart_max_price: "number._cheapest_max_price", smart_floor_soc: "number._always_charge_to", price_resolution: "select._price_resolution",
   // The smarter choices (EV Ledger), each on or off.
   wait_cheaper_day: "switch._wait_for_a_cheaper_day", learn_departure: "switch._learn_departure_times",
   prefer_green: "switch._prefer_green_power", ask_public_price: "switch._ask_for_the_price_of_public_charges",
@@ -628,6 +629,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="ctl rb-open" data-rbopen data-r="rbOpen" aria-haspopup="dialog" hidden>${ttdIcon("mdi:calendar-clock", "ic blue")}<span class="rb-open-t"><span>Klar senest</span><small data-r="rbSrc"></small></span><b data-r="rbVal">${TTD_DASH}</b>${ttdIcon("mdi:chevron-right", "rb-chev")}</button>
     <div class="ctl2" data-r="scFixed" hidden>${ttdIcon("mdi:clock-time-four-outline", "ic blue")}<span>Fast tid</span><input type="time" data-r="scFixedStart" aria-label="Fast ladestart"><span>–</span><input type="time" data-r="scFixedEnd" aria-label="Fast ladeslut"></div>
     <div class="ctl2" data-r="scCap" hidden>${ttdIcon("mdi:cash-lock", "ic amber")}<span>Prisloft</span><input type="number" step="0.05" inputmode="decimal" data-r="scCapInput" aria-label="Prisloft"><small data-r="scCapUnit"></small><span>min.</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scMinInput" aria-label="Minimum-SOC"><small>%</small></div>
+    <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Prisgrænse</span></button><span>maks.</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>altid op til</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
     <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
   </div>
@@ -2400,6 +2402,19 @@ class ThTeslaDashboardCard extends HTMLElement {
       cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " · delvist skønnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,
+      // EV Ledger's price limit on Cheapest: own set points, adjustable here.
+      limit: mode === "smart" && this._sc("smart_price_limit") && this._sc("smart_price_limit").state !== "unavailable" ? (() => {
+        const sw = this._sc("smart_price_limit");
+        const priceObj = this._sc("smart_max_price");
+        const on = sw.state === "on";
+        const a = this._sc("next_charge_start")?.attributes || {};
+        const above = Number(a.above_limit_kwh) || 0;
+        const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
+        const info = !on ? "" : above >= 0.5 ? (energy > 0 && reach != null ? `For dyrt over ca. ${f.number(reach, 0)} %` : "Prisen er over grænsen: venter")
+          : "Alt under grænsen";
+        return { on, value: ttdHasValue(priceObj) ? String(ttdToNumber(priceObj.state)) : "", unit: ttdUnit(priceObj?.attributes?.unit_of_measurement ?? ""),
+          floor: this._scNum("smart_floor_soc"), info };
+      })() : null,
       cap: mode === "price_cap" ? { value: ttdHasValue(capObj) ? String(ttdToNumber(capObj.state)) : "", unit: ttdUnit(capObj?.attributes?.unit_of_measurement ?? ""), min: this._scNum("min_soc"), over: (() => {
         // EV Ledger: may the plan go above the cap to reach the target by the ready-by time, and what that costs.
         const sw = this._sc("price_cap_override");
@@ -3253,6 +3268,15 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._hide("scRes", !["quarter", "hour"].includes(resolution));
     for (const button of this.shadowRoot.querySelectorAll("[data-scres]")) this._attrSet(button, "aria-checked", String(button.dataset.scres === resolution));
     this._hide("scCap", !sc.cap);
+    this._hide("scLimit", !sc.limit);
+    if (sc.limit) {
+      this._attrSet("scLimitChip", "aria-pressed", String(sc.limit.on));
+      if (active !== r.scLimitInput && r.scLimitInput.value !== sc.limit.value) r.scLimitInput.value = sc.limit.value;
+      this._t("scLimitUnit", sc.limit.unit);
+      const floor = sc.limit.floor == null ? "" : String(sc.limit.floor);
+      if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
+      this._t("scLimitInfo", sc.limit.info);
+    }
     this._hide("scCapX", !sc.cap?.over);
     if (sc.cap?.over) {
       const armed = this._armed === "capx";
@@ -3650,7 +3674,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
     if (target.dataset.socok != null || target.dataset.socundo != null) {
@@ -3683,6 +3707,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
+    else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
@@ -3759,7 +3784,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._dlTimer = setTimeout(() => this._setDeadline(el.value), 1500);
     }
     else if (el === r.modeSelect) this._setChargerMode(el.value);
-    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
+    else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scLimitInput, r.scFloorInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
   }
 
   /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
@@ -3780,6 +3805,8 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (el === r.scQuietUntil && el.value) this._scCall("quiet_until", "time", "set_value", { time: `${el.value}:00` });
     else if (el === r.scCapInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("price_cap", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scMinInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("min_soc", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scLimitInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("smart_max_price", "number", "set_value", { value: Number(el.value) });
+    else if (el === r.scFloorInput && el.value !== "" && Number.isFinite(Number(el.value))) this._scCall("smart_floor_soc", "number", "set_value", { value: Number(el.value) });
     else if (el === r.scDest) this._scCall("trip_destination", "text", "set_value", { value: el.value.trim() });
     else if (el === r.scDep && el.value) {
       const date = new Date(el.value);
