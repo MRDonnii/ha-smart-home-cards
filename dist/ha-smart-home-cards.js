@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.153 */
+/* MRDonnii Smart Home Cards v0.5.154 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -37134,7 +37134,18 @@ ${LUX_KEYFRAMES}
           .rt-lft{position:absolute;right:11px;bottom:6px;padding:0}
           .rt-lft .rt-sub{justify-content:flex-end}.rt-tg{display:none}
         }
-        @container (max-height:53px){.rt-r1{padding-right:74px}}
+        @container (max-height:53px){.rt-r1{padding-right:74px}.rt-n{font-size:12.5px}}
+        /* Claude AI, 2026-10-15; user: the room tiles look good on his own front page but not on his brother's (long names such as
+           "Master-badev\xE6relse" / "Udestue / havestue"). Tall tiles wrap the name over two lines instead of scrolling it; narrow
+           tiles use a slightly smaller name and status. */
+        @container (min-height:64px){
+          .rt-n{white-space:normal;overflow-wrap:anywhere;line-height:1.1;padding-right:2px}
+          .rt-n .marquee-track{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:normal;animation:none!important;transform:none!important}
+        }
+        .rt-n.marquee{--bleed:11px;margin-inline:-11px;padding-inline:11px}
+        .rt-st.marquee{--bleed:4px;margin-left:-4px;padding-left:4px}
+        .rt-n.marquee,.rt-st.marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
+        @container (max-width:125px){.rt-n{font-size:12px}.rt-r1 em{font-size:8px;letter-spacing:.04em}}
         @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
@@ -37156,6 +37167,7 @@ ${LUX_KEYFRAMES}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
         @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}.card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}.card.portrait .event{padding:5px 0}}
+        @media(min-width:701px){.card.portrait .rooms{grid-template-columns:repeat(auto-fit,minmax(max(108px,calc((100% - 21px) / 4)),1fr))}}
         @media(max-width:700px){.utilities{grid-template-columns:1fr}.body{grid-template-columns:1fr}.card{padding:14px}}
         ${MARQUEE_CSS}
       </style><ha-card class="card${this.config.portrait_layout ? " portrait" : ""}">${this.config.show_header === false ? "" : `<header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header>`}<div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path || "/hjem-overblik/cards")}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path || "/hjem-overblik/kalender")}"><h3>N\xE6ste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
