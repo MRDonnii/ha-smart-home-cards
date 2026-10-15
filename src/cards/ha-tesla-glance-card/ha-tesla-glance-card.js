@@ -7,8 +7,9 @@
 // 0.1.3 – v2-udseende (style_entity / style: v2), som forsidens nye fliser (Claude AI).
 
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
+import { CTL_CSS, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.7.1";
+const VERSION = "0.8.0";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -295,6 +296,8 @@ class HATeslaGlanceCard extends HTMLElement {
       @keyframes nowPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ev) 70%,transparent)}80%,100%{box-shadow:0 0 0 9px transparent}}
       .flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;background:var(--good);box-shadow:0 0 8px var(--good)}
       .tticks{position:absolute;left:0;right:0;bottom:-2px;height:12px}.tt{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap}.tt[style*="left:0"]{transform:none}.tt.end{transform:translateX(-100%);color:var(--good);font-weight:700}
+      ${CTL_CSS}
+      .plan .ctl-tl{--ctl-ev:var(--ev);--ctl-muted:var(--muted);--ctl-good:var(--good);--ctl-warn:var(--warn);--ctl-text:var(--primary-text-color)}
       .tx{position:absolute;top:2px;bottom:2px;border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 32%,transparent) 0 3px,transparent 3px 6px)}
       .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
       @container (max-width:640px){.pnums.has-btn .save{display:none}}
@@ -358,6 +361,7 @@ class HATeslaGlanceCard extends HTMLElement {
       <div class="dots" hidden><i data-v="plan" title="Ladeplan"></i><i data-v="car" title="Bilen"></i></div>
     </ha-card>`;
     const hc = this.shadowRoot.querySelector("ha-card");
+    ctlTips(this.shadowRoot, () => hc);
     hc.addEventListener("click", (e) => { if (this._swiped) { this._swiped = false; return; } const d = e.target.closest("[data-v]"); if (d) { e.stopPropagation(); this._setView(d.dataset.v); return; } const w = e.target.closest("[data-pwait]"); if (w) { e.stopPropagation(); this._chooseWait(w.dataset.pwait === "on"); return; } this._tap(); });
     // Switching between the overlay and the car (user, 2026-10-13: "swipe virker ikke så godt på PC og mobilen får hele siden
     // til at følge med"): a sideways drag on touch – the page keeps its vertical scrolling – and any drag with a mouse; the
@@ -429,7 +433,8 @@ class HATeslaGlanceCard extends HTMLElement {
     const cost = Number.isFinite(n(c.cost)) ? n(c.cost) : blocks.reduce((a, b) => a + (b.cost || 0), 0);
     const alt = this._hass.states[c.cost]?.attributes?.alternatives || {}; const nowCost = Number(alt.now?.cost);
     const soc = Number.isFinite(n(c.soc)) ? n(c.soc) : this._num(this._config.battery) ?? NaN;
-    return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit,
+    const prices = (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
+    return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit, prices, minutes: Number(pa.slot_minutes) || 15,
       soc, target: n(c.target), deadline: pa.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
@@ -449,15 +454,19 @@ class HATeslaGlanceCard extends HTMLElement {
     const L = p.limit; const over = !!L && L.above >= 0.5 && (L.ask || L.wait); const held = over && L.wait; const runs = [];
     if (held) for (const x of L.slots) { const xe = x.t + L.minutes * 60000; if (xe <= now || x.t >= end || x.p <= L.price) continue; const last = runs[runs.length - 1]; if (last && x.t - last.e < 60000) last.e = xe; else runs.push({ t: Math.max(x.t, now), e: xe }); }
     const stripes = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
-    const blocks = stripes + p.blocks.map((b) => `<i class="tb${over && !held && b.kwh > 0 && b.cost / b.kwh > L.price + 1e-6 ? " dear" : ""}" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
-    const ticks = []; const d0 = new Date(now); d0.setMinutes(0, 0, 0);
-    for (let t = +d0 + 3600000; t < end; t += 3600000) { const h = new Date(t).getHours(); const xx = X(t); if (h % 6 === 0 && xx > 7 && (!p.deadline || Math.abs(xx - X(dlT)) > 16)) ticks.push(`<span class="tt" style="left:${X(t).toFixed(2)}%">${String(h).padStart(2, "0")}</span>`); }
-    const dl = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
+    // The whole course on the shared timeline: charging periods, the pauses between them, the wait before and the time
+    // after, each with a tooltip (Claude AI, 2026-10-16; user: "vise hele forløbet, så den viser pauserne og … hover").
+    const parts = ctlParts({ now, blocks: p.blocks, deadline: p.deadline ? dlT : NaN, prices: p.prices, minutes: p.minutes });
+    const best = held ? L.cheaper.reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null) : null;
+    const later = best ? `${new Date(best.t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(best.t)}` : "";
+    const track = ctlTrack(parts, { now, end, X, deadline: p.deadline ? dlT : NaN, unit: "kr", extra: stripes,
+      held: held && Number.isFinite(L.reach) ? { reach: L.reach, later } : null,
+      dear: (part) => over && !held && part.kwh > 0 && part.cost / part.kwh > L.price + 1e-6 });
     // The icon is a ring: battery now (solid) to the target (faint), the plan's clock inside (Claude AI, 2026-10-13).
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
         <div class="pt"><b>Ladeplan · ${esc(MODE[p.mode] || p.mode)}</b><span>${esc(p.name)} · ${Math.round(soc)} % → ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % · mål ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc(until)}</em></div></div>
-      <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks.join("")}${dl ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc(dl)}</span>` : ""}</div></div>
+      <div class="ctl-tl">${track}</div>
       <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held, L, soc, tg) : ""}</div>`;
   }
   _limitText(L, held) {
@@ -496,14 +505,21 @@ class HATeslaGlanceCard extends HTMLElement {
     const c = this._config; const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c.battery) ?? 0; const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
     const pw = this._pw(); const raw = this._num(pw); const kw = raw == null ? null : (this._unit(pw) === "W" || raw > 100 ? raw / 1000 : raw);
-    const added = this._num(this._added()); const fin = this._val(c.charge_finish); const finT = fin ? Date.parse(fin) : NaN;
+    // While a plan in several periods runs, the bar is its timeline: where in the plan it is, the pauses still to come
+    // and a tooltip on each part (Claude AI, 2026-10-16). The ring keeps the battery.
+    const now = Date.now(); const dlT = p?.deadline ? Date.parse(p.deadline) : NaN;
+    const parts = p ? ctlParts({ now, blocks: p.blocks, deadline: dlT, prices: p.prices, minutes: p.minutes }) : [];
+    const tl = parts.filter((x) => x.kind === "charge").length > 1 || parts.some((x) => x.kind === "pause") ? `<div class="ctl-tl">${ctlTrack(parts, { now, deadline: dlT, unit: "kr" })}</div>` : "";
+    // With pauses ahead the car's own "full at" is wrong (it assumes charging on): the plan's last period ends it.
+    const planEnd = tl ? Math.max(...parts.filter((x) => x.kind === "charge").map((x) => x.e)) : NaN;
+    const added = this._num(this._added()); const fin = this._val(c.charge_finish); const finT = Number.isFinite(planEnd) ? planEnd : fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 60000) : null;
     const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
     const prev = c.preview === "charge";
     return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
         <div class="pt"><b>Lader nu${kw != null ? ` · <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc(p?.name || c.name)}${this._away() ? " · ude" : ""} · ${Math.round(soc)} % → ${Math.round(tg)} %${prev ? " · forhåndsvisning" : ""}</span></div>
         <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc(leftTxt)}</em></div></div>
-      <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
+      ${tl || `<div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>`}
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   // Spinning wheels while driving, like the Tesla app (Claude AI, 2026-10-14). `image_driving_wheels` lists each wheel in the

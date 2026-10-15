@@ -15,7 +15,9 @@
  * - Published source stays neutral: real entity IDs belong in the dashboard config only.
  */
 
-const TTD_VERSION = "1.19.3";
+import { CTL_CSS, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
+
+const TTD_VERSION = "1.20.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -606,6 +608,7 @@ function ttdTemplate(cfg) {
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
   <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
+  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h">${ttdIcon("mdi:timeline-clock-outline", "ptl-i")}<span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
   <div class="box monta">
     <button class="monta-main" data-more="${cfg.entities.monta_state ? "monta_state" : "charger_mode"}"><i class="mdot" data-r="montaDot"></i><span><b>${e(cfg.charger_label || (cfg.entities.monta_state ? "Monta" : "Lader"))}</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -857,6 +860,15 @@ button[data-dead]:hover{background:none}
 .bar-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--soc,0) * 1%);border-radius:inherit;background:var(--tone,var(--tdc-green));transition:width .6s ease}
 .bar-mark{position:absolute;top:-5px;bottom:-5px;width:3px;left:calc(var(--target,0) * 1% - 1.5px);border-radius:2px;background:var(--tdc-text)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+${CTL_CSS}
+.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text)}
+.ptl-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+.ptl-i{flex:none;width:20px;height:20px;color:var(--ctl-ev)}
+.ptl-t{display:grid;min-width:0}.ptl-t b{font-size:15px;font-weight:650}
+.ptl-t small{font-size:13px;color:var(--tdc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptl-line{margin:6px 0 0;font-size:12.5px;color:var(--tdc-muted)}
+.ptl-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ptl-acts .btn{flex:1 1 auto}
 .kpi{display:grid;gap:6px;min-width:0;padding:14px 16px;border-radius:0}
 .kpi+.kpi{border-left:1px solid var(--tdc-line)}
 .kpi b{font-size:18px}
@@ -1345,6 +1357,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._hi = -1;
     // All interaction is delegated from the shadow root, so rebuilding the DOM never duplicates listeners.
     this.shadowRoot.addEventListener("click", (event) => this._onClick(event));
+    ctlTips(this.shadowRoot);
     this.shadowRoot.addEventListener("change", (event) => this._onChange(event));
     // The ready-by popup keeps what is typed in its draft.
     this.shadowRoot.addEventListener("input", (event) => { if (event.target?.dataset?.rbin) this._rbInput(event.target); });
@@ -1760,7 +1773,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     // one), and the time left is counted from it, unless own sensors are configured. Unplugged, the plan's end is only
     // what would happen if the car were plugged in now, so it is not shown as the expected end here.
     const pluggedNow = !!(status.plugged || cable === true || plug === true);
-    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? ttdToDate(this._sc("next_charge_end")?.state) : null;
+    // The plan as a timeline with its pauses (Claude AI, 2026-10-16): its last period's end is the expected end, not the
+    // end of the next period (it said 01:00 for a plan that ran until 05:45).
+    const planTl = this._planTimeline(f, status, pluggedNow);
+    const planEnd = planTl && Number.isFinite(planTl.end) ? new Date(planTl.end) : null;
+    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? planEnd || ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
     let remainingRaw = this._text("charging_time_remaining");
     if (remainingRaw == null && !this._id("charging_time_remaining") && status.charging && scEnd) remainingRaw = String(Math.max(0, Math.round((scEnd.getTime() - Date.now()) / 60000)));
@@ -1796,7 +1813,10 @@ class ThTeslaDashboardCard extends HTMLElement {
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`, socPercent: soc == null ? 0 : ttdClamp(soc, 0, 100), socTone,
       target: target == null ? null : `Mål ${f.number(target, 0)} %`, targetPercent: target == null ? null : ttdClamp(target, 0, 100),
       power: this._value("charger_power", 1), rate: rateText, finish, remaining,
-      monta: montaLabel ?? (mode ? this._chargerText(mode) : TTD_DASH),
+      // The charger line says where in the plan it is ("Pause til 02:30 (periode 3 af 5)"); the plan box has the rest.
+      monta: montaLabel ?? (mode ? (planTl?.status ? planTl.status.split(" · ")[0] : this._chargerText(mode)) : TTD_DASH),
+      plan: planTl,
+      startLabel: planTl?.goal != null ? `Lad nu til ${f.number(planTl.goal, 0)} %` : "Lad nu",
       montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : { connected_charging: "ok", connected_requesting: "info", connected_finished: "info" }[mode] || "muted",
       modeBoxVisible: montaConfigured || !!this._modeOptions(),
       mode: mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : this._id("charger_mode") ? TTD_TEXT.unavailable : TTD_DASH,
@@ -2238,6 +2258,51 @@ class ThTeslaDashboardCard extends HTMLElement {
       const before = o.state;
       this._ccCall(key, key, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker…", "Bilen blinkede");
     }
+  }
+
+  /** EV Ledger's plan as the shared timeline of the charging panel (the Tesla page and the quick charge popup): the
+   * charging periods, the pauses between them with a tooltip each, the plan in words and the buttons that override it
+   * (Claude AI, 2026-10-16; user: "ladnings kortet … mere besked om hvornår den lader … ændre til fuld ladning og
+   * overstyre det der er igang"). Only while the cable is in. */
+  _planTimeline(f, status, plugged) {
+    if (!this._cfg.smart_charge || !plugged) return null;
+    const modeObj = this._sc("charge_mode");
+    const mode = modeObj?.state;
+    if (!mode || ["manual", "unavailable", "unknown"].includes(mode)) return null;
+    const a = this._sc("next_charge_start")?.attributes || {};
+    const now = Date.now();
+    const blocks = (Array.isArray(a.blocks) ? a.blocks : []).map((b) => ({ t: Date.parse(b.start), e: Date.parse(b.end), kwh: Number(b.kwh) || 0, cost: Number(b.cost) || 0 }));
+    const deadline = mode === "now" ? NaN : Date.parse(a.deadline);
+    const prices = (Array.isArray(a.prices) ? a.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
+    const parts = ctlParts({ now, blocks, deadline, prices, minutes: Number(a.slot_minutes) || 15 });
+    const waitObj = this._sc("price_limit_wait");
+    const above = Number(a.above_limit_kwh) || 0;
+    const waiting = waitObj?.state === "on" && above >= 0.5;
+    const goalRaw = a.deadline_target != null && Number.isFinite(Number(a.deadline_target)) ? Number(a.deadline_target) : null;
+    const goal = goalRaw ?? this._scNum("plan_target_soc") ?? this._scNum("target_soc");
+    const def = modeObj.attributes?.default_mode;
+    const acts = [];
+    if (waiting && waitObj.state !== "unavailable") acts.push({ key: "full", label: goal != null ? `Lad til ${f.number(goal, 0)} %` : "Lad til målet" });
+    if (def && mode !== def && ["now", "off"].includes(mode)) acts.push({ key: "back", label: `Følg planen (${ttdScLabel(def)})` });
+    const charge = parts.some((p) => p.kind === "charge");
+    if (!charge && !acts.length) return null;
+    const unit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.").replace(/\.$/, "");
+    const later = (Array.isArray(a.limit_cheaper) ? a.limit_cheaper : []).reduce((m, w) => (!m || Number(w.saving) > Number(m.saving) ? w : m), null);
+    const laterAt = later ? ttdToDate(later.start) : null;
+    const limitPrice = Number(a.price_limit);
+    const track = charge ? ctlTrack(parts, {
+      now, deadline, unit,
+      held: waiting && a.limit_soc != null ? { reach: Number(a.limit_soc), later: laterAt ? f.dayTime(laterAt) : "" } : null,
+      dear: (p) => !waiting && a.limit_ask === true && Number.isFinite(limitPrice) && p.price > limitPrice + 1e-6,
+    }) : "";
+    const status_ = charge ? ctlStatus(parts, { now, charging: status.charging }) : "";
+    const wait = waiting ? ` · venter med ${f.number(above, 1)} kWh${laterAt ? ` til ${f.dayTime(laterAt)}` : ""}` : "";
+    return {
+      title: `Ladeplan · ${ttdScLabel(mode)}`,
+      status: status_ || (mode === "off" ? "På pause – planen er stoppet" : ""),
+      line: charge ? `${ctlLine(parts, now)}${wait}` : "",
+      track, acts, goal, end: charge ? ctlSummary(parts).end : NaN,
+    };
   }
 
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
@@ -2987,12 +3052,27 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._t("remaining", c.remaining);
     this._attrSet("montaDot", "data-tone", c.montaTone);
     this._t("montaState", c.monta);
+    this._hide("ptl", !c.plan);
+    if (c.plan && r.ptl) {
+      this._t("ptlTitle", c.plan.title);
+      this._t("ptlStatus", c.plan.status);
+      this._t("ptlLine", c.plan.line);
+      if (r.ptlTrack.dataset.sig !== c.plan.track) { r.ptlTrack.dataset.sig = c.plan.track; r.ptlTrack.innerHTML = c.plan.track; }
+      r.ptlTrack.hidden = !c.plan.track;
+      const acts = JSON.stringify([c.plan.acts, this._armed]);
+      if (r.ptlActs.dataset.sig !== acts) {
+        r.ptlActs.dataset.sig = acts;
+        r.ptlActs.innerHTML = c.plan.acts.map((x) => `<button type="button" class="btn${x.key === "full" ? " go" : ""}" data-planact="${x.key}"${this._armed === `plan:${x.key}` ? " data-armed" : ""}>${ttdEsc(this._armed === `plan:${x.key}` ? `Bekræft: ${x.label.toLowerCase()}` : x.label)}</button>`).join("");
+      }
+      r.ptlActs.hidden = !c.plan.acts.length;
+    }
     this._t("chargerMode", c.mode);
     this._hide("modeBox", !c.modeBoxVisible);
     this._renderModeSelect(c.modeOptions);
     this._hide("startBtn", !c.startVisible);
     this._hide("stopBtn", !c.stopVisible);
-    this._t("startBtn", c.startBusy ? "Starter …" : this._armed === "start_charge" ? "Bekræft: lad nu" : "Lad nu");
+    this._t("startBtn", c.startBusy ? "Starter …" : this._armed === "start_charge" ? `Bekræft: ${c.startLabel.toLowerCase()}` : c.startLabel);
+    this._attrSet("startBtn", "title", c.plan ? "Overstyrer planen: lader med det samme til målet, derefter tilbage til standardplanen" : null);
     this._t("stopBtn", c.stopBusy ? "Stopper …" : this._armed === "stop_charge" ? "Bekræft: stop" : "Stop");
     this._attrSet("startBtn", "data-busy", c.startBusy);
     this._attrSet("stopBtn", "data-busy", c.stopBusy);
@@ -3759,7 +3839,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
     if (target.dataset.socok != null || target.dataset.socundo != null) {
@@ -3794,6 +3874,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
     else if (target.dataset.scwait) this._chooseWait(target.dataset.scwait === "on");
+    else if (target.dataset.planact) this._planAct(target.dataset.planact);
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
@@ -3992,6 +4073,25 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     this._disarm(true);
     this._scCall("price_limit_wait", "switch", on ? "turn_on" : "turn_off");
+  }
+
+  /** The plan box's overrides, each with a second tap: charge to the target after all (the plan waited with the dear
+   * rest), or back to the default plan after "Lad nu" or a pause. */
+  _planAct(key) {
+    const armKey = `plan:${key}`;
+    if (this._armed !== armKey) {
+      this._disarm(false);
+      this._armed = armKey;
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    if (key === "full") this._scCall("price_limit_wait", "switch", "turn_off");
+    else if (key === "back") {
+      const def = this._sc("charge_mode")?.attributes?.default_mode;
+      if (def) this._scCall("charge_mode", "select", "select_option", { option: def });
+    }
   }
 
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */

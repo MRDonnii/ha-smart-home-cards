@@ -3,7 +3,16 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const filename = new URL("../src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js", import.meta.url);
-const source = await readFile(filename, "utf8");
+// The card imports shared modules (the charge timeline): each is inlined as a closure that hands back its exports, so
+// the card's own top-level functions stay reachable on the test context.
+const raw = await readFile(filename, "utf8");
+let prelude = "";
+for (const [, names, path] of raw.matchAll(/^import \{([^}]+)\} from "([^"]+)";$/gm)) {
+  const shared = await readFile(new URL(path, filename), "utf8");
+  const list = names.split(",").map((name) => name.trim()).filter(Boolean).join(", ");
+  prelude += `const { ${list} } = (() => {\n${shared.replace(/^export /gm, "")}\nreturn { ${list} };\n})();\n`;
+}
+const source = prelude + raw.replace(/^import .*$/gm, "");
 const registry = new Map();
 
 class HTMLElement {
@@ -418,7 +427,15 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.plan.soc.value, 100, "target slider follows the integration");
   assert.equal(r.plan.deadline.text, "06:45");
   assert.equal(r.charge.startVisible, true, "plugged in and waiting: Lad nu switches the plan");
-  assert.equal(r.charge.monta, "Venter på planen", "a finished charger that waits for the plan says so");
+  assert.match(r.charge.monta, /^Starter \d\d:\d\d$/, "a finished charger that waits for the plan says when it starts");
+  // The plan box of the charging panel (2026-10-16): the timeline with its parts and a tooltip each, the plan in words.
+  assert.equal(r.charge.plan.title, "Ladeplan · Billigst");
+  assert.match(r.charge.plan.status, /^Starter \d\d:\d\d · færdig ca\. \d\d:\d\d$/);
+  assert.match(r.charge.plan.line, /^1 periode · lader .* · færdig ca\. /);
+  assert.match(r.charge.plan.track, /class="ctl-p ctl-wait"[^>]*data-tip="Venter /);
+  assert.match(r.charge.plan.track, /class="ctl-p ctl-c"[^>]*data-tip="Lader /);
+  assert.deepEqual(JSON.parse(JSON.stringify(r.charge.plan.acts)), [], "nothing to override while the plan runs as planned");
+  assert.match(r.charge.startLabel, /^Lad nu til \d+ %$/, "Lad nu says it charges to the target");
   assert.equal(r.charge.modeBoxVisible, false);
   assert.equal(r.charge.compare, null, "no comparison without the integration's alternatives");
   st["sensor.bil_planned_charge_cost"] = s("6.27", { unit_of_measurement: "kr", alternatives: {
@@ -537,6 +554,14 @@ console.log("th-tesla-dashboard-card tests passed");
   let hm = model(held, scConfig).sc;
   assert.equal(hm.limit.choice.wait, false);
   assert.equal(hm.limit.choice.title, "18,6 kWh kan lades billigere senere");
+  // The plan box: two periods with the pause between them, each part with its tooltip.
+  const hp = model(held, scConfig).charge.plan;
+  assert.ok(hp, "the plan box while the cable is in");
+  assert.match(hp.track, /class="ctl-p ctl-pause"[^>]*data-tip="Pause \d\d:\d\d–\d\d:\d\d \(30 min\)/, "the pause between the periods");
+  assert.match(hp.track, /data-tip="Lader \d\d:\d\d–\d\d:\d\d · 5,5 kWh · 10,54 kr \(1,92 kr\/kWh\) · periode 1 af 2"/);
+  assert.match(hp.line, /^2 perioder · lader 45 min · pauser 30 min · færdig ca\. /);
+  const waitHeld = { ...held, "switch.bil_wait_above_the_price_limit": s("on") };
+  assert.equal(model(waitHeld, scConfig).charge.plan.acts.map((x) => x.key).join(), "full", "waiting with the rest: charge to the target after all");
   assert.equal(hm.limit.choice.waitLabel, "Lad ikke i nat", "the car (72 %) is above tonight's level: nothing tonight");
   hm = model({ ...held, "sensor.battery": s("49", { unit_of_measurement: "%" }) }, scConfig).sc;
   assert.equal(hm.limit.choice.waitLabel, "Lad kun til 70 %", "the answer says what it charges to tonight");

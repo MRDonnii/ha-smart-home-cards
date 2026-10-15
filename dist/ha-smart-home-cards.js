@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.164 */
+/* MRDonnii Smart Home Cards v0.5.165 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2648,8 +2648,226 @@ if (!customElements.get("ha-tesla-charge-popup-card")) customElements.define("ha
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tesla-vehicle-card", name: "Tesla Vehicle Center", description: "Samlet Tesla-, Monta- og EV Ledger-kort" });
 
+// src/shared/charge-timeline.js
+var HOUR = 36e5;
+var pad = (n) => String(n).padStart(2, "0");
+var hm = (t) => {
+  const d = new Date(t);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+var num = (v, d) => Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var esc = (s) => String(s).replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+function ctlDuration(ms) {
+  const m = Math.max(0, Math.round(ms / 6e4));
+  const h = Math.floor(m / 60);
+  return h ? `${h} t${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
+}
+function dayWord(t, now) {
+  const a = new Date(now);
+  a.setHours(0, 0, 0, 0);
+  const b = new Date(t);
+  b.setHours(0, 0, 0, 0);
+  const days = Math.round((b - a) / 864e5);
+  if (days <= 0) return "";
+  return days === 1 ? "i morgen " : `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} `;
+}
+function meanPrice(prices, minutes, t, e) {
+  if (!Array.isArray(prices) || !prices.length) return NaN;
+  const len = (minutes || 15) * 6e4;
+  let sum = 0;
+  let n = 0;
+  for (const x of prices) {
+    if (x.t + len <= t || x.t >= e || !Number.isFinite(x.p)) continue;
+    sum += x.p;
+    n += 1;
+  }
+  return n ? sum / n : NaN;
+}
+function ctlParts({ now = Date.now(), blocks = [], deadline = NaN, prices = [], minutes = 15 }) {
+  const list = blocks.filter((b) => Number.isFinite(b.t) && Number.isFinite(b.e) && b.e > now).sort((a, b) => a.t - b.t);
+  const runs = [];
+  for (const b of list) {
+    const last = runs[runs.length - 1];
+    if (last && b.t - last.e < 6e4) {
+      last.e = b.e;
+      last.kwh += Number(b.kwh) || 0;
+      last.cost += Number(b.cost) || 0;
+    } else runs.push({ t: b.t, e: b.e, kwh: Number(b.kwh) || 0, cost: Number(b.cost) || 0 });
+  }
+  const parts = [];
+  let cursor = now;
+  runs.forEach((b, i) => {
+    const t = Math.max(b.t, now);
+    if (t - cursor >= 6e4) parts.push({ kind: i === 0 ? "wait" : "pause", t: cursor, e: t, price: meanPrice(prices, minutes, cursor, t) });
+    parts.push({ kind: "charge", t, e: b.e, kwh: b.kwh, cost: b.cost, n: i + 1, of: runs.length, price: b.kwh > 0 ? b.cost / b.kwh : NaN, running: b.t <= now });
+    cursor = b.e;
+  });
+  if (Number.isFinite(deadline) && deadline - cursor >= 6e4) parts.push({ kind: "done", t: cursor, e: deadline });
+  return parts;
+}
+function ctlSummary(parts) {
+  const charge = parts.filter((p) => p.kind === "charge");
+  const pause = parts.filter((p) => p.kind === "pause");
+  return {
+    periods: charge.length,
+    charging: charge.reduce((a, p) => a + (p.e - p.t), 0),
+    paused: pause.reduce((a, p) => a + (p.e - p.t), 0),
+    end: charge.length ? charge[charge.length - 1].e : NaN,
+    next: charge[0] || null
+  };
+}
+function tipText(p, { now, unit = "kr", deadline, held }) {
+  const per = `${unit}/kWh`;
+  const span = `${dayWord(p.t, now)}${hm(p.t)}\u2013${hm(p.e)}`;
+  if (p.kind === "charge") {
+    const head = p.running ? `Lader nu til ${hm(p.e)}` : `Lader ${span}`;
+    const money = p.kwh > 0 ? ` \xB7 ${num(p.kwh, 1)} kWh \xB7 ${num(p.cost, 2)} ${unit} (${num(p.price, 2)} ${per})` : "";
+    return `${head}${money}${p.of > 1 ? ` \xB7 periode ${p.n} af ${p.of}` : ""}`;
+  }
+  const price = Number.isFinite(p.price) ? ` \xB7 str\xF8mmen koster ca. ${num(p.price, 2)} ${per}` : "";
+  if (p.kind === "pause") return `Pause ${span} (${ctlDuration(p.e - p.t)})${price} \u2013 dyrere end planens kvarterer`;
+  if (p.kind === "wait") return `Venter ${span} (${ctlDuration(p.e - p.t)})${price}`;
+  const ready = Number.isFinite(deadline) ? ` \xB7 klar ${dayWord(deadline, now)}${hm(deadline)}` : "";
+  const rest2 = held ? ` \xB7 stopper ved ca. ${Math.round(held.reach)} %${held.later ? `, resten ${held.later}` : ""}` : "";
+  return `F\xE6rdig ca. ${hm(p.t)}${rest2}${ready}`;
+}
+function ctlTrack(parts, opts = {}) {
+  const now = opts.now ?? Date.now();
+  const deadline = Number.isFinite(opts.deadline) ? opts.deadline : NaN;
+  const end = opts.end ?? Math.max(Number.isFinite(deadline) ? deadline : now + HOUR, ...parts.map((p) => p.e));
+  const span = Math.max(end - now, HOUR);
+  const X = opts.X || ((t) => Math.max(0, Math.min(100, (t - now) / span * 100)));
+  const pos = (p) => `left:${X(p.t).toFixed(2)}%;width:${Math.max(0.8, X(p.e) - X(p.t)).toFixed(2)}%`;
+  const items = parts.map((p) => {
+    const cls = p.kind === "charge" ? `ctl-c${opts.dear?.(p) ? " dear" : ""}${p.running ? " run" : ""}` : `ctl-${p.kind}`;
+    return `<i class="ctl-p ${cls}" style="${pos(p)}" data-tip="${esc(tipText(p, { now, unit: opts.unit, deadline, held: opts.held }))}"></i>`;
+  }).join("");
+  const ticks2 = [];
+  const d0 = new Date(now);
+  d0.setMinutes(0, 0, 0);
+  const step = span > 30 * HOUR ? 12 : span > 12 * HOUR ? 6 : span > 6 * HOUR ? 3 : span > 3 * HOUR ? 2 : 1;
+  for (let t = +d0 + HOUR; t < end; t += HOUR) {
+    const h = new Date(t).getHours();
+    const x = X(t);
+    if (h % step === 0 && x > 6 && (!Number.isFinite(deadline) || Math.abs(x - X(deadline)) > 12)) ticks2.push(`<span class="ctl-t" style="left:${x.toFixed(2)}%">${String(h).padStart(2, "0")}</span>`);
+  }
+  const dl2 = Number.isFinite(deadline) ? `${dayWord(deadline, now)}${hm(deadline)}` : "";
+  return `<div class="ctl-track">${opts.extra || ""}${items}<i class="ctl-now"></i>${Number.isFinite(deadline) ? `<i class="ctl-flag" style="left:${X(deadline).toFixed(2)}%"></i>` : ""}</div><div class="ctl-ticks"><span class="ctl-t" style="left:0">nu</span>${ticks2.join("")}${dl2 ? `<span class="ctl-t end" style="left:${X(deadline).toFixed(2)}%">klar ${esc(dl2)}</span>` : ""}</div>`;
+}
+function ctlLine(parts, now = Date.now()) {
+  const s = ctlSummary(parts);
+  if (!s.periods) return "";
+  const bits = [s.periods > 1 ? `${s.periods} perioder` : "1 periode", `lader ${ctlDuration(s.charging)}`];
+  if (s.paused >= 6e4) bits.push(`pauser ${ctlDuration(s.paused)}`);
+  bits.push(`f\xE6rdig ca. ${dayWord(s.end, now)}${hm(s.end)}`);
+  return bits.join(" \xB7 ");
+}
+function ctlStatus(parts, { now = Date.now(), charging = false } = {}) {
+  const charge = parts.filter((p) => p.kind === "charge");
+  if (!charge.length) return "";
+  const end = charge[charge.length - 1].e;
+  const cur = charge.find((p) => p.t <= now && now < p.e);
+  const next = charge.find((p) => p.t > now);
+  const of = charge.length;
+  const fin = `f\xE6rdig ca. ${dayWord(end, now)}${hm(end)}`;
+  if (cur && charging) {
+    const after = next ? ` \xB7 derefter pause til ${hm(next.t)}` : "";
+    return of > 1 ? `Lader til ${hm(cur.e)} (periode ${cur.n} af ${of})${after} \xB7 ${fin}` : `Lader til ${hm(cur.e)} \xB7 ${fin}`;
+  }
+  if (!next) return cur ? `Starter nu \xB7 ${fin}` : "";
+  const first = next.n === 1;
+  const lead = first ? `Starter ${dayWord(next.t, now)}${hm(next.t)}` : `Pause til ${hm(next.t)}`;
+  return `${lead}${of > 1 ? ` (periode ${next.n} af ${of})` : ""} \xB7 ${fin}`;
+}
+var CTL_CSS = `
+.ctl-tl{display:block;position:relative;padding:2px 0 14px}
+.ctl-track{position:relative;height:12px;border-radius:7px;background:color-mix(in srgb,var(--ctl-text,currentColor) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ctl-text,currentColor) 6%,transparent)}
+.ctl-p{position:absolute;top:0;bottom:0;cursor:help;touch-action:pan-y}
+.ctl-c{border-radius:7px;background:linear-gradient(180deg,color-mix(in srgb,var(--ctl-ev,#9b7bff) 95%,#fff),var(--ctl-ev,#9b7bff));box-shadow:0 0 12px -1px var(--ctl-ev,#9b7bff)}
+.ctl-c.dear{background:linear-gradient(180deg,color-mix(in srgb,#ff6a3d 92%,#fff),#ff6a3d);box-shadow:0 0 12px -1px #ff6a3d}
+.ctl-c.run{animation:ctlRun 1.6s ease-in-out infinite alternate}
+@keyframes ctlRun{to{filter:brightness(1.25)}}
+.ctl-pause{top:3px;bottom:3px;border-radius:3px;background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--ctl-muted,#8a8f98) 55%,transparent) 0 4px,transparent 4px 8px)}
+.ctl-pause::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:8px;margin:-4px 0 0 -2.5px;border-left:2px solid var(--ctl-muted,#8a8f98);border-right:2px solid var(--ctl-muted,#8a8f98);box-sizing:border-box;opacity:.9}
+.ctl-wait,.ctl-done{top:-3px;bottom:-3px}
+.ctl-p:hover,.ctl-p[data-on]{outline:2px solid color-mix(in srgb,var(--ctl-text,#fff) 55%,transparent);outline-offset:1px;border-radius:7px}
+.ctl-now{position:absolute;left:0;top:50%;width:12px;height:12px;margin:-6px 0 0 -2px;border-radius:50%;background:#fff;pointer-events:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--ctl-ev,#9b7bff) 45%,transparent);animation:ctlNow 2s ease-out infinite}
+@keyframes ctlNow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ctl-ev,#9b7bff) 70%,transparent)}80%,100%{box-shadow:0 0 0 9px transparent}}
+.ctl-flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;pointer-events:none;background:var(--ctl-good,#3fc27e);box-shadow:0 0 8px var(--ctl-good,#3fc27e)}
+.ctl-ticks{position:absolute;left:0;right:0;bottom:-1px;height:12px;pointer-events:none}
+.ctl-t{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--ctl-muted,#8a8f98);white-space:nowrap}
+.ctl-t[style*="left:0"]{transform:none}.ctl-t.end{transform:translateX(-100%);color:var(--ctl-good,#3fc27e);font-weight:700}
+.ctl-tip{position:absolute;z-index:20;left:0;top:0;max-width:min(320px,90%);padding:7px 10px;border-radius:10px;pointer-events:none;
+  font-size:12px;line-height:1.35;font-weight:600;color:#f3f5f8;background:rgba(14,17,23,.94);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 26px -10px rgba(0,0,0,.7);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:normal}
+.ctl-tip.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.ctl-now,.ctl-c.run{animation:none}}
+`;
+function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ctl-tl")?.parentElement) {
+  if (!root || root.__ctlTips) return;
+  root.__ctlTips = true;
+  let shown = null;
+  const tipFor = (box) => {
+    let tip = box.querySelector(":scope > .ctl-tip");
+    if (!tip) {
+      tip = document.createElement("div");
+      tip.className = "ctl-tip";
+      tip.setAttribute("role", "tooltip");
+      box.appendChild(tip);
+    }
+    return tip;
+  };
+  const hide = () => {
+    if (!shown) return;
+    shown.tip.classList.remove("on");
+    shown.seg?.removeAttribute("data-on");
+    shown = null;
+  };
+  const show = (seg) => {
+    const box = host(seg);
+    if (!box) return;
+    const tip = tipFor(box);
+    if (shown && shown.seg !== seg) shown.seg?.removeAttribute("data-on");
+    tip.textContent = seg.dataset.tip;
+    seg.setAttribute("data-on", "");
+    const b = box.getBoundingClientRect();
+    const s = seg.getBoundingClientRect();
+    const w = tip.offsetWidth;
+    const h = tip.offsetHeight;
+    const left = Math.max(4, Math.min(b.width - w - 4, s.left - b.left + s.width / 2 - w / 2));
+    const above = s.top - b.top - h - 8;
+    const top = above >= 0 ? above : s.bottom - b.top + 8;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+    tip.classList.add("on");
+    shown = { tip, seg };
+  };
+  const segOf = (event) => event.composedPath?.().find((n) => n?.classList?.contains?.("ctl-p")) || null;
+  root.addEventListener("pointermove", (event) => {
+    if (event.pointerType !== "mouse") return;
+    const seg = segOf(event);
+    if (seg) {
+      if (!shown || shown.seg !== seg || !shown.tip.classList.contains("on")) show(seg);
+    } else hide();
+  });
+  root.addEventListener("pointerout", (event) => {
+    if (event.pointerType !== "mouse" || !segOf(event)) return;
+    if (!event.relatedTarget?.classList?.contains?.("ctl-p")) hide();
+  });
+  root.addEventListener("click", (event) => {
+    const seg = segOf(event);
+    if (!seg) {
+      hide();
+      return;
+    }
+    event.stopPropagation();
+    if (shown && shown.seg === seg) hide();
+    else show(seg);
+  }, true);
+}
+
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.19.3";
+var TTD_VERSION = "1.20.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3342,6 +3560,7 @@ function ttdTemplate(cfg) {
   <div class="soc-row"><b data-r="chargeSoc">${TTD_DASH}</b><span data-r="chargeTarget"></span></div>
   <div class="bar" data-r="bar"><i class="bar-fill" data-r="barFill"></i><i class="bar-mark" data-r="barMark"></i></div>
   <div class="box kpis">${kpi("charger_power", "mdi:flash", "power", "Aktuel effekt")}${kpi("charging_rate", "mdi:speedometer", "rate", "Ladehastighed")}${kpi("charging_finish_time", "mdi:flag-checkered", "finish", "Forventet slut")}${kpi("charging_time_remaining", "mdi:timer-sand", "remaining", "Resttid")}</div>
+  ${cfg.smart_charge ? `<div class="box ctl-host ptl" data-r="ptl" hidden><div class="ptl-h">${ttdIcon("mdi:timeline-clock-outline", "ptl-i")}<span class="ptl-t"><b data-r="ptlTitle">Ladeplan</b><small data-r="ptlStatus"></small></span></div><div class="ctl-tl" data-r="ptlTrack"></div><p class="ptl-line" data-r="ptlLine"></p><div class="ptl-acts" data-r="ptlActs" hidden></div></div>` : ""}
   <div class="box monta">
     <button class="monta-main" data-more="${cfg.entities.monta_state ? "monta_state" : "charger_mode"}"><i class="mdot" data-r="montaDot"></i><span><b>${e(cfg.charger_label || (cfg.entities.monta_state ? "Monta" : "Lader"))}</b><small data-r="montaState">${TTD_DASH}</small></span></button>
     <div class="monta-mode" data-r="modeBox"><small>Ladertilstand</small><button class="mode-v" data-more="charger_mode" data-r="chargerMode">${TTD_DASH}</button><select class="mode-sel" data-r="modeSelect" aria-label="Ladertilstand" hidden></select></div>
@@ -3592,6 +3811,15 @@ button[data-dead]:hover{background:none}
 .bar-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--soc,0) * 1%);border-radius:inherit;background:var(--tone,var(--tdc-green));transition:width .6s ease}
 .bar-mark{position:absolute;top:-5px;bottom:-5px;width:3px;left:calc(var(--target,0) * 1% - 1.5px);border-radius:2px;background:var(--tdc-text)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+${CTL_CSS}
+.ptl{position:relative;margin-top:14px;padding:12px 16px 10px;--ctl-ev:var(--dashboard-ev,#b7a4ff);--ctl-muted:var(--tdc-muted);--ctl-good:var(--tdc-green);--ctl-warn:var(--tdc-orange);--ctl-text:var(--tdc-text)}
+.ptl-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+.ptl-i{flex:none;width:20px;height:20px;color:var(--ctl-ev)}
+.ptl-t{display:grid;min-width:0}.ptl-t b{font-size:15px;font-weight:650}
+.ptl-t small{font-size:13px;color:var(--tdc-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptl-line{margin:6px 0 0;font-size:12.5px;color:var(--tdc-muted)}
+.ptl-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ptl-acts .btn{flex:1 1 auto}
 .kpi{display:grid;gap:6px;min-width:0;padding:14px 16px;border-radius:0}
 .kpi+.kpi{border-left:1px solid var(--tdc-line)}
 .kpi b{font-size:18px}
@@ -4079,6 +4307,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._loading = {};
     this._hi = -1;
     this.shadowRoot.addEventListener("click", (event) => this._onClick(event));
+    ctlTips(this.shadowRoot);
     this.shadowRoot.addEventListener("change", (event) => this._onChange(event));
     this.shadowRoot.addEventListener("input", (event) => {
       if (event.target?.dataset?.rbin) this._rbInput(event.target);
@@ -4448,7 +4677,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
     const pluggedNow = !!(status.plugged || cable === true || plug === true);
-    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? ttdToDate(this._sc("next_charge_end")?.state) : null;
+    const planTl = this._planTimeline(f, status, pluggedNow);
+    const planEnd = planTl && Number.isFinite(planTl.end) ? new Date(planTl.end) : null;
+    const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? planEnd || ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
     let remainingRaw = this._text("charging_time_remaining");
     if (remainingRaw == null && !this._id("charging_time_remaining") && status.charging && scEnd) remainingRaw = String(Math.max(0, Math.round((scEnd.getTime() - Date.now()) / 6e4)));
@@ -4487,7 +4718,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       rate: rateText,
       finish,
       remaining,
-      monta: montaLabel ?? (mode ? this._chargerText(mode) : TTD_DASH),
+      // The charger line says where in the plan it is ("Pause til 02:30 (periode 3 af 5)"); the plan box has the rest.
+      monta: montaLabel ?? (mode ? planTl?.status ? planTl.status.split(" \xB7 ")[0] : this._chargerText(mode) : TTD_DASH),
+      plan: planTl,
+      startLabel: planTl?.goal != null ? `Lad nu til ${f.number(planTl.goal, 0)} %` : "Lad nu",
       montaTone: montaKey ? TTD_MONTA_TONES[montaKey] || "muted" : { connected_charging: "ok", connected_requesting: "info", connected_finished: "info" }[mode] || "muted",
       modeBoxVisible: montaConfigured || !!this._modeOptions(),
       mode: mode ? TTD_TEXT.mode[mode] ?? ttdHumanize(mode) : this._id("charger_mode") ? TTD_TEXT.unavailable : TTD_DASH,
@@ -4992,6 +5226,55 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const before = o.state;
       this._ccCall(key, key, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker\u2026", "Bilen blinkede");
     }
+  }
+  /** EV Ledger's plan as the shared timeline of the charging panel (the Tesla page and the quick charge popup): the
+   * charging periods, the pauses between them with a tooltip each, the plan in words and the buttons that override it
+   * (Claude AI, 2026-10-16; user: "ladnings kortet … mere besked om hvornår den lader … ændre til fuld ladning og
+   * overstyre det der er igang"). Only while the cable is in. */
+  _planTimeline(f, status, plugged) {
+    if (!this._cfg.smart_charge || !plugged) return null;
+    const modeObj = this._sc("charge_mode");
+    const mode = modeObj?.state;
+    if (!mode || ["manual", "unavailable", "unknown"].includes(mode)) return null;
+    const a = this._sc("next_charge_start")?.attributes || {};
+    const now = Date.now();
+    const blocks = (Array.isArray(a.blocks) ? a.blocks : []).map((b) => ({ t: Date.parse(b.start), e: Date.parse(b.end), kwh: Number(b.kwh) || 0, cost: Number(b.cost) || 0 }));
+    const deadline = mode === "now" ? NaN : Date.parse(a.deadline);
+    const prices = (Array.isArray(a.prices) ? a.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
+    const parts = ctlParts({ now, blocks, deadline, prices, minutes: Number(a.slot_minutes) || 15 });
+    const waitObj = this._sc("price_limit_wait");
+    const above = Number(a.above_limit_kwh) || 0;
+    const waiting = waitObj?.state === "on" && above >= 0.5;
+    const goalRaw = a.deadline_target != null && Number.isFinite(Number(a.deadline_target)) ? Number(a.deadline_target) : null;
+    const goal = goalRaw ?? this._scNum("plan_target_soc") ?? this._scNum("target_soc");
+    const def = modeObj.attributes?.default_mode;
+    const acts = [];
+    if (waiting && waitObj.state !== "unavailable") acts.push({ key: "full", label: goal != null ? `Lad til ${f.number(goal, 0)} %` : "Lad til m\xE5let" });
+    if (def && mode !== def && ["now", "off"].includes(mode)) acts.push({ key: "back", label: `F\xF8lg planen (${ttdScLabel(def)})` });
+    const charge = parts.some((p) => p.kind === "charge");
+    if (!charge && !acts.length) return null;
+    const unit = ttdUnit(this._sc("planned_cost")?.attributes?.unit_of_measurement ?? "kr.").replace(/\.$/, "");
+    const later = (Array.isArray(a.limit_cheaper) ? a.limit_cheaper : []).reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
+    const laterAt = later ? ttdToDate(later.start) : null;
+    const limitPrice = Number(a.price_limit);
+    const track2 = charge ? ctlTrack(parts, {
+      now,
+      deadline,
+      unit,
+      held: waiting && a.limit_soc != null ? { reach: Number(a.limit_soc), later: laterAt ? f.dayTime(laterAt) : "" } : null,
+      dear: (p) => !waiting && a.limit_ask === true && Number.isFinite(limitPrice) && p.price > limitPrice + 1e-6
+    }) : "";
+    const status_ = charge ? ctlStatus(parts, { now, charging: status.charging }) : "";
+    const wait = waiting ? ` \xB7 venter med ${f.number(above, 1)} kWh${laterAt ? ` til ${f.dayTime(laterAt)}` : ""}` : "";
+    return {
+      title: `Ladeplan \xB7 ${ttdScLabel(mode)}`,
+      status: status_ || (mode === "off" ? "P\xE5 pause \u2013 planen er stoppet" : ""),
+      line: charge ? `${ctlLine(parts, now)}${wait}` : "",
+      track: track2,
+      acts,
+      goal,
+      end: charge ? ctlSummary(parts).end : NaN
+    };
   }
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
   _chargerText(mode) {
@@ -5774,12 +6057,30 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("remaining", c2.remaining);
     this._attrSet("montaDot", "data-tone", c2.montaTone);
     this._t("montaState", c2.monta);
+    this._hide("ptl", !c2.plan);
+    if (c2.plan && r.ptl) {
+      this._t("ptlTitle", c2.plan.title);
+      this._t("ptlStatus", c2.plan.status);
+      this._t("ptlLine", c2.plan.line);
+      if (r.ptlTrack.dataset.sig !== c2.plan.track) {
+        r.ptlTrack.dataset.sig = c2.plan.track;
+        r.ptlTrack.innerHTML = c2.plan.track;
+      }
+      r.ptlTrack.hidden = !c2.plan.track;
+      const acts = JSON.stringify([c2.plan.acts, this._armed]);
+      if (r.ptlActs.dataset.sig !== acts) {
+        r.ptlActs.dataset.sig = acts;
+        r.ptlActs.innerHTML = c2.plan.acts.map((x) => `<button type="button" class="btn${x.key === "full" ? " go" : ""}" data-planact="${x.key}"${this._armed === `plan:${x.key}` ? " data-armed" : ""}>${ttdEsc(this._armed === `plan:${x.key}` ? `Bekr\xE6ft: ${x.label.toLowerCase()}` : x.label)}</button>`).join("");
+      }
+      r.ptlActs.hidden = !c2.plan.acts.length;
+    }
     this._t("chargerMode", c2.mode);
     this._hide("modeBox", !c2.modeBoxVisible);
     this._renderModeSelect(c2.modeOptions);
     this._hide("startBtn", !c2.startVisible);
     this._hide("stopBtn", !c2.stopVisible);
-    this._t("startBtn", c2.startBusy ? "Starter \u2026" : this._armed === "start_charge" ? "Bekr\xE6ft: lad nu" : "Lad nu");
+    this._t("startBtn", c2.startBusy ? "Starter \u2026" : this._armed === "start_charge" ? `Bekr\xE6ft: ${c2.startLabel.toLowerCase()}` : c2.startLabel);
+    this._attrSet("startBtn", "title", c2.plan ? "Overstyrer planen: lader med det samme til m\xE5let, derefter tilbage til standardplanen" : null);
     this._t("stopBtn", c2.stopBusy ? "Stopper \u2026" : this._armed === "stop_charge" ? "Bekr\xE6ft: stop" : "Stop");
     this._attrSet("startBtn", "data-busy", c2.startBusy);
     this._attrSet("stopBtn", "data-busy", c2.stopBusy);
@@ -6528,7 +6829,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) {
       this._rbAction(target);
@@ -6589,6 +6890,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
     else if (target.dataset.scwait) this._chooseWait(target.dataset.scwait === "on");
+    else if (target.dataset.planact) this._planAct(target.dataset.planact);
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
     else if (target.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
@@ -6792,6 +7094,24 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._disarm(true);
     this._scCall("price_limit_wait", "switch", on ? "turn_on" : "turn_off");
   }
+  /** The plan box's overrides, each with a second tap: charge to the target after all (the plan waited with the dear
+   * rest), or back to the default plan after "Lad nu" or a pause. */
+  _planAct(key) {
+    const armKey = `plan:${key}`;
+    if (this._armed !== armKey) {
+      this._disarm(false);
+      this._armed = armKey;
+      this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
+      this._queue(true);
+      return;
+    }
+    this._disarm(true);
+    if (key === "full") this._scCall("price_limit_wait", "switch", "turn_off");
+    else if (key === "back") {
+      const def = this._sc("charge_mode")?.attributes?.default_mode;
+      if (def) this._scCall("charge_mode", "select", "select_option", { option: def });
+    }
+  }
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */
   _chooseDefault(mode) {
     if (this._sc("default_charge_mode")?.state === mode) return;
@@ -6865,8 +7185,8 @@ function ttdRbWhen(f, date2, long = false) {
   return `${day2} ${TTD_TEXT.at} ${f.time(date2)}`;
 }
 function ttdLocalInput(date2) {
-  const pad3 = (value) => String(value).padStart(2, "0");
-  return `${date2.getFullYear()}-${pad3(date2.getMonth() + 1)}-${pad3(date2.getDate())}T${pad3(date2.getHours())}:${pad3(date2.getMinutes())}`;
+  const pad4 = (value) => String(value).padStart(2, "0");
+  return `${date2.getFullYear()}-${pad4(date2.getMonth() + 1)}-${pad4(date2.getDate())}T${pad4(date2.getHours())}:${pad4(date2.getMinutes())}`;
 }
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
@@ -6906,15 +7226,15 @@ function isNewLook(hass, config, { entity = "style_entity", key = "style", fallb
   if (value === "classic") return false;
   return fallback;
 }
-var esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 function lookEditorHtml(config, { entity = "style_entity", key = "style", fallback = false, label = "Udseende" } = {}) {
   const value = config?.[key] === "v2" ? "new" : config?.[key] || (fallback ? "new" : "classic");
   return `<div class="look-editor" style="margin:12px 0;padding:10px;border:1px solid var(--divider-color);border-radius:10px">
-    <label style="display:block;font-weight:600;margin:0 0 4px">${esc(label)}</label>
-    <select data-look-key="${esc(key)}" style="box-sizing:border-box;width:100%;padding:9px">
+    <label style="display:block;font-weight:600;margin:0 0 4px">${esc2(label)}</label>
+    <select data-look-key="${esc2(key)}" style="box-sizing:border-box;width:100%;padding:9px">
       <option value="new"${value === "new" ? " selected" : ""}>Ny</option><option value="classic"${value === "classic" ? " selected" : ""}>Klassisk</option></select>
     <label style="display:block;font-weight:600;margin:10px 0 4px">Skifteknap (valgfri input_boolean)</label>
-    <input data-look-key="${esc(entity)}" value="${esc(config?.[entity] || "")}" placeholder="input_boolean.dashboard_\u2026" style="box-sizing:border-box;width:100%;padding:9px">
+    <input data-look-key="${esc2(entity)}" value="${esc2(config?.[entity] || "")}" placeholder="input_boolean.dashboard_\u2026" style="box-sizing:border-box;width:100%;padding:9px">
     <div style="margin-top:5px;font-size:12px;color:var(--secondary-text-color)">Til = ny, fra = klassisk. S\xE5 l\xE6nge hj\xE6lperen findes, styrer den udseendet.</div></div>`;
 }
 function wireLookEditor(root, editor, getConfig) {
@@ -6935,7 +7255,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.7.1";
+var VERSION5 = "0.8.0";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -6969,7 +7289,7 @@ var DEFAULTS = {
   cost_per_km: "",
   efficiency: ""
 };
-var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var HATeslaGlanceCard = class extends HTMLElement {
   static getStubConfig() {
     return { ...DEFAULTS };
@@ -7098,12 +7418,12 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const t = new Date(v);
     if (Number.isNaN(t.getTime())) return v;
     const now = /* @__PURE__ */ new Date();
-    const hm = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-    if (t.toDateString() === now.toDateString()) return hm;
+    const hm2 = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    if (t.toDateString() === now.toDateString()) return hm2;
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
-    if (t.toDateString() === tomorrow.toDateString()) return `i morgen ${hm}`;
-    return `${t.toLocaleDateString("da-DK", { weekday: "short" })} ${hm}`;
+    if (t.toDateString() === tomorrow.toDateString()) return `i morgen ${hm2}`;
+    return `${t.toLocaleDateString("da-DK", { weekday: "short" })} ${hm2}`;
   }
   _target() {
     const t = this._config.target_soc;
@@ -7244,6 +7564,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
       @keyframes nowPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ev) 70%,transparent)}80%,100%{box-shadow:0 0 0 9px transparent}}
       .flag{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;border-radius:2px;background:var(--good);box-shadow:0 0 8px var(--good)}
       .tticks{position:absolute;left:0;right:0;bottom:-2px;height:12px}.tt{position:absolute;transform:translateX(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap}.tt[style*="left:0"]{transform:none}.tt.end{transform:translateX(-100%);color:var(--good);font-weight:700}
+      ${CTL_CSS}
+      .plan .ctl-tl{--ctl-ev:var(--ev);--ctl-muted:var(--muted);--ctl-good:var(--good);--ctl-warn:var(--warn);--ctl-text:var(--primary-text-color)}
       .tx{position:absolute;top:2px;bottom:2px;border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--warn) 32%,transparent) 0 3px,transparent 3px 6px)}
       .pnums.has-btn{flex-wrap:nowrap}.pnums.has-btn>span{white-space:nowrap}.pnums .held{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:color-mix(in srgb,var(--warn) 80%,var(--primary-text-color))}.pnums .held b{color:var(--warn)}
       @container (max-width:640px){.pnums.has-btn .save{display:none}}
@@ -7307,6 +7629,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       <div class="dots" hidden><i data-v="plan" title="Ladeplan"></i><i data-v="car" title="Bilen"></i></div>
     </ha-card>`;
     const hc2 = this.shadowRoot.querySelector("ha-card");
+    ctlTips(this.shadowRoot, () => hc2);
     hc2.addEventListener("click", (e) => {
       if (this._swiped) {
         this._swiped = false;
@@ -7464,6 +7787,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const alt = this._hass.states[c2.cost]?.attributes?.alternatives || {};
     const nowCost = Number(alt.now?.cost);
     const soc = Number.isFinite(n(c2.soc)) ? n(c2.soc) : this._num(this._config.battery) ?? NaN;
+    const prices = (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
     return {
       blocks,
       mode,
@@ -7473,6 +7797,8 @@ var HATeslaGlanceCard = class extends HTMLElement {
       nowCost,
       nowKwh: Number(alt.now?.energy_kwh),
       limit,
+      prices,
+      minutes: Number(pa.slot_minutes) || 15,
       soc,
       target: n(c2.target),
       deadline: pa.deadline,
@@ -7483,7 +7809,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
     const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
-    const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    const hm2 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const now = Date.now();
     const soc = Number.isFinite(p.soc) ? p.soc : 0;
     const tg = Number.isFinite(p.target) ? p.target : 100;
@@ -7510,20 +7836,23 @@ var HATeslaGlanceCard = class extends HTMLElement {
       else runs.push({ t: Math.max(x.t, now), e: xe });
     }
     const stripes = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
-    const blocks = stripes + p.blocks.map((b) => `<i class="tb${over && !held && b.kwh > 0 && b.cost / b.kwh > L3.price + 1e-6 ? " dear" : ""}" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.8, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
-    const ticks2 = [];
-    const d0 = new Date(now);
-    d0.setMinutes(0, 0, 0);
-    for (let t = +d0 + 36e5; t < end; t += 36e5) {
-      const h = new Date(t).getHours();
-      const xx = X(t);
-      if (h % 6 === 0 && xx > 7 && (!p.deadline || Math.abs(xx - X(dlT)) > 16)) ticks2.push(`<span class="tt" style="left:${X(t).toFixed(2)}%">${String(h).padStart(2, "0")}</span>`);
-    }
-    const dl2 = p.deadline ? `${new Date(p.deadline).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(p.deadline)}` : "";
+    const parts = ctlParts({ now, blocks: p.blocks, deadline: p.deadline ? dlT : NaN, prices: p.prices, minutes: p.minutes });
+    const best = held ? L3.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null) : null;
+    const later = best ? `${new Date(best.t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm2(best.t)}` : "";
+    const track2 = ctlTrack(parts, {
+      now,
+      end,
+      X,
+      deadline: p.deadline ? dlT : NaN,
+      unit: "kr",
+      extra: stripes,
+      held: held && Number.isFinite(L3.reach) ? { reach: L3.reach, later } : null,
+      dear: (part) => over && !held && part.kwh > 0 && part.cost / part.kwh > L3.price + 1e-6
+    });
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
-        <div class="pt"><b>Ladeplan \xB7 ${esc2(MODE[p.mode] || p.mode)}</b><span>${esc2(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
-        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L3.price, 2)} kr` : running ? "nu" : hm(first.t)}</b><em>${esc2(until2)}</em></div></div>
-      <div class="tl"><div class="track">${blocks}<i class="nowdot"></i>${p.deadline ? `<i class="flag" style="left:${X(dlT).toFixed(2)}%"></i>` : ""}</div><div class="tticks"><span class="tt" style="left:0">nu</span>${ticks2.join("")}${dl2 ? `<span class="tt end" style="left:${X(dlT).toFixed(2)}%">klar ${esc2(dl2)}</span>` : ""}</div></div>
+        <div class="pt"><b>Ladeplan \xB7 ${esc3(MODE[p.mode] || p.mode)}</b><span>${esc3(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L3.reach) && p.blocks.length ? `${Math.round(L3.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
+        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L3.price, 2)} kr` : running ? "nu" : hm2(first.t)}</b><em>${esc3(until2)}</em></div></div>
+      <div class="ctl-tl">${track2}</div>
       <div class="pnums${over && L3.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L3, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L3.canWait ? this._waitBtn(held, L3, soc, tg) : ""}</div>`;
   }
   _limitText(L3, held) {
@@ -7574,22 +7903,27 @@ var HATeslaGlanceCard = class extends HTMLElement {
   // a live bar towards the target, the numbers with the savings badge to the right.
   _chargeHtml(p) {
     const c2 = this._config;
-    const hm = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    const hm2 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c2.battery) ?? 0;
     const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
     const pw = this._pw();
     const raw = this._num(pw);
     const kw = raw == null ? null : this._unit(pw) === "W" || raw > 100 ? raw / 1e3 : raw;
+    const now = Date.now();
+    const dlT = p?.deadline ? Date.parse(p.deadline) : NaN;
+    const parts = p ? ctlParts({ now, blocks: p.blocks, deadline: dlT, prices: p.prices, minutes: p.minutes }) : [];
+    const tl = parts.filter((x) => x.kind === "charge").length > 1 || parts.some((x) => x.kind === "pause") ? `<div class="ctl-tl">${ctlTrack(parts, { now, deadline: dlT, unit: "kr" })}</div>` : "";
+    const planEnd = tl ? Math.max(...parts.filter((x) => x.kind === "charge").map((x) => x.e)) : NaN;
     const added = this._num(this._added());
     const fin = this._val(c2.charge_finish);
-    const finT = fin ? Date.parse(fin) : NaN;
+    const finT = Number.isFinite(planEnd) ? planEnd : fin ? Date.parse(fin) : NaN;
     const left = Number.isFinite(finT) && finT > Date.now() ? Math.round((finT - Date.now()) / 6e4) : null;
     const leftTxt = left == null ? "" : left >= 60 ? `om ${Math.floor(left / 60)} t ${left % 60} min` : `om ${left} min`;
     const prev = c2.preview === "charge";
     return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, tg))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
-        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc2(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
-        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm(finT) : `${Math.round(soc)} %`}</b><em>${esc2(leftTxt)}</em></div></div>
-      <div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>
+        <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${esc3(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(tg)} %${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm2(finT) : `${Math.round(soc)} %`}</b><em>${esc3(leftTxt)}</em></div></div>
+      ${tl || `<div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, tg)}%"></i></div>`}
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
   // Spinning wheels while driving, like the Tesla app (Claude AI, 2026-10-14). `image_driving_wheels` lists each wheel in the
@@ -7786,10 +8120,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const line = root.querySelector(".line");
     if (charging) {
       const p = this._num(this._pw()), added = this._num(this._added()), fin = this._time(c2.charge_finish);
-      line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc2(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc2(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc2(fin)}` : ""}`;
+      line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc3(this._fmt(p, 1))} kW</b>${added != null ? ` \xB7 +${esc3(this._fmt(added, 1))} kWh` : ""}${fin ? ` \xB7 f\xE6rdig ${esc3(fin)}` : ""}`;
     } else {
       const next = this._time(c2.next_charge_start), cost = this._num(c2.next_charge_cost);
-      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc2(next)}</b>${cost != null ? ` \xB7 ${esc2(this._fmt(cost, 2))} kr` : ""}${target != null && !c2.compact ? ` \xB7 m\xE5l ${esc2(this._fmt(target))} %` : ""}`;
+      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc3(next)}</b>${cost != null ? ` \xB7 ${esc3(this._fmt(cost, 2))} kr` : ""}${target != null && !c2.compact ? ` \xB7 m\xE5l ${esc3(this._fmt(target))} %` : ""}`;
       else if (plugged) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
       else line.innerHTML = "";
     }
@@ -7798,7 +8132,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     if (lock) chips.push(lock === "locked" ? `<span class="chip ok" title="L\xE5st"><ha-icon icon="mdi:lock"></ha-icon><span class="cl">L\xE5st</span></span>` : `<span class="chip warn" title="Ul\xE5st"><ha-icon icon="mdi:lock-open-variant"></ha-icon><span class="cl">Ul\xE5st</span></span>`);
     if (this._val(c2.sentry) === "on") chips.push(`<span class="chip ok" title="Sentry"><ha-icon icon="mdi:shield-car"></ha-icon><span class="cl">Sentry</span></span>`);
     const inside = this._num(c2.inside_temperature);
-    if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc2(this._fmt(inside, 0))}\xB0</span>`);
+    if (inside != null) chips.push(`<span class="chip"><ha-icon icon="mdi:car-seat-heater"></ha-icon>${esc3(this._fmt(inside, 0))}\xB0</span>`);
     root.querySelector(".chips").innerHTML = chips.join("");
     const img = root.querySelector(".car img");
     const gearNow = String(this._val(c2.shift_state) || "").toUpperCase();
@@ -7825,10 +8159,10 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const stat = (label, id, digits, unitFallback) => {
       const v = this._num(id);
       if (v == null) return;
-      stats.push(`<div class="stat"><span>${esc2(label)}</span><b>${esc2(this._fmt(v, digits))}<small>${esc2((this._unit(id) || unitFallback).replace(/^DKK/, "kr"))}</small></b></div>`);
+      stats.push(`<div class="stat"><span>${esc3(label)}</span><b>${esc3(this._fmt(v, digits))}<small>${esc3((this._unit(id) || unitFallback).replace(/^DKK/, "kr"))}</small></b></div>`);
     };
     const today = this._num(c2.energy_today), todayCost = this._num(c2.cost_today);
-    if (today != null) stats.push(`<div class="stat"><span>I dag</span><b>${esc2(this._fmt(today, 1))}<small>kWh</small>${todayCost != null ? `<small> \xB7 ${esc2(this._fmt(todayCost, 0))} kr</small>` : ""}</b></div>`);
+    if (today != null) stats.push(`<div class="stat"><span>I dag</span><b>${esc3(this._fmt(today, 1))}<small>kWh</small>${todayCost != null ? `<small> \xB7 ${esc3(this._fmt(todayCost, 0))} kr</small>` : ""}</b></div>`);
     stat("Denne m\xE5ned", c2.energy_month, 0, "kWh");
     stat("Pris pr. km", c2.cost_per_km, 2, "kr/km");
     stat("Forbrug", c2.efficiency, 0, "Wh/km");
@@ -7845,7 +8179,7 @@ console.info(`%c HA TESLA GLANCE %c v${VERSION5} `, "color:white;background:#cc0
 
 // src/cards/ha-text-input-card/ha-text-input-card.js
 var VERSION6 = "0.1.0";
-var esc3 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc4 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var HATextInputCard = class _HATextInputCard extends HTMLElement {
   static getStubConfig() {
     return { entity: "input_text.message", name: "Besked", icon: "mdi:text-box-outline", height: 90 };
@@ -7905,7 +8239,7 @@ var HATextInputCard = class _HATextInputCard extends HTMLElement {
       input::placeholder{color:var(--secondary-text-color);opacity:.85}
       input:disabled{opacity:.5}
     </style>
-    <ha-card><label><ha-icon icon="${esc3(c2.icon)}"></ha-icon><input type="text" enterkeyhint="send" autocomplete="off" placeholder="${esc3(c2.name)}" aria-label="${esc3(c2.name)}"></label></ha-card>`;
+    <ha-card><label><ha-icon icon="${esc4(c2.icon)}"></ha-icon><input type="text" enterkeyhint="send" autocomplete="off" placeholder="${esc4(c2.name)}" aria-label="${esc4(c2.name)}"></label></ha-card>`;
     const input = this.shadowRoot.querySelector("input");
     const commit = () => {
       if (!this._hass || input.value === this._value) return;
@@ -7959,12 +8293,12 @@ var kindOf = (kind) => KINDS[kind] || KINDS.summer;
 var BAND_ORDER = ["under 0", "0\u20135", "5\u201310", "10\u201315", "15\u201320", "20+"];
 var BAND_LABEL = { "under 0": "Under 0\xB0", "0\u20135": "0\u20135\xB0", "5\u201310": "5\u201310\xB0", "10\u201315": "10\u201315\xB0", "15\u201320": "15\u201320\xB0", "20+": "Over 20\xB0" };
 var TYRES = [["fl", "VF"], ["fr", "HF"], ["rl", "VB"], ["rr", "HB"]];
-var esc4 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var num = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var num2 = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 var day = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
 var dayShort = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
-var pad = (n) => String(n).padStart(2, "0");
-var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad(date2.getMonth() + 1)}-${pad(date2.getDate())}T${pad(date2.getHours())}:${pad(date2.getMinutes())}`;
+var pad2 = (n) => String(n).padStart(2, "0");
+var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad2(date2.getMonth() + 1)}-${pad2(date2.getDate())}T${pad2(date2.getHours())}:${pad2(date2.getMinutes())}`;
 var icon = (name, cls = "") => `<ha-icon icon="${name}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 function dotAge(dot) {
   const m = /^(\d{2})(\d{2})$/.exec(String(dot || "").trim());
@@ -8042,7 +8376,7 @@ var HAEvTyreCard = class extends HTMLElement {
   // ---------------------------------------------------------------- render
   _render() {
     if (!this.shadowRoot || !this._config) return;
-    const body = !this._st ? `<p class="empty">${icon("mdi:alert-circle-outline")}<span>${esc4(this._config.entity)} findes ikke. Den kommer med EV Ledger 0.7.0 (genstart Home Assistant efter opdateringen).</span></p>` : this._view === "change" ? this._changeHtml() : this._view === "tread" ? this._treadHtml() : this._view === "edit" ? this._editHtml() : this._view === "season" ? this._seasonHtml() : this._mainHtml();
+    const body = !this._st ? `<p class="empty">${icon("mdi:alert-circle-outline")}<span>${esc5(this._config.entity)} findes ikke. Den kommer med EV Ledger 0.7.0 (genstart Home Assistant efter opdateringen).</span></p>` : this._view === "change" ? this._changeHtml() : this._view === "tread" ? this._treadHtml() : this._view === "edit" ? this._editHtml() : this._view === "season" ? this._seasonHtml() : this._mainHtml();
     const html = `<style>${STYLES}</style>${this._config.embedded ? `<div class="tc embedded">${body}</div>` : `<ha-card><div class="tc">${body}</div></ha-card>`}`;
     const scroller = this.shadowRoot.querySelector(".tc");
     const keep = scroller ? scroller.scrollTop : 0;
@@ -8070,7 +8404,7 @@ var HAEvTyreCard = class extends HTMLElement {
     const active = this._set(this._a.set_id);
     const k = active ? kindOf(active.kind) : null;
     return `<header class="th"><span class="th-i" style="--k:${k ? k.color : "var(--tc-muted)"}">${icon("mdi:tire")}</span>
-      <div class="th-t"><h3>${esc4(this._config.title)}</h3><p>${sub}</p></div>${actions}</header>`;
+      <div class="th-t"><h3>${esc5(this._config.title)}</h3><p>${sub}</p></div>${actions}</header>`;
   }
   _mainHtml() {
     const a = this._a;
@@ -8082,7 +8416,7 @@ var HAEvTyreCard = class extends HTMLElement {
     }
     const active = this._set(a.set_id);
     const k = active ? kindOf(active.kind) : null;
-    const sub = active ? `${esc4(active.name)} p\xE5 siden ${esc4(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
+    const sub = active ? `${esc5(active.name)} p\xE5 siden ${esc5(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
     const actions = `<div class="th-a"><button type="button" class="btn go" data-change>${icon("mdi:swap-horizontal")}<span>Skift hjul</span></button><button type="button" class="ib" data-new title="Nyt hjuls\xE6t" aria-label="Nyt hjuls\xE6t">${icon("mdi:plus")}</button></div>`;
     return `${this._header(sub, actions)}${this._tipHtml()}${active ? this._currentHtml(active, k) : `<p class="note">Tryk <b>Skift hjul</b> og v\xE6lg det s\xE6t, der sidder p\xE5 nu (du kan v\xE6lge en dato tilbage i tiden).</p>`}
       ${this._setsHtml()}${this._compareHtml()}${this._historyHtml()}`;
@@ -8092,8 +8426,8 @@ var HAEvTyreCard = class extends HTMLElement {
     if (!tip) return "";
     const to = kindOf(tip.to === "summer" ? "summer" : "winter");
     const goal = tip.to === "summer" ? "sommerhjul" : "vinterhjul";
-    return `<div class="tip${tip.urgent ? " urgent" : ""}" style="--k:${to.color}">${icon(to.icon, "tip-i")}<div><b>Tid til ${goal}${tip.set ? ` (${esc4(tip.set)})` : ""}</b><p>${esc4(tip.reason)}</p></div>
-      ${tip.set_id ? `<button type="button" class="btn" data-change="${esc4(tip.set_id)}">Skift nu</button>` : ""}</div>`;
+    return `<div class="tip${tip.urgent ? " urgent" : ""}" style="--k:${to.color}">${icon(to.icon, "tip-i")}<div><b>Tid til ${goal}${tip.set ? ` (${esc5(tip.set)})` : ""}</b><p>${esc5(tip.reason)}</p></div>
+      ${tip.set_id ? `<button type="button" class="btn" data-change="${esc5(tip.set_id)}">Skift nu</button>` : ""}</div>`;
   }
   _treadBar(set) {
     if (set.tread_mm == null) return "";
@@ -8101,10 +8435,10 @@ var HAEvTyreCard = class extends HTMLElement {
     const pct2 = Math.min(100, set.tread_mm / max * 100);
     const minPct = set.tread_min_mm / max * 100;
     const tone2 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
-    const left = set.km_left != null ? ` \xB7 ca. ${num(set.km_left)} km tilbage` : "";
-    return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num(set.tread_mm, 1)} mm</b></div>
-      <div class="tread-bar"><i style="width:${pct2.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num(set.tread_min_mm, 1)} mm"></em></div>
-      <small>Anbefalet min. ${num(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc4(dayShort(set.tread_at))}</small></div>`;
+    const left = set.km_left != null ? ` \xB7 ca. ${num2(set.km_left)} km tilbage` : "";
+    return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num2(set.tread_mm, 1)} mm</b></div>
+      <div class="tread-bar"><i style="width:${pct2.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
+      <small>Anbefalet min. ${num2(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num2(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc5(dayShort(set.tread_at))}</small></div>`;
   }
   _currentHtml(set, k) {
     const a = this._a;
@@ -8112,33 +8446,33 @@ var HAEvTyreCard = class extends HTMLElement {
     const age = dotAge(set.dot);
     const tyre = [set.brand, set.model].filter(Boolean).join(" ");
     const facts = [
-      set.rim ? `${icon("mdi:circle-double")}<span>${esc4(set.rim)}</span>` : "",
-      tyre ? `${icon("mdi:tire")}<span>${esc4(tyre)}</span>` : "",
-      set.dot ? `${icon("mdi:calendar")}<span>DOT ${esc4(set.dot)}${age != null ? ` \xB7 ${num(age, age < 10 ? 1 : 0)} \xE5r` : ""}</span>` : ""
+      set.rim ? `${icon("mdi:circle-double")}<span>${esc5(set.rim)}</span>` : "",
+      tyre ? `${icon("mdi:tire")}<span>${esc5(tyre)}</span>` : "",
+      set.dot ? `${icon("mdi:calendar")}<span>DOT ${esc5(set.dot)}${age != null ? ` \xB7 ${num2(age, age < 10 ? 1 : 0)} \xE5r` : ""}</span>` : ""
     ].filter(Boolean).map((f) => `<span class="fact">${f}</span>`).join("");
-    const kpi = (value, unit, label, title = "") => `<div class="kpi"${title ? ` title="${esc4(title)}"` : ""}><b>${value}<small>${unit}</small></b><span>${label}</span></div>`;
+    const kpi = (value, unit, label, title = "") => `<div class="kpi"${title ? ` title="${esc5(title)}"` : ""}><b>${value}<small>${unit}</small></b><span>${label}</span></div>`;
     return `<section class="cur" style="--k:${k.color}">
-      <div class="cur-top"><span class="kind">${icon(k.icon)}${k.label}</span><h4>${esc4(set.name)}</h4><p class="size">${esc4(set.size || "St\xF8rrelse ikke angivet")}</p>
+      <div class="cur-top"><span class="kind">${icon(k.icon)}${k.label}</span><h4>${esc5(set.name)}</h4><p class="size">${esc5(set.size || "St\xF8rrelse ikke angivet")}</p>
         <div class="facts">${facts}</div></div>
-      <div class="kpis">${kpi(num(season?.km ?? a.season_km), "km", "denne s\xE6son")}${kpi(num(season?.wh_per_km), "Wh/km", "k\xF8rsel", "Ud fra batteriets fald p\xE5 turene")}${kpi(num(season?.charged_kwh_per_100_km, 1), "kWh/100 km", "opladet", "Ladet energi pr. 100 km (med tab og standby)")}${kpi(num(season?.cost_per_km, 2), "kr/km", "ladeudgift")}</div>
+      <div class="kpis">${kpi(num2(season?.km ?? a.season_km), "km", "denne s\xE6son")}${kpi(num2(season?.wh_per_km), "Wh/km", "k\xF8rsel", "Ud fra batteriets fald p\xE5 turene")}${kpi(num2(season?.charged_kwh_per_100_km, 1), "kWh/100 km", "opladet", "Ladet energi pr. 100 km (med tab og standby)")}${kpi(num2(season?.cost_per_km, 2), "kr/km", "ladeudgift")}</div>
       ${this._treadBar(set)}
-      ${season?.mean_temp_c != null ? `<p class="mini">${icon("mdi:thermometer")}Gennemsnitlig udetemperatur p\xE5 turene: ${num(season.mean_temp_c, 1)} \xB0C \xB7 ${num(season.days)} dage \xB7 ${num(season.trips)} ture</p>` : ""}
+      ${season?.mean_temp_c != null ? `<p class="mini">${icon("mdi:thermometer")}Gennemsnitlig udetemperatur p\xE5 turene: ${num2(season.mean_temp_c, 1)} \xB0C \xB7 ${num2(season.days)} dage \xB7 ${num2(season.trips)} ture</p>` : ""}
     </section>`;
   }
   _setsHtml() {
     const sets = this._sets();
     const tiles = sets.filter((s) => !s.retired || s.mounted).map((s) => {
       const k = kindOf(s.kind);
-      const where = s.mounted ? `<span class="on">P\xE5 bilen</span>` : s.storage ? `<span class="off">${icon("mdi:warehouse")}${esc4(s.storage)}</span>` : "";
+      const where = s.mounted ? `<span class="on">P\xE5 bilen</span>` : s.storage ? `<span class="off">${icon("mdi:warehouse")}${esc5(s.storage)}</span>` : "";
       return `<article class="set${s.mounted ? " mounted" : ""}" style="--k:${k.color}">
-        <header>${icon(k.icon, "set-i")}<div><b>${esc4(s.name)}</b><small>${esc4(s.size || k.label)}</small></div>${where}</header>
-        <dl><div><dt>I alt</dt><dd>${num(s.total_km)} km</dd></div><div><dt>K\xF8rsel</dt><dd>${num(s.wh_per_km)} Wh/km</dd></div>
-          <div><dt>Opladet</dt><dd>${num(s.charged_kwh_per_100_km, 1)} kWh/100</dd></div><div><dt>M\xF8nster</dt><dd>${s.tread_mm != null ? `${num(s.tread_mm, 1)} mm` : "\u2013"}</dd></div></dl>
-        <footer><button type="button" class="lnk" data-tread="${esc4(s.id)}">${icon("mdi:ruler")}M\xE5l m\xF8nster</button><button type="button" class="lnk" data-edit="${esc4(s.id)}">${icon("mdi:pencil")}Ret</button></footer>
+        <header>${icon(k.icon, "set-i")}<div><b>${esc5(s.name)}</b><small>${esc5(s.size || k.label)}</small></div>${where}</header>
+        <dl><div><dt>I alt</dt><dd>${num2(s.total_km)} km</dd></div><div><dt>K\xF8rsel</dt><dd>${num2(s.wh_per_km)} Wh/km</dd></div>
+          <div><dt>Opladet</dt><dd>${num2(s.charged_kwh_per_100_km, 1)} kWh/100</dd></div><div><dt>M\xF8nster</dt><dd>${s.tread_mm != null ? `${num2(s.tread_mm, 1)} mm` : "\u2013"}</dd></div></dl>
+        <footer><button type="button" class="lnk" data-tread="${esc5(s.id)}">${icon("mdi:ruler")}M\xE5l m\xF8nster</button><button type="button" class="lnk" data-edit="${esc5(s.id)}">${icon("mdi:pencil")}Ret</button></footer>
       </article>`;
     }).join("");
     const retired = sets.filter((s) => s.retired && !s.mounted);
-    const old = retired.length ? `<p class="mini">${icon("mdi:archive-outline")}Udfasede: ${retired.map((s) => `<button type="button" class="lnk inline" data-edit="${esc4(s.id)}">${esc4(s.name)}</button>`).join(", ")}</p>` : "";
+    const old = retired.length ? `<p class="mini">${icon("mdi:archive-outline")}Udfasede: ${retired.map((s) => `<button type="button" class="lnk inline" data-edit="${esc5(s.id)}">${esc5(s.name)}</button>`).join(", ")}</p>` : "";
     return `<section class="sets">${tiles}</section>${old}`;
   }
   _compareHtml() {
@@ -8150,16 +8484,16 @@ var HAEvTyreCard = class extends HTMLElement {
     const rows = bands.map((band) => `<div class="band"><span class="band-l">${BAND_LABEL[band]}</span><div class="band-b">${sets.map((s) => {
       const v = s.bands[band];
       const k = kindOf(s.kind);
-      return v ? `<div class="bar" style="--k:${k.color};--w:${(v.wh_per_km / max * 100).toFixed(1)}%" title="${esc4(s.name)}: ${num(v.wh_per_km)} Wh/km over ${num(v.km)} km"><i></i><em>${num(v.wh_per_km)}</em></div>` : `<div class="bar none" title="${esc4(s.name)}: ingen ture"><i></i><em>\u2013</em></div>`;
+      return v ? `<div class="bar" style="--k:${k.color};--w:${(v.wh_per_km / max * 100).toFixed(1)}%" title="${esc5(s.name)}: ${num2(v.wh_per_km)} Wh/km over ${num2(v.km)} km"><i></i><em>${num2(v.wh_per_km)}</em></div>` : `<div class="bar none" title="${esc5(s.name)}: ingen ture"><i></i><em>\u2013</em></div>`;
     }).join("")}</div></div>`).join("");
     const lines = (cmp?.sets || []).map((c2) => {
       const s = this._set(c2.set_id);
-      if (c2.difference_pct == null) return `<p class="verdict muted">${icon("mdi:scale-balance")}<span><b>${esc4(c2.set)}</b> mod <b>${esc4(cmp.reference)}</b>: k\xF8r mindst 100 km p\xE5 begge s\xE6t i samme temperaturinterval, s\xE5 kan de sammenlignes \xE6rligt.</span></p>`;
+      if (c2.difference_pct == null) return `<p class="verdict muted">${icon("mdi:scale-balance")}<span><b>${esc5(c2.set)}</b> mod <b>${esc5(cmp.reference)}</b>: k\xF8r mindst 100 km p\xE5 begge s\xE6t i samme temperaturinterval, s\xE5 kan de sammenlignes \xE6rligt.</span></p>`;
       const more = c2.difference_pct > 0;
       const sure = { low: "forel\xF8bigt tal \u2014 bliver mere sikkert med flere km", medium: "rimeligt sikkert", high: "sikkert" }[c2.confidence];
-      return `<p class="verdict${c2.confidence === "low" ? " soft" : ""}" style="--k:${kindOf(s?.kind).color}">${icon(more ? "mdi:trending-up" : "mdi:trending-down")}<span><b>${esc4(c2.set)}</b> bruger <b>${num(Math.abs(c2.difference_pct), 1)} % ${more ? "mere" : "mindre"}</b> end ${esc4(cmp.reference)} ved samme udetemperatur (${c2.bands.map((b) => BAND_LABEL[b]).join(", ")} \xB7 ${num(c2.km_compared)} km${sure ? ` \xB7 ${sure}` : ""}).</span></p>`;
+      return `<p class="verdict${c2.confidence === "low" ? " soft" : ""}" style="--k:${kindOf(s?.kind).color}">${icon(more ? "mdi:trending-up" : "mdi:trending-down")}<span><b>${esc5(c2.set)}</b> bruger <b>${num2(Math.abs(c2.difference_pct), 1)} % ${more ? "mere" : "mindre"}</b> end ${esc5(cmp.reference)} ved samme udetemperatur (${c2.bands.map((b) => BAND_LABEL[b]).join(", ")} \xB7 ${num2(c2.km_compared)} km${sure ? ` \xB7 ${sure}` : ""}).</span></p>`;
     }).join("");
-    const legend = sets.map((s) => `<span style="--k:${kindOf(s.kind).color}"><i></i>${esc4(s.name)}</span>`).join("");
+    const legend = sets.map((s) => `<span style="--k:${kindOf(s.kind).color}"><i></i>${esc5(s.name)}</span>`).join("");
     return `<section class="cmp"><header class="sh"><h4>Forbrug ved udetemperatur</h4><span class="legend">${legend}</span></header>
       <div class="bands">${rows}</div>${lines}<p class="mini">Wh/km ud fra batteriets fald p\xE5 turene. Kulde koster mest \u2014 derfor sammenlignes s\xE6ttene kun i samme temperatur.</p></section>`;
   }
@@ -8169,9 +8503,9 @@ var HAEvTyreCard = class extends HTMLElement {
     const rows = seasons.map((s) => {
       const set = this._set(s.set_id);
       const k = kindOf(set?.kind || s.kind);
-      return `<button type="button" class="hrow" data-season="${esc4(s.change_id)}" style="--k:${k.color}">${icon(k.icon, "h-i")}
-        <span class="h-n"><b>${esc4(s.set || "Slettet s\xE6t")}</b><small>${esc4(day(s.from))} \u2013 ${s.to ? esc4(day(s.to)) : "nu"}</small></span>
-        <span class="h-v"><b>${s.km != null ? `${num(s.km)} km` : "\u2013"}</b><small>${s.wh_per_km != null ? `${num(s.wh_per_km)} Wh/km` : ""}${s.cost_per_km != null ? ` \xB7 ${num(s.cost_per_km, 2)} kr/km` : ""}</small></span>${icon("mdi:chevron-right", "h-c")}</button>`;
+      return `<button type="button" class="hrow" data-season="${esc5(s.change_id)}" style="--k:${k.color}">${icon(k.icon, "h-i")}
+        <span class="h-n"><b>${esc5(s.set || "Slettet s\xE6t")}</b><small>${esc5(day(s.from))} \u2013 ${s.to ? esc5(day(s.to)) : "nu"}</small></span>
+        <span class="h-v"><b>${s.km != null ? `${num2(s.km)} km` : "\u2013"}</b><small>${s.wh_per_km != null ? `${num2(s.wh_per_km)} Wh/km` : ""}${s.cost_per_km != null ? ` \xB7 ${num2(s.cost_per_km, 2)} kr/km` : ""}</small></span>${icon("mdi:chevron-right", "h-c")}</button>`;
     }).join("");
     return `<section class="hist"><header class="sh"><h4>S\xE6soner</h4></header>${rows}</section>`;
   }
@@ -8186,7 +8520,7 @@ var HAEvTyreCard = class extends HTMLElement {
     this._pick = pick;
     const choices = sets.map((s) => {
       const k = kindOf(s.kind);
-      return `<button type="button" class="choice" role="radio" aria-checked="${s.id === pick}" data-pick="${esc4(s.id)}" style="--k:${k.color}"${s.mounted ? " disabled" : ""}>${icon(k.icon)}<span><b>${esc4(s.name)}</b><small>${s.mounted ? "Sidder p\xE5 nu" : esc4(s.size || k.label)}</small></span></button>`;
+      return `<button type="button" class="choice" role="radio" aria-checked="${s.id === pick}" data-pick="${esc5(s.id)}" style="--k:${k.color}"${s.mounted ? " disabled" : ""}>${icon(k.icon)}<span><b>${esc5(s.name)}</b><small>${s.mounted ? "Sidder p\xE5 nu" : esc5(s.size || k.label)}</small></span></button>`;
     }).join("");
     return this._form("Skift hjul", "Hvilket s\xE6t kommer p\xE5?", `<div class="choices" role="radiogroup">${choices}</div>
       <div class="grid2"><label class="f"><span>Hvorn\xE5r</span><input type="datetime-local" data-f="at" value="${localInput()}" max="${localInput()}"></label>
@@ -8197,9 +8531,9 @@ var HAEvTyreCard = class extends HTMLElement {
   _treadHtml() {
     const set = this._set(this._treadId) || this._set(this._a.set_id) || this._sets()[0];
     this._treadId = set?.id;
-    const options = this._sets().map((s) => `<option value="${esc4(s.id)}"${s.id === set?.id ? " selected" : ""}>${esc4(s.name)}</option>`).join("");
+    const options = this._sets().map((s) => `<option value="${esc5(s.id)}"${s.id === set?.id ? " selected" : ""}>${esc5(s.name)}</option>`).join("");
     const last = (set?.treads || []).slice(-1)[0];
-    const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc4(day(r.at))}</span><b>${num(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc4(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
+    const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc5(day(r.at))}</span><b>${num2(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num2(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num2(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc5(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
     return this._form("M\xE5l m\xF8nsterdybde", "M\xE5l i midten af slidbanen med en dybdem\xE5ler", `
       <label class="f"><span>Hjuls\xE6t</span><select data-treadset>${options}</select></label>
       <div class="tyres">${TYRES.map(([key, label]) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="0.1" min="0" max="20" data-tyre="${key}" placeholder="${last?.each ? "" : "mm"}"></label>`).join("")}</div>
@@ -8210,12 +8544,12 @@ var HAEvTyreCard = class extends HTMLElement {
   _editHtml() {
     const s = this._set(this._editId) || { kind: this._newKind || "winter" };
     const isNew = !s.id;
-    const v = (key) => s[key] == null ? "" : esc4(s[key]);
-    const text = (key, label, ph = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc4(ph)}" autocomplete="off"></label>`;
-    const n = (key, label, ph = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc4(ph)}"></label>`;
+    const v = (key) => s[key] == null ? "" : esc5(s[key]);
+    const text = (key, label, ph = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc5(ph)}" autocomplete="off"></label>`;
+    const n = (key, label, ph = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc5(ph)}"></label>`;
     const kinds = Object.entries(KINDS).map(([key, k]) => `<button type="button" class="choice sm" role="radio" aria-checked="${(s.kind || "summer") === key}" data-kind="${key}" style="--k:${k.color}">${icon(k.icon)}<span><b>${k.label}</b></span></button>`).join("");
     const del = isNew ? "" : `<button type="button" class="btn stop" data-delset>${this._confirm === "set" ? "Tryk igen for at slette" : "Slet"}</button>`;
-    return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc4(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc4(s.size || ""), `
+    return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc5(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc5(s.size || ""), `
       ${text("name", "Navn", 'Fx Vinter 18"')}
       <div class="choices kinds" role="radiogroup" aria-label="Type">${kinds}</div>
       <h5>D\xE6k</h5>
@@ -8234,10 +8568,10 @@ var HAEvTyreCard = class extends HTMLElement {
     if (!season) return this._mainHtml();
     const at = new Date(season.from);
     return this._form(
-      `${esc4(season.set || "Skift")} p\xE5 bilen`,
-      `${esc4(day(season.from))} \u2013 ${season.to ? esc4(day(season.to)) : "nu"}`,
+      `${esc5(season.set || "Skift")} p\xE5 bilen`,
+      `${esc5(day(season.from))} \u2013 ${season.to ? esc5(day(season.to)) : "nu"}`,
       `
-      <div class="kpis">${[[num(season.km), "km"], [num(season.wh_per_km), "Wh/km"], [num(season.charged_kwh_per_100_km, 1), "kWh/100 km"], [num(season.mean_temp_c, 1), "\xB0C snit"]].map(([vv, u3]) => `<div class="kpi"><b>${vv}<small>${u3}</small></b></div>`).join("")}</div>
+      <div class="kpis">${[[num2(season.km), "km"], [num2(season.wh_per_km), "Wh/km"], [num2(season.charged_kwh_per_100_km, 1), "kWh/100 km"], [num2(season.mean_temp_c, 1), "\xB0C snit"]].map(([vv, u3]) => `<div class="kpi"><b>${vv}<small>${u3}</small></b></div>`).join("")}</div>
       <div class="grid2"><label class="f"><span>Skiftet</span><input type="datetime-local" data-f="at" value="${localInput(at)}" max="${localInput()}"></label>
       <label class="f"><span>Kilometerstand ved skift</span><input type="number" inputmode="numeric" step="1" min="0" data-f="odometer_km" value="${season.odometer_from ?? ""}" placeholder="Ukendt"></label></div>
       <p class="mini">Ret dato eller kilometerstand, hvis skiftet blev registreret forkert. Uden kilometerstand kan km og forbrug ikke regnes for s\xE6sonen.</p>`,
@@ -10905,7 +11239,7 @@ var HAACClimateCard = class extends HTMLElement {
     const climate = this._entity(unit.climate);
     const a = climate?.attributes || {};
     const mode = String(climate?.state || "unknown").toLowerCase();
-    const num3 = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
+    const num4 = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
     const status = this._entity(unit.status)?.state;
     const online = this._entity(unit.online);
     const offline = !!online && online.state === "off";
@@ -10922,8 +11256,8 @@ var HAACClimateCard = class extends HTMLElement {
       status,
       waiting: WAITING.includes(status),
       statusText,
-      current: num3(a.current_temperature),
-      target: num3(a.temperature),
+      current: num4(a.current_temperature),
+      target: num4(a.temperature),
       fan: a.fan_mode,
       fans: Array.isArray(a.fan_modes) ? a.fan_modes : [],
       power: this._num(unit.input),
@@ -21754,12 +22088,12 @@ Error generating stack: ` + l.message + `
     o.length !== 0 && t.push({ event: e, listeners: o });
   }
   var my = /\r\n?/g, py = /\u0000|\uFFFD/g;
-  function hm(t) {
+  function hm2(t) {
     return (typeof t == "string" ? t : "" + t).replace(my, `
 `).replace(py, "");
   }
   function ug(t, e) {
-    return e = hm(e), hm(t) === e;
+    return e = hm2(e), hm2(t) === e;
   }
   function J(t, e, a, l, n, i) {
     switch (a) {
@@ -30639,7 +30973,7 @@ if (!window.customCards.some((card) => card.type === TAG)) {
 console.info(`%c HA AIR QUALITY CARD %c v${VERSION23} `, "color:white;background:#2f9e6e;font-weight:700", "color:#4fd08f;background:#161b22");
 
 // src/cards/ha-radiator-overview-card-v2/ha-room-control-card.js
-var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc6 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var ON = /* @__PURE__ */ new Set(["on", "playing", "paused", "buffering", "open", "heat", "cool", "home", "active"]);
 var DEAD3 = /* @__PURE__ */ new Set(["unavailable", "unknown"]);
 var DOMAIN_ICON = { automation: "mdi:robot-outline", input_boolean: "mdi:toggle-switch-outline", switch: "mdi:power-socket-eu", script: "mdi:play-circle-outline", scene: "mdi:palette-outline", light: "mdi:lightbulb-outline", fan: "mdi:fan", media_player: "mdi:speaker" };
@@ -30896,14 +31230,14 @@ var HARoomControlCard = class extends HTMLElement {
       <button type="button" class="btn" style="--bc:var(--danger)" data-script="rum_sluk_midlertidigt"><ha-icon icon="mdi:power"></ha-icon>Sluk rummet</button>
       <button type="button" class="btn" style="--bc:var(--a)" data-script="rum_nulstil_automatisk"><ha-icon icon="mdi:restore"></ha-icon>Nulstil automatik</button>
       ${lit ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="off"><ha-icon icon="mdi:lightbulb-off-outline"></ha-icon>Sluk alt lys</button>` : d.lights.length ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="on"><ha-icon icon="mdi:lightbulb-on-outline"></ha-icon>T\xE6nd alt lys</button>` : ""}</div>` : "";
-    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc5(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
-      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc5(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
+    return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc6(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
+      <div class="t"><strong>Rumstatus</strong><span class="pill">${esc6(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
   }
   _profilesHtml(d) {
     if (!d.profiles.length && !d.specials.length) return "";
     const cur = this._st(d.m.profile)?.state;
-    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc5(p.option)}"><ha-icon class="i" icon="${esc5(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc5(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc5(s.id)}"><ha-icon class="i" icon="${esc5(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc5(s.label)}</b></button>`));
-    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc5(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
+    const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc6(p.option)}"><ha-icon class="i" icon="${esc6(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc6(p.name || p.option)}</b></button>`).concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc6(s.id)}"><ha-icon class="i" icon="${esc6(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc6(s.label)}</b></button>`));
+    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc6(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
   }
   _lightsHtml(d) {
     if (!d.lights.length) return "";
@@ -30914,7 +31248,7 @@ var HARoomControlCard = class extends HTMLElement {
       const pct2 = this._pct(s);
       const dead = DEAD3.has(s.state);
       const dim = (s.attributes?.supported_color_modes || []).some((x) => x !== "onoff");
-      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc5(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc5(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc5(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
+      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc6(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc6(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc6(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Lys</h4><span class="cnt">${lit}/${d.lights.length}</span><i class="rule"></i></div><div class="lights">${tiles.join("")}</div></section>`;
   }
@@ -30936,7 +31270,7 @@ var HARoomControlCard = class extends HTMLElement {
       const dom = t.entity.split(".")[0];
       const dead = DEAD3.has(s.state);
       const sub = dead ? "Utilg\xE6ngelig" : dom === "script" || dom === "scene" || dom === "button" ? "K\xF8r" : on ? dom === "automation" ? "Aktiv" : "Til" : dom === "automation" ? "Sl\xE5et fra" : "Fra";
-      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc5(t.entity)}"><ha-icon class="ti" icon="${esc5(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc5(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
+      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc6(t.entity)}"><ha-icon class="ti" icon="${esc6(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc6(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Automatik &amp; enheder</h4><i class="rule"></i></div><div class="tgs">${tiles.join("")}</div></section>`;
   }
@@ -30952,13 +31286,13 @@ var HARoomControlCard = class extends HTMLElement {
       const sub = off ? st === "idle" ? "Klar" : st === "unavailable" ? "Utilg\xE6ngelig" : "Slukket" : [a.media_artist || a.media_album_name, st === "paused" ? "Pause" : st === "playing" ? "Spiller" : st].filter(Boolean).join(" \xB7 ");
       const vol = Number.isFinite(a.volume_level) ? Math.round(a.volume_level * 100) : null;
       return `<div class="tile md ${off ? "off" : ""}" style="${pic ? `--img:${pic}` : ""}">${pic && !off ? '<i class="art"></i>' : ""}<span class="cov">${pic && !off ? "" : `<ha-icon icon="${st === "playing" ? "mdi:music" : "mdi:speaker"}"></ha-icon>`}</span>
-        <span class="n"><b>${esc5(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc5(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
-        <div class="ctl"><button type="button" class="ib" data-media="${esc5(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc5(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
-          <button type="button" class="ib main x" data-media="${esc5(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
-          <button type="button" class="ib x" data-media="${esc5(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
-          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc5(x.id)}" aria-label="Lydstyrke">` : ""}
-          <button type="button" class="ib" data-more="${esc5(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
+        <span class="n"><b>${esc6(off ? x.label || this._name(x.id) : title || x.label || this._name(x.id))}</b><small>${esc6(off ? sub : `${x.label ? `${x.label} \xB7 ` : ""}${sub}`)}</small></span>
+        <div class="ctl"><button type="button" class="ib" data-media="${esc6(x.id)}" data-cmd="toggle" title="T\xE6nd/sluk"><ha-icon icon="mdi:power"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc6(x.id)}" data-cmd="media_previous_track"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+          <button type="button" class="ib main x" data-media="${esc6(x.id)}" data-cmd="media_play_pause"><ha-icon icon="${st === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
+          <button type="button" class="ib x" data-media="${esc6(x.id)}" data-cmd="media_next_track"><ha-icon icon="mdi:skip-next"></ha-icon></button>
+          ${vol !== null && !off ? `<input class="vol" type="range" min="0" max="100" value="${vol}" data-vol="${esc6(x.id)}" aria-label="Lydstyrke">` : ""}
+          <button type="button" class="ib" data-more="${esc6(x.id)}" title="Mere"><ha-icon icon="mdi:dots-horizontal"></ha-icon></button></div></div>`;
     });
     return `<section class="sec"><div class="sh"><h4>Medier</h4><i class="rule"></i></div><div class="media">${tiles.join("")}</div></section>`;
   }
@@ -32051,9 +32385,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       let lo = Math.floor(Math.min(...values, ...targets) - 0.6);
       let hi = Math.ceil(Math.max(...values, ...targets) + 0.6);
       if (hi - lo < 4) {
-        const pad3 = (4 - (hi - lo)) / 2;
-        lo -= pad3;
-        hi += pad3;
+        const pad4 = (4 - (hi - lo)) / 2;
+        lo -= pad4;
+        hi += pad4;
       }
       const pos = (value) => (value - lo) / (hi - lo) * 100;
       if (targets.length) {
@@ -32855,15 +33189,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc11 = (v) => this._escape(v);
+    const esc12 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc11(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc12(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc11(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc11(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc12(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc12(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -32883,10 +33217,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc11(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc12(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc11(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc11(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc12(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc12(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div></div>
@@ -32900,18 +33234,18 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc11(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc11(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc12(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc12(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc11(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc12(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc11(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc12(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -36612,7 +36946,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       }
       this._decorationType = item2.type;
     }
-    const esc11 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc12 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -36624,14 +36958,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc11(item2.value));
+    setText(".value", esc12(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc11(item2.detail || " "));
+    setText(".detail", esc12(item2.detail || " "));
     setText(".label", item2.label);
     observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
@@ -36642,10 +36976,10 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc11(title)}">${inner}</span>`;
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc12(title)}">${inner}</span>`;
       const warn = "var(--warning-color,#f59e0b)";
       const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc11(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc12(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -38188,7 +38522,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc11 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -38206,12 +38540,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc11((p.name || "?").trim()[0] || "?");
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc11(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    const initial = esc12((p.name || "?").trim()[0] || "?");
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}" data-path="${esc12(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc11(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc11(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc11(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc12(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc12(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc12(trip || place)}</span></span></small></span>
       ${battery === null ? "" : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`}
     </button>`;
   }
@@ -38226,7 +38560,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc11 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -38239,14 +38573,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const travel = Number(this._s(p.travel_time)?.state);
       const where = home ? "" : away ? Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc11((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc12((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc11(x.p.navigation_path || "")}" title="${esc11(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc12(x.p.navigation_path || "")}" title="${esc12(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc11(x.name)}</b><small>${esc11(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc12(x.name)}</b><small>${esc12(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -39304,7 +39638,7 @@ console.info(
 var VWH_VER = "3.2.0";
 var fmt = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
-var esc6 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc7 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var DIR8 = ["N", "N\xD8", "\xD8", "S\xD8", "S", "SV", "V", "NV"];
 var P = {
   sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
@@ -39898,7 +40232,7 @@ var ThWeatherCard = class extends HTMLElement {
       const t = typeof w === "string" ? w : w.headline || w.title || w.event || w.overskrift || w.type || "Varsel";
       const d = typeof w === "string" ? "" : w.description || w.beskrivelse || "", n = Number(w.level ?? w.niveau ?? w.severity_level ?? 1) || 1;
       const til = w.expires || w.ends || w.slut || w.til;
-      return `<div class="wn" style="--c:${lvl(n)}">${ico("alert", 17, 1.8)}<div><b>${esc6(t)}</b>${esc6(String(d).slice(0, 180))}${til ? ` \xB7 til ${hhmm(new Date(til))}` : ""}</div></div>`;
+      return `<div class="wn" style="--c:${lvl(n)}">${ico("alert", 17, 1.8)}<div><b>${esc7(t)}</b>${esc7(String(d).slice(0, 180))}${til ? ` \xB7 til ${hhmm(new Date(til))}` : ""}</div></div>`;
     }).join(""));
   }
   dTabs() {
@@ -39923,7 +40257,7 @@ var ThWeatherCard = class extends HTMLElement {
     if (this._dtk !== tk) {
       this._dtk = tk;
       this._dk = null;
-      this.$("dtabs").innerHTML = tabs.map((t) => `<button data-t="${t.id}" class="${t.id === this._dtab ? "on" : ""}"><ha-icon icon="${t.icon}"></ha-icon>${esc6(t.label)}</button>`).join("");
+      this.$("dtabs").innerHTML = tabs.map((t) => `<button data-t="${t.id}" class="${t.id === this._dtab ? "on" : ""}"><ha-icon icon="${t.icon}"></ha-icon>${esc7(t.label)}</button>`).join("");
       this.$("dtabs").querySelectorAll("button").forEach((b) => b.onclick = () => {
         this._dtab = b.dataset.t;
         try {
@@ -39974,7 +40308,7 @@ var ThWeatherCard = class extends HTMLElement {
       const d = Math.abs(n) >= 100 || Number.isInteger(n) && !/°|mm|m\/s/.test(u3) ? 0 : 1;
       return { v: fmt(n, d), n, u: u3, a };
     }
-    return { v: esc6(st.state), u: "", a };
+    return { v: esc7(st.state), u: "", a };
   }
   riskCol(p) {
     return p < 10 ? "var(--emer)" : p < 30 ? "var(--amber)" : p < 60 ? "var(--coral)" : "var(--red)";
@@ -39983,13 +40317,13 @@ var ThWeatherCard = class extends HTMLElement {
     const risk = /risiko/i.test(sec.title || "");
     let items = sec.items.map((it) => ({ it, x: this.val(it.entity) })).filter((o) => o.x);
     if (risk) items.sort((p, q) => (q.x.n ?? -1) - (p.x.n ?? -1));
-    if (!items.length) return `<div class="dsub">${esc6(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
+    if (!items.length) return `<div class="dsub">${esc7(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
     const src = items.find((o) => o.x.a.station || o.x.a.kilde)?.x.a;
-    return `<div class="dsub">${esc6(sec.title)}<span>${esc6(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
+    return `<div class="dsub">${esc7(sec.title)}<span>${esc7(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
       const a = x.a, isR = (risk || x.u === "%" && /risiko/i.test(it.name)) && Number.isFinite(x.n), c2 = isR ? this.riskCol(x.n) : "";
-      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc6(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt(+a.i_g\u00E5r, 1)}` : "");
-      return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc6(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc6(it.name)}</div>
-        <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc6(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
+      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc7(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt(+a.i_g\u00E5r, 1)}` : "");
+      return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc7(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc7(it.name)}</div>
+        <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc7(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
     }).join("")}</div>`;
   }
   dRadar() {
@@ -40039,7 +40373,7 @@ var ThWeatherCard = class extends HTMLElement {
     this.set("rcells", items.map((it, i) => {
       const x = this.val(it.entity);
       const near = /naermeste_regn/.test(it.entity);
-      return `<div class="dc" style="animation-delay:${i * 40}ms"><div class="n"><ha-icon icon="${esc6(it.icon || "mdi:information-outline")}"></ha-icon>${esc6(it.name)}</div><b>${x ? `${x.v}${x.u ? `<small>${esc6(x.u)}</small>` : ""}` : near ? '<small style="margin:0">ingen inden for 30 km</small>' : "\u2013"}</b></div>`;
+      return `<div class="dc" style="animation-delay:${i * 40}ms"><div class="n"><ha-icon icon="${esc7(it.icon || "mdi:information-outline")}"></ha-icon>${esc7(it.name)}</div><b>${x ? `${x.v}${x.u ? `<small>${esc7(x.u)}</small>` : ""}` : near ? '<small style="margin:0">ingen inden for 30 km</small>' : "\u2013"}</b></div>`;
     }).join(""));
   }
   dPollen() {
@@ -40050,7 +40384,7 @@ var ThWeatherCard = class extends HTMLElement {
     return `<div class="dsub">Pollen \xB7 Google<span>i dag og de n\xE6ste dage</span></div><div class="pl">${rows.map(({ p, st }, i) => {
       const a = st.attributes, n = +a.index_value || 0, c2 = col(n);
       const fut = [["I morgen", a.tomorrow], ["Dag 3", a["day 3"]], ["Dag 4", a["day 4"]]].filter((f) => f[1] != null);
-      return `<div class="pr" style="--c:${c2};animation-delay:${i * 50}ms"><div><b>${esc6(p.name)}</b><small>${DA[String(st.state).toLowerCase()] || esc6(st.state)}${a.in_season === "True" || a.in_season === true ? " \xB7 i s\xE6son" : ""}</small></div>
+      return `<div class="pr" style="--c:${c2};animation-delay:${i * 50}ms"><div><b>${esc7(p.name)}</b><small>${DA[String(st.state).toLowerCase()] || esc7(st.state)}${a.in_season === "True" || a.in_season === true ? " \xB7 i s\xE6son" : ""}</small></div>
         <div class="pd">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= n ? "f" : ""}"></i>`).join("")}</div><div class="pf">${fut.map(([l, v]) => `<span style="--c:${col(+v)}"><i></i>${l}</span>`).join("")}</div></div>`;
     }).join("") || '<div class="dc">Ingen pollendata</div>'}</div>`;
   }
@@ -40218,8 +40552,8 @@ var KEY = {
   humidity: "luftfugtighed"
 };
 var CHARTS = ["temperature", "precipitation", "wind", "clouds", "atmosphere", "water", "pressure", "month"];
-var esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var num2 = (v) => {
+var esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var num3 = (v) => {
   const n = typeof v === "number" ? v : parseFloat(v);
   return Number.isFinite(n) ? n : null;
 };
@@ -40377,10 +40711,10 @@ var HAWeatherChartsCard = class extends HTMLElement {
   /** The hourly `timer` attribute of a forecast sensor as [t, value] for one field. */
   _timer(key, field = "v") {
     const rows = this._live(key)?.attributes?.timer;
-    return Array.isArray(rows) ? rows.map((r) => [Date.parse(r.t), num2(r[field])]).filter(([t]) => Number.isFinite(t)) : [];
+    return Array.isArray(rows) ? rows.map((r) => [Date.parse(r.t), num3(r[field])]).filter(([t]) => Number.isFinite(t)) : [];
   }
   _fc(field, scale = 1) {
-    return (this._forecast || []).map((f) => [Date.parse(f.datetime), num2(f[field]) == null ? null : num2(f[field]) * scale]);
+    return (this._forecast || []).map((f) => [Date.parse(f.datetime), num3(f[field]) == null ? null : num3(f[field]) * scale]);
   }
   _subscribeForecast() {
     try {
@@ -40418,7 +40752,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
           significant_changes_only: false
         });
         const out = {};
-        for (const [id, rows] of Object.entries(res || {})) out[id] = rows.map((r) => [((r.lu ?? r.lc) || 0) * 1e3, num2(r.s)]).filter(([t, v]) => t && v != null);
+        for (const [id, rows] of Object.entries(res || {})) out[id] = rows.map((r) => [((r.lu ?? r.lc) || 0) * 1e3, num3(r.s)]).filter(([t, v]) => t && v != null);
         return out;
       } catch (e) {
         console.warn("HA Weather Charts: history", e);
@@ -40440,7 +40774,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
           types: ["min", "max", "mean"],
           units: {}
         });
-        month = (st?.[this._id("temp")] || []).map((r) => ({ t: typeof r.start === "number" ? r.start : Date.parse(r.start), min: num2(r.min), max: num2(r.max), mean: num2(r.mean) }));
+        month = (st?.[this._id("temp")] || []).map((r) => ({ t: typeof r.start === "number" ? r.start : Date.parse(r.start), min: num3(r.min), max: num3(r.max), mean: num3(r.mean) }));
       } catch {
         month = null;
       }
@@ -40515,7 +40849,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
       const gust90 = this._timer("ensGust", "p90");
       const band = gust90.length ? gust50.map(([t, lo], i) => [t, lo, gust90[i]?.[1] ?? null]).filter(([, lo, hi]) => lo != null && hi != null) : [];
       const dirs = bucket(this._h("windDir"), 3 * H3, "avg");
-      const fcDirs = (this._forecast || []).filter((f, i) => i % 3 === 0).map((f) => [Date.parse(f.datetime), num2(f.wind_bearing)]).filter(([t, v]) => t > now && v != null);
+      const fcDirs = (this._forecast || []).filter((f, i) => i % 3 === 0).map((f) => [Date.parse(f.datetime), num3(f.wind_bearing)]).filter(([t, v]) => t > now && v != null);
       out.wind = {
         title: "Vind",
         sub: "M\xE5lt og DMI-prognose \xB7 pile viser hvorfra det bl\xE6ser",
@@ -40622,7 +40956,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
   _render() {
     if (!this.shadowRoot || !this._config) return;
     if (!this._built) {
-      this.shadowRoot.innerHTML = `<style>${STYLE6}</style><ha-card><div class="wrap">${this._config.title ? `<h2 class="t">${esc7(this._config.title)}</h2>` : ""}<div class="grid"></div></div></ha-card>`;
+      this.shadowRoot.innerHTML = `<style>${STYLE6}</style><ha-card><div class="wrap">${this._config.title ? `<h2 class="t">${esc8(this._config.title)}</h2>` : ""}<div class="grid"></div></div></ha-card>`;
       this.shadowRoot.querySelector(".grid").addEventListener("click", (e) => {
         const chip = e.target.closest("[data-chip]");
         if (!chip) return;
@@ -40689,9 +41023,9 @@ var HAWeatherChartsCard = class extends HTMLElement {
         hi += 1;
         lo -= opt.min != null ? 0 : 1;
       }
-      const pad3 = (hi - lo) * 0.08;
-      if (opt.max == null) hi += pad3;
-      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad3;
+      const pad4 = (hi - lo) * 0.08;
+      if (opt.max == null) hi += pad4;
+      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad4;
       const tk = ticks(lo, hi);
       lo = opt.min ?? tk[0];
       hi = opt.max ?? tk[tk.length - 1];
@@ -40777,7 +41111,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
     });
     if (heatH) ch2.heat.forEach(([name, color, pts], r) => {
       const y = y1 + 24 + r * 13;
-      svg += `<text class="hl" x="${x0 - 6}" y="${y + 8.5}" text-anchor="end">${esc7(name)}</text>`;
+      svg += `<text class="hl" x="${x0 - 6}" y="${y + 8.5}" text-anchor="end">${esc8(name)}</text>`;
       const inPts = pts.filter((p) => p[0] >= from && p[0] <= to);
       const w = inPts.length > 1 ? Math.max(1, X(inPts[1][0]) - X(inPts[0][0])) : 6;
       for (const [t, v] of inPts) {
@@ -40792,9 +41126,9 @@ var HAWeatherChartsCard = class extends HTMLElement {
       svg += `<line class="now" x1="${x}" x2="${x}" y1="${y0 - 2}" y2="${y1}"/><text class="nowl" x="${x}" y="${y0 + 8}" text-anchor="middle">nu</text>`;
     }
     svg += `<line class="cross" x1="0" x2="0" y1="${y0}" y2="${y1}" style="display:none"/>`;
-    const legend = ch2.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc7(key)}|${esc7(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc7(s.name)}</button>`).join("");
+    const legend = ch2.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc8(key)}|${esc8(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc8(s.name)}</button>`).join("");
     const empty = !L3 && !R;
-    return `<header><div><h3>${esc7(ch2.title)}</h3><p>${esc7(ch2.sub || "")}</p></div><span class="unit">${esc7(ch2.unit)}${ch2.right ? ` \xB7 ${esc7(ch2.right.unit)}` : ""}</span></header>
+    return `<header><div><h3>${esc8(ch2.title)}</h3><p>${esc8(ch2.sub || "")}</p></div><span class="unit">${esc8(ch2.unit)}${ch2.right ? ` \xB7 ${esc8(ch2.right.unit)}` : ""}</span></header>
       ${empty ? `<div class="empty">Ingen data endnu</div>` : `<svg viewBox="0 0 ${W3} ${Hh}" width="${W3}" height="${Hh}" data-x0="${x0}" data-x1="${x1}" data-from="${from}" data-to="${to}"><defs>${defs.join("")}</defs>${svg}</svg>`}
       <div class="tip" hidden></div><div class="legend">${legend}</div>`;
   }
@@ -40823,14 +41157,14 @@ var HAWeatherChartsCard = class extends HTMLElement {
         const d = (s.axis || "left") === "right" ? ch2.right.d : ch2.d;
         if (s.type === "band" || s.type === "range") {
           const p3 = near((s.band || s.range).map(([tt2, a, b]) => [tt2, a, b]));
-          return p3 ? `<span style="--c:${s.color}"><i></i>${esc7(s.name)}<b>${fmt2(p3[1], d)}\u2013${fmt2(p3[2], d)} ${esc7(unit)}</b></span>` : "";
+          return p3 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p3[1], d)}\u2013${fmt2(p3[2], d)} ${esc8(unit)}</b></span>` : "";
         }
         const p = near(s.points);
-        return p ? `<span style="--c:${s.color}"><i></i>${esc7(s.name)}<b>${fmt2(p[1], d)} ${esc7(unit)}</b></span>` : "";
+        return p ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p[1], d)} ${esc8(unit)}</b></span>` : "";
       }).filter(Boolean);
       for (const [name, color, pts] of ch2.heat || []) {
         const p = near(pts);
-        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc7(name)} skyer<b>${fmt2(p[1], 0)} %</b></span>`);
+        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc8(name)} skyer<b>${fmt2(p[1], 0)} %</b></span>`);
       }
       const when = new Date(t);
       const head = ch2.days ? `${DAYS[when.getDay()]} ${when.getDate()}.${when.getMonth() + 1}.` : `${DAYS[when.getDay()]} ${when.getDate()}. kl. ${hh(t)}.${String(Math.round(when.getMinutes() / 10) * 10 % 60).padStart(2, "0")}`;
@@ -41320,7 +41654,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc8 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc9 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -41880,7 +42214,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
     this.shadowRoot.innerHTML = `<style>${STYLE7}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc8(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc8(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc9(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc9(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -41900,16 +42234,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc8(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc8(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc8(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc9(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc9(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc9(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc8(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc8(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc9(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc9(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc8(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc9(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -50248,12 +50582,12 @@ var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "augu
 var MONTH_SHORT = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
 var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk", MUS: "Musik", KRI: "Kristendom", "N/T": "Natur/teknologi", UDE: "Udeskole", TB: "Temab\xE5nd", "FL-D": "Fagdage", Klp\u00E6d: "Klassens tid", "2-l\xE6rer": "To-l\xE6rer" };
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
-var HOUR = 36e5;
+var HOUR2 = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc9 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var pad2 = (n) => String(n).padStart(2, "0");
-var hhmm2 = (d) => `${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
-var dayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+var esc10 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var pad3 = (n) => String(n).padStart(2, "0");
+var hhmm2 = (d) => `${pad3(d.getHours())}.${pad3(d.getMinutes())}`;
+var dayKey = (d) => `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
 var startOfDay = (d) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -50411,7 +50745,7 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
         const allDay = this._allDay(ev);
         const st = this._val(ev.start);
         let en = this._val(ev.end);
-        if (!(en > st)) en = new Date(+st + (allDay ? 864e5 : HOUR));
+        if (!(en > st)) en = new Date(+st + (allDay ? 864e5 : HOUR2));
         return { ...ev, allDay, s: +st, e: +en };
       }).sort((a, b) => a.s - b.s || b.allDay - a.allDay);
       this._range = { start: s, end: e };
@@ -50569,7 +50903,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc9(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc10(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -50645,7 +50979,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY2[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc9(ds[0].toUpperCase() + ds.slice(1))}<small>${esc9(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc10(ds[0].toUpperCase() + ds.slice(1))}<small>${esc10(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -50657,7 +50991,7 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc9(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc10(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
@@ -50680,9 +51014,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc9(g)}">${esc9(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc10(g)}">${esc10(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc9(c2.entity)}" style="--c:${esc9(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc9(c2.name || c2.entity)}"><ha-icon icon="${esc9(c2.icon || "mdi:calendar")}"></ha-icon>${esc9(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc10(c2.entity)}" style="--c:${esc10(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc10(c2.name || c2.entity)}"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -50721,8 +51055,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc9(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc9(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc9(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY2[new Date(e.s).getDay()]}` : ""} \xB7 ${esc9(c2.name || "")}${e.location ? ` \xB7 ${esc9(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc10(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY2[new Date(e.s).getDay()]}` : ""} \xB7 ${esc10(c2.name || "")}${e.location ? ` \xB7 ${esc10(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -50733,11 +51067,11 @@ ${LUX_KEYFRAMES}
     let h1 = 22;
     todays.forEach((e) => {
       h0 = Math.min(h0, new Date(Math.max(e.s, d0)).getHours());
-      h1 = Math.max(h1, Math.ceil((Math.min(e.e, d1) - d0) / HOUR));
+      h1 = Math.max(h1, Math.ceil((Math.min(e.e, d1) - d0) / HOUR2));
     });
     h1 = Math.min(24, h1);
-    const span = (h1 - h0) * HOUR;
-    const x = (ms) => Math.max(0, Math.min(100, (ms - d0 - h0 * HOUR) / span * 100));
+    const span = (h1 - h0) * HOUR2;
+    const x = (ms) => Math.max(0, Math.min(100, (ms - d0 - h0 * HOUR2) / span * 100));
     const lanes = [];
     const blocks = todays.map((e) => {
       let l = lanes.findIndex((end) => end <= e.s);
@@ -50747,11 +51081,11 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc9(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc9(e.summary || "")}">${esc9(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc10(e.summary || "")}">${esc10(e.summary || "")}</button>`;
     });
     const hrs = [];
-    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR)}%"><span>${pad2(h)}</span></div>`);
-    r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR}|${span}"></div>`;
+    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad3(h)}</span></div>`);
+    r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR2}|${span}"></div>`;
     r.querySelector("[data-tlh]").textContent = todays.length ? `${todays.length} ${todays.length === 1 ? "aftale" : "aftaler"}` : "Fri";
     const wkEnd = +addDays(monday(new Date(t)), 7);
     const week = ev.filter((e) => e.s >= d0 && e.s < wkEnd).length;
@@ -50779,15 +51113,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY2[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc9(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc9(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc9(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc9(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc9(c2.icon || "mdi:calendar")}"></ha-icon>${esc9(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc9(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc10(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc10(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -50841,12 +51175,12 @@ ${LUX_KEYFRAMES}
         cEnd = Math.max(cEnd, it.en);
       });
       flush();
-      const y = (ms) => ((ms - ds) / HOUR - h0) * PX;
+      const y = (ms) => ((ms - ds) / HOUR2 - h0) * PX;
       const blocks = out.map(({ e, s, en, l, n }) => {
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H4, y(en)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc9(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc9(e.summary || "")}</b>${h > 34 ? `<small>${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc10(e.summary || "")}</b>${h > 34 ? `<small>${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H4}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -50854,9 +51188,9 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de2 = ds + 864e5;
-      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc9(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc9(e.summary || "")}</button>`).join("");
+      return ev.filter((e) => e.allDay && e.e > ds && e.s < de2).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("");
     };
-    const axis = `<div class="ax" style="height:${H4}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad2(h0 + i)}</span>` : "").join("")}</div>`;
+    const axis = `<div class="ax" style="height:${H4}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad3(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
       <div class="ad" style="border-right:1px solid var(--edge)"></div>${days.map((d) => `<div class="ad">${allDay(d)}</div>`).join("")}
       ${axis}${days.map((d) => colHtml(d)).join("")}</div>`;
@@ -50904,7 +51238,7 @@ ${LUX_KEYFRAMES}
     });
     r.querySelectorAll("[data-now-wk]").forEach((el) => {
       const [ds, h0, px] = el.dataset.nowWk.split("|").map(Number);
-      const y = ((t - ds) / HOUR - h0) * px;
+      const y = ((t - ds) / HOUR2 - h0) * px;
       el.style.display = y < 0 || y > el.parentElement.offsetHeight ? "none" : "";
       el.style.top = `${y}px`;
     });
@@ -50922,11 +51256,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc9(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc9(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc9(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc9(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc9(when[0].toUpperCase() + when.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc10(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc10(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc10(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc10(when[0].toUpperCase() + when.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc9(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc9(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc10(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc10(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -50977,7 +51311,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY2[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc9(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc10(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -50987,7 +51321,7 @@ ${LUX_KEYFRAMES}
     const en = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc9(SUBJECTS[k] || k)}</b><span>${hhmm2(s)}\u2013${hhmm2(en)}${e.location ? ` \xB7 ${esc9(e.location)}` : ""}</span>${teacher.length ? `<small>${esc9(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc10(SUBJECTS[k] || k)}</b><span>${hhmm2(s)}\u2013${hhmm2(en)}${e.location ? ` \xB7 ${esc10(e.location)}` : ""}</span>${teacher.length ? `<small>${esc10(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -55352,7 +55686,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc10 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc11 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -56181,8 +56515,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc10(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc10(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc11(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc11(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -56204,8 +56538,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc10(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc10(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc11(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc11(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -56282,7 +56616,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon4] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc10(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc10(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc11(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc11(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -56351,7 +56685,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc10(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc11(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -56366,29 +56700,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc10(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc10(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc11(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc11(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc10(title)}</h2><p>${esc10(subtitle)}</p></div>
+          <div><h2>${esc11(title)}</h2><p>${esc11(subtitle)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E3.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc10(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc10(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc10(t)}</b>${s ? `<span>${esc10(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc10(l)}</span><b>${esc10(v)}</b>${x ? `<small>${esc10(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc11(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc11(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc11(t)}</b>${s ? `<span>${esc11(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc11(l)}</span><b>${esc11(v)}</b>${x ? `<small>${esc11(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc10(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc10(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc10(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc10(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc11(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc11(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc11(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc11(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc10(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc11(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -56402,7 +56736,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc10(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc11(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
