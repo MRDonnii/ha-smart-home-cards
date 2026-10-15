@@ -427,10 +427,10 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(r.plan.soc.value, 100, "target slider follows the integration");
   assert.equal(r.plan.deadline.text, "06:45");
   assert.equal(r.charge.startVisible, true, "plugged in and waiting: Lad nu switches the plan");
-  assert.match(r.charge.monta, /^Starter \d\d:\d\d$/, "a finished charger that waits for the plan says when it starts");
+  assert.match(r.charge.monta, /^Starter (?:i morgen |\S+ )?\d\d:\d\d$/, "a finished charger that waits for the plan says when it starts");
   // The plan box of the charging panel (2026-10-16): the timeline with its parts and a tooltip each, the plan in words.
   assert.equal(r.charge.plan.title, "Ladeplan · Billigst");
-  assert.match(r.charge.plan.status, /^Starter \d\d:\d\d · færdig ca\. \d\d:\d\d$/);
+  assert.match(r.charge.plan.status, /^Starter (?:i morgen |\S+ )?\d\d:\d\d · færdig ca\. (?:i morgen |\S+ )?\d\d:\d\d$/);
   assert.match(r.charge.plan.line, /^1 periode · lader .* · færdig ca\. /);
   assert.match(r.charge.plan.track, /class="ctl-p ctl-wait"[^>]*data-tip="Venter /);
   assert.match(r.charge.plan.track, /class="ctl-p ctl-c"[^>]*data-tip="Lader /);
@@ -557,8 +557,8 @@ console.log("th-tesla-dashboard-card tests passed");
   // The plan box: two periods with the pause between them, each part with its tooltip.
   const hp = model(held, scConfig).charge.plan;
   assert.ok(hp, "the plan box while the cable is in");
-  assert.match(hp.track, /class="ctl-p ctl-pause"[^>]*data-tip="Pause \d\d:\d\d–\d\d:\d\d \(30 min\)/, "the pause between the periods");
-  assert.match(hp.track, /data-tip="Lader \d\d:\d\d–\d\d:\d\d · 5,5 kWh · 10,54 kr \(1,92 kr\/kWh\) · periode 1 af 2"/);
+  assert.match(hp.track, /class="ctl-p ctl-pause"[^>]*data-tip="Pause (?:i morgen |\S+ )?\d\d:\d\d–\d\d:\d\d \(30 min\)/, "the pause between the periods");
+  assert.match(hp.track, /data-tip="Lader (?:i morgen |\S+ )?\d\d:\d\d–\d\d:\d\d · 5,5 kWh · 10,54 kr \(1,92 kr\/kWh\) · periode 1 af 2"/);
   assert.match(hp.line, /^2 perioder · lader 45 min · pauser 30 min · færdig ca\. /);
   const waitHeld = { ...held, "switch.bil_wait_above_the_price_limit": s("on") };
   assert.equal(model(waitHeld, scConfig).charge.plan.acts.map((x) => x.key).join(), "full", "waiting with the rest: charge to the target after all");
