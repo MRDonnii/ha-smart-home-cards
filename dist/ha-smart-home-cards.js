@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.158 */
+/* MRDonnii Smart Home Cards v0.5.159 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2806,7 +2806,7 @@ var TTD_SC_ROLES = {
   send_plan: "button._send_plan_to_phone",
   price_cap_override: "switch._exceed_price_cap",
   smart_price_limit: "switch._price_limit_in_cheapest",
-  limit_wait: "switch._wait_above_the_price_limit",
+  price_limit_wait: "switch._wait_above_the_price_limit",
   smart_max_price: "number._cheapest_max_price",
   smart_floor_soc: "number._always_charge_to",
   price_resolution: "select._price_resolution",
@@ -5205,7 +5205,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const a = this._sc("next_charge_start")?.attributes || {};
         const above = Number(a.above_limit_kwh) || 0;
         const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
-        const waitObj = this._sc("limit_wait");
+        const waitObj = this._sc("price_limit_wait");
         const waiting2 = waitObj?.state === "on";
         const info = !on ? "" : above < 0.5 ? "Alt under gr\xE6nsen" : waiting2 ? "Venter med resten" : `${f.number(above, 1)} kWh over gr\xE6nsen`;
         let choice = null;
@@ -6753,7 +6753,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   /** Over the price limit: wait with the rest (only below the limit this plug-in) or charge to the target; second tap confirms. */
   _chooseWait(on) {
-    if (this._sc("limit_wait")?.state === "on" === on) return;
+    if (this._sc("price_limit_wait")?.state === "on" === on) return;
     const key = `wait:${on}`;
     if (this._armed !== key) {
       this._disarm(false);
@@ -6763,7 +6763,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     this._disarm(true);
-    this._scCall("limit_wait", "switch", on ? "turn_on" : "turn_off");
+    this._scCall("price_limit_wait", "switch", on ? "turn_on" : "turn_off");
   }
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */
   _chooseDefault(mode) {
@@ -7504,9 +7504,17 @@ var HATeslaGlanceCard = class extends HTMLElement {
   }
   // The answer to EV Ledger's price question (user, 2026-10-15): wait with the rest, or charge to the target. First tap
   // arms, the second sends.
+  // The switch is found next to the plan select in the entity registry (any language), else from the English id.
   _waitId() {
     const c2 = this._config.charge_plan || {};
-    return c2.limit_wait || (typeof c2.mode === "string" && c2.mode.endsWith("_charge_mode") ? c2.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "");
+    if (c2.limit_wait) return c2.limit_wait;
+    const reg = this._hass?.entities;
+    const own = reg?.[c2.mode];
+    if (own?.device_id) {
+      const hit = Object.values(reg).find((e) => e.device_id === own.device_id && e.platform === own.platform && e.translation_key === "price_limit_wait");
+      if (hit) return hit.entity_id;
+    }
+    return typeof c2.mode === "string" && c2.mode.endsWith("_charge_mode") ? c2.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "";
   }
   _waitBtn(held) {
     const armed = this._armAt && Date.now() - this._armAt < 4e3;
@@ -13862,9 +13870,16 @@ var ThElectricityPriceCard = class extends HTMLElement {
       name: c2.name || "Bilen"
     };
   }
+  // Kontakten findes ved siden af planens select i entity-registret (alle sprog), ellers ud fra det engelske id
   waitId() {
     const c2 = this.cfg.charge || {};
-    return c2.limit_wait || (typeof c2.mode === "string" && c2.mode.endsWith("_charge_mode") ? c2.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "");
+    if (c2.limit_wait) return c2.limit_wait;
+    const reg = this._h?.entities, own = reg?.[c2.mode];
+    if (own?.device_id) {
+      const hit = Object.values(reg).find((e) => e.device_id === own.device_id && e.platform === own.platform && e.translation_key === "price_limit_wait");
+      if (hit) return hit.entity_id;
+    }
+    return typeof c2.mode === "string" && c2.mode.endsWith("_charge_mode") ? c2.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "";
   }
   armed() {
     return !!this._armAt && Date.now() - this._armAt < 4e3;

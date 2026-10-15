@@ -556,6 +556,17 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(model(oldLedger, scConfig).sc.limit.choice, null, "an EV Ledger before 0.8");
   const offHeld = { ...held, "switch.bil_price_limit_in_cheapest": s("off") };
   assert.equal(model(offHeld, scConfig).sc.limitLine, null, "no line when the limit is off");
+  // Entity ids in another language (the brother's HA): the roles are found by translation key in the registry.
+  const danish = { "select.bil_charge_mode": "select.gk_ladeplan", "sensor.bil_charge_status": "sensor.gk_ladestatus", "sensor.bil_next_charge_start": "sensor.gk_naeste_ladestart",
+    "sensor.bil_planned_charge_cost": "sensor.gk_planlagt_pris", "sensor.bil_planned_charge_energy": "sensor.gk_planlagt_energi", "switch.bil_price_limit_in_cheapest": "switch.gk_prisgraense_i_billigst",
+    "number.bil_cheapest_max_price": "number.gk_maks_pris_i_billigst", "number.bil_always_charge_to": "number.gk_lad_altid_op_til", "switch.bil_wait_above_the_price_limit": "switch.gk_vent_med_resten_over_prisgraensen" };
+  const keys = { "select.gk_ladeplan": "charge_mode", "sensor.gk_ladestatus": "charge_status", "sensor.gk_naeste_ladestart": "next_charge_start", "sensor.gk_planlagt_pris": "planned_cost",
+    "sensor.gk_planlagt_energi": "planned_energy", "switch.gk_prisgraense_i_billigst": "smart_price_limit", "number.gk_maks_pris_i_billigst": "smart_max_price",
+    "number.gk_lad_altid_op_til": "smart_floor_soc", "switch.gk_vent_med_resten_over_prisgraensen": "price_limit_wait" };
+  const dk = {}; for (const [id, st2] of Object.entries(held)) dk[danish[id] || id] = st2;
+  const dkCard = card(dk, { ...scConfig, smart_charge: "select.gk_ladeplan" });
+  dkCard._hass.entities = Object.fromEntries(Object.entries(keys).map(([id, key]) => [id, { entity_id: id, device_id: "gk", platform: "evledger", translation_key: key }]));
+  assert.equal(dkCard._model().sc.limit.choice.title, "18,6 kWh koster over 2,00 kr/kWh", "found through the registry");
 }
 }
 // Car controls while Tesla Fleet has no data yet (after a restart): the state comes from the car's Tesla Custom twin,

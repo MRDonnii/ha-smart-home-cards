@@ -119,7 +119,7 @@ const TTD_SC_ROLES = {
   trip_energy: "sensor._trip_energy", trip_target_soc: "sensor._trip_soc_needed", charge_now: "binary_sensor._charge_now",
   confirm_on_phone: "switch._confirm_plan_on_phone", confirm_plan: "button._confirm_plan",
   notify_plan: "switch._notify_plan_on_phone", send_plan: "button._send_plan_to_phone",
-  price_cap_override: "switch._exceed_price_cap", smart_price_limit: "switch._price_limit_in_cheapest", limit_wait: "switch._wait_above_the_price_limit",
+  price_cap_override: "switch._exceed_price_cap", smart_price_limit: "switch._price_limit_in_cheapest", price_limit_wait: "switch._wait_above_the_price_limit",
   smart_max_price: "number._cheapest_max_price", smart_floor_soc: "number._always_charge_to", price_resolution: "select._price_resolution",
   // The smarter choices (EV Ledger), each on or off.
   wait_cheaper_day: "switch._wait_for_a_cheaper_day", learn_departure: "switch._learn_departure_times",
@@ -2434,7 +2434,7 @@ class ThTeslaDashboardCard extends HTMLElement {
         const reach = a.limit_soc != null && Number.isFinite(Number(a.limit_soc)) ? Number(a.limit_soc) : null;
         // EV Ledger 0.8: the plan charges to the target; the part above the limit can wait for a cheaper period
         // (switch "Wait above the price limit", the phones' "Vent med resten") (Claude AI, 2026-10-15).
-        const waitObj = this._sc("limit_wait");
+        const waitObj = this._sc("price_limit_wait");
         const waiting = waitObj?.state === "on";
         const info = !on ? "" : above < 0.5 ? "Alt under grænsen" : waiting ? "Venter med resten" : `${f.number(above, 1)} kWh over grænsen`;
         let choice = null;
@@ -3951,7 +3951,7 @@ class ThTeslaDashboardCard extends HTMLElement {
 
   /** Over the price limit: wait with the rest (only below the limit this plug-in) or charge to the target; second tap confirms. */
   _chooseWait(on) {
-    if ((this._sc("limit_wait")?.state === "on") === on) return;
+    if ((this._sc("price_limit_wait")?.state === "on") === on) return;
     const key = `wait:${on}`;
     if (this._armed !== key) {
       this._disarm(false);
@@ -3961,7 +3961,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       return;
     }
     this._disarm(true);
-    this._scCall("limit_wait", "switch", on ? "turn_on" : "turn_off");
+    this._scCall("price_limit_wait", "switch", on ? "turn_on" : "turn_off");
   }
 
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */

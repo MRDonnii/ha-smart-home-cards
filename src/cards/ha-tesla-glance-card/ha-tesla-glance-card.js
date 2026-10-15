@@ -466,9 +466,12 @@ class HATeslaGlanceCard extends HTMLElement {
   }
   // The answer to EV Ledger's price question (user, 2026-10-15): wait with the rest, or charge to the target. First tap
   // arms, the second sends.
+  // The switch is found next to the plan select in the entity registry (any language), else from the English id.
   _waitId() {
-    const c = this._config.charge_plan || {};
-    return c.limit_wait || (typeof c.mode === "string" && c.mode.endsWith("_charge_mode") ? c.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "");
+    const c = this._config.charge_plan || {}; if (c.limit_wait) return c.limit_wait;
+    const reg = this._hass?.entities; const own = reg?.[c.mode];
+    if (own?.device_id) { const hit = Object.values(reg).find((e) => e.device_id === own.device_id && e.platform === own.platform && e.translation_key === "price_limit_wait"); if (hit) return hit.entity_id; }
+    return typeof c.mode === "string" && c.mode.endsWith("_charge_mode") ? c.mode.replace(/^select\./, "switch.").replace(/_charge_mode$/, "_wait_above_the_price_limit") : "";
   }
   _waitBtn(held) {
     const armed = this._armAt && Date.now() - this._armAt < 4000;

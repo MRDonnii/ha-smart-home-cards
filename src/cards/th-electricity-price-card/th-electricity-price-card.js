@@ -254,7 +254,11 @@ class ThElectricityPriceCard extends HTMLElement {
       save: Number.isFinite(now) && Number.isFinite(cost) && blocks.length && !limit?.held ? now - cost : NaN, nowCost: Number.isFinite(now) ? now : NaN, limit,
       soc: this.n(c.soc), target: this.n(c.target), deadline: pa.deadline, charging: st(c.charging) === 'on' || cm === 'charging', name: c.name || 'Bilen' };
   }
-  waitId() { const c = this.cfg.charge || {}; return c.limit_wait || (typeof c.mode === 'string' && c.mode.endsWith('_charge_mode') ? c.mode.replace(/^select\./, 'switch.').replace(/_charge_mode$/, '_wait_above_the_price_limit') : ''); }
+  // Kontakten findes ved siden af planens select i entity-registret (alle sprog), ellers ud fra det engelske id
+  waitId() { const c = this.cfg.charge || {}; if (c.limit_wait) return c.limit_wait;
+    const reg = this._h?.entities, own = reg?.[c.mode];
+    if (own?.device_id) { const hit = Object.values(reg).find(e => e.device_id === own.device_id && e.platform === own.platform && e.translation_key === 'price_limit_wait'); if (hit) return hit.entity_id; }
+    return typeof c.mode === 'string' && c.mode.endsWith('_charge_mode') ? c.mode.replace(/^select\./, 'switch.').replace(/_charge_mode$/, '_wait_above_the_price_limit') : ''; }
   armed() { return !!this._armAt && Date.now() - this._armAt < 4000; }
   // Svaret på EV Ledgers prisspørgsmål (bruger, 2026-10-15): vent med resten eller lad til målet; første tryk gør klar, andet sender
   chooseWait(on) {
