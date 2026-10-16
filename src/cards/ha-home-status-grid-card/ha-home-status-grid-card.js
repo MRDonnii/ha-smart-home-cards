@@ -927,6 +927,9 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .sec2 .alarm b{display:none}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
+      /* Low screens (70 px tiles): the security tile too gets the tighter padding, so its detail line is not cut by the
+         pill row (user, 2026-10-17, the brother's Trueguard tile). */
+      @media(min-width:1101px) and (max-height:950px){:host([v2]) .item.security{padding:6px 10px 5px}:host([v2]) .item.security .value{line-height:18px}:host([v2]) .item.security .detail{line-height:13px}:host([v2]) .sec2 .sp{height:17px}}
       @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{height:70px;padding:7px 10px 6px;grid-template-columns:28px minmax(0,1fr) 30px}:host([v2]) .chip{width:28px;height:28px;border-radius:9px}:host([v2]) .ring{width:30px;height:30px}:host([v2]) .value{font-size:16px;line-height:18px}:host([v2]) .label{margin-top:3px;padding-top:3px;font-size:9.5px}}
       /* Phones: four tiles a row leave ~100 px – chip and ring on top, the value and detail under them. */
       /* Tiles in one row line up: the host and tile take the row's height (the security tile is a little taller). */
