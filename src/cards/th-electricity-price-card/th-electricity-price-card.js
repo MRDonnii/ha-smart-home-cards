@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.16.0';
+const TEP_VER = '1.16.1';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -474,7 +474,7 @@ class ThElectricityPriceCard extends HTMLElement {
     // Boblende væske (Claude AI, 2026-10-13): ladetiden i lilla, ellers det billigste vindue i grønt. Søjlerne fyldes, og boblerne
     // stiger op over søjlen (højere op, så det er let at se). viewBox'en strækkes ulige, så boblerne tegnes som ellipser.
     const groups = evBars.length ? [{ bars: evBars.filter(b => !b.x2), col: cE, id: 'ev' }, { bars: evBars.filter(b => b.x2), col: cE, id: 'evx', hot: cB }].filter(q => q.bars.length) : [];
-    let liq = [], liqCol = cE, liqId = 'ev';
+    let liq = [], liqCol = cE, liqId = 'ev', bsTop = null;
     if (!evBars.length) { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a2 = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a2 < best.a) best = { a: a2, t: fut[i].t, e: fut[i + win - 1].e }; }
       if (best) { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { if (!isBar) return lineBar(p); const x = Math.max(0, X(p.t)), gap = mode === '48' ? .3 : mode === '7' ? .4 : .7; return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - gap), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
@@ -485,6 +485,7 @@ class ThElectricityPriceCard extends HTMLElement {
       const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
       let seed = liq.length * 7 + Math.floor(liq[0].x); const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
       const rise = H * .32, topY = Math.min(...liq.map(b => b.y)), tint = `color-mix(in srgb,${hot || liqCol} 45%,#fff)`;
+      if (liqId === 'bs') bsTop = topY - rise * .75; // mærket BILLIGST står lige over boblerne
       g += `<defs><clipPath id="${liqId}c">${runsOf(liq.filter(b => b.p).map(b => b.p)).map(r => `<path d="${areaRun(r)}"/>`).join('')}${liq.filter(b => !b.p).map(b => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
         ${hot ? `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol}"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity="${isBar ? .92 : .35}"/></linearGradient>`}</defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
         <rect x="0" y="0" width="${W}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
@@ -540,7 +541,7 @@ class ThElectricityPriceCard extends HTMLElement {
           ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.s))} · ${tn(w.avg)}</span></div>`; } } }
     else { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e }; }
-      if (best && best.t < t1) { const l = Math.max(0, X(best.t) / W * 100), r = Math.min(100, X(best.e) / W * 100); ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`; } }
+      if (best && best.t < t1) { const l = Math.max(0, X(best.t) / W * 100), r = Math.min(100, X(best.e) / W * 100); ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6${bsTop != null ? `;top:${Math.max(4, bsTop / H * (pc.clientHeight - gb) - 22).toFixed(0)}px` : ''}">BILLIGST</span></div>`; } }
     { const runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (veryDear(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ t: Math.max(p.t, now), e: p.e }); } }
       const big = runs.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
       if (big && big.t < t1) { const l = Math.max(0, X(big.t) / W * 100), r = Math.min(100, X(big.e) / W * 100);

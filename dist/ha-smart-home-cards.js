@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.168 */
+/* MRDonnii Smart Home Cards v0.5.169 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13906,7 +13906,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.16.0";
+var TEP_VER = "1.16.1";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -14636,7 +14636,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const ak = this._ps + mode, anim = this._ak !== ak;
     this._ak = ak;
     const groups = evBars.length ? [{ bars: evBars.filter((b) => !b.x2), col: cE, id: "ev" }, { bars: evBars.filter((b) => b.x2), col: cE, id: "evx", hot: cB }].filter((q) => q.bars.length) : [];
-    let liq = [], liqCol = cE, liqId = "ev";
+    let liq = [], liqCol = cE, liqId = "ev", bsTop = null;
     if (!evBars.length) {
       const fut = act.filter((p) => p.t >= now - 9e5);
       let best = null;
@@ -14661,6 +14661,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       let seed = liq2.length * 7 + Math.floor(liq2[0].x);
       const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
       const rise = H4 * 0.32, topY = Math.min(...liq2.map((b) => b.y)), tint = `color-mix(in srgb,${hot || liqCol2} 45%,#fff)`;
+      if (liqId2 === "bs") bsTop = topY - rise * 0.75;
       g += `<defs><clipPath id="${liqId2}c">${runsOf(liq2.filter((b) => b.p).map((b) => b.p)).map((r) => `<path d="${areaRun(r)}"/>`).join("")}${liq2.filter((b) => !b.p).map((b) => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join("")}</clipPath>
         ${hot ? `<linearGradient id="${liqId2}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol2}"/><stop offset="1" stop-color="${liqCol2}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId2}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${liqCol2}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol2}" stop-opacity="${isBar ? 0.92 : 0.35}"/></linearGradient>`}</defs><g clip-path="url(#${liqId2}c)"><rect x="0" y="0" width="${W3}" height="${base}" fill="url(#${liqId2}l)"/>
         <rect x="0" y="0" width="${W3}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
@@ -14762,7 +14763,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
       if (best && best.t < t1) {
         const l = Math.max(0, X(best.t) / W3 * 100), r = Math.min(100, X(best.e) / W3 * 100);
-        ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`;
+        ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6${bsTop != null ? `;top:${Math.max(4, bsTop / H4 * (pc2.clientHeight - gb2) - 22).toFixed(0)}px` : ""}">BILLIGST</span></div>`;
       }
     }
     {
