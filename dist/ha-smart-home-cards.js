@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.169 */
+/* MRDonnii Smart Home Cards v0.5.170 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -13906,7 +13906,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.16.1";
+var TEP_VER = "1.17.0";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -13975,10 +13975,10 @@ var TEP_CSS = `
 .comp{min-width:0;margin-bottom:4px}
 .comp .bar{display:flex;height:7px;border-radius:7px;overflow:hidden;gap:2px}
 /* Tarif-bj\xE6lken st\xE5r stille \u2013 den voksede ind igen ved hver \xE6ndring og s\xE5 ud som et hop (Claude AI, 2026-10-12) */
-.comp .bar b{display:block;height:100%;border-radius:2px;transition:width .6s ease}
+.comp .bar b{display:block;height:100%;min-width:4px;border-radius:2px;transition:width .6s ease}
 @keyframes grow{from{transform:scaleX(0)}}
 .comp .lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;font-size:11px;color:var(--mut)}
-.comp .lg span{display:inline-flex;align-items:center;gap:5px}.comp .lg i{width:7px;height:7px;border-radius:2px}
+.comp .lg span{display:inline-flex;align-items:center;gap:5px}.comp .lg i{width:8px;height:8px;border-radius:2.5px;flex:none}
 /* ladeplan */
 .ev{display:none;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:15px;
   background:linear-gradient(100deg,color-mix(in srgb,var(--ev) 16%,transparent),color-mix(in srgb,var(--ev) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ev) 32%,transparent);animation:tin .7s cubic-bezier(.16,1,.3,1) both}
@@ -14353,12 +14353,12 @@ var ThElectricityPriceCard = class extends HTMLElement {
     this.shadowRoot.querySelector("#chip .ct").textContent = `${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
     this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [
-      ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--acc)"],
-      ["Nettarif", "sensor.stromligning_distribution_vat", "#8ed1ff"],
-      ["Systemtarif", "sensor.stromligning_systemtariff_vat", "#b7a4ff"],
-      ["Transport", "sensor.stromligning_nettariff_vat", "#7fb0ff"],
-      ["Till\xE6g", "sensor.stromligning_surcharge_vat", "#ff9e7a"],
-      ["Elafgift", "sensor.stromligning_electricity_tax_vat", "#6be3a8"]
+      ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--tep-spot,#3d8bff)"],
+      ["Nettarif", "sensor.stromligning_distribution_vat", "var(--tep-net,#ffb547)"],
+      ["Systemtarif", "sensor.stromligning_systemtariff_vat", "var(--tep-system,#c084fc)"],
+      ["Transport", "sensor.stromligning_nettariff_vat", "var(--tep-transport,#2dd4bf)"],
+      ["Till\xE6g", "sensor.stromligning_surcharge_vat", "var(--tep-surcharge,#ff6b81)"],
+      ["Elafgift", "sensor.stromligning_electricity_tax_vat", "var(--tep-tax,#a3e635)"]
     ].map(([n, e, c2]) => [n, this.n(e), c2]).filter((x) => Number.isFinite(x[1]) && x[1] > 0);
     const sum = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
     if (ck !== this._ck) {
