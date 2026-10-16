@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.15.0';
+const TEP_VER = '1.16.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -113,7 +113,7 @@ const TEP_CSS = `
 .pc{position:relative;flex:1;min-height:90px;margin-top:10px}
 /* Bundstriben under grafen (--gb) = kortets sidemargen; dagsnavnet står midt i den, og uden dagsfirkanter er striben kortets bundmargen (Claude AI, 2026-10-12) */
 /* På mobil vokser grafen ned til navbaren med forsidens --front-mobile-fill, som det klassiske kort */
-.pc{--gb:16px;min-height:calc(90px + var(--front-mobile-fill,0px))}.pc svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
+.pc{--gb:16px;min-height:calc(90px + var(--front-mobile-fill,0px))}.pc>svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
 .pc .dl{position:absolute;bottom:calc((var(--gb) - 10px) / 2);line-height:10px;font-size:10px;color:var(--mut);transform:translateX(4px);white-space:nowrap;text-transform:capitalize}
 .pc .now{position:absolute;top:0;bottom:var(--gb);width:1px;background:color-mix(in srgb,var(--ink) 40%,transparent)}
 .pc .nd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%);animation:pu 2s infinite}
@@ -152,7 +152,7 @@ dialog.adv::backdrop{background:rgba(4,8,14,.62);-webkit-backdrop-filter:blur(4p
 .adv .av{text-align:right;white-space:nowrap}.adv .av b{display:block;font-size:12.5px;font-weight:800;color:var(--c)}.adv .av small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
 .adv .tp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;font-size:11.5px;line-height:1.4;color:var(--mut);padding:1px 4px}.adv .tp svg{margin-top:1px;color:var(--c,var(--acc))}.adv .tp b{color:var(--ink);font-weight:700}
 .adv .af{font-size:10px;color:var(--mut);padding:0 4px;line-height:1.4}
-@keyframes barin{from{transform:scaleY(0)}}.pc svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc svg.still .fadein{opacity:1}
+@keyframes barin{from{transform:scaleY(0)}}.pc>svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc>svg.still .fadein{opacity:1}
 .draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:drw 2s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
 .fadein{opacity:0;animation:fi 1.1s .3s forwards}@keyframes fi{to{opacity:1}}
 /* dage */
@@ -427,9 +427,11 @@ class ThElectricityPriceCard extends HTMLElement {
     // i stedet for trappetrin (Claude AI, 2026-10-16; bruger: "linjegrafen også med samme ting som søjlebaren reagerer på")
     const mids = pts.map(p => [(p.t + p.e) / 2, Y(p.p)]);
     const yAt = t => { if (t <= mids[0][0]) return mids[0][1]; for (let i = 1; i < mids.length; i++) if (t <= mids[i][0]) { const [ta, ya] = mids[i - 1], [tb, yb] = mids[i]; return ya + (yb - ya) * (t - ta) / ((tb - ta) || 1); } return mids[mids.length - 1][1]; };
-    const area = p => { const a = Math.max(t0, p.t), b = Math.min(t1, p.e), m = (p.t + p.e) / 2, top = [[a, yAt(a)], ...(m > a && m < b ? [[m, Y(p.p)]] : []), [b, yAt(b)]];
+    const lineBar = p => { const x = Math.max(0, X(p.t)); return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x), y: Math.min(yAt(Math.max(t0, p.t)), Y(p.p), yAt(Math.min(t1, p.e))), p }; };
+    // Sammenhængende kvarterer som ét areal: hvert kvarter for sig gav lodrette sømme i Safari (Claude AI, 2026-10-16)
+    const runsOf = ps => { const out = []; for (const p of [...ps].sort((a, b) => a.t - b.t)) { const r = out[out.length - 1]; if (r && p.t - r[r.length - 1].e < 1000) r.push(p); else out.push([p]); } return out; };
+    const areaRun = ps => { const a = Math.max(t0, ps[0].t), b = Math.min(t1, ps[ps.length - 1].e), top = [[a, yAt(a)], ...ps.map(p => (p.t + p.e) / 2).filter(m => m > a && m < b).map(m => [m, yAt(m)]), [b, yAt(b)]];
       return `M${X(a).toFixed(2)} ${base}${top.map(([t, y]) => `L${X(t).toFixed(2)} ${y.toFixed(1)}`).join('')}L${X(b).toFixed(2)} ${base}Z`; };
-    const lineBar = p => { const x = Math.max(0, X(p.t)); return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x), y: Math.min(yAt(Math.max(t0, p.t)), Y(p.p), yAt(Math.min(t1, p.e))), d: area(p) }; };
     const isBar = this._ps === 'bar', calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const A1 = pts.filter(p => !p.f), F1 = pts.filter(p => p.f); if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = n => cs.getPropertyValue(n).trim();
@@ -447,10 +449,24 @@ class ThElectricityPriceCard extends HTMLElement {
       if (F1.length > 1) g += `<path d="${line(F1)}" fill="none" stroke="url(#pl)" stroke-width="1.6" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" opacity=".7" class="fadein"/>`;
       // ladeplanen som bobler under linjen, også i linjevisning – væsken følger linjen
       pts.forEach(p => { if (!inCh(p)) return; evBars.push({ ...lineBar(p), x2: dear(p) }); });
-      // Et lysende punkt glider hen ad den kommende del af linjen og et blødt skær pulserer under den (Claude AI, 2026-10-16)
+      // Den kommende del af linjen lever (Claude AI, 2026-10-16; bruger: "animationen i linje graf er heller ikke super"): et lysglimt
+      // med blød hale løber hen ad linjen, et svagt skær glider over arealet, og den billigste og dyreste kommende pris pulserer.
+      // Glødet er lagdelte streger frem for et blur-filter, så kioskskærmen ikke skal regne det om i hvert billede.
       const fut = pts.filter(p => p.e > now);
       if (fut.length > 2 && !calm) { const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
-        g += `<ellipse rx="${(4 / sx).toFixed(2)}" ry="${(4 / sy).toFixed(2)}" fill="#fff" opacity="0" style="filter:drop-shadow(0 0 4px #fff)"><animateMotion dur="${Math.max(5, fut.length / 12).toFixed(1)}s" repeatCount="indefinite" path="${line(fut)}"/><animate attributeName="opacity" values="0;.95;.95;0" keyTimes="0;.08;.85;1" dur="${Math.max(5, fut.length / 12).toFixed(1)}s" repeatCount="indefinite"/></ellipse>`; }
+        const fd = line(fut), xs = X((fut[0].t + fut[0].e) / 2), xe = X((fut[fut.length - 1].t + fut[fut.length - 1].e) / 2), tail = Math.max(60, (xe - xs) * .16);
+        const dur = Math.max(6, Math.min(14, fut.length / 10)).toFixed(1), sweep = (a, b) => `<animate attributeName="x1" values="${(xs - tail + a).toFixed(1)};${(xe + b).toFixed(1)};${(xe + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur}s" repeatCount="indefinite"/><animate attributeName="x2" values="${(xs + a).toFixed(1)};${(xe + tail + b).toFixed(1)};${(xe + tail + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur}s" repeatCount="indefinite"/>`;
+        g += `<defs><linearGradient id="cm" gradientUnits="userSpaceOnUse" x1="${xs - tail}" y1="0" x2="${xs}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".82" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>${sweep(0, 0)}</linearGradient>
+          <linearGradient id="sh" gradientUnits="userSpaceOnUse" x1="${xs - tail}" y1="0" x2="${xs}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>${sweep(-tail * .3, -tail * .3)}</linearGradient>
+          <linearGradient id="shg" gradientUnits="userSpaceOnUse" x1="0" y1="${Math.min(...fut.map(p => Y(p.p))).toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${cW}" stop-opacity=".42"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient>
+          <mask id="shm" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${base}"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#sh)"/></mask>
+          <clipPath id="arc"><path d="${fd}L${xe.toFixed(1)} ${base}L${xs.toFixed(1)} ${base}Z"/></clipPath></defs>
+          <g clip-path="url(#arc)" style="pointer-events:none"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#shg)" mask="url(#shm)"/></g>
+          ${[[9, .12], [5.5, .28], [2.6, 1]].map(([w, o]) => `<path d="${fd}" fill="none" stroke="url(#cm)" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" opacity="${o}" style="pointer-events:none"/>`).join('')}`;
+        const lo = fut.reduce((m, p) => (p.p < m.p ? p : m)), hi = fut.reduce((m, p) => (p.p > m.p ? p : m));
+        for (const [p, col, k] of [[lo, cG, 0], [hi, cB, 1]]) { if (hi.p - lo.p < .05) break; const cx = X((p.t + p.e) / 2), cy = Y(p.p), r0 = 3, r1 = 13, d2 = 2.6, b2 = (k * 1.3).toFixed(1);
+          g += `<g style="pointer-events:none">${[0, d2 / 2].map(off => `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${(r0 / sx).toFixed(2)}" ry="${(r0 / sy).toFixed(2)}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity="0"><animate attributeName="rx" values="${(r0 / sx).toFixed(2)};${(r1 / sx).toFixed(2)}" dur="${d2}s" begin="${(+b2 + off).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="ry" values="${(r0 / sy).toFixed(2)};${(r1 / sy).toFixed(2)}" dur="${d2}s" begin="${(+b2 + off).toFixed(2)}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="${d2}s" begin="${(+b2 + off).toFixed(2)}s" repeatCount="indefinite"/></ellipse>`).join('')}
+            <ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${(3.2 / sx).toFixed(2)}" ry="${(3.2 / sy).toFixed(2)}" fill="${col}" stroke="#fff" stroke-width="1.2" vector-effect="non-scaling-stroke"/></g>`; } }
     }
     // Indflyvning kun ved første tegning og ved skift af visning; en ny højde (fx når forsiden fylder ud til navbaren)
     // tegner bare om, så grafen ikke ser ud til at loade to gange (Claude AI, 2026-10-12).
@@ -469,8 +485,8 @@ class ThElectricityPriceCard extends HTMLElement {
       const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
       let seed = liq.length * 7 + Math.floor(liq[0].x); const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
       const rise = H * .32, topY = Math.min(...liq.map(b => b.y)), tint = `color-mix(in srgb,${hot || liqCol} 45%,#fff)`;
-      g += `<defs><clipPath id="${liqId}c">${liq.map(b => b.d ? `<path d="${b.d}"/>` : `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
-        ${hot ? `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol}"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>`}</defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
+      g += `<defs><clipPath id="${liqId}c">${runsOf(liq.filter(b => b.p).map(b => b.p)).map(r => `<path d="${areaRun(r)}"/>`).join('')}${liq.filter(b => !b.p).map(b => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
+        ${hot ? `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol}"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity="${isBar ? .92 : .35}"/></linearGradient>`}</defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
         <rect x="0" y="0" width="${W}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
       liq.forEach((b) => { const n = Math.max(2, Math.round((base - b.y) / 16)); for (let k = 0; k < n; k++) {
         const r = 1.8 + rnd() * 2.4, cx = b.x + b.w * (.2 + rnd() * .6), dur = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (.35 + rnd() * .65));
@@ -481,12 +497,13 @@ class ThElectricityPriceCard extends HTMLElement {
       const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
       let hs = hotP.length * 13 + Math.floor(X(hotP[0].t)); const hr = () => ((hs = (hs * 9301 + 49297) % 233280) / 233280);
       g += `<defs><linearGradient id="hotg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cB}" stop-opacity=".75"/><stop offset="1" stop-color="${cB}" stop-opacity=".05"/></linearGradient></defs>`;
+      // under linjen pulserer hver dyr strækning som ét areal (ellers ligner det striber)
+      if (!isBar) for (const r of runsOf(hotP)) g += `<path d="${areaRun(r)}" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" repeatCount="indefinite"/></path>`;
       hotP.forEach((p, i) => {
         const gap = mode === '48' ? .3 : mode === '7' ? .4 : .7, x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - (isBar ? gap : 0));
-        // søjlerne pulserer som en bølge; under linjen pulserer det røde samlet (ellers ligner det striber)
-        const top = isBar ? Y(p.p) : lineBar(p).y, begin = isBar ? ((i % 6) * .22).toFixed(2) : '0';
-        const shape = isBar ? `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5"` : `<path d="${area(p)}"`;
-        g += `${shape} fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${begin}s" repeatCount="indefinite"/>${isBar ? '</rect>' : '</path>'}`;
+        // søjlerne pulserer som en bølge
+        const top = isBar ? Y(p.p) : lineBar(p).y;
+        if (isBar) g += `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${((i % 6) * .22).toFixed(2)}s" repeatCount="indefinite"/></rect>`;
         if (i % (mode === '24' ? 1 : 3)) return; // gnister fra toppen – færre i de lange visninger
         const r = 1.4 + hr() * 1.4, cx = x + w * (.25 + hr() * .5), dur = (1.6 + hr() * 1.4).toFixed(2), delay = (hr() * 2).toFixed(2), up = Math.max(2, top - H * (.12 + hr() * .14));
         g += `<ellipse cx="${cx.toFixed(2)}" cy="${top.toFixed(1)}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${i % 2 ? '#ffb347' : cB}" opacity="0" style="pointer-events:none"><animate attributeName="cy" from="${top.toFixed(1)}" to="${up.toFixed(1)}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.95;0" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
@@ -523,7 +540,7 @@ class ThElectricityPriceCard extends HTMLElement {
           ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.s))} · ${tn(w.avg)}</span></div>`; } } }
     else { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e }; }
-      if (best && best.t < t1) { const l = X(best.t) / W * 100, r = X(best.e) / W * 100; ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`; } }
+      if (best && best.t < t1) { const l = Math.max(0, X(best.t) / W * 100), r = Math.min(100, X(best.e) / W * 100); ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`; } }
     { const runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (veryDear(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ t: Math.max(p.t, now), e: p.e }); } }
       const big = runs.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
       if (big && big.t < t1) { const l = Math.max(0, X(big.t) / W * 100), r = Math.min(100, X(big.e) / W * 100);
@@ -531,6 +548,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const nx = X(now) / W * 100, cp = all.find(p => p.t <= now && p.e > now);
     if (cp) ov += `<div class="now" style="left:${nx}%"></div><div class="nd" style="left:${nx}%;top:${Y(cp.p) / H * (pc.clientHeight - gb)}px"></div>`;
     this.$('ov').innerHTML = ov;
+    // Mærkerne står midt over deres periode, men aldrig ude over grafens kanter (Claude AI, 2026-10-16; bruger: "billigst er uden for billedet")
+    { const box = pc.getBoundingClientRect(); if (box.width) for (const sp of this.$('ov').querySelectorAll('.band span, .chg.lbl span')) {
+      const b = sp.getBoundingClientRect(), over = b.right - (box.right - 4), under = box.left + 4 - b.left;
+      if (over > 0) sp.style.marginLeft = `${-over}px`; else if (under > 0) sp.style.marginLeft = `${under}px`; } }
     const tip = this.$('tip');
     pc.onpointermove = pc.onpointerdown = e => { const b = pc.getBoundingClientRect(), t = t0 + (e.clientX - b.left) / b.width * (t1 - t0), p = pts.find(q => q.t <= t && q.e > t); if (!p) { tip.style.opacity = 0; return; }
       tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` · <em>bilen lader${dear(p) ? ' – dyrt' : ''}</em>` : ''}`;
