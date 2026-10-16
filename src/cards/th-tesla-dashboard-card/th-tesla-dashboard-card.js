@@ -17,7 +17,7 @@
 
 import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const TTD_VERSION = "1.20.0";
+const TTD_VERSION = "1.20.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -2489,10 +2489,12 @@ class ThTeslaDashboardCard extends HTMLElement {
       mode, modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
       segments, marks, chart, axisRight: f.dayTime(new Date(until)), axisMid: next ? `${f.time(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
       hint: statusKey === "disconnected" && next ? `Sættes bilen til nu, lader den ${f.dayTime(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}${blocks.length > 1 ? ` (+${blocks.length - 1} perioder)` : ""}${cost != null ? ` · ${ttdJoin(f.number(cost, 2), costUnit)}` : ""}` : "",
-      start: next ? (next.start.getTime() <= now ? "Nu" : f.time(next.start)) : TTD_DASH,
-      startDay: next && next.start.getTime() > now ? f.relativeDay(next.start) : "",
-      end: next ? f.time(lastEnd) : TTD_DASH,
-      endDay: next ? f.relativeDay(lastEnd) : "",
+      // Unplugged the plan is only what would happen if it were plugged in now (the hint says so): no start or end
+      // time that reads as if it will charge (user, 2026-10-16).
+      start: statusKey === "disconnected" ? TTD_DASH : next ? (next.start.getTime() <= now ? "Nu" : f.time(next.start)) : TTD_DASH,
+      startDay: statusKey === "disconnected" ? "ikke sat til" : next && next.start.getTime() > now ? f.relativeDay(next.start) : "",
+      end: statusKey === "disconnected" ? TTD_DASH : next ? f.time(lastEnd) : TTD_DASH,
+      endDay: statusKey === "disconnected" ? "" : next ? f.relativeDay(lastEnd) : "",
       cost: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), costUnit),
       kwh: energy != null && energy > 0 ? `${f.number(energy, 1)} kWh${blocks.some((block) => block.estimated) ? " · delvist skønnet pris" : ""}` : "",
       fixed: mode === "fixed" ? { start: time("fixed_start"), end: time("fixed_end") } : null,

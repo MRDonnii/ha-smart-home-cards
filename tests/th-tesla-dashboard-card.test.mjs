@@ -436,6 +436,12 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.match(r.charge.plan.track, /class="ctl-p ctl-c"[^>]*data-tip="Lader /);
   assert.deepEqual(JSON.parse(JSON.stringify(r.charge.plan.acts)), [], "nothing to override while the plan runs as planned");
   assert.match(r.charge.startLabel, /^Lad nu til \d+ %$/, "Lad nu says it charges to the target");
+  {
+    const unplugged = { ...states, "sensor.bil_charge_status": s("disconnected", states["sensor.bil_charge_status"]?.attributes || {}) };
+    const u = model(unplugged, scConfig).sc;
+    assert.equal(u.start, "—", "unplugged: no start time that reads as if it will charge");
+    assert.equal(u.startDay, "ikke sat til");
+  }
   assert.equal(r.charge.modeBoxVisible, false);
   assert.equal(r.charge.compare, null, "no comparison without the integration's alternatives");
   st["sensor.bil_planned_charge_cost"] = s("6.27", { unit_of_measurement: "kr", alternatives: {

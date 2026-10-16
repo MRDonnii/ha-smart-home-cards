@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.0";
+const VERSION = "0.8.1";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -654,9 +654,13 @@ class HATeslaGlanceCard extends HTMLElement {
       const p = this._num(this._pw()), added = this._num(this._added()), fin = this._time(c.charge_finish);
       line.innerHTML = `<ha-icon icon="mdi:ev-station"></ha-icon><b>${esc(this._fmt(p, 1))} kW</b>${added != null ? ` · +${esc(this._fmt(added, 1))} kWh` : ""}${fin ? ` · færdig ${esc(fin)}` : ""}`;
     } else {
-      const next = this._time(c.next_charge_start), cost = this._num(c.next_charge_cost);
+      // EV Ledger plans also without the cable ("if it were plugged in now"): a planned start only shows while the
+      // cable is in (user, 2026-10-16: "viser lader kl 13:45? Bilen er ikke sat til!").
+      const inPlug = plugged || this._plugged();
+      const next = inPlug ? this._time(c.next_charge_start) : null, cost = this._num(c.next_charge_cost);
       if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c.compact ? "Lader" : "Næste ladning"} <b>${esc(next)}</b>${cost != null ? ` · ${esc(this._fmt(cost, 2))} kr` : ""}${target != null && !c.compact ? ` · mål ${esc(this._fmt(target))} %` : ""}`;
-      else if (plugged) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
+      else if (inPlug) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
+      else if (c.next_charge_start && this._time(c.next_charge_start) && !this._away()) line.innerHTML = `<ha-icon icon="mdi:power-plug-off-outline"></ha-icon>Ikke sat til`;
       else line.innerHTML = "";
     }
 

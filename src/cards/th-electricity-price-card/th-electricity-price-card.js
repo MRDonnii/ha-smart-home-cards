@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.14.0';
+const TEP_VER = '1.15.0';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -92,6 +92,10 @@ const TEP_CSS = `
 .adv .ar .hold{grid-column:1/-1;padding-top:6px;border-top:1px solid var(--hair)}
 .pc .chg.x{--ev:var(--bad)}
 .pc .chg.lbl::after{display:none}
+.pc .band.hot{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--bad) 16%,transparent),transparent 55%);box-shadow:none}
+.pc .band.hot span{display:inline-flex;align-items:center;gap:3px;font-size:9px;letter-spacing:.08em;padding:1px 6px;border-radius:99px;color:#fff;background:color-mix(in srgb,var(--bad) 75%,rgba(10,12,18,.6));box-shadow:0 0 12px -2px var(--bad);animation:hotp 1.4s ease-in-out infinite}
+@keyframes hotp{50%{box-shadow:0 0 18px 1px var(--bad);transform:translateX(-50%) scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.pc .band.hot span{animation:none}}
 .pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
 .pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
 .pc .band.cheaper span{font-size:9px;letter-spacing:.06em;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,rgba(10,12,18,.6))}
@@ -415,7 +419,18 @@ class ThElectricityPriceCard extends HTMLElement {
     // Dyr ladning (Claude AI, 2026-10-15; bruger: "bare de bobler … hvis den er dyr skal de skifte farve og vis at der er et billigere
     // tidspunkt"): over EV Ledgers prisgrænse, eller over dagens snit +10 % uden grænse
     const meanP = this.n(C.mean), thr = ch?.limit ? (ch.limit.over ? ch.limit.price : Infinity) : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = p => p.p > thr;
+    // MEGET dyr strøm (bruger, 2026-10-16: "animeres noget når strømmen er MEGET dyr"): 45 % over dagens snit, eller den
+    // øverste sjettedel af prisspændet uden snit – kun nu og fremover
+    const vd = Number.isFinite(meanP) ? meanP * 1.45 : vmin + (vmax - vmin) * .83, veryDear = p => p.p >= vd && p.e > now && vmax > vmin;
     const line = arr => arr.map((p, i) => `${i ? 'L' : 'M'}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join('');
+    // Linjens højde på et vilkårligt tidspunkt og arealet under linjen for ét kvarter: væsken følger linjen i linjevisning
+    // i stedet for trappetrin (Claude AI, 2026-10-16; bruger: "linjegrafen også med samme ting som søjlebaren reagerer på")
+    const mids = pts.map(p => [(p.t + p.e) / 2, Y(p.p)]);
+    const yAt = t => { if (t <= mids[0][0]) return mids[0][1]; for (let i = 1; i < mids.length; i++) if (t <= mids[i][0]) { const [ta, ya] = mids[i - 1], [tb, yb] = mids[i]; return ya + (yb - ya) * (t - ta) / ((tb - ta) || 1); } return mids[mids.length - 1][1]; };
+    const area = p => { const a = Math.max(t0, p.t), b = Math.min(t1, p.e), m = (p.t + p.e) / 2, top = [[a, yAt(a)], ...(m > a && m < b ? [[m, Y(p.p)]] : []), [b, yAt(b)]];
+      return `M${X(a).toFixed(2)} ${base}${top.map(([t, y]) => `L${X(t).toFixed(2)} ${y.toFixed(1)}`).join('')}L${X(b).toFixed(2)} ${base}Z`; };
+    const lineBar = p => { const x = Math.max(0, X(p.t)); return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x), y: Math.min(yAt(Math.max(t0, p.t)), Y(p.p), yAt(Math.min(t1, p.e))), d: area(p) }; };
+    const isBar = this._ps === 'bar', calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const A1 = pts.filter(p => !p.f), F1 = pts.filter(p => p.f); if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = n => cs.getPropertyValue(n).trim();
     const cG = cv('--good') || '#6be3a8', cW = cv('--warn') || '#e8c37e', cB = cv('--bad') || '#ff9e7a', cE = cv('--ev') || '#b7a4ff';
@@ -430,8 +445,12 @@ class ThElectricityPriceCard extends HTMLElement {
     } else {
       if (A1.length) { const d = line(A1); g += `<path d="${d}L${X((A1[A1.length - 1].t + A1[A1.length - 1].e) / 2)} ${base}L${X((A1[0].t + A1[0].e) / 2)} ${base}Z" fill="url(#pa)" class="fadein"/><path d="${d}" fill="none" stroke="url(#pl)" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" class="draw"/>`; }
       if (F1.length > 1) g += `<path d="${line(F1)}" fill="none" stroke="url(#pl)" stroke-width="1.6" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" opacity=".7" class="fadein"/>`;
-      // ladeplanen som bobler under linjen, også i linjevisning
-      pts.forEach(p => { if (!inCh(p)) return; const x = Math.max(0, X(p.t)); evBars.push({ x, w: Math.max(.5, Math.min(W, X(p.e)) - x), y: Y(p.p), x2: dear(p) }); });
+      // ladeplanen som bobler under linjen, også i linjevisning – væsken følger linjen
+      pts.forEach(p => { if (!inCh(p)) return; evBars.push({ ...lineBar(p), x2: dear(p) }); });
+      // Et lysende punkt glider hen ad den kommende del af linjen og et blødt skær pulserer under den (Claude AI, 2026-10-16)
+      const fut = pts.filter(p => p.e > now);
+      if (fut.length > 2 && !calm) { const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
+        g += `<ellipse rx="${(4 / sx).toFixed(2)}" ry="${(4 / sy).toFixed(2)}" fill="#fff" opacity="0" style="filter:drop-shadow(0 0 4px #fff)"><animateMotion dur="${Math.max(5, fut.length / 12).toFixed(1)}s" repeatCount="indefinite" path="${line(fut)}"/><animate attributeName="opacity" values="0;.95;.95;0" keyTimes="0;.08;.85;1" dur="${Math.max(5, fut.length / 12).toFixed(1)}s" repeatCount="indefinite"/></ellipse>`; }
     }
     // Indflyvning kun ved første tegning og ved skift af visning; en ny højde (fx når forsiden fylder ud til navbaren)
     // tegner bare om, så grafen ikke ser ud til at loade to gange (Claude AI, 2026-10-12).
@@ -442,7 +461,7 @@ class ThElectricityPriceCard extends HTMLElement {
     let liq = [], liqCol = cE, liqId = 'ev';
     if (!evBars.length) { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a2 = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a2 < best.a) best = { a: a2, t: fut[i].t, e: fut[i + win - 1].e }; }
-      if (best && this._ps === 'bar') { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { const x = Math.max(0, X(p.t)), gap = mode === '48' ? .3 : mode === '7' ? .4 : .7; return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - gap), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
+      if (best) { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { if (!isBar) return lineBar(p); const x = Math.max(0, X(p.t)), gap = mode === '48' ? .3 : mode === '7' ? .4 : .7; return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - gap), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
     if (liq.length) groups.push({ bars: liq, col: liqCol, id: liqId });
     // Dyr ladning (Claude AI, 2026-10-15; bruger: "grafen er ikke så pæn"): samme lilla væske, der glider over i rødt
     // øverst, og bobler i væskens egne lyse toner i stedet for hvide/grå.
@@ -450,12 +469,33 @@ class ThElectricityPriceCard extends HTMLElement {
       const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
       let seed = liq.length * 7 + Math.floor(liq[0].x); const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
       const rise = H * .32, topY = Math.min(...liq.map(b => b.y)), tint = `color-mix(in srgb,${hot || liqCol} 45%,#fff)`;
-      g += `<defs><clipPath id="${liqId}c">${liq.map(b => `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
+      g += `<defs><clipPath id="${liqId}c">${liq.map(b => b.d ? `<path d="${b.d}"/>` : `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(2)}" height="${(base - b.y).toFixed(1)}" rx="1.5"/>`).join('')}</clipPath>
         ${hot ? `<linearGradient id="${liqId}l" gradientUnits="userSpaceOnUse" x1="0" y1="${topY.toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${hot}"/><stop offset=".7" stop-color="${liqCol}"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>` : `<linearGradient id="${liqId}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${liqCol}" stop-opacity="1"/><stop offset="1" stop-color="${liqCol}" stop-opacity=".92"/></linearGradient>`}</defs><g clip-path="url(#${liqId}c)"><rect x="0" y="0" width="${W}" height="${base}" fill="url(#${liqId}l)"/>
         <rect x="0" y="0" width="${W}" height="${base}" fill="#fff" opacity="0"><animate attributeName="opacity" values="0;.14;0" dur="3.2s" repeatCount="indefinite"/></rect></g>`;
       liq.forEach((b) => { const n = Math.max(2, Math.round((base - b.y) / 16)); for (let k = 0; k < n; k++) {
         const r = 1.8 + rnd() * 2.4, cx = b.x + b.w * (.2 + rnd() * .6), dur = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (.35 + rnd() * .65));
         g += `<ellipse cx="${cx.toFixed(2)}" cy="${base}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" style="fill:${k % 3 ? tint : (hot || liqCol)}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`; } });
+    }
+    const hotP = pts.filter(veryDear);
+    if (hotP.length && !calm) {
+      const sx = Math.max(.1, pc.clientWidth / W), sy = Math.max(.1, (pc.clientHeight - gb) / H);
+      let hs = hotP.length * 13 + Math.floor(X(hotP[0].t)); const hr = () => ((hs = (hs * 9301 + 49297) % 233280) / 233280);
+      g += `<defs><linearGradient id="hotg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cB}" stop-opacity=".75"/><stop offset="1" stop-color="${cB}" stop-opacity=".05"/></linearGradient></defs>`;
+      hotP.forEach((p, i) => {
+        const gap = mode === '48' ? .3 : mode === '7' ? .4 : .7, x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - (isBar ? gap : 0));
+        // søjlerne pulserer som en bølge; under linjen pulserer det røde samlet (ellers ligner det striber)
+        const top = isBar ? Y(p.p) : lineBar(p).y, begin = isBar ? ((i % 6) * .22).toFixed(2) : '0';
+        const shape = isBar ? `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5"` : `<path d="${area(p)}"`;
+        g += `${shape} fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${begin}s" repeatCount="indefinite"/>${isBar ? '</rect>' : '</path>'}`;
+        if (i % (mode === '24' ? 1 : 3)) return; // gnister fra toppen – færre i de lange visninger
+        const r = 1.4 + hr() * 1.4, cx = x + w * (.25 + hr() * .5), dur = (1.6 + hr() * 1.4).toFixed(2), delay = (hr() * 2).toFixed(2), up = Math.max(2, top - H * (.12 + hr() * .14));
+        g += `<ellipse cx="${cx.toFixed(2)}" cy="${top.toFixed(1)}" rx="${(r / sx).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${i % 2 ? '#ffb347' : cB}" opacity="0" style="pointer-events:none"><animate attributeName="cy" from="${top.toFixed(1)}" to="${up.toFixed(1)}" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.95;0" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
+      });
+      if (!isBar) { // den dyre del af linjen lyser rødt og pulserer
+        const runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (veryDear(p)) { if (last && last.open) last.ps.push(p); else runs.push({ ps: [p], open: true }); } else if (last) last.open = false; }
+        for (const r of runs) { const i0 = pts.indexOf(r.ps[0]), i1 = pts.indexOf(r.ps[r.ps.length - 1]), seg = pts.slice(Math.max(0, i0 - 1), Math.min(pts.length, i1 + 2));
+          g += `<path d="${line(seg)}" fill="none" stroke="${cB}" stroke-width="4.5" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".5" style="filter:drop-shadow(0 0 5px ${cB});pointer-events:none"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" repeatCount="indefinite"/></path>`; }
+      }
     }
     const svg = this.$('svg'); svg.classList.toggle('still', !anim); this.$('days').classList.toggle('still', !anim); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = g;
     // overlay
@@ -484,6 +524,10 @@ class ThElectricityPriceCard extends HTMLElement {
     else { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e }; }
       if (best && best.t < t1) { const l = X(best.t) / W * 100, r = X(best.e) / W * 100; ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6">BILLIGST</span></div>`; } }
+    { const runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (veryDear(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ t: Math.max(p.t, now), e: p.e }); } }
+      const big = runs.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
+      if (big && big.t < t1) { const l = Math.max(0, X(big.t) / W * 100), r = Math.min(100, X(big.e) / W * 100);
+        ov += `<div class="band hot" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('peak', 9, 2.4)}MEGET DYRT</span></div>`; } }
     const nx = X(now) / W * 100, cp = all.find(p => p.t <= now && p.e > now);
     if (cp) ov += `<div class="now" style="left:${nx}%"></div><div class="nd" style="left:${nx}%;top:${Y(cp.p) / H * (pc.clientHeight - gb)}px"></div>`;
     this.$('ov').innerHTML = ov;
