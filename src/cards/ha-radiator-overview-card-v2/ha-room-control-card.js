@@ -134,6 +134,29 @@ const STYLE = `
 .ib{width:40px;height:38px;border-radius:12px}
 @media(max-width:480px){.prof{grid-template-columns:repeat(3,minmax(0,1fr))}.pf{min-height:84px;padding:10px}.pf ha-icon.i{width:34px;height:34px}.lt{height:64px;padding:0 11px;gap:9px}.lt .li{width:34px;height:34px}.lt .pct{font-size:15px}.tg{padding:9px 10px;gap:8px}.tg .ti{width:30px;height:30px}.tg .n b{font-size:12px}.lights{grid-template-columns:1fr}
   .hero .btns{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.btn{flex-direction:column;gap:5px;min-height:64px;padding:8px 4px;font-size:11.5px;text-align:center;line-height:1.15}}
+.lockbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;margin:0 0 10px;padding:12px 14px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);
+  background:color-mix(in srgb,var(--ink) 5%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent)}
+.lockbar>ha-icon{--mdc-icon-size:24px;color:var(--mut)}.lockbar .go{--mdc-icon-size:20px}
+.lockbar .lk{display:grid;min-width:0}.lockbar .lk b{font-size:14px;font-weight:800}.lockbar .lk small{margin-top:2px;font-size:11.5px;line-height:1.3;color:var(--mut)}
+.lockbar.on{cursor:default;background:color-mix(in srgb,var(--warm) 12%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--warm) 55%,transparent)}
+.lockbar.on>ha-icon{color:var(--warm)}.lockbar.on .lk b{color:var(--warm)}.lockbar .btn{min-height:44px}
+/* Explained switches and buttons (Claude AI, 2026-10-17): bigger, with what they do and a clear TIL/FRA. */
+.tgs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tg{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;min-height:78px;padding:12px 14px;border-radius:18px;text-align:left;cursor:pointer;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 9%,transparent)}
+.tg .ti{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--mut);--mdc-icon-size:22px}
+.tg .n b{display:block;font-size:14px;font-weight:800;line-height:1.2;-webkit-line-clamp:unset}
+.tg .n small{display:block;margin-top:3px;font-size:11.5px;line-height:1.3;color:var(--mut)}
+.tg .st{min-width:46px;padding:7px 10px;border-radius:11px;font-size:12px;font-weight:900;letter-spacing:.06em;text-align:center;color:var(--mut);background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.tg.on{background:color-mix(in srgb,var(--ok) 11%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ok) 55%,transparent)}
+.tg.on .ti{color:var(--ok);background:color-mix(in srgb,var(--ok) 20%,transparent)}
+.tg.on .st{color:#04140c;background:var(--ok);box-shadow:0 0 14px -3px var(--ok)}
+.tg.paused{background:color-mix(in srgb,var(--warm) 10%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--warm) 50%,transparent)}
+.tg.paused .ti,.tg.paused .n small{color:var(--warm)}.tg.paused .st{color:#1b1206;background:var(--warm)}
+.tg.dead{opacity:.55}
+.tg:active{transform:scale(.97)}
+.btn .bt{display:grid;text-align:left;line-height:1.2}.btn .bt b{font-size:13px;font-weight:800}.btn .bt small{font-size:10.5px;font-weight:600;opacity:.75}
+@media(max-width:600px){.tgs{grid-template-columns:minmax(0,1fr)}.tg{min-height:70px}.btn .bt{text-align:center}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
@@ -187,9 +210,13 @@ class HARoomControlCard extends HTMLElement {
     if (!this._config || !this._hass) return;
     if (this._drag) return; // never repaint under a finger that is dimming
     const d = this._model(); const m = d.m;
-    const ids = [m.presence, m.override, m.timer, m.automation, m.ambient, m.profile, m.lux, m.luxThreshold, ...(m.openings || []), ...(m.important || []), ...d.lights, ...d.toggles.map((t) => t.entity), ...d.specials.map((s) => s.id), ...d.media.map((x) => x.id)];
+    const ids = [this._lockId(m), m.presence, m.override, m.timer, m.automation, m.ambient, m.profile, m.lux, m.luxThreshold, ...(m.openings || []), ...(m.important || []), ...d.lights, ...d.toggles.map((t) => t.entity), ...d.specials.map((s) => s.id), ...d.media.map((x) => x.id)];
     const key = JSON.stringify(ids.map((id) => { const s = this._st(id); return s ? [s.state, s.attributes?.brightness, s.attributes?.rgb_color, s.attributes?.media_title, s.attributes?.volume_level, s.attributes?.finishes_at, s.attributes?.entity_picture, s.last_changed] : 0; })) + Math.floor(Date.now() / 60000);
-    if (key === this._key) return; this._key = key;
+    const locked = this._st(this._lockId(m))?.state === "active";
+    if (locked && !this._lockTick) this._lockTick = setInterval(() => { this._key = ""; this._render(); }, 30000);
+    if (!locked && this._lockTick) { clearInterval(this._lockTick); this._lockTick = null; }
+    if (key === this._key && !locked) return; if (key === this._key && locked && this._lockMin === Math.floor(Date.now() / 60000)) return;
+    this._key = key; this._lockMin = Math.floor(Date.now() / 60000);
     if (!this._built) {
       this._built = true;
       this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div>`;
@@ -218,9 +245,9 @@ class HARoomControlCard extends HTMLElement {
     const t = this._st(m.timer); if (t?.state === "active" && t.attributes?.finishes_at) chips.push(`<span class="chip warn"><ha-icon icon="mdi:timer-sand"></ha-icon>Manuel i ${this._left(t.attributes.finishes_at)}</span>`);
     if ((m.openings || []).some((id) => this._on(id))) chips.push(`<span class="chip warn"><ha-icon icon="mdi:door-open"></ha-icon>Åben dør/vindue</span>`);
     const btns = m.room_key ? `<div class="btns">
-      <button type="button" class="btn" style="--bc:var(--danger)" data-script="rum_sluk_midlertidigt"><ha-icon icon="mdi:power"></ha-icon>Sluk rummet</button>
-      <button type="button" class="btn" style="--bc:var(--a)" data-script="rum_nulstil_automatisk"><ha-icon icon="mdi:restore"></ha-icon>Nulstil automatik</button>
-      ${lit ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="off"><ha-icon icon="mdi:lightbulb-off-outline"></ha-icon>Sluk alt lys</button>` : d.lights.length ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="on"><ha-icon icon="mdi:lightbulb-on-outline"></ha-icon>Tænd alt lys</button>` : ""}</div>` : "";
+      <button type="button" class="btn" style="--bc:var(--danger)" data-script="rum_sluk_midlertidigt"><ha-icon icon="mdi:power"></ha-icon><span class="bt"><b>Sluk rummet</b><small>Slukker lys og automatik midlertidigt</small></span></button>
+      <button type="button" class="btn" style="--bc:var(--a)" data-script="rum_nulstil_automatisk"><ha-icon icon="mdi:restore"></ha-icon><span class="bt"><b>Nulstil automatik</b><small>Lyset følger automatikken igen</small></span></button>
+      ${lit ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="off"><ha-icon icon="mdi:lightbulb-off-outline"></ha-icon><span class="bt"><b>Sluk alt lys</b><small>Kun lyset i rummet</small></span></button>` : d.lights.length ? `<button type="button" class="btn" style="--bc:var(--warm)" data-all="on"><ha-icon icon="mdi:lightbulb-on-outline"></ha-icon><span class="bt"><b>Tænd alt lys</b><small>Kun lyset i rummet</small></span></button>` : ""}</div>` : "";
     return `<div class="tile hero" style="--st:${color}"><span class="ic"><ha-icon icon="${esc(this._config.icon || m.icon || "mdi:home")}"></ha-icon></span>
       <div class="t"><strong>Rumstatus</strong><span class="pill">${esc(label)}</span></div><div class="s">${chips.join("")}</div>${btns}</div>`;
   }
@@ -230,7 +257,21 @@ class HARoomControlCard extends HTMLElement {
     const cur = this._st(d.m.profile)?.state;
     const items = d.profiles.map((p) => `<button type="button" class="tile pf ${cur === p.option ? "on" : ""}" data-option="${esc(p.option)}"><ha-icon class="i" icon="${esc(p.icon || "mdi:lightbulb-group-outline")}"></ha-icon><b>${esc(p.name || p.option)}</b></button>`)
       .concat(d.specials.map((s) => `<button type="button" class="tile pf special ${this._on(s.id) ? "on" : ""}" data-toggle="${esc(s.id)}"><ha-icon class="i" icon="${esc(s.icon || this._st(s.id)?.attributes?.icon || "mdi:star-four-points-outline")}"></ha-icon><b>${esc(s.label)}</b></button>`));
-    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc(cur)}</span>` : ""}</div><div class="prof">${items.join("")}</div></section>`;
+    return `<section class="sec"><div class="sh"><h4>Lysprofil</h4><i class="rule"></i>${cur && d.profiles.length ? `<span class="cnt">${esc(cur)}</span>` : ""}</div>${this._lockHtml(d)}<div class="prof">${items.join("")}</div></section>`;
+  }
+
+  // Scene lock (Claude AI, 2026-10-17; user: a button so the chosen scene stays, with a countdown; presence comes back after
+  // 3 hours; scenes can still be changed freely without touching the countdown). The lock is timer.scene_las_<room> (3 h,
+  // survives restarts) and the room's presence automation switched off; HA's "Scene-lås – nulstil rummet efter 3 timer"
+  // runs rum_nulstil_automatisk when it runs out. Changing scene does not touch the timer.
+  _lockId(m) { return m.room_key ? `timer.scene_las_${m.room_key}` : ""; }
+  _lockHtml(d) {
+    const id = this._lockId(d.m); const t = id ? this._st(id) : null; if (!t) return "";
+    if (t.state === "active" && t.attributes?.finishes_at) {
+      const end = new Date(t.attributes.finishes_at).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+      return `<div class="lockbar on"><ha-icon icon="mdi:lock-clock"></ha-icon><span class="lk"><b>Scenen er låst · ${esc(this._left(t.attributes.finishes_at))} tilbage</b><small>Bevægelse ændrer ikke lyset. Skift frit mellem scenerne – nedtællingen fortsætter. Automatik igen kl. ${esc(end)}.</small></span><button type="button" class="btn" style="--bc:var(--warm)" data-unlock><ha-icon icon="mdi:lock-open-variant-outline"></ha-icon><span class="bt"><b>Lås op</b><small>Automatik nu</small></span></button></div>`;
+    }
+    return `<button type="button" class="lockbar" data-lock><ha-icon icon="mdi:lock-outline"></ha-icon><span class="lk"><b>Lås scenen i 3 timer</b><small>Den valgte scene bliver – bevægelse ændrer ikke lyset. Du kan stadig skifte scene.</small></span><ha-icon class="go" icon="mdi:chevron-right"></ha-icon></button>`;
   }
 
   _lightsHtml(d) {
@@ -245,18 +286,34 @@ class HARoomControlCard extends HTMLElement {
   }
 
   _togglesHtml(d) {
+    // Big, explained switches (Claude AI, 2026-10-17; user: "nemmere at se og trykke på og de skal beskrive hvad de gør").
+    // Each says what it does and shows TIL/FRA; the room's presence automation can be paused and comes back on by itself
+    // after 3 hours (HA automation "Presence – slå til igen efter 3 timer"; the watchdog leaves it alone meanwhile).
     const m = d.m; const list = [...d.toggles];
-    const add = (entity, name, icon) => { if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon }); };
-    add(m.automation, "Presence-automatik", "mdi:motion-sensor");
-    add(m.ambient, "Ambient lys", "mdi:lamp-outline");
-    (m.al || []).forEach((id, i) => add(id, (m.al.length > 1 ? `Adaptive ${this._name(id).replace(/adaptive lighting:?/i, "").trim()}` : "Adaptive Lighting"), "mdi:theme-light-dark"));
-    add(m.persistent, "Kræv vedvarende presence", "mdi:account-clock-outline");
-    add(m.luxKrav, "Lux-krav", "mdi:brightness-auto");
+    const add = (entity, name, icon, desc, role) => { if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon, desc, role }); };
+    add(m.automation, "Presence-automatik", "mdi:motion-sensor", "Tænder og slukker lyset efter bevægelse i rummet", "presence");
+    add(m.ambient, "Ambient lys", "mdi:lamp-outline", "Holder et dæmpet stemningslys, når rummet er tomt");
+    (m.al || []).forEach((id) => add(id, (m.al.length > 1 ? `Adaptive ${this._name(id).replace(/adaptive lighting:?/i, "").trim()}` : "Adaptive Lighting"), "mdi:theme-light-dark", "Lysets farve og styrke følger døgnets rytme"));
+    add(m.persistent, "Kræv vedvarende presence", "mdi:account-clock-outline", "Lyset tændes først ved vedvarende bevægelse – ikke når nogen bare går forbi");
+    add(m.luxKrav, "Lux-krav", "mdi:brightness-auto", "Lyset tændes kun, når det er mørkt nok i rummet");
     if (!list.length) return "";
+    // The room's presence automation is the presence switch whatever it is called in the pop-up's own button list.
+    for (const t of list) if (t.entity === m.automation) { t.role = "presence"; t.desc = "Tænder og slukker lyset efter bevægelse i rummet"; }
+    const generic = { switch: "Tænder og slukker enheden", input_boolean: "Slår funktionen til og fra", automation: "Automatik, der kører af sig selv, når den er slået til",
+      script: "Kører handlingen med det samme", scene: "Aktiverer scenen", button: "Kører handlingen med det samme", light: "Tænder og slukker lyset", fan: "Tænder og slukker ventilatoren",
+      climate: "Tænder og slukker varmen", media_player: "Tænder og slukker afspilleren" };
+    const clock = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const tiles = list.map((t) => {
       const s = this._st(t.entity); const on = this._on(t.entity); const dom = t.entity.split(".")[0]; const dead = DEAD.has(s.state);
-      const sub = dead ? "Utilgængelig" : dom === "script" || dom === "scene" || dom === "button" ? "Kør" : on ? (dom === "automation" ? "Aktiv" : "Til") : (dom === "automation" ? "Slået fra" : "Fra");
-      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""}" data-toggle="${esc(t.entity)}"><ha-icon class="ti" icon="${esc(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon><span class="n"><b>${esc(t.name ? t.name : this._name(t.entity))}</b><small>${sub}</small></span>${["script", "scene", "button"].includes(dom) ? "" : '<i class="sw"></i>'}</button>`;
+      const once = ["script", "scene", "button"].includes(dom);
+      const state = dead ? "—" : once ? "KØR" : on ? "TIL" : "FRA";
+      let desc = t.desc || generic[dom] || "Slår til og fra";
+      if (t.role === "presence" && !on && !dead) desc = `Slået fra · slår selv til igen kl. ${clock(Date.parse(s.last_changed) + 3 * 3600e3)}`;
+      else if (t.role === "presence" && on) desc += " · tryk for at slå fra i 3 timer";
+      if (dead) desc = "Utilgængelig";
+      return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""} ${t.role === "presence" && !on && !dead ? "paused" : ""}" data-toggle="${esc(t.entity)}" title="${esc(desc)}">
+        <span class="ti"><ha-icon icon="${esc(t.icon || s.attributes?.icon || DOMAIN_ICON[dom] || "mdi:toggle-switch-outline")}"></ha-icon></span>
+        <span class="n"><b>${esc(t.name ? t.name : this._name(t.entity))}</b><small>${esc(desc)}</small></span><span class="st">${state}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Automatik &amp; enheder</h4><i class="rule"></i></div><div class="tgs">${tiles.join("")}</div></section>`;
   }
@@ -314,6 +371,15 @@ class HARoomControlCard extends HTMLElement {
       if (el.dataset.option !== undefined) return this._hass.callService("input_select", "select_option", { entity_id: m.profile, option: el.dataset.option });
       if (el.dataset.light) return this._hass.callService("light", "toggle", { entity_id: el.dataset.light });
       if (el.dataset.toggle) return this._toggle(el.dataset.toggle);
+      if (el.dataset.lock !== undefined && m.room_key) {
+        this._hass.callService("timer", "start", { entity_id: this._lockId(m), duration: "03:00:00" });
+        if (m.automation) this._hass.callService("automation", "turn_off", { entity_id: m.automation, stop_actions: false });
+        return;
+      }
+      if (el.dataset.unlock !== undefined && m.room_key) {
+        this._hass.callService("timer", "cancel", { entity_id: this._lockId(m) });
+        return this._hass.callService("script", "rum_nulstil_automatisk", { room: m.room_key });
+      }
       if (el.dataset.more) return this._more(el.dataset.more);
       if (el.dataset.media) return this._hass.callService("media_player", el.dataset.cmd, { entity_id: el.dataset.media });
       if (el.dataset.all) { const ids = this._model().lights; if (ids.length) this._hass.callService("light", el.dataset.all === "on" ? "turn_on" : "turn_off", { entity_id: ids }); return; }
