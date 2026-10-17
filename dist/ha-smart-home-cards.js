@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.175 */
+/* MRDonnii Smart Home Cards v0.5.176 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -32707,10 +32707,10 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     if (hasAir(room) && this._config.popup_air === true) tabs.push({ id: "air", label: "Luftkvalitet" });
     const hasControls = !!(room.controls && (room.controls.model || room.controls.light || room.controls.actions?.length || room.controls.alert));
-    if (hasControls) tabs.push({ id: "controls", label: "Styring" });
+    if (hasControls) tabs.unshift({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
-      content.dataset.defaultTab = acActive ? "ac" : "temperature";
+      content.dataset.defaultTab = hasControls ? "controls" : acActive ? "ac" : "temperature";
       const defaultTab = content.dataset.defaultTab;
       content.innerHTML = `
       <style>
@@ -33785,13 +33785,13 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     if (!content || !room) return;
     const model = this._roomModel(room);
     const tabs = [];
+    if (room.controls) tabs.push({ id: "controls", label: "Styring" });
     if (room.climate || room.temperature) tabs.push({ id: "temperature", label: "Varme" });
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
-    if (room.controls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
-      const def = model.acActive && room.ac ? "ac" : tabs[0]?.id;
+      const def = room.controls ? "controls" : model.acActive && room.ac ? "ac" : tabs[0]?.id;
       const di = Math.max(0, tabs.findIndex((t) => t.id === def));
       content.innerHTML = `<style>${POPUP_STYLE}</style>
         <div class="pop a-neutral">

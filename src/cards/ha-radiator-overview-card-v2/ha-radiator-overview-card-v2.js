@@ -1169,17 +1169,18 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     const acActive = !!state.ac?.active;
     const modeText = acActive ? state.ac.label : !state.climate ? "Måling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
     const tabs = [{ id: "temperature", label: "Temperatur" }];
+    // Styring first and opened by default (user, 2026-10-17); added in front once known below.
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
     // Luftkvalitet has its own tab in Varme Center, so the room popup no longer repeats it (user, 2026-10-13).
     if (hasAir(room) && this._config.popup_air === true) tabs.push({ id: "air", label: "Luftkvalitet" });
     const hasControls = !!(room.controls && (room.controls.model || room.controls.light || room.controls.actions?.length || room.controls.alert));
-    if (hasControls) tabs.push({ id: "controls", label: "Styring" });
+    if (hasControls) tabs.unshift({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
       // When AC is running it also switches the radiator off, so lead with the
       // AC tab instead of a temperature panel showing a dead radiator.
-      content.dataset.defaultTab = acActive ? "ac" : "temperature";
+      content.dataset.defaultTab = hasControls ? "controls" : acActive ? "ac" : "temperature";
       const defaultTab = content.dataset.defaultTab;
       content.innerHTML = `
       <style>

@@ -688,14 +688,15 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const room = this._config.rooms?.[index];
     if (!content || !room) return;
     const model = this._roomModel(room);
+    // Styring first and opened by default in every room popup (user, 2026-10-17).
     const tabs = [];
+    if (room.controls) tabs.push({ id: "controls", label: "Styring" });
     if (room.climate || room.temperature) tabs.push({ id: "temperature", label: "Varme" });
     if (room.ac) tabs.push({ id: "ac", label: "AC" });
     if (room.optimization) tabs.push({ id: "optimization", label: "Optimering" });
-    if (room.controls) tabs.push({ id: "controls", label: "Styring" });
     if (!content.dataset.ready) {
       content.dataset.ready = "true";
-      const def = model.acActive && room.ac ? "ac" : tabs[0]?.id;
+      const def = room.controls ? "controls" : model.acActive && room.ac ? "ac" : tabs[0]?.id;
       const di = Math.max(0, tabs.findIndex((t) => t.id === def));
       content.innerHTML = `<style>${POPUP_STYLE}</style>
         <div class="pop a-neutral">
