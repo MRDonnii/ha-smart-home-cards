@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.176 */
+/* MRDonnii Smart Home Cards v0.5.177 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -32941,7 +32941,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.0";
+var VERSION25 = "1.7.1";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33201,7 +33201,7 @@ var POPUP_STYLE = `
 /* All tabs share one grid cell, so the popup is as tall as its tallest tab and does not jump when switching
    (user: "lav popup i hvert rum s\xE5 det bare er h\xF8jden af det st\xF8rste"). */
 .body{display:grid;padding:18px 24px 24px}
-.panel{grid-area:1/1;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
+.panel{grid-area:1/1;align-self:start;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
 .panel[hidden]{display:block;visibility:hidden;pointer-events:none;animation:none}
 .empty{padding:30px 18px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--rc-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}

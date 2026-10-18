@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.7.0";
+const VERSION = "1.7.1";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -276,7 +276,7 @@ const POPUP_STYLE = `
 /* All tabs share one grid cell, so the popup is as tall as its tallest tab and does not jump when switching
    (user: "lav popup i hvert rum så det bare er højden af det største"). */
 .body{display:grid;padding:18px 24px 24px}
-.panel{grid-area:1/1;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
+.panel{grid-area:1/1;align-self:start;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
 .panel[hidden]{display:block;visibility:hidden;pointer-events:none;animation:none}
 .empty{padding:30px 18px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--rc-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
