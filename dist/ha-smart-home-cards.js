@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.185 */
+/* MRDonnii Smart Home Cards v0.5.195 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
