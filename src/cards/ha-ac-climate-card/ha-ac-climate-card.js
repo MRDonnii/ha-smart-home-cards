@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.10.2";
+const VERSION = "0.11.0";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -256,38 +256,58 @@ class HAACClimateCard extends HTMLElement {
     return `<div class="pill learning" title="Follow Me-indlæring – se Smart styring"><ha-icon icon="mdi:school-outline"></ha-icon><span>Indlærer · ${Math.max(0, Number(l.remaining_min) || 0)} min</span></div>`;
   }
 
-  // Qlima Control learns each unit's own Follow Me offset; show which check runs, how far it is and what it learned.
+  // Qlima Control learns at which Follow Me value each unit really stops and starts: show the running
+  // check and how far it is, and what has been learned (levels, confirmations, weather, last change).
   _learning(unit) {
     const a = this._entity(unit.climate)?.attributes || {};
     const l = a.follow_me_learning;
-    if (!l || typeof l !== "object") return "";
+    if (!l || typeof l !== "object" || l.stop_level === undefined) return "";
     const history = Array.isArray(a.follow_me_history) ? a.follow_me_history : [];
-    const offset = Number(l.offset) || 0, start = Number(l.start_offset) || 0;
-    if (l.state === "off" && !offset && !start && !history.length) return "";
-    const signed = (v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}°`;
-    const learned = [offset ? `Follow Me ${signed(offset)}` : "", start ? `start ${start}° tidligere` : "", l.park ? "mål parkeres ved stop" : ""].filter(Boolean).join(" · ") || "ingen rettelse nødvendig";
-    const outcome = { offset_up: `ellers Follow Me ${signed(l.outcome_value)}`, offset_down: `ellers Follow Me ${signed(l.outcome_value)}`,
-      start_earlier: `ellers startes ${l.outcome_value}° tidligere`, boost: `ellers skubbes starten ${l.outcome_value}°`, park: "ellers parkeres målet ved stop" }[l.outcome] || "";
-    const check = { checking_stop: "Tjekker at anlægget stopper", checking_hold: "Anlægget stoppede ved målet – tjekker", checking_start: "Venter på at anlægget starter", checking_rise: "Rummet stiger ikke – tjekker" }[l.state];
-    const steps = `stop ${l.stop_ok ? "✓" : "…"} · start ${l.start_ok ? "✓" : "…"}`;
-    // Weather learning: start/stop points moved for the current outdoor band.
-    const st = Number(l.start_at), sp = Number(l.stop_at), ho = Number(l.hold_at) || 0;
-    const tuned = l.outdoor_band && Number.isFinite(st) && Number.isFinite(sp) && (st !== 0.2 || sp !== 0.3 || ho > 0);
-    const weather = tuned ? ` · ved ${String(l.outdoor_band).replace("..", "–")} °C ude: start −${this._format(st, 2).replace(/0$/, "")}°, stop +${this._format(sp, 2).replace(/0$/, "")}°${ho > 0 ? `, hold fra −${this._format(ho, 2).replace(/0$/, "")}°` : ""}` : "";
-    let text, cls = "l-on";
-    if (check) { text = `${check} · ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min · ${outcome}`; cls = "l-check"; }
-    else if (l.state === "learned") { text = `Indlært: ${learned}${weather}`; cls = "l-done"; }
-    else if (l.state === "learning") text = `Lærer anlægget at kende (${steps}) · ${learned}${weather}`;
-    else if (l.state === "paused") text = `På pause – ${{ offline: "anlægget svarer ikke", defrost: "anlægget afrimer", fault: "anlægget viser en fejlkode", steering_off: "dør/vindue åben eller manuel styring" }[l.reason] || "venter"} · ${learned}`;
-    else if (l.state === "no_follow_me") { text = "Follow Me når ikke frem til anlægget – tjek IR-dioden. Indlæringen venter, så der ikke læres forkert."; cls = "l-bad"; }
-    else if (l.state === "no_meter") { text = "Mangler effektmåler – lærer ikke"; cls = "l-off"; }
-    else { text = `Slået fra · lært: ${learned}`; cls = "l-off"; }
-    const WHY = { stop: "kørte videre efter stop", hold: "stoppede ved målet", start: "startede ikke", rise: "rummet steg ikke" };
+    const cool = l.mode === "cool";
+    const past = cool ? "under" : "over", short = cool ? "over" : "under";
+    const stop = Number(l.stop_level) || 1, start = Number(l.start_level) || 1;
+    const num = (v) => this._format(Number(v), 2).replace(/,?0+$/, "");
+    const check = {
+      checking_stop: `Tjekker at anlægget stopper (det kører stadig, selv om det har fået ${stop}° ${past} målet)`,
+      checking_hold: "Anlægget slukkede, hvor det skulle køre roligt videre – tjekker",
+      checking_start: `Venter på at anlægget starter (det har fået ${start}° ${short} målet)`,
+    }[l.state];
+    const outcome = { stop_level: `ellers lærer den ${l.outcome_value}°`, start_level: `ellers lærer den ${l.outcome_value}° ${short}`, park: "ellers parkeres målet ved stop" }[l.outcome] || "";
+    const PAUSE = { offline: "anlægget svarer ikke", defrost: "anlægget afrimer", fault: "anlægget viser en fejlkode", steering_off: "dør/vindue åben eller manuel styring", follow_me_unconfirmed: "anlægget bekræfter ikke Follow Me-værdien lige nu (lærer kun, når den er bekræftet)" };
+    let status, cls = "l-on", label = "";
+    if (check) { status = `${check} · ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min · ${outcome}`; cls = "l-check"; label = `${Math.max(0, Number(l.remaining_min) || 0)} min`; }
+    else if (l.state === "learned") { status = "Indlært – styringen kender anlægget"; cls = "l-done"; label = "✓"; }
+    else if (l.state === "learning") status = "Lærer anlægget at kende – holder øje ved hvert start og stop";
+    else if (l.state === "paused") status = `På pause – ${PAUSE[l.reason] || "venter"}`;
+    else if (l.state === "no_follow_me") { status = "Follow Me når ikke frem til anlægget – tjek IR-dioden. Indlæringen venter, så der ikke læres forkert."; cls = "l-bad"; }
+    else if (l.state === "no_meter") { status = "Mangler effektmåler – lærer ikke"; cls = "l-off"; }
+    else { status = "Slået fra"; cls = "l-off"; }
+    const ok = (v) => v ? " ✓" : " · ikke bekræftet endnu";
+    const items = [
+      `Stop: slukker, når Follow Me er ${stop}° ${past} dens mål${stop === 1 ? " (som normalt)" : " (normalt 1°)"}${ok(l.stop_ok)}`,
+      `Start: starter, når Follow Me er ${start}° ${short} dens mål${start === 1 ? " (som normalt)" : " (normalt 1°)"}${ok(l.start_ok)}`,
+    ];
+    if (l.park) items.push("Slukker ikke på Follow Me: dens mål sænkes til minimum ved hvert stop");
+    items.push(l.state === "no_follow_me" ? "Follow Me når ikke frem lige nu ✗"
+      : l.follow_me_ok ? `Follow Me når frem – anlægget melder værdien tilbage${Number(a.follow_me_echo_offset) ? ` (forskudt ${Number(a.follow_me_echo_offset) > 0 ? "+" : "−"}${Math.abs(Number(a.follow_me_echo_offset))}°)` : ""} ✓`
+      : "Follow Me: ikke bekræftet endnu – anlægget skal melde tre værdier tilbage");
+    if (l.outdoor_band) {
+      const band = String(l.outdoor_band).replace("..", "–");
+      const tuned = Number(l.start_at) !== 0.2 || Number(l.stop_at) !== 0.3;
+      const n = Number(l.bands_learned) || 0;
+      items.push(`Ved ${band} °C ude starter den, når rummet er ${num(l.start_at)}° ${short} målet, og stopper ${num(l.stop_at)}° ${past}${tuned ? " – tilpasset vejret" : ""}`
+        + (n ? ` · målt i ${n} temperaturinterval${n === 1 ? "" : "ler"}` : " · vejret er ikke målt endnu"));
+    }
+    const WHY = { stop: "kørte videre efter stop", hold: "slukkede i hold", start: "startede ikke" };
+    const WHAT = { stop_level: "stop-niveau", start_level: "start-niveau", park: "mål parkeres ved stop" };
     const last = history[history.length - 1];
-    const lastTxt = last ? ` · sidst ${this._clock(last.at)}: ${WHY[last.check] || last.check}` : "";
+    if (last) {
+      const when = new Date(last.at);
+      const day = Number.isFinite(when.getTime()) ? when.toLocaleDateString(this._hass?.locale?.language || "da", { day: "numeric", month: "numeric" }) : "";
+      items.push(`Sidst lært ${day} kl. ${this._clock(last.at)}: ${WHAT[last.change] || last.change}${last.from != null && last.value != null ? ` ${last.from}° → ${last.value}°` : ""} (${WHY[last.check] || last.check})`);
+    }
     const bar = check ? `<i class="lbar"><b style="width:${Math.max(3, Math.min(100, Number(l.progress) || 0))}%"></b></i>` : "";
-    const label = check ? `${Math.max(0, Number(l.remaining_min) || 0)} min` : l.state === "learned" ? "✓" : "";
-    return `<div class="srow learn ${cls}"><ha-icon icon="mdi:school-outline"></ha-icon><div><strong>Follow Me-indlæring</strong><span>${this._esc(text + lastTxt)}</span>${bar}</div>${label ? `<em class="lstate">${this._esc(label)}</em>` : ""}</div>`;
+    return `<div class="srow learn ${cls}"><ha-icon icon="mdi:school-outline"></ha-icon><div><strong>Follow Me-indlæring</strong><span>${this._esc(status)}</span>${bar}<ul class="learned">${items.map((t) => `<li>${this._esc(t)}</li>`).join("")}</ul></div>${label ? `<em class="lstate">${this._esc(label)}</em>` : ""}</div>`;
   }
 
   _openings(unit) {
@@ -534,7 +554,7 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}
 .srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
 .srow .toggle{margin-left:0}
-.srow.learn span{-webkit-line-clamp:3}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
+.srow.learn span{-webkit-line-clamp:3}.srow .learned{margin:6px 0 0;padding:0 0 0 14px;color:var(--secondary-text-color);font-size:11px;line-height:1.45}.srow .learned li{margin:1px 0}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
 .srow .lstate{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color);white-space:nowrap}
 .srow.l-check{border-color:color-mix(in srgb,#f5a524 45%,transparent)}.srow.l-check>ha-icon,.srow.l-check .lstate{color:#f5a524}
 .srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-bad{border-color:color-mix(in srgb,#f85149 45%,transparent)}.srow.l-bad>ha-icon{color:#f85149}.srow.l-on>ha-icon{color:#58a6ff}
