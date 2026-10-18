@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.187 */
+/* MRDonnii Smart Home Cards v0.5.188 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -24470,7 +24470,7 @@ var w2 = "M-3.5 -12.5C2 -20 6 -27 15 -31C16.5 -27.5 14 -20.5 5 -12Z";
 var _2 = [0, 51.43, 102.86, 154.29, 205.71, 257.14, 308.57];
 var Yf = "matrix(.58 -.13 0 1 0 0)";
 var jf = [10, -2];
-var Lf = [-7, 1.5];
+var Lf = [0, 0];
 var S2 = (t) => [[0.075 * t, -1.008 * t], [-0.075 * t, 1.008 * t]];
 function Zg(t, e) {
   let [a, l] = S2(t);

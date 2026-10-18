@@ -147,7 +147,9 @@ const FAN_BLADE_ANGLES = [0, 51.43, 102.86, 154.29, 205.71, 257.14, 308.57];
 // the turned disc, so they sweep an ellipse like a real turned fan.
 const FAN_TILT = "matrix(.58 -.13 0 1 0 0)";
 const FAN_DRUM: Point = [10, -2];
-const FAN_MOTOR: Point = [-7, 1.5];
+// The motor cap sits on the rotor axis (Claude AI, 2026-10-18): offset to the side it made the turning blades look
+// as if they spun beside the centre.
+const FAN_MOTOR: Point = [0, 0];
 // Top and bottom of a turned circle of radius r, where the drum sides touch it.
 const tiltedEdge = (r: number): [Point, Point] => [[0.075 * r, -1.008 * r], [-0.075 * r, 1.008 * r]];
 function drumSide(r: number, offset: Point) {
