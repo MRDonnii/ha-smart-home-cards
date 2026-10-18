@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.181 */
+/* MRDonnii Smart Home Cards v0.5.182 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -11070,7 +11070,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION13 = "0.10.0";
+var VERSION13 = "0.10.1";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -11374,6 +11374,7 @@ var HAACClimateCard = class extends HTMLElement {
   }
   _learningPill(unit) {
     const l = this._entity(unit.climate)?.attributes?.follow_me_learning;
+    if (l?.state === "no_follow_me") return `<div class="pill learning bad" title="IR-signalet n\xE5r ikke frem \u2013 se Smart styring"><ha-icon icon="mdi:remote-off"></ha-icon><span>Follow Me n\xE5r ikke frem</span></div>`;
     if (!l || !String(l.state || "").startsWith("checking_")) return "";
     return `<div class="pill learning" title="Follow Me-indl\xE6ring \u2013 se Smart styring"><ha-icon icon="mdi:school-outline"></ha-icon><span>Indl\xE6rer \xB7 ${Math.max(0, Number(l.remaining_min) || 0)} min</span></div>`;
   }
@@ -11404,8 +11405,11 @@ var HAACClimateCard = class extends HTMLElement {
       text = `Indl\xE6rt: ${learned}`;
       cls = "l-done";
     } else if (l.state === "learning") text = `L\xE6rer anl\xE6gget at kende (${steps}) \xB7 ${learned}`;
-    else if (l.state === "paused") text = `P\xE5 pause \u2013 afrimning, \xE5ben d\xF8r eller manuel styring \xB7 ${learned}`;
-    else if (l.state === "no_meter") {
+    else if (l.state === "paused") text = `P\xE5 pause \u2013 ${{ offline: "anl\xE6gget svarer ikke", defrost: "anl\xE6gget afrimer", fault: "anl\xE6gget viser en fejlkode", steering_off: "d\xF8r/vindue \xE5ben eller manuel styring" }[l.reason] || "venter"} \xB7 ${learned}`;
+    else if (l.state === "no_follow_me") {
+      text = "Follow Me n\xE5r ikke frem til anl\xE6gget \u2013 tjek IR-dioden. Indl\xE6ringen venter, s\xE5 der ikke l\xE6res forkert.";
+      cls = "l-bad";
+    } else if (l.state === "no_meter") {
       text = "Mangler effektm\xE5ler \u2013 l\xE6rer ikke";
       cls = "l-off";
     } else {
@@ -11671,7 +11675,7 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow.learn span{-webkit-line-clamp:3}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
 .srow .lstate{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color);white-space:nowrap}
 .srow.l-check{border-color:color-mix(in srgb,#f5a524 45%,transparent)}.srow.l-check>ha-icon,.srow.l-check .lstate{color:#f5a524}
-.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-on>ha-icon{color:#58a6ff}
+.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-bad{border-color:color-mix(in srgb,#f85149 45%,transparent)}.srow.l-bad>ha-icon{color:#f85149}.srow.l-on>ha-icon{color:#58a6ff}
 .p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--on)}
 .fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}

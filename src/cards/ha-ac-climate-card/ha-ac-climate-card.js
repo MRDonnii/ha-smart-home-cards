@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.10.0";
+const VERSION = "0.10.1";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -251,6 +251,7 @@ class HAACClimateCard extends HTMLElement {
 
   _learningPill(unit) {
     const l = this._entity(unit.climate)?.attributes?.follow_me_learning;
+    if (l?.state === "no_follow_me") return `<div class="pill learning bad" title="IR-signalet når ikke frem – se Smart styring"><ha-icon icon="mdi:remote-off"></ha-icon><span>Follow Me når ikke frem</span></div>`;
     if (!l || !String(l.state || "").startsWith("checking_")) return "";
     return `<div class="pill learning" title="Follow Me-indlæring – se Smart styring"><ha-icon icon="mdi:school-outline"></ha-icon><span>Indlærer · ${Math.max(0, Number(l.remaining_min) || 0)} min</span></div>`;
   }
@@ -273,7 +274,8 @@ class HAACClimateCard extends HTMLElement {
     if (check) { text = `${check} · ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min · ${outcome}`; cls = "l-check"; }
     else if (l.state === "learned") { text = `Indlært: ${learned}`; cls = "l-done"; }
     else if (l.state === "learning") text = `Lærer anlægget at kende (${steps}) · ${learned}`;
-    else if (l.state === "paused") text = `På pause – afrimning, åben dør eller manuel styring · ${learned}`;
+    else if (l.state === "paused") text = `På pause – ${{ offline: "anlægget svarer ikke", defrost: "anlægget afrimer", fault: "anlægget viser en fejlkode", steering_off: "dør/vindue åben eller manuel styring" }[l.reason] || "venter"} · ${learned}`;
+    else if (l.state === "no_follow_me") { text = "Follow Me når ikke frem til anlægget – tjek IR-dioden. Indlæringen venter, så der ikke læres forkert."; cls = "l-bad"; }
     else if (l.state === "no_meter") { text = "Mangler effektmåler – lærer ikke"; cls = "l-off"; }
     else { text = `Slået fra · lært: ${learned}`; cls = "l-off"; }
     const WHY = { stop: "kørte videre efter stop", hold: "stoppede ved målet", start: "startede ikke", rise: "rummet steg ikke" };
@@ -531,7 +533,7 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow.learn span{-webkit-line-clamp:3}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
 .srow .lstate{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color);white-space:nowrap}
 .srow.l-check{border-color:color-mix(in srgb,#f5a524 45%,transparent)}.srow.l-check>ha-icon,.srow.l-check .lstate{color:#f5a524}
-.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-on>ha-icon{color:#58a6ff}
+.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-bad{border-color:color-mix(in srgb,#f85149 45%,transparent)}.srow.l-bad>ha-icon{color:#f85149}.srow.l-on>ha-icon{color:#58a6ff}
 .p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--on)}
 .fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
