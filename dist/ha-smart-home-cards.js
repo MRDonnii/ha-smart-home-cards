@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.186 */
+/* MRDonnii Smart Home Cards v0.5.187 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -34890,7 +34890,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.8.73";
+var VERSION28 = "0.8.74";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -35994,7 +35994,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._v3Ink = { main: "light", weather: sunBehind ? "dark" : "light" };
     const bgHtml = this._config.weather_v3_bg === false ? "" : (() => {
       const bgCat = cat === "windy" ? "cloudy" : cat, tK = tD === "night" ? "night" : tD !== "day" ? "twilight" : "day", bg = (V3_BG[bgCat] || V3_BG.sunny)[tK] || V3_BG.sunny.day, shadow = (V3_SHADOW[bgCat] || {})[tK] || "none";
-      const css = `linear-gradient(to bottom, ${bg.join(", ")})`, old = this._v3BgCss && this._v3BgCss !== css ? this._v3BgCss : null;
+      const css = `linear-gradient(to bottom, ${bg.join(", ")})`, old = null;
       this._v3BgCss = css;
       const main = v3BandLum(bg) > V3_INK_LIGHT_SKY ? "dark" : "light";
       this._v3Ink = { main, weather: sunBehind ? "dark" : main };
