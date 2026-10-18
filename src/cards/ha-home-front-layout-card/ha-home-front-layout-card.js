@@ -102,11 +102,15 @@ class HaHomeDesktopLayoutCard extends HTMLElement {
     this.config.right_cards.forEach((cfg,i)=>make(cfg,right,i,this.config.right_cards.length,true,"","right_cards"));
     this.config.mobile_cards.forEach((cfg,i)=>{if(i===this.config.mobile_cards.length-1)this.config.vertical_cards.forEach((verticalCfg,j)=>make(verticalCfg,mobile,j,this.config.vertical_cards.length,false,"vertical-only","vertical_cards"));make(cfg,mobile,i,this.config.mobile_cards.length,false,"","mobile_cards");});
     if(!this.config.mobile_cards.length)this.config.vertical_cards.forEach((cfg,i)=>make(cfg,mobile,i,this.config.vertical_cards.length,false,"vertical-only","vertical_cards"));
-    this._fill=0;this._navTries=0;this._observeMobile();this._applyLayoutVars();this._applyMode();this._flushActive();this._fitViewport();
+    this._fill=0;this._noShrink=false;this._lastExpect=null;this._navTries=0;this._observeMobile();this._applyLayoutVars();this._applyMode();this._flushActive();this._fitViewport();
   }
-  // Mobil: lader sidste kort (strømprisgrafen) vokse via --front-mobile-fill, så
+  // Mobil: lader sidste kort (strømprisgrafen) vokse eller skrumpe via --front-mobile-fill, så
   // afstanden fra fladens bund til den faste navbar svarer til afstanden i toppen.
-  // Kun når siden i forvejen er kortere end skærmen; ellers er fyldet 0.
+  // Skrumpe kun så meget som kortet kan (mobile_max_shrink, standard 100 px: grafen går fra
+  // 190 til 90 px); er siden for lang til det, er fyldet 0, og siden får luft i bunden, så det
+  // sidste kort kan rulles helt fri af navbaren (Claude AI, 2026-10-18; brugeren: grafen må
+  // aldrig ligge bag navbaren). Følger det sidste kort ikke et negativt fyld (bruger ikke
+  // --front-mobile-fill), skrumpes der ikke mere, så fyld og bundluft ikke skifter frem og tilbage.
   // ResizeObserver-kaldet kører før næste paint, så fyldet sættes i samme frame
   // som indholdet ændrer højde - grafen tilpasser sig uden synligt hop. Alle mål er
   // layout-mål (offsetTop/offsetHeight), så animationer og scroll ikke kan forskyde
@@ -116,9 +120,11 @@ class HaHomeDesktopLayoutCard extends HTMLElement {
   // Navbarens faste plads i bunden (højde + CSS-bund). offsetHeight og den beregnede
   // bund påvirkes ikke af animationer eller scroll, så resultatet er stabilt.
   _navSpace(){if(!this._navEl?.isConnected){this._navEl=null;const nav=this.getRootNode?.()?.querySelector?.("ha-navbar-card");const walk=(root,depth)=>{if(!root||depth>6)return null;for(const el of root.children){if(getComputedStyle(el).position==="fixed"&&el.offsetHeight>0)return el;const hit=walk(el.shadowRoot,depth+1)||walk(el,depth+1);if(hit)return hit;}return null;};this._navEl=walk(nav?.shadowRoot,0);}const el=this._navEl;if(!el||!el.offsetHeight)return null;return el.offsetHeight+(parseFloat(getComputedStyle(el).bottom)||0);}
+  // Navbarens top måles direkte (offsetTop på et fast element = afstand fra skærmens top, uden
+  // transform); skærmhøjde minus navbar passede ikke i iOS-appen med sidezoom (Claude AI, 2026-10-18).
   // Fladens top i dokumentet via offsetTop-kæden (ignorerer transform og scroll).
   _staticTop(el){let top=0,node=el,guard=0;while(node&&guard++<80){top+=node.offsetTop||0;node=node.offsetParent;}return top;}
-  _fitMobile(){const mobile=this.shadowRoot?.querySelector(".mobile"),surface=this.shadowRoot?.querySelector(".surface"),last=mobile?.lastElementChild;if(!last||!surface)return;const desktop=window.matchMedia(`(min-width:${(this._mobileBreakpoint||1100)+1}px)`).matches;let next=0;if(!desktop){const nav=this._navSpace();if(nav==null){if((this._navTries=(this._navTries||0)+1)<12){clearTimeout(this._navTimer);this._navTimer=setTimeout(()=>this._fitMobile(),500);}return;}const gap=Math.max(0,Number(this.config?.mobile_nav_gap??14));const natural=surface.offsetHeight-this._fill;next=Math.max(0,Math.min(600,Math.round(window.innerHeight-nav-gap-this._staticTop(surface)-natural)));}if(Math.abs(next-this._fill)<2)return;this._fill=next;if(next)last.style.setProperty("--front-mobile-fill",`${next}px`);else last.style.removeProperty("--front-mobile-fill");}
+  _fitMobile(){const mobile=this.shadowRoot?.querySelector(".mobile"),surface=this.shadowRoot?.querySelector(".surface"),last=mobile?.lastElementChild;if(!last||!surface)return;const desktop=window.matchMedia(`(min-width:${(this._mobileBreakpoint||1100)+1}px)`).matches;let next=0,pad=0;if(!desktop){const nav=this._navSpace();if(nav==null){if((this._navTries=(this._navTries||0)+1)<12){clearTimeout(this._navTimer);this._navTimer=setTimeout(()=>this._fitMobile(),500);}return;}const gap=Math.max(0,Number(this.config?.mobile_nav_gap??14));if(this._fill<0&&this._lastExpect!=null&&Math.abs(last.offsetHeight-this._lastExpect)>4)this._noShrink=true;const natural=surface.offsetHeight-this._fill;const navTop=this._navEl?.offsetTop>0?this._navEl.offsetTop:window.innerHeight-nav;const room=Math.round(navTop-gap-this._staticTop(surface)-natural);const shrink=this._noShrink?0:Math.max(0,Number(this.config?.mobile_max_shrink??100));if(room>=0)next=Math.min(600,room);else if(room>=-shrink)next=room;else{const doc=document.scrollingElement||document.documentElement;const below=doc.scrollHeight-(surface.getBoundingClientRect().bottom+window.scrollY)-(this._pad||0);pad=Math.max(0,Math.round(window.innerHeight-navTop+gap-below));}}if(Math.abs(pad-(this._pad||0))>=2){this._pad=pad;this.style.paddingBottom=pad?`${pad}px`:"";}if(Math.abs(next-this._fill)<2)return;this._lastExpect=last.offsetHeight-this._fill+next;this._fill=next;if(next)last.style.setProperty("--front-mobile-fill",`${next}px`);else last.style.removeProperty("--front-mobile-fill");}
   _fitViewport(){this._scheduleFill();const layout=this.shadowRoot?.querySelector(".layout");if(!layout||!window.matchMedia(`(min-width:${(this._mobileBreakpoint||1100)+1}px)`).matches)return;const top=layout.getBoundingClientRect().top;const viewportHeight=window.visualViewport?.height||window.innerHeight;const bottomGap=Math.max(90,Number(this.config?.bottom_gap)||110);layout.style.setProperty("--desktop-height",`${Math.max(0,viewportHeight-top-bottomGap)}px`);}
   getCardSize(){return 12;}
   static getConfigElement(){return document.createElement("ha-home-desktop-layout-card-front-editor");}

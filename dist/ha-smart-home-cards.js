@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.188 */
+/* MRDonnii Smart Home Cards v0.5.189 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14179,7 +14179,7 @@ var TEP_CSS = `
 .pc{position:relative;flex:1;min-height:90px;margin-top:10px}
 /* Bundstriben under grafen (--gb) = kortets sidemargen; dagsnavnet st\xE5r midt i den, og uden dagsfirkanter er striben kortets bundmargen (Claude AI, 2026-10-12) */
 /* P\xE5 mobil vokser grafen ned til navbaren med forsidens --front-mobile-fill, som det klassiske kort */
-.pc{--gb:16px;min-height:calc(90px + var(--front-mobile-fill,0px))}.pc>svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
+.pc{--gb:16px;min-height:max(60px,calc(90px + var(--front-mobile-fill,0px)))}.pc>svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
 .pc .dl{position:absolute;bottom:calc((var(--gb) - 10px) / 2);line-height:10px;font-size:10px;color:var(--mut);transform:translateX(4px);white-space:nowrap;text-transform:capitalize}
 .pc .now{position:absolute;top:0;bottom:var(--gb);width:1px;background:color-mix(in srgb,var(--ink) 40%,transparent)}
 .pc .nd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%);animation:pu 2s infinite}
@@ -14234,7 +14234,7 @@ dialog.adv::backdrop{background:rgba(4,8,14,.62);-webkit-backdrop-filter:blur(4p
 /* Dagsgennemsnittene kun p\xE5 store sk\xE6rme; p\xE5 mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
 :host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
 .empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
-@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}dialog.adv{width:calc(100vw - 20px)}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:max(90px,calc(190px + var(--front-mobile-fill,0px)));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}dialog.adv{width:calc(100vw - 20px)}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
   .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
@@ -37090,7 +37090,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       const waterTitle = blocked ? "Varmt vand: blokeret" : bypass ? "Varmt vand: bypass" : water ? "Varmt vand: opvarmer" : "Varmt vand: i ro";
       const acMode = this.acMode();
       const acChip = acMode ? `<span class="src-chip ac-chip m-${acMode}" title="AC ${acMode === "cool" ? "k\xF8ler" : acMode === "heat" ? "varmer" : "bl\xE6ser"}"><ha-icon icon="mdi:fan"></ha-icon><b>AC</b></span>` : "";
-      label = `<span class="source-row">${acChip}<span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
+      label = `<span class="source-row${acChip ? " has-ac" : ""}">${acChip}<span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
       const valvePct = this.number(cfg.valve_entity);
       meter = Number.isFinite(valvePct) ? Math.max(1, Math.ceil(Math.min(100, Math.max(0, valvePct)) / 20)) : heating ? 4 : 1;
       color = heating ? "var(--error-color, #f43f5e)" : "var(--state-info-icon, var(--info-color, #38bdf8))";
@@ -37327,6 +37327,16 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:14px;width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
       :host([v2]) .sec2 b{display:block;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
       :host([v2]) .sec2 .alarm b{display:none}
+      /* Heating tile source badges (Claude AI, 2026-10-18; user: the badges sat off centre and the AC fan did not turn
+         about its middle): they share the row like the security pills, icon and text centred; on a narrow tile the
+         "billigst" word goes first, then the AC text and the source icon, so the row always fits. */
+      .source-row ha-icon{display:flex;align-items:center;justify-content:center}.src-chip b,.src-chip small{line-height:1}
+      :host([v2]) .item.heating .label{container-type:inline-size;overflow:visible}
+      :host([v2]) .item.heating .label .source-row{display:flex;width:100%;height:20px;gap:4px}
+      :host([v2]) .item.heating .src-chip{flex:1 1 auto;min-width:0;height:20px;justify-content:center;gap:3px;padding:0 5px;border-radius:7px;overflow:hidden}
+      :host([v2]) .item.heating .src-chip b{font-size:11px}:host([v2]) .item.heating .src-chip small{white-space:nowrap}
+      @container (max-width:150px){:host([v2]) .item.heating .src-chip small{display:none}}
+      @container (max-width:110px){:host([v2]) .item.heating .source-row{gap:3px}:host([v2]) .item.heating .src-chip{padding:0 3px}:host([v2]) .item.heating .ac-chip b,:host([v2]) .item.heating .has-ac .src-chip:not(.ac-chip):not(.icon-only) ha-icon{display:none}}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
       /* Low screens (70 px tiles): the security tile too gets the tighter padding, so its detail line is not cut by the
@@ -37438,8 +37448,13 @@ var HaHomeStatusCard = class extends HTMLElement {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
     setText(".detail", esc12(item2.detail || " "));
-    setText(".label", item2.label);
-    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
+    if (item2.type === "heating") {
+      const l = this.shadowRoot.querySelector(".label");
+      l._marqueeHtml = void 0;
+      l.classList.remove("marquee");
+      l.innerHTML = item2.label;
+    } else setText(".label", item2.label);
+    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail), .item:not(.security):not(.heating) .label");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
     const v22 = isNewLook(this._hass, this.config);
     this.toggleAttribute("v2", v22);
@@ -54467,6 +54482,8 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     });
     if (!this.config.mobile_cards.length) this.config.vertical_cards.forEach((cfg, i) => make(cfg, mobile, i, this.config.vertical_cards.length, false, "vertical-only", "vertical_cards"));
     this._fill = 0;
+    this._noShrink = false;
+    this._lastExpect = null;
     this._navTries = 0;
     this._observeMobile();
     this._applyLayoutVars();
@@ -54474,9 +54491,13 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     this._flushActive();
     this._fitViewport();
   }
-  // Mobil: lader sidste kort (strømprisgrafen) vokse via --front-mobile-fill, så
+  // Mobil: lader sidste kort (strømprisgrafen) vokse eller skrumpe via --front-mobile-fill, så
   // afstanden fra fladens bund til den faste navbar svarer til afstanden i toppen.
-  // Kun når siden i forvejen er kortere end skærmen; ellers er fyldet 0.
+  // Skrumpe kun så meget som kortet kan (mobile_max_shrink, standard 100 px: grafen går fra
+  // 190 til 90 px); er siden for lang til det, er fyldet 0, og siden får luft i bunden, så det
+  // sidste kort kan rulles helt fri af navbaren (Claude AI, 2026-10-18; brugeren: grafen må
+  // aldrig ligge bag navbaren). Følger det sidste kort ikke et negativt fyld (bruger ikke
+  // --front-mobile-fill), skrumpes der ikke mere, så fyld og bundluft ikke skifter frem og tilbage.
   // ResizeObserver-kaldet kører før næste paint, så fyldet sættes i samme frame
   // som indholdet ændrer højde - grafen tilpasser sig uden synligt hop. Alle mål er
   // layout-mål (offsetTop/offsetHeight), så animationer og scroll ikke kan forskyde
@@ -54514,6 +54535,8 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     if (!el || !el.offsetHeight) return null;
     return el.offsetHeight + (parseFloat(getComputedStyle(el).bottom) || 0);
   }
+  // Navbarens top måles direkte (offsetTop på et fast element = afstand fra skærmens top, uden
+  // transform); skærmhøjde minus navbar passede ikke i iOS-appen med sidezoom (Claude AI, 2026-10-18).
   // Fladens top i dokumentet via offsetTop-kæden (ignorerer transform og scroll).
   _staticTop(el) {
     let top = 0, node = el, guard = 0;
@@ -54527,7 +54550,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     const mobile = this.shadowRoot?.querySelector(".mobile"), surface = this.shadowRoot?.querySelector(".surface"), last = mobile?.lastElementChild;
     if (!last || !surface) return;
     const desktop = window.matchMedia(`(min-width:${(this._mobileBreakpoint || 1100) + 1}px)`).matches;
-    let next = 0;
+    let next = 0, pad4 = 0;
     if (!desktop) {
       const nav = this._navSpace();
       if (nav == null) {
@@ -54538,10 +54561,25 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
         return;
       }
       const gap = Math.max(0, Number(this.config?.mobile_nav_gap ?? 14));
+      if (this._fill < 0 && this._lastExpect != null && Math.abs(last.offsetHeight - this._lastExpect) > 4) this._noShrink = true;
       const natural = surface.offsetHeight - this._fill;
-      next = Math.max(0, Math.min(600, Math.round(window.innerHeight - nav - gap - this._staticTop(surface) - natural)));
+      const navTop = this._navEl?.offsetTop > 0 ? this._navEl.offsetTop : window.innerHeight - nav;
+      const room = Math.round(navTop - gap - this._staticTop(surface) - natural);
+      const shrink = this._noShrink ? 0 : Math.max(0, Number(this.config?.mobile_max_shrink ?? 100));
+      if (room >= 0) next = Math.min(600, room);
+      else if (room >= -shrink) next = room;
+      else {
+        const doc = document.scrollingElement || document.documentElement;
+        const below = doc.scrollHeight - (surface.getBoundingClientRect().bottom + window.scrollY) - (this._pad || 0);
+        pad4 = Math.max(0, Math.round(window.innerHeight - navTop + gap - below));
+      }
+    }
+    if (Math.abs(pad4 - (this._pad || 0)) >= 2) {
+      this._pad = pad4;
+      this.style.paddingBottom = pad4 ? `${pad4}px` : "";
     }
     if (Math.abs(next - this._fill) < 2) return;
+    this._lastExpect = last.offsetHeight - this._fill + next;
     this._fill = next;
     if (next) last.style.setProperty("--front-mobile-fill", `${next}px`);
     else last.style.removeProperty("--front-mobile-fill");

@@ -113,7 +113,7 @@ const TEP_CSS = `
 .pc{position:relative;flex:1;min-height:90px;margin-top:10px}
 /* Bundstriben under grafen (--gb) = kortets sidemargen; dagsnavnet står midt i den, og uden dagsfirkanter er striben kortets bundmargen (Claude AI, 2026-10-12) */
 /* På mobil vokser grafen ned til navbaren med forsidens --front-mobile-fill, som det klassiske kort */
-.pc{--gb:16px;min-height:calc(90px + var(--front-mobile-fill,0px))}.pc>svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
+.pc{--gb:16px;min-height:max(60px,calc(90px + var(--front-mobile-fill,0px)))}.pc>svg{position:absolute;inset:0 0 var(--gb) 0;width:100%;height:calc(100% - var(--gb));overflow:visible}
 .pc .dl{position:absolute;bottom:calc((var(--gb) - 10px) / 2);line-height:10px;font-size:10px;color:var(--mut);transform:translateX(4px);white-space:nowrap;text-transform:capitalize}
 .pc .now{position:absolute;top:0;bottom:var(--gb);width:1px;background:color-mix(in srgb,var(--ink) 40%,transparent)}
 .pc .nd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%);animation:pu 2s infinite}
@@ -168,7 +168,7 @@ dialog.adv::backdrop{background:rgba(4,8,14,.62);-webkit-backdrop-filter:blur(4p
 /* Dagsgennemsnittene kun på store skærme; på mobil ligger de under navbaren (Claude AI, 2026-10-12). days: false fjerner dem helt. */
 :host([nodays]) .days{display:none}:host([nodays]) .c{padding-bottom:0}
 .empty{display:grid;place-items:center;flex:1;color:var(--mut);font-size:13px}
-@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:calc(190px + var(--front-mobile-fill,0px));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}dialog.adv{width:calc(100vw - 20px)}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
+@media(max-width:700px){.days{display:none}.c{padding-bottom:0!important}.pc{min-height:max(90px,calc(190px + var(--front-mobile-fill,0px)));--gb:12px}.c{padding:13px 12px 12px}.pt{grid-template-columns:auto minmax(0,1fr);grid-template-areas:'ctl ctl' 'big chip' 'comp comp'}.pt .chip{justify-self:end;align-self:center;max-width:100%}dialog.adv{width:calc(100vw - 20px)}.pt .ctl{width:100%}.seg.m{flex:1}.seg.m button{flex:1}.big{font-size:34px}
   .ev{grid-template-columns:auto minmax(0,1fr)}.ev .m{grid-column:span 2;justify-content:space-between;text-align:left}.days{gap:4px}.day{padding:6px 2px}.day strong{font-size:12px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;

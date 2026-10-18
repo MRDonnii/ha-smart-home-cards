@@ -644,7 +644,7 @@ class HaHomeStatusCard extends HTMLElement {
       const acChip = acMode
         ? `<span class="src-chip ac-chip m-${acMode}" title="AC ${acMode === "cool" ? "køler" : acMode === "heat" ? "varmer" : "blæser"}"><ha-icon icon="mdi:fan"></ha-icon><b>AC</b></span>`
         : "";
-      label = `<span class="source-row">${acChip}<span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
+      label = `<span class="source-row${acChip ? " has-ac" : ""}">${acChip}<span class="src-chip" style="--c:${sourceColor}" title="${sourceTitle}"><ha-icon icon="${sourceIcon}"></ha-icon><b>${sourceText}</b>${["VP", "FJ"].includes(sourceText) ? "<small>billigst</small>" : ""}</span><span class="src-chip icon-only" style="--c:${waterColor}" title="${waterTitle}"><ha-icon icon="${waterIcon}"></ha-icon></span></span>`;
       const valvePct = this.number(cfg.valve_entity);
       meter = Number.isFinite(valvePct)
         ? Math.max(1, Math.ceil(Math.min(100, Math.max(0, valvePct)) / 20))
@@ -926,6 +926,16 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:14px;width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
       :host([v2]) .sec2 b{display:block;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
       :host([v2]) .sec2 .alarm b{display:none}
+      /* Heating tile source badges (Claude AI, 2026-10-18; user: the badges sat off centre and the AC fan did not turn
+         about its middle): they share the row like the security pills, icon and text centred; on a narrow tile the
+         "billigst" word goes first, then the AC text and the source icon, so the row always fits. */
+      .source-row ha-icon{display:flex;align-items:center;justify-content:center}.src-chip b,.src-chip small{line-height:1}
+      :host([v2]) .item.heating .label{container-type:inline-size;overflow:visible}
+      :host([v2]) .item.heating .label .source-row{display:flex;width:100%;height:20px;gap:4px}
+      :host([v2]) .item.heating .src-chip{flex:1 1 auto;min-width:0;height:20px;justify-content:center;gap:3px;padding:0 5px;border-radius:7px;overflow:hidden}
+      :host([v2]) .item.heating .src-chip b{font-size:11px}:host([v2]) .item.heating .src-chip small{white-space:nowrap}
+      @container (max-width:150px){:host([v2]) .item.heating .src-chip small{display:none}}
+      @container (max-width:110px){:host([v2]) .item.heating .source-row{gap:3px}:host([v2]) .item.heating .src-chip{padding:0 3px}:host([v2]) .item.heating .ac-chip b,:host([v2]) .item.heating .has-ac .src-chip:not(.ac-chip):not(.icon-only) ha-icon{display:none}}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
       /* Low screens (70 px tiles): the security tile too gets the tighter padding, so its detail line is not cut by the
@@ -1022,8 +1032,10 @@ class HaHomeStatusCard extends HTMLElement {
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => { meter.children[index].className = `seg ${segClass(state)}`; });
     setText(".detail", esc(item.detail || " "));
-    setText(".label", item.label);
-    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail,.label)");
+    // The heating tile's source badges are fitted to the tile instead of scrolling as a marquee (Claude AI, 2026-10-18).
+    if (item.type === "heating") { const l = this.shadowRoot.querySelector(".label"); l._marqueeHtml = undefined; l.classList.remove("marquee"); l.innerHTML = item.label; }
+    else setText(".label", item.label);
+    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail), .item:not(.security):not(.heating) .label");
     this.shadowRoot
       .querySelector(".bg-icon")
       .setAttribute("icon", item.icon || "mdi:information-outline");
