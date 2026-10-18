@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.190 */
+/* MRDonnii Smart Home Cards v0.5.191 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14072,7 +14072,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.17.0";
+var TEP_VER = "1.17.1";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -14927,21 +14927,34 @@ var ThElectricityPriceCard = class extends HTMLElement {
         const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win;
         if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e };
       }
-      if (best && best.t < t1) {
+      if (best && best.t >= t0 && best.e <= t1) {
         const l = Math.max(0, X(best.t) / W3 * 100), r = Math.min(100, X(best.e) / W3 * 100);
         ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6${bsTop != null ? `;top:${Math.max(4, bsTop / H4 * (pc2.clientHeight - gb2) - 22).toFixed(0)}px` : ""}">BILLIGST</span></div>`;
       }
     }
     {
-      const runs = [];
+      const hot = (p) => p.p >= vd && vmax > vmin, runs = [];
       for (const p of pts) {
         const last2 = runs[runs.length - 1];
-        if (veryDear(p)) {
+        if (hot(p)) {
           if (last2 && last2.e >= p.t - 1) last2.e = p.e;
-          else runs.push({ t: Math.max(p.t, now), e: p.e });
+          else runs.push({ s: p.t, t: Math.max(p.t, now), e: p.e });
         }
       }
-      const big = runs.reduce((m, r) => !m || r.e - r.t > m.e - m.t ? r : m, null);
+      const hillLim = Number.isFinite(meanP) ? meanP : (vmin + vmax) / 2, hill = (p) => p.p > hillLim;
+      const stretch = (r) => {
+        let i = all.findIndex((p) => p.t >= r.s - 1), j = all.findIndex((p) => p.t >= r.e - 1);
+        if (i < 1 || j < 0) return null;
+        while (i > 0 && hill(all[i - 1])) i--;
+        while (j < all.length && hill(all[j])) j++;
+        return i > 0 && j < all.length ? { s: all[i].t, e: all[j].t } : null;
+      };
+      const whole = runs.filter((r) => {
+        if (r.e <= now) return false;
+        const st = stretch(r);
+        return !!st && st.s > t0 && st.e <= t1;
+      });
+      const big = whole.reduce((m, r) => !m || r.e - r.t > m.e - m.t ? r : m, null);
       if (big && big.t < t1) {
         const l = Math.max(0, X(big.t) / W3 * 100), r = Math.min(100, X(big.e) / W3 * 100);
         ov += `<div class="band hot" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>${ti("peak", 9, 2.4)}MEGET DYRT</span></div>`;

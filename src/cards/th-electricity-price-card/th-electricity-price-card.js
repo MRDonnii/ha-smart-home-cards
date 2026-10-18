@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.17.0';
+const TEP_VER = '1.17.1';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -543,9 +543,18 @@ class ThElectricityPriceCard extends HTMLElement {
           ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.s))} · ${tn(w.avg)}</span></div>`; } } }
     else { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a < best.a) best = { a, t: fut[i].t, e: fut[i + win - 1].e }; }
-      if (best && best.t < t1) { const l = Math.max(0, X(best.t) / W * 100), r = Math.min(100, X(best.e) / W * 100); ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6${bsTop != null ? `;top:${Math.max(4, bsTop / H * (pc.clientHeight - gb) - 22).toFixed(0)}px` : ''}">BILLIGST</span></div>`; } }
-    { const runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (veryDear(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ t: Math.max(p.t, now), e: p.e }); } }
-      const big = runs.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
+      if (best && best.t >= t0 && best.e <= t1) { const l = Math.max(0, X(best.t) / W * 100), r = Math.min(100, X(best.e) / W * 100); ov += `<div class="band" style="left:${l}%;width:${r - l}%;background:none;box-shadow:none"><span style="color:#2ee6d6${bsTop != null ? `;top:${Math.max(4, bsTop / H * (pc.clientHeight - gb) - 22).toFixed(0)}px` : ''}">BILLIGST</span></div>`; } }
+    // MEGET DYRT og BILLIGST kun når hele perioden står i grafen; en periode, der fortsætter ud over grafens kant, er svær at aflæse
+    // (Claude AI, 2026-10-18; bruger: "Det meget dyrt badge skal først komme når man kan se hele perioden"). En dyr periode skal have
+    // en start og en slutning inde i grafen; den kan godt være i gang nu, når dens start står i grafens historik.
+    { const hot = p => p.p >= vd && vmax > vmin, runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (hot(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ s: p.t, t: Math.max(p.t, now), e: p.e }); } }
+      // Perioden er hele prisbakken over dagens snit omkring den meget dyre top; den skal begynde og slutte inde i grafen, og
+      // der skal være priser efter den (ellers ved man ikke, om den fortsætter).
+      const hillLim = Number.isFinite(meanP) ? meanP : (vmin + vmax) / 2, hill = p => p.p > hillLim;
+      const stretch = r => { let i = all.findIndex(p => p.t >= r.s - 1), j = all.findIndex(p => p.t >= r.e - 1); if (i < 1 || j < 0) return null;
+        while (i > 0 && hill(all[i - 1])) i--; while (j < all.length && hill(all[j])) j++; return i > 0 && j < all.length ? { s: all[i].t, e: all[j].t } : null; };
+      const whole = runs.filter(r => { if (r.e <= now) return false; const st = stretch(r); return !!st && st.s > t0 && st.e <= t1; });
+      const big = whole.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
       if (big && big.t < t1) { const l = Math.max(0, X(big.t) / W * 100), r = Math.min(100, X(big.e) / W * 100);
         ov += `<div class="band hot" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('peak', 9, 2.4)}MEGET DYRT</span></div>`; } }
     const nx = X(now) / W * 100, cp = all.find(p => p.t <= now && p.e > now);
