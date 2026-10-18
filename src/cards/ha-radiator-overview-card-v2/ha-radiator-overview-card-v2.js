@@ -21,6 +21,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "./ac-unit-visual.js";
 import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
+import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
 const VERSION = "2.6.1";
 const TAG = "ha-radiator-overview-card-v2";
@@ -163,9 +164,6 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .spark .target{stroke:var(--primary-text-color);stroke-width:1;stroke-dasharray:3 4;opacity:.38;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:100%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:100%;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
-.spark-tip{position:absolute;top:-26px;padding:3px 8px;border-radius:8px;background:var(--card-background-color,rgba(8,12,18,.9));color:var(--primary-text-color,#fff);border:1px solid var(--divider-color,transparent);font-size:10.5px;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(-50%);pointer-events:none;transition:opacity .12s ease}
-.spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
 .spark-range{display:flex;justify-content:space-between;gap:8px;margin-top:7px;color:var(--rc-muted);font-size:10px;font-weight:650;line-height:1.2;font-variant-numeric:tabular-nums}
 .visual{display:flex;flex:none;align-self:flex-start;align-items:flex-end;justify-content:center;width:70px;height:var(--spark-h,44px)}
@@ -302,7 +300,6 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     this._statsLoading = false;
     this._statsFetchedAt = 0;
     this._statsTimer = undefined;
-    this._hoverWrap = undefined;
     this._popupEl = undefined;
     this._popupRoomIndex = undefined;
     this._popupCards = [];
@@ -315,8 +312,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
       const target = event.target?.closest?.("[data-room]");
       if (target) this._openRoomPopup(Number(target.dataset.room));
     });
-    this.shadowRoot.addEventListener("pointermove", (event) => this._onPointerMove(event));
-    this.shadowRoot.addEventListener("pointerleave", () => this._clearHover(), true);
+    chartHover(this.shadowRoot, ".spark-box", (box, fraction) => this._sparkPoint(box, fraction));
   }
 
   static getStubConfig() {
@@ -354,7 +350,6 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     this._statsTimer = undefined;
     if (this._raf) cancelAnimationFrame(this._raf);
     this._raf = 0;
-    this._clearHover();
     this._closeRoomPopup();
   }
 
@@ -600,7 +595,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     const isId = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate, room.co2, room.pm25, room.air_quality].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
-    const spark = (small = false) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
+    const spark = (small = false) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>`}</div>`;
     const zoneMarkup = ({ room, index }) => `
       <button class="zone a-neutral" type="button" data-room="${index}">
         <div class="z-top">
@@ -692,7 +687,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     const sparkRefs = (host) => {
       const wrap = host.querySelector(".spark-wrap");
       if (!wrap) return undefined;
-      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), cross: wrap.querySelector(".spark-cross"), tip: wrap.querySelector(".spark-tip"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: undefined };
+      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: undefined };
       wrap._spark = refs;
       return refs;
     };
@@ -1055,29 +1050,18 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
 
   // ---------- Hover på kurverne (én delegeret lytter) ----------
 
-  _clearHover() {
-    this._hoverWrap?.classList.remove("hover");
-    this._hoverWrap = undefined;
-  }
-
-  _onPointerMove(event) {
-    const wrap = event.target?.closest?.(".spark-wrap");
-    if (wrap !== this._hoverWrap) this._clearHover();
-    const spark = wrap?._spark;
-    if (!wrap || !spark?.scale || spark.data.length < 2) return;
-    const rect = wrap.querySelector(".spark").getBoundingClientRect();
-    if (!rect.width) return;
-    const fraction = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-    const time = spark.scale.t0 + fraction * (spark.scale.t1 - spark.scale.t0);
-    let nearest = spark.data[0];
-    for (const point of spark.data) if (Math.abs(point.t - time) < Math.abs(nearest.t - time)) nearest = point;
-    const left = `${(((nearest.t - spark.scale.t0) / Math.max(spark.scale.t1 - spark.scale.t0, 1)) * 100).toFixed(2)}%`;
-    const when = nearest.now ? "Nu" : `Kl. ${new Date(nearest.t).toLocaleTimeString(this._hass?.locale?.language || "da", { hour: "2-digit", minute: "2-digit" })}`;
-    spark.cross.style.left = left;
-    spark.tip.style.left = left;
-    this._setText(spark.tip, `${when} · ${this._format(nearest.v)}°`);
-    wrap.classList.add("hover");
-    this._hoverWrap = wrap;
+  // Hover: skiltet tegnes af den delte chart-hover inde i kurvens boks, så det ikke klippes af kortets kant.
+  _sparkPoint(box, fraction) {
+    const spark = box.closest(".spark-wrap")?._spark;
+    if (!spark?.scale || spark.data.length < 2) return null;
+    const { t0, t1, lo, hi } = spark.scale;
+    const nearest = nearestPoint(spark.data, t0, t1, fraction);
+    return {
+      x: (nearest.t - t0) / Math.max(t1 - t0, 1),
+      y: 1 - (nearest.v - lo) / Math.max(hi - lo, 0.001),
+      color: "var(--room-color)",
+      text: `${hoverTime(nearest.t, this._hass, { now: nearest.now })} · ${this._format(nearest.v)}°`,
+    };
   }
 
   // ---------- AC-animation (delt med ha-ac-climate-card) ----------

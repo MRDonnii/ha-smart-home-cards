@@ -16,6 +16,7 @@
  */
 
 import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
+import { chartHover } from "../../shared/chart-hover.js";
 
 const TTD_VERSION = "1.20.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
@@ -1347,6 +1348,8 @@ class ThTeslaDashboardCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    // Hover/tryk på smart-opladningens prisgraf: tid, pris og om bilen lader (Claude AI, 2026-10-18).
+    chartHover(this.shadowRoot, ".sc-chart", (box, fraction) => this._scPoint(fraction));
     this._cfg = null;
     this._hass = null;
     this._built = false;
@@ -3342,6 +3345,7 @@ class ThTeslaDashboardCard extends HTMLElement {
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
+    this._scBars = sc.chart;
     const chartSig = JSON.stringify([sc.chart, sc.marks, sc.limitLine]);
     if (r.scChart && r.scChart.dataset.sig !== chartSig) {
       r.scChart.dataset.sig = chartSig;
@@ -3349,7 +3353,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       const ly = sc.limitLine ? H - Math.max(3, sc.limitLine.h * (H - 4)) : null;
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H - 4));
-        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"></rect>`;
       }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${((ly / H) * 100).toFixed(1)}%">Senere ca. ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
@@ -3801,6 +3805,16 @@ class ThTeslaDashboardCard extends HTMLElement {
     tip.style.left = `${ttdClamp(left, 0, Math.max(0, wrap.width - tip.offsetWidth))}px`;
   }
 
+  // The price slot under the pointer in the smart charge chart (left/width are percent of the chart, h of its 60 px).
+  _scPoint(fraction) {
+    const bars = this._scBars;
+    if (!bars?.length) return null;
+    const x = fraction * 100;
+    const bar = bars.find((b) => x >= b.left && x < b.left + b.width) || bars.reduce((a, b) => (Math.abs(b.left + b.width / 2 - x) < Math.abs(a.left + a.width / 2 - x) ? b : a));
+    const h = Math.max(3, bar.h * 56) / 60;
+    return { x: (bar.left + bar.width / 2) / 100, y: 1 - h, color: bar.on ? "var(--tdc-green)" : "var(--tdc-text)", text: bar.title };
+  }
+
   _showTip(index) {
     const data = this._chart;
     const r = this._r;
@@ -3824,10 +3838,12 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._hide("tipERow", !data.hasEnergy);
     this._t("tipD", `${f.number(slot.d, 1)} ${this._chartUnits.d}`);
     this._t("tipE", `${f.number(slot.e, 1)} ${this._chartUnits.e}`);
+    // Centred over the bar and kept inside the chart by its real width (Claude AI, 2026-10-18; the old ±70 px clamp
+    // treated left as the centre, so the tip stuck out on the right and was cut by the panel).
+    this._hide("tip", false);
     const width = r.chart.clientWidth;
     const x = ((index + 0.5) / data.slots.length) * width;
-    r.tip.style.left = `${ttdClamp(x, 70, Math.max(70, width - 70))}px`;
-    this._hide("tip", false);
+    r.tip.style.left = `${ttdClamp(x - r.tip.offsetWidth / 2, 0, Math.max(0, width - r.tip.offsetWidth))}px`;
   }
 
   /* ------------------------------------------------------ interaction */

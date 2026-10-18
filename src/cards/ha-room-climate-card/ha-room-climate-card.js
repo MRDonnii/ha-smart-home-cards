@@ -130,12 +130,11 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--room-color) 60%,transparent))}
 .spark .target{stroke:var(--rc-ink);stroke-width:1;stroke-dasharray:3 5;opacity:.35;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:calc(100% - 6px);width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 3px var(--rc-surface),0 0 12px var(--room-color);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:100%;width:1px;background:rgba(255,255,255,.4);opacity:0;pointer-events:none}
-.spark-tip{position:absolute;top:-28px;padding:4px 9px;border-radius:9px;background:rgba(10,14,20,.92);color:#fff;font-size:10.5px;font-weight:700;white-space:nowrap;transform:translateX(-50%);opacity:0;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
 .spark-range{position:absolute;left:18px;right:18px;bottom:6px;display:flex;justify-content:space-between;color:var(--rc-muted);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 .zone .spark-box{margin:0 -1px}
+/* Hover-skiltet tegnes af shared/chart-hover inde i kurvens boks; spændet skjules imens (Claude AI, 2026-10-18) */
+.spark-range{transition:opacity .12s ease}.spark-box.chart-hovering+.spark-range{opacity:0}
 
 /* room dock */
 .z-room{display:none}
@@ -377,7 +376,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
     const esc = (v) => this._escape(v);
-    const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
+    const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
     const gauge = (key, icon, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span><strong>${DASH}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
@@ -459,7 +458,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     }
     const sparkRefs = (host) => {
       const wrap = host.querySelector(".spark-wrap"); if (!wrap) return undefined;
-      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), cross: wrap.querySelector(".spark-cross"), tip: wrap.querySelector(".spark-tip"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: undefined };
+      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: undefined };
       wrap._spark = refs; return refs;
     };
     this._refs = rooms.map((room, index) => {

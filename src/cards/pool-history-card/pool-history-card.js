@@ -1,3 +1,18 @@
+import { chartHover } from "../../shared/chart-hover.js";
+
+// Hover på pool-graferne (Claude AI, 2026-10-18; erstatter svg-<title>-skiltene): svg'en står med preserveAspectRatio "meet", så musens vandrette
+// brøk i boksen regnes om til viewBox-x, og et viewBox-punkt tilbage til brøker i boksen til linje, prik og skilt.
+function svgFit(box, width, height) {
+  const w = box.clientWidth;
+  const h = box.clientHeight;
+  const scale = Math.min(w / width, h / height) || 1;
+  const ox = (w - width * scale) / 2;
+  const oy = (h - height * scale) / 2;
+  return { viewX: (fraction) => (fraction * w - ox) / scale, box: (x, y) => ({ x: (ox + x * scale) / w, y: (oy + y * scale) / h }) };
+}
+const daNum = (value, digits = 1) => value.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const daDay = (date) => `${date.toLocaleDateString("da-DK", { weekday: "short" })} ${date.getDate()}/${date.getMonth() + 1}`;
+
 class PoolHistoryCard extends HTMLElement {
   static getConfigElement() {
     return document.createElement("hui-entities-card-editor");
@@ -25,6 +40,7 @@ class PoolHistoryCard extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
+    chartHover(this.shadowRoot, ".chart-wrap", (box, fraction) => this._chartPoint(box, fraction));
     this._data = null;
     this._loading = false;
     this._lastFetch = 0;
@@ -184,7 +200,7 @@ class PoolHistoryCard extends HTMLElement {
     const bars = days.map((day, index) => {
       if (!Number.isFinite(day.pump)) return "";
       const barH = Math.max(4, (day.pump / pumpMax) * 34);
-      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"><title>${day.label}: ${this._fmt(day.pump)} timers sandfilter</title></rect>`;
+      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"></rect>`;
     }).join("");
 
     const labels = days.map((day, index) => {
@@ -196,17 +212,18 @@ class PoolHistoryCard extends HTMLElement {
     const dots = days.map((day, index) => {
       const items = [];
       if (Number.isFinite(day.high)) {
-        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day.high)}" r="4"><title>${day.label}: høj ${this._fmt(day.high)} °C</title></circle>`);
+        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day.high)}" r="4"></circle>`);
         items.push(`<text class="value high-value" x="${x(index)}" y="${y(day.high) - 8}" text-anchor="middle">${Math.round(day.high)}&deg;</text>`);
       }
       if (Number.isFinite(day.low)) {
-        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day.low)}" r="3.5"><title>${day.label}: lav ${this._fmt(day.low)} °C</title></circle>`);
+        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day.low)}" r="3.5"></circle>`);
         items.push(`<text class="value low-value" x="${x(index)}" y="${y(day.low) + 16}" text-anchor="middle">${Math.round(day.low)}&deg;</text>`);
       }
       return items.join("");
     }).join("");
 
     const mid = Math.round((yMin + yMax) / 2);
+    this._chartGeo = { days, x, y, left, plotW, count, width, height, pumpMax, barBase: height - bottom };
 
     return `
       <svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img">
@@ -234,11 +251,31 @@ class PoolHistoryCard extends HTMLElement {
     `;
   }
 
+  // Dagen nærmest musen: høj/lav og sandfilter i skiltet, prikken på den høje kurve.
+  _chartPoint(box, fraction) {
+    const geo = this._chartGeo;
+    if (!geo?.days.length || !box.querySelector("svg.chart")) return null;
+    const fit = svgFit(box, geo.width, geo.height);
+    const index = Math.max(0, Math.min(geo.days.length - 1, Math.round(((fit.viewX(fraction) - geo.left) / geo.plotW) * geo.count)));
+    const day = geo.days[index];
+    const parts = [daDay(day.date)];
+    if (Number.isFinite(day.high)) parts.push(`høj ${daNum(day.high)}°`);
+    if (Number.isFinite(day.low)) parts.push(`lav ${daNum(day.low)}°`);
+    if (Number.isFinite(day.pump)) parts.push(`filter ${daNum(day.pump)} t`);
+    const main = Number.isFinite(day.high) ? ["high", "var(--pool-high)"] : Number.isFinite(day.low) ? ["low", "var(--pool-low)"] : null;
+    const point = fit.box(geo.x(index), main ? geo.y(day[main[0]]) : geo.barBase);
+    return { x: point.x, y: main ? point.y : undefined, color: main?.[1], text: parts.join(" · ") };
+  }
+
   _render() {
     if (!this.shadowRoot) return;
     const days = this._data || [];
     const currentTemp = Number(this._hass?.states?.[this.config?.temp_entity]?.state);
     const currentPump = Number(this._hass?.states?.[this.config?.pump_entity]?.state);
+    // Tegnes kun om, når noget vist har ændret sig, så et hover-skilt ikke forsvinder ved hver hass-opdatering.
+    const renderKey = JSON.stringify([this.config, days, currentTemp, currentPump, this._loading, this._error]);
+    if (renderKey === this._renderKey) return;
+    this._renderKey = renderKey;
     const highs = days.map((day) => day.high).filter(Number.isFinite);
     const lows = days.map((day) => day.low).filter(Number.isFinite);
     const pumpDays = days.map((day) => day.pump).filter(Number.isFinite);
@@ -622,6 +659,7 @@ class PoolWaterQualityCard extends HTMLElement {
       ...config,
     };
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    chartHover(this.shadowRoot, ".chart-wrap", (box, fraction) => this._chartPoint(box, fraction));
     this._data = null;
     this._loading = false;
     this._lastFetch = 0;
@@ -803,15 +841,16 @@ class PoolWaterQualityCard extends HTMLElement {
       const previous = points[index];
       if (!Number.isFinite(previous[key]) || !Number.isFinite(point[key])) return "";
       const level = this._quality(key, point[key]).level;
-      return `<line class="quality-segment ${key} ${level}" x1="${x(index)}" y1="${y(previous[key])}" x2="${x(index + 1)}" y2="${y(point[key])}"><title>${point.label}: ${key === "ph" ? "pH" : "klor"} ${this._fmt(point[key])}${key === "chlorine" ? " mg/L" : ""}</title></line>`;
+      return `<line class="quality-segment ${key} ${level}" x1="${x(index)}" y1="${y(previous[key])}" x2="${x(index + 1)}" y2="${y(point[key])}"></line>`;
     }).join("");
     const qualitySegments = segments("ph", phY) + segments("chlorine", chlorineY);
+    this._chartGeo = { points, x, phY, chlorineY, left, plotW, count, width, height };
     const labelStep = Math.max(1, Math.ceil(points.length / 7));
     const labels = points.map((point, index) => index % labelStep === 0 || index === points.length - 1 ? `<text class="date-label" x="${x(index)}" y="${height - 11}" text-anchor="middle">${point.label}</text>` : "").join("");
     const dots = points.map((point, index) => {
       const parts = [];
-      if (Number.isFinite(point.ph)) parts.push(`<circle class="dot ph ${this._quality("ph", point.ph).level}" cx="${x(index)}" cy="${phY(point.ph)}" r="4.5"><title>${point.label}: pH ${this._fmt(point.ph)} · ${this._quality("ph", point.ph).label}</title></circle>`);
-      if (Number.isFinite(point.chlorine)) parts.push(`<circle class="dot chlorine ${this._quality("chlorine", point.chlorine).level}" cx="${x(index)}" cy="${chlorineY(point.chlorine)}" r="4.5"><title>${point.label}: klor ${this._fmt(point.chlorine)} mg/L · ${this._quality("chlorine", point.chlorine).label}</title></circle>`);
+      if (Number.isFinite(point.ph)) parts.push(`<circle class="dot ph ${this._quality("ph", point.ph).level}" cx="${x(index)}" cy="${phY(point.ph)}" r="4.5"></circle>`);
+      if (Number.isFinite(point.chlorine)) parts.push(`<circle class="dot chlorine ${this._quality("chlorine", point.chlorine).level}" cx="${x(index)}" cy="${chlorineY(point.chlorine)}" r="4.5"></circle>`);
       return parts.join("");
     }).join("");
     return `<svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="pH og klor historik">
@@ -828,6 +867,22 @@ class PoolWaterQualityCard extends HTMLElement {
     </svg>`;
   }
 
+  // Målingen nærmest musen: pH og klor i skiltet, prikken på pH (ellers klor).
+  _chartPoint(box, fraction) {
+    const geo = this._chartGeo;
+    if (!geo?.points.length || !box.querySelector("svg.chart")) return null;
+    const fit = svgFit(box, geo.width, geo.height);
+    const index = Math.max(0, Math.min(geo.points.length - 1, Math.round(((fit.viewX(fraction) - geo.left) / geo.plotW) * geo.count)));
+    const point = geo.points[index];
+    const date = new Date(point.ts);
+    const parts = [point.dateOnly ? daDay(date) : `${daDay(date)} kl. ${String(date.getHours()).padStart(2, "0")}.${String(date.getMinutes()).padStart(2, "0")}`];
+    if (Number.isFinite(point.ph)) parts.push(`pH ${daNum(point.ph)} ${this._quality("ph", point.ph).label}`);
+    if (Number.isFinite(point.chlorine)) parts.push(`klor ${daNum(point.chlorine)} mg/L ${this._quality("chlorine", point.chlorine).label}`);
+    const main = Number.isFinite(point.ph) ? [geo.phY(point.ph), "var(--ph)"] : Number.isFinite(point.chlorine) ? [geo.chlorineY(point.chlorine), "var(--chlorine)"] : null;
+    const at = fit.box(geo.x(index), main ? main[0] : 0);
+    return { x: at.x, y: main ? at.y : undefined, color: main?.[1], text: parts.join(" · ") };
+  }
+
   _render() {
     if (!this.shadowRoot) return;
     const points = this._data || [];
@@ -836,6 +891,10 @@ class PoolWaterQualityCard extends HTMLElement {
     const phQuality = this._quality("ph", ph);
     const chlorineQuality = this._quality("chlorine", chlorine);
     const measured = this._hass?.states?.[this.config?.measured_entity]?.state || "Ikke registreret";
+    // Tegnes kun om, når noget vist har ændret sig, så et hover-skilt ikke forsvinder ved hver hass-opdatering.
+    const renderKey = JSON.stringify([this.config, points, ph, chlorine, measured, this._loading, this._error]);
+    if (renderKey === this._renderKey) return;
+    this._renderKey = renderKey;
     this.shadowRoot.innerHTML = `<style>
       .legend::after{content:"Anbefalet målområde · pH 7,2–7,6 · Klor 1,0–3,0 mg/L";flex-basis:100%;display:block;margin-top:1px;padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--color-success-500,#22c55e) 9%,transparent);border:1px solid color-mix(in srgb,var(--color-success-500,#22c55e) 24%,transparent);color:var(--secondary-text-color);font-size:12px;font-weight:750;box-sizing:border-box}
       .target-band{fill:var(--color-success-500,#22c55e);pointer-events:none}.ph-target{opacity:.075;stroke:color-mix(in srgb,var(--ph) 45%,transparent);stroke-width:1}.chlorine-target{opacity:.055;stroke:color-mix(in srgb,var(--chlorine) 48%,transparent);stroke-width:1}.target-label{font-size:9px;font-weight:850;fill:var(--color-success-500,#22c55e);opacity:.9}.quality-segment{fill:none;stroke-width:3.8;stroke-linecap:round}.quality-segment.chlorine{stroke-dasharray:7 5}.quality-segment.good{stroke:var(--color-success-500,#22c55e)}.quality-segment.warning{stroke:var(--color-warning-500,#f59e0b)}.quality-segment.bad{stroke:var(--color-error-500,#ef4444)}.dot{stroke:var(--surface);stroke-width:1.7}.dot.good{fill:var(--color-success-500,#22c55e)!important}.dot.warning{fill:var(--color-warning-500,#f59e0b)!important}.dot.bad{fill:var(--color-error-500,#ef4444)!important}.legend .line-key{background:var(--primary-text-color)}.legend .chlorine-key{background:repeating-linear-gradient(90deg,var(--primary-text-color) 0 6px,transparent 6px 9px)}

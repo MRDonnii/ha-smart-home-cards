@@ -1,4 +1,5 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
+import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 import { AIR_COLORS, AIR_LABELS, AIR_TONES, AIR_DEFAULTS, airQuality, co2Rank, pm25Rank, qualityRank } from "../shared/air-quality.js";
 
 const VERSION = "1.0.0";
@@ -53,10 +54,6 @@ h2{margin:5px 0 0;font-size:23px;line-height:1.08;letter-spacing:-.03em}
 .limit{stroke-width:1;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:.8}
 .tick,.lim{position:absolute;color:var(--muted);font-size:9px;font-weight:700;line-height:1;white-space:nowrap;pointer-events:none}.tick{bottom:4px;transform:translateX(-50%)}.tick.first{transform:none}.tick.last{transform:translateX(-100%)}.lim{transform:translate(-100%,-120%)}
 .line{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.cross{position:absolute;top:0;bottom:${PAD.b}px;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);pointer-events:none;opacity:0}
-.dot{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border:2px solid var(--surface);border-radius:50%;background:var(--primary-text-color);pointer-events:none;opacity:0}
-.tip{position:absolute;top:-4px;padding:4px 8px;border:1px solid var(--edge);border-radius:9px;background:var(--surface);color:var(--primary-text-color);font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transform:translateX(-50%);box-shadow:0 6px 16px rgba(0,0,0,.25)}
-.plot.hover .cross,.plot.hover .dot,.plot.hover .tip{opacity:1}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:100%;color:var(--muted);font-size:10px}
 .timeline{position:relative;height:12px;overflow:hidden;margin-top:6px;border-radius:6px;background:rgba(255,255,255,.05)}
 .timeline i{position:absolute;top:0;bottom:0}
@@ -78,6 +75,12 @@ class HAAirQualityCard extends HTMLElement {
     this._loading = false;
     this._fetchedAt = 0;
     this._series = {};
+    // Hover (Claude AI, 2026-10-18): delt chart-hover, så skiltet holdes inde i grafen og aldrig klippes af kortkanten.
+    // Testenes falske shadowRoot har ingen addEventListener.
+    if (typeof this.shadowRoot.addEventListener === "function") {
+      chartHover(this.shadowRoot, "[data-plot]", (box, fraction) => this._plotPoint(box, fraction));
+      chartHover(this.shadowRoot, ".chart.quality", (box, fraction, event) => this._timelinePoint(box, event));
+    }
   }
 
   static getStubConfig(hass) {
@@ -272,7 +275,7 @@ class HAAirQualityCard extends HTMLElement {
 
   _plot(kind, points, limits, yMin, yMax, small) {
     const height = small ? Math.round(H * 0.72) : H;
-    this._series[kind] = { points, yMin, yMax, height };
+    this._series[kind] = { points, yMin, yMax, height, start: Date.now() - this._hours() * 3600000, end: Date.now() };
     if (points.length < 2) return `<div class="plot${small ? " small" : ""}"><div class="empty"><ha-icon icon="mdi:chart-line"></ha-icon><span>${this._loading || !this._fetchedAt ? "Historik indlæses" : "Ingen historik endnu"}</span></div></div>`;
     const now = Date.now(), start = now - this._hours() * 3600000;
     const x = (time) => PAD.l + Math.max(0, Math.min(1, (time - start) / (now - start))) * (W - PAD.l - PAD.r);
@@ -297,7 +300,7 @@ class HAAirQualityCard extends HTMLElement {
     const labels = shown.map((limit) => `<span class="lim" style="left:${pct(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
     const hours = this._hours();
     const ticks = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct(W - PAD.r)}">Nu</span>`;
-    return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO₂" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks}<i class="cross"></i><i class="dot"></i><span class="tip"></span></div>`;
+    return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO₂" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks}</div>`;
   }
 
   _co2Chart(points) {
@@ -338,6 +341,7 @@ class HAAirQualityCard extends HTMLElement {
   _timeline(segments) {
     if (!segments.length) return "";
     const now = Date.now(), start = now - this._hours() * 3600000, span = now - start;
+    this._quality = { segments, start, now };
     const seen = new Map();
     const bars = segments.map((segment) => {
       const rank = qualityRank(segment.s);
@@ -346,42 +350,41 @@ class HAAirQualityCard extends HTMLElement {
       seen.set(label, tone);
       const left = Math.max(0, (Math.max(segment.start, start) - start) / span * 100);
       const width = Math.max(0, (Math.min(segment.end, now) - Math.max(segment.start, start)) / span * 100);
-      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone})" title="${this._escape(`${label}: ${this._clock(segment.start)}–${this._clock(segment.end)}`)}"></i>`;
+      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone})"></i>`;
     }).join("");
     const legend = [...seen].map(([label, tone]) => `<span><b style="background:var(--${tone})"></b>${this._escape(label)}</span>`).join("");
-    return `<section class="chart"><div class="chart-head"><strong>Målerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
+    return `<section class="chart quality"><div class="chart-head"><strong>Målerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
   }
 
-  _bindHover() {
-    this.shadowRoot.querySelectorAll("[data-plot]").forEach((plot) => {
-      const series = this._series[plot.dataset.plot];
-      if (!series || series.points.length < 2) return;
-      const unit = plot.dataset.plot === "co2" ? "ppm" : "µg/m³";
-      const digits = plot.dataset.plot === "co2" ? 0 : 1;
-      const move = (event) => {
-        const rect = plot.getBoundingClientRect();
-        if (!rect.width) return;
-        const now = Date.now(), start = now - this._hours() * 3600000;
-        const scale = rect.width / W;
-        const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left - PAD.l * scale) / ((W - PAD.l - PAD.r) * scale)));
-        const time = start + fraction * (now - start);
-        let nearest = series.points[0];
-        for (const point of series.points) if (Math.abs(point.t - time) < Math.abs(nearest.t - time)) nearest = point;
-        const px = (PAD.l + Math.max(0, Math.min(1, (nearest.t - start) / (now - start))) * (W - PAD.l - PAD.r)) * scale;
-        const py = (PAD.t + (series.yMax - nearest.v) / (series.yMax - series.yMin) * (series.height - PAD.t - PAD.b)) * (rect.height / series.height);
-        plot.querySelector(".cross").style.left = `${px}px`;
-        const dot = plot.querySelector(".dot");
-        dot.style.left = `${px}px`;
-        dot.style.top = `${py}px`;
-        const tip = plot.querySelector(".tip");
-        tip.textContent = `${this._clock(nearest.t)} · ${this._format(nearest.v, digits)} ${unit}`;
-        tip.style.left = `${Math.max(48, Math.min(rect.width - 48, px))}px`;
-        plot.classList.add("hover");
-      };
-      plot.addEventListener("pointermove", move);
-      plot.addEventListener("pointerdown", move);
-      plot.addEventListener("pointerleave", () => plot.classList.remove("hover"));
-    });
+  // Nærmeste punkt på CO₂-/PM-kurven; svg'en fylder hele .plot, så kun den indre PAD skal regnes fra.
+  _plotPoint(box, fraction) {
+    const kind = box.dataset.plot;
+    const series = this._series[kind];
+    if (!series || series.points.length < 2) return null;
+    const { start, end } = series;
+    const inner = Math.max(0, Math.min(1, (fraction * W - PAD.l) / (W - PAD.l - PAD.r)));
+    const nearest = nearestPoint(series.points, start, end, inner);
+    const x = PAD.l + Math.max(0, Math.min(1, (nearest.t - start) / (end - start))) * (W - PAD.l - PAD.r);
+    const y = PAD.t + (series.yMax - nearest.v) / (series.yMax - series.yMin) * (series.height - PAD.t - PAD.b);
+    const unit = kind === "co2" ? "ppm" : "µg/m³";
+    return { x: x / W, y: y / series.height, color: "var(--tone)", text: `${hoverTime(nearest.t, this._hass)} · ${this._format(nearest.v, kind === "co2" ? 0 : 1)} ${unit}` };
+  }
+
+  // Målerens vurdering er kun 12 px høj, så hoveren hører til hele sektionen og skiltet står i overskriften.
+  _timelinePoint(box, event) {
+    const bar = box.querySelector(".timeline");
+    const q = this._quality;
+    if (!bar || !q?.segments.length || !event) return null;
+    const rect = bar.getBoundingClientRect(), outer = box.getBoundingClientRect();
+    if (!rect.width || !outer.width) return null;
+    const clientX = Math.max(rect.left, Math.min(rect.right, event.clientX));
+    const time = q.start + (clientX - rect.left) / rect.width * (q.now - q.start);
+    const last = q.segments[q.segments.length - 1];
+    const segment = q.segments.find((row) => time >= row.start && time < row.end) || (time >= last.start ? last : undefined);
+    if (!segment) return null;
+    const rank = qualityRank(segment.s);
+    const label = rank === undefined ? "Ingen data" : AIR_LABELS[rank];
+    return { x: (clientX - outer.left) / outer.width, text: `${hoverTime(time, this._hass)} · ${label} (${this._clock(Math.max(segment.start, q.start))}–${this._clock(Math.min(segment.end, q.now))})` };
   }
 
   _open(id) {
@@ -422,7 +425,6 @@ class HAAirQualityCard extends HTMLElement {
       <div class="advice">${this._escape(advice)}</div>
       <div class="tiles">${tiles}</div>${charts}</div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-open]").forEach((button) => button.addEventListener("click", () => this._open(button.dataset.open)));
-    this._bindHover();
   }
 }
 

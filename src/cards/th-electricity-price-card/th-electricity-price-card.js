@@ -558,7 +558,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const tip = this.$('tip');
     pc.onpointermove = pc.onpointerdown = e => { const b = pc.getBoundingClientRect(), t = t0 + (e.clientX - b.left) / b.width * (t1 - t0), p = pts.find(q => q.t <= t && q.e > t); if (!p) { tip.style.opacity = 0; return; }
       tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` · <em>bilen lader${dear(p) ? ' – dyrt' : ''}</em>` : ''}`;
-      tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + 'px'; tip.style.top = (Y(p.p) / H * (b.height - gb)) + 'px'; tip.style.opacity = 1; };
+      // Skiltet måles og holdes inde i kortet; er der ikke plads over punktet, står det under (Claude AI, 2026-10-18; den faste 70 px-klemme var for smal til lange skilte)
+      const c = pc.closest('.c').getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, py = Y(p.p) / H * (b.height - gb);
+      tip.style.left = Math.max(c.left - b.left + tw / 2 + 4, Math.min(c.right - b.left - tw / 2 - 4, e.clientX - b.left)) + 'px'; tip.style.top = py + 'px';
+      tip.style.transform = b.top + py - th * 1.1 < c.top + 4 ? 'translate(-50%,12px)' : ''; tip.style.opacity = 1; };
     pc.onpointerleave = () => tip.style.opacity = 0;
     // dage
     const days = {}; for (const p of all) { const d = new Date(p.t); d.setHours(0, 0, 0, 0); const k = d.getTime(); (days[k] = days[k] || { k, s: 0, n: 0, min: 1e9, f: true }); days[k].s += p.p; days[k].n++; days[k].min = Math.min(days[k].min, p.p); days[k].f = days[k].f && p.f; }

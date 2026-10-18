@@ -1,4 +1,113 @@
-/* MRDonnii Smart Home Cards v0.5.184 */
+/* MRDonnii Smart Home Cards v0.5.185 */
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// src/shared/chart-hover.js
+var chart_hover_exports = {};
+__export(chart_hover_exports, {
+  chartHover: () => chartHover,
+  hoverTime: () => hoverTime,
+  nearestPoint: () => nearestPoint
+});
+function overlay(box) {
+  if (box._hoverUi?.line.isConnected) return box._hoverUi;
+  if (getComputedStyle(box).position === "static") box.style.position = "relative";
+  const line = document.createElement("i");
+  line.style.cssText = "position:absolute;top:0;bottom:0;width:1px;margin-left:-.5px;background:color-mix(in srgb,var(--primary-text-color,#fff) 45%,transparent);pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:3";
+  const dot = document.createElement("i");
+  dot.style.cssText = "position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;border:2px solid var(--card-background-color,#111);box-sizing:border-box;pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:4";
+  const tip = document.createElement("span");
+  tip.style.cssText = "position:absolute;top:2px;padding:3px 8px;border-radius:8px;background:color-mix(in srgb,var(--card-background-color,#0c1218) 92%,transparent);color:var(--primary-text-color,#fff);border:1px solid var(--divider-color,rgba(255,255,255,.15));box-shadow:0 6px 18px rgba(0,0,0,.35);font-size:10.5px;font-weight:700;line-height:1.35;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:5;font-variant-numeric:tabular-nums";
+  box.append(line, dot, tip);
+  box._hoverUi = { line, dot, tip };
+  return box._hoverUi;
+}
+function show(box, point) {
+  const ui = overlay(box);
+  const w = box.clientWidth;
+  const h = box.clientHeight;
+  const x = Math.min(1, Math.max(0, point.x)) * w;
+  ui.line.style.left = `${x}px`;
+  if (Number.isFinite(point.y)) {
+    ui.dot.style.left = `${x}px`;
+    ui.dot.style.top = `${Math.min(1, Math.max(0, point.y)) * h}px`;
+    ui.dot.style.background = point.color || "var(--primary-text-color,#fff)";
+    ui.dot.style.opacity = "1";
+  } else ui.dot.style.opacity = "0";
+  if (ui.tip.textContent !== point.text) ui.tip.textContent = point.text;
+  const tw = ui.tip.offsetWidth;
+  const gap = 6;
+  let left = x > w / 2 ? x - gap - tw : x + gap;
+  left = tw > w ? x > w / 2 ? w - tw : 0 : Math.max(0, Math.min(w - tw, left));
+  ui.tip.style.left = `${left}px`;
+  const dotY = Number.isFinite(point.y) ? point.y * h : h;
+  ui.tip.style.top = dotY < ui.tip.offsetHeight + 8 && h > ui.tip.offsetHeight * 2 + 8 ? `${h - ui.tip.offsetHeight - 2}px` : "2px";
+  ui.line.style.opacity = ui.tip.style.opacity = "1";
+  box.classList.add("chart-hovering");
+}
+function hide(box) {
+  const ui = box?._hoverUi;
+  if (ui) ui.line.style.opacity = ui.dot.style.opacity = ui.tip.style.opacity = "0";
+  box?.classList.remove("chart-hovering");
+}
+function chartHover(root, selector, resolve) {
+  if (!root || root[`_chartHover:${selector}`]) return;
+  root[`_chartHover:${selector}`] = true;
+  let current;
+  let touchTimer;
+  const clear = () => {
+    hide(current);
+    current = void 0;
+  };
+  const move = (event) => {
+    const box = event.target?.closest?.(selector);
+    if (box !== current) clear();
+    if (!box) return;
+    const rect = box.getBoundingClientRect();
+    if (!rect.width) return;
+    const point = resolve(box, Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)), event);
+    if (!point) {
+      hide(box);
+      return;
+    }
+    current = box;
+    show(box, point);
+    clearTimeout(touchTimer);
+    if (event.pointerType && event.pointerType !== "mouse") touchTimer = setTimeout(clear, TOUCH_HIDE_MS);
+  };
+  root.addEventListener("pointermove", move);
+  root.addEventListener("pointerdown", move);
+  root.addEventListener("pointerout", (event) => {
+    if (event.pointerType === "mouse" && current && !current.contains(event.relatedTarget)) clear();
+  });
+}
+function nearestPoint(points, t0, t1, fraction) {
+  if (!points?.length) return void 0;
+  const time = t0 + fraction * (t1 - t0);
+  let best = points[0];
+  for (const p of points) if (Math.abs(p.t - time) < Math.abs(best.t - time)) best = p;
+  return best;
+}
+function hoverTime(t, hass, { now = false } = {}) {
+  if (now) return "Nu";
+  const lang = hass?.locale?.language || hass?.language || "da";
+  const d = new Date(t);
+  const time = d.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+  return (/* @__PURE__ */ new Date()).toDateString() === d.toDateString() ? `Kl. ${time}` : `${d.toLocaleDateString(lang, { weekday: "short" })} ${time}`;
+}
+var TOUCH_HIDE_MS;
+var init_chart_hover = __esm({
+  "src/shared/chart-hover.js"() {
+    TOUCH_HIDE_MS = 3500;
+  }
+});
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -2835,13 +2944,13 @@ function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ct
     }
     return tip;
   };
-  const hide = () => {
+  const hide2 = () => {
     if (!shown) return;
     shown.tip.classList.remove("on");
     shown.seg?.removeAttribute("data-on");
     shown = null;
   };
-  const show = (seg) => {
+  const show2 = (seg) => {
     const box = host(seg);
     if (!box) return;
     const tip = tipFor(box);
@@ -2865,26 +2974,27 @@ function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ct
     if (event.pointerType !== "mouse") return;
     const seg = segOf(event);
     if (seg) {
-      if (!shown || shown.seg !== seg || !shown.tip.classList.contains("on")) show(seg);
-    } else hide();
+      if (!shown || shown.seg !== seg || !shown.tip.classList.contains("on")) show2(seg);
+    } else hide2();
   });
   root.addEventListener("pointerout", (event) => {
     if (event.pointerType !== "mouse" || !segOf(event)) return;
-    if (!event.relatedTarget?.classList?.contains?.("ctl-p")) hide();
+    if (!event.relatedTarget?.classList?.contains?.("ctl-p")) hide2();
   });
   root.addEventListener("click", (event) => {
     const seg = segOf(event);
     if (!seg) {
-      hide();
+      hide2();
       return;
     }
     event.stopPropagation();
-    if (shown && shown.seg === seg) hide();
-    else show(seg);
+    if (shown && shown.seg === seg) hide2();
+    else show2(seg);
   }, true);
 }
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
+init_chart_hover();
 var TTD_VERSION = "1.20.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -4316,6 +4426,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    chartHover(this.shadowRoot, ".sc-chart", (box, fraction) => this._scPoint(fraction));
     this._cfg = null;
     this._hass = null;
     this._built = false;
@@ -6300,12 +6411,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
   }
   /** Lays the cable over the photo exactly where the picture is drawn (object-fit: contain inside the img box). */
-  _placeCable(svg, img, show, align) {
+  _placeCable(svg, img, show2, align) {
     if (!svg || !img) return;
     const cable = this._cfg.cable;
-    if (!show || !cable || !img.offsetWidth) {
+    if (!show2 || !cable || !img.offsetWidth) {
       svg.setAttribute("hidden", "");
-      if (show && !img.dataset.cableWait) {
+      if (show2 && !img.dataset.cableWait) {
         img.dataset.cableWait = "1";
         img.addEventListener("load", () => this._queue(true), { once: true });
       }
@@ -6366,6 +6477,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
+    this._scBars = sc.chart;
     const chartSig = JSON.stringify([sc.chart, sc.marks, sc.limitLine]);
     if (r.scChart && r.scChart.dataset.sig !== chartSig) {
       r.scChart.dataset.sig = chartSig;
@@ -6373,7 +6485,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const ly = sc.limitLine ? H4 - Math.max(3, sc.limitLine.h * (H4 - 4)) : null;
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H4}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H4 - 4));
-        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H4 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"><title>${ttdEsc(b.title)}</title></rect>`;
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H4 - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"></rect>`;
       }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H4}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${(ly / H4 * 100).toFixed(1)}%">Senere ca. ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
@@ -6631,10 +6743,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const pane = map.getPane?.("tilePane");
     if (!pane) return;
     const ours = new Set((this._satLayers || []).map((layer) => layer.getContainer?.()).filter(Boolean));
-    const hide = this._mapStyle === "satellite";
+    const hide2 = this._mapStyle === "satellite";
     for (const el of pane.children) {
       if (ours.has(el)) continue;
-      const value = hide ? "hidden" : "";
+      const value = hide2 ? "hidden" : "";
       if (el.style.visibility !== value) el.style.visibility = value;
     }
   }
@@ -6813,6 +6925,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const left = col.left + col.width / 2 - wrap.left - tip.offsetWidth / 2;
     tip.style.left = `${ttdClamp(left, 0, Math.max(0, wrap.width - tip.offsetWidth))}px`;
   }
+  // The price slot under the pointer in the smart charge chart (left/width are percent of the chart, h of its 60 px).
+  _scPoint(fraction) {
+    const bars = this._scBars;
+    if (!bars?.length) return null;
+    const x = fraction * 100;
+    const bar = bars.find((b) => x >= b.left && x < b.left + b.width) || bars.reduce((a, b) => Math.abs(b.left + b.width / 2 - x) < Math.abs(a.left + a.width / 2 - x) ? b : a);
+    const h = Math.max(3, bar.h * 56) / 60;
+    return { x: (bar.left + bar.width / 2) / 100, y: 1 - h, color: bar.on ? "var(--tdc-green)" : "var(--tdc-text)", text: bar.title };
+  }
   _showTip(index) {
     const data = this._chart;
     const r = this._r;
@@ -6836,10 +6957,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("tipERow", !data.hasEnergy);
     this._t("tipD", `${f.number(slot.d, 1)} ${this._chartUnits.d}`);
     this._t("tipE", `${f.number(slot.e, 1)} ${this._chartUnits.e}`);
+    this._hide("tip", false);
     const width = r.chart.clientWidth;
     const x = (index + 0.5) / data.slots.length * width;
-    r.tip.style.left = `${ttdClamp(x, 70, Math.max(70, width - 70))}px`;
-    this._hide("tip", false);
+    r.tip.style.left = `${ttdClamp(x - r.tip.offsetWidth / 2, 0, Math.max(0, width - r.tip.offsetWidth))}px`;
   }
   /* ------------------------------------------------------ interaction */
   _moreId(key) {
@@ -7757,13 +7878,13 @@ var HATeslaGlanceCard = class extends HTMLElement {
   _paintView() {
     const hc2 = this.shadowRoot.querySelector("ha-card");
     if (!hc2) return;
-    const show = this._planOn && this._view === "plan";
-    hc2.classList.toggle("show-plan", show);
+    const show2 = this._planOn && this._view === "plan";
+    hc2.classList.toggle("show-plan", show2);
     hc2.classList.toggle("has-plan", !!this._planOn);
-    this.shadowRoot.querySelector(".plan").setAttribute("aria-hidden", String(!show));
+    this.shadowRoot.querySelector(".plan").setAttribute("aria-hidden", String(!show2));
     const dots = this.shadowRoot.querySelector(".dots");
     dots.hidden = !this._planOn;
-    dots.querySelectorAll("i").forEach((i) => i.classList.toggle("on", i.dataset.v === (show ? "plan" : "car")));
+    dots.querySelectorAll("i").forEach((i) => i.classList.toggle("on", i.dataset.v === (show2 ? "plan" : "car")));
   }
   // The charge plan (charge_plan: the same keys as the price card's charge), active when the cable is in at home and
   // EV Ledger has a plan with blocks ahead – the price card's own rule.
@@ -9781,6 +9902,17 @@ window.customCards.push({
 });
 
 // src/cards/pool-history-card/pool-history-card.js
+init_chart_hover();
+function svgFit(box, width, height) {
+  const w = box.clientWidth;
+  const h = box.clientHeight;
+  const scale = Math.min(w / width, h / height) || 1;
+  const ox = (w - width * scale) / 2;
+  const oy = (h - height * scale) / 2;
+  return { viewX: (fraction) => (fraction * w - ox) / scale, box: (x, y) => ({ x: (ox + x * scale) / w, y: (oy + y * scale) / h }) };
+}
+var daNum = (value, digits = 1) => value.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+var daDay = (date2) => `${date2.toLocaleDateString("da-DK", { weekday: "short" })} ${date2.getDate()}/${date2.getMonth() + 1}`;
 var PoolHistoryCard = class extends HTMLElement {
   static getConfigElement() {
     return document.createElement("hui-entities-card-editor");
@@ -9806,6 +9938,7 @@ var PoolHistoryCard = class extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
+    chartHover(this.shadowRoot, ".chart-wrap", (box, fraction) => this._chartPoint(box, fraction));
     this._data = null;
     this._loading = false;
     this._lastFetch = 0;
@@ -9930,26 +10063,27 @@ var PoolHistoryCard = class extends HTMLElement {
     const bars = days.map((day2, index) => {
       if (!Number.isFinite(day2.pump)) return "";
       const barH = Math.max(4, day2.pump / pumpMax * 34);
-      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"><title>${day2.label}: ${this._fmt(day2.pump)} timers sandfilter</title></rect>`;
+      return `<rect class="pump-bar" x="${x(index) - 8}" y="${height - bottom - barH}" width="16" height="${barH}" rx="5"></rect>`;
     }).join("");
     const labels = days.map((day2, index) => {
-      const show = days.length <= 8 || index % 2 === 0;
-      if (!show) return "";
+      const show2 = days.length <= 8 || index % 2 === 0;
+      if (!show2) return "";
       return `<text class="date-label" x="${x(index)}" y="${height - 11}" text-anchor="middle">${day2.label}</text>`;
     }).join("");
     const dots = days.map((day2, index) => {
       const items = [];
       if (Number.isFinite(day2.high)) {
-        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day2.high)}" r="4"><title>${day2.label}: h\xF8j ${this._fmt(day2.high)} \xB0C</title></circle>`);
+        items.push(`<circle class="dot high" cx="${x(index)}" cy="${y(day2.high)}" r="4"></circle>`);
         items.push(`<text class="value high-value" x="${x(index)}" y="${y(day2.high) - 8}" text-anchor="middle">${Math.round(day2.high)}&deg;</text>`);
       }
       if (Number.isFinite(day2.low)) {
-        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day2.low)}" r="3.5"><title>${day2.label}: lav ${this._fmt(day2.low)} \xB0C</title></circle>`);
+        items.push(`<circle class="dot low" cx="${x(index)}" cy="${y(day2.low)}" r="3.5"></circle>`);
         items.push(`<text class="value low-value" x="${x(index)}" y="${y(day2.low) + 16}" text-anchor="middle">${Math.round(day2.low)}&deg;</text>`);
       }
       return items.join("");
     }).join("");
     const mid = Math.round((yMin + yMax) / 2);
+    this._chartGeo = { days, x, y, left, plotW, count, width, height, pumpMax, barBase: height - bottom };
     return `
       <svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img">
         <defs>
@@ -9975,11 +10109,29 @@ var PoolHistoryCard = class extends HTMLElement {
       </svg>
     `;
   }
+  // Dagen nærmest musen: høj/lav og sandfilter i skiltet, prikken på den høje kurve.
+  _chartPoint(box, fraction) {
+    const geo = this._chartGeo;
+    if (!geo?.days.length || !box.querySelector("svg.chart")) return null;
+    const fit = svgFit(box, geo.width, geo.height);
+    const index = Math.max(0, Math.min(geo.days.length - 1, Math.round((fit.viewX(fraction) - geo.left) / geo.plotW * geo.count)));
+    const day2 = geo.days[index];
+    const parts = [daDay(day2.date)];
+    if (Number.isFinite(day2.high)) parts.push(`h\xF8j ${daNum(day2.high)}\xB0`);
+    if (Number.isFinite(day2.low)) parts.push(`lav ${daNum(day2.low)}\xB0`);
+    if (Number.isFinite(day2.pump)) parts.push(`filter ${daNum(day2.pump)} t`);
+    const main = Number.isFinite(day2.high) ? ["high", "var(--pool-high)"] : Number.isFinite(day2.low) ? ["low", "var(--pool-low)"] : null;
+    const point = fit.box(geo.x(index), main ? geo.y(day2[main[0]]) : geo.barBase);
+    return { x: point.x, y: main ? point.y : void 0, color: main?.[1], text: parts.join(" \xB7 ") };
+  }
   _render() {
     if (!this.shadowRoot) return;
     const days = this._data || [];
     const currentTemp = Number(this._hass?.states?.[this.config?.temp_entity]?.state);
     const currentPump = Number(this._hass?.states?.[this.config?.pump_entity]?.state);
+    const renderKey = JSON.stringify([this.config, days, currentTemp, currentPump, this._loading, this._error]);
+    if (renderKey === this._renderKey) return;
+    this._renderKey = renderKey;
     const highs = days.map((day2) => day2.high).filter(Number.isFinite);
     const lows = days.map((day2) => day2.low).filter(Number.isFinite);
     const pumpDays = days.map((day2) => day2.pump).filter(Number.isFinite);
@@ -10358,6 +10510,7 @@ var PoolWaterQualityCard = class extends HTMLElement {
       ...config
     };
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    chartHover(this.shadowRoot, ".chart-wrap", (box, fraction) => this._chartPoint(box, fraction));
     this._data = null;
     this._loading = false;
     this._lastFetch = 0;
@@ -10525,15 +10678,16 @@ var PoolWaterQualityCard = class extends HTMLElement {
       const previous = points[index];
       if (!Number.isFinite(previous[key]) || !Number.isFinite(point[key])) return "";
       const level = this._quality(key, point[key]).level;
-      return `<line class="quality-segment ${key} ${level}" x1="${x(index)}" y1="${y(previous[key])}" x2="${x(index + 1)}" y2="${y(point[key])}"><title>${point.label}: ${key === "ph" ? "pH" : "klor"} ${this._fmt(point[key])}${key === "chlorine" ? " mg/L" : ""}</title></line>`;
+      return `<line class="quality-segment ${key} ${level}" x1="${x(index)}" y1="${y(previous[key])}" x2="${x(index + 1)}" y2="${y(point[key])}"></line>`;
     }).join("");
     const qualitySegments = segments("ph", phY) + segments("chlorine", chlorineY);
+    this._chartGeo = { points, x, phY, chlorineY, left, plotW, count, width, height };
     const labelStep = Math.max(1, Math.ceil(points.length / 7));
     const labels = points.map((point, index) => index % labelStep === 0 || index === points.length - 1 ? `<text class="date-label" x="${x(index)}" y="${height - 11}" text-anchor="middle">${point.label}</text>` : "").join("");
     const dots = points.map((point, index) => {
       const parts = [];
-      if (Number.isFinite(point.ph)) parts.push(`<circle class="dot ph ${this._quality("ph", point.ph).level}" cx="${x(index)}" cy="${phY(point.ph)}" r="4.5"><title>${point.label}: pH ${this._fmt(point.ph)} \xB7 ${this._quality("ph", point.ph).label}</title></circle>`);
-      if (Number.isFinite(point.chlorine)) parts.push(`<circle class="dot chlorine ${this._quality("chlorine", point.chlorine).level}" cx="${x(index)}" cy="${chlorineY(point.chlorine)}" r="4.5"><title>${point.label}: klor ${this._fmt(point.chlorine)} mg/L \xB7 ${this._quality("chlorine", point.chlorine).label}</title></circle>`);
+      if (Number.isFinite(point.ph)) parts.push(`<circle class="dot ph ${this._quality("ph", point.ph).level}" cx="${x(index)}" cy="${phY(point.ph)}" r="4.5"></circle>`);
+      if (Number.isFinite(point.chlorine)) parts.push(`<circle class="dot chlorine ${this._quality("chlorine", point.chlorine).level}" cx="${x(index)}" cy="${chlorineY(point.chlorine)}" r="4.5"></circle>`);
       return parts.join("");
     }).join("");
     return `<svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="pH og klor historik">
@@ -10549,6 +10703,21 @@ var PoolWaterQualityCard = class extends HTMLElement {
       ${qualitySegments}${dots}${labels}
     </svg>`;
   }
+  // Målingen nærmest musen: pH og klor i skiltet, prikken på pH (ellers klor).
+  _chartPoint(box, fraction) {
+    const geo = this._chartGeo;
+    if (!geo?.points.length || !box.querySelector("svg.chart")) return null;
+    const fit = svgFit(box, geo.width, geo.height);
+    const index = Math.max(0, Math.min(geo.points.length - 1, Math.round((fit.viewX(fraction) - geo.left) / geo.plotW * geo.count)));
+    const point = geo.points[index];
+    const date2 = new Date(point.ts);
+    const parts = [point.dateOnly ? daDay(date2) : `${daDay(date2)} kl. ${String(date2.getHours()).padStart(2, "0")}.${String(date2.getMinutes()).padStart(2, "0")}`];
+    if (Number.isFinite(point.ph)) parts.push(`pH ${daNum(point.ph)} ${this._quality("ph", point.ph).label}`);
+    if (Number.isFinite(point.chlorine)) parts.push(`klor ${daNum(point.chlorine)} mg/L ${this._quality("chlorine", point.chlorine).label}`);
+    const main = Number.isFinite(point.ph) ? [geo.phY(point.ph), "var(--ph)"] : Number.isFinite(point.chlorine) ? [geo.chlorineY(point.chlorine), "var(--chlorine)"] : null;
+    const at = fit.box(geo.x(index), main ? main[0] : 0);
+    return { x: at.x, y: main ? at.y : void 0, color: main?.[1], text: parts.join(" \xB7 ") };
+  }
   _render() {
     if (!this.shadowRoot) return;
     const points = this._data || [];
@@ -10557,6 +10726,9 @@ var PoolWaterQualityCard = class extends HTMLElement {
     const phQuality = this._quality("ph", ph);
     const chlorineQuality = this._quality("chlorine", chlorine);
     const measured = this._hass?.states?.[this.config?.measured_entity]?.state || "Ikke registreret";
+    const renderKey = JSON.stringify([this.config, points, ph, chlorine, measured, this._loading, this._error]);
+    if (renderKey === this._renderKey) return;
+    this._renderKey = renderKey;
     this.shadowRoot.innerHTML = `<style>
       .legend::after{content:"Anbefalet m\xE5lomr\xE5de \xB7 pH 7,2\u20137,6 \xB7 Klor 1,0\u20133,0 mg/L";flex-basis:100%;display:block;margin-top:1px;padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--color-success-500,#22c55e) 9%,transparent);border:1px solid color-mix(in srgb,var(--color-success-500,#22c55e) 24%,transparent);color:var(--secondary-text-color);font-size:12px;font-weight:750;box-sizing:border-box}
       .target-band{fill:var(--color-success-500,#22c55e);pointer-events:none}.ph-target{opacity:.075;stroke:color-mix(in srgb,var(--ph) 45%,transparent);stroke-width:1}.chlorine-target{opacity:.055;stroke:color-mix(in srgb,var(--chlorine) 48%,transparent);stroke-width:1}.target-label{font-size:9px;font-weight:850;fill:var(--color-success-500,#22c55e);opacity:.9}.quality-segment{fill:none;stroke-width:3.8;stroke-linecap:round}.quality-segment.chlorine{stroke-dasharray:7 5}.quality-segment.good{stroke:var(--color-success-500,#22c55e)}.quality-segment.warning{stroke:var(--color-warning-500,#f59e0b)}.quality-segment.bad{stroke:var(--color-error-500,#ef4444)}.dot{stroke:var(--surface);stroke-width:1.7}.dot.good{fill:var(--color-success-500,#22c55e)!important}.dot.warning{fill:var(--color-warning-500,#f59e0b)!important}.dot.bad{fill:var(--color-error-500,#ef4444)!important}.legend .line-key{background:var(--primary-text-color)}.legend .chlorine-key{background:repeating-linear-gradient(90deg,var(--primary-text-color) 0 6px,transparent 6px 9px)}
@@ -11311,7 +11483,7 @@ var HAACClimateCard = class extends HTMLElement {
     return tiles.length ? `<section class="live">${tiles.join("")}</section>` : "";
   }
   _functions(unit, s) {
-    const btn = (action, icon4, label, on, show, toggle = false) => show ? `<button class="fn ${toggle ? "tg" : ""} ${on ? "on" : ""}" data-action="${action}" ${toggle ? `aria-pressed="${!!on}"` : ""}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>` : "";
+    const btn = (action, icon4, label, on, show2, toggle = false) => show2 ? `<button class="fn ${toggle ? "tg" : ""} ${on ? "on" : ""}" data-action="${action}" ${toggle ? `aria-pressed="${!!on}"` : ""}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>` : "";
     const follow = this._entity(unit.follow_me);
     const beep = this._entity(unit.beep);
     const supply = this._entity(unit.supply);
@@ -14794,8 +14966,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
         return;
       }
       tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` \xB7 <em>bilen lader${dear(p) ? " \u2013 dyrt" : ""}</em>` : ""}`;
-      tip.style.left = Math.max(70, Math.min(b.width - 70, e.clientX - b.left)) + "px";
-      tip.style.top = Y(p.p) / H4 * (b.height - gb2) + "px";
+      const c2 = pc2.closest(".c").getBoundingClientRect(), tw = tip.offsetWidth, th2 = tip.offsetHeight, py = Y(p.p) / H4 * (b.height - gb2);
+      tip.style.left = Math.max(c2.left - b.left + tw / 2 + 4, Math.min(c2.right - b.left - tw / 2 - 4, e.clientX - b.left)) + "px";
+      tip.style.top = py + "px";
+      tip.style.transform = b.top + py - th2 * 1.1 < c2.top + 4 ? "translate(-50%,12px)" : "";
       tip.style.opacity = 1;
     };
     pc2.onpointerleave = () => tip.style.opacity = 0;
@@ -29501,6 +29675,7 @@ window.__HRV_CARD_VERSION__ = "2.13.4-afterheat-status-layout";
 console.info("%c HRV Card %c loaded v2.12.1 ", "color: white; background: #1976d2; font-weight: 700; padding: 2px 4px; border-radius: 3px 0 0 3px;", "color: white; background: #43a047; font-weight: 700; padding: 2px 4px; border-radius: 0 3px 3px 0;");
 
 // src/cards/ha-power-flow-card/ha-power-flow-card.js
+init_chart_hover();
 var VERSION21 = "0.5.1";
 var HAPowerFlowCardEditor = class extends HTMLElement {
   setConfig(config) {
@@ -29527,6 +29702,26 @@ var HAPowerFlowCard = class extends HTMLElement {
     this._hass = void 0;
     this._sig = "";
     this._id = "pfc" + Math.random().toString(36).slice(2, 8);
+    chartHover(this.shadowRoot, ".chart", (box, fraction) => this._barPoint(box, fraction));
+  }
+  _barPoint(box, fraction) {
+    const bars = [...box.querySelectorAll(":scope > .bar")];
+    if (!bars.length) return null;
+    const rect = box.getBoundingClientRect();
+    const x = rect.left + fraction * rect.width;
+    const centre = (bar) => {
+      const r2 = bar.getBoundingClientRect();
+      return r2.left + r2.width / 2;
+    };
+    const best = bars.reduce((a, b) => Math.abs(centre(b) - x) < Math.abs(centre(a) - x) ? b : a);
+    const r = best.getBoundingClientRect();
+    const top = best.querySelector("i")?.getBoundingClientRect().top ?? r.bottom;
+    return {
+      x: (r.left + r.width / 2 - rect.left) / rect.width,
+      y: (top - rect.top) / rect.height,
+      color: "var(--price-color, var(--primary-text-color))",
+      text: best.dataset.tip
+    };
   }
   static getStubConfig() {
     return {
@@ -29806,8 +30001,10 @@ var HAPowerFlowCard = class extends HTMLElement {
       const t = this._tier(price);
       const pulse = this._pulse(price);
       const h = Number.isFinite(min) && Number.isFinite(max) && max > min ? 8 + (price - min) / (max - min) * 92 : 50;
-      const hour = new Date(p.start).getHours();
-      return `<div class="bar ${t} ${hour === nowHour ? "now" : ""} ${c2.high_price_animation !== false && pulse > 0 ? "price-alert" : ""}" style="--price-color:${this._priceColor(price)};--pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--pulse-glow:${(3 + pulse * 15).toFixed(1)}px" data-tip="${this._esc(this._fmt(price))} kr"><i style="height:${h}%"></i></div>`;
+      const start = new Date(p.start);
+      const hour = start.getHours();
+      const at = `${String(hour).padStart(2, "0")}.${String(start.getMinutes()).padStart(2, "0")}`;
+      return `<div class="bar ${t} ${hour === nowHour ? "now" : ""} ${c2.high_price_animation !== false && pulse > 0 ? "price-alert" : ""}" style="--price-color:${this._priceColor(price)};--pulse-duration:${(3.2 - pulse * 2).toFixed(2)}s;--pulse-scale:${(0.96 - pulse * 0.24).toFixed(2)};--pulse-opacity:${(0.88 - pulse * 0.3).toFixed(2)};--pulse-brightness:${(1.08 + pulse * 0.82).toFixed(2)};--pulse-glow:${(3 + pulse * 15).toFixed(1)}px" data-tip="${this._esc(`Kl. ${at} \xB7 ${this._fmt(price)} kr/kWh`)}" aria-label="${this._esc(`Kl. ${at} \xB7 ${this._fmt(price)} kr/kWh`)}"><i style="height:${h}%"></i></div>`;
     }).join("")}
       </div>
       <div class="axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
@@ -29819,12 +30016,15 @@ var HAPowerFlowCard = class extends HTMLElement {
       </div>
     </ha-card>`;
     const renderedChart = this.shadowRoot.querySelector(".chart");
-    if (preservedChart && renderedChart && preservedChart.children.length === renderedChart.children.length) {
-      [...preservedChart.children].forEach((bar, index) => {
-        const fresh = renderedChart.children[index];
+    const keptBars = preservedChart ? [...preservedChart.querySelectorAll(":scope > .bar")] : [];
+    const freshBars = renderedChart ? [...renderedChart.querySelectorAll(":scope > .bar")] : [];
+    if (preservedChart && renderedChart && keptBars.length === freshBars.length) {
+      keptBars.forEach((bar, index) => {
+        const fresh = freshBars[index];
         bar.className = fresh.className;
         bar.style.cssText = fresh.style.cssText;
         bar.dataset.tip = fresh.dataset.tip;
+        bar.setAttribute("aria-label", fresh.dataset.tip);
         bar.querySelector("i").style.cssText = fresh.querySelector("i").style.cssText;
       });
       renderedChart.replaceWith(preservedChart);
@@ -29833,9 +30033,6 @@ var HAPowerFlowCard = class extends HTMLElement {
       el.addEventListener("click", () => {
         if (el.dataset.more) this._more(el.dataset.more);
       });
-    });
-    this.shadowRoot.querySelectorAll(".bar[data-tip]").forEach((el) => {
-      el.setAttribute("title", el.dataset.tip);
     });
   }
   getCardSize() {
@@ -30704,6 +30901,7 @@ function airQuality(hass, cfg = {}) {
 }
 
 // src/cards/ha-air-quality-card/ha-air-quality-card.js
+init_chart_hover();
 var VERSION23 = "1.0.0";
 var TAG = "ha-air-quality-card";
 var DASH = "\u2014";
@@ -30754,10 +30952,6 @@ h2{margin:5px 0 0;font-size:23px;line-height:1.08;letter-spacing:-.03em}
 .limit{stroke-width:1;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;opacity:.8}
 .tick,.lim{position:absolute;color:var(--muted);font-size:9px;font-weight:700;line-height:1;white-space:nowrap;pointer-events:none}.tick{bottom:4px;transform:translateX(-50%)}.tick.first{transform:none}.tick.last{transform:translateX(-100%)}.lim{transform:translate(-100%,-120%)}
 .line{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.cross{position:absolute;top:0;bottom:${PAD.b}px;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);pointer-events:none;opacity:0}
-.dot{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border:2px solid var(--surface);border-radius:50%;background:var(--primary-text-color);pointer-events:none;opacity:0}
-.tip{position:absolute;top:-4px;padding:4px 8px;border:1px solid var(--edge);border-radius:9px;background:var(--surface);color:var(--primary-text-color);font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transform:translateX(-50%);box-shadow:0 6px 16px rgba(0,0,0,.25)}
-.plot.hover .cross,.plot.hover .dot,.plot.hover .tip{opacity:1}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:100%;color:var(--muted);font-size:10px}
 .timeline{position:relative;height:12px;overflow:hidden;margin-top:6px;border-radius:6px;background:rgba(255,255,255,.05)}
 .timeline i{position:absolute;top:0;bottom:0}
@@ -30778,6 +30972,10 @@ var HAAirQualityCard = class extends HTMLElement {
     this._loading = false;
     this._fetchedAt = 0;
     this._series = {};
+    if (typeof this.shadowRoot.addEventListener === "function") {
+      chartHover(this.shadowRoot, "[data-plot]", (box, fraction) => this._plotPoint(box, fraction));
+      chartHover(this.shadowRoot, ".chart.quality", (box, fraction, event) => this._timelinePoint(box, event));
+    }
   }
   static getStubConfig(hass) {
     const states = Object.values(hass?.states || {});
@@ -30954,7 +31152,7 @@ var HAAirQualityCard = class extends HTMLElement {
   // ---------- Charts ----------
   _plot(kind, points, limits, yMin, yMax, small) {
     const height = small ? Math.round(H * 0.72) : H;
-    this._series[kind] = { points, yMin, yMax, height };
+    this._series[kind] = { points, yMin, yMax, height, start: Date.now() - this._hours() * 36e5, end: Date.now() };
     if (points.length < 2) return `<div class="plot${small ? " small" : ""}"><div class="empty"><ha-icon icon="mdi:chart-line"></ha-icon><span>${this._loading || !this._fetchedAt ? "Historik indl\xE6ses" : "Ingen historik endnu"}</span></div></div>`;
     const now = Date.now(), start = now - this._hours() * 36e5;
     const x = (time) => PAD.l + Math.max(0, Math.min(1, (time - start) / (now - start))) * (W - PAD.l - PAD.r);
@@ -30977,7 +31175,7 @@ var HAAirQualityCard = class extends HTMLElement {
     const labels = shown.map((limit) => `<span class="lim" style="left:${pct2(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
     const hours = this._hours();
     const ticks2 = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct2(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct2(W - PAD.r)}">Nu</span>`;
-    return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO\u2082" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks2}<i class="cross"></i><i class="dot"></i><span class="tip"></span></div>`;
+    return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO\u2082" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks2}</div>`;
   }
   _co2Chart(points) {
     const cfg = this._config;
@@ -31015,6 +31213,7 @@ var HAAirQualityCard = class extends HTMLElement {
   _timeline(segments) {
     if (!segments.length) return "";
     const now = Date.now(), start = now - this._hours() * 36e5, span = now - start;
+    this._quality = { segments, start, now };
     const seen = /* @__PURE__ */ new Map();
     const bars = segments.map((segment) => {
       const rank = qualityRank(segment.s);
@@ -31023,41 +31222,39 @@ var HAAirQualityCard = class extends HTMLElement {
       seen.set(label, tone2);
       const left = Math.max(0, (Math.max(segment.start, start) - start) / span * 100);
       const width = Math.max(0, (Math.min(segment.end, now) - Math.max(segment.start, start)) / span * 100);
-      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone2})" title="${this._escape(`${label}: ${this._clock(segment.start)}\u2013${this._clock(segment.end)}`)}"></i>`;
+      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone2})"></i>`;
     }).join("");
     const legend = [...seen].map(([label, tone2]) => `<span><b style="background:var(--${tone2})"></b>${this._escape(label)}</span>`).join("");
-    return `<section class="chart"><div class="chart-head"><strong>M\xE5lerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
+    return `<section class="chart quality"><div class="chart-head"><strong>M\xE5lerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
   }
-  _bindHover() {
-    this.shadowRoot.querySelectorAll("[data-plot]").forEach((plot) => {
-      const series = this._series[plot.dataset.plot];
-      if (!series || series.points.length < 2) return;
-      const unit = plot.dataset.plot === "co2" ? "ppm" : "\xB5g/m\xB3";
-      const digits = plot.dataset.plot === "co2" ? 0 : 1;
-      const move = (event) => {
-        const rect = plot.getBoundingClientRect();
-        if (!rect.width) return;
-        const now = Date.now(), start = now - this._hours() * 36e5;
-        const scale = rect.width / W;
-        const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left - PAD.l * scale) / ((W - PAD.l - PAD.r) * scale)));
-        const time = start + fraction * (now - start);
-        let nearest = series.points[0];
-        for (const point of series.points) if (Math.abs(point.t - time) < Math.abs(nearest.t - time)) nearest = point;
-        const px = (PAD.l + Math.max(0, Math.min(1, (nearest.t - start) / (now - start))) * (W - PAD.l - PAD.r)) * scale;
-        const py = (PAD.t + (series.yMax - nearest.v) / (series.yMax - series.yMin) * (series.height - PAD.t - PAD.b)) * (rect.height / series.height);
-        plot.querySelector(".cross").style.left = `${px}px`;
-        const dot = plot.querySelector(".dot");
-        dot.style.left = `${px}px`;
-        dot.style.top = `${py}px`;
-        const tip = plot.querySelector(".tip");
-        tip.textContent = `${this._clock(nearest.t)} \xB7 ${this._format(nearest.v, digits)} ${unit}`;
-        tip.style.left = `${Math.max(48, Math.min(rect.width - 48, px))}px`;
-        plot.classList.add("hover");
-      };
-      plot.addEventListener("pointermove", move);
-      plot.addEventListener("pointerdown", move);
-      plot.addEventListener("pointerleave", () => plot.classList.remove("hover"));
-    });
+  // Nærmeste punkt på CO₂-/PM-kurven; svg'en fylder hele .plot, så kun den indre PAD skal regnes fra.
+  _plotPoint(box, fraction) {
+    const kind = box.dataset.plot;
+    const series = this._series[kind];
+    if (!series || series.points.length < 2) return null;
+    const { start, end } = series;
+    const inner = Math.max(0, Math.min(1, (fraction * W - PAD.l) / (W - PAD.l - PAD.r)));
+    const nearest = nearestPoint(series.points, start, end, inner);
+    const x = PAD.l + Math.max(0, Math.min(1, (nearest.t - start) / (end - start))) * (W - PAD.l - PAD.r);
+    const y = PAD.t + (series.yMax - nearest.v) / (series.yMax - series.yMin) * (series.height - PAD.t - PAD.b);
+    const unit = kind === "co2" ? "ppm" : "\xB5g/m\xB3";
+    return { x: x / W, y: y / series.height, color: "var(--tone)", text: `${hoverTime(nearest.t, this._hass)} \xB7 ${this._format(nearest.v, kind === "co2" ? 0 : 1)} ${unit}` };
+  }
+  // Målerens vurdering er kun 12 px høj, så hoveren hører til hele sektionen og skiltet står i overskriften.
+  _timelinePoint(box, event) {
+    const bar = box.querySelector(".timeline");
+    const q = this._quality;
+    if (!bar || !q?.segments.length || !event) return null;
+    const rect = bar.getBoundingClientRect(), outer = box.getBoundingClientRect();
+    if (!rect.width || !outer.width) return null;
+    const clientX = Math.max(rect.left, Math.min(rect.right, event.clientX));
+    const time = q.start + (clientX - rect.left) / rect.width * (q.now - q.start);
+    const last = q.segments[q.segments.length - 1];
+    const segment = q.segments.find((row) => time >= row.start && time < row.end) || (time >= last.start ? last : void 0);
+    if (!segment) return null;
+    const rank = qualityRank(segment.s);
+    const label = rank === void 0 ? "Ingen data" : AIR_LABELS[rank];
+    return { x: (clientX - outer.left) / outer.width, text: `${hoverTime(time, this._hass)} \xB7 ${label} (${this._clock(Math.max(segment.start, q.start))}\u2013${this._clock(Math.min(segment.end, q.now))})` };
   }
   _open(id) {
     if (isId(id)) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
@@ -31095,7 +31292,6 @@ var HAAirQualityCard = class extends HTMLElement {
       <div class="advice">${this._escape(advice)}</div>
       <div class="tiles">${tiles}</div>${charts}</div></ha-card>`;
     this.shadowRoot.querySelectorAll("[data-open]").forEach((button) => button.addEventListener("click", () => this._open(button.dataset.open)));
-    this._bindHover();
   }
 };
 if (!customElements.get(TAG)) customElements.define(TAG, HAAirQualityCard);
@@ -31617,6 +31813,7 @@ var HARoomControlCard = class extends HTMLElement {
 if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-control-card", HARoomControlCard);
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
+init_chart_hover();
 var VERSION24 = "2.6.1";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
@@ -31754,9 +31951,6 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .spark .target{stroke:var(--primary-text-color);stroke-width:1;stroke-dasharray:3 4;opacity:.38;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:100%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:100%;width:1px;background:color-mix(in srgb,var(--primary-text-color) 45%,transparent);opacity:0;pointer-events:none}
-.spark-tip{position:absolute;top:-26px;padding:3px 8px;border-radius:8px;background:var(--card-background-color,rgba(8,12,18,.9));color:var(--primary-text-color,#fff);border:1px solid var(--divider-color,transparent);font-size:10.5px;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(-50%);pointer-events:none;transition:opacity .12s ease}
-.spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
 .spark-range{display:flex;justify-content:space-between;gap:8px;margin-top:7px;color:var(--rc-muted);font-size:10px;font-weight:650;line-height:1.2;font-variant-numeric:tabular-nums}
 .visual{display:flex;flex:none;align-self:flex-start;align-items:flex-end;justify-content:center;width:70px;height:var(--spark-h,44px)}
@@ -31892,7 +32086,6 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._statsLoading = false;
     this._statsFetchedAt = 0;
     this._statsTimer = void 0;
-    this._hoverWrap = void 0;
     this._popupEl = void 0;
     this._popupRoomIndex = void 0;
     this._popupCards = [];
@@ -31909,8 +32102,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       const target = event.target?.closest?.("[data-room]");
       if (target) this._openRoomPopup(Number(target.dataset.room));
     });
-    this.shadowRoot.addEventListener("pointermove", (event) => this._onPointerMove(event));
-    this.shadowRoot.addEventListener("pointerleave", () => this._clearHover(), true);
+    chartHover(this.shadowRoot, ".spark-box", (box, fraction) => this._sparkPoint(box, fraction));
   }
   static getStubConfig() {
     return { title: "Radiatorer & rumklima", rooms: [] };
@@ -31945,7 +32137,6 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._statsTimer = void 0;
     if (this._raf) cancelAnimationFrame(this._raf);
     this._raf = 0;
-    this._clearHover();
     this._closeRoomPopup();
   }
   set hass(hass) {
@@ -32180,7 +32371,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate, room.co2, room.pm25, room.air_quality].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const spark = (small = false) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH2}</span></div>`}</div>`;
+    const spark = (small = false) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${small ? "" : `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH2}</span></div>`}</div>`;
     const zoneMarkup = ({ room, index }) => `
       <button class="zone a-neutral" type="button" data-room="${index}">
         <div class="z-top">
@@ -32284,7 +32475,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const sparkRefs = (host) => {
       const wrap = host.querySelector(".spark-wrap");
       if (!wrap) return void 0;
-      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), cross: wrap.querySelector(".spark-cross"), tip: wrap.querySelector(".spark-tip"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: void 0 };
+      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: void 0 };
       wrap._spark = refs;
       return refs;
     };
@@ -32657,28 +32848,18 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     summary.notice?.classList.toggle("show", dataProblem);
   }
   // ---------- Hover på kurverne (én delegeret lytter) ----------
-  _clearHover() {
-    this._hoverWrap?.classList.remove("hover");
-    this._hoverWrap = void 0;
-  }
-  _onPointerMove(event) {
-    const wrap = event.target?.closest?.(".spark-wrap");
-    if (wrap !== this._hoverWrap) this._clearHover();
-    const spark = wrap?._spark;
-    if (!wrap || !spark?.scale || spark.data.length < 2) return;
-    const rect = wrap.querySelector(".spark").getBoundingClientRect();
-    if (!rect.width) return;
-    const fraction = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-    const time = spark.scale.t0 + fraction * (spark.scale.t1 - spark.scale.t0);
-    let nearest = spark.data[0];
-    for (const point of spark.data) if (Math.abs(point.t - time) < Math.abs(nearest.t - time)) nearest = point;
-    const left = `${((nearest.t - spark.scale.t0) / Math.max(spark.scale.t1 - spark.scale.t0, 1) * 100).toFixed(2)}%`;
-    const when = nearest.now ? "Nu" : `Kl. ${new Date(nearest.t).toLocaleTimeString(this._hass?.locale?.language || "da", { hour: "2-digit", minute: "2-digit" })}`;
-    spark.cross.style.left = left;
-    spark.tip.style.left = left;
-    this._setText(spark.tip, `${when} \xB7 ${this._format(nearest.v)}\xB0`);
-    wrap.classList.add("hover");
-    this._hoverWrap = wrap;
+  // Hover: skiltet tegnes af den delte chart-hover inde i kurvens boks, så det ikke klippes af kortets kant.
+  _sparkPoint(box, fraction) {
+    const spark = box.closest(".spark-wrap")?._spark;
+    if (!spark?.scale || spark.data.length < 2) return null;
+    const { t0, t1, lo, hi } = spark.scale;
+    const nearest = nearestPoint(spark.data, t0, t1, fraction);
+    return {
+      x: (nearest.t - t0) / Math.max(t1 - t0, 1),
+      y: 1 - (nearest.v - lo) / Math.max(hi - lo, 1e-3),
+      color: "var(--room-color)",
+      text: `${hoverTime(nearest.t, this._hass, { now: nearest.now })} \xB7 ${this._format(nearest.v)}\xB0`
+    };
   }
   // ---------- AC-animation (delt med ha-ac-climate-card) ----------
   _acMiniLabel(state) {
@@ -33118,12 +33299,11 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spark .line{fill:none;stroke:var(--room-color);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--room-color) 60%,transparent))}
 .spark .target{stroke:var(--rc-ink);stroke-width:1;stroke-dasharray:3 5;opacity:.35;vector-effect:non-scaling-stroke}
 .spark-dot{position:absolute;left:calc(100% - 6px);width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 3px var(--rc-surface),0 0 12px var(--room-color);pointer-events:none}
-.spark-cross{position:absolute;top:0;height:100%;width:1px;background:rgba(255,255,255,.4);opacity:0;pointer-events:none}
-.spark-tip{position:absolute;top:-28px;padding:4px 9px;border-radius:9px;background:rgba(10,14,20,.92);color:#fff;font-size:10.5px;font-weight:700;white-space:nowrap;transform:translateX(-50%);opacity:0;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.spark-wrap.hover .spark-tip,.spark-wrap.hover .spark-cross{opacity:1}
 .spark-wrap.empty .spark,.spark-wrap.empty .spark-dot{visibility:hidden}
 .spark-range{position:absolute;left:18px;right:18px;bottom:6px;display:flex;justify-content:space-between;color:var(--rc-muted);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 .zone .spark-box{margin:0 -1px}
+/* Hover-skiltet tegnes af shared/chart-hover inde i kurvens boks; sp\xE6ndet skjules imens (Claude AI, 2026-10-18) */
+.spark-range{transition:opacity .12s ease}.spark-box.chart-hovering+.spark-range{opacity:0}
 
 /* room dock */
 .z-room{display:none}
@@ -33413,7 +33593,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
     const esc12 = (v) => this._escape(v);
-    const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i><i class="spark-cross"></i><span class="spark-tip"></span></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
+    const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
@@ -33501,7 +33681,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const sparkRefs = (host) => {
       const wrap = host.querySelector(".spark-wrap");
       if (!wrap) return void 0;
-      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), cross: wrap.querySelector(".spark-cross"), tip: wrap.querySelector(".spark-tip"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: void 0 };
+      const refs = { wrap, area: wrap.querySelector(".area"), line: wrap.querySelector(".line"), target: wrap.querySelector(".target"), dot: wrap.querySelector(".spark-dot"), range: wrap.querySelector('[data-f="range"]'), data: [], scale: void 0 };
       wrap._spark = refs;
       return refs;
     };
@@ -34017,6 +34197,7 @@ var HACardListEditor7 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor7);
 
 // src/cards/ha-temperature-target-card/ha-temperature-target-card.js
+init_chart_hover();
 var VERSION26 = "0.5.1";
 var HATemperatureTargetCard = class extends HTMLElement {
   constructor() {
@@ -34029,6 +34210,8 @@ var HATemperatureTargetCard = class extends HTMLElement {
     this._loading = false;
     this._timer = void 0;
     this._rendered = false;
+    this._graphs = {};
+    chartHover(this.shadowRoot, ".plot", (box, fraction) => this._graphPoint(box, fraction));
   }
   static getStubConfig() {
     return { title: "Temperaturer", rooms: [] };
@@ -34181,7 +34364,7 @@ var HATemperatureTargetCard = class extends HTMLElement {
     buckets.forEach((b, i) => {
       if (b.n) values.push({ time: start + (i + 0.5) * size, value: b.sum / b.n });
     });
-    if (state.current !== void 0) values.push({ time: now, value: state.current });
+    if (state.current !== void 0) values.push({ time: now, value: state.current, now: true });
     const nums = values.map((p) => p.value);
     const target = state.target;
     if (target !== void 0) nums.push(target - 0.4, target + 0.4);
@@ -34192,6 +34375,7 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const step = max - min > 6 ? 2 : max - min > 3 ? 1 : 0.5;
     const W3 = 1e3, H4 = 100, x = (t) => Math.max(0, Math.min(1, (t - start) / (now - start))) * W3, y = (v) => (max - v) / (max - min) * H4;
     const pts = values.map((p) => [x(p.time), y(p.value)]);
+    this._graphs[index] = { points: values.map((p) => ({ t: p.time, v: p.value, now: p.now })), start, now, min, max, target };
     let path = "";
     if (pts.length === 1) path = `M0 ${pts[0][1].toFixed(2)} L${W3} ${pts[0][1].toFixed(2)}`;
     else if (pts.length > 1) {
@@ -34221,6 +34405,13 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const tone2 = target === void 0 || state.current === void 0 ? "on" : state.current > target + 0.35 ? "above" : state.current < target - 0.35 ? "below" : "on";
     const dot = last ? `<span class="now-dot ${tone2}" style="top:${(last[1] / H4 * 100).toFixed(2)}%"></span>` : "";
     return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct2(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W3} ${H4}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W3}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
+  }
+  _graphPoint(box, fraction) {
+    const g = this._graphs[Number(box.closest("article")?.dataset.index)];
+    if (!g?.points.length) return null;
+    const p = nearestPoint(g.points, g.start, g.now, fraction);
+    const tone2 = g.target === void 0 || p.v > g.target - 0.35 && p.v < g.target + 0.35 ? "--target" : p.v > g.target ? "--above" : "--below";
+    return { x: (p.t - g.start) / Math.max(g.now - g.start, 1), y: (g.max - p.v) / (g.max - g.min), color: `var(${tone2})`, text: `${hoverTime(p.t, this._hass, { now: p.now })} \xB7 ${this._format(p.v)}\xB0${g.target === void 0 ? "" : ` \xB7 M\xE5l ${this._format(g.target)}\xB0`}` };
   }
   _room(room, index) {
     const s = this._state(room);
@@ -34270,7 +34461,10 @@ var HATemperatureTargetCard = class extends HTMLElement {
       article.querySelector('[data-action="off"]')?.classList.toggle("active", s.off);
       const graph = article.querySelector(".graph");
       const markup = this._graph(room, s, index);
-      if (graph && graph.innerHTML !== markup) graph.innerHTML = markup;
+      if (graph && graph._markup !== markup) {
+        graph._markup = markup;
+        graph.innerHTML = markup;
+      }
     });
   }
   _open(id) {
@@ -36338,6 +36532,7 @@ window.customCards.push({ type: "ha-home-header-card", name: "HA Home Header Car
 console.info(`%c HA HOME HEADER CARD %c v${VERSION28} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-home-status-grid-card/ha-home-status-grid-card.js
+init_chart_hover();
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
 var VERSION29 = "1.7.0";
@@ -37114,7 +37309,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       @keyframes chipFloat{50%{transform:translateY(-1.5px) scale(1.05)}}
       :host([v2]) .value{grid-column:2;grid-row:1;font-size:19px;line-height:21px;font-weight:800;letter-spacing:-.01em}
       :host([v2]) .detail{grid-column:2;grid-row:2;padding-right:0;font-size:11px;line-height:14px;margin-top:1px}
-      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:end;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
+      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:stretch;display:grid;align-content:center;min-width:0;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
       :host([v2]) .meter{display:none}
       :host([v2]) .ring{display:block;grid-column:3;grid-row:1/3;width:36px;height:36px;position:relative;z-index:2;transform:rotate(-90deg)}
       :host([v2]) .ring circle{fill:none;stroke-width:4;stroke-linecap:round}
@@ -37126,11 +37321,11 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .item.security .detail{display:block;position:static}
       :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;overflow:visible}
       :host([v2]) .sec2{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;width:100%}
-      :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
+      :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:4px;line-height:1;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
       :host([v2]) .sec2 .sp.on{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 10px -3px var(--c);animation:secWarn 2s ease-in-out infinite}
       @keyframes secWarn{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}}
-      :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:13px;width:13px;height:13px;flex:none}
-      :host([v2]) .sec2 b{font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+      :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:14px;width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
+      :host([v2]) .sec2 b{display:block;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
       :host([v2]) .sec2 .alarm b{display:none}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
@@ -37147,7 +37342,7 @@ var HaHomeStatusCard = class extends HTMLElement {
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
-        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:9px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
+        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:10px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
       /* compact: a low tile (user, 2026-10-13: "hund, alarm og indstillinger lidt mindre") \u2013 chip, value and ring on one line,
          the detail under the value; only the security tile keeps its pill row. */
       :host([v2][compact]) .item{height:100%;min-height:62px;align-content:center;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
@@ -37364,6 +37559,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     this._eventsSig = "";
     this._robotSig = "";
     this._robotNodes = /* @__PURE__ */ new Map();
+    chartHover(this.shadowRoot, ".ubars", (box, fraction) => this._utilPoint(box, fraction));
   }
   setConfig(config) {
     this.config = { ...SUMMARY_DEFAULTS, ...config };
@@ -37712,6 +37908,13 @@ ${LUX_KEYFRAMES}
 </style><div class="sheet"><div class="box"></div></div>`;
     document.body.appendChild(host);
     this._roomHost = host;
+    chartHover(root, ".chart", (box, fraction) => {
+      const c2 = this._roomChart;
+      if (!c2 || !box.querySelector("svg")) return null;
+      const p = nearestPoint(c2.pts, c2.t0, c2.t1, fraction);
+      if (!p) return null;
+      return { x: Math.max(0, (p.t - c2.t0) / (c2.t1 - c2.t0)), y: 1 - (p.v - c2.lo) / (c2.hi - c2.lo), color: "var(--c)", text: `${hoverTime(p.t, this._hass, { now: p.now })} \xB7 ${this._fmt(p.v, 1)}\xB0` };
+    });
     const sheet = root.querySelector(".sheet");
     sheet.addEventListener("click", (e) => {
       if (e.target === sheet || e.target.closest("[data-close]")) {
@@ -37811,8 +38014,9 @@ ${LUX_KEYFRAMES}
     if (!force && key === this._roomSheetKey) return;
     this._roomSheetKey = key;
     box.className = `box ${!Number.isFinite(r.temp) ? "na" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : ""}`;
-    const pts = [...r.series.map((p) => ({ t: p.t + 18e5, v: p.v })), ...Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp }] : []];
+    const pts = [...r.series.map((p) => ({ t: p.t + 18e5, v: p.v })), ...Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp, now: true }] : []];
     let chart = '<div class="empty">Ingen historik endnu</div>';
+    this._roomChart = null;
     if (pts.length > 2) {
       const t0 = Date.now() - 24 * 36e5;
       const t1 = Date.now();
@@ -37823,6 +38027,7 @@ ${LUX_KEYFRAMES}
       const Y = (v) => 100 - (v - lo) / (hi - lo) * 100;
       const line = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(2)} ${Y(p.v).toFixed(2)}`).join("");
       const last = pts[pts.length - 1];
+      this._roomChart = { pts, t0, t1, lo, hi };
       chart = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="ar" d="${line}L${X(last.t)} 100L${X(pts[0].t)} 100Z"/><path class="ln" d="${line}"/>${Number.isFinite(r.target) ? `<line class="tg" x1="0" x2="100" y1="${Y(r.target)}" y2="${Y(r.target)}"/>` : ""}</svg>
         <span class="lb" style="left:4px;top:2px">${f(hi, 0)}\xB0</span><span class="lb" style="left:4px;bottom:3px">${f(lo, 0)}\xB0</span><span class="lb" style="left:0;bottom:-16px">for 24 t</span><span class="lb" style="left:50%;bottom:-16px;transform:translateX(-50%)">for 12 t</span><span class="lb" style="right:0;bottom:-16px">nu</span>
         <i class="nd" style="left:${X(last.t)}%;top:${Y(last.v)}%"></i>`;
@@ -37918,7 +38123,8 @@ ${LUX_KEYFRAMES}
     const med = known.length ? known[Math.floor(known.length / 2)] : 0;
     const clean = uses.map((u3) => Number.isFinite(u3) && med > 0 && u3 > med * 12 ? null : u3);
     const max = Math.max(...clean.filter(Number.isFinite), 1e-4);
-    const bars = `<span class="ubars" aria-hidden="true">${clean.map((u3, i) => `<i class="${i + 1 === today ? "now" : i + 1 > today ? "fut" : ""}" style="height:${Number.isFinite(u3) ? Math.max(8, u3 / max * 100).toFixed(0) : 8}%"></i>`).join("")}</span>`;
+    const heights = clean.map((u3) => Number.isFinite(u3) ? Math.max(8, u3 / max * 100) : 8);
+    const bars = `<span class="ubars" aria-hidden="true">${heights.map((h, i) => `<i class="${i + 1 === today ? "now" : i + 1 > today ? "fut" : ""}" style="height:${h.toFixed(0)}%"></i>`).join("")}</span>`;
     let chip = "";
     const yDay = today - 1;
     const ours = yDay >= 1 ? byDay.get(yDay) : void 0;
@@ -37933,7 +38139,19 @@ ${LUX_KEYFRAMES}
     const proj = Number.isFinite(cost) && elapsed > 1.5 ? cost / elapsed * dim : Number.NaN;
     const digits = unit === "m\xB3" ? 3 : 1;
     const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m\xB3" ? todayUse * 1e3 : todayUse, unit === "m\xB3" ? 0 : 1)} ${unit === "m\xB3" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele m\xE5neden ender p\xE5 i samme tempo">Forventet \u2248 <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
-    return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
+    return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits, hover: { uses: clean, heights, today, month: m0, unit } };
+  }
+  // The day under the pointer in a month tile's bars (future days snap to today); water in litres like the foot.
+  _utilPoint(box, fraction) {
+    const data = box.closest(".utility")?._util;
+    if (!data?.uses.length) return null;
+    const n = data.uses.length;
+    const i = Math.min(data.today - 1, Math.max(0, Math.floor(fraction * n)));
+    const u3 = data.uses[i];
+    const date2 = new Date(data.month.getFullYear(), data.month.getMonth(), i + 1);
+    const day2 = i + 1 === data.today ? "I dag" : `${date2.toLocaleDateString("da-DK", { weekday: "short" })} ${i + 1}/${date2.getMonth() + 1}`;
+    const value = !Number.isFinite(u3) ? "ingen data" : data.unit === "m\xB3" ? `${this._fmt(u3 * 1e3, 0)} l` : `${this._fmt(u3, 1)} ${data.unit}`;
+    return { x: (i + 0.5) / n, y: 1 - data.heights[i] / 100, color: "var(--accent)", text: `${day2} \xB7 ${value}` };
   }
   async _vcRooms(host) {
     if (host._vc) {
@@ -38212,10 +38430,11 @@ ${LUX_KEYFRAMES}
         history.pushState(null, "", path);
         window.dispatchEvent(new Event("location-changed"));
       };
-      this.shadowRoot.querySelector(".utility.electricity").onclick = () => navigate(this.config.electricity_path);
-      this.shadowRoot.querySelector(".utility.water").onclick = () => navigate(this.config.water_path);
-      this.shadowRoot.querySelector(".utility.heat").onclick = () => navigate(this.config.heat_path);
-      this.shadowRoot.querySelector(".utility.car").onclick = () => navigate(this.config.car_path);
+      const barTap = (e) => e.pointerType && e.pointerType !== "mouse" && !!e.target.closest?.(".ubars");
+      this.shadowRoot.querySelector(".utility.electricity").onclick = (e) => barTap(e) || navigate(this.config.electricity_path);
+      this.shadowRoot.querySelector(".utility.water").onclick = (e) => barTap(e) || navigate(this.config.water_path);
+      this.shadowRoot.querySelector(".utility.heat").onclick = (e) => barTap(e) || navigate(this.config.heat_path);
+      this.shadowRoot.querySelector(".utility.car").onclick = (e) => barTap(e) || navigate(this.config.car_path);
       const roomsEl = this.shadowRoot.querySelector(".rooms");
       const openRoom = (e) => {
         if (roomsEl._vc) {
@@ -38264,6 +38483,7 @@ ${LUX_KEYFRAMES}
       if (tile2.hidden) return;
       tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
       const x = this._utilMonth(c2[utilityKeys[sel]], sel === ".car" ? "__car" : c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
+      tile2._util = x.hover;
       tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon4}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
     };
     this._utilStats();
@@ -39616,7 +39836,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const lon = this._config.radar_lon ?? this._hass?.config?.longitude ?? 12.5683;
     const dLat = (Number(lat) - 0.011).toFixed(3);
     const dLon = (Number(lon) - 0.015).toFixed(3);
-    const windyUrl = (overlay) => `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=11&overlay=${overlay}&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${dLat}&detailLon=${dLon}&marker=true&message=true`;
+    const windyUrl = (overlay2) => `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=m/s&zoom=11&overlay=${overlay2}&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${dLat}&detailLon=${dLon}&marker=true&message=true`;
     const lightningUrl = `https://map.blitzortung.org/index.php?interactive=0&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&LinksCheckboxChecked=1&LinksRangeValue=10&MapStyle=2&MapStyleRangeValue=10&Advertisment=0#7/${lat}/${lon}`;
     const image = this._config.radar_image_entity;
     const satellite = this._config.satellite_image_entity;
@@ -39924,6 +40144,7 @@ console.info(
 );
 
 // src/cards/th-weather-card/th-weather-card.js
+init_chart_hover();
 var VWH_VER = "3.2.0";
 var fmt = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
@@ -40061,7 +40282,9 @@ var CSS2 = `
 .cast{display:flex;align-items:center;gap:10px;margin:14px 22px 0;padding:10px 14px;border-radius:15px;font-size:13px;
   background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--ice)) 14%,transparent),rgba(255,255,255,.02));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--ice)) 22%,transparent)}
 .cast .ic{color:var(--c,var(--ice));flex:none}.cast b{font-weight:600}.cast small{margin-left:auto;color:var(--mut);font-size:11.5px;white-space:nowrap}
-.cast .bar{display:flex;gap:2px;align-items:flex-end;height:18px;margin-left:auto;flex:none}.cast .bar i{width:4px;border-radius:2px;background:var(--ice);opacity:.85;transform-origin:bottom;animation:gr .8s cubic-bezier(.16,1,.3,1) both}
+.cast .bar{display:flex;gap:2px;align-items:flex-end;height:18px;margin-left:auto;flex:none}/* Smallere end skiltet: den delte hover l\xE6gger det fra boksens venstre kant, s\xE5 det flyttes ind mod kortet (Claude AI, 2026-10-18) */
+.rr>span,.cast .bar>span{translate:calc(var(--bw) - 100%) 0}.rr{--bw:42px}
+.cast .bar i.b{width:4px;border-radius:2px;background:var(--ice);opacity:.85;transform-origin:bottom;animation:gr .8s cubic-bezier(.16,1,.3,1) both}
 @keyframes gr{from{transform:scaleY(0)}}
 /* sol/m\xE5ne */
 .cel{position:relative;padding:12px 14px 10px;border-radius:20px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px var(--hair);backdrop-filter:blur(10px)}
@@ -40235,7 +40458,7 @@ var ThWeatherCard = class extends HTMLElement {
     const comp = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>${[0, 90, 180, 270].map((a) => `<path d="M22 4v4" stroke="rgba(255,255,255,.4)" stroke-width="1.4" transform="rotate(${a} 22 22)"/>`).join("")}
       <text x="22" y="13.5" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,.55)" font-weight="700">N</text><g id="w-ndl" class="ndl"><path d="M22 9l3.5 13h-7Z" fill="#e8c37e"/><path d="M22 35l3.5-13h-7Z" fill="rgba(255,255,255,.3)"/></g><circle cx="22" cy="22" r="2" fill="#0c0e14"/></svg>`;
     const baro = `<svg class="vis" viewBox="0 0 44 44"><path d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4" stroke-linecap="round"/><path id="p-arc" class="ring" d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="#b7a4ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="47.1" stroke-dashoffset="47.1"/><g id="p-ndl" class="ndl" style="transform-origin:22px 30px"><path d="M22 30V17" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></g><circle cx="22" cy="30" r="2.4" fill="#fff"/></svg>`;
-    const spark = `<svg class="vis" viewBox="0 0 44 44" id="rr-sp"></svg>`;
+    const spark = `<div class="vis rr"><svg viewBox="0 0 44 44" id="rr-sp" style="display:block;width:100%;height:100%;overflow:visible"></svg></div>`;
     this._r.innerHTML = `<style>${CSS2}</style><div class="c" id="c"><div class="sky" id="sky"></div>
       <div class="top"><div class="loc"><i></i><span id="loc">Vejret nu</span></div><div class="r" id="chips"></div></div>
       <div class="main"><div class="now"><div id="bi"></div><div><div class="big" id="temp">\u2013</div></div><div style="min-width:0"><div class="cd" id="cd">\u2013</div><div class="meta" id="meta"></div></div></div>
@@ -40256,11 +40479,32 @@ var ThWeatherCard = class extends HTMLElement {
       };
     });
     const svg = this.$("hsvg"), tip = this.$("tip");
-    svg.addEventListener("pointermove", (e) => this.scrub(e));
-    svg.addEventListener("pointerleave", () => {
+    const unscrub = () => {
       tip.classList.remove("on");
       const h = this._r.getElementById("hl");
       if (h) h.setAttribute("opacity", 0);
+    };
+    svg.addEventListener("pointermove", (e) => this.scrub(e));
+    svg.addEventListener("pointerdown", (e) => this.scrub(e));
+    svg.addEventListener("pointerleave", (e) => {
+      if (e.pointerType === "mouse") unscrub();
+      else {
+        clearTimeout(this._unscrub);
+        this._unscrub = setTimeout(unscrub, 3500);
+      }
+    });
+    const hh2 = (f) => `Kl. ${String(new Date(f.datetime).getHours()).padStart(2, "0")}`;
+    chartHover(this._r, ".rr", (box, x) => {
+      const fc2 = this._rrFc;
+      if (!fc2?.length) return null;
+      const i = Math.round(x * (fc2.length - 1)), f = fc2[i], p = f.precipitation_probability || 0;
+      return { x: i / Math.max(1, fc2.length - 1), y: (34 - p / 100 * 22) / 44, color: "#8ed1ff", text: `${hh2(f)} \xB7 ${Math.round(p)} %` };
+    });
+    chartHover(this._r, ".cast .bar", (box, x) => {
+      const fc2 = this._castFc;
+      if (!fc2?.length) return null;
+      const i = Math.min(fc2.length - 1, Math.floor(x * fc2.length)), f = fc2[i];
+      return { x: (i + 0.5) / fc2.length, text: `${hh2(f)} \xB7 ${fmt(f.precipitation || 0, 1)} mm \xB7 ${Math.round(f.precipitation_probability || 0)} %` };
     });
     this._ro = new ResizeObserver(() => {
       const w = this.$("hs").clientWidth;
@@ -40441,7 +40685,8 @@ var ThWeatherCard = class extends HTMLElement {
     const el = this.$("cast");
     const rnow = this.d("nedbor_lige_nu"), raining = rnow > 0.05 || this._h.states["binary_sensor.dmi_vejr_regner_nu"]?.state === "on" || (fc2[0]?.precipitation || 0) >= 0.2;
     const near = this.d("afstand_til_naermeste_regn"), H4 = (f) => String(new Date(f.datetime).getHours()).padStart(2, "0");
-    const bars = fc2.length ? `<span class="bar">${fc2.map((f, i2) => `<i style="height:${Math.max(2, Math.min(18, (f.precipitation || 0) * 7 + (f.precipitation_probability || 0) / 25))}px;opacity:${0.25 + (f.precipitation_probability || 0) / 140};animation-delay:${i2 * 40}ms"></i>`).join("")}</span>` : "";
+    this._castFc = fc2;
+    const bars = fc2.length ? `<span class="bar" style="--bw:${fc2.length * 6 - 2}px">${fc2.map((f, i2) => `<i class="b" style="height:${Math.max(2, Math.min(18, (f.precipitation || 0) * 7 + (f.precipitation_probability || 0) / 25))}px;opacity:${0.25 + (f.precipitation_probability || 0) / 140};animation-delay:${i2 * 40}ms"></i>`).join("")}</span>` : "";
     let c2 = "var(--emer)", i = "sun", t;
     if (!fc2.length) t = "<b>Henter prognose\u2026</b>";
     else if (raining) {
@@ -40490,6 +40735,7 @@ var ThWeatherCard = class extends HTMLElement {
       tx2("rain", `${Math.round(mx)}<small>%</small>`, mm > 0 ? `${fmt(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
       const k = fc2.map((f) => f.precipitation_probability || 0).join();
       const sp = this.$("rr-sp");
+      this._rrFc = fc2;
       if (sp && sp._k !== k) {
         sp._k = k;
         const pts = fc2.map((f, i) => `${i / (fc2.length - 1) * 44},${34 - (f.precipitation_probability || 0) / 100 * 22}`).join(" ");
@@ -40792,10 +41038,11 @@ var ThWeatherCard = class extends HTMLElement {
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
       F\xF8les som <b>${fmt(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
       Vind <b>${fmt((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
-    const sc = this.$("hs").scrollLeft, vw = this.$("hs").clientWidth;
+    const hs = this.$("hs"), sc = hs.scrollLeft, pad4 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
+    const lo = sc + 22 - pad4, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad4 - tw);
     let L3 = (i + 1) * this._cw + 8;
-    if (L3 + 158 - sc > vw) L3 = i * this._cw - 158;
-    tip.style.left = Math.max(0, L3) + "px";
+    if (L3 > hi) L3 = i * this._cw - tw - 8;
+    tip.style.left = Math.max(lo, Math.min(hi, L3)) + "px";
     tip.classList.add("on");
   }
 };
@@ -41906,6 +42153,7 @@ var HACardListEditor11 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor11);
 
 // src/cards/ha-home-room-overview-card-v3/ha-home-room-overview-card-v3.js
+init_chart_hover();
 var ROOM_OVERVIEW_VERSION2 = "3.1.1";
 var OPEN_STATES = /* @__PURE__ */ new Set(["on", "open", "opening"]);
 var PRESENT_STATES = /* @__PURE__ */ new Set(["on", "home", "detected"]);
@@ -41993,6 +42241,8 @@ h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1
 .tile:focus-visible{box-shadow:0 0 0 2px var(--brand)}
 .tile.press{transform:scale(.985)}
 @media (hover:hover){.tile:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}.tile:hover::after{opacity:1}.tile:hover .spark{opacity:.5}}
+/* Hover p\xE5 baggrundskurven (Claude AI, 2026-10-18): shared/chart-hover tegner i flisen; linjen holdes p\xE5 kurvens b\xE5nd og skiltet lige over den. */
+.tile>i:first-of-type{top:var(--spark-top,0)!important;bottom:var(--spark-bottom,0)!important}.tile>span:last-of-type{top:max(2px,calc(var(--spark-top,0px) - 26px))!important}
 .tile.lit{border-color:color-mix(in srgb,rgb(var(--lrgb)) calc(18% + var(--level) * 30%),color-mix(in srgb,var(--line) 52%,transparent))}
 .tile.alarm{border-color:color-mix(in srgb,var(--bad) 58%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 22%,transparent),0 0 34px color-mix(in srgb,var(--bad) 13%,transparent)}
 .tile.critical{animation:tileIn .75s var(--ease) backwards,alarm 1.6s ease-in-out infinite}
@@ -42178,6 +42428,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     this._batteryCache = /* @__PURE__ */ new Map();
     this._filter = null;
     this._armed = null;
+    chartHover(this.shadowRoot, ".tile", (box, fraction, event) => this._sparkPoint(box, fraction, event));
   }
   setConfig(config) {
     if (!config || !Array.isArray(config.rooms) || !config.rooms.length) throw new Error("rooms is required");
@@ -42812,8 +43063,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       button.setAttribute("aria-pressed", String(on));
     });
     if (t.off) {
-      const show = m.lightOn || m.mediaOn;
-      t.off.classList.toggle("show", show);
+      const show2 = m.lightOn || m.mediaOn;
+      t.off.classList.toggle("show", show2);
       t.off.classList.toggle("pending", !!room.light && this._isPending(`off:${room.index}`));
     }
   }
@@ -42829,6 +43080,26 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (past == null) return null;
     const diff = current - past;
     return diff >= (room.trend_threshold ?? 0.3) ? "up" : diff <= -(room.trend_threshold ?? 0.3) ? "down" : null;
+  }
+  // Kurven ligger bag flisens indhold; hoveren vises kun, når markøren er i kurvens bånd og ikke på en knap.
+  _sparkPoint(box, fraction, event) {
+    const t = this._tiles?.find((tile3) => tile3.el === box);
+    const scale = t?.sparkScale;
+    const points = t && this._history.get(t.room.temperature);
+    if (!scale || !points || points.length < 2 || t.spark.style.display === "none" || !event) return null;
+    if (event.target?.closest?.(".btn,.chip.tap")) return null;
+    const tile2 = box.getBoundingClientRect(), band = t.spark.getBoundingClientRect();
+    if (!band.height || event.clientY < band.top || event.clientY > band.bottom) return null;
+    box.style.setProperty("--spark-top", `${band.top - tile2.top}px`);
+    box.style.setProperty("--spark-bottom", `${tile2.bottom - band.bottom}px`);
+    const nearest = nearestPoint(points, scale.start, scale.end, fraction);
+    const y = (37 - (nearest.v - scale.min) / (scale.max - scale.min) * 30) / 40;
+    return {
+      x: clamp((nearest.t - scale.start) / (scale.end - scale.start), 0, 1),
+      y: (band.top - tile2.top + y * band.height) / tile2.height,
+      color: "var(--accent)",
+      text: `${hoverTime(nearest.t, this._hass)} \xB7 ${this._fmt(nearest.v)}\xB0`
+    };
   }
   _patchSpark(t, room) {
     const points = this._history.get(room.temperature);
@@ -42848,6 +43119,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       max = mid + 0.4;
     }
     const coords = points.map((p) => [clamp((p.t - start) / (end - start) * 100, 0, 100), 37 - (p.v - min) / (max - min) * 30]);
+    t.sparkScale = { start, end, min, max };
     coords.push([100, coords[coords.length - 1][1]]);
     const line = coords.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
     t.stroke.setAttribute("points", line);
@@ -52223,6 +52495,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this.shadowRoot.addEventListener("contextmenu", (event) => {
       if (event.composedPath().some((node) => node?.dataset?.ctl)) event.preventDefault();
     });
+    Promise.resolve().then(() => (init_chart_hover(), chart_hover_exports)).then(({ chartHover: chartHover2 }) => chartHover2(this.shadowRoot, ".cf-chart", (box, fraction) => this._todayPoint(box, fraction))).catch(() => {
+    });
   }
   static getStubConfig(hass) {
     return { title: "Calefa II 40/40", subtitle: "Fjernvarmeunit" };
@@ -52989,7 +53263,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const meter = Boolean(meterKey);
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
-    const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><title></title><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
+    const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
     const stat = (key, label, ref, unit, sub = "", icon4 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon4}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
@@ -53068,7 +53342,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const scale = (value) => value / kwhMax * 94;
     const hours = this._refs["today-chart"].querySelectorAll(".cf-hour");
     hours.forEach((group, hour) => {
-      const [title, , heatBar, dhwBar] = group.children;
+      const [, heatBar, dhwBar] = group.children;
       const heatHeight = hour > current ? 0 : scale(lower[hour]);
       const dhwHeight = hour > current ? 0 : scale(upper[hour]);
       const set = (bar, y3, height) => {
@@ -53080,9 +53354,6 @@ var HaCalefaFlowCard = class extends HTMLElement {
       set(dhwBar, 100 - heatHeight - dhwHeight, dhwHeight);
       this._toggle(group, "is-now", hour === current);
       this._toggle(group, "is-future", hour > current);
-      const kwh = lower[hour] + upper[hour];
-      const text = hour > current ? "" : `Kl. ${String(hour).padStart(2, "0")}\u2013${String(hour + 1).padStart(2, "0")}: ${this._formatNumber(kwh, 2)} kWh${split ? ` (varme ${this._formatNumber(lower[hour], 2)}, varmt vand ${this._formatNumber(upper[hour], 2)})` : ""}${perKwh !== null ? ` \xB7 ${this._formatNumber(kwh * perKwh, 2)} kr` : ""}`;
-      this._text(title, text);
     });
     const fraction = clamp2((now - midnight) / 36e5 - current, 0, 1);
     let cumulative = 0;
@@ -53091,6 +53362,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       cumulative += basis[hour];
       points.push([hour === current ? (hour + fraction) * 10 : (hour + 1) * 10, cumulative]);
     }
+    this._todayHover = { lower, upper, split, perKwh, current, kwhMax, cumulative: points.slice(1).map(([, kwh]) => kwh) };
     const costMax = perKwh !== null ? nice(cumulative * perKwh * 1.1) : 0;
     const y = (kwh) => perKwh !== null && costMax ? 100 - kwh * perKwh / costMax * 94 : 100;
     const line = perKwh !== null ? points.map(([x, kwh], index) => `${index ? "L" : "M"}${x.toFixed(2)} ${y(kwh).toFixed(2)}`).join(" ") : "";
@@ -53103,6 +53375,22 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const total = basis.reduce((sum, value) => sum + value, 0);
     const label = `Forbrug pr. time i dag, i alt ${this._formatNumber(total, 1)} kWh${perKwh !== null ? `, ${this._formatNumber(total * perKwh, 2)} kr` : ""}`;
     if (this._refs["today-chart"].getAttribute("aria-label") !== label) this._refs["today-chart"].setAttribute("aria-label", label);
+  }
+  // The hour under the pointer: its kWh (split into heating and hot water when stacked) and the accumulated price.
+  // The chart box has side padding for the axis labels, so the pointer is mapped onto the plot inside it.
+  _todayPoint(box, fraction) {
+    const data = this._todayHover;
+    if (!data) return null;
+    const style = getComputedStyle(box);
+    const padLeft = parseFloat(style.paddingLeft) || 0;
+    const plot = box.clientWidth - padLeft - (parseFloat(style.paddingRight) || 0);
+    if (plot <= 0) return null;
+    const hour = clamp2(Math.floor((fraction * box.clientWidth - padLeft) / plot * 24), 0, data.current);
+    const kwh = data.lower[hour] + data.upper[hour];
+    const pad4 = (value) => String(value).padStart(2, "0");
+    const parts = [`Kl. ${pad4(hour)}\u2013${pad4(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} \xB7 vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
+    if (data.perKwh !== null) parts.push(`${this._formatNumber(kwh * data.perKwh, 2)} kr`, `i alt ${this._formatNumber(data.cumulative[hour] * data.perKwh, 2)} kr`);
+    return { x: (padLeft + (hour + 0.5) / 24 * plot) / box.clientWidth, y: 1 - kwh / data.kwhMax * 0.94, color: "var(--cf-chart-heat)", text: parts.join(" \xB7 ") };
   }
   // Statistics are only requested while the card is visible and at most every five minutes; the
   // current hour follows the live daily counters in between.
@@ -57367,6 +57655,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashboard", description: "AI-forbrug og kvoter" });
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
+init_chart_hover();
 var VERSION54 = "1.1.1";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
@@ -57726,8 +58015,8 @@ var STYLE8 = `
 .ring-wrap.active .ring-pulse{opacity:1;animation:pulse-dot 2.6s ease-in-out infinite}
 
 .spark{display:flex;align-items:flex-end;gap:3px;height:38px;margin-top:auto}
-.spark i{flex:1;min-width:2px;height:var(--h);border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,var(--tone),color-mix(in srgb,var(--tone) 35%,transparent));opacity:.9;transform-origin:bottom;transition:height .8s ease}
-.spark i.live{animation:live-bar 2.8s ease-in-out infinite}
+.spark i.b{flex:1;min-width:2px;height:var(--h);border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,var(--tone),color-mix(in srgb,var(--tone) 35%,transparent));opacity:.9;transform-origin:bottom;transition:height .8s ease}
+.spark i.b.live{animation:live-bar 2.8s ease-in-out infinite}
 .spark-caption{display:flex;justify-content:space-between;color:var(--energy-faint);font-size:11px;margin-top:4px}
 
 /* ---------- hovedsektion ---------- */
@@ -57790,7 +58079,7 @@ var STYLE8 = `
 .mini .spark{height:34px}
 .mini-foot{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--energy-muted)}
 .mini-foot .pill{font-size:12px;padding:3px 8px}
-.mini svg.mini-line{width:100%;height:40px;margin-top:auto;overflow:visible}
+.mini .mini-line-box{position:relative;margin-top:auto}.mini svg.mini-line{display:block;width:100%;height:40px;overflow:visible}
 .mini-line path{fill:none;stroke:var(--tone);stroke-width:2;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tone) 60%,transparent))}
 .mini-line circle{fill:var(--energy-cyan)}
 
@@ -57989,7 +58278,7 @@ var STYLE8 = `
 .dash .fact b,.dash .erow .val,.dash .leg b,.dash .ext b,.dash .range .rv{white-space:nowrap}
 .dash .a-price .big .u,.dash .a-house .big .u,.dash .mini .big .u,.dash .unit,.dash .range .ru{order:1;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700;opacity:1}
 /* meter */
-.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini svg.mini-line,.dash .erow .bar{order:2;margin-top:6px}
+.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini .mini-line-box,.dash .erow .bar{order:2;margin-top:6px}
 .dash .a-house .spark,.dash .mini .spark{height:30px}
 .dash .mini svg.mini-line{height:30px}
 .dash .erow .bar{height:5px;margin-bottom:4px;grid-column:auto}
@@ -58353,7 +58642,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon2("mdi:percent")}<h3>Pris lige nu vs. gennemsnit</h3></div>
         <div class="big"><span class="v num" data-ref="vsPrice" data-v>\u2014</span><span class="u">kr/kWh</span></div>
         <div class="mini-foot"><span class="pill" data-ref="vsPill">\u2014</span></div>
-        <svg class="mini-line" data-ref="vsLine" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+        <div class="mini-line-box"><svg class="mini-line" data-ref="vsLine" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div>
       </div>
     </div>
   </section>
@@ -58453,8 +58742,11 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     };
     root.addEventListener("click", (ev) => {
       if (ev.target.closest?.(".hover-layer")) return;
+      if (ev.pointerType && ev.pointerType !== "mouse" && ev.target.closest?.(".spark, .mini-line-box")) return;
       openMoreInfo(ev.target.closest?.("[data-entity]"));
     });
+    chartHover(root, ".spark", (box, fraction) => this._sparkPoint(box, fraction));
+    chartHover(root, ".mini-line-box", (box, fraction) => this._vsLinePoint(fraction));
     root.addEventListener("keydown", (ev) => {
       if (ev.key !== "Enter" && ev.key !== " ") return;
       const el = ev.target.closest?.("[data-entity]");
@@ -58644,6 +58936,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const a = m.todayAnalysis;
     const svg = this._refs.vsLine;
     if (!a || !m.todayDomain) {
+      this._vsLineGeom = null;
       svg.innerHTML = "";
       return;
     }
@@ -58652,6 +58945,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const toX = (t) => (t - start) / (end - start) * 100;
     const toY = (v) => 36 - (v - a.min) / span * 32;
     const d = splitOnGaps(m.today).map((seg) => monotonePath(seg.map((e) => [toX((e.start + e.end) / 2), toY(e.price)]))).join("");
+    this._vsLineGeom = { entries: m.today, start, end, toX, toY };
     const dot = m.current ? `<circle cx="${toX((m.current.start + m.current.end) / 2).toFixed(2)}" cy="${toY(m.current.price).toFixed(2)}" r="2.2"/>` : "";
     const markup = `<path d="${d}"/>${dot}`;
     if (this._shown.get("vsLineSvg") !== markup) {
@@ -58837,11 +59131,11 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const layer = plot.querySelector(".hover-layer");
     const tip = plot.querySelector(".tip");
     const vline = plot.querySelector(".hover-line");
-    const hide = () => {
+    const hide2 = () => {
       tip.hidden = true;
       vline.hidden = true;
     };
-    const show = (ev) => {
+    const show2 = (ev) => {
       const geom = getGeom();
       if (!geom?.entries?.length) return;
       const rect = layer.getBoundingClientRect();
@@ -58851,18 +59145,29 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       const d = describe(e, geom);
       this._toneClass(tip, d.tone);
       tip.innerHTML = d.html;
-      tip.style.left = `${clamp4(d.x, 12, 88)}%`;
-      tip.style.top = `${clamp4(d.y, 30, 100)}%`;
       vline.style.left = `${d.x}%`;
       tip.hidden = false;
       vline.hidden = false;
+      const box = plot.getBoundingClientRect();
+      const card = (plot.closest(".card") || plot).getBoundingClientRect();
+      const tw = tip.offsetWidth;
+      const th2 = tip.offsetHeight;
+      const px = d.x / 100 * box.width;
+      const py = d.y / 100 * box.height;
+      const left = clamp4(px - tw / 2, card.left - box.left + 6, card.right - box.left - tw - 6);
+      let top = py - th2 - 10;
+      if (box.top + top < card.top + 6) top = py + 12;
+      top = Math.min(top, card.bottom - box.top - th2 - 6);
+      tip.style.transform = "none";
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
     };
     layer.addEventListener("pointermove", (ev) => {
-      if (ev.pointerType === "mouse") show(ev);
+      if (ev.pointerType === "mouse") show2(ev);
     });
-    layer.addEventListener("pointerdown", show);
+    layer.addEventListener("pointerdown", show2);
     layer.addEventListener("pointerleave", (ev) => {
-      if (ev.pointerType === "mouse") hide();
+      if (ev.pointerType === "mouse") hide2();
     });
     layer.addEventListener("click", (ev) => ev.stopPropagation());
     if (!this._tipOutsideBound) {
@@ -59103,6 +59408,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       };
       this._stats.power = {};
       for (const id of powerIds) this._stats.power[id] = bucket2(power?.[id]);
+      this._stats.powerFirst = Math.floor((now - SPARK_WINDOW_MS) / SPARK_BUCKET_MS) + 1;
       this._stats.energyHourly = (energy?.[energyId] || []).map((r) => ({ start: statTime(r.start), change: r.change })).filter((r) => Number.isFinite(r.start) && Number.isFinite(r.change));
       this._stats.failed = false;
     } catch (err) {
@@ -59115,9 +59421,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._renderSparks();
     this._updateDayCompare();
   }
-  _renderSparkInto(ref, values, liveLast) {
+  _renderSparkInto(ref, values, liveLast, times, unit) {
     const el = this._refs[ref];
     if (!el) return;
+    el._hover = { values: values || [], times: times || [], unit, liveLast };
     const finite = (values || []).filter(Number.isFinite);
     if (finite.length < 2) {
       this._show(ref, false);
@@ -59128,7 +59435,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const span = max - min || 1;
     const markup = values.map((v, i) => {
       const h = Number.isFinite(v) ? 6 + (v - min) / span * 94 : 0;
-      return `<i class="${liveLast && i === values.length - 1 ? "live" : ""}" style="--h:${h.toFixed(1)}%"></i>`;
+      return `<i class="b${liveLast && i === values.length - 1 ? " live" : ""}" style="--h:${h.toFixed(1)}%"></i>`;
     }).join("");
     if (this._shown.get(`spark-${ref}`) !== markup) {
       this._shown.set(`spark-${ref}`, markup);
@@ -59136,19 +59443,42 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     }
     this._show(ref, true);
   }
+  _sparkPoint(box, fraction) {
+    const data = box._hover;
+    const n = data?.values.length;
+    if (!n || !this._clock) return null;
+    const i = clamp4(Math.floor(fraction * n), 0, n - 1);
+    const v = data.values[i];
+    const finite = data.values.filter(Number.isFinite);
+    const lo = Math.min(...finite, 0);
+    const span = Math.max(...finite, 0) - lo || 1;
+    const when = data.liveLast && i === n - 1 ? "Nu" : `Kl. ${this._clock.time(data.times[i])}`;
+    const value = !Number.isFinite(v) ? "ingen data" : data.unit === "kW" ? `${fmtPower(v)} kW` : `${fmtEnergy(v)} kWh`;
+    return { x: (i + 0.5) / n, y: Number.isFinite(v) ? 1 - (6 + (v - lo) / span * 94) / 100 : void 0, color: "var(--tone)", text: `${when} \xB7 ${value}` };
+  }
+  _vsLinePoint(fraction) {
+    const g = this._vsLineGeom;
+    if (!g?.entries?.length || !this._clock) return null;
+    const t = g.start + fraction * (g.end - g.start);
+    const e = g.entries.reduce((best, x) => Math.abs((x.start + x.end) / 2 - t) < Math.abs((best.start + best.end) / 2 - t) ? x : best);
+    const mid = (e.start + e.end) / 2;
+    return { x: g.toX(mid) / 100, y: g.toY(e.price) / 40, color: "var(--tone)", text: `Kl. ${this._clock.time(e.start)} \xB7 ${fmtPrice(e.price)} kr/kWh` };
+  }
   _renderSparks() {
     const houseId = this._id("house_power");
     const carId = this._id("charger_power");
     const house = houseId ? this._stats.power[houseId] : void 0;
     const car = carId ? this._stats.power[carId] : void 0;
-    this._renderSparkInto("houseSpark", house, true);
+    const first = this._stats.powerFirst;
+    const powerTimes = (values) => (values || []).map((_, i) => (first + i) * SPARK_BUCKET_MS);
+    this._renderSparkInto("houseSpark", house, true, powerTimes(house), "kW");
     this._show("houseSparkWrap", !this._refs.houseSpark.hidden);
-    this._renderSparkInto("houseMiniSpark", house, true);
-    this._renderSparkInto("chargerSpark", car, true);
+    this._renderSparkInto("houseMiniSpark", house, true, powerTimes(house), "kW");
+    this._renderSparkInto("chargerSpark", car, true, powerTimes(car), "kW");
     if (this._clock) {
       const todayKey = this._clock.dateKey(Date.now());
-      const todayHours = this._stats.energyHourly.filter((r) => this._clock.dateKey(r.start) === todayKey).map((r) => Math.max(0, r.change));
-      this._renderSparkInto("houseDaySpark", todayHours, false);
+      const todayRows = this._stats.energyHourly.filter((r) => this._clock.dateKey(r.start) === todayKey);
+      this._renderSparkInto("houseDaySpark", todayRows.map((r) => Math.max(0, r.change)), false, todayRows.map((r) => r.start), "kWh");
     }
   }
   /** Dagens forbrug sammenlignet med samme tidspunkt i går (fra timestatistik). */
@@ -60060,14 +60390,14 @@ var BarChart = class {
     this.host.classList.add("has-line");
   }
   _bindTooltip() {
-    const show = (ev) => {
+    const show2 = (ev) => {
       const n = this.values.length;
       if (!n || this.host.classList.contains("is-empty")) return;
       const rect = this.plot.getBoundingClientRect();
       const x = Math.min(Math.max(ev.clientX - rect.left, 0), rect.width - 1);
       const i = Math.floor(x / rect.width * n);
       const html = this.opts.describe?.(i);
-      if (!html) return hide();
+      if (!html) return hide2();
       const cx = (i + 0.5) / n * 100;
       this.tipEl.innerHTML = html;
       this.tipEl.style.left = `${Math.min(Math.max(cx, 14), 86)}%`;
@@ -60076,14 +60406,14 @@ var BarChart = class {
       this.hoverEl.hidden = false;
       [...this.barsEl.children].forEach((el, j) => el.classList.toggle("hover", j === i));
     };
-    const hide = () => {
+    const hide2 = () => {
       this.tipEl.hidden = true;
       this.hoverEl.hidden = true;
       this.barsEl.querySelector(".hover")?.classList.remove("hover");
     };
-    this.plot.addEventListener("pointermove", show);
-    this.plot.addEventListener("pointerdown", show);
-    this.plot.addEventListener("pointerleave", hide);
+    this.plot.addEventListener("pointermove", show2);
+    this.plot.addEventListener("pointerdown", show2);
+    this.plot.addEventListener("pointerleave", hide2);
   }
 };
 

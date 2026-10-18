@@ -1,3 +1,5 @@
+import { chartHover } from "../../shared/chart-hover.js";
+
 const VERSION = "0.5.1";
 
 class HAPowerFlowCardEditor extends HTMLElement {
@@ -20,6 +22,24 @@ class HAPowerFlowCard extends HTMLElement {
     this._hass = undefined;
     this._sig = "";
     this._id = "pfc" + Math.random().toString(36).slice(2, 8);
+    // Hover/tryk på prissøjlerne viser tid og pris inde i grafen (Claude AI, 2026-10-18).
+    chartHover(this.shadowRoot, ".chart", (box, fraction) => this._barPoint(box, fraction));
+  }
+  _barPoint(box, fraction) {
+    const bars = [...box.querySelectorAll(":scope > .bar")];
+    if (!bars.length) return null;
+    const rect = box.getBoundingClientRect();
+    const x = rect.left + fraction * rect.width;
+    const centre = (bar) => { const r = bar.getBoundingClientRect(); return r.left + r.width / 2; };
+    const best = bars.reduce((a, b) => (Math.abs(centre(b) - x) < Math.abs(centre(a) - x) ? b : a));
+    const r = best.getBoundingClientRect();
+    const top = best.querySelector("i")?.getBoundingClientRect().top ?? r.bottom;
+    return {
+      x: (r.left + r.width / 2 - rect.left) / rect.width,
+      y: (top - rect.top) / rect.height,
+      color: "var(--price-color, var(--primary-text-color))",
+      text: best.dataset.tip,
+    };
   }
   static getStubConfig() {
     return {
@@ -312,8 +332,10 @@ class HAPowerFlowCard extends HTMLElement {
             const h = Number.isFinite(min) && Number.isFinite(max) && max > min
               ? 8 + ((price - min) / (max - min)) * 92
               : 50;
-            const hour = new Date(p.start).getHours();
-            return `<div class="bar ${t} ${hour === nowHour ? "now" : ""} ${c.high_price_animation !== false && pulse > 0 ? "price-alert" : ""}" style="--price-color:${this._priceColor(price)};--pulse-duration:${(3.2-pulse*2).toFixed(2)}s;--pulse-scale:${(0.96-pulse*.24).toFixed(2)};--pulse-opacity:${(0.88-pulse*.3).toFixed(2)};--pulse-brightness:${(1.08+pulse*.82).toFixed(2)};--pulse-glow:${(3+pulse*15).toFixed(1)}px" data-tip="${this._esc(this._fmt(price))} kr"><i style="height:${h}%"></i></div>`;
+            const start = new Date(p.start);
+            const hour = start.getHours();
+            const at = `${String(hour).padStart(2, "0")}.${String(start.getMinutes()).padStart(2, "0")}`;
+            return `<div class="bar ${t} ${hour === nowHour ? "now" : ""} ${c.high_price_animation !== false && pulse > 0 ? "price-alert" : ""}" style="--price-color:${this._priceColor(price)};--pulse-duration:${(3.2-pulse*2).toFixed(2)}s;--pulse-scale:${(0.96-pulse*.24).toFixed(2)};--pulse-opacity:${(0.88-pulse*.3).toFixed(2)};--pulse-brightness:${(1.08+pulse*.82).toFixed(2)};--pulse-glow:${(3+pulse*15).toFixed(1)}px" data-tip="${this._esc(`Kl. ${at} · ${this._fmt(price)} kr/kWh`)}" aria-label="${this._esc(`Kl. ${at} · ${this._fmt(price)} kr/kWh`)}"><i style="height:${h}%"></i></div>`;
           })
           .join("")}
       </div>
@@ -327,12 +349,16 @@ class HAPowerFlowCard extends HTMLElement {
     </ha-card>`;
 
     const renderedChart = this.shadowRoot.querySelector(".chart");
-    if (preservedChart && renderedChart && preservedChart.children.length === renderedChart.children.length) {
-      [...preservedChart.children].forEach((bar, index) => {
-        const fresh = renderedChart.children[index];
+    // Kun søjlerne sammenlignes; hover-linjen, prikken og skiltet ligger også i .chart (Claude AI, 2026-10-18).
+    const keptBars = preservedChart ? [...preservedChart.querySelectorAll(":scope > .bar")] : [];
+    const freshBars = renderedChart ? [...renderedChart.querySelectorAll(":scope > .bar")] : [];
+    if (preservedChart && renderedChart && keptBars.length === freshBars.length) {
+      keptBars.forEach((bar, index) => {
+        const fresh = freshBars[index];
         bar.className = fresh.className;
         bar.style.cssText = fresh.style.cssText;
         bar.dataset.tip = fresh.dataset.tip;
+        bar.setAttribute("aria-label", fresh.dataset.tip);
         bar.querySelector("i").style.cssText = fresh.querySelector("i").style.cssText;
       });
       renderedChart.replaceWith(preservedChart);
@@ -341,9 +367,6 @@ class HAPowerFlowCard extends HTMLElement {
       el.addEventListener("click", () => {
         if (el.dataset.more) this._more(el.dataset.more);
       });
-    });
-    this.shadowRoot.querySelectorAll(".bar[data-tip]").forEach((el) => {
-      el.setAttribute("title", el.dataset.tip);
     });
   }
   getCardSize() {

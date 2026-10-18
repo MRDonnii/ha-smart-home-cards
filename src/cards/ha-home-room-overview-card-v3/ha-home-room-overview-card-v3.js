@@ -1,5 +1,6 @@
 import "./ha-card-list-editor.js";
 import { AIR_COLORS, airQuality, pm25Rank } from "../shared/air-quality.js";
+import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
 // 3.0.0 – rumoversigt med levende rumstatus, status-chips,
 // hurtigknapper (tryk = skift, hold = detaljer), lysfarve-glød, filtre og animationer.
@@ -83,6 +84,8 @@ h1{margin:8px 0 4px;font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1
 .tile:focus-visible{box-shadow:0 0 0 2px var(--brand)}
 .tile.press{transform:scale(.985)}
 @media (hover:hover){.tile:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}.tile:hover::after{opacity:1}.tile:hover .spark{opacity:.5}}
+/* Hover på baggrundskurven (Claude AI, 2026-10-18): shared/chart-hover tegner i flisen; linjen holdes på kurvens bånd og skiltet lige over den. */
+.tile>i:first-of-type{top:var(--spark-top,0)!important;bottom:var(--spark-bottom,0)!important}.tile>span:last-of-type{top:max(2px,calc(var(--spark-top,0px) - 26px))!important}
 .tile.lit{border-color:color-mix(in srgb,rgb(var(--lrgb)) calc(18% + var(--level) * 30%),color-mix(in srgb,var(--line) 52%,transparent))}
 .tile.alarm{border-color:color-mix(in srgb,var(--bad) 58%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 22%,transparent),0 0 34px color-mix(in srgb,var(--bad) 13%,transparent)}
 .tile.critical{animation:tileIn .75s var(--ease) backwards,alarm 1.6s ease-in-out infinite}
@@ -256,6 +259,7 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     this._batteryCache = new Map();
     this._filter = null;
     this._armed = null;
+    chartHover(this.shadowRoot, ".tile", (box, fraction, event) => this._sparkPoint(box, fraction, event));
   }
 
   setConfig(config) {
@@ -832,6 +836,27 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     return diff >= (room.trend_threshold ?? 0.3) ? "up" : diff <= -(room.trend_threshold ?? 0.3) ? "down" : null;
   }
 
+  // Kurven ligger bag flisens indhold; hoveren vises kun, når markøren er i kurvens bånd og ikke på en knap.
+  _sparkPoint(box, fraction, event) {
+    const t = this._tiles?.find((tile) => tile.el === box);
+    const scale = t?.sparkScale;
+    const points = t && this._history.get(t.room.temperature);
+    if (!scale || !points || points.length < 2 || t.spark.style.display === "none" || !event) return null;
+    if (event.target?.closest?.(".btn,.chip.tap")) return null;
+    const tile = box.getBoundingClientRect(), band = t.spark.getBoundingClientRect();
+    if (!band.height || event.clientY < band.top || event.clientY > band.bottom) return null;
+    box.style.setProperty("--spark-top", `${band.top - tile.top}px`);
+    box.style.setProperty("--spark-bottom", `${tile.bottom - band.bottom}px`);
+    const nearest = nearestPoint(points, scale.start, scale.end, fraction);
+    const y = (37 - (nearest.v - scale.min) / (scale.max - scale.min) * 30) / 40;
+    return {
+      x: clamp((nearest.t - scale.start) / (scale.end - scale.start), 0, 1),
+      y: (band.top - tile.top + y * band.height) / tile.height,
+      color: "var(--accent)",
+      text: `${hoverTime(nearest.t, this._hass)} · ${this._fmt(nearest.v)}°`,
+    };
+  }
+
   _patchSpark(t, room) {
     const points = this._history.get(room.temperature);
     const signature = points?.length ? `${this._historyVersion}:${points.length}` : "";
@@ -843,6 +868,7 @@ class HaHomeRoomOverviewCard extends HTMLElement {
     let min = Math.min(...values), max = Math.max(...values);
     if (max - min < 0.8) { const mid = (max + min) / 2; min = mid - 0.4; max = mid + 0.4; }
     const coords = points.map((p) => [clamp((p.t - start) / (end - start) * 100, 0, 100), 37 - (p.v - min) / (max - min) * 30]);
+    t.sparkScale = { start, end, min, max };
     coords.push([100, coords[coords.length - 1][1]]);
     const line = coords.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
     t.stroke.setAttribute("points", line);

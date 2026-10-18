@@ -3,6 +3,7 @@
  * weather: weather.dmi_vejr   prefix: sensor.dmi_vejr_   padding: '0'
  * valgfrit: radar_image_entity, satellite_image_entity, radar_details[], detail_sections[], pollen[]
  */
+import { chartHover } from '../../shared/chart-hover.js';
 const VWH_VER = '3.2.0';
 const fmt = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const hhmm = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
@@ -112,7 +113,9 @@ const CSS = `
 .cast{display:flex;align-items:center;gap:10px;margin:14px 22px 0;padding:10px 14px;border-radius:15px;font-size:13px;
   background:linear-gradient(90deg,color-mix(in srgb,var(--c,var(--ice)) 14%,transparent),rgba(255,255,255,.02));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--ice)) 22%,transparent)}
 .cast .ic{color:var(--c,var(--ice));flex:none}.cast b{font-weight:600}.cast small{margin-left:auto;color:var(--mut);font-size:11.5px;white-space:nowrap}
-.cast .bar{display:flex;gap:2px;align-items:flex-end;height:18px;margin-left:auto;flex:none}.cast .bar i{width:4px;border-radius:2px;background:var(--ice);opacity:.85;transform-origin:bottom;animation:gr .8s cubic-bezier(.16,1,.3,1) both}
+.cast .bar{display:flex;gap:2px;align-items:flex-end;height:18px;margin-left:auto;flex:none}/* Smallere end skiltet: den delte hover lægger det fra boksens venstre kant, så det flyttes ind mod kortet (Claude AI, 2026-10-18) */
+.rr>span,.cast .bar>span{translate:calc(var(--bw) - 100%) 0}.rr{--bw:42px}
+.cast .bar i.b{width:4px;border-radius:2px;background:var(--ice);opacity:.85;transform-origin:bottom;animation:gr .8s cubic-bezier(.16,1,.3,1) both}
 @keyframes gr{from{transform:scaleY(0)}}
 /* sol/måne */
 .cel{position:relative;padding:12px 14px 10px;border-radius:20px;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px var(--hair);backdrop-filter:blur(10px)}
@@ -252,7 +255,7 @@ class ThWeatherCard extends HTMLElement {
     const comp = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>${[0, 90, 180, 270].map(a => `<path d="M22 4v4" stroke="rgba(255,255,255,.4)" stroke-width="1.4" transform="rotate(${a} 22 22)"/>`).join('')}
       <text x="22" y="13.5" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,.55)" font-weight="700">N</text><g id="w-ndl" class="ndl"><path d="M22 9l3.5 13h-7Z" fill="#e8c37e"/><path d="M22 35l3.5-13h-7Z" fill="rgba(255,255,255,.3)"/></g><circle cx="22" cy="22" r="2" fill="#0c0e14"/></svg>`;
     const baro = `<svg class="vis" viewBox="0 0 44 44"><path d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4" stroke-linecap="round"/><path id="p-arc" class="ring" d="M7 30a15 15 0 1 1 30 0" fill="none" stroke="#b7a4ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="47.1" stroke-dashoffset="47.1"/><g id="p-ndl" class="ndl" style="transform-origin:22px 30px"><path d="M22 30V17" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></g><circle cx="22" cy="30" r="2.4" fill="#fff"/></svg>`;
-    const spark = `<svg class="vis" viewBox="0 0 44 44" id="rr-sp"></svg>`;
+    const spark = `<div class="vis rr"><svg viewBox="0 0 44 44" id="rr-sp" style="display:block;width:100%;height:100%;overflow:visible"></svg></div>`;
     this._r.innerHTML = `<style>${CSS}</style><div class="c" id="c"><div class="sky" id="sky"></div>
       <div class="top"><div class="loc"><i></i><span id="loc">Vejret nu</span></div><div class="r" id="chips"></div></div>
       <div class="main"><div class="now"><div id="bi"></div><div><div class="big" id="temp">–</div></div><div style="min-width:0"><div class="cd" id="cd">–</div><div class="meta" id="meta"></div></div></div>
@@ -265,7 +268,16 @@ class ThWeatherCard extends HTMLElement {
       <div class="warns" id="warns"></div><div class="dt" id="dt" hidden><div class="dtabs" id="dtabs"></div><div class="dbody" id="dbody"></div></div></div>`;
     this._r.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', +b.dataset.h === this._hrs); b.onclick = () => { this._hrs = +b.dataset.h; this._r.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); this._hk = null; this.hourly(); }; });
     const svg = this.$('hsvg'), tip = this.$('tip');
-    svg.addEventListener('pointermove', e => this.scrub(e)); svg.addEventListener('pointerleave', () => { tip.classList.remove('on'); const h = this._r.getElementById('hl'); if (h) h.setAttribute('opacity', 0); });
+    // Touch: et tryk viser også skiltet, og det skjules igen efter lidt tid (Claude AI, 2026-10-18)
+    const unscrub = () => { tip.classList.remove('on'); const h = this._r.getElementById('hl'); if (h) h.setAttribute('opacity', 0); };
+    svg.addEventListener('pointermove', e => this.scrub(e)); svg.addEventListener('pointerdown', e => this.scrub(e));
+    svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') unscrub(); else { clearTimeout(this._unscrub); this._unscrub = setTimeout(unscrub, 3500); } });
+    // Regnrisiko-kurven og nowcast-søjlerne: tid og værdi i et skilt inde i grafen (Claude AI, 2026-10-18)
+    const hh = f => `Kl. ${String(new Date(f.datetime).getHours()).padStart(2, '0')}`;
+    chartHover(this._r, '.rr', (box, x) => { const fc = this._rrFc; if (!fc?.length) return null; const i = Math.round(x * (fc.length - 1)), f = fc[i], p = f.precipitation_probability || 0;
+      return { x: i / Math.max(1, fc.length - 1), y: (34 - p / 100 * 22) / 44, color: '#8ed1ff', text: `${hh(f)} · ${Math.round(p)} %` }; });
+    chartHover(this._r, '.cast .bar', (box, x) => { const fc = this._castFc; if (!fc?.length) return null; const i = Math.min(fc.length - 1, Math.floor(x * fc.length)), f = fc[i];
+      return { x: (i + .5) / fc.length, text: `${hh(f)} · ${fmt(f.precipitation || 0, 1)} mm · ${Math.round(f.precipitation_probability || 0)} %` }; });
     this._ro = new ResizeObserver(() => { const w = this.$('hs').clientWidth; if (Math.abs(w - (this._hw || 0)) > 20) { this._hw = w; this._hk = null; this.hourly(); } }); this._ro.observe(this.$('hs'));
     this._tick = setInterval(() => { this._ck = null; this.update(); }, 60e3);
     this._rtk = setInterval(() => { if (this._dtab === 'radar') { this._dk = null; this.details(true); } }, 5 * 60e3);
@@ -376,7 +388,8 @@ class ThWeatherCard extends HTMLElement {
     const fc = (this._hourly || []).filter(f => new Date(f.datetime) >= Date.now() - 36e5).slice(0, 12); const el = this.$('cast');
     const rnow = this.d('nedbor_lige_nu'), raining = rnow > .05 || this._h.states['binary_sensor.dmi_vejr_regner_nu']?.state === 'on' || (fc[0]?.precipitation || 0) >= .2;
     const near = this.d('afstand_til_naermeste_regn'), H = f => String(new Date(f.datetime).getHours()).padStart(2, '0');
-    const bars = fc.length ? `<span class="bar">${fc.map((f, i) => `<i style="height:${Math.max(2, Math.min(18, (f.precipitation || 0) * 7 + (f.precipitation_probability || 0) / 25))}px;opacity:${.25 + (f.precipitation_probability || 0) / 140};animation-delay:${i * 40}ms"></i>`).join('')}</span>` : '';
+    this._castFc = fc;
+    const bars = fc.length ? `<span class="bar" style="--bw:${fc.length * 6 - 2}px">${fc.map((f, i) => `<i class="b" style="height:${Math.max(2, Math.min(18, (f.precipitation || 0) * 7 + (f.precipitation_probability || 0) / 25))}px;opacity:${.25 + (f.precipitation_probability || 0) / 140};animation-delay:${i * 40}ms"></i>`).join('')}</span>` : '';
     let c = 'var(--emer)', i = 'sun', t;
     if (!fc.length) t = '<b>Henter prognose…</b>';
     else if (raining) { const j = fc.findIndex((f, k) => k > 0 && (f.precipitation || 0) < .1); c = 'var(--ice)'; i = 'rain';
@@ -407,6 +420,7 @@ class ThWeatherCard extends HTMLElement {
     if (fc.length) { const mx = Math.max(...fc.map(f => f.precipitation_probability || 0)), mm = fc.reduce((s, f) => s + (f.precipitation || 0), 0);
       tx('rain', `${Math.round(mx)}<small>%</small>`, mm > 0 ? `${fmt(mm, 1)} mm næste døgn` : 'tørt næste døgn');
       const k = fc.map(f => f.precipitation_probability || 0).join(); const sp = this.$('rr-sp');
+      this._rrFc = fc;
       if (sp && sp._k !== k) { sp._k = k; const pts = fc.map((f, i) => `${i / (fc.length - 1) * 44},${34 - (f.precipitation_probability || 0) / 100 * 22}`).join(' ');
         sp.innerHTML = `<polygon points="0,34 ${pts} 44,34" fill="rgba(142,209,255,.18)" class="fi"/><polyline points="${pts}" fill="none" stroke="#8ed1ff" stroke-width="1.4" stroke-linejoin="round" class="draw"/>`; } }
     // tryk
@@ -581,8 +595,10 @@ class ThWeatherCard extends HTMLElement {
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString('da-DK', { weekday: 'short' })} kl. ${String(dt.getHours()).padStart(2, '0')}</span><span>${Math.round(f.temperature)}°</span></div>${txt}<br>
       Føles som <b>${fmt(f.apparent_temperature ?? f.temperature, 0)}°</b><br>Nedbør <b>${fmt(f.precipitation || 0, 1)} mm</b> · ${Math.round(f.precipitation_probability || 0)} %<br>
       Vind <b>${fmt((f.wind_speed || 0) / 3.6, 0)}</b> (stød ${fmt((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` · skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ''}`;
-    const sc = this.$('hs').scrollLeft, vw = this.$('hs').clientWidth; let L = (i + 1) * this._cw + 8; if (L + 158 - sc > vw) L = i * this._cw - 158;
-    tip.style.left = Math.max(0, L) + 'px'; tip.classList.add('on');
+    // Skiltet holdes i den synlige (ikke-tonede) del af den rullende graf (Claude AI, 2026-10-18; før kunne det ryge ud i siderne)
+    const hs = this.$('hs'), sc = hs.scrollLeft, pad = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
+    const lo = sc + 22 - pad, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad - tw); let L = (i + 1) * this._cw + 8; if (L > hi) L = i * this._cw - tw - 8;
+    tip.style.left = Math.max(lo, Math.min(hi, L)) + 'px'; tip.classList.add('on');
   }
 }
 if (!customElements.get('th-weather-card')) customElements.define('th-weather-card', ThWeatherCard);

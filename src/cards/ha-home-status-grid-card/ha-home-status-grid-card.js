@@ -1,5 +1,6 @@
 import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
+import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
@@ -907,7 +908,7 @@ class HaHomeStatusCard extends HTMLElement {
       @keyframes chipFloat{50%{transform:translateY(-1.5px) scale(1.05)}}
       :host([v2]) .value{grid-column:2;grid-row:1;font-size:19px;line-height:21px;font-weight:800;letter-spacing:-.01em}
       :host([v2]) .detail{grid-column:2;grid-row:2;padding-right:0;font-size:11px;line-height:14px;margin-top:1px}
-      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:end;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
+      :host([v2]) .label{grid-column:1/-1;grid-row:3;align-self:stretch;display:grid;align-content:center;min-width:0;margin-top:6px;padding-top:5px;border-top:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary-text-color,#a7b2c2)}
       :host([v2]) .meter{display:none}
       :host([v2]) .ring{display:block;grid-column:3;grid-row:1/3;width:36px;height:36px;position:relative;z-index:2;transform:rotate(-90deg)}
       :host([v2]) .ring circle{fill:none;stroke-width:4;stroke-linecap:round}
@@ -919,11 +920,11 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .item.security .detail{display:block;position:static}
       :host([v2]) .item.security .label{position:static;width:auto;height:auto;text-transform:none;letter-spacing:0;overflow:visible}
       :host([v2]) .sec2{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;width:100%}
-      :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
+      :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:4px;line-height:1;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
       :host([v2]) .sec2 .sp.on{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 10px -3px var(--c);animation:secWarn 2s ease-in-out infinite}
       @keyframes secWarn{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}}
-      :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:13px;width:13px;height:13px;flex:none}
-      :host([v2]) .sec2 b{font-size:9.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+      :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:14px;width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
+      :host([v2]) .sec2 b{display:block;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
       :host([v2]) .sec2 .alarm b{display:none}
       :host([v2]) .decoration{opacity:.45}
       :host([v2]) .appliances{top:auto;bottom:6px}
@@ -940,7 +941,7 @@ class HaHomeStatusCard extends HTMLElement {
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
-        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:9px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
+        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:10px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
       /* compact: a low tile (user, 2026-10-13: "hund, alarm og indstillinger lidt mindre") – chip, value and ring on one line,
          the detail under the value; only the security tile keeps its pill row. */
       :host([v2][compact]) .item{height:100%;min-height:62px;align-content:center;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
@@ -1145,6 +1146,8 @@ class HaHomeSummaryCard extends HTMLElement {
     this._eventsSig = "";
     this._robotSig = "";
     this._robotNodes = new Map();
+    // Hover/tryk på månedskortenes dagssøjler viser dag og forbrug (Claude AI, 2026-10-18).
+    chartHover(this.shadowRoot, ".ubars", (box, fraction) => this._utilPoint(box, fraction));
   }
   setConfig(config) {
     this.config = { ...SUMMARY_DEFAULTS, ...config };
@@ -1373,6 +1376,12 @@ ${LUX_KEYFRAMES}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style><div class="sheet"><div class="box"></div></div>`;
     document.body.appendChild(host); this._roomHost = host;
+    // Hover/tryk på døgnkurven: tid og temperatur ved punktet (Claude AI, 2026-10-18).
+    chartHover(root, ".chart", (box, fraction) => {
+      const c = this._roomChart; if (!c || !box.querySelector("svg")) return null;
+      const p = nearestPoint(c.pts, c.t0, c.t1, fraction); if (!p) return null;
+      return { x: Math.max(0, (p.t - c.t0) / (c.t1 - c.t0)), y: 1 - (p.v - c.lo) / (c.hi - c.lo), color: "var(--c)", text: `${hoverTime(p.t, this._hass, { now: p.now })} · ${this._fmt(p.v, 1)}°` };
+    });
     const sheet = root.querySelector(".sheet");
     sheet.addEventListener("click", (e) => {
       if (e.target === sheet || e.target.closest("[data-close]")) { this._closeRoom(); return; }
@@ -1421,14 +1430,15 @@ ${LUX_KEYFRAMES}
     if (!force && key === this._roomSheetKey) return; this._roomSheetKey = key;
     box.className = `box ${!Number.isFinite(r.temp) ? "na" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : ""}`;
     // chart: hourly means + now, the setpoint dashed
-    const pts = [...r.series.map((p) => ({ t: p.t + 1800000, v: p.v })), ...(Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp }] : [])];
-    let chart = '<div class="empty">Ingen historik endnu</div>';
+    const pts = [...r.series.map((p) => ({ t: p.t + 1800000, v: p.v })), ...(Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp, now: true }] : [])];
+    let chart = '<div class="empty">Ingen historik endnu</div>'; this._roomChart = null;
     if (pts.length > 2) {
       const t0 = Date.now() - 24 * 3600000; const t1 = Date.now(); const vs = pts.map((p) => p.v).concat(Number.isFinite(r.target) ? [r.target] : []);
       const lo = Math.floor(Math.min(...vs) - 0.3); const hi = Math.ceil(Math.max(...vs) + 0.3);
       const X = (t) => Math.max(0, ((t - t0) / (t1 - t0)) * 100); const Y = (v) => 100 - ((v - lo) / (hi - lo)) * 100;
       const line = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(2)} ${Y(p.v).toFixed(2)}`).join("");
       const last = pts[pts.length - 1];
+      this._roomChart = { pts, t0, t1, lo, hi };
       chart = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="ar" d="${line}L${X(last.t)} 100L${X(pts[0].t)} 100Z"/><path class="ln" d="${line}"/>${Number.isFinite(r.target) ? `<line class="tg" x1="0" x2="100" y1="${Y(r.target)}" y2="${Y(r.target)}"/>` : ""}</svg>
         <span class="lb" style="left:4px;top:2px">${f(hi, 0)}°</span><span class="lb" style="left:4px;bottom:3px">${f(lo, 0)}°</span><span class="lb" style="left:0;bottom:-16px">for 24 t</span><span class="lb" style="left:50%;bottom:-16px;transform:translateX(-50%)">for 12 t</span><span class="lb" style="right:0;bottom:-16px">nu</span>
         <i class="nd" style="left:${X(last.t)}%;top:${Y(last.v)}%"></i>`;
@@ -1493,7 +1503,8 @@ ${LUX_KEYFRAMES}
     const known = uses.filter((u) => Number.isFinite(u)).sort((a, b) => a - b); const med = known.length ? known[Math.floor(known.length / 2)] : 0;
     const clean = uses.map((u) => (Number.isFinite(u) && med > 0 && u > med * 12 ? null : u));
     const max = Math.max(...clean.filter(Number.isFinite), 0.0001);
-    const bars = `<span class="ubars" aria-hidden="true">${clean.map((u, i) => `<i class="${i + 1 === today ? "now" : i + 1 > today ? "fut" : ""}" style="height:${Number.isFinite(u) ? Math.max(8, (u / max) * 100).toFixed(0) : 8}%"></i>`).join("")}</span>`;
+    const heights = clean.map((u) => (Number.isFinite(u) ? Math.max(8, (u / max) * 100) : 8));
+    const bars = `<span class="ubars" aria-hidden="true">${heights.map((h, i) => `<i class="${i + 1 === today ? "now" : i + 1 > today ? "fut" : ""}" style="height:${h.toFixed(0)}%"></i>`).join("")}</span>`;
     // last month at the same point: its end-of-day state on yesterday's date, against ours yesterday
     let chip = "";
     const yDay = today - 1; const ours = yDay >= 1 ? byDay.get(yDay) : undefined;
@@ -1507,7 +1518,17 @@ ${LUX_KEYFRAMES}
     const elapsed = (now - m0) / 864e5; const proj = Number.isFinite(cost) && elapsed > 1.5 ? (cost / elapsed) * dim : Number.NaN;
     const digits = unit === "m³" ? 3 : 1;
     const foot = `<div class="ufoot">${Number.isFinite(todayUse) ? `I dag <b>${this._fmt(unit === "m³" ? todayUse * 1000 : todayUse, unit === "m³" ? 0 : 1)} ${unit === "m³" ? "l" : unit}</b>` : ""}${Number.isFinite(proj) ? `<span title="Hvad hele måneden ender på i samme tempo">Forventet ≈ <b>${this._fmt(proj, 0)} kr</b></span>` : ""}</div>`;
-    return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits };
+    return { chip, bars, foot: Number.isFinite(todayUse) || Number.isFinite(proj) ? foot : "", digits, hover: { uses: clean, heights, today, month: m0, unit } };
+  }
+  // The day under the pointer in a month tile's bars (future days snap to today); water in litres like the foot.
+  _utilPoint(box, fraction) {
+    const data = box.closest(".utility")?._util;
+    if (!data?.uses.length) return null;
+    const n = data.uses.length; const i = Math.min(data.today - 1, Math.max(0, Math.floor(fraction * n)));
+    const u = data.uses[i]; const date = new Date(data.month.getFullYear(), data.month.getMonth(), i + 1);
+    const day = i + 1 === data.today ? "I dag" : `${date.toLocaleDateString("da-DK", { weekday: "short" })} ${i + 1}/${date.getMonth() + 1}`;
+    const value = !Number.isFinite(u) ? "ingen data" : data.unit === "m³" ? `${this._fmt(u * 1000, 0)} l` : `${this._fmt(u, 1)} ${data.unit}`;
+    return { x: (i + 0.5) / n, y: 1 - data.heights[i] / 100, color: "var(--accent)", text: `${day} · ${value}` };
   }
   async _vcRooms(host) {
     if (host._vc) { host._vc.hass = this._hass; return; }
@@ -1747,10 +1768,12 @@ ${LUX_KEYFRAMES}
         ${MARQUEE_CSS}
       </style><ha-card class="card${this.config.portrait_layout?" portrait":""}">${this.config.show_header===false?"":`<header><h2><ha-icon icon="mdi:home-analytics"></ha-icon><span class="title"></span></h2><span class="health"></span></header>`}<div class="utilities"><section class="utility electricity"></section><section class="utility water"></section><section class="utility heat"></section><section class="utility car" hidden></section></div><div class="body"><a class="panel temperature-panel" href="${this._esc(this.config.rooms_navigation_path||'/hjem-overblik/cards')}"><h3>Temperaturer og setpunkter</h3><div class="rooms"></div></a><a class="panel agenda-panel" href="${this._esc(this.config.calendar_navigation_path||'/hjem-overblik/kalender')}"><h3>Næste i kalenderen</h3><div class="events"></div></a></div></ha-card>`;
       const navigate=(path)=>{if(!path)return;history.pushState(null,"",path);window.dispatchEvent(new Event("location-changed"));};
-      this.shadowRoot.querySelector(".utility.electricity").onclick=()=>navigate(this.config.electricity_path);
-      this.shadowRoot.querySelector(".utility.water").onclick=()=>navigate(this.config.water_path);
-      this.shadowRoot.querySelector(".utility.heat").onclick=()=>navigate(this.config.heat_path);
-      this.shadowRoot.querySelector(".utility.car").onclick=()=>navigate(this.config.car_path);
+      // A finger on the day bars shows their tooltip instead of leaving the page (Claude AI, 2026-10-18).
+      const barTap=(e)=>e.pointerType&&e.pointerType!=="mouse"&&!!e.target.closest?.(".ubars");
+      this.shadowRoot.querySelector(".utility.electricity").onclick=(e)=>barTap(e)||navigate(this.config.electricity_path);
+      this.shadowRoot.querySelector(".utility.water").onclick=(e)=>barTap(e)||navigate(this.config.water_path);
+      this.shadowRoot.querySelector(".utility.heat").onclick=(e)=>barTap(e)||navigate(this.config.heat_path);
+      this.shadowRoot.querySelector(".utility.car").onclick=(e)=>barTap(e)||navigate(this.config.car_path);
       const roomsEl=this.shadowRoot.querySelector(".rooms");
       // Varme Center rooms open their own heating popup; the panel link to the rooms page must not fire (user, 2026-10-13).
       const openRoom=(e)=>{if(roomsEl._vc){e.preventDefault();return;}const t=e.target.closest(".room[data-room],.rt[data-room],.ro[data-room]");if(!t)return;e.preventDefault();e.stopPropagation();this._openRoom(Number(t.dataset.room));};
@@ -1773,7 +1796,7 @@ ${LUX_KEYFRAMES}
     card.classList.toggle("no-titles",c.section_titles===false);
     const gap=c.room_gap===""||c.room_gap==null?Number.NaN:Number(c.room_gap);card.classList.toggle("room-gap",Number.isFinite(gap));if(Number.isFinite(gap))card.style.setProperty("--room-gap",`${gap}px`);else card.style.removeProperty("--room-gap");
     const health=this.shadowRoot.querySelector(".health")||document.createElement("span"); health.textContent=healthy?"Alt ser normalt ud":"Kræver opmærksomhed"; health.style.color=healthy?"var(--success-color,#20e3a2)":"var(--warning-color,#fb923c)";
-    const utilityKeys={".electricity":"monthly_energy_entity",".water":"water_month_entity",".heat":"heat_month_entity",".car":"car_month_entity"};const off=(k)=>k==="car_month_entity"?!c[k]:c[k]==="";const shown=Object.values(utilityKeys).filter((k)=>!off(k)).length;this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count",String(Math.max(shown,1)));const utility=(sel,icon,label,value,unit,cost,valid)=>{const tile=this.shadowRoot.querySelector(sel);tile.hidden=off(utilityKeys[sel]);if(tile.hidden)return;tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");const x=this._utilMonth(c[utilityKeys[sel]],sel===".car"?"__car":c[{".electricity":"electric_month_cost_entity",".water":"water_month_cost_entity",".heat":"heat_month_cost_entity"}[sel]],unit);tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "Månedspris"}<b>${cost} kr</b></div>${x.foot}`;};
+    const utilityKeys={".electricity":"monthly_energy_entity",".water":"water_month_entity",".heat":"heat_month_entity",".car":"car_month_entity"};const off=(k)=>k==="car_month_entity"?!c[k]:c[k]==="";const shown=Object.values(utilityKeys).filter((k)=>!off(k)).length;this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count",String(Math.max(shown,1)));const utility=(sel,icon,label,value,unit,cost,valid)=>{const tile=this.shadowRoot.querySelector(sel);tile.hidden=off(utilityKeys[sel]);if(tile.hidden)return;tile.style.setProperty("--accent",valid?"var(--success-color,#20e3a2)":"var(--error-color,#ef4444)");const x=this._utilMonth(c[utilityKeys[sel]],sel===".car"?"__car":c[{".electricity":"electric_month_cost_entity",".water":"water_month_cost_entity",".heat":"heat_month_cost_entity"}[sel]],unit);tile._util=x.hover;tile.innerHTML=`<ha-icon class="utility-bg" icon="${icon}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "Månedspris"}<b>${cost} kr</b></div>${x.foot}`;};
     this._utilStats();
     utility(".electricity","mdi:lightning-bolt","Strøm",this._fmt(monthly,0),"kWh",this._fmt(electricCost,0),Number.isFinite(monthly)&&Number.isFinite(electricCost));
     utility(".water","mdi:water","Vand",this._fmt(water,3),"m³",this._fmt(waterCost,0),Number.isFinite(water)&&Number.isFinite(waterCost));

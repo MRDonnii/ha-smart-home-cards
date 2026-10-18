@@ -419,6 +419,11 @@ class HaCalefaFlowCard extends HTMLElement {
     this.shadowRoot.addEventListener("contextmenu", (event) => {
       if (event.composedPath().some((node) => node?.dataset?.ctl)) event.preventDefault();
     });
+    // Hover/tryk på "I dag"-grafen viser timens forbrug og prisen indtil da (Claude AI, 2026-10-18). Hentes med
+    // import(), fordi testene kører kortfilen som et almindeligt script; bundlen lægger den delte hjælper ind.
+    import("../../shared/chart-hover.js")
+      .then(({ chartHover }) => chartHover(this.shadowRoot, ".cf-chart", (box, fraction) => this._todayPoint(box, fraction)))
+      .catch(() => {});
   }
 
   static getStubConfig(hass) {
@@ -1247,7 +1252,7 @@ class HaCalefaFlowCard extends HTMLElement {
     const meter = Boolean(meterKey);
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
-    const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><title></title><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
+    const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
     const stat = (key, label, ref, unit, sub = "", icon = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">–</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
@@ -1331,7 +1336,7 @@ class HaCalefaFlowCard extends HTMLElement {
     const scale = (value) => (value / kwhMax) * 94;
     const hours = this._refs["today-chart"].querySelectorAll(".cf-hour");
     hours.forEach((group, hour) => {
-      const [title, , heatBar, dhwBar] = group.children;
+      const [, heatBar, dhwBar] = group.children;
       const heatHeight = hour > current ? 0 : scale(lower[hour]);
       const dhwHeight = hour > current ? 0 : scale(upper[hour]);
       const set = (bar, y, height) => {
@@ -1343,9 +1348,6 @@ class HaCalefaFlowCard extends HTMLElement {
       set(dhwBar, 100 - heatHeight - dhwHeight, dhwHeight);
       this._toggle(group, "is-now", hour === current);
       this._toggle(group, "is-future", hour > current);
-      const kwh = lower[hour] + upper[hour];
-      const text = hour > current ? "" : `Kl. ${String(hour).padStart(2, "0")}–${String(hour + 1).padStart(2, "0")}: ${this._formatNumber(kwh, 2)} kWh${split ? ` (varme ${this._formatNumber(lower[hour], 2)}, varmt vand ${this._formatNumber(upper[hour], 2)})` : ""}${perKwh !== null ? ` · ${this._formatNumber(kwh * perKwh, 2)} kr` : ""}`;
-      this._text(title, text);
     });
     const fraction = clamp((now - midnight) / 3600000 - current, 0, 1);
     let cumulative = 0;
@@ -1354,6 +1356,7 @@ class HaCalefaFlowCard extends HTMLElement {
       cumulative += basis[hour];
       points.push([hour === current ? (hour + fraction) * 10 : (hour + 1) * 10, cumulative]);
     }
+    this._todayHover = { lower, upper, split, perKwh, current, kwhMax, cumulative: points.slice(1).map(([, kwh]) => kwh) };
     const costMax = perKwh !== null ? nice(cumulative * perKwh * 1.1) : 0;
     const y = (kwh) => (perKwh !== null && costMax ? 100 - ((kwh * perKwh) / costMax) * 94 : 100);
     const line = perKwh !== null ? points.map(([x, kwh], index) => `${index ? "L" : "M"}${x.toFixed(2)} ${y(kwh).toFixed(2)}`).join(" ") : "";
@@ -1366,6 +1369,23 @@ class HaCalefaFlowCard extends HTMLElement {
     const total = basis.reduce((sum, value) => sum + value, 0);
     const label = `Forbrug pr. time i dag, i alt ${this._formatNumber(total, 1)} kWh${perKwh !== null ? `, ${this._formatNumber(total * perKwh, 2)} kr` : ""}`;
     if (this._refs["today-chart"].getAttribute("aria-label") !== label) this._refs["today-chart"].setAttribute("aria-label", label);
+  }
+
+  // The hour under the pointer: its kWh (split into heating and hot water when stacked) and the accumulated price.
+  // The chart box has side padding for the axis labels, so the pointer is mapped onto the plot inside it.
+  _todayPoint(box, fraction) {
+    const data = this._todayHover;
+    if (!data) return null;
+    const style = getComputedStyle(box);
+    const padLeft = parseFloat(style.paddingLeft) || 0;
+    const plot = box.clientWidth - padLeft - (parseFloat(style.paddingRight) || 0);
+    if (plot <= 0) return null;
+    const hour = clamp(Math.floor(((fraction * box.clientWidth - padLeft) / plot) * 24), 0, data.current);
+    const kwh = data.lower[hour] + data.upper[hour];
+    const pad = (value) => String(value).padStart(2, "0");
+    const parts = [`Kl. ${pad(hour)}–${pad(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} · vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
+    if (data.perKwh !== null) parts.push(`${this._formatNumber(kwh * data.perKwh, 2)} kr`, `i alt ${this._formatNumber(data.cumulative[hour] * data.perKwh, 2)} kr`);
+    return { x: (padLeft + ((hour + 0.5) / 24) * plot) / box.clientWidth, y: 1 - (kwh / data.kwhMax) * 0.94, color: "var(--cf-chart-heat)", text: parts.join(" · ") };
   }
 
   // Statistics are only requested while the card is visible and at most every five minutes; the

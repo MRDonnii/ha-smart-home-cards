@@ -15,6 +15,8 @@
  * Alle entity-id'er kommer fra kortets konfiguration – kortet opfinder ingen værdier.
  */
 
+import { chartHover } from "../../shared/chart-hover.js";
+
 const VERSION = "1.1.1";
 const CARD_TAG = "ha-electricity-dashboard-card";
 
@@ -456,8 +458,8 @@ const STYLE = `
 .ring-wrap.active .ring-pulse{opacity:1;animation:pulse-dot 2.6s ease-in-out infinite}
 
 .spark{display:flex;align-items:flex-end;gap:3px;height:38px;margin-top:auto}
-.spark i{flex:1;min-width:2px;height:var(--h);border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,var(--tone),color-mix(in srgb,var(--tone) 35%,transparent));opacity:.9;transform-origin:bottom;transition:height .8s ease}
-.spark i.live{animation:live-bar 2.8s ease-in-out infinite}
+.spark i.b{flex:1;min-width:2px;height:var(--h);border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,var(--tone),color-mix(in srgb,var(--tone) 35%,transparent));opacity:.9;transform-origin:bottom;transition:height .8s ease}
+.spark i.b.live{animation:live-bar 2.8s ease-in-out infinite}
 .spark-caption{display:flex;justify-content:space-between;color:var(--energy-faint);font-size:11px;margin-top:4px}
 
 /* ---------- hovedsektion ---------- */
@@ -520,7 +522,7 @@ const STYLE = `
 .mini .spark{height:34px}
 .mini-foot{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--energy-muted)}
 .mini-foot .pill{font-size:12px;padding:3px 8px}
-.mini svg.mini-line{width:100%;height:40px;margin-top:auto;overflow:visible}
+.mini .mini-line-box{position:relative;margin-top:auto}.mini svg.mini-line{display:block;width:100%;height:40px;overflow:visible}
 .mini-line path{fill:none;stroke:var(--tone);stroke-width:2;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tone) 60%,transparent))}
 .mini-line circle{fill:var(--energy-cyan)}
 
@@ -719,7 +721,7 @@ const STYLE = `
 .dash .fact b,.dash .erow .val,.dash .leg b,.dash .ext b,.dash .range .rv{white-space:nowrap}
 .dash .a-price .big .u,.dash .a-house .big .u,.dash .mini .big .u,.dash .unit,.dash .range .ru{order:1;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:700;opacity:1}
 /* meter */
-.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini svg.mini-line,.dash .erow .bar{order:2;margin-top:6px}
+.dash .a-house [data-ref="houseSparkWrap"],.dash .mini .spark,.dash .mini .mini-line-box,.dash .erow .bar{order:2;margin-top:6px}
 .dash .a-house .spark,.dash .mini .spark{height:30px}
 .dash .mini svg.mini-line{height:30px}
 .dash .erow .bar{height:5px;margin-bottom:4px;grid-column:auto}
@@ -1122,7 +1124,7 @@ class HAElectricityDashboardCard extends HTMLElement {
         <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon("mdi:percent")}<h3>Pris lige nu vs. gennemsnit</h3></div>
         <div class="big"><span class="v num" data-ref="vsPrice" data-v>—</span><span class="u">kr/kWh</span></div>
         <div class="mini-foot"><span class="pill" data-ref="vsPill">—</span></div>
-        <svg class="mini-line" data-ref="vsLine" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+        <div class="mini-line-box"><svg class="mini-line" data-ref="vsLine" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div>
       </div>
     </div>
   </section>
@@ -1225,8 +1227,12 @@ class HAElectricityDashboardCard extends HTMLElement {
     };
     root.addEventListener("click", (ev) => {
       if (ev.target.closest?.(".hover-layer")) return;
+      if (ev.pointerType && ev.pointerType !== "mouse" && ev.target.closest?.(".spark, .mini-line-box")) return;
       openMoreInfo(ev.target.closest?.("[data-entity]"));
     });
+    // Hover/tryk på de små grafer: tid og værdi inde i grafens egen boks (Claude AI, 2026-10-18).
+    chartHover(root, ".spark", (box, fraction) => this._sparkPoint(box, fraction));
+    chartHover(root, ".mini-line-box", (box, fraction) => this._vsLinePoint(fraction));
     root.addEventListener("keydown", (ev) => {
       if (ev.key !== "Enter" && ev.key !== " ") return;
       const el = ev.target.closest?.("[data-entity]");
@@ -1452,6 +1458,7 @@ class HAElectricityDashboardCard extends HTMLElement {
     const a = m.todayAnalysis;
     const svg = this._refs.vsLine;
     if (!a || !m.todayDomain) {
+      this._vsLineGeom = null;
       svg.innerHTML = "";
       return;
     }
@@ -1462,6 +1469,7 @@ class HAElectricityDashboardCard extends HTMLElement {
     const d = splitOnGaps(m.today)
       .map((seg) => monotonePath(seg.map((e) => [toX((e.start + e.end) / 2), toY(e.price)])))
       .join("");
+    this._vsLineGeom = { entries: m.today, start, end, toX, toY };
     const dot = m.current ? `<circle cx="${toX((m.current.start + m.current.end) / 2).toFixed(2)}" cy="${toY(m.current.price).toFixed(2)}" r="2.2"/>` : "";
     const markup = `<path d="${d}"/>${dot}`;
     if (this._shown.get("vsLineSvg") !== markup) {
@@ -1680,11 +1688,24 @@ class HAElectricityDashboardCard extends HTMLElement {
       const d = describe(e, geom);
       this._toneClass(tip, d.tone);
       tip.innerHTML = d.html;
-      tip.style.left = `${clamp(d.x, 12, 88)}%`;
-      tip.style.top = `${clamp(d.y, 30, 100)}%`;
       vline.style.left = `${d.x}%`;
       tip.hidden = false;
       vline.hidden = false;
+      // Skiltet måles og holdes inde i kortet: centreret over punktet, under punktet hvis der ikke er plads over
+      // (Claude AI, 2026-10-18; procent-klemmen tog ikke højde for skiltets bredde og højde).
+      const box = plot.getBoundingClientRect();
+      const card = (plot.closest(".card") || plot).getBoundingClientRect();
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+      const px = (d.x / 100) * box.width;
+      const py = (d.y / 100) * box.height;
+      const left = clamp(px - tw / 2, card.left - box.left + 6, card.right - box.left - tw - 6);
+      let top = py - th - 10;
+      if (box.top + top < card.top + 6) top = py + 12;
+      top = Math.min(top, card.bottom - box.top - th - 6);
+      tip.style.transform = "none";
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
     };
     layer.addEventListener("pointermove", (ev) => {
       if (ev.pointerType === "mouse") show(ev);
@@ -1966,6 +1987,7 @@ class HAElectricityDashboardCard extends HTMLElement {
       };
       this._stats.power = {};
       for (const id of powerIds) this._stats.power[id] = bucket(power?.[id]);
+      this._stats.powerFirst = Math.floor((now - SPARK_WINDOW_MS) / SPARK_BUCKET_MS) + 1;
       this._stats.energyHourly = (energy?.[energyId] || [])
         .map((r) => ({ start: statTime(r.start), change: r.change }))
         .filter((r) => Number.isFinite(r.start) && Number.isFinite(r.change));
@@ -1981,9 +2003,10 @@ class HAElectricityDashboardCard extends HTMLElement {
     this._updateDayCompare();
   }
 
-  _renderSparkInto(ref, values, liveLast) {
+  _renderSparkInto(ref, values, liveLast, times, unit) {
     const el = this._refs[ref];
     if (!el) return;
+    el._hover = { values: values || [], times: times || [], unit, liveLast };
     const finite = (values || []).filter(Number.isFinite);
     if (finite.length < 2) {
       this._show(ref, false);
@@ -1995,7 +2018,7 @@ class HAElectricityDashboardCard extends HTMLElement {
     const markup = values
       .map((v, i) => {
         const h = Number.isFinite(v) ? 6 + ((v - min) / span) * 94 : 0;
-        return `<i class="${liveLast && i === values.length - 1 ? "live" : ""}" style="--h:${h.toFixed(1)}%"></i>`;
+        return `<i class="b${liveLast && i === values.length - 1 ? " live" : ""}" style="--h:${h.toFixed(1)}%"></i>`;
       })
       .join("");
     if (this._shown.get(`spark-${ref}`) !== markup) {
@@ -2005,20 +2028,45 @@ class HAElectricityDashboardCard extends HTMLElement {
     this._show(ref, true);
   }
 
+  _sparkPoint(box, fraction) {
+    const data = box._hover;
+    const n = data?.values.length;
+    if (!n || !this._clock) return null;
+    const i = clamp(Math.floor(fraction * n), 0, n - 1);
+    const v = data.values[i];
+    const finite = data.values.filter(Number.isFinite);
+    const lo = Math.min(...finite, 0);
+    const span = Math.max(...finite, 0) - lo || 1;
+    const when = data.liveLast && i === n - 1 ? "Nu" : `Kl. ${this._clock.time(data.times[i])}`;
+    const value = !Number.isFinite(v) ? "ingen data" : data.unit === "kW" ? `${fmtPower(v)} kW` : `${fmtEnergy(v)} kWh`;
+    return { x: (i + 0.5) / n, y: Number.isFinite(v) ? 1 - (6 + ((v - lo) / span) * 94) / 100 : undefined, color: "var(--tone)", text: `${when} · ${value}` };
+  }
+
+  _vsLinePoint(fraction) {
+    const g = this._vsLineGeom;
+    if (!g?.entries?.length || !this._clock) return null;
+    const t = g.start + fraction * (g.end - g.start);
+    const e = g.entries.reduce((best, x) => (Math.abs((x.start + x.end) / 2 - t) < Math.abs((best.start + best.end) / 2 - t) ? x : best));
+    const mid = (e.start + e.end) / 2;
+    return { x: g.toX(mid) / 100, y: g.toY(e.price) / 40, color: "var(--tone)", text: `Kl. ${this._clock.time(e.start)} · ${fmtPrice(e.price)} kr/kWh` };
+  }
+
   _renderSparks() {
     const houseId = this._id("house_power");
     const carId = this._id("charger_power");
     const house = houseId ? this._stats.power[houseId] : undefined;
     const car = carId ? this._stats.power[carId] : undefined;
-    this._renderSparkInto("houseSpark", house, true);
+    const first = this._stats.powerFirst;
+    const powerTimes = (values) => (values || []).map((_, i) => (first + i) * SPARK_BUCKET_MS);
+    this._renderSparkInto("houseSpark", house, true, powerTimes(house), "kW");
     this._show("houseSparkWrap", !this._refs.houseSpark.hidden);
-    this._renderSparkInto("houseMiniSpark", house, true);
-    this._renderSparkInto("chargerSpark", car, true);
+    this._renderSparkInto("houseMiniSpark", house, true, powerTimes(house), "kW");
+    this._renderSparkInto("chargerSpark", car, true, powerTimes(car), "kW");
     // Dagens timeforbrug (afsluttede timer i dag).
     if (this._clock) {
       const todayKey = this._clock.dateKey(Date.now());
-      const todayHours = this._stats.energyHourly.filter((r) => this._clock.dateKey(r.start) === todayKey).map((r) => Math.max(0, r.change));
-      this._renderSparkInto("houseDaySpark", todayHours, false);
+      const todayRows = this._stats.energyHourly.filter((r) => this._clock.dateKey(r.start) === todayKey);
+      this._renderSparkInto("houseDaySpark", todayRows.map((r) => Math.max(0, r.change)), false, todayRows.map((r) => r.start), "kWh");
     }
   }
 
