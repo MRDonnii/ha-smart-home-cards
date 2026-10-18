@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.7.1";
+const VERSION = "1.7.2";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -275,14 +275,16 @@ const POPUP_STYLE = `
 .tab ha-icon{--mdc-icon-size:18px}.tab.active{color:var(--rc-ink)}.tab.active ha-icon{color:var(--room-color)}
 /* All tabs share one grid cell, so the popup is as tall as its tallest tab and does not jump when switching
    (user: "lav popup i hvert rum så det bare er højden af det største"). */
-.body{display:grid;padding:18px 24px 24px}
+/* The popup lives in document.body, so page-wide CSS reaches it: simple-thermostat puts a global
+   .body{grid-auto-flow:column;place-items:center} in <head>, which shrank and centred every tab. */
+.pop .body{display:grid;grid-auto-flow:row;grid-auto-columns:auto;place-items:stretch;padding:18px 24px 24px}
 .panel{grid-area:1/1;align-self:start;min-width:0;animation:fadeUp .35s cubic-bezier(.2,1,.3,1)}
 .panel[hidden]{display:block;visibility:hidden;pointer-events:none;animation:none}
 .empty{padding:30px 18px;border-radius:18px;background:rgba(255,255,255,.04);color:var(--rc-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(max-width:600px){.grab{display:block}.ph{padding:12px 16px 0}.ph h2{font-size:23px}.ph-ic{width:46px;height:46px;border-radius:16px}.ph-ic ha-icon{--mdc-icon-size:24px}.close{width:40px;height:40px}
-  .ph-main{margin-top:14px;gap:12px 16px}.ph-temp{font-size:54px}.ph-chips{justify-content:flex-start;flex-basis:100%}.tabs{margin:14px 12px 0}.tab{flex-direction:column;gap:2px;min-height:48px;font-size:10.5px}.body{padding:14px 12px 20px}}
+  .ph-main{margin-top:14px;gap:12px 16px}.ph-temp{font-size:54px}.ph-chips{justify-content:flex-start;flex-basis:100%}.tabs{margin:14px 12px 0}.tab{flex-direction:column;gap:2px;min-height:48px;font-size:10.5px}.pop .body{padding:14px 12px 20px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
