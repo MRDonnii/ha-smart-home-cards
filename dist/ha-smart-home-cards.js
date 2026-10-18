@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.185 */
+/* MRDonnii Smart Home Cards v0.5.186 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -37342,9 +37342,12 @@ var HaHomeStatusCard = class extends HTMLElement {
         :host([v2]) .value{grid-column:1/-1;grid-row:2;margin-top:6px;font-size:15px;line-height:17px}
         :host([v2]) .detail{grid-column:1/-1;grid-row:3;font-size:10px;line-height:12px}
         :host([v2]) .label{grid-row:4;margin-top:4px;padding-top:4px;font-size:9px}
-        :host([v2]) .item.security .value{grid-row:2}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:10px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
+        :host([v2]) .item.security{padding:8px 8px 7px}:host([v2]) .item.security .value{grid-row:2;line-height:17px}:host([v2]) .item.security .detail{line-height:12px}:host([v2]) .item.security .label{grid-row:4}:host([v2]) .sec2{gap:3px}:host([v2]) .sec2 .sp{padding:0 2px;gap:1px}:host([v2]) .sec2 img{display:none}:host([v2]) .sec2 b{overflow:visible;font-size:10px}:host([v2]) .sec2 ha-icon{--mdc-icon-size:12px;width:12px;height:12px}}
       /* compact: a low tile (user, 2026-10-13: "hund, alarm og indstillinger lidt mindre") \u2013 chip, value and ring on one line,
          the detail under the value; only the security tile keeps its pill row. */
+      /* Compact only on wider screens (Claude AI, 2026-10-18; user: the bottom tiles' text must sit like the top row's on the phone),
+         so compact tiles use the same phone layout as the other tiles. */
+      @media(min-width:601px){
       :host([v2][compact]) .item{height:100%;min-height:62px;align-content:center;padding:8px 10px;grid-template-columns:30px minmax(0,1fr) 30px;grid-template-rows:auto auto;row-gap:0}
       :host([v2][compact]) .chip{width:30px;height:30px;border-radius:10px}:host([v2][compact]) .chip ha-icon{--mdc-icon-size:17px}
       :host([v2][compact]) .ring{width:30px;height:30px}
@@ -37353,12 +37356,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2][compact]) .item:not(.security) .label{grid-column:1/-1;grid-row:3;margin-top:5px;padding-top:4px}
       :host([v2][compact]) .item.security .label{grid-row:3;margin-top:5px;padding-top:4px}
       :host([v2][compact]) .item.security .value{grid-row:1}
-      @media(max-width:600px){:host([v2][compact]) .item{min-height:58px;padding:7px 7px;grid-template-columns:24px minmax(0,1fr) 24px;grid-template-rows:auto auto;column-gap:6px}
-        :host([v2][compact]) .chip{grid-row:1/3;width:24px;height:24px;border-radius:8px}:host([v2][compact]) .chip ha-icon{--mdc-icon-size:14px}
-        :host([v2][compact]) .ring{grid-row:1/3;grid-column:3;width:24px;height:24px}
-        :host([v2][compact]) .value{grid-column:2;grid-row:1;margin-top:0;font-size:13.5px;line-height:16px}
-        :host([v2][compact]) .detail{grid-column:2;grid-row:2;font-size:9.5px}
-        :host([v2][compact]) .item .label{grid-column:1/-1;grid-row:3;margin-top:4px;padding-top:3px;font-size:9px}}
+      }
       /* Claude AI, 2026-10-15; user: "n\xE5r tekst ruller er venstre side sk\xE5ret af brat i stedet for at fylde ud til kortets kant":
          in v2 a text box bleeds out into the tile's padding (label: to the card edge; value/detail: into the column gap),
          so scrolling text runs out to the edge and fades there instead of being cut inside the padding. --px is the
@@ -37366,8 +37364,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .item{--px:12px;--vb:7px}
       @media(min-width:1101px) and (max-height:950px){:host([v2]) .item{--px:10px}}
       @media(max-width:600px){:host([v2]) .item{--px:8px;--vb:8px}}
-      :host([v2][compact]) .item{--px:10px;--vb:7px}
-      @media(max-width:600px){:host([v2][compact]) .item{--px:7px;--vb:4px}}
+      @media(min-width:601px){:host([v2][compact]) .item{--px:10px;--vb:7px}}
       :host([v2]) .item:not(.security) :is(.value,.detail){--bleed:var(--vb);margin-inline:calc(-1 * var(--vb));padding-inline:var(--vb);max-width:none;text-overflow:clip}
       :host([v2]) .item:not(.security) .label{--bleed:var(--px);margin-inline:calc(-1 * var(--px));padding-inline:var(--px);max-width:none;text-overflow:clip;border-top-color:transparent;background:linear-gradient(color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent),color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)) var(--px) 0/calc(100% - 2 * var(--px)) 1px no-repeat;background-origin:border-box}
       :host([v2]) .item:not(.security) .marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
