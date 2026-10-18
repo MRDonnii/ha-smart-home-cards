@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.9.0";
+const VERSION = "0.9.1";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -121,7 +121,7 @@ class HAACClimateCard extends HTMLElement {
 
   // --- sections ----------------------------------------------------------
   _hero(unit, s) {
-    const label = s.mode === "off" ? "OFF" : `${this._format(s.target)}°`;
+    const label = s.mode === "off" ? "OFF" : `${this._format(s.target, s.target % 1 ? 1 : 0)}°`;
     const next = this._nextText(unit.next_change);
     const release = this._exists(unit.release);
     const modeIcon = (MODES.find((m) => m.id === s.mode) || {}).icon || "mdi:power";
@@ -141,7 +141,7 @@ class HAACClimateCard extends HTMLElement {
         ${next || release ? `<div class="next"><span>${this._esc(next)}</span>${release ? `<button class="release ${s.waiting ? "ready" : ""}" data-action="release"><ha-icon icon="mdi:play-circle-outline"></ha-icon>Frigiv</button>` : ""}</div>` : ""}
         <div class="target">
           <button data-action="temp-down" aria-label="Sænk">−</button>
-          <div><span>Mål</span><strong>${this._format(s.target)}°</strong></div>
+          <div><span>Mål</span><strong>${this._format(s.target, s.target % 1 ? 1 : 0)}°</strong></div>
           <button data-action="temp-up" aria-label="Hæv">+</button>
         </div>
       </div>

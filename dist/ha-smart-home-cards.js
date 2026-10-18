@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.178 */
+/* MRDonnii Smart Home Cards v0.5.179 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -11070,7 +11070,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION13 = "0.9.0";
+var VERSION13 = "0.9.1";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -11251,7 +11251,7 @@ var HAACClimateCard = class extends HTMLElement {
   }
   // --- sections ----------------------------------------------------------
   _hero(unit, s) {
-    const label = s.mode === "off" ? "OFF" : `${this._format(s.target)}\xB0`;
+    const label = s.mode === "off" ? "OFF" : `${this._format(s.target, s.target % 1 ? 1 : 0)}\xB0`;
     const next = this._nextText(unit.next_change);
     const release = this._exists(unit.release);
     const modeIcon = (MODES.find((m) => m.id === s.mode) || {}).icon || "mdi:power";
@@ -11271,7 +11271,7 @@ var HAACClimateCard = class extends HTMLElement {
         ${next || release ? `<div class="next"><span>${this._esc(next)}</span>${release ? `<button class="release ${s.waiting ? "ready" : ""}" data-action="release"><ha-icon icon="mdi:play-circle-outline"></ha-icon>Frigiv</button>` : ""}</div>` : ""}
         <div class="target">
           <button data-action="temp-down" aria-label="S\xE6nk">\u2212</button>
-          <div><span>M\xE5l</span><strong>${this._format(s.target)}\xB0</strong></div>
+          <div><span>M\xE5l</span><strong>${this._format(s.target, s.target % 1 ? 1 : 0)}\xB0</strong></div>
           <button data-action="temp-up" aria-label="H\xE6v">+</button>
         </div>
       </div>
