@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.10.1";
+const VERSION = "0.10.2";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -270,10 +270,14 @@ class HAACClimateCard extends HTMLElement {
       start_earlier: `ellers startes ${l.outcome_value}° tidligere`, boost: `ellers skubbes starten ${l.outcome_value}°`, park: "ellers parkeres målet ved stop" }[l.outcome] || "";
     const check = { checking_stop: "Tjekker at anlægget stopper", checking_hold: "Anlægget stoppede ved målet – tjekker", checking_start: "Venter på at anlægget starter", checking_rise: "Rummet stiger ikke – tjekker" }[l.state];
     const steps = `stop ${l.stop_ok ? "✓" : "…"} · start ${l.start_ok ? "✓" : "…"}`;
+    // Weather learning: start/stop points moved for the current outdoor band.
+    const st = Number(l.start_at), sp = Number(l.stop_at), ho = Number(l.hold_at) || 0;
+    const tuned = l.outdoor_band && Number.isFinite(st) && Number.isFinite(sp) && (st !== 0.2 || sp !== 0.3 || ho > 0);
+    const weather = tuned ? ` · ved ${String(l.outdoor_band).replace("..", "–")} °C ude: start −${this._format(st, 2).replace(/0$/, "")}°, stop +${this._format(sp, 2).replace(/0$/, "")}°${ho > 0 ? `, hold fra −${this._format(ho, 2).replace(/0$/, "")}°` : ""}` : "";
     let text, cls = "l-on";
     if (check) { text = `${check} · ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min · ${outcome}`; cls = "l-check"; }
-    else if (l.state === "learned") { text = `Indlært: ${learned}`; cls = "l-done"; }
-    else if (l.state === "learning") text = `Lærer anlægget at kende (${steps}) · ${learned}`;
+    else if (l.state === "learned") { text = `Indlært: ${learned}${weather}`; cls = "l-done"; }
+    else if (l.state === "learning") text = `Lærer anlægget at kende (${steps}) · ${learned}${weather}`;
     else if (l.state === "paused") text = `På pause – ${{ offline: "anlægget svarer ikke", defrost: "anlægget afrimer", fault: "anlægget viser en fejlkode", steering_off: "dør/vindue åben eller manuel styring" }[l.reason] || "venter"} · ${learned}`;
     else if (l.state === "no_follow_me") { text = "Follow Me når ikke frem til anlægget – tjek IR-dioden. Indlæringen venter, så der ikke læres forkert."; cls = "l-bad"; }
     else if (l.state === "no_meter") { text = "Mangler effektmåler – lærer ikke"; cls = "l-off"; }

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.182 */
+/* MRDonnii Smart Home Cards v0.5.183 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -11070,7 +11070,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION13 = "0.10.1";
+var VERSION13 = "0.10.2";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -11397,14 +11397,17 @@ var HAACClimateCard = class extends HTMLElement {
     }[l.outcome] || "";
     const check = { checking_stop: "Tjekker at anl\xE6gget stopper", checking_hold: "Anl\xE6gget stoppede ved m\xE5let \u2013 tjekker", checking_start: "Venter p\xE5 at anl\xE6gget starter", checking_rise: "Rummet stiger ikke \u2013 tjekker" }[l.state];
     const steps = `stop ${l.stop_ok ? "\u2713" : "\u2026"} \xB7 start ${l.start_ok ? "\u2713" : "\u2026"}`;
+    const st = Number(l.start_at), sp = Number(l.stop_at), ho2 = Number(l.hold_at) || 0;
+    const tuned = l.outdoor_band && Number.isFinite(st) && Number.isFinite(sp) && (st !== 0.2 || sp !== 0.3 || ho2 > 0);
+    const weather = tuned ? ` \xB7 ved ${String(l.outdoor_band).replace("..", "\u2013")} \xB0C ude: start \u2212${this._format(st, 2).replace(/0$/, "")}\xB0, stop +${this._format(sp, 2).replace(/0$/, "")}\xB0${ho2 > 0 ? `, hold fra \u2212${this._format(ho2, 2).replace(/0$/, "")}\xB0` : ""}` : "";
     let text, cls = "l-on";
     if (check) {
       text = `${check} \xB7 ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min \xB7 ${outcome}`;
       cls = "l-check";
     } else if (l.state === "learned") {
-      text = `Indl\xE6rt: ${learned}`;
+      text = `Indl\xE6rt: ${learned}${weather}`;
       cls = "l-done";
-    } else if (l.state === "learning") text = `L\xE6rer anl\xE6gget at kende (${steps}) \xB7 ${learned}`;
+    } else if (l.state === "learning") text = `L\xE6rer anl\xE6gget at kende (${steps}) \xB7 ${learned}${weather}`;
     else if (l.state === "paused") text = `P\xE5 pause \u2013 ${{ offline: "anl\xE6gget svarer ikke", defrost: "anl\xE6gget afrimer", fault: "anl\xE6gget viser en fejlkode", steering_off: "d\xF8r/vindue \xE5ben eller manuel styring" }[l.reason] || "venter"} \xB7 ${learned}`;
     else if (l.state === "no_follow_me") {
       text = "Follow Me n\xE5r ikke frem til anl\xE6gget \u2013 tjek IR-dioden. Indl\xE6ringen venter, s\xE5 der ikke l\xE6res forkert.";
