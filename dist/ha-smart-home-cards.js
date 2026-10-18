@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.179 */
+/* MRDonnii Smart Home Cards v0.5.180 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -32941,7 +32941,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.2";
+var VERSION25 = "1.7.3";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33140,11 +33140,11 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .zone.is-heating .radiator::after{display:block;animation:radiatorFlow 1.25s linear infinite}
 .zone.is-heating .radiator i{background:linear-gradient(180deg,rgba(255,202,98,.75),rgba(255,138,61,.14) 46%,rgba(255,138,61,.03) 72%);background-size:100% 230%;box-shadow:inset 0 0 7px rgba(255,202,98,.45),0 0 7px rgba(255,138,61,.24);animation:radiatorFill 1.8s ease-in-out infinite}
 .zone.is-heating .radiator i:nth-child(2){animation-delay:.12s}.zone.is-heating .radiator i:nth-child(3){animation-delay:.24s}.zone.is-heating .radiator i:nth-child(4){animation-delay:.36s}.zone.is-heating .radiator i:nth-child(5){animation-delay:.48s}
-.ac-mini{position:relative;width:67px;height:50px;overflow:hidden}
+.ac-mini{position:relative;flex:none;width:67px;height:50px;overflow:hidden}
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
 @keyframes radiatorFlow{from{transform:translateX(-13px)}to{transform:translateX(43px)}}
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
-@container (max-width:560px){.hv{width:60px}}
+@container (max-width:560px){.hv{width:60px}.hv .ac-mini{width:60px;height:45px}.hv .ac-mini .ac-unit-visual{transform:scale(.448)}}
 
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
 @keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rc-ok) 60%,transparent)}70%,100%{box-shadow:0 0 0 8px transparent}}
