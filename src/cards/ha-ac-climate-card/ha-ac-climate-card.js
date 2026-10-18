@@ -1,7 +1,7 @@
 import "./ha-card-list-editor.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../shared/ac-unit-visual.js";
 
-const VERSION = "0.9.1";
+const VERSION = "0.10.0";
 
 const STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket – dør/vindue åben", opening_reduced: "Skruet ned – dør/vindue åben", opening_resume_wait: "Venter på at genoptage", opening_reduce_wait: "Dør/vindue åben", sensor_lost: "Sensor væk", start_wait: "Venter på start", heating: "Varmer", cooling: "Køler", drying: "Affugter", fan_only: "Kun blæser", idle: "Tomgang" };
 const WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
@@ -68,7 +68,7 @@ class HAACClimateCard extends HTMLElement {
     const sig = JSON.stringify(ids.map((id) => {
       const e = hass?.states?.[id];
       const a = e?.attributes || {};
-      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event, a.until, a.wake_at, a.wakes_today, a.offset_heat, a.offset_cool];
+      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event, a.until, a.wake_at, a.wakes_today, a.offset_heat, a.offset_cool, JSON.stringify(a.follow_me_learning || null), a.follow_me_history?.length];
     }).concat(Math.floor(Date.now() / 30000)));
     if (sig === this._signature) return;
     this._signature = sig;
@@ -134,7 +134,7 @@ class HAACClimateCard extends HTMLElement {
         <div class="hero-top">
           <div>
             <h3>${this._esc(unit.name)}</h3>
-            <div class="pill ${s.waiting ? "wait" : ""} ${s.offline ? "bad" : ""}"><ha-icon icon="${s.offline ? "mdi:lan-disconnect" : modeIcon}"></ha-icon><span>${this._esc(s.statusText)}</span></div>
+            <div class="pill ${s.waiting ? "wait" : ""} ${s.offline ? "bad" : ""}"><ha-icon icon="${s.offline ? "mdi:lan-disconnect" : modeIcon}"></ha-icon><span>${this._esc(s.statusText)}</span></div>${this._learningPill(unit)}
           </div>
           <div class="room"><strong>${this._format(s.current, 1)}<small>°</small></strong><span>i rummet</span></div>
         </div>
@@ -244,7 +244,44 @@ class HAACClimateCard extends HTMLElement {
       const last = count && a.last_wake ? ` · vækket ${count}× i dag, sidst ${this._clock(a.last_wake)}` : "";
       rows.push(`<div class="srow w-${reason}"><ha-icon icon="mdi:alarm-light-outline"></ha-icon><div><strong>Vækning ved slumring</strong><span>${this._esc(text)}${last}</span></div>${wakeSw ? `<button class="toggle ${on ? "on" : ""}" data-action="wake" aria-pressed="${on}" title="Vækning ved slumring"><i></i></button>` : ""}</div>`);
     }
+    const learning = this._learning(unit);
+    if (learning) rows.push(learning);
     return rows.length ? `<section class="block smart"><h4><ha-icon icon="mdi:brain"></ha-icon>Smart styring</h4>${rows.join("")}</section>` : "";
+  }
+
+  _learningPill(unit) {
+    const l = this._entity(unit.climate)?.attributes?.follow_me_learning;
+    if (!l || !String(l.state || "").startsWith("checking_")) return "";
+    return `<div class="pill learning" title="Follow Me-indlæring – se Smart styring"><ha-icon icon="mdi:school-outline"></ha-icon><span>Indlærer · ${Math.max(0, Number(l.remaining_min) || 0)} min</span></div>`;
+  }
+
+  // Qlima Control learns each unit's own Follow Me offset; show which check runs, how far it is and what it learned.
+  _learning(unit) {
+    const a = this._entity(unit.climate)?.attributes || {};
+    const l = a.follow_me_learning;
+    if (!l || typeof l !== "object") return "";
+    const history = Array.isArray(a.follow_me_history) ? a.follow_me_history : [];
+    const offset = Number(l.offset) || 0, start = Number(l.start_offset) || 0;
+    if (l.state === "off" && !offset && !start && !history.length) return "";
+    const signed = (v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}°`;
+    const learned = [offset ? `Follow Me ${signed(offset)}` : "", start ? `start ${start}° tidligere` : "", l.park ? "mål parkeres ved stop" : ""].filter(Boolean).join(" · ") || "ingen rettelse nødvendig";
+    const outcome = { offset_up: `ellers Follow Me ${signed(l.outcome_value)}`, offset_down: `ellers Follow Me ${signed(l.outcome_value)}`,
+      start_earlier: `ellers startes ${l.outcome_value}° tidligere`, boost: `ellers skubbes starten ${l.outcome_value}°`, park: "ellers parkeres målet ved stop" }[l.outcome] || "";
+    const check = { checking_stop: "Tjekker at anlægget stopper", checking_hold: "Anlægget stoppede ved målet – tjekker", checking_start: "Venter på at anlægget starter", checking_rise: "Rummet stiger ikke – tjekker" }[l.state];
+    const steps = `stop ${l.stop_ok ? "✓" : "…"} · start ${l.start_ok ? "✓" : "…"}`;
+    let text, cls = "l-on";
+    if (check) { text = `${check} · ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min · ${outcome}`; cls = "l-check"; }
+    else if (l.state === "learned") { text = `Indlært: ${learned}`; cls = "l-done"; }
+    else if (l.state === "learning") text = `Lærer anlægget at kende (${steps}) · ${learned}`;
+    else if (l.state === "paused") text = `På pause – afrimning, åben dør eller manuel styring · ${learned}`;
+    else if (l.state === "no_meter") { text = "Mangler effektmåler – lærer ikke"; cls = "l-off"; }
+    else { text = `Slået fra · lært: ${learned}`; cls = "l-off"; }
+    const WHY = { stop: "kørte videre efter stop", hold: "stoppede ved målet", start: "startede ikke", rise: "rummet steg ikke" };
+    const last = history[history.length - 1];
+    const lastTxt = last ? ` · sidst ${this._clock(last.at)}: ${WHY[last.check] || last.check}` : "";
+    const bar = check ? `<i class="lbar"><b style="width:${Math.max(3, Math.min(100, Number(l.progress) || 0))}%"></b></i>` : "";
+    const label = check ? `${Math.max(0, Number(l.remaining_min) || 0)} min` : l.state === "learned" ? "✓" : "";
+    return `<div class="srow learn ${cls}"><ha-icon icon="mdi:school-outline"></ha-icon><div><strong>Follow Me-indlæring</strong><span>${this._esc(text + lastTxt)}</span>${bar}</div>${label ? `<em class="lstate">${this._esc(label)}</em>` : ""}</div>`;
   }
 
   _openings(unit) {
@@ -443,7 +480,7 @@ h2{margin:4px 0 0;font-size:23px;letter-spacing:-.03em}
 .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 h3{margin:0 0 6px;font-size:19px;letter-spacing:-.02em}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone);font-size:12px;font-weight:800}
-.pill ha-icon{--mdc-icon-size:15px}.pill.wait{background:color-mix(in srgb,var(--auto) 18%,transparent);color:var(--auto)}.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.pill ha-icon{--mdc-icon-size:15px}.pill.learning{margin-left:6px;background:color-mix(in srgb,#f5a524 16%,transparent);color:#f5a524}.pill.wait{background:color-mix(in srgb,var(--auto) 18%,transparent);color:var(--auto)}.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
 .room{text-align:right}.room strong{display:block;font-size:40px;font-weight:700;line-height:1;letter-spacing:-.04em}.room small{font-size:20px;opacity:.7}.room span{color:var(--secondary-text-color);font-size:10px}
 .next{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;color:var(--secondary-text-color);font-size:12px}
 .release{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--edge);border-radius:999px;background:rgba(255,255,255,.04);color:var(--primary-text-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.release ha-icon{--mdc-icon-size:16px}
@@ -491,6 +528,10 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}
 .srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
 .srow .toggle{margin-left:0}
+.srow.learn span{-webkit-line-clamp:3}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
+.srow .lstate{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color);white-space:nowrap}
+.srow.l-check{border-color:color-mix(in srgb,#f5a524 45%,transparent)}.srow.l-check>ha-icon,.srow.l-check .lstate{color:#f5a524}
+.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-on>ha-icon{color:#58a6ff}
 .p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--on)}
 .fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}

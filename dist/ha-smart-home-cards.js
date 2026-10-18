@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.180 */
+/* MRDonnii Smart Home Cards v0.5.181 */
 
 // src/cards/shared/motion-rest.js
 var REST_AFTER_MS = 3e4;
@@ -11070,7 +11070,7 @@ function acUnitVisualMarkup(label, active) {
 }
 
 // src/cards/ha-ac-climate-card/ha-ac-climate-card.js
-var VERSION13 = "0.9.1";
+var VERSION13 = "0.10.0";
 var STATUS_LABELS = { off: "Slukket", manual: "Manuel overstyring", opening_off: "Slukket \u2013 d\xF8r/vindue \xE5ben", opening_reduced: "Skruet ned \u2013 d\xF8r/vindue \xE5ben", opening_resume_wait: "Venter p\xE5 at genoptage", opening_reduce_wait: "D\xF8r/vindue \xE5ben", sensor_lost: "Sensor v\xE6k", start_wait: "Venter p\xE5 start", heating: "Varmer", cooling: "K\xF8ler", drying: "Affugter", fan_only: "Kun bl\xE6ser", idle: "Tomgang" };
 var WAITING = ["manual", "opening_off", "opening_reduced", "opening_resume_wait", "opening_reduce_wait", "start_wait", "sensor_lost"];
 var EVENT_LABELS = { manual_override: "Manuel overstyring slutter", opening_reduce: "Skrues ned", opening_off: "Slukker", opening_resume: "Genoptager", start_allowed: "Starter", min_run: "Min. k\xF8rsel slutter", sensor_loss: "Pause pga. sensor" };
@@ -11162,7 +11162,7 @@ var HAACClimateCard = class extends HTMLElement {
     const sig = JSON.stringify(ids.map((id) => {
       const e = hass?.states?.[id];
       const a = e?.attributes || {};
-      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event, a.until, a.wake_at, a.wakes_today, a.offset_heat, a.offset_cool];
+      return [id, e?.state, a.current_temperature, a.temperature, a.fan_mode, a.preset_mode, a.event, a.until, a.wake_at, a.wakes_today, a.offset_heat, a.offset_cool, JSON.stringify(a.follow_me_learning || null), a.follow_me_history?.length];
     }).concat(Math.floor(Date.now() / 3e4)));
     if (sig === this._signature) return;
     this._signature = sig;
@@ -11264,7 +11264,7 @@ var HAACClimateCard = class extends HTMLElement {
         <div class="hero-top">
           <div>
             <h3>${this._esc(unit.name)}</h3>
-            <div class="pill ${s.waiting ? "wait" : ""} ${s.offline ? "bad" : ""}"><ha-icon icon="${s.offline ? "mdi:lan-disconnect" : modeIcon}"></ha-icon><span>${this._esc(s.statusText)}</span></div>
+            <div class="pill ${s.waiting ? "wait" : ""} ${s.offline ? "bad" : ""}"><ha-icon icon="${s.offline ? "mdi:lan-disconnect" : modeIcon}"></ha-icon><span>${this._esc(s.statusText)}</span></div>${this._learningPill(unit)}
           </div>
           <div class="room"><strong>${this._format(s.current, 1)}<small>\xB0</small></strong><span>i rummet</span></div>
         </div>
@@ -11368,7 +11368,56 @@ var HAACClimateCard = class extends HTMLElement {
       const last = count && a.last_wake ? ` \xB7 v\xE6kket ${count}\xD7 i dag, sidst ${this._clock(a.last_wake)}` : "";
       rows.push(`<div class="srow w-${reason}"><ha-icon icon="mdi:alarm-light-outline"></ha-icon><div><strong>V\xE6kning ved slumring</strong><span>${this._esc(text)}${last}</span></div>${wakeSw ? `<button class="toggle ${on ? "on" : ""}" data-action="wake" aria-pressed="${on}" title="V\xE6kning ved slumring"><i></i></button>` : ""}</div>`);
     }
+    const learning = this._learning(unit);
+    if (learning) rows.push(learning);
     return rows.length ? `<section class="block smart"><h4><ha-icon icon="mdi:brain"></ha-icon>Smart styring</h4>${rows.join("")}</section>` : "";
+  }
+  _learningPill(unit) {
+    const l = this._entity(unit.climate)?.attributes?.follow_me_learning;
+    if (!l || !String(l.state || "").startsWith("checking_")) return "";
+    return `<div class="pill learning" title="Follow Me-indl\xE6ring \u2013 se Smart styring"><ha-icon icon="mdi:school-outline"></ha-icon><span>Indl\xE6rer \xB7 ${Math.max(0, Number(l.remaining_min) || 0)} min</span></div>`;
+  }
+  // Qlima Control learns each unit's own Follow Me offset; show which check runs, how far it is and what it learned.
+  _learning(unit) {
+    const a = this._entity(unit.climate)?.attributes || {};
+    const l = a.follow_me_learning;
+    if (!l || typeof l !== "object") return "";
+    const history2 = Array.isArray(a.follow_me_history) ? a.follow_me_history : [];
+    const offset = Number(l.offset) || 0, start = Number(l.start_offset) || 0;
+    if (l.state === "off" && !offset && !start && !history2.length) return "";
+    const signed = (v) => `${v > 0 ? "+" : v < 0 ? "\u2212" : ""}${Math.abs(v)}\xB0`;
+    const learned = [offset ? `Follow Me ${signed(offset)}` : "", start ? `start ${start}\xB0 tidligere` : "", l.park ? "m\xE5l parkeres ved stop" : ""].filter(Boolean).join(" \xB7 ") || "ingen rettelse n\xF8dvendig";
+    const outcome = {
+      offset_up: `ellers Follow Me ${signed(l.outcome_value)}`,
+      offset_down: `ellers Follow Me ${signed(l.outcome_value)}`,
+      start_earlier: `ellers startes ${l.outcome_value}\xB0 tidligere`,
+      boost: `ellers skubbes starten ${l.outcome_value}\xB0`,
+      park: "ellers parkeres m\xE5let ved stop"
+    }[l.outcome] || "";
+    const check = { checking_stop: "Tjekker at anl\xE6gget stopper", checking_hold: "Anl\xE6gget stoppede ved m\xE5let \u2013 tjekker", checking_start: "Venter p\xE5 at anl\xE6gget starter", checking_rise: "Rummet stiger ikke \u2013 tjekker" }[l.state];
+    const steps = `stop ${l.stop_ok ? "\u2713" : "\u2026"} \xB7 start ${l.start_ok ? "\u2713" : "\u2026"}`;
+    let text, cls = "l-on";
+    if (check) {
+      text = `${check} \xB7 ${this._format(Number(l.elapsed_min) || 0)} af ${l.needed_min} min \xB7 ${outcome}`;
+      cls = "l-check";
+    } else if (l.state === "learned") {
+      text = `Indl\xE6rt: ${learned}`;
+      cls = "l-done";
+    } else if (l.state === "learning") text = `L\xE6rer anl\xE6gget at kende (${steps}) \xB7 ${learned}`;
+    else if (l.state === "paused") text = `P\xE5 pause \u2013 afrimning, \xE5ben d\xF8r eller manuel styring \xB7 ${learned}`;
+    else if (l.state === "no_meter") {
+      text = "Mangler effektm\xE5ler \u2013 l\xE6rer ikke";
+      cls = "l-off";
+    } else {
+      text = `Sl\xE5et fra \xB7 l\xE6rt: ${learned}`;
+      cls = "l-off";
+    }
+    const WHY = { stop: "k\xF8rte videre efter stop", hold: "stoppede ved m\xE5let", start: "startede ikke", rise: "rummet steg ikke" };
+    const last = history2[history2.length - 1];
+    const lastTxt = last ? ` \xB7 sidst ${this._clock(last.at)}: ${WHY[last.check] || last.check}` : "";
+    const bar = check ? `<i class="lbar"><b style="width:${Math.max(3, Math.min(100, Number(l.progress) || 0))}%"></b></i>` : "";
+    const label = check ? `${Math.max(0, Number(l.remaining_min) || 0)} min` : l.state === "learned" ? "\u2713" : "";
+    return `<div class="srow learn ${cls}"><ha-icon icon="mdi:school-outline"></ha-icon><div><strong>Follow Me-indl\xE6ring</strong><span>${this._esc(text + lastTxt)}</span>${bar}</div>${label ? `<em class="lstate">${this._esc(label)}</em>` : ""}</div>`;
   }
   _openings(unit) {
     const sw = this._entity(unit.openings);
@@ -11571,7 +11620,7 @@ h2{margin:4px 0 0;font-size:23px;letter-spacing:-.03em}
 .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 h3{margin:0 0 6px;font-size:19px;letter-spacing:-.02em}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:color-mix(in srgb,var(--tone) 16%,transparent);color:var(--tone);font-size:12px;font-weight:800}
-.pill ha-icon{--mdc-icon-size:15px}.pill.wait{background:color-mix(in srgb,var(--auto) 18%,transparent);color:var(--auto)}.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.pill ha-icon{--mdc-icon-size:15px}.pill.learning{margin-left:6px;background:color-mix(in srgb,#f5a524 16%,transparent);color:#f5a524}.pill.wait{background:color-mix(in srgb,var(--auto) 18%,transparent);color:var(--auto)}.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
 .room{text-align:right}.room strong{display:block;font-size:40px;font-weight:700;line-height:1;letter-spacing:-.04em}.room small{font-size:20px;opacity:.7}.room span{color:var(--secondary-text-color);font-size:10px}
 .next{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;color:var(--secondary-text-color);font-size:12px}
 .release{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--edge);border-radius:999px;background:rgba(255,255,255,.04);color:var(--primary-text-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.release ha-icon{--mdc-icon-size:16px}
@@ -11619,6 +11668,10 @@ h4{display:flex;align-items:center;gap:7px;margin:0 0 10px;color:var(--secondary
 .srow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:13px;background:rgba(255,255,255,.025)}
 .srow>ha-icon{--mdc-icon-size:19px;color:var(--secondary-text-color)}.srow div{min-width:0}.srow strong{display:block;font-size:13px}.srow span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--secondary-text-color);font-size:11px;line-height:1.35}
 .srow .toggle{margin-left:0}
+.srow.learn span{-webkit-line-clamp:3}.srow .lbar{display:block;height:4px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.srow .lbar b{display:block;height:100%;border-radius:4px;background:#f5a524;transition:width .6s}
+.srow .lstate{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color);white-space:nowrap}
+.srow.l-check{border-color:color-mix(in srgb,#f5a524 45%,transparent)}.srow.l-check>ha-icon,.srow.l-check .lstate{color:#f5a524}
+.srow.l-done>ha-icon,.srow.l-done .lstate{color:#3fb950}.srow.l-on>ha-icon{color:#58a6ff}
 .p-cheap>ha-icon,.p-cheap span{color:#4ade80}.p-expensive>ha-icon,.p-expensive span{color:var(--bad)}.w-stalled>ha-icon,.w-stalled span,.w-busy span{color:var(--auto)}.w-working>ha-icon{color:var(--on)}
 .fn:disabled{opacity:.4;cursor:default}.fn.turbo.on{border-color:color-mix(in srgb,var(--auto) 60%,transparent);background:color-mix(in srgb,var(--auto) 15%,transparent)}.fn.turbo.on ha-icon{color:var(--auto)}
 .delays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px}
@@ -31557,7 +31610,7 @@ var HARoomControlCard = class extends HTMLElement {
 if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-control-card", HARoomControlCard);
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
-var VERSION24 = "2.6.0";
+var VERSION24 = "2.6.1";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -31943,7 +31996,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
     const tone2 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "K\xF8ler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
-    return { climate, mode, active, tone: tone2, label };
+    const learning = climate?.attributes?.follow_me_learning;
+    const learnLeft = active && String(learning?.state || "").startsWith("checking_") ? Math.max(0, Number(learning.remaining_min) || 0) : null;
+    return { climate, mode, active, tone: tone2, label, learnLeft };
   }
   _roomState(room) {
     const climate = this._entity(room.climate);
@@ -32941,7 +32996,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.3";
+var VERSION25 = "1.7.4";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33015,6 +33070,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .badge{display:none;place-items:center;width:30px;height:30px;border-radius:11px;background:rgba(255,255,255,.06);color:var(--rc-muted);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .badge.show{display:grid}.badge ha-icon{--mdc-icon-size:16px}
 .badge.window{color:var(--rc-open);background:color-mix(in srgb,var(--rc-open) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-open) 45%,transparent)}
+.badge.learn.show{display:inline-flex;align-items:center;gap:3px;width:auto;padding:0 8px 0 7px;color:#f5a524;background:color-mix(in srgb,#f5a524 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#f5a524 45%,transparent)}.badge.learn b{font-size:11px;font-weight:800;white-space:nowrap}
 .badge.battery{color:var(--rc-danger);background:color-mix(in srgb,var(--rc-danger) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-danger) 45%,transparent)}
 .badge.ac.on{color:var(--room-color);background:color-mix(in srgb,var(--room-color) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent);animation:badge 2.2s ease-in-out infinite}
 
@@ -33144,6 +33200,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
 @keyframes radiatorFlow{from{transform:translateX(-13px)}to{transform:translateX(43px)}}
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
+@container (max-width:345px){.badge.learn.show{padding:0 7px}.badge.learn b{display:none}}
 @container (max-width:560px){.hv{width:60px}.hv .ac-mini{width:60px;height:45px}.hv .ac-mini .ac-unit-visual{transform:scale(.448)}}
 
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
@@ -33360,6 +33417,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
+            <span class="badge learn" data-b="learn" title="AC'en l\xE6rer anl\xE6ggets Follow Me \u2013 se AC-fanen"><ha-icon icon="mdi:school-outline"></ha-icon><b></b></span>
           </span>
           <span class="hv" data-f="visual" title="Varme"></span>
         </div>
@@ -33462,7 +33520,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
         visual: f("visual"),
         visualKind: "",
         gauges: Object.fromEntries(["humidity", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
-        badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]') },
+        badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]'), learn: host.querySelector('[data-b="learn"]') },
         spark: sparkRefs(host)
       };
     });
@@ -33551,7 +33609,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const refs = this._refs[index];
     if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
     if (refs.view === view) return;
     refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
@@ -33591,6 +33649,9 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._gauge(refs.gauges.battery, model.batteryMin === void 0 ? DASH3 : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === void 0, model.batteryLow);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
+    const learnLeft = model.acActive ? model.ac?.learnLeft : null;
+    refs.badges.learn?.classList.toggle("show", learnLeft != null);
+    if (learnLeft != null) this._setText(refs.badges.learn.querySelector("b"), `${learnLeft} min`);
     const kind = model.acActive ? "ac" : "radiator";
     if (refs.visual && refs.visualKind !== kind) {
       refs.visual.innerHTML = model.acActive ? this._acMiniMarkup(model) : RADIATOR_MARKUP2;

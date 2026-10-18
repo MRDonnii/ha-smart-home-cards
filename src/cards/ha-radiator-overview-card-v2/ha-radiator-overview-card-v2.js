@@ -22,7 +22,7 @@ import { AIR_COLORS, airQuality } from "../shared/air-quality.js";
 import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 
-const VERSION = "2.6.0";
+const VERSION = "2.6.1";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -409,7 +409,10 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
     const tone = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "Køler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
-    return { climate, mode, active, tone, label };
+    // Qlima Control checking the unit's Follow Me offset: minutes the running check has left.
+    const learning = climate?.attributes?.follow_me_learning;
+    const learnLeft = active && String(learning?.state || "").startsWith("checking_") ? Math.max(0, Number(learning.remaining_min) || 0) : null;
+    return { climate, mode, active, tone, label, learnLeft };
   }
 
   _roomState(room) {

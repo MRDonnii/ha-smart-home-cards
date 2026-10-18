@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.7.3";
+const VERSION = "1.7.4";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -89,6 +89,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .badge{display:none;place-items:center;width:30px;height:30px;border-radius:11px;background:rgba(255,255,255,.06);color:var(--rc-muted);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .badge.show{display:grid}.badge ha-icon{--mdc-icon-size:16px}
 .badge.window{color:var(--rc-open);background:color-mix(in srgb,var(--rc-open) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-open) 45%,transparent)}
+.badge.learn.show{display:inline-flex;align-items:center;gap:3px;width:auto;padding:0 8px 0 7px;color:#f5a524;background:color-mix(in srgb,#f5a524 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#f5a524 45%,transparent)}.badge.learn b{font-size:11px;font-weight:800;white-space:nowrap}
 .badge.battery{color:var(--rc-danger);background:color-mix(in srgb,var(--rc-danger) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-danger) 45%,transparent)}
 .badge.ac.on{color:var(--room-color);background:color-mix(in srgb,var(--room-color) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent);animation:badge 2.2s ease-in-out infinite}
 
@@ -218,6 +219,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .ac-mini .ac-unit-visual{transform:scale(.5);transform-origin:top left}
 @keyframes radiatorFlow{from{transform:translateX(-13px)}to{transform:translateX(43px)}}
 @keyframes radiatorFill{0%,100%{background-position:0 100%;opacity:.62}50%{background-position:0 0;opacity:1}}
+@container (max-width:345px){.badge.learn.show{padding:0 7px}.badge.learn b{display:none}}
 @container (max-width:560px){.hv{width:60px}.hv .ac-mini{width:60px;height:45px}.hv .ac-mini .ac-unit-visual{transform:scale(.448)}}
 
 .no-animation *,.no-animation *::before,.no-animation *::after{animation:none!important}
@@ -386,6 +388,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller dør er åben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
+            <span class="badge learn" data-b="learn" title="AC'en lærer anlæggets Follow Me – se AC-fanen"><ha-icon icon="mdi:school-outline"></ha-icon><b></b></span>
           </span>
           <span class="hv" data-f="visual" title="Varme"></span>
         </div>
@@ -465,7 +468,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       const f = (name) => host.querySelector(`[data-f="${name}"]`);
       return { kind, host, view: "", status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), humbar: f("humbar"), day: f("day"), rail: f("rail"), step: f("step"), visual: f("visual"), visualKind: "",
         gauges: Object.fromEntries(["humidity", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
-        badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]') }, spark: sparkRefs(host) };
+        badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]'), learn: host.querySelector('[data-b="learn"]') }, spark: sparkRefs(host) };
     });
     const s = (name) => root.querySelector(`[data-s="${name}"]`);
     const stat = (name) => { const el = s(name); return el ? { el, value: el.querySelector("strong"), sub: el.querySelector("em") } : undefined; };
@@ -520,7 +523,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   _renderRoom(index, model) {
     const refs = this._refs[index]; if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
     if (refs.view === view) return; refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
     else if (refs.kind === "sensor") this._renderTile(room, refs, model);
@@ -561,6 +564,9 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._gauge(refs.gauges.battery, model.batteryMin === undefined ? DASH : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === undefined, model.batteryLow);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
+    const learnLeft = model.acActive ? model.ac?.learnLeft : null;
+    refs.badges.learn?.classList.toggle("show", learnLeft != null);
+    if (learnLeft != null) this._setText(refs.badges.learn.querySelector("b"), `${learnLeft} min`);
     const kind = model.acActive ? "ac" : "radiator";
     if (refs.visual && refs.visualKind !== kind) { refs.visual.innerHTML = model.acActive ? this._acMiniMarkup(model) : RADIATOR_MARKUP; refs.visualKind = kind; }
     else if (model.acActive) this._setText(refs.visual?.querySelector('[data-role="ac-unit-display"]'), this._acMiniLabel(model));
