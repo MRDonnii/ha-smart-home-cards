@@ -14,7 +14,7 @@
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 
-const VERSION = "1.7.4";
+const VERSION = "1.7.5";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -118,7 +118,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .g i{grid-column:2/-1;height:4px;border-radius:9px;background:rgba(255,255,255,.07);overflow:hidden}
 .g i::after{content:"";display:block;width:var(--v,0%);height:100%;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--gc,var(--room-color)) 55%,transparent),var(--gc,var(--room-color)));transition:width .6s ease}
 .g.na strong{color:var(--rc-muted);font-weight:600}.g.na i::after{width:0}
-.g.low{--gc:var(--rc-danger)}.g.low strong{color:var(--rc-danger)}
+.g.mid{--gc:#f5b14c}.g.low{--gc:var(--rc-danger)}.g.low strong{color:var(--rc-danger)}
 .g[data-m="humidity"]{--gc:#60a5fa}.g[data-m="valve"]{--gc:var(--rc-hot)}.g[data-m="feels"]{--gc:var(--room-color)}.g[data-m="battery"]{--gc:var(--rc-ok)}
 
 /* curve band */
@@ -561,6 +561,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._gauge(refs.gauges.valve, model.valve === undefined ? DASH : `${this._format(model.valve, 0)} %`, (model.valve ?? 0) / 100, model.valve === undefined);
     this._gauge(refs.gauges.feels, model.feels === undefined ? DASH : `${this._format(model.feels)}°`, model.feels === undefined ? 0 : (model.feels - 14) / 14, model.feels === undefined);
     this._gauge(refs.gauges.battery, model.batteryMin === undefined ? DASH : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === undefined, model.batteryLow);
+    this._batteryIcon(refs.gauges.battery?.querySelector("ha-icon"), model.batteryMin);
+    refs.gauges.battery?.classList.toggle("mid", model.batteryMin !== undefined && !model.batteryLow && model.batteryMin <= 40);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
     const learnLeft = model.acActive ? model.ac?.learnLeft : null;
@@ -752,6 +754,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     chip("valve", model.valve === undefined ? undefined : `Ventil ${this._format(model.valve, 0)} %`);
     chip("battery", model.batteryMin === undefined ? undefined : `Batteri ${this._format(model.batteryMin, 0)} %`);
     content.querySelector('[data-c="battery"]')?.classList.toggle("warn", !!model.batteryLow);
+    this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/dør åben" : undefined);
   }
 }

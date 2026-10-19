@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.196 */
+/* MRDonnii Smart Home Cards v0.5.197 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -31844,7 +31844,7 @@ if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
 init_chart_hover();
-var VERSION24 = "2.6.1";
+var VERSION24 = "2.6.2";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -32662,6 +32662,13 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const max = this._number(this._config.dial_max) ?? 30;
     return Math.min(1, Math.max(0, (value - min) / Math.max(max - min, 1)));
   }
+  // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
+  // batteri niveau").
+  _batteryIcon(icon4, pct2) {
+    if (!icon4) return;
+    const name = !Number.isFinite(pct2) ? "mdi:battery-unknown" : pct2 >= 95 ? "mdi:battery" : pct2 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct2 / 10) * 10)}`;
+    if (icon4.getAttribute("icon") !== name) icon4.setAttribute("icon", name);
+  }
   _metric(node, text, missing, low = false) {
     if (!node) return;
     this._setText(node.querySelector("strong"), text);
@@ -32705,6 +32712,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._metric(refs.metrics.valve, model.valve === void 0 ? DASH2 : `${this._format(model.valve, 0)} %`, model.valve === void 0);
     this._metric(refs.metrics.feels, model.feels === void 0 ? DASH2 : `${this._format(model.feels)}\xB0`, model.feels === void 0);
     this._metric(refs.metrics.battery, model.batteryMin === void 0 ? DASH2 : `${this._format(model.batteryMin, 0)} %`, model.batteryMin === void 0, model.batteryLow);
+    this._batteryIcon(refs.metrics.battery?.querySelector("ha-icon"), model.batteryMin);
     this._renderAir(refs.metrics.air, model.air);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
@@ -33214,7 +33222,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.4";
+var VERSION25 = "1.7.5";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33317,7 +33325,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .g i{grid-column:2/-1;height:4px;border-radius:9px;background:rgba(255,255,255,.07);overflow:hidden}
 .g i::after{content:"";display:block;width:var(--v,0%);height:100%;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--gc,var(--room-color)) 55%,transparent),var(--gc,var(--room-color)));transition:width .6s ease}
 .g.na strong{color:var(--rc-muted);font-weight:600}.g.na i::after{width:0}
-.g.low{--gc:var(--rc-danger)}.g.low strong{color:var(--rc-danger)}
+.g.mid{--gc:#f5b14c}.g.low{--gc:var(--rc-danger)}.g.low strong{color:var(--rc-danger)}
 .g[data-m="humidity"]{--gc:#60a5fa}.g[data-m="valve"]{--gc:var(--rc-hot)}.g[data-m="feels"]{--gc:var(--room-color)}.g[data-m="battery"]{--gc:var(--rc-ok)}
 
 /* curve band */
@@ -33864,6 +33872,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._gauge(refs.gauges.valve, model.valve === void 0 ? DASH3 : `${this._format(model.valve, 0)} %`, (model.valve ?? 0) / 100, model.valve === void 0);
     this._gauge(refs.gauges.feels, model.feels === void 0 ? DASH3 : `${this._format(model.feels)}\xB0`, model.feels === void 0 ? 0 : (model.feels - 14) / 14, model.feels === void 0);
     this._gauge(refs.gauges.battery, model.batteryMin === void 0 ? DASH3 : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === void 0, model.batteryLow);
+    this._batteryIcon(refs.gauges.battery?.querySelector("ha-icon"), model.batteryMin);
+    refs.gauges.battery?.classList.toggle("mid", model.batteryMin !== void 0 && !model.batteryLow && model.batteryMin <= 40);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
     const learnLeft = model.acActive ? model.ac?.learnLeft : null;
@@ -34134,6 +34144,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     chip("valve", model.valve === void 0 ? void 0 : `Ventil ${this._format(model.valve, 0)} %`);
     chip("battery", model.batteryMin === void 0 ? void 0 : `Batteri ${this._format(model.batteryMin, 0)} %`);
     content.querySelector('[data-c="battery"]')?.classList.toggle("warn", !!model.batteryLow);
+    this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/d\xF8r \xE5ben" : void 0);
   }
 };

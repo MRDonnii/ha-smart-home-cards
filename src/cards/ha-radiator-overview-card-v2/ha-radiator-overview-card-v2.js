@@ -23,7 +23,7 @@ import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
-const VERSION = "2.6.1";
+const VERSION = "2.6.2";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -834,6 +834,14 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     return Math.min(1, Math.max(0, (value - min) / Math.max(max - min, 1)));
   }
 
+  // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
+  // batteri niveau").
+  _batteryIcon(icon, pct) {
+    if (!icon) return;
+    const name = !Number.isFinite(pct) ? "mdi:battery-unknown" : pct >= 95 ? "mdi:battery" : pct < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct / 10) * 10)}`;
+    if (icon.getAttribute("icon") !== name) icon.setAttribute("icon", name);
+  }
+
   _metric(node, text, missing, low = false) {
     if (!node) return;
     this._setText(node.querySelector("strong"), text);
@@ -878,6 +886,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     this._metric(refs.metrics.valve, model.valve === undefined ? DASH : `${this._format(model.valve, 0)} %`, model.valve === undefined);
     this._metric(refs.metrics.feels, model.feels === undefined ? DASH : `${this._format(model.feels)}°`, model.feels === undefined);
     this._metric(refs.metrics.battery, model.batteryMin === undefined ? DASH : `${this._format(model.batteryMin, 0)} %`, model.batteryMin === undefined, model.batteryLow);
+    this._batteryIcon(refs.metrics.battery?.querySelector("ha-icon"), model.batteryMin);
     this._renderAir(refs.metrics.air, model.air);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
