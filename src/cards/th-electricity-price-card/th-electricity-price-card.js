@@ -245,7 +245,9 @@ class ThElectricityPriceCard extends HTMLElement {
     const mode = st(c.mode) || plan?.attributes?.mode, cm = st(c.charger_mode);
     // Et ukendt kabel-sensor (Tesla Fleet efter genstart) overlader det til laderen (Claude AI, 2026-10-15)
     const cmOk = !!cm && !['disconnected', 'unavailable', 'unknown'].includes(cm), cs = st(c.cable);
-    const plugged = (cs === 'on' || (cs !== 'off' && !!c.charger_mode && cmOk)) && (!c.tracker || st(c.tracker) === 'home') && (!c.charger_mode || cmOk);
+    // Kun en lader der siger "disconnected" underkender kablet; en utilgængelig lader (skyen tabt efter en netværksgenstart,
+    // 19. okt 2026) overlader det til kabel-sensoren (EV Ledgers "Sat til") (Claude AI)
+    const plugged = (cs === 'on' || (cs !== 'off' && !!c.charger_mode && cmOk)) && (!c.tracker || st(c.tracker) === 'home') && (!c.charger_mode || cm !== 'disconnected');
     // EV Ledgers prisgrænse i Billigst: hvad den holder tilbage over grænsen (Claude AI, 2026-10-15; bruger: "illustrer hvad der sker med ladning ud fra disse settings")
     const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
     // EV Ledger 0.8: the plan charges to the target; with the answer "Vent med resten" (switch) only below the limit

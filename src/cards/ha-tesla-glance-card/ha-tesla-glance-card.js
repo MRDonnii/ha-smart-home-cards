@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.2";
+const VERSION = "0.8.3";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -412,7 +412,9 @@ class HATeslaGlanceCard extends HTMLElement {
     // An unknown cable sensor (Tesla Fleet after a restart) leaves it to the card's own plug sensor (Claude AI, 2026-10-15).
     const cs = st(c.cable); const plugAlt = ["on", "true", "connected"].includes(String(this._val(this._config.plugged) || "").toLowerCase());
     const cable = cs === "on" || (cs !== "off" && plugAlt);
-    const plugged = cable && (!c.tracker || st(c.tracker) === "home") && (!c.charger_mode || (cm && !["disconnected", "unavailable", "unknown"].includes(cm)));
+    // Only a charger that says "disconnected" overrules the cable: one that is unavailable (its cloud lost after a network
+    // restart, 19 Oct 2026) leaves it to the cable sensor (EV Ledger's "Sat til", which then reads the car's own sensors).
+    const plugged = cable && (!c.tracker || st(c.tracker) === "home") && (!c.charger_mode || cm !== "disconnected");
     // EV Ledger's price limit on Cheapest: what it holds back above the limit, and the prices to show where (2026-10-15).
     const pa = plan?.attributes || {}; const lp = pa.price_limit == null ? NaN : Number(pa.price_limit); const above = Number(pa.above_limit_kwh) || 0;
     const ws = this._hass.states[this._waitId()];

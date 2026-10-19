@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.197 */
+/* MRDonnii Smart Home Cards v0.5.198 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -7403,7 +7403,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.8.2";
+var VERSION5 = "0.8.3";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -7900,7 +7900,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const cs = st(c2.cable);
     const plugAlt = ["on", "true", "connected"].includes(String(this._val(this._config.plugged) || "").toLowerCase());
     const cable = cs === "on" || cs !== "off" && plugAlt;
-    const plugged = cable && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm && !["disconnected", "unavailable", "unknown"].includes(cm));
+    const plugged = cable && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm !== "disconnected");
     const pa = plan?.attributes || {};
     const lp = pa.price_limit == null ? NaN : Number(pa.price_limit);
     const above = Number(pa.above_limit_kwh) || 0;
@@ -14424,7 +14424,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const blocks = (plan?.attributes?.blocks || []).map((b) => ({ t: new Date(b.start).getTime(), e: new Date(b.end).getTime(), kwh: b.kwh, cost: b.cost, est: b.estimated })).filter((b) => b.e > Date.now());
     const mode = st(c2.mode) || plan?.attributes?.mode, cm = st(c2.charger_mode);
     const cmOk = !!cm && !["disconnected", "unavailable", "unknown"].includes(cm), cs = st(c2.cable);
-    const plugged = (cs === "on" || cs !== "off" && !!c2.charger_mode && cmOk) && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cmOk);
+    const plugged = (cs === "on" || cs !== "off" && !!c2.charger_mode && cmOk) && (!c2.tracker || st(c2.tracker) === "home") && (!c2.charger_mode || cm !== "disconnected");
     const pa = plan?.attributes || {}, lp = pa.price_limit == null ? NaN : Number(pa.price_limit), above = Number(pa.above_limit_kwh) || 0;
     const ws = this._h.states[this.waitId()];
     const ask = pa.limit_ask == null ? true : pa.limit_ask === true, wt = ws?.state === "on";
