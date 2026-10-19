@@ -23,7 +23,7 @@ import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
-const VERSION = "2.6.2";
+const VERSION = "2.6.3";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -276,8 +276,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:18px}
 .qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 12px -4px var(--rc-ok)}
 .qa.light{flex:1;display:flex;justify-content:flex-start;gap:7px;padding:0 11px;font-size:12px;font-weight:800}
-.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.18),rgba(255,190,110,.45));transition:width .4s ease}
-.qa.light span{position:relative}.qa.light.on{color:#ffc46b;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5)}
+.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:var(--lfill,linear-gradient(90deg,rgba(var(--lc,255,190,110),.18),rgba(var(--lc,255,190,110),.45)));transition:width .4s ease,background .4s ease}
+.qa.light span{position:relative}.qa.light.on{color:color-mix(in srgb,rgb(var(--lc,255,196,107)) 70%,#fff);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px rgba(var(--lc,255,190,110),.5)}
 .rc.lit{color:#ffc46b;background:rgba(255,190,110,.13);box-shadow:inset 0 0 0 1px rgba(255,190,110,.35)}.rc.lit ha-icon{filter:drop-shadow(0 0 5px rgba(255,190,110,.7))}
 :host([compact]) .z-room{display:none!important}
 `;
@@ -834,6 +834,28 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     return Math.min(1, Math.max(0, (value - min) / Math.max(max - min, 1)));
   }
 
+  // The light slider takes the colour of the room's lit lights; several colours fade into each other (Claude AI,
+  // 2026-10-19; user: "lys sliderern skal farves efter farven i rummet, hvis flere farver må den fade").
+  _lightColors(l) {
+    if (!l) return [];
+    const ids = Array.isArray(l.attributes?.entity_id) ? l.attributes.entity_id : [l.entity_id];
+    const out = [];
+    for (const id of ids) {
+      const s = this._hass?.states?.[id]; const c = s?.state === "on" ? s.attributes?.rgb_color : null;
+      if (!Array.isArray(c) || c.length < 3) continue;
+      if (out.some((x) => Math.abs(x[0] - c[0]) + Math.abs(x[1] - c[1]) + Math.abs(x[2] - c[2]) < 60)) continue;
+      out.push(c.slice(0, 3).map((v) => Math.round(v))); if (out.length >= 4) break;
+    }
+    if (!out.length && l.state === "on" && Array.isArray(l.attributes?.rgb_color)) out.push(l.attributes.rgb_color.slice(0, 3).map((v) => Math.round(v)));
+    return out;
+  }
+  _lightVars(l, on, pct) {
+    const cols = on ? this._lightColors(l) : [];
+    if (!cols.length) return `--lv:${on ? pct : 0}%`;
+    const stops = cols.length === 1 ? [`rgba(${cols[0]},.18)`, `rgba(${cols[0]},.45)`] : cols.map((c, i) => `rgba(${c},${(.22 + (.23 * i) / (cols.length - 1)).toFixed(2)})`);
+    return `--lv:${pct}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
+  }
+
   // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
   // batteri niveau").
   _batteryIcon(icon, pct) {
@@ -1267,7 +1289,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
   _paintRoomInfo() {
     if (!this._built || !this._hass || !this._config?.rooms?.some((r) => r.roomInfo)) return;
     const st = (id) => (id ? this._hass.states[id] : undefined);
-    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)]; }));
+    const sig = JSON.stringify(this._config.rooms.map((r) => { const i = r.roomInfo; if (!i) return 0; return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, JSON.stringify(this._lightColors(st(i.light))), st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)]; }));
     if (sig === this._roomInfoSig) return; this._roomInfoSig = sig;
     const ago = (t) => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`; };
     this._config.rooms.forEach((r, i) => {
@@ -1289,7 +1311,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
       }
       // Quick buttons like the Alle rum cards: the light (tap toggles) and the room's actions; they act without opening the popup.
       const acts = [];
-      if (info?.light && st(info.light)) { const l = st(info.light); const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? Math.round(((l.attributes?.brightness ?? 255) / 255) * 100) : 0}%"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %` : "Lys"}</span></button>`); }
+      if (info?.light && st(info.light)) { const l = st(info.light); const on = l.state === "on"; acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, Math.round(((l.attributes?.brightness ?? 255) / 255) * 100))}"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round(((l.attributes?.brightness ?? 255) / 255) * 100)} %` : "Lys"}</span></button>`); }
       (info?.actions || []).slice(0, 4).forEach((x) => { const s2 = st(x.entity); if (!s2) return; const on = ["on", "playing", "paused"].includes(s2.state); acts.push(`<button type="button" class="qa ${on ? "on" : ""}" data-act="${this._escape(x.entity)}" title="${this._escape(x.name || "")}"><ha-icon icon="${this._escape(x.icon || s2.attributes?.icon || "mdi:power")}"></ha-icon></button>`); });
       if (r.controls) acts.push(`<button type="button" class="qa more" data-ctl="${i}" title="Styring"><ha-icon icon="mdi:tune-variant"></ha-icon></button>`);
       const html = chips.map(([cls, ic, t]) => `<span class="rc ${cls}"><ha-icon icon="${this._escape(ic)}"></ha-icon>${this._escape(t)}</span>`).join("") + (acts.length ? `<div class="qrow">${acts.join("")}</div>` : "");

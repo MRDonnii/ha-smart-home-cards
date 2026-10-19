@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.198 */
+/* MRDonnii Smart Home Cards v0.5.199 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -31844,7 +31844,7 @@ if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
 init_chart_hover();
-var VERSION24 = "2.6.2";
+var VERSION24 = "2.6.3";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -32093,8 +32093,8 @@ h2{margin:6px 0 0;font-size:25px;font-weight:800;line-height:1.08;letter-spacing
 .qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:18px}
 .qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 12px -4px var(--rc-ok)}
 .qa.light{flex:1;display:flex;justify-content:flex-start;gap:7px;padding:0 11px;font-size:12px;font-weight:800}
-.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.18),rgba(255,190,110,.45));transition:width .4s ease}
-.qa.light span{position:relative}.qa.light.on{color:#ffc46b;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5)}
+.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:var(--lfill,linear-gradient(90deg,rgba(var(--lc,255,190,110),.18),rgba(var(--lc,255,190,110),.45)));transition:width .4s ease,background .4s ease}
+.qa.light span{position:relative}.qa.light.on{color:color-mix(in srgb,rgb(var(--lc,255,196,107)) 70%,#fff);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);box-shadow:inset 0 0 0 1px rgba(var(--lc,255,190,110),.5)}
 .rc.lit{color:#ffc46b;background:rgba(255,190,110,.13);box-shadow:inset 0 0 0 1px rgba(255,190,110,.35)}.rc.lit ha-icon{filter:drop-shadow(0 0 5px rgba(255,190,110,.7))}
 :host([compact]) .z-room{display:none!important}
 `;
@@ -32662,6 +32662,29 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const max = this._number(this._config.dial_max) ?? 30;
     return Math.min(1, Math.max(0, (value - min) / Math.max(max - min, 1)));
   }
+  // The light slider takes the colour of the room's lit lights; several colours fade into each other (Claude AI,
+  // 2026-10-19; user: "lys sliderern skal farves efter farven i rummet, hvis flere farver må den fade").
+  _lightColors(l) {
+    if (!l) return [];
+    const ids = Array.isArray(l.attributes?.entity_id) ? l.attributes.entity_id : [l.entity_id];
+    const out = [];
+    for (const id of ids) {
+      const s = this._hass?.states?.[id];
+      const c2 = s?.state === "on" ? s.attributes?.rgb_color : null;
+      if (!Array.isArray(c2) || c2.length < 3) continue;
+      if (out.some((x) => Math.abs(x[0] - c2[0]) + Math.abs(x[1] - c2[1]) + Math.abs(x[2] - c2[2]) < 60)) continue;
+      out.push(c2.slice(0, 3).map((v) => Math.round(v)));
+      if (out.length >= 4) break;
+    }
+    if (!out.length && l.state === "on" && Array.isArray(l.attributes?.rgb_color)) out.push(l.attributes.rgb_color.slice(0, 3).map((v) => Math.round(v)));
+    return out;
+  }
+  _lightVars(l, on, pct2) {
+    const cols = on ? this._lightColors(l) : [];
+    if (!cols.length) return `--lv:${on ? pct2 : 0}%`;
+    const stops = cols.length === 1 ? [`rgba(${cols[0]},.18)`, `rgba(${cols[0]},.45)`] : cols.map((c2, i) => `rgba(${c2},${(0.22 + 0.23 * i / (cols.length - 1)).toFixed(2)})`);
+    return `--lv:${pct2}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
+  }
   // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
   // batteri niveau").
   _batteryIcon(icon4, pct2) {
@@ -33124,7 +33147,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const sig = JSON.stringify(this._config.rooms.map((r) => {
       const i = r.roomInfo;
       if (!i) return 0;
-      return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)];
+      return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, JSON.stringify(this._lightColors(st(i.light))), st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)];
     }));
     if (sig === this._roomInfoSig) return;
     this._roomInfoSig = sig;
@@ -33162,7 +33185,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       if (info?.light && st(info.light)) {
         const l = st(info.light);
         const on = l.state === "on";
-        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="--lv:${on ? Math.round((l.attributes?.brightness ?? 255) / 255 * 100) : 0}%"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round((l.attributes?.brightness ?? 255) / 255 * 100)} %` : "Lys"}</span></button>`);
+        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, Math.round((l.attributes?.brightness ?? 255) / 255 * 100))}"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${Math.round((l.attributes?.brightness ?? 255) / 255 * 100)} %` : "Lys"}</span></button>`);
       }
       (info?.actions || []).slice(0, 4).forEach((x) => {
         const s2 = st(x.entity);
@@ -33222,7 +33245,7 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.5";
+var VERSION25 = "1.7.6";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33362,10 +33385,10 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .qa:active{transform:scale(.9)}.qa ha-icon{position:relative;--mdc-icon-size:19px}
 .qa.on{color:var(--rc-ok);background:color-mix(in srgb,var(--rc-ok) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 45%,transparent),0 0 14px -5px var(--rc-ok)}
 .qa.light{flex:1;min-width:84px;display:flex;justify-content:flex-start;gap:8px;padding:0 13px;font-size:12.5px;font-weight:800;white-space:nowrap}
-.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:linear-gradient(90deg,rgba(255,190,110,.16),rgba(255,190,110,.42));transition:width .4s ease}
+.qa.light i{position:absolute;inset:0 auto 0 0;width:var(--lv,0%);background:var(--lfill,linear-gradient(90deg,rgba(var(--lc,255,190,110),.16),rgba(var(--lc,255,190,110),.42)));transition:width .4s ease,background .4s ease}
 .qa.light[data-dim='1']{touch-action:pan-y;user-select:none;-webkit-user-select:none}.qa.light.drag i{transition:none}.qa.light.drag{transform:scale(1.02)}
-.qa.light i::after{content:"";position:absolute;right:0;top:7px;bottom:7px;width:3px;border-radius:3px;background:#ffd28a;opacity:0;box-shadow:0 0 8px #ffc46b}.qa.light.on i::after{opacity:.9}
-.qa.light span{position:relative}.qa.light.on{color:#ffd28a;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,190,110,.5),0 0 18px -8px rgba(255,190,110,.9)}
+.qa.light i::after{content:"";position:absolute;right:0;top:7px;bottom:7px;width:3px;border-radius:3px;background:color-mix(in srgb,rgb(var(--lc,255,210,138)) 75%,#fff);opacity:0;box-shadow:0 0 8px rgb(var(--lc,255,196,107))}.qa.light.on i::after{opacity:.9}
+.qa.light span{position:relative}.qa.light.on{color:color-mix(in srgb,rgb(var(--lc,255,210,138)) 70%,#fff);background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(var(--lc,255,190,110),.5),0 0 18px -8px rgba(var(--lc,255,190,110),.9)}
 .qa.more{flex:0 0 auto;display:flex;gap:6px;padding:0 13px;color:var(--rc-accent);font-size:12px;font-weight:800;background:color-mix(in srgb,var(--rc-accent) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-accent) 40%,transparent)}
 
 /* outdoor */
@@ -33919,7 +33942,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const sig = JSON.stringify(this._config.rooms.map((r) => {
       const i = r.roomInfo;
       if (!i) return r.controls ? 1 : 0;
-      return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)];
+      return [st(i.presence)?.state, st(i.presence)?.last_changed, st(i.light)?.state, st(i.light)?.attributes?.brightness, JSON.stringify(this._lightColors(st(i.light))), ...(i.status || []).map((x) => [st(x.entity)?.state, st(x.entity)?.attributes?.media_title, st(x.entity)?.attributes?.app_name]), st(i.alert?.entity)?.state, st(i.opening)?.state, st(i.profile)?.state, st(i.model?.override)?.state, st(i.model?.timer)?.state, ...(i.actions || []).map((a) => st(a.entity)?.state)];
     })) + Math.floor(Date.now() / 6e4);
     if (sig === this._roomInfoSig) return;
     this._roomInfoSig = sig;
@@ -33955,7 +33978,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (l) {
         const on = l.state === "on";
         const dim = (l.attributes?.supported_color_modes || []).some((m) => m !== "onoff");
-        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="--lv:${on ? pct2(l) : 0}%" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct2(l)} %` : "Fra"}</span></button>`);
+        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, pct2(l))}" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct2(l)} %` : "Fra"}</span></button>`);
       }
       (info?.actions || []).slice(0, 2).forEach((x) => {
         const s2 = st(x.entity);
