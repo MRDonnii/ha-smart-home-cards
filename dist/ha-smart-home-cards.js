@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.195 */
+/* MRDonnii Smart Home Cards v0.5.196 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -31697,7 +31697,9 @@ var HARoomControlCard = class extends HTMLElement {
       const once = ["script", "scene", "button"].includes(dom);
       const state = dead ? "\u2014" : once ? "K\xD8R" : on ? "TIL" : "FRA";
       let desc = t.desc || generic[dom] || "Sl\xE5r til og fra";
-      if (t.role === "presence" && !on && !dead) desc = `Sl\xE5et fra \xB7 sl\xE5r selv til igen kl. ${clock(Date.parse(s.last_changed) + 3 * 36e5)}`;
+      const lock = this._st(this._lockId(m));
+      const lockEnd = lock?.state === "active" ? Date.parse(lock.attributes?.finishes_at || "") : NaN;
+      if (t.role === "presence" && !on && !dead) desc = `Sl\xE5et fra \xB7 sl\xE5r selv til igen kl. ${clock(Number.isFinite(lockEnd) ? lockEnd : Date.parse(s.last_changed) + 3 * 36e5)}`;
       else if (t.role === "presence" && on) desc += " \xB7 tryk for at sl\xE5 fra i 3 timer";
       if (dead) desc = "Utilg\xE6ngelig";
       return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""} ${t.role === "presence" && !on && !dead ? "paused" : ""}" data-toggle="${esc6(t.entity)}" title="${esc6(desc)}">
@@ -33104,7 +33106,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       }
       if (typeof o.name !== "string" || o.name.includes("[[[") || !/^(automation|input_boolean|switch|script|scene|fan)\./.test(o.entity)) continue;
       if (model && [model.override].includes(o.entity)) continue;
-      if (!toggles.some((t) => t.entity === o.entity)) toggles.push({ entity: o.entity, name: o.name, icon: typeof o.icon === "string" && !o.icon.includes("[[[") ? o.icon : void 0 });
+      if (!toggles.some((t) => t.entity === o.entity)) toggles.push({ entity: o.entity, name: o.name, icon: typeof o.icon === "string" && !o.icon.includes("[[[") ? o.icon : void 0, desc: typeof o.label === "string" && !o.label.includes("[[[") ? o.label : void 0 });
     }
     return { model, profiles, profileIcons, toggles };
   }

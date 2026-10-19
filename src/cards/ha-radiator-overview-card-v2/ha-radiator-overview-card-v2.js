@@ -1251,7 +1251,7 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
       if (scene) { profileIcons[o.entity] = o.icon; continue; }
       if (typeof o.name !== "string" || o.name.includes("[[[") || !/^(automation|input_boolean|switch|script|scene|fan)\./.test(o.entity)) continue;
       if (model && [model.override].includes(o.entity)) continue;
-      if (!toggles.some((t) => t.entity === o.entity)) toggles.push({ entity: o.entity, name: o.name, icon: typeof o.icon === "string" && !o.icon.includes("[[[") ? o.icon : undefined });
+      if (!toggles.some((t) => t.entity === o.entity)) toggles.push({ entity: o.entity, name: o.name, icon: typeof o.icon === "string" && !o.icon.includes("[[[") ? o.icon : undefined, desc: typeof o.label === "string" && !o.label.includes("[[[") ? o.label : undefined });
     }
     return { model, profiles, profileIcons, toggles };
   }

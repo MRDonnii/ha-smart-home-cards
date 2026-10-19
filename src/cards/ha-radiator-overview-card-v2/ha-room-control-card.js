@@ -308,7 +308,10 @@ class HARoomControlCard extends HTMLElement {
       const once = ["script", "scene", "button"].includes(dom);
       const state = dead ? "—" : once ? "KØR" : on ? "TIL" : "FRA";
       let desc = t.desc || generic[dom] || "Slår til og fra";
-      if (t.role === "presence" && !on && !dead) desc = `Slået fra · slår selv til igen kl. ${clock(Date.parse(s.last_changed) + 3 * 3600e3)}`;
+      // While the room is locked (scene lock or a work-hours switch holding it until 15:00) presence comes back when the lock ends,
+      // not 3 hours after it was switched off (Claude AI, 2026-10-19).
+      const lock = this._st(this._lockId(m)); const lockEnd = lock?.state === "active" ? Date.parse(lock.attributes?.finishes_at || "") : NaN;
+      if (t.role === "presence" && !on && !dead) desc = `Slået fra · slår selv til igen kl. ${clock(Number.isFinite(lockEnd) ? lockEnd : Date.parse(s.last_changed) + 3 * 3600e3)}`;
       else if (t.role === "presence" && on) desc += " · tryk for at slå fra i 3 timer";
       if (dead) desc = "Utilgængelig";
       return `<button type="button" class="tile tg ${on ? "on" : ""} ${dead ? "dead" : ""} ${t.role === "presence" && !on && !dead ? "paused" : ""}" data-toggle="${esc(t.entity)}" title="${esc(desc)}">
