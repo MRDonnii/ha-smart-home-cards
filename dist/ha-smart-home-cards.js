@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.199 */
+/* MRDonnii Smart Home Cards v0.5.200 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -34954,7 +34954,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.8.77";
+var VERSION28 = "0.8.78";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -36388,7 +36388,18 @@ var HAHomeHeaderCard = class extends HTMLElement {
     @keyframes wind-cloud{to{transform:translateX(calc(100vw + 430px))}}@keyframes storm-cloud{0%{transform:translate(-30px,0) skewX(-4deg)}45%{transform:translate(calc(50vw + 170px),-7px) skewX(5deg)}100%{transform:translate(calc(100vw + 470px),4px) skewX(-3deg)}}@keyframes wind-gust{0%{opacity:0;transform:translateX(0) scaleX(.4)}18%{opacity:.85}78%{opacity:.42}100%{opacity:0;transform:translateX(calc(100vw + 190px)) scaleX(1.35)}}
     .content{gap:10px;padding-left:62px;padding-right:14px;grid-template-columns:minmax(175px,.85fr) minmax(130px,1fr)}.menu{position:absolute;z-index:6;top:8px;left:8px;width:42px;border:0;background:transparent;border-radius:10px;pointer-events:auto}.menu.quick{top:auto;bottom:8px}.menu:hover{background:rgba(255,255,255,.055)}
     @media(min-width:1101px) and (max-height:1100px){ha-card{min-height:clamp(96px,10.5vh,118px)}.content{min-height:clamp(96px,10.5vh,118px);padding-top:clamp(10px,1.35vh,18px);padding-bottom:clamp(10px,1.35vh,18px)}.menu{top:clamp(5px,.75vh,8px);width:clamp(38px,4.2vh,42px);height:clamp(38px,4.2vh,48px)}.clock,.weather-copy b{font-size:clamp(42px,5vh,54px)}.date,.weather-copy span{font-size:clamp(11px,1.3vh,14px)}.weather img{width:clamp(58px,6.5vh,75px);height:clamp(58px,6.5vh,75px)}.status-group{min-height:clamp(68px,7.5vh,82px);padding-top:5px;padding-bottom:5px}.status-group span{font-size:clamp(15px,1.7vh,18px)}.status-group strong{font-size:clamp(14px,1.5vh,16px)}}
-    @media(max-width:700px){ha-card{min-height:88px}.content{grid-template-columns:minmax(84px,1fr) minmax(80px,1fr);gap:5px;padding:7px 8px 7px 42px;min-height:88px}.menu{top:3px;left:4px;width:32px;height:36px}.menu.quick{top:auto;bottom:3px}.menu ha-icon{width:20px;height:20px;--mdc-icon-size:20px}.status-group{gap:2px;min-width:105px;min-height:62px;padding:3px 7px}.status-group ha-icon{width:26px;height:26px;--mdc-icon-size:26px}.status-group div{min-width:0}.status-group span{font-size:11px;letter-spacing:.02em;white-space:nowrap}.status-group strong{overflow:hidden;font-size:13px;text-overflow:ellipsis;white-space:nowrap;max-width:140px}.status-group small{max-width:140px}.status-group.has-alert{gap:5px;padding:4px 8px}.status-group.has-alert ha-icon{width:18px;height:18px;--mdc-icon-size:18px}.status-group.has-alert strong{max-width:130px;font-size:12px}.weather{gap:4px}.weather img{width:38px;height:38px}.weather-copy strong{display:none}.weather-copy b{font-size:32px}.clock{font-size:32px}.date{font-size:8px;white-space:nowrap}.moon{right:24%;top:8px;width:34px;height:34px}.shooting-star{width:38px}.runway .roaming{animation-duration:var(--roam-x-mobile),var(--roam-y-mobile)}}/* "Hjemmet lige nu" p\xE5 telefoner (Claude AI, 2026-10-18; bruger: "skal strammes op" \u2026 "ikke eksklusivt nok, passer ikke ind i
+    @media(max-width:700px){ha-card{min-height:88px}.content{grid-template-columns:minmax(84px,1fr) minmax(80px,1fr);gap:5px;padding:7px 8px 7px 42px;min-height:88px}.menu{top:3px;left:4px;width:32px;height:36px}.menu.quick{top:auto;bottom:3px}.menu ha-icon{width:20px;height:20px;--mdc-icon-size:20px}.status-group{gap:2px;min-width:105px;min-height:62px;padding:3px 7px}.status-group ha-icon{width:26px;height:26px;--mdc-icon-size:26px}.status-group div{min-width:0}.status-group span{font-size:11px;letter-spacing:.02em;white-space:nowrap}.status-group strong{overflow:hidden;font-size:13px;text-overflow:ellipsis;white-space:nowrap;max-width:140px}.status-group small{max-width:140px}.status-group.has-alert{gap:5px;padding:4px 8px}.status-group.has-alert ha-icon{width:18px;height:18px;--mdc-icon-size:18px}.status-group.has-alert strong{max-width:130px;font-size:12px}.weather{gap:4px}.weather img{width:38px;height:38px}.weather-copy strong{display:none}.weather-copy b{font-size:32px}.clock{font-size:32px}.date{font-size:8px;white-space:nowrap}.moon{right:24%;top:8px;width:34px;height:34px}.shooting-star{width:38px}.runway .roaming{animation-duration:var(--roam-x-mobile),var(--roam-y-mobile)}}/* "Hjemmet lige nu" i alle st\xF8rrelser (Claude AI, 2026-10-19; bruger: "du har lavet til mobil view vil jeg gerne have i alle
+   st\xF8rrelser"): samme kolonne som p\xE5 telefonen \u2013 ikon med gl\xF8d, sp\xE6rret overskrift med tynde streger, v\xE6rdi, detalje \u2013 i st\xF8rre m\xE5l.
+   Telefonudgaven nedenfor g\xF8r den mindre. */
+.status-group:not(.has-alert){gap:0}
+.status-group:not(.has-alert) ha-icon{width:28px;height:28px;--mdc-icon-size:28px;margin-bottom:4px;filter:drop-shadow(0 0 9px color-mix(in srgb,currentColor 55%,transparent))}
+.status-group:not(.has-alert)>div{align-items:center;min-width:0;max-width:100%}
+.status-group:not(.has-alert) span{display:flex;align-items:center;gap:10px;font-size:11px;line-height:14px;font-weight:800;letter-spacing:.2em;white-space:nowrap}
+.status-group:not(.has-alert) span::before,.status-group:not(.has-alert) span::after{content:"";width:24px;height:1px;flex:0 0 24px;background:linear-gradient(90deg,transparent,currentColor);opacity:.55}
+.status-group:not(.has-alert) span::after{background:linear-gradient(270deg,transparent,currentColor)}
+.status-group:not(.has-alert) strong{margin-top:3px;font-size:20px;line-height:24px;font-weight:700;letter-spacing:-.01em;max-width:100%}
+.status-group:not(.has-alert) small{margin-top:2px;font-size:10.5px;line-height:13px;max-width:320px}
+/* "Hjemmet lige nu" p\xE5 telefoner (Claude AI, 2026-10-18; bruger: "skal strammes op" \u2026 "ikke eksklusivt nok, passer ikke ind i
    mit design \u2026 ikke symmetrisk"): samme midterkolonne som p\xE5 computer \u2013 ikon, overskrift, v\xE6rdi, detalje \u2013 strammet op, s\xE5 den
    st\xE5r frit midt i kortet. Overskriften har en tynd, tonet streg i hver side, og ikonet gl\xF8der svagt i sin farve. */
 @media(max-width:700px) and (min-width:431px){
