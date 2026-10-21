@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.200 */
+/* MRDonnii Smart Home Cards v0.5.201 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -34954,7 +34954,7 @@ var HACardListEditor8 = class extends HTMLElement {
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.8.78";
+var VERSION28 = "0.8.79";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -36060,7 +36060,12 @@ var HAHomeHeaderCard = class extends HTMLElement {
       const bgCat = cat === "windy" ? "cloudy" : cat, tK = tD === "night" ? "night" : tD !== "day" ? "twilight" : "day", bg = (V3_BG[bgCat] || V3_BG.sunny)[tK] || V3_BG.sunny.day, shadow = (V3_SHADOW[bgCat] || {})[tK] || "none";
       const css = `linear-gradient(to bottom, ${bg.join(", ")})`, old = null;
       this._v3BgCss = css;
-      const main = v3BandLum(bg) > V3_INK_LIGHT_SKY ? "dark" : "light";
+      let skyLum = v3BandLum(bg);
+      if (this._skyCloudsOn() && cat !== "unknown") {
+        const sp = this._skyParams(), cl = (c2) => 0.2126 * c2[0] ** 2.2 + 0.7152 * c2[1] ** 2.2 + 0.0722 * c2[2] ** 2.2, k = Math.min(1, Math.max(0, sp.cover)) * 0.85;
+        skyLum = skyLum * (1 - k) + (cl(sp.dark) * 0.85 + cl(sp.lit) * 0.15) * k;
+      }
+      const main = skyLum > V3_INK_LIGHT_SKY ? "dark" : "light";
       this._v3Ink = { main, weather: sunBehind ? "dark" : main };
       return `<div class="v3-bg" style="background:${css};box-shadow:${shadow};"></div>${old ? `<div class="v3-bg v3-bg-old" style="background:${old};box-shadow:${this._v3ShadowOld || "none"};"></div>` : ""}`;
     })();
