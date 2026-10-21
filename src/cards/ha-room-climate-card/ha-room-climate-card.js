@@ -13,8 +13,9 @@
  */
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
+import { co2Rank } from "../shared/air-quality.js";
 
-const VERSION = "1.7.6";
+const VERSION = "1.7.7";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -120,6 +121,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .g.na strong{color:var(--rc-muted);font-weight:600}.g.na i::after{width:0}
 .g.mid{--gc:#f5b14c}.g.low{--gc:var(--rc-danger)}.g.low strong{color:var(--rc-danger)}
 .g[data-m="humidity"]{--gc:#60a5fa}.g[data-m="valve"]{--gc:var(--rc-hot)}.g[data-m="feels"]{--gc:var(--room-color)}.g[data-m="battery"]{--gc:var(--rc-ok)}
+.g[data-m="co2"]{--gc:#5bc99a}.g[data-m="co2"].fair{--gc:#a3d65c}.g[data-m="co2"].poor{--gc:#ff9a4d}.g[data-m="co2"].bad{--gc:#ff5d73}
 
 /* curve band */
 .band{position:relative;margin-top:auto}
@@ -373,7 +375,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.ac?.climate].filter(isId));
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
     const esc = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
@@ -397,7 +399,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
             <div class="rail na" data-f="rail"><i class="tgt"></i><i class="cur"></i></div>
             <div class="step" data-f="step"><div class="tv"><span data-f="tlabel">Mål</span><strong data-f="target">${DASH}</strong></div></div>
           </div>
-          <div class="gauges">${gauge("humidity", "mdi:water-percent", "Fugt")}${gauge("valve", "mdi:valve", "Ventil")}${gauge("feels", "mdi:thermometer", "Føles")}${gauge("battery", "mdi:battery-outline", "Batteri")}</div>
+          <div class="gauges">${gauge("humidity", "mdi:water-percent", "Fugt")}${room.co2 ? gauge("co2", "mdi:molecule-co2", "CO₂") : ""}${gauge("valve", "mdi:valve", "Ventil")}${gauge("feels", "mdi:thermometer", "Føles")}${gauge("battery", "mdi:battery-outline", "Batteri")}</div>
         </div>
         <div class="band">${spark()}</div>
         <div class="z-room" data-f="roominfo"></div>
@@ -466,7 +468,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       const kind = room.outdoor ? "outdoor" : room.climate ? "zone" : "sensor";
       const f = (name) => host.querySelector(`[data-f="${name}"]`);
       return { kind, host, view: "", status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), humbar: f("humbar"), day: f("day"), rail: f("rail"), step: f("step"), visual: f("visual"), visualKind: "",
-        gauges: Object.fromEntries(["humidity", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
+        gauges: Object.fromEntries(["humidity", "co2", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
         badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]'), learn: host.querySelector('[data-b="learn"]') }, spark: sparkRefs(host) };
     });
     const s = (name) => root.querySelector(`[data-s="${name}"]`);
@@ -522,7 +524,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   _renderRoom(index, model) {
     const refs = this._refs[index]; if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
     if (refs.view === view) return; refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
     else if (refs.kind === "sensor") this._renderTile(room, refs, model);
@@ -558,6 +560,14 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       }
     }
     this._gauge(refs.gauges.humidity, model.humidity === undefined ? DASH : `${this._format(model.humidity, 0)} %`, (model.humidity ?? 0) / 100, model.humidity === undefined);
+    const co2 = model.air?.co2;
+    this._gauge(refs.gauges.co2, co2 === undefined ? DASH : `${this._format(co2, 0)} ppm`, co2 === undefined ? 0 : (co2 - 400) / 1200, co2 === undefined);
+    if (refs.gauges.co2) {
+      const rank = co2Rank(co2, room);
+      refs.gauges.co2.classList.toggle("fair", rank === 1);
+      refs.gauges.co2.classList.toggle("poor", rank === 3);
+      refs.gauges.co2.classList.toggle("bad", rank === 4);
+    }
     this._gauge(refs.gauges.valve, model.valve === undefined ? DASH : `${this._format(model.valve, 0)} %`, (model.valve ?? 0) / 100, model.valve === undefined);
     this._gauge(refs.gauges.feels, model.feels === undefined ? DASH : `${this._format(model.feels)}°`, model.feels === undefined ? 0 : (model.feels - 14) / 14, model.feels === undefined);
     this._gauge(refs.gauges.battery, model.batteryMin === undefined ? DASH : `${this._format(model.batteryMin, 0)} %`, (model.batteryMin ?? 0) / 100, model.batteryMin === undefined, model.batteryLow);
@@ -581,6 +591,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._setText(refs.temp, this._format(model.current));
     const parts = [];
     if (model.humidity !== undefined) parts.push(`Fugt ${this._format(model.humidity, 0)} %`);
+    if (room.co2) parts.push(`CO₂ ${model.air?.co2 === undefined ? DASH : `${this._format(model.air.co2, 0)} ppm`}`);
     if (model.feels !== undefined) parts.push(`Føles ${this._format(model.feels)}°`);
     if (refs.meta) refs.meta.innerHTML = parts.length ? parts.map((p) => this._escape(p)).join("<br>") : this._escape(model.status);
     refs.host.querySelector(".t-top b")?.setAttribute("title", model.status);
@@ -722,6 +733,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
               <div class="ph-step" data-v="step"${room.climate ? "" : " hidden"}><button type="button" class="sb" data-pstep="-1" aria-label="Sænk mål"><ha-icon icon="mdi:minus"></ha-icon></button><div class="tv"><span data-v="tlabel">Mål</span><strong data-v="target">${DASH}</strong></div><button type="button" class="sb" data-pstep="1" aria-label="Hæv mål"><ha-icon icon="mdi:plus"></ha-icon></button></div>
               <div class="ph-chips">
                 <span class="pc" data-c="humidity" style="--pcc:#60a5fa"><ha-icon icon="mdi:water-percent"></ha-icon><span></span></span>
+                ${room.co2 ? '<span class="pc" data-c="co2" style="--pcc:#5bc99a"><ha-icon icon="mdi:molecule-co2"></ha-icon><span></span></span>' : ""}
                 <span class="pc" data-c="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span></span></span>
                 <span class="pc" data-c="valve" style="--pcc:var(--rc-hot)"><ha-icon icon="mdi:valve"></ha-icon><span></span></span>
                 <span class="pc" data-c="battery" style="--pcc:var(--rc-ok)"><ha-icon icon="mdi:battery-outline"></ha-icon><span></span></span>
@@ -750,12 +762,40 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     content.querySelector('[data-v="step"]')?.classList.toggle("pending", pending !== undefined);
     const chip = (k, text) => { const n = content.querySelector(`[data-c="${k}"]`); if (!n) return; n.hidden = text === undefined; if (text !== undefined) { const s = n.querySelector("span"); if (s.textContent !== text) s.textContent = text; } };
     chip("humidity", model.humidity === undefined ? undefined : `${this._format(model.humidity, 0)} % fugt`);
+    chip("co2", model.air?.co2 === undefined ? "CO₂ offline" : `CO₂ ${this._format(model.air.co2, 0)} ppm`);
     chip("feels", model.feels === undefined ? undefined : `Føles ${this._format(model.feels)}°`);
     chip("valve", model.valve === undefined ? undefined : `Ventil ${this._format(model.valve, 0)} %`);
     chip("battery", model.batteryMin === undefined ? undefined : `Batteri ${this._format(model.batteryMin, 0)} %`);
     content.querySelector('[data-c="battery"]')?.classList.toggle("warn", !!model.batteryLow);
     this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/dør åben" : undefined);
+  }
+
+  async _mountPopupCards(content, room) {
+    await super._mountPopupCards(content, room);
+    if (!room.co2 || content !== this._popupEl?.querySelector(".room-popup-content") || this._config.rooms?.[this._popupRoomIndex] !== room) return;
+    const host = content.querySelector('[data-card-host="temperature"]');
+    if (!host) return;
+    try {
+      const helpers = await window.loadCardHelpers();
+      if (content !== this._popupEl?.querySelector(".room-popup-content") || this._config.rooms?.[this._popupRoomIndex] !== room) return;
+      const graph = helpers.createCardElement({
+        type: "custom:ha-air-quality-card",
+        title: `CO₂-forløb · ${room.name}`,
+        co2: room.co2,
+        co2_warning: room.co2_warning,
+        co2_critical: room.co2_critical,
+        hours: this._config.history_hours || 24,
+        animation: this._config.animation,
+      });
+      graph.style.display = "block";
+      graph.style.marginTop = "12px";
+      graph.hass = this._hass;
+      host.appendChild(graph);
+      this._popupCards.push(graph);
+    } catch (error) {
+      console.warn("HA Room Climate Card: CO₂ graph could not be mounted", error);
+    }
   }
 }
 
