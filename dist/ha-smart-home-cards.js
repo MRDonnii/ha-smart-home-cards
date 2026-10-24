@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.202 */
+/* MRDonnii Smart Home Cards v0.5.203 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -7403,7 +7403,7 @@ function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.8.3";
+var VERSION5 = "0.8.4";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -7944,7 +7944,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       soc,
       target: n(c2.target),
       deadline: pa.deadline,
-      charging: st(c2.charging) === "on" || cm === "charging",
+      charging: ["on", "charging", "starting"].includes(st(c2.charging)) || cm === "charging",
       name: c2.name || this._config.name
     };
   }
@@ -14087,7 +14087,7 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.17.1";
+var TEP_VER = "1.17.2";
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -14457,7 +14457,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       soc: this.n(c2.soc),
       target: this.n(c2.target),
       deadline: pa.deadline,
-      charging: st(c2.charging) === "on" || cm === "charging",
+      charging: ["on", "charging", "starting"].includes(st(c2.charging)) || cm === "charging",
       name: c2.name || "Bilen"
     };
   }

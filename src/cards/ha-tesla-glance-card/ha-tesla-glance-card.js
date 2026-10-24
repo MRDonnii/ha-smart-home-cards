@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.3";
+const VERSION = "0.8.4";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -431,7 +431,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const soc = Number.isFinite(n(c.soc)) ? n(c.soc) : this._num(this._config.battery) ?? NaN;
     const prices = (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
     return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit, prices, minutes: Number(pa.slot_minutes) || 15,
-      soc, target: n(c.target), deadline: pa.deadline, charging: st(c.charging) === "on" || cm === "charging", name: c.name || this._config.name };
+      soc, target: n(c.target), deadline: pa.deadline, charging: ["on", "charging", "starting"].includes(st(c.charging)) || cm === "charging", name: c.name || this._config.name };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {

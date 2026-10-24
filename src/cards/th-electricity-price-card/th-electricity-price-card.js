@@ -12,7 +12,7 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.17.1';
+const TEP_VER = '1.17.2';
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -261,7 +261,7 @@ class ThElectricityPriceCard extends HTMLElement {
     const kwh = this.n(c.energy), cost = this.n(c.cost), alt = this.A(c.cost, 'alternatives') || {}, now = alt.now?.cost;
     return { blocks, mode, kwh: Number.isFinite(kwh) ? kwh : blocks.reduce((a, b) => a + (b.kwh || 0), 0), cost: Number.isFinite(cost) ? cost : blocks.reduce((a, b) => a + (b.cost || 0), 0),
       save: Number.isFinite(now) && Number.isFinite(cost) && blocks.length && !limit?.held ? now - cost : NaN, nowCost: Number.isFinite(now) ? now : NaN, limit,
-      soc: this.n(c.soc), target: this.n(c.target), deadline: pa.deadline, charging: st(c.charging) === 'on' || cm === 'charging', name: c.name || 'Bilen' };
+      soc: this.n(c.soc), target: this.n(c.target), deadline: pa.deadline, charging: ['on', 'charging', 'starting'].includes(st(c.charging)) || cm === 'charging', name: c.name || 'Bilen' };
   }
   // Kontakten findes ved siden af planens select i entity-registret (alle sprog), ellers ud fra det engelske id
   waitId() { const c = this.cfg.charge || {}; if (c.limit_wait) return c.limit_wait;
