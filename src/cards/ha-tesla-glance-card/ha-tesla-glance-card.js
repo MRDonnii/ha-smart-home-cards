@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.4";
+const VERSION = "0.8.5";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -161,10 +161,14 @@ class HATeslaGlanceCard extends HTMLElement {
     return this._num(t);
   }
 
+  // The charger decides (Claude AI, 2026-10-24; user: "Lader nu" while the plan waited for the night): at home the home
+  // charger's power, when it reports one, says whether the car charges – a car integration's charging sensor can stay
+  // "on" while the car sleeps after a short charge. The car's own sensor only when away or without a power reading.
   _isCharging() {
     const c = String(this._val(this._config.charging) || "").toLowerCase();
-    if (CHARGING.has(c)) return true;
     const p = this._num(this._pw());
+    if (p != null && !this._away()) return p > 0.1;
+    if (CHARGING.has(c)) return true;
     return p != null && p > 0.1;
   }
 
@@ -431,7 +435,7 @@ class HATeslaGlanceCard extends HTMLElement {
     const soc = Number.isFinite(n(c.soc)) ? n(c.soc) : this._num(this._config.battery) ?? NaN;
     const prices = (Array.isArray(pa.prices) ? pa.prices : []).map((x) => ({ t: Date.parse(x?.t), p: Number(x?.p) })).filter((x) => Number.isFinite(x.t) && Number.isFinite(x.p));
     return { blocks, mode, kwh, cost, save: Number.isFinite(nowCost) && blocks.length ? nowCost - cost : NaN, nowCost, nowKwh: Number(alt.now?.energy_kwh), limit, prices, minutes: Number(pa.slot_minutes) || 15,
-      soc, target: n(c.target), deadline: pa.deadline, charging: ["on", "charging", "starting"].includes(st(c.charging)) || cm === "charging", name: c.name || this._config.name };
+      soc, target: n(c.target), deadline: pa.deadline, charging: cm && !["unknown", "unavailable"].includes(cm) ? /(^|_)charging$/.test(cm) : ["on", "charging", "starting"].includes(st(c.charging)), name: c.name || this._config.name };
   }
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
