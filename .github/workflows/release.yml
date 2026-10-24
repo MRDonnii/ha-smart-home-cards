@@ -47,10 +47,6 @@ jobs:
       - run: npm test
         if: steps.meta.outputs.should_release == 'true'
 
-      - name: Prepare HACS asset
-        if: steps.meta.outputs.should_release == 'true'
-        run: cp dist/ha-smart-home-cards.js ha-smart-home-cards.js
-
       - name: Create version tag
         if: steps.meta.outputs.should_release == 'true' && github.ref_type != 'tag'
         shell: bash
@@ -60,10 +56,12 @@ jobs:
           git tag "${{ steps.meta.outputs.tag }}" "$GITHUB_SHA"
           git push origin "${{ steps.meta.outputs.tag }}"
 
+      # No release asset on purpose (Claude AI, 2026-10-24): HACS downloads a release asset through github.com, whose
+      # redirect carries a CSP header longer than Home Assistant's aiohttp accepts (8190 bytes) – every install failed.
+      # Without an asset HACS takes dist/ha-smart-home-cards.js at the tag from raw.githubusercontent.com instead.
       - uses: softprops/action-gh-release@v2
         if: steps.meta.outputs.should_release == 'true'
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          files: ha-smart-home-cards.js
           generate_release_notes: true
