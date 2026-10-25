@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.204 */
+/* MRDonnii Smart Home Cards v0.5.205 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14091,7 +14091,9 @@ console.info(
 );
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.17.3";
+var TEP_VER = "1.18.0";
+var LEVEL_NAME = ["Billig", "Normal pris", "Dyrt", "Meget dyrt", "Ekstremt dyrt"];
+var LEVEL_COL = ["var(--good)", "var(--warn)", "var(--bad)", "var(--bad)", "var(--xbad,#ff4d8d)"];
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var tt = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var TI = {
@@ -14180,6 +14182,7 @@ var TEP_CSS = `
 .pc .band.hot{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--bad) 16%,transparent),transparent 55%);box-shadow:none}
 .pc .band.hot span{display:inline-flex;align-items:center;gap:3px;font-size:9px;letter-spacing:.08em;padding:1px 6px;border-radius:99px;color:#fff;background:color-mix(in srgb,var(--bad) 75%,rgba(10,12,18,.6));box-shadow:0 0 12px -2px var(--bad);animation:hotp 1.4s ease-in-out infinite}
 @keyframes hotp{50%{box-shadow:0 0 18px 1px var(--bad);transform:translateX(-50%) scale(1.06)}}
+.pc .band.hot.xt span{background:color-mix(in srgb,var(--xbad,#ff4d8d) 80%,rgba(10,12,18,.6));box-shadow:0 0 14px -2px var(--xbad,#ff4d8d)}
 @media (prefers-reduced-motion:reduce){.pc .band.hot span{animation:none}}
 .pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
 .pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
@@ -14276,6 +14279,22 @@ var ThElectricityPriceCard = class extends HTMLElement {
   }
   getCardSize() {
     return 6;
+  }
+  // Faste prisniveauer (Claude AI, 2026-10-25; bruger: "defineret hvad der er dyrt, meget dyrt, ekstremt dyrt … når strømmen er
+  // over en tærskel"): billig under cheap, dyrt fra dear, meget dyrt fra very_dear, ekstremt fra extreme (kr/kWh inkl. alt).
+  // levels: {cheap, dear, very_dear, extreme} – tal eller en entity (fx input_number), ellers standarden 1,50/3,00/3,75/5,00.
+  levels() {
+    const L3 = this.cfg.levels || {}, d = { cheap: 1.5, dear: 3, very_dear: 3.75, extreme: 5 }, o = {};
+    for (const k of Object.keys(d)) {
+      const v = L3[k];
+      const n = typeof v === "string" && v.includes(".") && Number.isNaN(Number(v)) ? this.n(v) : Number(v);
+      o[k] = Number.isFinite(n) && n > 0 ? n : d[k];
+    }
+    return o;
+  }
+  level(p) {
+    const L3 = this.levels();
+    return p >= L3.extreme ? 4 : p >= L3.very_dear ? 3 : p >= L3.dear ? 2 : p < L3.cheap ? 0 : 1;
   }
   getGridOptions() {
     return { columns: 12, rows: 6, min_columns: 6 };
@@ -14533,9 +14552,9 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const lv = this.$("live");
     lv.classList.toggle("off", !live);
     lv.title = live ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
-    const rel = mean ? cur / mean : 1, col = rel < 0.9 ? "var(--good)" : rel > 1.1 ? "var(--bad)" : "var(--warn)";
+    const rel = mean ? cur / mean : 1, lv0 = this.level(cur), col = LEVEL_COL[lv0];
     this.$("chip").style.setProperty("--c", col);
-    this.shadowRoot.querySelector("#chip .ct").textContent = `${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
+    this.shadowRoot.querySelector("#chip .ct").textContent = `${lv0 === 1 ? "Normal pris" : `${LEVEL_NAME[lv0]} nu`} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
     this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [
       ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--tep-spot,#3d8bff)"],
@@ -14649,7 +14668,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const adv = this.$("adv");
     if (!adv || !this._h) return;
     const C3 = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch2 = chIn === void 0 ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
-    const cur = this.n(C3.current), mean = this.n(C3.mean), rel = mean ? cur / mean : 1, col = rel < 0.9 ? "var(--good)" : rel > 1.1 ? "var(--bad)" : "var(--warn)";
+    const cur = this.n(C3.current), mean = this.n(C3.mean), rel = mean ? cur / mean : 1, lvN = this.level(cur), col = LEVEL_COL[lvN];
     const W3 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct2 = (v) => {
       const r = mean ? Math.round((v / mean - 1) * 100) : 0;
       return `${r >= 0 ? "+" : "\u2212"}${Math.abs(r)} %`;
@@ -14667,8 +14686,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W3(S.lastA)}${S.fc.length ? " \xB7 derefter prognose" : ""}` : "Prognose";
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null), worst = win.reduce((m, c2) => !m || c2.avg > m.avg ? c2 : m, null);
     const nb2 = win.filter((c2) => c2.s > now + 9e5 && c2.s <= now + 8 * 36e5 && c2.avg < cur * 0.85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb2;
-    const sm = rel < 0.9 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W3(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : rel > 1.1 ? ["Dyrt lige nu", `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb2 ? ` Billigst bliver det ${W3(nb2.s)} (\xD8 ${tn(nb2.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb2.avg / cur) * 100)} % billigere ved ${W3(nb2.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
-    let h = `<div class="sm" style="--c:${col}">${ti(rel < 0.9 ? "leaf" : rel > 1.1 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
+    const sm = lvN === 0 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W3(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb2 ? ` Billigst bliver det ${W3(nb2.s)} (\xD8 ${tn(nb2.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb2.avg / cur) * 100)} % billigere ved ${W3(nb2.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
+    let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? "leaf" : lvN >= 2 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
     if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct2(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
       <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct2(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
     const hrOk = (hrs) => (s, dur2) => {
@@ -14739,8 +14758,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const vmax = Math.max(...pts.map((p) => p.p)), vmin = Math.min(...pts.map((p) => p.p)), max = vmax * 1.06, min = Math.min(vmin * 0.9, vmin - 0.05), W3 = 1e3, H4 = 100, base = 100;
     const X = (t) => (t - t0) / (t1 - t0) * W3, Y = (v) => 8 + (1 - (v - min) / (max - min)) * (H4 - 14);
     const inCh = (p) => ch2 && ch2.blocks.some((b) => b.t < p.e && b.e > p.t);
-    const meanP = this.n(C3.mean), thr = ch2?.limit ? ch2.limit.over ? ch2.limit.price : Infinity : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = (p) => p.p > thr;
-    const vd = Number.isFinite(meanP) ? meanP * 1.45 : vmin + (vmax - vmin) * 0.83, veryDear = (p) => p.p >= vd && p.e > now && vmax > vmin;
+    const meanP = this.n(C3.mean), thr = ch2?.limit ? ch2.limit.over ? ch2.limit.price : Infinity : this.levels().dear, dear = (p) => p.p >= thr;
+    const LV = this.levels(), vd = LV.very_dear, veryDear = (p) => p.p >= vd && p.e > now;
     const line = (arr2) => arr2.map((p, i) => `${i ? "L" : "M"}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join("");
     const mids = pts.map((p) => [(p.t + p.e) / 2, Y(p.p)]);
     const yAt = (t) => {
@@ -14773,11 +14792,13 @@ var ThElectricityPriceCard = class extends HTMLElement {
     if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = (n) => cs.getPropertyValue(n).trim();
     const cG = cv("--good") || "#6be3a8", cW = cv("--warn") || "#e8c37e", cB = cv("--bad") || "#ff9e7a", cE = cv("--ev") || "#b7a4ff";
-    const tone2 = (v) => {
-      const r = (v - vmin) / (vmax - vmin || 1);
-      return r < 0.33 ? cG : r < 0.66 ? cW : cB;
-    };
-    let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H4}"><stop offset="0" stop-color="${cB}"/><stop offset=".55" stop-color="${cW}"/><stop offset="1" stop-color="${cG}"/></linearGradient>
+    const cX = cv("--xbad") || "#ff4d8d", cN = cv("--normal") || "#c9d66b";
+    const tone2 = (v) => [cG, cN, cW, cB, cX][this.level(v)];
+    let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H4}">${[[LV.extreme, cX], [LV.very_dear, cB], [LV.dear, cW], [LV.cheap, cN], [-1e9, cG]].map(([v, c2], i, a) => {
+      const o = (y) => Math.max(0, Math.min(1, y / H4)).toFixed(3);
+      const top = i ? o(Y(a[i - 1][0])) : "0", bot = o(Y(v));
+      return `<stop offset="${top}" stop-color="${c2}"/><stop offset="${bot}" stop-color="${c2}"/>`;
+    }).join("")}</linearGradient>
       <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cW}" stop-opacity=".28"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient></defs>`;
     const evBars = [];
     if (this._ps === "bar") {
@@ -14952,7 +14973,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       }
     }
     {
-      const hot = (p) => p.p >= vd && vmax > vmin, runs = [];
+      const hot = (p) => p.p >= vd, runs = [];
       for (const p of pts) {
         const last2 = runs[runs.length - 1];
         if (hot(p)) {
@@ -14960,7 +14981,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
           else runs.push({ s: p.t, t: Math.max(p.t, now), e: p.e });
         }
       }
-      const hillLim = Number.isFinite(meanP) ? meanP : (vmin + vmax) / 2, hill = (p) => p.p > hillLim;
+      const hill = (p) => p.p >= LV.dear;
       const stretch = (r) => {
         let i = all.findIndex((p) => p.t >= r.s - 1), j = all.findIndex((p) => p.t >= r.e - 1);
         if (i < 1 || j < 0) return null;
@@ -14976,7 +14997,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
       const big = whole.reduce((m, r) => !m || r.e - r.t > m.e - m.t ? r : m, null);
       if (big && big.t < t1) {
         const l = Math.max(0, X(big.t) / W3 * 100), r = Math.min(100, X(big.e) / W3 * 100);
-        ov += `<div class="band hot" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>${ti("peak", 9, 2.4)}MEGET DYRT</span></div>`;
+        const top = Math.max(...all.filter((p) => p.t < big.e && p.e > big.s).map((p) => p.p)), xt = top >= LV.extreme;
+        ov += `<div class="band hot${xt ? " xt" : ""}" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>${ti("peak", 9, 2.4)}${xt ? "EKSTREMT DYRT" : "MEGET DYRT"}</span></div>`;
       }
     }
     const nx2 = X(now) / W3 * 100, cp = all.find((p) => p.t <= now && p.e > now);
@@ -14997,7 +15019,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
         tip.style.opacity = 0;
         return;
       }
-      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` \xB7 <em>bilen lader${dear(p) ? " \u2013 dyrt" : ""}</em>` : ""}`;
+      tip.innerHTML = `${new Date(p.t).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })}${p.f ? " \xB7 prognose" : ""}<br><b>${tn(p.p)} kr</b> \xB7 ${LEVEL_NAME[this.level(p.p)].toLowerCase()}${inCh(p) ? ` \xB7 <em>bilen lader${dear(p) ? " \u2013 dyrt" : ""}</em>` : ""}`;
       const c2 = pc2.closest(".c").getBoundingClientRect(), tw = tip.offsetWidth, th2 = tip.offsetHeight, py = Y(p.p) / H4 * (b.height - gb2);
       tip.style.left = Math.max(c2.left - b.left + tw / 2 + 4, Math.min(c2.right - b.left - tw / 2 - 4, e.clientX - b.left)) + "px";
       tip.style.top = py + "px";

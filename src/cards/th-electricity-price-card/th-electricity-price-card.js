@@ -12,7 +12,9 @@
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 
-const TEP_VER = '1.17.3';
+const TEP_VER = '1.18.0';
+const LEVEL_NAME = ['Billig', 'Normal pris', 'Dyrt', 'Meget dyrt', 'Ekstremt dyrt'], LEVEL_COL = ['var(--good)', 'var(--warn)', 'var(--bad)', 'var(--bad)', 'var(--xbad,#ff4d8d)'];
+
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
 const tt = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
 const TI = {
@@ -95,6 +97,7 @@ const TEP_CSS = `
 .pc .band.hot{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--bad) 16%,transparent),transparent 55%);box-shadow:none}
 .pc .band.hot span{display:inline-flex;align-items:center;gap:3px;font-size:9px;letter-spacing:.08em;padding:1px 6px;border-radius:99px;color:#fff;background:color-mix(in srgb,var(--bad) 75%,rgba(10,12,18,.6));box-shadow:0 0 12px -2px var(--bad);animation:hotp 1.4s ease-in-out infinite}
 @keyframes hotp{50%{box-shadow:0 0 18px 1px var(--bad);transform:translateX(-50%) scale(1.06)}}
+.pc .band.hot.xt span{background:color-mix(in srgb,var(--xbad,#ff4d8d) 80%,rgba(10,12,18,.6));box-shadow:0 0 14px -2px var(--xbad,#ff4d8d)}
 @media (prefers-reduced-motion:reduce){.pc .band.hot span{animation:none}}
 .pc .band.cheaper{pointer-events:none;border-radius:0;background:linear-gradient(to top,color-mix(in srgb,var(--good) 20%,transparent),transparent 60%);box-shadow:none}
 .pc .band.cheaper::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:3px;border-radius:3px;background:var(--good);box-shadow:0 0 10px 1px color-mix(in srgb,var(--good) 55%,transparent);opacity:.85}
@@ -188,6 +191,15 @@ class ThElectricityPriceCard extends HTMLElement {
     this._mode = null;
   }
   getCardSize() { return 6; }
+  // Faste prisniveauer (Claude AI, 2026-10-25; bruger: "defineret hvad der er dyrt, meget dyrt, ekstremt dyrt … når strømmen er
+  // over en tærskel"): billig under cheap, dyrt fra dear, meget dyrt fra very_dear, ekstremt fra extreme (kr/kWh inkl. alt).
+  // levels: {cheap, dear, very_dear, extreme} – tal eller en entity (fx input_number), ellers standarden 1,50/3,00/3,75/5,00.
+  levels() {
+    const L = this.cfg.levels || {}, d = { cheap: 1.5, dear: 3, very_dear: 3.75, extreme: 5 }, o = {};
+    for (const k of Object.keys(d)) { const v = L[k]; const n = typeof v === 'string' && v.includes('.') && Number.isNaN(Number(v)) ? this.n(v) : Number(v); o[k] = Number.isFinite(n) && n > 0 ? n : d[k]; }
+    return o;
+  }
+  level(p) { const L = this.levels(); return p >= L.extreme ? 4 : p >= L.very_dear ? 3 : p >= L.dear ? 2 : p < L.cheap ? 0 : 1; }
   getGridOptions() { return { columns: 12, rows: 6, min_columns: 6 }; }
   set hass(h) {
     this._h = h; const mode = isNewLook(h, this.cfg, { entity: this.cfg.style_entity ? 'style_entity' : 'switch_entity', fallback: true }) ? 'new' : 'classic';
@@ -291,9 +303,9 @@ class ThElectricityPriceCard extends HTMLElement {
     if (this._mode !== 'new' || !this._h || !this.$('pc')) return;
     const C = this.cfg, cur = this.n(C.current), mean = this.n(C.mean);
     const live = this.s(C.current) && Date.now() - new Date(this.s(C.current).last_updated) < 2 * 36e5; const lv = this.$('live'); lv.classList.toggle('off', !live); lv.title = live ? 'Strømligning live' : 'Strømligning ikke live';
-    const rel = mean ? cur / mean : 1, col = rel < .9 ? 'var(--good)' : rel > 1.1 ? 'var(--bad)' : 'var(--warn)';
+    const rel = mean ? cur / mean : 1, lv0 = this.level(cur), col = LEVEL_COL[lv0];
     this.$('chip').style.setProperty('--c', col);
-    this.shadowRoot.querySelector('#chip .ct').textContent = `${rel < .9 ? 'Billig nu' : rel > 1.1 ? 'Dyr nu' : 'Normal pris'} · ${rel >= 1 ? '+' : '−'}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
+    this.shadowRoot.querySelector('#chip .ct').textContent = `${lv0 === 1 ? 'Normal pris' : `${LEVEL_NAME[lv0]} nu`} · ${rel >= 1 ? '+' : '−'}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
     this.set('now', `${tn(cur, 2)}<small>kr/kWh</small>`);
     // Hver del sin egen tydelige farve – tre blå nuancer var svære at skelne (Claude AI, 2026-10-16; bruger: "det skal dels mere op i
     // farver der kan differentieres"). Nabofarverne i bjælken ligger langt fra hinanden; temaer kan sætte --tep-<del>.
@@ -358,7 +370,7 @@ class ThElectricityPriceCard extends HTMLElement {
   renderAdvice(chIn) {
     const adv = this.$('adv'); if (!adv || !this._h) return;
     const C = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch = chIn === undefined ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
-    const cur = this.n(C.current), mean = this.n(C.mean), rel = mean ? cur / mean : 1, col = rel < .9 ? 'var(--good)' : rel > 1.1 ? 'var(--bad)' : 'var(--warn)';
+    const cur = this.n(C.current), mean = this.n(C.mean), rel = mean ? cur / mean : 1, lvN = this.level(cur), col = LEVEL_COL[lvN];
     const W = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct = (v) => { const r = mean ? Math.round((v / mean - 1) * 100) : 0; return `${r >= 0 ? '+' : '−'}${Math.abs(r)} %`; };
     const frame = (inner, sub) => `<div class="ah"><div class="ahl"><b>Hvornår er det smart?</b><small>${sub}</small></div><button type="button" class="x" aria-label="Luk">${ti('x', 14, 2)}</button></div><div class="ab">${inner}</div>`;
     const put = (h) => { const ab = adv.querySelector('.ab'), st = ab ? ab.scrollTop : 0; this.set('adv', h); if (st) adv.querySelector('.ab').scrollTop = st; };
@@ -367,10 +379,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c) => (!m || c.avg < m.avg ? c : m), null), worst = win.reduce((m, c) => (!m || c.avg > m.avg ? c : m), null);
     // overblik
     const nb = win.filter(c => c.s > now + 9e5 && c.s <= now + 8 * 36e5 && c.avg < cur * .85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb;
-    const sm = rel < .9 ? ['Billig strøm lige nu', `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit – kør gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * .85 ? ` Billigst bliver det ${W(best.s)} (Ø ${tn(best.avg)} kr).` : ''}`]
-      : rel > 1.1 ? ['Dyrt lige nu', `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigst bliver det ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
+    const sm = lvN === 0 ? ['Billig strøm lige nu', `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit – kør gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * .85 ? ` Billigst bliver det ${W(best.s)} (Ø ${tn(best.avg)} kr).` : ''}`]
+      : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigst bliver det ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
       : ['Normal pris', `${tn(cur)} kr/kWh er ${pct(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W(nb.s)}.` : 'Ingen markant billigere tid de næste timer – kør som du plejer.'}`];
-    let h = `<div class="sm" style="--c:${col}">${ti(rel < .9 ? 'leaf' : rel > 1.1 ? 'peak' : 'clock', 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
+    let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? 'leaf' : lvN >= 2 ? 'peak' : 'clock', 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
     if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}–${tt(new Date(best.e))}</b><span>Ø ${tn(best.avg)} kr · ${pct(best.avg)}${best.fc ? ' · prognose' : ''}</span></div>
       <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}–${tt(new Date(worst.e))}</b><span>Ø ${tn(worst.avg)} kr · ${pct(worst.avg)}${worst.fc ? ' · prognose' : ''}</span></div></div>`;
     // enheder
@@ -422,10 +434,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const inCh = p => ch && ch.blocks.some(b => b.t < p.e && b.e > p.t);
     // Dyr ladning (Claude AI, 2026-10-15; bruger: "bare de bobler … hvis den er dyr skal de skifte farve og vis at der er et billigere
     // tidspunkt"): over EV Ledgers prisgrænse, eller over dagens snit +10 % uden grænse
-    const meanP = this.n(C.mean), thr = ch?.limit ? (ch.limit.over ? ch.limit.price : Infinity) : Number.isFinite(meanP) ? meanP * 1.1 : Infinity, dear = p => p.p > thr;
+    const meanP = this.n(C.mean), thr = ch?.limit ? (ch.limit.over ? ch.limit.price : Infinity) : this.levels().dear, dear = p => p.p >= thr;
     // MEGET dyr strøm (bruger, 2026-10-16: "animeres noget når strømmen er MEGET dyr"): 45 % over dagens snit, eller den
     // øverste sjettedel af prisspændet uden snit – kun nu og fremover
-    const vd = Number.isFinite(meanP) ? meanP * 1.45 : vmin + (vmax - vmin) * .83, veryDear = p => p.p >= vd && p.e > now && vmax > vmin;
+    const LV = this.levels(), vd = LV.very_dear, veryDear = p => p.p >= vd && p.e > now;
     const line = arr => arr.map((p, i) => `${i ? 'L' : 'M'}${X((p.t + p.e) / 2).toFixed(1)} ${Y(p.p).toFixed(1)}`).join('');
     // Linjens højde på et vilkårligt tidspunkt og arealet under linjen for ét kvarter: væsken følger linjen i linjevisning
     // i stedet for trappetrin (Claude AI, 2026-10-16; bruger: "linjegrafen også med samme ting som søjlebaren reagerer på")
@@ -440,8 +452,10 @@ class ThElectricityPriceCard extends HTMLElement {
     const A1 = pts.filter(p => !p.f), F1 = pts.filter(p => p.f); if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = n => cs.getPropertyValue(n).trim();
     const cG = cv('--good') || '#6be3a8', cW = cv('--warn') || '#e8c37e', cB = cv('--bad') || '#ff9e7a', cE = cv('--ev') || '#b7a4ff';
-    const tone = v => { const r = (v - vmin) / (vmax - vmin || 1); return r < .33 ? cG : r < .66 ? cW : cB; };
-    let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H}"><stop offset="0" stop-color="${cB}"/><stop offset=".55" stop-color="${cW}"/><stop offset="1" stop-color="${cG}"/></linearGradient>
+    const cX = cv('--xbad') || '#ff4d8d', cN = cv('--normal') || '#c9d66b';
+    // Søjlerne efter de faste niveauer: billig grøn, normal lysegrøn, dyr gul, meget dyr rød, ekstremt dyr magenta
+    const tone = v => [cG, cN, cW, cB, cX][this.level(v)];
+    let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H}">${[[LV.extreme, cX], [LV.very_dear, cB], [LV.dear, cW], [LV.cheap, cN], [-1e9, cG]].map(([v, c], i, a) => { const o = (y) => Math.max(0, Math.min(1, y / H)).toFixed(3); const top = i ? o(Y(a[i - 1][0])) : '0', bot = o(Y(v)); return `<stop offset="${top}" stop-color="${c}"/><stop offset="${bot}" stop-color="${c}"/>`; }).join('')}</linearGradient>
       <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cW}" stop-opacity=".28"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient></defs>`;
     const evBars = [];
     if (this._ps === 'bar') {
@@ -549,16 +563,17 @@ class ThElectricityPriceCard extends HTMLElement {
     // MEGET DYRT og BILLIGST kun når hele perioden står i grafen; en periode, der fortsætter ud over grafens kant, er svær at aflæse
     // (Claude AI, 2026-10-18; bruger: "Det meget dyrt badge skal først komme når man kan se hele perioden"). En dyr periode skal have
     // en start og en slutning inde i grafen; den kan godt være i gang nu, når dens start står i grafens historik.
-    { const hot = p => p.p >= vd && vmax > vmin, runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (hot(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ s: p.t, t: Math.max(p.t, now), e: p.e }); } }
+    { const hot = p => p.p >= vd, runs = []; for (const p of pts) { const last = runs[runs.length - 1]; if (hot(p)) { if (last && last.e >= p.t - 1) last.e = p.e; else runs.push({ s: p.t, t: Math.max(p.t, now), e: p.e }); } }
       // Perioden er hele prisbakken over dagens snit omkring den meget dyre top; den skal begynde og slutte inde i grafen, og
       // der skal være priser efter den (ellers ved man ikke, om den fortsætter).
-      const hillLim = Number.isFinite(meanP) ? meanP : (vmin + vmax) / 2, hill = p => p.p > hillLim;
+      const hill = p => p.p >= LV.dear;
       const stretch = r => { let i = all.findIndex(p => p.t >= r.s - 1), j = all.findIndex(p => p.t >= r.e - 1); if (i < 1 || j < 0) return null;
         while (i > 0 && hill(all[i - 1])) i--; while (j < all.length && hill(all[j])) j++; return i > 0 && j < all.length ? { s: all[i].t, e: all[j].t } : null; };
       const whole = runs.filter(r => { if (r.e <= now) return false; const st = stretch(r); return !!st && st.s > t0 && st.e <= t1; });
       const big = whole.reduce((m, r) => (!m || r.e - r.t > m.e - m.t ? r : m), null);
       if (big && big.t < t1) { const l = Math.max(0, X(big.t) / W * 100), r = Math.min(100, X(big.e) / W * 100);
-        ov += `<div class="band hot" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('peak', 9, 2.4)}MEGET DYRT</span></div>`; } }
+        const top = Math.max(...all.filter(p => p.t < big.e && p.e > big.s).map(p => p.p)), xt = top >= LV.extreme;
+        ov += `<div class="band hot${xt ? ' xt' : ''}" style="left:${l}%;width:${Math.max(.6, r - l)}%"><span>${ti('peak', 9, 2.4)}${xt ? 'EKSTREMT DYRT' : 'MEGET DYRT'}</span></div>`; } }
     const nx = X(now) / W * 100, cp = all.find(p => p.t <= now && p.e > now);
     if (cp) ov += `<div class="now" style="left:${nx}%"></div><div class="nd" style="left:${nx}%;top:${Y(cp.p) / H * (pc.clientHeight - gb)}px"></div>`;
     this.$('ov').innerHTML = ov;
@@ -568,7 +583,7 @@ class ThElectricityPriceCard extends HTMLElement {
       if (over > 0) sp.style.marginLeft = `${-over}px`; else if (under > 0) sp.style.marginLeft = `${under}px`; } }
     const tip = this.$('tip');
     pc.onpointermove = pc.onpointerdown = e => { const b = pc.getBoundingClientRect(), t = t0 + (e.clientX - b.left) / b.width * (t1 - t0), p = pts.find(q => q.t <= t && q.e > t); if (!p) { tip.style.opacity = 0; return; }
-      tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b>${inCh(p) ? ` · <em>bilen lader${dear(p) ? ' – dyrt' : ''}</em>` : ''}`;
+      tip.innerHTML = `${new Date(p.t).toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}${p.f ? ' · prognose' : ''}<br><b>${tn(p.p)} kr</b> · ${LEVEL_NAME[this.level(p.p)].toLowerCase()}${inCh(p) ? ` · <em>bilen lader${dear(p) ? ' – dyrt' : ''}</em>` : ''}`;
       // Skiltet måles og holdes inde i kortet; er der ikke plads over punktet, står det under (Claude AI, 2026-10-18; den faste 70 px-klemme var for smal til lange skilte)
       const c = pc.closest('.c').getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, py = Y(p.p) / H * (b.height - gb);
       tip.style.left = Math.max(c.left - b.left + tw / 2 + 4, Math.min(c.right - b.left - tw / 2 - 4, e.clientX - b.left)) + 'px'; tip.style.top = py + 'px';
