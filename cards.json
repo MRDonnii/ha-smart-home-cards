@@ -183,7 +183,7 @@
   },
   {
     "slug": "ha-hch5-live-card",
-    "name": "HCH5 Live Control Card",
+    "name": "Dantherm Live Card",
     "filename": "ha-hch5-live-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"

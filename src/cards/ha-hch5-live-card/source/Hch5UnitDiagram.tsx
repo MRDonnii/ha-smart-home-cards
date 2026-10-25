@@ -45,8 +45,44 @@ export interface Hch5UnitDiagramProps {
   /** Smartdash crops the bottom of the drawing; place the panel higher, without footer. */
   controlCompact?: boolean;
   inlineControls?: ReactNode;
+  /** Parts that have a data source; the others are not drawn. All are shown when left out. */
+  parts?: Partial<DiagramParts>;
+  /** Entity key the supply reading opens: the measured T2AH, or the unit's own supply sensor. */
+  supplySensor?: string;
+  /** Entity key the damper readback opens: the damper code, or the bypass state. */
+  bypassSensor?: string;
+  /** The unit in sentences ("Dantherm RCV320 P2") and short labels ("RCV320 P2"); "anlægget" when unknown. */
+  unitName?: string | null;
+  unitLabel?: string | null;
 }
 export type AfterheatCoil = "electric" | "water";
+/** What the drawing shows besides the unit itself. A part without entities is left out. */
+export interface DiagramParts {
+  /** External afterheat coil, HAC1 with its wiring, and the afterheat readback. */
+  afterheat: boolean;
+  /** Flow and return water readings of the afterheat coil. */
+  water: boolean;
+  /** HAC1 frost sensor on the coil. */
+  frost: boolean;
+  /** Raspberry Pi controller at the end of the RS485 cable. */
+  pi: boolean;
+  /** Bus state in the phone layout's heading. */
+  bus: boolean;
+  outdoor: boolean;
+  extract: boolean;
+  exhaust: boolean;
+  supply: boolean;
+  supplyFan: boolean;
+  extractFan: boolean;
+  supplyFanPercent: boolean;
+  extractFanPercent: boolean;
+  /** Bypass damper readback. */
+  bypass: boolean;
+}
+const ALL_PARTS: DiagramParts = {
+  afterheat: true, water: true, frost: true, pi: true, bus: true, outdoor: true, extract: true, exhaust: true, supply: true,
+  supplyFan: true, extractFan: true, supplyFanPercent: true, extractFanPercent: true, bypass: true,
+};
 
 // What the exchanger shows while the damper is not at rest. "moving" is a
 // damper seen part-way with no known direction.
@@ -78,6 +114,7 @@ function int(value: Num) { return value === null ? "—" : Math.round(value).toL
 // Drawing area: from the room-side readings (T3/T2AH) on the left to where
 // the outdoor-air and exhaust ducts have faded out on the right.
 const VIEW = { x: -240, y: 40, width: 1446, height: 510 };
+const UNIT_ONLY_VIEW = { ...VIEW, height: 465 };
 // The WebUI keeps the complete labelled SVG on mobile. The HA card follows
 // the same drawing; container queries only arrange the readbacks underneath.
 
@@ -361,26 +398,28 @@ const WATER_VALVE_AT: Point = [5, 479];
 // the Raspberry Pi share one RS485/Modbus RTU cable (unit = slave 1, HAC1 =
 // slave 0x40, Pi = gateway). HAC1 wires its own T2AH and frost sensors and
 // the water valve actuator; with the water coil the T2AH lead is left out
-// because it would have to cross the water pipes.
-function Rs485Wiring({ active, compact = false, water = false }: { active: boolean; compact?: boolean; water?: boolean }) {
+// because it would have to cross the water pipes. Without HAC1 or without the
+// Pi the cable stops at the other one; the card leaves the wiring out when
+// neither is there.
+function Rs485Wiring({ active, compact = false, water = false, hac1 = true, pi = true, frost = true }: { active: boolean; compact?: boolean; water?: boolean; hac1?: boolean; pi?: boolean; frost?: boolean }) {
   const { x, y, width, height } = HAC1_BOX, cx = x + width / 2;
   const valve: Point = water ? [WATER_VALVE_AT[0], WATER_VALVE_AT[1] + 14] : [23, 446];
-  const bus = `M254 410 V496 M${x + width} 496 H600`;
+  const bus = hac1 && pi ? `M254 410 V496 M${x + width} 496 H600` : pi ? "M254 410 V496 H600" : `M254 410 V496 H${x + width}`;
   return <g className={`hch-wiring${active ? " active" : ""}`}>
-    {!water && <path className="hch-signal-wire" d={`M${x} ${y + 20} H2 V420 H-28 V371`}/>}
-    <path className="hch-signal-wire" d={`M${x + 8} ${y} V292 H63`}/>
-    <path className="hch-signal-wire" d={`M${x} ${y + 36} H${valve[0]} V${valve[1]}`}/>
+    {hac1 && !water && <path className="hch-signal-wire" d={`M${x} ${y + 20} H2 V420 H-28 V371`}/>}
+    {hac1 && frost && <path className="hch-signal-wire" d={`M${x + 8} ${y} V292 H63`}/>}
+    {hac1 && <path className="hch-signal-wire" d={`M${x} ${y + 36} H${valve[0]} V${valve[1]}`}/>}
     <path className="hch-bus-cable" d={bus}/><path className="hch-bus-core" d={bus}/>
     <rect className="hch-cable-gland" x="246" y="428" width="16" height="12" rx="3"/>
-    <circle className="hch-bus-joint" cx="254" cy="496" r="4"/>
-    <text className="hch-bus-label" x="425" y="486" textAnchor="middle">RS485 · Modbus RTU</text>
-    <g className="hch-device hch-hac1-box"><rect className="device-body" x={x} y={y} width={width} height={height} rx="10"/><text x={cx} y={y + 22} textAnchor="middle">HAC1 styring</text><text className="device-sub" x={cx} y={y + 41} textAnchor="middle">Modbus-slave 0x40</text>{compact&&<text className="device-compact" x={cx} y={y + 38} textAnchor="middle">HAC1</text>}</g>
-    <g className="hch-device hch-pi">
+    {hac1 && pi && <circle className="hch-bus-joint" cx="254" cy="496" r="4"/>}
+    {pi && <text className="hch-bus-label" x="425" y="486" textAnchor="middle">RS485 · Modbus RTU</text>}
+    {hac1 && <g className="hch-device hch-hac1-box"><rect className="device-body" x={x} y={y} width={width} height={height} rx="10"/><text x={cx} y={y + 22} textAnchor="middle">HAC1 styring</text><text className="device-sub" x={cx} y={y + 41} textAnchor="middle">Modbus-slave 0x40</text>{compact&&<text className="device-compact" x={cx} y={y + 38} textAnchor="middle">HAC1</text>}</g>}
+    {pi && <g className="hch-device hch-pi">
       <rect className="pi-board" x="600" y="468" width="180" height="72" rx="8"/>
       {[0,1,2,3,4,5,6,7,8,9].map(i => <rect key={i} className="pi-gpio" x={628 + i * 14} y="473" width="6" height="6" rx="1"/>)}
       <rect className="pi-chip" x="612" y="490" width="28" height="28" rx="3"/>
       <text x="710" y="506" textAnchor="middle">Raspberry Pi</text><text className="device-sub" x="710" y="525" textAnchor="middle">Gateway · RS485</text>{compact&&<text className="device-compact" x="712" y="517" textAnchor="middle">Pi</text>}
-    </g>
+    </g>}
   </g>;
 }
 
@@ -474,7 +513,10 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false,inlineControls=null}=props;
+  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false,inlineControls=null,supplySensor="afterheat_after",bypassSensor="bypass_raw",unitName=null,unitLabel=null}=props;
+  const show={...ALL_PARTS,...props.parts};
+  // Without an afterheater the unit's own supply sensor is T2.
+  const supplyName=show.afterheat?"T2AH":"T2";
   const water = afterheatCoil === "water";
   // Afkøl: how much the water cools across the coil, as in the WebUI.
   const waterDelta = flowWater === null || returnWater === null ? null : flowWater - returnWater;
@@ -520,9 +562,18 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
   // Back edges of the cabinet's floor and right-hand wall, one cabinet depth in.
   const {x:ox,y:oy,width:ow,height:oh}=OPENING;
   const backX=ox+ow+CABINET_DEPTH[0], backY=oy+oh+CABINET_DEPTH[1];
-  const view=VIEW;
+  // Without HAC1 and the Pi nothing is drawn below the unit, so the view ends under its floor shadow.
+  const view=show.afterheat||show.pi||control?VIEW:UNIT_ONLY_VIEW;
+  const showWater=show.afterheat&&show.water, showFrost=show.afterheat&&show.frost;
+  // Readbacks under the drawing; one without entities is left out and the row closes up.
+  const readbacks=[
+    (show.supplyFan||show.supplyFanPercent)&&<div key="supply" className="unit-readback" data-sensor={show.supplyFan?"supply_fan_rpm":"supply_fan_percent"}><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{show.supplyFan?<>{int(supplyRpm)} RPM</>:<>{int(supplyPercent)}%</>}</strong>{show.supplyFan&&show.supplyFanPercent&&<em data-sensor="supply_fan_percent">{int(supplyPercent)}%</em>}</div></div>,
+    (show.extractFan||show.extractFanPercent)&&<div key="extract" className="unit-readback" data-sensor={show.extractFan?"extract_fan_rpm":"extract_fan_percent"}><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{show.extractFan?<>{int(extractRpm)} RPM</>:<>{int(extractPercent)}%</>}</strong>{show.extractFan&&show.extractFanPercent&&<em data-sensor="extract_fan_percent">{int(extractPercent)}%</em>}</div></div>,
+    show.bypass&&<div key="bypass" className="unit-readback" data-sensor={bypassSensor}><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div>,
+    show.afterheat&&<div key="afterheat" className="unit-readback" data-sensor="afterheat_active"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div>,
+  ].filter(Boolean);
   return <div className={`hch5-visual${bypassOpen?" is-bypass":" is-recovery"}`}>
-    <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label="HCH5 luftstrøm med intern bypass og ekstern eftervarme">
+    <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label={`Luftstrøm i ${unitName??"anlægget"} med intern bypass${show.afterheat?" og ekstern eftervarme":""}`}>
       <defs>
         <linearGradient id="metalFace" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#596b76"/><stop offset=".4" stopColor="#263843"/><stop offset="1" stopColor="#14242e"/></linearGradient>
         <linearGradient id="metalTop" x1="0" x2="1"><stop offset="0" stopColor="#7b8991"/><stop offset=".48" stopColor="#40515b"/><stop offset="1" stopColor="#263640"/></linearGradient>
@@ -609,8 +660,8 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         </g>
       </g>
       <DuctCollar x={164} y={205}/><DuctCollar x={164} y={365}/>
-      {water ? <WaterCoil heating={heating} lockout={afterheatLockout} flowWater={flowWater} returnWater={returnWater}/> : <ElectricCoil heating={heating} lockout={afterheatLockout}/>}
-      <Rs485Wiring active={busActive} water={water}/>
+      {show.afterheat && (water ? <WaterCoil heating={heating} lockout={afterheatLockout} flowWater={flowWater} returnWater={returnWater}/> : <ElectricCoil heating={heating} lockout={afterheatLockout}/>)}
+      {(show.afterheat || show.pi) && <Rs485Wiring active={busActive} water={water} hac1={show.afterheat} pi={show.pi} frost={show.frost}/>}
       {/* The core looks solid unless the user has opened it: the air layers are
           masked out where they pass through it, with a soft edge. */}
       <g className="hch-air-layer" mask={coreOpen ? undefined : "url(#coreSolidMask)"}>
@@ -634,37 +685,37 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
         <text className="hch-recovery" x="520" y="293" textAnchor="middle">{bypassOpen?"BYPASS":recovery===null?"—":`${recovery}%`}</text>
       </g>}
       {/* Keep the physical readbacks on the unit at mobile sizes, as in WebUI. */}
-      <TempPort cx={1112} cy={rearFarY(205)} title="Udeluft · T1" sensor="outdoor_temperature" onSensor={onSensor} value={fmt(outdoor)} tone="cold"/>
-      <TempPort cx={1112} cy={rearFarY(365)} title="Afkast · T4" sensor="exhaust_temperature" onSensor={onSensor} value={fmt(exhaust)} tone="warm"/>
-      <TempPort cx={-150} cy={205} title="Udsugning · T3" sensor="extract_temperature" onSensor={onSensor} value={fmt(extract)} tone="warm"/>
-      <TempPort cx={-150} cy={365} title="Indblæsning · T2AH" sensor="afterheat_after" onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>
-      <SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/>
+      {show.outdoor && <TempPort cx={1112} cy={rearFarY(205)} title="Udeluft · T1" sensor="outdoor_temperature" onSensor={onSensor} value={fmt(outdoor)} tone="cold"/>}
+      {show.exhaust && <TempPort cx={1112} cy={rearFarY(365)} title="Afkast · T4" sensor="exhaust_temperature" onSensor={onSensor} value={fmt(exhaust)} tone="warm"/>}
+      {show.extract && <TempPort cx={-150} cy={205} title="Udsugning · T3" sensor="extract_temperature" onSensor={onSensor} value={fmt(extract)} tone="warm"/>}
+      {show.supply && <TempPort cx={-150} cy={365} title={`Indblæsning · ${supplyName}`} sensor={supplySensor} onSensor={onSensor} value={fmt(afterHeater)} tone="green"/>}
+      {show.afterheat && show.frost && <SensorPin x={57} y={292} label="Frost" sensor="afterheat_frost" onSensor={onSensor} value={fmt(frost,"°")}/>}
       {/* Measured T2 on the supply duct between the unit and the afterheat coil, as in the WebUI. */}
       {beforeHeater !== null && <SensorPin x={150} y={331} lift={38} width={92} label="T2 · målt" sensor="afterheat_before" onSensor={onSensor} value={fmt(beforeHeater,"°")}/>}
       {control && <ControlPanel control={control} compact={controlCompact}/>}
-      <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="90" rx="12"/><text x="14" y="20">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="40" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="60" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text><text className="water-value water-delta" x="14" y="80">Afkøl {fmt(waterDelta)}</text></g>
+      {show.afterheat && show.water && <g className="hch-water-callout" transform="translate(-236 424)"><rect width="166" height="90" rx="12"/><text x="14" y="20">{water ? "Vandvarmeflade" : "Eftervarmevand"}</text><text className="water-value" x="14" y="40" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_flow")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_flow"); } }}>Fremløb {fmt(flowWater)}</text><text className="water-value" x="14" y="60" role={onSensor ? "button" : undefined} tabIndex={onSensor ? 0 : undefined} onClick={() => onSensor?.("water_return")} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSensor?.("water_return"); } }}>Retur {fmt(returnWater)}</text><text className="water-value water-delta" x="14" y="80">Afkøl {fmt(waterDelta)}</text></g>}
     </svg>
-    <div className="hch-mobile-flow" aria-label="HCH5 luftstrømme og temperaturer">
-      <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>HCH5</strong><span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span></div>
-      <div className="hch-mobile-lane supply">
-        <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("outdoor_temperature")} aria-label="Vis historik for udeluft T1"><small>Udeluft · T1</small><strong>{fmt(outdoor)}</strong></button>
+    <div className="hch-mobile-flow" aria-label={`Luftstrømme og temperaturer i ${unitName ?? "anlægget"}`}>
+      <div className="hch-mobile-flow-head"><span>LUFTVEJE</span><strong>{unitLabel ?? "Anlæg"}</strong>{show.bus && <span className={busActive ? "connected" : ""}>{busActive ? "Bus aktiv" : "Afventer bus"}</span>}</div>
+      {(show.outdoor || show.supply) && <div className="hch-mobile-lane supply">
+        {show.outdoor && <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("outdoor_temperature")} aria-label="Vis historik for udeluft T1"><small>Udeluft · T1</small><strong>{fmt(outdoor)}</strong></button>}
         <div className="hch-mobile-route"><span>→</span><i/><span>→</span></div>
-        <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("afterheat_after")} aria-label="Vis historik for indblæsning T2AH"><small>Ind · T2AH</small><strong>{fmt(afterHeater)}</strong></button>
-      </div>
+        {show.supply && <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.(supplySensor)} aria-label={`Vis historik for indblæsning ${supplyName}`}><small>{`Ind · ${supplyName}`}</small><strong>{fmt(afterHeater)}</strong></button>}
+      </div>}
       <div className="hch-mobile-core"><span>VARMEGENVINDING</span><strong>{recovery === null ? "—" : `${recovery}%`}</strong><span className={bypassOpen ? "bypass-open" : ""}>{bypassPhase ? bypassLabel : bypassOpen ? "Bypass åben" : "Bypass lukket"}</span></div>
-      <div className="hch-mobile-lane extract">
-        <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("extract_temperature")} aria-label="Vis historik for fraluft T3"><small>Fraluft · T3</small><strong>{fmt(extract)}</strong></button>
+      {(show.extract || show.exhaust) && <div className="hch-mobile-lane extract">
+        {show.extract && <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("extract_temperature")} aria-label="Vis historik for fraluft T3"><small>Fraluft · T3</small><strong>{fmt(extract)}</strong></button>}
         <div className="hch-mobile-route"><span>→</span><i/><span>→</span></div>
-        <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("exhaust_temperature")} aria-label="Vis historik for afkast T4"><small>Afkast · T4</small><strong>{fmt(exhaust)}</strong></button>
-      </div>
+        {show.exhaust && <button type="button" className="hch-mobile-reading" onClick={() => onSensor?.("exhaust_temperature")} aria-label="Vis historik for afkast T4"><small>Afkast · T4</small><strong>{fmt(exhaust)}</strong></button>}
+      </div>}
       {inlineControls && <div className="hch-inline-controls">{inlineControls}</div>}
-      <div className="hch-mobile-subreadings">
-        <div className="hch-mobile-water"><span>Vand frem / retur</span><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater)}</button><span> / </span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong></div>
-        <button type="button" onClick={() => onSensor?.("afterheat_frost")}>Frost <strong>{fmt(frost)}</strong></button>
-        <div className="hch-mobile-water hch-mobile-water-delta"><span>Afkøl</span><strong>{fmt(waterDelta)}</strong></div>
-      </div>
-      <div className="hch-mobile-water-badge"><small>Vand frem/retur</small><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater).replace("°C", "")}</button><span>/</span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong><small>Afkøl <b>{fmt(waterDelta)}</b></small></div>
+      {showWater || showFrost ? <div className="hch-mobile-subreadings">
+        {showWater && <div className="hch-mobile-water"><span>Vand frem / retur</span><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater)}</button><span> / </span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong></div>}
+        {showFrost && <button type="button" onClick={() => onSensor?.("afterheat_frost")}>Frost <strong>{fmt(frost)}</strong></button>}
+        {showWater && <div className="hch-mobile-water hch-mobile-water-delta"><span>Afkøl</span><strong>{fmt(waterDelta)}</strong></div>}
+      </div> : null}
+      {showWater && <div className="hch-mobile-water-badge"><small>Vand frem/retur</small><strong><button type="button" aria-label="Vis historik for vand fremløb" onClick={() => onSensor?.("water_flow")}>{fmt(flowWater).replace("°C", "")}</button><span>/</span><button type="button" aria-label="Vis historik for vand retur" onClick={() => onSensor?.("water_return")}>{fmt(returnWater)}</button></strong><small>Afkøl <b>{fmt(waterDelta)}</b></small></div>}
     </div>
-    <div className="unit-readback-row" onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) onSensor?.(key); }}><div className="unit-readback" data-sensor="supply_fan_rpm"><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{int(supplyRpm)} RPM</strong><em data-sensor="supply_fan_percent">{int(supplyPercent)}%</em></div></div><div className="unit-readback" data-sensor="extract_fan_rpm"><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{int(extractRpm)} RPM</strong><em data-sensor="extract_fan_percent">{int(extractPercent)}%</em></div></div><div className="unit-readback" data-sensor="bypass_raw"><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div><div className="unit-readback" data-sensor="afterheat_active"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div></div>
+    {readbacks.length > 0 && <div className={`unit-readback-row${readbacks.length === 4 ? "" : ` readbacks-${readbacks.length}`}`} onClick={e => { const key = (e.target as Element).closest("[data-sensor]")?.getAttribute("data-sensor"); if (key) onSensor?.(key); }}>{readbacks}</div>}
   </div>;
 }

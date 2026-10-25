@@ -22,15 +22,15 @@ export class WaterSection extends Section {
     return `
 <div class="layout">
   <section class="card utility tone-water a-full">
-    <div class="hero-head"><div class="card-head">${icon("mdi:water")}<div><h3>Vand</h3><small>Vandmåler · live</small></div></div><span class="live"><i></i>Live</span></div>
-    <div class="util-body">
-      <div class="util-main clickable" data-entity="${escapeHtml(c.id("water_flow") || "")}" tabindex="0" role="button">
+    <div class="hero-head"><div class="card-head">${icon("mdi:water")}<div><h3>Vand</h3><small data-ref="sub">Vandmåler · live</small></div></div><span class="live" data-ref="live"><i></i>Live</span></div>
+    <div class="util-body" data-ref="body">
+      <div class="util-main clickable" data-entity="${escapeHtml(c.id("water_flow") || "")}" tabindex="0" role="button" data-ref="main">
         <small>Flow lige nu</small>
         <div class="mega num"><b data-ref="flowV">—</b><small>L/min</small></div>
         <span class="status" data-ref="status">—</span>
         ${icon("mdi:water", "tile-ic")}
       </div>
-      <div class="tiles">
+      <div class="tiles" data-ref="tiles">
         ${tile("today", "Forbrug i dag", c.id("water_total"), "mdi:water-outline")}
         ${tile("cost", "Pris i dag", c.id("water_cost_today"), "mdi:cash")}
         ${tile("price", "Pris pr. m³", c.id("water_price"), "mdi:tag-outline")}
@@ -39,6 +39,21 @@ export class WaterSection extends Section {
   </section>
   ${this.panels[0].html("a-full tall")}
 </div>`;
+  }
+
+  /** Without a flow sensor there is no live box, badge or "live" subtitle; tiles without entities are hidden. */
+  _arrange() {
+    const c = this.card;
+    if (!this.setupChanged(["water_flow", "water_total", "water_cost_today", "water_price"])) return;
+    const live = c.has("water_flow");
+    this.show("main", live);
+    this.show("live", live);
+    this.show("sub", live);
+    const tiles = this.fit("tiles", [["todayTile", c.has("water_total")], ["costTile", c.has("water_cost_today")], ["priceTile", c.has("water_price")]]);
+    this.show("tiles", tiles > 0);
+    this.refs.body?.classList.toggle("solo", !live);
+    this.show("body", live || tiles > 0);
+    this.show(this.panels[0].el, c.has(this.panels[0].o.stat));
   }
 
   shown() {
@@ -53,6 +68,7 @@ export class WaterSection extends Section {
 
   update() {
     const c = this.card;
+    this._arrange();
     const lpm = c.flowLpm("water_flow");
     this.text("flowV", Number.isFinite(lpm) ? fmt(lpm, lpm < 10 ? 1 : 0) : "—", true);
     const st = c.waterFlowState(lpm);

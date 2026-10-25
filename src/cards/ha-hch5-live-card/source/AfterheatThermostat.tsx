@@ -44,9 +44,12 @@ export interface AfterheatThermostatProps {
   onConfirm: () => void;
   onCancel: () => void;
   busy?: boolean;
+  /** Readings without an entity behind them are left out: T2 before the coil (and so the lift) and HAC1's readback. */
+  showBefore?: boolean;
+  showRegistered?: boolean;
 }
 
-export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false }: AfterheatThermostatProps) {
+export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false, showBefore = true, showRegistered = true }: AfterheatThermostatProps) {
   const pending = value !== current;
   const label = (v: AfterheatValue) => v === "off" ? "OFF" : `${v} °C`;
   const svgRef = useRef<SVGSVGElement>(null);
@@ -118,10 +121,10 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
     <div className="thermostat-side">
       <div className="thermostat-head"><span>Eftervarme</span><em>HAC1 · vandflade</em></div>
       <div className="thermostat-readings">
-        <div><small>Før flade</small><strong>{fmt(airBefore)}</strong></div>
+        {showBefore && <div><small>Før flade</small><strong>{fmt(airBefore)}</strong></div>}
         <div><small>Efter flade</small><strong>{fmt(airAfter)}</strong></div>
-        <div><small>Løft</small><strong>{airBefore === null || airAfter === null ? "—" : fmt(airAfter - airBefore)}</strong></div>
-        <div><small>I HAC1</small><strong>{registered}</strong></div>
+        {showBefore && <div><small>Løft</small><strong>{airBefore === null || airAfter === null ? "—" : fmt(airAfter - airBefore)}</strong></div>}
+        {showRegistered && <div><small>I HAC1</small><strong>{registered}</strong></div>}
       </div>
       {lockout && !off && <p className="thermostat-note">Sommerstop: udetemperaturen er {fmt(outdoor)}. HAC1 varmer først under {cutoff}{" "}°C ude.</p>}
       <div className="thermostat-actions">

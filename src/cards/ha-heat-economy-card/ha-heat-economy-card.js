@@ -1,4 +1,4 @@
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
 class HAHeatEconomyCard extends HTMLElement {
   constructor() {
@@ -18,11 +18,13 @@ class HAHeatEconomyCard extends HTMLElement {
       outdoor_entity: "sensor.example_outdoor",
       price_entity: "sensor.example_current_price",
       tomorrow_entity: "binary_sensor.example_tomorrow_available",
-      spa_kw: 3.2,
     };
   }
   setConfig(config) {
     this._config = { title: "Varmepumpe vs. Fjernvarme", spa_kw: 3.2, ...config };
+    // The spa cost line is opt-in: `show_spa: true`, or a `spa_kw` in the config (older configs keep their line).
+    // A home without a spa gets no spa line (Claude AI).
+    this._showSpa = config?.show_spa !== undefined ? Boolean(config.show_spa) : config?.spa_kw !== undefined && config?.spa_kw !== null;
     this._render();
   }
   _watchedIds() {
@@ -115,7 +117,7 @@ class HAHeatEconomyCard extends HTMLElement {
     const bestTomorrow = this._bestHours(tomorrowPrices, fj, cop);
 
     const currentPrice = this._num(c.price_entity);
-    const spaCost = Number.isFinite(currentPrice) ? currentPrice * (Number(c.spa_kw) || 3.2) : undefined;
+    const spaCost = this._showSpa && Number.isFinite(currentPrice) ? currentPrice * (Number(c.spa_kw) || 3.2) : undefined;
 
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)))}

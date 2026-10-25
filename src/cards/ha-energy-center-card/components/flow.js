@@ -33,6 +33,21 @@ const LINKS = [
 
 const toneOf = (key) => NODES.find((n) => n.key === key).tone;
 
+/** Height positions (%) for 1–3 nodes on one side; with all nodes they are the original fixed positions. */
+const SPREAD = { 1: [46], 2: [26, 70], 3: [13, 46, 79] };
+
+/** Node positions for the visible nodes: each side is spread evenly; without consumers "Hjem" moves right. */
+export function flowPositions(keys) {
+  const pos = {};
+  const left = ["grid", "heat"].filter((k) => keys.has(k));
+  const right = ["measured", "ev", "unmeasured"].filter((k) => keys.has(k));
+  const leftX = right.length ? 13 : 22;
+  left.forEach((k, i) => (pos[k] = { x: leftX, y: SPREAD[left.length][i] }));
+  right.forEach((k, i) => (pos[k] = { x: 87, y: SPREAD[right.length][i] }));
+  pos.home = { x: right.length ? 50 : 74, y: 46 };
+  return pos;
+}
+
 export class EnergyFlow {
   /** @param entities { key → entity-id } til more-info på noderne */
   constructor(host, entities = {}) {
@@ -60,6 +75,39 @@ export class EnergyFlow {
     host.querySelectorAll("[data-v]").forEach((el) => (this.vEls[el.dataset.v] = el));
     host.querySelectorAll("[data-u]").forEach((el) => (this.uEls[el.dataset.u] = el));
     this.values = {};
+    this.nodeEls = {};
+    host.querySelectorAll(".fnode").forEach((el) => (this.nodeEls[el.querySelector("[data-v]").dataset.v] = el));
+    this.pos = Object.fromEntries(NODES.map((n) => [n.key, { x: n.x, y: n.y }]));
+    this.keys = new Set(NODES.map((n) => n.key));
+  }
+
+  /** Shows only these nodes and the links between them, spread evenly per side (Claude AI). */
+  setNodes(keys) {
+    const sig = NODES.filter((n) => keys.has(n.key)).map((n) => n.key).join(",");
+    if (sig === this._nodeSig) return;
+    this._nodeSig = sig;
+    this.keys = new Set(keys);
+    this.pos = flowPositions(this.keys);
+    for (const n of NODES) {
+      const el = this.nodeEls[n.key];
+      const on = this.keys.has(n.key);
+      el.toggleAttribute("hidden", !on);
+      if (!on) continue;
+      const left = `${this.pos[n.key].x}%`;
+      const top = `${this.pos[n.key].y}%`;
+      if (el.style.left !== left) el.style.left = left;
+      if (el.style.top !== top) el.style.top = top;
+    }
+    for (const [a, b] of LINKS) {
+      const on = this.keys.has(a) && this.keys.has(b);
+      this.paths[`${a}-${b}`].toggleAttribute("hidden", !on);
+      this.dashes[`${a}-${b}`].toggleAttribute("hidden", !on);
+    }
+    // At most one node per side: everything sits on one line, so narrow layouts can drop the empty height.
+    const side = (list) => list.filter((k) => this.keys.has(k)).length;
+    this.host.classList.toggle("compact", Math.max(side(["grid", "heat"]), side(["measured", "ev", "unmeasured"])) <= 1);
+    this.size = { w: 0, h: 0 };
+    this._layout();
   }
 
   connect() {
@@ -87,7 +135,7 @@ export class EnergyFlow {
     if (!w || !h || (w === this.size.w && h === this.size.h)) return;
     this.size = { w, h };
     this.svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    const pos = Object.fromEntries(NODES.map((n) => [n.key, [(n.x / 100) * w, (n.y / 100) * h]]));
+    const pos = Object.fromEntries(NODES.map((n) => [n.key, [(this.pos[n.key]?.x ?? n.x) / 100 * w, (this.pos[n.key]?.y ?? n.y) / 100 * h]]));
     for (const [a, b] of LINKS) {
       const [x1, y1] = pos[a];
       const [x2, y2] = pos[b];

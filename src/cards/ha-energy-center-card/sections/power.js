@@ -86,24 +86,24 @@ export class PowerSection extends Section {
       )
       .join("");
     const mini = (ref, label, ic, key, extra = "") => `
-      <div class="card mini tone-el ${key ? "clickable" : ""}" ${key ? `data-entity="${ent(key)}" tabindex="0" role="button"` : ""}>
+      <div class="card mini tone-el ${key ? "clickable" : ""}" ${key ? `data-entity="${ent(key)}" tabindex="0" role="button"` : ""} data-ref="${ref}Card">
         <div class="card-head">${icon(ic)}<h3>${label}</h3></div>
         <div class="mini-val num"><b data-ref="${ref}V">—</b><small data-ref="${ref}U"></small></div>
         ${extra}
       </div>`;
     return `
 <div class="layout pw">
-  <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button">
+  <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button" data-ref="hero">
     <div class="hero-head"><div class="card-head">${icon("mdi:flash")}<h3>Strøm lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">—</b><small data-ref="mainU">W</small></div>
-    <div class="facts">
-      <div class="st-el"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">—</b>${icon("mdi:sine-wave", "tile-ic")}</div>
-      <div class="st-warm"><small>Pris nu</small><b class="num" data-ref="mainPrice">—</b>${icon("mdi:cash", "tile-ic")}</div>
-      <div class="st-muted"><small>Målertemperatur</small><b class="num" data-ref="mainTemp">—</b>${icon("mdi:thermometer", "tile-ic")}</div>
-      <div class="st-ok"><small>Returneret i alt</small><b class="num" data-ref="mainRet">—</b>${icon("mdi:transmission-tower-export", "tile-ic")}</div>
+    <div class="facts" data-ref="facts">
+      <div class="st-el" data-ref="factVa"><small>Tilsyneladende</small><b class="num" data-ref="mainVa">—</b>${icon("mdi:sine-wave", "tile-ic")}</div>
+      <div class="st-warm" data-ref="factPrice"><small>Pris nu</small><b class="num" data-ref="mainPrice">—</b>${icon("mdi:cash", "tile-ic")}</div>
+      <div class="st-muted" data-ref="factTemp"><small>Målertemperatur</small><b class="num" data-ref="mainTemp">—</b>${icon("mdi:thermometer", "tile-ic")}</div>
+      <div class="st-ok" data-ref="factRet"><small>Returneret i alt</small><b class="num" data-ref="mainRet">—</b>${icon("mdi:transmission-tower-export", "tile-ic")}</div>
     </div>
   </section>
-  <div class="quad a-half">
+  <div class="quad a-half" data-ref="quad">
     ${mini("mMain", "Hovedmåler", "mdi:meter-electric-outline", "grid_energy", `<div class="mini-sub"><span class="num" data-ref="mMainCost">—</span><span>i dag</span></div>`)}
     ${mini("mMeas", "Målt total", "mdi:chart-donut", "measured_power", `<div class="mini-sub"><span class="num" data-ref="mMeasPct">—</span><span>af hovedmåler</span></div>`)}
     ${mini("mUnm", "Umålt", "mdi:help-circle-outline", "unmeasured_power", `<div class="mini-sub"><span class="num" data-ref="mUnmPct">—</span><span>af hovedmåler</span></div>`)}
@@ -118,14 +118,14 @@ export class PowerSection extends Section {
       <div class="acct-msg" data-ref="acctMsg">—</div>
     </div>
   </div>
-  <section class="card a-full">
+  <section class="card a-full" data-ref="groupsCard">
     <div class="sect-head">
       <div class="card-head">${icon("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">—</small></div></div>
       <span class="hint">Tryk på en gruppe for detaljer</span>
     </div>
     <div class="groups">${groups}</div>
   </section>
-  <section class="card a-full">
+  <section class="card a-full" data-ref="phasesCard">
     <div class="sect-head">
       <div class="card-head">${icon("mdi:sine-wave")}<div><h3>3-faset måling</h3><small>Effekt, strøm, spænding og frekvens pr. fase</small></div></div>
       <span class="chip" data-ref="bal">Balance —</span>
@@ -151,8 +151,26 @@ export class PowerSection extends Section {
     this.card.loadToday(TODAY_KEYS, () => this._updateToday());
   }
 
+  /** Only what is set up: facts, meter tiles, groups, phases and history without entities are hidden (Claude AI). */
+  _arrange() {
+    const c = this.card;
+    const phasesOn = c.phasesInUse().length > 0;
+    if (!this.setupChanged(["grid_apparent", "grid_price", "meter_temperature", "grid_returned", "grid_energy", "grid_cost", "measured_power", "unmeasured_power", phasesOn])) return;
+    const has = (k) => c.has(k);
+    const facts = this.fit("facts", [["factVa", has("grid_apparent")], ["factPrice", has("grid_price")], ["factTemp", has("meter_temperature")], ["factRet", has("grid_returned")]]);
+    this.show("facts", facts > 0);
+    const quad = this.fit("quad", [["mMainCard", has("grid_energy") || has("grid_cost")], ["mMeasCard", has("measured_power")], ["mUnmCard", has("unmeasured_power")], ["acct", has("measured_power")]]);
+    this.show("mMainCost", has("grid_cost"));
+    this.show("quad", quad > 0);
+    this.span("hero", quad > 0 ? "a-half" : "a-full");
+    this.show("groupsCard", c.config.groups.length > 0);
+    this.show("phasesCard", phasesOn);
+    this.show(this.panels[0].el, has(this.panels[0].o.stat));
+  }
+
   update() {
     const c = this.card;
+    this._arrange();
     const grid = c.watts("grid_power");
     const meas = c.watts("measured_power");
     const unm = c.watts("unmeasured_power");

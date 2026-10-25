@@ -28,8 +28,12 @@ groups:
 
 ## Entities
 
-Every key is optional. A key that is left out or points to a missing entity shows "—"; the card never fails
-on a missing sensor.
+Every key is optional and the card never fails on a missing sensor. Only what is set up is shown: a key counts
+as set up when it is listed under `entities:` (shown as "—" while its entity is unavailable or missing). Tiles,
+energy-flow nodes, charts and sections whose keys are not set up are hidden, and the remaining tiles share the
+row. A home with only electricity and district heating, for example, gets no water or EV tiles, no "Målte
+grupper"/"Umålt" flow nodes, no "Aktuel effekt" box without `heat_power`, no phase section with `phases: []` and
+no group section without `groups`.
 
 | Tab | Keys |
 |---|---|
@@ -51,6 +55,7 @@ the tabs yourself, list them: `tabs: [power, heat, water, ev]` (the overview is 
 | `phases` | three phases A/B/C | List of `{name, power, apparent, power_factor, current, voltage, frequency}`. |
 | `groups` | none | Consumer groups `{name, icon, entities: [{entity, name, icon}]}`, shown on the electricity tab. |
 | `default_tab` | `overview` | Tab that opens first. |
+| `heat_subtitle` | meter line with `heat_power`, else none | Subtitle of the district heating tab; `""` hides it. |
 | `accounting_tolerance_w` | 25 | Warn when measured consumers and the main meter differ by more than this. |
 | `phase_moderate_a`, `phase_high_a` | 3, 6 | Phase imbalance thresholds in ampere. |
 | `water_high_flow_lpm` | 15 | Water flow above this is shown as high (display only, no leak alarm). |

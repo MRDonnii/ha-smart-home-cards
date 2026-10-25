@@ -91,6 +91,37 @@ export class Section {
     this.style(ref, "--p", f.toFixed(3));
   }
 
+  /**
+   * Shows only the parts that are set up (`items` = [[ref, visible], …]) and tells the grid how many are left
+   * (`data-n`), so the remaining tiles share the row instead of leaving gaps. Returns that number (Claude AI).
+   */
+  fit(grid, items) {
+    let n = 0;
+    for (const [ref, on] of items) {
+      this.show(ref, on);
+      if (on) n += 1;
+    }
+    const el = typeof grid === "string" ? this.refs[grid] : grid;
+    if (el && el.dataset.n !== String(n)) el.dataset.n = String(n);
+    return n;
+  }
+
+  /** Swaps the grid width class (a-full / a-half / a-third) of a layout child. */
+  span(ref, cls) {
+    const el = typeof ref === "string" ? this.refs[ref] : ref;
+    if (!el || el.classList.contains(cls)) return;
+    el.classList.remove("a-full", "a-half", "a-third");
+    el.classList.add(cls);
+  }
+
+  /** Runs `apply` only when the set-up signature of `keys` changed (the card's parts follow what HA has). */
+  setupChanged(keys) {
+    const sig = keys.map((k) => (typeof k === "boolean" ? k : this.card.has(k)) ? 1 : 0).join("");
+    if (sig === this._setupSig) return false;
+    this._setupSig = sig;
+    return true;
+  }
+
   setIcon(ref, name) {
     const el = typeof ref === "string" ? this.refs[ref] : ref;
     if (el && el.__icon !== name) {

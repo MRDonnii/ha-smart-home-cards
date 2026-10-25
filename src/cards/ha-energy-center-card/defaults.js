@@ -6,7 +6,8 @@
  *     grid_power: sensor.min_anden_maaler
  *
  * `entities` flettes nøgle for nøgle, `groups` og `phases` erstattes helt hvis de angives.
- * Entities der ikke findes i HA vises som "—" — kortet fejler aldrig på en manglende sensor.
+ * Kortet fejler aldrig på en manglende sensor. Nøgler der står i `entities:` vises ("—" hvis entity mangler);
+ * standardnøgler kun når deres entity findes i HA. Felter, flow-noder og grafer uden opsatte nøgler skjules.
  * Fanerne Fjernvarme, Vand og Billader vises kun, når mindst én af deres entities findes i HA;
  * `tabs: [power, heat, water, ev]` vælger fanerne eksplicit (Oversigt vises altid).
  */

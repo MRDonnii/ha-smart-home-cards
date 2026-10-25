@@ -33,15 +33,15 @@ export class HeatSection extends Section {
     return `
 <div class="layout">
   <section class="card utility tone-heat a-full">
-    <div class="hero-head"><div class="card-head">${icon("mdi:radiator")}<div><h3>Fjernvarme</h3><small>Kamstrup MULTICAL · live</small></div></div><span class="live"><i></i>Live</span></div>
-    <div class="util-body">
-      <div class="util-main clickable" data-entity="${escapeHtml(c.id("heat_power") || "")}" tabindex="0" role="button">
+    <div class="hero-head"><div class="card-head">${icon("mdi:radiator")}<div><h3>Fjernvarme</h3><small data-ref="sub">${escapeHtml(this._subtitle())}</small></div></div><span class="live" data-ref="live"><i></i>Live</span></div>
+    <div class="util-body" data-ref="body">
+      <div class="util-main clickable" data-entity="${escapeHtml(c.id("heat_power") || "")}" tabindex="0" role="button" data-ref="main">
         <small>Aktuel effekt</small>
         <div class="mega num"><b data-ref="powV">—</b><small data-ref="powU">kW</small></div>
         <span class="status" data-ref="status">—</span>
         ${icon("mdi:radiator", "tile-ic")}
       </div>
-      <div class="tiles">
+      <div class="tiles" data-ref="tiles">
         ${tile("today", "Forbrug i dag", c.id("heat_energy"), "mdi:fire")}
         ${tile("cost", "Pris i dag", c.id("heat_cost"), "mdi:cash")}
         ${tile("price", "Aktuel pris", c.id("heat_price"), "mdi:tag-outline")}
@@ -58,6 +58,30 @@ export class HeatSection extends Section {
 </div>`;
   }
 
+  /** `heat_subtitle` from the config; otherwise the meter line only when there is a live heat meter. */
+  _subtitle() {
+    const c = this.card;
+    if (typeof c.config.heat_subtitle === "string") return c.config.heat_subtitle;
+    return c.has("heat_power") ? "Kamstrup MULTICAL · live" : "";
+  }
+
+  /** Without a live heat meter (heat_power) there is no "Aktuel effekt" box and no live badge (Claude AI). */
+  _arrange() {
+    const c = this.card;
+    if (!this.setupChanged(["heat_power", "heat_energy", "heat_cost", "heat_price"])) return;
+    const live = c.has("heat_power");
+    this.show("main", live);
+    this.show("live", live);
+    const sub = this._subtitle();
+    this.text("sub", sub);
+    this.show("sub", Boolean(sub));
+    const tiles = this.fit("tiles", [["todayTile", c.has("heat_energy")], ["costTile", c.has("heat_cost")], ["priceTile", c.has("heat_price")]]);
+    this.show("tiles", tiles > 0);
+    this.refs.body?.classList.toggle("solo", !live);
+    this.show("body", live || tiles > 0);
+    this.show(this.panels[0].el, c.has(this.panels[0].o.stat));
+  }
+
   shown() {
     super.shown();
     this.card.loadToday(TODAY_KEYS, () => this._updateToday());
@@ -70,6 +94,7 @@ export class HeatSection extends Section {
 
   update() {
     const c = this.card;
+    this._arrange();
     const w = c.watts("heat_power");
     this.value("pow", fmtPower(w), true);
     this.text("status", !Number.isFinite(w) ? "Ingen data" : w > 0 ? "Varmer" : "Ingen varmeeffekt");

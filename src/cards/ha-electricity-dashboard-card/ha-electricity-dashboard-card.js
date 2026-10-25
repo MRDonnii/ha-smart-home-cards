@@ -17,7 +17,7 @@
 
 import { chartHover } from "../../shared/chart-hover.js";
 
-const VERSION = "1.1.1";
+const VERSION = "1.2.0";
 const CARD_TAG = "ha-electricity-dashboard-card";
 
 /* ------------------------------------------------------------------------------------------
@@ -762,6 +762,30 @@ const STYLE = `
   .dash .extremes{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dash .card.a-house{display:none}
 }
+
+/* ---------- No EV charger (no charger_* entities): no charging advice or charger boxes, and the remaining boxes
+   close the gaps (Claude AI). ---------- */
+.dash.no-charger .a-price{grid-column:1/15}
+.dash.no-charger .a-range{grid-column:15/33}
+.dash.no-charger .a-house{grid-column:33/49}
+.dash.no-charger.no-house .a-price{grid-column:1/21}
+.dash.no-charger.no-house .a-range{grid-column:21/49}
+.dash.no-charger .a-flow{grid-column:27/49}
+.mini-grid[data-n="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mini-grid[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mini-grid[data-n="1"]{grid-template-columns:minmax(0,1fr)}
+@container (max-width:1180px){
+  .dash.no-charger .a-price,.dash.no-charger .a-range,.dash.no-charger .a-house{grid-column:span 2}
+  .dash.no-charger.no-house .a-price,.dash.no-charger.no-house .a-range{grid-column:span 3}
+  .dash.no-charger .a-flow{grid-column:1/-1}
+}
+@container (max-width:640px){
+  .mini-grid[data-n="3"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mini-grid[data-n="3"] > :last-child{grid-column:1/-1}
+}
+@container (max-width:330px){
+  .mini-grid[data-n]{grid-template-columns:minmax(0,1fr)}
+}
 `;
 
 /* ------------------------------------------------------------------------------------------
@@ -1032,6 +1056,13 @@ class HAElectricityDashboardCard extends HTMLElement {
     const c = this._config;
     const u = this._uid;
     const has = (k) => Boolean(this._id(k));
+    // Without any charger_* entity the home has no EV charger: no charging advice, no charger segment and plain
+    // house labels instead of "uden billader" (Claude AI).
+    const charger = Object.entries(c.entities).some(([k, v]) => k.startsWith("charger_") && v);
+    const houseKw = charger ? "Husforbrug uden billader" : "Husforbrug";
+    const houseShort = charger ? "Hus uden bil" : "Hus";
+    const houseDay = charger ? "Dagens husforbrug uden bil" : "Dagens husforbrug";
+    const minis = 1 + ["house_energy_today", "charger_power", "house_power"].filter(has).length;
     this.shadowRoot.innerHTML = `
 <style>${STYLE}</style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -1042,7 +1073,7 @@ class HAElectricityDashboardCard extends HTMLElement {
     <linearGradient id="charger-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in srgb,var(--energy-text) 16%,var(--energy-surface))"/><stop offset="1" style="stop-color:var(--energy-surface)"/></linearGradient>
   </defs>
 </svg>
-<div class="dash" data-ref="dash">
+<div class="dash${charger ? "" : ` no-charger${has("house_power") ? "" : " no-house"}`}" data-ref="dash">
   <header class="header">
     <div class="brand">
       <div class="brand-mark">${icon("mdi:chart-bar")}</div>
@@ -1070,7 +1101,7 @@ class HAElectricityDashboardCard extends HTMLElement {
     </div>
   </section>
 
-  <section class="card kpi a-advice" data-ref="advice">
+  <section class="card kpi a-advice" data-ref="advice" ${charger ? "" : "hidden"}>
     <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:ev-plug-type2")}<h3>Ladeanbefaling</h3><span class="info-btn" title="Vejledende – baseret alene på den aktuelle pris' placering blandt dagens priser. Styrer ikke laderen.">${icon("mdi:information-outline")}</span></div>
     <div class="advice-box" data-ref="adviceBox">${icon("mdi:power-plug-outline")}<div><b data-ref="adviceTitle" data-v>—</b><small data-ref="adviceLevel">—</small></div></div>
     <div class="advice-note" data-ref="adviceNote1">${icon("mdi:check-circle")}<span data-ref="adviceText">—</span></div>
@@ -1088,7 +1119,7 @@ class HAElectricityDashboardCard extends HTMLElement {
   </section>
 
   <section class="card kpi a-house clickable tone-green" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0" ${has("house_power") ? "" : "hidden"}>
-    <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>Husforbrug uden billader</h3></div>
+    <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>${houseKw}</h3></div>
     <div class="big"><span class="v num" data-ref="houseKpi" data-v>—</span><span class="u">kW</span></div>
     <div data-ref="houseSparkWrap" hidden><div class="spark" data-ref="houseSpark"></div><div class="spark-caption"><span>−6 t</span><span>nu</span></div></div>
   </section>
@@ -1103,9 +1134,9 @@ class HAElectricityDashboardCard extends HTMLElement {
       <div data-ref="todayChart"></div>
       <div class="composition" data-ref="composition" hidden></div>
     </div>
-    <div class="mini-grid">
+    <div class="mini-grid" data-n="${minis}">
       <div class="mini tone-green clickable" data-entity="${escapeHtml(this._id("house_energy_today"))}" tabindex="0" ${has("house_energy_today") ? "" : "hidden"}>
-        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>Dagens husforbrug uden bil</h3></div>
+        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home")}<h3>${houseDay}</h3></div>
         <div class="big"><span class="v num" data-ref="houseDay" data-v>—</span><span class="u">kWh</span></div>
         <div class="spark" data-ref="houseDaySpark" hidden></div>
         <div class="mini-foot" data-ref="houseDayCompare" hidden><span class="pill" data-ref="houseDayComparePill"></span><span>ift. samme tid i går</span></div>
@@ -1116,7 +1147,7 @@ class HAElectricityDashboardCard extends HTMLElement {
         <div class="spark" data-ref="chargerSpark" hidden></div>
       </div>
       <div class="mini tone-green clickable" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0" ${has("house_power") ? "" : "hidden"}>
-        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home-lightning-bolt")}<h3>Husforbrug uden billader</h3></div>
+        <div class="card-head" style="--head-ic:var(--energy-green)">${icon("mdi:home-lightning-bolt")}<h3>${houseKw}</h3></div>
         <div class="big"><span class="v num" data-ref="houseMini" data-v>—</span><span class="u">kW</span></div>
         <div class="spark" data-ref="houseMiniSpark" hidden></div>
       </div>
@@ -1142,8 +1173,8 @@ class HAElectricityDashboardCard extends HTMLElement {
         <div class="donut-center"><span class="v num" data-ref="flowTotal" data-v>—</span><span class="u">kW</span></div>
       </div>
       <div class="legend">
-        <div class="leg tone-blue clickable" data-entity="${escapeHtml(this._id("charger_power"))}" tabindex="0">${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">—</span></div>
-        <div class="leg tone-green clickable" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>Hus uden bil</small><b class="num"><span data-ref="flowHouse" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">—</span></div>
+        <div class="leg tone-blue clickable" data-entity="${escapeHtml(this._id("charger_power"))}" tabindex="0" ${charger ? "" : "hidden"}>${icon("mdi:car-electric")}<small>Billader</small><b class="num"><span data-ref="flowCar" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowCarPct">—</span></div>
+        <div class="leg tone-green clickable" data-entity="${escapeHtml(this._id("house_power"))}" tabindex="0">${icon("mdi:home")}<small>${houseShort}</small><b class="num"><span data-ref="flowHouse" data-v>—</span> <span class="unit">kW</span></b><span class="pct" data-ref="flowHousePct">—</span></div>
       </div>
     </div>
   </section>
@@ -1179,7 +1210,7 @@ class HAElectricityDashboardCard extends HTMLElement {
       <span class="tag">${icon("mdi:calendar-today")}I dag</span>
     </div>
     <div class="energy-rows">
-      <div class="erow tone-green clickable" data-entity="${escapeHtml(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">Hus uden bil</span><span class="val num"><span data-ref="eHouse" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">—</span></div>
+      <div class="erow tone-green clickable" data-entity="${escapeHtml(this._id("house_energy_today"))}" tabindex="0">${icon("mdi:home")}<span class="name">${houseShort}</span><span class="val num"><span data-ref="eHouse" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eHouseBar"></i></div><span class="share" data-ref="eHouseShare">—</span></div>
       <div class="erow tone-blue clickable" data-ref="eCarRow" data-entity="${escapeHtml(this._id("charger_energy_today"))}" tabindex="0" ${has("charger_energy_today") ? "" : "hidden"}>${icon("mdi:car-electric")}<span class="name">Bilopladning</span><span class="val num"><span data-ref="eCar" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eCarBar"></i></div><span class="share" data-ref="eCarShare">—</span></div>
       <div class="erow tone-purple" data-ref="eTotalRow" hidden>${icon("mdi:lightning-bolt")}<span class="name">Samlet elforbrug</span><span class="val num"><span data-ref="eTotal" data-v>—</span> <span class="unit">kWh</span></span><div class="bar"><i data-ref="eTotalBar"></i></div><span class="share" data-ref="eTotalShare">100 %</span></div>
     </div>
@@ -1187,13 +1218,13 @@ class HAElectricityDashboardCard extends HTMLElement {
 
   <section class="card a-tomorrow">
     <div class="panel-head" style="margin-bottom:0">
-      <div class="panel-title">${icon("mdi:calendar-arrow-right", "lead")}<div><h2>I morgen</h2><div class="sub">Forventede elpriser – brug dem til planlægning af opladning</div></div></div>
+      <div class="panel-title">${icon("mdi:calendar-arrow-right", "lead")}<div><h2>I morgen</h2><div class="sub">${charger ? "Forventede elpriser – brug dem til planlægning af opladning" : "Forventede elpriser – brug dem til at planlægge forbruget"}</div></div></div>
     </div>
     <div data-ref="tomorrowBody"></div>
   </section>
 
   <footer class="footer">
-    <span>${icon("mdi:information-outline")}Denne visning bruger direkte el-entiteter fra Home Assistant. Elpriser, forbrug og opladningsdata beregnes ud fra dine målere og prisdata.</span>
+    <span>${icon("mdi:information-outline")}Denne visning bruger direkte el-entiteter fra Home Assistant. ${charger ? "Elpriser, forbrug og opladningsdata beregnes" : "Elpriser og forbrug beregnes"} ud fra dine målere og prisdata.</span>
     <span>${icon("mdi:database-outline")}<span data-ref="footerCounts">—</span></span>
   </footer>
 </div>`;

@@ -1147,3 +1147,29 @@ button { font: inherit; color: inherit; }
 /* Bål in a half-width pair next to Pejsefunktion: four choices on one row (Claude AI). */
 .pro-control-pair .bonfire-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; }
 .pro-control-pair .bonfire-actions button { min-width: 0; padding: 0 2px; }
+
+/* Parts without entities are left out (Claude AI): the grid, the tile rows and the control pairs close the gap. */
+.dashboard-main-grid.without-climate { grid-template-areas: "unit controls" "afterheat afterheat"; }
+.dashboard-main-grid.without-afterheat { grid-template-areas: "unit controls" "climate climate"; }
+.dashboard-main-grid.without-climate.without-afterheat { grid-template-areas: "unit controls"; }
+@container hch-card (max-width: 1080px) {
+  .dashboard-main-grid.without-climate { grid-template-areas: "unit" "controls" "afterheat"; }
+  .dashboard-main-grid.without-afterheat { grid-template-areas: "unit" "controls" "climate"; }
+  .dashboard-main-grid.without-climate.without-afterheat { grid-template-areas: "unit" "controls"; }
+}
+.climate-metrics.metrics-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.climate-metrics.metrics-1 { grid-template-columns: minmax(0,1fr); }
+.unit-readback-row.readbacks-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.unit-readback-row.readbacks-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.unit-readback-row.readbacks-1 { grid-template-columns: minmax(0,1fr); }
+@container hch-card (max-width: 960px) {
+  .climate-metrics.metrics-3,.unit-readback-row.readbacks-3 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+.pro-control-pair > :only-child { grid-column: 1 / -1; }
+.mini-buttons.one { grid-template-columns: minmax(0,1fr); }
+/* An MKII connected directly has more operation modes than the three of HCH5 Control. */
+.pro-segment.many { grid-template-columns: repeat(auto-fit,minmax(78px,1fr)); }
+.hch-smartdash-mode.many { grid-column: 1 / -1; }
+@container hch-card (max-width: 960px) {
+  .unit-readback-row.readbacks-3 > :last-child,.climate-metrics.metrics-3 > :last-child { grid-column: 1 / -1; }
+}

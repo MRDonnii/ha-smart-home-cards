@@ -1,17 +1,45 @@
-# HCH5 Live Control Card
+# Dantherm Live Card
 
-Animated Dantherm HCH5 unit with live temperatures, fan and bypass readbacks, and the Home Assistant controls of the HCH5 Control integration.
+Animated Dantherm ventilation unit with live temperatures, fan and bypass readbacks, and the Home Assistant controls of the [Dantherm Control](https://github.com/MRDonnii/dantherm-control-ha) integration (formerly HCH5 Control): an HCH5 MK1 with HAC1 and the Raspberry Pi controller, or an MKII/RCV/HCV unit over Modbus.
+
+The card type is `custom:ha-dantherm-live-card`. The old type `custom:ha-hch5-live-card` is kept as an alias and renders the same card, so existing dashboards keep working; only the new name is listed in the card picker.
+
+- `unit_name`: what the card's texts call the unit, e.g. `Dantherm RCV320 P2`. By default the model of the unit's Home Assistant device is used (taken from its temperature, fan, bypass or mode entities), prefixed "Dantherm" in sentences; without a known model the texts say "anlægget".
 
 ```yaml
-type: custom:ha-hch5-live-card
+type: custom:ha-dantherm-live-card
 afterheat_coil: water
 entities:
   water_flow: sensor.example_afterheat_water_flow
   water_return: sensor.example_afterheat_water_return
   afterheat_active: binary_sensor.example_afterheat_active
-  power: sensor.example_hch5_power
+  power: sensor.example_unit_power
   attic_temperature: sensor.example_attic_temperature
-  # … the other HCH5 entities
+  # … the other unit entities
+```
+
+The card only shows what it has entities for. An entity counts when it is configured and Home Assistant knows it; one that is unavailable still shows as "—" (a real outage), while a missing one leaves its part out and the layout closes the gap:
+
+- Afterheat: the coil, HAC1 with its wiring, the "Ekstern eftervarme" readback and the "Eftervarme setpunkt" tile need an `afterheat_*` or `water_*` entity; the thermostat needs `afterheat_climate`; water readings need `water_flow`/`water_return`, the frost pin `afterheat_frost`.
+- Raspberry Pi: the Pi on the RS485 cable, the "Master" pill and "Aktiv beslutning" need `active_master`, `effective_source` or `effective_reason`. Without HAC1 and Pi no wiring is drawn.
+- Each status pill, temperature reading, fan and bypass readback, control (mode, levels, boost buttons, bypass, fireplace, bonfire, OFF, free cooling/Køl) and tile (indoor climate, diagnostics and energy, "Beregnet fra målt T2") is shown only with its own entity. Cost lines need the matching price entity.
+- An MKII, RCV or HCV unit connected directly over Modbus works too: the mode buttons follow its operation-mode select, `bypass_control` may be its "Bypass (manuel)" switch, `effective_level` may read `level_3`, and an alarm sensor as `diagnostics_status` (without `diagnostics_alarm_text`) shows its alarm code.
+
+```yaml
+type: custom:ha-dantherm-live-card
+entities:
+  mode_control: select.example_unit_operation_mode
+  level_control: select.example_unit_fan_step
+  effective_level: sensor.example_unit_current_fan_step
+  outdoor_temperature: sensor.example_unit_outdoor_temperature
+  supply_temperature: sensor.example_unit_supply_temperature
+  extract_temperature: sensor.example_unit_extract_temperature
+  exhaust_temperature: sensor.example_unit_exhaust_temperature
+  supply_fan_rpm: sensor.example_unit_supply_fan_speed
+  extract_fan_rpm: sensor.example_unit_extract_fan_speed
+  bypass: binary_sensor.example_unit_bypass_active
+  bypass_control: switch.example_unit_bypass_manual
+  diagnostics_status: sensor.example_unit_alarm
 ```
 
 - `afterheat_coil`: how the external afterheater is drawn. `electric` (default) shows heating elements that glow while it heats. `water` shows a water coil: its flow and return pipes run to the water readings, are tinted by the `water_flow` and `water_return` temperatures, and the water moves while `afterheat_active` is on.

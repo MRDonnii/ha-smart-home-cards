@@ -437,4 +437,21 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
   .hero-grid,.facts,.util-body .tiles,.subtiles,.phases{gap:8px}
   .subtiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* ---------- Only what is set up (Claude AI): parts without entities are hidden and the grid gets the number of
+   tiles left in data-n, so the rest share the row instead of leaving empty columns. ---------- */
+.hero-grid[data-n="1"],.kpis[data-n="1"],.facts[data-n="1"],.quad[data-n="1"],.tiles[data-n="1"]{grid-template-columns:minmax(0,1fr)}
+.hero-grid[data-n="2"],.kpis[data-n="2"],.tiles[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hero-grid[data-n="3"],.kpis[data-n="3"],.facts[data-n="3"],.tiles.four[data-n="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.quad[data-n="3"] > .acct{grid-column:1/-1}
+.util-body.solo{grid-template-columns:minmax(0,1fr)}
+@container (max-width:600px){
+  .tiles[data-n="1"] > :first-child:nth-last-child(3),.tiles[data-n="2"] > :first-child:nth-last-child(3){grid-column:auto}
+}
+@container (max-width:860px){
+  .flow.compact{height:180px}
+}
+@container (max-width:360px){
+  .kpis[data-n]{grid-template-columns:minmax(0,1fr)}
+}
 `;

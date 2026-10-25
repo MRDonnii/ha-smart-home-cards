@@ -72,14 +72,14 @@ export class OverviewSection extends Section {
   html() {
     const c = this.card;
     const heroItem = (ref, tone, ic, label, key) => `
-      <button type="button" class="hero-item tone-${tone} clickable" data-entity="${escapeHtml(c.id(key) || "")}">
+      <button type="button" class="hero-item tone-${tone} clickable" data-entity="${escapeHtml(c.id(key) || "")}" data-ref="${ref}Item">
         <span class="badge">${icon(ic)}</span>
         <span class="hi-label">${label}</span>
         <span class="hi-val num"><b data-ref="${ref}V">—</b><small data-ref="${ref}U"></small></span>
         <span class="hi-sub" data-ref="${ref}Sub">—</span>
       </button>`;
     const kpi = (ref, tone, ic, label, tab) => `
-      <button type="button" class="card kpi tone-${tone} clickable" data-goto="${tab}">
+      <button type="button" class="card kpi tone-${tone} clickable" data-goto="${tab}" data-ref="${ref}Card">
         <span class="kpi-top"><span class="badge sm">${icon(ic)}</span><span class="kpi-label">${label}</span>${icon("mdi:chevron-right", "chev")}</span>
         <span class="kpi-val num"><b data-ref="${ref}V">—</b><small data-ref="${ref}U"></small></span>
         <span class="kpi-foot"><span class="num" data-ref="${ref}Cost">—</span><span data-ref="${ref}Note">i dag</span></span>
@@ -88,20 +88,20 @@ export class OverviewSection extends Section {
 <div class="layout ov">
   <section class="card hero a-full">
     <div class="hero-head"><div class="card-head">${icon("mdi:pulse")}<h3>Aktuel status lige nu</h3></div><span class="live"><i></i>Live</span></div>
-    <div class="hero-grid">
+    <div class="hero-grid" data-ref="heroGrid">
       ${heroItem("hEl", "el", "mdi:flash", "Strøm", "grid_power")}
       ${heroItem("hHeat", "heat", "mdi:radiator", "Fjernvarme", "heat_power")}
       ${heroItem("hWater", "water", "mdi:water", "Vand", "water_flow")}
       ${heroItem("hEv", "ev", "mdi:car-electric", "Billader", "ev_power")}
     </div>
   </section>
-  <div class="kpis a-full">
+  <div class="kpis a-full" data-ref="kpis">
     ${kpi("kEl", "el", "mdi:flash", "Strøm i dag", "power")}
     ${kpi("kHeat", "heat", "mdi:radiator", "Varme i dag", "heat")}
     ${kpi("kWater", "water", "mdi:water", "Vand i dag", "water")}
     ${kpi("kEv", "ev", "mdi:car-electric", "Billader i dag", "ev")}
   </div>
-  <section class="card a-half">
+  <section class="card a-half" data-ref="flowCard">
     <div class="card-head">${icon("mdi:transit-connection-variant")}<div><h3>Energiflow</h3><small>Live effekt gennem huset</small></div></div>
     <div data-ref="flow"></div>
   </section>
@@ -141,8 +141,46 @@ export class OverviewSection extends Section {
     this.card.loadToday(TODAY_KEYS, () => this._updateToday());
   }
 
+  /** Only what is set up for this home: tiles, flow nodes and charts without entities are hidden (Claude AI). */
+  _arrange() {
+    const c = this.card;
+    const keys = ["heat_power", "water_flow", "ev_power", "heat_energy", "heat_cost", "water_total", "water_cost_today",
+      "ev_energy_today", "ev_cost_today", "measured_power", "unmeasured_power", "grid_energy", "grid_cost"];
+    if (!this.setupChanged(keys)) return;
+    const has = (k) => c.has(k);
+    this.fit("heroGrid", [["hElItem", true], ["hHeatItem", has("heat_power")], ["hWaterItem", has("water_flow")], ["hEvItem", has("ev_power")]]);
+    this.fit("kpis", [
+      ["kElCard", true],
+      ["kHeatCard", has("heat_energy") || has("heat_cost")],
+      ["kWaterCard", has("water_total") || has("water_cost_today")],
+      ["kEvCard", has("ev_energy_today") || has("ev_cost_today")],
+    ]);
+    // Without a cost sensor the tile foot just says "i dag" instead of "— i dag".
+    this.show("kElCost", has("grid_cost"));
+    this.show("kHeatCost", has("heat_cost"));
+    this.show("kWaterCost", has("water_cost_today"));
+    this.show("kEvCost", has("ev_cost_today"));
+    const nodes = new Set(["grid", "home"]);
+    if (has("heat_power")) nodes.add("heat");
+    if (has("measured_power")) nodes.add("measured");
+    if (has("ev_power")) nodes.add("ev");
+    if (has("unmeasured_power")) nodes.add("unmeasured");
+    this.flow?.setNodes(nodes);
+    const [price, el, heat, water] = this.panels;
+    const priceOn = has(price.o.stat);
+    this.show(price.el, priceOn);
+    this.span("flowCard", priceOn ? "a-half" : "a-full");
+    const charts = [[el, has(el.o.stat)], [heat, has(heat.o.stat)], [water, has(water.o.stat)]];
+    const n = charts.filter(([, on]) => on).length;
+    for (const [p, on] of charts) {
+      this.show(p.el, on);
+      if (on) this.span(p.el, n === 1 ? "a-full" : n === 2 ? "a-half" : "a-third");
+    }
+  }
+
   update() {
     const c = this.card;
+    this._arrange();
     // Hero
     const grid = c.watts("grid_power");
     const heat = c.watts("heat_power");

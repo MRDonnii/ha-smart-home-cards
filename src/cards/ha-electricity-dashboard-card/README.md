@@ -10,13 +10,17 @@ Kopiér `ha-electricity-dashboard-card.js` til `/config/www/ha-electricity-dashb
 og registrér ressourcen som et JavaScript-modul:
 
 ```text
-/local/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js?v=1.1.1
+/local/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js?v=1.2.0
 ```
 
 ## Konfiguration
 
 Kun `entities.price` er påkrævet. Alle andre dele af kortet skjules eller vises som "—",
 hvis en entity mangler eller er utilgængelig – kortet viser aldrig opdigtede værdier.
+
+Uden nogen `charger_*`-entities har hjemmet ingen billader: så vises hverken ladeanbefaling,
+billader-felter eller billader-andel i "Elforbrug lige nu", husforbruget hedder blot "Husforbrug"/"Hus"
+(ikke "uden billader"), og de øvrige felter lukker hullerne.
 
 ```yaml
 type: custom:ha-electricity-dashboard-card

@@ -35,7 +35,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | Fjernvarme House Card | `ha-fjernvarme-house-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-fjernvarme-house-card) |
 | HA Electricity Price Card | `ha-electricity-price-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-electricity-price-card) |
 | TH Electricity Price Card | `th-electricity-price-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-electricity-price-card) – price levels, advice, car charging plan |
-| HCH5 Live Control Card | `ha-hch5-live-card.js` | HCH5 ventilation overview with animated unit, readbacks and HA controls |
+| Dantherm Live Card | `ha-hch5-live-card.js` | Dantherm ventilation overview (HCH5 MK1 via HAC1/Pi, MKII/RCV/HCV over Modbus) with animated unit, readbacks and HA controls; type `ha-dantherm-live-card`, alias `ha-hch5-live-card` |
 | HA Ventilation Card | `ha-ventilation-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ventilation-card) |
 | Heat Center Header Card | `ha-heat-center-header-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-center-header-card) |
 | Heat Economy Card | `ha-heat-economy-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-heat-economy-card) |

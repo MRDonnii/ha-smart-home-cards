@@ -26,7 +26,7 @@ import { HeatSection } from "./sections/heat.js";
 import { WaterSection } from "./sections/water.js";
 import { EvSection } from "./sections/ev.js";
 
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 const CARD_TAG = "ha-energy-center-card";
 
 const TABS = [
@@ -74,6 +74,10 @@ class HaEnergyCenterCard extends HTMLElement {
   setConfig(config) {
     if (config && typeof config !== "object") throw new Error("Ugyldig konfiguration");
     const c = config || {};
+    // Keys the user named in `entities:` count as set up even while their entity is missing (shown as "—");
+    // default keys only when their entity exists. Everything else is hidden (Claude AI).
+    this._explicit = new Set(Object.entries(c.entities || {}).filter(([, id]) => id).map(([key]) => key));
+    this._explicitPhases = Array.isArray(c.phases);
     this.config = {
       ...DEFAULT_CONFIG,
       ...c,
@@ -488,6 +492,25 @@ class HaEnergyCenterCard extends HTMLElement {
     return id ? this._hass?.states?.[id] : undefined;
   }
 
+  /**
+   * Is this entity key set up for this home? Yes when the card's own `entities:` names it, or when the default
+   * entity exists in HA. Tiles, flow nodes and charts whose keys are not set up are hidden, so a home without
+   * e.g. a water meter, an EV charger or a live heat meter gets no empty "—" parts (Claude AI).
+   */
+  has(key) {
+    const id = this.id(key);
+    if (!id) return false;
+    return Boolean(this._explicit?.has(key)) || Boolean(this._hass?.states?.[id]);
+  }
+
+  /** Phases to show: the configured list, or the default A/B/C only when their entities exist. */
+  phasesInUse() {
+    const phases = this.config?.phases || [];
+    if (this._explicitPhases) return phases;
+    const states = this._hass?.states || {};
+    return phases.some((p) => ["power", "apparent", "power_factor", "current", "voltage", "frequency"].some((k) => p[k] && states[p[k]])) ? phases : [];
+  }
+
   num(key) {
     return toNumber(this.stateObj(key)?.state);
   }
@@ -532,7 +555,7 @@ class HaEnergyCenterCard extends HTMLElement {
 
   /** Henter timestatistik for i dag (deles med "Dag"-graferne via cachen). */
   loadToday(pairs, done) {
-    const ids = pairs.map(([k]) => this.id(k)).filter(Boolean);
+    const ids = pairs.filter(([k]) => this.has(k)).map(([k]) => this.id(k));
     if (!ids.length || !this._hass) return;
     const sod = startOfDay();
     const range = periodRange("day");
