@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.205 */
+/* MRDonnii Smart Home Cards v0.5.206 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14267,8 +14267,14 @@ var ThElectricityPriceCard = class extends HTMLElement {
   // Part of Smart Home Cards since 1.7.0 (Claude AI, 2026-10-14): new/classic like the other cards' looks.
   static getConfigForm() {
     return {
-      schema: [...lookFormSchema(), { name: "days", selector: { boolean: {} } }, { name: "advice", selector: { boolean: {} } }, { name: "fill_height", selector: { boolean: {} } }],
-      computeLabel: (s) => ({ ...LOOK_LABELS, days: "Dagsgennemsnit i bunden (kun store sk\xE6rme)", advice: "Anbefalinger n\xE5r man trykker p\xE5 prisbadget", fill_height: "Fyld h\xF8jden" })[s.name] || s.name
+      schema: [
+        ...lookFormSchema(),
+        { name: "days", selector: { boolean: {} } },
+        { name: "advice", selector: { boolean: {} } },
+        { name: "fill_height", selector: { boolean: {} } },
+        { name: "levels", type: "expandable", title: "Prisniveauer (kr/kWh)", schema: ["cheap", "dear", "very_dear", "extreme"].map((name) => ({ name, selector: { entity: { domain: ["input_number", "number", "sensor"] } } })) }
+      ],
+      computeLabel: (s) => ({ ...LOOK_LABELS, days: "Dagsgennemsnit i bunden (kun store sk\xE6rme)", advice: "Anbefalinger n\xE5r man trykker p\xE5 prisbadget", fill_height: "Fyld h\xF8jden", cheap: "Billig under", dear: "Dyrt fra", very_dear: "Meget dyrt fra", extreme: "Ekstremt dyrt fra" })[s.name] || s.name
     };
   }
   setConfig(c2) {

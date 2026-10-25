@@ -7,6 +7,8 @@
  * advice: false  – prisbadget kan ikke trykkes. Ellers åbner et tryk på badget en popup med anbefalinger: hvornår vaskemaskine, tørretumbler, opvasker, bil og huset i det hele taget bør køre ud fra de kommende priser
  * advice: { devices: [{ name, icon: wash|dry|dish|car|bolt|heat, entity, running, kwh, minutes, hours: [fra, til] }] }  – egne enheder i stedet for standardlisten.
  *   entity = sensor med attributterne kwh_pr_koersel og varighed_min (som HA WashData-prisfølerne), running = binary_sensor, hours = tidsrum som hele kørslen skal ligge inden for
+ * levels: { cheap, dear, very_dear, extreme }  – faste prisniveauer i kr/kWh (tal eller entity, fx input_number): billig under cheap, dyrt fra dear,
+ *   meget dyrt fra very_dear, ekstremt dyrt fra extreme. Standard 1.50 / 3.00 / 3.75 / 5.00. Se README.md i kortets mappe.
  * charge: { plan, mode, cost, energy, cable, tracker, charger_mode, soc, target, name }  – vises kun når ladeplanen er aktiv og bilen er sat i laderen derhjemme
  * Bruger temaets variabler: --dashboard-accent/success/warning/danger, --dashboard-left-accent-width, --dashboard-card-highlight m.fl.
  */
@@ -181,8 +183,9 @@ class ThElectricityPriceCard extends HTMLElement {
   // Part of Smart Home Cards since 1.7.0 (Claude AI, 2026-10-14): new/classic like the other cards' looks.
   static getConfigForm() {
     return {
-      schema: [...lookFormSchema(), { name: 'days', selector: { boolean: {} } }, { name: 'advice', selector: { boolean: {} } }, { name: 'fill_height', selector: { boolean: {} } }],
-      computeLabel: (s) => ({ ...LOOK_LABELS, days: 'Dagsgennemsnit i bunden (kun store skærme)', advice: 'Anbefalinger når man trykker på prisbadget', fill_height: 'Fyld højden' })[s.name] || s.name,
+      schema: [...lookFormSchema(), { name: 'days', selector: { boolean: {} } }, { name: 'advice', selector: { boolean: {} } }, { name: 'fill_height', selector: { boolean: {} } },
+        { name: 'levels', type: 'expandable', title: 'Prisniveauer (kr/kWh)', schema: ['cheap', 'dear', 'very_dear', 'extreme'].map((name) => ({ name, selector: { entity: { domain: ['input_number', 'number', 'sensor'] } } })) }],
+      computeLabel: (s) => ({ ...LOOK_LABELS, days: 'Dagsgennemsnit i bunden (kun store skærme)', advice: 'Anbefalinger når man trykker på prisbadget', fill_height: 'Fyld højden', cheap: 'Billig under', dear: 'Dyrt fra', very_dear: 'Meget dyrt fra', extreme: 'Ekstremt dyrt fra' })[s.name] || s.name,
     };
   }
   setConfig(c) {

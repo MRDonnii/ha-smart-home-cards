@@ -149,6 +149,14 @@ any sensors as groups of tiles (`detail_sections`). Tiles and the radar image up
 and the wind map is not reloaded on every sensor update. See the
 [card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-weather-card).
 
+## Electricity price card: fixed price levels
+
+`th-electricity-price-card` (v1.18.0) colours its bars, badge and summary by fixed price levels in kr/kWh instead of
+the day's own range: cheap below `cheap`, dear from `dear`, very dear from `very_dear`, extremely dear from `extreme`.
+Each is a number or an entity (e.g. `input_number`), default 1.50 / 3.00 / 3.75 / 5.00. See the
+[card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-electricity-price-card) for the
+helper package and the config.
+
 ## Home header card: sky clouds
 
 v0.4.82 (v0.4.83: keeps drawing when the dashboard moves the card) draws the clouds of the V3 weather backdrop (`weather_style_v3: true`) as a soft, drifting cloud layer (WebGL,
