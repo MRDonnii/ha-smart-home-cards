@@ -1,12 +1,12 @@
-/* MRDonnii Smart Home Cards v0.5.212 */
+/* MRDonnii Smart Home Cards v0.5.213 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
-var __export = (target, all) => {
+var __export = (target2, all) => {
   for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+    __defProp(target2, name, { get: all[name], enumerable: true });
 };
 
 // src/shared/chart-hover.js
@@ -339,13 +339,13 @@ var HACardListEditor = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -2888,9 +2888,9 @@ function ctlStatus(parts, { now = Date.now(), charging = false } = {}) {
   const lead = first ? `Starter ${dayWord(next.t, now)}${hm(next.t)}` : `Pause til ${hm(next.t)}`;
   return `${lead}${of > 1 ? ` (periode ${next.n} af ${of})` : ""} \xB7 ${fin}`;
 }
-function ctlBattery(soc, target, charging = false, { low = 20, critical = 10 } = {}) {
+function ctlBattery(soc, target2, charging = false, { low = 20, critical = 10 } = {}) {
   const s = Math.max(0, Math.min(100, Number(soc) || 0));
-  const t = Math.max(s, Math.min(100, Number.isFinite(Number(target)) ? Number(target) : 100));
+  const t = Math.max(s, Math.min(100, Number.isFinite(Number(target2)) ? Number(target2) : 100));
   const tone2 = s <= critical ? "crit" : s <= low ? "warn" : "ok";
   return `<span class="ctl-bat${charging ? " on" : ""}" data-tone="${tone2}" style="--s:${s.toFixed(1)};--t:${t.toFixed(1)}" role="img" aria-label="Batteri ${Math.round(s)} %${t > s ? `, m\xE5l ${Math.round(t)} %` : ""}"><i class="ctl-bat-f"></i><i class="ctl-bat-g"></i></span>`;
 }
@@ -4755,7 +4755,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const cfg = this._cfg;
     const status = ttdDeriveStatus(this._snapshot());
     const soc = this._num("battery");
-    const target = this._targetSoc();
+    const target2 = this._targetSoc();
     const socTone = soc == null ? "muted" : soc <= cfg.battery.critical ? "crit" : soc <= cfg.battery.low ? "warn" : "ok";
     const reported = ttdToDate(this._text("last_update"));
     const lastUpdate = reported && reported.getFullYear() >= 2e3 ? reported : null;
@@ -4777,7 +4777,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return {
       status,
       hero,
-      charge: this._chargeModel(f, status, soc, target, socTone),
+      charge: this._chargeModel(f, status, soc, target2, socTone),
       plan: this._planModel(f),
       sc: this._cfg.smart_charge ? this._scModel(f) : null,
       rb: this._cfg.smart_charge ? this._rbModel(f) : null,
@@ -4790,7 +4790,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       map: this._mapModel(f)
     };
   }
-  _chargeModel(f, status, soc, target, socTone) {
+  _chargeModel(f, status, soc, target2, socTone) {
     const cable = this._bool("monta_cable_connected");
     const plug = this._bool("charger");
     const montaKey = this._text("monta_state");
@@ -4806,7 +4806,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const rate = this._num("charging_rate");
     const rateText = rate == null ? TTD_DASH : `${rate > 0 ? "+" : ""}${ttdJoin(f.number(rate, 0), this._unit("charging_rate", "km/h"))}`;
     const pluggedNow = !!(status.plugged || cable === true || plug === true);
-    const planTl = this._planTimeline(f, status, pluggedNow, soc, target);
+    const planTl = this._planTimeline(f, status, pluggedNow, soc, target2);
     const planEnd = planTl && Number.isFinite(planTl.end) ? new Date(planTl.end) : null;
     const scEnd = this._cfg.smart_charge && !this._id("charging_finish_time") && pluggedNow ? planEnd || ttdToDate(this._sc("next_charge_end")?.state) : null;
     const finishRaw = this._text("charging_finish_time") ?? (scEnd ? scEnd.toISOString() : null);
@@ -4841,8 +4841,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       soc: soc == null ? TTD_DASH : `${f.number(soc, 0)} %`,
       socPercent: soc == null ? 0 : ttdClamp(soc, 0, 100),
       socTone,
-      target: target == null ? null : planTl?.aim != null ? `I nat ca. ${f.number(planTl.aim, 0)} % \xB7 m\xE5l ${f.number(target, 0)} %` : `M\xE5l ${f.number(target, 0)} %`,
-      targetPercent: target == null ? null : ttdClamp(target, 0, 100),
+      target: target2 == null ? null : planTl?.aim != null ? `I nat ca. ${f.number(planTl.aim, 0)} % \xB7 m\xE5l ${f.number(target2, 0)} %` : `M\xE5l ${f.number(target2, 0)} %`,
+      targetPercent: target2 == null ? null : ttdClamp(target2, 0, 100),
       power: this._value("charger_power", 1),
       rate: rateText,
       finish,
@@ -5165,12 +5165,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this._attrSet(holdBtn, "data-on", on2);
         this._attrSet(holdBtn, "data-active", !!a.active);
         const kr = (v) => `${f.number(Number(v), 2)} kr`;
-        const target2 = a.target != null ? `${f.number(Number(a.target), 0)} %` : "m\xE5let";
-        const why = !on2 ? "Lader fra nettet i stedet for batteriet, mens bilen varmes" : a.active ? `Lader nu og holder ${target2}` : {
+        const target3 = a.target != null ? `${f.number(Number(a.target), 0)} %` : "m\xE5let";
+        const why = !on2 ? "Lader fra nettet i stedet for batteriet, mens bilen varmes" : a.active ? `Lader nu og holder ${target3}` : {
           not_plugged_in: "Kun n\xE5r bilen er sat til laderen",
-          climate_off: `Holder ${target2}, n\xE5r klimaet k\xF8rer`,
+          climate_off: `Holder ${target3}, n\xE5r klimaet k\xF8rer`,
           too_expensive: `Venter: str\xF8mmen koster ${kr(a.price_now)} (h\xF8jst ${kr(a.price_limit)})`,
-          at_target: `Batteriet er p\xE5 m\xE5let (${target2})`,
+          at_target: `Batteriet er p\xE5 m\xE5let (${target3})`,
           paused: "Ladeplanen st\xE5r p\xE5 pause",
           no_price: "Venter p\xE5 elprisen",
           no_battery_level: "Venter p\xE5 bilens batteriniveau"
@@ -5184,9 +5184,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const u2 = ttdUnit(limit?.attributes?.unit_of_measurement || "kr/kWh");
         if (unit && unit.textContent !== u2) unit.textContent = u2;
       }
-      const target = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
+      const target2 = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
       const tEl = pop.querySelector('[data-qcp="temp"]');
-      const tText = Number.isFinite(target) ? `${f.number(target, 1)} \xB0C` : TTD_DASH;
+      const tText = Number.isFinite(target2) ? `${f.number(target2, 1)} \xB0C` : TTD_DASH;
       if (tEl && tEl.textContent !== tText) tEl.textContent = tText;
       if (tEl) this._attrSet(tEl, "data-busy", this._qcTemp != null || !!(this._ccBusy || {}).climate_temp);
     } else if (sub) {
@@ -5212,12 +5212,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return TTD_QC_CHIPS.map(([role, label, icon4, domain, pattern]) => {
       const found = pool.filter((entry) => entry.entity_id.startsWith(`${domain}.`) && pattern.test(entry.entity_id)).map((entry) => entry.entity_id);
       if (!found.length) return null;
-      const target = found.find((id) => states[id] && states[id].state !== "unavailable") || found[0];
-      const shown = states[found.find(known) || target];
+      const target2 = found.find((id) => states[id] && states[id].state !== "unavailable") || found[0];
+      const shown = states[found.find(known) || target2];
       const value = String(shown?.state || "").toLowerCase();
       const on = domain === "switch" ? value === "on" : !!value && !["off", "unknown", "unavailable"].includes(value);
       const level = domain === "switch" ? on ? "Til" : "Fra" : TTD_HEAT_LEVELS[value] || TTD_DASH;
-      return { role, label, icon: icon4, domain, target, value, on, level, dead: !states[target] || states[target].state === "unavailable" };
+      return { role, label, icon: icon4, domain, target: target2, value, on, level, dead: !states[target2] || states[target2].state === "unavailable" };
     }).filter(Boolean);
   }
   _qcChip(role) {
@@ -5360,7 +5360,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
    * charging periods, the pauses between them with a tooltip each, the plan in words and the buttons that override it
    * (Claude AI, 2026-10-16; user: "ladnings kortet … mere besked om hvornår den lader … ændre til fuld ladning og
    * overstyre det der er igang"). Only while the cable is in. */
-  _planTimeline(f, status, plugged, soc = null, target = null) {
+  _planTimeline(f, status, plugged, soc = null, target2 = null) {
     if (!this._cfg.smart_charge || !plugged) return null;
     const modeObj = this._sc("charge_mode");
     const mode = modeObj?.state;
@@ -5405,7 +5405,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       end: charge ? ctlSummary(parts).end : NaN,
       // Waiting with the dear rest, tonight's level is what the plan aims for.
       aim: waiting && a.limit_soc != null && Number(a.limit_soc) > (soc ?? 0) ? Number(a.limit_soc) : null,
-      battery: soc == null ? "" : ctlBattery(soc, waiting && a.limit_soc != null ? Number(a.limit_soc) : goal ?? target ?? 100, !!status.charging, this._cfg.battery)
+      battery: soc == null ? "" : ctlBattery(soc, waiting && a.limit_soc != null ? Number(a.limit_soc) : goal ?? target2 ?? 100, !!status.charging, this._cfg.battery)
     };
   }
   /** The charger's state in words; with smart charging a stopped charger that waits for the plan is not "finished". */
@@ -5507,7 +5507,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const blocks = (Array.isArray(plan.blocks) ? plan.blocks : []).map((block) => ({ start: ttdToDate(block.start), end: ttdToDate(block.end), estimated: !!block.estimated })).filter((block) => block.start && block.end && block.end.getTime() > now);
     const deadline = ttdToDate(plan.deadline);
     const trip = ttdToDate(this._sc("trip_departure")?.state);
-    const target = this._scNum("plan_target_soc");
+    const target2 = this._scNum("plan_target_soc");
     const waiting = plan.waiting_for && typeof plan.waiting_for === "object" ? plan.waiting_for : null;
     const until2 = Math.min(now + (waiting ? 96 : 48) * 36e5, Math.max(now + 36e5, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
     const at = (date2) => ttdClamp((date2.getTime() - now) / (until2 - now) * 100, 0, 100);
@@ -5551,7 +5551,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else if (mode === "off") sub.push("Laderen holdes p\xE5 pause");
     else if (mode === "manual") sub.push("Laderen styres ikke");
     else if (deadline) sub.push(`Klar ${f.dayTime(trip && trip < deadline ? trip : deadline)}`);
-    if (target != null && mode !== "now" && mode !== "off") sub.push(`m\xE5l ${f.number(target, 0)} %`);
+    if (target2 != null && mode !== "now" && mode !== "off") sub.push(`m\xE5l ${f.number(target2, 0)} %`);
     const time = (role) => {
       const raw = this._sc(role)?.state;
       return ttdIsClock(raw) ? ttdClock(raw) : "";
@@ -5717,11 +5717,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const a = week.attributes || {};
     const next = ttdToDate(a.next_ready_by);
     const normal = ttdToNumber(a.normal_target);
-    const target = ttdToNumber(a.next_target);
-    const own = target != null && normal != null && Math.round(target) !== Math.round(normal);
+    const target2 = ttdToNumber(a.next_target);
+    const own = target2 != null && normal != null && Math.round(target2) !== Math.round(normal);
     const source = { once: "Engangstid", week: "Ugeplan", learned: "L\xE6rte afgange", time: this._rbSameText() }[a.next_source] || "";
     return {
-      value: next ? `${ttdRbWhen(f, next)}${own ? ` \xB7 ${Math.round(target)} %` : ""}` : TTD_DASH,
+      value: next ? `${ttdRbWhen(f, next)}${own ? ` \xB7 ${Math.round(target2)} %` : ""}` : TTD_DASH,
       source,
       sig: JSON.stringify([a.next_ready_by, a.next_target, a.next_source, a.once, week.state, a.days])
     };
@@ -5855,28 +5855,28 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     else if (key.startsWith("target:")) d.days[key.slice(7)].target = el.value;
     else d[key] = el.value;
   }
-  _rbAction(target) {
+  _rbAction(target2) {
     const d = this._rbDraft;
-    if (target.dataset.rbopen != null) return this._rbOpen();
+    if (target2.dataset.rbopen != null) return this._rbOpen();
     if (!d) return void 0;
-    if (target.dataset.rbclose != null) return this._rbClose();
+    if (target2.dataset.rbclose != null) return this._rbClose();
     d.error = "";
-    if (target.dataset.rbmode) d.mode = target.dataset.rbmode;
-    else if (target.dataset.rbday) {
-      const day2 = d.days[target.dataset.rbday];
+    if (target2.dataset.rbmode) d.mode = target2.dataset.rbmode;
+    else if (target2.dataset.rbday) {
+      const day2 = d.days[target2.dataset.rbday];
       day2.on = !day2.on;
-    } else if (target.dataset.rbweekend != null) d.weekendOn = !d.weekendOn;
-    else if (target.dataset.rbcopy != null) {
+    } else if (target2.dataset.rbweekend != null) d.weekendOn = !d.weekendOn;
+    else if (target2.dataset.rbcopy != null) {
       for (const key of ["tue", "wed", "thu", "fri"]) d.days[key] = { ...d.days.mon };
-    } else if (target.dataset.rblearned != null) {
+    } else if (target2.dataset.rblearned != null) {
       const learned = this._sc("learn_departure")?.attributes?.departures || {};
       TTD_RB_DAYS.forEach(([key], i) => {
         const time = learned[TTD_RB_LEARNED[i]];
         d.days[key] = time ? { ...d.days[key], on: true, time } : { ...d.days[key], on: false };
       });
-    } else if (target.dataset.rbsave != null) return this._rbSave();
-    else if (target.dataset.rboncesave != null) return this._rbOnceSave();
-    else if (target.dataset.rbonceclear != null) return this._rbService("clear_ready_by_once", {}, false);
+    } else if (target2.dataset.rbsave != null) return this._rbSave();
+    else if (target2.dataset.rboncesave != null) return this._rbOnceSave();
+    else if (target2.dataset.rbonceclear != null) return this._rbService("clear_ready_by_once", {}, false);
     this._rbRender();
     return void 0;
   }
@@ -6977,95 +6977,95 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
-    if (!target) return;
-    if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) {
-      this._rbAction(target);
+    const target2 = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    if (!target2) return;
+    if (Object.keys(target2.dataset).some((key) => key.startsWith("rb"))) {
+      this._rbAction(target2);
       return;
     }
-    if (target.dataset.socok != null || target.dataset.socundo != null) {
+    if (target2.dataset.socok != null || target2.dataset.socundo != null) {
       const value = this._socPending;
       this._socPending = null;
       clearTimeout(this._socTimer);
-      if (target.dataset.socok != null && value != null) this._setTargetSoc(value);
+      if (target2.dataset.socok != null && value != null) this._setTargetSoc(value);
       this._queue(true);
       return;
     }
-    if (target.dataset.qc) {
-      if (!target.disabled) this._openQc(target.dataset.qc);
+    if (target2.dataset.qc) {
+      if (!target2.disabled) this._openQc(target2.dataset.qc);
       return;
     }
-    if (target.dataset.qcclose != null) {
+    if (target2.dataset.qcclose != null) {
       this._openQc(this._qcOpen);
       return;
     }
-    if (target.dataset.qcpower != null) {
+    if (target2.dataset.qcpower != null) {
       this._qcPower();
       return;
     }
-    if (target.dataset.qcchip) {
-      this._qcChip(target.dataset.qcchip);
+    if (target2.dataset.qcchip) {
+      this._qcChip(target2.dataset.qcchip);
       return;
     }
-    if (target.dataset.qchold != null) {
+    if (target2.dataset.qchold != null) {
       this._scCall("heat_hold", "switch", "toggle");
       return;
     }
-    if (target.dataset.qctemp) {
-      this._qcTempStep(Number(target.dataset.qctemp));
+    if (target2.dataset.qctemp) {
+      this._qcTempStep(Number(target2.dataset.qctemp));
       return;
     }
-    if (target.dataset.qcmore != null) {
+    if (target2.dataset.qcmore != null) {
       const id = this._cfg.carControls[this._qcOpen];
       this._openQc(this._qcOpen);
       if (id) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
       return;
     }
-    if (target.dataset.cc) this._carControl(target.dataset.cc);
-    else if (target.dataset.ccset) {
+    if (target2.dataset.cc) this._carControl(target2.dataset.cc);
+    else if (target2.dataset.ccset) {
       const pending = this._ccPending;
-      const id = this._ccTarget(target.dataset.ccset);
+      const id = this._ccTarget(target2.dataset.ccset);
       this._ccPending = null;
       clearTimeout(this._ccTimer);
-      if (pending && id && pending.key === target.dataset.ccset) this._call("number", "set_value", { entity_id: id, value: pending.value });
+      if (pending && id && pending.key === target2.dataset.ccset) this._call("number", "set_value", { entity_id: id, value: pending.value });
       this._applyCarControls();
-    } else if (target.dataset.ccundo) {
+    } else if (target2.dataset.ccundo) {
       this._ccPending = null;
       clearTimeout(this._ccTimer);
       this._applyCarControls();
-    } else if (target.dataset.scmode) this._chooseMode(target.dataset.scmode);
-    else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
-    else if (target.dataset.sccapx != null) this._toggleCapOverride();
-    else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
-    else if (target.dataset.scwait) this._chooseWait(target.dataset.scwait === "on");
-    else if (target.dataset.planact) this._planAct(target.dataset.planact);
-    else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
-    else if (target.dataset.scdef != null) {
+    } else if (target2.dataset.scmode) this._chooseMode(target2.dataset.scmode);
+    else if (target2.dataset.scdefault) this._chooseDefault(target2.dataset.scdefault);
+    else if (target2.dataset.sccapx != null) this._toggleCapOverride();
+    else if (target2.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
+    else if (target2.dataset.scwait) this._chooseWait(target2.dataset.scwait === "on");
+    else if (target2.dataset.planact) this._planAct(target2.dataset.planact);
+    else if (target2.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target2.dataset.scres });
+    else if (target2.dataset.scdef != null) {
       this._defOpen = !this._defOpen;
       this._queue(true);
-    } else if (target.dataset.sctrip != null) {
+    } else if (target2.dataset.sctrip != null) {
       this._tripOpen = !this._tripOpen;
       this._queue(true);
-    } else if (target.dataset.scround != null) this._scCall("trip_round_trip", "switch", "toggle");
-    else if (target.dataset.scclear != null) this._scCall("trip_clear", "button", "press");
-    else if (target.dataset.scconfirm != null) this._scCall("confirm_plan", "button", "press");
-    else if (target.dataset.scphone != null) this._scCall("confirm_on_phone", "switch", "toggle");
-    else if (target.dataset.scinfo != null) this._scCall("notify_plan", "switch", "toggle");
-    else if (target.dataset.scsend != null) this._scCall("send_plan", "button", "press");
-    else if (target.dataset.scopt != null) {
+    } else if (target2.dataset.scround != null) this._scCall("trip_round_trip", "switch", "toggle");
+    else if (target2.dataset.scclear != null) this._scCall("trip_clear", "button", "press");
+    else if (target2.dataset.scconfirm != null) this._scCall("confirm_plan", "button", "press");
+    else if (target2.dataset.scphone != null) this._scCall("confirm_on_phone", "switch", "toggle");
+    else if (target2.dataset.scinfo != null) this._scCall("notify_plan", "switch", "toggle");
+    else if (target2.dataset.scsend != null) this._scCall("send_plan", "button", "press");
+    else if (target2.dataset.scopt != null) {
       this._optOpen = !this._optOpen;
       this._queue(true);
-    } else if (target.dataset.scoptrole) this._scCall(target.dataset.scoptrole, "switch", "toggle");
-    else if (target.dataset.pctoggle != null) {
+    } else if (target2.dataset.scoptrole) this._scCall(target2.dataset.scoptrole, "switch", "toggle");
+    else if (target2.dataset.pctoggle != null) {
       this._pcOpen = !this._pcOpen;
       this._queue(true);
-    } else if (target.dataset.pcsave != null) this._savePublic();
-    else if (target.dataset.nav != null) this._navigate();
-    else if (target.dataset.mapstyle != null) this._toggleMapStyle();
-    else if (target.dataset.range != null) this._setMapHours(Number(target.dataset.range));
-    else if (target.dataset.action) this._action(target.dataset.action);
-    else if (target.dataset.more) {
-      const entityId = this._moreId(target.dataset.more);
+    } else if (target2.dataset.pcsave != null) this._savePublic();
+    else if (target2.dataset.nav != null) this._navigate();
+    else if (target2.dataset.mapstyle != null) this._toggleMapStyle();
+    else if (target2.dataset.range != null) this._setMapHours(Number(target2.dataset.range));
+    else if (target2.dataset.action) this._action(target2.dataset.action);
+    else if (target2.dataset.more) {
+      const entityId = this._moreId(target2.dataset.more);
       if (entityId && this._hass?.states?.[entityId]) {
         this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId } }));
       }
@@ -8201,12 +8201,12 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const range = this._num(c2.range);
     root.querySelector(".range").textContent = range == null ? "" : `${this._fmt(range)} ${this._unit(c2.range) || "km"}`;
     root.querySelector(".fill").style.setProperty("--soc", `${Math.max(0, Math.min(100, soc ?? 0))}%`);
-    const target = this._target();
+    const target2 = this._target();
     const marker = root.querySelector(".marker");
-    marker.hidden = target == null;
-    if (target != null) {
-      marker.style.setProperty("--target", `${Math.max(0, Math.min(100, target))}%`);
-      marker.title = `M\xE5l ${this._fmt(target)} %`;
+    marker.hidden = target2 == null;
+    if (target2 != null) {
+      marker.style.setProperty("--target", `${Math.max(0, Math.min(100, target2))}%`);
+      marker.title = `M\xE5l ${this._fmt(target2)} %`;
     }
     const line = root.querySelector(".line");
     if (charging) {
@@ -8215,7 +8215,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     } else {
       const inPlug = plugged || this._plugged();
       const next = inPlug ? this._time(c2.next_charge_start) : null, cost = this._num(c2.next_charge_cost);
-      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc3(next)}</b>${cost != null ? ` \xB7 ${esc3(this._fmt(cost, 2))} kr` : ""}${target != null && !c2.compact ? ` \xB7 m\xE5l ${esc3(this._fmt(target))} %` : ""}`;
+      if (next) line.innerHTML = `<ha-icon icon="mdi:calendar-clock"></ha-icon>${c2.compact ? "Lader" : "N\xE6ste ladning"} <b>${esc3(next)}</b>${cost != null ? ` \xB7 ${esc3(this._fmt(cost, 2))} kr` : ""}${target2 != null && !c2.compact ? ` \xB7 m\xE5l ${esc3(this._fmt(target2))} %` : ""}`;
       else if (inPlug) line.innerHTML = `<ha-icon icon="mdi:power-plug-outline"></ha-icon>Kablet sidder i`;
       else if (c2.next_charge_start && this._time(c2.next_charge_start) && !this._away()) line.innerHTML = `<ha-icon icon="mdi:power-plug-off-outline"></ha-icon>Ikke sat til`;
       else line.innerHTML = "";
@@ -11160,13 +11160,13 @@ var HACardListEditor2 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -12683,16 +12683,16 @@ var HACalefaDetailsCard = class extends HTMLElement {
       dhw: [["dhw_power", "Varmtvand effekt", "#f59e0b"]]
     };
     for (const [name, series] of Object.entries(definitions)) {
-      const target = this.shadowRoot.querySelector(`[data-history="${name}"]`);
-      if (!target) continue;
+      const target2 = this.shadowRoot.querySelector(`[data-history="${name}"]`);
+      if (!target2) continue;
       const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
       if (!entities.length) {
-        target.textContent = "Ingen historik-entiteter valgt";
+        target2.textContent = "Ingen historik-entiteter valgt";
         continue;
       }
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, font_size: 72, animate: false, hour24: true, show: { graph: "line", icon: false, name: false, state: true, legend: true, labels: false } });
       card.hass = this._hass;
-      target.replaceChildren(card);
+      target2.replaceChildren(card);
       this._historyCards.push(card);
     }
   }
@@ -15495,7 +15495,7 @@ var HAVentilationCard = class extends HTMLElement {
     const reason = this._entityValue("effective_reason");
     const source = this._entityValue("effective_source");
     const climate = this._state("afterheat_climate");
-    const target = Number(climate?.attributes?.temperature);
+    const target2 = Number(climate?.attributes?.temperature);
     const current = Number(climate?.attributes?.current_temperature);
     const heating = climate?.attributes?.hvac_action === "heating";
     const fireplace = this._state("fireplace_control")?.state || "Slukket";
@@ -15535,7 +15535,7 @@ var HAVentilationCard = class extends HTMLElement {
       <div class="reason"><small>EFFEKTIV \xC5RSAG</small><strong>${this._escape(reason)}</strong></div>
       <div class="feature-grid">
         <div class="feature"><small>SMART AUTO</small><div class="smart-grid"><span>H\xF8jeste CO\u2082 <b>${this._number("highest_co2", " ppm")} \xB7 ${this._entityValue("highest_co2_room")}</b></span><span>H\xF8jeste RH <b>${this._number("highest_rh", "%", 1)} \xB7 ${this._entityValue("highest_rh_room")}</b></span><span>Styrende rum <b>${this._entityValue("controlling_room")}</b></span></div></div>
-        <div class="feature"><small>EFTERVARME</small><div class="climate-control"><button data-climate-delta="-1">\u2212</button><div><b>${Number.isFinite(target) ? `${target.toLocaleString("da-DK")}\xB0` : "\u2014"}</b><span>${Number.isFinite(current) ? `${current.toLocaleString("da-DK", { maximumFractionDigits: 1 })}\xB0` : "\u2014"} \xB7 ${heating ? "Varmer" : "Inaktiv"}</span></div><button data-climate-delta="1">+</button></div><div class="subline">Ventil ${this._number("afterheat_valve", "%")} \xB7 f\xF8r ${this._number("afterheat_before", "\xB0", 1)} \xB7 frost ${this._number("afterheat_frost", "\xB0", 1)}</div></div>
+        <div class="feature"><small>EFTERVARME</small><div class="climate-control"><button data-climate-delta="-1">\u2212</button><div><b>${Number.isFinite(target2) ? `${target2.toLocaleString("da-DK")}\xB0` : "\u2014"}</b><span>${Number.isFinite(current) ? `${current.toLocaleString("da-DK", { maximumFractionDigits: 1 })}\xB0` : "\u2014"} \xB7 ${heating ? "Varmer" : "Inaktiv"}</span></div><button data-climate-delta="1">+</button></div><div class="subline">Ventil ${this._number("afterheat_valve", "%")} \xB7 f\xF8r ${this._number("afterheat_before", "\xB0", 1)} \xB7 frost ${this._number("afterheat_frost", "\xB0", 1)}</div></div>
         <div class="feature"><small>PEJS</small><div class="segmented fireplace-buttons">${[["Slukket", "FRA"], ["15 min", "15 MIN"], ["30 min", "30 MIN"]].map(([value, label]) => `<button data-fireplace="${value}" class="${fireplace === value ? "active" : ""}">${label}</button>`).join("")}</div><div class="subline">Resterende ${this._number("fireplace_remaining", " s")}</div></div>
       </div>
       <details class="advanced"><summary>Avanceret \xB7 profiler og Auto-indstillinger</summary><div class="advanced-grid"><div><h3>Fanprofiler</h3>${profileRows}</div><div><h3>Auto-indstillinger</h3>${settingKeys.map(([key, label]) => this._numberControl(key, label)).join("")}</div></div></details>
@@ -15645,14 +15645,14 @@ ${error?.message || error}`);
     };
     for (const [name, series] of Object.entries(definitions)) {
       if (mountId !== this._historyMountId) return;
-      const target = this.shadowRoot.querySelector(`[data-overview-history="${name}"]`);
+      const target2 = this.shadowRoot.querySelector(`[data-overview-history="${name}"]`);
       const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
-      if (!target || !entities.length) continue;
+      if (!target2 || !entities.length) continue;
       const compact = name !== "temperatures";
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", name: name === "temperatures" ? "Temperaturer" : name === "co2" ? "CO\u2082" : "Varmegenvinding", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, height: compact ? 122 : 165, font_size: 68, animate: false, hour24: true, show: { icon: false, name: true, state: true, legend: !compact, labels: false, points: false, fill: compact ? true : "fade" } });
-      if (mountId !== this._historyMountId || !target.isConnected) return;
+      if (mountId !== this._historyMountId || !target2.isConnected) return;
       card.hass = this._hass;
-      target.replaceChildren(card);
+      target2.replaceChildren(card);
       this._historyCards.push(card);
     }
   }
@@ -16055,12 +16055,12 @@ var HAVentilationDetailsCard = class extends HTMLElement {
     const helpers = await window.loadCardHelpers();
     const defs = { fans: [["extract_speed", "Udsugning", "#00bfa5"], ["supply_speed", "Indbl\xE6sning", "#42a5f5"]], temperatures: [["outdoor_temperature", "Ude", "#42a5f5"], ["supply_temperature", "Indbl\xE6sning", "#f59e0b"], ["extract_temperature", "Udsugning", "#00bfa5"], ["exhaust_temperature", "Afkast", "#ab47bc"]], co2: [["co2", "CO\u2082", "#22c55e"]], recovery: [["heat_recovery", "Genvindingsgrad", "#26c6da"]], heat: [["air_before_coil", "Luft f\xF8r", "#42a5f5"], ["air_after_coil", "Luft efter", "#f59e0b"], ["air_delta", "Luft delta-T", "#ab47bc"], ["water_flow", "Vand freml\xF8b", "#ef5350"], ["water_return", "Vand retur", "#26c6da"], ["water_delta", "Vand delta-T", "#22c55e"]] };
     for (const [name, series] of Object.entries(defs)) {
-      const target = this.shadowRoot.querySelector(`[data-history="${name}"]`);
+      const target2 = this.shadowRoot.querySelector(`[data-history="${name}"]`);
       const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((x) => x.entity);
-      if (!target || !entities.length) continue;
+      if (!target2 || !entities.length) continue;
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, height: 170, animate: false, hour24: true, show: { icon: false, name: false, state: true, legend: true, labels: false, points: false, fill: "fade" } });
       card.hass = this._hass;
-      target.replaceChildren(card);
+      target2.replaceChildren(card);
       this._historyCards.push(card);
     }
   }
@@ -23343,7 +23343,7 @@ Error generating stack: ` + l.message + `
   we.prototype.unobserveUsing = function(t) {
     var e = this._observers;
     if (e !== null && e.has(t)) {
-      e.delete(t), oe(this._fragmentFiber.child, false, p2, t, void 0, void 0);
+      e.delete(t), oe(this._fragmentFiber.child, false, p22, t, void 0, void 0);
       for (var a = e = 0; a < Ze.length; a++) {
         var l = Ze[a];
         l.fragmentInstance === this && l.observer === t ? t.unobserve(l.instance) : Ze[e++] = l;
@@ -23351,7 +23351,7 @@ Error generating stack: ` + l.message + `
       Ze.length = e;
     }
   };
-  function p2(t, e) {
+  function p22(t, e) {
     return t.tag === 6 || (t = _t(t), e.unobserve(t)), false;
   }
   var Ze = [], qs = false;
@@ -26574,13 +26574,13 @@ var HACardListEditor3 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -26699,7 +26699,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const heating = action === "heating";
     const cooling = action === "cooling";
     const current = Number.isFinite(Number(climate?.attributes?.current_temperature)) ? Number(climate.attributes.current_temperature) : void 0;
-    const target = Number.isFinite(Number(climate?.attributes?.temperature)) ? Number(climate.attributes.temperature) : void 0;
+    const target2 = Number.isFinite(Number(climate?.attributes?.temperature)) ? Number(climate.attributes.temperature) : void 0;
     const missing = !climate || [output, input, cop, dailyEnergy, dailyCost].some((v) => v === void 0);
     let level = "ok", title = "Klar", detail = "Varmepumpen er tilg\xE6ngelig og overv\xE5ges";
     if (missing) {
@@ -26731,7 +26731,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
       detail = "Ingen aktiv opvarmning eller k\xF8ling";
     }
     const efficiency = input && output !== void 0 ? output / input : cop;
-    return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current, target, level, title, detail };
+    return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current, target: target2, level, title, detail };
   }
   _metric(label, value, icon4) {
     return `<div class="metric"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
@@ -26821,13 +26821,13 @@ var HACardListEditor4 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -26964,8 +26964,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const climate = this._entity(room.climate);
     const demand = this._entity(room.demand_status);
     const current = Number.isFinite(Number(climate?.attributes?.current_temperature)) ? Number(climate.attributes.current_temperature) : void 0;
-    const target = Number.isFinite(Number(climate?.attributes?.temperature)) ? Number(climate.attributes.temperature) : void 0;
-    const delta = current !== void 0 && target !== void 0 ? current - target : void 0;
+    const target2 = Number.isFinite(Number(climate?.attributes?.temperature)) ? Number(climate.attributes.temperature) : void 0;
+    const delta = current !== void 0 && target2 !== void 0 ? current - target2 : void 0;
     const valve = this._number(room.valve);
     const output = this._number(room.output);
     const utilisation = this._number(room.utilisation);
@@ -27029,7 +27029,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       detail = signature ? this._learningText(learnReason, validDays, requiredDays) : `${this._format(Math.min(learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer indsamlet`;
     }
     const active = (valve || 0) > 1 || (output || 0) > 1;
-    return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active, signature, validDays, requiredDays, learnReason };
+    return { climate, demand, current, target: target2, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active, signature, validDays, requiredDays, learnReason };
   }
   _learningText(reason, validDays, requiredDays) {
     if (reason === "collecting_days") return `${validDays} af ${requiredDays} d\xF8gn indsamlet`;
@@ -30201,13 +30201,13 @@ var HACardListEditor5 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -30378,11 +30378,11 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     const humidityEntity = this._entity(room.humidity);
     const comfortEntity = this._entity(room.comfort);
     const current = this._number(climate?.attributes?.current_temperature ?? temperatureEntity?.state);
-    const target = this._number(climate?.attributes?.temperature);
+    const target2 = this._number(climate?.attributes?.temperature);
     const humidity = this._number(climate?.attributes?.current_humidity ?? humidityEntity?.state);
     const windowOpen = ["on", "open", "opening"].includes(String(this._entity(room.window)?.state).toLowerCase()) || climate?.attributes?.window_open === true || climate?.attributes?.door_open === true;
     const off = climate ? climate.state === "off" : false;
-    const delta = current !== void 0 && target !== void 0 ? current - target : void 0;
+    const delta = current !== void 0 && target2 !== void 0 ? current - target2 : void 0;
     const comfortable = comfortEntity?.attributes?.is_comfortable;
     const valveValues = Object.values(this._object(climate?.attributes?.calibration_balance)).map((entry) => this._number(entry?.["valve%"] ?? entry?.valve ?? entry?.position)).filter((value) => value !== void 0);
     const valve = valveValues.length ? Math.max(...valveValues) : void 0;
@@ -30393,10 +30393,10 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     let tone2 = "neutral";
     if (delta !== void 0 && delta < -0.4) tone2 = "cold";
     else if (delta !== void 0 && delta > 0.7) tone2 = "warm";
-    else if (target !== void 0 && current !== void 0) tone2 = "ok";
+    else if (target2 !== void 0 && current !== void 0) tone2 = "ok";
     else if (comfortable === false) tone2 = "warn";
     else if (current !== void 0) tone2 = "ok";
-    return { climate, current, target, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
+    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
   }
   _format(value, digits = 1) {
     if (value === void 0) return "\u2014";
@@ -30529,7 +30529,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     if (!content || !room) return;
     const state = this._roomState(room);
     const modes = Array.isArray(state.climate?.attributes?.hvac_modes) ? state.climate.attributes.hvac_modes : [];
-    const target = state.target ?? state.current ?? 20;
+    const target2 = state.target ?? state.current ?? 20;
     const batteryLow = state.batteries.some((value) => value <= 20);
     const acActive = !!state.ac?.active;
     const modeText = acActive ? state.ac.label : !state.climate ? "M\xE5ling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
@@ -30573,7 +30573,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     setText("mode", modeText);
     setText("current", `${this._format(state.current)}\xB0`);
     setText("target", `${this._format(state.target)}\xB0`);
-    setText("target-control", `${this._format(target)} \xB0C`);
+    setText("target-control", `${this._format(target2)} \xB0C`);
     setText("humidity", `${this._format(state.humidity, 0)}%`);
     setText("valve", `${this._format(state.valve, 0)}%`);
     setText("window", state.windowOpen ? "\xC5ben" : "Lukket");
@@ -30581,7 +30581,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     setText("battery", state.batteries.length ? state.batteries.map((value) => `${this._format(value, 0)}%`).join(" \xB7 ") : "\u2014");
     content.querySelector('[data-metric="window"]')?.classList.toggle("warn", state.windowOpen);
     content.querySelector('[data-metric="battery"]')?.classList.toggle("warn", batteryLow);
-    content.querySelectorAll("[data-target]").forEach((button) => button.classList.toggle("active", Math.abs(target - Number(button.dataset.target)) < 0.1));
+    content.querySelectorAll("[data-target]").forEach((button) => button.classList.toggle("active", Math.abs(target2 - Number(button.dataset.target)) < 0.1));
     content.querySelectorAll("[data-mode]").forEach((button) => {
       button.disabled = !modes.includes(button.dataset.mode);
       button.classList.toggle("on", button.dataset.mode === "heat" && !state.off);
@@ -30637,7 +30637,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
       state.valve === void 0,
       batteryEmpty
     ]);
-    const target = `<div class="metric${state.target === void 0 ? " empty" : ""}" style="order:${targetOrder}"><span>M\xE5l</span><strong>${this._metricText(state.target, "\xB0")}</strong></div>`;
+    const target2 = `<div class="metric${state.target === void 0 ? " empty" : ""}" style="order:${targetOrder}"><span>M\xE5l</span><strong>${this._metricText(state.target, "\xB0")}</strong></div>`;
     const humidity = `<div class="metric${state.humidity === void 0 ? " empty" : ""}" style="order:${humidityOrder}"><span>Fugt</span><strong>${this._metricText(state.humidity, "%", 0)}</strong></div>`;
     const delta = `<div class="metric${state.delta === void 0 ? " empty" : ""}" style="order:${deltaOrder}"><span>Afvigelse</span><strong>${state.delta === void 0 ? "\u2014" : `${state.delta > 0 ? "+" : ""}${this._format(state.delta)}\xB0`}</strong></div>`;
     const valve = `<div class="metric equipment valve${state.valve === void 0 ? " empty" : ""}" style="order:${valveOrder}"><span>Ventil</span><strong>${this._metricText(state.valve, "%", 0)}</strong></div>`;
@@ -30660,7 +30660,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
           ${radiator}
           <div class="temperature"><strong>${this._format(state.current)}</strong><span>\xB0C</span></div>
         </div>
-        <div class="room-foot">${target}${humidity}${delta}${valve}${battery}</div>
+        <div class="room-foot">${target2}${humidity}${delta}${valve}${battery}</div>
       </button>`;
   }
   _updateMain(states, heating, open, average) {
@@ -30879,13 +30879,13 @@ var HACardListEditor6 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -31825,9 +31825,9 @@ var HARoomControlCard = class extends HTMLElement {
   _bind(wrap) {
     let hold = null;
     let held = false;
-    const target = (e) => e.target.closest?.("[data-light],[data-toggle],[data-option]");
+    const target2 = (e) => e.target.closest?.("[data-light],[data-toggle],[data-option]");
     wrap.addEventListener("pointerdown", (e) => {
-      const el = target(e);
+      const el = target2(e);
       held = false;
       if (!el) return;
       const id = el.dataset.light || el.dataset.toggle;
@@ -31871,7 +31871,7 @@ var HARoomControlCard = class extends HTMLElement {
     wrap.addEventListener("pointerup", end);
     wrap.addEventListener("pointercancel", end);
     wrap.addEventListener("contextmenu", (e) => {
-      const el = target(e);
+      const el = target2(e);
       if (!el) return;
       e.preventDefault();
       this._more(el.dataset.light || el.dataset.toggle);
@@ -31959,11 +31959,11 @@ var smoothPath = (points) => {
   for (let i = 0; i < points.length - 1; i += 1) {
     const p0 = points[i - 1] || points[i];
     const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2] || p2;
-    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    const p22 = points[i + 1];
+    const p3 = points[i + 2] || p22;
+    const c1 = [p1[0] + (p22[0] - p0[0]) / 6, p1[1] + (p22[1] - p0[1]) / 6];
+    const c2 = [p22[0] - (p3[0] - p1[0]) / 6, p22[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p22[0].toFixed(1)} ${p22[1].toFixed(1)}`;
   }
   return d;
 };
@@ -32221,8 +32221,8 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
         this._selectPopupTab("controls");
         return;
       }
-      const target = event.target?.closest?.("[data-room]");
-      if (target) this._openRoomPopup(Number(target.dataset.room));
+      const target2 = event.target?.closest?.("[data-room]");
+      if (target2) this._openRoomPopup(Number(target2.dataset.room));
     });
     chartHover(this.shadowRoot, ".spark-box", (box, fraction) => this._sparkPoint(box, fraction));
   }
@@ -32326,11 +32326,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const humidityEntity = this._entity(room.humidity);
     const comfortEntity = this._entity(room.comfort);
     const current = this._number(climate?.attributes?.current_temperature ?? temperatureEntity?.state);
-    const target = this._number(climate?.attributes?.temperature);
+    const target2 = this._number(climate?.attributes?.temperature);
     const humidity = this._number(climate?.attributes?.current_humidity ?? humidityEntity?.state);
     const windowOpen = ["on", "open", "opening"].includes(String(this._entity(room.window)?.state).toLowerCase()) || climate?.attributes?.window_open === true || climate?.attributes?.door_open === true;
     const off = climate ? climate.state === "off" : false;
-    const delta = current !== void 0 && target !== void 0 ? current - target : void 0;
+    const delta = current !== void 0 && target2 !== void 0 ? current - target2 : void 0;
     const comfortable = comfortEntity?.attributes?.is_comfortable;
     const valveValues = Object.values(this._object(climate?.attributes?.calibration_balance)).map((entry) => this._number(entry?.["valve%"] ?? entry?.valve ?? entry?.position)).filter((value) => value !== void 0);
     const valve = valveValues.length ? Math.max(...valveValues) : void 0;
@@ -32341,10 +32341,10 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     let tone2 = "neutral";
     if (delta !== void 0 && delta < -0.4) tone2 = "cold";
     else if (delta !== void 0 && delta > 0.7) tone2 = "warm";
-    else if (target !== void 0 && current !== void 0) tone2 = "ok";
+    else if (target2 !== void 0 && current !== void 0) tone2 = "ok";
     else if (comfortable === false) tone2 = "warn";
     else if (current !== void 0) tone2 = "ok";
-    return { climate, current, target, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
+    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
   }
   // Visningsmodel for et rum: alt det, hovedsiden viser, uden at røre DOM'en.
   _roomModel(room) {
@@ -32867,7 +32867,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     this._renderSpark(refs.spark, points, void 0);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader. \xC5bn detaljer`);
   }
-  _renderSpark(spark, points, target) {
+  _renderSpark(spark, points, target2) {
     if (!spark) return;
     spark.data = points;
     if (points.length < 2) {
@@ -32882,10 +32882,10 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const values = points.map((point) => point.v);
     let lo = Math.min(...values);
     let hi = Math.max(...values);
-    const showTarget = target !== void 0 && target > lo - 1.5 && target < hi + 1.5;
+    const showTarget = target2 !== void 0 && target2 > lo - 1.5 && target2 < hi + 1.5;
     if (showTarget) {
-      lo = Math.min(lo, target);
-      hi = Math.max(hi, target);
+      lo = Math.min(lo, target2);
+      hi = Math.max(hi, target2);
     }
     const span = Math.max(hi - lo, 1.2);
     const middle = (hi + lo) / 2;
@@ -32897,7 +32897,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     spark.line.setAttribute("d", line);
     spark.area.setAttribute("d", `${line}L${SPARK_W} ${SPARK_H}L0 ${SPARK_H}Z`);
     if (showTarget) {
-      const ty = y(target).toFixed(1);
+      const ty = y(target2).toFixed(1);
       spark.target.setAttribute("y1", ty);
       spark.target.setAttribute("y2", ty);
       spark.target.style.display = "";
@@ -33094,7 +33094,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (!content || !room) return;
     const state = this._roomState(room);
     const modes = Array.isArray(state.climate?.attributes?.hvac_modes) ? state.climate.attributes.hvac_modes : [];
-    const target = state.target ?? state.current ?? 20;
+    const target2 = state.target ?? state.current ?? 20;
     const batteryLow = state.batteries.some((value) => value <= 20);
     const acActive = !!state.ac?.active;
     const modeText = acActive ? state.ac.label : !state.climate ? "M\xE5ling" : state.off ? "Slukket" : state.heating ? "Varmer nu" : "Holder temperaturen";
@@ -33141,7 +33141,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     setText("mode", modeText);
     setText("current", `${this._format(state.current)}\xB0`);
     setText("target", `${this._format(state.target)}\xB0`);
-    setText("target-control", `${this._format(target)} \xB0C`);
+    setText("target-control", `${this._format(target2)} \xB0C`);
     setText("humidity", `${this._format(state.humidity, 0)}%`);
     setText("valve", `${this._format(state.valve, 0)}%`);
     setText("window", state.windowOpen ? "\xC5ben" : "Lukket");
@@ -33149,7 +33149,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     setText("battery", state.batteries.length ? state.batteries.map((value) => `${this._format(value, 0)}%`).join(" \xB7 ") : "\u2014");
     content.querySelector('[data-metric="window"]')?.classList.toggle("warn", state.windowOpen);
     content.querySelector('[data-metric="battery"]')?.classList.toggle("warn", batteryLow);
-    content.querySelectorAll("[data-target]").forEach((button) => button.classList.toggle("active", Math.abs(target - Number(button.dataset.target)) < 0.1));
+    content.querySelectorAll("[data-target]").forEach((button) => button.classList.toggle("active", Math.abs(target2 - Number(button.dataset.target)) < 0.1));
     content.querySelectorAll("[data-mode]").forEach((button) => {
       button.disabled = !modes.includes(button.dataset.mode);
       button.classList.toggle("on", button.dataset.mode === "heat" && !state.off);
@@ -33971,15 +33971,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._setText(refs.temp, this._format(model.current));
     const ctl = this._control(room, model);
     const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : void 0;
-    const target = pending ?? ctl.target;
-    this._setText(refs.target, target === void 0 ? "Intet m\xE5l" : `${this._format(target)}\xB0`);
+    const target2 = pending ?? ctl.target;
+    this._setText(refs.target, target2 === void 0 ? "Intet m\xE5l" : `${this._format(target2)}\xB0`);
     this._setText(refs.host.querySelector('[data-f="tlabel"]'), ctl.ac ? "AC-m\xE5l" : "M\xE5l");
     refs.step?.classList.toggle("pending", pending !== void 0);
     if (refs.rail) {
-      const ok = model.current !== void 0 && target !== void 0;
+      const ok = model.current !== void 0 && target2 !== void 0;
       refs.rail.classList.toggle("na", !ok);
       if (ok) {
-        const pos = (v) => `${(Math.min(1, Math.max(0, (v - target + 3) / 6)) * 100).toFixed(1)}%`;
+        const pos = (v) => `${(Math.min(1, Math.max(0, (v - target2 + 3) / 6)) * 100).toFixed(1)}%`;
         refs.rail.querySelector(".tgt").style.left = "50%";
         refs.rail.querySelector(".cur").style.left = pos(model.current);
       }
@@ -34009,7 +34009,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       refs.visualKind = kind;
     } else if (model.acActive) this._setText(refs.visual?.querySelector('[data-role="ac-unit-display"]'), this._acMiniLabel(model));
     if (refs.visual) refs.visual.title = model.acActive ? model.status : model.heating ? "Radiatoren varmer" : "Radiatoren hviler";
-    this._renderSpark(refs.spark, this._sparkPoints(room, model), target);
+    this._renderSpark(refs.spark, this._sparkPoints(room, model), target2);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. \xC5bn detaljer`);
   }
   _renderTile(room, refs, model) {
@@ -34250,8 +34250,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     set("temp", this._format(model.current));
     const ctl = this._control(room, model);
     const pending = this._pending[index]?.ac === ctl.ac ? this._pending[index]?.value : void 0;
-    const target = pending ?? ctl.target;
-    set("target", target === void 0 ? DASH3 : `${this._format(target)}\xB0`);
+    const target2 = pending ?? ctl.target;
+    set("target", target2 === void 0 ? DASH3 : `${this._format(target2)}\xB0`);
     set("tlabel", ctl.ac ? "AC-m\xE5l" : "M\xE5l");
     const stepEl = content.querySelector('[data-v="step"]');
     if (stepEl) stepEl.hidden = !ctl.climate;
@@ -34334,13 +34334,13 @@ var HACardListEditor7 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -34505,8 +34505,8 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const sensor = this._entity(room.temperature);
     const climate = this._entity(room.climate);
     const current = this._num(sensor?.state ?? climate?.attributes?.current_temperature);
-    const target = this._num(climate?.attributes?.temperature);
-    const delta = current !== void 0 && target !== void 0 ? current - target : void 0;
+    const target2 = this._num(climate?.attributes?.temperature);
+    const delta = current !== void 0 && target2 !== void 0 ? current - target2 : void 0;
     const action = String(climate?.attributes?.hvac_action || "").toLowerCase();
     const valves = Object.entries(this._object(climate?.attributes?.calibration_balance)).map(([id, row]) => ({ id, value: this._num(row?.["valve%"] ?? row?.valve ?? row?.position) })).filter((row) => row.value !== void 0);
     const valve = valves.length ? Math.max(...valves.map((row) => row.value)) : void 0;
@@ -34514,7 +34514,7 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const battery = batteries.length ? Math.min(...batteries.map((row) => row.value)) : void 0;
     const windowOpen = climate?.attributes?.window_open === true || climate?.attributes?.door_open === true;
     let tone2 = "measure", status = "M\xE5ling uden setpunkt", detail = "Viser temperaturens udvikling";
-    if (target !== void 0) {
+    if (target2 !== void 0) {
       if (delta > 0.4) {
         tone2 = "above";
         status = "Over m\xE5l";
@@ -34532,9 +34532,9 @@ var HATemperatureTargetCard = class extends HTMLElement {
     if (action === "heating") {
       tone2 = "heating";
       status = "Varmer mod m\xE5l";
-      detail = `Radiatoren arbejder mod ${this._format(target)}\xB0`;
+      detail = `Radiatoren arbejder mod ${this._format(target2)}\xB0`;
     }
-    return { sensor, climate, current, target, delta, action, tone: tone2, status, detail, valves, valve, batteries, battery, windowOpen, off: climate?.state === "off" };
+    return { sensor, climate, current, target: target2, delta, action, tone: tone2, status, detail, valves, valve, batteries, battery, windowOpen, off: climate?.state === "off" };
   }
   // The SVG only holds lines and areas and may stretch freely; text and dots are HTML on top, so nothing is distorted.
   _graph(room, state, index) {
@@ -34560,8 +34560,8 @@ var HATemperatureTargetCard = class extends HTMLElement {
     });
     if (state.current !== void 0) values.push({ time: now, value: state.current, now: true });
     const nums = values.map((p) => p.value);
-    const target = state.target;
-    if (target !== void 0) nums.push(target - 0.4, target + 0.4);
+    const target2 = state.target;
+    if (target2 !== void 0) nums.push(target2 - 0.4, target2 + 0.4);
     let min = Math.min(...nums), max = Math.max(...nums);
     const span = Math.max(max - min, 1.2);
     min -= span * 0.1;
@@ -34569,7 +34569,7 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const step = max - min > 6 ? 2 : max - min > 3 ? 1 : 0.5;
     const W2 = 1e3, H3 = 100, x = (t) => Math.max(0, Math.min(1, (t - start) / (now - start))) * W2, y = (v) => (max - v) / (max - min) * H3;
     const pts = values.map((p) => [x(p.time), y(p.value)]);
-    this._graphs[index] = { points: values.map((p) => ({ t: p.time, v: p.value, now: p.now })), start, now, min, max, target };
+    this._graphs[index] = { points: values.map((p) => ({ t: p.time, v: p.value, now: p.now })), start, now, min, max, target: target2 };
     let path = "";
     if (pts.length === 1) path = `M0 ${pts[0][1].toFixed(2)} L${W2} ${pts[0][1].toFixed(2)}`;
     else if (pts.length > 1) {
@@ -34590,13 +34590,13 @@ var HATemperatureTargetCard = class extends HTMLElement {
     for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) grid.push(v);
     const pct2 = (v) => (y(v) / H3 * 100).toFixed(2);
     let zones = "", lines = "", tag = "";
-    if (target !== void 0) {
-      const hi = y(target + 0.35), lo = y(target - 0.35);
+    if (target2 !== void 0) {
+      const hi = y(target2 + 0.35), lo = y(target2 - 0.35);
       zones = `<clipPath id="tt-a-${index}"><rect x="-5" y="-50" width="${W2 + 10}" height="${(hi + 50).toFixed(2)}"/></clipPath><clipPath id="tt-t-${index}"><rect x="-5" y="${hi.toFixed(2)}" width="${W2 + 10}" height="${(lo - hi).toFixed(2)}"/></clipPath><clipPath id="tt-b-${index}"><rect x="-5" y="${lo.toFixed(2)}" width="${W2 + 10}" height="${(H3 - lo + 50).toFixed(2)}"/></clipPath>`;
-      lines = `<rect x="0" y="${hi.toFixed(2)}" width="${W2}" height="${(lo - hi).toFixed(2)}" class="target-band"/><line x1="0" x2="${W2}" y1="${y(target).toFixed(2)}" y2="${y(target).toFixed(2)}" class="target-line"/>${path ? `<path d="${path}" class="temperature-line above" clip-path="url(#tt-a-${index})"/><path d="${path}" class="temperature-line on" clip-path="url(#tt-t-${index})"/><path d="${path}" class="temperature-line below" clip-path="url(#tt-b-${index})"/>` : ""}`;
-      tag = `<span class="target-tag" style="top:${pct2(target)}%">M\xE5l ${this._format(target)}\xB0</span>`;
+      lines = `<rect x="0" y="${hi.toFixed(2)}" width="${W2}" height="${(lo - hi).toFixed(2)}" class="target-band"/><line x1="0" x2="${W2}" y1="${y(target2).toFixed(2)}" y2="${y(target2).toFixed(2)}" class="target-line"/>${path ? `<path d="${path}" class="temperature-line above" clip-path="url(#tt-a-${index})"/><path d="${path}" class="temperature-line on" clip-path="url(#tt-t-${index})"/><path d="${path}" class="temperature-line below" clip-path="url(#tt-b-${index})"/>` : ""}`;
+      tag = `<span class="target-tag" style="top:${pct2(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
     } else if (path) lines = `<path d="${path}" class="temperature-line on"/>`;
-    const tone2 = target === void 0 || state.current === void 0 ? "on" : state.current > target + 0.35 ? "above" : state.current < target - 0.35 ? "below" : "on";
+    const tone2 = target2 === void 0 || state.current === void 0 ? "on" : state.current > target2 + 0.35 ? "above" : state.current < target2 - 0.35 ? "below" : "on";
     const dot = last ? `<span class="now-dot ${tone2}" style="top:${(last[1] / H3 * 100).toFixed(2)}%"></span>` : "";
     return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct2(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
   }
@@ -34969,13 +34969,13 @@ var HACardListEditor8 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this._configSig = this._sig(this._config);
@@ -37091,10 +37091,10 @@ var HaHomeStatusCard = class extends HTMLElement {
     const end = clock(ids.end);
     const cost = this.number(ids.cost);
     const energy = this.number(ids.energy);
-    const target = this.number(ids.target);
-    const missing = Number.isFinite(target) && Number.isFinite(battery) ? target - battery : NaN;
+    const target2 = this.number(ids.target);
+    const missing = Number.isFinite(target2) && Number.isFinite(battery) ? target2 - battery : NaN;
     const price = Number.isFinite(cost) && cost > 0 ? `${cost.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr` : "";
-    const need = missing >= 1 ? `mangler ${this.fmt(missing, 0)} %${Number.isFinite(energy) && energy > 0 ? ` (${this.fmt(energy, 1)} kWh)` : ""} til ${this.fmt(target, 0)} %` : "";
+    const need = missing >= 1 ? `mangler ${this.fmt(missing, 0)} %${Number.isFinite(energy) && energy > 0 ? ` (${this.fmt(energy, 1)} kWh)` : ""} til ${this.fmt(target2, 0)} %` : "";
     if (power > 0) {
       return [
         `${this.fmt(power, 1)} kW`,
@@ -37927,7 +37927,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const a = cl?.attributes || {};
     const temp = Number.isFinite(this._num(room.temperature)) ? this._num(room.temperature) : Number(a.current_temperature);
     const humidity = Number.isFinite(this._num(room.humidity)) ? this._num(room.humidity) : Number(a.current_humidity);
-    const target = cl && cl.state !== "off" ? Number(a.temperature) : Number.NaN;
+    const target2 = cl && cl.state !== "off" ? Number(a.temperature) : Number.NaN;
     const json = (v) => {
       if (v && typeof v === "object") return v;
       try {
@@ -37943,14 +37943,14 @@ var HaHomeSummaryCard = class extends HTMLElement {
     const prev = series.length ? series[series.length - 1].v : Number.NaN;
     const ac = this._acInfo(room.acEntity || room.ac);
     const acOn = ac && ac.mode !== "off" && Number.isFinite(Number(ac.a.temperature));
-    const goal = acOn ? Number(ac.a.temperature) : target;
+    const goal = acOn ? Number(ac.a.temperature) : target2;
     return {
       cl,
       a,
       temp,
       humidity,
       target: goal,
-      btTarget: target,
+      btTarget: target2,
       acTarget: acOn,
       delta: Number.isFinite(temp) && Number.isFinite(goal) ? temp - goal : Number.NaN,
       heating: a.hvac_action === "heating",
@@ -38227,14 +38227,14 @@ ${LUX_KEYFRAMES}
     const a = ac.a;
     const off = ac.mode === "off";
     const f = (v, d = 1) => this._fmt(v, d);
-    const target = Number.isFinite(pend[ac.id]) ? pend[ac.id] : Number(a.temperature);
+    const target2 = Number.isFinite(pend[ac.id]) ? pend[ac.id] : Number(a.temperature);
     const modes = (a.hvac_modes || []).filter((m) => AC_MODES[m]);
     const fans = a.fan_modes || [];
     const presets = (a.preset_modes || []).filter((p) => ["auto", "manual"].includes(p));
     const status = ac.paused ? "Pause \xB7 d\xF8r eller vindue st\xE5r \xE5bent" : off ? "Slukket" : ac.running ? `K\xF8rer \xB7 ${AC_MODES[ac.mode]?.[0] || ac.mode}` : `Venter \xB7 ${AC_MODES[ac.mode]?.[0] || ac.mode}`;
     return `<h5 class="ach ${ac.running ? `run m-${ac.mode}` : ""}"><ha-icon icon="${off ? "mdi:air-conditioner" : AC_MODES[ac.mode]?.[1] || "mdi:air-conditioner"}"></ha-icon>AC<span>${this._esc(status)}</span></h5>
       <div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" data-ent="${ac.id}" class="${ac.mode === m ? "on" : ""}"><ha-icon icon="${AC_MODES[m][1]}"></ha-icon>${AC_MODES[m][0]}</button>`).join("")}</div>
-      ${off ? "" : `<div class="ctl sm"><button type="button" class="step" data-step="-1" data-ent="${ac.id}" aria-label="S\xE6nk AC">\u2212</button><div class="tgt ${Number.isFinite(pend[ac.id]) ? "pend" : ""}"><span>AC setpunkt</span><b>${Number.isFinite(target) ? `${f(target)}\xB0` : "\u2013"}</b></div><button type="button" class="step" data-step="1" data-ent="${ac.id}" aria-label="H\xE6v AC">+</button></div>
+      ${off ? "" : `<div class="ctl sm"><button type="button" class="step" data-step="-1" data-ent="${ac.id}" aria-label="S\xE6nk AC">\u2212</button><div class="tgt ${Number.isFinite(pend[ac.id]) ? "pend" : ""}"><span>AC setpunkt</span><b>${Number.isFinite(target2) ? `${f(target2)}\xB0` : "\u2013"}</b></div><button type="button" class="step" data-step="1" data-ent="${ac.id}" aria-label="H\xE6v AC">+</button></div>
       ${fans.length ? `<div class="modes fans">${fans.map((m) => `<button type="button" data-fan="${this._esc(m)}" data-ent="${ac.id}" class="${a.fan_mode === m ? "on" : ""}">${this._esc(AC_FANS[String(m).toLowerCase()] || m)}</button>`).join("")}</div>` : ""}`}
       ${presets.length === 2 ? `<div class="modes"><button type="button" data-preset="auto" data-ent="${ac.id}" class="${a.preset_mode === "auto" ? "on" : ""}"><ha-icon icon="mdi:robot-outline"></ha-icon>Automatisk</button><button type="button" data-preset="manual" data-ent="${ac.id}" class="${a.preset_mode === "manual" ? "on" : ""}"><ha-icon icon="mdi:hand-back-right-outline"></ha-icon>Manuel</button></div>` : ""}`;
   }
@@ -38270,7 +38270,7 @@ ${LUX_KEYFRAMES}
     const range = mins.length ? `${f(Math.min(...mins))}\u2013${f(Math.max(...mins))}\xB0 i d\xF8gnet` : "";
     const trend = !Number.isFinite(r.trend) ? "" : Math.abs(r.trend) < 0.05 ? "u\xE6ndret siden sidste time" : `${r.trend > 0 ? "+" : "\u2212"}${f(Math.abs(r.trend))}\xB0 siden sidste time`;
     const pend = this._pending || {};
-    const target = Number.isFinite(pend[room.climate]) ? pend[room.climate] : Number(r.a.temperature);
+    const target2 = Number.isFinite(pend[room.climate]) ? pend[room.climate] : Number(r.a.temperature);
     const modes = (r.a.hvac_modes || []).filter((m) => ["heat", "off", "auto", "cool", "heat_cool"].includes(m));
     const MODE = { heat: ["Varme", "mdi:fire"], off: ["Fra", "mdi:power"], auto: ["Auto", "mdi:thermostat-auto"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Varme/k\xF8l", "mdi:sun-snowflake-variant"] };
     const rows = [];
@@ -38282,7 +38282,7 @@ ${LUX_KEYFRAMES}
     box.innerHTML = `<div class="hd"><span class="ic"><ha-icon icon="${this._esc(room.icon || "mdi:thermometer")}"></ha-icon></span><div><h4>${this._esc(room.name)}</h4><small>${Number.isFinite(r.target) ? `${r.acTarget ? "AC-m\xE5l" : "M\xE5l"} ${f(r.target)}\xB0` : "Ingen termostat"}${Number.isFinite(r.delta) ? ` \xB7 ${r.delta > 0 ? "+" : ""}${f(r.delta)}\xB0 fra m\xE5let` : ""}</small></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
       <div class="hero"><div class="now"><b>${f(r.temp)}\xB0</b><span>${this._esc(trend)}</span></div><div class="side">${Number.isFinite(r.humidity) ? `<span><b>${f(r.humidity, 0)} %</b> fugt</span>` : ""}${range ? `<span>${range}</span>` : ""}</div></div>
       <div class="chart">${chart}</div>
-      ${r.cl ? `${r.ac ? '<h5><ha-icon icon="mdi:radiator"></ha-icon>Radiatorer</h5>' : ""}<div class="ctl"><button type="button" class="step" data-step="-1" data-ent="${room.climate}" aria-label="S\xE6nk" ${r.cl.state === "off" ? "disabled" : ""}>\u2212</button><div class="tgt ${Number.isFinite(pend[room.climate]) ? "pend" : ""}"><span>Setpunkt</span><b>${r.cl.state === "off" ? "Fra" : `${f(target)}\xB0`}</b></div><button type="button" class="step" data-step="1" data-ent="${room.climate}" aria-label="H\xE6v" ${r.cl.state === "off" ? "disabled" : ""}>+</button></div>
+      ${r.cl ? `${r.ac ? '<h5><ha-icon icon="mdi:radiator"></ha-icon>Radiatorer</h5>' : ""}<div class="ctl"><button type="button" class="step" data-step="-1" data-ent="${room.climate}" aria-label="S\xE6nk" ${r.cl.state === "off" ? "disabled" : ""}>\u2212</button><div class="tgt ${Number.isFinite(pend[room.climate]) ? "pend" : ""}"><span>Setpunkt</span><b>${r.cl.state === "off" ? "Fra" : `${f(target2)}\xB0`}</b></div><button type="button" class="step" data-step="1" data-ent="${room.climate}" aria-label="H\xE6v" ${r.cl.state === "off" ? "disabled" : ""}>+</button></div>
         ${modes.length > 1 ? `<div class="modes">${modes.map((m) => `<button type="button" data-mode="${m}" data-ent="${room.climate}" class="${r.cl.state === m ? "on" : ""}"><ha-icon icon="${MODE[m][1]}"></ha-icon>${MODE[m][0]}</button>`).join("")}</div>` : ""}` : ""}
       ${this._acSection(r.ac, pend)}
       ${rows.length ? `<div class="rows">${rows.map(([cls, ic, b, sub]) => `<div class="row ${cls}"><ha-icon icon="${ic}"></ha-icon><div><b>${b}</b><span>${sub}</span></div></div>`).join("")}</div>` : ""}
@@ -38730,11 +38730,11 @@ ${LUX_KEYFRAMES}
     }
     const classicTiles = !isNewLook(this._hass, c2, { entity: "room_tiles_entity", key: "room_tiles", fallback: true });
     const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
-      const temp = this._num(room.temperature), humidity = this._num(room.humidity), target = Number(this._state(room.climate)?.attributes?.temperature);
-      const delta = Number.isFinite(temp) && Number.isFinite(target) ? temp - target : Number.NaN;
+      const temp = this._num(room.temperature), humidity = this._num(room.humidity), target2 = Number(this._state(room.climate)?.attributes?.temperature);
+      const delta = Number.isFinite(temp) && Number.isFinite(target2) ? temp - target2 : Number.NaN;
       const tone2 = !Number.isFinite(temp) ? "unavailable" : delta > 0.7 ? "warm" : delta < -0.7 ? "cold" : "";
       const icon4 = this._esc(room.icon || "mdi:thermometer");
-      const targetText = Number.isFinite(target) ? `M\xE5l <b>${this._fmt(target, 1)}\xB0</b>` : "";
+      const targetText = Number.isFinite(target2) ? `M\xE5l <b>${this._fmt(target2, 1)}\xB0</b>` : "";
       const humidityText = Number.isFinite(humidity) ? `<span class="ro-humidity">${targetText ? "\xB7 " : ""}${this._fmt(humidity, 0)}%</span>` : "";
       const heating = room.climate ? this._state(room.climate)?.attributes?.hvac_action === "heating" : false;
       const present = room.presence ? this._state(room.presence)?.state === "on" : false;
@@ -39045,9 +39045,9 @@ var HaHomeDesktopLayoutCardEditor = class extends HTMLElement {
   }
   _move(side, index, direction) {
     const cards = structuredClone(this._cards(side));
-    const target = index + direction;
-    if (target < 0 || target >= cards.length) return;
-    [cards[index], cards[target]] = [cards[target], cards[index]];
+    const target2 = index + direction;
+    if (target2 < 0 || target2 >= cards.length) return;
+    [cards[index], cards[target2]] = [cards[target2], cards[index]];
     this._emit({ ...this.config, [side]: cards });
   }
   _remove(side, index) {
@@ -39456,13 +39456,13 @@ var HACardListEditor9 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -41193,8 +41193,8 @@ var ThWeatherCard = class extends HTMLElement {
     const pts = fc.map((f, i) => [X(i), Y(f.temperature)]);
     let d = `M${pts[0][0]} ${pts[0][1]}`;
     for (let i = 0; i < n - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-      d += `C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p22 = pts[i + 1], p3 = pts[i + 2] || p22;
+      d += `C${p1[0] + (p22[0] - p0[0]) / 6} ${p1[1] + (p22[1] - p0[1]) / 6} ${p22[0] - (p3[0] - p1[0]) / 6} ${p22[1] - (p3[1] - p1[1]) / 6} ${p22[0]} ${p22[1]}`;
     }
     const tc = (t) => t <= 0 ? "#8ed1ff" : t < 8 ? "#9fd8c4" : t < 16 ? "#e8c37e" : t < 24 ? "#ffb27a" : "#ff8a7a";
     let g = `<defs><linearGradient id="tl" x1="0" y1="0" x2="${W2}" y2="0" gradientUnits="userSpaceOnUse">${fc.map((f, i) => `<stop offset="${(X(i) / W2).toFixed(4)}" stop-color="${tc(f.temperature)}"/>`).join("")}</linearGradient>
@@ -41926,8 +41926,8 @@ var HAWeatherChartsCard = class extends HTMLElement {
         const unit = (s.axis || "left") === "right" ? ch2.right.unit : ch2.unit;
         const d = (s.axis || "left") === "right" ? ch2.right.d : ch2.d;
         if (s.type === "band" || s.type === "range") {
-          const p2 = near((s.band || s.range).map(([tt2, a, b]) => [tt2, a, b]));
-          return p2 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p2[1], d)}\u2013${fmt2(p2[2], d)} ${esc8(unit)}</b></span>` : "";
+          const p3 = near((s.band || s.range).map(([tt2, a, b]) => [tt2, a, b]));
+          return p3 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p3[1], d)}\u2013${fmt2(p3[2], d)} ${esc8(unit)}</b></span>` : "";
         }
         const p = near(s.points);
         return p ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p[1], d)} ${esc8(unit)}</b></span>` : "";
@@ -42042,13 +42042,13 @@ var HACardListEditor10 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -42330,13 +42330,13 @@ var HACardListEditor11 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -42958,7 +42958,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const presence = this._state(room.presence);
     const present = !!presence && PRESENT_STATES.has(presence.state);
     const climate = this._state(room.climate);
-    const target = Number(climate?.attributes?.temperature);
+    const target2 = Number(climate?.attributes?.temperature);
     const open = this._openParts(room);
     const ctx = { humidity, lightOn, present, climate, open, tempDead: !tempState || DEAD4.has(tempState.state) };
     const chips = this._chips(room, ctx);
@@ -42976,7 +42976,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       chips,
       mediaOn,
       rgb: lightOn ? this._lightRgb(light) : null,
-      target: Number.isFinite(target) ? target : null,
+      target: Number.isFinite(target2) ? target2 : null,
       heating: climate?.attributes?.hvac_action === "heating",
       climateOff: climate?.state === "off",
       running: chips.some((c2) => c2.running && c2.tone === "active"),
@@ -43419,9 +43419,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     el.classList.add("err");
     setTimeout(() => el.classList.remove("err"), 600);
   }
-  _call(domain, service, data, target, pendingId, pendingEntity, el) {
+  _call(domain, service, data, target2, pendingId, pendingEntity, el) {
     if (pendingId) this._setPending(pendingId, pendingEntity);
-    return this._hass.callService(domain, service, data, target).catch((err) => {
+    return this._hass.callService(domain, service, data, target2).catch((err) => {
       console.warn("Room overview action failed", `${domain}.${service}`, err);
       if (pendingId) this._pending.delete(pendingId);
       this._flash(el);
@@ -45707,8 +45707,8 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   _findMediaChild(node, name) {
     if (!name || !Array.isArray(node?.children)) return null;
     const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const target = norm(name);
-    return node.children.find((child) => norm(child.title) === target) || node.children.find((child) => norm(child.title).includes(target)) || null;
+    const target2 = norm(name);
+    return node.children.find((child) => norm(child.title) === target2) || node.children.find((child) => norm(child.title).includes(target2)) || null;
   }
   _ago(iso) {
     const ms = Date.now() - new Date(iso).getTime();
@@ -48478,12 +48478,12 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       this._renderList();
     });
   }
-  async _renderList(target, camFilter) {
-    const l = target || this.$("list");
+  async _renderList(target2, camFilter) {
+    const l = target2 || this.$("list");
     if (!l) return;
     const src = camFilter ? this._camEvents(camFilter).sort((a, b) => b.t - a.t) : this._events || [];
     const ev = src.filter((e) => (camFilter || this._fc === "all" || e.cam === this._fc) && (camFilter || this._ft === "all" || e.type === this._ft));
-    if (!target && this.$("evn")) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
+    if (!target2 && this.$("evn")) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
     const key = ev.slice(0, 60).map((e) => e.id).join();
     if (l._key === key && l.childElementCount) return;
     l._key = key;
@@ -49768,6 +49768,81 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Card", description: "Responsive camera overview with automatic and manual camera selection", preview: true });
 console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION40} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
+// src/shared/watch-pause.js
+var p2 = (n) => String(n).padStart(2, "0");
+var stamp = (d) => `${p2(d.getHours())}.${p2(d.getMinutes())}`;
+var ymdhms = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:00`;
+function untilText(d) {
+  const now = /* @__PURE__ */ new Date(), tom = new Date(now);
+  tom.setDate(now.getDate() + 1);
+  if (d.toDateString() === now.toDateString()) return `kl. ${stamp(d)}`;
+  if (d.toDateString() === tom.toDateString()) return `i morgen kl. ${stamp(d)}`;
+  return `${d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" })} kl. ${stamp(d)}`;
+}
+function target(kind) {
+  const d = /* @__PURE__ */ new Date();
+  if (kind === "off") return new Date(d.getTime() - 6e4);
+  if (kind === "morning") {
+    if (d.getHours() >= 4) d.setDate(d.getDate() + 1);
+    d.setHours(7, 0, 0, 0);
+    return d;
+  }
+  return new Date(d.getTime() + Number(kind) * 36e5);
+}
+var WATCH_PAUSE_CSS = `
+.wp{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 0;padding:10px 12px;border-radius:14px;
+  background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}
+.wp[hidden]{display:none}
+.wp .st{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 220px;font-size:12.5px;line-height:1.3}
+.wp .st ha-icon{--mdc-icon-size:20px;flex:none;color:var(--wp-c)}
+.wp .st b{display:block;font-weight:750}.wp .st small{display:block;color:var(--secondary-text-color,#9ba5b3);font-size:11px;margin-top:1px}
+.wp .bt{display:flex;gap:6px;flex-wrap:wrap}
+.wp button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:10px;font:inherit;font-size:11.5px;font-weight:750;
+  color:var(--primary-text-color,#fff);background:color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)}
+.wp button:hover{background:color-mix(in srgb,var(--primary-text-color,#fff) 12%,transparent)}
+.wp button ha-icon{--mdc-icon-size:15px}
+.wp button.go{background:color-mix(in srgb,var(--accent,#54a8f5) 22%,transparent);color:var(--accent,#54a8f5)}
+`;
+function renderWatchPause(box, hass, cfg) {
+  if (!box || !hass) return;
+  if (!cfg.pause_entity && !cfg.guard_entity) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box._hass = hass;
+  box._cfg = cfg;
+  const g = cfg.guard_entity ? hass.states[cfg.guard_entity] : null, p = cfg.pause_entity ? hass.states[cfg.pause_entity] : null;
+  const ts = Number(p?.attributes?.timestamp), until2 = Number.isFinite(ts) ? new Date(ts * 1e3) : null, paused2 = !!until2 && until2 > /* @__PURE__ */ new Date();
+  const armed = g ? g.state === "on" : null, grund = g?.attributes?.grund || "";
+  const icon4 = paused2 ? "mdi:bell-sleep-outline" : armed ? "mdi:shield-check" : "mdi:shield-home-outline";
+  const color = paused2 ? "var(--warning-color,#f5b14c)" : armed ? "var(--success-color,#45d19a)" : "var(--secondary-text-color,#9ba5b3)";
+  const head = armed == null ? "Notifikationer" : armed ? `Vagten er aktiv \xB7 ${grund}` : "Vagten venter \u2013 I er hjemme";
+  const sub = paused2 ? `Beskeder p\xE5 pause til ${untilText(until2)} \xB7 der registreres stadig` : armed === false ? "Registrerer og sender besked, n\xE5r ingen er hjemme" : "Begge telefoner f\xE5r besked";
+  const btns = !cfg.pause_entity ? "" : paused2 ? '<button class="go" data-pause="off"><ha-icon icon="mdi:bell-ring-outline"></ha-icon>Genoptag beskeder</button>' : '<button data-pause="1"><ha-icon icon="mdi:bell-sleep-outline"></ha-icon>1 t</button><button data-pause="3">3 t</button><button data-pause="morning">Til i morgen kl. 7</button>';
+  const html = `<div class="st" style="--wp-c:${color}"><ha-icon icon="${icon4}"></ha-icon><span><b>${head}</b><small>${sub}</small></span></div><div class="bt">${btns}</div>`;
+  if (box._v !== html) {
+    box._v = html;
+    box.innerHTML = html;
+  }
+  if (!box._bound) {
+    box._bound = true;
+    box.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pause]");
+      if (!b) return;
+      e.stopPropagation();
+      box._hass.callService("input_datetime", "set_datetime", { entity_id: box._cfg.pause_entity, datetime: ymdhms(target(b.dataset.pause)) });
+    });
+    box._tick = setInterval(() => {
+      if (!box.isConnected) {
+        clearInterval(box._tick);
+        return;
+      }
+      renderWatchPause(box, box._hass, box._cfg);
+    }, 3e4);
+  }
+}
+
 // src/cards/ha-license-plate-card/ha-license-plate-card.js
 var HaLicensePlateCard = class extends HTMLElement {
   constructor() {
@@ -49797,6 +49872,7 @@ var HaLicensePlateCard = class extends HTMLElement {
       this._renderSelected();
     }
     this._updateHeader(state);
+    renderWatchPause(this.shadowRoot.querySelector("[data-wp]"), hass, this.config);
   }
   getCardSize() {
     return 12;
@@ -49805,7 +49881,7 @@ var HaLicensePlateCard = class extends HTMLElement {
     return { columns: "full", rows: "auto" };
   }
   _build() {
-    this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra den afgr\xE6nsede indk\xF8rselszone</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:car-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="plate">\u2014</span><small data-v="known">UKENDT K\xD8RET\xD8J</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:percent-outline"></ha-icon><span>Sikkerhed</span><b data-v="confidence">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live indk\xF8rsel</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Overv\xE5gning</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra den afgr\xE6nsede indk\xF8rselszone</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:car-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="plate">\u2014</span><small data-v="known">UKENDT K\xD8RET\xD8J</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:percent-outline"></ha-icon><span>Sikkerhed</span><b data-v="confidence">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live indk\xF8rsel</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Overv\xE5gning</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
     this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = true;
   }
@@ -49983,7 +50059,7 @@ var HaLicensePlateCard = class extends HTMLElement {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
   _css() {
-    return `:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media img~.placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media.loading .scan{opacity:.8;animation:scan 1.4s ease-in-out infinite}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(30px,5vw,48px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.05em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes scan{50%{top:100%}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
+    return `${WATCH_PAUSE_CSS}:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media img~.placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media.loading .scan{opacity:.8;animation:scan 1.4s ease-in-out infinite}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(30px,5vw,48px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.05em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes scan{50%{top:100%}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
   }
 };
 if (!customElements.get("ha-license-plate-card")) customElements.define("ha-license-plate-card", HaLicensePlateCard);
@@ -50017,6 +50093,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
       this._renderSelected();
     }
     this._updateHeader(state);
+    renderWatchPause(this.shadowRoot.querySelector("[data-wp]"), hass, this.config);
   }
   getCardSize() {
     return 12;
@@ -50025,7 +50102,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
     return { columns: "full", rows: "auto" };
   }
   _build() {
-    this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra kameraerne uden for huset</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:account-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="camera">\u2014</span><small data-v="known">UKENDT PERSON</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:cctv"></ha-icon><span>Kamera</span><b data-v="camera-fact">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live overv\xE5gning</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Personvagt-side</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra kameraerne uden for huset</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:account-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="camera">\u2014</span><small data-v="known">UKENDT PERSON</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:cctv"></ha-icon><span>Kamera</span><b data-v="camera-fact">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live overv\xE5gning</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Personvagt-side</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
     this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = true;
   }
@@ -50122,7 +50199,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
   _css() {
-    return `:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media.loaded .placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(24px,4vw,38px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.02em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
+    return `${WATCH_PAUSE_CSS}:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media.loaded .placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(24px,4vw,38px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.02em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
   }
 };
 if (!customElements.get("ha-person-detection-card")) customElements.define("ha-person-detection-card", HaPersonDetectionCard);
@@ -50231,13 +50308,13 @@ var HACardListEditor12 = class extends HTMLElement {
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
-    let target = source;
+    let target2 = source;
     parts.slice(0, -1).forEach((key) => {
-      target[key] = target[key] && typeof target[key] === "object" ? target[key] : {};
-      target = target[key];
+      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
+      target2 = target2[key];
     });
-    if (value === "" || value === void 0) delete target[parts.at(-1)];
-    else target[parts.at(-1)] = value;
+    if (value === "" || value === void 0) delete target2[parts.at(-1)];
+    else target2[parts.at(-1)] = value;
   }
   _emit() {
     this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: structuredClone(this._config) }, bubbles: true, composed: true }));
@@ -50315,10 +50392,10 @@ var HaSecurityCenterCard = class extends HTMLElement {
       this.shadowRoot.addEventListener("click", (event) => this._activate(event.target.closest("[data-script],[data-more],[data-lock],[data-nav]")));
       this.shadowRoot.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
-        const target = event.target.closest("[data-lock]");
-        if (!target) return;
+        const target2 = event.target.closest("[data-lock]");
+        if (!target2) return;
         event.preventDefault();
-        this._activate(target);
+        this._activate(target2);
       });
     }
     this._render();
@@ -50378,12 +50455,12 @@ var HaSecurityCenterCard = class extends HTMLElement {
     history.pushState(null, "", path);
     window.dispatchEvent(new Event("location-changed"));
   }
-  _activate(target) {
-    if (!target) return;
-    if (target.dataset.script) this._service("script", "turn_on", { entity_id: target.dataset.script });
-    else if (target.dataset.lock) this._service("lock", target.dataset.state === "locked" ? "unlock" : "lock", { entity_id: target.dataset.lock });
-    else if (target.dataset.more) this._moreInfo(target.dataset.more);
-    else if (target.dataset.nav) this._navigate(target.dataset.nav);
+  _activate(target2) {
+    if (!target2) return;
+    if (target2.dataset.script) this._service("script", "turn_on", { entity_id: target2.dataset.script });
+    else if (target2.dataset.lock) this._service("lock", target2.dataset.state === "locked" ? "unlock" : "lock", { entity_id: target2.dataset.lock });
+    else if (target2.dataset.more) this._moreInfo(target2.dataset.more);
+    else if (target2.dataset.nav) this._navigate(target2.dataset.nav);
   }
   _patchNode(current, next) {
     if (current.nodeType !== next.nodeType || current.nodeName !== next.nodeName) {
@@ -55796,26 +55873,26 @@ var HaCalefaFlowCard = class extends HTMLElement {
     panel.insertBefore(bar, panel.lastElementChild);
   }
   _handleClick(event) {
-    const target = event.composedPath().find((node) => node?.dataset?.action);
-    if (!target) return;
-    const action = target.dataset.action;
+    const target2 = event.composedPath().find((node) => node?.dataset?.action);
+    if (!target2) return;
+    const action = target2.dataset.action;
     if (action === "more-info") {
-      const key = target.dataset.key;
+      const key = target2.dataset.key;
       const id = key === "pump" ? this._config.pump || this._config.pump_speed : key === "bypass" ? this._config.dhw_active : this._config?.[key];
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "delta-history") {
-      const key = target.dataset.delta === "fjv" ? "fjv_delta" : "heating_delta";
+      const key = target2.dataset.delta === "fjv" ? "fjv_delta" : "heating_delta";
       const id = this._config?.[key];
       if (id && this._hass?.states?.[id]) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
     else if (action === "open-faults") this._openFaults();
     else if (action === "close-faults") this._closeFaults();
     else if (action === "fault-more-info") {
-      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: target.dataset.entityId } }));
+      this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: target2.dataset.entityId } }));
     } else if (action === "open-legacy-popup") this._openLegacyPopup();
     else if (action === "close-display") this._closeDisplay();
-    else if (action === "display-key") this._pressKey(target.dataset.ctl, event);
+    else if (action === "display-key") this._pressKey(target2.dataset.ctl, event);
   }
   _handleKeydown(event) {
     if (this._faultOpen) {
@@ -56545,9 +56622,9 @@ var HaHomeDesktopLayoutCardEditor2 = class extends HTMLElement {
   }
   _move(side, index, direction) {
     const cards = structuredClone(this._cards(side));
-    const target = index + direction;
-    if (target < 0 || target >= cards.length) return;
-    [cards[index], cards[target]] = [cards[target], cards[index]];
+    const target2 = index + direction;
+    if (target2 < 0 || target2 >= cards.length) return;
+    [cards[index], cards[target2]] = [cards[target2], cards[index]];
     this._emit({ ...this.config, [side]: cards });
   }
   _remove(side, index) {
@@ -63265,8 +63342,8 @@ var PowerSection = class extends Section {
     let total = 0;
     sums.forEach((s, i) => {
       total += s.sum || 0;
-      const p2 = fmtPower2(s.sum);
-      this.text(`g${i}Val`, `${p2.v} ${p2.u}`);
+      const p3 = fmtPower2(s.sum);
+      this.text(`g${i}Val`, `${p3.v} ${p3.u}`);
       this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt3(s.sum / grid * 100, 0)} %` : "\u2014");
       this.bar(`g${i}Bar`, (s.sum || 0) / max);
       const warn = this.refs[`g${i}Warn`];
@@ -63942,8 +64019,8 @@ var HaEnergyCenterCard = class extends HTMLElement {
     const max = Math.max(1, ...vals.filter(Number.isFinite));
     vals.forEach((w, i) => {
       const row = this._dlgRows[i];
-      const p2 = fmtPower2(w);
-      row.v.textContent = Number.isFinite(w) ? `${p2.v} ${p2.u}` : "Ingen data";
+      const p3 = fmtPower2(w);
+      row.v.textContent = Number.isFinite(w) ? `${p3.v} ${p3.u}` : "Ingen data";
       row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt3(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
       row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
       row.el.classList.toggle("off", !Number.isFinite(w));
