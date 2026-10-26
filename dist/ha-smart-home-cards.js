@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.211 */
+/* MRDonnii Smart Home Cards v0.5.212 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -7333,8 +7333,8 @@ function ttdRbWhen(f, date2, long = false) {
   return `${day2} ${TTD_TEXT.at} ${f.time(date2)}`;
 }
 function ttdLocalInput(date2) {
-  const pad4 = (value) => String(value).padStart(2, "0");
-  return `${date2.getFullYear()}-${pad4(date2.getMonth() + 1)}-${pad4(date2.getDate())}T${pad4(date2.getHours())}:${pad4(date2.getMinutes())}`;
+  const pad5 = (value) => String(value).padStart(2, "0");
+  return `${date2.getFullYear()}-${pad5(date2.getMonth() + 1)}-${pad5(date2.getDate())}T${pad5(date2.getHours())}:${pad5(date2.getMinutes())}`;
 }
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
@@ -26172,14 +26172,14 @@ function Zx({ hass: t, config: e, host: a }) {
   }), f("standby_control") && (0, u.jsx)("button", { className: `level-off${Zt ? " active" : ""}`, "aria-haspopup": "dialog", "aria-pressed": Zt, disabled: S !== null, onClick: () => ui(true), children: "OFF" })] })] }), Uh && (0, u.jsxs)("div", { className: "active-decision", children: [(0, u.jsx)("span", { children: "Aktiv beslutning" }), (0, u.jsx)("strong", { children: Zt ? "OFF \xB7 anl\xE6g slukket" : (0, u.jsxs)(u.Fragment, { children: ["Trin ", Se(Sl), " \xB7 ", wl(o("effective_source")).replaceAll("_", " ")] }) }), (0, u.jsx)("small", { children: wl(o("effective_reason"), "Afventer controllerens beslutning") })] })] }), Gh = Ro.length > 0 && (0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(ph, { size: 20 }), (0, u.jsx)("strong", { children: "Hurtig boost" })] }), (0, u.jsx)("div", { className: `mini-buttons ${Ro.length === 3 ? "three" : Ro.length === 2 ? "two" : "one"}`, children: Ro.map((x) => (0, u.jsxs)("button", { className: Dh === x || S === `boost-${x}` ? "active" : "", "aria-pressed": Dh === x, disabled: S !== null || ht, onClick: () => void T(`boost-${x}`, `boost_${x}`, "button", "press", {}, `Quick Boost ${x} min startet.`), children: [x, " min"] }, x)) }), Ch && (f("boost_stop") ? (0, u.jsxs)("button", { className: "text-action", onClick: () => void T("boost-stop", "boost_stop", "button", "press", {}, "Quick Boost stoppet."), children: [yl(Oo), " \xB7 stop"] }) : (0, u.jsx)("small", { className: "control-footnote", children: yl(Oo) }))] }), qh = f("bypass_control") && (0, u.jsxs)("article", { className: "surface mini-control", children: [(0, u.jsxs)("div", { className: "mini-control-title", children: [(0, u.jsx)(Bb, { size: 20 }), (0, u.jsx)("strong", { children: "Bypass-styring" })] }), (0, u.jsxs)("div", { className: "mini-buttons two", children: [(0, u.jsx)("button", { className: Tt("bypass_control") === "off" ? "active" : "", "aria-pressed": Tt("bypass_control") === "off", disabled: S !== null || J, onClick: () => void Rh("off", "Bypass sat til Auto."), children: "Auto" }), (0, u.jsx)("button", { className: Tt("bypass_control") === "on" ? "active" : "", "aria-pressed": Tt("bypass_control") === "on", disabled: S !== null || ht || J, onClick: () => void Rh("on", "Bypass \xF8nskes \xE5ben."), children: "On" })] }), b.bypass && (0, u.jsxs)("small", { className: "control-footnote", children: ["Faktisk: ", en] })] }), jh = f("bonfire_control") && (0, u.jsxs)("article", { className: `surface status-action-card bonfire-card${dt ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon smoke", children: (0, u.jsx)(jb, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "B\xE5l i haven" }), (0, u.jsx)("strong", { children: dt ? "Aktiv \xB7 anl\xE6g slukket" : "Ikke aktiv" }), (0, u.jsx)("small", { children: dt ? `${yl(U)} \xB7 stopper selv` : ht ? "Ikke under pejsefunktion" : Zt ? "Ikke mens anl\xE6gget er slukket" : "Slukker anl\xE6gget, t\xE6nder selv igen" })] }), (0, u.jsx)("div", { className: "fireplace-actions bonfire-actions", children: dt ? (0, u.jsx)("button", { disabled: S !== null, onClick: () => void T("bonfire-stop", "bonfire_control", "select", "select_option", { option: "Slukket" }, "B\xE5l-tilstand stoppet.", "Slukket"), children: "Stop" }) : Gx.map(([x, G]) => (0, u.jsx)("button", { disabled: S !== null || ht || Zt, onClick: () => void T(`bonfire-${x}`, "bonfire_control", "select", "select_option", { option: x }, `B\xE5l-tilstand startet i ${G}.`, x), children: G }, x)) })] }), Lh = f("fireplace_control", "fireplace_active", "fireplace_remaining", "fireplace_auto_signal") && (0, u.jsxs)("article", { className: "surface status-action-card", children: [(0, u.jsx)("div", { className: `status-action-icon flame${ke ? " auto-active" : ""}`, "aria-label": ke ? "Autopejs aktiv" : void 0, children: (0, u.jsx)(oi, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Pejsefunktion" }), (0, u.jsx)("strong", { children: ke ? "Autopejs aktiv" : ht ? "Aktiv" : "Ikke aktiv" }), Bh !== null && (0, u.jsx)("small", { children: Bh })] }), f("fireplace_control") && (0, u.jsx)("div", { className: "fireplace-actions", children: ht ? (0, u.jsx)("button", { disabled: S !== null, onClick: () => void T("fireplace-stop", "fireplace_control", "select", "select_option", { option: "Slukket" }, "Pejsefunktion stoppet.", "Slukket"), children: "Stop" }) : (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("button", { className: Tt("fireplace_control") === "15 min" ? "active" : "", "aria-pressed": Tt("fireplace_control") === "15 min", disabled: S !== null, onClick: () => void T("fireplace-15", "fireplace_control", "select", "select_option", { option: "15 min" }, "Pejsefunktion startet i 15 min.", "15 min"), children: "15" }), (0, u.jsx)("button", { className: Tt("fireplace_control") === "30 min" ? "active" : "", "aria-pressed": Tt("fireplace_control") === "30 min", disabled: S !== null, onClick: () => void T("fireplace-30", "fireplace_control", "select", "select_option", { option: "30 min" }, "Pejsefunktion startet i 30 min.", "30 min"), children: "30" })] }) })] }), Yh = f("cooling_state", "cooling_control"), d1 = (Yh || f("cool_30", "cool_60", "cool_120")) && (0, u.jsxs)("article", { className: `surface status-action-card cooling-card${va || qa ? " active" : ""}`, children: [(0, u.jsx)("div", { className: "status-action-icon", children: (0, u.jsx)(No, { size: 24 }) }), (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { children: "Frik\xF8ling" }), (0, u.jsx)("strong", { children: va ? "K\xF8l aktiv" : f("cooling_state") ? Yx(qc) : "Ikke aktiv" }), (0, u.jsx)("small", { children: va ? `${yl(jc)} \xB7 bypass \xE5ben og boost` : Yh ? qa ? "Automatik aktiv" : "Automatik sl\xE5et fra" : "Bypass \xE5ben og boost" })] }), (0, u.jsxs)("div", { className: "fireplace-actions cooling-actions", children: [Mh && (0, u.jsx)("button", { className: va ? "active" : "", "aria-haspopup": "dialog", disabled: S !== null || ht || Zt, title: ht ? "Ikke under pejsefunktion" : "\xC5bn bypass og k\xF8r boost i en periode", onClick: () => fi(true), children: "K\xF8l" }), Mh && va && f("cool_stop") && (0, u.jsx)("button", { className: "stop", disabled: S !== null, onClick: () => void T("cool-stop", "cool_stop", "button", "press", {}, "K\xF8l stoppet."), children: "Stop" }), f("cooling_control") && (0, u.jsx)("button", { className: qa ? "active" : "", "aria-pressed": qa, disabled: S !== null, onClick: () => !qa && void T("cooling", "cooling_control", "switch", "turn_on", {}, "Frik\xF8ling aktiveret.", "on"), children: "Til" }), f("cooling_control") && (0, u.jsx)("button", { className: qa ? "" : "active", "aria-pressed": !qa, disabled: S !== null, onClick: () => qa && void T("cooling", "cooling_control", "switch", "turn_off", {}, "Frik\xF8ling deaktiveret.", "off"), children: "Fra" })] })] }), Vh = (0, u.jsxs)(u.Fragment, { children: [h1, (Gh || qh) && (0, u.jsxs)("div", { className: "pro-control-pair", children: [Gh, qh] }), (jh || Lh) && (0, u.jsxs)("div", { className: "pro-control-pair", children: [jh, Lh] }), d1] }), Qc = (x) => {
     let G = x.target.closest("[data-sensor]")?.getAttribute("data-sensor");
     G && Nt(G);
-  }, pi = [f("co2") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "co2", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "CO\u2082" }), (0, u.jsxs)("strong", { children: [Se(Xt), " ", (0, u.jsx)("small", { children: "ppm" })] }), (0, u.jsx)("em", { children: Xt === null ? "Ukendt" : Xt < 800 ? "God" : Xt < 1200 ? "Moderat" : "H\xF8j" }), (0, u.jsx)("i", { style: { width: `${Xt === null ? 0 : Math.min(100, Math.max(5, Xt / 16))}%` } })] }, "co2"), f("humidity") && (0, u.jsxs)("div", { className: "climate-metric blue", "data-sensor": "humidity", children: [(0, u.jsx)("span", { className: "metric-drop", children: "\u25CF" }), (0, u.jsx)("span", { children: "Luftfugtighed" }), (0, u.jsxs)("strong", { children: [Se(Ct), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: Ct === null ? "Ukendt" : Ct < 60 ? "Normal" : "H\xF8j" }), (0, u.jsx)("i", { style: { width: `${Ct ?? 0}%` } })] }, "humidity"), f("filter_life") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "filter_life", children: [(0, u.jsx)("span", { className: "metric-filter", children: "\u25A7" }), (0, u.jsx)("span", { children: "Filter" }), (0, u.jsxs)("strong", { children: [Se(Pt), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: Pt === null ? "Ukendt" : Pt > 40 ? "OK" : Pt > 15 ? "Snart skift" : "Skift filter" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, Pt ?? 0))}%` } })] }, "filter"), f("afterheat_climate") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_selection", children: [(0, u.jsx)("span", { className: "metric-heat", children: "\u224B" }), (0, u.jsx)("span", { children: "Eftervarme setpunkt" }), (0, u.jsx)("strong", { children: mi === "off" ? "OFF" : xl(mi) }), (0, u.jsx)("em", { children: Hc }), (0, u.jsx)("i", { style: { width: `${mi === "off" ? 0 : (mi - 10) / 25 * 100}%` } })] }, "afterheat")].filter(Boolean), Ho = [f("frost_state") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "frost_state", children: [(0, u.jsx)(No, { size: 21 }), (0, u.jsx)("span", { children: "Frost i veksler" }), (0, u.jsx)("strong", { children: { ok: "OK", watch: "Hold \xF8je", risk: "Risiko" }[String(o("frost_state"))] ?? "\u2014" }), (0, u.jsxs)("em", { children: ["Afkast T4 ", xl(r("exhaust_temperature"))] }), (0, u.jsx)("i", { style: { width: o("frost_state") === "risk" ? "100%" : o("frost_state") === "watch" ? "50%" : "5%" } })] }, "frost"), f("filter_power", "sfp") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "filter_power", children: [(0, u.jsx)(dh, { size: 21 }), (0, u.jsx)("span", { children: "Filter \xB7 str\xF8m" }), (0, u.jsx)("strong", { children: r("filter_power") === null ? "\u2014" : `${Math.round((r("filter_power") - 1) * 100)} %` }), (0, u.jsx)("em", { children: r("sfp") === null ? "L\xE6rer rent filter" : `SFP ${Se(r("sfp"))} W/(m\xB3/s)` }), (0, u.jsx)("i", { style: { width: `${Math.min(100, Math.max(0, ((r("filter_power") ?? 1) - 1) * 400))}%` } })] }, "filter-power"), f("recovered_today") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "recovered_today", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "Genvundet i dag \xB7 ansl\xE5et" }), (0, u.jsxs)("strong", { children: [xh(r("recovered_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("heat_price") && (0, u.jsxs)("em", { children: ["Teoretisk varmev\xE6rdi ca. ", wh(r("recovered_today"), r("heat_price"))] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("recovered_today") ?? 0) * 5)}%` } })] }, "recovered"), f("unit_energy_today", "measured_energy_today") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": f("measured_energy_today") && !f("unit_energy_today") ? "measured_energy_today" : "unit_energy_today", children: [(0, u.jsx)(mh, { size: 21 }), (0, u.jsxs)("span", { children: ["Str\xF8m i dag", r("measured_energy_today") !== null ? " \xB7 m\xE5lt" : " \xB7 ansl\xE5et"] }), (0, u.jsxs)("strong", { children: [xh(r("measured_energy_today") ?? r("unit_energy_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("electricity_price") && (0, u.jsxs)("em", { children: ["Ca. ", wh(r("measured_energy_today") ?? r("unit_energy_today"), r("electricity_price")), " ved aktuel elpris"] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("measured_energy_today") ?? r("unit_energy_today") ?? 0) * 50)}%` } })] }, "energy"), f("afterheat_today") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_today", children: [(0, u.jsx)(oi, { size: 21 }), (0, u.jsx)("span", { children: "Eftervarme i dag \xB7 ansl\xE5et" }), (0, u.jsxs)("strong", { children: [xh(r("afterheat_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("heat_price") && (0, u.jsxs)("em", { children: ["Ca. ", wh(r("afterheat_today"), r("heat_price")), " ved aktuel varmepris"] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("afterheat_today") ?? 0) * 50)}%` } })] }, "afterheat-today")].filter(Boolean), Xh = pi.length > 0 || Ho.length > 0, Zc = [f("supply_recovery") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "supply_recovery", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "Genvinding \xB7 indbl\xE6sning" }), (0, u.jsxs)("strong", { children: [Se(r("supply_recovery")), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: "(T2 \u2212 T1) / (T3 \u2212 T1)" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, r("supply_recovery") ?? 0))}%` } })] }, "supply-recovery"), f("recovered_heat") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "recovered_heat", children: [(0, u.jsx)(ph, { size: 21 }), (0, u.jsx)("span", { children: "Genvundet varme" }), (0, u.jsxs)("strong", { children: [Se(r("recovered_heat")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Veksler \u2192 indbl\xE6sning" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("recovered_heat") ?? 0) / 30)}%` } })] }, "recovered-heat"), f("afterheat_lift") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_lift", children: [(0, u.jsx)("span", { className: "metric-heat", children: "\u224B" }), (0, u.jsx)("span", { children: "Eftervarme l\xF8ft" }), (0, u.jsx)("strong", { children: xl(r("afterheat_lift")) }), (0, u.jsx)("em", { children: "T2AH \u2212 T2" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, (r("afterheat_lift") ?? 0) * 10))}%` } })] }, "lift"), f("afterheat_power") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_power", children: [(0, u.jsx)(oi, { size: 21 }), (0, u.jsx)("span", { children: "Eftervarme effekt" }), (0, u.jsxs)("strong", { children: [Se(r("afterheat_power")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Varme tilf\xF8rt luften" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("afterheat_power") ?? 0) / 20)}%` } })] }, "afterheat-power")].filter(Boolean), Qh = (r("supply_recovery") !== null || r("afterheat_lift") !== null) && Zc.length > 0, Zh = f("afterheat_climate"), Kh = Zh || Qh;
+  }, pi2 = [f("co2") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "co2", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "CO\u2082" }), (0, u.jsxs)("strong", { children: [Se(Xt), " ", (0, u.jsx)("small", { children: "ppm" })] }), (0, u.jsx)("em", { children: Xt === null ? "Ukendt" : Xt < 800 ? "God" : Xt < 1200 ? "Moderat" : "H\xF8j" }), (0, u.jsx)("i", { style: { width: `${Xt === null ? 0 : Math.min(100, Math.max(5, Xt / 16))}%` } })] }, "co2"), f("humidity") && (0, u.jsxs)("div", { className: "climate-metric blue", "data-sensor": "humidity", children: [(0, u.jsx)("span", { className: "metric-drop", children: "\u25CF" }), (0, u.jsx)("span", { children: "Luftfugtighed" }), (0, u.jsxs)("strong", { children: [Se(Ct), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: Ct === null ? "Ukendt" : Ct < 60 ? "Normal" : "H\xF8j" }), (0, u.jsx)("i", { style: { width: `${Ct ?? 0}%` } })] }, "humidity"), f("filter_life") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "filter_life", children: [(0, u.jsx)("span", { className: "metric-filter", children: "\u25A7" }), (0, u.jsx)("span", { children: "Filter" }), (0, u.jsxs)("strong", { children: [Se(Pt), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: Pt === null ? "Ukendt" : Pt > 40 ? "OK" : Pt > 15 ? "Snart skift" : "Skift filter" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, Pt ?? 0))}%` } })] }, "filter"), f("afterheat_climate") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_selection", children: [(0, u.jsx)("span", { className: "metric-heat", children: "\u224B" }), (0, u.jsx)("span", { children: "Eftervarme setpunkt" }), (0, u.jsx)("strong", { children: mi === "off" ? "OFF" : xl(mi) }), (0, u.jsx)("em", { children: Hc }), (0, u.jsx)("i", { style: { width: `${mi === "off" ? 0 : (mi - 10) / 25 * 100}%` } })] }, "afterheat")].filter(Boolean), Ho = [f("frost_state") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "frost_state", children: [(0, u.jsx)(No, { size: 21 }), (0, u.jsx)("span", { children: "Frost i veksler" }), (0, u.jsx)("strong", { children: { ok: "OK", watch: "Hold \xF8je", risk: "Risiko" }[String(o("frost_state"))] ?? "\u2014" }), (0, u.jsxs)("em", { children: ["Afkast T4 ", xl(r("exhaust_temperature"))] }), (0, u.jsx)("i", { style: { width: o("frost_state") === "risk" ? "100%" : o("frost_state") === "watch" ? "50%" : "5%" } })] }, "frost"), f("filter_power", "sfp") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "filter_power", children: [(0, u.jsx)(dh, { size: 21 }), (0, u.jsx)("span", { children: "Filter \xB7 str\xF8m" }), (0, u.jsx)("strong", { children: r("filter_power") === null ? "\u2014" : `${Math.round((r("filter_power") - 1) * 100)} %` }), (0, u.jsx)("em", { children: r("sfp") === null ? "L\xE6rer rent filter" : `SFP ${Se(r("sfp"))} W/(m\xB3/s)` }), (0, u.jsx)("i", { style: { width: `${Math.min(100, Math.max(0, ((r("filter_power") ?? 1) - 1) * 400))}%` } })] }, "filter-power"), f("recovered_today") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "recovered_today", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "Genvundet i dag \xB7 ansl\xE5et" }), (0, u.jsxs)("strong", { children: [xh(r("recovered_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("heat_price") && (0, u.jsxs)("em", { children: ["Teoretisk varmev\xE6rdi ca. ", wh(r("recovered_today"), r("heat_price"))] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("recovered_today") ?? 0) * 5)}%` } })] }, "recovered"), f("unit_energy_today", "measured_energy_today") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": f("measured_energy_today") && !f("unit_energy_today") ? "measured_energy_today" : "unit_energy_today", children: [(0, u.jsx)(mh, { size: 21 }), (0, u.jsxs)("span", { children: ["Str\xF8m i dag", r("measured_energy_today") !== null ? " \xB7 m\xE5lt" : " \xB7 ansl\xE5et"] }), (0, u.jsxs)("strong", { children: [xh(r("measured_energy_today") ?? r("unit_energy_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("electricity_price") && (0, u.jsxs)("em", { children: ["Ca. ", wh(r("measured_energy_today") ?? r("unit_energy_today"), r("electricity_price")), " ved aktuel elpris"] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("measured_energy_today") ?? r("unit_energy_today") ?? 0) * 50)}%` } })] }, "energy"), f("afterheat_today") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_today", children: [(0, u.jsx)(oi, { size: 21 }), (0, u.jsx)("span", { children: "Eftervarme i dag \xB7 ansl\xE5et" }), (0, u.jsxs)("strong", { children: [xh(r("afterheat_today")), " ", (0, u.jsx)("small", { children: "kWh" })] }), f("heat_price") && (0, u.jsxs)("em", { children: ["Ca. ", wh(r("afterheat_today"), r("heat_price")), " ved aktuel varmepris"] }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("afterheat_today") ?? 0) * 50)}%` } })] }, "afterheat-today")].filter(Boolean), Xh = pi2.length > 0 || Ho.length > 0, Zc = [f("supply_recovery") && (0, u.jsxs)("div", { className: "climate-metric green", "data-sensor": "supply_recovery", children: [(0, u.jsx)(ri, { size: 21 }), (0, u.jsx)("span", { children: "Genvinding \xB7 indbl\xE6sning" }), (0, u.jsxs)("strong", { children: [Se(r("supply_recovery")), " ", (0, u.jsx)("small", { children: "%" })] }), (0, u.jsx)("em", { children: "(T2 \u2212 T1) / (T3 \u2212 T1)" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, r("supply_recovery") ?? 0))}%` } })] }, "supply-recovery"), f("recovered_heat") && (0, u.jsxs)("div", { className: "climate-metric cyan", "data-sensor": "recovered_heat", children: [(0, u.jsx)(ph, { size: 21 }), (0, u.jsx)("span", { children: "Genvundet varme" }), (0, u.jsxs)("strong", { children: [Se(r("recovered_heat")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Veksler \u2192 indbl\xE6sning" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("recovered_heat") ?? 0) / 30)}%` } })] }, "recovered-heat"), f("afterheat_lift") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_lift", children: [(0, u.jsx)("span", { className: "metric-heat", children: "\u224B" }), (0, u.jsx)("span", { children: "Eftervarme l\xF8ft" }), (0, u.jsx)("strong", { children: xl(r("afterheat_lift")) }), (0, u.jsx)("em", { children: "T2AH \u2212 T2" }), (0, u.jsx)("i", { style: { width: `${Math.max(0, Math.min(100, (r("afterheat_lift") ?? 0) * 10))}%` } })] }, "lift"), f("afterheat_power") && (0, u.jsxs)("div", { className: "climate-metric neutral", "data-sensor": "afterheat_power", children: [(0, u.jsx)(oi, { size: 21 }), (0, u.jsx)("span", { children: "Eftervarme effekt" }), (0, u.jsxs)("strong", { children: [Se(r("afterheat_power")), " ", (0, u.jsx)("small", { children: "W" })] }), (0, u.jsx)("em", { children: "Varme tilf\xF8rt luften" }), (0, u.jsx)("i", { style: { width: `${Math.min(100, (r("afterheat_power") ?? 0) / 20)}%` } })] }, "afterheat-power")].filter(Boolean), Qh = (r("supply_recovery") !== null || r("afterheat_lift") !== null) && Zc.length > 0, Zh = f("afterheat_climate"), Kh = Zh || Qh;
   return (0, u.jsxs)("section", { className: "dashboard-overview", children: [(0, u.jsxs)("header", { className: "overview-heading-row", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "OVERBLIK" }), (0, u.jsx)("h1", { children: "Aktuel drift og status" }), (0, u.jsx)("p", { children: `Live visning af ${_.full ?? "anl\xE6gget"}, luftveje, sensorer og den styring der er aktiv lige nu.` })] }), (0, u.jsxs)("div", { className: "overview-status-pills", children: [f("active_master") && (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "status-led" }), (0, u.jsx)("small", { children: "Master" }), (0, u.jsx)("strong", { children: $b(o("active_master")) })] }), f("rs485_healthy") && (0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: `status-led ${Gc ? "" : "warn"}` }), (0, u.jsx)("small", { children: "Bus" }), (0, u.jsx)("strong", { children: Gc ? "Sund" : "Afventer" })] }), f("mode_control") && (0, u.jsxs)("div", { children: [(0, u.jsx)(ri, { size: 18 }), (0, u.jsx)("small", { children: "Driftstilstand" }), (0, u.jsx)("strong", { children: si(o("mode_control")) })] }), f("power") && (0, u.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => Nt("power"), onKeyDown: (x) => {
     (x.key === "Enter" || x.key === " ") && (x.preventDefault(), Nt("power"));
   }, children: [(0, u.jsx)(mh, { size: 18 }), (0, u.jsx)("small", { children: "Forbrug" }), (0, u.jsx)("strong", { children: Jb(r("power")) })] }), f("attic_temperature") && (0, u.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => Nt("attic_temperature"), onKeyDown: (x) => {
     (x.key === "Enter" || x.key === " ") && (x.preventDefault(), Nt("attic_temperature"));
   }, children: [(0, u.jsx)(qb, { size: 18 }), (0, u.jsx)("small", { children: "Loftrum" }), (0, u.jsx)("strong", { children: xl(r("attic_temperature")) })] }), f("outdoor_air_quality") && (0, u.jsxs)("div", { className: "power-pill", role: "button", tabIndex: 0, onClick: () => Nt("outdoor_air_quality"), onKeyDown: (x) => {
     (x.key === "Enter" || x.key === " ") && (x.preventDefault(), Nt("outdoor_air_quality"));
-  }, title: r("outdoor_pm25") === null ? "Google Air Quality \xB7 udend\xF8rs modeldata" : `Google Air Quality \xB7 PM2.5 ${r("outdoor_pm25").toLocaleString("da-DK")} \xB5g/m\xB3`, children: [(0, u.jsx)(ri, { size: 18 }), (0, u.jsx)("small", { children: "Udeluft \xB7 Google" }), (0, u.jsx)("strong", { children: Lx(o("outdoor_air_quality")) })] })] })] }), hi.active && hi.text && (0, u.jsxs)("div", { className: `diagnostics-alarm ${o("diagnostics_status")}`, role: "alert", "data-sensor": f("diagnostics_alarm_text") ? "diagnostics_alarm_text" : "diagnostics_status", onClick: () => Nt(f("diagnostics_alarm_text") ? "diagnostics_alarm_text" : "diagnostics_status"), children: [(0, u.jsx)("strong", { children: o("diagnostics_status") === "critical" ? "Fejl" : o("diagnostics_status") === "warning" ? "Advarsel" : "Bem\xE6rk" }), (0, u.jsx)("span", { children: hi.text })] }), (0, u.jsxs)("div", { className: `dashboard-main-grid${Xh ? "" : " without-climate"}${Kh ? "" : " without-afterheat"}`, children: [(0, u.jsxs)("article", { className: "surface pro-air-card", children: [(0, u.jsxs)("div", { className: "pro-card-head", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Luftstr\xF8mme og temperaturer" }), (0, u.jsx)("p", { children: `Live luftveje gennem ${_.full ?? "anl\xE6gget"} med aktuelle temperaturer og fysisk status.` })] }), (0, u.jsxs)("span", { className: `status-chip${Lc ? "" : " muted"}`, children: [(0, u.jsx)("span", { className: "live-dot" }), Lc ? "Live" : "Afventer"] })] }), (0, u.jsx)(fh, { onSensor: Nt, outdoor: xt, extract: Ot, exhaust: A, beforeHeater: da, afterHeater: ma, room: je, frost: Ne, flowWater: Te, returnWater: _l, supplyRpm: pa, extractRpm: jt, supplyPercent: It, extractPercent: Le, fanLevel: p, bypassActual: ze, bypassRequest: Ye, heating: Mt, recovery: o1, busActive: Gc, bypassRaw: C2, afterheatLockout: te, afterheatCoil: e.afterheat_coil === "water" ? "water" : "electric", bypassTravelDirection: ga, bypassTravelSeconds: ce, bypassTravelTotal: Ba, inlineControls: Vh, parts: b, supplySensor: y, bypassSensor: m, unitName: _.full, unitLabel: _.short, control: !Lc || o("effective_source") === null ? null : yh({ active_master: o("active_master"), effective_source: o("effective_source"), effective_level: p, effective_reason: o("effective_reason"), fireplace: ht }) })] }), (0, u.jsx)("aside", { className: "pro-control-column", children: Vh }), Xh && (0, u.jsxs)("article", { className: "surface climate-panel", children: [pi.length > 0 && (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: "pro-card-head compact", children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Indeklimadata" }), (0, u.jsx)("p", { children: "Aktuelle v\xE6rdier" })] }) }), (0, u.jsx)("div", { className: `climate-metrics${Zb(pi.length)}`, onClick: Qc, children: pi })] }), Ho.length > 0 && (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: `pro-card-head compact${pi.length > 0 ? " air-calc-head" : ""}`, children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Diagnose og energi i dag" }), (0, u.jsx)("p", { children: f("diagnostics_status") ? hi.active ? wl(hi.text) : "Ingen advarsler" : "Aktuelle v\xE6rdier" })] }) }), (0, u.jsx)("div", { className: `climate-metrics${Zb(Ho.length)}`, onClick: Qc, children: Ho })] })] }), Kh && (0, u.jsxs)("article", { className: "surface afterheat-setpoint-card", children: [Zh && (0, u.jsx)(Vb, { value: mi, onChange: c1, heating: Mt, lockout: te, cutoff: Eo, outdoor: xt, airBefore: da, airAfter: ma, registered: l1, lastOn: Eh, current: Xc, onConfirm: s1, onCancel: () => Yc(null), busy: S !== null, showBefore: f("afterheat_before"), showRegistered: f("afterheat_selection") }), Qh ? (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: "pro-card-head compact air-calc-head", children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Beregnet fra m\xE5lt T2" }), (0, u.jsxs)("p", { children: ["Luftm\xE6ngde ansl\xE5et for aktuelt trin", r("supply_airflow") === null ? "" : ` \xB7 ${Se(r("supply_airflow"))} m\xB3/h`] })] }) }), (0, u.jsx)("div", { className: `climate-metrics ${Zc.length === 1 ? "metrics-1" : "metrics-2"}`, onClick: Qc, children: Zc })] }) : null] })] }), e1 && (0, u.jsx)("div", { className: "standby-backdrop", onMouseDown: (x) => {
+  }, title: r("outdoor_pm25") === null ? "Google Air Quality \xB7 udend\xF8rs modeldata" : `Google Air Quality \xB7 PM2.5 ${r("outdoor_pm25").toLocaleString("da-DK")} \xB5g/m\xB3`, children: [(0, u.jsx)(ri, { size: 18 }), (0, u.jsx)("small", { children: "Udeluft \xB7 Google" }), (0, u.jsx)("strong", { children: Lx(o("outdoor_air_quality")) })] })] })] }), hi.active && hi.text && (0, u.jsxs)("div", { className: `diagnostics-alarm ${o("diagnostics_status")}`, role: "alert", "data-sensor": f("diagnostics_alarm_text") ? "diagnostics_alarm_text" : "diagnostics_status", onClick: () => Nt(f("diagnostics_alarm_text") ? "diagnostics_alarm_text" : "diagnostics_status"), children: [(0, u.jsx)("strong", { children: o("diagnostics_status") === "critical" ? "Fejl" : o("diagnostics_status") === "warning" ? "Advarsel" : "Bem\xE6rk" }), (0, u.jsx)("span", { children: hi.text })] }), (0, u.jsxs)("div", { className: `dashboard-main-grid${Xh ? "" : " without-climate"}${Kh ? "" : " without-afterheat"}`, children: [(0, u.jsxs)("article", { className: "surface pro-air-card", children: [(0, u.jsxs)("div", { className: "pro-card-head", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Luftstr\xF8mme og temperaturer" }), (0, u.jsx)("p", { children: `Live luftveje gennem ${_.full ?? "anl\xE6gget"} med aktuelle temperaturer og fysisk status.` })] }), (0, u.jsxs)("span", { className: `status-chip${Lc ? "" : " muted"}`, children: [(0, u.jsx)("span", { className: "live-dot" }), Lc ? "Live" : "Afventer"] })] }), (0, u.jsx)(fh, { onSensor: Nt, outdoor: xt, extract: Ot, exhaust: A, beforeHeater: da, afterHeater: ma, room: je, frost: Ne, flowWater: Te, returnWater: _l, supplyRpm: pa, extractRpm: jt, supplyPercent: It, extractPercent: Le, fanLevel: p, bypassActual: ze, bypassRequest: Ye, heating: Mt, recovery: o1, busActive: Gc, bypassRaw: C2, afterheatLockout: te, afterheatCoil: e.afterheat_coil === "water" ? "water" : "electric", bypassTravelDirection: ga, bypassTravelSeconds: ce, bypassTravelTotal: Ba, inlineControls: Vh, parts: b, supplySensor: y, bypassSensor: m, unitName: _.full, unitLabel: _.short, control: !Lc || o("effective_source") === null ? null : yh({ active_master: o("active_master"), effective_source: o("effective_source"), effective_level: p, effective_reason: o("effective_reason"), fireplace: ht }) })] }), (0, u.jsx)("aside", { className: "pro-control-column", children: Vh }), Xh && (0, u.jsxs)("article", { className: "surface climate-panel", children: [pi2.length > 0 && (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: "pro-card-head compact", children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Indeklimadata" }), (0, u.jsx)("p", { children: "Aktuelle v\xE6rdier" })] }) }), (0, u.jsx)("div", { className: `climate-metrics${Zb(pi2.length)}`, onClick: Qc, children: pi2 })] }), Ho.length > 0 && (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: `pro-card-head compact${pi2.length > 0 ? " air-calc-head" : ""}`, children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Diagnose og energi i dag" }), (0, u.jsx)("p", { children: f("diagnostics_status") ? hi.active ? wl(hi.text) : "Ingen advarsler" : "Aktuelle v\xE6rdier" })] }) }), (0, u.jsx)("div", { className: `climate-metrics${Zb(Ho.length)}`, onClick: Qc, children: Ho })] })] }), Kh && (0, u.jsxs)("article", { className: "surface afterheat-setpoint-card", children: [Zh && (0, u.jsx)(Vb, { value: mi, onChange: c1, heating: Mt, lockout: te, cutoff: Eo, outdoor: xt, airBefore: da, airAfter: ma, registered: l1, lastOn: Eh, current: Xc, onConfirm: s1, onCancel: () => Yc(null), busy: S !== null, showBefore: f("afterheat_before"), showRegistered: f("afterheat_selection") }), Qh ? (0, u.jsxs)(u.Fragment, { children: [(0, u.jsx)("div", { className: "pro-card-head compact air-calc-head", children: (0, u.jsxs)("div", { children: [(0, u.jsx)("h2", { children: "Beregnet fra m\xE5lt T2" }), (0, u.jsxs)("p", { children: ["Luftm\xE6ngde ansl\xE5et for aktuelt trin", r("supply_airflow") === null ? "" : ` \xB7 ${Se(r("supply_airflow"))} m\xB3/h`] })] }) }), (0, u.jsx)("div", { className: `climate-metrics ${Zc.length === 1 ? "metrics-1" : "metrics-2"}`, onClick: Qc, children: Zc })] }) : null] })] }), e1 && (0, u.jsx)("div", { className: "standby-backdrop", onMouseDown: (x) => {
     x.target === x.currentTarget && ui(false);
   }, children: (0, u.jsxs)("section", { className: "standby-dialog surface", role: "dialog", "aria-modal": "true", "aria-label": Zt ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget", children: [(0, u.jsxs)("div", { className: "standby-dialog-heading", children: [(0, u.jsxs)("div", { children: [(0, u.jsx)("span", { className: "eyebrow", children: "VENTILATION" }), (0, u.jsx)("h2", { children: Zt ? "Anl\xE6gget er slukket" : "Sluk anl\xE6gget" })] }), (0, u.jsx)("button", { type: "button", "aria-label": "Luk", onClick: () => ui(false), children: "\xD7" })] }), (0, u.jsx)("p", { className: "standby-dialog-lead", children: Zt ? kh === null ? "Begge ventilatorer st\xE5r stille, til du t\xE6nder igen." : `Begge ventilatorer st\xE5r stille \xB7 ${yl(kh)}.` : "Begge ventilatorer stopper. Pejs, b\xE5l og boost kan ikke startes, mens anl\xE6gget er slukket." }), (0, u.jsx)("div", { className: "standby-choices", children: jx.map(([x, G, ja]) => (0, u.jsxs)("button", { type: "button", className: ue === x ? "active" : "", disabled: S !== null, onClick: () => {
     ui(false), T(`standby-${x}`, "standby_control", "select", "select_option", { option: x }, x === "Permanent" ? "Anl\xE6gget er slukket, til du t\xE6nder igen." : x === "Til i morgen kl. 07" ? "Anl\xE6gget er slukket til i morgen kl. 07:00." : `Anl\xE6gget er slukket i ${G}.`, x);
@@ -32948,9 +32948,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       let lo = Math.floor(Math.min(...values, ...targets) - 0.6);
       let hi = Math.ceil(Math.max(...values, ...targets) + 0.6);
       if (hi - lo < 4) {
-        const pad4 = (4 - (hi - lo)) / 2;
-        lo -= pad4;
-        hi += pad4;
+        const pad5 = (4 - (hi - lo)) / 2;
+        lo -= pad5;
+        hi += pad5;
       }
       const pos = (value) => (value - lo) / (hi - lo) * 100;
       if (targets.length) {
@@ -41272,8 +41272,8 @@ var ThWeatherCard = class extends HTMLElement {
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
       F\xF8les som <b>${fmt(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
       Vind <b>${fmt((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
-    const hs = this.$("hs"), sc = hs.scrollLeft, pad4 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
-    const lo = sc + 22 - pad4, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad4 - tw);
+    const hs = this.$("hs"), sc = hs.scrollLeft, pad5 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
+    const lo = sc + 22 - pad5, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad5 - tw);
     let L = (i + 1) * this._cw + 8;
     if (L > hi) L = i * this._cw - tw - 8;
     tip.style.left = Math.max(lo, Math.min(hi, L)) + "px";
@@ -41793,9 +41793,9 @@ var HAWeatherChartsCard = class extends HTMLElement {
         hi += 1;
         lo -= opt.min != null ? 0 : 1;
       }
-      const pad4 = (hi - lo) * 0.08;
-      if (opt.max == null) hi += pad4;
-      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad4;
+      const pad5 = (hi - lo) * 0.08;
+      if (opt.max == null) hi += pad5;
+      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad5;
       const tk = ticks(lo, hi);
       lo = opt.min ?? tk[0];
       hi = opt.max ?? tk[tk.length - 1];
@@ -46988,8 +46988,990 @@ console.info(
   "color:#60a5fa;background:#0f172a"
 );
 
+// src/cards/th-camera-card/player.js
+var SEG = 1e4;
+var LIVE_LAG = 2e4;
+var READY_LAG = 1e4;
+var SPANS = [6e4, 2 * 6e4, 5 * 6e4, 15 * 6e4, 30 * 6e4, 36e5, 3 * 36e5, 6 * 36e5, 12 * 36e5, 24 * 36e5];
+var STEPS = [5e3, 1e4, 3e4, 6e4, 2 * 6e4, 5 * 6e4, 10 * 6e4, 15 * 6e4, 30 * 6e4, 36e5, 2 * 36e5, 3 * 36e5, 6 * 36e5, 12 * 36e5];
+var SPEEDS = [1, 2, 4, 8];
+var QKEY = "th-camera-player:quality";
+var isoZ = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "+00:00");
+var pad3 = (n) => String(n).padStart(2, "0");
+var hms = (d, sec = true) => `${pad3(d.getHours())}.${pad3(d.getMinutes())}${sec ? "." + pad3(d.getSeconds()) : ""}`;
+var durMs = (s) => {
+  const g = (r) => +((String(s || "").match(r) || [])[1] || 0);
+  return (g(/(\d+)h/) * 3600 + g(/(\d+)m/) * 60 + g(/(\d+)s/)) * 1e3;
+};
+var firstOk = (ps) => new Promise((res) => {
+  let left = ps.length;
+  if (!left) res(null);
+  ps.forEach((p) => p.then((v) => {
+    if (v) res(v);
+    else if (!--left) res(null);
+  }, () => {
+    if (!--left) res(null);
+  }));
+});
+var PI = {
+  play: '<path d="M8 5.5v13l10.5-6.5Z" fill="currentColor" stroke="none"/>',
+  pause: '<path d="M8 5.5v13M16 5.5v13" stroke-width="3"/>',
+  prev: '<path d="M6 5v14"/><path d="M19 5.5v13L9 12Z" fill="currentColor" stroke="none"/>',
+  next: '<path d="M18 5v14"/><path d="M5 5.5v13L15 12Z" fill="currentColor" stroke="none"/>',
+  back: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4h4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
+  fwd: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4.5v4h-4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+  sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+  cal: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  minus: '<path d="M6 12h12"/>',
+  plus: '<path d="M6 12h12M12 6v12"/>'
+};
+var pi = (k, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PI[k]}</svg>`;
+var CSS3 = `
+:host{display:block;position:relative;color:#f4f1ea;--gold:#e8c37e;--mut:rgba(244,241,234,.56);--hair:rgba(244,241,234,.09);--red:#ff4d63;outline:none;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--hair);touch-action:manipulation;cursor:pointer}
+.stage video,.stage .live,.stage .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .12s;pointer-events:none}
+.stage .poster{object-fit:cover;filter:blur(14px) brightness(.5) saturate(1.2);transform:scale(1.1)}
+.stage video.on,.stage .live.on,.stage .poster.on{opacity:1}
+.stage .live ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
+.stage .live img{width:100%;height:100%;object-fit:contain}
+.top{position:absolute;left:10px;right:10px;top:10px;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
+.cn{padding:5px 10px;border-radius:10px;background:rgba(10,12,18,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:12.5px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.q{margin-left:auto;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.12em;background:rgba(0,0,0,.5);backdrop-filter:blur(8px)}
+.q.live{background:var(--red);color:#fff}.q:empty{display:none}
+.spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:sp .8s linear infinite;opacity:0;transition:opacity .2s;pointer-events:none}
+.spin.on{opacity:1}@keyframes sp{to{transform:rotate(1turn)}}
+.msg{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:6px 12px;border-radius:99px;background:rgba(0,0,0,.65);font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.msg.on{opacity:1}
+.row{display:flex;align-items:center;gap:4px;margin-top:8px}
+.row button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;min-width:34px;height:34px;padding:0 8px;border-radius:11px;
+  background:rgba(255,255,255,.05);color:inherit;font:inherit;font-size:11.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--hair);transition:background .2s}
+.row button:hover{background:rgba(255,255,255,.1)}.row button:active{transform:scale(.95)}
+.row .pp{min-width:46px;background:var(--gold);color:#15110a;box-shadow:none}.row .pp:hover{background:#f1d199}
+.row .lv i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.row .lv.on{background:var(--red);color:#fff;box-shadow:none}
+.row .on2{color:var(--gold)}
+.clock{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;margin:0 4px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.grow{flex:1;min-width:0}
+.span{font-size:11px;font-weight:600;color:var(--mut);min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.date{position:relative}.date input{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.tlw{position:relative;height:58px;margin-top:8px;border-radius:12px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--hair);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.tlw.drag{cursor:grabbing}
+.tlw canvas{position:absolute;inset:0;width:100%;height:100%}
+.ph{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 10px color-mix(in srgb,var(--gold) 70%,transparent);pointer-events:none}
+.ph::before{content:"";position:absolute;left:50%;top:0;border:6px solid transparent;border-top-color:var(--gold);transform:translateX(-50%)}
+.tip{position:absolute;bottom:72px;width:168px;padding:6px;border-radius:12px;background:rgba(14,16,22,.96);box-shadow:0 14px 34px -10px #000,inset 0 0 0 1px var(--hair);pointer-events:none;opacity:0;transition:opacity .15s;z-index:3}
+.tip.on{opacity:1}.tip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#06070b}
+.tip b{display:block;font-size:11.5px;margin:5px 2px 1px}.tip small{display:block;font-size:10.5px;color:var(--mut);margin:0 2px}
+:host([compact]) .row button{min-width:32px;height:32px;padding:0 7px}
+:host([compact]) .hidec{display:none}
+:host(:fullscreen){background:#000;padding:14px;display:flex;flex-direction:column}
+:host(:fullscreen) .stage{flex:1;aspect-ratio:auto;border-radius:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+`;
+var HTML = `
+<div class="stage" part="stage">
+  <img class="poster" alt=""><video class="v" playsinline muted preload="auto"></video><video class="v" playsinline muted preload="auto"></video><div class="live"></div>
+  <div class="top"><span class="cn"></span><span class="q"></span></div><div class="spin"></div><div class="msg"></div>
+</div>
+<div class="row">
+  <button data-a="prev" title="Forrige h\xE6ndelse">${pi("prev")}</button><button data-a="back" title="10 s tilbage (\u2190)">${pi("back")}</button>
+  <button data-a="play" class="pp" title="Afspil / pause (mellemrum)">${pi("play")}</button>
+  <button data-a="fwd" title="10 s frem (\u2192)">${pi("fwd")}</button><button data-a="next" title="N\xE6ste h\xE6ndelse">${pi("next")}</button>
+  <span class="clock"></span><span class="grow"></span>
+  <button data-a="live" class="lv" title="Live (L)"><i></i>LIVE</button>
+</div>
+<div class="tlw"><canvas></canvas><div class="ph"></div><div class="tip"><img alt=""><b></b><small></small></div></div>
+<div class="row">
+  <button data-a="speed" title="Hastighed">1\xD7</button><button data-a="quality" title="Kvalitet: Auto viser lav kvalitet med det samme og skifter til h\xF8j">Auto</button>
+  <button data-a="mute" title="Lyd">${pi("mute", 17)}</button>
+  <button data-a="date" class="date" title="G\xE5 til en dato">${pi("cal", 17)}<span class="hidec">Dato</span><input type="date" tabindex="-1"></button>
+  <span class="grow"></span>
+  <button data-a="zout" title="Vis l\xE6ngere tid">${pi("minus", 16)}</button><span class="span"></span><button data-a="zin" title="Vis kortere tid">${pi("plus", 16)}</button>
+  <button data-a="full" title="Fuld sk\xE6rm (F)">${pi("full", 17)}</button>
+</div>`;
+var ThProtectPlayer = class extends HTMLElement {
+  constructor() {
+    super();
+    this._r = this.attachShadow({ mode: "open" });
+    this._r.innerHTML = `<style>${CSS3}</style>${HTML}`;
+    this._cache = /* @__PURE__ */ new Map();
+    this._bytes = 0;
+    this._gen = 0;
+    this._sgen = 0;
+    this._rate = 1;
+    this._span = 30 * 6e4;
+    this._t = Date.now();
+    this._live = false;
+    this._playing = false;
+    this._muted = true;
+    try {
+      this._quality = localStorage.getItem(QKEY) || "auto";
+    } catch (e) {
+      this._quality = "auto";
+    }
+    this._vids = [...this._r.querySelectorAll("video")];
+    this._fr = () => this._frame();
+    this._bind();
+  }
+  q(s) {
+    return this._r.querySelector(s);
+  }
+  setup(o) {
+    this._o = o;
+    this._h = o.hass;
+    this._pb = !!o.pb;
+    this.toggleAttribute("compact", !!o.compact);
+    this.q('[data-a="quality"]').style.display = this._pb ? "" : "none";
+    this._labels();
+  }
+  set hass(h) {
+    this._h = h;
+    const s = this.q(".live ha-camera-stream");
+    if (s && Date.now() - (this._hs || 0) > 6e4) {
+      this._hs = Date.now();
+      s.hass = h;
+    }
+  }
+  get cam() {
+    return this._cam?.base;
+  }
+  get time() {
+    return this._live ? null : this._t;
+  }
+  connectedCallback() {
+    if (!this.hasAttribute("tabindex")) this.tabIndex = 0;
+    clearTimeout(this._gcT);
+    if (this._cam) this._loop();
+    if (!this._ro) {
+      this._ro = new ResizeObserver(() => {
+        this._dirty = true;
+      });
+      this._ro.observe(this.q(".tlw"));
+    }
+  }
+  disconnectedCallback() {
+    cancelAnimationFrame(this._raf);
+    this._raf = null;
+    this._sgen++;
+    this._gen++;
+    this._vids.forEach((v) => v.pause());
+    this._exitLive();
+    this._playing = false;
+    this._ppBtn();
+    this._gcT = setTimeout(() => this._free(), 6e4);
+  }
+  _free() {
+    for (const e of this._cache.values()) {
+      e.ctrl?.abort();
+      if (e.url) URL.revokeObjectURL(e.url);
+    }
+    this._cache.clear();
+    this._bytes = 0;
+    this._vids.forEach((v) => {
+      v.removeAttribute("src");
+      v.load();
+      v._e = null;
+    });
+    this._cur = null;
+  }
+  _loop() {
+    if (!this._raf) this._raf = requestAnimationFrame(this._fr);
+  }
+  // Åbn et kamera på et tidspunkt (ms) eller live (null). Samme tidspunkt bevares, når man skifter kamera.
+  open(base, at, play = true) {
+    const cam = this._o?.cams().find((c2) => c2.base === base);
+    if (!cam) return;
+    if (this._cam?.base !== base) {
+      this._sgen++;
+      this._gen++;
+      this._hand = null;
+      this._vids.forEach((v) => {
+        v.pause();
+        v.classList.remove("on");
+      });
+      this._cur = null;
+      this._exitLive();
+      this._evc = null;
+    }
+    this._cam = cam;
+    this.q(".cn").textContent = cam.name;
+    this._loop();
+    if (at == null) this.goLive();
+    else {
+      this._poster(at);
+      this._seek(at, play);
+    }
+    this._o.onCam?.(base);
+  }
+  pause() {
+    if (this._live) return;
+    this._playing = false;
+    this._cur?.v.pause();
+    this._ppBtn();
+  }
+  // ---- hentning ----------------------------------------------------------------------------------------------------
+  _path(cid, q, k) {
+    const s = isoZ(k * SEG), e = isoZ((k + 1) * SEG);
+    return this._pb ? `/api/protect_playback/video/${this._o.nvr}/${cid}/${q === "hd" ? 0 : 2}/${s}/${e}` : `/api/unifiprotect/video/${this._o.nvr}/${cid}/${s}/${e}`;
+  }
+  async _fetch(path, signal) {
+    if (typeof this._h?.fetchWithAuth === "function") return this._h.fetchWithAuth(path, { signal });
+    const r = await this._h.callWS({ type: "auth/sign_path", path, expires: 300 });
+    return fetch(r.path, { signal });
+  }
+  _qs() {
+    if (!this._pb) return ["hd"];
+    if (this._quality === "sd") return ["sd"];
+    if (this._quality === "hd") return ["hd"];
+    return this._rate >= 4 ? ["sd"] : ["sd", "hd"];
+  }
+  _get(k, q, scrub = false) {
+    const cid = this._cam && this._o.cid(this._cam.base);
+    if (!cid) return null;
+    if (!this._pb) q = "hd";
+    const key = `${cid}|${q}|${k}`;
+    let e = this._cache.get(key);
+    if (e?.failed && Date.now() - e.failed > 2e4) {
+      this._cache.delete(key);
+      e = null;
+    }
+    if (e) {
+      e.used = Date.now();
+      return e;
+    }
+    if ((k + 1) * SEG > Date.now() - READY_LAG) return null;
+    const inflight = [...this._cache.values()].filter((x) => x.q === q && !x.ok && !x.failed).length;
+    if (!scrub && inflight >= (q === "hd" ? 3 : 4)) return null;
+    e = { key, k, q, cid, used: Date.now(), ctrl: new AbortController() };
+    e.p = (async () => {
+      const res = await this._fetch(this._path(cid, q, k), e.ctrl.signal);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const b = await res.blob();
+      if (b.size < 4096) throw new Error("tom");
+      e.url = URL.createObjectURL(b);
+      e.bytes = b.size;
+      this._bytes += b.size;
+      e.ok = true;
+      this._evict();
+      return e;
+    })();
+    e.p.catch(() => {
+      e.failed = Date.now();
+    });
+    this._cache.set(key, e);
+    if (scrub) {
+      (this._scrubs ||= []).push(e);
+      while (this._scrubs.length > 2) {
+        const o = this._scrubs.shift();
+        if (!o.ok && !o.failed && !this._vids.some((v) => v._e === o)) {
+          o.ctrl.abort();
+          this._cache.delete(o.key);
+        }
+      }
+    }
+    return e;
+  }
+  _ready(k) {
+    const cid = this._cam && this._o.cid(this._cam.base);
+    if (!cid) return null;
+    for (const q of this._quality === "sd" && this._pb ? ["sd"] : ["hd", "sd"]) {
+      const e = this._cache.get(`${cid}|${q}|${k}`);
+      if (e?.ok) {
+        e.used = Date.now();
+        return e;
+      }
+    }
+    return null;
+  }
+  _evict() {
+    const budget = (matchMedia("(pointer:coarse)").matches ? 90 : 260) * 1048576;
+    if (this._bytes <= budget) return;
+    const inUse = new Set(this._vids.map((v) => v._e));
+    for (const e of [...this._cache.values()].filter((x) => x.ok && !inUse.has(x)).sort((a, b) => a.used - b.used)) {
+      if (this._bytes <= budget * 0.75) break;
+      URL.revokeObjectURL(e.url);
+      this._bytes -= e.bytes;
+      this._cache.delete(e.key);
+    }
+  }
+  _prefetch(k) {
+    const qs = this._qs(), ahead = Math.ceil(2 * this._rate) + 1;
+    for (let i = 0; i <= ahead; i++) {
+      if ((k + i + 1) * SEG > Date.now() - READY_LAG) break;
+      if (qs.includes("sd")) this._get(k + i, "sd");
+      if (qs.includes("hd") && i <= 2) this._get(k + i, "hd");
+    }
+  }
+  // ---- video --------------------------------------------------------------------------------------------------------
+  _load(v, e) {
+    if (v._e === e && v.readyState >= 1) return Promise.resolve(true);
+    v._e = e;
+    v.src = e.url;
+    return new Promise((res) => {
+      const done = (ok) => {
+        v.removeEventListener("loadedmetadata", onOk);
+        v.removeEventListener("error", onErr);
+        if (v._e !== e) return res(false);
+        if (ok && e.t0 == null && Number.isFinite(v.duration)) e.t0 = (e.k + 1) * SEG - v.duration * 1e3;
+        res(ok && e.t0 != null);
+      };
+      const onOk = () => done(true), onErr = () => done(false);
+      v.addEventListener("loadedmetadata", onOk);
+      v.addEventListener("error", onErr);
+    });
+  }
+  _seekV(v, abs) {
+    const e = v._e;
+    if (!e || e.t0 == null) return Promise.resolve();
+    const ct = Math.min(Math.max(0, (abs - e.t0) / 1e3), Math.max(0, v.duration - 0.04));
+    if (Math.abs(v.currentTime - ct) < 0.03 && !v.seeking) return Promise.resolve();
+    return new Promise((res) => {
+      const t = setTimeout(res, 2500);
+      v.addEventListener("seeked", () => {
+        clearTimeout(t);
+        res();
+      }, { once: true });
+      v.currentTime = ct;
+    });
+  }
+  _other() {
+    return this._vids.find((v) => v !== this._cur?.v);
+  }
+  _activate(v) {
+    const old = this._cur?.v;
+    if (old && old !== v) {
+      old.pause();
+      old.classList.remove("on");
+    }
+    v.classList.add("on");
+    v.playbackRate = this._rate;
+    v.muted = this._muted;
+    this._cur = { v };
+    this.q(".poster").classList.remove("on");
+    this._badge();
+  }
+  _play(v) {
+    v.playbackRate = this._rate;
+    v.muted = this._muted;
+    v.play()?.catch(() => {
+      if (!v.muted) {
+        this._muted = true;
+        v.muted = true;
+        this._labels();
+        v.play().catch(() => {
+        });
+      }
+    });
+  }
+  async _present(e, abs, play) {
+    const gen = ++this._gen;
+    this._hand = null;
+    const v = this._cur?.v._e === e ? this._cur.v : this._other();
+    if (!await this._load(v, e) || gen !== this._gen) return false;
+    await this._seekV(v, abs);
+    if (gen !== this._gen) return false;
+    this._activate(v);
+    if (play) this._play(v);
+    else v.pause();
+    this._spin(false);
+    this._msg("");
+    this._o.onFrame?.();
+    return true;
+  }
+  // Næste stykke (eller samme stykke i høj kvalitet) gøres klar i den skjulte video og står på det rigtige billede.
+  async _arm(e, at, up = false) {
+    const v = this._other(), h = this._hand = { v, e, at, up, ready: false };
+    if (!await this._load(v, e) || this._hand !== h) return;
+    await this._seekV(v, at);
+    if (this._hand !== h) return;
+    v.pause();
+    h.ready = true;
+  }
+  _doHand() {
+    const h = this._hand;
+    this._hand = null;
+    this._activate(h.v);
+    this._play(h.v);
+  }
+  async _seek(abs, play = this._playing) {
+    abs = Math.min(abs, Date.now());
+    if (abs > Date.now() - LIVE_LAG) {
+      this.goLive();
+      return;
+    }
+    this._exitLive();
+    this._t = abs;
+    this._playing = play;
+    this._ppBtn();
+    this._dirty = true;
+    this._msg("");
+    const sgen = ++this._sgen;
+    if (!this._o.cid(this._cam.base)) {
+      this._spinSoon();
+      await this._o.ready;
+      if (sgen !== this._sgen) return;
+    }
+    this._loadDays();
+    const k = Math.floor(abs / SEG);
+    let e = this._ready(k);
+    if (!e) {
+      this._spinSoon();
+      const first = this._get(k, this._pb && this._quality !== "hd" ? "sd" : "hd", true), ps = first ? [first.p.catch(() => null)] : [];
+      if (this._pb && this._quality === "auto" || this._quality === "hd" && this._pb && first?.q === "sd")
+        ps.push(Promise.race([ps[0], new Promise((r) => setTimeout(r, 400))]).then(() => sgen === this._sgen ? this._get(k, "hd", true)?.p.catch(() => null) : null));
+      e = await firstOk(ps);
+      if (sgen !== this._sgen) return;
+      if (!e) {
+        this._spin(false);
+        this._msg("Ingen optagelse p\xE5 dette tidspunkt");
+        this._playing = false;
+        this._ppBtn();
+        return;
+      }
+    }
+    await this._present(e, abs, this._playing);
+    if (sgen !== this._sgen || e.q !== "sd" || this._playing || !this._qs().includes("hd")) return;
+    this._get(k, "hd")?.p.then((x) => {
+      if (x && sgen === this._sgen && !this._playing && !this._drag && !this._live) this._present(x, this._t, false);
+    }, () => {
+    });
+  }
+  goLive() {
+    if (!this._cam) return;
+    this._sgen++;
+    this._gen++;
+    this._hand = null;
+    this._stalling = false;
+    this._live = true;
+    this._playing = true;
+    this._t = Date.now();
+    this._vids.forEach((v) => {
+      v.pause();
+      v.classList.remove("on");
+    });
+    this._cur = null;
+    this.q(".poster").classList.remove("on");
+    this._spin(false);
+    this._msg("");
+    const box = this.q(".live"), ent = this._o.compact ? this._cam.tile || this._cam.id : this._cam.id;
+    if (box._ent !== ent) {
+      box.innerHTML = "";
+      box._ent = ent;
+      clearInterval(this._liveT);
+      const s = this._h.states[ent];
+      if (s && customElements.get("ha-camera-stream")) {
+        const el = document.createElement("ha-camera-stream");
+        el.hass = this._h;
+        el.stateObj = s;
+        el.muted = this._muted;
+        el.controls = false;
+        el.allowExoPlayer = false;
+        box.appendChild(el);
+      } else if (s) {
+        const im = document.createElement("img");
+        box.appendChild(im);
+        const up = () => {
+          const p = this._h.states[ent]?.attributes?.entity_picture;
+          if (p) im.src = `${p}&t=${Date.now()}`;
+        };
+        up();
+        this._liveT = setInterval(up, 1e3);
+      }
+    }
+    box.classList.add("on");
+    this._badge();
+    this._ppBtn();
+    this._labels();
+    this._dirty = true;
+    this._loop();
+  }
+  _exitLive() {
+    if (!this._live) return;
+    this._live = false;
+    const box = this.q(".live");
+    box.classList.remove("on");
+    box.innerHTML = "";
+    box._ent = null;
+    clearInterval(this._liveT);
+    this._labels();
+    this._badge();
+  }
+  // ---- løkke --------------------------------------------------------------------------------------------------------
+  _frame() {
+    this._raf = requestAnimationFrame(this._fr);
+    const now = Date.now();
+    if (this._live) {
+      if (now - (this._lastDraw || 0) > 1e3) {
+        this._t = now;
+        this._draw();
+        this._clock();
+      }
+      return;
+    }
+    const v = this._cur?.v, e = v?._e;
+    if (!this._drag && v && e?.t0 != null && !v.paused && !v.seeking) {
+      this._t = e.t0 + v.currentTime * 1e3;
+      const end = (e.k + 1) * SEG, h = this._hand;
+      if (h?.ready && this._t >= h.at - 40) {
+        if (h.up && this._t > h.at + 250) this._hand = null;
+        else this._doHand();
+      } else if (v.ended || this._t >= end - 25) this._stall(end);
+      if (this._t > now - LIVE_LAG) {
+        this.goLive();
+        return;
+      }
+    }
+    if (now - (this._lastArm || 0) > 250) {
+      this._lastArm = now;
+      this._tickArm();
+    }
+    if (this._dirty || this._t !== this._drawnT) this._draw();
+    if (now - (this._lastClock || 0) > 150) this._clock();
+  }
+  _stall(end) {
+    if (this._stalling) return;
+    this._stalling = true;
+    this._seek(end + 1, true).finally(() => {
+      this._stalling = false;
+    });
+  }
+  _tickArm() {
+    if (this._live || this._drag || !this._playing || this._stalling) return;
+    const v = this._cur?.v, e = v?._e;
+    if (!e) return;
+    const k = e.k, end = (k + 1) * SEG, qs = this._qs();
+    this._prefetch(k);
+    const h = this._hand;
+    if (e.q === "sd" && qs.includes("hd") && !h?.up) {
+      const hd = this._cache.get(`${e.cid}|hd|${k}`);
+      if (hd?.ok && this._t + 900 < end - 200) {
+        this._arm(hd, this._t + 900, true);
+        return;
+      }
+    }
+    if (!h) {
+      const n = this._ready(k + 1);
+      if (n) this._arm(n, end);
+    } else if (!h.up && h.at === end && h.e.q === "sd" && qs.includes("hd")) {
+      const hd = this._cache.get(`${e.cid}|hd|${k + 1}`);
+      if (hd?.ok) this._arm(hd, end);
+    }
+  }
+  // ---- tidslinje ----------------------------------------------------------------------------------------------------
+  _events() {
+    if (!this._cam) return [];
+    const ver = this._o.version();
+    if (this._evc?.base === this._cam.base && this._evc.ver === ver) return this._evc.list;
+    const list = this._o.events(this._cam.base).map((e) => ({ s: +e.t, d: Math.max(durMs(e.dur), 2e3), type: e.type, e })).sort((a, b) => a.s - b.s);
+    this._evc = { base: this._cam.base, ver, list };
+    this._dirty = true;
+    return list;
+  }
+  _loadDays() {
+    if (!this._cam || !this._o.loadDay) return;
+    const from = new Date(this._t - this._span / 2);
+    from.setHours(0, 0, 0, 0);
+    for (let d = +from, n = 0; d <= this._t + this._span / 2 && n < 3; n++) {
+      if (d <= Date.now()) this._o.loadDay(this._cam.base, d)?.then(() => {
+        this._dirty = true;
+      }, () => {
+      });
+      const nx2 = new Date(d);
+      nx2.setDate(nx2.getDate() + 1);
+      d = +nx2;
+    }
+  }
+  _draw() {
+    this._lastDraw = Date.now();
+    this._drawnT = this._t;
+    this._dirty = false;
+    const cv = this.q("canvas"), W2 = cv.clientWidth, H3 = cv.clientHeight, dpr = devicePixelRatio || 1;
+    if (!W2) return;
+    if (cv.width !== Math.round(W2 * dpr) || cv.height !== Math.round(H3 * dpr)) {
+      cv.width = Math.round(W2 * dpr);
+      cv.height = Math.round(H3 * dpr);
+    }
+    const c2 = cv.getContext("2d");
+    c2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c2.clearRect(0, 0, W2, H3);
+    const span = this._span, T = this._t, t0 = T - span / 2, t12 = T + span / 2, x = (t) => (t - t0) / span * W2, now = Date.now();
+    const laneY = 30, laneH = 14;
+    const xn = Math.min(W2, Math.max(0, x(now)));
+    c2.fillStyle = "rgba(255,255,255,.07)";
+    c2.beginPath();
+    c2.roundRect(0, laneY, xn, laneH, 4);
+    c2.fill();
+    if (xn < W2) {
+      c2.fillStyle = "rgba(255,255,255,.025)";
+      c2.fillRect(xn, laneY, W2 - xn, laneH);
+      c2.fillStyle = "#ff4d63";
+      c2.fillRect(xn - 1, 18, 2, H3 - 22);
+    }
+    const step = STEPS.find((s) => s / span * W2 >= 74) || STEPS[STEPS.length - 1];
+    const off = -new Date(t0).getTimezoneOffset() * 6e4;
+    c2.font = "600 10.5px system-ui, -apple-system, Segoe UI, sans-serif";
+    c2.textAlign = "center";
+    c2.textBaseline = "alphabetic";
+    for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t12; t += step) {
+      const px2 = x(t), d = new Date(t), midnight = d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+      c2.fillStyle = midnight ? "rgba(232,195,126,.7)" : "rgba(255,255,255,.22)";
+      c2.fillRect(px2 - 0.5, 18, 1, midnight ? H3 - 22 : 8);
+      c2.fillStyle = midnight ? "#e8c37e" : "rgba(244,241,234,.56)";
+      c2.fillText(midnight ? d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" }) : hms(d, step < 6e4), px2, 13);
+    }
+    c2.fillStyle = "rgba(255,255,255,.1)";
+    for (let t = Math.ceil((t0 + off) / (step / 2)) * (step / 2) - off; t <= t12; t += step / 2) c2.fillRect(x(t) - 0.5, 22, 1, 4);
+    const types = this._o.types || {};
+    for (const ev of this._events()) {
+      if (ev.s + ev.d < t0 || ev.s > t12) continue;
+      const px2 = x(ev.s), w = Math.max(3, ev.d / span * W2);
+      c2.fillStyle = (types[ev.type] || [])[2] || "#b7a4ff";
+      c2.globalAlpha = ev.type === "motion" ? 0.55 : 0.95;
+      c2.beginPath();
+      c2.roundRect(px2, laneY, w, laneH, 3);
+      c2.fill();
+      c2.globalAlpha = 1;
+    }
+  }
+  _hit(t, W2) {
+    const tol = 6 / W2 * this._span;
+    return this._events().find((ev) => t >= ev.s - tol && t <= ev.s + ev.d + tol) || null;
+  }
+  _setSpan(s) {
+    this._span = Math.min(SPANS[SPANS.length - 1], Math.max(SPANS[0], s));
+    this._labels();
+    this._dirty = true;
+    this._loadDays();
+  }
+  _zoom(dir) {
+    const i = SPANS.findIndex((s) => s >= this._span - 1);
+    this._setSpan(SPANS[Math.min(SPANS.length - 1, Math.max(0, (i < 0 ? SPANS.length - 1 : i) + dir))]);
+  }
+  _dragStart(x, rebase) {
+    if (!rebase) {
+      this._drag = true;
+      this._moved = false;
+      this._wasPlaying = this._playing;
+      this._wasLive = this._live;
+      this._sgen++;
+      this._hand = null;
+      this._cur?.v.pause();
+      this.q(".tlw").classList.add("drag");
+    }
+    this._dx0 = x;
+    this._dt0 = this._t;
+    this._tip(null);
+  }
+  _dragMove(x) {
+    const dx2 = x - this._dx0;
+    if (Math.abs(dx2) > 4) this._moved = true;
+    if (!this._moved) return;
+    this._t = Math.min(Date.now(), this._dt0 - dx2 / this.q(".tlw").clientWidth * this._span);
+    if (this._live && this._t < Date.now() - LIVE_LAG) this._exitLive();
+    this._dirty = true;
+    this._scrubSoon();
+  }
+  _dragEnd(ev, pinch) {
+    this._drag = false;
+    this.q(".tlw").classList.remove("drag");
+    clearTimeout(this._scT);
+    if (pinch) {
+      if (!this._live) this._seek(this._t, this._wasPlaying);
+      return;
+    }
+    if (!this._moved) {
+      const r = this.q(".tlw").getBoundingClientRect(), t = this._t + (ev.clientX - r.left - r.width / 2) / r.width * this._span, hit = this._hit(t, r.width);
+      this._seek(hit ? hit.s - 2e3 : t, true);
+      return;
+    }
+    if (this._t > Date.now() - LIVE_LAG) {
+      this.goLive();
+      return;
+    }
+    this._seek(this._t, this._wasPlaying || this._wasLive);
+  }
+  _scrubSoon() {
+    const now = Date.now();
+    clearTimeout(this._scT);
+    if (now - (this._lastScrub || 0) > 70) {
+      this._lastScrub = now;
+      this._scrub();
+    } else this._scT = setTimeout(() => {
+      if (this._drag) {
+        this._lastScrub = Date.now();
+        this._scrub();
+      }
+    }, 80);
+  }
+  // Forhåndsvisning under spoling: hent lav kvalitet for stedet og stil billedet, så snart det er der.
+  _scrub() {
+    if (this._live) return;
+    const abs = this._t, k = Math.floor(abs / SEG);
+    if ((k + 1) * SEG > Date.now() - READY_LAG) return;
+    const e = this._ready(k);
+    if (e) {
+      if (this._cur?.v._e === e) {
+        if (!this._cur.v.seeking) this._seekV(this._cur.v, abs);
+      } else this._present(e, abs, false);
+      return;
+    }
+    if (!this._cur) this._poster(abs);
+    this._get(k, "sd", true)?.p.then((x) => {
+      if (x && this._drag && Math.floor(this._t / SEG) === k) this._present(x, this._t, false);
+    }, () => {
+    });
+  }
+  async _poster(at) {
+    const ev = this._events().find((x) => Math.abs(x.s - at) < 2e4 || at >= x.s && at <= x.s + x.d);
+    const im = this.q(".poster");
+    if (!ev || !this._o.thumb) {
+      im.classList.remove("on");
+      return;
+    }
+    const url = await this._o.thumb(ev.e);
+    if (!url) return;
+    im.src = url;
+    if (!this._cur && !this._live) im.classList.add("on");
+  }
+  async _tip(ev, cx2) {
+    const tip = this.q(".tip");
+    if (!ev) {
+      tip.classList.remove("on");
+      this._tipEv = null;
+      return;
+    }
+    const W2 = this.q(".tlw").clientWidth;
+    tip.style.left = `${Math.max(4, Math.min(W2 - 172, cx2 - 84))}px`;
+    if (this._tipEv === ev) return;
+    this._tipEv = ev;
+    const T = (this._o.types || {})[ev.type] || ["H\xE6ndelse"];
+    tip.querySelector("b").textContent = T[0];
+    tip.querySelector("small").textContent = `${hms(new Date(ev.s))} \xB7 ${ev.e.dur || ""}`;
+    const im = tip.querySelector("img");
+    im.removeAttribute("src");
+    tip.classList.add("on");
+    const url = await this._o.thumb?.(ev.e);
+    if (url && this._tipEv === ev) im.src = url;
+  }
+  // ---- knapper og visning ---------------------------------------------------------------------------------------------
+  _bind() {
+    const tl = this.q(".tlw"), pts = /* @__PURE__ */ new Map();
+    tl.addEventListener("pointerdown", (ev) => {
+      tl.setPointerCapture?.(ev.pointerId);
+      pts.set(ev.pointerId, ev.clientX);
+      if (pts.size === 1) this._dragStart(ev.clientX);
+      else if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        this._pinch = { d: Math.max(10, Math.abs(a - b)), span: this._span };
+      }
+    });
+    tl.addEventListener("pointermove", (ev) => {
+      if (!pts.has(ev.pointerId)) {
+        if (ev.pointerType === "mouse" && !this._drag) {
+          const r = tl.getBoundingClientRect(), t = this._t + (ev.clientX - r.left - r.width / 2) / r.width * this._span;
+          this._tip(this._hit(t, r.width), ev.clientX - r.left);
+        }
+        return;
+      }
+      pts.set(ev.pointerId, ev.clientX);
+      if (pts.size >= 2 && this._pinch) {
+        const [a, b] = [...pts.values()];
+        this._setSpan(this._pinch.span * this._pinch.d / Math.max(10, Math.abs(a - b)));
+        this._moved = true;
+        return;
+      }
+      this._dragMove(ev.clientX);
+    });
+    const up = (ev) => {
+      if (!pts.has(ev.pointerId)) return;
+      pts.delete(ev.pointerId);
+      if (!pts.size) {
+        const pinch = !!this._pinch;
+        this._pinch = null;
+        this._dragEnd(ev, pinch);
+      } else if (pts.size === 1) this._dragStart([...pts.values()][0], true);
+    };
+    tl.addEventListener("pointerup", up);
+    tl.addEventListener("pointercancel", up);
+    tl.addEventListener("pointerleave", (ev) => {
+      if (ev.pointerType === "mouse") this._tip(null);
+    });
+    tl.addEventListener("wheel", (ev) => {
+      ev.preventDefault();
+      if (Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) {
+        if (!this._drag) {
+          this._dragStart(0);
+          this._moved = true;
+        }
+        this._dt0 = this._t = Math.min(Date.now(), this._t + ev.deltaX / tl.clientWidth * this._span);
+        this._dx0 = 0;
+        if (this._live && this._t < Date.now() - LIVE_LAG) this._exitLive();
+        this._dirty = true;
+        this._scrubSoon();
+        clearTimeout(this._wheelT);
+        this._wheelT = setTimeout(() => this._dragEnd({}, false), 280);
+      } else this._setSpan(this._span * Math.pow(1.0018, ev.deltaY));
+    }, { passive: false });
+    const st = this.q(".stage");
+    st.addEventListener("click", () => {
+      if (!this._live) this._act("play");
+    });
+    st.addEventListener("dblclick", () => this._act("full"));
+    this._r.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      this._act(b.dataset.a);
+    }));
+    const di = this.q(".date input");
+    di.addEventListener("change", () => {
+      if (!di.value) return;
+      const [y, m, d] = di.value.split("-").map(Number), base = new Date(this._live ? Date.now() - 36e5 : this._t);
+      const t = new Date(y, m - 1, d, base.getHours(), base.getMinutes(), base.getSeconds());
+      this._seek(Math.min(+t, Date.now() - LIVE_LAG - 1e3), false);
+    });
+    this.addEventListener("keydown", (ev) => {
+      if (ev.target !== this || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      const k = ev.key, step = ev.shiftKey ? 6e4 : 5e3;
+      if (k === " " || k === "k") this._act("play");
+      else if (k === "ArrowLeft") this._seek((this._live ? Date.now() - LIVE_LAG : this._t) - step, this._playing);
+      else if (k === "ArrowRight" && !this._live) this._seek(this._t + step, this._playing);
+      else if (k === "l" || k === "L") this.goLive();
+      else if (k === "f" || k === "F") this._act("full");
+      else return;
+      ev.preventDefault();
+    });
+    document.addEventListener("visibilitychange", () => {
+      const v = this._cur?.v;
+      if (!v || this._live) return;
+      if (document.hidden && !v.paused) {
+        this._resume = true;
+        v.pause();
+      } else if (!document.hidden && this._resume) {
+        this._resume = false;
+        if (this._playing) this._play(v);
+      }
+    });
+  }
+  _act(a) {
+    const now = Date.now(), evs = this._events();
+    if (a === "play") {
+      if (this._live) {
+        this._seek(now - LIVE_LAG - 8e3, false);
+        return;
+      }
+      if (this._playing) {
+        this.pause();
+        return;
+      }
+      const v = this._cur?.v, e = v?._e;
+      if (v && e?.t0 != null && !v.ended && this._t < (e.k + 1) * SEG - 60) {
+        this._playing = true;
+        this._ppBtn();
+        this._play(v);
+      } else this._seek(this._t + (v?.ended ? 60 : 0), true);
+    } else if (a === "back") this._seek((this._live ? now - LIVE_LAG : this._t) - 1e4, true);
+    else if (a === "fwd" && !this._live) this._seek(this._t + 1e4, this._playing);
+    else if (a === "prev") {
+      const ref = this._live ? now : this._t - 3e3, ev = [...evs].reverse().find((x) => x.s < ref);
+      if (ev) this._seek(ev.s - 2e3, true);
+    } else if (a === "next") {
+      if (this._live) return;
+      const ev = evs.find((x) => x.s > this._t + 1e3);
+      if (ev) this._seek(ev.s - 2e3, true);
+      else this.goLive();
+    } else if (a === "live") this.goLive();
+    else if (a === "speed") {
+      this._rate = SPEEDS[(SPEEDS.indexOf(this._rate) + 1) % SPEEDS.length];
+      this._vids.forEach((v) => {
+        v.playbackRate = this._rate;
+      });
+      this._labels();
+    } else if (a === "quality") {
+      const Q = ["auto", "hd", "sd"];
+      this._quality = Q[(Q.indexOf(this._quality) + 1) % Q.length];
+      try {
+        localStorage.setItem(QKEY, this._quality);
+      } catch (e) {
+      }
+      this._hand = null;
+      this._labels();
+    } else if (a === "mute") {
+      this._muted = !this._muted;
+      this._vids.forEach((v) => {
+        v.muted = this._muted;
+      });
+      const s = this.q(".live ha-camera-stream");
+      if (s) s.muted = this._muted;
+      this._labels();
+    } else if (a === "date") {
+      const di = this.q(".date input");
+      const d = new Date(this._live ? Date.now() : this._t);
+      di.max = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      di.value = `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
+      try {
+        di.showPicker();
+      } catch (e) {
+        di.focus();
+        di.click();
+      }
+    } else if (a === "zin") this._zoom(-1);
+    else if (a === "zout") this._zoom(1);
+    else if (a === "full") {
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      else if (this.requestFullscreen) this.requestFullscreen().catch(() => this._cur?.v.webkitEnterFullscreen?.());
+      else this._cur?.v.webkitEnterFullscreen?.();
+    }
+    this.focus({ preventScroll: true });
+  }
+  _labels() {
+    const sp = this.q(".span"), s = this._span;
+    sp.textContent = s >= 36e5 ? `${s / 36e5} t` : `${Math.round(s / 6e4)} min`;
+    this.q('[data-a="speed"]').textContent = `${this._rate}\xD7`;
+    this.q('[data-a="speed"]').classList.toggle("on2", this._rate !== 1);
+    this.q('[data-a="quality"]').textContent = { auto: "Auto", hd: "HD", sd: "SD" }[this._quality];
+    this.q('[data-a="mute"]').innerHTML = pi(this._muted ? "mute" : "sound", 17);
+    this.q('[data-a="live"]').classList.toggle("on", this._live);
+    this._ppBtn();
+  }
+  _ppBtn() {
+    const b = this.q('[data-a="play"]');
+    const h = pi(this._playing && !this._live ? "pause" : "play");
+    if (b._h !== h) {
+      b._h = h;
+      b.innerHTML = h;
+    }
+  }
+  _badge() {
+    const q = this.q(".q");
+    q.classList.toggle("live", this._live);
+    q.textContent = this._live ? "LIVE" : this._cur?.v._e ? this._cur.v._e.q === "hd" ? "HD" : "SD" : "";
+  }
+  _clock() {
+    this._lastClock = Date.now();
+    const d = new Date(this._t), el = this.q(".clock");
+    const txt = this._live ? `Live \xB7 ${hms(/* @__PURE__ */ new Date())}` : `${d.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? "I dag" : d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" })} \xB7 ${hms(d)}`;
+    if (el.textContent !== txt) el.textContent = txt;
+  }
+  _spin(on) {
+    clearTimeout(this._spT);
+    this.q(".spin").classList.toggle("on", on);
+  }
+  _spinSoon() {
+    clearTimeout(this._spT);
+    this._spT = setTimeout(() => this.q(".spin").classList.add("on"), 150);
+  }
+  _msg(t) {
+    const m = this.q(".msg");
+    m.textContent = t;
+    m.classList.toggle("on", !!t);
+  }
+};
+if (!customElements.get("th-protect-player")) customElements.define("th-protect-player", ThProtectPlayer);
+
 // src/cards/th-camera-card/th-camera-card.js
-var VC_VER = "2.3.0";
+var VC_VER = "2.4.0";
 var VC_CACHE = "th-camera-card:events";
 var VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>',
@@ -47016,9 +47998,15 @@ var VC_CSS = `
   color:var(--ink);-webkit-font-smoothing:antialiased;padding:12px 0 var(--th-camera-bottom,100px)}
 @media(max-width:1100px){:host{padding:max(10px,env(safe-area-inset-top)) 10px 112px}}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
-.g{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:8px;align-items:start}
-@media(max-width:1250px){.g{grid-template-columns:minmax(0,1fr) 320px}}
-@media(max-width:1000px){.g{grid-template-columns:1fr}}
+.g{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+.g.wide{grid-template-columns:minmax(0,1fr) minmax(400px,34%)}
+.g.pb.wide{grid-template-columns:minmax(0,1fr) 380px}
+.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:8px;max-height:calc(100dvh - 130px);min-width:0}
+.side .ev{flex:1 1 auto;min-height:220px}
+.plp{padding:12px}
+.g.pb.wide .ev{position:sticky;top:12px;max-height:calc(100dvh - 130px)}
+.g.pb:not(.wide) .plp{position:sticky;top:0;z-index:5;background:rgba(10,12,17,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#pc{margin-bottom:10px}
 .p{position:relative;border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015)),rgba(12,14,20,.74);
   box-shadow:0 26px 50px -36px #000,inset 0 0 0 1px var(--hair),inset 0 1px 0 rgba(255,255,255,.05);animation:in .8s cubic-bezier(.16,1,.3,1) both;min-width:0}
 @keyframes in{from{opacity:0;transform:translateY(12px);filter:blur(6px)}}
@@ -47042,13 +48030,14 @@ var VC_CSS = `
 .cam .bot{position:absolute;left:12px;right:12px;bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
 .cam .last{font-size:11.5px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:6px}
 .cam .cnt{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px)}
-.cam .tag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;font-weight:700;font-size:13px;
-  background:color-mix(in srgb,var(--c) 88%,transparent);color:#140f08;box-shadow:0 10px 30px -6px var(--c);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{from{transform:translate(-50%,-50%) scale(.5);opacity:0}}
+/* Registrering som lille m\xE6rke i hj\xF8rnet i stedet for REC (brugeren: det store m\xE6rke midt i billedet skjulte, hvad der skete) */
+.cam .tag{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:99px;font-weight:700;font-size:11px;
+  background:color-mix(in srgb,var(--c) 90%,transparent);color:#140f08;box-shadow:0 6px 18px -6px var(--c);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.cam.act .rec{display:none}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
 .cam.act{box-shadow:inset 0 0 0 2px var(--c),0 0 40px -12px var(--c)}
 .cam .pulse{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px var(--c);animation:pl 1.6s ease-out infinite;pointer-events:none}@keyframes pl{to{box-shadow:inset 0 0 0 14px transparent}}
-.ev{position:sticky;top:12px;max-height:calc(100dvh - 140px);display:flex;flex-direction:column}
-@media(max-width:1000px){.ev{position:relative;top:0;max-height:none}}
+.ev{display:flex;flex-direction:column;min-height:0}
 .flt{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:8px}.flt::-webkit-scrollbar{display:none}
 .flt button{appearance:none;border:0;cursor:pointer;flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;font-size:11.5px;font-weight:600;color:var(--mut);
   background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--hair);transition:all .3s}
@@ -47065,18 +48054,15 @@ var VC_CSS = `
 .day{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:8px 2px 2px}
 .empty{padding:20px;text-align:center;color:var(--mut);font-size:13px}
 .skel{height:72px;border-radius:15px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.07),rgba(255,255,255,.03));background-size:200% 100%;animation:sk 1.4s infinite}@keyframes sk{to{background-position:-200% 0}}
-.mod{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(3,4,8,.9);backdrop-filter:blur(10px);animation:fd .3s both}@keyframes fd{from{opacity:0}}
-.mod .box{width:min(1300px,96vw);display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;animation:pp .45s cubic-bezier(.16,1,.3,1) both}
-@keyframes pp{from{transform:translateY(20px) scale(.97);opacity:0}}
-@media(max-width:900px){.mod .box{grid-template-columns:1fr;max-height:92vh;overflow:auto}}
-.mod .vid{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 30px 80px #000}
-.mod .vid>*{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
-.mod .side{border-radius:18px;padding:14px;background:rgba(14,16,22,.9);box-shadow:inset 0 0 0 1px var(--hair);max-height:min(72vh,700px);overflow:auto}
-.mod .side h3{margin:0 0 4px;font-size:17px;font-weight:500}.mod .side p{margin:0 0 12px;color:var(--mut);font-size:12px}
-.mod .x{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center;z-index:2}
-.mod .tabs2{display:flex;gap:6px;margin-bottom:10px}
-.mod .tabs2 button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.06);color:var(--mut)}
-.mod .tabs2 button.on{background:var(--gold);color:#15110a}
+@keyframes fd{from{opacity:0}}
+.sheet{position:fixed;inset:0;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:rgba(3,4,8,.96);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);animation:fd .25s both;padding:max(10px,env(safe-area-inset-top)) 10px max(24px,env(safe-area-inset-bottom))}
+.sh-in{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.sh-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;background:rgba(3,4,8,.96);padding:2px 0 4px}
+.sh-top .x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center}
+.sh-top .flt{margin:0;flex:1;min-width:0}
+.sh-pl{position:sticky;top:48px;z-index:2;background:rgba(3,4,8,.96);padding-bottom:6px}
+.sh-k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
 #nvr{margin-top:10px;display:grid;gap:8px}
 .nvr .k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:0 2px 6px}
 .nvc{display:flex;flex-wrap:wrap;gap:6px}
@@ -47088,7 +48074,7 @@ var VC_CSS = `
 .ql b{display:block;font-size:13px;font-weight:600}.ql small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
-var ThCameraCard = class extends HTMLElement {
+var ThCameraCard = class _ThCameraCard extends HTMLElement {
   setConfig(c2) {
     this.cfg = { concurrency: 5, ...c2 };
   }
@@ -47101,15 +48087,21 @@ var ThCameraCard = class extends HTMLElement {
   connectedCallback() {
     this._tick = setInterval(() => this._refresh(), 1e3);
     this._evt = setInterval(() => this._loadEvents(), 6e4);
+    if (!this._ro) this._ro = new ResizeObserver(() => {
+      if (this._h && this._mode() !== this._lastMode) this._render();
+    });
+    this._ro.observe(this);
   }
   disconnectedCallback() {
     clearInterval(this._tick);
     clearInterval(this._evt);
+    this._ro?.disconnect();
     this._io?.disconnect();
     this._io = null;
     this._r?.querySelectorAll(".cam .lv").forEach((l) => {
       l.innerHTML = "";
     });
+    this._closeSheet();
   }
   set hass(h) {
     const first = !this._h;
@@ -47120,9 +48112,23 @@ var ThCameraCard = class extends HTMLElement {
       this._ft = "all";
       this._fc = "all";
       this._signed = {};
+      this._evVer = 0;
+      this._nodesP = new Promise((r) => {
+        this._nodesR = r;
+      });
+      this._frameP = new Promise((r) => {
+        this._frameR = r;
+      });
     }
-    if (first) this._loadCache();
-    else if (Date.now() - (this._hs || 0) > 6e4) {
+    if (this._player) this._player.hass = h;
+    if (first) {
+      this._loadCache();
+      _ThCameraCard._pbP ||= h.callApi("GET", "protect_playback/cameras").then(() => true, () => false);
+      _ThCameraCard._pbP.then((v) => {
+        this._pb = v;
+        if (this._player?._o) this._player.setup(this._plOpts(this._player.hasAttribute("compact")));
+      });
+    } else if (Date.now() - (this._hs || 0) > 6e4) {
       this._hs = Date.now();
       this._r?.querySelectorAll(".cam .lv ha-camera-stream").forEach((v) => {
         v.hass = h;
@@ -47154,23 +48160,36 @@ var ThCameraCard = class extends HTMLElement {
     const ev = st["event." + b + "_motion_detection"], t = ev && !["unknown", "unavailable"].includes(ev.state) ? new Date(ev.state) : null;
     return on("binary_sensor." + b + "_person_detected") ? "person" : on("binary_sensor." + b + "_vehicle_detected") ? "vehicle" : on("binary_sensor." + b + "_animal_detected") ? "animal" : on("binary_sensor." + b + "_doorbell") ? "ring" : t && Date.now() - t < 45e3 ? "motion" : null;
   }
+  // auto: bred skærm = live + afspiller + hændelser, smal = kun live (afspilleren åbnes i fuld skærm); playback = afspilleren som side.
+  _mode() {
+    const wide = (this.getBoundingClientRect().width || window.innerWidth) >= 1e3;
+    return this.cfg.layout === "playback" ? wide ? "pbw" : "pbn" : wide ? "wide" : "narrow";
+  }
   _render() {
-    const cams = this.cams(), w = this.$("w"), key = cams.map((c2) => c2.id).join();
+    const cams = this.cams(), w = this.$("w"), mode = this._mode(), key = mode + cams.map((c2) => c2.id).join();
     if (key !== this._key) {
       this._key = key;
+      this._lastMode = mode;
       if (!cams.length) {
         w.innerHTML = `<div class="p"><div class="hd"><div><div class="k">Kameraer</div><h2>UniFi Protect</h2></div></div><div class="empty">Ingen UniFi\u2011kameraer fundet endnu.</div></div>`;
         return;
       }
-      w.innerHTML = `<div class="g">
-        <div class="p"><div class="hd"><div><div class="k">Kameraer \xB7 UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
+      const camsP = `<div class="p"><div class="hd"><div><div class="k">Kameraer \xB7 UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
           <div class="cams">${cams.map((c2, i) => `<button class="cam" data-b="${c2.base}" data-id="${c2.id}" data-tile="${c2.tile}" data-live="${c2.live}" style="animation-delay:${i * 70}ms"><img alt=""><div class="lv"></div><div class="sh"></div>
             <div class="nm">${vci("cam", 14)}${vce(c2.name)}</div><div class="rec"><i></i>REC</div><div class="tg"></div>
             <div class="bot"><span class="last">${vci("clock", 13)}<span>\u2013</span></span><span class="cnt">0 i dag</span></div></button>`).join("")}</div>
-          <div id="nvr"></div></div>
-        <div class="p ev" style="animation-delay:120ms"><div class="hd"><div><div class="k">H\xE6ndelser \xB7 seneste d\xF8gn</div><h2 id="evn">Henter\u2026</h2></div></div>
-          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div></div>`;
-      w.querySelectorAll(".cam").forEach((b) => b.onclick = () => this.openLive(b.dataset.id, b.dataset.b));
+          <div id="nvr"></div></div>`;
+      const evP = `<div class="p ev" style="animation-delay:120ms"><div class="hd"><div><div class="k">H\xE6ndelser \xB7 seneste d\xF8gn</div><h2 id="evn">Henter\u2026</h2></div></div>
+          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div>`;
+      const plP = (cams2) => `<div class="p plp">${cams2 ? '<div class="flt" id="pc"></div>' : ""}<div id="plbox"></div></div>`;
+      this._closeSheet();
+      w.innerHTML = mode === "wide" ? `<div class="g wide">${camsP}<div class="side">${plP(false)}${evP}</div></div>` : mode === "narrow" ? `<div class="g narrow">${camsP}</div>` : `<div class="g pb ${mode === "pbw" ? "wide" : ""}">${plP(true)}${evP}</div>`;
+      w.querySelectorAll(".cam").forEach((b) => b.onclick = () => this._openCam(b.dataset.b));
+      const box = this.$("plbox");
+      if (box) {
+        box.appendChild(this._pl(mode === "wide"));
+        this._startPlayer();
+      }
       this._renderFilters();
       this._refresh(true);
       this._liveTiles();
@@ -47182,7 +48201,7 @@ var ThCameraCard = class extends HTMLElement {
       if (ty) act++;
       b.classList.toggle("act", !!ty);
       b.style.setProperty("--c", T ? T[2] : "transparent");
-      const tg = b.querySelector(".tg"), h = T ? `<div class="pulse"></div><div class="tag">${vci(T[1], 16, 2)}${T[0]}</div>` : "";
+      const tg = b.querySelector(".tg"), h = T ? `<div class="pulse"></div><div class="tag">${vci(T[1], 13, 2.2)}${T[0]}</div>` : "";
       if (tg._v !== h) {
         tg.innerHTML = h;
         tg._v = h;
@@ -47350,32 +48369,29 @@ var ThCameraCard = class extends HTMLElement {
         let nvr = root;
         if (!/:browse$/.test(root.media_content_id || "") && root.children?.length === 1) nvr = await this._browse(root.children[0].media_content_id);
         const cams = this.cams();
+        this._nvr = String(nvr.media_content_id || "").split("/").pop().split(":")[0];
         this._nodes = (nvr.children || []).filter((c2) => !/:browse:all$/.test(c2.media_content_id)).map((ch2) => ({
           ch: ch2,
+          cid: ch2.media_content_id.split(":browse:")[1],
           cam: cams.find((c2) => c2.name.toLowerCase() === ch2.title.toLowerCase()) || cams.find((c2) => ch2.title.toLowerCase().startsWith(c2.name.toLowerCase()))
         })).filter((n) => n.cam || !(this.cfg.exclude || []).length);
+        this._cid = Object.fromEntries(this._nodes.filter((n) => n.cam).map((n) => [n.cam.base, n.cid]));
+        this._nodesR();
+        if (this._player?.isConnected && (this._events || []).length) await this._afterFrame();
       }
       const order = [...this._nodes].sort((a, b) => (b.cam?.base === first) - (a.cam?.base === first));
       const per = this._per || (this._per = /* @__PURE__ */ new Map());
       let i = 0;
       const work = async () => {
         while (i < order.length) {
-          const { ch: ch2, cam } = order[i++];
+          const n = order[i++];
           let r;
           try {
-            r = await this._browse(ch2.media_content_id + ":all:recent:1");
+            r = await this._browse(n.ch.media_content_id + ":all:recent:1");
           } catch (e) {
             continue;
           }
-          const evs = [];
-          for (const e of r.children || []) {
-            const m = e.title.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\s+(\S+)\s+(.*)$/);
-            if (!m) continue;
-            const t = new Date(2e3 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
-            const old = (this._events || []).find((x) => x.id === e.media_content_id);
-            evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: old?.thumbS, t, dur: m[7], type: typeOf(m[8]), raw: m[8], cam: cam?.base || ch2.title, camName: cam?.name || ch2.title });
-          }
-          per.set(ch2.media_content_id, evs);
+          per.set(n.ch.media_content_id, this._parse(r.children, n));
           this._mergeSoon();
         }
       };
@@ -47383,6 +48399,7 @@ var ThCameraCard = class extends HTMLElement {
       this._merge();
       this._saveCache();
     } catch (e) {
+      this._nodesR?.();
       const l = this.$("list");
       if (l && !(this._events || []).length) l.innerHTML = `<div class="empty">Kunne ikke hente h\xE6ndelser (${vce(e.message || e)})</div>`;
     }
@@ -47393,16 +48410,29 @@ var ThCameraCard = class extends HTMLElement {
       this._loadEvents(f);
     }
   }
+  // "10/26/26 07:11:06 1m 5s Object Detection - Person" (lokal tid) – varigheden kan have flere led.
+  _parse(children, n) {
+    const evs = [];
+    for (const e of children || []) {
+      const m = e.title.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\s+((?:\d+[hms]\s?)+)\s*(.*)$/);
+      if (!m) continue;
+      const t = new Date(2e3 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
+      const old = (this._events || []).find((x) => x.id === e.media_content_id);
+      evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: old?.thumbS, t, dur: m[7].trim(), type: typeOf(m[8]), raw: m[8], cam: n.cam?.base || n.ch.title, camName: n.cam?.name || n.ch.title });
+    }
+    return evs;
+  }
   _merge() {
     clearTimeout(this._mt);
     this._mt = null;
     this._all = [...(this._per || /* @__PURE__ */ new Map()).values()].flat().sort((a, b) => b.t - a.t);
     this._events = this._all.slice(0, 150);
+    this._evVer++;
     this._renderFilters();
     this._renderList();
     this._render();
-    const m = this._r.querySelector(".mod");
-    if (m?._cam) this._renderList(m.querySelector("#mlist"), m._cam);
+    this._renderSheet();
+    this._startPlayer();
   }
   _mergeSoon() {
     if (!this._mt) this._mt = setTimeout(() => this._merge(), 250);
@@ -47412,15 +48442,23 @@ var ThCameraCard = class extends HTMLElement {
       const c2 = JSON.parse(localStorage.getItem(VC_CACHE) || "null");
       if (!c2 || Date.now() - c2.at > 6 * 36e5) return;
       const fresh = Date.now() - c2.at < 50 * 6e4;
-      this._events = c2.events.map((e) => ({ ...e, t: new Date(e.t), thumbS: fresh ? e.thumbS : void 0 }));
+      this._events = c2.events.map((e) => ({ ...e, t: new Date(e.t), dur: String(e.dur || ""), thumbS: fresh ? e.thumbS : void 0 }));
+      this._evVer++;
+      if (c2.nvr && c2.cid) {
+        this._nvr = c2.nvr;
+        this._cid = c2.cid;
+      }
     } catch (e) {
     }
   }
   _saveCache() {
     try {
-      localStorage.setItem(VC_CACHE, JSON.stringify({ at: Date.now(), events: (this._events || []).slice(0, 80).map((e) => ({ ...e, t: +e.t })) }));
+      localStorage.setItem(VC_CACHE, JSON.stringify({ at: Date.now(), nvr: this._nvr, cid: this._cid, events: (this._events || []).slice(0, 80).map((e) => ({ ...e, t: +e.t })) }));
     } catch (e) {
     }
+  }
+  _afterFrame() {
+    return Promise.race([this._frameP, new Promise((r) => setTimeout(r, 2500))]);
   }
   _renderFilters() {
     const ft = this.$("ft"), fc = this.$("fc");
@@ -47443,11 +48481,13 @@ var ThCameraCard = class extends HTMLElement {
   async _renderList(target, camFilter) {
     const l = target || this.$("list");
     if (!l) return;
-    const ev = (this._events || []).filter((e) => (camFilter ? e.cam === camFilter : this._fc === "all" || e.cam === this._fc) && (camFilter || this._ft === "all" || e.type === this._ft));
-    if (!target) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
+    const src = camFilter ? this._camEvents(camFilter).sort((a, b) => b.t - a.t) : this._events || [];
+    const ev = src.filter((e) => (camFilter || this._fc === "all" || e.cam === this._fc) && (camFilter || this._ft === "all" || e.type === this._ft));
+    if (!target && this.$("evn")) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
     const key = ev.slice(0, 60).map((e) => e.id).join();
     if (l._key === key && l.childElementCount) return;
     l._key = key;
+    l._ev = ev;
     if (!ev.length) {
       l.innerHTML = '<div class="empty">Ingen h\xE6ndelser i det valgte filter</div>';
       return;
@@ -47460,90 +48500,144 @@ var ThCameraCard = class extends HTMLElement {
         lastDay = d;
       }
       const T = TYPES[e.type];
-      html += `<button class="it" data-i="${this._events.indexOf(e)}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="th">${e.thumbS ? `<img loading="lazy" src="${e.thumbS}" alt="">` : ""}<span>${vci("play", 22)}</span></div>
+      html += `<button class="it" data-i="${i}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="th">${e.thumbS ? `<img loading="lazy" src="${e.thumbS}" alt="">` : ""}<span>${vci("play", 22)}</span></div>
         <div style="min-width:0"><b>${vce(e.camName)}</b><small>${vci("clock", 12)}${vct(e.t)} \xB7 ${vce(e.dur)}</small><span class="ty" style="--c:${T[2]}">${vci(T[1], 12, 2)}${T[0]}</span></div></button>`;
     });
     l.innerHTML = html;
-    l.querySelectorAll(".it").forEach((b) => b.onclick = () => this.play(this._events[+b.dataset.i]));
+    l.querySelectorAll(".it").forEach((b) => b.onclick = () => this._openEvent(l._ev[+b.dataset.i]));
     const todo = ev.slice(0, 60).filter((e) => !e.thumbS && e.thumb);
+    if (todo.length && this._player?.isConnected) await this._afterFrame();
     for (let k = 0; k < todo.length; k += 10) await Promise.all(todo.slice(k, k + 10).map(async (e) => {
       e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200"));
-      const im = l.querySelector(`.it[data-i="${this._events.indexOf(e)}"] .th`);
-      if (im && !im.querySelector("img")) im.insertAdjacentHTML("afterbegin", `<img src="${e.thumbS}" alt="">`);
+      const im = l.querySelector(`.it[data-i="${ev.indexOf(e)}"] .th`);
+      if (im && !im.querySelector("img")) im.insertAdjacentHTML("afterbegin", `<img loading="lazy" decoding="async" src="${e.thumbS}" alt="">`);
     }));
   }
-  _modal(title, sub) {
-    this._r.querySelector(".mod")?.remove();
-    const m = document.createElement("div");
-    m.className = "mod";
-    m.innerHTML = `<button class="x">${vci("close", 18)}</button><div class="box"><div class="vid" id="vid"></div><div class="side"><h3>${vce(title)}</h3><p>${sub}</p><div class="tabs2" id="mt"></div><div class="list" id="mlist"></div></div></div>`;
-    m.onclick = (e) => {
-      if (e.target === m || e.target.closest(".x")) {
-        clearInterval(m._t);
-        m.remove();
-      }
+  // ---- afspiller (player.js) -------------------------------------------------------------------------------------------
+  _plOpts(compact) {
+    const self = this;
+    return {
+      hass: this._h,
+      get nvr() {
+        return self._nvr;
+      },
+      pb: !!this._pb,
+      compact,
+      cams: () => this.cams(),
+      cid: (b) => this._cid?.[b],
+      ready: this._nodesP,
+      events: (b) => this._camEvents(b),
+      version: () => this._evVer || 0,
+      loadDay: (b, d) => this._loadDay(b, d),
+      thumb: (e) => this._thumbUrl(e),
+      types: TYPES,
+      onCam: (b) => this._onPlayerCam(b),
+      onFrame: () => this._frameR()
     };
-    this._r.appendChild(m);
-    return m;
   }
-  _liveInto(box, id, m) {
-    clearInterval(m._t);
-    box.innerHTML = "";
-    const s = this._h.states[id];
-    if (customElements.get("ha-camera-stream")) {
-      const v = document.createElement("ha-camera-stream");
-      v.hass = this._h;
-      v.stateObj = s;
-      v.muted = true;
-      v.controls = true;
-      v.allowExoPlayer = true;
-      box.appendChild(v);
-    } else {
-      const im = document.createElement("img");
-      box.appendChild(im);
-      const up = () => {
-        im.src = s.attributes.entity_picture + "&t=" + Date.now();
-      };
-      up();
-      m._t = setInterval(up, 1e3);
-    }
-    m.querySelector("[data-l]")?.classList.add("on");
+  _pl(compact = false) {
+    if (!this._player) this._player = document.createElement("th-protect-player");
+    this._player.setup(this._plOpts(compact));
+    this._player.hass = this._h;
+    return this._player;
   }
-  openLive(id, base) {
-    const cam = this.cams().find((c2) => c2.id === id), m = this._modal(cam?.name || id, "Live \xB7 tryk p\xE5 en h\xE6ndelse for at afspille klippet");
-    m.querySelector("#mt").innerHTML = `<button data-l>${vci("live", 13)} Live</button>`;
-    m.querySelector("[data-l]").onclick = () => this._liveInto(m.querySelector("#vid"), id, m);
-    m._cam = base;
-    this._liveInto(m.querySelector("#vid"), id, m);
-    this._renderList(m.querySelector("#mlist"), base);
-    if (!(this._events || []).some((e) => e.cam === base)) this._loadEvents(base);
-  }
-  async play(e) {
-    if (!e) return;
-    let m = this._r.querySelector(".mod");
-    const sub = `${TYPES[e.type][0]} \xB7 ${e.t.toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" })} \xB7 ${e.dur}`;
-    if (!m) {
-      m = this._modal(e.camName, sub);
-      m._cam = e.cam;
-      this._renderList(m.querySelector("#mlist"), e.cam);
-      const cam = this.cams().find((c2) => c2.base === e.cam);
-      if (cam) {
-        m.querySelector("#mt").innerHTML = `<button data-l>${vci("live", 13)} Live</button>`;
-        m.querySelector("[data-l]").onclick = () => this._liveInto(m.querySelector("#vid"), cam.id, m);
+  // Første visning: kamera og tidspunkt fra adressen (?cam=&t=), ellers den seneste hændelse på pause.
+  _startPlayer() {
+    const p = this._player;
+    if (!p?.isConnected || p.cam || !this._h) return;
+    const u2 = new URLSearchParams(location.search), qc = u2.get("cam"), qt = u2.get("t");
+    if (qc && !this._usedQuery) {
+      this._usedQuery = true;
+      const base = qc.replace(/_(high|medium|low)(_resolution_channel)?$/, "");
+      if (this.cams().some((c2) => c2.base === base)) {
+        const t = qt ? /^\d+$/.test(qt) ? +qt : Date.parse(qt) : null;
+        p.open(base, Number.isFinite(t) ? t : null, true);
+        return;
       }
-    } else m.querySelector(".side p").textContent = sub;
-    m.querySelector("[data-l]")?.classList.remove("on");
-    clearInterval(m._t);
-    const box = m.querySelector("#vid");
-    box.innerHTML = e.thumbS ? `<img src="${e.thumbS}" style="filter:blur(2px) brightness(.6)">` : "";
-    try {
-      const r = await this._h.callWS({ type: "media_source/resolve_media", media_content_id: e.id });
-      let url = r.url;
-      if (url.startsWith("/") && !/authSig=/.test(url)) url = await this._sign(url);
-      box.innerHTML = `<video src="${url}" controls autoplay playsinline muted></video>`;
-    } catch (er) {
-      box.insertAdjacentHTML("beforeend", `<div style="display:grid;place-items:center;color:#fff;font-size:13px">Klippet kunne ikke afspilles (${vce(er.message || er)})</div>`);
     }
+    const ev = (this._events || [])[0];
+    if (ev) p.open(ev.cam, +ev.t - 2e3, false);
+    else if (this._all) p.open(this.cams()[0]?.base, null);
+  }
+  _openEvent(e) {
+    if (!e) return;
+    if (this._lastMode === "narrow") this._openSheet(e.cam, +e.t - 2e3);
+    else this._pl(this._lastMode === "wide").open(e.cam, +e.t - 2e3, true);
+  }
+  _openCam(base) {
+    if (this._lastMode === "narrow") this._openSheet(base, null);
+    else this._pl(true).open(base, null);
+  }
+  _onPlayerCam(b) {
+    const pc = this.$("pc");
+    if (pc) {
+      pc.innerHTML = this.cams().map((c2) => `<button data-k="${c2.base}" class="${c2.base === b ? "on" : ""}">${vce(c2.name)}</button>`).join("");
+      pc.querySelectorAll("button").forEach((x) => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
+    }
+    this._renderSheet();
+  }
+  // Smal skærm: afspilleren i fuld skærm med kameraets hændelser under sig.
+  _openSheet(base, at) {
+    this._closeSheet();
+    const s = document.createElement("div");
+    s.className = "sheet";
+    s.innerHTML = `<div class="sh-in"><div class="sh-top"><button class="x" aria-label="Luk">${vci("close", 18)}</button><div class="flt" id="sc"></div></div>
+      <div class="sh-pl"></div><div class="sh-k">H\xE6ndelser p\xE5 kameraet</div><div class="list" id="slist"></div></div>`;
+    s.querySelector(".x").onclick = () => this._closeSheet();
+    this._r.appendChild(s);
+    this._sheet = s;
+    s.querySelector(".sh-pl").appendChild(this._pl(false));
+    this._player.open(base, at, true);
+    this._renderSheet();
+  }
+  _closeSheet() {
+    if (!this._sheet) return;
+    this._sheet.remove();
+    this._sheet = null;
+  }
+  _renderSheet() {
+    const s = this._sheet, b = this._player?.cam;
+    if (!s || !b) return;
+    const sc = s.querySelector("#sc"), h = this.cams().map((c2) => `<button data-k="${c2.base}" class="${c2.base === b ? "on" : ""}">${vce(c2.name)}</button>`).join("");
+    if (sc._v !== h) {
+      sc._v = h;
+      sc.innerHTML = h;
+      sc.querySelectorAll("button").forEach((x) => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
+      sc.querySelector(".on")?.scrollIntoView({ block: "nearest", inline: "center" });
+    }
+    this._renderList(s.querySelector("#slist"), b);
+    if (!(this._events || []).some((e) => e.cam === b)) this._loadEvents(b);
+  }
+  _camEvents(b) {
+    const out = /* @__PURE__ */ new Map();
+    for (const e of this._all || this._events || []) if (e.cam === b) out.set(e.id, e);
+    for (const e of this._dayEv?.[b] || []) if (!out.has(e.id)) out.set(e.id, e);
+    return [...out.values()];
+  }
+  // Hændelser for en hel dag, når tidslinjen vises længere tilbage end det seneste døgn.
+  _loadDay(b, day2) {
+    const key = `${b}|${day2}`;
+    this._dayL ||= /* @__PURE__ */ new Map();
+    if (this._dayL.has(key)) return this._dayL.get(key);
+    const p = (async () => {
+      await this._nodesP;
+      const n = this._nodes?.find((x) => x.cam?.base === b);
+      if (!n || !this._nvr) return;
+      const d = new Date(day2);
+      const r = await this._browse(`media-source://unifiprotect/${this._nvr}:browse:${n.cid}:all:range:${d.getFullYear()}:${d.getMonth() + 1}:${d.getDate()}`);
+      const have = new Set((this._dayEv?.[b] || []).map((e) => e.id));
+      (this._dayEv ||= {})[b] = [...this._dayEv[b] || [], ...this._parse(r.children, n).filter((e) => !have.has(e.id))];
+      this._evVer++;
+    })();
+    p.catch(() => this._dayL.delete(key));
+    this._dayL.set(key, p);
+    return p;
+  }
+  async _thumbUrl(e) {
+    if (e.thumbS) return e.thumbS;
+    if (!e.thumb) return null;
+    e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200"));
+    return e.thumbS;
   }
 };
 if (!customElements.get("th-camera-card")) customElements.define("th-camera-card", ThCameraCard);
@@ -51941,9 +53035,9 @@ var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Oversk
 var HOUR2 = 36e5;
 var STORE = "ha-family-calendar-card";
 var esc10 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var pad3 = (n) => String(n).padStart(2, "0");
-var hhmm2 = (d) => `${pad3(d.getHours())}.${pad3(d.getMinutes())}`;
-var dayKey = (d) => `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
+var pad4 = (n) => String(n).padStart(2, "0");
+var hhmm2 = (d) => `${pad4(d.getHours())}.${pad4(d.getMinutes())}`;
+var dayKey = (d) => `${d.getFullYear()}-${pad4(d.getMonth() + 1)}-${pad4(d.getDate())}`;
 var startOfDay = (d) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -52440,7 +53534,7 @@ ${LUX_KEYFRAMES}
       return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc10(e.summary || "")}">${esc10(e.summary || "")}</button>`;
     });
     const hrs = [];
-    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad3(h)}</span></div>`);
+    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad4(h)}</span></div>`);
     r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR2}|${span}"></div>`;
     r.querySelector("[data-tlh]").textContent = todays.length ? `${todays.length} ${todays.length === 1 ? "aftale" : "aftaler"}` : "Fri";
     const wkEnd = +addDays(monday(new Date(t)), 7);
@@ -52546,7 +53640,7 @@ ${LUX_KEYFRAMES}
       const de = ds + 864e5;
       return ev.filter((e) => e.allDay && e.e > ds && e.s < de).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("");
     };
-    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad3(h0 + i)}</span>` : "").join("")}</div>`;
+    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad4(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
       <div class="ad" style="border-right:1px solid var(--edge)"></div>${days.map((d) => `<div class="ad">${allDay(d)}</div>`).join("")}
       ${axis}${days.map((d) => colHtml(d)).join("")}</div>`;
@@ -52659,8 +53753,8 @@ ${LUX_KEYFRAMES}
     if (!people.length) return '<div class="msg">Skoleskemaet har ingen data</div>';
     const m = monday(now);
     const t = +now;
-    return `<div class="school">${people.map(([name, list], pi) => {
-      const color = pi % 2 ? "#f7b942" : "#28df9d";
+    return `<div class="school">${people.map(([name, list], pi2) => {
+      const color = pi2 % 2 ? "#f7b942" : "#28df9d";
       this._lessonWho = `Skoleskema \xB7 ${name[0].toUpperCase()}${name.slice(1)}`;
       const days = [0, 1, 2, 3, 4].map((o) => {
         const d = addDays(m, o);
@@ -54182,8 +55276,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (plot <= 0) return null;
     const hour = clamp2(Math.floor((fraction * box.clientWidth - padLeft) / plot * 24), 0, data.current);
     const kwh = data.lower[hour] + data.upper[hour];
-    const pad4 = (value) => String(value).padStart(2, "0");
-    const parts = [`Kl. ${pad4(hour)}\u2013${pad4(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} \xB7 vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
+    const pad5 = (value) => String(value).padStart(2, "0");
+    const parts = [`Kl. ${pad5(hour)}\u2013${pad5(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} \xB7 vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
     if (data.perKwh !== null) parts.push(`${this._formatNumber(kwh * data.perKwh, 2)} kr`, `i alt ${this._formatNumber(data.cumulative[hour] * data.perKwh, 2)} kr`);
     return { x: (padLeft + (hour + 0.5) / 24 * plot) / box.clientWidth, y: 1 - kwh / data.kwhMax * 0.94, color: "var(--cf-chart-heat)", text: parts.join(" \xB7 ") };
   }
@@ -55333,7 +56427,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     const mobile = this.shadowRoot?.querySelector(".mobile"), surface = this.shadowRoot?.querySelector(".surface"), last = mobile?.lastElementChild;
     if (!last || !surface) return;
     const desktop = window.matchMedia(`(min-width:${(this._mobileBreakpoint || 1100) + 1}px)`).matches;
-    let next = 0, pad4 = 0;
+    let next = 0, pad5 = 0;
     if (!desktop) {
       const nav = this._navSpace();
       if (nav == null) {
@@ -55354,12 +56448,12 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
       else {
         const doc = document.scrollingElement || document.documentElement;
         const below = doc.scrollHeight - (surface.getBoundingClientRect().bottom + window.scrollY) - (this._pad || 0);
-        pad4 = Math.max(0, Math.round(window.innerHeight - navTop + gap - below));
+        pad5 = Math.max(0, Math.round(window.innerHeight - navTop + gap - below));
       }
     }
-    if (Math.abs(pad4 - (this._pad || 0)) >= 2) {
-      this._pad = pad4;
-      this.style.paddingBottom = pad4 ? `${pad4}px` : "";
+    if (Math.abs(pad5 - (this._pad || 0)) >= 2) {
+      this._pad = pad5;
+      this.style.paddingBottom = pad5 ? `${pad5}px` : "";
     }
     if (Math.abs(next - this._fill) < 2) return;
     this._lastExpect = last.offsetHeight - this._fill + next;
@@ -56532,11 +57626,11 @@ var HaNavbarCardEditor = class extends HTMLElement {
     return String(v === void 0 || v === null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   /* ---------- mutationer ---------- */
-  _node(ri2, pi) {
+  _node(ri2, pi2) {
     const rute = this._config.routes[ri2];
     if (!rute) return null;
-    if (pi === -1) return rute;
-    return Array.isArray(rute.popup) ? rute.popup[pi] : null;
+    if (pi2 === -1) return rute;
+    return Array.isArray(rute.popup) ? rute.popup[pi2] : null;
   }
   _saet(obj, key, value) {
     if (value === "" || value === void 0 || value === null) delete obj[key];
@@ -56546,23 +57640,23 @@ var HaNavbarCardEditor = class extends HTMLElement {
     this._saet(this._config, key, value);
     this._emit();
   }
-  _saetFelt(ri2, pi, key, value) {
-    const n = this._node(ri2, pi);
+  _saetFelt(ri2, pi2, key, value) {
+    const n = this._node(ri2, pi2);
     if (n) {
       this._saet(n, key, value);
       this._emit();
     }
   }
-  _saetBadge(ri2, pi, key, value) {
-    const n = this._node(ri2, pi);
+  _saetBadge(ri2, pi2, key, value) {
+    const n = this._node(ri2, pi2);
     if (!n) return;
     if (!n.badge) n.badge = {};
     this._saet(n.badge, key, value);
     if (!Object.keys(n.badge).length) delete n.badge;
     this._emit();
   }
-  _skiftBadge(ri2, pi, til) {
-    const n = this._node(ri2, pi);
+  _skiftBadge(ri2, pi2, til) {
+    const n = this._node(ri2, pi2);
     if (!n) return;
     if (til) n.badge = n.badge || JSON.parse(JSON.stringify(NB_BADGE_STANDARD));
     else delete n.badge;
@@ -56599,55 +57693,55 @@ var HaNavbarCardEditor = class extends HTMLElement {
     }
   }
   /* ---------- felter ---------- */
-  _attr(kind, ri2, pi, key) {
-    return `data-kind="${kind}" data-ri="${ri2}" data-pi="${pi}" data-key="${key}"`;
+  _attr(kind, ri2, pi2, key) {
+    return `data-kind="${kind}" data-ri="${ri2}" data-pi="${pi2}" data-key="${key}"`;
   }
-  _tekst(label, key, value, kind, ri2 = -1, pi = -1, ph2 = "") {
+  _tekst(label, key, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
     return `<label><span>${label}</span>
-      <input type="text" ${this._attr(kind, ri2, pi, key)}
+      <input type="text" ${this._attr(kind, ri2, pi2, key)}
         value="${this._esc(value)}" placeholder="${this._esc(ph2)}"></label>`;
   }
   // Genbruger HA-frontendens egen ikonvaelger (allerede indlaest, ingen ny
   // afhaengighed) i stedet for et fritekstfelt hvor et tastefejl i et
   // mdi:-navn bare giver et tomt ikon uden nogen advarsel.
-  _ikonVaelger(label, key, value, kind, ri2 = -1, pi = -1) {
+  _ikonVaelger(label, key, value, kind, ri2 = -1, pi2 = -1) {
     return `<label><span>${label}</span>
-      <ha-icon-picker ${this._attr(kind, ri2, pi, key)} value="${this._esc(value)}"></ha-icon-picker></label>`;
+      <ha-icon-picker ${this._attr(kind, ri2, pi2, key)} value="${this._esc(value)}"></ha-icon-picker></label>`;
   }
-  _tal(label, key, value, kind, ri2 = -1, pi = -1, disabled = false, min = null, max = null) {
+  _tal(label, key, value, kind, ri2 = -1, pi2 = -1, disabled = false, min = null, max = null) {
     return `<label class="${disabled ? "deaktiveret" : ""}"><span>${label}</span>
-      <input type="number" ${this._attr(kind, ri2, pi, key)} ${disabled ? "disabled" : ""}
+      <input type="number" ${this._attr(kind, ri2, pi2, key)} ${disabled ? "disabled" : ""}
         ${min !== null ? `min="${min}"` : ""} ${max !== null ? `max="${max}"` : ""}
         value="${value === void 0 ? "" : this._esc(value)}"></label>`;
   }
-  _bool(label, key, checked, kind, ri2 = -1, pi = -1) {
-    return `<label class="tjek"><input type="checkbox" ${this._attr(kind, ri2, pi, key)}
+  _bool(label, key, checked, kind, ri2 = -1, pi2 = -1) {
+    return `<label class="tjek"><input type="checkbox" ${this._attr(kind, ri2, pi2, key)}
       ${checked ? "checked" : ""}><span>${label}</span></label>`;
   }
   // Udtryk kan vaere flerlinjede, saa de faar et textarea - et input ville
   // klemme dem sammen til een linje og aedelegge formateringen.
-  _udtryk(label, key, value, kind, ri2 = -1, pi = -1, ph2 = "") {
+  _udtryk(label, key, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
     return `<label class="bred"><span>${label}</span>
-      <textarea rows="2" ${this._attr(kind, ri2, pi, key)}
+      <textarea rows="2" ${this._attr(kind, ri2, pi2, key)}
         placeholder="${this._esc(ph2)}">${this._esc(value)}</textarea></label>`;
   }
-  _valg(label, key, value, muligheder, kind, ri2 = -1, pi = -1) {
+  _valg(label, key, value, muligheder, kind, ri2 = -1, pi2 = -1) {
     const valgt = value || muligheder[0][0];
     return `<label><span>${label}</span>
-      <select ${this._attr(kind, ri2, pi, key)}>
+      <select ${this._attr(kind, ri2, pi2, key)}>
         ${muligheder.map(([v, t]) => `<option value="${v}" ${valgt === v ? "selected" : ""}>${t}</option>`).join("")}
       </select></label>`;
   }
-  _badgeBlok(n, ri2, pi) {
+  _badgeBlok(n, ri2, pi2) {
     const b = n.badge;
     return `<div class="badge">
-      ${this._bool("Badge", "badge", !!b, "badge-toggle", ri2, pi)}
+      ${this._bool("Badge", "badge", !!b, "badge-toggle", ri2, pi2)}
       ${b ? `<div class="gitter">
-          ${this._udtryk("Vis (udtryk)", "show", b.show, "badge", ri2, pi, "[[[ return true; ]]]")}
-          ${this._udtryk("Tal (udtryk)", "count", b.count, "badge", ri2, pi, "[[[ return 3; ]]]")}
-          ${this._tekst("Tekst", "text", b.text, "badge", ri2, pi, "!")}
-          ${this._tekst("Farve", "color", b.color, "badge", ri2, pi, "var(--error-color)")}
-          ${this._tekst("Tekstfarve", "textColor", b.textColor, "badge", ri2, pi, "var(--white, #fff)")}
+          ${this._udtryk("Vis (udtryk)", "show", b.show, "badge", ri2, pi2, "[[[ return true; ]]]")}
+          ${this._udtryk("Tal (udtryk)", "count", b.count, "badge", ri2, pi2, "[[[ return 3; ]]]")}
+          ${this._tekst("Tekst", "text", b.text, "badge", ri2, pi2, "!")}
+          ${this._tekst("Farve", "color", b.color, "badge", ri2, pi2, "var(--error-color)")}
+          ${this._tekst("Tekstfarve", "textColor", b.textColor, "badge", ri2, pi2, "var(--white, #fff)")}
         </div>
         <p class="hj">Tomt <b>Tal</b> giver en prik. Roed eller orange farve pulserer automatisk.</p>` : ""}
     </div>`;
@@ -56810,17 +57904,17 @@ var HaNavbarCardEditor = class extends HTMLElement {
   _aendret(el, value) {
     const kind = el.dataset.kind;
     const ri2 = Number(el.dataset.ri);
-    const pi = Number(el.dataset.pi);
+    const pi2 = Number(el.dataset.pi);
     const key = el.dataset.key;
     if (kind === "root") return this._saetRod(key, value);
-    if (kind === "field") return this._saetFelt(ri2, pi, key, value);
-    if (kind === "badge") return this._saetBadge(ri2, pi, key, value);
-    if (kind === "badge-toggle") return this._skiftBadge(ri2, pi, value);
+    if (kind === "field") return this._saetFelt(ri2, pi2, key, value);
+    if (kind === "badge") return this._saetBadge(ri2, pi2, key, value);
+    if (kind === "badge-toggle") return this._skiftBadge(ri2, pi2, value);
   }
   _handling(el) {
     const h = el.dataset.handling;
     const ri2 = Number(el.dataset.ri);
-    const pi = Number(el.dataset.pi);
+    const pi2 = Number(el.dataset.pi);
     const ruter = this._config.routes;
     if (h === "importer") return this._importer();
     if (h === "rute-tilfoej") {
@@ -56845,10 +57939,10 @@ var HaNavbarCardEditor = class extends HTMLElement {
       this._emit();
       return this._render();
     }
-    if (h === "pop-op") return this._flyt(rute.popup, pi, -1);
-    if (h === "pop-ned") return this._flyt(rute.popup, pi, 1);
+    if (h === "pop-op") return this._flyt(rute.popup, pi2, -1);
+    if (h === "pop-ned") return this._flyt(rute.popup, pi2, 1);
     if (h === "pop-slet") {
-      rute.popup.splice(pi, 1);
+      rute.popup.splice(pi2, 1);
       if (!rute.popup.length) delete rute.popup;
       this._emit();
       return this._render();

@@ -8,11 +8,18 @@
  * concurrency: hvor mange kameraer der hentes hændelser fra ad gangen (standard 5)
  * nvr: { storage_entity, capacity_entity, uptime_entity, cpu_entity, temp_entity, memory_entity, hdd_entities: [] }  – optagerens status
  * quick_links: [{ name, subtitle, icon, navigation_path }]  – genveje under kameraerne
+ * layout: auto (standard) – bred skærm: live til venstre, afspiller og seneste hændelser til højre; smal skærm: kun live,
+ *         og et tryk på et kamera åbner afspilleren i fuld skærm. playback – afspilleren og hændelserne som hele siden
+ *         (?cam=camera.x&t=<ms eller ISO> i adressen åbner et kamera på et tidspunkt).
+ * Afspilleren (player.js, 2.4.0): tidslinje med hændelser, spol ved at trække, zoom, ±10 s, forrige/næste hændelse, 1–8×,
+ * dato, live. Med integrationen protect_playback hentes lav kvalitet først og høj kvalitet bagefter (Claude AI, 2026-10-26).
  * Del af Smart Home Cards fra 2.1.0 (Claude AI, 2026-10-26): hurtigere med mange kameraer – hændelser hentes parallelt og vises,
  * efterhånden som hvert kamera svarer, det trykkede kamera først; de seneste hændelser huskes i browseren, så listen står klar
  * med det samme; fliserne bruger mellemkanalen, live bruger den højeste.
  */
-const VC_VER = '2.3.0';
+import './player.js';
+
+const VC_VER = '2.4.0';
 const VC_CACHE = 'th-camera-card:events';
 const VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>', person: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -33,9 +40,15 @@ const VC_CSS = `
   color:var(--ink);-webkit-font-smoothing:antialiased;padding:12px 0 var(--th-camera-bottom,100px)}
 @media(max-width:1100px){:host{padding:max(10px,env(safe-area-inset-top)) 10px 112px}}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
-.g{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:8px;align-items:start}
-@media(max-width:1250px){.g{grid-template-columns:minmax(0,1fr) 320px}}
-@media(max-width:1000px){.g{grid-template-columns:1fr}}
+.g{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+.g.wide{grid-template-columns:minmax(0,1fr) minmax(400px,34%)}
+.g.pb.wide{grid-template-columns:minmax(0,1fr) 380px}
+.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:8px;max-height:calc(100dvh - 130px);min-width:0}
+.side .ev{flex:1 1 auto;min-height:220px}
+.plp{padding:12px}
+.g.pb.wide .ev{position:sticky;top:12px;max-height:calc(100dvh - 130px)}
+.g.pb:not(.wide) .plp{position:sticky;top:0;z-index:5;background:rgba(10,12,17,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#pc{margin-bottom:10px}
 .p{position:relative;border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015)),rgba(12,14,20,.74);
   box-shadow:0 26px 50px -36px #000,inset 0 0 0 1px var(--hair),inset 0 1px 0 rgba(255,255,255,.05);animation:in .8s cubic-bezier(.16,1,.3,1) both;min-width:0}
 @keyframes in{from{opacity:0;transform:translateY(12px);filter:blur(6px)}}
@@ -59,13 +72,14 @@ const VC_CSS = `
 .cam .bot{position:absolute;left:12px;right:12px;bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
 .cam .last{font-size:11.5px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:6px}
 .cam .cnt{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px)}
-.cam .tag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;font-weight:700;font-size:13px;
-  background:color-mix(in srgb,var(--c) 88%,transparent);color:#140f08;box-shadow:0 10px 30px -6px var(--c);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{from{transform:translate(-50%,-50%) scale(.5);opacity:0}}
+/* Registrering som lille mærke i hjørnet i stedet for REC (brugeren: det store mærke midt i billedet skjulte, hvad der skete) */
+.cam .tag{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:99px;font-weight:700;font-size:11px;
+  background:color-mix(in srgb,var(--c) 90%,transparent);color:#140f08;box-shadow:0 6px 18px -6px var(--c);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.cam.act .rec{display:none}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
 .cam.act{box-shadow:inset 0 0 0 2px var(--c),0 0 40px -12px var(--c)}
 .cam .pulse{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px var(--c);animation:pl 1.6s ease-out infinite;pointer-events:none}@keyframes pl{to{box-shadow:inset 0 0 0 14px transparent}}
-.ev{position:sticky;top:12px;max-height:calc(100dvh - 140px);display:flex;flex-direction:column}
-@media(max-width:1000px){.ev{position:relative;top:0;max-height:none}}
+.ev{display:flex;flex-direction:column;min-height:0}
 .flt{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:8px}.flt::-webkit-scrollbar{display:none}
 .flt button{appearance:none;border:0;cursor:pointer;flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;font-size:11.5px;font-weight:600;color:var(--mut);
   background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--hair);transition:all .3s}
@@ -82,18 +96,15 @@ const VC_CSS = `
 .day{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:8px 2px 2px}
 .empty{padding:20px;text-align:center;color:var(--mut);font-size:13px}
 .skel{height:72px;border-radius:15px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.07),rgba(255,255,255,.03));background-size:200% 100%;animation:sk 1.4s infinite}@keyframes sk{to{background-position:-200% 0}}
-.mod{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(3,4,8,.9);backdrop-filter:blur(10px);animation:fd .3s both}@keyframes fd{from{opacity:0}}
-.mod .box{width:min(1300px,96vw);display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;animation:pp .45s cubic-bezier(.16,1,.3,1) both}
-@keyframes pp{from{transform:translateY(20px) scale(.97);opacity:0}}
-@media(max-width:900px){.mod .box{grid-template-columns:1fr;max-height:92vh;overflow:auto}}
-.mod .vid{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 30px 80px #000}
-.mod .vid>*{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
-.mod .side{border-radius:18px;padding:14px;background:rgba(14,16,22,.9);box-shadow:inset 0 0 0 1px var(--hair);max-height:min(72vh,700px);overflow:auto}
-.mod .side h3{margin:0 0 4px;font-size:17px;font-weight:500}.mod .side p{margin:0 0 12px;color:var(--mut);font-size:12px}
-.mod .x{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center;z-index:2}
-.mod .tabs2{display:flex;gap:6px;margin-bottom:10px}
-.mod .tabs2 button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.06);color:var(--mut)}
-.mod .tabs2 button.on{background:var(--gold);color:#15110a}
+@keyframes fd{from{opacity:0}}
+.sheet{position:fixed;inset:0;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:rgba(3,4,8,.96);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);animation:fd .25s both;padding:max(10px,env(safe-area-inset-top)) 10px max(24px,env(safe-area-inset-bottom))}
+.sh-in{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.sh-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;background:rgba(3,4,8,.96);padding:2px 0 4px}
+.sh-top .x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center}
+.sh-top .flt{margin:0;flex:1;min-width:0}
+.sh-pl{position:sticky;top:48px;z-index:2;background:rgba(3,4,8,.96);padding-bottom:6px}
+.sh-k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
 #nvr{margin-top:10px;display:grid;gap:8px}
 .nvr .k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:0 2px 6px}
 .nvc{display:flex;flex-wrap:wrap;gap:6px}
@@ -112,12 +123,21 @@ class ThCameraCard extends HTMLElement {
   getCardSize() { return 10; }
   connectedCallback() {
     this._tick = setInterval(() => this._refresh(), 1000); this._evt = setInterval(() => this._loadEvents(), 60e3);
+    if (!this._ro) this._ro = new ResizeObserver(() => { if (this._h && this._mode() !== this._lastMode) this._render(); });
+    this._ro.observe(this);
   }
-  disconnectedCallback() { clearInterval(this._tick); clearInterval(this._evt); this._io?.disconnect(); this._io = null; this._r?.querySelectorAll('.cam .lv').forEach(l => { l.innerHTML = ''; }); }
+  disconnectedCallback() { clearInterval(this._tick); clearInterval(this._evt); this._ro?.disconnect(); this._io?.disconnect(); this._io = null; this._r?.querySelectorAll('.cam .lv').forEach(l => { l.innerHTML = ''; }); this._closeSheet(); }
   set hass(h) {
     const first = !this._h; this._h = h;
-    if (!this._r) { this._r = this.attachShadow({ mode: 'open' }); this._r.innerHTML = `<style>${VC_CSS}</style><div id="w"></div>`; this._ft = 'all'; this._fc = 'all'; this._signed = {}; }
-    if (first) this._loadCache();
+    if (!this._r) { this._r = this.attachShadow({ mode: 'open' }); this._r.innerHTML = `<style>${VC_CSS}</style><div id="w"></div>`; this._ft = 'all'; this._fc = 'all'; this._signed = {};
+      this._evVer = 0; this._nodesP = new Promise(r => { this._nodesR = r; }); this._frameP = new Promise(r => { this._frameR = r; }); }
+    if (this._player) this._player.hass = h;
+    if (first) {
+      this._loadCache();
+      // Findes integrationen protect_playback, kan afspilleren hente kameraets lave kanal først.
+      ThCameraCard._pbP ||= h.callApi('GET', 'protect_playback/cameras').then(() => true, () => false);
+      ThCameraCard._pbP.then(v => { this._pb = v; if (this._player?._o) this._player.setup(this._plOpts(this._player.hasAttribute('compact'))); });
+    }
     else if (Date.now() - (this._hs || 0) > 60e3) { this._hs = Date.now(); this._r?.querySelectorAll('.cam .lv ha-camera-stream').forEach(v => { v.hass = h; }); }
     this._render(); if (first) this._loadEvents();
   }
@@ -143,25 +163,32 @@ class ThCameraCard extends HTMLElement {
     return on('binary_sensor.' + b + '_person_detected') ? 'person' : on('binary_sensor.' + b + '_vehicle_detected') ? 'vehicle' : on('binary_sensor.' + b + '_animal_detected') ? 'animal'
       : on('binary_sensor.' + b + '_doorbell') ? 'ring' : t && Date.now() - t < 45e3 ? 'motion' : null;
   }
+  // auto: bred skærm = live + afspiller + hændelser, smal = kun live (afspilleren åbnes i fuld skærm); playback = afspilleren som side.
+  _mode() { const wide = (this.getBoundingClientRect().width || window.innerWidth) >= 1000; return this.cfg.layout === 'playback' ? (wide ? 'pbw' : 'pbn') : wide ? 'wide' : 'narrow'; }
   _render() {
-    const cams = this.cams(), w = this.$('w'), key = cams.map(c => c.id).join();
-    if (key !== this._key) { this._key = key;
+    const cams = this.cams(), w = this.$('w'), mode = this._mode(), key = mode + cams.map(c => c.id).join();
+    if (key !== this._key) { this._key = key; this._lastMode = mode;
       if (!cams.length) { w.innerHTML = `<div class="p"><div class="hd"><div><div class="k">Kameraer</div><h2>UniFi Protect</h2></div></div><div class="empty">Ingen UniFi‑kameraer fundet endnu.</div></div>`; return; }
-      w.innerHTML = `<div class="g">
-        <div class="p"><div class="hd"><div><div class="k">Kameraer · UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
+      const camsP = `<div class="p"><div class="hd"><div><div class="k">Kameraer · UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
           <div class="cams">${cams.map((c, i) => `<button class="cam" data-b="${c.base}" data-id="${c.id}" data-tile="${c.tile}" data-live="${c.live}" style="animation-delay:${i * 70}ms"><img alt=""><div class="lv"></div><div class="sh"></div>
             <div class="nm">${vci('cam', 14)}${vce(c.name)}</div><div class="rec"><i></i>REC</div><div class="tg"></div>
             <div class="bot"><span class="last">${vci('clock', 13)}<span>–</span></span><span class="cnt">0 i dag</span></div></button>`).join('')}</div>
-          <div id="nvr"></div></div>
-        <div class="p ev" style="animation-delay:120ms"><div class="hd"><div><div class="k">Hændelser · seneste døgn</div><h2 id="evn">Henter…</h2></div></div>
-          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div></div>`;
-      w.querySelectorAll('.cam').forEach(b => b.onclick = () => this.openLive(b.dataset.id, b.dataset.b));
+          <div id="nvr"></div></div>`;
+      const evP = `<div class="p ev" style="animation-delay:120ms"><div class="hd"><div><div class="k">Hændelser · seneste døgn</div><h2 id="evn">Henter…</h2></div></div>
+          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div>`;
+      const plP = (cams2) => `<div class="p plp">${cams2 ? '<div class="flt" id="pc"></div>' : ''}<div id="plbox"></div></div>`;
+      this._closeSheet();
+      w.innerHTML = mode === 'wide' ? `<div class="g wide">${camsP}<div class="side">${plP(false)}${evP}</div></div>`
+        : mode === 'narrow' ? `<div class="g narrow">${camsP}</div>`
+          : `<div class="g pb ${mode === 'pbw' ? 'wide' : ''}">${plP(true)}${evP}</div>`;
+      w.querySelectorAll('.cam').forEach(b => b.onclick = () => this._openCam(b.dataset.b));
+      const box = this.$('plbox'); if (box) { box.appendChild(this._pl(mode === 'wide')); this._startPlayer(); }
       this._renderFilters(); this._refresh(true); this._liveTiles(); if ((this._events || []).length) this._renderList();
     }
     let act = 0;
     w.querySelectorAll('.cam').forEach(b => { const ty = this.live(b.dataset.b), T = ty && TYPES[ty]; if (ty) act++;
       b.classList.toggle('act', !!ty); b.style.setProperty('--c', T ? T[2] : 'transparent');
-      const tg = b.querySelector('.tg'), h = T ? `<div class="pulse"></div><div class="tag">${vci(T[1], 16, 2)}${T[0]}</div>` : ''; if (tg._v !== h) { tg.innerHTML = h; tg._v = h; }
+      const tg = b.querySelector('.tg'), h = T ? `<div class="pulse"></div><div class="tag">${vci(T[1], 13, 2.2)}${T[0]}</div>` : ''; if (tg._v !== h) { tg.innerHTML = h; tg._v = h; }
       const evs = (this._all || this._events || []).filter(e => e.cam === b.dataset.b), lst = evs[0];
       b.querySelector('.last span').textContent = lst ? `${TYPES[lst.type][0]} ${vct(lst.t)}` : 'Ingen hændelser';
       b.querySelector('.cnt').textContent = `${evs.filter(e => e.t.toDateString() === new Date().toDateString()).length} i dag`; });
@@ -225,43 +252,52 @@ class ThCameraCard extends HTMLElement {
         const root = await this._browse('media-source://unifiprotect');
         let nvr = root; if (!/:browse$/.test(root.media_content_id || '') && root.children?.length === 1) nvr = await this._browse(root.children[0].media_content_id);
         const cams = this.cams();
-        this._nodes = (nvr.children || []).filter(c => !/:browse:all$/.test(c.media_content_id)).map(ch => ({ ch,
+        this._nvr = String(nvr.media_content_id || '').split('/').pop().split(':')[0];
+        this._nodes = (nvr.children || []).filter(c => !/:browse:all$/.test(c.media_content_id)).map(ch => ({ ch, cid: ch.media_content_id.split(':browse:')[1],
           cam: cams.find(c => c.name.toLowerCase() === ch.title.toLowerCase()) || cams.find(c => ch.title.toLowerCase().startsWith(c.name.toLowerCase())) }))
           .filter(n => n.cam || !(this.cfg.exclude || []).length); // udeladte kameraer: ingen hændelser
+        this._cid = Object.fromEntries(this._nodes.filter(n => n.cam).map(n => [n.cam.base, n.cid])); this._nodesR();
+        // Afspilleren først: optageren svarer langsomt på video, mens den samtidig leverer 11 hændelseslister og miniaturer.
+        if (this._player?.isConnected && (this._events || []).length) await this._afterFrame();
       }
       const order = [...this._nodes].sort((a, b) => (b.cam?.base === first) - (a.cam?.base === first));
       const per = this._per || (this._per = new Map()); let i = 0;
-      const work = async () => { while (i < order.length) { const { ch, cam } = order[i++]; let r; try { r = await this._browse(ch.media_content_id + ':all:recent:1'); } catch (e) { continue; }
-        const evs = [];
-        for (const e of r.children || []) {
-          const m = e.title.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\s+(\S+)\s+(.*)$/); if (!m) continue;
-          const t = new Date(2000 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
-          const old = (this._events || []).find(x => x.id === e.media_content_id);
-          evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: old?.thumbS, t, dur: m[7], type: typeOf(m[8]), raw: m[8], cam: cam?.base || ch.title, camName: cam?.name || ch.title });
-        }
-        per.set(ch.media_content_id, evs); this._mergeSoon(); } };
+      const work = async () => { while (i < order.length) { const n = order[i++]; let r; try { r = await this._browse(n.ch.media_content_id + ':all:recent:1'); } catch (e) { continue; }
+        per.set(n.ch.media_content_id, this._parse(r.children, n)); this._mergeSoon(); } };
       await Promise.all(Array.from({ length: Math.max(1, Math.min(this.cfg.concurrency || 5, order.length)) }, work));
       this._merge(); this._saveCache();
-    } catch (e) { const l = this.$('list'); if (l && !(this._events || []).length) l.innerHTML = `<div class="empty">Kunne ikke hente hændelser (${vce(e.message || e)})</div>`; }
+    } catch (e) { this._nodesR?.(); const l = this.$('list'); if (l && !(this._events || []).length) l.innerHTML = `<div class="empty">Kunne ikke hente hændelser (${vce(e.message || e)})</div>`; }
     this._loading = false;
     if (this._wantFirst) { const f = this._wantFirst; this._wantFirst = null; this._loadEvents(f); }
+  }
+  // "10/26/26 07:11:06 1m 5s Object Detection - Person" (lokal tid) – varigheden kan have flere led.
+  _parse(children, n) {
+    const evs = [];
+    for (const e of children || []) {
+      const m = e.title.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\s+((?:\d+[hms]\s?)+)\s*(.*)$/); if (!m) continue;
+      const t = new Date(2000 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
+      const old = (this._events || []).find(x => x.id === e.media_content_id);
+      evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: old?.thumbS, t, dur: m[7].trim(), type: typeOf(m[8]), raw: m[8], cam: n.cam?.base || n.ch.title, camName: n.cam?.name || n.ch.title });
+    }
+    return evs;
   }
   _merge() {
     clearTimeout(this._mt); this._mt = null;
     this._all = [...(this._per || new Map()).values()].flat().sort((a, b) => b.t - a.t); // fliserne tæller alle; listen viser de 150 nyeste
-    this._events = this._all.slice(0, 150);
-    this._renderFilters(); this._renderList(); this._render();
-    const m = this._r.querySelector('.mod'); if (m?._cam) this._renderList(m.querySelector('#mlist'), m._cam);
+    this._events = this._all.slice(0, 150); this._evVer++;
+    this._renderFilters(); this._renderList(); this._render(); this._renderSheet(); this._startPlayer();
   }
   _mergeSoon() { if (!this._mt) this._mt = setTimeout(() => this._merge(), 250); }
   _loadCache() {
     try { const c = JSON.parse(localStorage.getItem(VC_CACHE) || 'null'); if (!c || Date.now() - c.at > 6 * 3600e3) return;
       const fresh = Date.now() - c.at < 50 * 60e3; // signerede miniaturer gælder en time
-      this._events = c.events.map(e => ({ ...e, t: new Date(e.t), thumbS: fresh ? e.thumbS : undefined })); } catch (e) { /* intet gemt */ }
+      this._events = c.events.map(e => ({ ...e, t: new Date(e.t), dur: String(e.dur || ''), thumbS: fresh ? e.thumbS : undefined })); this._evVer++;
+      if (c.nvr && c.cid) { this._nvr = c.nvr; this._cid = c.cid; } } catch (e) { /* intet gemt */ }
   }
   _saveCache() {
-    try { localStorage.setItem(VC_CACHE, JSON.stringify({ at: Date.now(), events: (this._events || []).slice(0, 80).map(e => ({ ...e, t: +e.t })) })); } catch (e) { /* fuld */ }
+    try { localStorage.setItem(VC_CACHE, JSON.stringify({ at: Date.now(), nvr: this._nvr, cid: this._cid, events: (this._events || []).slice(0, 80).map(e => ({ ...e, t: +e.t })) })); } catch (e) { /* fuld */ }
   }
+  _afterFrame() { return Promise.race([this._frameP, new Promise(r => setTimeout(r, 2500))]); }
   _renderFilters() {
     const ft = this.$('ft'), fc = this.$('fc'); if (!ft) return; const ev = this._events || [];
     const cnt = k => ev.filter(e => k === 'all' || e.type === k).length;
@@ -273,50 +309,103 @@ class ThCameraCard extends HTMLElement {
   }
   async _renderList(target, camFilter) {
     const l = target || this.$('list'); if (!l) return;
-    const ev = (this._events || []).filter(e => (camFilter ? e.cam === camFilter : (this._fc === 'all' || e.cam === this._fc)) && (camFilter || this._ft === 'all' || e.type === this._ft));
-    if (!target) this.$('evn').textContent = `${ev.length} hændelse${ev.length === 1 ? '' : 'r'}`;
-    const key = ev.slice(0, 60).map(e => e.id).join(); if (l._key === key && l.childElementCount) return; l._key = key; // uændret: tegn ikke om
+    // Ét kamera (fuldskærmsafspilleren): alle dets hændelser, også dem uden for de 150 nyeste på tværs af kameraerne.
+    const src = camFilter ? this._camEvents(camFilter).sort((a, b) => b.t - a.t) : (this._events || []);
+    const ev = src.filter(e => (camFilter || this._fc === 'all' || e.cam === this._fc) && (camFilter || this._ft === 'all' || e.type === this._ft));
+    if (!target && this.$('evn')) this.$('evn').textContent = `${ev.length} hændelse${ev.length === 1 ? '' : 'r'}`;
+    const key = ev.slice(0, 60).map(e => e.id).join(); if (l._key === key && l.childElementCount) return; l._key = key; l._ev = ev; // uændret: tegn ikke om
     if (!ev.length) { l.innerHTML = '<div class="empty">Ingen hændelser i det valgte filter</div>'; return; }
     let lastDay = '', html = '';
     ev.slice(0, 60).forEach((e, i) => { const d = e.t.toDateString() === new Date().toDateString() ? 'I dag' : e.t.toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'short' });
       if (d !== lastDay) { html += `<div class="day">${d}</div>`; lastDay = d; } const T = TYPES[e.type];
-      html += `<button class="it" data-i="${this._events.indexOf(e)}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="th">${e.thumbS ? `<img loading="lazy" src="${e.thumbS}" alt="">` : ''}<span>${vci('play', 22)}</span></div>
+      html += `<button class="it" data-i="${i}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="th">${e.thumbS ? `<img loading="lazy" src="${e.thumbS}" alt="">` : ''}<span>${vci('play', 22)}</span></div>
         <div style="min-width:0"><b>${vce(e.camName)}</b><small>${vci('clock', 12)}${vct(e.t)} · ${vce(e.dur)}</small><span class="ty" style="--c:${T[2]}">${vci(T[1], 12, 2)}${T[0]}</span></div></button>`; });
     l.innerHTML = html;
-    l.querySelectorAll('.it').forEach(b => b.onclick = () => this.play(this._events[+b.dataset.i]));
+    l.querySelectorAll('.it').forEach(b => b.onclick = () => this._openEvent(l._ev[+b.dataset.i]));
     // Miniaturer signeres ti ad gangen i stedet for én ad gangen (Claude AI, 2026-10-26)
     const todo = ev.slice(0, 60).filter(e => !e.thumbS && e.thumb);
+    if (todo.length && this._player?.isConnected) await this._afterFrame(); // miniaturerne venter på afspillerens første billede
     for (let k = 0; k < todo.length; k += 10) await Promise.all(todo.slice(k, k + 10).map(async e => { e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, 'width=320&height=200'));
-      const im = l.querySelector(`.it[data-i="${this._events.indexOf(e)}"] .th`); if (im && !im.querySelector('img')) im.insertAdjacentHTML('afterbegin', `<img src="${e.thumbS}" alt="">`); }));
+      const im = l.querySelector(`.it[data-i="${ev.indexOf(e)}"] .th`); if (im && !im.querySelector('img')) im.insertAdjacentHTML('afterbegin', `<img loading="lazy" decoding="async" src="${e.thumbS}" alt="">`); }));
   }
-  _modal(title, sub) {
-    this._r.querySelector('.mod')?.remove();
-    const m = document.createElement('div'); m.className = 'mod';
-    m.innerHTML = `<button class="x">${vci('close', 18)}</button><div class="box"><div class="vid" id="vid"></div><div class="side"><h3>${vce(title)}</h3><p>${sub}</p><div class="tabs2" id="mt"></div><div class="list" id="mlist"></div></div></div>`;
-    m.onclick = e => { if (e.target === m || e.target.closest('.x')) { clearInterval(m._t); m.remove(); } }; this._r.appendChild(m); return m;
+  // ---- afspiller (player.js) -------------------------------------------------------------------------------------------
+  _plOpts(compact) {
+    const self = this;
+    return { hass: this._h, get nvr() { return self._nvr; }, pb: !!this._pb, compact, cams: () => this.cams(), cid: b => this._cid?.[b], ready: this._nodesP,
+      events: b => this._camEvents(b), version: () => this._evVer || 0, loadDay: (b, d) => this._loadDay(b, d), thumb: e => this._thumbUrl(e), types: TYPES,
+      onCam: b => this._onPlayerCam(b), onFrame: () => this._frameR() };
   }
-  _liveInto(box, id, m) {
-    clearInterval(m._t); box.innerHTML = ''; const s = this._h.states[id];
-    if (customElements.get('ha-camera-stream')) { const v = document.createElement('ha-camera-stream'); v.hass = this._h; v.stateObj = s; v.muted = true; v.controls = true; v.allowExoPlayer = true; box.appendChild(v); }
-    else { const im = document.createElement('img'); box.appendChild(im); const up = () => { im.src = s.attributes.entity_picture + '&t=' + Date.now(); }; up(); m._t = setInterval(up, 1000); }
-    m.querySelector('[data-l]')?.classList.add('on');
+  _pl(compact = false) {
+    if (!this._player) this._player = document.createElement('th-protect-player');
+    this._player.setup(this._plOpts(compact)); this._player.hass = this._h;
+    return this._player;
   }
-  openLive(id, base) {
-    const cam = this.cams().find(c => c.id === id), m = this._modal(cam?.name || id, 'Live · tryk på en hændelse for at afspille klippet');
-    m.querySelector('#mt').innerHTML = `<button data-l>${vci('live', 13)} Live</button>`; m.querySelector('[data-l]').onclick = () => this._liveInto(m.querySelector('#vid'), id, m);
-    m._cam = base; this._liveInto(m.querySelector('#vid'), id, m); this._renderList(m.querySelector('#mlist'), base);
-    if (!(this._events || []).some(e => e.cam === base)) this._loadEvents(base);
+  // Første visning: kamera og tidspunkt fra adressen (?cam=&t=), ellers den seneste hændelse på pause.
+  _startPlayer() {
+    const p = this._player; if (!p?.isConnected || p.cam || !this._h) return;
+    const u = new URLSearchParams(location.search), qc = u.get('cam'), qt = u.get('t');
+    if (qc && !this._usedQuery) { this._usedQuery = true; const base = qc.replace(/_(high|medium|low)(_resolution_channel)?$/, '');
+      if (this.cams().some(c => c.base === base)) { const t = qt ? (/^\d+$/.test(qt) ? +qt : Date.parse(qt)) : null; p.open(base, Number.isFinite(t) ? t : null, true); return; } }
+    const ev = (this._events || [])[0];
+    if (ev) p.open(ev.cam, +ev.t - 2000, false);
+    else if (this._all) p.open(this.cams()[0]?.base, null);
   }
-  async play(e) {
-    if (!e) return; let m = this._r.querySelector('.mod'); const sub = `${TYPES[e.type][0]} · ${e.t.toLocaleString('da-DK', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · ${e.dur}`;
-    if (!m) { m = this._modal(e.camName, sub); m._cam = e.cam; this._renderList(m.querySelector('#mlist'), e.cam);
-      const cam = this.cams().find(c => c.base === e.cam); if (cam) { m.querySelector('#mt').innerHTML = `<button data-l>${vci('live', 13)} Live</button>`; m.querySelector('[data-l]').onclick = () => this._liveInto(m.querySelector('#vid'), cam.id, m); } }
-    else m.querySelector('.side p').textContent = sub;
-    m.querySelector('[data-l]')?.classList.remove('on');
-    clearInterval(m._t); const box = m.querySelector('#vid'); box.innerHTML = e.thumbS ? `<img src="${e.thumbS}" style="filter:blur(2px) brightness(.6)">` : '';
-    try { const r = await this._h.callWS({ type: 'media_source/resolve_media', media_content_id: e.id }); let url = r.url; if (url.startsWith('/') && !/authSig=/.test(url)) url = await this._sign(url);
-      box.innerHTML = `<video src="${url}" controls autoplay playsinline muted></video>`; }
-    catch (er) { box.insertAdjacentHTML('beforeend', `<div style="display:grid;place-items:center;color:#fff;font-size:13px">Klippet kunne ikke afspilles (${vce(er.message || er)})</div>`); }
+  _openEvent(e) {
+    if (!e) return;
+    if (this._lastMode === 'narrow') this._openSheet(e.cam, +e.t - 2000);
+    else this._pl(this._lastMode === 'wide').open(e.cam, +e.t - 2000, true);
+  }
+  _openCam(base) {
+    if (this._lastMode === 'narrow') this._openSheet(base, null);
+    else this._pl(true).open(base, null);
+  }
+  _onPlayerCam(b) {
+    const pc = this.$('pc');
+    if (pc) { pc.innerHTML = this.cams().map(c => `<button data-k="${c.base}" class="${c.base === b ? 'on' : ''}">${vce(c.name)}</button>`).join('');
+      pc.querySelectorAll('button').forEach(x => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true)); }
+    this._renderSheet();
+  }
+  // Smal skærm: afspilleren i fuld skærm med kameraets hændelser under sig.
+  _openSheet(base, at) {
+    this._closeSheet();
+    const s = document.createElement('div'); s.className = 'sheet';
+    s.innerHTML = `<div class="sh-in"><div class="sh-top"><button class="x" aria-label="Luk">${vci('close', 18)}</button><div class="flt" id="sc"></div></div>
+      <div class="sh-pl"></div><div class="sh-k">Hændelser på kameraet</div><div class="list" id="slist"></div></div>`;
+    s.querySelector('.x').onclick = () => this._closeSheet();
+    this._r.appendChild(s); this._sheet = s;
+    s.querySelector('.sh-pl').appendChild(this._pl(false));
+    this._player.open(base, at, true); this._renderSheet();
+  }
+  _closeSheet() { if (!this._sheet) return; this._sheet.remove(); this._sheet = null; }
+  _renderSheet() {
+    const s = this._sheet, b = this._player?.cam; if (!s || !b) return;
+    const sc = s.querySelector('#sc'), h = this.cams().map(c => `<button data-k="${c.base}" class="${c.base === b ? 'on' : ''}">${vce(c.name)}</button>`).join('');
+    if (sc._v !== h) { sc._v = h; sc.innerHTML = h; sc.querySelectorAll('button').forEach(x => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
+      sc.querySelector('.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+    this._renderList(s.querySelector('#slist'), b);
+    if (!(this._events || []).some(e => e.cam === b)) this._loadEvents(b);
+  }
+  _camEvents(b) {
+    const out = new Map();
+    for (const e of this._all || this._events || []) if (e.cam === b) out.set(e.id, e);
+    for (const e of this._dayEv?.[b] || []) if (!out.has(e.id)) out.set(e.id, e);
+    return [...out.values()];
+  }
+  // Hændelser for en hel dag, når tidslinjen vises længere tilbage end det seneste døgn.
+  _loadDay(b, day) {
+    const key = `${b}|${day}`; this._dayL ||= new Map(); if (this._dayL.has(key)) return this._dayL.get(key);
+    const p = (async () => {
+      await this._nodesP; const n = this._nodes?.find(x => x.cam?.base === b); if (!n || !this._nvr) return;
+      const d = new Date(day);
+      const r = await this._browse(`media-source://unifiprotect/${this._nvr}:browse:${n.cid}:all:range:${d.getFullYear()}:${d.getMonth() + 1}:${d.getDate()}`);
+      const have = new Set((this._dayEv?.[b] || []).map(e => e.id));
+      (this._dayEv ||= {})[b] = [...(this._dayEv[b] || []), ...this._parse(r.children, n).filter(e => !have.has(e.id))]; this._evVer++;
+    })();
+    p.catch(() => this._dayL.delete(key)); this._dayL.set(key, p); return p;
+  }
+  async _thumbUrl(e) {
+    if (e.thumbS) return e.thumbS; if (!e.thumb) return null;
+    e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, 'width=320&height=200')); return e.thumbS;
   }
 }
 if (!customElements.get('th-camera-card')) customElements.define('th-camera-card', ThCameraCard);
