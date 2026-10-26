@@ -11,7 +11,7 @@
  * efterhånden som hvert kamera svarer, det trykkede kamera først; de seneste hændelser huskes i browseren, så listen står klar
  * med det samme; fliserne bruger mellemkanalen, live bruger den højeste.
  */
-const VC_VER = '2.2.0';
+const VC_VER = '2.2.1';
 const VC_CACHE = 'th-camera-card:events';
 const VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>', person: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -159,7 +159,7 @@ class ThCameraCard extends HTMLElement {
     w.querySelectorAll('.cam').forEach(b => { const ty = this.live(b.dataset.b), T = ty && TYPES[ty]; if (ty) act++;
       b.classList.toggle('act', !!ty); b.style.setProperty('--c', T ? T[2] : 'transparent');
       const tg = b.querySelector('.tg'), h = T ? `<div class="pulse"></div><div class="tag">${vci(T[1], 16, 2)}${T[0]}</div>` : ''; if (tg._v !== h) { tg.innerHTML = h; tg._v = h; }
-      const evs = (this._events || []).filter(e => e.cam === b.dataset.b), lst = evs[0];
+      const evs = (this._all || this._events || []).filter(e => e.cam === b.dataset.b), lst = evs[0];
       b.querySelector('.last span').textContent = lst ? `${TYPES[lst.type][0]} ${vct(lst.t)}` : 'Ingen hændelser';
       b.querySelector('.cnt').textContent = `${evs.filter(e => e.t.toDateString() === new Date().toDateString()).length} i dag`; });
     this._renderNvr();
@@ -244,7 +244,8 @@ class ThCameraCard extends HTMLElement {
   }
   _merge() {
     clearTimeout(this._mt); this._mt = null;
-    this._events = [...(this._per || new Map()).values()].flat().sort((a, b) => b.t - a.t).slice(0, 150);
+    this._all = [...(this._per || new Map()).values()].flat().sort((a, b) => b.t - a.t); // fliserne tæller alle; listen viser de 150 nyeste
+    this._events = this._all.slice(0, 150);
     this._renderFilters(); this._renderList(); this._render();
     const m = this._r.querySelector('.mod'); if (m?._cam) this._renderList(m.querySelector('#mlist'), m._cam);
   }

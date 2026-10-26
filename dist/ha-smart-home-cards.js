@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.208 */
+/* MRDonnii Smart Home Cards v0.5.209 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -46989,7 +46989,7 @@ console.info(
 );
 
 // src/cards/th-camera-card/th-camera-card.js
-var VC_VER = "2.2.0";
+var VC_VER = "2.2.1";
 var VC_CACHE = "th-camera-card:events";
 var VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>',
@@ -47185,7 +47185,7 @@ var ThCameraCard = class extends HTMLElement {
         tg.innerHTML = h;
         tg._v = h;
       }
-      const evs = (this._events || []).filter((e) => e.cam === b.dataset.b), lst = evs[0];
+      const evs = (this._all || this._events || []).filter((e) => e.cam === b.dataset.b), lst = evs[0];
       b.querySelector(".last span").textContent = lst ? `${TYPES[lst.type][0]} ${vct(lst.t)}` : "Ingen h\xE6ndelser";
       b.querySelector(".cnt").textContent = `${evs.filter((e) => e.t.toDateString() === (/* @__PURE__ */ new Date()).toDateString()).length} i dag`;
     });
@@ -47394,7 +47394,8 @@ var ThCameraCard = class extends HTMLElement {
   _merge() {
     clearTimeout(this._mt);
     this._mt = null;
-    this._events = [...(this._per || /* @__PURE__ */ new Map()).values()].flat().sort((a, b) => b.t - a.t).slice(0, 150);
+    this._all = [...(this._per || /* @__PURE__ */ new Map()).values()].flat().sort((a, b) => b.t - a.t);
+    this._events = this._all.slice(0, 150);
     this._renderFilters();
     this._renderList();
     this._render();
