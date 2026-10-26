@@ -58,7 +58,7 @@ export function renderWatchPause(box, hass, cfg) {
       const b = e.target.closest('[data-pause]'); if (!b) return; e.stopPropagation();
       box._hass.callService('input_datetime', 'set_datetime', { entity_id: box._cfg.pause_entity, datetime: ymdhms(target(b.dataset.pause)) });
     });
-    // Teksten "til kl. …" og udløbet af pausen følger uret, også uden nye tilstande.
-    box._tick = setInterval(() => { if (!box.isConnected) { clearInterval(box._tick); return; } renderWatchPause(box, box._hass, box._cfg); }, 30e3);
   }
+  // Teksten "til kl. …" og udløbet af pausen følger uret, også uden nye tilstande (genstartes, når kortet vises igen).
+  if (!box._tick) box._tick = setInterval(() => { if (!box.isConnected) { clearInterval(box._tick); box._tick = null; return; } renderWatchPause(box, box._hass, box._cfg); }, 30e3);
 }

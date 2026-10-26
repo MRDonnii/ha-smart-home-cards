@@ -8,4 +8,4 @@ Install: copy this folder to `custom_components/protect_playback`, add `protect_
 restart Home Assistant. It needs the UniFi Protect integration and uses its connection and access checks.
 
 - `GET /api/protect_playback/cameras` – NVRs, cameras and their channels
-- `GET /api/protect_playback/video/{nvr_id}/{camera_id}/{channel}/{start}/{end}[?fps=4]` – MP4, at most 3 hours
+- `GET /api/protect_playback/video/{nvr_id}/{camera_id}/{channel}/{start}/{end}[?fps=4]` – MP4, at most 10 minutes (3 hours as a timelapse); pieces newer than 2 minutes are not cached

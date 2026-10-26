@@ -9,11 +9,12 @@
  * To <video> skiftes, så næste stykke allerede står på det rigtige billede, når det forrige slutter.
  *
  * Bruges af th-camera-card: setup({ hass, nvr, pb, compact, cams(), cid(base), ready, events(base), version(), loadDay(),
- * thumb(e), types, onCam(base) }) og open(base, tid | null = live, afspil).
+ * thumb(e), types, onCam(base), onFrame() }) og open(base, tid | null = live, afspil).
  */
 const SEG = 10000;          // ét stykke optagelse
 const LIVE_LAG = 20000;     // tættere på nu end det = live
 const READY_LAG = 10000;    // et stykke hentes først, når det er optaget færdigt
+const FRESH = 120e3;        // så nye stykker kan stadig være ufærdige hos Protect
 const SPANS = [60e3, 2 * 60e3, 5 * 60e3, 15 * 60e3, 30 * 60e3, 3600e3, 3 * 3600e3, 6 * 3600e3, 12 * 3600e3, 24 * 3600e3];
 const STEPS = [5e3, 10e3, 30e3, 60e3, 2 * 60e3, 5 * 60e3, 10 * 60e3, 15 * 60e3, 30 * 60e3, 3600e3, 2 * 3600e3, 3 * 3600e3, 6 * 3600e3, 12 * 3600e3];
 const SPEEDS = [1, 2, 4, 8];
@@ -21,6 +22,7 @@ const QKEY = 'th-camera-player:quality';
 const isoZ = ms => new Date(ms).toISOString().replace(/\.\d{3}Z$/, '+00:00');
 const pad = n => String(n).padStart(2, '0');
 const hms = (d, sec = true) => `${pad(d.getHours())}.${pad(d.getMinutes())}${sec ? '.' + pad(d.getSeconds()) : ''}`;
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 export const durMs = s => { const g = r => +((String(s || '').match(r) || [])[1] || 0); return (g(/(\d+)h/) * 3600 + g(/(\d+)m/) * 60 + g(/(\d+)s/)) * 1000; };
 // Den første, der lykkes – eller null, når alle er slået fejl.
 const firstOk = ps => new Promise(res => { let left = ps.length; if (!left) res(null);
@@ -31,7 +33,8 @@ const PI = {
   prev: '<path d="M6 5v14"/><path d="M19 5.5v13L9 12Z" fill="currentColor" stroke="none"/>', next: '<path d="M18 5v14"/><path d="M5 5.5v13L15 12Z" fill="currentColor" stroke="none"/>',
   back: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4h4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
   fwd: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4.5v4h-4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
-  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', unfull: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
+  mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
   sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
   cal: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>', minus: '<path d="M6 12h12"/>', plus: '<path d="M6 12h12M12 6v12"/>',
 };
@@ -40,44 +43,56 @@ const pi = (k, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" f
 const CSS = `
 :host{display:block;position:relative;color:#f4f1ea;--gold:#e8c37e;--mut:rgba(244,241,234,.56);--hair:rgba(244,241,234,.09);--red:#ff4d63;outline:none;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
-.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--hair);touch-action:manipulation;cursor:pointer}
-.stage video,.stage .live,.stage .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .12s;pointer-events:none}
+.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--hair);touch-action:manipulation;cursor:pointer}
+.stage video,.stage .live,.stage .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none}
+.stage .live,.stage .poster{transition:opacity .12s}
+/* Ingen fade mellem de to videoer: den nye lægges øverst, og den gamle skjules først i næste billede (ellers blinker det). */
+.stage video.fr{z-index:1}
 .stage .poster{object-fit:cover;filter:blur(14px) brightness(.5) saturate(1.2);transform:scale(1.1)}
 .stage video.on,.stage .live.on,.stage .poster.on{opacity:1}
-.stage .live ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
+.stage .live{z-index:1}.stage .live ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
 .stage .live img{width:100%;height:100%;object-fit:contain}
-.top{position:absolute;left:10px;right:10px;top:10px;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
+/* Kameranavnet nederst – kameraets eget tidsstempel står øverst til venstre */
+.top{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;display:flex;align-items:flex-end;gap:8px;pointer-events:none}
 .cn{padding:5px 10px;border-radius:10px;background:rgba(10,12,18,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:12.5px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 .q{margin-left:auto;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.12em;background:rgba(0,0,0,.5);backdrop-filter:blur(8px)}
 .q.live{background:var(--red);color:#fff}.q:empty{display:none}
-.spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:sp .8s linear infinite;opacity:0;transition:opacity .2s;pointer-events:none}
+.spin{position:absolute;z-index:3;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:sp .8s linear infinite;opacity:0;transition:opacity .2s;pointer-events:none}
 .spin.on{opacity:1}@keyframes sp{to{transform:rotate(1turn)}}
-.msg{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:6px 12px;border-radius:99px;background:rgba(0,0,0,.65);font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.msg{position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);padding:7px 13px;border-radius:99px;background:rgba(0,0,0,.7);font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .msg.on{opacity:1}
 .row{display:flex;align-items:center;gap:4px;margin-top:8px}
 .row button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;min-width:34px;height:34px;padding:0 8px;border-radius:11px;
   background:rgba(255,255,255,.05);color:inherit;font:inherit;font-size:11.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--hair);transition:background .2s}
 .row button:hover{background:rgba(255,255,255,.1)}.row button:active{transform:scale(.95)}
+.row button:disabled{opacity:.35;cursor:default}
 .row .pp{min-width:46px;background:var(--gold);color:#15110a;box-shadow:none}.row .pp:hover{background:#f1d199}
 .row .lv i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .row .lv.on{background:var(--red);color:#fff;box-shadow:none}
 .row .on2{color:var(--gold)}
-.clock{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;margin:0 4px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.clock{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;margin:0 4px 0 6px;white-space:nowrap;flex:0 1 auto;min-width:3.6em;overflow:hidden;text-overflow:ellipsis}
 .grow{flex:1;min-width:0}
 .span{font-size:11px;font-weight:600;color:var(--mut);min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
 .date{position:relative}.date input{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
-.tlw{position:relative;height:58px;margin-top:8px;border-radius:12px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--hair);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.tlx{position:relative;margin-top:8px}
+.tlw{position:relative;height:58px;border-radius:12px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--hair);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .tlw.drag{cursor:grabbing}
 .tlw canvas{position:absolute;inset:0;width:100%;height:100%}
 .ph{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 10px color-mix(in srgb,var(--gold) 70%,transparent);pointer-events:none}
 .ph::before{content:"";position:absolute;left:50%;top:0;border:6px solid transparent;border-top-color:var(--gold);transform:translateX(-50%)}
-.tip{position:absolute;bottom:72px;width:168px;padding:6px;border-radius:12px;background:rgba(14,16,22,.96);box-shadow:0 14px 34px -10px #000,inset 0 0 0 1px var(--hair);pointer-events:none;opacity:0;transition:opacity .15s;z-index:3}
+.tip{position:absolute;bottom:66px;width:168px;padding:6px;border-radius:12px;background:rgba(14,16,22,.97);box-shadow:0 14px 34px -10px #000,inset 0 0 0 1px var(--hair);pointer-events:none;opacity:0;transition:opacity .15s;z-index:4}
 .tip.on{opacity:1}.tip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#06070b}
 .tip b{display:block;font-size:11.5px;margin:5px 2px 1px}.tip small{display:block;font-size:10.5px;color:var(--mut);margin:0 2px}
 :host([compact]) .row button{min-width:32px;height:32px;padding:0 7px}
-:host([compact]) .hidec{display:none}
+:host([compact]) .hidec,:host([narrow]) .hidec{display:none}
+:host([narrow]) .row{gap:3px}:host([narrow]) .row button{min-width:30px;height:32px;padding:0 6px}:host([narrow]) .row .pp{min-width:40px}
+:host([narrow]) .span{min-width:34px}:host([narrow]) .clock{margin:0 2px 0 4px}
 :host(:fullscreen){background:#000;padding:14px;display:flex;flex-direction:column}
-:host(:fullscreen) .stage{flex:1;aspect-ratio:auto;border-radius:12px}
+:host(:fullscreen) .stage{flex:1;aspect-ratio:auto}
+/* Fuld skærm uden Fullscreen-API (iPhone): afspilleren lægger sig selv over hele skærmen med tidslinjen. */
+:host([pfs]){position:fixed;inset:0;z-index:10000;background:#000;display:flex;flex-direction:column;height:100dvh;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+:host([pfs]) .stage{flex:1;aspect-ratio:auto;min-height:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
@@ -93,7 +108,7 @@ const HTML = `
   <span class="clock"></span><span class="grow"></span>
   <button data-a="live" class="lv" title="Live (L)"><i></i>LIVE</button>
 </div>
-<div class="tlw"><canvas></canvas><div class="ph"></div><div class="tip"><img alt=""><b></b><small></small></div></div>
+<div class="tlx"><div class="tlw"><canvas></canvas><div class="ph"></div></div><div class="tip"><img alt=""><b></b><small></small></div></div>
 <div class="row">
   <button data-a="speed" title="Hastighed">1×</button><button data-a="quality" title="Kvalitet: Auto viser lav kvalitet med det samme og skifter til høj">Auto</button>
   <button data-a="mute" title="Lyd">${pi('mute', 17)}</button>
@@ -113,6 +128,11 @@ class ThProtectPlayer extends HTMLElement {
     try { this._quality = localStorage.getItem(QKEY) || 'auto'; } catch (e) { this._quality = 'auto'; }
     this._vids = [...this._r.querySelectorAll('video')];
     this._fr = () => this._frame();
+    this._vis = () => {
+      const v = this._cur?.v; if (!v || this._live) return;
+      if (document.hidden && !v.paused) { this._resume = true; v.pause(); }
+      else if (!document.hidden && this._resume) { this._resume = false; if (this._playing) this._play(v); }
+    };
     this._bind();
   }
   q(s) { return this._r.querySelector(s); }
@@ -128,19 +148,38 @@ class ThProtectPlayer extends HTMLElement {
   }
   get cam() { return this._cam?.base; }
   get time() { return this._live ? null : this._t; }
-  connectedCallback() { if (!this.hasAttribute('tabindex')) this.tabIndex = 0; clearTimeout(this._gcT); if (this._cam) this._loop(); if (!this._ro) { this._ro = new ResizeObserver(() => { this._dirty = true; }); this._ro.observe(this.q('.tlw')); } }
+  connectedCallback() {
+    if (!this.hasAttribute('tabindex')) this.tabIndex = 0;
+    clearTimeout(this._gcT); document.addEventListener('visibilitychange', this._vis);
+    if (!this._ro) {
+      this._ro = new ResizeObserver(() => { this._dirty = true; this.toggleAttribute('narrow', this.clientWidth > 0 && this.clientWidth < 420); });
+      this._ro.observe(this); this._ro.observe(this.q('.tlw'));
+    }
+    // Flyttet eller vist igen (HA's visninger, layoutskift): fortsæt hvor den var – live eller på pause.
+    if (this._cam && this._dc) {
+      this._dc = false; this._reopen = true;
+      queueMicrotask(() => { if (!this._reopen || !this.isConnected) return; this._reopen = false; if (this._wasLiveDc) this.goLive(); else this._seek(this._t, false); });
+    }
+    if (this._cam) this._loop();
+  }
   disconnectedCallback() {
-    cancelAnimationFrame(this._raf); this._raf = null; this._sgen++; this._gen++;
-    this._vids.forEach(v => v.pause()); this._exitLive(); this._playing = false; this._ppBtn();
+    document.removeEventListener('visibilitychange', this._vis);
+    cancelAnimationFrame(this._raf); this._raf = null; this._sgen++; this._gen++; this._hand = null;
+    this._dc = true; this._wasLiveDc = this._live;
+    this._vids.forEach(v => v.pause()); this._exitLive(); this._playing = false; this._ppBtn(); this._setPfs(false);
     this._gcT = setTimeout(() => this._free(), 60e3); // ryddes, hvis afspilleren ikke kommer tilbage
   }
-  _free() { for (const e of this._cache.values()) { e.ctrl?.abort(); if (e.url) URL.revokeObjectURL(e.url); } this._cache.clear(); this._bytes = 0; this._vids.forEach(v => { v.removeAttribute('src'); v.load(); v._e = null; }); this._cur = null; }
+  _free() {
+    for (const e of this._cache.values()) { e.ctrl?.abort(); if (e.url) URL.revokeObjectURL(e.url); }
+    this._cache.clear(); this._bytes = 0; this._vids.forEach(v => { v.removeAttribute('src'); v.load(); v._e = null; v.classList.remove('on', 'fr'); }); this._cur = null;
+  }
   _loop() { if (!this._raf) this._raf = requestAnimationFrame(this._fr); }
 
   // Åbn et kamera på et tidspunkt (ms) eller live (null). Samme tidspunkt bevares, når man skifter kamera.
   open(base, at, play = true) {
     const cam = this._o?.cams().find(c => c.base === base); if (!cam) return;
-    if (this._cam?.base !== base) { this._sgen++; this._gen++; this._hand = null; this._vids.forEach(v => { v.pause(); v.classList.remove('on'); }); this._cur = null; this._exitLive(); this._evc = null; }
+    this._reopen = false;
+    if (this._cam?.base !== base) { this._sgen++; this._gen++; this._hand = null; this._vids.forEach(v => { v.pause(); v.classList.remove('on', 'fr'); }); this._cur = null; this._exitLive(); this._evc = null; }
     this._cam = cam; this.q('.cn').textContent = cam.name; this._loop();
     if (at == null) this.goLive();
     else { this._poster(at); this._seek(at, play); }
@@ -153,13 +192,13 @@ class ThProtectPlayer extends HTMLElement {
     const s = isoZ(k * SEG), e = isoZ((k + 1) * SEG);
     return this._pb ? `/api/protect_playback/video/${this._o.nvr}/${cid}/${q === 'hd' ? 0 : 2}/${s}/${e}` : `/api/unifiprotect/video/${this._o.nvr}/${cid}/${s}/${e}`;
   }
-  async _fetch(path, signal) {
-    if (typeof this._h?.fetchWithAuth === 'function') return this._h.fetchWithAuth(path, { signal });
-    const r = await this._h.callWS({ type: 'auth/sign_path', path, expires: 300 }); return fetch(r.path, { signal });
+  async _fetch(path, init) {
+    if (typeof this._h?.fetchWithAuth === 'function') return this._h.fetchWithAuth(path, init);
+    const r = await this._h.callWS({ type: 'auth/sign_path', path, expires: 300 }); return fetch(r.path, init);
   }
   _qs() { // de kvaliteter, afspilningen bruger lige nu
     if (!this._pb) return ['hd'];
-    if (this._quality === 'sd') return ['sd'];
+    if (this._quality === 'sd' || this._noHd) return ['sd'];
     if (this._quality === 'hd') return ['hd'];
     return this._rate >= 4 ? ['sd'] : ['sd', 'hd'];
   }
@@ -170,13 +209,16 @@ class ThProtectPlayer extends HTMLElement {
     if (e?.failed && Date.now() - e.failed > 20e3) { this._cache.delete(key); e = null; }
     if (e) { e.used = Date.now(); return e; }
     if ((k + 1) * SEG > Date.now() - READY_LAG) return null;
-    const inflight = [...this._cache.values()].filter(x => x.q === q && !x.ok && !x.failed).length;
-    if (!scrub && inflight >= (q === 'hd' ? 3 : 4)) return null;
+    // Højst 4 eksporter ad gangen (heraf 2 i høj kvalitet), så optageren ikke mættes og miniaturer m.m. stadig kommer igennem.
+    const inflight = [...this._cache.values()].filter(x => !x.ok && !x.failed);
+    if (!scrub && (inflight.length >= 4 || (q === 'hd' && inflight.filter(x => x.q === 'hd').length >= 2))) return null;
     e = { key, k, q, cid, used: Date.now(), ctrl: new AbortController() };
+    const fresh = (k + 1) * SEG > Date.now() - FRESH;
     e.p = (async () => {
-      const res = await this._fetch(this._path(cid, q, k), e.ctrl.signal);
+      const res = await this._fetch(this._path(cid, q, k), { signal: e.ctrl.signal, ...(fresh ? { cache: 'no-store' } : {}) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const b = await res.blob(); if (b.size < 4096) throw new Error('tom');
+      if (e.ctrl.signal.aborted || this._cache.get(key) !== e) throw new Error('forældet');
       e.url = URL.createObjectURL(b); e.bytes = b.size; this._bytes += b.size; e.ok = true; this._evict(); return e;
     })();
     e.p.catch(() => { e.failed = Date.now(); });
@@ -187,9 +229,15 @@ class ThProtectPlayer extends HTMLElement {
     }
     return e;
   }
+  _drop(e) { e.ctrl?.abort(); if (e.url) URL.revokeObjectURL(e.url); if (e.ok) this._bytes -= e.bytes || 0; e.ok = false; e.failed = Date.now(); if (this._cache.get(e.key) === e) this._cache.delete(e.key); }
+  // Hentninger, der ikke længere er brug for (andet kamera eller et andet sted på tidslinjen), afbrydes efter et spring.
+  _abortOld(k) {
+    const cid = this._cam && this._o.cid(this._cam.base), inUse = new Set(this._vids.map(v => v._e));
+    for (const e of [...this._cache.values()]) if (!e.ok && !e.failed && !inUse.has(e) && (e.cid !== cid || e.k < k - 1 || e.k > k + 4)) { e.ctrl.abort(); this._cache.delete(e.key); }
+  }
   _ready(k) { // bedste færdige stykke til tidspunktet
     const cid = this._cam && this._o.cid(this._cam.base); if (!cid) return null;
-    for (const q of this._quality === 'sd' && this._pb ? ['sd'] : ['hd', 'sd']) { const e = this._cache.get(`${cid}|${q}|${k}`); if (e?.ok) { e.used = Date.now(); return e; } }
+    for (const q of (this._quality === 'sd' || this._noHd) && this._pb ? ['sd'] : ['hd', 'sd']) { const e = this._cache.get(`${cid}|${q}|${k}`); if (e?.ok) { e.used = Date.now(); return e; } }
     return null;
   }
   _evict() {
@@ -216,8 +264,11 @@ class ThProtectPlayer extends HTMLElement {
     return new Promise(res => {
       const done = ok => { v.removeEventListener('loadedmetadata', onOk); v.removeEventListener('error', onErr);
         if (v._e !== e) return res(false);
-        if (ok && e.t0 == null && Number.isFinite(v.duration)) e.t0 = (e.k + 1) * SEG - v.duration * 1000;
-        res(ok && e.t0 != null); };
+        if (!ok) { this._drop(e); if (e.q === 'hd' && this._pb) this._noHd = true; return res(false); } // fx 4K i H.265 uden afkoder
+        // Et for kort stykke tæt på nu er ikke skrevet færdigt hos Protect – så passer starttiden ikke.
+        if (v.duration < SEG / 1000 - 0.3 && (e.k + 1) * SEG > Date.now() - FRESH) { this._drop(e); return res(false); }
+        if (e.t0 == null && Number.isFinite(v.duration)) e.t0 = (e.k + 1) * SEG - v.duration * 1000;
+        res(e.t0 != null); };
       const onOk = () => done(true), onErr = () => done(false);
       v.addEventListener('loadedmetadata', onOk); v.addEventListener('error', onErr);
     });
@@ -231,8 +282,8 @@ class ThProtectPlayer extends HTMLElement {
   _other() { return this._vids.find(v => v !== this._cur?.v); }
   _activate(v) {
     const old = this._cur?.v;
-    if (old && old !== v) { old.pause(); old.classList.remove('on'); }
-    v.classList.add('on'); v.playbackRate = this._rate; v.muted = this._muted;
+    v.playbackRate = this._rate; v.muted = this._muted; v.classList.add('on', 'fr');
+    if (old && old !== v) { old.pause(); old.classList.remove('fr'); requestAnimationFrame(() => { if (this._cur?.v !== old) old.classList.remove('on'); }); }
     this._cur = { v }; this.q('.poster').classList.remove('on'); this._badge();
   }
   _play(v) {
@@ -245,59 +296,81 @@ class ThProtectPlayer extends HTMLElement {
     if (!(await this._load(v, e)) || gen !== this._gen) return false;
     await this._seekV(v, abs); if (gen !== this._gen) return false;
     this._activate(v);
-    if (play) this._play(v); else v.pause();
+    if (play && this._playing) this._play(v); else v.pause();
     this._spin(false); this._msg(''); this._o.onFrame?.();
     return true;
   }
   // Næste stykke (eller samme stykke i høj kvalitet) gøres klar i den skjulte video og står på det rigtige billede.
   async _arm(e, at, up = false) {
     const v = this._other(), h = this._hand = { v, e, at, up, ready: false };
-    if (!(await this._load(v, e)) || this._hand !== h) return;
+    if (!(await this._load(v, e)) || this._hand !== h) { if (this._hand === h) this._hand = null; return; }
     await this._seekV(v, at); if (this._hand !== h) return;
     v.pause(); h.ready = true;
   }
   _doHand() { const h = this._hand; this._hand = null; this._activate(h.v); this._play(h.v); }
 
-  async _seek(abs, play = this._playing) {
+  // Find det næste stykke med optagelse (huller, fx når kameraet var offline) – højst 6 stykker frem.
+  async _nextRecorded(k, sgen) {
+    for (let i = 1; i <= 6; i++) {
+      if ((k + i + 1) * SEG > Date.now() - READY_LAG) return null;
+      const r = await this._get(k + i, this._pb ? 'sd' : 'hd', true)?.p.catch(() => null);
+      if (sgen !== this._sgen) return null;
+      if (r) return r;
+    }
+    return null;
+  }
+  async _seek(abs, play = this._playing, opt = {}) {
     abs = Math.min(abs, Date.now());
     if (abs > Date.now() - LIVE_LAG) { this.goLive(); return; }
     this._exitLive();
+    this._hand = null; this._gen++; this._cur?.v.pause(); // den gamle afspilning stopper, mens det nye sted hentes
     this._t = abs; this._playing = play; this._ppBtn(); this._dirty = true; this._msg('');
-    const sgen = ++this._sgen;
+    const sgen = ++this._sgen; this._pend = sgen;
     if (!this._o.cid(this._cam.base)) { this._spinSoon(); await this._o.ready; if (sgen !== this._sgen) return; }
-    this._loadDays();
-    const k = Math.floor(abs / SEG);
+    let k = Math.floor(abs / SEG);
+    this._abortOld(k);
     let e = this._ready(k);
     if (!e) {
       this._spinSoon();
       // Lav kvalitet først og alene (0,3 s); den høje hentes, når den lave er der – eller efter 0,4 s, hvis den lave mangler.
       const first = this._get(k, this._pb && this._quality !== 'hd' ? 'sd' : 'hd', true), ps = first ? [first.p.catch(() => null)] : [];
-      if (this._pb && this._quality === 'auto' || this._quality === 'hd' && this._pb && first?.q === 'sd')
+      if (this._pb && !this._noHd && (this._quality === 'auto' || (this._quality === 'hd' && first?.q === 'sd')))
         ps.push(Promise.race([ps[0], new Promise(r => setTimeout(r, 400))]).then(() => sgen === this._sgen ? this._get(k, 'hd', true)?.p.catch(() => null) : null));
       e = await firstOk(ps);
       if (sgen !== this._sgen) return;
-      if (!e) { this._spin(false); this._msg('Ingen optagelse på dette tidspunkt'); this._playing = false; this._ppBtn(); return; }
+      if (!e && opt.skip) { // hul i optagelsen under afspilning: spring videre til næste optagelse eller hændelse
+        e = await this._nextRecorded(k, sgen); if (sgen !== this._sgen) return;
+        if (e) { abs = e.k * SEG; k = e.k; this._t = abs; }
+        else { const ev = this._events().find(x => x.s > abs + 1000); if (ev) { this._pend = 0; this._seek(ev.s - 2000, play); return; } }
+      }
+      if (!e) { this._pend = 0; this._spin(false); this._msg('Ingen optagelse på dette tidspunkt'); this._playing = false; this._ppBtn(); return; }
     }
-    await this._present(e, abs, this._playing);
-    if (sgen !== this._sgen || e.q !== 'sd' || this._playing || !this._qs().includes('hd')) return;
+    const ok = await this._present(e, abs, this._playing);
+    if (sgen !== this._sgen) return;
+    this._pend = 0;
+    if (!ok) { this._spin(false); this._msg('Optagelsen kunne ikke afspilles'); this._playing = false; this._ppBtn(); return; }
+    this._loadDays();
+    if (e.q !== 'sd' || this._playing || !this._qs().includes('hd')) return;
     // På pause: skift til høj kvalitet, når den er hentet.
     this._get(k, 'hd')?.p.then(x => { if (x && sgen === this._sgen && !this._playing && !this._drag && !this._live) this._present(x, this._t, false); }, () => {});
   }
 
   goLive() {
     if (!this._cam) return;
-    this._sgen++; this._gen++; this._hand = null; this._stalling = false;
+    this._sgen++; this._gen++; this._hand = null; this._stalling = false; this._pend = 0;
     this._live = true; this._playing = true; this._t = Date.now();
-    this._vids.forEach(v => { v.pause(); v.classList.remove('on'); }); this._cur = null;
+    this._vids.forEach(v => { v.pause(); v.classList.remove('on', 'fr'); }); this._cur = null;
     this.q('.poster').classList.remove('on'); this._spin(false); this._msg('');
-    const box = this.q('.live'), ent = this._o.compact ? (this._cam.tile || this._cam.id) : this._cam.id;
+    // Mellemkanalen i den lille afspiller og på telefoner, den høje ellers.
+    const small = this._o.compact || matchMedia('(max-width: 900px)').matches;
+    const box = this.q('.live'), ent = small ? (this._cam.tile || this._cam.id) : this._cam.id;
     if (box._ent !== ent) {
       box.innerHTML = ''; box._ent = ent; clearInterval(this._liveT);
       const s = this._h.states[ent];
       if (s && customElements.get('ha-camera-stream')) { const el = document.createElement('ha-camera-stream'); el.hass = this._h; el.stateObj = s; el.muted = this._muted; el.controls = false; el.allowExoPlayer = false; box.appendChild(el); }
       else if (s) { const im = document.createElement('img'); box.appendChild(im); const up = () => { const p = this._h.states[ent]?.attributes?.entity_picture; if (p) im.src = `${p}&t=${Date.now()}`; }; up(); this._liveT = setInterval(up, 1000); }
     }
-    box.classList.add('on'); this._badge(); this._ppBtn(); this._labels(); this._dirty = true; this._loop();
+    box.classList.add('on'); this._badge(); this._labels(); this._dirty = true; this._loop();
   }
   _exitLive() {
     if (!this._live) return;
@@ -309,15 +382,17 @@ class ThProtectPlayer extends HTMLElement {
   _frame() {
     this._raf = requestAnimationFrame(this._fr);
     const now = Date.now();
-    if (this._live) { if (now - (this._lastDraw || 0) > 1000) { this._t = now; this._draw(); this._clock(); } return; }
+    if (this._live) { if (this._drag || this._dirty || now - (this._lastDraw || 0) > 1000) { if (!this._drag) this._t = now; this._draw(); this._clock(); } return; }
     const v = this._cur?.v, e = v?._e;
-    if (!this._drag && v && e?.t0 != null && !v.paused && !v.seeking) {
+    // En video, der er nået til ende, står på pause – derfor også "ended", ellers går afspilningen i stå ved 4–8×.
+    if (!this._drag && !this._pend && v && e?.t0 != null && (!v.paused || (v.ended && this._playing)) && !v.seeking) {
       this._t = e.t0 + v.currentTime * 1000;
-      const end = (e.k + 1) * SEG, h = this._hand;
-      if (h?.ready && this._t >= h.at - 40) {
+      const end = (e.k + 1) * SEG, h = this._hand, lead = 40 * this._rate;
+      if (h && !h.ready && this._t > h.at + 250) this._hand = null; // klargøringen nåede ikke frem i tide
+      else if (h?.ready && this._t >= h.at - lead) {
         if (h.up && this._t > h.at + 250) this._hand = null; // kvalitetsskiftet nåede ikke frem i tide – prøv igen
         else this._doHand();
-      } else if (v.ended || this._t >= end - 25) this._stall(end);
+      } else if (v.ended || this._t >= end - 25 * this._rate) this._stall(end);
       if (this._t > now - LIVE_LAG) { this.goLive(); return; }
     }
     if (now - (this._lastArm || 0) > 250) { this._lastArm = now; this._tickArm(); }
@@ -326,10 +401,10 @@ class ThProtectPlayer extends HTMLElement {
   }
   _stall(end) {
     if (this._stalling) return; this._stalling = true;
-    this._seek(end + 1, true).finally(() => { this._stalling = false; });
+    this._seek(end + 1, true, { skip: true }).finally(() => { this._stalling = false; });
   }
   _tickArm() {
-    if (this._live || this._drag || !this._playing || this._stalling) return;
+    if (this._live || this._drag || !this._playing || this._stalling || this._pend) return;
     const v = this._cur?.v, e = v?._e; if (!e) return;
     const k = e.k, end = (k + 1) * SEG, qs = this._qs();
     this._prefetch(k);
@@ -337,7 +412,7 @@ class ThProtectPlayer extends HTMLElement {
     // Samme stykke i høj kvalitet: skift midt i afspilningen.
     if (e.q === 'sd' && qs.includes('hd') && !h?.up) {
       const hd = this._cache.get(`${e.cid}|hd|${k}`);
-      if (hd?.ok && this._t + 900 < end - 200) { this._arm(hd, this._t + 900, true); return; }
+      if (hd?.ok && this._t + 900 * this._rate < end - 200 * this._rate) { this._arm(hd, this._t + 900 * this._rate, true); return; }
     }
     if (!h) { const n = this._ready(k + 1); if (n) this._arm(n, end); }
     else if (!h.up && h.at === end && h.e.q === 'sd' && qs.includes('hd')) { const hd = this._cache.get(`${e.cid}|hd|${k + 1}`); if (hd?.ok) this._arm(hd, end); }
@@ -351,13 +426,27 @@ class ThProtectPlayer extends HTMLElement {
     const list = this._o.events(this._cam.base).map(e => ({ s: +e.t, d: Math.max(durMs(e.dur), 2000), type: e.type, e })).sort((a, b) => a.s - b.s);
     this._evc = { base: this._cam.base, ver, list }; this._dirty = true; return list;
   }
+  // Hændelser for dage længere tilbage end det seneste døgn (det døgn har kortet allerede).
   _loadDays() {
     if (!this._cam || !this._o.loadDay) return;
     const from = new Date(this._t - this._span / 2); from.setHours(0, 0, 0, 0);
-    for (let d = +from, n = 0; d <= this._t + this._span / 2 && n < 3; n++) {
-      if (d <= Date.now()) this._o.loadDay(this._cam.base, d)?.then(() => { this._dirty = true; }, () => {});
-      const nx = new Date(d); nx.setDate(nx.getDate() + 1); d = +nx;
+    for (let d = new Date(from), n = 0; +d <= this._t + this._span / 2 && n < 3; n++, d.setDate(d.getDate() + 1)) {
+      if (+d >= Date.now() - 86400e3 || +d > Date.now()) continue;
+      this._o.loadDay(this._cam.base, +d)?.then(() => { this._dirty = true; }, () => {});
     }
+  }
+  // Tidspunkter for skalaen: hele timer følger lokal tid (sommertid), kortere trin går op i hele minutter.
+  _ticks(t0, t1, step) {
+    const out = [];
+    if (step >= 3600e3) {
+      const h = step / 3600e3, d = new Date(t0); d.setMinutes(0, 0, 0);
+      while (+d < t0 || d.getHours() % h) d.setHours(d.getHours() + 1);
+      for (let i = 0; +d <= t1 && i < 60; i++) { out.push(+d); d.setHours(d.getHours() + h); }
+    } else {
+      const off = -new Date(t0).getTimezoneOffset() * 60e3;
+      for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t1; t += step) out.push(t);
+    }
+    return out;
   }
   _draw() {
     this._lastDraw = Date.now(); this._drawnT = this._t; this._dirty = false;
@@ -370,19 +459,21 @@ class ThProtectPlayer extends HTMLElement {
     const xn = Math.min(W, Math.max(0, x(now)));
     c.fillStyle = 'rgba(255,255,255,.07)'; c.beginPath(); c.roundRect(0, laneY, xn, laneH, 4); c.fill();
     if (xn < W) { c.fillStyle = 'rgba(255,255,255,.025)'; c.fillRect(xn, laneY, W - xn, laneH); c.fillStyle = '#ff4d63'; c.fillRect(xn - 1, 18, 2, H - 22); }
-    // skala
+    // skala – etiketter, der ville blive skåret over ved kanten eller ligge under afspilningsstregen, udelades
     const step = STEPS.find(s => s / span * W >= 74) || STEPS[STEPS.length - 1];
-    const off = -new Date(t0).getTimezoneOffset() * 60e3;
     c.font = '600 10.5px system-ui, -apple-system, Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-    for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t1; t += step) {
+    for (const t of this._ticks(t0, t1, step)) {
       const px = x(t), d = new Date(t), midnight = d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
       c.fillStyle = midnight ? 'rgba(232,195,126,.7)' : 'rgba(255,255,255,.22)'; c.fillRect(px - .5, 18, 1, midnight ? H - 22 : 8);
-      c.fillStyle = midnight ? '#e8c37e' : 'rgba(244,241,234,.56)';
-      c.fillText(midnight ? d.toLocaleDateString('da-DK', { weekday: 'short', day: 'numeric', month: 'short' }) : hms(d, step < 60e3), px, 13);
+      const label = midnight ? d.toLocaleDateString('da-DK', { weekday: 'short', day: 'numeric', month: 'short' }) : hms(d, step < 60e3);
+      const half = c.measureText(label).width / 2 + 3;
+      if (px - half < 2 || px + half > W - 2 || Math.abs(px - W / 2) < half + 4) continue;
+      c.fillStyle = midnight ? '#e8c37e' : 'rgba(244,241,234,.56)'; c.fillText(label, px, 13);
     }
     // halve trin som små streger
     c.fillStyle = 'rgba(255,255,255,.1)';
-    for (let t = Math.ceil((t0 + off) / (step / 2)) * (step / 2) - off; t <= t1; t += step / 2) c.fillRect(x(t) - .5, 22, 1, 4);
+    const minor = step >= 2 * 3600e3 ? (step % (2 * 3600e3) === 0 ? step / 2 : 3600e3) : step / 2;
+    for (const t of this._ticks(t0, t1, minor)) c.fillRect(x(t) - .5, 22, 1, 4);
     // hændelser
     const types = this._o.types || {};
     for (const ev of this._events()) {
@@ -399,7 +490,7 @@ class ThProtectPlayer extends HTMLElement {
   _dragStart(x, rebase) {
     if (!rebase) {
       this._drag = true; this._moved = false; this._wasPlaying = this._playing; this._wasLive = this._live;
-      this._sgen++; this._hand = null; this._cur?.v.pause(); this.q('.tlw').classList.add('drag');
+      this._sgen++; this._gen++; this._pend = 0; this._hand = null; this._cur?.v.pause(); this.q('.tlw').classList.add('drag');
     }
     this._dx0 = x; this._dt0 = this._t; this._tip(null);
   }
@@ -413,6 +504,7 @@ class ThProtectPlayer extends HTMLElement {
     this._drag = false; this.q('.tlw').classList.remove('drag'); clearTimeout(this._scT);
     if (pinch) { if (!this._live) this._seek(this._t, this._wasPlaying); return; }
     if (!this._moved) { // tryk: hop til tidspunktet eller til starten af den hændelse, der blev trykket på
+      if (ev.clientX == null) { if (!this._live) this._seek(this._t, this._wasPlaying); return; }
       const r = this.q('.tlw').getBoundingClientRect(), t = this._t + (ev.clientX - r.left - r.width / 2) / r.width * this._span, hit = this._hit(t, r.width);
       this._seek(hit ? hit.s - 2000 : t, true); return;
     }
@@ -497,55 +589,64 @@ class ThProtectPlayer extends HTMLElement {
       else if (k === 'ArrowRight' && !this._live) this._seek(this._t + step, this._playing);
       else if (k === 'l' || k === 'L') this.goLive();
       else if (k === 'f' || k === 'F') this._act('full');
+      else if (k === 'Escape' && this.hasAttribute('pfs')) this._setPfs(false);
       else return;
       ev.preventDefault();
     });
-    document.addEventListener('visibilitychange', () => {
-      const v = this._cur?.v; if (!v || this._live) return;
-      if (document.hidden && !v.paused) { this._resume = true; v.pause(); }
-      else if (!document.hidden && this._resume) { this._resume = false; if (this._playing) this._play(v); }
-    });
   }
+  _isFs() { return this.getRootNode().fullscreenElement === this || this.hasAttribute('pfs'); }
+  _setPfs(on) { this.toggleAttribute('pfs', on); this.q('[data-a="full"]').innerHTML = pi(on || this.getRootNode().fullscreenElement === this ? 'unfull' : 'full', 17); this._dirty = true; }
   _act(a) {
     const now = Date.now(), evs = this._events();
     if (a === 'play') {
       if (this._live) { this._seek(now - LIVE_LAG - 8000, false); return; }
       if (this._playing) { this.pause(); return; }
       const v = this._cur?.v, e = v?._e;
-      if (v && e?.t0 != null && !v.ended && this._t < (e.k + 1) * SEG - 60) { this._playing = true; this._ppBtn(); this._play(v); }
-      else this._seek(this._t + (v?.ended ? 60 : 0), true);
+      if (this.q('.msg').classList.contains('on')) this._seek(this._t, true, { skip: true });
+      else if (v && e?.t0 != null && !v.ended && this._t < (e.k + 1) * SEG - 60) { this._playing = true; this._ppBtn(); this._play(v); }
+      else this._seek(this._t + (v?.ended ? 60 : 0), true, { skip: true });
     }
     else if (a === 'back') this._seek((this._live ? now - LIVE_LAG : this._t) - 10e3, true);
     else if (a === 'fwd' && !this._live) this._seek(this._t + 10e3, this._playing);
     else if (a === 'prev') { const ref = this._live ? now : this._t - 3000, ev = [...evs].reverse().find(x => x.s < ref); if (ev) this._seek(ev.s - 2000, true); }
-    else if (a === 'next') { if (this._live) return; const ev = evs.find(x => x.s > this._t + 1000); if (ev) this._seek(ev.s - 2000, true); else this.goLive(); }
+    else if (a === 'next') { if (this._live) return; const ev = evs.find(x => x.s > this._t + 2500); if (ev) this._seek(ev.s - 2000, true); else this.goLive(); }
     else if (a === 'live') this.goLive();
-    else if (a === 'speed') { this._rate = SPEEDS[(SPEEDS.indexOf(this._rate) + 1) % SPEEDS.length]; this._vids.forEach(v => { v.playbackRate = this._rate; }); this._labels(); }
-    else if (a === 'quality') { const Q = ['auto', 'hd', 'sd']; this._quality = Q[(Q.indexOf(this._quality) + 1) % Q.length]; try { localStorage.setItem(QKEY, this._quality); } catch (e) { /* privat */ } this._hand = null; this._labels(); }
+    else if (a === 'speed') { if (this._live) return; this._rate = SPEEDS[(SPEEDS.indexOf(this._rate) + 1) % SPEEDS.length]; this._vids.forEach(v => { v.playbackRate = this._rate; }); this._labels(); }
+    else if (a === 'quality') {
+      const Q = ['auto', 'hd', 'sd']; this._quality = Q[(Q.indexOf(this._quality) + 1) % Q.length]; this._noHd = false;
+      try { localStorage.setItem(QKEY, this._quality); } catch (e) { /* privat */ }
+      this._labels(); if (!this._live && this._cur) this._seek(this._t, this._playing); // skift med det samme
+    }
     else if (a === 'mute') { this._muted = !this._muted; this._vids.forEach(v => { v.muted = this._muted; }); const s = this.q('.live ha-camera-stream'); if (s) s.muted = this._muted; this._labels(); }
-    else if (a === 'date') { const di = this.q('.date input'); const d = new Date(this._live ? Date.now() : this._t); di.max = new Date().toISOString().slice(0, 10); di.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; try { di.showPicker(); } catch (e) { di.focus(); di.click(); } }
+    else if (a === 'date') {
+      const di = this.q('.date input'), d = new Date(this._live ? Date.now() : this._t); di.max = ymd(new Date()); di.value = ymd(d);
+      try { di.showPicker(); } catch (e) { di.focus(); di.click(); }
+      return; // ellers lukker fokus-skiftet herunder vælgeren igen
+    }
     else if (a === 'zin') this._zoom(-1);
     else if (a === 'zout') this._zoom(1);
     else if (a === 'full') {
-      if (document.fullscreenElement) document.exitFullscreen?.();
-      else if (this.requestFullscreen) this.requestFullscreen().catch(() => this._cur?.v.webkitEnterFullscreen?.());
-      else this._cur?.v.webkitEnterFullscreen?.();
+      if (this.hasAttribute('pfs')) this._setPfs(false);
+      else if (this.getRootNode().fullscreenElement === this) document.exitFullscreen?.().then(() => this._setPfs(false));
+      else if (typeof this.requestFullscreen === 'function' && document.fullscreenEnabled) this.requestFullscreen().then(() => this._setPfs(false)).catch(() => this._setPfs(true));
+      else this._setPfs(true); // iPhone: ingen Fullscreen-API for andet end <video>
     }
     this.focus({ preventScroll: true });
   }
   _labels() {
     const sp = this.q('.span'), s = this._span; sp.textContent = s >= 3600e3 ? `${s / 3600e3} t` : `${Math.round(s / 60e3)} min`;
-    this.q('[data-a="speed"]').textContent = `${this._rate}×`; this.q('[data-a="speed"]').classList.toggle('on2', this._rate !== 1);
+    const speed = this.q('[data-a="speed"]'); speed.textContent = `${this._rate}×`; speed.classList.toggle('on2', this._rate !== 1); speed.disabled = this._live;
     this.q('[data-a="quality"]').textContent = { auto: 'Auto', hd: 'HD', sd: 'SD' }[this._quality];
     this.q('[data-a="mute"]').innerHTML = pi(this._muted ? 'mute' : 'sound', 17);
     this.q('[data-a="live"]').classList.toggle('on', this._live);
     this._ppBtn();
   }
-  _ppBtn() { const b = this.q('[data-a="play"]'); const h = pi(this._playing && !this._live ? 'pause' : 'play'); if (b._h !== h) { b._h = h; b.innerHTML = h; } }
+  _ppBtn() { const b = this.q('[data-a="play"]'); const h = pi(this._playing || this._live ? 'pause' : 'play'); if (b._h !== h) { b._h = h; b.innerHTML = h; } }
   _badge() { const q = this.q('.q'); q.classList.toggle('live', this._live); q.textContent = this._live ? 'LIVE' : this._cur?.v._e ? (this._cur.v._e.q === 'hd' ? 'HD' : 'SD') : ''; }
   _clock() {
-    this._lastClock = Date.now(); const d = new Date(this._t), el = this.q('.clock');
-    const txt = this._live ? `Live · ${hms(new Date())}` : `${d.toDateString() === new Date().toDateString() ? 'I dag' : d.toLocaleDateString('da-DK', { weekday: 'short', day: 'numeric', month: 'short' })} · ${hms(d)}`;
+    this._lastClock = Date.now(); const d = new Date(this._t), el = this.q('.clock'), narrow = this.hasAttribute('narrow');
+    const day = d.toDateString() === new Date().toDateString() ? (narrow ? '' : 'I dag · ') : `${d.toLocaleDateString('da-DK', narrow ? { day: 'numeric', month: 'numeric' } : { weekday: 'short', day: 'numeric', month: 'short' })} · `;
+    const txt = this._live ? `${narrow ? '' : 'Live · '}${hms(new Date())}` : `${day}${hms(d)}`;
     if (el.textContent !== txt) el.textContent = txt;
   }
   _spin(on) { clearTimeout(this._spT); this.q('.spin').classList.toggle('on', on); }

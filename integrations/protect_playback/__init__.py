@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 import logging
 
+import aiohttp
 from aiohttp import web
 from uiprotect.exceptions import ClientError
 
@@ -25,12 +26,15 @@ from homeassistant.components.unifiprotect.data import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "protect_playback"
-VERSION = "1.0.0"
-MAX_SPAN = timedelta(hours=3)
+VERSION = "1.1.0"
+MAX_SPAN = timedelta(minutes=10)  # the player asks for 10 s pieces; a 3 h 4K export would be ~20 GB through HA
+MAX_TIMELAPSE_SPAN = timedelta(hours=3)
+SETTLED = timedelta(minutes=2)  # newer pieces may still be written by Protect and are not cached
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
@@ -120,32 +124,38 @@ class PlaybackVideoView(HomeAssistantView):
             return _error("No access to this camera", HTTPStatus.FORBIDDEN)
         try:
             channel_index = int(channel)
-            camera.channels[channel_index]
-        except (ValueError, IndexError):
+        except ValueError:
+            return _error("Invalid channel", HTTPStatus.BAD_REQUEST)
+        if not 0 <= channel_index < len(camera.channels):
             return _error("Invalid channel", HTTPStatus.BAD_REQUEST)
         try:
             start_dt = datetime.fromisoformat(start)
             end_dt = datetime.fromisoformat(end)
         except ValueError:
             return _error("Invalid start or end", HTTPStatus.BAD_REQUEST)
-        if not timedelta(0) < end_dt - start_dt <= MAX_SPAN:
-            return _error("The span must be between 0 and 3 hours", HTTPStatus.BAD_REQUEST)
+        if start_dt.tzinfo is None or end_dt.tzinfo is None:
+            return _error("start and end need a UTC offset", HTTPStatus.BAD_REQUEST)
         fps: int | None = None
         if "fps" in request.query:
             try:
                 fps = max(1, min(60, int(request.query["fps"])))
             except ValueError:
                 return _error("Invalid fps", HTTPStatus.BAD_REQUEST)
+        limit = MAX_TIMELAPSE_SPAN if fps else MAX_SPAN
+        if not timedelta(0) < end_dt - start_dt <= limit:
+            return _error(f"The span must be between 0 and {limit}", HTTPStatus.BAD_REQUEST)
+        settled = end_dt < dt_util.utcnow() - SETTLED
 
         response = web.StreamResponse(
             status=200,
             reason="OK",
-            headers={"Content-Type": "video/mp4", "Cache-Control": "private, max-age=86400"},
+            headers={"Content-Type": "video/mp4", "Cache-Control": "private, max-age=86400" if settled else "no-store"},
         )
 
         async def iterator(total: int, chunk: bytes | None) -> None:
             if not response.prepared:
-                response.content_length = total
+                if total:
+                    response.content_length = total
                 await response.prepare(request)
             if chunk is not None:
                 await response.write(chunk)
@@ -156,11 +166,15 @@ class PlaybackVideoView(HomeAssistantView):
             )
         except ClientError as err:
             if response.prepared:
-                raise
+                return response
             return _error(f"No recording: {err}", HTTPStatus.NOT_FOUND)
         except ConnectionResetError:
             # The player cancels segments it no longer needs while the user scrubs.
             return response
+        except (aiohttp.ClientError, TimeoutError) as err:
+            if response.prepared:
+                return response
+            return _error(f"Protect export failed: {err}", HTTPStatus.BAD_GATEWAY)
 
         if not response.prepared:
             return _error("No recording", HTTPStatus.NOT_FOUND)

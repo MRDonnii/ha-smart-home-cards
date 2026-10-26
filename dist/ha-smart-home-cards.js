@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.213 */
+/* MRDonnii Smart Home Cards v0.5.214 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -46992,6 +46992,7 @@ console.info(
 var SEG = 1e4;
 var LIVE_LAG = 2e4;
 var READY_LAG = 1e4;
+var FRESH = 12e4;
 var SPANS = [6e4, 2 * 6e4, 5 * 6e4, 15 * 6e4, 30 * 6e4, 36e5, 3 * 36e5, 6 * 36e5, 12 * 36e5, 24 * 36e5];
 var STEPS = [5e3, 1e4, 3e4, 6e4, 2 * 6e4, 5 * 6e4, 10 * 6e4, 15 * 6e4, 30 * 6e4, 36e5, 2 * 36e5, 3 * 36e5, 6 * 36e5, 12 * 36e5];
 var SPEEDS = [1, 2, 4, 8];
@@ -46999,6 +47000,7 @@ var QKEY = "th-camera-player:quality";
 var isoZ = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "+00:00");
 var pad3 = (n) => String(n).padStart(2, "0");
 var hms = (d, sec = true) => `${pad3(d.getHours())}.${pad3(d.getMinutes())}${sec ? "." + pad3(d.getSeconds()) : ""}`;
+var ymd = (d) => `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
 var durMs = (s) => {
   const g = (r) => +((String(s || "").match(r) || [])[1] || 0);
   return (g(/(\d+)h/) * 3600 + g(/(\d+)m/) * 60 + g(/(\d+)s/)) * 1e3;
@@ -47021,6 +47023,7 @@ var PI = {
   back: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4h4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
   fwd: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4.5v4h-4"/><text x="12" y="15.2" font-size="7.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text>',
   full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  unfull: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
   mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
   sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
   cal: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
@@ -47031,44 +47034,56 @@ var pi = (k, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fil
 var CSS3 = `
 :host{display:block;position:relative;color:#f4f1ea;--gold:#e8c37e;--mut:rgba(244,241,234,.56);--hair:rgba(244,241,234,.09);--red:#ff4d63;outline:none;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
-.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--hair);touch-action:manipulation;cursor:pointer}
-.stage video,.stage .live,.stage .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .12s;pointer-events:none}
+.stage{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--hair);touch-action:manipulation;cursor:pointer}
+.stage video,.stage .live,.stage .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none}
+.stage .live,.stage .poster{transition:opacity .12s}
+/* Ingen fade mellem de to videoer: den nye l\xE6gges \xF8verst, og den gamle skjules f\xF8rst i n\xE6ste billede (ellers blinker det). */
+.stage video.fr{z-index:1}
 .stage .poster{object-fit:cover;filter:blur(14px) brightness(.5) saturate(1.2);transform:scale(1.1)}
 .stage video.on,.stage .live.on,.stage .poster.on{opacity:1}
-.stage .live ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
+.stage .live{z-index:1}.stage .live ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
 .stage .live img{width:100%;height:100%;object-fit:contain}
-.top{position:absolute;left:10px;right:10px;top:10px;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
+/* Kameranavnet nederst \u2013 kameraets eget tidsstempel st\xE5r \xF8verst til venstre */
+.top{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;display:flex;align-items:flex-end;gap:8px;pointer-events:none}
 .cn{padding:5px 10px;border-radius:10px;background:rgba(10,12,18,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:12.5px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 .q{margin-left:auto;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.12em;background:rgba(0,0,0,.5);backdrop-filter:blur(8px)}
 .q.live{background:var(--red);color:#fff}.q:empty{display:none}
-.spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:sp .8s linear infinite;opacity:0;transition:opacity .2s;pointer-events:none}
+.spin{position:absolute;z-index:3;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:sp .8s linear infinite;opacity:0;transition:opacity .2s;pointer-events:none}
 .spin.on{opacity:1}@keyframes sp{to{transform:rotate(1turn)}}
-.msg{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:6px 12px;border-radius:99px;background:rgba(0,0,0,.65);font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.msg{position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);padding:7px 13px;border-radius:99px;background:rgba(0,0,0,.7);font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .msg.on{opacity:1}
 .row{display:flex;align-items:center;gap:4px;margin-top:8px}
 .row button{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;min-width:34px;height:34px;padding:0 8px;border-radius:11px;
   background:rgba(255,255,255,.05);color:inherit;font:inherit;font-size:11.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--hair);transition:background .2s}
 .row button:hover{background:rgba(255,255,255,.1)}.row button:active{transform:scale(.95)}
+.row button:disabled{opacity:.35;cursor:default}
 .row .pp{min-width:46px;background:var(--gold);color:#15110a;box-shadow:none}.row .pp:hover{background:#f1d199}
 .row .lv i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .row .lv.on{background:var(--red);color:#fff;box-shadow:none}
 .row .on2{color:var(--gold)}
-.clock{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;margin:0 4px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.clock{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;margin:0 4px 0 6px;white-space:nowrap;flex:0 1 auto;min-width:3.6em;overflow:hidden;text-overflow:ellipsis}
 .grow{flex:1;min-width:0}
 .span{font-size:11px;font-weight:600;color:var(--mut);min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
 .date{position:relative}.date input{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
-.tlw{position:relative;height:58px;margin-top:8px;border-radius:12px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--hair);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.tlx{position:relative;margin-top:8px}
+.tlw{position:relative;height:58px;border-radius:12px;background:rgba(255,255,255,.03);box-shadow:inset 0 0 0 1px var(--hair);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .tlw.drag{cursor:grabbing}
 .tlw canvas{position:absolute;inset:0;width:100%;height:100%}
 .ph{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 10px color-mix(in srgb,var(--gold) 70%,transparent);pointer-events:none}
 .ph::before{content:"";position:absolute;left:50%;top:0;border:6px solid transparent;border-top-color:var(--gold);transform:translateX(-50%)}
-.tip{position:absolute;bottom:72px;width:168px;padding:6px;border-radius:12px;background:rgba(14,16,22,.96);box-shadow:0 14px 34px -10px #000,inset 0 0 0 1px var(--hair);pointer-events:none;opacity:0;transition:opacity .15s;z-index:3}
+.tip{position:absolute;bottom:66px;width:168px;padding:6px;border-radius:12px;background:rgba(14,16,22,.97);box-shadow:0 14px 34px -10px #000,inset 0 0 0 1px var(--hair);pointer-events:none;opacity:0;transition:opacity .15s;z-index:4}
 .tip.on{opacity:1}.tip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#06070b}
 .tip b{display:block;font-size:11.5px;margin:5px 2px 1px}.tip small{display:block;font-size:10.5px;color:var(--mut);margin:0 2px}
 :host([compact]) .row button{min-width:32px;height:32px;padding:0 7px}
-:host([compact]) .hidec{display:none}
+:host([compact]) .hidec,:host([narrow]) .hidec{display:none}
+:host([narrow]) .row{gap:3px}:host([narrow]) .row button{min-width:30px;height:32px;padding:0 6px}:host([narrow]) .row .pp{min-width:40px}
+:host([narrow]) .span{min-width:34px}:host([narrow]) .clock{margin:0 2px 0 4px}
 :host(:fullscreen){background:#000;padding:14px;display:flex;flex-direction:column}
-:host(:fullscreen) .stage{flex:1;aspect-ratio:auto;border-radius:12px}
+:host(:fullscreen) .stage{flex:1;aspect-ratio:auto}
+/* Fuld sk\xE6rm uden Fullscreen-API (iPhone): afspilleren l\xE6gger sig selv over hele sk\xE6rmen med tidslinjen. */
+:host([pfs]){position:fixed;inset:0;z-index:10000;background:#000;display:flex;flex-direction:column;height:100dvh;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+:host([pfs]) .stage{flex:1;aspect-ratio:auto;min-height:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 var HTML = `
@@ -47083,7 +47098,7 @@ var HTML = `
   <span class="clock"></span><span class="grow"></span>
   <button data-a="live" class="lv" title="Live (L)"><i></i>LIVE</button>
 </div>
-<div class="tlw"><canvas></canvas><div class="ph"></div><div class="tip"><img alt=""><b></b><small></small></div></div>
+<div class="tlx"><div class="tlw"><canvas></canvas><div class="ph"></div></div><div class="tip"><img alt=""><b></b><small></small></div></div>
 <div class="row">
   <button data-a="speed" title="Hastighed">1\xD7</button><button data-a="quality" title="Kvalitet: Auto viser lav kvalitet med det samme og skifter til h\xF8j">Auto</button>
   <button data-a="mute" title="Lyd">${pi("mute", 17)}</button>
@@ -47114,6 +47129,17 @@ var ThProtectPlayer = class extends HTMLElement {
     }
     this._vids = [...this._r.querySelectorAll("video")];
     this._fr = () => this._frame();
+    this._vis = () => {
+      const v = this._cur?.v;
+      if (!v || this._live) return;
+      if (document.hidden && !v.paused) {
+        this._resume = true;
+        v.pause();
+      } else if (!document.hidden && this._resume) {
+        this._resume = false;
+        if (this._playing) this._play(v);
+      }
+    };
     this._bind();
   }
   q(s) {
@@ -47144,23 +47170,41 @@ var ThProtectPlayer = class extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("tabindex")) this.tabIndex = 0;
     clearTimeout(this._gcT);
-    if (this._cam) this._loop();
+    document.addEventListener("visibilitychange", this._vis);
     if (!this._ro) {
       this._ro = new ResizeObserver(() => {
         this._dirty = true;
+        this.toggleAttribute("narrow", this.clientWidth > 0 && this.clientWidth < 420);
       });
+      this._ro.observe(this);
       this._ro.observe(this.q(".tlw"));
     }
+    if (this._cam && this._dc) {
+      this._dc = false;
+      this._reopen = true;
+      queueMicrotask(() => {
+        if (!this._reopen || !this.isConnected) return;
+        this._reopen = false;
+        if (this._wasLiveDc) this.goLive();
+        else this._seek(this._t, false);
+      });
+    }
+    if (this._cam) this._loop();
   }
   disconnectedCallback() {
+    document.removeEventListener("visibilitychange", this._vis);
     cancelAnimationFrame(this._raf);
     this._raf = null;
     this._sgen++;
     this._gen++;
+    this._hand = null;
+    this._dc = true;
+    this._wasLiveDc = this._live;
     this._vids.forEach((v) => v.pause());
     this._exitLive();
     this._playing = false;
     this._ppBtn();
+    this._setPfs(false);
     this._gcT = setTimeout(() => this._free(), 6e4);
   }
   _free() {
@@ -47174,6 +47218,7 @@ var ThProtectPlayer = class extends HTMLElement {
       v.removeAttribute("src");
       v.load();
       v._e = null;
+      v.classList.remove("on", "fr");
     });
     this._cur = null;
   }
@@ -47184,13 +47229,14 @@ var ThProtectPlayer = class extends HTMLElement {
   open(base, at, play = true) {
     const cam = this._o?.cams().find((c2) => c2.base === base);
     if (!cam) return;
+    this._reopen = false;
     if (this._cam?.base !== base) {
       this._sgen++;
       this._gen++;
       this._hand = null;
       this._vids.forEach((v) => {
         v.pause();
-        v.classList.remove("on");
+        v.classList.remove("on", "fr");
       });
       this._cur = null;
       this._exitLive();
@@ -47217,14 +47263,14 @@ var ThProtectPlayer = class extends HTMLElement {
     const s = isoZ(k * SEG), e = isoZ((k + 1) * SEG);
     return this._pb ? `/api/protect_playback/video/${this._o.nvr}/${cid}/${q === "hd" ? 0 : 2}/${s}/${e}` : `/api/unifiprotect/video/${this._o.nvr}/${cid}/${s}/${e}`;
   }
-  async _fetch(path, signal) {
-    if (typeof this._h?.fetchWithAuth === "function") return this._h.fetchWithAuth(path, { signal });
+  async _fetch(path, init) {
+    if (typeof this._h?.fetchWithAuth === "function") return this._h.fetchWithAuth(path, init);
     const r = await this._h.callWS({ type: "auth/sign_path", path, expires: 300 });
-    return fetch(r.path, { signal });
+    return fetch(r.path, init);
   }
   _qs() {
     if (!this._pb) return ["hd"];
-    if (this._quality === "sd") return ["sd"];
+    if (this._quality === "sd" || this._noHd) return ["sd"];
     if (this._quality === "hd") return ["hd"];
     return this._rate >= 4 ? ["sd"] : ["sd", "hd"];
   }
@@ -47243,14 +47289,16 @@ var ThProtectPlayer = class extends HTMLElement {
       return e;
     }
     if ((k + 1) * SEG > Date.now() - READY_LAG) return null;
-    const inflight = [...this._cache.values()].filter((x) => x.q === q && !x.ok && !x.failed).length;
-    if (!scrub && inflight >= (q === "hd" ? 3 : 4)) return null;
+    const inflight = [...this._cache.values()].filter((x) => !x.ok && !x.failed);
+    if (!scrub && (inflight.length >= 4 || q === "hd" && inflight.filter((x) => x.q === "hd").length >= 2)) return null;
     e = { key, k, q, cid, used: Date.now(), ctrl: new AbortController() };
+    const fresh = (k + 1) * SEG > Date.now() - FRESH;
     e.p = (async () => {
-      const res = await this._fetch(this._path(cid, q, k), e.ctrl.signal);
+      const res = await this._fetch(this._path(cid, q, k), { signal: e.ctrl.signal, ...fresh ? { cache: "no-store" } : {} });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const b = await res.blob();
       if (b.size < 4096) throw new Error("tom");
+      if (e.ctrl.signal.aborted || this._cache.get(key) !== e) throw new Error("for\xE6ldet");
       e.url = URL.createObjectURL(b);
       e.bytes = b.size;
       this._bytes += b.size;
@@ -47274,10 +47322,26 @@ var ThProtectPlayer = class extends HTMLElement {
     }
     return e;
   }
+  _drop(e) {
+    e.ctrl?.abort();
+    if (e.url) URL.revokeObjectURL(e.url);
+    if (e.ok) this._bytes -= e.bytes || 0;
+    e.ok = false;
+    e.failed = Date.now();
+    if (this._cache.get(e.key) === e) this._cache.delete(e.key);
+  }
+  // Hentninger, der ikke længere er brug for (andet kamera eller et andet sted på tidslinjen), afbrydes efter et spring.
+  _abortOld(k) {
+    const cid = this._cam && this._o.cid(this._cam.base), inUse = new Set(this._vids.map((v) => v._e));
+    for (const e of [...this._cache.values()]) if (!e.ok && !e.failed && !inUse.has(e) && (e.cid !== cid || e.k < k - 1 || e.k > k + 4)) {
+      e.ctrl.abort();
+      this._cache.delete(e.key);
+    }
+  }
   _ready(k) {
     const cid = this._cam && this._o.cid(this._cam.base);
     if (!cid) return null;
-    for (const q of this._quality === "sd" && this._pb ? ["sd"] : ["hd", "sd"]) {
+    for (const q of (this._quality === "sd" || this._noHd) && this._pb ? ["sd"] : ["hd", "sd"]) {
       const e = this._cache.get(`${cid}|${q}|${k}`);
       if (e?.ok) {
         e.used = Date.now();
@@ -47315,8 +47379,17 @@ var ThProtectPlayer = class extends HTMLElement {
         v.removeEventListener("loadedmetadata", onOk);
         v.removeEventListener("error", onErr);
         if (v._e !== e) return res(false);
-        if (ok && e.t0 == null && Number.isFinite(v.duration)) e.t0 = (e.k + 1) * SEG - v.duration * 1e3;
-        res(ok && e.t0 != null);
+        if (!ok) {
+          this._drop(e);
+          if (e.q === "hd" && this._pb) this._noHd = true;
+          return res(false);
+        }
+        if (v.duration < SEG / 1e3 - 0.3 && (e.k + 1) * SEG > Date.now() - FRESH) {
+          this._drop(e);
+          return res(false);
+        }
+        if (e.t0 == null && Number.isFinite(v.duration)) e.t0 = (e.k + 1) * SEG - v.duration * 1e3;
+        res(e.t0 != null);
       };
       const onOk = () => done(true), onErr = () => done(false);
       v.addEventListener("loadedmetadata", onOk);
@@ -47342,13 +47415,16 @@ var ThProtectPlayer = class extends HTMLElement {
   }
   _activate(v) {
     const old = this._cur?.v;
-    if (old && old !== v) {
-      old.pause();
-      old.classList.remove("on");
-    }
-    v.classList.add("on");
     v.playbackRate = this._rate;
     v.muted = this._muted;
+    v.classList.add("on", "fr");
+    if (old && old !== v) {
+      old.pause();
+      old.classList.remove("fr");
+      requestAnimationFrame(() => {
+        if (this._cur?.v !== old) old.classList.remove("on");
+      });
+    }
     this._cur = { v };
     this.q(".poster").classList.remove("on");
     this._badge();
@@ -47374,7 +47450,7 @@ var ThProtectPlayer = class extends HTMLElement {
     await this._seekV(v, abs);
     if (gen !== this._gen) return false;
     this._activate(v);
-    if (play) this._play(v);
+    if (play && this._playing) this._play(v);
     else v.pause();
     this._spin(false);
     this._msg("");
@@ -47384,7 +47460,10 @@ var ThProtectPlayer = class extends HTMLElement {
   // Næste stykke (eller samme stykke i høj kvalitet) gøres klar i den skjulte video og står på det rigtige billede.
   async _arm(e, at, up = false) {
     const v = this._other(), h = this._hand = { v, e, at, up, ready: false };
-    if (!await this._load(v, e) || this._hand !== h) return;
+    if (!await this._load(v, e) || this._hand !== h) {
+      if (this._hand === h) this._hand = null;
+      return;
+    }
     await this._seekV(v, at);
     if (this._hand !== h) return;
     v.pause();
@@ -47396,35 +47475,66 @@ var ThProtectPlayer = class extends HTMLElement {
     this._activate(h.v);
     this._play(h.v);
   }
-  async _seek(abs, play = this._playing) {
+  // Find det næste stykke med optagelse (huller, fx når kameraet var offline) – højst 6 stykker frem.
+  async _nextRecorded(k, sgen) {
+    for (let i = 1; i <= 6; i++) {
+      if ((k + i + 1) * SEG > Date.now() - READY_LAG) return null;
+      const r = await this._get(k + i, this._pb ? "sd" : "hd", true)?.p.catch(() => null);
+      if (sgen !== this._sgen) return null;
+      if (r) return r;
+    }
+    return null;
+  }
+  async _seek(abs, play = this._playing, opt = {}) {
     abs = Math.min(abs, Date.now());
     if (abs > Date.now() - LIVE_LAG) {
       this.goLive();
       return;
     }
     this._exitLive();
+    this._hand = null;
+    this._gen++;
+    this._cur?.v.pause();
     this._t = abs;
     this._playing = play;
     this._ppBtn();
     this._dirty = true;
     this._msg("");
     const sgen = ++this._sgen;
+    this._pend = sgen;
     if (!this._o.cid(this._cam.base)) {
       this._spinSoon();
       await this._o.ready;
       if (sgen !== this._sgen) return;
     }
-    this._loadDays();
-    const k = Math.floor(abs / SEG);
+    let k = Math.floor(abs / SEG);
+    this._abortOld(k);
     let e = this._ready(k);
     if (!e) {
       this._spinSoon();
       const first = this._get(k, this._pb && this._quality !== "hd" ? "sd" : "hd", true), ps = first ? [first.p.catch(() => null)] : [];
-      if (this._pb && this._quality === "auto" || this._quality === "hd" && this._pb && first?.q === "sd")
+      if (this._pb && !this._noHd && (this._quality === "auto" || this._quality === "hd" && first?.q === "sd"))
         ps.push(Promise.race([ps[0], new Promise((r) => setTimeout(r, 400))]).then(() => sgen === this._sgen ? this._get(k, "hd", true)?.p.catch(() => null) : null));
       e = await firstOk(ps);
       if (sgen !== this._sgen) return;
+      if (!e && opt.skip) {
+        e = await this._nextRecorded(k, sgen);
+        if (sgen !== this._sgen) return;
+        if (e) {
+          abs = e.k * SEG;
+          k = e.k;
+          this._t = abs;
+        } else {
+          const ev = this._events().find((x) => x.s > abs + 1e3);
+          if (ev) {
+            this._pend = 0;
+            this._seek(ev.s - 2e3, play);
+            return;
+          }
+        }
+      }
       if (!e) {
+        this._pend = 0;
         this._spin(false);
         this._msg("Ingen optagelse p\xE5 dette tidspunkt");
         this._playing = false;
@@ -47432,8 +47542,18 @@ var ThProtectPlayer = class extends HTMLElement {
         return;
       }
     }
-    await this._present(e, abs, this._playing);
-    if (sgen !== this._sgen || e.q !== "sd" || this._playing || !this._qs().includes("hd")) return;
+    const ok = await this._present(e, abs, this._playing);
+    if (sgen !== this._sgen) return;
+    this._pend = 0;
+    if (!ok) {
+      this._spin(false);
+      this._msg("Optagelsen kunne ikke afspilles");
+      this._playing = false;
+      this._ppBtn();
+      return;
+    }
+    this._loadDays();
+    if (e.q !== "sd" || this._playing || !this._qs().includes("hd")) return;
     this._get(k, "hd")?.p.then((x) => {
       if (x && sgen === this._sgen && !this._playing && !this._drag && !this._live) this._present(x, this._t, false);
     }, () => {
@@ -47445,18 +47565,20 @@ var ThProtectPlayer = class extends HTMLElement {
     this._gen++;
     this._hand = null;
     this._stalling = false;
+    this._pend = 0;
     this._live = true;
     this._playing = true;
     this._t = Date.now();
     this._vids.forEach((v) => {
       v.pause();
-      v.classList.remove("on");
+      v.classList.remove("on", "fr");
     });
     this._cur = null;
     this.q(".poster").classList.remove("on");
     this._spin(false);
     this._msg("");
-    const box = this.q(".live"), ent = this._o.compact ? this._cam.tile || this._cam.id : this._cam.id;
+    const small = this._o.compact || matchMedia("(max-width: 900px)").matches;
+    const box = this.q(".live"), ent = small ? this._cam.tile || this._cam.id : this._cam.id;
     if (box._ent !== ent) {
       box.innerHTML = "";
       box._ent = ent;
@@ -47483,7 +47605,6 @@ var ThProtectPlayer = class extends HTMLElement {
     }
     box.classList.add("on");
     this._badge();
-    this._ppBtn();
     this._labels();
     this._dirty = true;
     this._loop();
@@ -47504,21 +47625,22 @@ var ThProtectPlayer = class extends HTMLElement {
     this._raf = requestAnimationFrame(this._fr);
     const now = Date.now();
     if (this._live) {
-      if (now - (this._lastDraw || 0) > 1e3) {
-        this._t = now;
+      if (this._drag || this._dirty || now - (this._lastDraw || 0) > 1e3) {
+        if (!this._drag) this._t = now;
         this._draw();
         this._clock();
       }
       return;
     }
     const v = this._cur?.v, e = v?._e;
-    if (!this._drag && v && e?.t0 != null && !v.paused && !v.seeking) {
+    if (!this._drag && !this._pend && v && e?.t0 != null && (!v.paused || v.ended && this._playing) && !v.seeking) {
       this._t = e.t0 + v.currentTime * 1e3;
-      const end = (e.k + 1) * SEG, h = this._hand;
-      if (h?.ready && this._t >= h.at - 40) {
+      const end = (e.k + 1) * SEG, h = this._hand, lead = 40 * this._rate;
+      if (h && !h.ready && this._t > h.at + 250) this._hand = null;
+      else if (h?.ready && this._t >= h.at - lead) {
         if (h.up && this._t > h.at + 250) this._hand = null;
         else this._doHand();
-      } else if (v.ended || this._t >= end - 25) this._stall(end);
+      } else if (v.ended || this._t >= end - 25 * this._rate) this._stall(end);
       if (this._t > now - LIVE_LAG) {
         this.goLive();
         return;
@@ -47534,12 +47656,12 @@ var ThProtectPlayer = class extends HTMLElement {
   _stall(end) {
     if (this._stalling) return;
     this._stalling = true;
-    this._seek(end + 1, true).finally(() => {
+    this._seek(end + 1, true, { skip: true }).finally(() => {
       this._stalling = false;
     });
   }
   _tickArm() {
-    if (this._live || this._drag || !this._playing || this._stalling) return;
+    if (this._live || this._drag || !this._playing || this._stalling || this._pend) return;
     const v = this._cur?.v, e = v?._e;
     if (!e) return;
     const k = e.k, end = (k + 1) * SEG, qs = this._qs();
@@ -47547,8 +47669,8 @@ var ThProtectPlayer = class extends HTMLElement {
     const h = this._hand;
     if (e.q === "sd" && qs.includes("hd") && !h?.up) {
       const hd = this._cache.get(`${e.cid}|hd|${k}`);
-      if (hd?.ok && this._t + 900 < end - 200) {
-        this._arm(hd, this._t + 900, true);
+      if (hd?.ok && this._t + 900 * this._rate < end - 200 * this._rate) {
+        this._arm(hd, this._t + 900 * this._rate, true);
         return;
       }
     }
@@ -47570,19 +47692,35 @@ var ThProtectPlayer = class extends HTMLElement {
     this._dirty = true;
     return list;
   }
+  // Hændelser for dage længere tilbage end det seneste døgn (det døgn har kortet allerede).
   _loadDays() {
     if (!this._cam || !this._o.loadDay) return;
     const from = new Date(this._t - this._span / 2);
     from.setHours(0, 0, 0, 0);
-    for (let d = +from, n = 0; d <= this._t + this._span / 2 && n < 3; n++) {
-      if (d <= Date.now()) this._o.loadDay(this._cam.base, d)?.then(() => {
+    for (let d = new Date(from), n = 0; +d <= this._t + this._span / 2 && n < 3; n++, d.setDate(d.getDate() + 1)) {
+      if (+d >= Date.now() - 864e5 || +d > Date.now()) continue;
+      this._o.loadDay(this._cam.base, +d)?.then(() => {
         this._dirty = true;
       }, () => {
       });
-      const nx2 = new Date(d);
-      nx2.setDate(nx2.getDate() + 1);
-      d = +nx2;
     }
+  }
+  // Tidspunkter for skalaen: hele timer følger lokal tid (sommertid), kortere trin går op i hele minutter.
+  _ticks(t0, t12, step) {
+    const out = [];
+    if (step >= 36e5) {
+      const h = step / 36e5, d = new Date(t0);
+      d.setMinutes(0, 0, 0);
+      while (+d < t0 || d.getHours() % h) d.setHours(d.getHours() + 1);
+      for (let i = 0; +d <= t12 && i < 60; i++) {
+        out.push(+d);
+        d.setHours(d.getHours() + h);
+      }
+    } else {
+      const off = -new Date(t0).getTimezoneOffset() * 6e4;
+      for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t12; t += step) out.push(t);
+    }
+    return out;
   }
   _draw() {
     this._lastDraw = Date.now();
@@ -47611,19 +47749,22 @@ var ThProtectPlayer = class extends HTMLElement {
       c2.fillRect(xn - 1, 18, 2, H3 - 22);
     }
     const step = STEPS.find((s) => s / span * W2 >= 74) || STEPS[STEPS.length - 1];
-    const off = -new Date(t0).getTimezoneOffset() * 6e4;
     c2.font = "600 10.5px system-ui, -apple-system, Segoe UI, sans-serif";
     c2.textAlign = "center";
     c2.textBaseline = "alphabetic";
-    for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t12; t += step) {
+    for (const t of this._ticks(t0, t12, step)) {
       const px2 = x(t), d = new Date(t), midnight = d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
       c2.fillStyle = midnight ? "rgba(232,195,126,.7)" : "rgba(255,255,255,.22)";
       c2.fillRect(px2 - 0.5, 18, 1, midnight ? H3 - 22 : 8);
+      const label = midnight ? d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" }) : hms(d, step < 6e4);
+      const half = c2.measureText(label).width / 2 + 3;
+      if (px2 - half < 2 || px2 + half > W2 - 2 || Math.abs(px2 - W2 / 2) < half + 4) continue;
       c2.fillStyle = midnight ? "#e8c37e" : "rgba(244,241,234,.56)";
-      c2.fillText(midnight ? d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" }) : hms(d, step < 6e4), px2, 13);
+      c2.fillText(label, px2, 13);
     }
     c2.fillStyle = "rgba(255,255,255,.1)";
-    for (let t = Math.ceil((t0 + off) / (step / 2)) * (step / 2) - off; t <= t12; t += step / 2) c2.fillRect(x(t) - 0.5, 22, 1, 4);
+    const minor = step >= 2 * 36e5 ? step % (2 * 36e5) === 0 ? step / 2 : 36e5 : step / 2;
+    for (const t of this._ticks(t0, t12, minor)) c2.fillRect(x(t) - 0.5, 22, 1, 4);
     const types = this._o.types || {};
     for (const ev of this._events()) {
       if (ev.s + ev.d < t0 || ev.s > t12) continue;
@@ -47657,6 +47798,8 @@ var ThProtectPlayer = class extends HTMLElement {
       this._wasPlaying = this._playing;
       this._wasLive = this._live;
       this._sgen++;
+      this._gen++;
+      this._pend = 0;
       this._hand = null;
       this._cur?.v.pause();
       this.q(".tlw").classList.add("drag");
@@ -47683,6 +47826,10 @@ var ThProtectPlayer = class extends HTMLElement {
       return;
     }
     if (!this._moved) {
+      if (ev.clientX == null) {
+        if (!this._live) this._seek(this._t, this._wasPlaying);
+        return;
+      }
       const r = this.q(".tlw").getBoundingClientRect(), t = this._t + (ev.clientX - r.left - r.width / 2) / r.width * this._span, hit = this._hit(t, r.width);
       this._seek(hit ? hit.s - 2e3 : t, true);
       return;
@@ -47839,20 +47986,18 @@ var ThProtectPlayer = class extends HTMLElement {
       else if (k === "ArrowRight" && !this._live) this._seek(this._t + step, this._playing);
       else if (k === "l" || k === "L") this.goLive();
       else if (k === "f" || k === "F") this._act("full");
+      else if (k === "Escape" && this.hasAttribute("pfs")) this._setPfs(false);
       else return;
       ev.preventDefault();
     });
-    document.addEventListener("visibilitychange", () => {
-      const v = this._cur?.v;
-      if (!v || this._live) return;
-      if (document.hidden && !v.paused) {
-        this._resume = true;
-        v.pause();
-      } else if (!document.hidden && this._resume) {
-        this._resume = false;
-        if (this._playing) this._play(v);
-      }
-    });
+  }
+  _isFs() {
+    return this.getRootNode().fullscreenElement === this || this.hasAttribute("pfs");
+  }
+  _setPfs(on) {
+    this.toggleAttribute("pfs", on);
+    this.q('[data-a="full"]').innerHTML = pi(on || this.getRootNode().fullscreenElement === this ? "unfull" : "full", 17);
+    this._dirty = true;
   }
   _act(a) {
     const now = Date.now(), evs = this._events();
@@ -47866,11 +48011,12 @@ var ThProtectPlayer = class extends HTMLElement {
         return;
       }
       const v = this._cur?.v, e = v?._e;
-      if (v && e?.t0 != null && !v.ended && this._t < (e.k + 1) * SEG - 60) {
+      if (this.q(".msg").classList.contains("on")) this._seek(this._t, true, { skip: true });
+      else if (v && e?.t0 != null && !v.ended && this._t < (e.k + 1) * SEG - 60) {
         this._playing = true;
         this._ppBtn();
         this._play(v);
-      } else this._seek(this._t + (v?.ended ? 60 : 0), true);
+      } else this._seek(this._t + (v?.ended ? 60 : 0), true, { skip: true });
     } else if (a === "back") this._seek((this._live ? now - LIVE_LAG : this._t) - 1e4, true);
     else if (a === "fwd" && !this._live) this._seek(this._t + 1e4, this._playing);
     else if (a === "prev") {
@@ -47878,11 +48024,12 @@ var ThProtectPlayer = class extends HTMLElement {
       if (ev) this._seek(ev.s - 2e3, true);
     } else if (a === "next") {
       if (this._live) return;
-      const ev = evs.find((x) => x.s > this._t + 1e3);
+      const ev = evs.find((x) => x.s > this._t + 2500);
       if (ev) this._seek(ev.s - 2e3, true);
       else this.goLive();
     } else if (a === "live") this.goLive();
     else if (a === "speed") {
+      if (this._live) return;
       this._rate = SPEEDS[(SPEEDS.indexOf(this._rate) + 1) % SPEEDS.length];
       this._vids.forEach((v) => {
         v.playbackRate = this._rate;
@@ -47891,12 +48038,13 @@ var ThProtectPlayer = class extends HTMLElement {
     } else if (a === "quality") {
       const Q = ["auto", "hd", "sd"];
       this._quality = Q[(Q.indexOf(this._quality) + 1) % Q.length];
+      this._noHd = false;
       try {
         localStorage.setItem(QKEY, this._quality);
       } catch (e) {
       }
-      this._hand = null;
       this._labels();
+      if (!this._live && this._cur) this._seek(this._t, this._playing);
     } else if (a === "mute") {
       this._muted = !this._muted;
       this._vids.forEach((v) => {
@@ -47906,30 +48054,33 @@ var ThProtectPlayer = class extends HTMLElement {
       if (s) s.muted = this._muted;
       this._labels();
     } else if (a === "date") {
-      const di = this.q(".date input");
-      const d = new Date(this._live ? Date.now() : this._t);
-      di.max = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-      di.value = `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
+      const di = this.q(".date input"), d = new Date(this._live ? Date.now() : this._t);
+      di.max = ymd(/* @__PURE__ */ new Date());
+      di.value = ymd(d);
       try {
         di.showPicker();
       } catch (e) {
         di.focus();
         di.click();
       }
+      return;
     } else if (a === "zin") this._zoom(-1);
     else if (a === "zout") this._zoom(1);
     else if (a === "full") {
-      if (document.fullscreenElement) document.exitFullscreen?.();
-      else if (this.requestFullscreen) this.requestFullscreen().catch(() => this._cur?.v.webkitEnterFullscreen?.());
-      else this._cur?.v.webkitEnterFullscreen?.();
+      if (this.hasAttribute("pfs")) this._setPfs(false);
+      else if (this.getRootNode().fullscreenElement === this) document.exitFullscreen?.().then(() => this._setPfs(false));
+      else if (typeof this.requestFullscreen === "function" && document.fullscreenEnabled) this.requestFullscreen().then(() => this._setPfs(false)).catch(() => this._setPfs(true));
+      else this._setPfs(true);
     }
     this.focus({ preventScroll: true });
   }
   _labels() {
     const sp = this.q(".span"), s = this._span;
     sp.textContent = s >= 36e5 ? `${s / 36e5} t` : `${Math.round(s / 6e4)} min`;
-    this.q('[data-a="speed"]').textContent = `${this._rate}\xD7`;
-    this.q('[data-a="speed"]').classList.toggle("on2", this._rate !== 1);
+    const speed = this.q('[data-a="speed"]');
+    speed.textContent = `${this._rate}\xD7`;
+    speed.classList.toggle("on2", this._rate !== 1);
+    speed.disabled = this._live;
     this.q('[data-a="quality"]').textContent = { auto: "Auto", hd: "HD", sd: "SD" }[this._quality];
     this.q('[data-a="mute"]').innerHTML = pi(this._muted ? "mute" : "sound", 17);
     this.q('[data-a="live"]').classList.toggle("on", this._live);
@@ -47937,7 +48088,7 @@ var ThProtectPlayer = class extends HTMLElement {
   }
   _ppBtn() {
     const b = this.q('[data-a="play"]');
-    const h = pi(this._playing && !this._live ? "pause" : "play");
+    const h = pi(this._playing || this._live ? "pause" : "play");
     if (b._h !== h) {
       b._h = h;
       b.innerHTML = h;
@@ -47950,8 +48101,9 @@ var ThProtectPlayer = class extends HTMLElement {
   }
   _clock() {
     this._lastClock = Date.now();
-    const d = new Date(this._t), el = this.q(".clock");
-    const txt = this._live ? `Live \xB7 ${hms(/* @__PURE__ */ new Date())}` : `${d.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? "I dag" : d.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" })} \xB7 ${hms(d)}`;
+    const d = new Date(this._t), el = this.q(".clock"), narrow = this.hasAttribute("narrow");
+    const day2 = d.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? narrow ? "" : "I dag \xB7 " : `${d.toLocaleDateString("da-DK", narrow ? { day: "numeric", month: "numeric" } : { weekday: "short", day: "numeric", month: "short" })} \xB7 `;
+    const txt = this._live ? `${narrow ? "" : "Live \xB7 "}${hms(/* @__PURE__ */ new Date())}` : `${day2}${hms(d)}`;
     if (el.textContent !== txt) el.textContent = txt;
   }
   _spin(on) {
@@ -47971,8 +48123,10 @@ var ThProtectPlayer = class extends HTMLElement {
 if (!customElements.get("th-protect-player")) customElements.define("th-protect-player", ThProtectPlayer);
 
 // src/cards/th-camera-card/th-camera-card.js
-var VC_VER = "2.4.0";
+var VC_VER = "2.5.0";
 var VC_CACHE = "th-camera-card:events";
+var SIGN_FOR = 86400;
+var SIGN_OK = 20 * 36e5;
 var VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>',
   person: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -47983,7 +48137,8 @@ var VC_I = {
   play: '<path d="M8 5v14l11-7Z" fill="currentColor"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   live: '<circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/>',
-  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>'
 };
 var vci = (k, s = 16, sw = 1.7) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none">${VC_I[k] || ""}</svg>`;
 var vce = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
@@ -47993,19 +48148,25 @@ var typeOf = (title) => {
   const t = (title || "").toLowerCase();
   return /person|face/.test(t) ? "person" : /vehicle|car|license/.test(t) ? "vehicle" : /animal/.test(t) ? "animal" : /ring|doorbell/.test(t) ? "ring" : "motion";
 };
+var thumbOk = (e) => !!e.thumbS && Date.now() - (e.thumbAt || 0) < SIGN_OK;
 var VC_CSS = `
 :host{display:block;--ink:#f4f1ea;--mut:rgba(244,241,234,.56);--faint:rgba(244,241,234,.3);--hair:rgba(244,241,234,.09);--gold:#e8c37e;--emer:#6be3a8;--coral:#ff9e7a;--red:#ff6b7d;--ice:#8ed1ff;
   color:var(--ink);-webkit-font-smoothing:antialiased;padding:12px 0 var(--th-camera-bottom,100px)}
-@media(max-width:1100px){:host{padding:max(10px,env(safe-area-inset-top)) 10px 112px}}
+/* HA's visning l\xE6gger selv luft til iPhonens statuslinje \u2013 ikke en gang til her */
+@media(max-width:1100px){:host{padding:10px 10px 112px}}
+@media(max-width:480px){:host{padding:4px 4px 112px}.p{padding:10px!important}}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
 .g{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
-.g.wide{grid-template-columns:minmax(0,1fr) minmax(400px,34%)}
-.g.pb.wide{grid-template-columns:minmax(0,1fr) 380px}
-.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:8px;max-height:calc(100dvh - 130px);min-width:0}
-.side .ev{flex:1 1 auto;min-height:220px}
-.plp{padding:12px}
-.g.pb.wide .ev{position:sticky;top:12px;max-height:calc(100dvh - 130px)}
-.g.pb:not(.wide) .plp{position:sticky;top:0;z-index:5;background:rgba(10,12,17,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+/* PC: h\xF8jre kolonne (afspiller + h\xE6ndelser) er lige s\xE5 h\xF8j som kameraerne, og listen fylder resten (bruger 2026-10-26) */
+.g.wide{grid-template-columns:minmax(0,1fr) minmax(400px,34%);align-items:stretch}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0;contain:size;min-height:min(760px,calc(100dvh - 130px))}
+.side .ev{flex:1 1 auto;min-height:0}
+.plp{padding:12px;flex:none}
+.g.pb.wide{grid-template-columns:minmax(0,1fr) 380px;align-items:stretch}
+/* Optagelser p\xE5 PC: h\xE6ndelserne er pr\xE6cis lige s\xE5 h\xF8je som afspilleren og ruller indeni */
+.g.pb.wide .ev{contain:size;min-height:0}
+.g.pb:not(.wide) .plp{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:#0a0c11}
+@media (max-height:600px){.g.pb:not(.wide) .plp,.sh-pl{position:static!important}}
 #pc{margin-bottom:10px}
 .p{position:relative;border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015)),rgba(12,14,20,.74);
   box-shadow:0 26px 50px -36px #000,inset 0 0 0 1px var(--hair),inset 0 1px 0 rgba(255,255,255,.05);animation:in .8s cubic-bezier(.16,1,.3,1) both;min-width:0}
@@ -48016,20 +48177,27 @@ var VC_CSS = `
 .chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite}@keyframes bl{50%{opacity:.25}}
 .cams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 @media(max-width:640px){.cams{grid-template-columns:1fr}}
-.cam{appearance:none;border:0;padding:0;cursor:pointer;position:relative;overflow:hidden;border-radius:20px;aspect-ratio:16/9;background:#05060a;text-align:left;
-  box-shadow:inset 0 0 0 1px var(--hair);animation:in .8s cubic-bezier(.16,1,.3,1) both;transition:transform .5s cubic-bezier(.16,1,.3,1),box-shadow .5s}
-.cam:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px rgba(232,195,126,.35),0 24px 50px -24px #000}
-.cam img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .5s,transform 8s ease}
+.cam{appearance:none;border:0;padding:0;cursor:pointer;position:relative;overflow:hidden;border-radius:14px;aspect-ratio:16/9;background:#05060a;text-align:left;
+  box-shadow:inset 0 0 0 1px var(--hair);animation:in .8s cubic-bezier(.16,1,.3,1) both;transition:box-shadow .5s}
+/* Glimt, til det f\xF8rste billede er der */
+.cam::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.02),rgba(255,255,255,.07),rgba(255,255,255,.02));background-size:200% 100%;animation:sk 1.4s infinite}
+/* Ingen l\xF8ft ved hover: flisen flyttede sig v\xE6k fra musen ved kanten og blinkede (bruger 2026-10-26) */
+.cam:hover{box-shadow:inset 0 0 0 1px rgba(232,195,126,.45),0 24px 50px -24px #000}
+.cam img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .5s,transform 8s ease,filter .4s}
+.cam img:not([src]){opacity:0}
 .cam:hover img{transform:scale(1.06)}
+/* Live: stillbilledet sl\xF8res bag videoen, s\xE5 kameraer med et andet format (fx 4:3) f\xE5r en rolig baggrund i stedet for et dobbeltbillede */
+.cam.lvon img{filter:blur(16px) brightness(.55);transform:scale(1.12)}
 .cam .lv{position:absolute;inset:0;pointer-events:none}.cam .lv ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
-.cam .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.5),transparent 28%,transparent 55%,rgba(0,0,0,.82))}
-.cam .nm{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:8px;padding:6px 11px 6px 9px;border-radius:12px;background:rgba(10,12,18,.5);backdrop-filter:blur(10px);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font-size:12.5px;font-weight:600}
+.cam .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 22%,transparent 50%,rgba(0,0,0,.82))}
 .cam .rec{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.14em;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
 .cam .rec i{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:bl 1.4s infinite}
-.cam .bot{position:absolute;left:12px;right:12px;bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
-.cam .last{font-size:11.5px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:6px}
-.cam .cnt{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px)}
+/* Navn og seneste h\xE6ndelse nederst \u2013 kameraets eget tidsstempel st\xE5r \xF8verst til venstre */
+.cam .bot{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.cam .nm{display:flex;flex-direction:column;gap:2px;min-width:0;padding:6px 11px 6px 10px;border-radius:11px;background:rgba(10,12,18,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.cam .nm b{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.cam .last{font-size:11px;color:rgba(255,255,255,.78);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.cam .cnt{flex:none;font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px)}
 /* Registrering som lille m\xE6rke i hj\xF8rnet i stedet for REC (brugeren: det store m\xE6rke midt i billedet skjulte, hvad der skete) */
 .cam .tag{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:99px;font-weight:700;font-size:11px;
   background:color-mix(in srgb,var(--c) 90%,transparent);color:#140f08;box-shadow:0 6px 18px -6px var(--c);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
@@ -48038,30 +48206,36 @@ var VC_CSS = `
 .cam.act{box-shadow:inset 0 0 0 2px var(--c),0 0 40px -12px var(--c)}
 .cam .pulse{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 2px var(--c);animation:pl 1.6s ease-out infinite;pointer-events:none}@keyframes pl{to{box-shadow:inset 0 0 0 14px transparent}}
 .ev{display:flex;flex-direction:column;min-height:0}
-.flt{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:8px}.flt::-webkit-scrollbar{display:none}
+.flt{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:8px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+.flt::-webkit-scrollbar{display:none}
 .flt button{appearance:none;border:0;cursor:pointer;flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;font-size:11.5px;font-weight:600;color:var(--mut);
   background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--hair);transition:all .3s}
+.flt button:last-child{margin-right:22px}
 .flt button.on{color:#15110a;background:var(--c,var(--gold));box-shadow:none}
-.list{overflow-y:auto;scrollbar-width:thin;display:grid;gap:6px;padding-right:2px;flex:1;align-content:start}
+.list{overflow-y:auto;scrollbar-width:thin;display:grid;gap:6px;padding-right:2px;flex:1;align-content:start;min-height:0}
 .it{appearance:none;border:0;cursor:pointer;display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;padding:6px;border-radius:15px;text-align:left;background:rgba(255,255,255,.03);
-  transition:background .3s,transform .3s;animation:in .5s both}
+  transition:background .3s,transform .3s,box-shadow .3s}
+.list.first .it,.it.fresh{animation:in .5s both}
 .it:hover{background:rgba(255,255,255,.07);transform:translateX(2px)}
+.it.on{background:rgba(232,195,126,.08);box-shadow:inset 0 0 0 1px rgba(232,195,126,.55)}
 .it .th{position:relative;width:96px;aspect-ratio:16/10;border-radius:11px;overflow:hidden;background:#06070b}
 .it .th img{width:100%;height:100%;object-fit:cover}
 .it .th span{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:0;background:rgba(0,0,0,.35);transition:opacity .3s}.it:hover .th span{opacity:1}
 .it b{display:block;font-size:13px;font-weight:500}.it small{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-top:3px}
 .it .ty{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--c);margin-top:5px}
 .day{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:8px 2px 2px}
-.empty{padding:20px;text-align:center;color:var(--mut);font-size:13px}
+.empty{padding:26px 16px;text-align:center;color:var(--mut);font-size:13px;display:grid;justify-items:center;gap:10px}
+.empty button{appearance:none;border:0;cursor:pointer;padding:7px 13px;border-radius:99px;font-size:12px;font-weight:600;color:#15110a;background:var(--gold)}
 .skel{height:72px;border-radius:15px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(255,255,255,.07),rgba(255,255,255,.03));background-size:200% 100%;animation:sk 1.4s infinite}@keyframes sk{to{background-position:-200% 0}}
 @keyframes fd{from{opacity:0}}
-.sheet{position:fixed;inset:0;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:rgba(3,4,8,.96);backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);animation:fd .25s both;padding:max(10px,env(safe-area-inset-top)) 10px max(24px,env(safe-area-inset-bottom))}
+/* Fuldsk\xE6rm p\xE5 telefonen: helt d\xE6kkende (intet skinner igennem), luft til statuslinjen i toppen */
+.sheet{position:fixed;inset:0;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#030408;animation:fd .25s both;
+  padding:0 10px max(24px,env(safe-area-inset-bottom))}
 .sh-in{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.sh-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;background:rgba(3,4,8,.96);padding:2px 0 4px}
+.sh-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;background:#030408;padding:max(10px,env(safe-area-inset-top)) 0 4px}
 .sh-top .x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center}
 .sh-top .flt{margin:0;flex:1;min-width:0}
-.sh-pl{position:sticky;top:48px;z-index:2;background:rgba(3,4,8,.96);padding-bottom:6px}
+.sh-pl{position:sticky;top:calc(max(10px,env(safe-area-inset-top)) + 46px);z-index:2;background:#030408;padding-bottom:6px}
 .sh-k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
 #nvr{margin-top:10px;display:grid;gap:8px}
 .nvr .k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:0 2px 6px}
@@ -48077,6 +48251,7 @@ var VC_CSS = `
 var ThCameraCard = class _ThCameraCard extends HTMLElement {
   setConfig(c2) {
     this.cfg = { concurrency: 5, ...c2 };
+    this._key = null;
   }
   static getStubConfig() {
     return {};
@@ -48085,23 +48260,38 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     return 10;
   }
   connectedCallback() {
-    this._tick = setInterval(() => this._refresh(), 1e3);
-    this._evt = setInterval(() => this._loadEvents(), 6e4);
-    if (!this._ro) this._ro = new ResizeObserver(() => {
-      if (this._h && this._mode() !== this._lastMode) this._render();
+    this._tick = setInterval(() => {
+      this._refresh();
+      if (++this._n % 5 === 0 && this._h) this._renderTiles();
+    }, 1e3);
+    this._n = 0;
+    this._evt = setInterval(() => {
+      if (!document.hidden) this._loadEvents();
+    }, 6e4);
+    if (!this._ro) this._ro = new ResizeObserver(([en]) => {
+      this._w = en.contentRect.width;
+      if (!this._h) return;
+      if (this._sheet || this._player?.hasAttribute("pfs") || document.fullscreenElement) {
+        this._modeLater = true;
+        return;
+      }
+      if (this._mode() !== this._lastMode) this._render();
     });
     this._ro.observe(this);
+    this._loc ||= () => setTimeout(() => this._startPlayer(), 0);
+    window.addEventListener("location-changed", this._loc);
+    if (this._r && this._h && this._key) {
+      this._liveTiles();
+      this._refresh(true);
+    }
   }
   disconnectedCallback() {
     clearInterval(this._tick);
     clearInterval(this._evt);
     this._ro?.disconnect();
-    this._io?.disconnect();
-    this._io = null;
-    this._r?.querySelectorAll(".cam .lv").forEach((l) => {
-      l.innerHTML = "";
-    });
-    this._closeSheet();
+    window.removeEventListener("location-changed", this._loc);
+    this._stopTiles();
+    this._closeSheet(true);
   }
   set hass(h) {
     const first = !this._h;
@@ -48128,14 +48318,27 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
         this._pb = v;
         if (this._player?._o) this._player.setup(this._plOpts(this._player.hasAttribute("compact")));
       });
+      setTimeout(() => {
+        if (this._w == null) {
+          this._w = this.getBoundingClientRect().width || window.innerWidth;
+          this._render();
+        }
+      }, 400);
     } else if (Date.now() - (this._hs || 0) > 6e4) {
       this._hs = Date.now();
       this._r?.querySelectorAll(".cam .lv ha-camera-stream").forEach((v) => {
         v.hass = h;
       });
     }
-    this._render();
+    if (this._w != null && this._changed(h)) this._render();
     if (first) this._loadEvents();
+  }
+  // Kun de entiteter, kortet viser, tæller – HA kalder hass ved hver eneste tilstandsændring i huset.
+  _changed(h) {
+    if (!this._key || !this._rel) return true;
+    const cur = this._rel.map((id) => h.states[id]), prev = this._relV;
+    this._relV = cur;
+    return !prev || cur.some((s, i) => s !== prev[i]);
   }
   $(id) {
     return this._r.getElementById(id);
@@ -48160,9 +48363,10 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     const ev = st["event." + b + "_motion_detection"], t = ev && !["unknown", "unavailable"].includes(ev.state) ? new Date(ev.state) : null;
     return on("binary_sensor." + b + "_person_detected") ? "person" : on("binary_sensor." + b + "_vehicle_detected") ? "vehicle" : on("binary_sensor." + b + "_animal_detected") ? "animal" : on("binary_sensor." + b + "_doorbell") ? "ring" : t && Date.now() - t < 45e3 ? "motion" : null;
   }
-  // auto: bred skærm = live + afspiller + hændelser, smal = kun live (afspilleren åbnes i fuld skærm); playback = afspilleren som side.
+  // auto: bred = live + afspiller + hændelser, smal = kun live (afspilleren åbnes i fuld skærm); playback = afspilleren som side.
+  // Lidt afstand mellem grænserne, så en scrollbar ikke kan få layoutet til at skifte frem og tilbage.
   _mode() {
-    const wide = (this.getBoundingClientRect().width || window.innerWidth) >= 1e3;
+    const w = this._w || window.innerWidth, was = /^(wide|pbw)$/.test(this._lastMode || ""), wide = was ? w >= 960 : w >= 1040;
     return this.cfg.layout === "playback" ? wide ? "pbw" : "pbn" : wide ? "wide" : "narrow";
   }
   _render() {
@@ -48176,15 +48380,39 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       }
       const camsP = `<div class="p"><div class="hd"><div><div class="k">Kameraer \xB7 UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
           <div class="cams">${cams.map((c2, i) => `<button class="cam" data-b="${c2.base}" data-id="${c2.id}" data-tile="${c2.tile}" data-live="${c2.live}" style="animation-delay:${i * 70}ms"><img alt=""><div class="lv"></div><div class="sh"></div>
-            <div class="nm">${vci("cam", 14)}${vce(c2.name)}</div><div class="rec"><i></i>REC</div><div class="tg"></div>
-            <div class="bot"><span class="last">${vci("clock", 13)}<span>\u2013</span></span><span class="cnt">0 i dag</span></div></button>`).join("")}</div>
+            <div class="rec"><i></i>REC</div><div class="tg"></div>
+            <div class="bot"><span class="nm"><b>${vci("cam", 14)}${vce(c2.name)}</b><span class="last">${vci("clock", 12)}<span>\u2013</span></span></span><span class="cnt">\u2013</span></div></button>`).join("")}</div>
           <div id="nvr"></div></div>`;
       const evP = `<div class="p ev" style="animation-delay:120ms"><div class="hd"><div><div class="k">H\xE6ndelser \xB7 seneste d\xF8gn</div><h2 id="evn">Henter\u2026</h2></div></div>
-          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div>`;
+          <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list first" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div>`;
       const plP = (cams2) => `<div class="p plp">${cams2 ? '<div class="flt" id="pc"></div>' : ""}<div id="plbox"></div></div>`;
-      this._closeSheet();
+      this._closeSheet(true);
+      this._modeLater = false;
       w.innerHTML = mode === "wide" ? `<div class="g wide">${camsP}<div class="side">${plP(false)}${evP}</div></div>` : mode === "narrow" ? `<div class="g narrow">${camsP}</div>` : `<div class="g pb ${mode === "pbw" ? "wide" : ""}">${plP(true)}${evP}</div>`;
       w.querySelectorAll(".cam").forEach((b) => b.onclick = () => this._openCam(b.dataset.b));
+      const n = this.cfg.nvr || {};
+      this._rel = [
+        ...cams.flatMap((c2) => {
+          const b = c2.base.replace("camera.", "");
+          return [
+            c2.id,
+            c2.tile,
+            `binary_sensor.${b}_person_detected`,
+            `binary_sensor.${b}_vehicle_detected`,
+            `binary_sensor.${b}_animal_detected`,
+            `binary_sensor.${b}_doorbell`,
+            `event.${b}_motion_detection`
+          ];
+        }),
+        n.storage_entity,
+        n.capacity_entity,
+        n.uptime_entity,
+        n.cpu_entity,
+        n.temp_entity,
+        n.memory_entity,
+        ...n.hdd_entities || []
+      ].filter(Boolean);
+      this._relV = null;
       const box = this.$("plbox");
       if (box) {
         box.appendChild(this._pl(mode === "wide"));
@@ -48195,7 +48423,28 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       this._liveTiles();
       if ((this._events || []).length) this._renderList();
     }
+    this._renderTiles();
+    this._renderNvr();
+  }
+  // Pr. kamera: seneste hændelse og antal i dag – regnes én gang pr. ny hændelsesliste, ikke ved hver tilstandsændring.
+  _stats() {
+    const day2 = (/* @__PURE__ */ new Date()).toDateString();
+    if (this._st?.ver === this._evVer && this._st.day === day2) return this._st.m;
+    const m = {};
+    for (const e of this._all || this._events || []) {
+      const s = m[e.cam] ||= { last: e, today: 0 };
+      if (e.t.toDateString() === day2) s.today++;
+    }
+    return (this._st = { ver: this._evVer, day: day2, m }).m;
+  }
+  _renderTiles() {
+    const w = this.$("w");
+    if (!w) return;
+    const stats = this._stats();
     let act = 0;
+    const set = (el, txt) => {
+      if (el && el.textContent !== txt) el.textContent = txt;
+    };
     w.querySelectorAll(".cam").forEach((b) => {
       const ty = this.live(b.dataset.b), T = ty && TYPES[ty];
       if (ty) act++;
@@ -48206,11 +48455,10 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
         tg.innerHTML = h;
         tg._v = h;
       }
-      const evs = (this._all || this._events || []).filter((e) => e.cam === b.dataset.b), lst = evs[0];
-      b.querySelector(".last span").textContent = lst ? `${TYPES[lst.type][0]} ${vct(lst.t)}` : "Ingen h\xE6ndelser";
-      b.querySelector(".cnt").textContent = `${evs.filter((e) => e.t.toDateString() === (/* @__PURE__ */ new Date()).toDateString()).length} i dag`;
+      const s = stats[b.dataset.b], loaded = this._loadedCams?.has(b.dataset.b);
+      set(b.querySelector(".last span"), s ? `${TYPES[s.last.type][0]} ${vct(s.last.t)}` : loaded ? "Ingen h\xE6ndelser" : "\u2013");
+      set(b.querySelector(".cnt"), s || loaded ? `${s?.today || 0} i dag` : "\u2013");
     });
-    this._renderNvr();
     const st = this.$("stat");
     if (st) {
       const h = `<span class="chip" style="--c:${act ? "var(--coral)" : "var(--emer)"}"><i></i>${act ? `Aktivitet p\xE5 ${act} kamera${act > 1 ? "er" : ""}` : "Alt roligt"}</span>`;
@@ -48231,12 +48479,12 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       return Number.isFinite(x) ? x : null;
     };
     const chips = [];
-    const pct2 = (id, label, warn = 90) => {
+    const pct2 = (id, label, warn = 90, c2) => {
       const x = num4(id);
       if (x == null) return;
-      chips.push([label, `${Math.round(x)} %`, x >= warn ? "var(--coral)" : "var(--emer)"]);
+      chips.push([label, `${Math.round(x)} %`, c2 || (x >= warn ? "var(--coral)" : "var(--emer)")]);
     };
-    pct2(n.storage_entity, "Lager", 101);
+    pct2(n.storage_entity, "Lager", 101, "var(--ice)");
     pct2(n.cpu_entity, "CPU");
     pct2(n.memory_entity, "Hukommelse");
     const temp = num4(n.temp_entity);
@@ -48274,9 +48522,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   }
   // Live fliser som i UniFi Protect (Claude AI, 2026-10-26; bruger: "mere som i unifi hvor det kommer hurtigt og er live"): hver
   // synlig flise får HA's egen kamerastrøm (WebRTC via go2rtc) på kameraets laveste kanal; stillbilledet står under, til videoen
-  // spiller. Fliser uden for skærmen stopper deres strøm.
+  // spiller. Fliser uden for skærmen – eller under fuldskærmsafspilleren – stopper deres strøm.
   async _liveTiles() {
-    if (this.cfg.live_tiles === false || !this._r) return;
+    if (this.cfg.live_tiles === false || !this._r || this._sheet) return;
     if (!customElements.get("ha-camera-stream")) {
       try {
         const h = await window.loadCardHelpers?.();
@@ -48299,12 +48547,14 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       }
       this._loader?.remove();
       this._loader = null;
+      if (!this.isConnected || this._sheet) return;
     }
     this._io?.disconnect();
-    const max = this.cfg.max_live || 16, on = /* @__PURE__ */ new Set();
-    const start = (b) => {
+    clearTimeout(this._lvT);
+    const max = this.cfg.max_live || 16, on = /* @__PURE__ */ new Set(), queue = [];
+    const startNow = (b) => {
       const lv = b.querySelector(".lv");
-      if (!lv || lv.firstChild || on.size >= max) return;
+      if (!lv || lv.firstChild || on.size >= max || !b.isConnected || this._sheet) return;
       const s = this._h.states[b.dataset.live];
       if (!s) return;
       const v = document.createElement("ha-camera-stream");
@@ -48315,40 +48565,83 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       v.allowExoPlayer = false;
       lv.appendChild(v);
       on.add(b);
+      b.classList.add("lvon");
+    };
+    const pump = () => {
+      this._lvT = null;
+      const b = queue.shift();
+      if (b) startNow(b);
+      if (queue.length) this._lvT = setTimeout(pump, 500);
+    };
+    const start = (b) => {
+      if (queue.includes(b) || b.querySelector(".lv")?.firstChild) return;
+      queue.push(b);
+      if (!this._lvT) this._lvT = setTimeout(pump, on.size ? 0 : 300);
     };
     const stop = (b) => {
+      const i = queue.indexOf(b);
+      if (i >= 0) queue.splice(i, 1);
       const lv = b.querySelector(".lv");
       if (lv) lv.innerHTML = "";
       on.delete(b);
+      b.classList.remove("lvon");
     };
     this._io = new IntersectionObserver((list) => list.forEach((x) => x.isIntersecting ? start(x.target) : stop(x.target)), { rootMargin: "100px" });
     this._r.querySelectorAll(".cam").forEach((b) => this._io.observe(b));
   }
+  _stopTiles() {
+    clearTimeout(this._lvT);
+    this._lvT = null;
+    this._io?.disconnect();
+    this._io = null;
+    this._r?.querySelectorAll(".cam").forEach((b) => {
+      const lv = b.querySelector(".lv");
+      if (lv) lv.innerHTML = "";
+      b.classList.remove("lvon");
+    });
+  }
+  // Stillbilleder: højst 3 ad gangen (de øverste fliser først) og i mindre størrelse – optageren laver dem ud fra 4K (1,5–5 s
+  // hver), og 11 på én gang optog alle browserens forbindelser til HA, så miniaturer og video stod i kø.
   _refresh(force) {
-    if (!this._r || document.hidden) return;
+    if (!this._r || document.hidden || this._sheet) return;
     const every = (this.cfg.refresh || (this.cams().length > 8 ? 5 : 3)) * 1e3;
-    if (!force && Date.now() - (this._lastRef || 0) < every - 50) return;
-    this._lastRef = Date.now();
-    this._r.querySelectorAll(".cam").forEach((b) => {
-      if (b.querySelector(".lv")?.firstChild && b.dataset.img) return;
+    if (force) this._r.querySelectorAll(".cam").forEach((b) => {
+      b._at = 0;
+    });
+    for (const b of this._r.querySelectorAll(".cam")) {
+      if ((this._stillN || 0) >= 3) break;
+      if (b._busy || Date.now() - (b._at || 0) < every || b.querySelector(".lv")?.firstChild && b.dataset.img) continue;
       const s = this._h.states[b.dataset.tile || b.dataset.id];
-      if (!s?.attributes?.entity_picture) return;
-      b.dataset.img = 1;
+      if (!s?.attributes?.entity_picture) continue;
+      b._busy = true;
+      this._stillN = (this._stillN || 0) + 1;
       const img = b.querySelector("img"), n = new Image();
+      const done = () => {
+        if (!b._busy) return;
+        b._busy = false;
+        b._at = Date.now();
+        this._stillN--;
+        clearTimeout(n._t);
+      };
+      n._t = setTimeout(done, 2e4);
       n.onload = () => {
         img.src = n.src;
+        b.dataset.img = 1;
+        done();
       };
-      n.src = s.attributes.entity_picture + "&t=" + Date.now();
-    });
+      n.onerror = done;
+      n.src = `${s.attributes.entity_picture}&width=640&t=${Date.now()}`;
+    }
   }
   async _browse(id) {
     return this._h.callWS({ type: "media_source/browse_media", media_content_id: id });
   }
   async _sign(path) {
-    if (this._signed[path]) return this._signed[path];
+    const c2 = this._signed[path];
+    if (c2 && Date.now() - c2.at < SIGN_OK) return c2.p;
     try {
-      const r = await this._h.callWS({ type: "auth/sign_path", path, expires: 3600 });
-      this._signed[path] = r.path;
+      const r = await this._h.callWS({ type: "auth/sign_path", path, expires: SIGN_FOR });
+      this._signed[path] = { p: r.path, at: Date.now() };
       return r.path;
     } catch (e) {
       return path;
@@ -48392,6 +48685,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
             continue;
           }
           per.set(n.ch.media_content_id, this._parse(r.children, n));
+          (this._loadedCams ||= /* @__PURE__ */ new Set()).add(n.cam?.base);
           this._mergeSoon();
         }
       };
@@ -48412,13 +48706,12 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   }
   // "10/26/26 07:11:06 1m 5s Object Detection - Person" (lokal tid) – varigheden kan have flere led.
   _parse(children, n) {
-    const evs = [];
+    const evs = [], old = new Map((this._events || []).map((x) => [x.id, x]));
     for (const e of children || []) {
       const m = e.title.match(/^(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\s+((?:\d+[hms]\s?)+)\s*(.*)$/);
       if (!m) continue;
-      const t = new Date(2e3 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
-      const old = (this._events || []).find((x) => x.id === e.media_content_id);
-      evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: old?.thumbS, t, dur: m[7].trim(), type: typeOf(m[8]), raw: m[8], cam: n.cam?.base || n.ch.title, camName: n.cam?.name || n.ch.title });
+      const t = new Date(2e3 + +m[3], +m[1] - 1, +m[2], +m[4], +m[5], +m[6]), o = old.get(e.media_content_id), keep = o && thumbOk(o);
+      evs.push({ id: e.media_content_id, thumb: e.thumbnail, thumbS: keep ? o.thumbS : void 0, thumbAt: keep ? o.thumbAt : void 0, t, dur: m[7].trim(), type: typeOf(m[8]), raw: m[8], cam: n.cam?.base || n.ch.title, camName: n.cam?.name || n.ch.title });
     }
     return evs;
   }
@@ -48430,19 +48723,18 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     this._evVer++;
     this._renderFilters();
     this._renderList();
-    this._render();
+    this._renderTiles();
     this._renderSheet();
     this._startPlayer();
   }
   _mergeSoon() {
-    if (!this._mt) this._mt = setTimeout(() => this._merge(), 250);
+    if (!this._mt) this._mt = setTimeout(() => this._merge(), 400);
   }
   _loadCache() {
     try {
       const c2 = JSON.parse(localStorage.getItem(VC_CACHE) || "null");
       if (!c2 || Date.now() - c2.at > 6 * 36e5) return;
-      const fresh = Date.now() - c2.at < 50 * 6e4;
-      this._events = c2.events.map((e) => ({ ...e, t: new Date(e.t), dur: String(e.dur || ""), thumbS: fresh ? e.thumbS : void 0 }));
+      this._events = c2.events.map((e) => ({ ...e, t: new Date(e.t), dur: String(e.dur || ""), thumbS: thumbOk(e) ? e.thumbS : void 0 }));
       this._evVer++;
       if (c2.nvr && c2.cid) {
         this._nvr = c2.nvr;
@@ -48463,9 +48755,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   _renderFilters() {
     const ft = this.$("ft"), fc = this.$("fc");
     if (!ft) return;
-    const ev = this._events || [];
+    const ev = (this._events || []).filter((e) => this._fc === "all" || e.cam === this._fc);
     const cnt = (k) => ev.filter((e) => k === "all" || e.type === k).length;
-    ft.innerHTML = [["all", "Alle", null, "#e8c37e"], ...Object.entries(TYPES).filter(([k]) => cnt(k)).map(([k, v]) => [k, v[0], v[1], v[2]])].map(([k, l, ic, c2]) => `<button data-k="${k}" class="${this._ft === k ? "on" : ""}" style="--c:${c2}">${ic ? vci(ic, 13, 2) : ""}${l} \xB7 ${cnt(k)}</button>`).join("");
+    ft.innerHTML = [["all", "Alle", null, "#e8c37e"], ...Object.entries(TYPES).filter(([k]) => cnt(k) || this._ft === k).map(([k, v]) => [k, v[0], v[1], v[2]])].map(([k, l, ic, c2]) => `<button data-k="${k}" class="${this._ft === k ? "on" : ""}" style="--c:${c2}">${ic ? vci(ic, 13, 2) : ""}${l} \xB7 ${cnt(k)}</button>`).join("");
     fc.innerHTML = [["all", "Alle kameraer"], ...this.cams().map((c2) => [c2.base, c2.name])].map(([k, l]) => `<button data-k="${k}" class="${this._fc === k ? "on" : ""}">${vce(l)}</button>`).join("");
     ft.querySelectorAll("button").forEach((b) => b.onclick = () => {
       this._ft = b.dataset.k;
@@ -48484,34 +48776,68 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     const src = camFilter ? this._camEvents(camFilter).sort((a, b) => b.t - a.t) : this._events || [];
     const ev = src.filter((e) => (camFilter || this._fc === "all" || e.cam === this._fc) && (camFilter || this._ft === "all" || e.type === this._ft));
     if (!target2 && this.$("evn")) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
-    const key = ev.slice(0, 60).map((e) => e.id).join();
+    const shown = ev.slice(0, 60), key = shown.map((e) => e.id).join() + "|" + (this._sel || "");
     if (l._key === key && l.childElementCount) return;
     l._key = key;
-    l._ev = ev;
+    l._ev = shown;
     if (!ev.length) {
-      l.innerHTML = '<div class="empty">Ingen h\xE6ndelser i det valgte filter</div>';
+      const filtered = !camFilter && (this._fc !== "all" || this._ft !== "all");
+      l.innerHTML = `<div class="empty">${vci("filter", 22)}<span>${filtered ? "Ingen h\xE6ndelser i det valgte filter" : "Ingen h\xE6ndelser endnu"}</span>${filtered ? "<button data-reset>Nulstil filtre</button>" : ""}</div>`;
+      l.querySelector("[data-reset]")?.addEventListener("click", () => {
+        this._ft = "all";
+        this._fc = "all";
+        this._renderFilters();
+        this._renderList();
+      });
+      l._ids = /* @__PURE__ */ new Set();
       return;
     }
+    const prev = l._ids, firstPaint = !prev || l.classList.contains("first");
+    const keepImg = new Map([...l.querySelectorAll(".it[data-id]")].map((b) => [b.dataset.id, b.querySelector(".th img")]).filter(([, im]) => im));
     let lastDay = "", html = "";
-    ev.slice(0, 60).forEach((e, i) => {
+    shown.forEach((e, i) => {
       const d = e.t.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? "I dag" : e.t.toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "short" });
       if (d !== lastDay) {
         html += `<div class="day">${d}</div>`;
         lastDay = d;
       }
       const T = TYPES[e.type];
-      html += `<button class="it" data-i="${i}" style="animation-delay:${Math.min(i, 12) * 35}ms"><div class="th">${e.thumbS ? `<img loading="lazy" src="${e.thumbS}" alt="">` : ""}<span>${vci("play", 22)}</span></div>
+      const cls = `it${!firstPaint && !prev.has(e.id) ? " fresh" : ""}${e.id === this._sel ? " on" : ""}`;
+      html += `<button class="${cls}" data-i="${i}" data-id="${vce(e.id)}" style="animation-delay:${firstPaint ? Math.min(i, 12) * 35 : 0}ms"><div class="th">${thumbOk(e) && !keepImg.has(e.id) ? `<img decoding="async"${i >= 12 ? ' loading="lazy"' : ""} src="${e.thumbS}" alt="">` : ""}<span>${vci("play", 22)}</span></div>
         <div style="min-width:0"><b>${vce(e.camName)}</b><small>${vci("clock", 12)}${vct(e.t)} \xB7 ${vce(e.dur)}</small><span class="ty" style="--c:${T[2]}">${vci(T[1], 12, 2)}${T[0]}</span></div></button>`;
     });
+    const top = l.scrollTop, h0 = l.scrollHeight;
     l.innerHTML = html;
-    l.querySelectorAll(".it").forEach((b) => b.onclick = () => this._openEvent(l._ev[+b.dataset.i]));
-    const todo = ev.slice(0, 60).filter((e) => !e.thumbS && e.thumb);
-    if (todo.length && this._player?.isConnected) await this._afterFrame();
-    for (let k = 0; k < todo.length; k += 10) await Promise.all(todo.slice(k, k + 10).map(async (e) => {
-      e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200"));
-      const im = l.querySelector(`.it[data-i="${ev.indexOf(e)}"] .th`);
-      if (im && !im.querySelector("img")) im.insertAdjacentHTML("afterbegin", `<img loading="lazy" decoding="async" src="${e.thumbS}" alt="">`);
-    }));
+    for (const [id, im] of keepImg) {
+      const th2 = l.querySelector(`.it[data-id="${CSS.escape(id)}"] .th`);
+      if (th2 && !th2.querySelector("img")) th2.prepend(im);
+    }
+    if (top > 0) l.scrollTop = top + (l.scrollHeight - h0);
+    if (firstPaint && prev) l.classList.remove("first");
+    else if (!prev) setTimeout(() => l.classList.remove("first"), 900);
+    l._ids = new Set(shown.map((e) => e.id));
+    l.querySelectorAll(".it").forEach((b) => b.onclick = () => {
+      const e = l._ev[+b.dataset.i];
+      this._sel = e?.id;
+      this._openEvent(e);
+      this._markSel();
+    });
+    const tok = l._tok = (l._tok || 0) + 1;
+    const todo = shown.filter((e) => !thumbOk(e) && e.thumb);
+    for (let k = 0; k < todo.length; k += 20) {
+      await Promise.all(todo.slice(k, k + 20).map(async (e) => {
+        const p = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200"));
+        e.thumbS = p;
+        e.thumbAt = this._signed[e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200")]?.at || Date.now();
+        if (l._tok !== tok) return;
+        const th2 = l.querySelector(`.it[data-id="${CSS.escape(e.id)}"] .th`);
+        if (th2 && !th2.querySelector("img")) th2.insertAdjacentHTML("afterbegin", `<img decoding="async"${shown.indexOf(e) >= 12 ? ' loading="lazy"' : ""} src="${p}" alt="">`);
+      }));
+      if (l._tok !== tok) return;
+    }
+  }
+  _markSel() {
+    this._r.querySelectorAll(".list .it").forEach((b) => b.classList.toggle("on", b.dataset.id === this._sel));
   }
   // ---- afspiller (player.js) -------------------------------------------------------------------------------------------
   _plOpts(compact) {
@@ -48541,20 +48867,22 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     this._player.hass = this._h;
     return this._player;
   }
-  // Første visning: kamera og tidspunkt fra adressen (?cam=&t=), ellers den seneste hændelse på pause.
+  // Første visning: kamera og tidspunkt fra adressen (?cam=&t=, fx fra en notifikation – også ved senere besøg med en ny
+  // adresse), ellers den seneste hændelse på pause.
   _startPlayer() {
     const p = this._player;
-    if (!p?.isConnected || p.cam || !this._h) return;
-    const u2 = new URLSearchParams(location.search), qc = u2.get("cam"), qt = u2.get("t");
-    if (qc && !this._usedQuery) {
-      this._usedQuery = true;
+    if (!p?.isConnected || !this._h) return;
+    const qs = location.search, u2 = new URLSearchParams(qs), qc = u2.get("cam"), qt = u2.get("t");
+    if (qc && this._usedQuery !== qs) {
       const base = qc.replace(/_(high|medium|low)(_resolution_channel)?$/, "");
       if (this.cams().some((c2) => c2.base === base)) {
+        this._usedQuery = qs;
         const t = qt ? /^\d+$/.test(qt) ? +qt : Date.parse(qt) : null;
         p.open(base, Number.isFinite(t) ? t : null, true);
         return;
       }
     }
+    if (p.cam) return;
     const ev = (this._events || [])[0];
     if (ev) p.open(ev.cam, +ev.t - 2e3, false);
     else if (this._all) p.open(this.cams()[0]?.base, null);
@@ -48571,29 +48899,64 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   _onPlayerCam(b) {
     const pc = this.$("pc");
     if (pc) {
-      pc.innerHTML = this.cams().map((c2) => `<button data-k="${c2.base}" class="${c2.base === b ? "on" : ""}">${vce(c2.name)}</button>`).join("");
-      pc.querySelectorAll("button").forEach((x) => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
+      const h = this.cams().map((c2) => `<button data-k="${c2.base}" class="${c2.base === b ? "on" : ""}">${vce(c2.name)}</button>`).join("");
+      if (pc._v !== h) {
+        pc._v = h;
+        pc.innerHTML = h;
+        pc.querySelectorAll("button").forEach((x) => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
+      }
+      const on = pc.querySelector(".on");
+      if (on) pc.scrollTo({ left: on.offsetLeft - pc.clientWidth / 2 + on.offsetWidth / 2, behavior: "smooth" });
     }
     this._renderSheet();
   }
-  // Smal skærm: afspilleren i fuld skærm med kameraets hændelser under sig.
+  // Smal skærm: afspilleren i fuld skærm med kameraets hændelser under sig. Telefonens tilbage-knap lukker den.
   _openSheet(base, at) {
-    this._closeSheet();
+    if (this._sheet) {
+      this._player.open(base, at, true);
+      this._renderSheet();
+      return;
+    }
     const s = document.createElement("div");
     s.className = "sheet";
     s.innerHTML = `<div class="sh-in"><div class="sh-top"><button class="x" aria-label="Luk">${vci("close", 18)}</button><div class="flt" id="sc"></div></div>
-      <div class="sh-pl"></div><div class="sh-k">H\xE6ndelser p\xE5 kameraet</div><div class="list" id="slist"></div></div>`;
-    s.querySelector(".x").onclick = () => this._closeSheet();
+      <div class="sh-pl"></div><div class="sh-k">H\xE6ndelser p\xE5 kameraet</div><div class="list first" id="slist"></div></div>`;
+    s.querySelector(".x").onclick = () => {
+      if (history.state?.thCameraSheet) history.back();
+      else this._closeSheet();
+    };
     this._r.appendChild(s);
     this._sheet = s;
+    this._stopTiles();
+    try {
+      if (!history.state?.thCameraSheet) history.pushState({ ...history.state || {}, thCameraSheet: 1 }, "");
+    } catch (e) {
+    }
+    this._pop ||= () => {
+      if (this._sheet && !history.state?.thCameraSheet) this._closeSheet();
+    };
+    window.addEventListener("popstate", this._pop);
     s.querySelector(".sh-pl").appendChild(this._pl(false));
     this._player.open(base, at, true);
     this._renderSheet();
   }
-  _closeSheet() {
+  _closeSheet(reopening) {
     if (!this._sheet) return;
+    window.removeEventListener("popstate", this._pop);
     this._sheet.remove();
     this._sheet = null;
+    if (reopening) return;
+    if (this._modeLater) {
+      this._modeLater = false;
+      if (this._mode() !== this._lastMode) {
+        this._render();
+        return;
+      }
+    }
+    if (this.isConnected) {
+      this._liveTiles();
+      this._refresh(true);
+    }
   }
   _renderSheet() {
     const s = this._sheet, b = this._player?.cam;
@@ -48603,10 +48966,15 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       sc._v = h;
       sc.innerHTML = h;
       sc.querySelectorAll("button").forEach((x) => x.onclick = () => this._player.open(x.dataset.k, this._player.time, true));
-      sc.querySelector(".on")?.scrollIntoView({ block: "nearest", inline: "center" });
+      const on = sc.querySelector(".on");
+      if (on) sc.scrollLeft = on.offsetLeft - sc.clientWidth / 2 + on.offsetWidth / 2;
     }
     this._renderList(s.querySelector("#slist"), b);
-    if (!(this._events || []).some((e) => e.cam === b)) this._loadEvents(b);
+    const asked = this._asked ||= /* @__PURE__ */ new Set();
+    if (!this._camEvents(b).length && !asked.has(b) && !this._loadedCams?.has(b)) {
+      asked.add(b);
+      this._loadEvents(b);
+    }
   }
   _camEvents(b) {
     const out = /* @__PURE__ */ new Map();
@@ -48634,9 +49002,11 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     return p;
   }
   async _thumbUrl(e) {
-    if (e.thumbS) return e.thumbS;
+    if (thumbOk(e)) return e.thumbS;
     if (!e.thumb) return null;
-    e.thumbS = await this._sign(e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200"));
+    const path = e.thumb.replace(/width=\d+&height=\d+/, "width=320&height=200");
+    e.thumbS = await this._sign(path);
+    e.thumbAt = this._signed[path]?.at || Date.now();
     return e.thumbS;
   }
 };
@@ -49833,14 +50203,15 @@ function renderWatchPause(box, hass, cfg) {
       e.stopPropagation();
       box._hass.callService("input_datetime", "set_datetime", { entity_id: box._cfg.pause_entity, datetime: ymdhms(target(b.dataset.pause)) });
     });
-    box._tick = setInterval(() => {
-      if (!box.isConnected) {
-        clearInterval(box._tick);
-        return;
-      }
-      renderWatchPause(box, box._hass, box._cfg);
-    }, 3e4);
   }
+  if (!box._tick) box._tick = setInterval(() => {
+    if (!box.isConnected) {
+      clearInterval(box._tick);
+      box._tick = null;
+      return;
+    }
+    renderWatchPause(box, box._hass, box._cfg);
+  }, 3e4);
 }
 
 // src/cards/ha-license-plate-card/ha-license-plate-card.js
@@ -49848,6 +50219,7 @@ var HaLicensePlateCard = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = false;
     this._selected = null;
     this._filter = "all";
@@ -49856,6 +50228,7 @@ var HaLicensePlateCard = class extends HTMLElement {
   setConfig(config) {
     this.config = { title: "Nummerpladevagt", subtitle: "Protect \xB7 Indk\xF8rsel", entity: "sensor.protect_nummerpladehistorik", camera_entity: "camera.indkorsel_high_resolution_channel", navigation_path: "/teknik-overblik/overvagning", ...config };
     this._built = false;
+    this._sig = null;
   }
   set hass(hass) {
     this._hass = hass;
@@ -49882,7 +50255,6 @@ var HaLicensePlateCard = class extends HTMLElement {
   }
   _build() {
     this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra den afgr\xE6nsede indk\xF8rselszone</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:car-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="plate">\u2014</span><small data-v="known">UKENDT K\xD8RET\xD8J</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:percent-outline"></ha-icon><span>Sikkerhed</span><b data-v="confidence">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live indk\xF8rsel</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Overv\xE5gning</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
-    this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = true;
   }
   _set(key, value) {
@@ -49924,6 +50296,7 @@ var HaLicensePlateCard = class extends HTMLElement {
       const video = document.createElement("video");
       video.src = resolved.url;
       video.controls = true;
+      video.muted = true;
       video.autoplay = true;
       video.playsInline = true;
       media.append(video);
@@ -49958,6 +50331,7 @@ var HaLicensePlateCard = class extends HTMLElement {
   }
   _renderSelected() {
     const e = (this._events || []).find((x) => x.event_id === this._selected);
+    this.shadowRoot.querySelector("ha-card")?.classList.toggle("empty-state", !e);
     if (!e) {
       this._set("plate", "\u2014");
       return;
@@ -49988,19 +50362,20 @@ var HaLicensePlateCard = class extends HTMLElement {
   async _loadImage(e, w = 1280, h = 720) {
     const key = this._url(e, w, h);
     if (this._blobs.has(key)) return this._blobs.get(key);
-    const auth = this._hass?.auth || this._hass?.connection?.options?.auth;
-    const token = auth?.data?.access_token || auth?.accessToken;
-    if (!token) throw Error("no auth");
-    const response = await fetch(key, { credentials: "same-origin", headers: { Authorization: `Bearer ${token}` } });
-    if (!response.ok) throw Error(String(response.status));
-    const url = URL.createObjectURL(await response.blob());
-    this._blobs.set(key, url);
+    const p = (async () => {
+      const response = typeof this._hass?.fetchWithAuth === "function" ? await this._hass.fetchWithAuth(key) : await fetch(key, { credentials: "same-origin", headers: { Authorization: `Bearer ${this._hass?.auth?.data?.access_token || ""}` } });
+      if (!response.ok) throw Error(String(response.status));
+      return URL.createObjectURL(await response.blob());
+    })();
+    p.catch(() => this._blobs.delete(key));
+    this._blobs.set(key, p);
     while (this._blobs.size > 30) {
       const [old, value] = this._blobs.entries().next().value;
-      URL.revokeObjectURL(value);
+      value.then((u2) => URL.revokeObjectURL(u2), () => {
+      });
       this._blobs.delete(old);
     }
-    return url;
+    return p;
   }
   _hydrateThumbs(root) {
     root.querySelectorAll("[data-thumb]").forEach((node) => {
@@ -50059,7 +50434,7 @@ var HaLicensePlateCard = class extends HTMLElement {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
   _css() {
-    return `${WATCH_PAUSE_CSS}:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media img~.placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media.loading .scan{opacity:.8;animation:scan 1.4s ease-in-out infinite}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(30px,5vw,48px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.05em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes scan{50%{top:100%}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
+    return `${WATCH_PAUSE_CSS}.empty-state .detail,.empty-state .media-badge,.empty-state .scan{display:none!important}.media-badge{gap:6px}.actions button{white-space:nowrap}:host{display:block;--accent:var(--dashboard-accent,#e8c37e);--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media img~.placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media.loading .scan{opacity:.8;animation:scan 1.4s ease-in-out infinite}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(30px,5vw,48px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.05em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes scan{50%{top:100%}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
   }
 };
 if (!customElements.get("ha-license-plate-card")) customElements.define("ha-license-plate-card", HaLicensePlateCard);
@@ -50071,6 +50446,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = false;
     this._selected = null;
     this._filter = "all";
@@ -50078,6 +50454,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
   setConfig(config) {
     this.config = { title: "Personvagt", subtitle: "Protect \xB7 Udend\xF8rs kameraer", entity: "sensor.protect_personhistorik", live_navigation_path: "/teknik-overblik/overvagning", ...config };
     this._built = false;
+    this._sig = null;
   }
   set hass(hass) {
     this._hass = hass;
@@ -50103,7 +50480,6 @@ var HaPersonDetectionCard = class extends HTMLElement {
   }
   _build() {
     this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra kameraerne uden for huset</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:account-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="camera">\u2014</span><small data-v="known">UKENDT PERSON</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:cctv"></ha-icon><span>Kamera</span><b data-v="camera-fact">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live overv\xE5gning</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Personvagt-side</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
-    this.shadowRoot.addEventListener("click", (e) => this._click(e));
     this._built = true;
   }
   _set(key, value) {
@@ -50124,11 +50500,13 @@ var HaPersonDetectionCard = class extends HTMLElement {
     if (!list) return;
     const items = this._visible();
     this._set("count", `${items.length} / 10`);
-    list.innerHTML = items.length ? items.map((e, i) => `<button class="event ${e.event_id === this._selected ? "selected" : ""}" data-event="${this._esc(e.event_id)}" style="--delay:${i * 35}ms"><div class="thumb">${e.snapshot_url ? `<img src="${this._esc(e.snapshot_url)}" alt="">` : `<ha-icon icon="mdi:account"></ha-icon>`}</div><div><strong>${this._esc(e.camera || "Ukendt kamera")}</strong><span>${this._esc(e.known_name || "Ukendt person")}</span></div><time>${this._shortTime(e.event_time)}</time><ha-icon class="arrow" icon="mdi:chevron-right"></ha-icon></button>`).join("") : `<div class="empty"><ha-icon icon="mdi:timeline-clock-outline"></ha-icon><span>Ingen h\xE6ndelser i dette filter</span></div>`;
+    list.innerHTML = items.length ? items.map((e, i) => `<button class="event ${e.event_id === this._selected ? "selected" : ""}" data-event="${this._esc(e.event_id)}" style="--delay:${i * 35}ms"><div class="thumb">${e.snapshot_url ? `<img data-src="${this._esc(e.snapshot_url)}" alt="">` : `<ha-icon icon="mdi:account"></ha-icon>`}</div><div><strong>${this._esc(e.camera || "Ukendt kamera")}</strong><span>${this._esc(e.known_name || "Ukendt person")}</span></div><time>${this._shortTime(e.event_time)}</time><ha-icon class="arrow" icon="mdi:chevron-right"></ha-icon></button>`).join("") : `<div class="empty"><ha-icon icon="mdi:timeline-clock-outline"></ha-icon><span>Ingen h\xE6ndelser i dette filter</span></div>`;
+    this._hydrate(list);
   }
   _renderSelected() {
     const e = (this._events || []).find((x) => x.event_id === this._selected);
     const media = this.shadowRoot.querySelector("[data-media]");
+    this.shadowRoot.querySelector("ha-card")?.classList.toggle("empty-state", !e);
     if (!e) {
       this._set("camera", "\u2014");
       this._set("known", "UKENDT PERSON");
@@ -50151,12 +50529,38 @@ var HaPersonDetectionCard = class extends HTMLElement {
         img.alt = "Protect registrering";
         media.prepend(img);
       }
-      img.src = e.snapshot_url;
+      const id = e.event_id;
+      this._src(e.snapshot_url).then((u2) => {
+        if (this._selected === id && u2) img.src = u2;
+      });
       media.classList.add("loaded");
     } else {
       img?.remove();
       media.classList.remove("loaded");
     }
+  }
+  // Billederne ligger under /media/ og kræver login – et <img> sender ikke HA's token, så stien signeres (Claude AI, 2026-10-26).
+  async _src(url) {
+    if (!url || !String(url).startsWith("/media/")) return url;
+    this._signed ||= {};
+    const c2 = this._signed[url];
+    if (c2 && Date.now() - c2.at < 20 * 36e5) return c2.p;
+    try {
+      const r = await this._hass.callWS({ type: "auth/sign_path", path: url, expires: 86400 });
+      this._signed[url] = { p: r.path, at: Date.now() };
+      return r.path;
+    } catch (err) {
+      return "";
+    }
+  }
+  _hydrate(root) {
+    root.querySelectorAll("img[data-src]").forEach((im) => {
+      const u2 = im.dataset.src;
+      im.removeAttribute("data-src");
+      this._src(u2).then((p) => {
+        if (p && im.isConnected) im.src = p;
+      });
+    });
   }
   _click(event) {
     const filter = event.target.closest("[data-filter]");
@@ -50199,7 +50603,7 @@ var HaPersonDetectionCard = class extends HTMLElement {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
   _css() {
-    return `${WATCH_PAUSE_CSS}:host{display:block;--accent:var(--dashboard-accent,var(--primary-color,#54a8f5));--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media.loaded .placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(24px,4vw,38px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.02em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
+    return `${WATCH_PAUSE_CSS}.empty-state .detail,.empty-state .media-badge,.empty-state .scan{display:none!important}.media-badge{gap:6px}.actions button{white-space:nowrap}:host{display:block;--accent:var(--dashboard-accent,#e8c37e);--ok:var(--success-color,#45d19a);--surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#11151b)));color:var(--primary-text-color,#f4f7fb)}*{box-sizing:border-box}ha-card{position:relative;overflow:hidden;border-radius:20px;padding:26px;background:var(--surface);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent);box-shadow:var(--dashboard-shadow-soft,var(--ha-card-box-shadow,0 18px 50px rgba(0,0,0,.24)))}.glow{position:absolute;width:360px;height:360px;right:-150px;top:-190px;border-radius:50%;background:var(--accent);filter:blur(80px);opacity:.12;pointer-events:none}header{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1;margin-top:5px}header p{margin-top:9px;color:var(--secondary-text-color,#9ba5b3);font-size:13px}.eyebrow{font-size:9px;font-weight:850;letter-spacing:.14em;color:var(--secondary-text-color,#9ba5b3)}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,transparent);color:var(--ok);font-size:9px;font-weight:850;letter-spacing:.1em}.status i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:pulse 2s infinite}nav{display:flex;gap:7px;align-items:center;margin:22px 0 14px}button{font:inherit;color:inherit;border:0;cursor:pointer}nav button{min-height:38px;padding:0 15px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);color:var(--secondary-text-color,#9ba5b3);font-size:11px;font-weight:750}nav button.active{color:var(--primary-text-color,#fff);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 7%,transparent));box-shadow:inset 3px 0 var(--accent)}nav>span{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--secondary-text-color,#9ba5b3)}main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px}.focus,.history{border-radius:17px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.2%,transparent);border:1px solid color-mix(in srgb,var(--primary-text-color,#fff) 6%,transparent);overflow:hidden}.media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),rgba(0,0,0,.22));overflow:hidden}.media img{width:100%;height:100%;object-fit:cover;animation:reveal .35s ease}.placeholder{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3)}.placeholder ha-icon{width:52px;height:52px;opacity:.45}.media.loaded .placeholder{display:none}.scan{position:absolute;left:0;right:0;top:-3px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 16px var(--accent);opacity:0}.media-badge{position:absolute;top:13px;left:13px;display:flex;gap:6px;align-items:center;padding:7px 9px;border-radius:9px;background:rgba(5,9,14,.72);backdrop-filter:blur(10px);font-size:8px;font-weight:850;letter-spacing:.09em}.media-badge ha-icon{width:15px;color:var(--ok)}.detail{padding:18px}.plate{display:flex;align-items:end;justify-content:space-between;gap:12px}.plate span{font:850 clamp(24px,4vw,38px)/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.02em}.plate small{padding:6px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-size:8px;font-weight:850;letter-spacing:.08em}.facts{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:16px}.facts>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:11px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 4%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 70%,transparent)}.facts ha-icon{grid-row:1/3;width:20px;color:var(--accent)}.facts span{font-size:9px;color:var(--secondary-text-color,#9ba5b3)}.facts b{font-size:12px;margin-top:3px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:42px;border-radius:11px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,transparent);font-size:11px;font-weight:750}.actions button:first-child{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.actions ha-icon{width:18px}.history{padding:18px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section-head h2{font-size:20px;margin-top:4px}.counter{font-size:9px;font-weight:850;color:var(--secondary-text-color,#9ba5b3)}.event-list{display:grid;gap:7px}.event{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 3.5%,transparent);text-align:left;border:1px solid transparent;animation:slide .3s both;animation-delay:var(--delay)}.event.selected{border-color:color-mix(in srgb,var(--accent) 32%,transparent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.thumb{width:64px;aspect-ratio:1.5;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:rgba(0,0,0,.2);color:var(--secondary-text-color,#9ba5b3)}.thumb img{width:100%;height:100%;object-fit:cover}.event strong,.event span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event strong{font-size:14px}.event span,.event time{font-size:9px;color:var(--secondary-text-color,#9ba5b3);margin-top:4px}.event time{text-align:right;max-width:65px}.arrow{width:18px;color:var(--secondary-text-color,#9ba5b3)}.empty{min-height:240px;display:grid;place-content:center;justify-items:center;gap:10px;color:var(--secondary-text-color,#9ba5b3);font-size:12px}.empty ha-icon{width:40px;height:40px;opacity:.5}@keyframes pulse{70%{box-shadow:0 0 0 8px transparent}}@keyframes reveal{from{opacity:0;transform:scale(1.015)}}@keyframes slide{from{opacity:0;transform:translateX(8px)}}@media(max-width:820px){ha-card{padding:18px;border-radius:18px}header p{max-width:250px}main{grid-template-columns:1fr}.history{padding:15px}.plate{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr 1fr}.facts>div:first-child{grid-column:1/-1}.event{grid-template-columns:58px minmax(0,1fr) auto 14px}.thumb{width:58px}nav button{padding:0 12px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}`;
   }
 };
 if (!customElements.get("ha-person-detection-card")) customElements.define("ha-person-detection-card", HaPersonDetectionCard);
