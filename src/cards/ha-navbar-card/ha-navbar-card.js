@@ -1,4 +1,4 @@
-const VERSION = "0.10.4";
+const VERSION = "0.11.0";
 
 /* ha-navbar-card
  * Erstatning for decluttering-templaten "global_navbar_front_responsive".
@@ -128,7 +128,7 @@ const nbGlasCss = (accent, anim = "gum") => {
 :host(:not([placering="left"]):not([placering="right"])) .bar{height:auto!important;padding:var(--nb-luft,7px)!important;max-width:min(96vw, var(--nb-maxbredde, 900px))}
 /* Kvadratiske knapper der fylder baren (brugeren: "knapperne skal være firkantede og fylde mere"): pladsen pr. knap
    regnes af den faktiske luft og kant, og bredde = højde = den mindste af pladsen og item_min_width. */
-:host{--nb-plads:calc((min(96vw, var(--nb-maxbredde,900px)) - 2 * var(--nb-luft,7px) - 3px - (var(--nb-antal) - 1) * var(--nb-mellemrum,4px)) / var(--nb-antal));--nb-kvadrat:min(var(--nb-knapbredde,56px), var(--nb-plads))}
+:host{--nb-plads:calc((min(96vw, var(--nb-maxbredde,900px)) - 2 * var(--nb-luft,7px) - 3px - (var(--nb-antal) - 1) * var(--nb-mellemrum,4px)) / var(--nb-antal));--nb-kvadrat:min(var(--nb-knapbredde,56px), var(--nb-plads));--nb-knap:var(--nb-kvadrat)}
 :host(:not([placering="left"]):not([placering="right"])) .rute{width:var(--nb-kvadrat)!important;height:var(--nb-kvadrat)!important;min-width:0!important}
 :host(:not([placering="left"]):not([placering="right"])) .rute ha-icon,:host(:not([placering="left"]):not([placering="right"])) .rute .nbikon{--mdc-icon-size:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important;width:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important;height:min(var(--nb-ikon,26px), calc(var(--nb-kvadrat) * .52))!important}
 .bar{padding:0 7px;backdrop-filter:blur(26px) saturate(1.4);-webkit-backdrop-filter:blur(26px) saturate(1.4);overflow:hidden;
@@ -575,7 +575,12 @@ class HaNavbarCard extends HTMLElement {
     // +1 for notifikationsknappen. Bruges af --nb-plads til at regne ud
     // hvor meget plads hver knap kan faa uden at baren loeber ud over
     // skaermkanten.
-    this.style.setProperty("--nb-antal", String((this.config.routes || []).length + (this._visKlokke() ? 1 : 0)));
+    const antal = (this.config.routes || []).length + (this._visKlokke() ? 1 : 0);
+    // slots (Claude AI, 2026-10-26): en undernavbar (fx Overvågning med Hjem, Kameraer, Nummerplader, Personer) bliver
+    // lige så bred som den fulde bar med så mange ruter, og knapperne spredes ud, så Hjem og klokken står samme sted.
+    const pladser = Math.max(antal, Math.round(Number(this.config.slots) || 0) + (this._visKlokke() ? 1 : 0));
+    this.style.setProperty("--nb-antal", String(pladser));
+    this.toggleAttribute("spredt", pladser > antal);
     if (!this._mqMobil) { this._mqMobil = window.matchMedia("(max-width: 600px)"); this._mqMobil.addEventListener?.("change", () => { if (this.config?.mobile_notifications === false && this._hass) { this._byg(); this.hass = this._hass; } }); }
     this._observerBar();
     this._opdaterAktiv();
@@ -923,7 +928,7 @@ class HaNavbarCard extends HTMLElement {
     const auto = this.config?.auto_size === true;
     return `
 :host{display:block;--nb-ikon:28px;--nb-hoejde:64px;--nb-bund:18px;
-  --nb-antal:8;
+  --nb-antal:8;--nb-knap:${auto ? "var(--nb-plads)" : "min(var(--nb-knapbredde,56px), var(--nb-plads))"};
   --nb-plads:calc((min(92vw, var(--nb-maxbredde,900px)) - 24px
     - (var(--nb-antal) - 1) * var(--nb-mellemrum,4px)) / var(--nb-antal));
   --nb-radius:22px;--nb-mellemrum:4px;--nb-knapbredde:56px;--nb-badge:18px;--nb-etiket:12px;
@@ -978,6 +983,9 @@ class HaNavbarCard extends HTMLElement {
   bottom:auto;top:50%;transform:translate(16px,-50%) scale(.97)}
 :host([placering="right"]) .ark.vis{transform:translate(0,-50%) scale(1)}
 .ruter{position:relative;z-index:1;display:flex;align-items:center;gap:var(--nb-mellemrum)}
+/* slots: rækken er lige så bred som --nb-antal knapper, og knapperne fordeles fra kant til kant. */
+:host([spredt]:not([placering="left"]):not([placering="right"])) .ruter{justify-content:space-between;
+  min-width:calc(var(--nb-antal) * var(--nb-knap) + (var(--nb-antal) - 1) * var(--nb-mellemrum,4px))}
 .indikator{position:absolute;top:var(--nb-indikator-luft,8px);bottom:var(--nb-indikator-luft,8px);left:0;border-radius:var(--nb-knapradius,16px);
   background:color-mix(in srgb,var(--nb-accent) 18%,transparent);opacity:0;
   transition:transform .18s cubic-bezier(.2,0,0,1),width .18s cubic-bezier(.2,0,0,1),
@@ -1325,6 +1333,7 @@ class HaNavbarCardEditor extends HTMLElement {
             ${this._tekst("Faelles opsaetning (fil)", "config_url", c.config_url, "root", -1, -1, "/local/ha-navbar-card/navbar.json")}
             ${this._tekst("Rutefil (gammelt format)", "routes_url", c.routes_url, "root", -1, -1, "/local/ha-navbar-card/routes.json")}
             ${this._tal("Maks laengde (px)", "max_width", c.max_width, "root")}
+            ${this._tal("Bredde som en bar med N ruter (holder Hjem og klokke samme sted)", "slots", c.slots, "root")}
           </div>
           <div class="tjekrk">
             ${this._bool("Vis tekst under ikoner", "show_labels", c.show_labels === true, "root")}
