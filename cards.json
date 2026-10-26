@@ -392,6 +392,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "th-camera-card",
+    "name": "TH Camera Card",
+    "filename": "th-camera-card.js",
+    "category": "Security and cameras",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-door-window-card",
     "name": "HA Door/Window Card",
     "filename": "ha-door-window-card.js",

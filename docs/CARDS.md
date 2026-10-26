@@ -75,6 +75,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 |---|---|---|
 | HA Alarm Center Card | `ha-alarm-center-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-alarm-center-card) |
 | HA Camera Hub Card | `ha-camera-hub-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-camera-hub-card) |
+| TH Camera Card | `th-camera-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-camera-card) – UniFi Protect live tiles and events |
 | HA Door/Window Card | `ha-door-window-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-door-window-card) |
 | HA Home Camera Card | `ha-home-camera-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-camera-card) |
 | HA License Plate Card | `ha-license-plate-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-license-plate-card) |

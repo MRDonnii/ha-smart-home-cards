@@ -56,6 +56,7 @@ import "./cards/ha-kid-tracker-card/ha-kid-tracker-card.js";
 import "./cards/smart-home-overview-card/smart-home-overview-card.js";
 import "./cards/ha-alarm-center-card/ha-alarm-center-card.js";
 import "./cards/ha-camera-hub-card/ha-camera-hub-card.js";
+import "./cards/th-camera-card/th-camera-card.js";
 import "./cards/ha-door-window-card/ha-door-window-card.js";
 import "./cards/ha-home-camera-card/ha-home-camera-card.js";
 import "./cards/ha-license-plate-card/ha-license-plate-card.js";
