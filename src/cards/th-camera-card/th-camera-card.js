@@ -1,6 +1,7 @@
 /* TH Kamera – UniFi Protect: live kameraer + hændelser med klip
  * type: custom:th-camera-card
  * cameras: [camera.x, …]   valgfri – ellers alle UniFi Protect-kameraer (platform: unifiprotect)
+ * exclude: [camera.x, …]   kameraer der ikke skal vises (alle kanaler af kameraet), og deres hændelser
  * live_tiles: true  – fliserne viser live video (WebRTC, kameraets laveste kanal) som i UniFi Protect; false = stillbilleder
  * max_live: hvor mange fliser der må køre live på én gang (standard 16); kun fliser, der er på skærmen
  * refresh: sekunder mellem stillbilleder (standard 3, eller 5 ved mere end 8 kameraer)
@@ -11,7 +12,7 @@
  * efterhånden som hvert kamera svarer, det trykkede kamera først; de seneste hændelser huskes i browseren, så listen står klar
  * med det samme; fliserne bruger mellemkanalen, live bruger den højeste.
  */
-const VC_VER = '2.2.1';
+const VC_VER = '2.3.0';
 const VC_CACHE = 'th-camera-card:events';
 const VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>', person: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -127,6 +128,8 @@ class ThCameraCard extends HTMLElement {
       if (!id.startsWith('camera.') || /_insecure|_package/.test(id)) continue;
       if (!this.cfg.cameras && (ent[id]?.platform || '') !== (this.cfg.platform || 'unifiprotect')) continue;
       if (this.cfg.cameras && !this.cfg.cameras.includes(id)) continue;
+      const strip = x => String(x).replace(/_(high|medium|low)(_resolution_channel)?$/, '');
+      if ((this.cfg.exclude || []).some(x => strip(x) === strip(id))) continue;
       const base = id.replace(/_(high|medium|low)(_resolution_channel)?$/, ''), rank = /_high/.test(id) ? 0 : /_medium/.test(id) ? 1 : /_low/.test(id) ? 2 : 0;
       if (!out[base] || rank < out[base].rank) out[base] = { ...(out[base] || {}), id, base, rank, name: (st[id].attributes.friendly_name || id).replace(/\s*-\s*UniFi Protect.*$/i, '').replace(/\s*-?\s*(High|Medium|Low|Høj|Mellem|Lav)( resolution channel| opløsning)?$/i, '').trim() };
       if (/_medium/.test(id) || (/_low/.test(id) && !out[base].tile)) out[base].tile = id;
@@ -223,7 +226,8 @@ class ThCameraCard extends HTMLElement {
         let nvr = root; if (!/:browse$/.test(root.media_content_id || '') && root.children?.length === 1) nvr = await this._browse(root.children[0].media_content_id);
         const cams = this.cams();
         this._nodes = (nvr.children || []).filter(c => !/:browse:all$/.test(c.media_content_id)).map(ch => ({ ch,
-          cam: cams.find(c => c.name.toLowerCase() === ch.title.toLowerCase()) || cams.find(c => ch.title.toLowerCase().startsWith(c.name.toLowerCase())) }));
+          cam: cams.find(c => c.name.toLowerCase() === ch.title.toLowerCase()) || cams.find(c => ch.title.toLowerCase().startsWith(c.name.toLowerCase())) }))
+          .filter(n => n.cam || !(this.cfg.exclude || []).length); // udeladte kameraer: ingen hændelser
       }
       const order = [...this._nodes].sort((a, b) => (b.cam?.base === first) - (a.cam?.base === first));
       const per = this._per || (this._per = new Map()); let i = 0;

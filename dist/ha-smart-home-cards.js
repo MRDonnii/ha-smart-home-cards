@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.209 */
+/* MRDonnii Smart Home Cards v0.5.210 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -46989,7 +46989,7 @@ console.info(
 );
 
 // src/cards/th-camera-card/th-camera-card.js
-var VC_VER = "2.2.1";
+var VC_VER = "2.3.0";
 var VC_CACHE = "th-camera-card:events";
 var VC_I = {
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>',
@@ -47140,6 +47140,8 @@ var ThCameraCard = class extends HTMLElement {
       if (!id.startsWith("camera.") || /_insecure|_package/.test(id)) continue;
       if (!this.cfg.cameras && (ent[id]?.platform || "") !== (this.cfg.platform || "unifiprotect")) continue;
       if (this.cfg.cameras && !this.cfg.cameras.includes(id)) continue;
+      const strip = (x) => String(x).replace(/_(high|medium|low)(_resolution_channel)?$/, "");
+      if ((this.cfg.exclude || []).some((x) => strip(x) === strip(id))) continue;
       const base = id.replace(/_(high|medium|low)(_resolution_channel)?$/, ""), rank = /_high/.test(id) ? 0 : /_medium/.test(id) ? 1 : /_low/.test(id) ? 2 : 0;
       if (!out[base] || rank < out[base].rank) out[base] = { ...out[base] || {}, id, base, rank, name: (st[id].attributes.friendly_name || id).replace(/\s*-\s*UniFi Protect.*$/i, "").replace(/\s*-?\s*(High|Medium|Low|Høj|Mellem|Lav)( resolution channel| opløsning)?$/i, "").trim() };
       if (/_medium/.test(id) || /_low/.test(id) && !out[base].tile) out[base].tile = id;
@@ -47351,7 +47353,7 @@ var ThCameraCard = class extends HTMLElement {
         this._nodes = (nvr.children || []).filter((c2) => !/:browse:all$/.test(c2.media_content_id)).map((ch2) => ({
           ch: ch2,
           cam: cams.find((c2) => c2.name.toLowerCase() === ch2.title.toLowerCase()) || cams.find((c2) => ch2.title.toLowerCase().startsWith(c2.name.toLowerCase()))
-        }));
+        })).filter((n) => n.cam || !(this.cfg.exclude || []).length);
       }
       const order = [...this._nodes].sort((a, b) => (b.cam?.base === first) - (a.cam?.base === first));
       const per = this._per || (this._per = /* @__PURE__ */ new Map());

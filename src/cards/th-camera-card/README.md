@@ -7,6 +7,7 @@ last day's events beside them with thumbnails and filters, and a tap on a camera
 type: custom:th-camera-card
 # all optional
 cameras: [camera.front_high_resolution_channel, camera.drive_high_resolution_channel]  # default: every UniFi Protect camera
+exclude: [camera.workshop_high_resolution_channel]  # leave cameras (and their events) out
 live_tiles: true      # tiles play live video (WebRTC, the camera's lowest channel); false = stills
 max_live: 16          # at most this many live tiles at once (only tiles on screen play)
 refresh: 3            # seconds between stills (default 3, or 5 with more than 8 cameras)
