@@ -3954,18 +3954,28 @@ class ThTeslaDashboardCard extends HTMLElement {
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", operator: "operatørens pris", default: "standardpris" };
     for (const station of reply?.stations || []) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
-      const label = station.price == null ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
+      // Only a price that belongs to the station counts: the ledger's default price is what an unknown station would
+      // be logged with, not the station's price (user: "alle 3 ladesteder viser det samme i pris? det er da ikke det samme").
+      const known = station.price != null && station.price_source && station.price_source !== "default";
+      const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
       const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
-      const prices = station.price == null ? "Ingen pris – svar på beskeden, når du har ladet"
+      const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, spørger telefonen om prisen.";
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris → "Husk for stedet" sætter den her.</div>`
         : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">· ${esc(SOURCE[station.price_source] || "")}</span>`
           + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} · lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
-      const plugs = (station.connectors || []).filter((c) => c.type || c.kw).map((c) => `${c.count > 1 ? `${c.count} × ` : ""}${esc(c.type || "Stik")}${c.kw ? ` ${Math.round(c.kw)} kW` : ""}`);
+      // The same plug and power once, counted ("2 × CCS 150 kW")
+      const plugCount = new Map();
+      for (const c of (station.connectors || []).filter((x) => x.type || x.kw)) {
+        const key = `${esc(c.type || "Stik")}${c.kw ? ` ${Math.round(c.kw)} kW` : ""}`;
+        plugCount.set(key, (plugCount.get(key) || 0) + (Number(c.count) || 1));
+      }
+      const plugs = [...plugCount].map(([key, count]) => `${count > 1 ? `${count} × ` : ""}${key}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
         `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc(station.operator) : null, power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" · "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc(station.operator) : station.operator ? null : "Operatør ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" · "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
         station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc(station.usage_cost)}</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1000)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`,

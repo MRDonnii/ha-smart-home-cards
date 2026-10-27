@@ -944,4 +944,26 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(context.ttdCeNum("3.95"), 3.95);
   assert.equal(context.ttdCeNum("abc"), null);
 }
+// The map's stations (Claude AI, 2026-10-27): only a price that belongs to the station is shown; one that would only get
+// the ledger's default price is "?" with "Pris ukendt" (user: "alle 3 ladesteder viser det samme i pris?").
+{
+  const c = card({}, config);
+  const drawn = [];
+  context.document = { createElement: () => ({ innerHTML: "", title: "" }) };
+  class Marker { constructor(o) { this.el = o.element; } setLngLat() { return this; } setPopup(p) { this.popup = p; return this; } addTo() { drawn.push(this); return this; } remove() {} }
+  class Popup { setHTML(html) { this.html = html; return this; } }
+  c._drawChargers({ kind: "maplibre", map: {}, lib: { Marker, Popup } }, { currency: "DKK", default_price: 2.6, stations: [
+    { name: "Supercharger Søndervig", operator: "Tesla", kind: "supercharger", latitude: 56.12, longitude: 8.11, max_kw: 250, fast: true, price: 2.6, price_source: "operator" },
+    { name: "Meny Søndervig - RAH", operator: null, kind: "ocm", latitude: 56.12, longitude: 8.12, max_kw: 150, fast: true, price: 2.6, price_source: "default",
+      connectors: [{ type: "CCS", kw: 150, count: 1 }, { type: "CCS", kw: 150, count: 1 }, { type: "Type 2", kw: 11, count: 4 }] },
+  ] });
+  assert.equal(drawn.length, 2);
+  assert.match(drawn[0].el.innerHTML, /2,60<\/div>$/);
+  assert.match(drawn[1].el.innerHTML, /\?<\/div>$/, "the default price is not the station's price");
+  assert.match(drawn[1].popup.html, /Pris ukendt/);
+  assert.match(drawn[1].popup.html, /standardpris 2,60 kr\/kWh/);
+  assert.match(drawn[1].popup.html, /Operatør ukendt/);
+  assert.match(drawn[1].popup.html, /2 × CCS 150 kW, 4 × Type 2 11 kW/);
+  delete context.document;
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.229 */
+/* MRDonnii Smart Home Cards v0.5.230 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -7125,16 +7125,23 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of reply?.stations || []) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
-      const label = station.price == null ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
+      const known = station.price != null && station.price_source && station.price_source !== "default";
+      const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
       const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc12(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
-      const prices = station.price == null ? "Ingen pris \u2013 svar p\xE5 beskeden, n\xE5r du har ladet" : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} \xB7 lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
-      const plugs = (station.connectors || []).filter((c2) => c2.type || c2.kw).map((c2) => `${c2.count > 1 ? `${c2.count} \xD7 ` : ""}${esc12(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`);
+      const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} \xB7 lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
+      const plugCount = /* @__PURE__ */ new Map();
+      for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
+        const key = `${esc12(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
+        plugCount.set(key, (plugCount.get(key) || 0) + (Number(c2.count) || 1));
+      }
+      const plugs = [...plugCount].map(([key, count]) => `${count > 1 ? `${count} \xD7 ` : ""}${key}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
         `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc12(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc12(station.operator) : null, power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc12(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
         station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc12(station.usage_cost)}</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`

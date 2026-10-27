@@ -314,7 +314,8 @@ og "Opladninger uden pris" i Økonomi åbner den første uden pris. En rettet pr
 **Ladesteder på kortet (EV Ledger 0.13.0 eller nyere):** Knappen **Ladesteder** i kortets top viser ladestederne
 omkring bilen: Tesla Superchargere, Open Charge Maps ladere (med EV Ledgers Open Charge Map-nøgle), dine navngivne
 steder og zoner med pris. Mærket viser prisen pr. kWh (rød Supercharger, orange lynlader, grøn normal, lilla dine
-egne). Et tryk viser navn, pris og hvor prisen kommer fra, normal- og lynpris, operatør, effekt, pladser, stik,
+egne). Kun en pris, der hører til laderen (dit sted, zonen, operatøren), vises; ellers står der **?** og "Pris ukendt"
+med den standardpris, en ladning der ville få. Open Charge Map kender ofte ikke operatøren i Danmark. Et tryk viser navn, pris og hvor prisen kommer fra, normal- og lynpris, operatør, effekt, pladser, stik,
 afstand fra bilen og en rutelink. Valget huskes i browseren. Virker med Home Assistants kort fra 2026.10 (MapLibre)
 og det ældre (Leaflet).
 
