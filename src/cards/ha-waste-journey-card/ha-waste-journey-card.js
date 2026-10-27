@@ -159,7 +159,7 @@ class HAWasteJourneyCard extends HTMLElement{
       .top{display:grid;gap:12px;margin-top:15px}
       @container (min-width:980px){.top{grid-template-columns:minmax(0,1fr) 300px}}
       .journey{position:relative;overflow:hidden;min-width:0;padding:17px 17px 12px;border:1px solid color-mix(in srgb,var(--tone) 25%,var(--edge));border-radius:20px;background:radial-gradient(circle at 80% 0,color-mix(in srgb,var(--tone) 12%,transparent),transparent 37%),rgba(0,0,0,.12);transition:background 1s}
-      .night .journey{background:radial-gradient(circle at 80% 0,color-mix(in srgb,var(--tone) 10%,transparent),transparent 37%),linear-gradient(180deg,rgba(12,20,52,.5),rgba(0,0,0,.14) 70%)}
+      /* The night sky is always dark, so its text is light in every theme (Claude AI, 2026-10-27: a light theme put dark text on a grey sky) */.night .journey{background:radial-gradient(circle at 80% 0,color-mix(in srgb,var(--tone) 10%,transparent),transparent 37%),linear-gradient(180deg,rgba(12,20,52,.86),rgba(14,22,50,.66) 70%);--text:#f1f5ff;--muted:rgba(226,232,255,.74);color:var(--text)}
       .sky{position:absolute;inset:0;pointer-events:none}
       .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff;opacity:0;transition:opacity 1.2s}
       .night .star{opacity:.6;animation:twinkle 3.4s ease-in-out infinite}
