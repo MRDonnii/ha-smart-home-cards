@@ -1576,6 +1576,16 @@ ${LUX_KEYFRAMES}
     if (!raw || ["unknown", "unavailable"].includes(String(raw).toLowerCase())) return "";
     return this._roomKey(robot.room_map?.[raw] ?? robot.room_map?.[this._roomKey(raw)] ?? raw);
   }
+  // Premium robot (Claude AI, 2026-10-27; user: "robotten … mere exclusivt"): a top-down robot that drives lanes back and
+  // forth like a real robot vacuum, turning at each end, with a light trail behind it, a spinning side brush and a name
+  // tag in the tile corner. Lawn mowers are green, vacuums cyan (robot.color overrides). Transforms only.
+  _robotPremiumMarkup(robot) {
+    const mower = String(robot.entity || "").startsWith("lawn_mower.");
+    const color = this._esc(robot.color || (mower ? "#20e3a2" : "#38bdf8"));
+    const name = this._esc(robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot");
+    const speed = Math.max(5, Math.min(40, (Number(robot.speed_seconds) || 16) * 0.55));
+    return `<span class="rb-tag" style="--rb:${color}"><i></i>${name}</span><span class="rb-lane" style="--rb:${color};--rbs:${speed.toFixed(1)}s"><span class="rb-y"><span class="rb-x"><span class="rb"><span class="rb-trail"></span><svg class="rb-body" viewBox="0 0 24 24" aria-hidden="true"><circle class="rb-shell" cx="12" cy="12" r="10.4"/><path class="rb-bumper" d="M15.2 2.6A10.4 10.4 0 0 1 15.2 21.4"/><circle class="rb-lidar" cx="9.4" cy="12" r="3.5"/><circle class="rb-eye" cx="9.4" cy="12" r="1.3"/><g class="rb-brush"><path d="M18.4 4.8l2 2M20.4 4.8l-2 2"/></g>${mower ? '<path class="rb-blade" d="M5 7.5h3M5 16.5h3"/>' : ""}</svg></span></span></span></span>`;
+  }
   _updateRobots() {
     const rooms = this.shadowRoot?.querySelector(".rooms"), panel = this.shadowRoot?.querySelector(".temperature-panel");
     if (!rooms || !panel) return;
@@ -1585,12 +1595,14 @@ ${LUX_KEYFRAMES}
       let node = this._robotNodes.get(key);
       // The robot moves by transforms on two nested wrappers (vertical outside, horizontal inside), not by left/top, so a
       // running robot costs no layout or repaint per frame (Claude AI).
+      const premium = !!this._rtPremium && !robot.outdoors;
+      if (node && node.isConnected && node.classList.contains("pmr") !== premium) { node.remove(); node = undefined; }
       if (!node || !node.isConnected) {
-        node = document.createElement("span"); node.className = "room-robot"; node.dataset.robot = key;
-        node.innerHTML = '<span class="room-robot-x"><ha-icon class="room-robot-icon"></ha-icon></span>';
+        node = document.createElement("span"); node.className = premium ? "room-robot pmr" : "room-robot"; node.dataset.robot = key;
+        node.innerHTML = premium ? this._robotPremiumMarkup(robot) : '<span class="room-robot-x"><ha-icon class="room-robot-icon"></ha-icon></span>';
         this._robotNodes.set(key, node);
       }
-      node.querySelector(".room-robot-icon").setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
+      node.querySelector(".room-robot-icon")?.setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
       node.title = robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot";
       node.style.setProperty("--robot-speed", `${Math.max(7, Math.min(90, Number(robot.speed_seconds) || 16))}s`);
       node.style.setProperty("--robot-speed-y", `${Math.max(6, Math.min(75, (Number(robot.speed_seconds) || 16) * .72))}s`);
@@ -1855,6 +1867,27 @@ ${LUX_KEYFRAMES}
         .room-status.ac{display:flex;color:var(--secondary-text-color,#a7b2c2)}.room-status.ac.run{animation:roomHeatPulse 1.8s ease-in-out infinite}.room-status.ac.run.m-heat{color:#fb923c}.room-status.ac.run.m-cool{color:#38bdf8}.room-status.ac.run.m-dry{color:#5ad1e6}.room-status.ac.run.m-fan_only ha-icon{animation:acSpin 1.6s linear infinite}.room-status.ac.run.m-heat_cool{color:#a78bfa}@keyframes acSpin{to{transform:rotate(360deg)}}
 
         @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
+        .room-robot.pmr{left:0;top:0;width:100%;height:100%;animation:none}
+        .pmr .rb-tag{position:absolute;top:8px;right:9px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:58%;padding:2px 7px 2px 5px;overflow:hidden;border-radius:99px;background:rgba(9,13,20,.62);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rb) 45%,transparent),0 4px 12px -6px var(--rb);color:color-mix(in srgb,var(--rb) 72%,#fff);font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;text-overflow:ellipsis}
+        .pmr .rb-tag i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--rb);box-shadow:0 0 6px var(--rb);animation:rbPing 1.8s ease-out infinite}
+        .pmr .rb-lane{position:absolute;left:9%;right:calc(9% + 22px);top:38%;bottom:calc(30% + 22px)}
+        .pmr .rb-y{position:absolute;inset:0;animation:rbLanes calc(var(--rbs) * 4) ease-in-out infinite alternate}
+        .pmr .rb-x{position:absolute;left:0;top:0;width:100%;height:0;animation:rbX var(--rbs) ease-in-out infinite alternate}
+        .pmr .rb{position:absolute;left:0;top:0;width:22px;height:22px;animation:rbFace calc(var(--rbs) * 2) linear infinite}
+        .pmr .rb-trail{position:absolute;right:45%;top:50%;width:58px;height:14px;margin-top:-7px;border-radius:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rb) 26%,transparent));filter:blur(1.5px)}
+        .pmr .rb-body{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rb) 70%,transparent)) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+        .rb-shell{fill:#141c26;stroke:color-mix(in srgb,var(--rb) 80%,#fff);stroke-width:1.2}
+        .rb-bumper{fill:none;stroke:var(--rb);stroke-width:2.2;stroke-linecap:round}
+        .rb-lidar{fill:#0b1118;stroke:rgba(255,255,255,.4);stroke-width:.8}
+        .rb-eye{fill:var(--rb);animation:rbEye 1.6s ease-in-out infinite}
+        .rb-brush{fill:none;stroke:#d7e0ea;stroke-width:1.1;stroke-linecap:round;transform-box:fill-box;transform-origin:center;animation:rbBrush .45s linear infinite}
+        .rb-blade{stroke:color-mix(in srgb,var(--rb) 60%,#fff);stroke-width:1.2;stroke-linecap:round}
+        @keyframes rbX{to{transform:translateX(100%)}}
+        @keyframes rbLanes{0%,21%{transform:translateY(0)}29%,46%{transform:translateY(33.3%)}54%,71%{transform:translateY(66.6%)}79%,100%{transform:translateY(100%)}}
+        @keyframes rbFace{0%,44%{transform:rotate(0)}50%,94%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
+        @keyframes rbBrush{to{transform:rotate(360deg)}}@keyframes rbEye{50%{opacity:.35}}
+        @keyframes rbPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rb) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+        @media(prefers-reduced-motion:reduce){.pmr *{animation:none!important}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
         @media(min-width:1101px) and (max-height:950px){header{margin-bottom:9px}.utilities{margin-bottom:9px;gap:8px}.utility{padding-top:10px;padding-bottom:9px}.use{margin-top:5px}.cost{margin-top:5px;padding-top:5px}.body{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:9px}.panel{padding:10px}.panel h3{margin-bottom:7px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(42px,1fr);gap:5px;height:calc(100% - 19px)}.room{padding:5px 7px}.event{padding:2px 0}.card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}.card.portrait .event{padding:5px 0}}
