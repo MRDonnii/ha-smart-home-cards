@@ -1443,6 +1443,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     // Layout cards may move the element (disconnect + connect); forget cleared timers so they restart.
     clearTimeout(this._styleTimer);
     this._styleTimer = null;
+    clearTimeout(this._chargerRetry);
     clearTimeout(this._pendingTimer);
     this._disarm(false);
   }
@@ -3882,6 +3883,7 @@ class ThTeslaDashboardCard extends HTMLElement {
 
   _toggleChargers() {
     this._chargersOn = !this._chargersOn;
+    clearTimeout(this._chargerRetry);
     try { localStorage.setItem("ttd-chargers", this._chargersOn ? "1" : "0"); } catch (_) { /* private mode */ }
     this._applyMapStyle(0);
     this._queue(true);
@@ -3943,6 +3945,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     if (this._chargerView !== view || key !== this._chargerKey || !this._chargersOn) return;
     this._drawChargers(view, reply);
+    // EV Ledger is fetching the operators' own prices (AFIR) in the background: ask again when they are there
+    clearTimeout(this._chargerRetry);
+    if (reply?.afir?.loading && (this._chargerTries = (this._chargerTries || 0) + 1) <= 6) {
+      this._chargerRetry = setTimeout(() => { this._chargerKey = null; this._loadChargers(view); }, 20000);
+    } else if (!reply?.afir?.loading) this._chargerTries = 0;
   }
 
   _drawChargers(view, reply) {
@@ -3951,7 +3958,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
     const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-    const SOURCE = { place: "din pris for stedet", zone: "zonens pris", operator: "operatørens pris", default: "standardpris" };
+    const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operatørens egen pris nu", operator: "operatørens pris", default: "standardpris" };
     for (const station of reply?.stations || []) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       // Only a price that belongs to the station counts: the ledger's default price is what an unknown station would
@@ -3964,7 +3971,12 @@ class ThTeslaDashboardCard extends HTMLElement {
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, spørger telefonen om prisen.";
       const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris → "Husk for stedet" sætter den her.</div>`
         : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">· ${esc(SOURCE[station.price_source] || "")}</span>`
-          + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} · lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
+          + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} · ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "")
+          + (station.price_source === "station" ? [
+            Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}–${money(station.day_range[1])} ${unit}/kWh` : null,
+            Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
+            ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`),
+          ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc(line)}</div>`).join("") : "");
       // The same plug and power once, counted ("2 × CCS 150 kW")
       const plugCount = new Map();
       for (const c of (station.connectors || []).filter((x) => x.type || x.kw)) {
@@ -3978,6 +3990,7 @@ class ThTeslaDashboardCard extends HTMLElement {
         [station.operator && !String(station.name || "").includes(station.operator) ? esc(station.operator) : station.operator ? null : "Operatør ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" · "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
         station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1000)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`,
       ].filter(Boolean).join("")}</div>`;
       let marker;

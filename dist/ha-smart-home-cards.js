@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.230 */
+/* MRDonnii Smart Home Cards v0.5.231 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -4539,6 +4539,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._io = null;
     clearTimeout(this._styleTimer);
     this._styleTimer = null;
+    clearTimeout(this._chargerRetry);
     clearTimeout(this._pendingTimer);
     this._disarm(false);
   }
@@ -7051,6 +7052,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   _toggleChargers() {
     this._chargersOn = !this._chargersOn;
+    clearTimeout(this._chargerRetry);
     try {
       localStorage.setItem("ttd-chargers", this._chargersOn ? "1" : "0");
     } catch (_) {
@@ -7115,6 +7117,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     if (this._chargerView !== view || key !== this._chargerKey || !this._chargersOn) return;
     this._drawChargers(view, reply);
+    clearTimeout(this._chargerRetry);
+    if (reply?.afir?.loading && (this._chargerTries = (this._chargerTries || 0) + 1) <= 6) {
+      this._chargerRetry = setTimeout(() => {
+        this._chargerKey = null;
+        this._loadChargers(view);
+      }, 2e4);
+    } else if (!reply?.afir?.loading) this._chargerTries = 0;
   }
   _drawChargers(view, reply) {
     this._clearChargers();
@@ -7122,7 +7131,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
     const esc12 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-    const SOURCE = { place: "din pris for stedet", zone: "zonens pris", operator: "operat\xF8rens pris", default: "standardpris" };
+    const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of reply?.stations || []) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
@@ -7131,7 +7140,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
-      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} \xB7 lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
+        Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}\u2013${money(station.day_range[1])} ${unit}/kWh` : null,
+        Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
+        ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`)
+      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc12(line)}</div>`).join("") : "");
       const plugCount = /* @__PURE__ */ new Map();
       for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
         const key = `${esc12(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
@@ -7144,6 +7157,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         [station.operator && !String(station.name || "").includes(station.operator) ? esc12(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
         station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc12(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc12(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
       ].filter(Boolean).join("")}</div>`;
       let marker;

@@ -964,6 +964,16 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.match(drawn[1].popup.html, /standardpris 2,60 kr\/kWh/);
   assert.match(drawn[1].popup.html, /Operatør ukendt/);
   assert.match(drawn[1].popup.html, /2 × CCS 150 kW, 4 × Type 2 11 kW/);
+  // The operator's own price now (EV Ledger 0.14, AFIR): AC and DC, the day's range, start fee, minute price, the feed
+  drawn.length = 0;
+  c._drawChargers({ kind: "maplibre", map: {}, lib: { Marker, Popup } }, { currency: "DKK", default_price: 2.6, stations: [
+    { name: "Example Center", operator: "Example Energi", kind: "afir", latitude: 56.12, longitude: 8.12, max_kw: 150, fast: true,
+      price: 4, price_source: "station", price_normal: 2.5, price_fast: 4, day_range: [2.5, 4], start_fee: 5, minute_fees: [[0.5, 60]], feed: "Spirii" },
+  ] });
+  assert.match(drawn[0].el.innerHTML, /4,00<\/div>$/);
+  for (const text of ["operatørens egen pris nu", "AC 2,50 · DC 4,00 kr/kWh", "I dag 2,50–4,00 kr/kWh", "Startgebyr 5,00 kr", "0,50 kr/min efter 60 min", "Data: Spirii"]) {
+    assert.ok(drawn[0].popup.html.includes(text), text);
+  }
   delete context.document;
 }
 console.log("th-tesla-dashboard-card smart charge tests passed");
