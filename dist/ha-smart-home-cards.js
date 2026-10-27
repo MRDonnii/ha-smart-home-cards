@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.228 */
+/* MRDonnii Smart Home Cards v0.5.229 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -3780,7 +3780,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   </div>
 </section>`}
 ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placering">
-  <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
+  <header class="ph">${ttdIcon("mdi:map-marker-radius", "ph-i blue")}<div class="ph-t"><h3>Bilens placering</h3></div><span class="meta" data-r="mapMeta"><i class="dot"></i><span data-r="mapMetaText">${TTD_DASH}</span></span><button type="button" class="icon-btn" data-chargers data-r="chargersBtn" aria-pressed="false" aria-label="Ladesteder" title="Ladesteder" hidden>${ttdIcon("mdi:ev-station")}</button><button type="button" class="icon-btn" data-mapstyle data-r="styleBtn" aria-pressed="false" aria-label="Satellitbillede" title="Satellitbillede" hidden>${ttdIcon("mdi:satellite-variant")}</button><button class="icon-btn" data-more="location" aria-label="\xC5bn placering">${ttdIcon("mdi:arrow-expand")}</button></header>
   <div class="map-body"><div class="map-host" data-r="mapHost"></div><p class="map-empty" data-r="mapEmpty" hidden></p><div class="seg" role="group" aria-label="Vis rute for" data-r="mapSeg">${ranges}</div></div>
 </section>
 <section class="panel tpms" data-r="tpms" aria-label="D\xE6ktryk">
@@ -3799,6 +3799,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
   <header class="ph">${ttdIcon("mdi:ev-station", "ph-i")}<div class="ph-t"><h3>Seneste opladning</h3></div><button class="icon-btn" data-more="last_charge" data-r="lastMore" aria-label="\xC5bn seneste opladning">${ttdIcon("mdi:chevron-right")}</button></header>
   <div class="lc-grid">${item2("", "mdi:battery-charging-medium", "lcKwh", "Opladet energi")}${item2("", "mdi:cash", "lcPrice", "Total pris")}${item2("", "mdi:calendar-month-outline", "lcStart", "Starttidspunkt")}${item2("", "mdi:clock-outline", "lcDuration", "Varighed")}</div>
   <p class="lc-foot" data-r="lcFoot"></p><p class="lc-foot" data-r="lcMonta"></p>
+  <button type="button" class="lc-fix" data-ceopen data-r="lcFix" hidden>${ttdIcon("mdi:pencil-outline", "lc-fix-i")}<span class="lc-fix-t"><b data-r="lcFixPrice"></b><small data-r="lcFixSrc"></small></span><span class="lc-fix-go">Ret pris</span></button>
   ${cfg.smart_charge ? `<div class="sc-trip pc" data-r="pc" hidden>
     <button type="button" class="sc-trip-h" data-pctoggle data-r="pcHead" aria-expanded="false">${ttdIcon("mdi:map-marker-plus-outline", "ic blue")}<span><b>Offentlig ladning</b><small data-r="pcSum">Log kWh og pris</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="pcBody" hidden>
@@ -3826,7 +3827,7 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
 </section>
 ${cfg.tyres !== false ? `<section class="panel tyres" data-r="tyres" aria-label="Hjul" hidden><div data-r="tyresHost"></div></section>` : ""}` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "\xC5bn hele Tesla-oversigten" : "Flere indstillinger p\xE5 Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
-</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}</div>`;
+</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}<dialog class="rb-dlg ce-dlg" data-r="ceDlg" aria-label="Ret opladning"><div class="rb ce" data-r="ceBody"></div></dialog></div>`;
 }
 var TTD_STYLES = `
 :host{display:block}
@@ -4203,6 +4204,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .lc b{font-size:18px}
 .lc-foot{margin-top:14px;font-size:13px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-foot+.lc-foot{margin-top:4px}
+.lc-fix{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;margin-top:12px;padding:10px 12px;border-radius:14px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-text) 3%,transparent);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.lc-fix:hover{border-color:color-mix(in srgb,var(--tdc-blue) 45%,transparent)}
+.lc-fix[data-tone=warn]{border-color:color-mix(in srgb,#f59e0b 55%,transparent);background:color-mix(in srgb,#f59e0b 10%,transparent)}
+.lc-fix-i{--mdc-icon-size:20px;color:var(--tdc-blue)}.lc-fix[data-tone=warn] .lc-fix-i{color:#f59e0b}
+.lc-fix-t{display:grid;gap:1px;min-width:0}.lc-fix-t b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lc-fix-t small{font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-fix-go{padding:6px 12px;border-radius:999px;background:var(--tdc-blue);color:var(--text-primary-color,#fff);font-size:13px;font-weight:600;white-space:nowrap}
+.ce-list{display:grid;gap:6px;max-height:228px;overflow:auto;overscroll-behavior:contain;padding-right:2px}
+.ce-it{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;width:100%;padding:9px 12px!important;border-radius:12px;border:1px solid var(--tdc-line)!important;text-align:left}
+.ce-it[aria-pressed=true]{border-color:var(--tdc-blue)!important;background:color-mix(in srgb,var(--tdc-blue) 14%,transparent)!important}
+.ce-it b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ce-it small{grid-column:1;font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ce-it em{grid-row:1/3;grid-column:2;font-style:normal;text-align:right;font-size:13px;line-height:1.3}.ce-it em small{display:block;color:var(--tdc-muted);font-size:11.5px}
+.ce-it .warn{color:#fbbf24}
+.ce-f{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+.ce-f .rb-f input{font-size:18px;font-weight:600;text-align:right}
+.ce-f .rb-f.main input{border-color:color-mix(in srgb,var(--tdc-blue) 60%,transparent);background:color-mix(in srgb,var(--tdc-blue) 10%,transparent)}
+.ce-sum{margin:0;font-size:14px;color:var(--tdc-text)}.ce-sum b{font-size:16px}
+.ce-ok{margin:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#22c55e 16%,transparent);color:#bbf7d0;font-size:13px}
+.ce .rb-seg{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+@media (max-width:520px){.ce-f{grid-template-columns:1fr 1fr}.ce-f .rb-f.main{grid-column:1/-1;order:-1}.ce-list{max-height:190px}}
 .lc-foot:empty{display:none}
 /* daily chart */
 .range-sel{flex:none;min-height:32px;padding:0 8px;border-radius:8px;border:1px solid var(--tdc-line);background:var(--tdc-panel);font-size:14px}
@@ -4466,6 +4486,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this.shadowRoot.addEventListener("change", (event) => this._onChange(event));
     this.shadowRoot.addEventListener("input", (event) => {
       if (event.target?.dataset?.rbin) this._rbInput(event.target);
+    });
+    this.shadowRoot.addEventListener("input", (event) => {
+      if (event.target?.dataset?.cein) this._ceInput(event.target);
+    });
+    this.shadowRoot.addEventListener("focusin", (event) => {
+      const el = event.target;
+      if (["kwh", "per", "total"].includes(el?.dataset?.cein)) setTimeout(() => {
+        if (this.shadowRoot.activeElement === el) el.select();
+      }, 0);
     });
     this.shadowRoot.addEventListener("input", (event) => this._onInput(event));
     this.shadowRoot.addEventListener("keydown", (event) => this._onKey(event));
@@ -5735,6 +5764,233 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       })()
     };
   }
+  /* ------------------------------------------------------ correct a charge (EV Ledger update_charge) */
+  /** EV Ledger's finished charges, newest first (the charges sensor keeps the latest 20). */
+  _ceCharges() {
+    const list = this._so("charges")?.attributes?.charges;
+    return Array.isArray(list) ? list.filter((c2) => c2 && c2.id && c2.ended_at) : [];
+  }
+  _ceAvailable() {
+    return !!this._ledgerEntity() && this._ceCharges().length > 0;
+  }
+  /** One charge's price per kWh and where the price came from, for the panel and the list. */
+  _ceSummary(c2) {
+    if (!c2) return null;
+    const f = this._format();
+    const kwh = ttdToNumber(c2.kwh);
+    const price = ttdToNumber(c2.price);
+    const unit = ttdPerKwh(ttdUnit(c2.price_currency) || "kr.");
+    const per = kwh && price != null ? price / kwh : null;
+    const operator = c2.operator ? String(c2.operator) : "";
+    const source = {
+      place: "din pris for stedet",
+      zone: "zonens pris",
+      operator: operator ? `${operator}s pris` : "operat\xF8rens pris",
+      default: "standardprisen",
+      manual: "rettet af dig"
+    }[c2.price_source] || (c2.location_kind === "home" ? "m\xE5lt hjemme" : "");
+    return {
+      missing: price == null,
+      price: price == null ? "Mangler pris" : per == null ? ttdJoin(f.number(price, 2), ttdUnit(c2.price_currency) || "kr.") : per === 0 ? "Gratis" : `${f.number(per, 2)} ${unit}`,
+      source: price == null ? "Skriv kWh og prisen pr. kWh" : [source, kwh ? `${f.number(kwh, 1)} kWh = ${ttdJoin(f.number(price, 2), ttdUnit(c2.price_currency) || "kr.")}` : ""].filter(Boolean).join(" \xB7 ")
+    };
+  }
+  _ceOpen(id) {
+    const dlg = this._r.ceDlg;
+    const charges = this._ceCharges();
+    if (!dlg || !charges.length) return;
+    this._cePick(charges.find((c2) => c2.id === id) || charges[0]);
+    this._ceRender();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+  }
+  _ceClose() {
+    const dlg = this._r.ceDlg;
+    clearTimeout(this._ceTimer);
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+    this._ceDraft = null;
+  }
+  /** A draft of one charge (nothing is saved before "Gem"). */
+  _cePick(c2) {
+    const kwh = ttdToNumber(c2.kwh);
+    const price = ttdToNumber(c2.price);
+    this._ceDraft = {
+      id: c2.id,
+      kwh: kwh == null ? "" : ttdCeText(kwh, 2),
+      per: kwh && price != null ? ttdCeText(price / kwh, 2) : "",
+      total: price == null ? "" : ttdCeText(price, 2),
+      place: c2.location_name || "",
+      last: "per",
+      remember: "",
+      error: "",
+      saved: "",
+      busy: false
+    };
+  }
+  _ceRender() {
+    const body = this._r.ceBody;
+    const d = this._ceDraft;
+    if (!body || !d) return;
+    const f = this._format();
+    const charges = this._ceCharges();
+    const c2 = charges.find((x) => x.id === d.id);
+    if (!c2) {
+      this._ceClose();
+      return;
+    }
+    const pub = c2.location_kind === "public";
+    const unit = ttdPerKwh(ttdUnit(c2.price_currency) || "kr.");
+    const money = ttdUnit(c2.price_currency) || "kr.";
+    const when2 = (x) => {
+      const t = ttdToDate(x.started_at);
+      return t ? `${f.date(t)} ${f.time(t)}` : "";
+    };
+    const where = (x) => x.location_kind === "home" ? "Hjemme" : x.location_name || "Ude";
+    const sum = this._ceSummary(c2);
+    const canPlace = pub && c2.latitude != null && c2.longitude != null;
+    const list = charges.map((x) => {
+      const s = this._ceSummary(x);
+      return `<button type="button" class="ce-it" data-cepick="${ttdEsc(x.id)}" aria-pressed="${x.id === d.id}"><b>${ttdEsc(where(x))}</b><small>${ttdEsc(when2(x))}${x.kwh != null ? ` \xB7 ${ttdEsc(f.number(Number(x.kwh), Number(x.kwh) < 1 ? 2 : 1))} kWh` : ""}</small><em${s.missing ? ' class="warn"' : ""}>${ttdEsc(s.price)}${x.price != null ? `<small>${ttdEsc(ttdJoin(f.number(Number(x.price), 2), money))}</small>` : ""}</em></button>`;
+    }).join("");
+    const scroll = this._r.ceList?.scrollTop;
+    body.innerHTML = `
+      <header class="rb-h">
+        <span class="rb-hi">${ttdIcon("mdi:cash-edit")}</span>
+        <div><h3 tabindex="-1" autofocus>Ret opladning</h3><p><b>${ttdEsc(where(c2))}</b> \xB7 ${ttdEsc(when2(c2))}</p></div>
+        <button type="button" class="rb-x" data-ceclose aria-label="Luk">${ttdIcon("mdi:close")}</button>
+      </header>
+      <section class="rb-sec">
+        <h4>${ttdIcon("mdi:cash")}Pris</h4>
+        <p class="rb-note">Nu: <b>${ttdEsc(sum.price)}</b>${sum.missing ? "" : ` \xB7 ${ttdEsc(sum.source)}`}</p>
+        <div class="ce-f">
+          <label class="rb-f"><span>kWh</span><input type="text" inputmode="decimal" autocomplete="off" data-cein="kwh" value="${ttdEsc(d.kwh)}" placeholder="23,4"></label>
+          <label class="rb-f main"><span>Pris (${ttdEsc(unit)})</span><input type="text" inputmode="decimal" autocomplete="off" data-cein="per" value="${ttdEsc(d.per)}" placeholder="3,95"></label>
+          <label class="rb-f"><span>I alt (${ttdEsc(money)})</span><input type="text" inputmode="decimal" autocomplete="off" data-cein="total" value="${ttdEsc(d.total)}" placeholder="92,43"></label>
+        </div>
+        <p class="ce-sum" data-cesum>${ttdEsc(this._ceSumText())}</p>
+        ${pub ? `<label class="rb-f"><span>Sted</span><input type="text" autocomplete="off" data-cein="place" value="${ttdEsc(d.place)}" placeholder="Fx Clever Bilka"></label>
+        ${canPlace || c2.operator ? `<div class="rb-seg" role="radiogroup" aria-label="Husk prisen">
+          <button type="button" role="radio" aria-checked="${d.remember === ""}" data-ceremember="">Kun denne ladning</button>
+          ${canPlace ? `<button type="button" role="radio" aria-checked="${d.remember === "place"}" data-ceremember="place">Husk for stedet</button>` : ""}
+          ${c2.operator ? `<button type="button" role="radio" aria-checked="${d.remember === "operator"}" data-ceremember="operator">Husk for ${ttdEsc(String(c2.operator).slice(0, 18))}</button>` : ""}
+        </div>
+        <p class="rb-note">${d.remember === "place" ? "N\xE6ste ladning her (inden for ca. 150 m) f\xE5r prisen og navnet af sig selv." : d.remember === "operator" ? `${ttdEsc(c2.operator)} f\xE5r prisen som sin ${Number(c2.station_kw) >= 50 ? "lynladerpris (fra 50 kW)" : "normale pris"} til n\xE6ste ladninger.` : "Prisen g\xE6lder kun denne ladning. En pris du retter, bliver aldrig skiftet ud af sig selv."}</p>` : ""}` : ""}
+      </section>
+      <section class="rb-sec">
+        <h4>${ttdIcon("mdi:format-list-bulleted")}V\xE6lg en anden opladning</h4>
+        <div class="ce-list" data-r="ceList">${list}</div>
+      </section>
+      <p class="rb-err" role="alert"${d.error ? "" : " hidden"}>${ttdEsc(d.error)}</p>
+      <p class="ce-ok" role="status"${d.saved ? "" : " hidden"}>${ttdEsc(d.saved)}</p>
+      <footer class="rb-foot">
+        <button type="button" class="btn" data-ceclose>Annuller</button>
+        <button type="button" class="btn go" data-cesave ${d.busy ? "disabled" : ""}>Gem pris</button>
+      </footer>`;
+    this._r.ceList = body.querySelector(".ce-list");
+    if (scroll != null && this._r.ceList) this._r.ceList.scrollTop = scroll;
+  }
+  /** "23,4 kWh × 3,95 kr/kWh = 92,43 kr." for the draft. */
+  _ceSumText() {
+    const d = this._ceDraft;
+    const f = this._format();
+    const kwh = ttdCeNum(d?.kwh);
+    const per = ttdCeNum(d?.per);
+    const total = ttdCeNum(d?.total);
+    if (!(kwh > 0) || total == null) return "Skriv kWh og prisen pr. kWh \u2013 eller hvad ladningen kostede i alt.";
+    return `${f.number(kwh, 1)} kWh \xD7 ${f.number(per ?? total / kwh, 2)} kr/kWh = ${f.number(total, 2)} kr.`;
+  }
+  /** Typing changes the draft; the total follows kWh × price per kWh, the price per kWh follows a total typed in. */
+  _ceInput(el) {
+    const d = this._ceDraft;
+    const key = el.dataset.cein;
+    if (!d || !key) return;
+    d[key] = el.value;
+    d.error = "";
+    d.saved = "";
+    const body = this._r.ceBody;
+    const set = (k, value) => {
+      d[k] = value;
+      const input = body?.querySelector(`[data-cein="${k}"]`);
+      if (input && input !== el) input.value = value;
+    };
+    const kwh = ttdCeNum(d.kwh);
+    if (key === "per" || key === "kwh" && d.last === "per") {
+      const per = ttdCeNum(d.per);
+      if (key === "per") d.last = "per";
+      if (kwh > 0 && per != null) set("total", ttdCeText(kwh * per, 2));
+    } else if (key === "total" || key === "kwh") {
+      const total = ttdCeNum(d.total);
+      if (key === "total") d.last = "total";
+      if (kwh > 0 && total != null) set("per", ttdCeText(total / kwh, 2));
+    }
+    const sum = body?.querySelector("[data-cesum]");
+    if (sum) sum.textContent = this._ceSumText();
+    for (const node of body?.querySelectorAll(".rb-err,.ce-ok") || []) node.hidden = true;
+  }
+  _ceAction(target2) {
+    if (target2.dataset.ceopen != null) {
+      this._ceOpen();
+      return;
+    }
+    const d = this._ceDraft;
+    if (!d) return;
+    if (target2.dataset.ceclose != null) {
+      this._ceClose();
+      return;
+    }
+    if (target2.dataset.cepick != null) {
+      const c2 = this._ceCharges().find((x) => x.id === target2.dataset.cepick);
+      if (c2) this._cePick(c2);
+    } else if (target2.dataset.ceremember != null) d.remember = target2.dataset.ceremember;
+    else if (target2.dataset.cesave != null) {
+      this._ceSave();
+      return;
+    }
+    this._ceRender();
+  }
+  async _ceSave() {
+    const d = this._ceDraft;
+    const c2 = this._ceCharges().find((x) => x.id === d?.id);
+    const entity = this._ledgerEntity();
+    if (!d || !c2 || !entity || d.busy) return;
+    const kwh = ttdCeNum(d.kwh);
+    const per = ttdCeNum(d.per);
+    const total = ttdCeNum(d.total);
+    const fail = (text) => {
+      d.error = text;
+      this._ceRender();
+    };
+    if (!(kwh > 0) || kwh > 300) return fail("Skriv hvor mange kWh ladningen gav (fx 23,4).");
+    if (d.last === "total" ? total == null || total < 0 : per == null || per < 0 || per > 100) return fail("Skriv prisen pr. kWh (fx 3,95) \u2013 eller prisen i alt.");
+    const place = String(d.place || "").trim();
+    if (d.remember === "place" && !place) return fail("Giv stedet et navn, s\xE5 det kan huskes (fx Clever Bilka).");
+    const data = { entity_id: entity, charge_id: c2.id, kwh };
+    if (d.last === "total") data.price = Math.round(total * 100) / 100;
+    else data.price_per_kwh = Math.round(per * 1e4) / 1e4;
+    if (c2.location_kind === "public" && place !== (c2.location_name || "")) data.location_name = place;
+    if (d.remember) data.remember = d.remember;
+    d.busy = true;
+    d.error = "";
+    this._ceRender();
+    try {
+      await this._hass.callService("evledger", "update_charge", data);
+      const f = this._format();
+      const price = data.price ?? Math.round(kwh * data.price_per_kwh * 100) / 100;
+      d.busy = false;
+      d.saved = `Gemt: ${f.number(kwh, 1)} kWh \xD7 ${f.number(price / kwh, 2)} kr/kWh = ${f.number(price, 2)} kr.${d.remember === "place" ? " Prisen huskes for stedet." : d.remember === "operator" ? ` Prisen huskes for ${c2.operator}.` : ""}`;
+      this._ceRender();
+      clearTimeout(this._ceTimer);
+      this._ceTimer = setTimeout(() => this._ceClose(), 1600);
+    } catch (err) {
+      d.busy = false;
+      fail(`Kunne ikke gemme: ${err?.message || err}`);
+    }
+  }
   /* ------------------------------------------------------ ready-by popup (EV Ledger week plan, one-time time) */
   /** The "Klar senest" button: the next ready-by time, its target when it has its own, and what set it. */
   _rbModel(f) {
@@ -6380,6 +6636,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("lcDuration", l.duration);
     this._t("lcFoot", l.foot);
     this._t("lcMonta", l.montaLine);
+    const fix = this._ceAvailable() && l.source === "last_charge" ? this._ceSummary(this._ceCharges()[0]) : null;
+    this._hide("lcFix", !fix);
+    if (fix) {
+      this._t("lcFixPrice", fix.price);
+      this._t("lcFixSrc", fix.source);
+      this._attrSet("lcFix", "data-tone", fix.missing ? "warn" : null);
+      this._attrSet("lcFix", "aria-label", `Ret pris eller kWh: ${fix.price}`);
+    }
     if (this._r.cost) {
       const c3 = m.cost;
       this._hide("cost", !c3);
@@ -6434,6 +6698,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("mapSeg", !!m.map.empty);
     for (const el of this._rangeEls) this._attrSet(el, "aria-pressed", String(Number(el.dataset.range) === this._mapHours));
     this._attrSet("styleBtn", "aria-pressed", String(this._mapStyle === "satellite"));
+    this._attrSet("chargersBtn", "aria-pressed", String(!!this._chargersOn));
     for (const el of this._moreEls) this._attrSet(el, "data-dead", !this._hass.states[this._moreId(el.dataset.more)]);
   }
   /** Lays the cable over the photo exactly where the picture is drawn (object-fit: contain inside the img box). */
@@ -6740,12 +7005,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   _applyMapStyleNow(attempt) {
     const haMap = ttdFindDeep(this._map, "ha-map");
+    const engine = haMap?._engine;
+    if (engine?._map?.project && engine?._maplibre?.Marker) {
+      this._hide("styleBtn", true);
+      this._applyChargers({ kind: "maplibre", map: engine._map, lib: engine._maplibre });
+      return;
+    }
     const L = haMap?.Leaflet;
     const map = haMap?.leafletMap;
     if (!L?.tileLayer || !map?.addLayer) {
       if (this._map && attempt < 30) this._styleTimer = setTimeout(() => this._applyMapStyle(attempt + 1), 1e3);
       else this._styleGaveUp = Date.now();
       this._hide("styleBtn", true);
+      this._hide("chargersBtn", true);
       return;
     }
     this._hide("styleBtn", false);
@@ -6763,6 +7035,123 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (satellite && !map.hasLayer(this._sat)) this._sat.addTo(map);
     if (!satellite && map.hasLayer(this._sat)) map.removeLayer(this._sat);
     this._syncBaseLayers(map);
+    this._applyChargers({ kind: "leaflet", map, lib: L });
+  }
+  /* ------------------------------------------------------ charging stations on the map */
+  /**
+   * Charging stations on the map (Claude AI, 2026-10-27; user: "kan det også vise de her lade steder på kortet …
+   * trykke på lade stedet og se prisen"). EV Ledger's evledger/chargers answers with the Superchargers, Open Charge
+   * Map's stations (its API key stays in Home Assistant), the places named before and the zones with a price, each with
+   * the price per kWh it would use. A marker shows that price; a tap shows name, operator, normal/fast price and where
+   * it comes from, power, connectors, the distance from the car and a route link. Fetched for the visible area, again
+   * after moving the map. The choice is kept per browser.
+   */
+  _ledgerEntity() {
+    return this._id("last_charge") || this._cfg.smart_charge || this._cfg.ev_ledger || null;
+  }
+  _toggleChargers() {
+    this._chargersOn = !this._chargersOn;
+    try {
+      localStorage.setItem("ttd-chargers", this._chargersOn ? "1" : "0");
+    } catch (_) {
+    }
+    this._applyMapStyle(0);
+    this._queue(true);
+  }
+  /** The map's centre and the distance (km) to its corner, for either engine. */
+  _chargerArea(view) {
+    const map = view.map;
+    const center = map.getCenter?.();
+    const corner = map.getBounds?.()?.getNorthEast?.();
+    if (!center) return null;
+    const lat = center.lat, lng = center.lng ?? center.lon;
+    const radius = corner ? ttdDistanceKm(lat, lng, corner.lat, corner.lng ?? corner.lon) : 5;
+    return { lat, lng, radius: Math.min(25, Math.max(1, radius)) };
+  }
+  _applyChargers(view) {
+    const entity = this._ledgerEntity();
+    this._hide("chargersBtn", !entity || typeof this._hass?.callWS !== "function");
+    if (this._chargersOn == null) {
+      try {
+        this._chargersOn = localStorage.getItem("ttd-chargers") === "1";
+      } catch (_) {
+        this._chargersOn = false;
+      }
+    }
+    if (this._chargerView?.map !== view.map) {
+      this._clearChargers();
+      this._chargerKey = null;
+      view.map.on("moveend", () => {
+        clearTimeout(this._chargerTimer);
+        this._chargerTimer = setTimeout(() => this._loadChargers(view), 600);
+      });
+    }
+    this._chargerView = view;
+    if (!entity || !this._chargersOn) {
+      this._clearChargers();
+      this._chargerKey = null;
+      return;
+    }
+    this._loadChargers(view);
+  }
+  _clearChargers() {
+    for (const marker of this._chargerMarkers || []) marker.remove();
+    this._chargerMarkers = [];
+  }
+  async _loadChargers(view) {
+    if (!this._chargersOn || this._chargerView !== view) return;
+    const at = this._chargerArea(view);
+    if (!at) return;
+    const key = `${at.lat.toFixed(3)},${at.lng.toFixed(3)},${at.radius.toFixed(1)}`;
+    if (key === this._chargerKey) return;
+    this._chargerKey = key;
+    let reply;
+    try {
+      reply = await this._hass.callWS({ type: "evledger/chargers", entity_id: this._ledgerEntity(), latitude: at.lat, longitude: at.lng, radius_km: Number(at.radius.toFixed(2)) });
+    } catch (err) {
+      this._chargerKey = null;
+      console.warn("th-tesla-dashboard-card: ladesteder", err);
+      return;
+    }
+    if (this._chargerView !== view || key !== this._chargerKey || !this._chargersOn) return;
+    this._drawChargers(view, reply);
+  }
+  _drawChargers(view, reply) {
+    this._clearChargers();
+    const car = this._hass?.states?.[this._loc()]?.attributes || {};
+    const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
+    const money = (value) => Number(value).toFixed(2).replace(".", ",");
+    const esc12 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const SOURCE = { place: "din pris for stedet", zone: "zonens pris", operator: "operat\xF8rens pris", default: "standardpris" };
+    for (const station of reply?.stations || []) {
+      const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
+      const label = station.price == null ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
+      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc12(label)}</div>`;
+      const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
+      const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
+      const prices = station.price == null ? "Ingen pris \u2013 svar p\xE5 beskeden, n\xE5r du har ladet" : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">Normal ${money(station.price_normal)} \xB7 lyn ${money(station.price_fast)} ${unit}/kWh</div>` : "");
+      const plugs = (station.connectors || []).filter((c2) => c2.type || c2.kw).map((c2) => `${c2.count > 1 ? `${c2.count} \xD7 ` : ""}${esc12(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`);
+      const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
+        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc12(station.name || station.operator || "Ladested")}</div>`,
+        `<div style="margin-bottom:6px">${prices}</div>`,
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc12(station.operator) : null, power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
+        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc12(station.usage_cost)}</div>` : "",
+        `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
+      ].filter(Boolean).join("")}</div>`;
+      let marker;
+      if (view.kind === "maplibre") {
+        const el = document.createElement("div");
+        el.innerHTML = pill;
+        el.title = station.name || "";
+        marker = new view.lib.Marker({ element: el, anchor: "center" }).setLngLat([station.longitude, station.latitude]).setPopup(new view.lib.Popup({ offset: 14, maxWidth: "290px", closeButton: true }).setHTML(popup)).addTo(view.map);
+      } else {
+        const L = view.lib;
+        marker = L.marker([station.latitude, station.longitude], { icon: L.divIcon({ className: "", html: `<div style="transform:translate(-50%,-50%);width:max-content">${pill}</div>`, iconSize: [0, 0] }), keyboard: false, title: station.name || "" }).bindPopup(popup, { maxWidth: 280, autoPanPadding: [16, 16] }).addTo(view.map);
+      }
+      marker._ttdStation = station;
+      this._chargerMarkers.push(marker);
+    }
   }
   /** Hides (never removes) Home Assistant's own base map below the satellite layers, so its theme handling keeps working. */
   _syncBaseLayers(map) {
@@ -7002,8 +7391,21 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._rbClose();
       return;
     }
+    if (event.target && event.target === this._r.ceDlg) {
+      this._ceClose();
+      return;
+    }
+    const ce = event.target?.closest?.("[data-ceopen],[data-ceclose],[data-cepick],[data-cesave],[data-ceremember]");
+    if (ce && Object.keys(ce.dataset || {}).some((key) => key.startsWith("ce"))) {
+      this._ceAction(ce);
+      return;
+    }
+    if (event.target?.closest?.('[data-more="charges_needing_price"]')?.dataset?.more === "charges_needing_price" && this._ceAvailable() && this._ceCharges().some((c2) => c2.price == null)) {
+      this._ceOpen(this._ceCharges().find((c2) => c2.price == null)?.id);
+      return;
+    }
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target2 = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target2 = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-chargers],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
     if (!target2) return;
     if (Object.keys(target2.dataset).some((key) => key.startsWith("rb"))) {
       this._rbAction(target2);
@@ -7088,6 +7490,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else if (target2.dataset.pcsave != null) this._savePublic();
     else if (target2.dataset.nav != null) this._navigate();
     else if (target2.dataset.mapstyle != null) this._toggleMapStyle();
+    else if (target2.dataset.chargers != null) this._toggleChargers();
     else if (target2.dataset.range != null) this._setMapHours(Number(target2.dataset.range));
     else if (target2.dataset.action) this._action(target2.dataset.action);
     else if (target2.dataset.more) {
@@ -7114,6 +7517,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._rbInput(event.target);
       return;
     }
+    if (event.target?.dataset?.cein) return;
     const el = event.target;
     const r = this._r;
     if (el?.dataset?.ccnum) {
@@ -7362,8 +7766,22 @@ function ttdLocalInput(date2) {
   const pad5 = (value) => String(value).padStart(2, "0");
   return `${date2.getFullYear()}-${pad5(date2.getMonth() + 1)}-${pad5(date2.getDate())}T${pad5(date2.getHours())}:${pad5(date2.getMinutes())}`;
 }
+function ttdCeNum(value) {
+  const text = String(value ?? "").trim().replace(/\s/g, "");
+  if (!text) return null;
+  const number2 = Number(/,\d*$/.test(text) ? text.replace(/\./g, "").replace(",", ".") : text);
+  return Number.isFinite(number2) ? number2 : null;
+}
+function ttdCeText(value, digits) {
+  return Number.isFinite(value) ? (Math.round(value * 10 ** digits) / 10 ** digits).toFixed(digits).replace(".", ",") : "";
+}
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
+}
+function ttdDistanceKm(lat1, lon1, lat2, lon2) {
+  const r = Math.PI / 180, dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(a));
 }
 function ttdFindDeep(root, tag, depth = 0) {
   if (!root || depth > 6) return null;

@@ -899,4 +899,49 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.equal(calls.length, 1, "undo sends nothing");
   assert.equal(c._socPending, null);
 }
+// Correcting a charge (Claude AI, 2026-10-27): the total follows kWh × the price per kWh, "Gem" sends EV Ledger's
+// update_charge with the card's ledger entity, a total typed in is sent as the total.
+{
+  const charges = [
+    { id: "c1", location_kind: "public", started_at: "2026-10-27T18:47:00+00:00", ended_at: "2026-10-27T19:55:00+00:00",
+      kwh: 50.42, price: 131.09, price_currency: "DKK", location_name: "Supercharger Søndervig", price_source: "operator",
+      operator: "Tesla", latitude: 56.1, longitude: 8.1, station_kw: 250 },
+    { id: "c2", location_kind: "home", started_at: "2026-10-26T01:45:00+00:00", ended_at: "2026-10-26T03:00:00+00:00",
+      kwh: 5.558, price: null, price_currency: "DKK", location_name: "Home" },
+    { id: "open", location_kind: "home", started_at: "2026-10-28T01:00:00+00:00", ended_at: null, kwh: null, price: null },
+  ];
+  const st = { "sensor.bil_charges": s("3", { charges }), "sensor.bil_last_charge": s("131.09", charges[0]) };
+  const c = card(st, { ...config, entities: { ...config.entities, charges: "sensor.bil_charges", last_charge: "sensor.bil_last_charge" } });
+  const calls = [];
+  c._hass.callService = async (...a) => { calls.push(a); };
+  assert.deepEqual(c._ceCharges().map((x) => x.id), ["c1", "c2"], "only finished charges");
+  assert.equal(c._ceSummary(charges[0]).price, "2,60 kr/kWh");
+  assert.match(c._ceSummary(charges[0]).source, /Teslas pris/);
+  assert.equal(c._ceSummary(charges[1]).missing, true);
+  c._cePick(charges[0]);
+  assert.deepEqual([c._ceDraft.kwh, c._ceDraft.per, c._ceDraft.total], ["50,42", "2,60", "131,09"]);
+  c._ceInput({ dataset: { cein: "per" }, value: "2,85" });
+  assert.equal(c._ceDraft.total, "143,70");
+  assert.match(c._ceSumText(), /2,85 kr\/kWh = 143,70 kr/);
+  await c._ceSave();
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1))), ["evledger", "update_charge",
+    { entity_id: "sensor.bil_last_charge", charge_id: "c1", kwh: 50.42, price_per_kwh: 2.85 }]);
+  // A total typed in: the price per kWh follows, and the total is what is sent; remembered for the place
+  c._cePick(charges[0]);
+  c._ceInput({ dataset: { cein: "total" }, value: "100" });
+  assert.equal(c._ceDraft.per, "1,98");
+  c._ceDraft.remember = "place";
+  await c._ceSave();
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1))), ["evledger", "update_charge",
+    { entity_id: "sensor.bil_last_charge", charge_id: "c1", kwh: 50.42, price: 100, remember: "place" }]);
+  // A charge without a price needs the price; nothing is sent before it is there
+  c._cePick(charges[1]);
+  const before = calls.length;
+  await c._ceSave();
+  assert.match(c._ceDraft.error, /prisen pr\. kWh/);
+  assert.equal(calls.length, before);
+  assert.equal(context.ttdCeNum("1.234,5"), 1234.5);
+  assert.equal(context.ttdCeNum("3.95"), 3.95);
+  assert.equal(context.ttdCeNum("abc"), null);
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

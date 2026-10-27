@@ -304,6 +304,20 @@ Telefonvalg, prisloft, manuel, kvarter/time, midlertidig plan, standardplan og s
 **Offentlig ladning:** Under "Seneste opladning" kan kWh, pris og sted for en offentlig ladning skrives og gemmes i
 EV Ledger. Viser også, hvor mange opladninger der mangler pris.
 
+**Ret pris (EV Ledger 0.13.0 eller nyere):** Under "Seneste opladning" står ladningens pris pr. kWh og hvor den kom
+fra (fx "Teslas pris", "standardprisen"). **Ret pris** åbner en dialog med kWh, pris pr. kWh og pris i alt: i alt
+følger kWh × pris pr. kWh, og en pris i alt giver prisen pr. kWh. Et tryk på et tal markerer det, så det nye bare
+skrives. En ladning ude kan få sit sted, og prisen kan huskes **for stedet** (næste ladning inden for ca. 150 m) eller
+**for operatøren** (dens lynladerpris ved 50 kW og op). Listen nederst viser de seneste 20 opladninger (hjemme og ude),
+og "Opladninger uden pris" i Økonomi åbner den første uden pris. En rettet pris skiftes aldrig ud af sig selv.
+
+**Ladesteder på kortet (EV Ledger 0.13.0 eller nyere):** Knappen **Ladesteder** i kortets top viser ladestederne
+omkring bilen: Tesla Superchargere, Open Charge Maps ladere (med EV Ledgers Open Charge Map-nøgle), dine navngivne
+steder og zoner med pris. Mærket viser prisen pr. kWh (rød Supercharger, orange lynlader, grøn normal, lilla dine
+egne). Et tryk viser navn, pris og hvor prisen kommer fra, normal- og lynpris, operatør, effekt, pladser, stik,
+afstand fra bilen og en rutelink. Valget huskes i browseren. Virker med Home Assistants kort fra 2026.10 (MapLibre)
+og det ældre (Leaflet).
+
 **Smarte valg:** En sektion i "Smart opladning" slår EV Ledgers valg til og fra: Vent på billigere dag, Lær
 køretider, Grøn strøm, Spørg om pris ude, Morgentjek, Billig strøm-besked og Lydløs om natten (med tidsrummet, fx
 22:00–07:00, hvor ladestart, færdig og planbeskeder kommer uden lyd). Den viser de lærte afgange. Venter
