@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.218 */
+/* MRDonnii Smart Home Cards v0.5.219 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -51859,7 +51859,7 @@ window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", de
 console.info(`%c HA AI USAGE CARD %c v${VERSION42} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION43 = "0.6.13";
+var VERSION43 = "0.7.0";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -52029,6 +52029,19 @@ var HASettingsCenterCard = class extends HTMLElement {
         ${this._icon(i.icon || "mdi:toggle-switch-outline")}
         <span><b>${this._esc(i.name)}</b><small data-state>Kontrollerer\u2026</small></span>
       </button>`
+    );
+  }
+  // Kortversioner (Claude AI, 2026-10-27; bruger: "skifte mellem versionerne af kort … så det er en dropdown"): én
+  // rullemenu pr. kort. input_boolean/switch giver to valg (on_label = til, off_label = fra); input_select/select viser
+  // hjælperens egne valgmuligheder (options: [{value, label}] kan give dem pænere navne), så et kort kan få flere versioner.
+  _versionRow(i) {
+    return this._once(
+      `version:${i.entity}`,
+      `<div class="row version-row" data-view="version" data-entity="${this._esc(i.entity)}" data-options="${this._esc(JSON.stringify(i.options || []))}" data-on-label="${this._esc(i.on_label || "Ny")}" data-off-label="${this._esc(i.off_label || "Klassisk")}">
+        <span class="row-icon">${this._icon(i.icon || "mdi:layers-outline")}</span>
+        <span class="row-text"><b>${this._esc(i.name)}</b><small>${this._esc(i.description || "")}</small></span>
+        <select class="profile-select version-select" data-action="set-version" data-entity="${this._esc(i.entity)}" aria-label="Version af ${this._esc(i.name)}"></select>
+      </div>`
     );
   }
   _entityRow(i) {
@@ -52231,6 +52244,10 @@ var HASettingsCenterCard = class extends HTMLElement {
           <div class="toggle-grid">${(o.dashboard_items || []).map((i) => this._toggleTile(i)).join("")}</div>
           ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
         </div>
+        ${(o.card_versions || []).length ? `<div class="section">
+          ${this._panelHead("mdi:layers-triple-outline", "Kortversioner", "V\xE6lg hvilken version af kortene der vises \u2013 skift frem og tilbage og sammenlign")}
+          <div class="row-list">${o.card_versions.map((i) => this._versionRow(i)).join("")}</div>
+        </div>` : ""}
         <div class="section">
           ${this._panelHead("mdi:view-dashboard-edit", "Dashboard", "Redig\xE9r den faelles opsaetning her - gemmes for alle dashboards paa een gang")}
           <div class="delt-omraader">
@@ -52403,6 +52420,29 @@ var HASettingsCenterCard = class extends HTMLElement {
       n.classList.toggle("missing", !a);
       n.querySelector("[data-state]").textContent = a ? on ? n.dataset.onLabel || "Aktiv" : n.dataset.offLabel || "Deaktiv" : "Ikke tilg\xE6ngelig";
     });
+    this.shadowRoot.querySelectorAll('[data-view="version"]').forEach((n) => {
+      const id = n.dataset.entity, e = this._e(id), sel = n.querySelector("select"), domain = id.split(".")[0];
+      let opts;
+      if (["input_boolean", "switch"].includes(domain)) opts = [["on", n.dataset.onLabel], ["off", n.dataset.offLabel]];
+      else {
+        let labels = {};
+        try {
+          labels = Object.fromEntries(JSON.parse(n.dataset.options || "[]").map((o) => [o.value, o.label]));
+        } catch (_) {
+          labels = {};
+        }
+        opts = (e?.attributes?.options || []).map((o) => [o, labels[o] || o]);
+      }
+      const optSig = JSON.stringify(opts);
+      if (sel.dataset.optSig !== optSig) {
+        sel.innerHTML = opts.map(([v, l]) => `<option value="${this._esc(v)}">${this._esc(l)}</option>`).join("");
+        sel.dataset.optSig = optSig;
+      }
+      if (e && sel.value !== e.state) sel.value = e.state;
+      const ok = this._available(id);
+      sel.disabled = !ok;
+      n.classList.toggle("missing", !ok);
+    });
     this.shadowRoot.querySelectorAll('[data-view="number"]').forEach((n) => {
       const e = this._e(n.dataset.entity);
       const unit = e?.attributes?.unit_of_measurement || "";
@@ -52517,6 +52557,13 @@ var HASettingsCenterCard = class extends HTMLElement {
     this._statusEscHandler = null;
   }
   _change(e) {
+    const version = e.target.closest?.("[data-action='set-version']");
+    if (version) {
+      const id = version.dataset.entity, domain = id.split(".")[0];
+      if (["input_boolean", "switch"].includes(domain)) this._call(`${domain}.turn_${version.value === "on" ? "on" : "off"}`, {}, { entity_id: id });
+      else this._call(`${domain}.select_option`, { option: version.value }, { entity_id: id });
+      return;
+    }
     const el = e.target.closest?.("[data-action='set-profile']");
     if (!el) return;
     this._call("input_select.select_option", { option: el.value }, { entity_id: el.dataset.entity });
@@ -52609,6 +52656,8 @@ var HASettingsCenterCard = class extends HTMLElement {
       .row.on.toggle-btn{background:var(--settings-positive);border-left-color:var(--good)}
       .row.on.toggle-btn .row-icon{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
       .row.on.toggle-btn > ha-icon:last-child{color:var(--good)}
+      .version-row .row-icon{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+      .version-select{flex:0 0 auto;width:min(46%,240px);min-width:130px;margin:0;font-weight:700;cursor:pointer}
       .toggle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
       .tile-btn{position:relative;display:flex;align-items:center;gap:10px;min-height:54px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--accent) 14%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:var(--settings-neutral);box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer;min-width:0}
       .tile-btn ha-icon{--mdc-icon-size:20px;color:var(--muted);flex:0 0 auto}
