@@ -45,6 +45,7 @@ class HAPersonOverviewCard extends HTMLElement {
           p.travel_time,
           this._geoId(p),
         ])
+        .concat([].concat(this._config?.trip_calendar || []))
         .concat(this._config?.style_entity || [])
         .filter(Boolean) || [];
     const sig = JSON.stringify(
@@ -89,7 +90,19 @@ class HAPersonOverviewCard extends HTMLElement {
     const lat = Number(a.latitude), lon = Number(a.longitude);
     return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
   }
+  // A trip in the calendar (trip_calendar, e.g. "Lalandia søndervig" all-day 26–30/10): while someone is more than 25 km
+  // from home during an ongoing all-day event of two days or more, its title is the place.
+  _trip(p) {
+    const cals = [].concat(this._config.trip_calendar || []); if (!cals.length || !(this._km(p) > 25)) return "";
+    for (const id of cals) {
+      const a = this._s(id)?.attributes || {}; if (this._s(id)?.state !== "on" || !a.all_day || !a.message) continue;
+      const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time).replace(" ", "T"));
+      if (end - start >= 2 * 864e5) return String(a.message).trim().replace(/^./, (c) => c.toUpperCase());
+    }
+    return "";
+  }
   _place(p) {
+    const trip = this._trip(p); if (trip) return trip;
     let best = this._ownPlace(p); const here = this._coords(p);
     if (here) for (const q of this._config.persons || []) {
       if (q === p) continue; const there = this._coords(q); if (!there) continue;

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.222 */
+/* MRDonnii Smart Home Cards v0.5.223 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -6324,11 +6324,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       r.topImg.dataset.src = this._cfg.topImage;
       r.topImg.src = this._url(this._cfg.topImage);
     }
-    const names = { FL: "venstre for", FR: "h\xF8jre for", RL: "venstre bag", RR: "h\xF8jre bag" };
+    const names2 = { FL: "venstre for", FR: "h\xF8jre for", RL: "venstre bag", RR: "h\xF8jre bag" };
     const tires = ["FL", "FR", "RL", "RR"].map((key) => [key, m.tpms.tires[key]]);
     const off = tires.filter(([, tire]) => ["warn", "crit"].includes(tire.tone));
     const known = tires.filter(([, tire]) => tire.tone !== "muted");
-    const summary = !known.length ? TTD_TEXT.tpms.unknown : !off.length ? "Alle fire d\xE6k har normalt tryk" : Object.entries(off.reduce((acc, [key, tire]) => ({ ...acc, [tire.status]: [...acc[tire.status] || [], names[key]] }), {})).map(([status, where]) => `${status}: ${where.join(", ")}`).join(" \xB7 ");
+    const summary = !known.length ? TTD_TEXT.tpms.unknown : !off.length ? "Alle fire d\xE6k har normalt tryk" : Object.entries(off.reduce((acc, [key, tire]) => ({ ...acc, [tire.status]: [...acc[tire.status] || [], names2[key]] }), {})).map(([status, where]) => `${status}: ${where.join(", ")}`).join(" \xB7 ");
     this._t("tpmsSum", summary);
     this._t("month", m.drive.month);
     this._t("totalDist", m.drive.total);
@@ -7565,12 +7565,12 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const t = new Date(v);
     if (Number.isNaN(t.getTime())) return v;
     const now = /* @__PURE__ */ new Date();
-    const hm2 = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-    if (t.toDateString() === now.toDateString()) return hm2;
+    const hm3 = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    if (t.toDateString() === now.toDateString()) return hm3;
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
-    if (t.toDateString() === tomorrow.toDateString()) return `i morgen ${hm2}`;
-    return `${t.toLocaleDateString("da-DK", { weekday: "short" })} ${hm2}`;
+    if (t.toDateString() === tomorrow.toDateString()) return `i morgen ${hm3}`;
+    return `${t.toLocaleDateString("da-DK", { weekday: "short" })} ${hm3}`;
   }
   _target() {
     const t = this._config.target_soc;
@@ -7955,7 +7955,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   // Plan and charging overlays, v2 (Claude AI, 2026-10-13; user: "arbejd videre på ladeplan og ladning så det bliver endnu federe").
   _planHtml(p) {
     const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
-    const hm2 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    const hm3 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const now = Date.now();
     const soc = Number.isFinite(p.soc) ? p.soc : 0;
     const tg = Number.isFinite(p.target) ? p.target : 100;
@@ -7984,7 +7984,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const stripes = runs.map((b) => `<i class="tx" style="left:${X(b.t).toFixed(2)}%;width:${Math.max(0.6, X(b.e) - X(b.t)).toFixed(2)}%"></i>`).join("");
     const parts = ctlParts({ now, blocks: p.blocks, deadline: p.deadline ? dlT : NaN, prices: p.prices, minutes: p.minutes });
     const best = held ? L.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null) : null;
-    const later = best ? `${new Date(best.t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm2(best.t)}` : "";
+    const later = best ? `${new Date(best.t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm3(best.t)}` : "";
     const track2 = ctlTrack(parts, {
       now,
       end,
@@ -7998,14 +7998,14 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const aim = held && Number.isFinite(L.reach) && p.blocks.length && L.reach > soc ? L.reach : tg;
     return `<div class="ph"><span class="ring" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, aim))}"><span class="core"><ha-icon icon="mdi:clock-outline"></ha-icon></span></span>
         <div class="pt"><b>Ladeplan \xB7 ${esc3(MODE[p.mode] || p.mode)}</b><span>${ctlBattery(soc, aim, false)}${esc3(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
-        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm2(first.t)}</b><em>${esc3(until2)}</em></div></div>
+        <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm3(first.t)}</b><em>${esc3(until2)}</em></div></div>
       <div class="ctl-tl">${track2}</div>
       <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held, L, soc, tg) : ""}</div>`;
   }
   _limitText(L, held) {
     const best = L.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
-    const when = (t) => `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
-    if (held) return `<b>${this._fmt(L.above, 1)}</b> kWh venter${best ? ` \xB7 resten ${when(best.t)}` : ""}`;
+    const when2 = (t) => `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
+    if (held) return `<b>${this._fmt(L.above, 1)}</b> kWh venter${best ? ` \xB7 resten ${when2(best.t)}` : ""}`;
     const save = Number.isFinite(L.saving) ? L.saving : best ? Number(best.saving) : NaN;
     return `<b>${this._fmt(L.above, 1)}</b> kWh billigere senere${Number.isFinite(save) ? ` \xB7 spar ca. ${this._fmt(save, 0)} kr` : ""}`;
   }
@@ -8050,7 +8050,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
   // a live bar towards the target, the numbers with the savings badge to the right.
   _chargeHtml(p) {
     const c2 = this._config;
-    const hm2 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    const hm3 = (t) => new Date(t).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     const soc = this._num(c2.battery) ?? 0;
     const tg = Number.isFinite(p?.target) ? p.target : this._target() ?? 100;
     const L = p?.limit;
@@ -8072,7 +8072,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const prev = c2.preview === "charge";
     return `<div class="ph"><span class="ring chg" style="--s:${Math.max(0, Math.min(100, soc))};--t:${Math.max(0, Math.min(100, aim))}"><span class="core"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></span>
         <div class="pt"><b>Lader nu${kw != null ? ` \xB7 <span class="kw">${this._fmt(kw, 1)} kW</span>` : ""}</b><span>${ctlBattery(soc, aim, true)}${esc3(p?.name || c2.name)}${this._away() ? " \xB7 ude" : ""} \xB7 ${Math.round(soc)} % \u2192 ${Math.round(aim)} %${held ? ` \xB7 m\xE5l ${Math.round(tg)} %` : ""}${prev ? " \xB7 forh\xE5ndsvisning" : ""}</span></div>
-        <div class="pstart"><small>${Number.isFinite(finT) ? held || Number.isFinite(planEnd) ? "F\xE6rdig kl." : "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm2(finT) : `${Math.round(soc)} %`}</b><em>${esc3(leftTxt)}</em></div></div>
+        <div class="pstart"><small>${Number.isFinite(finT) ? held || Number.isFinite(planEnd) ? "F\xE6rdig kl." : "Fuld kl." : "Batteri"}</small><b>${Number.isFinite(finT) ? hm3(finT) : `${Math.round(soc)} %`}</b><em>${esc3(leftTxt)}</em></div></div>
       ${tl || `<div class="cbar"><div class="cfill" style="width:${Math.max(2, Math.min(100, soc))}%"><i></i></div><i class="ctg" style="left:${Math.min(100, aim)}%"></i></div>`}
       <div class="pnums">${added != null ? `<span><b>+${this._fmt(added, 1)}</b> kWh ladet</span>` : ""}${p ? `<span><b>${this._fmt(p.cost, 2)}</b> kr i planen</span>` : ""}${p && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}</div>`;
   }
@@ -8733,8 +8733,8 @@ var HAEvTyreCard = class extends HTMLElement {
   }
   async _save() {
     if (this._busy) return;
-    const when = this._val("at");
-    const at = when ? new Date(when).toISOString() : void 0;
+    const when2 = this._val("at");
+    const at = when2 ? new Date(when2).toISOString() : void 0;
     let ok = false;
     if (this._view === "change") {
       if (!this._pick) {
@@ -9742,8 +9742,8 @@ var PoolForecastCard = class extends HTMLElement {
   }
   _label(ts, short = false) {
     const date2 = new Date(ts);
-    const names = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
-    return short ? names[date2.getDay()] : `${names[date2.getDay()]} ${date2.getDate()}/${date2.getMonth() + 1}`;
+    const names2 = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
+    return short ? names2[date2.getDay()] : `${names2[date2.getDay()]} ${date2.getDate()}/${date2.getMonth() + 1}`;
   }
   _mergePoints() {
     const weatherByDay = new Map(this._weatherPoints().map((item2) => [this._dayKey(item2.ts), item2]));
@@ -11610,8 +11610,8 @@ var HAACClimateCard = class extends HTMLElement {
     const WHAT = { stop_level: "stop-niveau", start_level: "start-niveau", park: "m\xE5l parkeres ved stop" };
     const last = history2[history2.length - 1];
     if (last) {
-      const when = new Date(last.at);
-      const day2 = Number.isFinite(when.getTime()) ? when.toLocaleDateString(this._hass?.locale?.language || "da", { day: "numeric", month: "numeric" }) : "";
+      const when2 = new Date(last.at);
+      const day2 = Number.isFinite(when2.getTime()) ? when2.toLocaleDateString(this._hass?.locale?.language || "da", { day: "numeric", month: "numeric" }) : "";
       items.push(`Sidst l\xE6rt ${day2} kl. ${this._clock(last.at)}: ${WHAT[last.change] || last.change}${last.from != null && last.value != null ? ` ${last.from}\xB0 \u2192 ${last.value}\xB0` : ""} (${WHY[last.check] || last.check})`);
     }
     const bar = check ? `<i class="lbar"><b style="width:${Math.max(3, Math.min(100, Number(l.progress) || 0))}%"></b></i>` : "";
@@ -13820,10 +13820,10 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       if (!Number.isFinite(next)) return null;
       const day2 = new Date(dayEnd);
       day2.setHours(0, 0, 0, 0);
-      const when = new Date(next);
+      const when2 = new Date(next);
       const startDay = new Date(next);
       startDay.setHours(0, 0, 0, 0);
-      const title = startDay.getTime() === day2.getTime() ? "BIL \xB7 I MORGEN" : `BIL \xB7 ${when.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "").toUpperCase()}`;
+      const title = startDay.getTime() === day2.getTime() ? "BIL \xB7 I MORGEN" : `BIL \xB7 ${when2.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "").toUpperCase()}`;
       return { index: points.length - 1, title, text: this._label({ start: next }), later: true };
     }
     let last = first;
@@ -14635,8 +14635,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
     }
   }
   // Gennemsnitspris over [s, s+dur], vægtet efter hvor meget af kørslen der ligger i hver prisperiode; null når priserne ikke dækker hele kørslen
-  avgOver(all, s, dur2) {
-    const e = s + dur2;
+  avgOver(all, s, dur3) {
+    const e = s + dur3;
     let sum = 0, cov = 0, fc = false;
     for (const p of all) {
       if (p.e <= s) continue;
@@ -14648,21 +14648,21 @@ var ThElectricityPriceCard = class extends HTMLElement {
         fc = fc || p.f;
       }
     }
-    return cov >= dur2 * 0.98 ? { avg: sum / cov, fc } : null;
+    return cov >= dur3 * 0.98 ? { avg: sum / cov, fc } : null;
   }
   // Alle mulige starttidspunkter de næste 24 t. Prisen er stykvis lineær i starttidspunktet, så det billigste ligger altid hvor kørslens start eller slutning rammer en periodegrænse
-  scan(all, dur2, now, ok = () => true, hours = 24) {
+  scan(all, dur3, now, ok = () => true, hours = 24) {
     const hor = now + hours * 36e5, c2 = /* @__PURE__ */ new Set([now]);
     for (const p of all) {
       if (p.t > now && p.t < hor) c2.add(p.t);
-      const x = p.e - dur2;
+      const x = p.e - dur3;
       if (x > now && x < hor) c2.add(Math.ceil(x / 3e5) * 3e5);
     }
     const out = [];
     for (const s of c2) {
-      if (!ok(s, dur2)) continue;
-      const a = this.avgOver(all, s, dur2);
-      if (a) out.push({ s, e: s + dur2, ...a });
+      if (!ok(s, dur3)) continue;
+      const a = this.avgOver(all, s, dur3);
+      if (a) out.push({ s, e: s + dur3, ...a });
     }
     return out;
   }
@@ -14696,26 +14696,26 @@ var ThElectricityPriceCard = class extends HTMLElement {
     let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? "leaf" : lvN >= 2 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
     if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct2(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
       <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct2(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
-    const hrOk = (hrs) => (s, dur2) => {
+    const hrOk = (hrs) => (s, dur3) => {
       if (!hrs) return true;
       const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5;
-      return hrs[0] <= hrs[1] ? s >= a && s + dur2 <= b : s >= a || s + dur2 <= b;
+      return hrs[0] <= hrs[1] ? s >= a && s + dur3 <= b : s >= a || s + dur3 <= b;
     };
     const cfgDev = Array.isArray(C2.advice?.devices), devs = (cfgDev ? C2.advice.devices : TEP_DEV).filter((d) => cfgDev || this._h.states[d.entity] || this._h.states[d.running]);
     let rows = "", waits = 0;
     for (const d of devs) {
-      const kwh = parseFloat(this.A(d.entity, "kwh_pr_koersel")) || d.kwh || 1, min = parseFloat(this.A(d.entity, "varighed_min")) || d.minutes || 120, dur2 = min * 6e4;
+      const kwh = parseFloat(this.A(d.entity, "kwh_pr_koersel")) || d.kwh || 1, min = parseFloat(this.A(d.entity, "varighed_min")) || d.minutes || 120, dur3 = min * 6e4;
       const ic = ti(TI[d.icon] ? d.icon : "bolt", 19), nm = this.esc(d.name || d.entity), facts = `${tn(kwh, 1)} kWh \xB7 ${tm(min)}`;
       if (d.running && this._h.states[d.running]?.state === "on") {
         rows += `<div class="ar" style="--c:var(--acc)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>K\xF8rer nu</b><small>allerede i gang</small></div></div>`;
         continue;
       }
-      const base = this.avgOver(all, now, dur2), cands = this.scan(all, dur2, now, hrOk(d.hours)), bst = cands.reduce((m, c2) => !m || c2.avg < m.avg - 1e-9 ? c2 : m, null);
+      const base = this.avgOver(all, now, dur3), cands = this.scan(all, dur3, now, hrOk(d.hours)), bst = cands.reduce((m, c2) => !m || c2.avg < m.avg - 1e-9 ? c2 : m, null);
       if (!base || !bst) {
         rows += `<div class="ar" style="--c:var(--mut)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>\u2013</b><small>priser mangler</small></div></div>`;
         continue;
       }
-      const nowOk = hrOk(d.hours)(now, dur2), cNow = base.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
+      const nowOk = hrOk(d.hours)(now, dur3), cNow = base.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
       const wait = bst.s - now > 9e5 && (!nowOk || save >= Math.max(0.3, cNow * 0.06));
       if (wait) waits++;
       rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} \xB7 nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W2(bst.s)}</b><small>${save > 0.05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? " \xB7 prognose" : ""}</small></div></div>` : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>K\xF8r nu</b><small>${tn(cNow)} kr</small></div></div>`;
@@ -14828,7 +14828,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       if (fut.length > 2 && !calm) {
         const sx2 = Math.max(0.1, pc.clientWidth / W2), sy = Math.max(0.1, (pc.clientHeight - gb2) / H3);
         const fd = line(fut), xs = X((fut[0].t + fut[0].e) / 2), xe = X((fut[fut.length - 1].t + fut[fut.length - 1].e) / 2), tail = Math.max(60, (xe - xs) * 0.16);
-        const dur2 = Math.max(6, Math.min(14, fut.length / 10)).toFixed(1), sweep = (a, b) => `<animate attributeName="x1" values="${(xs - tail + a).toFixed(1)};${(xe + b).toFixed(1)};${(xe + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur2}s" repeatCount="indefinite"/><animate attributeName="x2" values="${(xs + a).toFixed(1)};${(xe + tail + b).toFixed(1)};${(xe + tail + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur2}s" repeatCount="indefinite"/>`;
+        const dur3 = Math.max(6, Math.min(14, fut.length / 10)).toFixed(1), sweep = (a, b) => `<animate attributeName="x1" values="${(xs - tail + a).toFixed(1)};${(xe + b).toFixed(1)};${(xe + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur3}s" repeatCount="indefinite"/><animate attributeName="x2" values="${(xs + a).toFixed(1)};${(xe + tail + b).toFixed(1)};${(xe + tail + b).toFixed(1)}" keyTimes="0;.8;1" dur="${dur3}s" repeatCount="indefinite"/>`;
         g += `<defs><linearGradient id="cm" gradientUnits="userSpaceOnUse" x1="${xs - tail}" y1="0" x2="${xs}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".82" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>${sweep(0, 0)}</linearGradient>
           <linearGradient id="sh" gradientUnits="userSpaceOnUse" x1="${xs - tail}" y1="0" x2="${xs}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>${sweep(-tail * 0.3, -tail * 0.3)}</linearGradient>
           <linearGradient id="shg" gradientUnits="userSpaceOnUse" x1="0" y1="${Math.min(...fut.map((p) => Y(p.p))).toFixed(1)}" x2="0" y2="${base}"><stop offset="0" stop-color="${cW}" stop-opacity=".42"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient>
@@ -14880,8 +14880,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
       liq2.forEach((b) => {
         const n = Math.max(2, Math.round((base - b.y) / 16));
         for (let k = 0; k < n; k++) {
-          const r = 1.8 + rnd() * 2.4, cx2 = b.x + b.w * (0.2 + rnd() * 0.6), dur2 = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (0.35 + rnd() * 0.65));
-          g += `<ellipse cx="${cx2.toFixed(2)}" cy="${base}" rx="${(r / sx2).toFixed(2)}" ry="${(r / sy).toFixed(2)}" style="fill:${k % 3 ? tint : hot || liqCol2}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
+          const r = 1.8 + rnd() * 2.4, cx2 = b.x + b.w * (0.2 + rnd() * 0.6), dur3 = (2.8 + rnd() * 3).toFixed(2), delay = (rnd() * 4.5).toFixed(2), top = Math.max(3, b.y - rise * (0.35 + rnd() * 0.65));
+          g += `<ellipse cx="${cx2.toFixed(2)}" cy="${base}" rx="${(r / sx2).toFixed(2)}" ry="${(r / sy).toFixed(2)}" style="fill:${k % 3 ? tint : hot || liqCol2}" opacity="0"><animate attributeName="cy" from="${base}" to="${top.toFixed(1)}" dur="${dur3}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.6;.5;0" keyTimes="0;.15;.75;1" dur="${dur3}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
         }
       });
     }
@@ -14897,8 +14897,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
         const top = isBar ? Y(p.p) : lineBar(p).y;
         if (isBar) g += `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${(i % 6 * 0.22).toFixed(2)}s" repeatCount="indefinite"/></rect>`;
         if (i % (mode === "24" ? 1 : 3)) return;
-        const r = 1.4 + hr() * 1.4, cx2 = x + w * (0.25 + hr() * 0.5), dur2 = (1.6 + hr() * 1.4).toFixed(2), delay = (hr() * 2).toFixed(2), up = Math.max(2, top - H3 * (0.12 + hr() * 0.14));
-        g += `<ellipse cx="${cx2.toFixed(2)}" cy="${top.toFixed(1)}" rx="${(r / sx2).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${i % 2 ? "#ffb347" : cB}" opacity="0" style="pointer-events:none"><animate attributeName="cy" from="${top.toFixed(1)}" to="${up.toFixed(1)}" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.95;0" dur="${dur2}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
+        const r = 1.4 + hr() * 1.4, cx2 = x + w * (0.25 + hr() * 0.5), dur3 = (1.6 + hr() * 1.4).toFixed(2), delay = (hr() * 2).toFixed(2), up = Math.max(2, top - H3 * (0.12 + hr() * 0.14));
+        g += `<ellipse cx="${cx2.toFixed(2)}" cy="${top.toFixed(1)}" rx="${(r / sx2).toFixed(2)}" ry="${(r / sy).toFixed(2)}" fill="${i % 2 ? "#ffb347" : cB}" opacity="0" style="pointer-events:none"><animate attributeName="cy" from="${top.toFixed(1)}" to="${up.toFixed(1)}" dur="${dur3}s" begin="${delay}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.95;0" dur="${dur3}s" begin="${delay}s" repeatCount="indefinite"/></ellipse>`;
       });
       if (!isBar) {
         const runs = [];
@@ -14953,8 +14953,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
         ov += `<div class="band cheaper" style="left:${l}%;width:${Math.max(0.6, r - l)}%"><span>BILLIGERE ${tt(new Date(w.t))} \xB7 ${tn(Number(w.price))}</span></div>`;
       }
       else if (ex2.length && !ch2.limit) {
-        const dur2 = ex2.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex2.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur2;
-        const sorted = [...all].sort((a, b) => a.t - b.t), wins = this.scan(sorted, dur2, now, () => true, 40).filter((w) => w.e <= t12 && w.avg <= xa - Math.max(0.1, xa * 0.08) && (!ch2.limit || w.avg <= ch2.limit.price) && !ch2.blocks.some((b) => b.t < w.e && b.e > w.s));
+        const dur3 = ex2.reduce((a, p) => a + p.e - Math.max(p.t, now), 0), xa = ex2.reduce((a, p) => a + p.p * (p.e - Math.max(p.t, now)), 0) / dur3;
+        const sorted = [...all].sort((a, b) => a.t - b.t), wins = this.scan(sorted, dur3, now, () => true, 40).filter((w) => w.e <= t12 && w.avg <= xa - Math.max(0.1, xa * 0.08) && (!ch2.limit || w.avg <= ch2.limit.price) && !ch2.blocks.some((b) => b.t < w.e && b.e > w.s));
         const dayW = (w) => {
           const h = new Date(w.s).getHours();
           return h >= 8 && h < 17;
@@ -19096,7 +19096,7 @@ Error generating stack: ` + l.message + `
     }
     return a = Ft(), a.memoizedState = a.baseState = e, l = { pending: null, lanes: 0, dispatch: null, lastRenderedReducer: Ng, lastRenderedState: e }, a.queue = l, a = jg.bind(null, B, l), l.dispatch = a, l = mu(false), i = Cf.bind(null, B, false, l.queue), l = Ft(), n = { state: e, dispatch: null, action: t, pending: null }, l.queue = n, a = yy.bind(null, B, n, i, a), n.dispatch = a, l.memoizedState = t, [e, a, false];
   }
-  function hm2(t) {
+  function hm3(t) {
     var e = mt();
     return Tg(e, P3, t);
   }
@@ -19401,7 +19401,7 @@ Error generating stack: ` + l.message + `
   }, useTransition: function() {
     var t = gr(Aa)[0], e = mt().memoizedState;
     return [typeof t == "boolean" ? t : mo(t), e];
-  }, useSyncExternalStore: pg, useId: Gg, useHostTransitionStatus: Of, useFormState: hm2, useActionState: hm2, useOptimistic: function(t, e) {
+  }, useSyncExternalStore: pg, useId: Gg, useHostTransitionStatus: Of, useFormState: hm3, useActionState: hm3, useOptimistic: function(t, e) {
     var a = mt();
     return wg(a, P3, t, e);
   }, useMemoCache: Tf, useCacheRefresh: qg, useEffectEvent: kg }, Ty = { readContext: Ht, use: dc, useCallback: Mg, useContext: Ht, useEffect: kf, useImperativeHandle: Cg, useInsertionEffect: Eg, useLayoutEffect: Ag, useMemo: Dg, useReducer: zs, useRef: zg, useState: function() {
@@ -23343,7 +23343,7 @@ Error generating stack: ` + l.message + `
   we.prototype.unobserveUsing = function(t) {
     var e = this._observers;
     if (e !== null && e.has(t)) {
-      e.delete(t), oe(this._fragmentFiber.child, false, p23, t, void 0, void 0);
+      e.delete(t), oe(this._fragmentFiber.child, false, p24, t, void 0, void 0);
       for (var a = e = 0; a < Ze.length; a++) {
         var l = Ze[a];
         l.fragmentInstance === this && l.observer === t ? t.unobserve(l.instance) : Ze[e++] = l;
@@ -23351,7 +23351,7 @@ Error generating stack: ` + l.message + `
       Ze.length = e;
     }
   };
-  function p23(t, e) {
+  function p24(t, e) {
     return t.tag === 6 || (t = _t(t), e.unobserve(t)), false;
   }
   var Ze = [], qs = false;
@@ -31959,11 +31959,11 @@ var smoothPath = (points) => {
   for (let i = 0; i < points.length - 1; i += 1) {
     const p0 = points[i - 1] || points[i];
     const p1 = points[i];
-    const p23 = points[i + 1];
-    const p3 = points[i + 2] || p23;
-    const c1 = [p1[0] + (p23[0] - p0[0]) / 6, p1[1] + (p23[1] - p0[1]) / 6];
-    const c2 = [p23[0] - (p3[0] - p1[0]) / 6, p23[1] - (p3[1] - p1[1]) / 6];
-    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p23[0].toFixed(1)} ${p23[1].toFixed(1)}`;
+    const p24 = points[i + 1];
+    const p3 = points[i + 2] || p24;
+    const c1 = [p1[0] + (p24[0] - p0[0]) / 6, p1[1] + (p24[1] - p0[1]) / 6];
+    const c2 = [p24[0] - (p3[0] - p1[0]) / 6, p24[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p24[0].toFixed(1)} ${p24[1].toFixed(1)}`;
   }
   return d;
 };
@@ -32939,7 +32939,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const view = JSON.stringify([indoor.map(({ model, index }) => [index, model.current, model.accent]), heating.map(({ index }) => index), open.map(({ index }) => index), acOn.map((unit) => unit.names.join()), targets, demand, dataProblem, zones.length]);
     if (summary.view === view) return;
     summary.view = view;
-    const names = (list) => list.map(({ room }) => room.name).join(", ");
+    const names2 = (list) => list.map(({ room }) => room.name).join(", ");
     summary.flow?.classList.toggle("on", heating.length > 0);
     this._setText(summary.flowText, heating.length ? `Leverer varme \xB7 ${heating.length} ${heating.length === 1 ? "zone" : "zoner"}` : "I hvile");
     this._setText(summary.avg, this._format(average));
@@ -32988,8 +32988,8 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       this._setText(stat.value, value);
       this._setText(stat.sub, sub);
     };
-    setStat(summary.heat, heating.length ? "hot" : "", `${heating.length} af ${zones.length}`, heating.length ? names(heating) : "Ingen zoner kalder p\xE5 varme");
-    setStat(summary.open, open.length ? "open" : "ok", String(open.length), open.length ? names(open) : "Alle vinduer og d\xF8re lukket");
+    setStat(summary.heat, heating.length ? "hot" : "", `${heating.length} af ${zones.length}`, heating.length ? names2(heating) : "Ingen zoner kalder p\xE5 varme");
+    setStat(summary.open, open.length ? "open" : "ok", String(open.length), open.length ? names2(open) : "Alle vinduer og d\xF8re lukket");
     setStat(summary.ac, acOn.length ? "cool" : "", acOn.length ? `${acOn.length} k\xF8rer` : "Slukket", acOn.length ? acOn.map((unit) => `${unit.names.join("/")} \xB7 ${unit.label.replace(" via AC", "").toLowerCase()}`).join(", ") : `${acUnits.size} ${acUnits.size === 1 ? "enhed" : "enheder"} klar`);
     if (demand !== void 0) {
       setStat(summary.demand, demand > 0 ? "hot" : "", demand >= 1e3 ? `${this._format(demand / 1e3, 1)} kW` : `${this._format(demand, 0)} W`, "Estimeret varmebehov i alt");
@@ -34023,8 +34023,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     let changed = false;
     const rooms = this._config.rooms.map((r) => {
       if (!r.outdoor || r.controls) return r;
-      const names = r.controls_room ? [key(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key(r.name)];
-      const m = src.v3.find((x) => names.includes(key(x.name)));
+      const names2 = r.controls_room ? [key(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key(r.name)];
+      const m = src.v3.find((x) => names2.includes(key(x.name)));
       if (!m) return r;
       const pop = m.popup ? src.pops[m.popup] : void 0;
       const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening };
@@ -34461,7 +34461,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
     const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
-    const f = (name) => host.querySelector(`[data-f="${name}"]`), p23 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p23(t.getHours())}:${p23(t.getMinutes())}`;
+    const f = (name) => host.querySelector(`[data-f="${name}"]`), p24 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p24(t.getHours())}:${p24(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
     const sun = (t) => {
@@ -34475,7 +34475,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     };
     const weather = st(room.weather), a = weather?.attributes || {};
     const hourly = (this._wx?.hourly || []).filter((x) => Date.parse(x.datetime) > now.getTime() - 36e5 + 6e4).slice(0, 12);
-    const todayKey = `${now.getFullYear()}-${p23(now.getMonth() + 1)}-${p23(now.getDate())}`;
+    const todayKey = `${now.getFullYear()}-${p24(now.getMonth() + 1)}-${p24(now.getDate())}`;
     const daily = this._wx?.daily || [], d0 = daily.find((x) => String(x.datetime).startsWith(todayKey)), d1 = d0 ? daily[daily.indexOf(d0) + 1] : void 0;
     const info = wxInfo(hourly[0]?.condition || weather?.state, night(now));
     host.style.setProperty("--wx-c", info.color);
@@ -34510,15 +34510,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       chipsEl._h = chipHtml;
       chipsEl.innerHTML = chipHtml;
     }
-    const hoursHtml = hourly.map((x, i) => {
+    const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p23(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p23(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      const title = `${p24(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p24(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
-    if (hoursEl && hoursEl._h !== hoursHtml) {
-      hoursEl._h = hoursHtml;
-      hoursEl.innerHTML = hoursHtml;
+    if (hoursEl && hoursEl._h !== hoursHtml2) {
+      hoursEl._h = hoursHtml2;
+      hoursEl.innerHTML = hoursHtml2;
     }
     const dl = f("daylight"), today = sun(now);
     if (dl) {
@@ -34534,7 +34534,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
         dot.style.left = `${(12 + b[0] / 200 * 76).toFixed(2)}%`;
         dot.style.top = `${(4 + b[1] / 40 * 24).toFixed(1)}px`;
       }
-      const dur2 = (ms2) => {
+      const dur3 = (ms2) => {
         const m = Math.max(0, Math.round(ms2 / 6e4));
         return m >= 60 ? `${Math.floor(m / 60)} t ${m % 60} min` : `${m} min`;
       };
@@ -34543,7 +34543,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       const next = sun(tomorrow);
       this._setText(f("dlrise"), clock2(today.rise));
       this._setText(f("dlset"), clock2(today.set));
-      this._setText(f("dltext"), t < 0 ? `Solopgang om ${dur2(today.rise - now)}` : t > 1 ? `M\xF8rkt \xB7 solopgang ${next ? clock2(next.rise) : ""}` : `Dagslys ${dur2(span)} \xB7 ${dur2(today.set - now)} tilbage`);
+      this._setText(f("dltext"), t < 0 ? `Solopgang om ${dur3(today.rise - now)}` : t > 1 ? `M\xF8rkt \xB7 solopgang ${next ? clock2(next.rise) : ""}` : `Dagslys ${dur3(span)} \xB7 ${dur3(today.set - now)} tilbage`);
     }
   }
   // ---------- room dock (presence, light, media, profile + quick buttons) ----------
@@ -35593,8 +35593,172 @@ var HACardListEditor8 = class extends HTMLElement {
 };
 if (!customElements.get("ha-home-header-card-editor")) customElements.define("ha-home-header-card-editor", HACardListEditor8);
 
+// src/cards/ha-home-header-card/insights.js
+var p2 = (n) => String(n).padStart(2, "0");
+var hm2 = (d) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+var dur = (min) => {
+  const m = Math.max(0, Math.round(min));
+  return m >= 60 ? `${Math.floor(m / 60)} t ${m % 60} min` : `${m} min`;
+};
+var names = (list) => list.length <= 2 ? list.join(" og ") : `${list.slice(0, 2).join(", ")} +${list.length - 2}`;
+var when = (d) => {
+  const now = /* @__PURE__ */ new Date(), day2 = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day2(now) - day2(d)) / 864e5);
+  if (diff === 0) return `kl. ${hm2(d)}`;
+  if (diff === 1) return `i g\xE5r ${hm2(d)}`;
+  if (diff === -1) return `i morgen ${hm2(d)}`;
+  return `${d.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm2(d)}`;
+};
+function insightIds(cfg = {}) {
+  return [
+    cfg.away,
+    cfg.away_since,
+    cfg.alarm,
+    ...cfg.locks || [],
+    ...cfg.openings || [],
+    cfg.power,
+    cfg.price,
+    cfg.price_mean,
+    cfg.price_min,
+    cfg.waste,
+    ...cfg.calendars || [],
+    ...(cfg.travel || []).flatMap((t) => [t.travel, t.direction]),
+    ...(cfg.robots || []).flatMap((r) => [r.entity, r.room]),
+    cfg.car?.battery,
+    cfg.car?.range,
+    cfg.car?.plugged,
+    cfg.car?.next_start
+  ].filter(Boolean);
+}
+function computeInsights(hass, cfg = {}, hourly = []) {
+  const S = (id) => id ? hass?.states?.[id] : void 0, st = (id) => S(id)?.state;
+  const num4 = (id) => {
+    const v = parseFloat(st(id));
+    return Number.isFinite(v) ? v : NaN;
+  };
+  const fname = (id) => S(id)?.attributes?.friendly_name || id;
+  const valid2 = (v) => v != null && !["unknown", "unavailable", ""].includes(String(v));
+  const out = [], now = /* @__PURE__ */ new Date();
+  const add = (prio, item2) => out.push({ prio, ...item2 });
+  const away = cfg.away && st(cfg.away) === "on";
+  const alarm = cfg.alarm ? st(cfg.alarm) : null, armed = !!alarm && alarm.startsWith("armed");
+  const open = (cfg.openings || []).filter((id) => st(id) === "on");
+  const unlocked = (cfg.locks || []).filter((id) => ["unlocked", "open", "opening", "unlocking", "jammed"].includes(st(id)));
+  if (open.length) add(1, { key: "sec", icon: "mdi:door-open", tone: "warn", text: `\xC5ben: ${names(open.map(fname))}`, entity: open[0] });
+  else if (unlocked.length) add(1, { key: "sec", icon: "mdi:lock-open-variant-outline", tone: "warn", text: `Ul\xE5st: ${names(unlocked.map(fname))}`, entity: unlocked[0] });
+  else if ((cfg.locks || []).length || (cfg.openings || []).length) add(8, { key: "sec", icon: "mdi:shield-lock-outline", tone: "ok", text: `Alt lukket og l\xE5st${armed && !away ? " \xB7 alarm til" : ""}`, entity: cfg.alarm });
+  if (cfg.waste) {
+    const days = num4(cfg.waste), a = S(cfg.waste)?.attributes || {};
+    if (Number.isFinite(days) && days <= 1 && !a.kvitteret) add(2, { key: "waste", icon: "mdi:trash-can-outline", tone: "warn", text: `${a.typer || "Affald"} ${days === 0 ? "i dag" : "i morgen"} \u2013 s\xE6t ud`, path: cfg.waste_path });
+  }
+  const coming = (cfg.travel || []).map((t) => ({ name: t.name, min: num4(t.travel), dir: st(t.direction) })).filter((t) => t.dir === "towards" && Number.isFinite(t.min) && t.min >= 1).sort((a, b) => a.min - b.min);
+  if (coming.length) {
+    const together = coming.every((t) => t.min - coming[0].min < 5);
+    add(3, { key: "home", icon: "mdi:home-import-outline", tone: "accent", text: `${together && coming.length > 1 ? "" : `${coming[0].name} `}hjemme om ${dur(coming[0].min)}`.replace(/^h/, "H") });
+  }
+  if (away) {
+    const sinceEnt = cfg.away_since && S(cfg.away_since) ? S(cfg.away_since) : S(cfg.away);
+    const holiday = String(st(cfg.away_since) || "").toLowerCase() === "ferie";
+    const since = sinceEnt?.last_changed ? new Date(sinceEnt.last_changed) : null;
+    add(4, { key: "away", icon: holiday ? "mdi:palm-tree" : "mdi:home-export-outline", tone: "info", text: `${holiday ? "Ferie \xB7 tomt" : "Tomt"}${since ? ` siden ${when(since)}` : ""}${armed ? " \xB7 alarm til" : ""}`, entity: cfg.alarm || cfg.away });
+  }
+  if (cfg.forecast !== false && hourly.length) {
+    const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 6e4).slice(0, 6);
+    const wet = next.findIndex((h) => Number(h.precipitation_probability) >= 50 || Number(h.precipitation) >= 0.3);
+    const temps = next.map((h) => Number(h.temperature)).filter(Number.isFinite);
+    if (wet === 0) add(5, { key: "wx", icon: "mdi:weather-rainy", tone: "accent", text: "Regn nu og den n\xE6ste time" });
+    else if (wet > 0) add(5, { key: "wx", icon: "mdi:weather-rainy", tone: "accent", text: `Regn fra kl. ${p2(new Date(next[wet].datetime).getHours())}` });
+    else if (temps.length) add(7, { key: "wx", icon: "mdi:weather-partly-cloudy", tone: "info", text: `T\xF8rt de n\xE6ste 6 timer \xB7 ${Math.round(Math.min(...temps))}\u2013${Math.round(Math.max(...temps))}\xB0` });
+  }
+  let soon = null;
+  for (const id of cfg.calendars || []) {
+    const a = S(id)?.attributes || {};
+    if (!a.start_time || !a.message) continue;
+    const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time || a.start_time).replace(" ", "T"));
+    if (a.all_day && end - start > 864e5) continue;
+    if (start > now && start - now < 864e5 && (!soon || start < soon.start)) soon = { start, text: String(a.message).trim(), all: a.all_day, id };
+  }
+  if (soon) add(6, { key: "cal", icon: "mdi:calendar-clock", tone: "info", text: `${soon.all ? soon.start.getDate() === now.getDate() ? "I dag" : "I morgen" : when(soon.start).replace(/^kl\./, "Kl.")} \xB7 ${soon.text}`, entity: soon.id });
+  const pw = S(cfg.power), price = num4(cfg.price);
+  if (pw && valid2(pw.state) && Number.isFinite(price)) {
+    const w = parseFloat(pw.state) * (String(pw.attributes?.unit_of_measurement || "W").toLowerCase() === "kw" ? 1e3 : 1);
+    const mean = num4(cfg.price_mean), min = num4(cfg.price_min), at = S(cfg.price_min)?.attributes?.at;
+    const tone2 = Number.isFinite(mean) ? price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info" : "info";
+    let cheap = "";
+    if (Number.isFinite(min) && min < price * 0.85 && at) {
+      const [h, m] = String(at).split(":").map(Number);
+      const t = new Date(now);
+      t.setHours(h, m || 0, 0, 0);
+      if (t > now) cheap = ` \xB7 billigst kl. ${p2(h)}`;
+    }
+    add(7, { key: "power", icon: "mdi:flash", tone: tone2, text: `${w >= 1e3 ? `${(w / 1e3).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w)} W`} \xB7 ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
+  }
+  for (const r of cfg.robots || []) {
+    const s = st(r.entity);
+    if (!["cleaning", "returning", "mowing"].includes(s)) continue;
+    const room = st(r.room);
+    add(6, { key: `robot-${r.entity}`, icon: String(r.entity).startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum", tone: "accent", text: s === "returning" ? `${r.name} k\xF8rer hjem i dock` : `${r.name} g\xF8r rent${valid2(room) ? ` i ${room}` : ""}`, entity: r.entity });
+  }
+  const car = cfg.car;
+  if (car?.battery && Number.isFinite(num4(car.battery))) {
+    const bat = Math.round(num4(car.battery)), plugged = car.plugged && st(car.plugged) === "on";
+    const start = car.next_start && valid2(st(car.next_start)) ? new Date(st(car.next_start)) : null;
+    const range = num4(car.range);
+    const tail = plugged ? start && start > now ? `lader ${when(start)}` : "tilsluttet" : Number.isFinite(range) ? `${Math.round(range)} km` : "";
+    add(9, { key: "car", icon: plugged ? "mdi:car-electric" : "mdi:car-side", tone: bat < 20 ? "warn" : "info", text: `${car.name || "Bil"} ${bat} %${tail ? ` \xB7 ${tail}` : ""}`, path: car.path, entity: car.path ? void 0 : car.battery });
+  }
+  return out.sort((a, b) => a.prio - b.prio);
+}
+function hoursHtml(hass, hourly = [], esc12 = (v) => v) {
+  const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
+  const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 6e4).slice(0, 6);
+  const sunCache = /* @__PURE__ */ new Map();
+  const night = (t) => {
+    const k = t.toDateString();
+    if (!sunCache.has(k)) sunCache.set(k, sunTimes(t, lat, lon));
+    const s = sunCache.get(k);
+    return s ? t < s.rise || t > s.set : false;
+  };
+  return next.map((h, i) => {
+    const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
+    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc12(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
+  }).join("");
+}
+var INSIGHT_CSS = `
+/* wide: as many whole chips as fit, most important first (the ones that would wrap are hidden) */
+.insights{position:absolute;left:50%;bottom:9px;z-index:7;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:calc(100% - 560px);height:24px;overflow:hidden;transform:translateX(-50%);pointer-events:auto}
+.insights:empty{display:none}
+.ins{flex:0 0 auto;max-width:100%;display:inline-flex;align-items:center;gap:5px;min-width:0;height:24px;padding:0 10px 0 7px;border:0;border-radius:99px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:700;white-space:nowrap;
+  color:#f3f6fa;background:rgba(10,15,22,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 4px 12px -6px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.ins span{overflow:hidden;text-overflow:ellipsis}
+.ins ha-icon{flex:none;--mdc-icon-size:14px;color:var(--ic,#9fd3ff)}
+.ins.t-ok{--ic:#4ade80}.ins.t-warn{--ic:#fbbf24;box-shadow:inset 0 0 0 1px rgba(251,191,36,.45),0 4px 12px -6px rgba(0,0,0,.6)}.ins.t-accent{--ic:#7dd3fc}.ins.t-info{--ic:#cbd5e1}
+.ins.t-warn ha-icon{animation:insPulse 2.2s ease-in-out infinite}
+ha-card.has-insights .status-group{top:41%}
+.hours6{position:absolute;right:250px;top:50%;z-index:6;display:flex;gap:3px;transform:translateY(-58%);pointer-events:none}
+.hours6:empty{display:none}
+.h6{display:flex;flex-direction:column;align-items:center;gap:1px;width:36px;padding:4px 0 3px;border-radius:11px;background:rgba(10,15,22,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);color:#f3f6fa;font-variant-numeric:tabular-nums}
+.h6.now{background:rgba(10,15,22,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.h6 small{font-size:9px;font-weight:800;opacity:.75}.h6 ha-icon{--mdc-icon-size:16px}.h6 b{font-size:11px;font-weight:800}
+.h6 i{width:22px;height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;position:relative}.h6 i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#60a5fa}
+@keyframes insPulse{50%{opacity:.45}}
+@container (min-width:1181px){.ins.k-wx.t-info{display:none}}
+@container (max-width:1180px){.hours6{display:none}.insights{max-width:calc(100% - 460px)}}
+@container (max-width:900px){.insights{max-width:calc(100% - 400px)}}
+/* narrow: one insight at a time, they take turns */
+@container (max-width:720px){
+  .insights{left:10px;right:10px;bottom:6px;width:auto;max-width:none;transform:none;height:22px;overflow:visible}
+  .ins,.ins:nth-child(n){position:absolute;left:50%;top:0;display:inline-flex;max-width:100%;height:22px;font-size:11px;opacity:0;transform:translate(-50%,6px);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
+  .ins.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  ha-card.has-insights .status-group{top:40%}
+  ha-card.has-insights .status-group:not(.has-alert) span{display:none}
+  ha-card.has-insights .status-group:not(.has-alert) ha-icon{width:26px;height:26px;--mdc-icon-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.ins.t-warn ha-icon{animation:none}.ins{transition:none!important}}
+`;
+
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.8.79";
+var VERSION28 = "0.9.0";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -36371,6 +36535,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._v3Bucket = null;
   }
   connectedCallback() {
+    this._wxSub();
     if (!this._timer) this._timer = setInterval(() => this._updateClock(), 1e3);
     if (!this._filterTimer) this._filterTimer = setInterval(() => this._scanFilters(), 15e3);
     this._updateClock();
@@ -36394,6 +36559,9 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock }, bubbles: true, composed: true }));
   }
   disconnectedCallback() {
+    this._wxUnsub?.();
+    this._wxUnsub = null;
+    this._wxFor = null;
     clearInterval(this._timer);
     this._timer = void 0;
     clearInterval(this._filterTimer);
@@ -36450,9 +36618,10 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
   set hass(h) {
     this._hass = h;
+    this._wxSub();
     this.style.setProperty("--header-accent-width", h?.states?.["input_boolean.dashboard_venstre_accent"]?.state === "on" ? "4px" : "0px");
     if (this._popupCard) this._popupCard.hass = h;
-    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.wind_speed_entity, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error]), ...(this._config.notes || []).map((n) => n?.entity)].filter(Boolean);
+    const ids = [this._config.weather, this._config.outdoor_temperature, this._config.wind_speed_entity, this._config.mode_entity, this._config.snooze_entity, ...(this._config.alerts || []).flatMap((a) => [a.entity, a.snapshot, ...(a.conditions || []).map((c2) => c2.entity)]), ...(this._config.activities || []).flatMap((a) => [a.entity, a.battery, a.charging, a.error]), ...(this._config.notes || []).map((n) => n?.entity), ...insightIds(this._config.insights)].filter(Boolean);
     const states = h?.states || {};
     const values = ids.map((id) => {
       const entity = states[id];
@@ -36715,6 +36884,58 @@ var HAHomeHeaderCard = class extends HTMLElement {
   }
   // notes: quiet one-line hints under the house mode while no alert shows, e.g.
   // {entity: calendar.school_holiday, state: "on", text: "Skolefri · vækning holder pause"}. The first match wins.
+  // Header insights (Claude AI, 2026-10-27; user: "Prøv at byg det i"): see insights.js. Re-drawn only when the content
+  // changes; on narrow headers they take turns (the .on class moves, nothing is redrawn).
+  _updateInsights() {
+    const root = this.shadowRoot, box = root?.querySelector(".insights");
+    if (!box) return;
+    const cfg = this._config.insights;
+    const card = root.querySelector("ha-card");
+    if (!cfg) {
+      box.innerHTML = "";
+      box._key = "";
+      card?.classList.remove("has-insights");
+      return;
+    }
+    const items = computeInsights(this._hass, cfg, this._wxHourly || []).slice(0, 8);
+    this._insightItems = items;
+    const key = items.map((it) => `${it.tone}|${it.icon}|${it.text}`).join("\xA7");
+    if (box._key !== key) {
+      box._key = key;
+      box.innerHTML = items.map((it, i) => `<button class="ins t-${this._esc(it.tone)} k-${this._esc(it.key)}" data-ins="${i}" type="button" title="${this._esc(it.text)}"><ha-icon icon="${this._esc(it.icon)}"></ha-icon><span>${this._esc(it.text)}</span></button>`).join("");
+    }
+    const n = items.length;
+    if (n) this._insIdx = (this._insIdx || 0) % n;
+    [...box.children].forEach((el, i) => el.classList.toggle("on", i === this._insIdx));
+    card?.classList.toggle("has-insights", n > 0);
+    const h6 = root.querySelector(".hours6");
+    if (h6) {
+      const hh3 = cfg.forecast === false ? "" : hoursHtml(this._hass, this._wxHourly || [], (v) => this._esc(v));
+      if (h6._h !== hh3) {
+        h6._h = hh3;
+        h6.innerHTML = hh3;
+      }
+    }
+  }
+  _wxSub() {
+    const id = this._config?.weather;
+    const want = this._config?.insights && this._config.insights.forecast !== false && id && this.isConnected && this._hass?.connection ? id : null;
+    if (want === (this._wxFor || null)) return;
+    this._wxUnsub?.();
+    this._wxUnsub = null;
+    this._wxFor = want;
+    if (!want) return;
+    const p = this._hass.connection.subscribeMessage((m) => {
+      if (this._wxFor !== want) return;
+      this._wxHourly = Array.isArray(m?.forecast) ? m.forecast : [];
+      this._updateInsights();
+    }, { type: "weather/subscribe_forecast", forecast_type: "hourly", entity_id: want });
+    p.catch((e) => console.warn("ha-home-header-card: vejrprognose", e));
+    this._wxUnsub = () => {
+      p.then((u2) => u2 && u2()).catch(() => {
+      });
+    };
+  }
   _note() {
     this._noteColor = "";
     for (const n of this._config.notes || []) {
@@ -36762,6 +36983,18 @@ var HAHomeHeaderCard = class extends HTMLElement {
     if (changed) {
       this._updateStatusGroup();
       this._updateMedia();
+    }
+    if (this._config.insights) {
+      const n = this._insightItems?.length || 0;
+      if (Date.now() - (this._insAt || 0) > 2e4) {
+        this._insAt = Date.now();
+        this._updateInsights();
+      }
+      if (n > 1 && Date.now() - (this._insCycle || 0) > (Number(this._config.cycle_seconds) || 8) * 1e3) {
+        this._insCycle = Date.now();
+        this._insIdx = ((this._insIdx || 0) + 1) % n;
+        this.shadowRoot.querySelectorAll(".insights>.ins").forEach((el, i) => el.classList.toggle("on", i === this._insIdx));
+      }
     }
   }
   _mediaSlotHtml(mediaAlert) {
@@ -37062,7 +37295,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
   :host([home-unified]) ha-card{border:0;border-radius:0;background:linear-gradient(to bottom,color-mix(in srgb,var(--ha-card-background,var(--card-background-color)) 54%,transparent) 0%,color-mix(in srgb,var(--ha-card-background,var(--card-background-color)) 54%,transparent) 80%,transparent 100%);box-shadow:none}
   :host([home-unified]) .v3-bg{mask-image:linear-gradient(to bottom,#000 0%,#000 84%,transparent 100%)}
   :host([home-unified]) .weather-fx{mask-image:linear-gradient(to bottom,#000 0%,#000 86%,transparent 100%)}
-  </style><ha-card class="${cardClass}" style="--robot-icon-size:${robotSize}px;--robot-opacity:${robotOpacity};${v3InkVars((this._v3InkShown || this._v3Ink || {}).main || "light", (this._v3InkShown || this._v3Ink || {}).weather || "light")}">${backdropHtml}<div class="runway"></div><div class="status-group${v3 ? " v3-active" : ""}"><ha-icon></ha-icon><div><span></span><strong></strong></div></div><div class="content"><button class="menu" title="\xC5bn sidemenu"><ha-icon icon="mdi:menu"></ha-icon></button>${(Array.isArray(this._config.quick_buttons) ? this._config.quick_buttons : []).slice(0, 1).map((b, i) => `<button class="menu quick" data-quick="${i}" title="${this._esc(b?.title || b?.name || "")}" aria-label="${this._esc(b?.title || b?.name || "")}"><ha-icon icon="${this._esc(b?.icon || "mdi:arrow-right")}"></ha-icon></button>`).join("")}<div class="time"><div class="date"></div><div class="clock"></div></div><div class="weather${weatherClass}"></div></div></ha-card>`;
+  ha-card{container-type:inline-size}${INSIGHT_CSS}</style><ha-card class="${cardClass}" style="--robot-icon-size:${robotSize}px;--robot-opacity:${robotOpacity};${v3InkVars((this._v3InkShown || this._v3Ink || {}).main || "light", (this._v3InkShown || this._v3Ink || {}).weather || "light")}">${backdropHtml}<div class="runway"></div><div class="status-group${v3 ? " v3-active" : ""}"><ha-icon></ha-icon><div><span></span><strong></strong></div></div><div class="hours6"></div><div class="insights"></div><div class="content"><button class="menu" title="\xC5bn sidemenu"><ha-icon icon="mdi:menu"></ha-icon></button>${(Array.isArray(this._config.quick_buttons) ? this._config.quick_buttons : []).slice(0, 1).map((b, i) => `<button class="menu quick" data-quick="${i}" title="${this._esc(b?.title || b?.name || "")}" aria-label="${this._esc(b?.title || b?.name || "")}"><ha-icon icon="${this._esc(b?.icon || "mdi:arrow-right")}"></ha-icon></button>`).join("")}<div class="time"><div class="date"></div><div class="clock"></div></div><div class="weather${weatherClass}"></div></div></ha-card>`;
       this._built = true;
       this._mediaSig = null;
       this._runwaySig = null;
@@ -37074,10 +37307,18 @@ var HAHomeHeaderCard = class extends HTMLElement {
         else this._navigate(b.navigation_path || b.path);
       }));
       this._bindPress(this.shadowRoot.querySelector(".status-group"), () => this._alertTap(this._currentActiveAlert), () => this._alertHold(this._currentActiveAlert));
+      this.shadowRoot.querySelector(".insights")?.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-ins]");
+        const it = b && this._insightItems?.[Number(b.dataset.ins)];
+        if (!it) return;
+        if (it.path) this._navigate(it.path);
+        else if (it.entity) this._more(it.entity);
+      });
     }
     this._updateRunway(activity);
     this._updateStatusGroup();
     this._updateMedia();
+    this._updateInsights();
     this._updateClock();
   }
 };
@@ -39863,7 +40104,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
       p.distance,
       p.travel_time,
       this._geoId(p)
-    ]).concat(this._config?.style_entity || []).filter(Boolean) || [];
+    ]).concat([].concat(this._config?.trip_calendar || [])).concat(this._config?.style_entity || []).filter(Boolean) || [];
     const sig = JSON.stringify(
       ids.map((id) => [id, h.states[id]?.state, h.states[id]?.last_updated])
     );
@@ -39909,7 +40150,22 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const lat = Number(a.latitude), lon = Number(a.longitude);
     return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
   }
+  // A trip in the calendar (trip_calendar, e.g. "Lalandia søndervig" all-day 26–30/10): while someone is more than 25 km
+  // from home during an ongoing all-day event of two days or more, its title is the place.
+  _trip(p) {
+    const cals = [].concat(this._config.trip_calendar || []);
+    if (!cals.length || !(this._km(p) > 25)) return "";
+    for (const id of cals) {
+      const a = this._s(id)?.attributes || {};
+      if (this._s(id)?.state !== "on" || !a.all_day || !a.message) continue;
+      const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time).replace(" ", "T"));
+      if (end - start >= 2 * 864e5) return String(a.message).trim().replace(/^./, (c2) => c2.toUpperCase());
+    }
+    return "";
+  }
   _place(p) {
+    const trip = this._trip(p);
+    if (trip) return trip;
     let best = this._ownPlace(p);
     const here = this._coords(p);
     if (here) for (const q of this._config.persons || []) {
@@ -41892,8 +42148,8 @@ var ThWeatherCard = class extends HTMLElement {
     const pts = fc.map((f, i) => [X(i), Y(f.temperature)]);
     let d = `M${pts[0][0]} ${pts[0][1]}`;
     for (let i = 0; i < n - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p23 = pts[i + 1], p3 = pts[i + 2] || p23;
-      d += `C${p1[0] + (p23[0] - p0[0]) / 6} ${p1[1] + (p23[1] - p0[1]) / 6} ${p23[0] - (p3[0] - p1[0]) / 6} ${p23[1] - (p3[1] - p1[1]) / 6} ${p23[0]} ${p23[1]}`;
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p24 = pts[i + 1], p3 = pts[i + 2] || p24;
+      d += `C${p1[0] + (p24[0] - p0[0]) / 6} ${p1[1] + (p24[1] - p0[1]) / 6} ${p24[0] - (p3[0] - p1[0]) / 6} ${p24[1] - (p3[1] - p1[1]) / 6} ${p24[0]} ${p24[1]}`;
     }
     const tc = (t) => t <= 0 ? "#8ed1ff" : t < 8 ? "#9fd8c4" : t < 16 ? "#e8c37e" : t < 24 ? "#ffb27a" : "#ff8a7a";
     let g = `<defs><linearGradient id="tl" x1="0" y1="0" x2="${W2}" y2="0" gradientUnits="userSpaceOnUse">${fc.map((f, i) => `<stop offset="${(X(i) / W2).toFixed(4)}" stop-color="${tc(f.temperature)}"/>`).join("")}</linearGradient>
@@ -42635,8 +42891,8 @@ var HAWeatherChartsCard = class extends HTMLElement {
         const p = near(pts);
         if (p) rows.push(`<span style="--c:${color}"><i></i>${esc8(name)} skyer<b>${fmt3(p[1], 0)} %</b></span>`);
       }
-      const when = new Date(t);
-      const head = ch2.days ? `${DAYS[when.getDay()]} ${when.getDate()}.${when.getMonth() + 1}.` : `${DAYS[when.getDay()]} ${when.getDate()}. kl. ${hh2(t)}.${String(Math.round(when.getMinutes() / 10) * 10 % 60).padStart(2, "0")}`;
+      const when2 = new Date(t);
+      const head = ch2.days ? `${DAYS[when2.getDay()]} ${when2.getDate()}.${when2.getMonth() + 1}.` : `${DAYS[when2.getDay()]} ${when2.getDate()}. kl. ${hh2(t)}.${String(Math.round(when2.getMinutes() / 10) * 10 % 60).padStart(2, "0")}`;
       const tip = panel.querySelector(".tip");
       tip.innerHTML = `<em>${head}</em>${rows.join("") || "<span>Ingen v\xE6rdier</span>"}`;
       tip.hidden = false;
@@ -50838,9 +51094,9 @@ window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Car
 console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION40} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
 // src/shared/watch-pause.js
-var p2 = (n) => String(n).padStart(2, "0");
-var stamp = (d) => `${p2(d.getHours())}.${p2(d.getMinutes())}`;
-var ymdhms = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:00`;
+var p22 = (n) => String(n).padStart(2, "0");
+var stamp = (d) => `${p22(d.getHours())}.${p22(d.getMinutes())}`;
+var ymdhms = (d) => `${d.getFullYear()}-${p22(d.getMonth() + 1)}-${p22(d.getDate())} ${p22(d.getHours())}:${p22(d.getMinutes())}:00`;
 function untilText(d) {
   const now = /* @__PURE__ */ new Date(), tom = new Date(now);
   tom.setDate(now.getDate() + 1);
@@ -54278,7 +54534,7 @@ var addDays = (d, n) => {
   return x;
 };
 var monday = (d) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
-var dur = (ms) => {
+var dur2 = (ms) => {
   const m = Math.max(0, Math.round(ms / 6e4));
   if (m < 60) return `${m} min`;
   const h = Math.floor(m / 60);
@@ -54800,7 +55056,7 @@ ${LUX_KEYFRAMES}
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
     return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc10(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc10(e.location)}</span>` : ""}</span></span></button>`;
+      <span class="x"><b>${esc10(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur2(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc10(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -54927,7 +55183,7 @@ ${LUX_KEYFRAMES}
     const c2 = e._color ? { color: e._color, name: e._name, icon: e._icon } : this._cal(e.calendar_entity);
     const s = new Date(e.s);
     const en = new Date(e.e);
-    const when = e.allDay ? `${DAY2[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` \u2013 ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} \xB7 hele dagen` : `${DAY2[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} \xB7 ${hhmm2(s)}\u2013${hhmm2(en)} (${dur(e.e - e.s)})`;
+    const when2 = e.allDay ? `${DAY2[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]}${en - s > 864e5 ? ` \u2013 ${addDays(en, -1).getDate()}. ${MONTH[addDays(en, -1).getMonth()]}` : ""} \xB7 hele dagen` : `${DAY2[s.getDay()]} ${s.getDate()}. ${MONTH[s.getMonth()]} \xB7 ${hhmm2(s)}\u2013${hhmm2(en)} (${dur2(e.e - e.s)})`;
     const live = this._on(e, Date.now());
     this._closeSheet();
     const host = document.createElement("div");
@@ -54936,7 +55192,7 @@ ${LUX_KEYFRAMES}
     const div = document.createElement("div");
     div.className = "sheet";
     div.innerHTML = `<div class="box" style="--c:${esc10(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc10(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc10(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc10(when[0].toUpperCase() + when.slice(1))}</dd>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc10(when2[0].toUpperCase() + when2.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
       ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc10(e.location)}</dd>` : ""}
       ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc10(e.description)}</dd>` : ""}</dl>
@@ -55037,13 +55293,13 @@ var SKYLINE = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www
 var WAVE = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' viewBox='0 0 24 6'><path d='M0 3q6-3 12 0t12 0v3H0z'/></svg>");
 var TRUCK = `<svg viewBox="0 0 68 44" aria-hidden="true"><circle class="t-flash" cx="51.5" cy="10.5" r="7"/><rect class="t-lamp" x="49" y="9" width="5" height="3" rx="1"/><rect class="t-box" x="4" y="10" width="38" height="22" rx="3"/><path class="t-ribs" d="M13 13v16M33 13v16"/><circle class="t-logo" cx="23" cy="21" r="4.6"/><rect class="t-rear" x="1" y="12" width="5" height="19" rx="1.5"/><path class="t-cab" d="M43 14h11l9 9v9H43z"/><path class="t-glass" d="M46 17h7l6 6H46z"/><rect class="t-chassis" x="1" y="31" width="64" height="4" rx="1.5"/><circle class="t-light" cx="63" cy="28" r="1.6"/><g class="wheel"><circle class="t-tire" cx="15" cy="36" r="6"/><path class="t-spoke" d="M15 31.5v9M10.5 36h9"/></g><g class="wheel"><circle class="t-tire" cx="53" cy="36" r="6"/><path class="t-spoke" d="M53 31.5v9M48.5 36h9"/></g></svg>`;
 var LEARN_KEY = "ha-waste-journey:intervals";
-var p22 = (n) => String(n).padStart(2, "0");
+var p23 = (n) => String(n).padStart(2, "0");
 var parseDate = (value) => {
   const [y, m, d] = String(value || "").split("-").map(Number);
   return y && m && d ? new Date(y, m - 1, d) : null;
 };
 var dayDiff = (a, b) => Math.round((b - a) / DAY3);
-var clock = (date2) => `${p22(date2.getHours())}:${p22(date2.getMinutes())}`;
+var clock = (date2) => `${p23(date2.getHours())}:${p23(date2.getMinutes())}`;
 var tickFrames = (n) => {
   let frames = "";
   for (let i = 0; i < n; i++) frames += `${(i / n * 100).toFixed(2)}%,${((i + 0.84) / n * 100).toFixed(2)}%{transform:translateY(${(-i / (n + 1) * 100).toFixed(3)}%)}`;
@@ -55519,9 +55775,9 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   _type(item2, isNext) {
     const days = item2.days, fill = this._fill(item2), date2 = parseDate(item2.attrs.date), hints = this._hints(item2), n = Math.min(hints.length, 6);
     const chip = isNext ? `<em class="chip">${days === 0 ? "I dag" : days === 1 ? "I morgen" : "N\xE6ste"}</em>` : "";
-    const when = date2 ? `<strong>${WEEKDAYS[date2.getDay()]} ${date2.getDate()}. ${MONTHS[date2.getMonth()]}</strong> \xB7 ${this._esc(item2.attrs.description || "Planlagt afhentning")}` : this._esc(item2.attrs.date_short || "Dato ukendt");
+    const when2 = date2 ? `<strong>${WEEKDAYS[date2.getDay()]} ${date2.getDate()}. ${MONTHS[date2.getMonth()]}</strong> \xB7 ${this._esc(item2.attrs.description || "Planlagt afhentning")}` : this._esc(item2.attrs.date_short || "Dato ukendt");
     const ticker = !n ? "" : n === 1 ? `<span class="ticker"><em>H\xF8rer til</em><span class="tk"><i>${this._esc(hints[0])}</i></span></span>` : `<span class="ticker"><em>H\xF8rer til</em><span class="tk tk${n}">${[...hints.slice(0, n), hints[0]].map((text) => `<i>${this._esc(text)}</i>`).join("")}</span></span>`;
-    return `<button class="waste${isNext ? " next" : ""}${days != null && days <= 3 ? " close" : ""}" type="button" data-entity="${this._esc(item2.entity)}" style="--c:${this._esc(item2.color || "#22c55e")};--fill:${fill.toFixed(3)};--i:${item2.index}"><span class="spot"></span><span class="can" aria-hidden="true"><i class="lid"></i><span class="tank"><i class="liquid"><i class="wave"></i></i><i class="bubble"></i><i class="bubble"></i></span><ha-icon icon="${this._esc(item2.icon || item2.attrs.icon || "mdi:trash-can-outline")}"></ha-icon><i class="wheels"></i></span><span class="waste-copy">${chip}<b>${this._esc(item2.name || item2.attrs.name || "Affald")}</b><span class="when">${when}</span>${ticker}</span><span class="waste-days"><b data-count="${days ?? ""}" data-delay="${item2.index * 90 + 300}" data-duration="1000">${days ?? "\u2014"}</b><span>${days === 1 ? "dag" : "dage"}</span></span><span class="bar"><i></i></span></button>`;
+    return `<button class="waste${isNext ? " next" : ""}${days != null && days <= 3 ? " close" : ""}" type="button" data-entity="${this._esc(item2.entity)}" style="--c:${this._esc(item2.color || "#22c55e")};--fill:${fill.toFixed(3)};--i:${item2.index}"><span class="spot"></span><span class="can" aria-hidden="true"><i class="lid"></i><span class="tank"><i class="liquid"><i class="wave"></i></i><i class="bubble"></i><i class="bubble"></i></span><ha-icon icon="${this._esc(item2.icon || item2.attrs.icon || "mdi:trash-can-outline")}"></ha-icon><i class="wheels"></i></span><span class="waste-copy">${chip}<b>${this._esc(item2.name || item2.attrs.name || "Affald")}</b><span class="when">${when2}</span>${ticker}</span><span class="waste-days"><b data-count="${days ?? ""}" data-delay="${item2.index * 90 + 300}" data-duration="1000">${days ?? "\u2014"}</b><span>${days === 1 ? "dag" : "dage"}</span></span><span class="bar"><i></i></span></button>`;
   }
   // Indkørslen: alt starter ved genbrugspladsen og kører på plads, beholderne fyldes, tallene tæller op
   _play() {
@@ -60452,12 +60708,12 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   }
   _cleanSelected() {
     if (!this._sel.length) return;
-    const names = this._sel.map((id) => this._rooms.find((r) => r.id === id)?.name).join(" \u2192 ");
+    const names2 = this._sel.map((id) => this._rooms.find((r) => r.id === id)?.name).join(" \u2192 ");
     this._call("vacuum", "send_command", {
       entity_id: this._config.entity,
       command: "app_segment_clean",
       params: [{ segments: [...this._sel], repeat: this._repeat }]
-    }, `Sendt: ${names}${this._repeat > 1 ? ` (${this._repeat}\xD7)` : ""}`);
+    }, `Sendt: ${names2}${this._repeat > 1 ? ` (${this._repeat}\xD7)` : ""}`);
   }
   _action(a, value) {
     const vac = { entity_id: this._config.entity };
@@ -62559,8 +62815,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._show("adviceNote2", Boolean(cheapest));
     if (cheapest) {
       const isNow = cheapest.start <= m.now;
-      const when = cheapest.dateKey !== m.dateKey ? `i morgen kl. ${cheapest.label}` : `kl. ${cheapest.label}`;
-      this._text("adviceNext", isNow ? "Lige nu er det billigste kommende tidsrum" : `Billigst ${when} \xB7 ${fmtPrice(cheapest.price)} kr/kWh`);
+      const when2 = cheapest.dateKey !== m.dateKey ? `i morgen kl. ${cheapest.label}` : `kl. ${cheapest.label}`;
+      this._text("adviceNext", isNow ? "Lige nu er det billigste kommende tidsrum" : `Billigst ${when2} \xB7 ${fmtPrice(cheapest.price)} kr/kWh`);
     }
   }
   _updateVsMini(m, nowPrice, dev, devTone) {
@@ -63087,9 +63343,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const finite = data.values.filter(Number.isFinite);
     const lo = Math.min(...finite, 0);
     const span = Math.max(...finite, 0) - lo || 1;
-    const when = data.liveLast && i === n - 1 ? "Nu" : `Kl. ${this._clock.time(data.times[i])}`;
+    const when2 = data.liveLast && i === n - 1 ? "Nu" : `Kl. ${this._clock.time(data.times[i])}`;
     const value = !Number.isFinite(v) ? "ingen data" : data.unit === "kW" ? `${fmtPower(v)} kW` : `${fmtEnergy(v)} kWh`;
-    return { x: (i + 0.5) / n, y: Number.isFinite(v) ? 1 - (6 + (v - lo) / span * 94) / 100 : void 0, color: "var(--tone)", text: `${when} \xB7 ${value}` };
+    return { x: (i + 0.5) / n, y: Number.isFinite(v) ? 1 - (6 + (v - lo) / span * 94) / 100 : void 0, color: "var(--tone)", text: `${when2} \xB7 ${value}` };
   }
   _vsLinePoint(fraction) {
     const g = this._vsLineGeom;
@@ -64496,11 +64752,11 @@ var EnergyFlow = class {
       const w = v[a === "home" ? b : a];
       const active = Number.isFinite(w) && w > ACTIVE_W;
       const dash = this.dashes[`${a}-${b}`];
-      const dur2 = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
-      if (dash.__dur === dur2) continue;
-      dash.__dur = dur2;
+      const dur3 = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
+      if (dash.__dur === dur3) continue;
+      dash.__dur = dur3;
       dash.classList.toggle("on", active);
-      if (active) dash.style.setProperty("--dur", `${dur2}s`);
+      if (active) dash.style.setProperty("--dur", `${dur3}s`);
     }
   }
 };
