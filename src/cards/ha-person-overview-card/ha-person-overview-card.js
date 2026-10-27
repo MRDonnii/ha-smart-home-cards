@@ -1,5 +1,5 @@
 import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
-const VERSION = "0.5.6";
+const VERSION = "0.6.0";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -43,6 +43,7 @@ class HAPersonOverviewCard extends HTMLElement {
           p.charging,
           p.distance,
           p.travel_time,
+          this._geoId(p),
         ])
         .concat(this._config?.style_entity || [])
         .filter(Boolean) || [];
@@ -59,6 +60,51 @@ class HAPersonOverviewCard extends HTMLElement {
   }
   _s(id) {
     return this._hass?.states?.[id];
+  }
+  // ---------- where someone is without a zone (Claude AI, 2026-10-27; user: "tager ud fra lokation hvis ikke der er en
+  // zone oprettet i området? enten med By eller som nu Lalandia søndervig") ----------
+  // The phone's own geocoded sensor (iOS/Android companion app, sensor.<tracker>_geocoded_location, or p.geocoded):
+  // a known place (Areas Of Interest), else the district (Sub Locality), else the town. Trackers without one (the boys'
+  // watches) use the town in their address; anyone within 1.5 km of a person with a better place shares it.
+  _geoId(p) {
+    if (p.geocoded) return p.geocoded;
+    const t = String(p.tracker || "").split(".")[1];
+    const id = t ? `sensor.${t}_geocoded_location` : "";
+    return id && this._s(id) ? id : "";
+  }
+  _ownPlace(p) {
+    const ok = (v) => this._valid(v) && !["n/a", "na", "-"].includes(String(v).trim().toLowerCase());
+    const geo = this._s(this._geoId(p))?.attributes;
+    if (geo) { const poi = String(geo["Areas Of Interest"] || "").split(/[,;]/)[0]; for (const v of [poi, geo["Sub Locality"], geo.Locality]) if (ok(v)) return { name: String(v).trim(), rank: v === poi ? 3 : 2 }; }
+    const tracker = this._s(p.tracker)?.attributes || {};
+    const addr = String(tracker.address || "");
+    const town = addr.match(/\b\d{4}\s+([^,]+)/)?.[1];
+    if (ok(town)) return { name: town.trim(), rank: 1 };
+    const city = this._s(p.city)?.state;
+    if (ok(city) && !/\d/.test(city)) return { name: city, rank: 1 };
+    return null;
+  }
+  _coords(p) {
+    const a = this._s(p.entity)?.attributes || this._s(p.tracker)?.attributes || {};
+    const lat = Number(a.latitude), lon = Number(a.longitude);
+    return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
+  }
+  _place(p) {
+    let best = this._ownPlace(p); const here = this._coords(p);
+    if (here) for (const q of this._config.persons || []) {
+      if (q === p) continue; const there = this._coords(q); if (!there) continue;
+      const r = Math.PI / 180, dLat = (there[0] - here[0]) * r, dLon = (there[1] - here[1]) * r;
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(here[0] * r) * Math.cos(there[0] * r) * Math.sin(dLon / 2) ** 2;
+      if (6371000 * 2 * Math.asin(Math.sqrt(h)) > 1500) continue;
+      const theirs = this._ownPlace(q); if (theirs && (!best || theirs.rank > best.rank)) best = theirs;
+    }
+    return best?.name || "";
+  }
+  // Distance home in km whatever the sensor's unit (the boys' proximity sensors report metres: "117811,0 km").
+  _km(p) {
+    const s = this._s(p.distance); const v = Number(s?.state); if (!Number.isFinite(v)) return NaN;
+    const unit = String(s.attributes?.unit_of_measurement || "km").toLowerCase();
+    return unit === "m" ? v / 1000 : unit === "mi" ? v * 1.609344 : unit === "ft" ? v * 0.0003048 : v;
   }
   _valid(v) {
     return (
@@ -88,7 +134,7 @@ class HAPersonOverviewCard extends HTMLElement {
     const status = home
       ? "Hjemme"
       : away
-        ? "Ude"
+        ? this._place(p) || "Ude"
         : this._valid(state)
           ? state
           : "Ukendt";
@@ -114,7 +160,7 @@ class HAPersonOverviewCard extends HTMLElement {
               ? "var(--battery-good,#41d98d)"
               : "var(--battery-full,#23e6b3)";
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
-    const dist = Number(this._s(p.distance)?.state),
+    const dist = this._km(p),
       travel = Number(this._s(p.travel_time)?.state),
       tripMain = home
         ? "Hjemme"
@@ -137,12 +183,13 @@ class HAPersonOverviewCard extends HTMLElement {
     const person = this._s(p.entity); const tracker = this._s(p.tracker) || person; const state = tracker?.state || person?.state || "unknown";
     const home = state === "home"; const away = state === "not_home";
     const color = home ? "var(--presence-home,#37e69a)" : away ? "var(--presence-away,#ffb347)" : this._valid(state) ? "var(--presence-zone,#58b9ff)" : "var(--presence-unknown,#8795a5)";
-    const status = home ? "Hjemme" : away ? "Ude" : this._valid(state) ? state : "Ukendt";
-    const city = this._s(p.city)?.state; const place = this._valid(city) ? city : home ? p.home_label || "Hjemme" : "";
+    const where = away ? this._place(p) : "";
+    const status = home ? "Hjemme" : away ? where || "Ude" : this._valid(state) ? state : "Ukendt";
+    const place = home ? p.home_label || "Hjemme" : where;
     const level = Number(this._s(p.battery)?.state); const battery = Number.isFinite(level) ? Math.max(0, Math.min(100, level)) : null;
     const charging = this._charging(p);
     const bColor = battery === null ? "var(--presence-unknown,#8795a5)" : battery < 20 ? "var(--battery-critical,#ff4665)" : battery < 40 ? "var(--battery-low,#ffb347)" : "var(--battery-good,#41d98d)";
-    const dist = Number(this._s(p.distance)?.state); const travel = Number(this._s(p.travel_time)?.state);
+    const dist = this._km(p); const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? (dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1).replace(".", ",")} km`) : ""].filter(Boolean).join(" · ");
     const pic = p.image || person?.attributes?.entity_picture || "";
     const initial = esc((p.name || "?").trim()[0] || "?");
@@ -170,7 +217,8 @@ class HAPersonOverviewCard extends HTMLElement {
       const color = home ? "var(--presence-home,#37e69a)" : away ? "var(--presence-away,#ff5d8f)" : this._valid(state) ? "var(--presence-zone,#58b9ff)" : "var(--presence-unknown,#8795a5)";
       const level = Number(this._s(p.battery)?.state); const low = Number.isFinite(level) && level < 20;
       const travel = Number(this._s(p.travel_time)?.state);
-      const where = home ? "" : away ? (Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "Ude") : this._valid(state) ? state : "Ukendt";
+      const spot = away ? this._place(p) : "";
+      const where = home ? "" : away ? [spot, Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : ""].filter(Boolean).join(" · ") || "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
       const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
