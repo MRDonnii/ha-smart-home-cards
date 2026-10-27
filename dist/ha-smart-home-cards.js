@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.217 */
+/* MRDonnii Smart Home Cards v0.5.218 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -33395,7 +33395,7 @@ var WX_MARKUP = `<div class="wx" data-f="wx">
     <span class="dl-l" data-f="dlrise">\u2014</span><span class="dl-c" data-f="dltext">\u2014</span><span class="dl-r" data-f="dlset">\u2014</span></div>
 </div>`;
 var PREMIUM_STYLE = `
-.dial,.wx{display:none}
+.dial,.wx,.wx-head{display:none}
 ha-card.premium{--pm-grain:${GRAIN}}
 .premium .head h2{background:linear-gradient(100deg,var(--rc-ink) 30%,color-mix(in srgb,var(--rc-ink) 55%,var(--rc-accent)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .premium .eyebrow{letter-spacing:.24em}
@@ -33490,8 +33490,10 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .wx-ic.rain .p,.wx-ic.storm .p{animation:pmDrop 1.1s linear infinite}.wx-ic.rain .p:nth-of-type(3),.wx-ic.storm .p:nth-of-type(3){animation-delay:.37s}.wx-ic.rain .p:nth-of-type(4),.wx-ic.storm .p:nth-of-type(4){animation-delay:.74s}
 .wx-ic.snow .p{width:4px;height:4px;border-radius:50%;animation:pmFlake 2.4s linear infinite}.wx-ic.snow .p:nth-of-type(3){animation-delay:.8s}.wx-ic.snow .p:nth-of-type(4){animation-delay:1.6s}
 .wx-ic.storm ha-icon{animation:pmFlash 3.2s steps(1) infinite}
-.wx-chips{grid-column:1/-1;display:flex;gap:5px;overflow:hidden;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent)}
-.wx-chip{flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 6px;border-radius:99px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-size:10.5px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wx-chips{display:none!important}
+/* weather facts in the header, where the other rooms show their radiator (same tile height) */
+.premium .wx-head{display:grid;grid-template-columns:repeat(2,auto);justify-content:end;gap:4px 6px;flex:none;margin-left:auto}
+.wx-chip{flex:none;display:inline-flex;align-items:center;justify-content:flex-start;gap:4px;padding:3px 8px 3px 6px;border-radius:99px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-size:10.5px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
 .wx-chip ha-icon{--mdc-icon-size:13px;color:var(--cc,var(--rc-muted))}.wx-chip small{color:var(--rc-muted);font-size:10px;font-weight:700}
 .wx-chip .arrow{display:inline-flex;transition:transform .6s ease}
 .hours{grid-column:1/-1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:1px;padding:6px 4px;border-radius:16px;background:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.24));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
@@ -33512,7 +33514,7 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .daylight span{position:absolute;bottom:0;color:var(--rc-muted);font-size:10px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
 .dl-l{left:0;bottom:12px!important}.dl-r{right:0;bottom:12px!important}.dl-c{left:50%;transform:translateX(-50%);color:var(--rc-ink)!important}
 .premium .zone.outdoor .band{margin-top:4px;min-height:30px}.premium .zone.outdoor .band .spark-box{min-height:30px}
-@container (max-width:400px){.hr:nth-child(n+9){display:none}.wx-txt em{white-space:normal}}
+@container (max-width:400px){.hr:nth-child(n+9){display:none}.wx-txt em{white-space:normal}.premium .wx-head{grid-template-columns:auto}.wx-head .wx-chip:nth-child(n+4){display:none}}
 @keyframes dialGlow{0%,100%{opacity:.15}50%{opacity:.55}}
 @keyframes pmSpin{to{transform:rotate(360deg)}}@keyframes pmBreath{50%{transform:scale(1.06)}}@keyframes pmDrift{50%{transform:translateX(3px)}}
 @keyframes pmDrop{0%{opacity:0;transform:translateY(-4px)}25%{opacity:.9}100%{opacity:0;transform:translateY(12px)}}
@@ -34061,6 +34063,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
         <div class="z-head">
           <span class="z-icon"><ha-icon icon="${esc12(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
           <span class="z-title"><strong>${esc12(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div></div>
@@ -34332,6 +34335,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   _renderOutdoor(room, refs, model) {
     this._setText(refs.temp, this._format(model.current));
+    if (!this._premium) this._setText(refs.host.querySelector(".z-status em"), "Ude nu");
     this._setText(refs.feels, model.feels === void 0 ? DASH3 : `${this._format(model.feels)}\xB0`);
     this._setText(refs.humidity, model.humidity === void 0 ? DASH3 : `${this._format(model.humidity, 0)} %`);
     refs.host.querySelector('[data-m="humidity"]')?.style.setProperty("--v", `${Math.round(model.humidity ?? 0)}%`);
@@ -34376,7 +34380,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt4(Math.min(...lows))}\xB0\u2013${fmt4(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
     const chips = [];
     if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt4(model.feels)}\xB0`]);
-    if (model.humidity !== void 0) chips.push(["mdi:water-percent", "#60a5fa", `Fugt ${fmt4(model.humidity, 0)} %`]);
+    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt4(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
       const n = this._number(v);
       return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
@@ -34389,10 +34393,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt4(dd)}`]);
     const uv = this._number(a.uv_index);
     if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt4(uv, 0)}`]);
-    const humid = chips.findIndex((c2) => c2[0] === "mdi:water-percent");
-    if (humid >= 0) chips.push(chips.splice(humid, 1)[0]);
     const chipHtml = chips.map(([icon4, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc12(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon4}"></ha-icon></span>` : `<ha-icon icon="${icon4}"></ha-icon>`}${esc12(text)}</span>`).join("");
-    const chipsEl = f("wxchips");
+    const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
       chipsEl._h = chipHtml;
       chipsEl.innerHTML = chipHtml;

@@ -486,6 +486,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
         <div class="z-head">
           <span class="z-icon"><ha-icon icon="${esc(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
           <span class="z-title"><strong>${esc(room.name || "Udendørs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
           <div class="z-temp"><div class="t-big"><span data-f="temp">${DASH}</span><small>°C</small></div></div>
@@ -696,6 +697,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
 
   _renderOutdoor(room, refs, model) {
     this._setText(refs.temp, this._format(model.current));
+    if (!this._premium) this._setText(refs.host.querySelector(".z-status em"), "Ude nu");
     this._setText(refs.feels, model.feels === undefined ? DASH : `${this._format(model.feels)}°`);
     this._setText(refs.humidity, model.humidity === undefined ? DASH : `${this._format(model.humidity, 0)} %`);
     refs.host.querySelector('[data-m="humidity"]')?.style.setProperty("--v", `${Math.round(model.humidity ?? 0)}%`);
@@ -729,7 +731,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     // Chips: feels like, humidity, wind (m/s and where it comes from), rain today, degree days, UV
     const chips = [];
     if (model.feels !== undefined) chips.push(["mdi:thermometer", "var(--rc-cool)", `Føles ${fmt(model.feels)}°`]);
-    if (model.humidity !== undefined) chips.push(["mdi:water-percent", "#60a5fa", `Fugt ${fmt(model.humidity, 0)} %`]);
+    // Humidity goes next to "Ude nu", so the facts in the header stay 2 × 2
+    this._setText(host.querySelector(".z-status em"), model.humidity !== undefined ? `Ude · fugt ${fmt(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => { const n = this._number(v); return n === undefined ? undefined : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6; };
     const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
     if (wind !== undefined) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt(wind)} m/s${bearing !== undefined ? ` ${compass(bearing)}` : ""}`, gust !== undefined ? `stød ${fmt(gust, 0)}` : "", bearing !== undefined ? bearing + 180 : undefined]);
@@ -738,9 +741,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const dd = this._number(st(room.degree_days)?.state);
     if (dd !== undefined) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt(dd)}`]);
     const uv = this._number(a.uv_index); if (uv !== undefined && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt(uv, 0)}`]);
-    const humid = chips.findIndex((c) => c[0] === "mdi:water-percent"); if (humid >= 0) chips.push(chips.splice(humid, 1)[0]);
     const chipHtml = chips.map(([icon, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc(sub)}"` : ""}>${rot !== undefined ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon}"></ha-icon></span>` : `<ha-icon icon="${icon}"></ha-icon>`}${esc(text)}</span>`).join("");
-    const chipsEl = f("wxchips"); if (chipsEl && chipsEl._h !== chipHtml) { chipsEl._h = chipHtml; chipsEl.innerHTML = chipHtml; }
+    const chipsEl = f("wxhead"); if (chipsEl && chipsEl._h !== chipHtml) { chipsEl._h = chipHtml; chipsEl.innerHTML = chipHtml; }
     // The next 12 hours: icon, temperature, chance of rain (bar) and mm
     const hoursHtml = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
