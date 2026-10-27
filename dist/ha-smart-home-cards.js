@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.224 */
+/* MRDonnii Smart Home Cards v0.5.225 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -37733,6 +37733,7 @@ var PRESETS = {
     "open_count_entity": "sensor.security_open_count",
     "alarm_entity": "alarm_control_panel.security_alarm",
     "secondary_alarm_entity": "alarm_control_panel.security_secondary_alarm",
+    "away_entity": "binary_sensor.security_away",
     "door_entities": [
       "binary_sensor.security_door_1",
       "binary_sensor.security_door_2",
@@ -37857,6 +37858,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       cfg.open_count_entity,
       cfg.alarm_entity,
       cfg.secondary_alarm_entity,
+      cfg.away_entity,
       cfg.heating_entity,
       cfg.pressure_entity,
       cfg.source_entity,
@@ -38075,20 +38077,24 @@ var HaHomeStatusCard = class extends HTMLElement {
       const [vIcon, vColor] = alarmIcon(cfg.alarm_entity);
       const [aIcon, aColor] = alarmIcon(cfg.secondary_alarm_entity);
       const triggered = this.text(cfg.alarm_entity) === "triggered" || this.text(cfg.secondary_alarm_entity) === "triggered";
-      value = triggered ? "Alarm" : hasError ? "Fejl" : locked === segStates.length ? "L\xE5st" : "\xC5ben";
+      const doors = (cfg.door_entities || []).filter(
+        (id) => this.on(id)
+      ).length;
+      const windows = Number.isFinite(open) ? open : 0;
+      const away = this.text(cfg.away_entity, "") === "on" || this.text(cfg.alarm_entity, "") === "armed_away";
+      const awayOpen = away && windows + doors > 0 && !triggered;
+      cfg.awayOpen = awayOpen;
+      value = triggered ? "Alarm" : hasError ? "Fejl" : awayOpen || locked !== segStates.length ? "\xC5ben" : "L\xE5st";
       detail = "";
       meter = locked;
       cfg.segments = segStates.length;
       cfg.segmentStates = segStates;
       cfg.hasError = hasError && !triggered;
-      color = triggered || hasError ? "var(--error-color, #ef4444)" : value === "L\xE5st" ? "var(--state-on-icon, var(--success-color, #20e3a2))" : "var(--warning-color, #f59e0b)";
-      cfg.icon = hasError ? "mdi:lock-alert-outline" : value === "L\xE5st" ? "mdi:home-lock" : "mdi:home-lock-open";
-      const doors = (cfg.door_entities || []).filter(
-        (id) => this.on(id)
-      ).length;
-      const windows = Number.isFinite(open) ? open : 0;
-      const windowColor = windows ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
-      const doorColor = doors ? "var(--warning-color, #f59e0b)" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
+      color = triggered || hasError || awayOpen ? "var(--error-color, #ef4444)" : value === "L\xE5st" ? "var(--state-on-icon, var(--success-color, #20e3a2))" : "var(--warning-color, #f59e0b)";
+      cfg.icon = hasError ? "mdi:lock-alert-outline" : awayOpen ? "mdi:home-alert-outline" : value === "L\xE5st" ? "mdi:home-lock" : "mdi:home-lock-open";
+      const openColor = (n) => n ? awayOpen ? "var(--error-color, #ef4444)" : "var(--warning-color, #f59e0b)" : "var(--state-on-icon, var(--success-color, #20e3a2))";
+      const windowColor = openColor(windows);
+      const doorColor = openColor(doors);
       label = `<span class="security-row"><span><img src="/local/billeder/security-status/verisure-brand-icon.png"><ha-icon icon="${vIcon}" style="color:${vColor}"></ha-icon></span><span><img src="/local/billeder/security-status/ajax-brand-icon.png"><ha-icon icon="${aIcon}" style="color:${aColor}"></ha-icon></span><span><ha-icon icon="${windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}" style="color:${windowColor}"></ha-icon><b style="color:${windowColor}">${windows}</b></span><span><ha-icon icon="${doors ? "mdi:door-open" : "mdi:door-closed"}" style="color:${doorColor}"></ha-icon><b style="color:${doorColor}">${doors}</b></span></span>`;
       const alarmName = (id) => {
         const st = this.text(id, "unknown");
@@ -38101,6 +38107,9 @@ var HaHomeStatusCard = class extends HTMLElement {
         windows,
         doors,
         triggered,
+        awayOpen,
+        windowColor,
+        doorColor,
         alarms: [["/local/billeder/security-status/verisure-brand-icon.png", vIcon, vColor, alarmName(cfg.alarm_entity), "Verisure"], ["/local/billeder/security-status/ajax-brand-icon.png", aIcon, aColor, alarmName(cfg.secondary_alarm_entity), "Ajax"]]
       };
     } else if (type === "heating") {
@@ -38379,6 +38388,11 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .sec2 .sp{display:flex;align-items:center;justify-content:center;gap:4px;line-height:1;min-width:0;height:20px;padding:0 4px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
       :host([v2]) .sec2 .sp.on{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 10px -3px var(--c);animation:secWarn 2s ease-in-out infinite}
       @keyframes secWarn{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}}
+      /* Something open while nobody is home (Claude AI, 2026-10-27): the whole tile pulses red. Only the opacity of a ring
+         layer animates (cheap), and the name contains "Alert", so motion-rest keeps it moving when the screen is idle. */
+      .item.away-open::after{content:"";position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 2px var(--error-color,#ef4444),inset 0 0 24px -6px var(--error-color,#ef4444);opacity:.2;animation:secAwayAlert 1.4s ease-in-out infinite}
+      @keyframes secAwayAlert{50%{opacity:1}}
+      @media(prefers-reduced-motion:reduce){.item.away-open::after{animation:none;opacity:.8}}
       :host([v2]) .sec2 img{width:12px;height:12px;object-fit:contain;flex:none}:host([v2]) .sec2 ha-icon{--mdc-icon-size:14px;width:14px;height:14px;flex:none;display:flex;align-items:center;justify-content:center}
       :host([v2]) .sec2 b{display:block;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
       :host([v2]) .sec2 .alarm b{display:none}
@@ -38466,7 +38480,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     this._currentItem = item2;
     const button = this.shadowRoot.querySelector(".item");
     const pulse = Math.max(0, Math.min(1, item2.pricePulse || 0));
-    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${pulse > 0 ? " price-alert" : ""}`;
+    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${item2.awayOpen ? " away-open" : ""}${pulse > 0 ? " price-alert" : ""}`;
     button.style.setProperty("--accent", item2.color);
     button.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
     button.style.setProperty("--price-pulse-scale", (0.94 - pulse * 0.28).toFixed(2));
@@ -38517,11 +38531,9 @@ var HaHomeStatusCard = class extends HTMLElement {
     if (v2 && item2.type === "security" && item2.secV2) {
       const q = item2.secV2;
       const open = q.windows + q.doors;
-      const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} \xE5ben${open > 1 ? "e" : ""}` : ""}`;
+      const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : q.awayOpen ? `${open} ${open > 1 ? "\xE5bne" : "\xE5ben"} \xB7 ingen hjemme` : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} ${open > 1 ? "\xE5bne" : "\xE5ben"}` : ""}`;
       const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc12(title)}">${inner}</span>`;
-      const warn = "var(--warning-color,#f59e0b)";
-      const mute = "var(--dashboard-icon-muted,var(--disabled-text-color,#64748b))";
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc12(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "", q.windows ? warn : mute, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, `${q.windows} vinduer \xE5bne`) + pill(q.doors ? "on" : "", q.doors ? warn : mute, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, `${q.doors} d\xF8re \xE5bne`);
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc12(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
