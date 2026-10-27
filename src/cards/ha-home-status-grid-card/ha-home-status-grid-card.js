@@ -491,6 +491,9 @@ class HaHomeStatusCard extends HTMLElement {
       detail = `${done}/${statuses.length} måltider`;
       meter = done;
       cfg.segments = statuses.length || 5;
+      // One ring field per meal, in order (Claude AI, 2026-10-27; user: "deles op i felter til hver del"): given, missed, not yet
+      if (statuses.length) cfg.segmentStates = statuses.map((s) => /givet|færdig|done/.test(s) ? "on" : /missed|glemt|sprunget/.test(s) ? "missed" : "");
+      cfg.ringSegments = true;
       color = error
         ? "var(--error-color, #f43f5e)"
         : "var(--state-on-icon, var(--success-color, #20e3a2))";
@@ -556,6 +559,7 @@ class HaHomeStatusCard extends HTMLElement {
       meter = locked;
       cfg.segments = segStates.length;
       cfg.segmentStates = segStates;
+      cfg.ringSegments = true;   // one ring field per lock
       cfg.hasError = hasError && !triggered;
       color = triggered || hasError || awayOpen
         ? "var(--error-color, #ef4444)"
@@ -883,7 +887,7 @@ class HaHomeStatusCard extends HTMLElement {
       type: this.config.preset || this.config.type_name || "entity",
     });
     const segClass = (s) =>
-      s === "locked" ? "seg-locked" : s === "unlocked" ? "seg-unlocked" : s === "error" ? "seg-error" : s === "on" ? "on" : "";
+      s === "locked" ? "seg-locked" : s === "unlocked" ? "seg-unlocked" : s === "error" ? "seg-error" : s === "missed" ? "seg-missed" : s === "on" ? "on" : "";
     const meterHtml = (
       item.segmentStates ||
       Array.from({ length: item.segments || 5 }, (_, i) => (i + 1 <= item.meter ? "on" : ""))
@@ -894,7 +898,7 @@ class HaHomeStatusCard extends HTMLElement {
       this.shadowRoot.innerHTML = `<style>
       :host{display:block}
       .item{display:block;width:100%;min-width:0;max-width:100%;height:85px;box-sizing:border-box;position:relative;overflow:hidden;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--accent) 78%,transparent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));color:var(--gray800,var(--primary-text-color,#f8fafc));font:inherit;text-align:left;cursor:pointer;transition:border-left-color .9s ease,box-shadow .15s ease,transform .15s ease}/* Samme loeft-hover som resten af forsidens knapper. Rod-elementet her er <button class="item">, ikke <ha-card> - derfor kunne den tidligere ha-card-baserede regel aldrig ramme noget. */.item:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22))),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.item:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.item{transition:border-left-color .9s ease,box-shadow .15s ease}.item:hover{transform:none}}
-      .value{position:relative;z-index:2;font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meter{position:relative;z-index:2;display:flex;gap:4px;height:8px;margin:5px 0}.seg{width:14px;height:6px;border-radius:99px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 25%,transparent);transition:background-color .9s ease,box-shadow .9s ease}.seg.on{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 28%,transparent)}.seg.seg-locked{background:var(--state-on-icon, var(--success-color, #20e3a2));box-shadow:0 0 7px color-mix(in srgb,var(--state-on-icon, var(--success-color, #20e3a2)) 30%,transparent)}.seg.seg-unlocked{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-error{background:var(--error-color,#ef4444);animation:seg-error-pulse 1.8s ease-in-out infinite}@keyframes seg-error-pulse{0%,100%{opacity:.5;box-shadow:0 0 4px color-mix(in srgb,var(--error-color,#ef4444) 35%,transparent)}50%{opacity:1;box-shadow:0 0 11px color-mix(in srgb,var(--error-color,#ef4444) 75%,transparent)}}.item.has-error{animation:item-error-pulse 1.8s ease-in-out infinite}@keyframes item-error-pulse{0%,100%{box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--error-color,#ef4444) 22%,transparent),var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}}
+      .value{position:relative;z-index:2;font-size:18px;font-weight:750;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meter{position:relative;z-index:2;display:flex;gap:4px;height:8px;margin:5px 0}.seg{width:14px;height:6px;border-radius:99px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 25%,transparent);transition:background-color .9s ease,box-shadow .9s ease}.seg.on{background:var(--accent);box-shadow:0 0 7px color-mix(in srgb,var(--accent) 28%,transparent)}.seg.seg-locked{background:var(--state-on-icon, var(--success-color, #20e3a2));box-shadow:0 0 7px color-mix(in srgb,var(--state-on-icon, var(--success-color, #20e3a2)) 30%,transparent)}.seg.seg-unlocked{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-missed{background:var(--warning-color,#f59e0b);box-shadow:0 0 7px color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent)}.seg.seg-error{background:var(--error-color,#ef4444);animation:seg-error-pulse 1.8s ease-in-out infinite}@keyframes seg-error-pulse{0%,100%{opacity:.5;box-shadow:0 0 4px color-mix(in srgb,var(--error-color,#ef4444) 35%,transparent)}50%{opacity:1;box-shadow:0 0 11px color-mix(in srgb,var(--error-color,#ef4444) 75%,transparent)}}.item.has-error{animation:item-error-pulse 1.8s ease-in-out infinite}@keyframes item-error-pulse{0%,100%{box-shadow:var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--error-color,#ef4444) 22%,transparent),var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)))}}
       .detail{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.label{display:block;min-width:0;max-width:100%;position:relative;z-index:2;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:35px;box-sizing:border-box}.source-row{display:flex;align-items:center;gap:4px;height:16px}.source-row ha-icon{position:static;width:13px;height:13px;--mdc-icon-size:13px;flex:0 0 13px}.source-row b{line-height:1}.src-chip{display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 6px 0 4px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 32%,transparent);color:var(--c);box-sizing:border-box}.src-chip ha-icon{color:var(--c)}.src-chip b{font-size:10px;font-weight:800}.src-chip small{font-size:9px;font-weight:600;opacity:.8;color:var(--secondary-text-color)}.src-chip.icon-only{padding:0 3px}.item.ev .detail{padding-right:6px;z-index:3}.item.security .detail{display:none}.item.security .label{position:absolute;left:12px;bottom:4px;width:80px;height:38px;padding:0;overflow:visible}.security-row{display:grid;grid-template-columns:repeat(2,38px);grid-template-rows:repeat(2,18px);gap:2px 4px;width:80px;height:38px;justify-content:start;align-content:start}.security-row>span{display:flex;align-items:center;justify-content:center;gap:1px;width:38px;height:18px;padding:0 2px;box-sizing:border-box;border-radius:6px;background:color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 9%,transparent);border:1px solid color-mix(in srgb,var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)) 18%,transparent)}.security-row img,.security-row ha-icon{position:static;width:12px;height:12px;--mdc-icon-size:12px;object-fit:contain}.security-row b{font-size:9px;line-height:1}
       .item.security{padding:0 12px}.item.security .value{position:absolute;left:12px;top:4px;width:calc(100% - 50px);height:25px;line-height:25px;padding:1px 0 0;overflow:visible}.item.security .meter{position:absolute;left:12px;top:32px;height:8px;margin:0}.item.security .label{top:43px;bottom:auto}
       .bg-icon{position:absolute;right:-10px;bottom:-10px;width:58px;height:58px;--mdc-icon-size:58px;color:var(--accent);opacity:.12;animation:drift 5s ease-in-out infinite;z-index:1;pointer-events:none;filter:saturate(1.05) drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 10%,transparent))}@keyframes drift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
@@ -927,6 +931,14 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .ring .tr{stroke:color-mix(in srgb,var(--primary-text-color,#fff) 9%,transparent)}
       :host([v2]) .ring .pr{stroke:var(--accent);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--accent) 70%,transparent));transition:stroke-dasharray .9s cubic-bezier(.16,1,.3,1)}
       :host([v2]) .item.has-error .ring .pr{stroke:var(--error-color,#ef4444)}
+      /* Segmented ring: a field per part (meal, lock) - empty fields show the track colour, filled ones their state */
+      :host([v2]) .ring.segmented .tr,:host([v2]) .ring.segmented .pr{display:none}
+      :host([v2]) .ring .sg{fill:none;stroke-width:4;stroke-linecap:butt;stroke:color-mix(in srgb,var(--primary-text-color,#fff) 13%,transparent);transition:stroke .6s ease}
+      :host([v2]) .ring .sg.on{stroke:var(--accent)}
+      :host([v2]) .ring .sg.seg-locked{stroke:var(--state-on-icon,var(--success-color,#20e3a2))}
+      :host([v2]) .ring .sg.seg-unlocked,:host([v2]) .ring .sg.seg-missed{stroke:var(--warning-color,#f59e0b)}
+      :host([v2]) .ring .sg.seg-error{stroke:var(--error-color,#ef4444)}
+      :host([v2]) .ring .sgs{filter:drop-shadow(0 0 2.5px color-mix(in srgb,var(--accent) 55%,transparent))}
       :host([v2]) .item.security{padding:11px 12px 9px}:host([v2]) .item.security .value{position:static;width:auto;height:auto;line-height:21px;padding:0}
       :host([v2]) .item.security .meter{display:none}
       :host([v2]) .item.security .detail{display:block;position:static}
@@ -1072,8 +1084,29 @@ class HaHomeStatusCard extends HTMLElement {
     }
     if (v2) {
       this.shadowRoot.querySelector(".chip ha-icon").setAttribute("icon", item.icon || "mdi:information-outline");
-      const on = segmentStates.filter((x) => x === "on" || x === "locked").length; const frac = segmentStates.length ? on / segmentStates.length : 0;
-      const C = 2 * Math.PI * 15; this.shadowRoot.querySelector(".ring .pr").setAttribute("stroke-dasharray", `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
+      const ring = this.shadowRoot.querySelector(".ring"); const C = 2 * Math.PI * 15;
+      if (item.ringSegments && segmentStates.length > 1 && segmentStates.length <= 12) {
+        // A field per part (meal, lock), each in its own state colour, from the top clockwise (Claude AI, 2026-10-27)
+        const n = segmentStates.length, gap = n > 6 ? 2.4 : 3.4, len = C / n - gap;
+        let g = ring.querySelector(".sgs");
+        if (!g || g.children.length !== n) {
+          g?.remove(); g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.setAttribute("class", "sgs");
+          for (let i = 0; i < n; i++) {
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("cx", "18"); c.setAttribute("cy", "18"); c.setAttribute("r", "15");
+            c.setAttribute("stroke-dasharray", `${len.toFixed(2)} ${(C - len).toFixed(2)}`);
+            c.setAttribute("stroke-dashoffset", (-(i * C / n + gap / 2)).toFixed(2));
+            g.appendChild(c);
+          }
+          ring.appendChild(g);
+        }
+        segmentStates.forEach((st, i) => g.children[i].setAttribute("class", `sg ${segClass(st)}`));
+        ring.classList.add("segmented");
+      } else {
+        ring.classList.remove("segmented"); ring.querySelector(".sgs")?.remove();
+        const on = segmentStates.filter((x) => x === "on" || x === "locked").length; const frac = segmentStates.length ? on / segmentStates.length : 0;
+        ring.querySelector(".pr").setAttribute("stroke-dasharray", `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
+      }
     }
   }
 
