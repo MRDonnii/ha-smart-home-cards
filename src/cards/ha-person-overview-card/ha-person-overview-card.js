@@ -1,5 +1,5 @@
 import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
-const VERSION = "0.6.0";
+const VERSION = "0.6.1";
 class HAPersonOverviewCard extends HTMLElement {
   constructor() {
     super();
@@ -86,9 +86,11 @@ class HAPersonOverviewCard extends HTMLElement {
     return null;
   }
   _coords(p) {
-    const a = this._s(p.entity)?.attributes || this._s(p.tracker)?.attributes || {};
-    const lat = Number(a.latitude), lon = Number(a.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
+    for (const id of [p.entity, p.tracker]) {
+      const a = this._s(id)?.attributes || {}; const lat = Number(a.latitude), lon = Number(a.longitude);
+      if (a.latitude != null && Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon];
+    }
+    return null;
   }
   // A trip in the calendar (trip_calendar, e.g. "Lalandia søndervig" all-day 26–30/10): while someone is more than 25 km
   // from home during an ongoing all-day event of two days or more, its title is the place.
@@ -97,7 +99,8 @@ class HAPersonOverviewCard extends HTMLElement {
     for (const id of cals) {
       const a = this._s(id)?.attributes || {}; if (this._s(id)?.state !== "on" || !a.all_day || !a.message) continue;
       const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time).replace(" ", "T"));
-      if (end - start >= 2 * 864e5) return String(a.message).trim().replace(/^./, (c) => c.toUpperCase());
+      const days = Math.round((Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) - Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) / 864e5);
+      if (days >= 2) return String(a.message).trim().replace(/^./, (c) => c.toUpperCase());
     }
     return "";
   }
@@ -186,7 +189,8 @@ class HAPersonOverviewCard extends HTMLElement {
           ? `${dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(1) + " km"}`
           : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    return `<button class="person" data-path="${p.navigation_path || ""}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${pic.replaceAll("'", "%27")}')` : ""}"></span><span class="main"><b>${p.name || person?.attributes?.friendly_name || "Person"}</b><strong style="color:${color}">${status}</strong><small>${place}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    return `<button class="person" data-path="${esc(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc(status)}</strong><small>${esc(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.

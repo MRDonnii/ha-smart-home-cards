@@ -26,7 +26,7 @@ const HINTS=[
 const STARS=[[7,16,0],[16,44,1.1],[27,10,2.2],[41,30,.6],[55,8,1.7],[63,40,2.8],[74,18,.3],[86,34,1.4],[94,9,2.5]];
 const SKYLINE="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='240' height='36' viewBox='0 0 240 36'><path d='M0 36V22l12-9 12 9v14z'/><rect x='30' y='12' width='14' height='24'/><path d='M48 36V24l10-8 10 8v12z'/><circle cx='80' cy='22' r='8'/><rect x='79' y='26' width='2' height='10'/><rect x='94' y='16' width='20' height='20'/><rect x='98' y='9' width='4' height='7'/><path d='M120 36V25l9-7 9 7v11z'/><circle cx='150' cy='25' r='6'/><rect x='149' y='28' width='2' height='8'/><path d='M160 36V20l14-10 14 10v16z'/><circle cx='202' cy='24' r='7'/><circle cx='210' cy='20' r='8'/><rect x='205' y='26' width='2' height='10'/><rect x='222' y='18' width='14' height='18'/></svg>");
 const WAVE="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' viewBox='0 0 24 6'><path d='M0 3q6-3 12 0t12 0v3H0z'/></svg>");
-const TRUCK=`<svg viewBox="0 0 68 44" aria-hidden="true"><circle class="t-flash" cx="51.5" cy="10.5" r="7"/><rect class="t-lamp" x="49" y="9" width="5" height="3" rx="1"/><rect class="t-box" x="4" y="10" width="38" height="22" rx="3"/><path class="t-ribs" d="M13 13v16M33 13v16"/><circle class="t-logo" cx="23" cy="21" r="4.6"/><rect class="t-rear" x="1" y="12" width="5" height="19" rx="1.5"/><path class="t-cab" d="M43 14h11l9 9v9H43z"/><path class="t-glass" d="M46 17h7l6 6H46z"/><rect class="t-chassis" x="1" y="31" width="64" height="4" rx="1.5"/><circle class="t-light" cx="63" cy="28" r="1.6"/><g class="wheel"><circle class="t-tire" cx="15" cy="36" r="6"/><path class="t-spoke" d="M15 31.5v9M10.5 36h9"/></g><g class="wheel"><circle class="t-tire" cx="53" cy="36" r="6"/><path class="t-spoke" d="M53 31.5v9M48.5 36h9"/></g></svg>`;
+const TRUCK=`<svg viewBox="0 0 68 44" aria-hidden="true"><rect class="t-lamp" x="49" y="9" width="5" height="3" rx="1"/><rect class="t-box" x="4" y="10" width="38" height="22" rx="3"/><path class="t-ribs" d="M13 13v16M33 13v16"/><circle class="t-logo" cx="23" cy="21" r="4.6"/><rect class="t-rear" x="1" y="12" width="5" height="19" rx="1.5"/><path class="t-cab" d="M43 14h11l9 9v9H43z"/><path class="t-glass" d="M46 17h7l6 6H46z"/><rect class="t-chassis" x="1" y="31" width="64" height="4" rx="1.5"/><circle class="t-light" cx="63" cy="28" r="1.6"/></svg><i class="wh w1"></i><i class="wh w2"></i><i class="fl"></i>`;
 const LEARN_KEY="ha-waste-journey:intervals";
 const p2=n=>String(n).padStart(2,"0");
 const parseDate=value=>{const [y,m,d]=String(value||"").split("-").map(Number);return y&&m&&d?new Date(y,m-1,d):null;};
@@ -54,7 +54,8 @@ class HAWasteJourneyCard extends HTMLElement{
   set hass(hass){
     this._hass=hass;if(!this.shadowRoot?.querySelector("ha-card"))this._build();
     const cfg=this._config||{},calendar=this._state(cfg.calendar_entity);
-    const signature=JSON.stringify([cfg.next_entity,this._value(this._sunEntity()),new Date().getHours(),this._value(cfg.confirm_entity),calendar?.state,calendar?.attributes?.start_time,...(cfg.waste_types||[]).map(item=>[item.entity,this._value(item.entity),this._state(item.entity)?.attributes?.date])]);
+    const nextState=this._state(cfg.next_entity);
+    const signature=JSON.stringify([cfg.next_entity,nextState?.state,nextState?.attributes?.date,nextState?.attributes?.name,this._value(this._sunEntity()),new Date().getHours(),this._value(cfg.confirm_entity),calendar?.state,calendar?.attributes?.start_time,...(cfg.waste_types||[]).map(item=>[item.entity,this._value(item.entity),this._state(item.entity)?.attributes?.date])]);
     if(signature!==this._signature){this._signature=signature;this._render();}
   }
   connectedCallback(){
@@ -85,7 +86,7 @@ class HAWasteJourneyCard extends HTMLElement{
     const today=new Date();today.setHours(0,0,0,0);let changed=false;
     for(const item of types){
       const date=item.attrs.date;if(!date||!item.entity)continue;const seen=store[item.entity]||{};
-      if(seen.date&&date>seen.date){const before=parseDate(seen.date),after=parseDate(date),gap=before&&after?dayDiff(before,after):0;if(before&&dayDiff(before,today)<=3&&gap>=5&&gap<=120)seen.interval=gap;}
+      if(seen.date&&date>seen.date){const before=parseDate(seen.date),after=parseDate(date),gap=before&&after?dayDiff(before,after):0;const ago=before?dayDiff(before,today):-1;if(ago>=0&&ago<=3&&gap>=5&&gap<=120)seen.interval=gap;}
       if(seen.date!==date){seen.date=date;store[item.entity]=seen;changed=true;}
     }
     if(changed)try{localStorage.setItem(LEARN_KEY,JSON.stringify(store));}catch(_){}
@@ -93,7 +94,7 @@ class HAWasteJourneyCard extends HTMLElement{
   }
   _interval(item){
     const set=Number(item.interval);if(set>0)return set;
-    const match=/(\d+)\s*dag/i.exec(item.attrs.description||"");if(match)return Number(match[1]);
+    const match=/(\d+)\.?\s*-?\s*dag/i.exec(item.attrs.description||"");if(match)return Number(match[1]);
     return this._learned?.[item.entity]?.interval||null;
   }
   // Hvor fyldt beholderen er tegnet: den del af perioden, der er gået siden sidste tømning
@@ -105,9 +106,14 @@ class HAWasteJourneyCard extends HTMLElement{
   }
   // Afhentningsvinduet fra kalenderen (fx 07:00–15:00), kun når kalenderens næste begivenhed er samme dag
   _window(date){
-    const attrs=this._state(this._config.calendar_entity)?.attributes;if(!attrs?.start_time||!date||!String(attrs.start_time).startsWith(date))return null;
-    const start=new Date(String(attrs.start_time).replace(" ","T")),end=new Date(String(attrs.end_time||attrs.start_time).replace(" ","T"));
-    return Number.isFinite(start.getTime())?{start,end:Number.isFinite(end.getTime())?end:start}:null;
+    if(!date)return null;this._windows||={};
+    const attrs=this._state(this._config.calendar_entity)?.attributes;
+    if(attrs?.start_time&&!attrs.all_day&&String(attrs.start_time).startsWith(date)){
+      const start=new Date(String(attrs.start_time).replace(" ","T")),end=new Date(String(attrs.end_time||attrs.start_time).replace(" ","T"));
+      if(Number.isFinite(start.getTime()))this._windows[date]={start,end:Number.isFinite(end.getTime())?end:start};
+    }
+    // When the pickup ends the calendar shows the next event, so the day's window is remembered (the "after" phase)
+    return this._windows[date]||null;
   }
   _phase(win){if(!win)return null;const now=Date.now();return now<win.start?"before":now<win.end?"during":"after";}
   _whenText(win,days){
@@ -175,7 +181,8 @@ class HAWasteJourneyCard extends HTMLElement{
       .scene{--x0:84px;--x1:98px;--hf:0;height:118px;margin-top:4px}
       .sun,.moon{position:absolute;top:8px;left:31%;width:20px;height:20px;border-radius:50%;transition:opacity 1.2s}
       .sun{background:radial-gradient(circle,#ffe6a0 0 42%,rgba(255,200,90,.35) 52%,transparent 70%);opacity:.6}
-      .sun:before{content:"";position:absolute;inset:-9px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.42) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);animation:spin 40s linear infinite}
+      .sun:before{content:"";position:absolute;inset:-9px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.42) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);}
+      ha-card:not(.night) .sun:before{animation:spin 40s linear infinite}
       .moon{box-shadow:inset -6px 3px 0 0 #eef2ff;opacity:0;transform:rotate(-18deg);filter:drop-shadow(0 0 6px rgba(215,225,255,.5))}
       .night .sun{opacity:0}.night .moon{opacity:.92}
       .cloud{position:absolute;top:10px;left:-80px;width:100%;height:24px;background:radial-gradient(16px 9px at 22px 15px,rgba(255,255,255,.13) 60%,transparent),radial-gradient(20px 13px at 40px 11px,rgba(255,255,255,.15) 60%,transparent),radial-gradient(15px 8px at 58px 16px,rgba(255,255,255,.12) 60%,transparent) no-repeat;background-size:80px 24px;background-repeat:no-repeat;animation:drift 90s linear infinite;pointer-events:none;transition:opacity 1.2s}
@@ -195,17 +202,20 @@ class HAWasteJourneyCard extends HTMLElement{
       .truck,.mini{position:absolute;padding:0;border:0;background:none;cursor:pointer;transform:translateX(-50%)}
       .truck{left:calc(var(--x0) + (100% - var(--x0) - var(--x1)) * var(--hf));bottom:17px;z-index:4;width:68px;height:44px;transition:left 2.4s cubic-bezier(.25,.8,.25,1)}
       .mini{left:calc(var(--x0) + (100% - var(--x0) - var(--x1)) * var(--f));bottom:20px;z-index:3;width:40px;height:26px;transition:left 2.4s cubic-bezier(.25,.8,.25,1) calc(var(--j) * 160ms + 150ms)}
-      .body{display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate}
-      .truck .body{filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}.mini .body{opacity:.9;animation-duration:.62s;animation-delay:calc(var(--j) * -.21s)}
+      .body{position:relative;display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate}
+      .truck:before{content:"";position:absolute;left:6%;right:4%;bottom:-3px;height:9px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent)}.mini .body{opacity:.9;animation-duration:.62s;animation-delay:calc(var(--j) * -.21s)}
       .during .truck .body{animation-duration:.3s}
       .body svg{display:block;width:100%;height:100%;overflow:visible}
       .t-box{fill:var(--truck)}.t-ribs{fill:none;stroke:color-mix(in srgb,var(--truck) 55%,black);stroke-width:1.4;opacity:.6}
       .t-logo{fill:none;stroke:rgba(255,255,255,.6);stroke-width:1.6;stroke-dasharray:6 3.6}
       .t-rear{fill:color-mix(in srgb,var(--truck) 62%,black)}.t-cab{fill:color-mix(in srgb,var(--truck) 58%,white)}.t-glass{fill:#0c1722;opacity:.85}
       .t-chassis{fill:#1a2330}.t-tire{fill:#0d1218;stroke:#2c3846;stroke-width:1.5}.t-spoke{fill:none;stroke:#8c99a8;stroke-width:1.4}
-      .t-light{fill:#ffe7a8}.t-lamp{fill:#ffb020;opacity:.35}.t-flash{fill:#ffb020;opacity:0}
-      .alert .truck .t-lamp{opacity:1}.alert .truck .t-flash{animation:flash 1.1s ease-in-out infinite}
-      .wheel{transform-box:fill-box;transform-origin:center;animation:spin .7s linear infinite}
+      .t-light{fill:#ffe7a8}.t-lamp{fill:#ffb020;opacity:.35}
+      .alert .truck .t-lamp{opacity:1}.alert .truck .fl{animation:flash 1.1s ease-in-out infinite}
+      /* wheels and the beacon glow are HTML over the drawing: animated SVG parts would redo style, layout and paint every frame */
+      .wh{position:absolute;top:68.2%;width:17.6%;height:27.3%;border-radius:50%;background:radial-gradient(circle,#8c99a8 0 17%,transparent 19%),repeating-conic-gradient(#8c99a8 0 8deg,transparent 8deg 90deg),#0d1218;box-shadow:inset 0 0 0 1.5px #2c3846;animation:spin .7s linear infinite}
+      .wh.w1{left:13.2%}.wh.w2{left:69.1%}.mini .wh{animation:none}
+      .fl{position:absolute;left:65.4%;top:8%;width:20.6%;height:31.8%;border-radius:50%;background:radial-gradient(circle,#ffb020 0 28%,rgba(255,176,32,.35) 55%,transparent 72%);opacity:0}
       .puff{position:absolute;left:-5px;bottom:9px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,rgba(210,220,232,.55),transparent 70%);opacity:0;animation:puff 1.8s ease-out infinite}
       .puff+.puff{animation-delay:.6s}.puff+.puff+.puff{animation-delay:1.2s}
       .beam{position:absolute;left:94%;bottom:4px;width:58px;height:22px;background:linear-gradient(90deg,rgba(255,232,160,.42),transparent);clip-path:polygon(0 42%,100% 0,100% 100%,0 64%);opacity:0;transition:opacity 1.2s;pointer-events:none}
@@ -248,13 +258,13 @@ class HAWasteJourneyCard extends HTMLElement{
       .spot{position:absolute;inset:0;background:radial-gradient(200px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--c) 17%,transparent),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
       @media(hover:hover){.waste:hover .spot{opacity:1}.waste:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--edge))}}
       .can{position:relative;width:46px;height:60px}
-      .lid{position:absolute;left:1px;right:1px;top:7px;height:7px;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--c) 70%,white);box-shadow:0 2px 4px rgba(0,0,0,.35);transform-origin:6% 100%;animation:peek 9s ease-in-out infinite;animation-delay:calc(var(--i) * -2.3s)}
+      .lid{position:absolute;left:1px;right:1px;top:7px;height:7px;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--c) 70%,white);box-shadow:0 2px 4px rgba(0,0,0,.35);transform-origin:6% 100%}
       .lid:before{content:"";position:absolute;left:50%;top:-4px;width:14px;height:4px;border-radius:3px 3px 0 0;background:inherit;transform:translateX(-50%)}
       .next .lid{animation:flap 2.6s ease-in-out infinite}
       .tank{position:absolute;left:3px;right:3px;top:15px;bottom:6px;overflow:hidden;clip-path:polygon(0 0,100% 0,91% 100%,9% 100%);background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 30%,transparent 70%,rgba(0,0,0,.28)),color-mix(in srgb,var(--c) 13%,rgba(0,0,0,.35))}
       .tank:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.16) 9px 10px)}
       .liquid{position:absolute;left:0;right:0;bottom:0;height:calc(var(--fill) * 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 80%,white),color-mix(in srgb,var(--c) 85%,black));transition:height 1.4s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 400ms)}
-      .wave{position:absolute;left:0;top:-5px;width:calc(100% + 24px);height:6px;background:color-mix(in srgb,var(--c) 80%,white);-webkit-mask:url("${WAVE}") repeat-x 0 0/24px 6px;mask:url("${WAVE}") repeat-x 0 0/24px 6px;animation:wave 1.8s linear infinite}
+      .wave{position:absolute;left:0;top:-5px;width:calc(100% + 24px);height:6px;background:color-mix(in srgb,var(--c) 80%,white);-webkit-mask:url("${WAVE}") repeat-x 0 0/24px 6px;mask:url("${WAVE}") repeat-x 0 0/24px 6px}.close .wave{animation:wave 1.8s linear infinite}
       .bubble{position:absolute;bottom:0;left:30%;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55);opacity:0}
       .close .bubble{animation:bubble 2.6s ease-in infinite}.close .bubble+.bubble{left:62%;animation-delay:1.3s}
       .can ha-icon{position:absolute;left:50%;top:58%;z-index:1;--mdc-icon-size:18px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));transform:translate(-50%,-50%)}
@@ -274,7 +284,7 @@ class HAWasteJourneyCard extends HTMLElement{
       .waste{transition:opacity .6s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 150ms),transform .6s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 150ms)}
       .pre .scene{--hf:0!important}.pre .mini{--f:0!important}.pre .ring{stroke-dashoffset:${RING}!important}.pre .bar i{width:0!important}.pre .liquid{height:0!important}
       .pre .hero,.pre .waste{opacity:0;transform:translateY(12px)}.pre .leaf{opacity:0;transform:rotateX(-100deg)}.pre .cell{opacity:0;transform:scale(.6)}.pre .dots i{transform:scale(0)}.pre *{transition:none!important}
-      .intro .body{animation-duration:.22s}.intro .wheel{animation-duration:.28s}
+      .intro .body{animation-duration:.22s}.intro .wh{animation-duration:.28s}
       .no-animation *,.no-animation *:before,.no-animation *:after{animation:none!important;transition:none!important}
       @keyframes pulse{50%{opacity:.4;transform:scale(.7)}}@keyframes ping{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(3.2)}}
       @keyframes halo{0%{opacity:.7;transform:scale(.94)}100%{opacity:0;transform:scale(1.2)}}@keyframes twinkle{50%{opacity:.12}}

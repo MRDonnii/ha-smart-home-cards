@@ -25,11 +25,14 @@ const when = (d) => {
   return `${d.toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} ${hm(d)}`;
 };
 
+// The entities whose change should show at once (doors, locks, waste, away, robots). Fast-changing ones (power, price,
+// travel time, car, calendars) follow the card's 20 s refresh instead, so a power meter reporting every few seconds does
+// not redraw the header (review, 2026-10-27).
 export function insightIds(cfg = {}) {
-  return [cfg.away, cfg.away_since, cfg.alarm, ...(cfg.locks || []), ...(cfg.openings || []), cfg.power, cfg.price, cfg.price_mean, cfg.price_min,
-    cfg.waste, ...(cfg.calendars || []), ...(cfg.travel || []).flatMap((t) => [t.travel, t.direction]),
-    ...(cfg.robots || []).flatMap((r) => [r.entity, r.room]), cfg.car?.battery, cfg.car?.range, cfg.car?.plugged, cfg.car?.next_start].filter(Boolean);
+  return [cfg.away, cfg.away_since, cfg.alarm, ...(cfg.locks || []), ...(cfg.openings || []), cfg.waste,
+    ...(cfg.robots || []).flatMap((r) => [r.entity, r.room])].filter(Boolean);
 }
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /** The insights right now, most important first: { key, icon, text, tone (ok|warn|info|accent), path?, entity? }. */
 export function computeInsights(hass, cfg = {}, hourly = []) {
@@ -72,7 +75,7 @@ export function computeInsights(hass, cfg = {}, hourly = []) {
 
   // Weather in the next 6 hours
   if (cfg.forecast !== false && hourly.length) {
-    const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 60e3).slice(0, 6);
+    const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 60e3).slice(0, 6);
     const wet = next.findIndex((h) => Number(h.precipitation_probability) >= 50 || Number(h.precipitation) >= 0.3);
     const temps = next.map((h) => Number(h.temperature)).filter(Number.isFinite);
     if (wet === 0) add(5, { key: "wx", icon: "mdi:weather-rainy", tone: "accent", text: "Regn nu og den næste time" });
@@ -85,7 +88,8 @@ export function computeInsights(hass, cfg = {}, hourly = []) {
   for (const id of cfg.calendars || []) {
     const a = S(id)?.attributes || {}; if (!a.start_time || !a.message) continue;
     const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time || a.start_time).replace(" ", "T"));
-    if (a.all_day && end - start > 864e5) continue;
+    // multi-day all-day events (a holiday) are skipped; compared by calendar day, so DST days (23/25 h) count right
+    if (a.all_day) { const last = new Date(end.getTime() - 1); if (!sameDay(start, last)) continue; }
     if (start > now && start - now < 864e5 && (!soon || start < soon.start)) soon = { start, text: String(a.message).trim(), all: a.all_day, id };
   }
   if (soon) add(6, { key: "cal", icon: "mdi:calendar-clock", tone: "info", text: `${soon.all ? (soon.start.getDate() === now.getDate() ? "I dag" : "I morgen") : when(soon.start).replace(/^kl\./, "Kl.")} · ${soon.text}`, entity: soon.id });
@@ -98,7 +102,7 @@ export function computeInsights(hass, cfg = {}, hourly = []) {
     const tone = Number.isFinite(mean) ? (price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info") : "info";
     let cheap = "";
     if (Number.isFinite(min) && min < price * 0.85 && at) { const [h, m] = String(at).split(":").map(Number); const t = new Date(now); t.setHours(h, m || 0, 0, 0); if (t > now) cheap = ` · billigst kl. ${p2(h)}`; }
-    add(7, { key: "power", icon: "mdi:flash", tone, text: `${w >= 1000 ? `${(w / 1000).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w)} W`} · ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
+    add(7, { key: "power", icon: "mdi:flash", tone, text: `${w >= 1000 ? `${(w / 1000).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w / 50) * 50} W`} · ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
   }
 
   // Robots at work
@@ -123,7 +127,7 @@ export function computeInsights(hass, cfg = {}, hourly = []) {
 /** The next 6 hours as a strip (wide headers). */
 export function hoursHtml(hass, hourly = [], esc = (v) => v) {
   const now = new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
-  const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 60e3).slice(0, 6);
+  const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 60e3).slice(0, 6);
   const sunCache = new Map(); const night = (t) => { const k = t.toDateString(); if (!sunCache.has(k)) sunCache.set(k, sunTimes(t, lat, lon)); const s = sunCache.get(k); return s ? t < s.rise || t > s.set : false; };
   return next.map((h, i) => {
     const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
@@ -136,7 +140,7 @@ export const INSIGHT_CSS = `
 .insights{position:absolute;left:50%;bottom:9px;z-index:7;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:calc(100% - 560px);height:24px;overflow:hidden;transform:translateX(-50%);pointer-events:auto}
 .insights:empty{display:none}
 .ins{flex:0 0 auto;max-width:100%;display:inline-flex;align-items:center;gap:5px;min-width:0;height:24px;padding:0 10px 0 7px;border:0;border-radius:99px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:700;white-space:nowrap;
-  color:#f3f6fa;background:rgba(10,15,22,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 4px 12px -6px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  color:#f3f6fa;background:rgba(10,15,22,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 4px 12px -6px rgba(0,0,0,.6)}
 .ins span{overflow:hidden;text-overflow:ellipsis}
 .ins ha-icon{flex:none;--mdc-icon-size:14px;color:var(--ic,#9fd3ff)}
 .ins.t-ok{--ic:#4ade80}.ins.t-warn{--ic:#fbbf24;box-shadow:inset 0 0 0 1px rgba(251,191,36,.45),0 4px 12px -6px rgba(0,0,0,.6)}.ins.t-accent{--ic:#7dd3fc}.ins.t-info{--ic:#cbd5e1}

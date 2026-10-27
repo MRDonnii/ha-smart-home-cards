@@ -686,6 +686,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
 
   _renderTile(room, refs, model) {
     if (this._premium) { this._renderComfortTile(room, refs, model); return; }
+    if (refs.meta) refs.meta._h = "";   // the premium tile's cache, so switching back to premium redraws it
     refs.host.className = `tile a-${model.accent}`;
     this._setText(refs.temp, this._format(model.current));
     const parts = [];
@@ -748,8 +749,9 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const night = (t) => { const s = sun(t); return s ? t < s.rise || t > s.set : false; };
     const weather = st(room.weather), a = weather?.attributes || {};
     const hourly = (this._wx?.hourly || []).filter((x) => Date.parse(x.datetime) > now.getTime() - 3600e3 + 60e3).slice(0, 12);
-    const todayKey = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
-    const daily = this._wx?.daily || [], d0 = daily.find((x) => String(x.datetime).startsWith(todayKey)), d1 = d0 ? daily[daily.indexOf(d0) + 1] : undefined;
+    // today's daily entry by its local date (some integrations send midnight in UTC, e.g. 23:00 the day before)
+    const localDay = (v) => { const d = new Date(v); return Number.isFinite(d.getTime()) ? new Date(d.getTime() + 3 * 36e5).toDateString() : ""; };
+    const daily = this._wx?.daily || [], d0 = daily.find((x) => localDay(x.datetime) === now.toDateString()), d1 = d0 ? daily[daily.indexOf(d0) + 1] : undefined;
     const info = wxInfo(hourly[0]?.condition || weather?.state, night(now));
     host.style.setProperty("--wx-c", info.color);
     const ic = f("wxic"); if (ic) { ic.className = `wx-ic ${info.kind}`; ic.querySelector("ha-icon")?.setAttribute("icon", info.icon); }

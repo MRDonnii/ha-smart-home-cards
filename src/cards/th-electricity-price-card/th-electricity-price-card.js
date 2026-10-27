@@ -13,8 +13,9 @@
  * Bruger temaets variabler: --dashboard-accent/success/warning/danger, --dashboard-left-accent-width, --dashboard-card-highlight m.fl.
  */
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
+import { smilPause } from '../../shared/smil-pause.js';
 
-const TEP_VER = '1.18.0';
+const TEP_VER = '1.18.1';
 const LEVEL_NAME = ['Billig', 'Normal pris', 'Dyrt', 'Meget dyrt', 'Ekstremt dyrt'], LEVEL_COL = ['var(--good)', 'var(--warn)', 'var(--bad)', 'var(--bad)', 'var(--xbad,#ff4d8d)'];
 
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -246,8 +247,10 @@ class ThElectricityPriceCard extends HTMLElement {
     if (!this._ro) { this._ro = new ResizeObserver(() => { this._pk = null; this.update(); }); }
     this._ro.disconnect(); this._ro.observe(r.getElementById('pc'));
   }
-  disconnectedCallback() { this._ro?.disconnect(); this.closeAdvice(); }
-  connectedCallback() { if (this._ro && this.shadowRoot?.getElementById('pc')) this._ro.observe(this.shadowRoot.getElementById('pc')); }
+  // The chart's SVG animations (sweeps, rings, bubbles, glow) run only while the card can be seen and someone uses the
+  // screen (Claude AI, 2026-10-27; optimisation round: they cost layout and paint every frame and never rested).
+  disconnectedCallback() { this._ro?.disconnect(); this.closeAdvice(); this._smil?.disconnect(); }
+  connectedCallback() { if (this._ro && this.shadowRoot?.getElementById('pc')) this._ro.observe(this.shadowRoot.getElementById('pc')); (this._smil ||= smilPause(this, () => this.shadowRoot)).connect(); }
   $(id) { return this.shadowRoot.getElementById(id); }
   set(id, h) { const e = this.$(id); if (e && e._v !== h) { e.innerHTML = h; e._v = h; } }
   s(e) { const x = this._h?.states[e]; return x && !['unknown', 'unavailable'].includes(x.state) ? x : null; }
@@ -536,7 +539,7 @@ class ThElectricityPriceCard extends HTMLElement {
           g += `<path d="${line(seg)}" fill="none" stroke="${cB}" stroke-width="4.5" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".5" style="filter:drop-shadow(0 0 5px ${cB});pointer-events:none"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" repeatCount="indefinite"/></path>`; }
       }
     }
-    const svg = this.$('svg'); svg.classList.toggle('still', !anim); this.$('days').classList.toggle('still', !anim); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = g;
+    const svg = this.$('svg'); svg.classList.toggle('still', !anim); this.$('days').classList.toggle('still', !anim); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = g; this._smil?.apply();
     // overlay
     let ov = ''; const day0 = new Date(t0); day0.setHours(0, 0, 0, 0);
     for (let d = new Date(day0.getTime() + 864e5); d.getTime() < t1; d = new Date(d.getTime() + 864e5)) { const x = X(d.getTime()) / W * 100;

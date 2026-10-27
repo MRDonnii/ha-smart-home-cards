@@ -100,7 +100,8 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .dial .ring{background:conic-gradient(from 225deg,rgba(255,255,255,.09) 0 270deg,transparent 270deg)}
 .dial .fill i,.dial .glow i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 225deg,var(--rc-cool),var(--rc-ok) 135deg,var(--rc-warm) 205deg,var(--rc-hot) 270deg,transparent 270deg);
   -webkit-mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a));mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a))}
-.dial .glow{filter:blur(7px);opacity:0}
+/* the glow is a wider, feathered ring (a blur filter would be recomputed every frame of the pulse) */
+.dial .glow{opacity:0;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 20px),#000 calc(100% - 10px),#000 calc(100% - 4px),transparent 100%)!important;mask:radial-gradient(farthest-side,transparent calc(100% - 20px),#000 calc(100% - 10px),#000 calc(100% - 4px),transparent 100%)!important}
 .zone.is-heating .dial .glow,.zone.is-ac .dial .glow{animation:dialGlow 2.6s ease-in-out infinite}
 .dial .tick{transform:rotate(calc(225deg + var(--t)))}
 .dial .tick::before{content:"";position:absolute;left:50%;top:-3px;width:2px;height:15px;margin-left:-1px;border-radius:2px;background:var(--rc-ink);box-shadow:0 0 6px rgba(255,255,255,.6)}
@@ -140,7 +141,8 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .premium .tile .t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;line-height:1.2}
 .cf-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 9px 3px 7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--room-color) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 38%,transparent);color:color-mix(in srgb,var(--room-color) 78%,#fff);font-size:10px;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
 .cf-pill i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 8px var(--room-color)}
-.premium .tile.cf-hot .cf-pill i,.premium .tile.cf-air .cf-pill i,.premium .tile.cf-cold .cf-pill i{animation:pmPing 1.8s ease-out infinite}
+.cf-pill i{position:relative}.cf-pill i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--room-color);opacity:0}
+.premium .tile.cf-hot .cf-pill i::after,.premium .tile.cf-air .cf-pill i::after,.premium .tile.cf-cold .cf-pill i::after{animation:pmPing 1.8s ease-out infinite}
 .premium .tile .t-meta small{max-width:100%;overflow:hidden;color:var(--rc-muted);font-size:9.5px;text-overflow:ellipsis;white-space:nowrap}
 .premium .cf{display:block;position:relative;margin-top:10px}
 .cf-bar{position:relative;height:6px;margin-bottom:15px;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--rc-cool) 40%,transparent),rgba(255,255,255,.07) 35%,rgba(255,255,255,.07) 65%,color-mix(in srgb,var(--rc-hot) 40%,transparent))}
@@ -155,7 +157,7 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .cf-chip.bad{color:#fbbf24;background:rgba(251,191,36,.1);box-shadow:inset 0 0 0 1px rgba(251,191,36,.3)}.cf-chip.bad ha-icon{color:#fbbf24}
 .premium .tile .spark-wrap{--spark-h:28px;flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end}
 .premium .tile .spark-box{flex:1 1 auto;height:auto;min-height:28px;max-height:90px}
-@keyframes pmPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--room-color) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+@keyframes pmPing{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
 
 /* measuring points and summary */
 .premium .tile .t-temp{font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}

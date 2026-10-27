@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.223 */
+/* MRDonnii Smart Home Cards v0.5.224 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -138,8 +138,31 @@ try {
 } catch (_) {
   restSheet = null;
 }
+function pauseSmil(root) {
+  root?.querySelectorAll?.("svg").forEach((svg) => {
+    if (svg.ownerSVGElement || svg.__mrSmil || !svg.querySelector("animate,animateTransform,animateMotion,set")) return;
+    try {
+      if (!svg.animationsPaused()) {
+        svg.pauseAnimations();
+        svg.__mrSmil = true;
+      }
+    } catch (_) {
+    }
+  });
+}
+function wakeSmil(root) {
+  root?.querySelectorAll?.("svg").forEach((svg) => {
+    if (!svg.__mrSmil) return;
+    svg.__mrSmil = false;
+    try {
+      svg.unpauseAnimations();
+    } catch (_) {
+    }
+  });
+}
 function pauseIn(host) {
   const root = host.shadowRoot;
+  pauseSmil(root);
   const adopted = Boolean(root && restSheet && root.adoptedStyleSheets);
   if (adopted && !root.adoptedStyleSheets.includes(restSheet)) root.adoptedStyleSheets = [...root.adoptedStyleSheets, restSheet];
   const list = root?.getAnimations ? root.getAnimations() : host.getAnimations({ subtree: true });
@@ -157,6 +180,7 @@ function pauseIn(host) {
 }
 function wakeIn(host) {
   const root = host.shadowRoot;
+  wakeSmil(root);
   if (root?.adoptedStyleSheets?.includes(restSheet)) root.adoptedStyleSheets = root.adoptedStyleSheets.filter((sheet) => sheet !== restSheet);
 }
 function rest() {
@@ -165,6 +189,7 @@ function rest() {
   hosts.forEach((host) => {
     if (host.isConnected) pauseIn(host);
   });
+  window.dispatchEvent(new CustomEvent("shc-motion", { detail: { resting: true } }));
   scanTimer = window.setInterval(() => hosts.forEach((host) => {
     if (host.isConnected) pauseIn(host);
   }), RESCAN_MS);
@@ -183,6 +208,7 @@ function wake() {
     }
   });
   paused.clear();
+  window.dispatchEvent(new CustomEvent("shc-motion", { detail: { resting: false } }));
 }
 var lastMove = 0;
 function onActivity(event) {
@@ -14090,8 +14116,46 @@ console.info(
   "color:#69c4ff;background:#161b22"
 );
 
+// src/shared/smil-pause.js
+function smilPause(host, rootOf) {
+  let visible = true, io = null;
+  const apply = () => {
+    const run = visible && !document.hidden && !window.shcMotion?.resting;
+    rootOf()?.querySelectorAll("svg").forEach((svg) => {
+      if (svg.ownerSVGElement || !svg.querySelector("animate,animateTransform,animateMotion,set")) return;
+      try {
+        if (run && svg.animationsPaused()) svg.unpauseAnimations();
+        else if (!run && !svg.animationsPaused()) svg.pauseAnimations();
+      } catch (_) {
+      }
+    });
+  };
+  const onChange = () => apply();
+  return {
+    apply,
+    connect() {
+      window.addEventListener("shc-motion", onChange);
+      document.addEventListener("visibilitychange", onChange);
+      if (!io && "IntersectionObserver" in window) {
+        io = new IntersectionObserver((entries) => {
+          visible = entries.some((e) => e.isIntersecting);
+          apply();
+        });
+        io.observe(host);
+      }
+      apply();
+    },
+    disconnect() {
+      window.removeEventListener("shc-motion", onChange);
+      document.removeEventListener("visibilitychange", onChange);
+      io?.disconnect();
+      io = null;
+    }
+  };
+}
+
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.18.0";
+var TEP_VER = "1.18.1";
 var LEVEL_NAME = ["Billig", "Normal pris", "Dyrt", "Meget dyrt", "Ekstremt dyrt"];
 var LEVEL_COL = ["var(--good)", "var(--warn)", "var(--bad)", "var(--bad)", "var(--xbad,#ff4d8d)"];
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -14417,12 +14481,16 @@ var ThElectricityPriceCard = class extends HTMLElement {
     this._ro.disconnect();
     this._ro.observe(r.getElementById("pc"));
   }
+  // The chart's SVG animations (sweeps, rings, bubbles, glow) run only while the card can be seen and someone uses the
+  // screen (Claude AI, 2026-10-27; optimisation round: they cost layout and paint every frame and never rested).
   disconnectedCallback() {
     this._ro?.disconnect();
     this.closeAdvice();
+    this._smil?.disconnect();
   }
   connectedCallback() {
     if (this._ro && this.shadowRoot?.getElementById("pc")) this._ro.observe(this.shadowRoot.getElementById("pc"));
+    (this._smil ||= smilPause(this, () => this.shadowRoot)).connect();
   }
   $(id) {
     return this.shadowRoot.getElementById(id);
@@ -14920,6 +14988,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     this.$("days").classList.toggle("still", !anim);
     svg.setAttribute("viewBox", `0 0 ${W2} ${H3}`);
     svg.innerHTML = g;
+    this._smil?.apply();
     let ov = "";
     const day0 = new Date(t0);
     day0.setHours(0, 0, 0, 0);
@@ -33429,7 +33498,8 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .dial .ring{background:conic-gradient(from 225deg,rgba(255,255,255,.09) 0 270deg,transparent 270deg)}
 .dial .fill i,.dial .glow i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 225deg,var(--rc-cool),var(--rc-ok) 135deg,var(--rc-warm) 205deg,var(--rc-hot) 270deg,transparent 270deg);
   -webkit-mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a));mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a))}
-.dial .glow{filter:blur(7px);opacity:0}
+/* the glow is a wider, feathered ring (a blur filter would be recomputed every frame of the pulse) */
+.dial .glow{opacity:0;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 20px),#000 calc(100% - 10px),#000 calc(100% - 4px),transparent 100%)!important;mask:radial-gradient(farthest-side,transparent calc(100% - 20px),#000 calc(100% - 10px),#000 calc(100% - 4px),transparent 100%)!important}
 .zone.is-heating .dial .glow,.zone.is-ac .dial .glow{animation:dialGlow 2.6s ease-in-out infinite}
 .dial .tick{transform:rotate(calc(225deg + var(--t)))}
 .dial .tick::before{content:"";position:absolute;left:50%;top:-3px;width:2px;height:15px;margin-left:-1px;border-radius:2px;background:var(--rc-ink);box-shadow:0 0 6px rgba(255,255,255,.6)}
@@ -33469,7 +33539,8 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .premium .tile .t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;line-height:1.2}
 .cf-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 9px 3px 7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--room-color) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 38%,transparent);color:color-mix(in srgb,var(--room-color) 78%,#fff);font-size:10px;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
 .cf-pill i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 8px var(--room-color)}
-.premium .tile.cf-hot .cf-pill i,.premium .tile.cf-air .cf-pill i,.premium .tile.cf-cold .cf-pill i{animation:pmPing 1.8s ease-out infinite}
+.cf-pill i{position:relative}.cf-pill i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--room-color);opacity:0}
+.premium .tile.cf-hot .cf-pill i::after,.premium .tile.cf-air .cf-pill i::after,.premium .tile.cf-cold .cf-pill i::after{animation:pmPing 1.8s ease-out infinite}
 .premium .tile .t-meta small{max-width:100%;overflow:hidden;color:var(--rc-muted);font-size:9.5px;text-overflow:ellipsis;white-space:nowrap}
 .premium .cf{display:block;position:relative;margin-top:10px}
 .cf-bar{position:relative;height:6px;margin-bottom:15px;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--rc-cool) 40%,transparent),rgba(255,255,255,.07) 35%,rgba(255,255,255,.07) 65%,color-mix(in srgb,var(--rc-hot) 40%,transparent))}
@@ -33484,7 +33555,7 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .cf-chip.bad{color:#fbbf24;background:rgba(251,191,36,.1);box-shadow:inset 0 0 0 1px rgba(251,191,36,.3)}.cf-chip.bad ha-icon{color:#fbbf24}
 .premium .tile .spark-wrap{--spark-h:28px;flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end}
 .premium .tile .spark-box{flex:1 1 auto;height:auto;min-height:28px;max-height:90px}
-@keyframes pmPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--room-color) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+@keyframes pmPing{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
 
 /* measuring points and summary */
 .premium .tile .t-temp{font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -34394,6 +34465,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       this._renderComfortTile(room, refs, model);
       return;
     }
+    if (refs.meta) refs.meta._h = "";
     refs.host.className = `tile a-${model.accent}`;
     this._setText(refs.temp, this._format(model.current));
     const parts = [];
@@ -34475,8 +34547,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     };
     const weather = st(room.weather), a = weather?.attributes || {};
     const hourly = (this._wx?.hourly || []).filter((x) => Date.parse(x.datetime) > now.getTime() - 36e5 + 6e4).slice(0, 12);
-    const todayKey = `${now.getFullYear()}-${p24(now.getMonth() + 1)}-${p24(now.getDate())}`;
-    const daily = this._wx?.daily || [], d0 = daily.find((x) => String(x.datetime).startsWith(todayKey)), d1 = d0 ? daily[daily.indexOf(d0) + 1] : void 0;
+    const localDay = (v) => {
+      const d = new Date(v);
+      return Number.isFinite(d.getTime()) ? new Date(d.getTime() + 3 * 36e5).toDateString() : "";
+    };
+    const daily = this._wx?.daily || [], d0 = daily.find((x) => localDay(x.datetime) === now.toDateString()), d1 = d0 ? daily[daily.indexOf(d0) + 1] : void 0;
     const info = wxInfo(hourly[0]?.condition || weather?.state, night(now));
     host.style.setProperty("--wx-c", info.color);
     const ic = f("wxic");
@@ -35616,20 +35691,11 @@ function insightIds(cfg = {}) {
     cfg.alarm,
     ...cfg.locks || [],
     ...cfg.openings || [],
-    cfg.power,
-    cfg.price,
-    cfg.price_mean,
-    cfg.price_min,
     cfg.waste,
-    ...cfg.calendars || [],
-    ...(cfg.travel || []).flatMap((t) => [t.travel, t.direction]),
-    ...(cfg.robots || []).flatMap((r) => [r.entity, r.room]),
-    cfg.car?.battery,
-    cfg.car?.range,
-    cfg.car?.plugged,
-    cfg.car?.next_start
+    ...(cfg.robots || []).flatMap((r) => [r.entity, r.room])
   ].filter(Boolean);
 }
+var sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 function computeInsights(hass, cfg = {}, hourly = []) {
   const S = (id) => id ? hass?.states?.[id] : void 0, st = (id) => S(id)?.state;
   const num4 = (id) => {
@@ -35663,7 +35729,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
     add(4, { key: "away", icon: holiday ? "mdi:palm-tree" : "mdi:home-export-outline", tone: "info", text: `${holiday ? "Ferie \xB7 tomt" : "Tomt"}${since ? ` siden ${when(since)}` : ""}${armed ? " \xB7 alarm til" : ""}`, entity: cfg.alarm || cfg.away });
   }
   if (cfg.forecast !== false && hourly.length) {
-    const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 6e4).slice(0, 6);
+    const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
     const wet = next.findIndex((h) => Number(h.precipitation_probability) >= 50 || Number(h.precipitation) >= 0.3);
     const temps = next.map((h) => Number(h.temperature)).filter(Number.isFinite);
     if (wet === 0) add(5, { key: "wx", icon: "mdi:weather-rainy", tone: "accent", text: "Regn nu og den n\xE6ste time" });
@@ -35675,7 +35741,10 @@ function computeInsights(hass, cfg = {}, hourly = []) {
     const a = S(id)?.attributes || {};
     if (!a.start_time || !a.message) continue;
     const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time || a.start_time).replace(" ", "T"));
-    if (a.all_day && end - start > 864e5) continue;
+    if (a.all_day) {
+      const last = new Date(end.getTime() - 1);
+      if (!sameDay(start, last)) continue;
+    }
     if (start > now && start - now < 864e5 && (!soon || start < soon.start)) soon = { start, text: String(a.message).trim(), all: a.all_day, id };
   }
   if (soon) add(6, { key: "cal", icon: "mdi:calendar-clock", tone: "info", text: `${soon.all ? soon.start.getDate() === now.getDate() ? "I dag" : "I morgen" : when(soon.start).replace(/^kl\./, "Kl.")} \xB7 ${soon.text}`, entity: soon.id });
@@ -35691,7 +35760,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
       t.setHours(h, m || 0, 0, 0);
       if (t > now) cheap = ` \xB7 billigst kl. ${p2(h)}`;
     }
-    add(7, { key: "power", icon: "mdi:flash", tone: tone2, text: `${w >= 1e3 ? `${(w / 1e3).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w)} W`} \xB7 ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
+    add(7, { key: "power", icon: "mdi:flash", tone: tone2, text: `${w >= 1e3 ? `${(w / 1e3).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w / 50) * 50} W`} \xB7 ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
   }
   for (const r of cfg.robots || []) {
     const s = st(r.entity);
@@ -35711,7 +35780,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
 }
 function hoursHtml(hass, hourly = [], esc12 = (v) => v) {
   const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
-  const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 30 * 6e4).slice(0, 6);
+  const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
   const sunCache = /* @__PURE__ */ new Map();
   const night = (t) => {
     const k = t.toDateString();
@@ -35729,7 +35798,7 @@ var INSIGHT_CSS = `
 .insights{position:absolute;left:50%;bottom:9px;z-index:7;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:max-content;max-width:calc(100% - 560px);height:24px;overflow:hidden;transform:translateX(-50%);pointer-events:auto}
 .insights:empty{display:none}
 .ins{flex:0 0 auto;max-width:100%;display:inline-flex;align-items:center;gap:5px;min-width:0;height:24px;padding:0 10px 0 7px;border:0;border-radius:99px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:700;white-space:nowrap;
-  color:#f3f6fa;background:rgba(10,15,22,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 4px 12px -6px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  color:#f3f6fa;background:rgba(10,15,22,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),0 4px 12px -6px rgba(0,0,0,.6)}
 .ins span{overflow:hidden;text-overflow:ellipsis}
 .ins ha-icon{flex:none;--mdc-icon-size:14px;color:var(--ic,#9fd3ff)}
 .ins.t-ok{--ic:#4ade80}.ins.t-warn{--ic:#fbbf24;box-shadow:inset 0 0 0 1px rgba(251,191,36,.45),0 4px 12px -6px rgba(0,0,0,.6)}.ins.t-accent{--ic:#7dd3fc}.ins.t-info{--ic:#cbd5e1}
@@ -36893,17 +36962,30 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const card = root.querySelector("ha-card");
     if (!cfg) {
       box.innerHTML = "";
-      box._key = "";
+      box._keys = "";
       card?.classList.remove("has-insights");
       return;
     }
     const items = computeInsights(this._hass, cfg, this._wxHourly || []).slice(0, 8);
     this._insightItems = items;
-    const key = items.map((it) => `${it.tone}|${it.icon}|${it.text}`).join("\xA7");
-    if (box._key !== key) {
-      box._key = key;
-      box.innerHTML = items.map((it, i) => `<button class="ins t-${this._esc(it.tone)} k-${this._esc(it.key)}" data-ins="${i}" type="button" title="${this._esc(it.text)}"><ha-icon icon="${this._esc(it.icon)}"></ha-icon><span>${this._esc(it.text)}</span></button>`).join("");
+    const keys = items.map((it) => it.key).join("\xA7");
+    if (box._keys !== keys) {
+      box._keys = keys;
+      box.innerHTML = items.map((it, i) => `<button class="ins k-${this._esc(it.key)}" data-ins="${i}" type="button"><ha-icon></ha-icon><span></span></button>`).join("");
     }
+    [...box.children].forEach((el, i) => {
+      const it = items[i];
+      if (!it) return;
+      const cls = `ins t-${it.tone} k-${it.key}`;
+      if (el.className.replace(/ on$/, "") !== cls) el.className = cls;
+      const ic = el.firstElementChild;
+      if (ic.getAttribute("icon") !== it.icon) ic.setAttribute("icon", it.icon);
+      const sp = el.lastElementChild;
+      if (sp.textContent !== it.text) {
+        sp.textContent = it.text;
+        el.title = it.text;
+      }
+    });
     const n = items.length;
     if (n) this._insIdx = (this._insIdx || 0) % n;
     [...box.children].forEach((el, i) => el.classList.toggle("on", i === this._insIdx));
@@ -38567,7 +38649,7 @@ var HaHomeSummaryCard = class extends HTMLElement {
       this.config?.water_flow_entity,
       this.config?.storage_entity,
       ...this.config?.hdd_entities || [],
-      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence, room.ac]),
+      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence, room.ac, room.co2]),
       ...(this.config?.calendars || []).map((x) => x.entity)
     ].filter(Boolean);
     const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
@@ -39203,7 +39285,7 @@ ${LUX_KEYFRAMES}
     const color = this._esc(robot.color || (mower ? "#20e3a2" : "#38bdf8"));
     const name = this._esc(robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot");
     const speed = Math.max(5, Math.min(40, (Number(robot.speed_seconds) || 16) * 0.55));
-    return `<span class="rb-tag" style="--rb:${color}"><i></i>${name}</span><span class="rb-lane" style="--rb:${color};--rbs:${speed.toFixed(1)}s"><span class="rb-y"><span class="rb-x"><span class="rb"><span class="rb-trail"></span><svg class="rb-body" viewBox="0 0 24 24" aria-hidden="true"><circle class="rb-shell" cx="12" cy="12" r="10.4"/><path class="rb-bumper" d="M15.2 2.6A10.4 10.4 0 0 1 15.2 21.4"/><circle class="rb-lidar" cx="9.4" cy="12" r="3.5"/><circle class="rb-eye" cx="9.4" cy="12" r="1.3"/><g class="rb-brush"><path d="M18.4 4.8l2 2M20.4 4.8l-2 2"/></g>${mower ? '<path class="rb-blade" d="M5 7.5h3M5 16.5h3"/>' : ""}</svg></span></span></span></span>`;
+    return `<span class="rb-tag" style="--rb:${color}"><i></i>${name}</span><span class="rb-lane" style="--rb:${color};--rbs:${speed.toFixed(1)}s"><span class="rb-y"><span class="rb-x"><span class="rb"><span class="rb-trail"></span><svg class="rb-body" viewBox="0 0 24 24" aria-hidden="true"><circle class="rb-shell" cx="12" cy="12" r="10.4"/><path class="rb-bumper" d="M15.2 2.6A10.4 10.4 0 0 1 15.2 21.4"/><circle class="rb-lidar" cx="9.4" cy="12" r="3.5"/><circle class="rb-eye" cx="9.4" cy="12" r="1.3"/>${mower ? '<path class="rb-blade" d="M5 7.5h3M5 16.5h3"/>' : ""}</svg><i class="rb-br"></i></span></span></span></span>`;
   }
   _updateRobots() {
     const rooms = this.shadowRoot?.querySelector(".rooms"), panel = this.shadowRoot?.querySelector(".temperature-panel");
@@ -39467,25 +39549,25 @@ ${LUX_KEYFRAMES}
         .rt.pm.s-heat .rt-fx::before{left:-20%;right:-20%;bottom:-62%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,118,40,.5),rgba(255,118,40,.14) 62%,transparent);animation:pmGlow 3.6s ease-in-out infinite}
         .rt.pm.s-heat .rt-fx::after{left:-30%;right:-30%;bottom:-20%;height:60%;background:radial-gradient(45% 60% at 30% 100%,rgba(255,196,110,.28),transparent 70%),radial-gradient(40% 55% at 72% 100%,rgba(255,92,40,.26),transparent 70%);opacity:1;animation:pmHaze 7s ease-in-out infinite alternate}
         .rt.pm.s-heat .rt-fx i{bottom:2px;width:3px;height:3px;border-radius:50%;background:#ffe2b8;box-shadow:0 0 6px 1px rgba(255,150,60,.95);animation:pmEmber 3.8s cubic-bezier(.3,.6,.4,1) infinite}
-        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;animation-delay:.65s;animation-duration:4.3s;width:2px;height:2px}
-        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;animation-delay:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;animation-delay:1.95s;animation-duration:4.1s;width:2px;height:2px}
-        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;animation-delay:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;animation-delay:3.2s;animation-duration:4.4s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;--ad:.65s;animation-duration:4.3s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;--ad:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;--ad:1.95s;animation-duration:4.1s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;--ad:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;--ad:3.2s;animation-duration:4.4s;width:2px;height:2px}
         /* AC cooling: frost from the top and snow drifting down */
         .rt.pm.s-cool .rt-fx::before{left:-20%;right:-20%;top:-65%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(110,190,255,.36),rgba(110,190,255,.1) 62%,transparent);opacity:1;animation:pmGlow 4.4s ease-in-out infinite}
         .rt.pm.s-cool .rt-fx i{top:-6px;width:4px;height:4px;border-radius:50%;background:#e6f4ff;box-shadow:0 0 6px #9fd4ff;animation:pmSnow 5s linear infinite}
-        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;animation-delay:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;animation-delay:1.7s}
-        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;animation-delay:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;animation-delay:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;animation-delay:4.2s;width:3px;height:3px}
+        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;--ad:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;--ad:1.7s}
+        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;--ad:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;--ad:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;--ad:4.2s;width:3px;height:3px}
         /* open window: air streaming through */
         .rt.pm.s-open .rt-fx i{left:-45%;width:55%;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(196,181,253,.85),transparent);animation:pmAir 3.2s ease-in-out infinite}
-        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;animation-delay:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;animation-delay:1.1s}
-        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;animation-delay:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;animation-delay:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;animation-delay:2.75s;width:35%}
+        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;--ad:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;--ad:1.1s}
+        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;--ad:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;--ad:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;--ad:2.75s;width:35%}
         /* outside: a sky glow and two soft clouds drifting by */
         .rt.pm.s-out .rt-fx::before{left:-20%;right:-20%;top:-70%;height:115%;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),transparent);opacity:1}
         .rt.pm.s-out .rt-fx i:nth-child(-n+2){top:14%;left:-60%;width:62%;height:30%;border-radius:50%;background:radial-gradient(closest-side,rgba(200,230,255,.09),rgba(200,230,255,.03) 60%,transparent);opacity:1;animation:pmCloud 26s linear infinite}
-        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;animation-delay:-17s}
+        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;--ad:-17s}
         /* all is well: a slow light gliding over the glass */
-        .rt.pm.s-ok .rt-fx::after{top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
-        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{animation-delay:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{animation-delay:-7s}
+        .rt.pm.s-ok .rt-fx::after{--ad:0s;top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
+        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{--ad:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{--ad:-7s}
         /* a room outside its comfort zone: a soft glow in the warning colour */
         .rt.pm[class*="cf-"]:not(.cf-ok) .rt-fx::before{left:-20%;right:-20%;bottom:-70%;height:110%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--sc) 30%,transparent),transparent);opacity:1}
         @keyframes pmGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08) translateY(-4%)}}
@@ -39495,6 +39577,8 @@ ${LUX_KEYFRAMES}
         @keyframes pmAir{0%{opacity:0;transform:translateX(0)}30%{opacity:.9}100%{opacity:0;transform:translateX(270%)}}
         @keyframes pmCloud{to{transform:translateX(300%)}}
         @keyframes pmGlide{0%,55%{transform:translateX(-120%) rotate(8deg)}100%{transform:translateX(330%) rotate(8deg)}}
+        /* animations keep their phase when the tiles are redrawn: the delay counts from the wall clock (--wc, set on .rooms) */
+        .rt.pm .rt-fx i,.rt.pm .rt-fx::before,.rt.pm .rt-fx::after{animation-delay:calc(var(--wc,0) * -1s + var(--ad,0s))!important}
         @media(prefers-reduced-motion:reduce){.rt-fx *,.rt-fx::before,.rt-fx::after{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
@@ -39515,24 +39599,26 @@ ${LUX_KEYFRAMES}
         @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
         .room-robot.pmr{left:0;top:0;width:100%;height:100%;animation:none}
         .pmr .rb-tag{position:absolute;top:8px;right:9px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:58%;padding:2px 7px 2px 5px;overflow:hidden;border-radius:99px;background:rgba(9,13,20,.62);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rb) 45%,transparent),0 4px 12px -6px var(--rb);color:color-mix(in srgb,var(--rb) 72%,#fff);font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;text-overflow:ellipsis}
-        .pmr .rb-tag i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--rb);box-shadow:0 0 6px var(--rb);animation:rbPing 1.8s ease-out infinite}
+        .pmr .rb-tag i{position:relative;flex:none;width:5px;height:5px;border-radius:50%;background:var(--rb);box-shadow:0 0 6px var(--rb)}.pmr .rb-tag i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--rb);opacity:0;animation:rbPing 1.8s ease-out infinite}
         .pmr .rb-lane{position:absolute;left:9%;right:calc(9% + 22px);top:38%;bottom:calc(30% + 22px)}
         .pmr .rb-y{position:absolute;inset:0;animation:rbLanes calc(var(--rbs) * 4) ease-in-out infinite alternate}
         .pmr .rb-x{position:absolute;left:0;top:0;width:100%;height:0;animation:rbX var(--rbs) ease-in-out infinite alternate}
         .pmr .rb{position:absolute;left:0;top:0;width:22px;height:22px;animation:rbFace calc(var(--rbs) * 2) linear infinite}
         .pmr .rb-trail{position:absolute;right:45%;top:50%;width:58px;height:14px;margin-top:-7px;border-radius:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rb) 26%,transparent));filter:blur(1.5px)}
-        .pmr .rb-body{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rb) 70%,transparent)) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+        .pmr .rb{will-change:transform}.pmr .rb-body{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rb) 70%,transparent)) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
         .rb-shell{fill:#141c26;stroke:color-mix(in srgb,var(--rb) 80%,#fff);stroke-width:1.2}
         .rb-bumper{fill:none;stroke:var(--rb);stroke-width:2.2;stroke-linecap:round}
         .rb-lidar{fill:#0b1118;stroke:rgba(255,255,255,.4);stroke-width:.8}
-        .rb-eye{fill:var(--rb);animation:rbEye 1.6s ease-in-out infinite}
-        .rb-brush{fill:none;stroke:#d7e0ea;stroke-width:1.1;stroke-linecap:round;transform-box:fill-box;transform-origin:center;animation:rbBrush .45s linear infinite}
+        .rb-eye{fill:var(--rb)}
+        /* the side brush is HTML over the drawing (an animated SVG part redoes style, layout and paint every frame) */
+        .pmr .rb-br{position:absolute;left:73%;top:14%;width:18%;height:18%;border-radius:50%;background:linear-gradient(45deg,transparent 42%,#d7e0ea 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,#d7e0ea 42% 58%,transparent 58%);animation:rbBrush .45s linear infinite}
         .rb-blade{stroke:color-mix(in srgb,var(--rb) 60%,#fff);stroke-width:1.2;stroke-linecap:round}
         @keyframes rbX{to{transform:translateX(100%)}}
         @keyframes rbLanes{0%,21%{transform:translateY(0)}29%,46%{transform:translateY(33.3%)}54%,71%{transform:translateY(66.6%)}79%,100%{transform:translateY(100%)}}
         @keyframes rbFace{0%,44%{transform:rotate(0)}50%,94%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
-        @keyframes rbBrush{to{transform:rotate(360deg)}}@keyframes rbEye{50%{opacity:.35}}
-        @keyframes rbPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rb) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+        @keyframes rbBrush{to{transform:rotate(360deg)}}
+        @keyframes rbPing{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+        .pmr .rb-y,.pmr .rb-x,.pmr .rb,.pmr .rb-br{animation-delay:calc(var(--wc,0) * -1s)!important}
         @media(prefers-reduced-motion:reduce){.pmr *{animation:none!important}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
@@ -39646,6 +39732,7 @@ ${LUX_KEYFRAMES}
       rooms._html = roomsHtml;
       for (const node of this._robotNodes.values()) node.remove();
       this._robotNodes.clear();
+      rooms.style.setProperty("--wc", (Date.now() / 1e3 % 86400).toFixed(2));
       rooms.innerHTML = roomsHtml;
     }
     this._updateRobots();
@@ -40061,7 +40148,7 @@ customElements.whenDefined("ha-home-status-card").then(() => {
 });
 
 // src/cards/ha-person-overview-card/ha-person-overview-card.js
-var VERSION30 = "0.6.0";
+var VERSION30 = "0.6.1";
 var HAPersonOverviewCard = class extends HTMLElement {
   constructor() {
     super();
@@ -40146,9 +40233,12 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return null;
   }
   _coords(p) {
-    const a = this._s(p.entity)?.attributes || this._s(p.tracker)?.attributes || {};
-    const lat = Number(a.latitude), lon = Number(a.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
+    for (const id of [p.entity, p.tracker]) {
+      const a = this._s(id)?.attributes || {};
+      const lat = Number(a.latitude), lon = Number(a.longitude);
+      if (a.latitude != null && Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon];
+    }
+    return null;
   }
   // A trip in the calendar (trip_calendar, e.g. "Lalandia søndervig" all-day 26–30/10): while someone is more than 25 km
   // from home during an ongoing all-day event of two days or more, its title is the place.
@@ -40159,7 +40249,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const a = this._s(id)?.attributes || {};
       if (this._s(id)?.state !== "on" || !a.all_day || !a.message) continue;
       const start = new Date(String(a.start_time).replace(" ", "T")), end = new Date(String(a.end_time).replace(" ", "T"));
-      if (end - start >= 2 * 864e5) return String(a.message).trim().replace(/^./, (c2) => c2.toUpperCase());
+      const days = Math.round((Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) - Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) / 864e5);
+      if (days >= 2) return String(a.message).trim().replace(/^./, (c2) => c2.toUpperCase());
     }
     return "";
   }
@@ -40211,7 +40302,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = this._km(p), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    return `<button class="person" data-path="${p.navigation_path || ""}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${pic.replaceAll("'", "%27")}')` : ""}"></span><span class="main"><b>${p.name || person?.attributes?.friendly_name || "Person"}</b><strong style="color:${color}">${status}</strong><small>${place}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    return `<button class="person" data-path="${esc12(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc12(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc12(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc12(status)}</strong><small>${esc12(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
@@ -55291,7 +55383,7 @@ var HINTS = [
 var STARS = [[7, 16, 0], [16, 44, 1.1], [27, 10, 2.2], [41, 30, 0.6], [55, 8, 1.7], [63, 40, 2.8], [74, 18, 0.3], [86, 34, 1.4], [94, 9, 2.5]];
 var SKYLINE = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='240' height='36' viewBox='0 0 240 36'><path d='M0 36V22l12-9 12 9v14z'/><rect x='30' y='12' width='14' height='24'/><path d='M48 36V24l10-8 10 8v12z'/><circle cx='80' cy='22' r='8'/><rect x='79' y='26' width='2' height='10'/><rect x='94' y='16' width='20' height='20'/><rect x='98' y='9' width='4' height='7'/><path d='M120 36V25l9-7 9 7v11z'/><circle cx='150' cy='25' r='6'/><rect x='149' y='28' width='2' height='8'/><path d='M160 36V20l14-10 14 10v16z'/><circle cx='202' cy='24' r='7'/><circle cx='210' cy='20' r='8'/><rect x='205' y='26' width='2' height='10'/><rect x='222' y='18' width='14' height='18'/></svg>");
 var WAVE = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' viewBox='0 0 24 6'><path d='M0 3q6-3 12 0t12 0v3H0z'/></svg>");
-var TRUCK = `<svg viewBox="0 0 68 44" aria-hidden="true"><circle class="t-flash" cx="51.5" cy="10.5" r="7"/><rect class="t-lamp" x="49" y="9" width="5" height="3" rx="1"/><rect class="t-box" x="4" y="10" width="38" height="22" rx="3"/><path class="t-ribs" d="M13 13v16M33 13v16"/><circle class="t-logo" cx="23" cy="21" r="4.6"/><rect class="t-rear" x="1" y="12" width="5" height="19" rx="1.5"/><path class="t-cab" d="M43 14h11l9 9v9H43z"/><path class="t-glass" d="M46 17h7l6 6H46z"/><rect class="t-chassis" x="1" y="31" width="64" height="4" rx="1.5"/><circle class="t-light" cx="63" cy="28" r="1.6"/><g class="wheel"><circle class="t-tire" cx="15" cy="36" r="6"/><path class="t-spoke" d="M15 31.5v9M10.5 36h9"/></g><g class="wheel"><circle class="t-tire" cx="53" cy="36" r="6"/><path class="t-spoke" d="M53 31.5v9M48.5 36h9"/></g></svg>`;
+var TRUCK = `<svg viewBox="0 0 68 44" aria-hidden="true"><rect class="t-lamp" x="49" y="9" width="5" height="3" rx="1"/><rect class="t-box" x="4" y="10" width="38" height="22" rx="3"/><path class="t-ribs" d="M13 13v16M33 13v16"/><circle class="t-logo" cx="23" cy="21" r="4.6"/><rect class="t-rear" x="1" y="12" width="5" height="19" rx="1.5"/><path class="t-cab" d="M43 14h11l9 9v9H43z"/><path class="t-glass" d="M46 17h7l6 6H46z"/><rect class="t-chassis" x="1" y="31" width="64" height="4" rx="1.5"/><circle class="t-light" cx="63" cy="28" r="1.6"/></svg><i class="wh w1"></i><i class="wh w2"></i><i class="fl"></i>`;
 var LEARN_KEY = "ha-waste-journey:intervals";
 var p23 = (n) => String(n).padStart(2, "0");
 var parseDate = (value) => {
@@ -55345,7 +55437,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     this._hass = hass;
     if (!this.shadowRoot?.querySelector("ha-card")) this._build();
     const cfg = this._config || {}, calendar = this._state(cfg.calendar_entity);
-    const signature = JSON.stringify([cfg.next_entity, this._value(this._sunEntity()), (/* @__PURE__ */ new Date()).getHours(), this._value(cfg.confirm_entity), calendar?.state, calendar?.attributes?.start_time, ...(cfg.waste_types || []).map((item2) => [item2.entity, this._value(item2.entity), this._state(item2.entity)?.attributes?.date])]);
+    const nextState = this._state(cfg.next_entity);
+    const signature = JSON.stringify([cfg.next_entity, nextState?.state, nextState?.attributes?.date, nextState?.attributes?.name, this._value(this._sunEntity()), (/* @__PURE__ */ new Date()).getHours(), this._value(cfg.confirm_entity), calendar?.state, calendar?.attributes?.start_time, ...(cfg.waste_types || []).map((item2) => [item2.entity, this._value(item2.entity), this._state(item2.entity)?.attributes?.date])]);
     if (signature !== this._signature) {
       this._signature = signature;
       this._render();
@@ -55426,7 +55519,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       const seen = store[item2.entity] || {};
       if (seen.date && date2 > seen.date) {
         const before = parseDate(seen.date), after = parseDate(date2), gap = before && after ? dayDiff(before, after) : 0;
-        if (before && dayDiff(before, today) <= 3 && gap >= 5 && gap <= 120) seen.interval = gap;
+        const ago = before ? dayDiff(before, today) : -1;
+        if (ago >= 0 && ago <= 3 && gap >= 5 && gap <= 120) seen.interval = gap;
       }
       if (seen.date !== date2) {
         seen.date = date2;
@@ -55443,7 +55537,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   _interval(item2) {
     const set = Number(item2.interval);
     if (set > 0) return set;
-    const match = /(\d+)\s*dag/i.exec(item2.attrs.description || "");
+    const match = /(\d+)\.?\s*-?\s*dag/i.exec(item2.attrs.description || "");
     if (match) return Number(match[1]);
     return this._learned?.[item2.entity]?.interval || null;
   }
@@ -55461,10 +55555,14 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   }
   // Afhentningsvinduet fra kalenderen (fx 07:00–15:00), kun når kalenderens næste begivenhed er samme dag
   _window(date2) {
+    if (!date2) return null;
+    this._windows ||= {};
     const attrs = this._state(this._config.calendar_entity)?.attributes;
-    if (!attrs?.start_time || !date2 || !String(attrs.start_time).startsWith(date2)) return null;
-    const start = new Date(String(attrs.start_time).replace(" ", "T")), end = new Date(String(attrs.end_time || attrs.start_time).replace(" ", "T"));
-    return Number.isFinite(start.getTime()) ? { start, end: Number.isFinite(end.getTime()) ? end : start } : null;
+    if (attrs?.start_time && !attrs.all_day && String(attrs.start_time).startsWith(date2)) {
+      const start = new Date(String(attrs.start_time).replace(" ", "T")), end = new Date(String(attrs.end_time || attrs.start_time).replace(" ", "T"));
+      if (Number.isFinite(start.getTime())) this._windows[date2] = { start, end: Number.isFinite(end.getTime()) ? end : start };
+    }
+    return this._windows[date2] || null;
   }
   _phase(win) {
     if (!win) return null;
@@ -55554,7 +55652,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       .scene{--x0:84px;--x1:98px;--hf:0;height:118px;margin-top:4px}
       .sun,.moon{position:absolute;top:8px;left:31%;width:20px;height:20px;border-radius:50%;transition:opacity 1.2s}
       .sun{background:radial-gradient(circle,#ffe6a0 0 42%,rgba(255,200,90,.35) 52%,transparent 70%);opacity:.6}
-      .sun:before{content:"";position:absolute;inset:-9px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.42) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);animation:spin 40s linear infinite}
+      .sun:before{content:"";position:absolute;inset:-9px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.42) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);mask:radial-gradient(circle,transparent 0 46%,#000 47% 68%,transparent 70%);}
+      ha-card:not(.night) .sun:before{animation:spin 40s linear infinite}
       .moon{box-shadow:inset -6px 3px 0 0 #eef2ff;opacity:0;transform:rotate(-18deg);filter:drop-shadow(0 0 6px rgba(215,225,255,.5))}
       .night .sun{opacity:0}.night .moon{opacity:.92}
       .cloud{position:absolute;top:10px;left:-80px;width:100%;height:24px;background:radial-gradient(16px 9px at 22px 15px,rgba(255,255,255,.13) 60%,transparent),radial-gradient(20px 13px at 40px 11px,rgba(255,255,255,.15) 60%,transparent),radial-gradient(15px 8px at 58px 16px,rgba(255,255,255,.12) 60%,transparent) no-repeat;background-size:80px 24px;background-repeat:no-repeat;animation:drift 90s linear infinite;pointer-events:none;transition:opacity 1.2s}
@@ -55574,17 +55673,20 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       .truck,.mini{position:absolute;padding:0;border:0;background:none;cursor:pointer;transform:translateX(-50%)}
       .truck{left:calc(var(--x0) + (100% - var(--x0) - var(--x1)) * var(--hf));bottom:17px;z-index:4;width:68px;height:44px;transition:left 2.4s cubic-bezier(.25,.8,.25,1)}
       .mini{left:calc(var(--x0) + (100% - var(--x0) - var(--x1)) * var(--f));bottom:20px;z-index:3;width:40px;height:26px;transition:left 2.4s cubic-bezier(.25,.8,.25,1) calc(var(--j) * 160ms + 150ms)}
-      .body{display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate}
-      .truck .body{filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}.mini .body{opacity:.9;animation-duration:.62s;animation-delay:calc(var(--j) * -.21s)}
+      .body{position:relative;display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate}
+      .truck:before{content:"";position:absolute;left:6%;right:4%;bottom:-3px;height:9px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent)}.mini .body{opacity:.9;animation-duration:.62s;animation-delay:calc(var(--j) * -.21s)}
       .during .truck .body{animation-duration:.3s}
       .body svg{display:block;width:100%;height:100%;overflow:visible}
       .t-box{fill:var(--truck)}.t-ribs{fill:none;stroke:color-mix(in srgb,var(--truck) 55%,black);stroke-width:1.4;opacity:.6}
       .t-logo{fill:none;stroke:rgba(255,255,255,.6);stroke-width:1.6;stroke-dasharray:6 3.6}
       .t-rear{fill:color-mix(in srgb,var(--truck) 62%,black)}.t-cab{fill:color-mix(in srgb,var(--truck) 58%,white)}.t-glass{fill:#0c1722;opacity:.85}
       .t-chassis{fill:#1a2330}.t-tire{fill:#0d1218;stroke:#2c3846;stroke-width:1.5}.t-spoke{fill:none;stroke:#8c99a8;stroke-width:1.4}
-      .t-light{fill:#ffe7a8}.t-lamp{fill:#ffb020;opacity:.35}.t-flash{fill:#ffb020;opacity:0}
-      .alert .truck .t-lamp{opacity:1}.alert .truck .t-flash{animation:flash 1.1s ease-in-out infinite}
-      .wheel{transform-box:fill-box;transform-origin:center;animation:spin .7s linear infinite}
+      .t-light{fill:#ffe7a8}.t-lamp{fill:#ffb020;opacity:.35}
+      .alert .truck .t-lamp{opacity:1}.alert .truck .fl{animation:flash 1.1s ease-in-out infinite}
+      /* wheels and the beacon glow are HTML over the drawing: animated SVG parts would redo style, layout and paint every frame */
+      .wh{position:absolute;top:68.2%;width:17.6%;height:27.3%;border-radius:50%;background:radial-gradient(circle,#8c99a8 0 17%,transparent 19%),repeating-conic-gradient(#8c99a8 0 8deg,transparent 8deg 90deg),#0d1218;box-shadow:inset 0 0 0 1.5px #2c3846;animation:spin .7s linear infinite}
+      .wh.w1{left:13.2%}.wh.w2{left:69.1%}.mini .wh{animation:none}
+      .fl{position:absolute;left:65.4%;top:8%;width:20.6%;height:31.8%;border-radius:50%;background:radial-gradient(circle,#ffb020 0 28%,rgba(255,176,32,.35) 55%,transparent 72%);opacity:0}
       .puff{position:absolute;left:-5px;bottom:9px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,rgba(210,220,232,.55),transparent 70%);opacity:0;animation:puff 1.8s ease-out infinite}
       .puff+.puff{animation-delay:.6s}.puff+.puff+.puff{animation-delay:1.2s}
       .beam{position:absolute;left:94%;bottom:4px;width:58px;height:22px;background:linear-gradient(90deg,rgba(255,232,160,.42),transparent);clip-path:polygon(0 42%,100% 0,100% 100%,0 64%);opacity:0;transition:opacity 1.2s;pointer-events:none}
@@ -55627,13 +55729,13 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       .spot{position:absolute;inset:0;background:radial-gradient(200px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--c) 17%,transparent),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
       @media(hover:hover){.waste:hover .spot{opacity:1}.waste:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--edge))}}
       .can{position:relative;width:46px;height:60px}
-      .lid{position:absolute;left:1px;right:1px;top:7px;height:7px;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--c) 70%,white);box-shadow:0 2px 4px rgba(0,0,0,.35);transform-origin:6% 100%;animation:peek 9s ease-in-out infinite;animation-delay:calc(var(--i) * -2.3s)}
+      .lid{position:absolute;left:1px;right:1px;top:7px;height:7px;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--c) 70%,white);box-shadow:0 2px 4px rgba(0,0,0,.35);transform-origin:6% 100%}
       .lid:before{content:"";position:absolute;left:50%;top:-4px;width:14px;height:4px;border-radius:3px 3px 0 0;background:inherit;transform:translateX(-50%)}
       .next .lid{animation:flap 2.6s ease-in-out infinite}
       .tank{position:absolute;left:3px;right:3px;top:15px;bottom:6px;overflow:hidden;clip-path:polygon(0 0,100% 0,91% 100%,9% 100%);background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 30%,transparent 70%,rgba(0,0,0,.28)),color-mix(in srgb,var(--c) 13%,rgba(0,0,0,.35))}
       .tank:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.16) 9px 10px)}
       .liquid{position:absolute;left:0;right:0;bottom:0;height:calc(var(--fill) * 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 80%,white),color-mix(in srgb,var(--c) 85%,black));transition:height 1.4s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 400ms)}
-      .wave{position:absolute;left:0;top:-5px;width:calc(100% + 24px);height:6px;background:color-mix(in srgb,var(--c) 80%,white);-webkit-mask:url("${WAVE}") repeat-x 0 0/24px 6px;mask:url("${WAVE}") repeat-x 0 0/24px 6px;animation:wave 1.8s linear infinite}
+      .wave{position:absolute;left:0;top:-5px;width:calc(100% + 24px);height:6px;background:color-mix(in srgb,var(--c) 80%,white);-webkit-mask:url("${WAVE}") repeat-x 0 0/24px 6px;mask:url("${WAVE}") repeat-x 0 0/24px 6px}.close .wave{animation:wave 1.8s linear infinite}
       .bubble{position:absolute;bottom:0;left:30%;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55);opacity:0}
       .close .bubble{animation:bubble 2.6s ease-in infinite}.close .bubble+.bubble{left:62%;animation-delay:1.3s}
       .can ha-icon{position:absolute;left:50%;top:58%;z-index:1;--mdc-icon-size:18px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));transform:translate(-50%,-50%)}
@@ -55653,7 +55755,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       .waste{transition:opacity .6s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 150ms),transform .6s cubic-bezier(.2,.8,.2,1) calc(var(--i) * 90ms + 150ms)}
       .pre .scene{--hf:0!important}.pre .mini{--f:0!important}.pre .ring{stroke-dashoffset:${RING}!important}.pre .bar i{width:0!important}.pre .liquid{height:0!important}
       .pre .hero,.pre .waste{opacity:0;transform:translateY(12px)}.pre .leaf{opacity:0;transform:rotateX(-100deg)}.pre .cell{opacity:0;transform:scale(.6)}.pre .dots i{transform:scale(0)}.pre *{transition:none!important}
-      .intro .body{animation-duration:.22s}.intro .wheel{animation-duration:.28s}
+      .intro .body{animation-duration:.22s}.intro .wh{animation-duration:.28s}
       .no-animation *,.no-animation *:before,.no-animation *:after{animation:none!important;transition:none!important}
       @keyframes pulse{50%{opacity:.4;transform:scale(.7)}}@keyframes ping{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(3.2)}}
       @keyframes halo{0%{opacity:.7;transform:scale(.94)}100%{opacity:0;transform:scale(1.2)}}@keyframes twinkle{50%{opacity:.12}}

@@ -1174,7 +1174,7 @@ class HaHomeSummaryCard extends HTMLElement {
       this.config?.heat_month_cost_entity,
       this.config?.co2_entity, this.config?.air_quality_entity, this.config?.water_flow_entity,
       this.config?.storage_entity, ...(this.config?.hdd_entities || []),
-      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence, room.ac]),
+      ...(this.config?.rooms || []).flatMap((room) => [room.temperature, room.humidity, room.climate, room.presence, room.ac, room.co2]),
       ...(this.config?.calendars || []).map((x) => x.entity)].filter(Boolean);
     const robotIds = (this.config?.robots || []).flatMap((robot) => [robot.entity, robot.room_entity]).filter(Boolean);
     const sig = JSON.stringify(ids.map((id) => [id, hass.states?.[id]?.state,
@@ -1584,7 +1584,7 @@ ${LUX_KEYFRAMES}
     const color = this._esc(robot.color || (mower ? "#20e3a2" : "#38bdf8"));
     const name = this._esc(robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot");
     const speed = Math.max(5, Math.min(40, (Number(robot.speed_seconds) || 16) * 0.55));
-    return `<span class="rb-tag" style="--rb:${color}"><i></i>${name}</span><span class="rb-lane" style="--rb:${color};--rbs:${speed.toFixed(1)}s"><span class="rb-y"><span class="rb-x"><span class="rb"><span class="rb-trail"></span><svg class="rb-body" viewBox="0 0 24 24" aria-hidden="true"><circle class="rb-shell" cx="12" cy="12" r="10.4"/><path class="rb-bumper" d="M15.2 2.6A10.4 10.4 0 0 1 15.2 21.4"/><circle class="rb-lidar" cx="9.4" cy="12" r="3.5"/><circle class="rb-eye" cx="9.4" cy="12" r="1.3"/><g class="rb-brush"><path d="M18.4 4.8l2 2M20.4 4.8l-2 2"/></g>${mower ? '<path class="rb-blade" d="M5 7.5h3M5 16.5h3"/>' : ""}</svg></span></span></span></span>`;
+    return `<span class="rb-tag" style="--rb:${color}"><i></i>${name}</span><span class="rb-lane" style="--rb:${color};--rbs:${speed.toFixed(1)}s"><span class="rb-y"><span class="rb-x"><span class="rb"><span class="rb-trail"></span><svg class="rb-body" viewBox="0 0 24 24" aria-hidden="true"><circle class="rb-shell" cx="12" cy="12" r="10.4"/><path class="rb-bumper" d="M15.2 2.6A10.4 10.4 0 0 1 15.2 21.4"/><circle class="rb-lidar" cx="9.4" cy="12" r="3.5"/><circle class="rb-eye" cx="9.4" cy="12" r="1.3"/>${mower ? '<path class="rb-blade" d="M5 7.5h3M5 16.5h3"/>' : ""}</svg><i class="rb-br"></i></span></span></span></span>`;
   }
   _updateRobots() {
     const rooms = this.shadowRoot?.querySelector(".rooms"), panel = this.shadowRoot?.querySelector(".temperature-panel");
@@ -1821,25 +1821,25 @@ ${LUX_KEYFRAMES}
         .rt.pm.s-heat .rt-fx::before{left:-20%;right:-20%;bottom:-62%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,118,40,.5),rgba(255,118,40,.14) 62%,transparent);animation:pmGlow 3.6s ease-in-out infinite}
         .rt.pm.s-heat .rt-fx::after{left:-30%;right:-30%;bottom:-20%;height:60%;background:radial-gradient(45% 60% at 30% 100%,rgba(255,196,110,.28),transparent 70%),radial-gradient(40% 55% at 72% 100%,rgba(255,92,40,.26),transparent 70%);opacity:1;animation:pmHaze 7s ease-in-out infinite alternate}
         .rt.pm.s-heat .rt-fx i{bottom:2px;width:3px;height:3px;border-radius:50%;background:#ffe2b8;box-shadow:0 0 6px 1px rgba(255,150,60,.95);animation:pmEmber 3.8s cubic-bezier(.3,.6,.4,1) infinite}
-        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;animation-delay:.65s;animation-duration:4.3s;width:2px;height:2px}
-        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;animation-delay:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;animation-delay:1.95s;animation-duration:4.1s;width:2px;height:2px}
-        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;animation-delay:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;animation-delay:3.2s;animation-duration:4.4s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;--ad:.65s;animation-duration:4.3s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;--ad:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;--ad:1.95s;animation-duration:4.1s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;--ad:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;--ad:3.2s;animation-duration:4.4s;width:2px;height:2px}
         /* AC cooling: frost from the top and snow drifting down */
         .rt.pm.s-cool .rt-fx::before{left:-20%;right:-20%;top:-65%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(110,190,255,.36),rgba(110,190,255,.1) 62%,transparent);opacity:1;animation:pmGlow 4.4s ease-in-out infinite}
         .rt.pm.s-cool .rt-fx i{top:-6px;width:4px;height:4px;border-radius:50%;background:#e6f4ff;box-shadow:0 0 6px #9fd4ff;animation:pmSnow 5s linear infinite}
-        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;animation-delay:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;animation-delay:1.7s}
-        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;animation-delay:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;animation-delay:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;animation-delay:4.2s;width:3px;height:3px}
+        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;--ad:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;--ad:1.7s}
+        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;--ad:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;--ad:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;--ad:4.2s;width:3px;height:3px}
         /* open window: air streaming through */
         .rt.pm.s-open .rt-fx i{left:-45%;width:55%;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(196,181,253,.85),transparent);animation:pmAir 3.2s ease-in-out infinite}
-        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;animation-delay:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;animation-delay:1.1s}
-        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;animation-delay:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;animation-delay:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;animation-delay:2.75s;width:35%}
+        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;--ad:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;--ad:1.1s}
+        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;--ad:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;--ad:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;--ad:2.75s;width:35%}
         /* outside: a sky glow and two soft clouds drifting by */
         .rt.pm.s-out .rt-fx::before{left:-20%;right:-20%;top:-70%;height:115%;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),transparent);opacity:1}
         .rt.pm.s-out .rt-fx i:nth-child(-n+2){top:14%;left:-60%;width:62%;height:30%;border-radius:50%;background:radial-gradient(closest-side,rgba(200,230,255,.09),rgba(200,230,255,.03) 60%,transparent);opacity:1;animation:pmCloud 26s linear infinite}
-        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;animation-delay:-17s}
+        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;--ad:-17s}
         /* all is well: a slow light gliding over the glass */
-        .rt.pm.s-ok .rt-fx::after{top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
-        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{animation-delay:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{animation-delay:-7s}
+        .rt.pm.s-ok .rt-fx::after{--ad:0s;top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
+        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{--ad:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{--ad:-7s}
         /* a room outside its comfort zone: a soft glow in the warning colour */
         .rt.pm[class*="cf-"]:not(.cf-ok) .rt-fx::before{left:-20%;right:-20%;bottom:-70%;height:110%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--sc) 30%,transparent),transparent);opacity:1}
         @keyframes pmGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08) translateY(-4%)}}
@@ -1849,6 +1849,8 @@ ${LUX_KEYFRAMES}
         @keyframes pmAir{0%{opacity:0;transform:translateX(0)}30%{opacity:.9}100%{opacity:0;transform:translateX(270%)}}
         @keyframes pmCloud{to{transform:translateX(300%)}}
         @keyframes pmGlide{0%,55%{transform:translateX(-120%) rotate(8deg)}100%{transform:translateX(330%) rotate(8deg)}}
+        /* animations keep their phase when the tiles are redrawn: the delay counts from the wall clock (--wc, set on .rooms) */
+        .rt.pm .rt-fx i,.rt.pm .rt-fx::before,.rt.pm .rt-fx::after{animation-delay:calc(var(--wc,0) * -1s + var(--ad,0s))!important}
         @media(prefers-reduced-motion:reduce){.rt-fx *,.rt-fx::before,.rt-fx::after{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
@@ -1869,24 +1871,26 @@ ${LUX_KEYFRAMES}
         @media(prefers-reduced-motion:reduce){.utility-bg,.room-bg,.room-robot,.room-robot-x{animation:none}}
         .room-robot.pmr{left:0;top:0;width:100%;height:100%;animation:none}
         .pmr .rb-tag{position:absolute;top:8px;right:9px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:58%;padding:2px 7px 2px 5px;overflow:hidden;border-radius:99px;background:rgba(9,13,20,.62);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rb) 45%,transparent),0 4px 12px -6px var(--rb);color:color-mix(in srgb,var(--rb) 72%,#fff);font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;text-overflow:ellipsis}
-        .pmr .rb-tag i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--rb);box-shadow:0 0 6px var(--rb);animation:rbPing 1.8s ease-out infinite}
+        .pmr .rb-tag i{position:relative;flex:none;width:5px;height:5px;border-radius:50%;background:var(--rb);box-shadow:0 0 6px var(--rb)}.pmr .rb-tag i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--rb);opacity:0;animation:rbPing 1.8s ease-out infinite}
         .pmr .rb-lane{position:absolute;left:9%;right:calc(9% + 22px);top:38%;bottom:calc(30% + 22px)}
         .pmr .rb-y{position:absolute;inset:0;animation:rbLanes calc(var(--rbs) * 4) ease-in-out infinite alternate}
         .pmr .rb-x{position:absolute;left:0;top:0;width:100%;height:0;animation:rbX var(--rbs) ease-in-out infinite alternate}
         .pmr .rb{position:absolute;left:0;top:0;width:22px;height:22px;animation:rbFace calc(var(--rbs) * 2) linear infinite}
         .pmr .rb-trail{position:absolute;right:45%;top:50%;width:58px;height:14px;margin-top:-7px;border-radius:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--rb) 26%,transparent));filter:blur(1.5px)}
-        .pmr .rb-body{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rb) 70%,transparent)) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+        .pmr .rb{will-change:transform}.pmr .rb-body{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rb) 70%,transparent)) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
         .rb-shell{fill:#141c26;stroke:color-mix(in srgb,var(--rb) 80%,#fff);stroke-width:1.2}
         .rb-bumper{fill:none;stroke:var(--rb);stroke-width:2.2;stroke-linecap:round}
         .rb-lidar{fill:#0b1118;stroke:rgba(255,255,255,.4);stroke-width:.8}
-        .rb-eye{fill:var(--rb);animation:rbEye 1.6s ease-in-out infinite}
-        .rb-brush{fill:none;stroke:#d7e0ea;stroke-width:1.1;stroke-linecap:round;transform-box:fill-box;transform-origin:center;animation:rbBrush .45s linear infinite}
+        .rb-eye{fill:var(--rb)}
+        /* the side brush is HTML over the drawing (an animated SVG part redoes style, layout and paint every frame) */
+        .pmr .rb-br{position:absolute;left:73%;top:14%;width:18%;height:18%;border-radius:50%;background:linear-gradient(45deg,transparent 42%,#d7e0ea 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,#d7e0ea 42% 58%,transparent 58%);animation:rbBrush .45s linear infinite}
         .rb-blade{stroke:color-mix(in srgb,var(--rb) 60%,#fff);stroke-width:1.2;stroke-linecap:round}
         @keyframes rbX{to{transform:translateX(100%)}}
         @keyframes rbLanes{0%,21%{transform:translateY(0)}29%,46%{transform:translateY(33.3%)}54%,71%{transform:translateY(66.6%)}79%,100%{transform:translateY(100%)}}
         @keyframes rbFace{0%,44%{transform:rotate(0)}50%,94%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
-        @keyframes rbBrush{to{transform:rotate(360deg)}}@keyframes rbEye{50%{opacity:.35}}
-        @keyframes rbPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--rb) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+        @keyframes rbBrush{to{transform:rotate(360deg)}}
+        @keyframes rbPing{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+        .pmr .rb-y,.pmr .rb-x,.pmr .rb,.pmr .rb-br{animation-delay:calc(var(--wc,0) * -1s)!important}
         @media(prefers-reduced-motion:reduce){.pmr *{animation:none!important}}
         .agenda-panel{display:flex;flex-direction:column;min-height:0;overflow:hidden}.events{display:grid;flex:1 1 0;height:0;gap:3px;align-content:start;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent) transparent}.events::-webkit-scrollbar{width:5px}.events::-webkit-scrollbar-thumb{border-radius:8px;background:color-mix(in srgb,var(--dashboard-accent,#38bdf8) 55%,transparent)}.event{display:grid;grid-template-columns:34px 3px minmax(0,1fr);gap:7px;align-items:center;min-width:0;padding:3px 0}.event>.date{display:grid;place-items:center;align-content:center;height:33px;border-radius:9px;background:color-mix(in srgb,var(--event) 13%,transparent);border:1px solid color-mix(in srgb,var(--event) 30%,transparent)}.date span{font-size:7px!important;text-transform:uppercase;color:var(--event)!important;font-weight:900}.date b{font-size:14px!important;line-height:14px}.event>i{display:block;align-self:stretch;border-radius:5px;background:var(--event)}.event-copy{min-width:0}.event-copy b,.event-copy span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-copy b{font-size:11px}.event-copy span,.empty{font-size:9px;color:var(--secondary-text-color,#a7b2c2);margin-top:1px}
         .card.portrait{min-height:570px}.card.portrait .body{grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);min-height:390px}.card.portrait .rooms{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(100px,1fr)}.card.portrait .events{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;grid-auto-rows:min-content}.card.portrait .event{padding:5px 0}
@@ -1960,7 +1964,7 @@ ${LUX_KEYFRAMES}
     if(vc){this._vcRooms(rooms);this._updateRobots();this._renderEvents();this._observeMarquees();return;}
     if(rooms._vc){rooms._vc.remove();rooms._vc=null;rooms._html="";}
     rooms.classList.toggle("old",classicTiles);
-    if(rooms._html!==roomsHtml){rooms._html=roomsHtml;for(const node of this._robotNodes.values())node.remove();this._robotNodes.clear();rooms.innerHTML=roomsHtml;}
+    if(rooms._html!==roomsHtml){rooms._html=roomsHtml;for(const node of this._robotNodes.values())node.remove();this._robotNodes.clear();rooms.style.setProperty("--wc",((Date.now()/1000)%86400).toFixed(2));rooms.innerHTML=roomsHtml;}
     this._updateRobots();
     this._renderEvents();
     this._observeMarquees();

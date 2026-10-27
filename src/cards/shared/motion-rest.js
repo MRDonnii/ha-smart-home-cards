@@ -42,8 +42,21 @@ try {
   restSheet = null;
 }
 
+// SVG (SMIL) animations are not Web Animations, so the sheet cannot hold them: their outer <svg> time containers are
+// paused one by one, and only the ones paused here are started again (Claude AI, 2026-10-27).
+function pauseSmil(root) {
+  root?.querySelectorAll?.("svg").forEach((svg) => {
+    if (svg.ownerSVGElement || svg.__mrSmil || !svg.querySelector("animate,animateTransform,animateMotion,set")) return;
+    try { if (!svg.animationsPaused()) { svg.pauseAnimations(); svg.__mrSmil = true; } } catch (_) { /* not an SVG root */ }
+  });
+}
+function wakeSmil(root) {
+  root?.querySelectorAll?.("svg").forEach((svg) => { if (!svg.__mrSmil) return; svg.__mrSmil = false; try { svg.unpauseAnimations(); } catch (_) { /* gone */ } });
+}
+
 function pauseIn(host) {
   const root = host.shadowRoot;
+  pauseSmil(root);
   const adopted = Boolean(root && restSheet && root.adoptedStyleSheets);
   if (adopted && !root.adoptedStyleSheets.includes(restSheet)) root.adoptedStyleSheets = [...root.adoptedStyleSheets, restSheet];
   const list = root?.getAnimations ? root.getAnimations() : host.getAnimations({ subtree: true });
@@ -60,6 +73,7 @@ function pauseIn(host) {
 
 function wakeIn(host) {
   const root = host.shadowRoot;
+  wakeSmil(root);
   if (root?.adoptedStyleSheets?.includes(restSheet)) root.adoptedStyleSheets = root.adoptedStyleSheets.filter((sheet) => sheet !== restSheet);
 }
 
@@ -67,6 +81,8 @@ function rest() {
   if (resting || alwaysMove()) return;
   resting = true;
   hosts.forEach((host) => { if (host.isConnected) pauseIn(host); });
+  // Cards outside the bundle (e.g. a /local copy of a card) can follow along
+  window.dispatchEvent(new CustomEvent("shc-motion", { detail: { resting: true } }));
   // Cards that appear meanwhile, and new alert animations.
   scanTimer = window.setInterval(() => hosts.forEach((host) => { if (host.isConnected) pauseIn(host); }), RESCAN_MS);
 }
@@ -80,6 +96,7 @@ function wake() {
   hosts.forEach(wakeIn);
   paused.forEach((animation) => { try { animation.play(); } catch (_) { /* gone */ } });
   paused.clear();
+  window.dispatchEvent(new CustomEvent("shc-motion", { detail: { resting: false } }));
 }
 
 let lastMove = 0;
