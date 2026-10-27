@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.219 */
+/* MRDonnii Smart Home Cards v0.5.220 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -33395,7 +33395,7 @@ var WX_MARKUP = `<div class="wx" data-f="wx">
     <span class="dl-l" data-f="dlrise">\u2014</span><span class="dl-c" data-f="dltext">\u2014</span><span class="dl-r" data-f="dlset">\u2014</span></div>
 </div>`;
 var PREMIUM_STYLE = `
-.dial,.wx,.wx-head{display:none}
+.dial,.wx,.wx-head,.cf{display:none}
 ha-card.premium{--pm-grain:${GRAIN}}
 .premium .head h2{background:linear-gradient(100deg,var(--rc-ink) 30%,color-mix(in srgb,var(--rc-ink) 55%,var(--rc-accent)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .premium .eyebrow{letter-spacing:.24em}
@@ -33462,6 +33462,30 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .premium .qa{border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.06)}
 .premium .rc{background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
 
+/* measuring points: comfort for the kind of room (shared/comfort.js) */
+.premium .tile{padding:13px 14px 0}
+.premium .tile .t-row{align-items:center;margin-top:9px}
+.premium .tile .t-temp{font-size:28px}
+.premium .tile .t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;line-height:1.2}
+.cf-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 9px 3px 7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--room-color) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 38%,transparent);color:color-mix(in srgb,var(--room-color) 78%,#fff);font-size:10px;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
+.cf-pill i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 8px var(--room-color)}
+.premium .tile.cf-hot .cf-pill i,.premium .tile.cf-air .cf-pill i,.premium .tile.cf-cold .cf-pill i{animation:pmPing 1.8s ease-out infinite}
+.premium .tile .t-meta small{max-width:100%;overflow:hidden;color:var(--rc-muted);font-size:9.5px;text-overflow:ellipsis;white-space:nowrap}
+.premium .cf{display:block;position:relative;margin-top:10px}
+.cf-bar{position:relative;height:6px;margin-bottom:15px;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--rc-cool) 40%,transparent),rgba(255,255,255,.07) 35%,rgba(255,255,255,.07) 65%,color-mix(in srgb,var(--rc-hot) 40%,transparent))}
+.cf-band{position:absolute;top:-2px;bottom:-2px;border-radius:99px;background:color-mix(in srgb,var(--rc-ok) 28%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 70%,transparent),0 0 10px -2px var(--rc-ok)}
+.cf-dot{position:absolute;top:50%;z-index:1;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface),0 0 12px var(--room-color);transition:left .7s cubic-bezier(.2,1,.3,1)}
+.cf-dot[hidden]{display:none}
+.cf-range{position:absolute;top:10px;transform:translateX(-50%);color:color-mix(in srgb,var(--rc-ok) 75%,var(--rc-ink));font-size:8.5px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
+.cf-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.cf-chips:empty{display:none}
+.cf-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 5px;border-radius:99px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);color:color-mix(in srgb,var(--rc-ink) 85%,transparent);font-size:10px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cf-chip ha-icon{--mdc-icon-size:12px;color:var(--rc-muted)}
+.cf-chip.bad{color:#fbbf24;background:rgba(251,191,36,.1);box-shadow:inset 0 0 0 1px rgba(251,191,36,.3)}.cf-chip.bad ha-icon{color:#fbbf24}
+.premium .tile .spark-wrap{--spark-h:28px;flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end}
+.premium .tile .spark-box{flex:1 1 auto;height:auto;min-height:28px;max-height:90px}
+@keyframes pmPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--room-color) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
+
 /* measuring points and summary */
 .premium .tile .t-temp{font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .premium .tile .t-temp small{-webkit-text-fill-color:var(--rc-muted)}
@@ -33522,6 +33546,49 @@ ha-card.premium{--pm-grain:${GRAIN}}
 @keyframes pmFlash{0%,88%,94%,100%{opacity:1}90%,96%{opacity:.35}}
 @container (max-width:560px){.premium .dial{width:128px;height:128px}.dn b{font-size:38px}.premium .z-body{gap:14px}}
 `;
+
+// src/cards/shared/comfort.js
+var PROFILES = [
+  // Sleep: 16–19 °C is the usual advice for a bedroom at night.
+  [/sove|bedroom|sleep/i, { kind: "sleep", temp: [16, 19], hum: [40, 60], ok: "God sovetemp.", low: "Under sovetemp.", high: "Over sovetemp." }],
+  [/lille ?wc|toilet|\bwc\b/i, { kind: "wc", temp: [19, 23], hum: [40, 60] }],
+  // A bathroom may be warmer (floor heating) and wetter after a shower.
+  [/bad/i, { kind: "bath", temp: [22, 26], hum: [40, 70] }],
+  [/bryggers|teknik|vaske|utility|depot|kælder|kaelder|garage|værksted/i, { kind: "utility", temp: [17, 24], hum: [35, 65] }]
+];
+var DEFAULT = { kind: "living", temp: [20, 23], hum: [40, 60] };
+function comfortProfile(room = {}) {
+  const found = PROFILES.find(([pattern]) => pattern.test(`${room.name || ""} ${room.comfort_profile || ""}`))?.[1] || DEFAULT;
+  const num4 = (v, d) => Number.isFinite(Number(v)) && v !== null && v !== "" ? Number(v) : d;
+  return { ...found, temp: [num4(room.comfort_min, found.temp[0]), num4(room.comfort_max, found.temp[1])], hum: [num4(room.humidity_min, found.hum[0]), num4(room.humidity_max, found.hum[1])] };
+}
+var fmt = (v, d = 1) => Number(v).toLocaleString("da-DK", { maximumFractionDigits: d, minimumFractionDigits: 0 });
+function roomComfort(room, temp, humidity, co2) {
+  const p = comfortProfile(room);
+  const [lo, hi] = p.temp;
+  const [hlo, hhi] = p.hum;
+  const parts = [];
+  if (Number.isFinite(temp)) {
+    const over = temp - hi - 0.25, under = lo - temp - 0.25;
+    if (over > 1.5) parts.push({ tone: "hot", level: 3, label: p.kind === "sleep" ? p.high : "For varmt", detail: `+${fmt(temp - hi)}\xB0 over ${fmt(hi)}\xB0` });
+    else if (over > 0) parts.push({ tone: "warm", level: 1, label: p.kind === "sleep" ? p.high : "Lidt varmt", detail: `+${fmt(temp - hi)}\xB0 over ${fmt(hi)}\xB0` });
+    else if (under > 1.5) parts.push({ tone: "cold", level: 3, label: p.kind === "sleep" ? p.low : "For koldt", detail: `${fmt(lo - temp)}\xB0 under ${fmt(lo)}\xB0` });
+    else if (under > 0) parts.push({ tone: "cool", level: 1, label: p.kind === "sleep" ? p.low : "Lidt k\xF8ligt", detail: `${fmt(lo - temp)}\xB0 under ${fmt(lo)}\xB0` });
+  }
+  if (Number.isFinite(humidity)) {
+    if (humidity < hlo - 10) parts.push({ tone: "dry", level: 2, label: "Meget t\xF8r luft", detail: `fugt ${fmt(humidity, 0)} %` });
+    else if (humidity < hlo) parts.push({ tone: "dry", level: 1, label: "T\xF8r luft", detail: `fugt ${fmt(humidity, 0)} %` });
+    else if (humidity > hhi + 10) parts.push({ tone: "humid", level: 2, label: "Meget fugtigt", detail: `fugt ${fmt(humidity, 0)} %` });
+    else if (humidity > hhi) parts.push({ tone: "humid", level: 1, label: "Fugtigt", detail: `fugt ${fmt(humidity, 0)} %` });
+  }
+  const rank = co2Rank(co2, room);
+  if (rank >= 3) parts.push({ tone: "air", level: rank === 4 ? 3 : 2, label: rank === 4 ? "Luft ud nu" : "Luft ud", detail: `CO\u2082 ${fmt(co2, 0)} ppm` });
+  const worst = parts.sort((a, b) => b.level - a.level)[0];
+  const range = `${fmt(lo)}\u2013${fmt(hi)}\xB0`;
+  if (!worst) return { tone: "ok", level: 0, label: p.kind === "sleep" ? p.ok : "Behageligt", detail: `${range} er behageligt`, profile: p, range };
+  return { ...worst, profile: p, range };
+}
+var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
 var VERSION25 = "1.8.0";
@@ -34080,6 +34147,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
         <div class="t-top"><span class="t-ic"><ha-icon icon="${esc12(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc12(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
+        <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc12(room.name)}" hidden></i>`).join("");
@@ -34322,6 +34390,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._setText(d("tv"), target2 === void 0 ? "Intet" : `${this._format(target2)}\xB0`);
   }
   _renderTile(room, refs, model) {
+    if (this._premium) {
+      this._renderComfortTile(room, refs, model);
+      return;
+    }
     refs.host.className = `tile a-${model.accent}`;
     this._setText(refs.temp, this._format(model.current));
     const parts = [];
@@ -34332,6 +34404,45 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     refs.host.querySelector(".t-top b")?.setAttribute("title", model.status);
     this._renderSpark(refs.spark, this._sparkPoints(room, model), void 0);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. \xC5bn detaljer`);
+  }
+  // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
+  // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
+  _renderComfortTile(room, refs, model) {
+    const esc12 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
+    const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c2.tone] || "neutral";
+    refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c2.tone}`;
+    this._setText(refs.temp, this._format(model.current));
+    const meta = `<span class="cf-pill"><i></i>${esc12(c2.label)}</span><small>${esc12(c2.detail)}</small>`;
+    if (refs.meta && refs.meta._h !== meta) {
+      refs.meta._h = meta;
+      refs.meta.innerHTML = meta;
+    }
+    const cf = refs.host.querySelector('[data-f="cf"]');
+    if (cf) {
+      const [lo, hi] = c2.profile.temp, a = comfortScale(lo), b = comfortScale(hi);
+      const band = cf.querySelector(".cf-band");
+      band.style.left = `${(a * 100).toFixed(1)}%`;
+      band.style.width = `${((b - a) * 100).toFixed(1)}%`;
+      const dot = cf.querySelector(".cf-dot");
+      dot.hidden = !Number.isFinite(model.current);
+      if (Number.isFinite(model.current)) dot.style.left = `${(comfortScale(model.current) * 100).toFixed(1)}%`;
+      const range = cf.querySelector(".cf-range");
+      range.style.left = `${((a + b) / 2 * 100).toFixed(1)}%`;
+      this._setText(range, `${c2.range}${c2.profile.kind === "sleep" ? " s\xF8vn" : ""}`);
+      const [hlo, hhi] = c2.profile.hum, chips = [];
+      if (model.humidity !== void 0) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
+      if (room.co2) chips.push([co2 !== void 0 && co2 >= 1e3 ? "bad" : "", "mdi:molecule-co2", co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`]);
+      if (model.feels !== void 0) chips.push(["", "mdi:thermometer", `f\xF8les ${this._format(model.feels)}\xB0`]);
+      const html = chips.map(([cls, icon4, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon4}"></ha-icon>${esc12(text)}</span>`).join("");
+      const box = cf.querySelector(".cf-chips");
+      if (box._h !== html) {
+        box._h = html;
+        box.innerHTML = html;
+      }
+    }
+    refs.host.querySelector(".t-top b")?.setAttribute("title", c2.label);
+    this._renderSpark(refs.spark, this._sparkPoints(room, model), void 0);
+    refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${c2.label}. \xC5bn detaljer`);
   }
   _renderOutdoor(room, refs, model) {
     this._setText(refs.temp, this._format(model.current));
@@ -34349,7 +34460,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
-    const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt4 = (v, digits = 1) => this._format(v, digits);
+    const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
     const f = (name) => host.querySelector(`[data-f="${name}"]`), p23 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p23(t.getHours())}:${p23(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
@@ -34375,24 +34486,24 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const observed = st(room.observed)?.state;
     this._setText(f("wxlabel"), observed || info.label);
-    const range = (x) => x && x.templow !== void 0 ? `${fmt4(x.templow)}\xB0\u2013${fmt4(x.temperature)}\xB0` : "";
+    const range = (x) => x && x.templow !== void 0 ? `${fmt5(x.templow)}\xB0\u2013${fmt5(x.temperature)}\xB0` : "";
     const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
-    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt4(Math.min(...lows))}\xB0\u2013${fmt4(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt5(Math.min(...lows))}\xB0\u2013${fmt5(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
     const chips = [];
-    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt4(model.feels)}\xB0`]);
-    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt4(model.humidity, 0)} %` : "Ude nu");
+    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt5(model.feels)}\xB0`]);
+    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt5(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
       const n = this._number(v);
       return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
     };
     const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
-    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt4(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt4(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
+    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt5(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt5(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
     const rain = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
-    if (rain !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt4(rain ?? rainFc)} mm`, rain !== void 0 && rainFc !== void 0 ? `prognose ${fmt4(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt4(d0.precipitation_probability, 0)} %` : ""]);
+    if (rain !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt5(rain ?? rainFc)} mm`, rain !== void 0 && rainFc !== void 0 ? `prognose ${fmt5(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt5(d0.precipitation_probability, 0)} %` : ""]);
     const dd = this._number(st(room.degree_days)?.state);
-    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt4(dd)}`]);
+    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt5(dd)}`]);
     const uv = this._number(a.uv_index);
-    if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt4(uv, 0)}`]);
+    if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt5(uv, 0)}`]);
     const chipHtml = chips.map(([icon4, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc12(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon4}"></ha-icon></span>` : `<ha-icon icon="${icon4}"></ha-icon>`}${esc12(text)}</span>`).join("");
     const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
@@ -34401,7 +34512,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const hoursHtml = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p23(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt4(x.temperature)}\xB0 \xB7 ${fmt4(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt4(mm)} mm` : ""}`;
+      const title = `${p23(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
       return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p23(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
@@ -37156,7 +37267,7 @@ console.info(`%c HA HOME HEADER CARD %c v${VERSION28} `, "color:white;background
 init_chart_hover();
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION29 = "1.7.0";
+var VERSION29 = "1.8.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -38296,8 +38407,15 @@ var HaHomeSummaryCard = class extends HTMLElement {
   _roomTileV2(room, i) {
     const r = this._roomInfo(room);
     const f = (v, d = 1) => this._fmt(v, d);
-    const st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? r.ac.mode === "cool" ? "cool" : "heat" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
-    const status = { na: "Ingen data", out: "Ude nu", open: "Vindue \xE5bent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "K\xF8ler via AC", warm: `Over m\xE5l +${f(r.delta)}\xB0`, cold: `Under m\xE5l ${f(r.delta)}\xB0`, ok: "P\xE5 m\xE5l", plain: "M\xE5ling" }[st];
+    let st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? r.ac.mode === "cool" ? "cool" : "heat" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
+    let status = { na: "Ingen data", out: "Ude nu", open: "Vindue \xE5bent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "K\xF8ler via AC", warm: `Over m\xE5l +${f(r.delta)}\xB0`, cold: `Under m\xE5l ${f(r.delta)}\xB0`, ok: "P\xE5 m\xE5l", plain: "M\xE5ling" }[st];
+    let comfortTone = "";
+    if (this._rtPremium && st === "plain") {
+      const c2 = roomComfort(room, r.temp, r.humidity, this._num(room.co2));
+      status = c2.label;
+      comfortTone = c2.tone;
+      st = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warm", air: "warm" }[c2.tone] || "plain";
+    }
     const pts = [...r.series.map((p) => p.v), ...Number.isFinite(r.temp) ? [r.temp] : []];
     let curve = "";
     if (pts.length > 2) {
@@ -38311,7 +38429,9 @@ var HaHomeSummaryCard = class extends HTMLElement {
     }
     const trend = r.trend > 0.15 ? '<ha-icon class="rt-tr up" icon="mdi:arrow-up-right"></ha-icon>' : r.trend < -0.15 ? '<ha-icon class="rt-tr dn" icon="mdi:arrow-down-right"></ha-icon>' : "";
     const sub = `${Number.isFinite(r.humidity) ? `<span class="rt-rh"><ha-icon icon="mdi:water-percent"></ha-icon>${f(r.humidity, 0)} %</span>` : ""}${Number.isFinite(r.target) ? `<span class="rt-tg">${r.acTarget ? "AC" : "m\xE5l"} ${f(r.target)}\xB0</span>` : ""}`;
-    return `<div class="rt s-${st}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>
+    const pm = this._rtPremium;
+    const temp = pm ? this._esc(f(r.temp)).replace(/^(-?\d+)([,.]\d+)$/, '$1<span class="d">$2</span>') : f(r.temp);
+    return `<div class="rt s-${st}${pm ? " pm" : ""}${comfortTone ? ` cf-${comfortTone}` : ""}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>${pm ? '<span class="rt-fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>' : ""}
       ${(() => {
       const acHeat = r.ac?.running && r.ac.mode !== "cool";
       const cool = r.ac?.running && r.ac.mode === "cool";
@@ -38319,7 +38439,28 @@ var HaHomeSummaryCard = class extends HTMLElement {
       return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`;
     })()}
       <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i><span class="rt-st">${this._esc(status)}</span></em></div>
-      <div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${sub}</small></span><b class="rt-v">${f(r.temp)}<small>\xB0</small>${trend}</b></div></div>`;
+      ${pm ? this._roomRail(room, r) : ""}<div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${sub}</small></span><b class="rt-v">${temp}<small>\xB0</small>${trend}</b></div></div>`;
+  }
+  // The premium comfort line: target ±0.5° for a room with a thermostat, the room's comfort zone otherwise (shared/comfort.js).
+  _roomRail(room, r) {
+    if (room.outdoor || !Number.isFinite(r.temp)) return "";
+    const [lo, hi] = Number.isFinite(r.target) ? [r.target - 0.5, r.target + 0.5] : roomComfort(room, r.temp, r.humidity).profile.temp;
+    const min = Math.min(lo - 3, r.temp - 0.6), max = Math.max(hi + 3, r.temp + 0.6), pos = (v) => (v - min) / (max - min) * 100;
+    return `<span class="rt-rail" aria-hidden="true"><i class="b" style="left:${pos(lo).toFixed(1)}%;width:${(pos(hi) - pos(lo)).toFixed(1)}%"></i><i class="d" style="left:${pos(r.temp).toFixed(1)}%"></i></span>`;
+  }
+  // Which room tiles: room_tiles_entity (input_boolean on = new / off = classic, or an input_select whose option names
+  // Premium / Nye / Klassiske) wins over room_tiles (premium | new | classic); new is the default (Claude AI, 2026-10-27).
+  _roomTilesMode() {
+    const pick = (value) => {
+      const v = String(value ?? "").trim().toLowerCase();
+      if (!v) return null;
+      if (/premium|eksklusiv|exclusive/.test(v)) return "premium";
+      if (v === "off" || /klassisk|classic/.test(v)) return "classic";
+      if (v === "on" || /^(ny|nye|nyt|new|v2)$/.test(v)) return "new";
+      return null;
+    };
+    const id = this.config?.room_tiles_entity;
+    return pick(id ? this._hass?.states?.[id]?.state : null) || pick(this.config?.room_tiles) || (isNewLook(this._hass, this.config, { entity: "room_tiles_entity", key: "room_tiles", fallback: true }) ? "new" : "classic");
   }
   _roomInfo(room) {
     const cl = this._state(room.climate);
@@ -39034,6 +39175,71 @@ ${LUX_KEYFRAMES}
         .rt-n.marquee,.rt-st.marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
         @container (max-width:125px){.rt-n{font-size:12px}.rt-r1 em{font-size:8px;letter-spacing:.04em}}
         @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat{animation:none!important}}
+        /* Premium room tiles (Claude AI, 2026-10-27; user: "endnu mere exclusive og pr\xE6mium hvor data stadig kan l\xE6ses og
+           animationerne er endnu bedre \u2026 hvis du kan lave en l\xE6kker nok animering kan vi fjerne flammen"): glass with grain and a
+           hairline edge in the state colour, no watermark icon, the temperature large with the decimal raised, a thin comfort
+           line (temperature against the target, or the room's comfort zone) and a scene per state: embers rising from a warm
+           glow while it heats, frost and snow for AC cooling, air through an open window, clouds outside, a slow light over
+           the glass when all is well. Only transform/opacity animate; motion-rest pauses them when nobody uses the screen. */
+        .rooms .rt.pm{--pm-grain:${GRAIN};border-radius:18px;
+          background:radial-gradient(120% 95% at 100% 0%,color-mix(in srgb,var(--sc) 20%,transparent),transparent 62%),radial-gradient(90% 80% at 0% 100%,color-mix(in srgb,var(--sc) 7%,transparent),transparent 72%),var(--pm-grain),linear-gradient(165deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 45%,rgba(0,0,0,.2)),var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 16px 30px -22px rgba(0,0,0,.95),0 10px 26px -20px color-mix(in srgb,var(--sc) 70%,transparent);animation:none}
+        .rt.pm::before{content:"";position:absolute;inset:0;z-index:3;padding:1px;border-radius:inherit;pointer-events:none;opacity:.6;transition:opacity .35s ease;
+          background:linear-gradient(150deg,color-mix(in srgb,var(--sc) 80%,#fff 10%),rgba(255,255,255,.1) 34%,rgba(255,255,255,.02) 62%,color-mix(in srgb,var(--sc) 35%,transparent));
+          -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+        .rt.pm.s-heat::before{opacity:.9;background:linear-gradient(0deg,rgba(255,150,70,.9),rgba(255,150,70,.25) 45%,rgba(255,255,255,.06) 70%,color-mix(in srgb,var(--sc) 40%,transparent))}
+        .rooms .rt.pm:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 16px 30px -22px rgba(0,0,0,.95),0 0 30px -10px var(--sc)}.rooms .rt.pm:hover::before{opacity:1}.rooms .rt.pm:active{transform:scale(.98)}
+        .rt.pm .rt-bg{display:none}
+        .rt.pm .rt-r1,.rt.pm .rt-r2,.rt.pm .rt-rail{position:relative;z-index:1}
+        .rt.pm .rt-n{font-weight:750;letter-spacing:-.015em;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+        .rt.pm .rt-r1 em{letter-spacing:.13em}.rt.pm .rt-r1 em i{box-shadow:0 0 8px var(--sc)}
+        .rt.pm .rt-v{font-weight:750;letter-spacing:-.05em;text-shadow:none;background:linear-gradient(180deg,#fff 35%,color-mix(in srgb,#fff 70%,var(--sc)));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 7px rgba(0,0,0,.45))}
+        .rt.pm .rt-v .d{font-size:.6em;margin-top:.1em;letter-spacing:-.02em}
+        .rt.pm .rt-v small{-webkit-text-fill-color:var(--secondary-text-color,#a7b2c2);color:var(--secondary-text-color,#a7b2c2)}
+        .rt.pm .rt-v .rt-tr{-webkit-text-fill-color:initial}
+        .rt.pm .rt-sub{color:color-mix(in srgb,var(--primary-text-color,#fff) 64%,transparent);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+        /* comfort line: the band is the target \xB10.5\xB0 (or the comfort zone), the dot the temperature */
+        .rt-rail{display:block;flex:none;height:3px;margin:auto 1px 6px;border-radius:9px;background:rgba(255,255,255,.08)}
+        .rt-rail .b{position:absolute;top:-1px;bottom:-1px;border-radius:9px;background:color-mix(in srgb,#20e3a2 35%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#20e3a2 70%,transparent)}
+        .rt-rail .d{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--sc);box-shadow:0 0 0 2px rgba(10,14,20,.9),0 0 10px var(--sc);transition:left .7s cubic-bezier(.2,1,.3,1)}
+        @container (max-height:86px){.rt-rail{display:none}}
+        /* the scenes */
+        .rt-fx{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+        .rt-fx::before,.rt-fx::after{content:"";position:absolute;opacity:0;pointer-events:none}
+        .rt-fx i{position:absolute;opacity:0}
+        /* heating: warm glow breathing from the bottom, a slow heat haze and embers rising */
+        .rt.pm.s-heat .rt-fx::before{left:-20%;right:-20%;bottom:-62%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,118,40,.5),rgba(255,118,40,.14) 62%,transparent);animation:pmGlow 3.6s ease-in-out infinite}
+        .rt.pm.s-heat .rt-fx::after{left:-30%;right:-30%;bottom:-20%;height:60%;background:radial-gradient(45% 60% at 30% 100%,rgba(255,196,110,.28),transparent 70%),radial-gradient(40% 55% at 72% 100%,rgba(255,92,40,.26),transparent 70%);opacity:1;animation:pmHaze 7s ease-in-out infinite alternate}
+        .rt.pm.s-heat .rt-fx i{bottom:2px;width:3px;height:3px;border-radius:50%;background:#ffe2b8;box-shadow:0 0 6px 1px rgba(255,150,60,.95);animation:pmEmber 3.8s cubic-bezier(.3,.6,.4,1) infinite}
+        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;animation-delay:.65s;animation-duration:4.3s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;animation-delay:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;animation-delay:1.95s;animation-duration:4.1s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;animation-delay:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;animation-delay:3.2s;animation-duration:4.4s;width:2px;height:2px}
+        /* AC cooling: frost from the top and snow drifting down */
+        .rt.pm.s-cool .rt-fx::before{left:-20%;right:-20%;top:-65%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(110,190,255,.36),rgba(110,190,255,.1) 62%,transparent);opacity:1;animation:pmGlow 4.4s ease-in-out infinite}
+        .rt.pm.s-cool .rt-fx i{top:-6px;width:4px;height:4px;border-radius:50%;background:#e6f4ff;box-shadow:0 0 6px #9fd4ff;animation:pmSnow 5s linear infinite}
+        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;animation-delay:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;animation-delay:1.7s}
+        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;animation-delay:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;animation-delay:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;animation-delay:4.2s;width:3px;height:3px}
+        /* open window: air streaming through */
+        .rt.pm.s-open .rt-fx i{left:-45%;width:55%;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(196,181,253,.85),transparent);animation:pmAir 3.2s ease-in-out infinite}
+        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;animation-delay:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;animation-delay:1.1s}
+        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;animation-delay:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;animation-delay:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;animation-delay:2.75s;width:35%}
+        /* outside: a sky glow and two soft clouds drifting by */
+        .rt.pm.s-out .rt-fx::before{left:-20%;right:-20%;top:-70%;height:115%;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),transparent);opacity:1}
+        .rt.pm.s-out .rt-fx i:nth-child(-n+2){top:14%;left:-60%;width:62%;height:30%;border-radius:50%;background:radial-gradient(closest-side,rgba(200,230,255,.09),rgba(200,230,255,.03) 60%,transparent);opacity:1;animation:pmCloud 26s linear infinite}
+        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;animation-delay:-17s}
+        /* all is well: a slow light gliding over the glass */
+        .rt.pm.s-ok .rt-fx::after{top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
+        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{animation-delay:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{animation-delay:-7s}
+        /* a room outside its comfort zone: a soft glow in the warning colour */
+        .rt.pm[class*="cf-"]:not(.cf-ok) .rt-fx::before{left:-20%;right:-20%;bottom:-70%;height:110%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--sc) 30%,transparent),transparent);opacity:1}
+        @keyframes pmGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08) translateY(-4%)}}
+        @keyframes pmHaze{from{transform:translateX(-7%)}to{transform:translateX(7%)}}
+        @keyframes pmEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}45%{transform:translate(5px,-48px) scale(.9)}75%{opacity:.7}100%{opacity:0;transform:translate(-4px,-104px) scale(.35)}}
+        @keyframes pmSnow{0%{opacity:0;transform:translate(0,0)}15%{opacity:.9}100%{opacity:0;transform:translate(-12px,150px)}}
+        @keyframes pmAir{0%{opacity:0;transform:translateX(0)}30%{opacity:.9}100%{opacity:0;transform:translateX(270%)}}
+        @keyframes pmCloud{to{transform:translateX(300%)}}
+        @keyframes pmGlide{0%,55%{transform:translateX(-120%) rotate(8deg)}100%{transform:translateX(330%) rotate(8deg)}}
+        @media(prefers-reduced-motion:reduce){.rt-fx *,.rt-fx::before,.rt-fx::after{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -39127,7 +39333,9 @@ ${LUX_KEYFRAMES}
       const carKwh = this._num(c2.car_month_entity);
       utility(".car", "mdi:car-electric", "Bil", this._fmt(carKwh, 0), "kWh", this._fmt(this._carMonthCost(), 0), Number.isFinite(carKwh) && Number.isFinite(this._carMonthCost()));
     }
-    const classicTiles = !isNewLook(this._hass, c2, { entity: "room_tiles_entity", key: "room_tiles", fallback: true });
+    const tileMode = this._roomTilesMode();
+    const classicTiles = tileMode === "classic";
+    this._rtPremium = tileMode === "premium";
     const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const temp = this._num(room.temperature), humidity = this._num(room.humidity), target2 = Number(this._state(room.climate)?.attributes?.temperature);
       const delta = Number.isFinite(temp) && Number.isFinite(target2) ? temp - target2 : Number.NaN;
@@ -40779,7 +40987,7 @@ console.info(
 // src/cards/th-weather-card/th-weather-card.js
 init_chart_hover();
 var VWH_VER = "3.2.0";
-var fmt = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var fmt2 = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
 var esc7 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var DIR8 = ["N", "N\xD8", "\xD8", "S\xD8", "S", "SV", "V", "NV"];
@@ -41137,7 +41345,7 @@ var ThWeatherCard = class extends HTMLElement {
       const fc = this._castFc;
       if (!fc?.length) return null;
       const i = Math.min(fc.length - 1, Math.floor(x * fc.length)), f = fc[i];
-      return { x: (i + 0.5) / fc.length, text: `${hh3(f)} \xB7 ${fmt(f.precipitation || 0, 1)} mm \xB7 ${Math.round(f.precipitation_probability || 0)} %` };
+      return { x: (i + 0.5) / fc.length, text: `${hh3(f)} \xB7 ${fmt2(f.precipitation || 0, 1)} mm \xB7 ${Math.round(f.precipitation_probability || 0)} %` };
     });
     this._ro = new ResizeObserver(() => {
       const w = this.$("hs").clientWidth;
@@ -41220,7 +41428,7 @@ var ThWeatherCard = class extends HTMLElement {
     const st = this.s(this.PX + "temperatur");
     this.set("loc", `Vejret nu${st?.attributes?.station ? " \xB7 " + st.attributes.station : ""}${st?.attributes?.m\u00E5lt ? " \xB7 m\xE5lt " + hhmm(new Date(st.attributes.m\u00E5lt)) : ""}`);
     const nw = this.d("varsler"), lyn = this.d("lyn_sidste_30_min");
-    this.set("chips", (nw > 0 ? `<span class="chip pl" style="--c:var(--coral)"><i></i>${nw} varsel${nw > 1 ? "er" : ""}</span>` : "") + (lyn > 0 ? `<span class="chip pl" style="--c:var(--amber)">${ico("flash", 12, 2)}${fmt(lyn, 0)} lyn \xB7 30 min</span>` : "") + (!nw && !(lyn > 0) ? `<span class="chip" style="--c:var(--emer)">Ingen varsler</span>` : ""));
+    this.set("chips", (nw > 0 ? `<span class="chip pl" style="--c:var(--coral)"><i></i>${nw} varsel${nw > 1 ? "er" : ""}</span>` : "") + (lyn > 0 ? `<span class="chip pl" style="--c:var(--amber)">${ico("flash", 12, 2)}${fmt2(lyn, 0)} lyn \xB7 30 min</span>` : "") + (!nw && !(lyn > 0) ? `<span class="chip" style="--c:var(--emer)">Ingen varsler</span>` : ""));
     const ik = ic + (ic === "moon" || ic === "pmoon" ? Math.round(moonPhase() * 28) : "");
     if (this._ik !== ik) {
       this._ik = ik;
@@ -41228,7 +41436,7 @@ var ThWeatherCard = class extends HTMLElement {
     }
     if (Number.isFinite(temp) && temp !== this._tv) this.countTo(temp);
     this.set("cd", txt);
-    this.set("meta", `<span>F\xF8les som <b>${fmt(feels, 1)}\xB0</b></span>${Number.isFinite(hi) ? `<span class="hl"><span>H <b class="u">${Math.round(hi)}\xB0</b></span><span>L <b class="d">${Math.round(lo)}\xB0</b></span></span>` : ""}
+    this.set("meta", `<span>F\xF8les som <b>${fmt2(feels, 1)}\xB0</b></span>${Number.isFinite(hi) ? `<span class="hl"><span>H <b class="u">${Math.round(hi)}\xB0</b></span><span>L <b class="d">${Math.round(lo)}\xB0</b></span></span>` : ""}
       ${Number.isFinite(ws) ? `<span>${beau(ws)} fra <b>${DIR8[Math.round(wb2 / 45) % 8]}</b></span>` : ""}`);
     this.sky(w.state, night, S);
     if (S && this._ck !== Math.floor(Date.now() / 6e4)) {
@@ -41246,10 +41454,10 @@ var ThWeatherCard = class extends HTMLElement {
     cancelAnimationFrame(this._raf);
     const step = (t) => {
       const k = Math.min(1, (t - t0) / 1400), e = 1 - Math.pow(1 - k, 4), x = from + (v - from) * e;
-      el.innerHTML = `${fmt(x, 1)}<sup>\xB0</sup>`;
+      el.innerHTML = `${fmt2(x, 1)}<sup>\xB0</sup>`;
       if (k < 1) this._raf = requestAnimationFrame(step);
     };
-    if (document.hidden) el.innerHTML = `${fmt(v, 1)}<sup>\xB0</sup>`;
+    if (document.hidden) el.innerHTML = `${fmt2(v, 1)}<sup>\xB0</sup>`;
     else this._raf = requestAnimationFrame(step);
   }
   sky(state, night, S) {
@@ -41326,14 +41534,14 @@ var ThWeatherCard = class extends HTMLElement {
       const j = fc.findIndex((f, k) => k > 0 && (f.precipitation || 0) < 0.1);
       c2 = "var(--ice)";
       i = "rain";
-      t = `<b>Det regner nu${rnow > 0 ? ` \xB7 ${fmt(rnow, 1)} mm/t` : ""}</b>&nbsp;${j > 0 ? `\u2013 ophold fra ca. kl. ${H3(fc[j])}` : "\u2013 forts\xE6tter de n\xE6ste timer"}`;
+      t = `<b>Det regner nu${rnow > 0 ? ` \xB7 ${fmt2(rnow, 1)} mm/t` : ""}</b>&nbsp;${j > 0 ? `\u2013 ophold fra ca. kl. ${H3(fc[j])}` : "\u2013 forts\xE6tter de n\xE6ste timer"}`;
     } else {
       const j = fc.findIndex((f) => (f.precipitation || 0) >= 0.2 || (f.precipitation_probability || 0) >= 60);
       if (j >= 0) {
         const mm = fc.slice(j, j + 4).reduce((s, f) => s + (f.precipitation || 0), 0);
         c2 = "var(--ice)";
         i = "drop";
-        t = `<b>Regn fra ca. kl. ${H3(fc[j])}</b>&nbsp;\u2013 omkring ${fmt(mm, 1)} mm de f\xF8rste timer`;
+        t = `<b>Regn fra ca. kl. ${H3(fc[j])}</b>&nbsp;\u2013 omkring ${fmt2(mm, 1)} mm de f\xF8rste timer`;
       } else {
         const fr = fc.find((f) => f.temperature <= 0);
         t = `<b>T\xF8rvejr de n\xE6ste 12 timer</b>${fr ? `&nbsp;\u2013 frost fra ca. kl. ${H3(fr)}` : ""}`;
@@ -41343,7 +41551,7 @@ var ThWeatherCard = class extends HTMLElement {
         }
       }
     }
-    const sub = Number.isFinite(near) && !raining ? `<small>n\xE6rmeste byge ${fmt(near, 0)} km</small>` : "";
+    const sub = Number.isFinite(near) && !raining ? `<small>n\xE6rmeste byge ${fmt2(near, 0)} km</small>` : "";
     el.style.setProperty("--c", c2);
     this.set("cast", `<span class="ic">${ico(i, 17, 1.8)}</span><span>${t}</span>${sub || bars}`);
   }
@@ -41354,18 +41562,18 @@ var ThWeatherCard = class extends HTMLElement {
     };
     const hum = this.pick(this.d("luftfugtighed"), a.humidity), pres = this.pick(this.d("lufttryk"), a.pressure), dew = this.pick(this.d("dugpunkt"), a.dew_point);
     const vis = this.pick(this.d("sigtbarhed"), a.visibility), uv = this.pick(a.uv_index, 0), gmax = this.d("kraftigste_vindstod_i_dag");
-    tx2("wind", `${fmt(ws, 1)}<small>m/s</small>`, `fra ${DIR8[Math.round(wb2 / 45) % 8]} \xB7 ${beau(ws).toLowerCase()}`);
+    tx2("wind", `${fmt2(ws, 1)}<small>m/s</small>`, `fra ${DIR8[Math.round(wb2 / 45) % 8]} \xB7 ${beau(ws).toLowerCase()}`);
     const nd = this.$("w-ndl");
     if (nd) nd.style.transform = `rotate(${wb2 + 180}deg)`;
-    tx2("gust", `${fmt(gust, 1)}<small>m/s</small>`, Number.isFinite(gmax) ? `kraftigste i dag ${fmt(gmax, 1)}` : beau(gust).toLowerCase());
+    tx2("gust", `${fmt2(gust, 1)}<small>m/s</small>`, Number.isFinite(gmax) ? `kraftigste i dag ${fmt2(gmax, 1)}` : beau(gust).toLowerCase());
     this.$("t-gust").style.setProperty("--p", Math.min(100, gust / Math.max(15, gmax || 0) * 100) + "%");
-    tx2("hum", `${fmt(hum, 0)}<small>%</small>`, hum > 90 ? "meget fugtigt" : hum > 70 ? "fugtigt" : hum < 35 ? "t\xF8rt" : "behageligt");
+    tx2("hum", `${fmt2(hum, 0)}<small>%</small>`, hum > 90 ? "meget fugtigt" : hum > 70 ? "fugtigt" : hum < 35 ? "t\xF8rt" : "behageligt");
     const hr = this.$("hum-r");
     if (hr) hr.style.strokeDashoffset = 106.8 * (1 - Math.min(1, hum / 100));
     const fc = (this._hourly || []).filter((f) => new Date(f.datetime) >= Date.now() - 36e5).slice(0, 24);
     if (fc.length) {
       const mx2 = Math.max(...fc.map((f) => f.precipitation_probability || 0)), mm = fc.reduce((s, f) => s + (f.precipitation || 0), 0);
-      tx2("rain", `${Math.round(mx2)}<small>%</small>`, mm > 0 ? `${fmt(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
+      tx2("rain", `${Math.round(mx2)}<small>%</small>`, mm > 0 ? `${fmt2(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
       const k = fc.map((f) => f.precipitation_probability || 0).join();
       const sp = this.$("rr-sp");
       this._rrFc = fc;
@@ -41376,7 +41584,7 @@ var ThWeatherCard = class extends HTMLElement {
       }
     }
     const tr = this._ptr;
-    tx2("pres", `${fmt(pres, 0)}<small>hPa</small>`, Number.isFinite(tr) ? `${tr > 0.5 ? "\u2197 stigende" : tr < -0.5 ? "\u2198 faldende" : "\u2192 stabilt"} ${tr > 0 ? "+" : ""}${fmt(tr, 1)} / 3 t` : pres > 1020 ? "h\xF8jtryk" : pres < 1e3 ? "lavtryk" : "normalt");
+    tx2("pres", `${fmt2(pres, 0)}<small>hPa</small>`, Number.isFinite(tr) ? `${tr > 0.5 ? "\u2197 stigende" : tr < -0.5 ? "\u2198 faldende" : "\u2192 stabilt"} ${tr > 0 ? "+" : ""}${fmt2(tr, 1)} / 3 t` : pres > 1020 ? "h\xF8jtryk" : pres < 1e3 ? "lavtryk" : "normalt");
     const pk = Math.max(0, Math.min(1, (pres - 970) / 80));
     const pa = this.$("p-arc");
     if (pa) pa.style.strokeDashoffset = 47.1 * (1 - pk);
@@ -41384,12 +41592,12 @@ var ThWeatherCard = class extends HTMLElement {
     if (pn) pn.style.transform = `rotate(${-90 + pk * 180}deg)`;
     this.pressureTrend();
     const spr = temp - dew;
-    tx2("dew", `${fmt(dew, 1)}<small>\xB0</small>`, Number.isFinite(spr) ? `${fmt(spr, 1)}\xB0 spredning \xB7 ${spr < 1.5 ? "t\xE5ge/dug mulig" : spr < 4 ? "fugtig luft" : "t\xF8r luft"}` : "");
+    tx2("dew", `${fmt2(dew, 1)}<small>\xB0</small>`, Number.isFinite(spr) ? `${fmt2(spr, 1)}\xB0 spredning \xB7 ${spr < 1.5 ? "t\xE5ge/dug mulig" : spr < 4 ? "fugtig luft" : "t\xF8r luft"}` : "");
     this.$("t-dew").style.setProperty("--p", Math.max(4, 100 - Math.min(100, spr / 12 * 100)) + "%");
-    tx2("vis", `${fmt(vis, vis < 10 ? 1 : 0)}<small>km</small>`, vis >= 20 ? "fremragende" : vis >= 10 ? "god" : vis >= 4 ? "moderat" : vis >= 1 ? "d\xE5rlig" : "t\xE5ge");
+    tx2("vis", `${fmt2(vis, vis < 10 ? 1 : 0)}<small>km</small>`, vis >= 20 ? "fremragende" : vis >= 10 ? "god" : vis >= 4 ? "moderat" : vis >= 1 ? "d\xE5rlig" : "t\xE5ge");
     this.$("t-vis").style.setProperty("--p", Math.min(100, vis / 50 * 100) + "%");
     const fuv = Math.max(uv, ...fc.map((f) => f.uv_index || 0));
-    tx2("uv", `${fmt(uv, 1)}`, `${uv < 3 ? "lav" : uv < 6 ? "moderat" : uv < 8 ? "h\xF8j" : "meget h\xF8j"}${fuv > uv + 0.4 ? ` \xB7 op til ${fmt(fuv, 1)}` : ""}`);
+    tx2("uv", `${fmt2(uv, 1)}`, `${uv < 3 ? "lav" : uv < 6 ? "moderat" : uv < 8 ? "h\xF8j" : "meget h\xF8j"}${fuv > uv + 0.4 ? ` \xB7 op til ${fmt2(fuv, 1)}` : ""}`);
     this.$("t-uv").style.setProperty("--p", Math.min(100, uv / 11 * 100) + "%");
   }
   /* ---------- varsler og detaljer ---------- */
@@ -41474,7 +41682,7 @@ var ThWeatherCard = class extends HTMLElement {
     const n = parseFloat(st.state);
     if (Number.isFinite(n) && String(+st.state) === String(n)) {
       const d = Math.abs(n) >= 100 || Number.isInteger(n) && !/°|mm|m\/s/.test(u2) ? 0 : 1;
-      return { v: fmt(n, d), n, u: u2, a };
+      return { v: fmt2(n, d), n, u: u2, a };
     }
     return { v: esc7(st.state), u: "", a };
   }
@@ -41487,9 +41695,9 @@ var ThWeatherCard = class extends HTMLElement {
     if (risk) items.sort((p, q) => (q.x.n ?? -1) - (p.x.n ?? -1));
     if (!items.length) return `<div class="dsub">${esc7(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
     const src = items.find((o) => o.x.a.station || o.x.a.kilde)?.x.a;
-    return `<div class="dsub">${esc7(sec.title)}<span>${esc7(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
+    return `<div class="dsub">${esc7(sec.title)}<span>${esc7(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt2(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
       const a = x.a, isR = (risk || x.u === "%" && /risiko/i.test(it.name)) && Number.isFinite(x.n), c2 = isR ? this.riskCol(x.n) : "";
-      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc7(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt(+a.i_g\u00E5r, 1)}` : "");
+      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt2(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc7(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt2(+a.i_g\u00E5r, 1)}` : "");
       return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc7(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc7(it.name)}</div>
         <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc7(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
     }).join("")}</div>`;
@@ -41633,7 +41841,7 @@ var ThWeatherCard = class extends HTMLElement {
       if (p > 0.04) {
         const h = Math.max(3, p / pmax * 24), bw = Math.min(18, cw * 0.42);
         g += `<rect x="${X(i) - bw / 2}" y="${158 - h}" width="${bw}" height="${h}" rx="${Math.min(4, bw / 3)}" fill="url(#pb)" opacity="${0.45 + pp / 200}" class="gbar" style="animation-delay:${0.6 + i * 0.02}s"/>
-          <text x="${X(i)}" y="${155 - h}" text-anchor="middle" font-size="8.5" fill="#8ed1ff" font-weight="600" class="fi">${p >= 1 ? fmt(p, 0) : fmt(p, 1)}</text>`;
+          <text x="${X(i)}" y="${155 - h}" text-anchor="middle" font-size="8.5" fill="#8ed1ff" font-weight="600" class="fi">${p >= 1 ? fmt2(p, 0) : fmt2(p, 1)}</text>`;
       } else if (pp >= 30) g += `<text x="${X(i)}" y="155" text-anchor="middle" font-size="8.5" fill="rgba(142,209,255,.7)" class="fi">${Math.round(pp)}%</text>`;
     });
     g += `<line x1="0" y1="158.5" x2="${W2}" y2="158.5" stroke="rgba(255,255,255,.07)"/>`;
@@ -41658,7 +41866,7 @@ var ThWeatherCard = class extends HTMLElement {
     sv.innerHTML = g;
     this.$("hin").style.width = W2 + "px";
     const tot = fc.reduce((s, f) => s + (f.precipitation || 0), 0);
-    this.set("hsum", `${Math.round(mn)}\xB0 \u2013 ${Math.round(mx2)}\xB0 \xB7 ${tot > 0.05 ? fmt(tot, 1) + " mm nedb\xF8r" : "ingen nedb\xF8r"} \xB7 vind m/s`);
+    this.set("hsum", `${Math.round(mn)}\xB0 \u2013 ${Math.round(mx2)}\xB0 \xB7 ${tot > 0.05 ? fmt2(tot, 1) + " mm nedb\xF8r" : "ingen nedb\xF8r"} \xB7 vind m/s`);
   }
   scrub(e) {
     const fc = this._fc;
@@ -41669,8 +41877,8 @@ var ThWeatherCard = class extends HTMLElement {
     hl.setAttribute("opacity", 1);
     const dt = new Date(f.datetime), tip = this.$("tip"), [txt] = cnd(f.condition, false);
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
-      F\xF8les som <b>${fmt(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
-      Vind <b>${fmt((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
+      F\xF8les som <b>${fmt2(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt2(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
+      Vind <b>${fmt2((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt2((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
     const hs = this.$("hs"), sc = hs.scrollLeft, pad5 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
     const lo = sc + 22 - pad5, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad5 - tw);
     let L = (i + 1) * this._cw + 8;
@@ -41726,7 +41934,7 @@ var num3 = (v) => {
   const n = typeof v === "number" ? v : parseFloat(v);
   return Number.isFinite(n) ? n : null;
 };
-var fmt2 = (v, d = 1) => v == null ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var fmt3 = (v, d = 1) => v == null ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hh2 = (t) => String(new Date(t).getHours()).padStart(2, "0");
 function smoothPath2(pts) {
   let d = "";
@@ -42206,11 +42414,11 @@ var HAWeatherChartsCard = class extends HTMLElement {
     let svg = "";
     if (L) for (const t of L.tk) {
       const y = L.Y(t).toFixed(1);
-      svg += `<line class="gl" x1="${x0}" x2="${x12}" y1="${y}" y2="${y}"/><text class="yl" x="${x0 - 6}" y="${y}" dy="3.5" text-anchor="end">${fmt2(t, Math.abs(t) < 10 && t % 1 ? 1 : 0)}</text>`;
+      svg += `<line class="gl" x1="${x0}" x2="${x12}" y1="${y}" y2="${y}"/><text class="yl" x="${x0 - 6}" y="${y}" dy="3.5" text-anchor="end">${fmt3(t, Math.abs(t) < 10 && t % 1 ? 1 : 0)}</text>`;
     }
     if (R) for (const t of R.tk) {
       const y = R.Y(t).toFixed(1);
-      svg += `<text class="yl" x="${x12 + 6}" y="${y}" dy="3.5">${fmt2(t, 0)}</text>`;
+      svg += `<text class="yl" x="${x12 + 6}" y="${y}" dy="3.5">${fmt3(t, 0)}</text>`;
     }
     const dayStart = new Date(from);
     dayStart.setHours(0, 0, 0, 0);
@@ -42326,14 +42534,14 @@ var HAWeatherChartsCard = class extends HTMLElement {
         const d = (s.axis || "left") === "right" ? ch2.right.d : ch2.d;
         if (s.type === "band" || s.type === "range") {
           const p3 = near((s.band || s.range).map(([tt2, a, b]) => [tt2, a, b]));
-          return p3 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p3[1], d)}\u2013${fmt2(p3[2], d)} ${esc8(unit)}</b></span>` : "";
+          return p3 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt3(p3[1], d)}\u2013${fmt3(p3[2], d)} ${esc8(unit)}</b></span>` : "";
         }
         const p = near(s.points);
-        return p ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt2(p[1], d)} ${esc8(unit)}</b></span>` : "";
+        return p ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt3(p[1], d)} ${esc8(unit)}</b></span>` : "";
       }).filter(Boolean);
       for (const [name, color, pts] of ch2.heat || []) {
         const p = near(pts);
-        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc8(name)} skyer<b>${fmt2(p[1], 0)} %</b></span>`);
+        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc8(name)} skyer<b>${fmt3(p[1], 0)} %</b></span>`);
       }
       const when = new Date(t);
       const head = ch2.days ? `${DAYS[when.getDay()]} ${when.getDate()}.${when.getMonth() + 1}.` : `${DAYS[when.getDay()]} ${when.getDate()}. kl. ${hh2(t)}.${String(Math.round(when.getMinutes() / 10) * 10 % 60).padStart(2, "0")}`;
@@ -61022,13 +61230,13 @@ var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt4 = numberFormats.get(digits);
-  if (!fmt4) {
-    fmt4 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt4);
+  let fmt5 = numberFormats.get(digits);
+  if (!fmt5) {
+    fmt5 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt5);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt4.format(rounded === 0 ? 0 : rounded);
+  return fmt5.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -63406,7 +63614,7 @@ function normalize(stateObj, kind) {
   return { value: n === void 0 ? void 0 : n * factor, known: true };
 }
 var numberFormats2 = /* @__PURE__ */ new Map();
-function fmt3(value, digits = 1) {
+function fmt4(value, digits = 1) {
   if (!Number.isFinite(value)) return "\u2014";
   let f = numberFormats2.get(digits);
   if (!f) {
@@ -63419,22 +63627,22 @@ function fmt3(value, digits = 1) {
 function fmtPower2(watts) {
   if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
   const abs = Math.abs(watts);
-  if (abs >= 1e3) return { v: fmt3(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
-  return { v: fmt3(watts, abs < 10 ? 1 : 0), u: "W" };
+  if (abs >= 1e3) return { v: fmt4(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
+  return { v: fmt4(watts, abs < 10 ? 1 : 0), u: "W" };
 }
 function fmtEnergy2(kwh) {
   if (!Number.isFinite(kwh)) return { v: "\u2014", u: "kWh" };
   const abs = Math.abs(kwh);
-  if (abs >= 1e4) return { v: fmt3(kwh / 1e3, 1), u: "MWh" };
-  if (abs < 1 && abs > 0) return { v: fmt3(kwh * 1e3, 0), u: "Wh" };
-  return { v: fmt3(kwh, abs >= 100 ? 0 : 1), u: "kWh" };
+  if (abs >= 1e4) return { v: fmt4(kwh / 1e3, 1), u: "MWh" };
+  if (abs < 1 && abs > 0) return { v: fmt4(kwh * 1e3, 0), u: "Wh" };
+  return { v: fmt4(kwh, abs >= 100 ? 0 : 1), u: "kWh" };
 }
 function fmtVolume(m3) {
   if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
-  if (Math.abs(m3) < 10) return { v: fmt3(m3 * 1e3, 0), u: "L" };
-  return { v: fmt3(m3, 1), u: "m\xB3" };
+  if (Math.abs(m3) < 10) return { v: fmt4(m3 * 1e3, 0), u: "L" };
+  return { v: fmt4(m3, 1), u: "m\xB3" };
 }
-var fmtKr = (v) => Number.isFinite(v) ? `${fmt3(v, 2)} kr` : "\u2014";
+var fmtKr = (v) => Number.isFinite(v) ? `${fmt4(v, 2)} kr` : "\u2014";
 function escapeHtml3(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -63679,7 +63887,7 @@ var BarChart = class {
     let grid = "";
     for (let v = 0; v <= hi + step / 2; v += step) {
       const pct2 = 100 - v / hi * 100;
-      y += `<span style="top:${pct2}%">${fmt3(v, d)}</span>`;
+      y += `<span style="top:${pct2}%">${fmt4(v, d)}</span>`;
       grid += `<i style="top:${pct2}%"></i>`;
     }
     this.$("y").innerHTML = y;
@@ -63736,7 +63944,7 @@ var BarChart = class {
     svg.removeAttribute("hidden");
     const dec = decimalsFor(step);
     let labels = "";
-    for (let v = lo; v <= hi + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi - lo) * 100}%">${fmt3(v, dec)}</span>`;
+    for (let v = lo; v <= hi + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi - lo) * 100}%">${fmt4(v, dec)}</span>`;
     y2.innerHTML = labels;
     y2.hidden = false;
     this.host.classList.add("has-line");
@@ -63922,7 +64130,7 @@ var HistoryPanel = class {
     const has = values.some(Number.isFinite);
     const total = values.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     const unit = this._unit();
-    this.totalEl.textContent = has ? `${fmt3(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
+    this.totalEl.textContent = has ? `${fmt4(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
     const costTotal = cost?.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     this.costEl.textContent = cost && cost.some(Number.isFinite) ? fmtKr(costTotal) : "";
   }
@@ -63947,7 +64155,7 @@ var HistoryPanel = class {
     const c2 = this.current.cost?.[i];
     const unit = this._unit();
     const digits = unit === "L" ? 0 : v >= 100 ? 0 : v >= 10 ? 1 : 2;
-    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt3(v, digits) : "\u2014"}</em> ${unit}</span>`;
+    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt4(v, digits) : "\u2014"}</em> ${unit}</span>`;
     if (Number.isFinite(c2)) html += `<span>${fmtKr(c2)}</span>`;
     const lv = this.current.line?.values[i];
     if (Number.isFinite(lv)) html += `<span class="tip-line">${escapeHtml3(this.o.line.format(lv))}</span>`;
@@ -64252,7 +64460,7 @@ var OverviewSection = class extends Section {
           key: "grid_price",
           label: "Timepris (kr/kWh)",
           values: (range) => hourlyPrices(card.stateObj("grid_price"), range.buckets),
-          format: (v) => `${fmt3(v, 2)} kr/kWh`
+          format: (v) => `${fmt4(v, 2)} kr/kWh`
         }
       }),
       new HistoryPanel(card, { key: "ov-el", title: "Elforbrug", icon: "mdi:flash", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" }),
@@ -64403,13 +64611,13 @@ var OverviewSection = class extends Section {
     this.value("hEl", fmtPower2(grid), true);
     this.value("hHeat", fmtPower2(heat), true);
     this.value("hEv", fmtPower2(ev), true);
-    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt3(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt4(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
     this.text("hWaterU", "L/min");
     const price = c2.num("grid_price");
-    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt3(price, 2)} kr/kWh` : "Ingen prisdata");
+    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt4(price, 2)} kr/kWh` : "Ingen prisdata");
     const sup = c2.num("heat_supply");
     const ret = c2.num("heat_return");
-    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt3(sup, 0)}\xB0 \xB7 retur ${fmt3(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
+    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt4(sup, 0)}\xB0 \xB7 retur ${fmt4(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
     const wf = c2.waterFlowState(flowLpm);
     this.text("hWaterSub", wf.label);
     this.tone(this.refs.hWaterSub, wf.tone);
@@ -64604,11 +64812,11 @@ var PowerSection = class extends Section {
     const unm = c2.watts("unmeasured_power");
     this.value("main", fmtPower2(grid), true);
     const va = c2.num("grid_apparent");
-    this.text("mainVa", Number.isFinite(va) ? `${fmt3(va, 0)} VA` : "\u2014");
+    this.text("mainVa", Number.isFinite(va) ? `${fmt4(va, 0)} VA` : "\u2014");
     const price = c2.num("grid_price");
-    this.text("mainPrice", Number.isFinite(price) ? `${fmt3(price, 2)} kr/kWh` : "\u2014");
+    this.text("mainPrice", Number.isFinite(price) ? `${fmt4(price, 2)} kr/kWh` : "\u2014");
     const temp = c2.num("meter_temperature");
-    this.text("mainTemp", Number.isFinite(temp) ? `${fmt3(temp, 1)} \xB0C` : "\u2014");
+    this.text("mainTemp", Number.isFinite(temp) ? `${fmt4(temp, 1)} \xB0C` : "\u2014");
     const ret = fmtEnergy2(c2.kwh("grid_returned"));
     this.text("mainRet", `${ret.v} ${ret.u}`);
     this.value("mMeas", fmtPower2(meas));
@@ -64616,18 +64824,18 @@ var PowerSection = class extends Section {
     const pct2 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
     const measPct = pct2(meas);
     const unmPct = pct2(unm);
-    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt3(measPct, 0)} %` : "\u2014");
-    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt3(unmPct, 0)} %` : "\u2014");
-    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt3(measPct, 0)} %` : "\u2014");
-    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt3(unmPct, 0)} %` : "\u2014");
+    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
+    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
+    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
+    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
     this.bar("acctMeas", grid > 0 && Number.isFinite(meas) ? Math.min(meas / grid, 1) : 0);
     this.bar("acctUnm", grid > 0 && Number.isFinite(unm) ? Math.min(unm / grid, 1) : 0);
     const tol = c2.config.accounting_tolerance_w;
     if (Number.isFinite(grid) && Number.isFinite(meas)) {
       const diff = meas + (Number.isFinite(unm) ? unm : 0) - grid;
-      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt3(diff, 0)} W`);
+      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt4(diff, 0)} W`);
       const off = meas - grid > tol;
-      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt3(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
+      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt4(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
       this.tone("acct", off ? "warn" : "");
     } else {
       this.text("acctDiff", "\u2014");
@@ -64654,7 +64862,7 @@ var PowerSection = class extends Section {
       total += s.sum || 0;
       const p3 = fmtPower2(s.sum);
       this.text(`g${i}Val`, `${p3.v} ${p3.u}`);
-      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt3(s.sum / grid * 100, 0)} %` : "\u2014");
+      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt4(s.sum / grid * 100, 0)} %` : "\u2014");
       this.bar(`g${i}Bar`, (s.sum || 0) / max);
       const warn = this.refs[`g${i}Warn`];
       this.show(warn, s.missing > 0);
@@ -64664,7 +64872,7 @@ var PowerSection = class extends Section {
       }
     });
     const p = fmtPower2(total);
-    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt3(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
+    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt4(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
   }
   _updatePhases() {
     const c2 = this.card;
@@ -64677,15 +64885,15 @@ var PowerSection = class extends Section {
     phases.forEach((p, i) => {
       this.value(`ph${i}`, fmtPower2(c2.wattsOf(p.power)), true);
       const cur = currents[i];
-      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt3(cur, 2)} A` : "\u2014");
+      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt4(cur, 2)} A` : "\u2014");
       const v = c2.numOf(p.voltage);
-      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt3(v, 1)} V` : "\u2014");
+      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt4(v, 1)} V` : "\u2014");
       const hz = c2.numOf(p.frequency);
-      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt3(hz, 2)} Hz` : "\u2014");
+      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt4(hz, 2)} Hz` : "\u2014");
       const pf = c2.numOf(p.power_factor);
-      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt3(pf, 2) : "\u2014");
+      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt4(pf, 2) : "\u2014");
       const va = c2.numOf(p.apparent);
-      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt3(va, 0)} VA` : "\u2014");
+      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt4(va, 0)} VA` : "\u2014");
       this.bar(`ph${i}Bar`, Number.isFinite(cur) ? cur / maxI : 0);
       this.show(`ph${i}Flag`, Boolean(bal.flagged[i]));
       this.tone(`ph${i}`, bal.flagged[i] ? bal.tone : "");
@@ -64780,22 +64988,22 @@ var HeatSection = class extends Section {
     this.text("status", !Number.isFinite(w) ? "Ingen data" : w > 0 ? "Varmer" : "Ingen varmeeffekt");
     this.tone("status", w > 0 ? "heat" : "");
     const price = c2.num("heat_price");
-    this.text("priceV", Number.isFinite(price) ? fmt3(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt4(price, 2) : "\u2014");
     this.text("priceU", "kr/kWh");
-    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt3(c2.num(k), 1)} \xB0C` : "\u2014";
+    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt4(c2.num(k), 1)} \xB0C` : "\u2014";
     this.text("sup", deg("heat_supply"));
     this.text("ret", deg("heat_return"));
     this.text("cool", deg("heat_cooling"));
     const flow = c2.num("heat_flow");
     const unit = c2.stateObj("heat_flow")?.attributes?.unit_of_measurement || "";
-    this.text("flow", Number.isFinite(flow) ? `${fmt3(flow, 0)} ${unit}` : "\u2014");
+    this.text("flow", Number.isFinite(flow) ? `${fmt4(flow, 0)} ${unit}` : "\u2014");
     this._updateToday();
   }
   _updateToday() {
     const c2 = this.card;
     this.value("today", fmtEnergy2(c2.today("heat_energy", "energy")));
     const cost = c2.today("heat_cost", "monetary");
-    this.text("costV", Number.isFinite(cost) ? fmt3(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -64861,15 +65069,15 @@ var WaterSection = class extends Section {
     const c2 = this.card;
     this._arrange();
     const lpm = c2.flowLpm("water_flow");
-    this.text("flowV", Number.isFinite(lpm) ? fmt3(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("flowV", Number.isFinite(lpm) ? fmt4(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
     const st = c2.waterFlowState(lpm);
     this.text("status", st.label);
     this.tone("status", st.tone);
     const cost = c2.num("water_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt3(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
     this.text("costU", "kr");
     const price = c2.num("water_price");
-    this.text("priceV", Number.isFinite(price) ? fmt3(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt4(price, 2) : "\u2014");
     this.text("priceU", "kr/m\xB3");
     this._updateToday();
   }
@@ -64949,7 +65157,7 @@ var EvSection = class extends Section {
     this.value("month", fmtEnergy2(c2.kwh("ev_energy_month")));
     this.value("session", fmtEnergy2(c2.kwh("ev_session")));
     const cost = c2.num("ev_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt3(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -65331,7 +65539,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
       const row = this._dlgRows[i];
       const p3 = fmtPower2(w);
       row.v.textContent = Number.isFinite(w) ? `${p3.v} ${p3.u}` : "Ingen data";
-      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt3(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
+      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt4(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
       row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
       row.el.classList.toggle("off", !Number.isFinite(w));
       row.el.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);

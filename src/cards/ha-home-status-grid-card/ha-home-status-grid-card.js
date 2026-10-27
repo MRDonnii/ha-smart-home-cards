@@ -1,10 +1,12 @@
 import { luxCss, LUX_ACCENT, LUX_KEYFRAMES } from "../../shared/lux.js";
 import { isNewLook, lookEditorHtml, wireLookEditor } from "../../shared/look.js";
 import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
+import { GRAIN } from "../ha-room-climate-card/premium.js";
+import { roomComfort } from "../shared/comfort.js";
 
 const AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["Køl", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["Tør", "mdi:water-percent"], fan_only: ["Blæs", "mdi:fan"] };
 const AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "Høj", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-const VERSION = "1.7.0";
+const VERSION = "1.8.0";
 
 const PRESETS = {
   "home_energy": {
@@ -1225,8 +1227,11 @@ class HaHomeSummaryCard extends HTMLElement {
   // 24 h curve across the whole bottom with the setpoint dashed and a glowing dot at "now". `room_tiles: classic` = old.
   _roomTileV2(room, i) {
     const r = this._roomInfo(room); const f = (v, d = 1) => this._fmt(v, d);
-    const st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? (r.ac.mode === "cool" ? "cool" : "heat") : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
-    const status = { na: "Ingen data", out: "Ude nu", open: "Vindue åbent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "Køler via AC", warm: `Over mål +${f(r.delta)}°`, cold: `Under mål ${f(r.delta)}°`, ok: "På mål", plain: "Måling" }[st];
+    let st = !Number.isFinite(r.temp) ? "na" : room.outdoor ? "out" : r.window ? "open" : r.heating ? "heat" : r.ac?.running ? (r.ac.mode === "cool" ? "cool" : "heat") : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : Number.isFinite(r.delta) ? "ok" : "plain";
+    let status = { na: "Ingen data", out: "Ude nu", open: "Vindue åbent", heat: r.ac?.running ? "Varmer via AC" : "Varmer nu", cool: "Køler via AC", warm: `Over mål +${f(r.delta)}°`, cold: `Under mål ${f(r.delta)}°`, ok: "På mål", plain: "Måling" }[st];
+    // Premium: a room without a thermostat says whether its climate is comfortable for its kind of room (Claude AI, 2026-10-27)
+    let comfortTone = "";
+    if (this._rtPremium && st === "plain") { const c = roomComfort(room, r.temp, r.humidity, this._num(room.co2)); status = c.label; comfortTone = c.tone; st = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warm", air: "warm" }[c.tone] || "plain"; }
     // the curve: hourly means + now, scaled to include the setpoint
     const pts = [...r.series.map((p) => p.v), ...(Number.isFinite(r.temp) ? [r.temp] : [])];
     let curve = "";
@@ -1243,10 +1248,26 @@ class HaHomeSummaryCard extends HTMLElement {
     // status and humidity/target under. No small activity icons either (Claude AI, 2026-10-15; user: "De små ikoner i
     // bunden til venstre er heller ikke nødvendige, vi har jo det store og animation rundt i kanten"): the big background
     // icon shows heat/AC, the orbiting edge light shows presence, the status line shows an open window.
-    return `<div class="rt s-${st}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>
+    const pm = this._rtPremium;
+    const temp = pm ? this._esc(f(r.temp)).replace(/^(-?\d+)([,.]\d+)$/, '$1<span class="d">$2</span>') : f(r.temp);
+    return `<div class="rt s-${st}${pm ? " pm" : ""}${comfortTone ? ` cf-${comfortTone}` : ""}${r.present ? " is-present" : ""}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0" title="${this._esc(room.name)}"><i class="sheen"></i>${pm ? '<span class="rt-fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>' : ""}
       ${(() => { const acHeat = r.ac?.running && r.ac.mode !== "cool"; const cool = r.ac?.running && r.ac.mode === "cool"; const ic = cool ? "mdi:snowflake" : acHeat ? "mdi:heat-pump-outline" : r.heating ? "mdi:fire" : (room.icon || "mdi:thermometer"); return `<ha-icon class="rt-bg ${cool ? "cool" : acHeat || r.heating ? "hot" : ""}" icon="${this._esc(ic)}"></ha-icon>`; })()}
       <div class="rt-r1"><b class="rt-n">${this._esc(room.name)}</b><em><i></i><span class="rt-st">${this._esc(status)}</span></em></div>
-      <div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${sub}</small></span><b class="rt-v">${f(r.temp)}<small>°</small>${trend}</b></div></div>`;
+      ${pm ? this._roomRail(room, r) : ""}<div class="rt-r2"><span class="rt-lft"><small class="rt-sub">${sub}</small></span><b class="rt-v">${temp}<small>°</small>${trend}</b></div></div>`;
+  }
+  // The premium comfort line: target ±0.5° for a room with a thermostat, the room's comfort zone otherwise (shared/comfort.js).
+  _roomRail(room, r) {
+    if (room.outdoor || !Number.isFinite(r.temp)) return "";
+    const [lo, hi] = Number.isFinite(r.target) ? [r.target - 0.5, r.target + 0.5] : roomComfort(room, r.temp, r.humidity).profile.temp;
+    const min = Math.min(lo - 3, r.temp - 0.6), max = Math.max(hi + 3, r.temp + 0.6), pos = (v) => ((v - min) / (max - min)) * 100;
+    return `<span class="rt-rail" aria-hidden="true"><i class="b" style="left:${pos(lo).toFixed(1)}%;width:${(pos(hi) - pos(lo)).toFixed(1)}%"></i><i class="d" style="left:${pos(r.temp).toFixed(1)}%"></i></span>`;
+  }
+  // Which room tiles: room_tiles_entity (input_boolean on = new / off = classic, or an input_select whose option names
+  // Premium / Nye / Klassiske) wins over room_tiles (premium | new | classic); new is the default (Claude AI, 2026-10-27).
+  _roomTilesMode() {
+    const pick = (value) => { const v = String(value ?? "").trim().toLowerCase(); if (!v) return null; if (/premium|eksklusiv|exclusive/.test(v)) return "premium"; if (v === "off" || /klassisk|classic/.test(v)) return "classic"; if (v === "on" || /^(ny|nye|nyt|new|v2)$/.test(v)) return "new"; return null; };
+    const id = this.config?.room_tiles_entity;
+    return pick(id ? this._hass?.states?.[id]?.state : null) || pick(this.config?.room_tiles) || (isNewLook(this._hass, this.config, { entity: "room_tiles_entity", key: "room_tiles", fallback: true }) ? "new" : "classic");
   }
   _roomInfo(room) {
     const cl = this._state(room.climate); const a = cl?.attributes || {};
@@ -1752,6 +1773,71 @@ ${LUX_KEYFRAMES}
         .rt-n.marquee,.rt-st.marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
         @container (max-width:125px){.rt-n{font-size:12px}.rt-r1 em{font-size:8px;letter-spacing:.04em}}
         @media(prefers-reduced-motion:reduce){.rt-bg,.rt .sheen::before,.rt.s-heat{animation:none!important}}
+        /* Premium room tiles (Claude AI, 2026-10-27; user: "endnu mere exclusive og præmium hvor data stadig kan læses og
+           animationerne er endnu bedre … hvis du kan lave en lækker nok animering kan vi fjerne flammen"): glass with grain and a
+           hairline edge in the state colour, no watermark icon, the temperature large with the decimal raised, a thin comfort
+           line (temperature against the target, or the room's comfort zone) and a scene per state: embers rising from a warm
+           glow while it heats, frost and snow for AC cooling, air through an open window, clouds outside, a slow light over
+           the glass when all is well. Only transform/opacity animate; motion-rest pauses them when nobody uses the screen. */
+        .rooms .rt.pm{--pm-grain:${GRAIN};border-radius:18px;
+          background:radial-gradient(120% 95% at 100% 0%,color-mix(in srgb,var(--sc) 20%,transparent),transparent 62%),radial-gradient(90% 80% at 0% 100%,color-mix(in srgb,var(--sc) 7%,transparent),transparent 72%),var(--pm-grain),linear-gradient(165deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 45%,rgba(0,0,0,.2)),var(--surface,var(--ha-card-background,var(--card-background-color,#171b22)));
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 16px 30px -22px rgba(0,0,0,.95),0 10px 26px -20px color-mix(in srgb,var(--sc) 70%,transparent);animation:none}
+        .rt.pm::before{content:"";position:absolute;inset:0;z-index:3;padding:1px;border-radius:inherit;pointer-events:none;opacity:.6;transition:opacity .35s ease;
+          background:linear-gradient(150deg,color-mix(in srgb,var(--sc) 80%,#fff 10%),rgba(255,255,255,.1) 34%,rgba(255,255,255,.02) 62%,color-mix(in srgb,var(--sc) 35%,transparent));
+          -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+        .rt.pm.s-heat::before{opacity:.9;background:linear-gradient(0deg,rgba(255,150,70,.9),rgba(255,150,70,.25) 45%,rgba(255,255,255,.06) 70%,color-mix(in srgb,var(--sc) 40%,transparent))}
+        .rooms .rt.pm:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 16px 30px -22px rgba(0,0,0,.95),0 0 30px -10px var(--sc)}.rooms .rt.pm:hover::before{opacity:1}.rooms .rt.pm:active{transform:scale(.98)}
+        .rt.pm .rt-bg{display:none}
+        .rt.pm .rt-r1,.rt.pm .rt-r2,.rt.pm .rt-rail{position:relative;z-index:1}
+        .rt.pm .rt-n{font-weight:750;letter-spacing:-.015em;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+        .rt.pm .rt-r1 em{letter-spacing:.13em}.rt.pm .rt-r1 em i{box-shadow:0 0 8px var(--sc)}
+        .rt.pm .rt-v{font-weight:750;letter-spacing:-.05em;text-shadow:none;background:linear-gradient(180deg,#fff 35%,color-mix(in srgb,#fff 70%,var(--sc)));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 7px rgba(0,0,0,.45))}
+        .rt.pm .rt-v .d{font-size:.6em;margin-top:.1em;letter-spacing:-.02em}
+        .rt.pm .rt-v small{-webkit-text-fill-color:var(--secondary-text-color,#a7b2c2);color:var(--secondary-text-color,#a7b2c2)}
+        .rt.pm .rt-v .rt-tr{-webkit-text-fill-color:initial}
+        .rt.pm .rt-sub{color:color-mix(in srgb,var(--primary-text-color,#fff) 64%,transparent);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+        /* comfort line: the band is the target ±0.5° (or the comfort zone), the dot the temperature */
+        .rt-rail{display:block;flex:none;height:3px;margin:auto 1px 6px;border-radius:9px;background:rgba(255,255,255,.08)}
+        .rt-rail .b{position:absolute;top:-1px;bottom:-1px;border-radius:9px;background:color-mix(in srgb,#20e3a2 35%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#20e3a2 70%,transparent)}
+        .rt-rail .d{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--sc);box-shadow:0 0 0 2px rgba(10,14,20,.9),0 0 10px var(--sc);transition:left .7s cubic-bezier(.2,1,.3,1)}
+        @container (max-height:86px){.rt-rail{display:none}}
+        /* the scenes */
+        .rt-fx{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+        .rt-fx::before,.rt-fx::after{content:"";position:absolute;opacity:0;pointer-events:none}
+        .rt-fx i{position:absolute;opacity:0}
+        /* heating: warm glow breathing from the bottom, a slow heat haze and embers rising */
+        .rt.pm.s-heat .rt-fx::before{left:-20%;right:-20%;bottom:-62%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,118,40,.5),rgba(255,118,40,.14) 62%,transparent);animation:pmGlow 3.6s ease-in-out infinite}
+        .rt.pm.s-heat .rt-fx::after{left:-30%;right:-30%;bottom:-20%;height:60%;background:radial-gradient(45% 60% at 30% 100%,rgba(255,196,110,.28),transparent 70%),radial-gradient(40% 55% at 72% 100%,rgba(255,92,40,.26),transparent 70%);opacity:1;animation:pmHaze 7s ease-in-out infinite alternate}
+        .rt.pm.s-heat .rt-fx i{bottom:2px;width:3px;height:3px;border-radius:50%;background:#ffe2b8;box-shadow:0 0 6px 1px rgba(255,150,60,.95);animation:pmEmber 3.8s cubic-bezier(.3,.6,.4,1) infinite}
+        .rt.pm.s-heat .rt-fx i:nth-child(1){left:10%}.rt.pm.s-heat .rt-fx i:nth-child(2){left:27%;animation-delay:.65s;animation-duration:4.3s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(3){left:43%;animation-delay:1.3s;animation-duration:3.4s}.rt.pm.s-heat .rt-fx i:nth-child(4){left:58%;animation-delay:1.95s;animation-duration:4.1s;width:2px;height:2px}
+        .rt.pm.s-heat .rt-fx i:nth-child(5){left:73%;animation-delay:2.6s}.rt.pm.s-heat .rt-fx i:nth-child(6){left:88%;animation-delay:3.2s;animation-duration:4.4s;width:2px;height:2px}
+        /* AC cooling: frost from the top and snow drifting down */
+        .rt.pm.s-cool .rt-fx::before{left:-20%;right:-20%;top:-65%;height:110%;border-radius:50%;background:radial-gradient(closest-side,rgba(110,190,255,.36),rgba(110,190,255,.1) 62%,transparent);opacity:1;animation:pmGlow 4.4s ease-in-out infinite}
+        .rt.pm.s-cool .rt-fx i{top:-6px;width:4px;height:4px;border-radius:50%;background:#e6f4ff;box-shadow:0 0 6px #9fd4ff;animation:pmSnow 5s linear infinite}
+        .rt.pm.s-cool .rt-fx i:nth-child(1){left:12%}.rt.pm.s-cool .rt-fx i:nth-child(2){left:30%;animation-delay:.85s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(3){left:48%;animation-delay:1.7s}
+        .rt.pm.s-cool .rt-fx i:nth-child(4){left:64%;animation-delay:2.55s;width:3px;height:3px}.rt.pm.s-cool .rt-fx i:nth-child(5){left:80%;animation-delay:3.4s}.rt.pm.s-cool .rt-fx i:nth-child(6){left:92%;animation-delay:4.2s;width:3px;height:3px}
+        /* open window: air streaming through */
+        .rt.pm.s-open .rt-fx i{left:-45%;width:55%;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(196,181,253,.85),transparent);animation:pmAir 3.2s ease-in-out infinite}
+        .rt.pm.s-open .rt-fx i:nth-child(1){top:30%}.rt.pm.s-open .rt-fx i:nth-child(2){top:44%;animation-delay:.55s}.rt.pm.s-open .rt-fx i:nth-child(3){top:56%;animation-delay:1.1s}
+        .rt.pm.s-open .rt-fx i:nth-child(4){top:68%;animation-delay:1.65s}.rt.pm.s-open .rt-fx i:nth-child(5){top:38%;animation-delay:2.2s;width:35%}.rt.pm.s-open .rt-fx i:nth-child(6){top:62%;animation-delay:2.75s;width:35%}
+        /* outside: a sky glow and two soft clouds drifting by */
+        .rt.pm.s-out .rt-fx::before{left:-20%;right:-20%;top:-70%;height:115%;border-radius:50%;background:radial-gradient(closest-side,rgba(56,189,248,.28),transparent);opacity:1}
+        .rt.pm.s-out .rt-fx i:nth-child(-n+2){top:14%;left:-60%;width:62%;height:30%;border-radius:50%;background:radial-gradient(closest-side,rgba(200,230,255,.09),rgba(200,230,255,.03) 60%,transparent);opacity:1;animation:pmCloud 26s linear infinite}
+        .rt.pm.s-out .rt-fx i:nth-child(2){top:36%;width:45%;height:26%;animation-duration:34s;animation-delay:-17s}
+        /* all is well: a slow light gliding over the glass */
+        .rt.pm.s-ok .rt-fx::after{top:-50%;bottom:-50%;left:0;width:45%;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);opacity:1;transform:translateX(-120%) rotate(8deg);animation:pmGlide 11s ease-in-out infinite}
+        .rt.pm.s-ok:nth-child(2n) .rt-fx::after{animation-delay:-4s}.rt.pm.s-ok:nth-child(3n) .rt-fx::after{animation-delay:-7s}
+        /* a room outside its comfort zone: a soft glow in the warning colour */
+        .rt.pm[class*="cf-"]:not(.cf-ok) .rt-fx::before{left:-20%;right:-20%;bottom:-70%;height:110%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--sc) 30%,transparent),transparent);opacity:1}
+        @keyframes pmGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08) translateY(-4%)}}
+        @keyframes pmHaze{from{transform:translateX(-7%)}to{transform:translateX(7%)}}
+        @keyframes pmEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}45%{transform:translate(5px,-48px) scale(.9)}75%{opacity:.7}100%{opacity:0;transform:translate(-4px,-104px) scale(.35)}}
+        @keyframes pmSnow{0%{opacity:0;transform:translate(0,0)}15%{opacity:.9}100%{opacity:0;transform:translate(-12px,150px)}}
+        @keyframes pmAir{0%{opacity:0;transform:translateX(0)}30%{opacity:.9}100%{opacity:0;transform:translateX(270%)}}
+        @keyframes pmCloud{to{transform:translateX(300%)}}
+        @keyframes pmGlide{0%,55%{transform:translateX(-120%) rotate(8deg)}100%{transform:translateX(330%) rotate(8deg)}}
+        @media(prefers-reduced-motion:reduce){.rt-fx *,.rt-fx::before,.rt-fx::after{animation:none!important}}
         .room{cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1),filter .2s}.room:hover{filter:brightness(1.08)}.room:active{transform:scale(.96)}
         .room-spark{position:absolute!important;z-index:0!important;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none;opacity:.6}
         .room-spark .a{fill:color-mix(in srgb,var(--room-accent) 15%,transparent)}.room-spark .l{fill:none;stroke:color-mix(in srgb,var(--room-accent) 65%,transparent);stroke-width:1.4;vector-effect:non-scaling-stroke}
@@ -1816,7 +1902,7 @@ ${LUX_KEYFRAMES}
     // Room tiles (Claude AI, 2026-10-13; user: "mere grafisk pænt op med flere funktioner"): a faint 24 h curve behind,
     // a comfort bar (temperature against the setpoint), a trend arrow, badges for heating, presence, an open window and
     // a low battery. A tap opens the room panel (_openRoom) instead of the rooms page; the heading still goes there.
-    const classicTiles=!isNewLook(this._hass,c,{entity:"room_tiles_entity",key:"room_tiles",fallback:true});
+    const tileMode=this._roomTilesMode();const classicTiles=tileMode==="classic";this._rtPremium=tileMode==="premium";
     // Classic = the room tiles as they were before the rebuild (0.8.72, 2026-10-11; user 2026-10-14: "du skal længere
     // tilbage"), with their own ro- classes so the newer tile styles never reach them. A tap still opens the room.
     const roomsHtml=!classicTiles?(c.rooms||[]).map((room,i)=>this._roomTileV2(room,i)).join(""):(c.rooms||[]).map((room,i)=>{

@@ -18,13 +18,18 @@ Cards that have a new and a classic look can switch between them the same way:
 | `ha-home-status-card` | `style: new / classic` | `style_entity` |
 | `ha-person-overview-card` | `style: new / classic` | `style_entity` |
 | `ha-tesla-glance-card` | `style: new / classic` | `style_entity` |
-| `ha-home-summary-card` (room tiles) | `room_tiles: new / classic` | `room_tiles_entity` |
+| `ha-home-summary-card` (room tiles) | `room_tiles: premium / new / classic` | `room_tiles_entity` (input_boolean on = new, or an input_select with Premium / Nye / Klassiske) |
 | `th-electricity-price-card` (new) / `ha-electricity-price-card` (classic, configured under `classic:`) | `style: new / classic` | `style_entity` (or `switch_entity`) |
 | `ha-room-climate-card` (new = premium: glass tiles, thermostat dial, Udendørs with the day's weather) | `style: new / classic` | `style_entity` |
 
 `ha-room-climate-card`'s premium Udendørs room takes optional `weather` (a `weather.*` entity with an hourly forecast),
 `observed` (text sensor for the observed weather), `rain_today` and `degree_days`; sunrise and sunset come from the home
 location. It also gets the light, buttons and Styring of the rooms page's outdoor room (`controls_room`, default "Udenfor").
+
+Premium room tiles (front page) and the premium measuring points in `ha-room-climate-card` judge rooms without a thermostat by
+their kind (`src/cards/shared/comfort.js`): bedroom 16–19 °C, bathroom 22–26 °C, WC 19–23 °C, utility rooms 17–24 °C, others
+20–23 °C, humidity 40–60 % (bathroom up to 70 %), CO₂ from the air-quality limits. Override per room with `comfort_min`,
+`comfort_max`, `humidity_min`, `humidity_max` or `comfort_profile` (e.g. "sove").
 
 Without a helper the editor's choice applies. With a helper (e.g. `input_boolean.dashboard_nye_statuskort`, created under
 Settings → Devices & services → Helpers → Toggle) the helper decides as long as it exists, so a button in a settings page

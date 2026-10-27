@@ -18,6 +18,7 @@ import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overvie
 import { co2Rank } from "../shared/air-quality.js";
 import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
+import { roomComfort, comfortScale } from "../shared/comfort.js";
 
 const VERSION = "1.8.0";
 const TAG = "ha-room-climate-card";
@@ -503,6 +504,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
         <div class="t-top"><span class="t-ic"><ha-icon icon="${esc(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH}</span><small>°C</small></div><div class="t-meta" data-f="meta">${DASH}</div></div>
+        <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc(room.name)}" hidden></i>`).join("");
@@ -683,6 +685,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   }
 
   _renderTile(room, refs, model) {
+    if (this._premium) { this._renderComfortTile(room, refs, model); return; }
     refs.host.className = `tile a-${model.accent}`;
     this._setText(refs.temp, this._format(model.current));
     const parts = [];
@@ -693,6 +696,33 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     refs.host.querySelector(".t-top b")?.setAttribute("title", model.status);
     this._renderSpark(refs.spark, this._sparkPoints(room, model), undefined);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. Åbn detaljer`);
+  }
+
+  // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
+  // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
+  _renderComfortTile(room, refs, model) {
+    const esc = (v) => this._escape(v), co2 = model.air?.co2, c = roomComfort(room, model.current, model.humidity, co2);
+    const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c.tone] || "neutral";
+    refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c.tone}`;
+    this._setText(refs.temp, this._format(model.current));
+    const meta = `<span class="cf-pill"><i></i>${esc(c.label)}</span><small>${esc(c.detail)}</small>`;
+    if (refs.meta && refs.meta._h !== meta) { refs.meta._h = meta; refs.meta.innerHTML = meta; }
+    const cf = refs.host.querySelector('[data-f="cf"]');
+    if (cf) {
+      const [lo, hi] = c.profile.temp, a = comfortScale(lo), b = comfortScale(hi);
+      const band = cf.querySelector(".cf-band"); band.style.left = `${(a * 100).toFixed(1)}%`; band.style.width = `${((b - a) * 100).toFixed(1)}%`;
+      const dot = cf.querySelector(".cf-dot"); dot.hidden = !Number.isFinite(model.current); if (Number.isFinite(model.current)) dot.style.left = `${(comfortScale(model.current) * 100).toFixed(1)}%`;
+      const range = cf.querySelector(".cf-range"); range.style.left = `${(((a + b) / 2) * 100).toFixed(1)}%`; this._setText(range, `${c.range}${c.profile.kind === "sleep" ? " søvn" : ""}`);
+      const [hlo, hhi] = c.profile.hum, chips = [];
+      if (model.humidity !== undefined) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
+      if (room.co2) chips.push([co2 !== undefined && co2 >= 1000 ? "bad" : "", "mdi:molecule-co2", co2 === undefined ? DASH : `${this._format(co2, 0)} ppm`]);
+      if (model.feels !== undefined) chips.push(["", "mdi:thermometer", `føles ${this._format(model.feels)}°`]);
+      const html = chips.map(([cls, icon, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon}"></ha-icon>${esc(text)}</span>`).join("");
+      const box = cf.querySelector(".cf-chips"); if (box._h !== html) { box._h = html; box.innerHTML = html; }
+    }
+    refs.host.querySelector(".t-top b")?.setAttribute("title", c.label);
+    this._renderSpark(refs.spark, this._sparkPoints(room, model), undefined);
+    refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${c.label}. Åbn detaljer`);
   }
 
   _renderOutdoor(room, refs, model) {

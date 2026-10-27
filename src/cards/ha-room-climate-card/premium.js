@@ -66,7 +66,7 @@ export const WX_MARKUP = `<div class="wx" data-f="wx">
 </div>`;
 
 export const PREMIUM_STYLE = `
-.dial,.wx,.wx-head{display:none}
+.dial,.wx,.wx-head,.cf{display:none}
 ha-card.premium{--pm-grain:${GRAIN}}
 .premium .head h2{background:linear-gradient(100deg,var(--rc-ink) 30%,color-mix(in srgb,var(--rc-ink) 55%,var(--rc-accent)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .premium .eyebrow{letter-spacing:.24em}
@@ -132,6 +132,30 @@ ha-card.premium{--pm-grain:${GRAIN}}
 .premium .zone.has-room .z-room{background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.3));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .premium .qa{border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.06)}
 .premium .rc{background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+
+/* measuring points: comfort for the kind of room (shared/comfort.js) */
+.premium .tile{padding:13px 14px 0}
+.premium .tile .t-row{align-items:center;margin-top:9px}
+.premium .tile .t-temp{font-size:28px}
+.premium .tile .t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0;line-height:1.2}
+.cf-pill{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 9px 3px 7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--room-color) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 38%,transparent);color:color-mix(in srgb,var(--room-color) 78%,#fff);font-size:10px;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
+.cf-pill i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 8px var(--room-color)}
+.premium .tile.cf-hot .cf-pill i,.premium .tile.cf-air .cf-pill i,.premium .tile.cf-cold .cf-pill i{animation:pmPing 1.8s ease-out infinite}
+.premium .tile .t-meta small{max-width:100%;overflow:hidden;color:var(--rc-muted);font-size:9.5px;text-overflow:ellipsis;white-space:nowrap}
+.premium .cf{display:block;position:relative;margin-top:10px}
+.cf-bar{position:relative;height:6px;margin-bottom:15px;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--rc-cool) 40%,transparent),rgba(255,255,255,.07) 35%,rgba(255,255,255,.07) 65%,color-mix(in srgb,var(--rc-hot) 40%,transparent))}
+.cf-band{position:absolute;top:-2px;bottom:-2px;border-radius:99px;background:color-mix(in srgb,var(--rc-ok) 28%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 70%,transparent),0 0 10px -2px var(--rc-ok)}
+.cf-dot{position:absolute;top:50%;z-index:1;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 2px var(--rc-surface),0 0 12px var(--room-color);transition:left .7s cubic-bezier(.2,1,.3,1)}
+.cf-dot[hidden]{display:none}
+.cf-range{position:absolute;top:10px;transform:translateX(-50%);color:color-mix(in srgb,var(--rc-ok) 75%,var(--rc-ink));font-size:8.5px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
+.cf-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.cf-chips:empty{display:none}
+.cf-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 5px;border-radius:99px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);color:color-mix(in srgb,var(--rc-ink) 85%,transparent);font-size:10px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cf-chip ha-icon{--mdc-icon-size:12px;color:var(--rc-muted)}
+.cf-chip.bad{color:#fbbf24;background:rgba(251,191,36,.1);box-shadow:inset 0 0 0 1px rgba(251,191,36,.3)}.cf-chip.bad ha-icon{color:#fbbf24}
+.premium .tile .spark-wrap{--spark-h:28px;flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end}
+.premium .tile .spark-box{flex:1 1 auto;height:auto;min-height:28px;max-height:90px}
+@keyframes pmPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--room-color) 70%,transparent)}100%{box-shadow:0 0 0 6px transparent}}
 
 /* measuring points and summary */
 .premium .tile .t-temp{font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
