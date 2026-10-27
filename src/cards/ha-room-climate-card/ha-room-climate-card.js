@@ -10,12 +10,16 @@
  * - Room popup: a hero top with the room, temperature and setpoint, tabs with a sliding marker (Varme, AC, Optimering,
  *   Styring) and a bottom sheet on phones. Luftkvalitet is not in the rooms; it has its own tab in Varme Center.
  * The old card (ha-radiator-overview-card-v2) stays as it is, so the dashboard can switch back by changing the type.
+ * 1.8.0 (Claude AI, 2026-10-27): a premium look (premium.js) behind style: new / style_entity, the 1.7.7 look stays as
+ * classic; Udendørs shows the weather through the day and gets the "Udenfor" room's light, buttons and Styring.
  */
 import { HARadiatorOverviewCardV2 } from "../ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js";
 import { AC_UNIT_VISUAL_STYLE, acUnitVisualMarkup } from "../ha-radiator-overview-card-v2/ac-unit-visual.js";
 import { co2Rank } from "../shared/air-quality.js";
+import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
+import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 
-const VERSION = "1.7.7";
+const VERSION = "1.8.0";
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -336,6 +340,78 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
 
   static getStubConfig() { return { title: "Radiatorer & rumklima", rooms: [] }; }
 
+  // The editor of the old card plus the look switch and the premium Udendørs weather fields.
+  static getConfigElement() {
+    const editor = super.getConfigElement(), def = editor.definition;
+    def.roots.push({ key: "style", label: `${LOOK_LABELS.style}: new (premium) eller classic` }, { key: "style_entity", label: LOOK_LABELS.style_entity, type: "entity" });
+    def.collections.find((c) => c.key === "rooms")?.fields.push(
+      { key: "weather", label: "Udendørs: vejr (weather.*, timeprognose)", type: "entity" }, { key: "observed", label: "Udendørs: observeret vejr (tekst)", type: "entity" },
+      { key: "rain_today", label: "Udendørs: nedbør i dag", type: "entity" }, { key: "degree_days", label: "Udendørs: graddage i dag", type: "entity" },
+      { key: "controls_room", label: "Udendørs: rum med styring (standard Udenfor)" });
+    return editor;
+  }
+
+  set hass(hass) { super.hass = hass; this._applyLook(); }
+  connectedCallback() { super.connectedCallback(); this._applyLook(); }
+  disconnectedCallback() { super.disconnectedCallback(); this._wxStop(); }
+
+  // ---------- look (style / style_entity, shared/look.js) ----------
+  _applyLook() {
+    if (!this._built || !this._config) return;
+    const on = isNewLook(this._hass, this._config);
+    this.shadowRoot.querySelector("ha-card")?.classList.toggle("premium", on);
+    if (this._premium !== on) {
+      this._premium = on;
+      this._refs?.forEach((refs) => { if (refs) refs.view = ""; });
+      if (this._hass && this.isConnected) this._dirtyAll();
+    }
+    this._wxSync();
+  }
+  // Hourly and daily forecast for Udendørs while the premium look shows it (weather/subscribe_forecast).
+  _wxSync() {
+    const index = (this._config?.rooms || []).findIndex((room) => room.outdoor);
+    const id = index >= 0 ? this._config.rooms[index].weather : undefined;
+    const want = this._premium && id && this.isConnected && this._hass?.connection ? id : null;
+    if (want === (this._wxFor || null)) return;
+    this._wxStop();
+    if (!want) return;
+    this._wxFor = want; this._wx = { hourly: [], daily: [] };
+    const sub = (type) => this._hass.connection.subscribeMessage((msg) => {
+      if (this._wxFor !== want) return;
+      this._wx[type] = Array.isArray(msg?.forecast) ? msg.forecast : [];
+      this._wxRev = (this._wxRev || 0) + 1; this._dirty.add(index); this._schedule();
+    }, { type: "weather/subscribe_forecast", forecast_type: type, entity_id: want }).catch((error) => { console.warn("ha-room-climate-card: vejrprognose", error); return null; });
+    this._wxUnsubs = [sub("hourly"), sub("daily")];
+  }
+  _wxStop() {
+    (this._wxUnsubs || []).forEach((p) => Promise.resolve(p).then((unsub) => { try { unsub?.(); } catch { /* already gone */ } }));
+    this._wxUnsubs = []; this._wxFor = null;
+  }
+
+  // Udendørs gets the light, buttons and Styring of the outdoor room on the rooms page ("Udenfor" by default;
+  // user: "Ude skal også have styring af ude ting"). The old card skips outdoor rooms, so it is matched here.
+  _applyControls() {
+    super._applyControls();
+    const src = this._ctlSource; if (!src || !this._config?.rooms) return;
+    const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    let changed = false;
+    const rooms = this._config.rooms.map((r) => {
+      if (!r.outdoor || r.controls) return r;
+      const names = r.controls_room ? [key(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key(r.name)];
+      const m = src.v3.find((x) => names.includes(key(x.name))); if (!m) return r;
+      const pop = m.popup ? src.pops[m.popup] : undefined;
+      const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening };
+      const ctl = { name: r.name, icon: r.icon, light: m.light, actions: m.actions, alert: m.alert, ...(pop ? this._popupControls(pop) : {}) };
+      if (ctl.model?.profile) info.profile = ctl.model.profile;
+      if (ctl.model) info.model = ctl.model;
+      changed = true;
+      return { ...r, roomInfo: info, controls: ctl.model || ctl.light || ctl.actions?.length || ctl.alert ? ctl : undefined };
+    });
+    if (!changed) return;
+    this._config = { ...this._config, rooms };
+    this._roomInfoSig = ""; this._paintRoomInfo();
+  }
+
   // ---------- setpoint (tile and popup) ----------
   // Presses add up and are sent once the finger rests, so 3 taps = one service call of +1.5°.
   // What the room is steered by right now: the AC's setpoint while the AC runs (it also switches the radiator off),
@@ -375,7 +451,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate].filter(isId));
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, ...(room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : [])].filter(isId));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
     const esc = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
@@ -394,7 +470,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
           <span class="hv" data-f="visual" title="Varme"></span>
         </div>
         <div class="z-body">
-          <div class="z-temp">
+          <div class="z-temp">${DIAL_MARKUP}
             <div class="t-big"><span data-f="temp">${DASH}</span><small>°C</small></div>
             <div class="rail na" data-f="rail"><i class="tgt"></i><i class="cur"></i></div>
             <div class="step" data-f="step"><div class="tv"><span data-f="tlabel">Mål</span><strong data-f="target">${DASH}</strong></div></div>
@@ -417,9 +493,10 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
             <div class="g" data-m="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span>Føles</span><strong data-f="feels">${DASH}</strong></div>
             <div class="g" data-m="humidity"><ha-icon icon="mdi:water-percent"></ha-icon><span>Fugt</span><strong data-f="humidity">${DASH}</strong><i data-f="humbar"></i></div>
             <div class="g" data-m="day"><ha-icon icon="mdi:arrow-expand-vertical"></ha-icon><span>Døgnet</span><strong data-f="day">${DASH}</strong></div>
-          </div>
+          </div>${WX_MARKUP}
         </div>
         <div class="band">${spark()}</div>
+        <div class="z-room" data-f="roominfo"></div>
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
@@ -430,7 +507,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under mål"], ["var(--rc-ok)", "På mål"], ["var(--rc-warm)", "Over mål"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "Åben"]].map(([c, l]) => `<span><i style="--c:${c}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
-      <style>${STYLE}${AC_UNIT_VISUAL_STYLE}</style>
+      <style>${STYLE}${AC_UNIT_VISUAL_STYLE}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
@@ -479,6 +556,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._tilesEl = root.querySelector(".zones > .tiles");
     this._built = true;
     this._roomInfoSig = "";
+    this._premium = undefined;
+    this._applyLook();
     this._observeLayout();
   }
 
@@ -524,7 +603,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
   _renderRoom(index, model) {
     const refs = this._refs[index]; if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000)].join("|");
+    const wx = room.outdoor && this._premium ? [this._wxRev, Math.floor(Date.now() / 60000), ...[room.weather, room.observed, room.rain_today, room.degree_days].map((id) => this._hass?.states?.[id]?.last_updated)].join(",") : "";
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000), this._premium ? 1 : 0, wx].join("|");
     if (refs.view === view) return; refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
     else if (refs.kind === "sensor") this._renderTile(room, refs, model);
@@ -583,7 +663,22 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     else if (model.acActive) this._setText(refs.visual?.querySelector('[data-role="ac-unit-display"]'), this._acMiniLabel(model));
     if (refs.visual) refs.visual.title = model.acActive ? model.status : model.heating ? "Radiatoren varmer" : "Radiatoren hviler";
     this._renderSpark(refs.spark, this._sparkPoints(room, model), target);
+    this._renderDial(refs, model.current, target, ctl.ac, pending !== undefined);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. Åbn detaljer`);
+  }
+
+  // Premium dial: 270° from 4° under to 4° over the target (14–28° without one); the tick marks the target in the middle.
+  _renderDial(refs, current, target, ac, pending) {
+    const dial = refs.dial || (refs.dial = refs.host.querySelector('[data-f="dial"]')); if (!dial) return;
+    const lo = target !== undefined ? target - 4 : 14, hi = target !== undefined ? target + 4 : 28;
+    const frac = current === undefined ? 0 : Math.min(1, Math.max(0, (current - lo) / (hi - lo)));
+    dial.style.setProperty("--a", `${(frac * 270).toFixed(1)}deg`);
+    dial.style.setProperty("--t", `${target !== undefined ? 135 : 0}deg`);
+    dial.classList.toggle("na", current === undefined); dial.classList.toggle("notgt", target === undefined); dial.classList.toggle("pending", !!pending);
+    const text = current === undefined ? DASH : this._format(current); const cut = text.search(/[,.]/);
+    const d = (name) => dial.querySelector(`[data-d="${name}"]`);
+    this._setText(d("int"), cut > 0 ? text.slice(0, cut) : text); this._setText(d("dec"), cut > 0 ? text.slice(cut) : "");
+    this._setText(d("tl"), ac ? "AC-mål" : "Mål"); this._setText(d("tv"), target === undefined ? "Intet" : `${this._format(target)}°`);
   }
 
   _renderTile(room, refs, model) {
@@ -608,7 +703,66 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const lows = points.map((p) => p.min ?? p.v); const highs = points.map((p) => p.max ?? p.v);
     this._setText(refs.day, points.length > 1 ? `${this._format(Math.min(...lows))}°–${this._format(Math.max(...highs))}°` : DASH);
     this._renderSpark(refs.spark, points, undefined);
+    if (this._premium) this._renderWeather(room, refs, model, points);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader. Åbn detaljer`);
+  }
+
+  // ---------- premium Udendørs: the weather through the day ----------
+  _renderWeather(room, refs, model, points) {
+    const host = refs.host, esc = (v) => this._escape(v), st = (id) => this._entity(id), fmt = (v, digits = 1) => this._format(v, digits);
+    const f = (name) => host.querySelector(`[data-f="${name}"]`), p2 = (n) => String(n).padStart(2, "0"), clock = (t) => `${p2(t.getHours())}:${p2(t.getMinutes())}`;
+    const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = new Date();
+    const days = new Map(); const sun = (t) => { const k = t.toDateString(); if (!days.has(k)) days.set(k, sunTimes(t, lat, lon)); return days.get(k); };
+    const night = (t) => { const s = sun(t); return s ? t < s.rise || t > s.set : false; };
+    const weather = st(room.weather), a = weather?.attributes || {};
+    const hourly = (this._wx?.hourly || []).filter((x) => Date.parse(x.datetime) > now.getTime() - 3600e3 + 60e3).slice(0, 12);
+    const todayKey = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
+    const daily = this._wx?.daily || [], d0 = daily.find((x) => String(x.datetime).startsWith(todayKey)), d1 = d0 ? daily[daily.indexOf(d0) + 1] : undefined;
+    const info = wxInfo(hourly[0]?.condition || weather?.state, night(now));
+    host.style.setProperty("--wx-c", info.color);
+    const ic = f("wxic"); if (ic) { ic.className = `wx-ic ${info.kind}`; ic.querySelector("ha-icon")?.setAttribute("icon", info.icon); }
+    const observed = st(room.observed)?.state;
+    this._setText(f("wxlabel"), observed || info.label);
+    const range = (x) => x && x.templow !== undefined ? `${fmt(x.templow)}°–${fmt(x.temperature)}°` : "";
+    const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `Døgnet ${fmt(Math.min(...lows))}°–${fmt(Math.max(...highs))}°` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" · ") || "Ude nu");
+    // Chips: feels like, humidity, wind (m/s and where it comes from), rain today, degree days, UV
+    const chips = [];
+    if (model.feels !== undefined) chips.push(["mdi:thermometer", "var(--rc-cool)", `Føles ${fmt(model.feels)}°`]);
+    if (model.humidity !== undefined) chips.push(["mdi:water-percent", "#60a5fa", `Fugt ${fmt(model.humidity, 0)} %`]);
+    const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => { const n = this._number(v); return n === undefined ? undefined : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6; };
+    const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
+    if (wind !== undefined) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt(wind)} m/s${bearing !== undefined ? ` ${compass(bearing)}` : ""}`, gust !== undefined ? `stød ${fmt(gust, 0)}` : "", bearing !== undefined ? bearing + 180 : undefined]);
+    const rain = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
+    if (rain !== undefined || rainFc !== undefined) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt(rain ?? rainFc)} mm`, rain !== undefined && rainFc !== undefined ? `prognose ${fmt(rainFc)}` : d0?.precipitation_probability !== undefined ? `${fmt(d0.precipitation_probability, 0)} %` : ""]);
+    const dd = this._number(st(room.degree_days)?.state);
+    if (dd !== undefined) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt(dd)}`]);
+    const uv = this._number(a.uv_index); if (uv !== undefined && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt(uv, 0)}`]);
+    const humid = chips.findIndex((c) => c[0] === "mdi:water-percent"); if (humid >= 0) chips.push(chips.splice(humid, 1)[0]);
+    const chipHtml = chips.map(([icon, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc(sub)}"` : ""}>${rot !== undefined ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon}"></ha-icon></span>` : `<ha-icon icon="${icon}"></ha-icon>`}${esc(text)}</span>`).join("");
+    const chipsEl = f("wxchips"); if (chipsEl && chipsEl._h !== chipHtml) { chipsEl._h = chipHtml; chipsEl.innerHTML = chipHtml; }
+    // The next 12 hours: icon, temperature, chance of rain (bar) and mm
+    const hoursHtml = hourly.map((x, i) => {
+      const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
+      const title = `${p2(t.getHours())}:00 · ${hi.label} · ${fmt(x.temperature)}° · ${fmt(pr, 0)} % regn${mm >= 0.1 ? ` · ${fmt(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc(title)}"><span>${i === 0 ? "Nu" : p2(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}°</b><i style="--p:${pr}%"></i></div>`;
+    }).join("");
+    const hoursEl = f("hours"); if (hoursEl && hoursEl._h !== hoursHtml) { hoursEl._h = hoursHtml; hoursEl.innerHTML = hoursHtml; }
+    // Daylight arc: sunrise → sunset with the sun where it is now
+    const dl = f("daylight"), today = sun(now);
+    if (dl) {
+      dl.hidden = !today; if (!today) return;
+      const span = today.set - today.rise, t = (now - today.rise) / span, dark = t < 0 || t > 1, u = Math.min(1, Math.max(0, t));
+      const P0 = [4, 38], P1 = [100, -34], P2 = [196, 38], lerp = (p, q, k) => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+      const q = lerp(P0, P1, u), b = lerp(q, lerp(P1, P2, u), u);
+      dl.classList.toggle("dark", dark);
+      dl.querySelector(".dl-done")?.setAttribute("d", dark ? "" : `M4 38 Q${q[0].toFixed(1)} ${q[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`);
+      const dot = dl.querySelector(".dl-sun"); if (dot) { dot.style.left = `${(12 + (b[0] / 200) * 76).toFixed(2)}%`; dot.style.top = `${(4 + (b[1] / 40) * 24).toFixed(1)}px`; } // the arc spans 12–88 % × 24 px
+      const dur = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)} t ${m % 60} min` : `${m} min`; };
+      const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1); const next = sun(tomorrow);
+      this._setText(f("dlrise"), clock(today.rise)); this._setText(f("dlset"), clock(today.set));
+      this._setText(f("dltext"), t < 0 ? `Solopgang om ${dur(today.rise - now)}` : t > 1 ? `Mørkt · solopgang ${next ? clock(next.rise) : ""}` : `Dagslys ${dur(span)} · ${dur(today.set - now)} tilbage`);
+    }
   }
 
   // ---------- room dock (presence, light, media, profile + quick buttons) ----------

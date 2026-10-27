@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.216 */
+/* MRDonnii Smart Home Cards v0.5.217 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -33336,8 +33336,193 @@ if (!window.customCards.some((card) => card.type === TAG2)) {
 }
 console.info(`%c HA RADIATOR OVERVIEW CARD V2 %c v${VERSION24} `, "color:white;background:#ef7d32;font-weight:700", "color:#ef7d32;background:#161b22");
 
+// src/cards/ha-room-climate-card/premium.js
+var WX_COND = {
+  "clear-night": ["mdi:weather-night", "Klart", "night"],
+  cloudy: ["mdi:weather-cloudy", "Overskyet", "cloud"],
+  exceptional: ["mdi:alert-circle-outline", "Us\xE6dvanligt vejr", "storm"],
+  fog: ["mdi:weather-fog", "T\xE5ge", "fog"],
+  hail: ["mdi:weather-hail", "Hagl", "rain"],
+  lightning: ["mdi:weather-lightning", "Torden", "storm"],
+  "lightning-rainy": ["mdi:weather-lightning-rainy", "Torden og regn", "storm"],
+  partlycloudy: ["mdi:weather-partly-cloudy", "Delvist skyet", "part"],
+  pouring: ["mdi:weather-pouring", "Skybrud", "rain"],
+  rainy: ["mdi:weather-rainy", "Regn", "rain"],
+  snowy: ["mdi:weather-snowy", "Sne", "snow"],
+  "snowy-rainy": ["mdi:weather-snowy-rainy", "Slud", "snow"],
+  sunny: ["mdi:weather-sunny", "Sol", "sun"],
+  windy: ["mdi:weather-windy", "Bl\xE6sende", "wind"],
+  "windy-variant": ["mdi:weather-windy-variant", "Bl\xE6sende og skyet", "wind"]
+};
+var NIGHT_ICON = { sunny: "mdi:weather-night", partlycloudy: "mdi:weather-night-partly-cloudy" };
+var WX_COLOR = { sun: "#fbbf24", part: "#fcd34d", cloud: "#a5b4c8", rain: "#60a5fa", snow: "#e2e8f0", storm: "#a78bfa", fog: "#94a3b8", wind: "#7dd3fc", night: "#a5b4fc" };
+function wxInfo(condition, night) {
+  const [icon4, label, kind] = WX_COND[condition] || ["mdi:weather-partly-cloudy", condition || "\u2014", "cloud"];
+  const k = night && (kind === "sun" || kind === "part") ? "night" : kind;
+  return { icon: night ? NIGHT_ICON[condition] || icon4 : icon4, label, kind: k, color: WX_COLOR[k] };
+}
+var COMPASS = ["N", "NN\xD8", "N\xD8", "\xD8N\xD8", "\xD8", "\xD8S\xD8", "S\xD8", "SS\xD8", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"];
+var compass = (deg) => COMPASS[Math.round((Number(deg) % 360 + 360) % 360 / 22.5) % 16];
+function sunTimes(date2, lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const rad = Math.PI / 180, dayMs = 864e5, J1970 = 2440588, J2000 = 2451545, e = rad * 23.4397, J0 = 9e-4;
+  const noon = new Date(date2);
+  noon.setHours(12, 0, 0, 0);
+  const d = noon.valueOf() / dayMs - 0.5 + J1970 - J2000;
+  const lw = rad * -lng, phi = rad * lat;
+  const n = Math.round(d - J0 - lw / (2 * Math.PI));
+  const ds = J0 + lw / (2 * Math.PI) + n;
+  const M = rad * (357.5291 + 0.98560028 * ds);
+  const L = M + rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 3e-4 * Math.sin(3 * M)) + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L));
+  const transit = (x) => J2000 + x + 53e-4 * Math.sin(M) - 69e-4 * Math.sin(2 * L);
+  const Jnoon = transit(ds);
+  const w = Math.acos((Math.sin(rad * -0.833) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  if (!Number.isFinite(w)) return null;
+  const Jset = transit(J0 + (w + lw) / (2 * Math.PI) + n), Jrise = Jnoon - (Jset - Jnoon);
+  const from = (j) => new Date((j + 0.5 - J1970) * dayMs);
+  return { rise: from(Jrise), set: from(Jset) };
+}
+var GRAIN = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .055 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>")}")`;
+var DIAL_MARKUP = `<div class="dial" data-f="dial" aria-hidden="true"><i class="ring"></i><i class="glow"><i></i></i><i class="fill"><i></i></i><i class="tick"></i><i class="knob"></i>
+  <div class="dv"><span class="dn"><b data-d="int">\u2014</b><i data-d="dec"></i><small>\xB0</small></span><span class="dt"><em data-d="tl">M\xE5l</em><strong data-d="tv">\u2014</strong></span></div></div>`;
+var WX_MARKUP = `<div class="wx" data-f="wx">
+  <div class="wx-now"><span class="wx-ic" data-f="wxic"><i class="wx-rays"></i><ha-icon icon="mdi:weather-partly-cloudy"></ha-icon><i class="p"></i><i class="p"></i><i class="p"></i></span>
+    <div class="wx-txt"><strong data-f="wxlabel">\u2014</strong><em data-f="wxsub">\u2014</em></div></div>
+  <div class="wx-chips" data-f="wxchips"></div>
+  <div class="hours" data-f="hours"></div>
+  <div class="daylight" data-f="daylight"><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path class="dl-track" d="M4 38 Q100 -34 196 38"></path><path class="dl-done" d=""></path></svg><i class="dl-sun"></i>
+    <span class="dl-l" data-f="dlrise">\u2014</span><span class="dl-c" data-f="dltext">\u2014</span><span class="dl-r" data-f="dlset">\u2014</span></div>
+</div>`;
+var PREMIUM_STYLE = `
+.dial,.wx{display:none}
+ha-card.premium{--pm-grain:${GRAIN}}
+.premium .head h2{background:linear-gradient(100deg,var(--rc-ink) 30%,color-mix(in srgb,var(--rc-ink) 55%,var(--rc-accent)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.premium .eyebrow{letter-spacing:.24em}
+.premium .flow{border-radius:20px;background:var(--pm-grain),linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.015)),var(--rc-surface)}
+.premium .group-head h3{letter-spacing:.24em}.premium .count{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.04))}
+
+/* glass tiles with grain and a hairline edge in the room's colour; hover lights the edge, nothing moves */
+.premium .zone,.premium .tile,.premium .panel,.premium .stat{
+  background:radial-gradient(95% 70% at 100% 0%,color-mix(in srgb,var(--room-color,var(--sc,var(--rc-accent))) 24%,transparent),transparent 62%),
+    radial-gradient(80% 60% at 0% 100%,color-mix(in srgb,var(--room-color,var(--sc,var(--rc-accent))) 8%,transparent),transparent 72%),
+    var(--pm-grain),linear-gradient(165deg,rgba(255,255,255,.075),rgba(255,255,255,.012) 42%,rgba(0,0,0,.2)),var(--rc-surface);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 34px 64px -38px rgba(0,0,0,.95),0 16px 32px -26px color-mix(in srgb,var(--room-color,var(--sc,transparent)) 55%,transparent)}
+.premium .zone::before,.premium .tile::before,.premium .panel::before,.premium .stat::before{content:"";position:absolute;inset:0;z-index:3;padding:1px;border-radius:inherit;pointer-events:none;opacity:.6;transition:opacity .35s ease;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--room-color,var(--sc,var(--rc-accent))) 75%,#fff 8%),rgba(255,255,255,.09) 32%,rgba(255,255,255,.02) 62%,color-mix(in srgb,var(--room-color,var(--sc,var(--rc-accent))) 32%,transparent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.premium .zone:hover,.premium .tile:hover{transform:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 34px 64px -36px rgba(0,0,0,.95),0 0 46px -20px var(--room-color)}
+.premium .zone:hover::before,.premium .tile:hover::before{opacity:1}
+.premium .zone{border-radius:30px}.premium .tile{border-radius:24px}
+.premium .zone .mark{opacity:.045;filter:blur(.3px)}
+.premium .z-icon{border-radius:17px;background:linear-gradient(150deg,color-mix(in srgb,var(--room-color) 34%,rgba(255,255,255,.06)),color-mix(in srgb,var(--room-color) 6%,transparent));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px color-mix(in srgb,var(--room-color) 38%,transparent),0 10px 24px -12px var(--room-color)}
+.premium .z-title strong{font-size:18.5px;font-weight:750;letter-spacing:-.025em}
+.premium .z-status{font-size:9.5px;letter-spacing:.16em}
+
+/* thermostat dial */
+.premium .z-body{grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:14px 18px 10px}
+.premium .zone:not(.outdoor) .z-temp .t-big,.premium .zone:not(.outdoor) .z-temp .rail,.premium .zone:not(.outdoor) .z-temp .step{display:none}
+.premium .dial{--a:0deg;--t:135deg;position:relative;display:grid;place-items:center;width:146px;height:146px;border-radius:50%;
+  background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.07),rgba(0,0,0,.18) 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -14px 24px -18px rgba(0,0,0,.8),0 18px 30px -22px rgba(0,0,0,.9)}
+.dial>i{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+.dial .ring,.dial .fill,.dial .glow{-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px),#000 calc(100% - 2px),transparent calc(100% - 1px));mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px),#000 calc(100% - 2px),transparent calc(100% - 1px))}
+.dial .ring{background:conic-gradient(from 225deg,rgba(255,255,255,.09) 0 270deg,transparent 270deg)}
+.dial .fill i,.dial .glow i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 225deg,var(--rc-cool),var(--rc-ok) 135deg,var(--rc-warm) 205deg,var(--rc-hot) 270deg,transparent 270deg);
+  -webkit-mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a));mask:conic-gradient(from 225deg,#000 0 var(--a),transparent var(--a))}
+.dial .glow{filter:blur(7px);opacity:0}
+.zone.is-heating .dial .glow,.zone.is-ac .dial .glow{animation:dialGlow 2.6s ease-in-out infinite}
+.dial .tick{transform:rotate(calc(225deg + var(--t)))}
+.dial .tick::before{content:"";position:absolute;left:50%;top:-3px;width:2px;height:15px;margin-left:-1px;border-radius:2px;background:var(--rc-ink);box-shadow:0 0 6px rgba(255,255,255,.6)}
+.dial .knob{transform:rotate(calc(225deg + var(--a)));transition:transform .9s cubic-bezier(.2,1,.3,1)}
+.dial .knob::before{content:"";position:absolute;left:50%;top:-1px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--room-color);box-shadow:0 0 0 3px var(--rc-surface),0 0 16px var(--room-color)}
+.dial.na .fill,.dial.na .knob,.dial.na .glow{display:none}.dial.notgt .tick{display:none}
+.dv{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.dn{display:flex;align-items:flex-start;line-height:.9}
+.dn b{font-size:44px;font-weight:650;letter-spacing:-.06em;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.dn i{margin-top:4px;color:color-mix(in srgb,var(--rc-ink) 75%,transparent);font-size:20px;font-style:normal;font-weight:650;letter-spacing:-.03em}
+.dn small{margin:5px 0 0 1px;color:var(--rc-muted);font-size:13px;font-weight:700}
+.dt{display:flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.dt em{color:var(--rc-muted);font-size:8.5px;font-style:normal;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.dt strong{font-size:12.5px;font-weight:800}.dial.pending .dt strong{color:var(--room-color)}
+
+/* finer gauges */
+.premium .gauges{gap:10px}
+.premium .g{grid-template-columns:26px minmax(0,1fr) auto;gap:3px 9px}
+.premium .g ha-icon{grid-row:span 2;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;--mdc-icon-size:15px;background:color-mix(in srgb,var(--gc,var(--rc-muted)) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gc,var(--rc-muted)) 22%,transparent)}
+.premium .g span{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.premium .g strong{font-size:13.5px;font-weight:750}
+.premium .g i{grid-column:2/-1;height:3px;background:rgba(255,255,255,.06)}
+.premium .g i::after{box-shadow:0 0 10px var(--gc,var(--room-color))}
+.premium .spark .area{opacity:.2}.premium .spark .line{stroke-width:2}
+/* the curve takes the room's spare height, so tiles in a tall row have no empty middle */
+.premium .zone .band{flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end;min-height:var(--spark-h,56px)}
+.premium .zone .band .spark-wrap{flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end}
+.premium .zone .band .spark-box{flex:1 1 auto;height:auto;min-height:var(--spark-h,56px);max-height:150px}
+.premium .zone.has-room .z-room{background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.3));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.premium .qa{border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.06)}
+.premium .rc{background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+
+/* measuring points and summary */
+.premium .tile .t-temp{font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 70%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.premium .tile .t-temp small{-webkit-text-fill-color:var(--rc-muted)}
+.premium .panel,.premium .stat{border-radius:28px}
+.premium .big{font-weight:650}.premium .big span{background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 65%,var(--rc-accent)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.premium .stat .ic{border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px color-mix(in srgb,var(--sc) 32%,transparent),0 10px 22px -14px var(--sc)}
+
+/* Udend\xF8rs: weather through the day */
+.premium .zone.outdoor{--room-color:var(--wx-c,var(--rc-accent));container-type:inline-size}
+.premium .zone.outdoor .gauges{display:none}
+.premium .zone.outdoor .z-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 14px;align-items:center;padding:8px 18px 0}
+.premium .zone.outdoor .t-big{font-size:54px;font-weight:650;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--rc-ink) 65%,var(--room-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.premium .zone.outdoor .t-big small{-webkit-text-fill-color:var(--rc-muted)}
+.premium .wx{display:contents}
+.wx-now{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.wx-txt{min-width:0;text-align:right}.wx-txt strong{display:block;overflow:hidden;font-size:15px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.wx-txt em{display:block;margin-top:3px;overflow:hidden;color:var(--rc-muted);font-size:10.5px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}
+.wx-ic{position:relative;flex:none;display:grid;place-items:center;width:56px;height:56px;color:var(--wx-c,var(--rc-accent))}
+.wx-ic ha-icon{position:relative;z-index:1;--mdc-icon-size:42px;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--wx-c,var(--rc-accent)) 55%,transparent))}
+.wx-rays{position:absolute;inset:-2px;border-radius:50%;opacity:0;background:repeating-conic-gradient(color-mix(in srgb,var(--wx-c) 45%,transparent) 0 6deg,transparent 6deg 30deg);-webkit-mask:radial-gradient(circle,transparent 0 46%,#000 50% 66%,transparent 70%);mask:radial-gradient(circle,transparent 0 46%,#000 50% 66%,transparent 70%)}
+.wx-ic .p{position:absolute;top:62%;width:2px;height:8px;border-radius:2px;background:var(--wx-c);opacity:0}
+.wx-ic .p:nth-of-type(2){left:38%}.wx-ic .p:nth-of-type(3){left:52%}.wx-ic .p:nth-of-type(4){left:66%}
+.wx-ic.sun .wx-rays,.wx-ic.part .wx-rays{opacity:1;animation:pmSpin 26s linear infinite}
+.wx-ic.sun ha-icon{animation:pmBreath 4s ease-in-out infinite}
+.wx-ic.cloud ha-icon,.wx-ic.part ha-icon,.wx-ic.fog ha-icon,.wx-ic.wind ha-icon,.wx-ic.night ha-icon{animation:pmDrift 6s ease-in-out infinite}
+.wx-ic.rain .p,.wx-ic.storm .p{animation:pmDrop 1.1s linear infinite}.wx-ic.rain .p:nth-of-type(3),.wx-ic.storm .p:nth-of-type(3){animation-delay:.37s}.wx-ic.rain .p:nth-of-type(4),.wx-ic.storm .p:nth-of-type(4){animation-delay:.74s}
+.wx-ic.snow .p{width:4px;height:4px;border-radius:50%;animation:pmFlake 2.4s linear infinite}.wx-ic.snow .p:nth-of-type(3){animation-delay:.8s}.wx-ic.snow .p:nth-of-type(4){animation-delay:1.6s}
+.wx-ic.storm ha-icon{animation:pmFlash 3.2s steps(1) infinite}
+.wx-chips{grid-column:1/-1;display:flex;gap:5px;overflow:hidden;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 18px),transparent)}
+.wx-chip{flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 6px;border-radius:99px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-size:10.5px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wx-chip ha-icon{--mdc-icon-size:13px;color:var(--cc,var(--rc-muted))}.wx-chip small{color:var(--rc-muted);font-size:10px;font-weight:700}
+.wx-chip .arrow{display:inline-flex;transition:transform .6s ease}
+.hours{grid-column:1/-1;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:1px;padding:6px 4px;border-radius:16px;background:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.24));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.hours:empty{display:none}
+.hr{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:2px 0 3px;border-radius:11px;font-variant-numeric:tabular-nums}
+.hr.now{background:color-mix(in srgb,var(--wx-c,var(--rc-accent)) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wx-c,var(--rc-accent)) 30%,transparent)}
+.hr>span{color:var(--rc-muted);font-size:9px;font-weight:800}.hr.now>span{color:var(--rc-ink)}
+.hr ha-icon{--mdc-icon-size:15px;color:var(--hc,var(--rc-muted))}
+.hr b{font-size:10.5px;font-weight:800}
+.hr i{position:relative;width:4px;height:9px;overflow:hidden;border-radius:3px;background:rgba(255,255,255,.07)}
+.hr i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--p,0%);border-radius:inherit;background:#60a5fa;box-shadow:0 0 6px #60a5fa}
+.daylight{grid-column:1/-1;position:relative;height:42px;margin:0 4px}
+.daylight svg{position:absolute;left:12%;right:12%;top:4px;width:76%;height:24px;overflow:visible}
+.dl-track{fill:none;stroke:rgba(255,255,255,.14);stroke-width:1.5;stroke-dasharray:2 4;vector-effect:non-scaling-stroke}
+.dl-done{fill:none;stroke:#fbbf24;stroke-width:2;stroke-linecap:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px rgba(251,191,36,.7))}
+.dl-sun{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:radial-gradient(circle,#fff7d6,#fbbf24 60%);box-shadow:0 0 0 3px rgba(251,191,36,.18),0 0 18px #fbbf24;transition:left 1s ease,top 1s ease}
+.daylight.dark .dl-sun{display:none}.daylight.dark .dl-track{stroke:rgba(165,180,252,.18)}
+.daylight span{position:absolute;bottom:0;color:var(--rc-muted);font-size:10px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dl-l{left:0;bottom:12px!important}.dl-r{right:0;bottom:12px!important}.dl-c{left:50%;transform:translateX(-50%);color:var(--rc-ink)!important}
+.premium .zone.outdoor .band{margin-top:4px;min-height:30px}.premium .zone.outdoor .band .spark-box{min-height:30px}
+@container (max-width:400px){.hr:nth-child(n+9){display:none}.wx-txt em{white-space:normal}}
+@keyframes dialGlow{0%,100%{opacity:.15}50%{opacity:.55}}
+@keyframes pmSpin{to{transform:rotate(360deg)}}@keyframes pmBreath{50%{transform:scale(1.06)}}@keyframes pmDrift{50%{transform:translateX(3px)}}
+@keyframes pmDrop{0%{opacity:0;transform:translateY(-4px)}25%{opacity:.9}100%{opacity:0;transform:translateY(12px)}}
+@keyframes pmFlake{0%{opacity:0;transform:translate(0,-4px)}30%{opacity:.9}100%{opacity:0;transform:translate(3px,12px)}}
+@keyframes pmFlash{0%,88%,94%,100%{opacity:1}90%,96%{opacity:.35}}
+@container (max-width:560px){.premium .dial{width:128px;height:128px}.dn b{font-size:38px}.premium .z-body{gap:14px}}
+`;
+
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.7.7";
+var VERSION25 = "1.8.0";
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
 var SPARK_W2 = 240;
@@ -33688,6 +33873,103 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   static getStubConfig() {
     return { title: "Radiatorer & rumklima", rooms: [] };
   }
+  // The editor of the old card plus the look switch and the premium Udendørs weather fields.
+  static getConfigElement() {
+    const editor = super.getConfigElement(), def = editor.definition;
+    def.roots.push({ key: "style", label: `${LOOK_LABELS.style}: new (premium) eller classic` }, { key: "style_entity", label: LOOK_LABELS.style_entity, type: "entity" });
+    def.collections.find((c2) => c2.key === "rooms")?.fields.push(
+      { key: "weather", label: "Udend\xF8rs: vejr (weather.*, timeprognose)", type: "entity" },
+      { key: "observed", label: "Udend\xF8rs: observeret vejr (tekst)", type: "entity" },
+      { key: "rain_today", label: "Udend\xF8rs: nedb\xF8r i dag", type: "entity" },
+      { key: "degree_days", label: "Udend\xF8rs: graddage i dag", type: "entity" },
+      { key: "controls_room", label: "Udend\xF8rs: rum med styring (standard Udenfor)" }
+    );
+    return editor;
+  }
+  set hass(hass) {
+    super.hass = hass;
+    this._applyLook();
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this._applyLook();
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._wxStop();
+  }
+  // ---------- look (style / style_entity, shared/look.js) ----------
+  _applyLook() {
+    if (!this._built || !this._config) return;
+    const on = isNewLook(this._hass, this._config);
+    this.shadowRoot.querySelector("ha-card")?.classList.toggle("premium", on);
+    if (this._premium !== on) {
+      this._premium = on;
+      this._refs?.forEach((refs) => {
+        if (refs) refs.view = "";
+      });
+      if (this._hass && this.isConnected) this._dirtyAll();
+    }
+    this._wxSync();
+  }
+  // Hourly and daily forecast for Udendørs while the premium look shows it (weather/subscribe_forecast).
+  _wxSync() {
+    const index = (this._config?.rooms || []).findIndex((room) => room.outdoor);
+    const id = index >= 0 ? this._config.rooms[index].weather : void 0;
+    const want = this._premium && id && this.isConnected && this._hass?.connection ? id : null;
+    if (want === (this._wxFor || null)) return;
+    this._wxStop();
+    if (!want) return;
+    this._wxFor = want;
+    this._wx = { hourly: [], daily: [] };
+    const sub = (type) => this._hass.connection.subscribeMessage((msg) => {
+      if (this._wxFor !== want) return;
+      this._wx[type] = Array.isArray(msg?.forecast) ? msg.forecast : [];
+      this._wxRev = (this._wxRev || 0) + 1;
+      this._dirty.add(index);
+      this._schedule();
+    }, { type: "weather/subscribe_forecast", forecast_type: type, entity_id: want }).catch((error) => {
+      console.warn("ha-room-climate-card: vejrprognose", error);
+      return null;
+    });
+    this._wxUnsubs = [sub("hourly"), sub("daily")];
+  }
+  _wxStop() {
+    (this._wxUnsubs || []).forEach((p) => Promise.resolve(p).then((unsub) => {
+      try {
+        unsub?.();
+      } catch {
+      }
+    }));
+    this._wxUnsubs = [];
+    this._wxFor = null;
+  }
+  // Udendørs gets the light, buttons and Styring of the outdoor room on the rooms page ("Udenfor" by default;
+  // user: "Ude skal også have styring af ude ting"). The old card skips outdoor rooms, so it is matched here.
+  _applyControls() {
+    super._applyControls();
+    const src = this._ctlSource;
+    if (!src || !this._config?.rooms) return;
+    const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    let changed = false;
+    const rooms = this._config.rooms.map((r) => {
+      if (!r.outdoor || r.controls) return r;
+      const names = r.controls_room ? [key(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key(r.name)];
+      const m = src.v3.find((x) => names.includes(key(x.name)));
+      if (!m) return r;
+      const pop = m.popup ? src.pops[m.popup] : void 0;
+      const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening };
+      const ctl = { name: r.name, icon: r.icon, light: m.light, actions: m.actions, alert: m.alert, ...pop ? this._popupControls(pop) : {} };
+      if (ctl.model?.profile) info.profile = ctl.model.profile;
+      if (ctl.model) info.model = ctl.model;
+      changed = true;
+      return { ...r, roomInfo: info, controls: ctl.model || ctl.light || ctl.actions?.length || ctl.alert ? ctl : void 0 };
+    });
+    if (!changed) return;
+    this._config = { ...this._config, rooms };
+    this._roomInfoSig = "";
+    this._paintRoomInfo();
+  }
   // ---------- setpoint (tile and popup) ----------
   // Presses add up and are sent once the finger rests, so 3 taps = one service call of +1.5°.
   // What the room is steered by right now: the AC's setpoint while the AC runs (it also switches the radiator off),
@@ -33744,7 +34026,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId2 = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate].filter(isId2));
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
     const esc12 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
@@ -33763,7 +34045,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
           <span class="hv" data-f="visual" title="Varme"></span>
         </div>
         <div class="z-body">
-          <div class="z-temp">
+          <div class="z-temp">${DIAL_MARKUP}
             <div class="t-big"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div>
             <div class="rail na" data-f="rail"><i class="tgt"></i><i class="cur"></i></div>
             <div class="step" data-f="step"><div class="tv"><span data-f="tlabel">M\xE5l</span><strong data-f="target">${DASH3}</strong></div></div>
@@ -33786,9 +34068,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
             <div class="g" data-m="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span>F\xF8les</span><strong data-f="feels">${DASH3}</strong></div>
             <div class="g" data-m="humidity"><ha-icon icon="mdi:water-percent"></ha-icon><span>Fugt</span><strong data-f="humidity">${DASH3}</strong><i data-f="humbar"></i></div>
             <div class="g" data-m="day"><ha-icon icon="mdi:arrow-expand-vertical"></ha-icon><span>D\xF8gnet</span><strong data-f="day">${DASH3}</strong></div>
-          </div>
+          </div>${WX_MARKUP}
         </div>
         <div class="band">${spark()}</div>
+        <div class="z-room" data-f="roominfo"></div>
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
@@ -33799,7 +34082,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc12(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
-      <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}</style>
+      <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
@@ -33889,6 +34172,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._tilesEl = root.querySelector(".zones > .tiles");
     this._built = true;
     this._roomInfoSig = "";
+    this._premium = void 0;
+    this._applyLook();
     this._observeLayout();
   }
   _fitMetrics() {
@@ -33950,7 +34235,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const refs = this._refs[index];
     if (!refs) return;
     const room = this._config.rooms[index];
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5)].join("|");
+    const wx2 = room.outdoor && this._premium ? [this._wxRev, Math.floor(Date.now() / 6e4), ...[room.weather, room.observed, room.rain_today, room.degree_days].map((id) => this._hass?.states?.[id]?.last_updated)].join(",") : "";
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 6e5), this._premium ? 1 : 0, wx2].join("|");
     if (refs.view === view) return;
     refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
@@ -34010,7 +34296,27 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     } else if (model.acActive) this._setText(refs.visual?.querySelector('[data-role="ac-unit-display"]'), this._acMiniLabel(model));
     if (refs.visual) refs.visual.title = model.acActive ? model.status : model.heating ? "Radiatoren varmer" : "Radiatoren hviler";
     this._renderSpark(refs.spark, this._sparkPoints(room, model), target2);
+    this._renderDial(refs, model.current, target2, ctl.ac, pending !== void 0);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader, ${model.status}. \xC5bn detaljer`);
+  }
+  // Premium dial: 270° from 4° under to 4° over the target (14–28° without one); the tick marks the target in the middle.
+  _renderDial(refs, current, target2, ac, pending) {
+    const dial = refs.dial || (refs.dial = refs.host.querySelector('[data-f="dial"]'));
+    if (!dial) return;
+    const lo = target2 !== void 0 ? target2 - 4 : 14, hi = target2 !== void 0 ? target2 + 4 : 28;
+    const frac = current === void 0 ? 0 : Math.min(1, Math.max(0, (current - lo) / (hi - lo)));
+    dial.style.setProperty("--a", `${(frac * 270).toFixed(1)}deg`);
+    dial.style.setProperty("--t", `${target2 !== void 0 ? 135 : 0}deg`);
+    dial.classList.toggle("na", current === void 0);
+    dial.classList.toggle("notgt", target2 === void 0);
+    dial.classList.toggle("pending", !!pending);
+    const text = current === void 0 ? DASH3 : this._format(current);
+    const cut = text.search(/[,.]/);
+    const d = (name) => dial.querySelector(`[data-d="${name}"]`);
+    this._setText(d("int"), cut > 0 ? text.slice(0, cut) : text);
+    this._setText(d("dec"), cut > 0 ? text.slice(cut) : "");
+    this._setText(d("tl"), ac ? "AC-m\xE5l" : "M\xE5l");
+    this._setText(d("tv"), target2 === void 0 ? "Intet" : `${this._format(target2)}\xB0`);
   }
   _renderTile(room, refs, model) {
     refs.host.className = `tile a-${model.accent}`;
@@ -34034,7 +34340,98 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const highs = points.map((p) => p.max ?? p.v);
     this._setText(refs.day, points.length > 1 ? `${this._format(Math.min(...lows))}\xB0\u2013${this._format(Math.max(...highs))}\xB0` : DASH3);
     this._renderSpark(refs.spark, points, void 0);
+    if (this._premium) this._renderWeather(room, refs, model, points);
     refs.host.setAttribute("aria-label", `${room.name}: ${this._format(model.current)} grader. \xC5bn detaljer`);
+  }
+  // ---------- premium Udendørs: the weather through the day ----------
+  _renderWeather(room, refs, model, points) {
+    const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt4 = (v, digits = 1) => this._format(v, digits);
+    const f = (name) => host.querySelector(`[data-f="${name}"]`), p23 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p23(t.getHours())}:${p23(t.getMinutes())}`;
+    const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
+    const days = /* @__PURE__ */ new Map();
+    const sun = (t) => {
+      const k = t.toDateString();
+      if (!days.has(k)) days.set(k, sunTimes(t, lat, lon));
+      return days.get(k);
+    };
+    const night = (t) => {
+      const s = sun(t);
+      return s ? t < s.rise || t > s.set : false;
+    };
+    const weather = st(room.weather), a = weather?.attributes || {};
+    const hourly = (this._wx?.hourly || []).filter((x) => Date.parse(x.datetime) > now.getTime() - 36e5 + 6e4).slice(0, 12);
+    const todayKey = `${now.getFullYear()}-${p23(now.getMonth() + 1)}-${p23(now.getDate())}`;
+    const daily = this._wx?.daily || [], d0 = daily.find((x) => String(x.datetime).startsWith(todayKey)), d1 = d0 ? daily[daily.indexOf(d0) + 1] : void 0;
+    const info = wxInfo(hourly[0]?.condition || weather?.state, night(now));
+    host.style.setProperty("--wx-c", info.color);
+    const ic = f("wxic");
+    if (ic) {
+      ic.className = `wx-ic ${info.kind}`;
+      ic.querySelector("ha-icon")?.setAttribute("icon", info.icon);
+    }
+    const observed = st(room.observed)?.state;
+    this._setText(f("wxlabel"), observed || info.label);
+    const range = (x) => x && x.templow !== void 0 ? `${fmt4(x.templow)}\xB0\u2013${fmt4(x.temperature)}\xB0` : "";
+    const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt4(Math.min(...lows))}\xB0\u2013${fmt4(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
+    const chips = [];
+    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt4(model.feels)}\xB0`]);
+    if (model.humidity !== void 0) chips.push(["mdi:water-percent", "#60a5fa", `Fugt ${fmt4(model.humidity, 0)} %`]);
+    const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
+      const n = this._number(v);
+      return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
+    };
+    const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
+    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt4(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt4(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
+    const rain = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
+    if (rain !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt4(rain ?? rainFc)} mm`, rain !== void 0 && rainFc !== void 0 ? `prognose ${fmt4(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt4(d0.precipitation_probability, 0)} %` : ""]);
+    const dd = this._number(st(room.degree_days)?.state);
+    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt4(dd)}`]);
+    const uv = this._number(a.uv_index);
+    if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt4(uv, 0)}`]);
+    const humid = chips.findIndex((c2) => c2[0] === "mdi:water-percent");
+    if (humid >= 0) chips.push(chips.splice(humid, 1)[0]);
+    const chipHtml = chips.map(([icon4, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc12(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon4}"></ha-icon></span>` : `<ha-icon icon="${icon4}"></ha-icon>`}${esc12(text)}</span>`).join("");
+    const chipsEl = f("wxchips");
+    if (chipsEl && chipsEl._h !== chipHtml) {
+      chipsEl._h = chipHtml;
+      chipsEl.innerHTML = chipHtml;
+    }
+    const hoursHtml = hourly.map((x, i) => {
+      const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
+      const title = `${p23(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt4(x.temperature)}\xB0 \xB7 ${fmt4(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt4(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p23(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+    }).join("");
+    const hoursEl = f("hours");
+    if (hoursEl && hoursEl._h !== hoursHtml) {
+      hoursEl._h = hoursHtml;
+      hoursEl.innerHTML = hoursHtml;
+    }
+    const dl = f("daylight"), today = sun(now);
+    if (dl) {
+      dl.hidden = !today;
+      if (!today) return;
+      const span = today.set - today.rise, t = (now - today.rise) / span, dark = t < 0 || t > 1, u2 = Math.min(1, Math.max(0, t));
+      const P0 = [4, 38], P1 = [100, -34], P22 = [196, 38], lerp = (p, q2, k) => [p[0] + (q2[0] - p[0]) * k, p[1] + (q2[1] - p[1]) * k];
+      const q = lerp(P0, P1, u2), b = lerp(q, lerp(P1, P22, u2), u2);
+      dl.classList.toggle("dark", dark);
+      dl.querySelector(".dl-done")?.setAttribute("d", dark ? "" : `M4 38 Q${q[0].toFixed(1)} ${q[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`);
+      const dot = dl.querySelector(".dl-sun");
+      if (dot) {
+        dot.style.left = `${(12 + b[0] / 200 * 76).toFixed(2)}%`;
+        dot.style.top = `${(4 + b[1] / 40 * 24).toFixed(1)}px`;
+      }
+      const dur2 = (ms2) => {
+        const m = Math.max(0, Math.round(ms2 / 6e4));
+        return m >= 60 ? `${Math.floor(m / 60)} t ${m % 60} min` : `${m} min`;
+      };
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      const next = sun(tomorrow);
+      this._setText(f("dlrise"), clock2(today.rise));
+      this._setText(f("dlset"), clock2(today.set));
+      this._setText(f("dltext"), t < 0 ? `Solopgang om ${dur2(today.rise - now)}` : t > 1 ? `M\xF8rkt \xB7 solopgang ${next ? clock2(next.rise) : ""}` : `Dagslys ${dur2(span)} \xB7 ${dur2(today.set - now)} tilbage`);
+    }
   }
   // ---------- room dock (presence, light, media, profile + quick buttons) ----------
   _paintRoomInfo() {

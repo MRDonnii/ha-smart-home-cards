@@ -20,6 +20,11 @@ Cards that have a new and a classic look can switch between them the same way:
 | `ha-tesla-glance-card` | `style: new / classic` | `style_entity` |
 | `ha-home-summary-card` (room tiles) | `room_tiles: new / classic` | `room_tiles_entity` |
 | `th-electricity-price-card` (new) / `ha-electricity-price-card` (classic, configured under `classic:`) | `style: new / classic` | `style_entity` (or `switch_entity`) |
+| `ha-room-climate-card` (new = premium: glass tiles, thermostat dial, Udendørs with the day's weather) | `style: new / classic` | `style_entity` |
+
+`ha-room-climate-card`'s premium Udendørs room takes optional `weather` (a `weather.*` entity with an hourly forecast),
+`observed` (text sensor for the observed weather), `rain_today` and `degree_days`; sunrise and sunset come from the home
+location. It also gets the light, buttons and Styring of the rooms page's outdoor room (`controls_room`, default "Udenfor").
 
 Without a helper the editor's choice applies. With a helper (e.g. `input_boolean.dashboard_nye_statuskort`, created under
 Settings → Devices & services → Helpers → Toggle) the helper decides as long as it exists, so a button in a settings page
