@@ -20,8 +20,19 @@ type Hass = {
 };
 // afterheat_coil: how the afterheater is drawn, "electric" (default) or "water".
 // unit_name: what the texts call the unit; by default the model of its Home Assistant device.
-type Config = { entities: Record<string, string>; unit_name?: string; afterheat_outdoor_cutoff?: number; afterheat_coil?: "electric" | "water"; variant?: "smartdash"; embedded?: boolean; controls?: boolean };
+type Config = { entities: Record<string, string>; unit_name?: string; afterheat?: boolean; integration?: "dantherm"; afterheat_outdoor_cutoff?: number; afterheat_coil?: "electric" | "water"; variant?: "smartdash"; embedded?: boolean; controls?: boolean };
 type AfterheatValue = number | "off";
+// What the standard Dantherm integration provides. `integration: "dantherm"` drops every other entity key;
+// `afterheat: false` drops the afterheat, coil water and frost keys. Blocks without entities are not drawn.
+const DANTHERM_KEYS = new Set(["outdoor_temperature", "extract_temperature", "exhaust_temperature", "supply_temperature", "room_temperature", "supply_fan_rpm", "extract_fan_rpm", "supply_fan_percent", "extract_fan_percent", "level_control", "bypass", "humidity", "co2", "filter_life", "power", "attic_temperature", "outdoor_air_quality", "outdoor_pm25", "electricity_price", "heat_price"]);
+const AFTERHEAT_KEY = /^(afterheat_|water_)|^(frost_state)$/;
+function limitEntities(config: Config): Config {
+  const dantherm = config.integration === "dantherm";
+  if (!dantherm && config.afterheat !== false) return config;
+  const entities = Object.fromEntries(Object.entries(config.entities).filter(([key]) =>
+    (!dantherm || DANTHERM_KEYS.has(key)) && !(config.afterheat === false && AFTERHEAT_KEY.test(key))));
+  return { ...config, entities };
+}
 type Notice = { text: string; error: boolean };
 
 // HA reports the new setpoint a moment after the service call returns; the
@@ -740,7 +751,7 @@ class DanthermLiveCard extends HTMLElement {
   setConfig(config: Config) {
     if (!config || typeof config.entities !== "object" || config.entities === null) throw new Error("Dantherm-kortet kræver en entities-konfiguration.");
     this.toggleAttribute("embedded", config.embedded === true && config.variant !== "smartdash");
-    this.config = config;
+    this.config = limitEntities(config);
     this.signature = "";
     this.renderCard();
   }

@@ -43,6 +43,8 @@ entities:
 ```
 
 - `afterheat_coil`: how the external afterheater is drawn. `electric` (default) shows heating elements that glow while it heats. `water` shows a water coil: its flow and return pipes run to the water readings, are tinted by the `water_flow` and `water_return` temperatures, and the water moves while `afterheat_active` is on.
+- `afterheat: false`: hides the afterheat everywhere (coil, HAC1 wiring, readback, setpoint tile, lift/power/water/frost values) even if `afterheat_*` or `water_*` entities are listed.
+- `integration: dantherm`: for people using the standard Dantherm integration. Only entity keys that integration provides are used (temperatures, fan rpm/percent, `level_control`, `bypass`, `humidity`, `co2`, `filter_life`, `power`, outdoor air quality, prices); every HCH5 Control/Pi-only key (afterheat, water, frost, bus, diagnostics, boost/fireplace/cooling controls, modes) is ignored and its blocks are hidden. Implies no afterheat.
 - `afterheat_outdoor_cutoff`: outdoor temperature (°C) from which HAC1 blocks the afterheat; 15 by default.
 - `entities.power`: optional power meter for the unit (W), e.g. a smart plug or relay. Shown as "Forbrug" next to the status pills, and in the Smartdash header.
 - `entities.attic_temperature`: optional loft/attic temperature, shown as "Loftrum" beside "Forbrug" and in the Smartdash header.
