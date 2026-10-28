@@ -3909,9 +3909,11 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (this._chargerView?.map !== view.map) {
       this._clearChargers();
       this._chargerKey = null;
+      // Browsing the map loads the stations where it is moved to (user: "den viser data hvis man søger rundt på
+      // kortet"). The view object is made anew on every update, so the current one is used, not this one.
       view.map.on("moveend", () => {
         clearTimeout(this._chargerTimer);
-        this._chargerTimer = setTimeout(() => this._loadChargers(view), 600);
+        this._chargerTimer = setTimeout(() => this._chargerView && this._loadChargers(this._chargerView), 600);
       });
     }
     this._chargerView = view;
@@ -3929,7 +3931,7 @@ class ThTeslaDashboardCard extends HTMLElement {
   }
 
   async _loadChargers(view) {
-    if (!this._chargersOn || this._chargerView !== view) return;
+    if (!this._chargersOn || this._chargerView?.map !== view.map) return;
     const at = this._chargerArea(view);
     if (!at) return;
     const key = `${at.lat.toFixed(3)},${at.lng.toFixed(3)},${at.radius.toFixed(1)}`;
@@ -3943,12 +3945,12 @@ class ThTeslaDashboardCard extends HTMLElement {
       console.warn("th-tesla-dashboard-card: ladesteder", err);
       return;
     }
-    if (this._chargerView !== view || key !== this._chargerKey || !this._chargersOn) return;
-    this._drawChargers(view, reply);
+    if (this._chargerView?.map !== view.map || key !== this._chargerKey || !this._chargersOn) return;
+    this._drawChargers(this._chargerView, reply);
     // EV Ledger is fetching the operators' own prices (AFIR) in the background: ask again when they are there
     clearTimeout(this._chargerRetry);
     if (reply?.afir?.loading && (this._chargerTries = (this._chargerTries || 0) + 1) <= 6) {
-      this._chargerRetry = setTimeout(() => { this._chargerKey = null; this._loadChargers(view); }, 20000);
+      this._chargerRetry = setTimeout(() => { this._chargerKey = null; if (this._chargerView) this._loadChargers(this._chargerView); }, 20000);
     } else if (!reply?.afir?.loading) this._chargerTries = 0;
   }
 
@@ -3959,7 +3961,9 @@ class ThTeslaDashboardCard extends HTMLElement {
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
     const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operatørens egen pris nu", operator: "operatørens pris", default: "standardpris" };
-    for (const station of reply?.stations || []) {
+    // The nearest TTD_MAX_CHARGERS to the map's centre (EV Ledger answers nearest first): zoomed far out a city has
+    // more stations than markers stay smooth with
+    for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       // Only a price that belongs to the station counts: the ledger's default price is what an unknown station would
       // be logged with, not the station's price (user: "alle 3 ladesteder viser det samme i pris? det er da ikke det samme").
@@ -4623,6 +4627,8 @@ function ttdCeNum(value) {
 function ttdCeText(value, digits) {
   return Number.isFinite(value) ? (Math.round(value * 10 ** digits) / 10 ** digits).toFixed(digits).replace(".", ",") : "";
 }
+
+const TTD_MAX_CHARGERS = 250;
 
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;

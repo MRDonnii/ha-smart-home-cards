@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.231 */
+/* MRDonnii Smart Home Cards v0.5.232 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -7085,7 +7085,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._chargerKey = null;
       view.map.on("moveend", () => {
         clearTimeout(this._chargerTimer);
-        this._chargerTimer = setTimeout(() => this._loadChargers(view), 600);
+        this._chargerTimer = setTimeout(() => this._chargerView && this._loadChargers(this._chargerView), 600);
       });
     }
     this._chargerView = view;
@@ -7101,7 +7101,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._chargerMarkers = [];
   }
   async _loadChargers(view) {
-    if (!this._chargersOn || this._chargerView !== view) return;
+    if (!this._chargersOn || this._chargerView?.map !== view.map) return;
     const at = this._chargerArea(view);
     if (!at) return;
     const key = `${at.lat.toFixed(3)},${at.lng.toFixed(3)},${at.radius.toFixed(1)}`;
@@ -7115,13 +7115,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       console.warn("th-tesla-dashboard-card: ladesteder", err);
       return;
     }
-    if (this._chargerView !== view || key !== this._chargerKey || !this._chargersOn) return;
-    this._drawChargers(view, reply);
+    if (this._chargerView?.map !== view.map || key !== this._chargerKey || !this._chargersOn) return;
+    this._drawChargers(this._chargerView, reply);
     clearTimeout(this._chargerRetry);
     if (reply?.afir?.loading && (this._chargerTries = (this._chargerTries || 0) + 1) <= 6) {
       this._chargerRetry = setTimeout(() => {
         this._chargerKey = null;
-        this._loadChargers(view);
+        if (this._chargerView) this._loadChargers(this._chargerView);
       }, 2e4);
     } else if (!reply?.afir?.loading) this._chargerTries = 0;
   }
@@ -7132,7 +7132,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
     const esc12 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
-    for (const station of reply?.stations || []) {
+    for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
       const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
@@ -7796,6 +7796,7 @@ function ttdCeNum(value) {
 function ttdCeText(value, digits) {
   return Number.isFinite(value) ? (Math.round(value * 10 ** digits) / 10 ** digits).toFixed(digits).replace(".", ",") : "";
 }
+var TTD_MAX_CHARGERS = 250;
 function ttdPerKwh(unit) {
   return unit === "kr." || unit === "kr" ? "kr/kWh" : `${unit}/kWh`;
 }

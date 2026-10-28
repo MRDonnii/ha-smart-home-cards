@@ -1,6 +1,6 @@
 {
   "name": "ha-smart-home-cards",
-  "version": "0.5.231",
+  "version": "0.5.232",
   "private": true,
   "type": "module",
   "scripts": {
