@@ -188,13 +188,87 @@ class HASettingsCenterCard extends HTMLElement {
   }
 
   _toggleTile(i) {
-    return this._once(
-      i.entity,
-      `<button class="tile-btn" data-action="toggle" data-entity="${this._esc(i.entity)}" data-view="toggle" data-on-label="${this._esc(i.on_label || "Aktiv")}" data-off-label="${this._esc(i.off_label || "Deaktiv")}">
+    const tile = `<button class="tile-btn" data-action="toggle" data-entity="${this._esc(i.entity)}" data-view="toggle" data-on-label="${this._esc(i.on_label || "Aktiv")}" data-off-label="${this._esc(i.off_label || "Deaktiv")}">
         ${this._icon(i.icon || "mdi:toggle-switch-outline")}
         <span><b>${this._esc(i.name)}</b><small data-state>Kontrollerer…</small></span>
-      </button>`,
+      </button>`;
+    // Spring over (Claude AI, 2026-10-29; bruger: "en knap der inde der bare springer 1 dag over … og en uge også …
+    // en popup … som giver mulighederne"): en rutine med `pause` (en dato-hjælper og et script) får en lille knap i
+    // hjørnet, der åbner valgene; mens datoen er i dag eller senere, viser feltet pausen.
+    if (!i.pause?.entity || !i.pause?.script) return this._once(i.entity, tile);
+    return this._once(
+      i.entity,
+      `<div class="tile-wrap" data-view="pause" data-entity="${this._esc(i.entity)}" data-pause="${this._esc(i.pause.entity)}">
+        ${tile}
+        <button class="tile-skip" data-action="pause-popup" data-entity="${this._esc(i.entity)}" aria-label="Spring ${this._esc(i.name)} over" title="Spring over">${this._icon("mdi:skip-next-circle-outline")}</button>
+      </div>`,
     );
+  }
+
+  // The pause date of a routine (YYYY-MM-DD) while it is today or later, else null.
+  _pausedUntil(pauseEntity) {
+    const v = String(this._state(pauseEntity) || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+    const d = new Date(); const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return v >= today ? v : null;
+  }
+  _pauseShort(v) {
+    const t = this._pauseDate(v);
+    return t.startsWith("i dag") ? "Springer over i dag" : t.startsWith("i morgen") ? "Springer over i morgen" : `Springer over til og med ${t}`;
+  }
+  _pauseDate(v) {
+    const [y, m, d] = v.split("-").map(Number); const date = new Date(y, m - 1, d); const now = new Date();
+    const days = Math.round((date - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+    const txt = date.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+    return days === 0 ? `i dag (${txt})` : days === 1 ? `i morgen (${txt})` : txt;
+  }
+
+  _openPausePopup(entityId) {
+    this._closeStatusPopup();
+    const item = this._find(entityId); const pause = item?.pause; if (!pause) return;
+    const field = pause.field || "dage";
+    const options = pause.options || [
+      { days: 1, label: "Spring næste over", sub: "Kun den næste gang" },
+      { days: 7, label: "Spring en uge over", sub: "De næste syv dage" },
+    ];
+    const backdrop = document.createElement("div");
+    backdrop.className = "ha-settings-status-backdrop";
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:999999;background:rgba(8,12,18,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px";
+    const panel = document.createElement("section");
+    panel.setAttribute("role", "dialog"); panel.setAttribute("aria-modal", "true"); panel.setAttribute("aria-label", `Spring ${item.name || ""} over`);
+    panel.style.cssText = "position:relative;width:min(100%,420px);max-height:92vh;overflow:auto;padding:22px;border:1px solid var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.24)));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--warning-color,#f59e0b);border-radius:20px;background:#141b24;box-shadow:0 28px 70px rgba(0,0,0,.5);color:#f3f6fb;font-family:inherit";
+    const btn = "display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:10px;padding:11px 14px;border:1px solid rgba(127,145,165,.26);border-radius:14px;background:rgba(255,255,255,.04);color:inherit;font:inherit;text-align:left;cursor:pointer";
+    const render = (note) => {
+      const until = this._pausedUntil(pause.entity);
+      const status = until ? `Springer over til og med ${this._esc(this._pauseDate(until))}` : "Kører som normalt";
+      panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:70px"><ha-icon icon="mdi:alarm-off" style="--mdc-icon-size:28px;color:var(--warning-color,#f59e0b)"></ha-icon><div><div style="font-size:17px;font-weight:900">${this._esc(item.name || "Spring over")}</div><div data-pstatus style="margin-top:3px;color:${until ? "var(--warning-color,#f59e0b)" : "var(--secondary-text-color,#a7b2c2)"};font-size:12.5px;font-weight:700">${status}</div></div></div>
+        ${options.map((o) => `<button data-days="${Number(o.days) || 0}" style="${btn}"><ha-icon icon="${this._esc(o.icon || (Number(o.days) >= 7 ? "mdi:calendar-week" : "mdi:skip-next"))}" style="--mdc-icon-size:22px;color:var(--warning-color,#f59e0b)"></ha-icon><span><b style="display:block;font-size:14px">${this._esc(o.label)}</b><small style="display:block;margin-top:2px;font-size:12px;color:#a7b2c2">${this._esc(o.sub || "")}</small></span></button>`).join("")}
+        ${until ? `<button data-days="0" style="${btn}"><ha-icon icon="mdi:play-circle-outline" style="--mdc-icon-size:22px;color:var(--success-color,#20e3a2)"></ha-icon><span><b style="display:block;font-size:14px">Genoptag</b><small style="display:block;margin-top:2px;font-size:12px;color:#a7b2c2">Kører igen fra næste gang</small></span></button>` : ""}
+        ${note ? `<div style="margin-top:12px;font-size:12.5px;color:#a7b2c2">${this._esc(note)}</div>` : ""}`;
+      const close = document.createElement("button");
+      close.textContent = "Luk ✕"; close.setAttribute("aria-label", "Luk");
+      close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:#0d1219;color:#f3f6fb;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
+      close.addEventListener("click", () => this._closeStatusPopup()); panel.appendChild(close);
+    };
+    panel.addEventListener("click", async (event) => {
+      const b = event.target.closest?.("[data-days]"); if (!b) return;
+      b.disabled = true;
+      try {
+        await this._call(pause.script, { [field]: Number(b.dataset.days) });
+        const t0 = Date.now(); const before = this._state(pause.entity);
+        while (Date.now() - t0 < 3000 && this._state(pause.entity) === before) await new Promise((r) => setTimeout(r, 150));
+        render(); this._patch();
+        clearTimeout(this._pauseClose); this._pauseClose = setTimeout(() => this._closeStatusPopup(), 1400);
+      } catch (err) { b.disabled = false; render(`Kunne ikke gemme: ${err?.message || err}`); }
+    });
+    render();
+    backdrop.appendChild(panel);
+    backdrop.addEventListener("click", (event) => { if (event.target === backdrop) this._closeStatusPopup(); });
+    this._statusEscHandler = (event) => { if (event.key === "Escape") this._closeStatusPopup(); };
+    document.addEventListener("keydown", this._statusEscHandler);
+    document.body.appendChild(backdrop);
+    this._statusPopup = backdrop;
+    this._pausePanel = { panel, render };
   }
 
   // Kortversioner (Claude AI, 2026-10-27; bruger: "skifte mellem versionerne af kort … så det er en dropdown"): én
@@ -619,6 +693,12 @@ class HASettingsCenterCard extends HTMLElement {
       n.classList.toggle("missing", !a);
       n.querySelector("[data-state]").textContent = a ? (on ? (n.dataset.onLabel || "Aktiv") : (n.dataset.offLabel || "Deaktiv")) : "Ikke tilgængelig";
     });
+    // A routine on pause shows until when instead of Aktiv, in the warning colour.
+    this.shadowRoot.querySelectorAll('[data-view="pause"]').forEach((n) => {
+      const until = this._pausedUntil(n.dataset.pause); const tile = n.querySelector(".tile-btn");
+      n.classList.toggle("paused", Boolean(until));
+      if (until && this._on(n.dataset.entity)) tile.querySelector("[data-state]").textContent = this._pauseShort(until);
+    });
     this.shadowRoot.querySelectorAll('[data-view="version"]').forEach((n) => {
       const id = n.dataset.entity, e = this._e(id), sel = n.querySelector("select"), domain = id.split(".")[0];
       let opts;
@@ -728,13 +808,13 @@ class HASettingsCenterCard extends HTMLElement {
     const close = document.createElement("button");
     close.textContent = "Luk ✕";
     close.setAttribute("aria-label", "Luk problemoversigt");
-    close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:var(--card-background-color,rgba(8,12,18,.92));color:var(--primary-text-color,#fff);font:inherit;font-size:13px;font-weight:800;cursor:pointer";
+    close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:#0d1219;color:#f3f6fb;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const title = this._esc(item.name || "Systemstatus");
     const icon = this._esc(item.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem
       ? `<div style="display:grid;gap:8px;margin-top:16px">${details.map((value) => `<div style="padding:11px 12px;border:1px solid color-mix(in srgb,var(--error-color,#ef4444) 28%,transparent);border-radius:12px;background:color-mix(in srgb,var(--error-color,#ef4444) 9%,transparent);font-size:13px;line-height:1.45">${this._esc(value)}</div>`).join("")}</div>`
       : `<div style="margin-top:16px;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--success-color,#20e3a2) 10%,transparent);color:var(--success-color,#20e3a2);font-weight:800">Ingen aktive problemer.</div>`;
-    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:var(--secondary-text-color,#a7b2c2);font-size:12px">${problem ? `${count} ${count === 1 ? "problem kræver" : "problemer kræver"} opmærksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:var(--secondary-text-color,#a7b2c2)"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item.advice || "Kontrollér den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
+    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:#a7b2c2;font-size:12px">${problem ? `${count} ${count === 1 ? "problem kræver" : "problemer kræver"} opmærksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:#a7b2c2"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item.advice || "Kontrollér den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
     panel.appendChild(close);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => { if (event.target === backdrop) this._closeStatusPopup(); });
@@ -773,6 +853,7 @@ class HASettingsCenterCard extends HTMLElement {
     if (a === "tab") this._select(b.dataset.tab);
     else if (a === "toggle" && this._available(b.dataset.entity)) this._call("homeassistant.toggle", {}, { entity_id: b.dataset.entity });
     else if (a === "status-popup") this._openStatusPopup(b.dataset.entity);
+    else if (a === "pause-popup") this._openPausePopup(b.dataset.entity);
     else if (a === "more") this._more(b.dataset.moreEntity || b.dataset.entity);
     else if (a === "mode") this._call("input_select.select_option", { option: b.dataset.option }, { entity_id: b.dataset.entity });
     else if (a === "rum-nulstil") this._call("script.rum_nulstil_automatisk", { room: b.dataset.room });
@@ -866,6 +947,13 @@ class HASettingsCenterCard extends HTMLElement {
       .tile-btn span{min-width:0;text-align:left}
       .tile-btn b{display:block;font-size:11.5px;font-weight:700;color:var(--primary-text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .tile-btn small{display:block;margin-top:2px;font-size:9.5px;color:var(--secondary-text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .tile-wrap{position:relative;display:grid;min-width:0}.tile-wrap .tile-btn{padding-right:44px}
+      .tile-skip{position:absolute;top:0;bottom:0;right:6px;margin:auto 0;display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent);border-radius:10px;background:color-mix(in srgb,var(--warning-color,#f59e0b) 8%,transparent);color:var(--warning-color,#f59e0b);cursor:pointer}
+      .tile-skip ha-icon{--mdc-icon-size:19px}
+      .tile-wrap.paused .tile-btn,.tile-wrap.paused .tile-btn.on{border-color:color-mix(in srgb,var(--warning-color,#f59e0b) 30%,transparent);border-left-color:var(--warning-color,#f59e0b);background:color-mix(in srgb,var(--warning-color,#f59e0b) 9%,var(--settings-neutral))}
+      .tile-wrap.paused .tile-btn small{color:var(--warning-color,#f59e0b);font-weight:700}
+      .tile-wrap.paused .tile-btn ha-icon,.tile-wrap.paused .tile-btn.on ha-icon{color:var(--warning-color,#f59e0b)}
+      .tile-wrap.paused .tile-skip{background:var(--warning-color,#f59e0b);color:#1b1205;border-color:transparent}
       .tile-btn.on{border-color:color-mix(in srgb,var(--good) 52%,transparent);border-left-color:var(--good);background:var(--settings-positive);box-shadow:0 4px 12px rgba(0,0,0,.1),0 0 16px color-mix(in srgb,var(--good) 12%,transparent)}
       .tile-btn.on ha-icon{color:var(--good)}
       .tile-btn.on small{color:var(--good)}
