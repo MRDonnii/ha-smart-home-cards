@@ -134,8 +134,8 @@ export function premiumHtml(card) {
       <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct(now)}%"></span><span class="pp-now" style="left:${pct(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
       <div class="pp-meals">${mealCards}</div>
     </section>
-    <section class="pp-panel pp-supply" style="--d:2">
-      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>Foder og vand</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent)} % i beholderen`}</p></div></header>
+    <section class="pp-panel pp-supply${c.water ? "" : " food"}" style="--d:2">
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>${c.water ? "Foder og vand" : "Foder"}</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent)} % i beholderen`}</p></div></header>
       <div class="pp-supply-row">
         <button class="pp-silo ${level}" data-info="${esc(c.container_percent || c.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent)} %">
           <span class="pp-silo-fill" style="height:${percent}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent)}<small>%</small></b></button>
@@ -195,7 +195,7 @@ export const PREMIUM_STYLE = `
 .pp-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}
 .pp-heat{grid-column:1/-1}
 .pp-panel{position:relative;min-width:0;padding:18px;border-radius:22px;background:var(--pp-surface);border:1px solid var(--pp-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pp-food);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22))}
-.pp-supply{border-left-color:var(--pp-water)}.pp-heat{border-left-color:var(--pp-heat)}
+.pp-supply{border-left-color:var(--pp-water)}.pp-supply.food{border-left-color:var(--pp-food)}.pp-supply.food .pp-hicon{background:color-mix(in srgb,var(--pp-food) 15%,transparent);color:var(--pp-food)}.pp-heat{border-left-color:var(--pp-heat)}
 .pp.intro .pp-panel,.pp.intro .pp-hero{animation:ppRise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d, 0) * .08s)}
 @keyframes ppRise{from{opacity:0;transform:translateY(10px)}}
 .pp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.pp-head>div{flex:1;min-width:0}
