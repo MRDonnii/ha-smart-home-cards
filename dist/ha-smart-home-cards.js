@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.236 */
+/* MRDonnii Smart Home Cards v0.5.237 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -41132,10 +41132,19 @@ function heatModel(card) {
   const duration2 = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
   const day2 = Number(a.dag);
   const inHeat = Number.isFinite(day2) && day2 >= 1 && day2 <= duration2;
-  const date2 = (v) => {
+  const fmt5 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+  const date2 = (v, shift = 0) => {
     if (!v) return "";
     const d = /* @__PURE__ */ new Date(`${String(v).slice(0, 10)}T12:00:00`);
-    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+    if (Number.isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + shift);
+    return fmt5(d);
+  };
+  const inDays = (n) => {
+    const d = /* @__PURE__ */ new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() + n);
+    return fmt5(d);
   };
   const phase = (d) => d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
   const phaseText = { bleed: "Bl\xF8dning", fertile: "Mest frugtbar", late: "Sidste del" };
@@ -41150,6 +41159,11 @@ function heatModel(card) {
     end: date2(a.forventet_slut),
     next: date2(a.naeste_forventet),
     daysToNext: Number(a.dage_til_naeste),
+    // How far she is (Claude AI, 2026-10-29; user: "se hvor langt hun er i løbetid og hvornår næste ca starter"):
+    // days left, the next phase and when it starts, and outside the heat when to start watching (14 days before).
+    left: inHeat ? duration2 - day2 : null,
+    nextPhase: !inHeat ? null : day2 <= 8 ? { name: "Mest frugtbar", in: 9 - day2, date: inDays(9 - day2) } : day2 <= 14 ? { name: "Sidste del", in: 15 - day2, date: inDays(15 - day2) } : null,
+    watch: date2(a.naeste_forventet, -14),
     script: h.script,
     calendar: h.calendar,
     sensor: h.sensor,
@@ -41166,16 +41180,20 @@ function heatHtml(card, H3, esc12) {
     return `<i class="pp-cell ${ph2}${state}" style="--i:${i}" title="Dag ${d}"></i>`;
   }).join("");
   const marker = H3.inHeat ? `<span class="pp-heat-marker" style="left:calc(${(H3.day - 0.5) / H3.duration * 100}% - 1px)"><b>Dag ${H3.day}</b></span>` : "";
-  const ring = !H3.inHeat && Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<div class="pp-heat-count"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="v" cx="32" cy="32" r="27" style="stroke-dashoffset:${(170 * Math.min(1, H3.daysToNext / 183)).toFixed(1)}"/></svg><b>${H3.daysToNext}</b><small>dage</small></div>` : "";
+  const ringOf = (offset, big, small) => `<div class="pp-heat-count"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="v" cx="32" cy="32" r="27" style="stroke-dashoffset:${offset.toFixed(1)}"/></svg><b>${big}</b><small>${small}</small></div>`;
+  const ring = H3.inHeat ? ringOf(170 * (1 - H3.day / H3.duration), `${Math.round(H3.day / H3.duration * 100)}%`, "forl\xF8bet") : Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? ringOf(170 * Math.min(1, H3.daysToNext / 183), H3.daysToNext, "dage") : "";
+  const days = (n) => n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`;
   return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
       <p>${H3.inHeat ? `<b>${esc12(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
     ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H3.start ? `<div><small>Startede</small><b>${esc12(H3.start)}</b></div>` : ""}
-      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc12(H3.end)}</b></div>` : ""}
-      ${H3.next ? `<div><small>N\xE6ste ca.</small><b>${esc12(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>om ${H3.daysToNext} dage</em>` : ""}</div>` : ""}
+      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc12(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc12(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc12(H3.nextPhase.name)}</b><em>fra ${esc12(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
+      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc12(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
+      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc12(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
     <div class="pp-actions">
       ${H3.script && !H3.inHeat ? `<button class="pp-btn heat" data-heatstart><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
@@ -41305,7 +41323,7 @@ var PREMIUM_STYLE2 = `
 .pp-chip.heat{border-color:color-mix(in srgb,var(--pp-heat) 45%,transparent);background:color-mix(in srgb,var(--pp-heat) 12%,transparent)}.pp-chip.heat ha-icon{color:var(--pp-heat)}
 .pp-chip.danger{border-color:color-mix(in srgb,var(--pp-danger) 50%,transparent);background:color-mix(in srgb,var(--pp-danger) 14%,transparent)}.pp-chip.danger ha-icon{color:var(--pp-danger)}
 .pp-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}
-.pp-heat{grid-column:1/-1}
+.pp-heat{grid-column:1/-1}.pp-heat.active{order:-1}
 .pp-panel{position:relative;min-width:0;padding:18px;border-radius:22px;background:var(--pp-surface);border:1px solid var(--pp-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pp-food);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22))}
 .pp-supply{border-left-color:var(--pp-water)}.pp-supply.food{border-left-color:var(--pp-food)}.pp-supply.food .pp-hicon{background:color-mix(in srgb,var(--pp-food) 15%,transparent);color:var(--pp-food)}.pp-heat{border-left-color:var(--pp-heat)}
 .pp.intro .pp-panel,.pp.intro .pp-hero{animation:ppRise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d, 0) * .08s)}

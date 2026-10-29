@@ -41,8 +41,10 @@ heat:                                            # valgfri, kun i premium-looket
   og en til/fra-knap. Fodertilstanden (plan/manuel) skiftes i hjørnet.
 - **Foder og vand**: en foderbeholder, der fyldes efter procenten, gram, hvor mange dage det rækker, og en vandskål.
 - **Løbetid** (med `heat`): de ca. 21 dage som et bånd (blødning dag 1–8, mest frugtbar dag 9–14, sidste del), dagen
-  i dag markeret, slutdato og næste forventede løbetid. Uden for løbetiden er der en nedtælling og knappen "Hun er gået
-  i løbetid", der spørger om dagen og kalder `heat.script` med `dato: ÅÅÅÅ-MM-DD`.
+  i dag markeret, en ring med hvor langt hun er (%), hvor mange dage der er tilbage, næste fase og hvornår den
+  starter, og næste forventede løbetid. Mens hun er i løbetid, ligger panelet lige under toppen. Uden for løbetiden
+  er der en nedtælling, "Hold øje fra" (14 dage før) og knappen "Hun er gået i løbetid", der spørger om dagen og
+  kalder `heat.script` med `dato: ÅÅÅÅ-MM-DD`.
 
 Alt bevæger sig langsomt og stopper med `animation: false` eller "reducer bevægelse" i systemet. I stedet for `heat`
 kan de flade nøgler `heat_sensor`, `heat_start`, `heat_script` og `heat_calendar` bruges (dem viser editoren).

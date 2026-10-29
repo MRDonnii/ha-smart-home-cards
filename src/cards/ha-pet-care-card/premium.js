@@ -36,12 +36,19 @@ function heatModel(card) {
   const duration = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
   const day = Number(a.dag);
   const inHeat = Number.isFinite(day) && day >= 1 && day <= duration;
-  const date = (v) => { if (!v) return ""; const d = new Date(`${String(v).slice(0, 10)}T12:00:00`); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined }); };
+  const fmt = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+  const date = (v, shift = 0) => { if (!v) return ""; const d = new Date(`${String(v).slice(0, 10)}T12:00:00`); if (Number.isNaN(d.getTime())) return ""; d.setDate(d.getDate() + shift); return fmt(d); };
+  const inDays = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return fmt(d); };
   const phase = (d) => (d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late");
   const phaseText = { bleed: "Blødning", fertile: "Mest frugtbar", late: "Sidste del" };
   return {
     duration, day, inHeat, fase: String(a.fase || ""), phase: inHeat ? phase(day) : null, phaseText,
     start: date(card._state(h.start) || ""), end: date(a.forventet_slut), next: date(a.naeste_forventet), daysToNext: Number(a.dage_til_naeste),
+    // How far she is (Claude AI, 2026-10-29; user: "se hvor langt hun er i løbetid og hvornår næste ca starter"):
+    // days left, the next phase and when it starts, and outside the heat when to start watching (14 days before).
+    left: inHeat ? duration - day : null,
+    nextPhase: !inHeat ? null : day <= 8 ? { name: "Mest frugtbar", in: 9 - day, date: inDays(9 - day) } : day <= 14 ? { name: "Sidste del", in: 15 - day, date: inDays(15 - day) } : null,
+    watch: date(a.naeste_forventet, -14),
     script: h.script, calendar: h.calendar, sensor: h.sensor,
     // The same window as the front page tile: the 14 days before the expected heat, and up to 30 days late.
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? ""
@@ -57,17 +64,22 @@ function heatHtml(card, H, esc) {
     return `<i class="pp-cell ${ph}${state}" style="--i:${i}" title="Dag ${d}"></i>`;
   }).join("");
   const marker = H.inHeat ? `<span class="pp-heat-marker" style="left:calc(${((H.day - 0.5) / H.duration) * 100}% - 1px)"><b>Dag ${H.day}</b></span>` : "";
-  const ring = !H.inHeat && Number.isFinite(H.daysToNext) && H.daysToNext >= 0
-    ? `<div class="pp-heat-count"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="v" cx="32" cy="32" r="27" style="stroke-dashoffset:${(170 * Math.min(1, H.daysToNext / 183)).toFixed(1)}"/></svg><b>${H.daysToNext}</b><small>dage</small></div>` : "";
+  // In the heat the ring is how far she is (day of the cycle), outside it a countdown to the next.
+  const ringOf = (offset, big, small) => `<div class="pp-heat-count"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="v" cx="32" cy="32" r="27" style="stroke-dashoffset:${offset.toFixed(1)}"/></svg><b>${big}</b><small>${small}</small></div>`;
+  const ring = H.inHeat ? ringOf(170 * (1 - H.day / H.duration), `${Math.round((H.day / H.duration) * 100)}%`, "forløbet")
+    : Number.isFinite(H.daysToNext) && H.daysToNext >= 0 ? ringOf(170 * Math.min(1, H.daysToNext / 183), H.daysToNext, "dage") : "";
+  const days = (n) => (n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`);
   return `<section class="pp-panel pp-heat${H.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>Løbetid</h3>
       <p>${H.inHeat ? `<b>${esc(H.phaseText[H.phase])}</b> · dag ${H.day} af ca. ${H.duration} · hold hanner væk` : "Ikke i løbetid lige nu"}</p></div>${ring}</header>
     ${H.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Blødning (dag 1–8)</span><span class="fertile"><i></i>Mest frugtbar (9–14)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H.start ? `<div><small>Startede</small><b>${esc(H.start)}</b></div>` : ""}
-      ${H.inHeat && H.end ? `<div><small>Slutter ca.</small><b>${esc(H.end)}</b></div>` : ""}
-      ${H.next ? `<div><small>Næste ca.</small><b>${esc(H.next)}</b>${Number.isFinite(H.daysToNext) && H.daysToNext >= 0 ? `<em>om ${H.daysToNext} dage</em>` : ""}</div>` : ""}
+      ${H.start ? `<div><small>${H.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc(H.start)}</b></div>` : ""}
+      ${H.inHeat && H.end ? `<div><small>Slutter ca.</small><b>${esc(H.end)}</b><em>${H.left} ${H.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H.nextPhase ? `<div><small>Næste fase</small><b>${esc(H.nextPhase.name)}</b><em>fra ${esc(H.nextPhase.date)} · ${days(H.nextPhase.in)}</em></div>` : ""}
+      ${!H.inHeat && H.watch && H.daysToNext > 14 ? `<div><small>Hold øje fra</small><b>${esc(H.watch)}</b><em>${days(H.daysToNext - 14)}</em></div>` : ""}
+      ${H.next ? `<div><small>${H.inHeat ? "Næste løbetid ca." : "Næste ca."}</small><b>${esc(H.next)}</b>${Number.isFinite(H.daysToNext) && H.daysToNext >= 0 ? `<em>${days(H.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
     <div class="pp-actions">
       ${H.script && !H.inHeat ? `<button class="pp-btn heat" data-heatstart><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er gået i løbetid</button>` : ""}
@@ -193,7 +205,7 @@ export const PREMIUM_STYLE = `
 .pp-chip.heat{border-color:color-mix(in srgb,var(--pp-heat) 45%,transparent);background:color-mix(in srgb,var(--pp-heat) 12%,transparent)}.pp-chip.heat ha-icon{color:var(--pp-heat)}
 .pp-chip.danger{border-color:color-mix(in srgb,var(--pp-danger) 50%,transparent);background:color-mix(in srgb,var(--pp-danger) 14%,transparent)}.pp-chip.danger ha-icon{color:var(--pp-danger)}
 .pp-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}
-.pp-heat{grid-column:1/-1}
+.pp-heat{grid-column:1/-1}.pp-heat.active{order:-1}
 .pp-panel{position:relative;min-width:0;padding:18px;border-radius:22px;background:var(--pp-surface);border:1px solid var(--pp-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pp-food);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22))}
 .pp-supply{border-left-color:var(--pp-water)}.pp-supply.food{border-left-color:var(--pp-food)}.pp-supply.food .pp-hicon{background:color-mix(in srgb,var(--pp-food) 15%,transparent);color:var(--pp-food)}.pp-heat{border-left-color:var(--pp-heat)}
 .pp.intro .pp-panel,.pp.intro .pp-hero{animation:ppRise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d, 0) * .08s)}
