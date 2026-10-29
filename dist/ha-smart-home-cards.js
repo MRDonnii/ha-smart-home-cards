@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.234 */
+/* MRDonnii Smart Home Cards v0.5.235 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -447,10 +447,10 @@ function scanRuleMatches(states, rules) {
   return matches;
 }
 function ruleHeld(rule, entity, now = Date.now()) {
-  const minutes = Number(rule?.for_minutes);
-  if (!Number.isFinite(minutes) || minutes <= 0) return true;
+  const minutes2 = Number(rule?.for_minutes);
+  if (!Number.isFinite(minutes2) || minutes2 <= 0) return true;
   const changed = Date.parse(entity?.last_changed || "");
-  return Number.isFinite(changed) && now - changed >= minutes * 6e4;
+  return Number.isFinite(changed) && now - changed >= minutes2 * 6e4;
 }
 function matchSignature(states, rules, matches) {
   const timed = rules.filter((rule) => isFilterRule(rule) && Number(rule.for_minutes) > 0);
@@ -570,9 +570,9 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   _ago(iso) {
     const time = Date.parse(iso || "");
     if (!Number.isFinite(time)) return "";
-    const minutes = Math.max(0, Math.round((Date.now() - time) / 6e4));
-    if (minutes < 60) return minutes < 2 ? "lige nu" : `for ${minutes} min siden`;
-    const hours = Math.round(minutes / 60);
+    const minutes2 = Math.max(0, Math.round((Date.now() - time) / 6e4));
+    if (minutes2 < 60) return minutes2 < 2 ? "lige nu" : `for ${minutes2} min siden`;
+    const hours = Math.round(minutes2 / 60);
     if (hours < 36) return `for ${hours} t siden`;
     return `for ${Math.round(hours / 24)} dage siden`;
   }
@@ -1881,10 +1881,10 @@ var HARoborockVacuumCard = class extends HTMLElement {
   }
   _consumable(label, hoursLeft) {
     const warn = Number.isFinite(hoursLeft) && hoursLeft <= 0;
-    const pct2 = Number.isFinite(hoursLeft) ? Math.max(0, Math.min(100, hoursLeft / 300 * 100)) : 0;
+    const pct3 = Number.isFinite(hoursLeft) ? Math.max(0, Math.min(100, hoursLeft / 300 * 100)) : 0;
     return `<div class="consumable ${warn ? "warn" : ""}">
       <div class="consumable-head"><span>${label}</span><b>${Number.isFinite(hoursLeft) ? `${this._fmt(hoursLeft)} t` : "\u2014"}</b></div>
-      <div class="track"><i style="width:${pct2}%"></i></div>
+      <div class="track"><i style="width:${pct3}%"></i></div>
     </div>`;
   }
   _switchChip(id, label, icon4) {
@@ -2755,9 +2755,9 @@ var HaTeslaChargePopupCard = class extends HTMLElement {
     this._set("start", this._txt("bestStart"));
     this._set("end", this._txt("bestEnd"));
     this._set("price", `${this._fmt(this._n("estimate"), 2)} kr`);
-    const minutes = this._n("minutes");
-    this._set("duration", minutes == null ? "\u2014" : `${this._fmt(minutes)} min`);
-    const finish = minutes == null ? null : new Date(Date.now() + minutes * 6e4);
+    const minutes2 = this._n("minutes");
+    this._set("duration", minutes2 == null ? "\u2014" : `${this._fmt(minutes2)} min`);
+    const finish = minutes2 == null ? null : new Date(Date.now() + minutes2 * 6e4);
     this._set("finishNow", finish ? finish.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }) : "\u2014");
     this._set("hint", state === "busy-scheduled" ? "Lad nu tilsides\xE6tter Montas nuv\xE6rende ladeplan." : "Styringen sendes direkte til Monta-laderen.");
     const start = this.shadowRoot.querySelector('[data-action="start"]'), stop = this.shadowRoot.querySelector('[data-action="stop"]');
@@ -2806,9 +2806,9 @@ function dayWord(t, now) {
   if (days <= 0) return "";
   return days === 1 ? "i morgen " : `${new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "")} `;
 }
-function meanPrice(prices, minutes, t, e) {
+function meanPrice(prices, minutes2, t, e) {
   if (!Array.isArray(prices) || !prices.length) return NaN;
-  const len = (minutes || 15) * 6e4;
+  const len = (minutes2 || 15) * 6e4;
   let sum = 0;
   let n = 0;
   for (const x of prices) {
@@ -2818,7 +2818,7 @@ function meanPrice(prices, minutes, t, e) {
   }
   return n ? sum / n : NaN;
 }
-function ctlParts({ now = Date.now(), blocks = [], deadline = NaN, prices = [], minutes = 15 }) {
+function ctlParts({ now = Date.now(), blocks = [], deadline = NaN, prices = [], minutes: minutes2 = 15 }) {
   const list = blocks.filter((b) => Number.isFinite(b.t) && Number.isFinite(b.e) && b.e > now).sort((a, b) => a.t - b.t);
   const runs = [];
   for (const b of list) {
@@ -2833,7 +2833,7 @@ function ctlParts({ now = Date.now(), blocks = [], deadline = NaN, prices = [], 
   let cursor = now;
   runs.forEach((b, i) => {
     const t = Math.max(b.t, now);
-    if (t - cursor >= 6e4) parts.push({ kind: i === 0 ? "wait" : "pause", t: cursor, e: t, price: meanPrice(prices, minutes, cursor, t) });
+    if (t - cursor >= 6e4) parts.push({ kind: i === 0 ? "wait" : "pause", t: cursor, e: t, price: meanPrice(prices, minutes2, cursor, t) });
     parts.push({ kind: "charge", t, e: b.e, kwh: b.kwh, cost: b.cost, n: i + 1, of: runs.length, price: b.kwh > 0 ? b.cost / b.kwh : NaN, running: b.t <= now });
     cursor = b.e;
   });
@@ -3418,8 +3418,8 @@ function ttdIsClock(text) {
   return typeof text === "string" && /^\d{1,2}[:.]\d{2}(?::\d{2})?$/.test(text.trim());
 }
 function ttdClock(text) {
-  const [hours, minutes] = String(text).trim().split(/[:.]/);
-  return `${hours.padStart(2, "0")}:${minutes}`;
+  const [hours, minutes2] = String(text).trim().split(/[:.]/);
+  return `${hours.padStart(2, "0")}:${minutes2}`;
 }
 function ttdHumanize(value) {
   const text = String(value ?? "").replace(/[_-]+/g, " ").trim();
@@ -3527,9 +3527,9 @@ var TtdFormat = class {
     const date2 = ttdToDate(value);
     return date2 ? `${this.relativeDay(date2)} ${TTD_TEXT.at} ${this.time(date2)}` : TTD_DASH;
   }
-  duration(minutes) {
-    if (minutes == null || !Number.isFinite(minutes) || minutes < 0) return TTD_DASH;
-    const total = Math.round(minutes);
+  duration(minutes2) {
+    if (minutes2 == null || !Number.isFinite(minutes2) || minutes2 < 0) return TTD_DASH;
+    const total = Math.round(minutes2);
     const days = Math.floor(total / 1440);
     const hours = Math.floor(total % 1440 / 60);
     const mins = total % 60;
@@ -4968,7 +4968,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const price = this._num("best_charge_price");
     const priceUnit = this._unit("best_charge_price", "kr.");
     const minutesRaw = this._num("charge_minutes_needed");
-    const minutes = minutesRaw == null ? null : String(this._attr("charge_minutes_needed", "unit_of_measurement")) === "h" ? minutesRaw * 60 : minutesRaw;
+    const minutes2 = minutesRaw == null ? null : String(this._attr("charge_minutes_needed", "unit_of_measurement")) === "h" ? minutesRaw * 60 : minutesRaw;
     const deadline = this._deadlineModel(f);
     const targetId = this._targetEntity();
     const targetControl = this._control("target_soc");
@@ -4988,7 +4988,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       bestPrice: !reached && price != null ? ttdJoin(f.number(price, 2), priceUnit) : TTD_DASH,
       bestPriceKwh: !reached && price != null && price > 0 && missing != null && missing > 0 ? `\u2248 ${f.number(price / missing, 2)} ${ttdPerKwh(priceUnit)}` : "",
       missing: missing == null ? TTD_DASH : ttdJoin(f.number(Math.max(0, missing), 1), this._unit("missing_wall_kwh", "kWh")),
-      minutes: minutes == null ? TTD_DASH : f.duration(Math.max(0, minutes)),
+      minutes: minutes2 == null ? TTD_DASH : f.duration(Math.max(0, minutes2)),
       applyVisible: !!this._control("apply_plan") && !reached,
       soc,
       targetKnown: !!targetId,
@@ -5573,8 +5573,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     });
     const marks = [deadline && deadline.getTime() <= until2 ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until2 ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
     const next = blocks[0];
-    const minutes = Number(plan.slot_minutes) || 15;
-    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until2);
+    const minutes2 = Number(plan.slot_minutes) || 15;
+    const slots = (Array.isArray(plan.prices) ? plan.prices : []).map((x) => ({ s: Date.parse(x?.t), p: Number(x?.p), est: !!x?.e })).map((x) => ({ ...x, e: x.s + minutes2 * 6e4 })).filter((x) => Number.isFinite(x.s) && Number.isFinite(x.p) && x.e > now && x.s < until2);
     const lo = Math.min(...slots.map((x) => x.p)), hi = Math.max(...slots.map((x) => x.p));
     const limitOn = mode === "smart" && this._sc("smart_price_limit")?.state === "on" && (plan.limit_ask == null || plan.limit_ask === true || this._sc("price_limit_wait")?.state === "on");
     const limitP = limitOn && plan.price_limit != null && Number.isFinite(Number(plan.price_limit)) ? Number(plan.price_limit) : null;
@@ -6320,7 +6320,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const currency = ttdUnit(useLedger ? a.price_currency || ledger.attributes?.unit_of_measurement : a.currency?.identifier?.toUpperCase());
     const start = ttdToDate(useLedger ? a.started_at : a.startedAt);
     const end = ttdToDate(useLedger ? a.ended_at : a.stoppedAt);
-    const minutes = start && end ? (end - start) / 6e4 : null;
+    const minutes2 = start && end ? (end - start) / 6e4 : null;
     const fromSoc = ttdToNumber(useLedger ? a.start_battery_pct : null);
     const toSoc = ttdToNumber(useLedger ? a.end_battery_pct : a.soc?.percentage);
     const foot = source ? [
@@ -6342,7 +6342,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       kwh: kwh == null ? TTD_DASH : `${f.number(kwh, 2)} kWh`,
       price: price == null ? TTD_DASH : ttdJoin(f.number(price, 2), currency || "kr."),
       start: start ? `${f.date(start)} ${f.time(start)}` : TTD_DASH,
-      duration: minutes == null || minutes < 0 ? TTD_DASH : f.duration(minutes),
+      duration: minutes2 == null || minutes2 < 0 ? TTD_DASH : f.duration(minutes2),
       foot,
       montaLine
     };
@@ -8990,12 +8990,12 @@ var HAEvTyreCard = class extends HTMLElement {
   _treadBar(set) {
     if (set.tread_mm == null) return "";
     const max = Math.max(8, set.tread_mm);
-    const pct2 = Math.min(100, set.tread_mm / max * 100);
+    const pct3 = Math.min(100, set.tread_mm / max * 100);
     const minPct = set.tread_min_mm / max * 100;
     const tone2 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
     const left = set.km_left != null ? ` \xB7 ca. ${num2(set.km_left)} km tilbage` : "";
     return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num2(set.tread_mm, 1)} mm</b></div>
-      <div class="tread-bar"><i style="width:${pct2.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
+      <div class="tread-bar"><i style="width:${pct3.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
       <small>Anbefalet min. ${num2(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num2(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc5(dayShort(set.tread_at))}</small></div>`;
   }
   _currentHtml(set, k) {
@@ -9886,7 +9886,7 @@ var HALightSceneCard = class extends HTMLElement {
     const value = Number(bE?.state);
     const min = Number(bE?.attributes?.min) || 0;
     const max = Number(bE?.attributes?.max) || 100;
-    const pct2 = Number.isFinite(value) ? Math.min(100, Math.max(0, (value - min) / (max - min) * 100)) : 0;
+    const pct3 = Number.isFinite(value) ? Math.min(100, Math.max(0, (value - min) / (max - min) * 100)) : 0;
     const unit = bE?.attributes?.unit_of_measurement || "%";
     const cE = this._e(light.color_entity);
     const options = cE?.attributes?.options || [];
@@ -9902,7 +9902,7 @@ var HALightSceneCard = class extends HTMLElement {
           <button class="step-btn" data-step="1" data-entity="${this._esc(light.brightness_entity)}"><ha-icon icon="mdi:plus"></ha-icon></button>
         </div>` : ""}
       </div>
-      ${light.brightness_entity ? `<div class="bar"><i style="width:${pct2}%"></i></div>` : ""}
+      ${light.brightness_entity ? `<div class="bar"><i style="width:${pct3}%"></i></div>` : ""}
       ${light.color_entity && options.length ? `<div class="swatches">${options.map(
       (opt) => `<button class="swatch ${opt === current ? "selected" : ""}" data-color-entity="${this._esc(light.color_entity)}" data-color="${this._esc(opt)}" style="--sw:${COLOR_SWATCH[opt] || "#888"}" title="${this._esc(opt)}">${opt === current ? '<ha-icon icon="mdi:check"></ha-icon>' : ""}</button>`
     ).join("")}</div>` : ""}
@@ -11938,13 +11938,13 @@ var HAACClimateCard = class extends HTMLElement {
   }
   _live(unit, s) {
     const maxPower = Number(unit.max_power) || 1500;
-    const pct2 = s.power !== void 0 ? Math.max(2, Math.min(100, s.power / maxPower * 100)) : 0;
+    const pct3 = s.power !== void 0 ? Math.max(2, Math.min(100, s.power / maxPower * 100)) : 0;
     const copPct = s.cop !== void 0 ? Math.max(1e-3, Math.min(1, s.cop / 6)) : 1e-3;
     const a = Math.PI * (1 - copPct);
     const end = `${(40 + 32 * Math.cos(a)).toFixed(1)} ${(40 - 32 * Math.sin(a)).toFixed(1)}`;
     const tile2 = (icon4, label, value) => `<div class="tile"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
     const tiles = [];
-    if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct2}%"></b></i></div></div>`);
+    if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct3}%"></b></i></div></div>`);
     if (unit.output) tiles.push(tile2("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
     if (unit.cop) tiles.push(`<div class="tile gauge"><svg viewBox="0 0 80 46"><path d="M8 40 A32 32 0 0 1 72 40" class="track"/><path d="M8 40 A32 32 0 0 1 ${end}" class="val"/></svg><div><strong>${this._format(s.cop, 1)}</strong><span>COP</span></div></div>`);
     if (unit.outdoor) tiles.push(tile2("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}\xB0`));
@@ -13997,15 +13997,15 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     return map;
   }
   /** Quarters or whole hours from the card: EV Ledger's select when there is one (the plans follow), else only this view. */
-  _setResolution(minutes) {
-    if (minutes === 15 && !this._hasQuarters && this._source() === "stromligning") {
+  _setResolution(minutes2) {
+    if (minutes2 === 15 && !this._hasQuarters && this._source() === "stromligning") {
       this._enableStromligningQuarters();
       return;
     }
     const id = this._resolutionEntity();
     const entity = this._entity(id);
     if (entity && ["select", "input_select"].includes(id.split(".")[0])) {
-      const wanted = minutes === 60 ? ["hour", "time", "60", "1h", "hourly"] : ["quarter", "kvarter", "15", "15m"];
+      const wanted = minutes2 === 60 ? ["hour", "time", "60", "1h", "hourly"] : ["quarter", "kvarter", "15", "15m"];
       const option = (entity.attributes?.options || []).find((o) => wanted.includes(String(o).toLowerCase()));
       if (option) {
         this._hass.callService(id.split(".")[0], "select_option", { entity_id: id, option });
@@ -14013,7 +14013,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       }
     }
     try {
-      localStorage.setItem("ha-electricity-price-card:resolution", minutes === 60 ? "hour" : "quarter");
+      localStorage.setItem("ha-electricity-price-card:resolution", minutes2 === 60 ? "hour" : "quarter");
     } catch (_err) {
     }
     this._render();
@@ -14113,9 +14113,9 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       const key = hour.getTime();
       if (!hours.has(key)) hours.set(key, { start: key, end: key + 36e5, sum: 0, minutes: 0 });
       const slot = hours.get(key);
-      const minutes = (p.end - p.start) / 6e4;
-      slot.sum += p.price * minutes;
-      slot.minutes += minutes;
+      const minutes2 = (p.end - p.start) / 6e4;
+      slot.sum += p.price * minutes2;
+      slot.minutes += minutes2;
     });
     return [...hours.values()].map((h) => ({ start: h.start, end: h.end, price: h.sum / h.minutes }));
   }
@@ -14235,8 +14235,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
         b = stops[i + 1];
         break;
       }
-    const pct2 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
-    return `color-mix(in oklab,${a[1]} ${100 - pct2}%,${b[1]} ${pct2}%)`;
+    const pct3 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
+    return `color-mix(in oklab,${a[1]} ${100 - pct3}%,${b[1]} ${pct3}%)`;
   }
   _pulse(value) {
     return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
@@ -15183,7 +15183,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     if (!adv || !this._h) return;
     const C2 = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch2 = chIn === void 0 ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
     const cur = this.n(C2.current), mean = this.n(C2.mean), rel = mean ? cur / mean : 1, lvN = this.level(cur), col = LEVEL_COL[lvN];
-    const W2 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct2 = (v) => {
+    const W2 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct3 = (v) => {
       const r = mean ? Math.round((v / mean - 1) * 100) : 0;
       return `${r >= 0 ? "+" : "\u2212"}${Math.abs(r)} %`;
     };
@@ -15200,10 +15200,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W2(S.lastA)}${S.fc.length ? " \xB7 derefter prognose" : ""}` : "Prognose";
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null), worst = win.reduce((m, c2) => !m || c2.avg > m.avg ? c2 : m, null);
     const nb = win.filter((c2) => c2.s > now + 9e5 && c2.s <= now + 8 * 36e5 && c2.avg < cur * 0.85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb;
-    const sm = lvN === 0 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W2(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb ? ` Billigst bliver det ${W2(nb.s)} (\xD8 ${tn(nb.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct2(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W2(nb.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
+    const sm = lvN === 0 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W2(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb ? ` Billigst bliver det ${W2(nb.s)} (\xD8 ${tn(nb.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct3(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W2(nb.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
     let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? "leaf" : lvN >= 2 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
-    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct2(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
-      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct2(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
+    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct3(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
+      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct3(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
     const hrOk = (hrs) => (s, dur3) => {
       if (!hrs) return true;
       const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5;
@@ -27569,10 +27569,10 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     return Math.min(240, Math.max(6, hours));
   }
   _duration(ms) {
-    const minutes = Math.round(ms / 6e4);
-    if (minutes < 1) return "under 1 min";
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60), rest2 = minutes % 60;
+    const minutes2 = Math.round(ms / 6e4);
+    if (minutes2 < 1) return "under 1 min";
+    if (minutes2 < 60) return `${minutes2} min`;
+    const hours = Math.floor(minutes2 / 60), rest2 = minutes2 % 60;
     return rest2 ? `${hours} t ${rest2} min` : `${hours} t`;
   }
   // Tæller perioder med tilstanden "on" i historikken og deres samlede varighed inden for vinduet.
@@ -30453,8 +30453,8 @@ var HAPowerFlowCard = class extends HTMLElement {
       b = stops[i + 1];
       break;
     }
-    const pct2 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
-    return `color-mix(in oklab,${a[1]} ${100 - pct2}%,${b[1]} ${pct2}%)`;
+    const pct3 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
+    return `color-mix(in oklab,${a[1]} ${100 - pct3}%,${b[1]} ${pct3}%)`;
   }
   _pulse(value) {
     return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
@@ -31778,9 +31778,9 @@ var HAAirQualityCard = class extends HTMLElement {
     return new Date(time).toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" });
   }
   _duration(ms) {
-    const minutes = Math.round(ms / 6e4);
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60), rest2 = minutes % 60;
+    const minutes2 = Math.round(ms / 6e4);
+    if (minutes2 < 60) return `${minutes2} min`;
+    const hours = Math.floor(minutes2 / 60), rest2 = minutes2 % 60;
     return rest2 ? `${hours} t ${rest2} min` : `${hours} t`;
   }
   _escape(value) {
@@ -31808,10 +31808,10 @@ var HAAirQualityCard = class extends HTMLElement {
       const ly = y(limit.value).toFixed(1);
       return `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${ly}" y2="${ly}" class="limit" style="stroke:var(--${limit.above})"/>`;
     }).join("");
-    const pct2 = (value) => `${(value / W * 100).toFixed(2)}%`;
-    const labels = shown.map((limit) => `<span class="lim" style="left:${pct2(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
+    const pct3 = (value) => `${(value / W * 100).toFixed(2)}%`;
+    const labels = shown.map((limit) => `<span class="lim" style="left:${pct3(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
     const hours = this._hours();
-    const ticks2 = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct2(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct2(W - PAD.r)}">Nu</span>`;
+    const ticks2 = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct3(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct3(W - PAD.r)}">Nu</span>`;
     return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO\u2082" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks2}</div>`;
   }
   _co2Chart(points) {
@@ -32262,10 +32262,10 @@ var HARoomControlCard = class extends HTMLElement {
     const tiles = d.lights.map((id) => {
       const s = this._st(id);
       const on = s.state === "on";
-      const pct2 = this._pct(s);
+      const pct3 = this._pct(s);
       const dead = DEAD3.has(s.state);
       const dim = (s.attributes?.supported_color_modes || []).some((x) => x !== "onoff");
-      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc6(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct2}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc6(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc6(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct2}%` : "Til" : "Fra"}</span></button>`;
+      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc6(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct3}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc6(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc6(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct3}%` : "Til" : "Fra"}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Lys</h4><span class="cnt">${lit}/${d.lights.length}</span><i class="rule"></i></div><div class="lights">${tiles.join("")}</div></section>`;
   }
@@ -33288,17 +33288,17 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (!out.length && l.state === "on" && Array.isArray(l.attributes?.rgb_color)) out.push(l.attributes.rgb_color.slice(0, 3).map((v) => Math.round(v)));
     return out;
   }
-  _lightVars(l, on, pct2) {
+  _lightVars(l, on, pct3) {
     const cols = on ? this._lightColors(l) : [];
-    if (!cols.length) return `--lv:${on ? pct2 : 0}%`;
+    if (!cols.length) return `--lv:${on ? pct3 : 0}%`;
     const stops = cols.length === 1 ? [`rgba(${cols[0]},.18)`, `rgba(${cols[0]},.45)`] : cols.map((c2, i) => `rgba(${c2},${(0.22 + 0.23 * i / (cols.length - 1)).toFixed(2)})`);
-    return `--lv:${pct2}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
+    return `--lv:${pct3}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
   }
   // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
   // batteri niveau").
-  _batteryIcon(icon4, pct2) {
+  _batteryIcon(icon4, pct3) {
     if (!icon4) return;
-    const name = !Number.isFinite(pct2) ? "mdi:battery-unknown" : pct2 >= 95 ? "mdi:battery" : pct2 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct2 / 10) * 10)}`;
+    const name = !Number.isFinite(pct3) ? "mdi:battery-unknown" : pct3 >= 95 ? "mdi:battery" : pct3 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct3 / 10) * 10)}`;
     if (icon4.getAttribute("icon") !== name) icon4.setAttribute("icon", name);
   }
   _metric(node, text, missing, low = false) {
@@ -35085,7 +35085,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       const m = Math.round((Date.now() - Date.parse(t)) / 6e4);
       return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`;
     };
-    const pct2 = (l) => Math.round((l.attributes?.brightness ?? 255) / 255 * 100);
+    const pct3 = (l) => Math.round((l.attributes?.brightness ?? 255) / 255 * 100);
     this._config.rooms.forEach((r, i) => {
       const host = this.shadowRoot.querySelector(`.zone[data-room="${i}"] [data-f="roominfo"]`);
       if (!host) return;
@@ -35113,7 +35113,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (l) {
         const on = l.state === "on";
         const dim = (l.attributes?.supported_color_modes || []).some((m) => m !== "onoff");
-        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, pct2(l))}" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct2(l)} %` : "Fra"}</span></button>`);
+        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, pct3(l))}" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct3(l)} %` : "Fra"}</span></button>`);
       }
       (info?.actions || []).slice(0, 2).forEach((x) => {
         const s2 = st(x.entity);
@@ -35621,17 +35621,17 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const area = path && pts.length > 1 ? `${path} L${last[0].toFixed(2)} ${H3} L${first[0].toFixed(2)} ${H3} Z` : "";
     const grid = [];
     for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) grid.push(v);
-    const pct2 = (v) => (y(v) / H3 * 100).toFixed(2);
+    const pct3 = (v) => (y(v) / H3 * 100).toFixed(2);
     let zones = "", lines = "", tag = "";
     if (target2 !== void 0) {
       const hi = y(target2 + 0.35), lo = y(target2 - 0.35);
       zones = `<clipPath id="tt-a-${index}"><rect x="-5" y="-50" width="${W2 + 10}" height="${(hi + 50).toFixed(2)}"/></clipPath><clipPath id="tt-t-${index}"><rect x="-5" y="${hi.toFixed(2)}" width="${W2 + 10}" height="${(lo - hi).toFixed(2)}"/></clipPath><clipPath id="tt-b-${index}"><rect x="-5" y="${lo.toFixed(2)}" width="${W2 + 10}" height="${(H3 - lo + 50).toFixed(2)}"/></clipPath>`;
       lines = `<rect x="0" y="${hi.toFixed(2)}" width="${W2}" height="${(lo - hi).toFixed(2)}" class="target-band"/><line x1="0" x2="${W2}" y1="${y(target2).toFixed(2)}" y2="${y(target2).toFixed(2)}" class="target-line"/>${path ? `<path d="${path}" class="temperature-line above" clip-path="url(#tt-a-${index})"/><path d="${path}" class="temperature-line on" clip-path="url(#tt-t-${index})"/><path d="${path}" class="temperature-line below" clip-path="url(#tt-b-${index})"/>` : ""}`;
-      tag = `<span class="target-tag" style="top:${pct2(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
+      tag = `<span class="target-tag" style="top:${pct3(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
     } else if (path) lines = `<path d="${path}" class="temperature-line on"/>`;
     const tone2 = target2 === void 0 || state.current === void 0 ? "on" : state.current > target2 + 0.35 ? "above" : state.current < target2 - 0.35 ? "below" : "on";
     const dot = last ? `<span class="now-dot ${tone2}" style="top:${(last[1] / H3 * 100).toFixed(2)}%"></span>` : "";
-    return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct2(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
+    return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct3(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
   }
   _graphPoint(box, fraction) {
     const g = this._graphs[Number(box.closest("article")?.dataset.index)];
@@ -38270,7 +38270,7 @@ var HaHomeStatusCard = class extends HTMLElement {
   connectedCallback() {
     this._cycleTimer = setInterval(() => {
       const type = this.config?.preset || this.config?.type_name;
-      if (type === "ev") {
+      if (type === "ev" || type === "pet" && this._petHeat) {
         this._evCycle = (this._evCycle + 1) % 2;
         this.render();
       }
@@ -38314,6 +38314,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       cfg.blocked_by_entity,
       cfg.off_count_entity,
       cfg.secondary_entity,
+      cfg.heat_entity,
       ...Object.values(this.smartIds(cfg.smart_charge) || {}),
       ...cfg.phase_entities || [],
       ...cfg.status_entities || [],
@@ -38330,7 +38331,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     const ids = [...this._watchedIds(), this.config?.style_entity].filter(Boolean);
     const sig = JSON.stringify(
       ids.map((id) => [id, hass?.states?.[id]?.state])
-    );
+    ) + (this.config?.heat_entity ? hass?.states?.[this.config.heat_entity]?.last_updated || "" : "");
     if (sig !== this._sig) {
       this._sig = sig;
       this.render();
@@ -38486,6 +38487,12 @@ var HaHomeStatusCard = class extends HTMLElement {
       const mode = this.text(cfg.entity, "Auto");
       value = error ? "Fejl" : mode === "schedule" ? "Auto" : mode;
       detail = `${done}/${statuses.length} m\xE5ltider`;
+      const heat = this.petHeat(cfg);
+      this._petHeat = !!heat;
+      if (heat && this._evCycle % 2 === 1) {
+        detail = heat;
+        cfg.detailHeat = true;
+      }
       meter = done;
       cfg.segments = statuses.length || 5;
       if (statuses.length) cfg.segmentStates = statuses.map((s) => /givet|færdig|done/.test(s) ? "on" : /missed|glemt|sprunget/.test(s) ? "missed" : "");
@@ -38638,6 +38645,21 @@ var HaHomeStatusCard = class extends HTMLElement {
       color,
       pricePulse
     };
+  }
+  // The pet's heat cycle text for the tile, or null outside the heat and the `heat_lead_days` (14) before it. A heat
+  // that has not been registered by the expected day says "ventes nu" for up to 30 days.
+  petHeat(cfg) {
+    const st = this.state(cfg.heat_entity);
+    if (!st) return null;
+    const a = st.attributes || {};
+    const length = Number(/(\d+)\s*$/.exec(st.state)?.[1]) || Number(cfg.heat_days) || 21;
+    const day2 = Number(a.dag);
+    if (a.dag != null && Number.isFinite(day2) && day2 >= 1 && day2 <= length)
+      return day2 >= 9 && day2 <= 14 ? `Frugtbar \xB7 dag ${day2}/${length}` : `L\xF8betid dag ${day2}/${length}`;
+    const left = Number(a.dage_til_naeste);
+    if (a.dage_til_naeste == null || a.dage_til_naeste === "" || !Number.isFinite(left)) return null;
+    if (left > Number(cfg.heat_lead_days ?? 14) || left < -30) return null;
+    return left > 1 ? `L\xF8betid om ca. ${left} dage` : left === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu";
   }
   // The heat pumps' combined state for the heating tile: null when none runs.
   acMode() {
@@ -38907,6 +38929,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .item:not(.security) .label{--bleed:var(--px);margin-inline:calc(-1 * var(--px));padding-inline:var(--px);max-width:none;text-overflow:clip;border-top-color:transparent;background:linear-gradient(color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent),color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)) var(--px) 0/calc(100% - 2 * var(--px)) 1px no-repeat;background-origin:border-box}
       :host([v2]) .item:not(.security) .marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
+      /* The pet's heat cycle in the detail line (Claude AI, 2026-10-29). */
+      .detail.heat,:host([v2]) .detail.heat{color:#ff6fa5;font-weight:700}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile2 = this.shadowRoot.querySelector(".item");
       tile2.addEventListener("click", () => {
@@ -38976,6 +39000,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
     setText(".detail", esc12(item2.detail || " "));
+    this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
     if (item2.type === "heating") {
       const l = this.shadowRoot.querySelector(".label");
       l._marqueeHtml = void 0;
@@ -39057,8 +39082,9 @@ var HaHomeStatusCardEditor = class extends HTMLElement {
     const options = Object.keys(PRESETS).map(
       (key) => `<option value="${key}" ${this.config?.preset === key ? "selected" : ""}>${PRESETS[key].name}</option>`
     ).join("");
+    const heatField = this.config?.preset === "pet" ? `<label>L\xF8betidssensor (valgfri, fx sensor.hund_lobetid)</label><input id="heat-entity" style="box-sizing:border-box;width:100%;padding:9px" value="${String(this.config.heat_entity || "").replace(/"/g, "&quot;")}" placeholder="sensor.\u2026_lobetid">` : "";
     const inversion = this.config?.preset === "security" ? `<label class="check"><input id="gate-lock-inverted" type="checkbox" ${this.config.gate_lock_inverted !== false ? "checked" : ""}>Portkontakt er omvendt (\xE5ben = l\xE5st)</label>` : "";
-    this.innerHTML = `<style>select{box-sizing:border-box;width:100%;padding:10px}label{display:block;margin:8px 0 4px}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;height:18px}</style><label>Kortfunktion</label><select>${options}</select>${inversion}`;
+    this.innerHTML = `<style>select{box-sizing:border-box;width:100%;padding:10px}label{display:block;margin:8px 0 4px}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;height:18px}</style><label>Kortfunktion</label><select>${options}</select>${inversion}${heatField}`;
     this.querySelector("select").addEventListener(
       "change",
       (event) => this.dispatchEvent(
@@ -39071,6 +39097,12 @@ var HaHomeStatusCardEditor = class extends HTMLElement {
     );
     this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config));
     wireLookEditor(this, this, () => this.config);
+    this.querySelector("#heat-entity")?.addEventListener("change", (event) => {
+      const config = { ...this.config };
+      if (event.target.value.trim()) config.heat_entity = event.target.value.trim();
+      else delete config.heat_entity;
+      this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
+    });
     this.querySelector("#gate-lock-inverted")?.addEventListener(
       "change",
       (event) => this.dispatchEvent(
@@ -39723,9 +39755,9 @@ ${LUX_KEYFRAMES}
     const ours = yDay >= 1 ? byDay.get(yDay) : void 0;
     const theirs = lastM.find((d) => new Date(d.t).getDate() === yDay)?.v;
     if (Number.isFinite(ours) && Number.isFinite(theirs) && theirs > 0) {
-      const pct2 = (ours - theirs) / theirs * 100;
-      if (Math.abs(pct2) < 3) chip = `<span class="uchip same" title="Som sidste m\xE5ned p\xE5 samme tid">\u2248 sidste md.</span>`;
-      else chip = `<span class="uchip ${pct2 > 0 ? "up" : "down"}" title="Mod sidste m\xE5ned p\xE5 samme tid">${pct2 > 0 ? "\u25B2" : "\u25BC"} ${this._fmt(Math.abs(pct2), 0)} %</span>`;
+      const pct3 = (ours - theirs) / theirs * 100;
+      if (Math.abs(pct3) < 3) chip = `<span class="uchip same" title="Som sidste m\xE5ned p\xE5 samme tid">\u2248 sidste md.</span>`;
+      else chip = `<span class="uchip ${pct3 > 0 ? "up" : "down"}" title="Mod sidste m\xE5ned p\xE5 samme tid">${pct3 > 0 ? "\u25B2" : "\u25BC"} ${this._fmt(Math.abs(pct3), 0)} %</span>`;
     }
     const todayUse = clean[today - 1];
     const elapsed = (now - m0) / 864e5;
@@ -41058,8 +41090,312 @@ var HACardListEditor9 = class extends HTMLElement {
 };
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor9);
 
+// src/cards/ha-pet-care-card/premium.js
+var MEAL_COLORS = { done: "var(--pp-good)", pending: "var(--pp-food)", missed: "var(--pp-danger)", skipped: "var(--pp-muted)", disabled: "var(--pp-muted)" };
+var DAY_START = 6 * 60;
+var DAY_END = 22 * 60;
+var pawSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.35 3c1.18-.17 2.43 1.12 2.79 2.9.36 1.77-.29 3.35-1.47 3.53-1.17.18-2.43-1.11-2.8-2.89C6.5 4.77 7.17 3.19 8.35 3m7.15 0c1.19.19 1.85 1.77 1.5 3.54-.38 1.78-1.63 3.07-2.81 2.89-1.19-.18-1.84-1.76-1.47-3.53.36-1.78 1.61-3.07 2.78-2.9M3 7.6c1.14-.49 2.69.4 3.5 1.95.76 1.58.5 3.24-.63 3.73-1.13.49-2.67-.39-3.46-1.96C1.62 9.75 1.9 8.08 3 7.6m18 0c1.1.48 1.38 2.15.59 3.72-.79 1.57-2.33 2.45-3.46 1.96-1.13-.49-1.39-2.15-.63-3.73C18.31 8 19.86 7.11 21 7.6m-1.67 10.78c.04.94-.68 1.98-1.54 2.37-1.79.82-3.91-.88-5.9-.88-1.99 0-4.13 1.77-5.89.88-1-.49-1.69-1.79-1.56-2.87.18-1.49 1.95-2.29 3.01-3.38 1.41-1.41 2.41-4.06 4.44-4.06 2.02 0 3.08 2.61 4.44 4.06 1.12 1.23 2.99 2.27 3 3.88"/></svg>';
+var minutes = (hhmm3) => {
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm3 || ""));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+var nowMinutes = () => {
+  const d = /* @__PURE__ */ new Date();
+  return d.getHours() * 60 + d.getMinutes();
+};
+var pct = (m) => Math.max(0, Math.min(100, (m - DAY_START) / (DAY_END - DAY_START) * 100));
+function premiumCountdown(meal) {
+  const t = minutes(meal?.time);
+  if (t == null) return "";
+  const left = t - nowMinutes();
+  if (left <= 0) return "nu";
+  const h = Math.floor(left / 60);
+  const m = left % 60;
+  return h ? `om ${h} t${m ? ` ${m} min` : ""}` : `om ${m} min`;
+}
+function premiumTick(root, card) {
+  const now = pct(nowMinutes());
+  root.querySelector(".pp-progress")?.style.setProperty("width", `${now}%`);
+  root.querySelector(".pp-now")?.style.setProperty("left", `${now}%`);
+  const el = root.querySelector("[data-countdown]");
+  if (el) {
+    const meal = (card._config.meals || [])[Number(el.dataset.countdown)];
+    el.textContent = premiumCountdown(meal);
+  }
+}
+function heatModel(card) {
+  const h = card._config.heat;
+  if (!h?.sensor) return null;
+  const st = card._entity(h.sensor);
+  if (!st) return null;
+  const a = st.attributes || {};
+  const duration2 = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
+  const day2 = Number(a.dag);
+  const inHeat = Number.isFinite(day2) && day2 >= 1 && day2 <= duration2;
+  const date2 = (v) => {
+    if (!v) return "";
+    const d = /* @__PURE__ */ new Date(`${String(v).slice(0, 10)}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+  };
+  const phase = (d) => d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
+  const phaseText = { bleed: "Bl\xF8dning", fertile: "Mest frugtbar", late: "Sidste del" };
+  return {
+    duration: duration2,
+    day: day2,
+    inHeat,
+    fase: String(a.fase || ""),
+    phase: inHeat ? phase(day2) : null,
+    phaseText,
+    start: date2(card._state(h.start) || ""),
+    end: date2(a.forventet_slut),
+    next: date2(a.naeste_forventet),
+    daysToNext: Number(a.dage_til_naeste),
+    script: h.script,
+    calendar: h.calendar,
+    sensor: h.sensor,
+    // The same window as the front page tile: the 14 days before the expected heat, and up to 30 days late.
+    soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? "" : a.dage_til_naeste > 1 ? `L\xF8betid om ca. ${a.dage_til_naeste} dage` : a.dage_til_naeste === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu"
+  };
+}
+function heatHtml(card, H3, esc12) {
+  if (!H3) return "";
+  const cells = Array.from({ length: H3.duration }, (_, i) => {
+    const d = i + 1;
+    const ph2 = d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
+    const state = !H3.inHeat ? "" : d < H3.day ? " past" : d === H3.day ? " today" : "";
+    return `<i class="pp-cell ${ph2}${state}" style="--i:${i}" title="Dag ${d}"></i>`;
+  }).join("");
+  const marker = H3.inHeat ? `<span class="pp-heat-marker" style="left:calc(${(H3.day - 0.5) / H3.duration * 100}% - 1px)"><b>Dag ${H3.day}</b></span>` : "";
+  const ring = !H3.inHeat && Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<div class="pp-heat-count"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/><circle class="v" cx="32" cy="32" r="27" style="stroke-dashoffset:${(170 * Math.min(1, H3.daysToNext / 183)).toFixed(1)}"/></svg><b>${H3.daysToNext}</b><small>dage</small></div>` : "";
+  return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
+    <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
+      <p>${H3.inHeat ? `<b>${esc12(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
+    ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
+    <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
+    <div class="pp-facts">
+      ${H3.start ? `<div><small>Startede</small><b>${esc12(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc12(H3.end)}</b></div>` : ""}
+      ${H3.next ? `<div><small>N\xE6ste ca.</small><b>${esc12(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>om ${H3.daysToNext} dage</em>` : ""}</div>` : ""}
+    </div>
+    <div class="pp-actions">
+      ${H3.script && !H3.inHeat ? `<button class="pp-btn heat" data-heatstart><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
+      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc12(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
+    </div>
+    <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
+  </section>`;
+}
+function premiumHtml(card) {
+  const c2 = card._config;
+  const esc12 = (v) => card._escape(v);
+  const meals = c2.meals || [];
+  const info = meals.map((meal, i) => {
+    const skipped = card._on(meal.skip);
+    const enabled = card._on(meal.enabled);
+    const status = card._state(meal.status);
+    const tone2 = !enabled ? "disabled" : skipped ? "skipped" : status === "done" ? "done" : status === "missed" ? "missed" : "pending";
+    return { meal, i, skipped, enabled, tone: tone2, t: minutes(meal.time) };
+  });
+  const planned = info.filter((m) => m.enabled && !m.skipped);
+  const done = planned.filter((m) => m.tone === "done").length;
+  const now = nowMinutes();
+  const next = planned.find((m) => m.tone === "pending" && m.t != null && m.t >= now) || planned.find((m) => m.tone === "pending");
+  const percent2 = Math.max(0, Math.min(100, card._number(c2.container_percent) ?? 0));
+  const grams = card._number(c2.container_grams);
+  const daily = card._number(c2.daily_amount);
+  const daysLeft = Number.isFinite(grams) && daily > 0 ? grams / daily : void 0;
+  const water = card._waterOk();
+  const error = card._error();
+  const mode = card._state(c2.feeder_mode);
+  const level = percent2 <= 10 ? "danger" : percent2 <= 30 ? "warn" : "good";
+  const H3 = heatModel(card);
+  const mood = error ? ["Foderautomaten melder fejl", "danger"] : !water && c2.water ? ["Vandsk\xE5len skal fyldes", "danger"] : level === "danger" ? ["Foderbeholderen er n\xE6sten tom", "warn"] : planned.some((m) => m.tone === "missed") ? ["Et m\xE5ltid blev ikke givet", "warn"] : ["Alt er godt", "good"];
+  const n = Math.max(1, info.length);
+  const gap = 16;
+  const C2 = 2 * Math.PI * 52;
+  const seg = (C2 - n * gap) / n;
+  const arcs = info.map((m, i) => `<circle class="pp-arc ${m.tone}" cx="60" cy="60" r="52" style="stroke:${MEAL_COLORS[m.tone]};stroke-dasharray:${seg.toFixed(2)} ${(C2 - seg).toFixed(2)};stroke-dashoffset:${(-(i * (seg + gap) + gap / 2)).toFixed(2)};--i:${i}"/>`).join("");
+  const chips = [
+    `<span class="pp-chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${done} af ${planned.length} m\xE5ltider</span>`,
+    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc12(next.meal.name)} ${esc12(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
+    c2.water ? `<span class="pp-chip ${water ? "water" : "danger"}"><ha-icon icon="${water ? "mdi:water" : "mdi:water-off"}"></ha-icon>${water ? "Vand i sk\xE5len" : "Mangler vand"}</span>` : "",
+    H3?.inHeat ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip"></ha-icon>L\xF8betid dag ${H3.day}/${H3.duration}</span>` : H3?.soon ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon>${H3.soon}</span>` : ""
+  ].filter(Boolean).join("");
+  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct(m.t)}%" data-info="${esc12(m.meal.status || "")}" title="${esc12(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc12(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
+  const label = { done: "Givet", pending: "Afventer", missed: "Misset", skipped: "Springes over", disabled: "Sl\xE5et fra" };
+  const mealCards = info.map((m) => `<article class="pp-meal ${m.tone}" style="--i:${m.i}">
+      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc12(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
+        <div><h4>${esc12(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc12(m.meal.status || "")}">${esc12(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
+        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc12(m.meal.enabled)}" aria-label="${esc12(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
+      <div class="pp-meal-actions">
+        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc12(m.meal.feed_action)}" data-name="${esc12(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
+        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc12(m.meal.skip)}" data-name="${esc12(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
+      </div></article>`).join("");
+  const hours = [6, 9, 12, 15, 18, 21].map((h) => `<span style="left:${pct(h * 60)}%">${String(h).padStart(2, "0")}</span>`).join("");
+  return `<ha-card class="pp ${card._config.animation === false ? "still" : ""}${card._ppIntro ? "" : " intro"}">
+  <section class="pp-hero ${mood[1]}">
+    <div class="pp-aurora"></div>
+    <div class="pp-paws">${[0, 1, 2, 3, 4, 5].map((i) => `<span style="--p:${i}">${pawSvg}</span>`).join("")}</div>
+    <div class="pp-avatar"><svg class="pp-ring" viewBox="0 0 120 120"><circle class="pp-ring-bg" cx="60" cy="60" r="52"/>${arcs}</svg>
+      <div class="pp-face"><ha-icon icon="${esc12(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
+    <div class="pp-id"><span class="pp-eyebrow">${esc12(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc12(c2.pet_name || "K\xE6ledyr")}</h2>
+      <p class="pp-mood ${mood[1]}"><i></i>${esc12(mood[0])}</p><div class="pp-chips">${chips}</div></div>
+  </section>
+  <div class="pp-grid">
+    <section class="pp-panel pp-day" style="--d:1">
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc12(next.meal.name.toLowerCase())} kl. ${esc12(next.meal.time)}` : ""}</p></div>
+        ${c2.feeder_mode ? `<button class="pp-mode ${mode === "schedule" ? "on" : ""}" data-mode><ha-icon icon="${mode === "schedule" ? "mdi:calendar-check" : "mdi:hand-back-right"}"></ha-icon>${mode === "schedule" ? "Plan" : "Manuel"}</button>` : ""}</header>
+      <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct(now)}%"></span><span class="pp-now" style="left:${pct(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
+      <div class="pp-meals">${mealCards}</div>
+    </section>
+    <section class="pp-panel pp-supply" style="--d:2">
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>Foder og vand</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent2)} % i beholderen`}</p></div></header>
+      <div class="pp-supply-row">
+        <button class="pp-silo ${level}" data-info="${esc12(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
+          <span class="pp-silo-fill" style="height:${percent2}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent2)}<small>%</small></b></button>
+        <div class="pp-stats">
+          <div><small>I beholderen</small><b>${Number.isFinite(grams) ? `${card._format(grams)} g` : "\u2014"}</b></div>
+          <div><small>R\xE6kker ca.</small><b>${daysLeft != null ? `${card._format(daysLeft, daysLeft < 10 ? 1 : 0)} dage` : "\u2014"}</b></div>
+          <div><small>Pr. dag</small><b>${Number.isFinite(daily) ? `${card._format(daily)} g` : "\u2014"}</b></div>
+          ${c2.refill_action ? `<button class="pp-btn ghost" data-refill><ha-icon icon="mdi:refresh"></ha-icon>Fyldt op</button>` : ""}
+        </div>
+        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc12(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
+          <span class="pp-bowl-water"><i></i><i></i></span>
+          <b>${water ? "Vand" : "Tom"}</b>${c2.water_battery ? `<small>${card._format(card._number(c2.water_battery))} % batteri</small>` : ""}</button>` : ""}
+      </div>
+    </section>
+    ${heatHtml(card, H3, esc12)}
+  </div>
+</ha-card>`;
+}
+var PREMIUM_STYLE2 = `
+:host{display:block}
+.pp{--pp-good:var(--dashboard-success,#4fe0a6);--pp-food:#ffb547;--pp-water:#4cc9ff;--pp-heat:#ff6fa5;--pp-heat2:#c86bff;--pp-danger:var(--dashboard-danger,#ff667a);--pp-muted:var(--dashboard-icon-muted,#7b8796);
+  --pp-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#141c27)));--pp-line:color-mix(in srgb,var(--primary-text-color) 9%,transparent);
+  overflow:visible;border:0;background:none;box-shadow:none;display:grid;gap:14px}
+.pp-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center;padding:24px 26px;border-radius:26px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--pp-surface) 92%,#000),var(--pp-surface));border:1px solid var(--pp-line);
+  border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pp-food);box-shadow:var(--dashboard-shadow-strong,0 14px 40px rgba(0,0,0,.28))}
+.pp-hero.danger{border-left-color:var(--pp-danger)}.pp-hero.warn{border-left-color:var(--pp-food)}.pp-hero.good{border-left-color:var(--pp-good)}
+.pp-aurora{position:absolute;inset:-40%;z-index:-2;background:radial-gradient(40% 35% at 20% 30%,color-mix(in srgb,var(--pp-food) 28%,transparent),transparent 70%),radial-gradient(35% 30% at 75% 25%,color-mix(in srgb,var(--pp-water) 20%,transparent),transparent 70%),radial-gradient(40% 40% at 60% 85%,color-mix(in srgb,var(--pp-heat2) 18%,transparent),transparent 70%);filter:blur(10px);animation:ppAurora 26s ease-in-out infinite alternate}
+@keyframes ppAurora{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(4%,-3%) rotate(8deg)}100%{transform:translate(-3%,4%) rotate(-6deg)}}
+.pp-paws{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.pp-paws span{position:absolute;bottom:-30px;left:calc(18% + var(--p) * 13%);width:18px;height:18px;color:color-mix(in srgb,var(--primary-text-color) 13%,transparent);transform:rotate(calc(var(--p) * 23deg - 40deg));animation:ppPaw 16s linear infinite;animation-delay:calc(var(--p) * -2.7s)}
+.pp-paws svg{width:100%;height:100%}
+@keyframes ppPaw{0%{transform:translateY(0) rotate(-20deg);opacity:0}15%{opacity:1}85%{opacity:.9}100%{transform:translateY(-210px) rotate(15deg);opacity:0}}
+.pp-avatar{position:relative;width:132px;height:132px;display:grid;place-items:center}
+.pp-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.pp-ring-bg{fill:none;stroke:color-mix(in srgb,var(--primary-text-color) 8%,transparent);stroke-width:9}
+.pp-arc{fill:none;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 6px currentColor)}
+.pp-arc.done{color:var(--pp-good)}.pp-arc.pending{color:var(--pp-food);opacity:.55}.pp-arc.missed{color:var(--pp-danger)}.pp-arc.skipped,.pp-arc.disabled{opacity:.3;filter:none}
+.pp.intro .pp-arc{animation:ppArc 1.4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * .18s + .2s)}
+@keyframes ppArc{from{opacity:0;stroke-width:2}}
+.pp-face{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--pp-food) 30%,var(--pp-surface)),var(--pp-surface) 72%);box-shadow:inset 0 0 0 1px var(--pp-line),0 10px 30px rgba(0,0,0,.25)}
+.pp-face ha-icon{--mdc-icon-size:54px;color:color-mix(in srgb,var(--pp-food) 75%,var(--primary-text-color));animation:ppBreath 5.5s ease-in-out infinite;transform-origin:50% 80%}
+@keyframes ppBreath{0%,100%{transform:scale(1) rotate(0)}40%{transform:scale(1.04) rotate(-3deg)}70%{transform:scale(1.02) rotate(2deg)}}
+.pp-count{position:absolute;bottom:-4px;right:-2px;padding:3px 9px;border-radius:999px;background:var(--pp-surface);border:1px solid var(--pp-line);font-size:12px;font-weight:800}
+.pp-id{min-width:0}.pp-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--pp-food)}
+.pp-id h2{margin:2px 0 4px;font-size:40px;line-height:1;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,color-mix(in srgb,var(--pp-food) 80%,var(--primary-text-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pp-mood{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px;font-weight:700;color:var(--secondary-text-color)}
+.pp-mood i{--dot:var(--pp-good);width:9px;height:9px;border-radius:50%;background:var(--dot);animation:ppPulse 2.6s ease-out infinite}
+.pp-mood.warn i{--dot:var(--pp-food)}.pp-mood.danger i{--dot:var(--pp-danger)}
+@keyframes ppPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--dot) 55%,transparent)}70%,100%{box-shadow:0 0 0 9px transparent}}
+.pp-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pp-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--pp-line)}
+.pp-chip ha-icon{--mdc-icon-size:16px}.pp-chip.food ha-icon{color:var(--pp-food)}.pp-chip.next ha-icon{color:var(--pp-food)}.pp-chip.water ha-icon{color:var(--pp-water)}.pp-chip.good ha-icon{color:var(--pp-good)}
+.pp-chip.heat{border-color:color-mix(in srgb,var(--pp-heat) 45%,transparent);background:color-mix(in srgb,var(--pp-heat) 12%,transparent)}.pp-chip.heat ha-icon{color:var(--pp-heat)}
+.pp-chip.danger{border-color:color-mix(in srgb,var(--pp-danger) 50%,transparent);background:color-mix(in srgb,var(--pp-danger) 14%,transparent)}.pp-chip.danger ha-icon{color:var(--pp-danger)}
+.pp-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}
+.pp-heat{grid-column:1/-1}
+.pp-panel{position:relative;min-width:0;padding:18px;border-radius:22px;background:var(--pp-surface);border:1px solid var(--pp-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pp-food);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22))}
+.pp-supply{border-left-color:var(--pp-water)}.pp-heat{border-left-color:var(--pp-heat)}
+.pp.intro .pp-panel,.pp.intro .pp-hero{animation:ppRise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d, 0) * .08s)}
+@keyframes ppRise{from{opacity:0;transform:translateY(10px)}}
+.pp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.pp-head>div{flex:1;min-width:0}
+.pp-head h3{margin:0;font-size:16px;font-weight:800}.pp-head p{margin:2px 0 0;font-size:12.5px;color:var(--secondary-text-color)}
+.pp-hicon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--pp-food) 15%,transparent);color:var(--pp-food)}
+.pp-supply .pp-hicon{background:color-mix(in srgb,var(--pp-water) 15%,transparent);color:var(--pp-water)}.pp-heat .pp-hicon{background:color-mix(in srgb,var(--pp-heat) 15%,transparent);color:var(--pp-heat)}
+.pp-hicon ha-icon{--mdc-icon-size:21px}
+button{font:inherit;color:inherit;cursor:pointer}
+.pp-mode{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);font-size:12.5px;font-weight:700}
+.pp-mode.on{border-color:color-mix(in srgb,var(--pp-good) 45%,transparent);background:color-mix(in srgb,var(--pp-good) 12%,transparent)}.pp-mode ha-icon{--mdc-icon-size:16px}
+.pp-timeline{position:relative;margin:4px 6px 18px}
+.pp-track{position:relative;height:8px;border-radius:999px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);margin:18px 0 8px}
+.pp-progress{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb,var(--pp-food) 40%,transparent),var(--pp-food));transition:width 1s}
+.pp-now{position:absolute;top:50%;width:0;height:0;transition:left 1s}
+.pp-now i{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--pp-food) 45%,transparent),0 0 16px var(--pp-food);animation:ppNow 2.4s ease-in-out infinite}
+@keyframes ppNow{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--pp-food) 20%,transparent),0 0 22px var(--pp-food)}}
+.pp-node{position:absolute;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:50%;border:2px solid var(--pp-surface);background:var(--pp-surface);box-shadow:0 0 0 2px currentColor}
+.pp-node ha-icon{--mdc-icon-size:17px}
+.pp-node.done{color:var(--pp-good);background:color-mix(in srgb,var(--pp-good) 22%,var(--pp-surface));box-shadow:0 0 0 2px currentColor,0 0 14px color-mix(in srgb,var(--pp-good) 60%,transparent)}
+.pp-node.pending{color:var(--pp-food);animation:ppNode 3s ease-in-out infinite}.pp-node.missed{color:var(--pp-danger)}.pp-node.skipped,.pp-node.disabled{color:var(--pp-muted);opacity:.7}
+@keyframes ppNode{50%{box-shadow:0 0 0 2px currentColor,0 0 0 7px color-mix(in srgb,var(--pp-food) 18%,transparent)}}
+.pp-hours{position:relative;height:14px}.pp-hours span{position:absolute;transform:translateX(-50%);font-size:10.5px;color:var(--secondary-text-color);font-variant-numeric:tabular-nums}
+.pp-meals{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.pp-meal{padding:12px;border-radius:16px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);border:1px solid var(--pp-line)}
+.pp.intro .pp-meal{animation:ppRise .6s both;animation-delay:calc(.25s + var(--i) * .08s)}
+.pp-meal.done{border-color:color-mix(in srgb,var(--pp-good) 35%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--pp-good) 10%,transparent),transparent 70%)}
+.pp-meal.missed{border-color:color-mix(in srgb,var(--pp-danger) 40%,transparent)}.pp-meal.skipped,.pp-meal.disabled{opacity:.72}
+.pp-meal-top{display:flex;align-items:center;gap:10px}.pp-meal-top>div{flex:1;min-width:0}
+.pp-meal-top h4{margin:0 0 3px;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-micon{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--pp-food) 13%,transparent);color:var(--pp-food)}.pp-micon ha-icon{--mdc-icon-size:19px}
+.pp-status{display:inline-flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--secondary-text-color);font-size:11.5px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pp-status i{width:7px;height:7px;border-radius:50%;background:var(--pp-food)}.done .pp-status i{background:var(--pp-good)}.missed .pp-status i{background:var(--pp-danger)}.skipped .pp-status i,.disabled .pp-status i{background:var(--pp-muted)}
+.pp-meal{container-type:inline-size}
+.pp-meal-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:7px;margin-top:11px}.pp-meal-actions .pp-btn{white-space:nowrap;padding:8px 8px}
+@container (max-width:230px){.pp-meal-actions .pp-btn ha-icon{display:none}}
+.pp-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:12px;border:0;background:var(--pp-food);color:#1d1305;font-size:12.5px;font-weight:800;transition:transform .15s}
+.pp-btn:active{transform:scale(.97)}.pp-btn ha-icon{--mdc-icon-size:16px}
+.pp-btn.ghost{background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);color:inherit;border:1px solid var(--pp-line)}
+.pp-btn.heat{background:linear-gradient(120deg,var(--pp-heat),var(--pp-heat2));color:#fff}
+.pp-tog{flex:0 0 auto;position:relative;width:40px;height:24px;padding:0;border-radius:999px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 10%,transparent)}
+.pp-tog i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.pp-tog.on{background:var(--pp-good);border-color:transparent}.pp-tog.on i{transform:translateX(16px)}
+.pp-supply-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.pp-silo{position:relative;width:86px;height:150px;padding:0;border-radius:24px 24px 18px 18px;border:2px solid color-mix(in srgb,var(--primary-text-color) 18%,transparent);background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);overflow:hidden}
+.pp-silo-fill{position:absolute;left:0;right:0;bottom:0;background:radial-gradient(circle at 20% 30%,rgba(255,255,255,.25) 0 2px,transparent 3px) 0 0/14px 12px,radial-gradient(circle at 70% 70%,rgba(0,0,0,.18) 0 2.5px,transparent 3.5px) 0 0/16px 14px,linear-gradient(180deg,#e9a24a,#a8642a);transition:height 1.2s cubic-bezier(.2,.8,.2,1)}
+.pp-silo.warn .pp-silo-fill{background:radial-gradient(circle at 20% 30%,rgba(255,255,255,.25) 0 2px,transparent 3px) 0 0/14px 12px,linear-gradient(180deg,#f2c14e,#b98a26)}
+.pp-silo.danger .pp-silo-fill{background:linear-gradient(180deg,#ff8a7a,#c2403a)}
+.pp-silo.warn .pp-wave{background:radial-gradient(12px 8px at 12px 10px,#f2c14e 98%,transparent) 0 0/24px 14px}.pp-silo.danger .pp-wave{background:radial-gradient(12px 8px at 12px 10px,#ff8a7a 98%,transparent) 0 0/24px 14px}
+.pp-wave{position:absolute;left:-50%;top:-7px;width:200%;height:14px;background:radial-gradient(12px 8px at 12px 10px,#e9a24a 98%,transparent) 0 0/24px 14px;animation:ppWave 6s linear infinite;opacity:.95}
+@keyframes ppWave{to{transform:translateX(24px)}}
+.pp-silo-glass{position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.18),transparent 30%,transparent 70%,rgba(255,255,255,.08));pointer-events:none}
+.pp-silo b{position:absolute;left:0;right:0;top:12px;text-align:center;font-size:22px;font-weight:850;text-shadow:0 2px 8px rgba(0,0,0,.45)}.pp-silo b small{font-size:12px}
+.pp-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;align-content:center}
+.pp-stats small,.pp-facts small{display:block;font-size:11px;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.pp-stats b,.pp-facts b{font-size:17px;font-weight:800}.pp-stats .pp-btn{grid-column:1/-1;justify-self:start}
+.pp-bowl{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--pp-water) 7%,transparent);text-align:left;position:relative;overflow:hidden}
+.pp-bowl-water{position:relative;width:54px;height:22px;border-radius:0 0 30px 30px;background:linear-gradient(180deg,#7fd9ff,#2a9bd6);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+.pp-bowl.empty .pp-bowl-water{background:color-mix(in srgb,var(--primary-text-color) 10%,transparent);box-shadow:none}
+.pp-bowl-water i{position:absolute;left:50%;top:5px;width:8px;height:3px;border-radius:50%;border:1px solid rgba(255,255,255,.75);transform:translateX(-50%);animation:ppRipple 3.2s ease-out infinite}
+.pp-bowl-water i+i{animation-delay:1.6s}.pp-bowl.empty .pp-bowl-water i{display:none}
+@keyframes ppRipple{from{width:6px;height:2px;opacity:.9}to{width:44px;height:9px;opacity:0}}
+.pp-bowl b{font-size:15px;font-weight:800}.pp-bowl small{font-size:11.5px;color:var(--secondary-text-color);justify-self:end}
+.pp-bowl.empty{border-color:color-mix(in srgb,var(--pp-danger) 45%,transparent);background:color-mix(in srgb,var(--pp-danger) 10%,transparent)}
+.pp-heat .pp-head{margin-bottom:12px}
+.pp-heat-count{position:relative;width:64px;height:64px;display:grid;place-items:center}.pp-head>.pp-heat-count{flex:0 0 64px}.pp-heat-count svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.pp-heat-count circle{fill:none;stroke:color-mix(in srgb,var(--primary-text-color) 9%,transparent);stroke-width:6}.pp-heat-count circle.v{stroke:var(--pp-heat);stroke-dasharray:170;stroke-linecap:round}
+.pp-heat-count b{position:relative;margin-top:-8px;font-size:16px;font-weight:850;line-height:1}.pp-heat-count small{position:absolute;bottom:16px;font-size:9.5px;color:var(--secondary-text-color)}
+.pp-ribbon{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;height:34px;margin:26px 0 10px}
+.pp-cell{border-radius:7px;opacity:.28}.pp-cell.bleed{background:#ff5c7c}.pp-cell.fertile{background:linear-gradient(180deg,#ff7ac0,#c86bff)}.pp-cell.late{background:#ffa3c4}
+.pp-cell.past{opacity:.85}.pp-cell.today{opacity:1;box-shadow:0 0 0 2px #fff,0 0 18px var(--pp-heat);animation:ppToday 2.8s ease-in-out infinite}
+@keyframes ppToday{50%{box-shadow:0 0 0 2px #fff,0 0 28px var(--pp-heat)}}
+.pp.intro .pp-cell{animation:ppCell .5s both;animation-delay:calc(var(--i) * .03s)}.pp.intro .pp-cell.today{animation:ppCell .5s both,ppToday 2.8s ease-in-out .9s infinite}
+@keyframes ppCell{from{transform:scaleY(.2);opacity:0}}
+.pp-heat-marker{position:absolute;top:-24px;transform:translateX(-50%);font-size:11.5px;white-space:nowrap}.pp-heat-marker b{padding:2px 8px;border-radius:999px;background:var(--pp-heat);color:#fff;font-weight:800}
+.pp-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;font-size:12px;color:var(--secondary-text-color)}
+.pp-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}.pp-legend .bleed i{background:#ff5c7c}.pp-legend .fertile i{background:linear-gradient(180deg,#ff7ac0,#c86bff)}.pp-legend .late i{background:#ffa3c4}
+.pp-facts{display:flex;flex-wrap:wrap;gap:12px 26px;margin:4px 0 14px}.pp-facts em{display:block;font-style:normal;font-size:12px;color:var(--pp-heat);font-weight:700}
+.pp-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pp-note{margin:12px 0 0;font-size:11.5px;color:var(--secondary-text-color)}
+.pp.still *,.pp.still *::before,.pp.still *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){.pp *{animation:none!important;transition:none!important}}
+@media(max-width:820px){.pp-grid{grid-template-columns:minmax(0,1fr)}.pp-hero{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;padding:22px 18px}.pp-chips{justify-content:center}.pp-mood{justify-content:center}.pp-id h2{font-size:36px}}
+@media(max-width:700px){.pp-meals{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:480px){.pp-stats{grid-template-columns:minmax(0,1fr)}}
+`;
+
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
-var VERSION31 = "0.3.0";
+var VERSION31 = "0.4.0";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
     super();
@@ -41086,7 +41422,13 @@ var HAPetCareCard = class extends HTMLElement {
         { key: "feeder_error", label: "Foderfejl", type: "entity" },
         { key: "container_grams", label: "Beholder gram", type: "entity" },
         { key: "container_percent", label: "Beholder procent", type: "entity" },
-        { key: "refill_action", label: "Genopfyld handling", type: "entity" }
+        { key: "refill_action", label: "Genopfyld handling", type: "entity" },
+        { key: "style", label: "Udseende: new (premium) eller classic" },
+        { key: "style_entity", label: "Skifteknap for udseende (input_boolean: til = premium)", type: "entity" },
+        { key: "heat_sensor", label: "L\xF8betid: sensor (premium)", type: "entity" },
+        { key: "heat_start", label: "L\xF8betid: startdato (input_datetime)", type: "entity" },
+        { key: "heat_script", label: "L\xF8betid: script der registrerer starten", type: "entity" },
+        { key: "heat_calendar", label: "L\xF8betid: kalender", type: "entity" }
       ],
       collections: [{
         key: "meals",
@@ -41109,16 +41451,29 @@ var HAPetCareCard = class extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("K\xE6ledyrskortet kr\xE6ver en konfiguration");
     this._config = { title: "K\xE6ledyrspleje", pet_name: "K\xE6ledyr", icon: "mdi:dog-side", animation: true, meals: [], ...config };
+    const heat = config.heat || {};
+    const flat = { sensor: config.heat_sensor, start: config.heat_start, script: config.heat_script, calendar: config.heat_calendar, duration: config.heat_duration };
+    this._config.heat = Object.fromEntries(Object.entries({ ...flat, ...heat }).filter(([, v]) => v));
     this._signature = "";
     this._render();
   }
   set hass(hass) {
     this._hass = hass;
-    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action"].map((key) => this._config[key]).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
+    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"].map((key) => this._config[key]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
     const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
     if (signature === this._signature) return;
     this._signature = signature;
     this._render();
+  }
+  connectedCallback() {
+    clearInterval(this._tick);
+    this._tick = setInterval(() => {
+      if (this._premium) premiumTick(this.shadowRoot, this);
+    }, 6e4);
+  }
+  disconnectedCallback() {
+    clearInterval(this._tick);
+    this._tick = null;
   }
   getCardSize() {
     return 7;
@@ -41180,6 +41535,36 @@ var HAPetCareCard = class extends HTMLElement {
     if (!window.confirm(message)) return;
     await this._hass.callService("input_boolean", skipped ? "turn_off" : "turn_on", { entity_id: id });
   }
+  _renderPremium() {
+    if (!this._hass) return;
+    this.shadowRoot.innerHTML = `<style>${PREMIUM_STYLE2}</style>${premiumHtml(this)}`;
+    this._ppIntro = true;
+    this._wire();
+    this.shadowRoot.querySelector("[data-heatstart]")?.addEventListener("click", () => this._heatStart());
+  }
+  async _heatStart() {
+    const heat = this._config.heat || {};
+    if (!heat.script || !this._hass) return;
+    const d = /* @__PURE__ */ new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const day2 = window.prompt(`Hvilken dag gik ${this._config.pet_name || "hun"} i l\xF8betid? (\xC5\xC5\xC5\xC5-MM-DD)
+Kalenderen f\xE5r forl\xF8bet og den n\xE6ste forventede l\xF8betid.`, today);
+    if (day2 == null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day2.trim())) {
+      window.alert("Skriv datoen som \xC5\xC5\xC5\xC5-MM-DD, fx " + today);
+      return;
+    }
+    await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day2.trim() } });
+  }
+  _wire() {
+    const root = this.shadowRoot;
+    root.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
+    root.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
+    root.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
+    root.querySelectorAll("[data-feed]").forEach((button) => button.addEventListener("click", () => this._script(button.dataset.feed, `Vil du give ${button.dataset.name || "m\xE5ltidet"} nu?`)));
+    root.querySelectorAll("[data-skip]").forEach((button) => button.addEventListener("click", () => this._skip(button.dataset.skip, button.dataset.name, button.dataset.skipped === "true")));
+    root.querySelector("[data-refill]")?.addEventListener("click", () => this._script(this._config.refill_action, "Er foderbeholderen fyldt op og skal t\xE6lleren nulstilles?"));
+  }
   _meal(meal, index) {
     const skipped = this._on(meal.skip);
     const [label, tone2] = skipped ? ["Sprunget over", "skipped"] : this._status(this._state(meal.status));
@@ -41191,6 +41576,8 @@ var HAPetCareCard = class extends HTMLElement {
     </article>`;
   }
   _render() {
+    this._premium = isNewLook(this._hass, this._config);
+    if (this._premium) return keepScroll(this, () => this._renderPremium());
     const meals = this._config.meals || [];
     const percent2 = Math.max(0, Math.min(100, this._number(this._config.container_percent) ?? 0));
     const grams = this._number(this._config.container_grams);
@@ -41251,12 +41638,7 @@ var HAPetCareCard = class extends HTMLElement {
       .shell .feeder{position:relative;isolation:isolate;padding:14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pet-accent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
       .shell .section-title{margin:14px 2px 9px}
     </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, m\xE5ltider og foder samlet \xE9t sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong><ha-icon class="tile-icon" icon="mdi:water"></ha-icon></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` \xB7 ${skipped} sprunget` : ""}</strong><ha-icon class="tile-icon" icon="mdi:calendar-check"></ha-icon></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong><ha-icon class="tile-icon" icon="mdi:bowl-mix"></ha-icon></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandsk\xE5l</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens m\xE5ltider</span><strong>${next ? `N\xE6ste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kr\xE6ver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent2)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong><ha-icon class="tile-icon" icon="mdi:gauge"></ha-icon></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong><ha-icon class="tile-icon" icon="mdi:shield-check-outline"></ha-icon></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
-    this.shadowRoot.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
-    this.shadowRoot.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
-    this.shadowRoot.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
-    this.shadowRoot.querySelectorAll("[data-feed]").forEach((button) => button.addEventListener("click", () => this._script(button.dataset.feed, `Vil du give ${button.dataset.name || "m\xE5ltidet"} nu?`)));
-    this.shadowRoot.querySelectorAll("[data-skip]").forEach((button) => button.addEventListener("click", () => this._skip(button.dataset.skip, button.dataset.name, button.dataset.skipped === "true")));
-    this.shadowRoot.querySelector("[data-refill]")?.addEventListener("click", () => this._script(this._config.refill_action, "Er foderbeholderen fyldt op og skal t\xE6lleren nulstilles?"));
+    this._wire();
   }
 };
 if (!customElements.get("ha-pet-care-card")) customElements.define("ha-pet-care-card", HAPetCareCard);
@@ -41731,11 +42113,11 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const now = this._now();
     const elevation = this._num(sun?.attributes?.elevation);
     const uv = this._uvTone(now.uv);
-    const pct2 = Number.isFinite(elevation) ? Math.max(0, Math.min(100, (elevation + 10) / 80 * 100)) : 0;
+    const pct3 = Number.isFinite(elevation) ? Math.max(0, Math.min(100, (elevation + 10) / 80 * 100)) : 0;
     return `<div class="row" data-more="${this._esc(c2.sun_entity)}"><ha-icon icon="mdi:weather-sunset-up"></ha-icon><span class="row-label">Solopgang</span><b>${this._time(sun?.attributes?.next_rising)}</b></div>
       <div class="row" data-more="${this._esc(c2.sun_entity)}"><ha-icon icon="mdi:weather-sunset-down"></ha-icon><span class="row-label">Solnedgang</span><b>${this._time(sun?.attributes?.next_setting)}</b></div>
       <div class="row" data-more="${this._esc(c2.weather_entity)}" style="--tone:${uv.color}"><ha-icon icon="mdi:weather-sunny-alert"></ha-icon><span class="row-label">UV-indeks</span><b class="toned">${this._fmt(now.uv, 1)} \xB7 ${uv.label}</b></div>
-      <div class="sun-arc"><div class="sun-track"><div class="sun-fill" style="width:${pct2}%"></div><div class="sun-dot" style="left:${pct2}%"></div></div>
+      <div class="sun-arc"><div class="sun-track"><div class="sun-fill" style="width:${pct3}%"></div><div class="sun-dot" style="left:${pct3}%"></div></div>
         <div class="sun-labels"><span>Solh\xF8jde ${this._fmt(elevation, 1)}\xB0</span><span>Retning ${this._esc(this._compass(this._num(sun?.attributes?.azimuth)))}</span></div></div>`;
   }
   _panelsHtml() {
@@ -44310,9 +44692,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     if (value == null || !Number.isFinite(value)) return "\u2013";
     return value.toLocaleString(this._lang || "da", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
-  _dur(minutes) {
-    if (minutes == null || !Number.isFinite(minutes)) return "";
-    const m = Math.max(0, Math.round(minutes));
+  _dur(minutes2) {
+    if (minutes2 == null || !Number.isFinite(minutes2)) return "";
+    const m = Math.max(0, Math.round(minutes2));
     if (m < 60) return `${m} min`;
     const h = Math.floor(m / 60), rest2 = m % 60;
     if (h < 24) return rest2 && h < 10 ? `${h} t ${rest2} min` : `${h} t`;
@@ -50025,14 +50407,14 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       return Number.isFinite(x) ? x : null;
     };
     const chips = [];
-    const pct2 = (id, label, warn = 90, c2) => {
+    const pct3 = (id, label, warn = 90, c2) => {
       const x = num4(id);
       if (x == null) return;
       chips.push([label, `${Math.round(x)} %`, c2 || (x >= warn ? "var(--coral)" : "var(--emer)")]);
     };
-    pct2(n.storage_entity, "Lager", 101, "var(--ice)");
-    pct2(n.cpu_entity, "CPU");
-    pct2(n.memory_entity, "Hukommelse");
+    pct3(n.storage_entity, "Lager", 101, "var(--ice)");
+    pct3(n.cpu_entity, "CPU");
+    pct3(n.memory_entity, "Hukommelse");
     const temp = num4(n.temp_entity);
     if (temp != null) chips.push(["Temperatur", `${Math.round(temp)} \xB0C`, temp >= 70 ? "var(--coral)" : "var(--emer)"]);
     const cap = v(n.capacity_entity);
@@ -52871,10 +53253,10 @@ var HAAIUsageCard = class extends HTMLElement {
     if (!state || ["unknown", "unavailable"].includes(state)) return "Ingen nulstillingstid";
     const difference = new Date(state).getTime() - Date.now();
     if (!Number.isFinite(difference) || difference <= 0) return "Nulstiller snart";
-    const minutes = Math.ceil(difference / 6e4);
-    if (minutes < 60) return `Om ${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const rest2 = minutes % 60;
+    const minutes2 = Math.ceil(difference / 6e4);
+    if (minutes2 < 60) return `Om ${minutes2} min`;
+    const hours = Math.floor(minutes2 / 60);
+    const rest2 = minutes2 % 60;
     if (hours < 24) return `Om ${hours} t${rest2 ? ` ${rest2} min` : ""}`;
     const days = Math.floor(hours / 24);
     return `Om ${days} d ${hours % 24} t`;
@@ -52882,11 +53264,11 @@ var HAAIUsageCard = class extends HTMLElement {
   _age(id) {
     const state = this._state(id);
     if (!state || ["unknown", "unavailable"].includes(state)) return "Ukendt";
-    const minutes = Math.max(0, Math.round((Date.now() - new Date(state).getTime()) / 6e4));
-    if (!Number.isFinite(minutes)) return "Ukendt";
-    if (minutes < 1) return "Lige nu";
-    if (minutes < 60) return `${minutes} min siden`;
-    return `${Math.floor(minutes / 60)} t siden`;
+    const minutes2 = Math.max(0, Math.round((Date.now() - new Date(state).getTime()) / 6e4));
+    if (!Number.isFinite(minutes2)) return "Ukendt";
+    if (minutes2 < 1) return "Lige nu";
+    if (minutes2 < 60) return `${minutes2} min siden`;
+    return `${Math.floor(minutes2 / 60)} t siden`;
   }
   _tone(remaining, connected, reached, unit, max) {
     if (!connected || reached) return "danger";
@@ -54155,9 +54537,9 @@ var HAKioskServerCard = class extends HTMLElement {
     });
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  _barColor(pct2) {
-    if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
-    return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
+  _barColor(pct3) {
+    if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
+    return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
   }
   _statTile(label, value, icon4) {
     return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
@@ -54429,13 +54811,13 @@ var HAOpsStatusCard = class extends HTMLElement {
   }
   _kioskInfo() {
     if (!this._config.kiosk_uptime) return null;
-    const minutes = Number(this._e(this._config.kiosk_uptime)?.state);
+    const minutes2 = Number(this._e(this._config.kiosk_uptime)?.state);
     const cpu = this._e(this._config.kiosk_cpu)?.state ?? "N/A";
     const mem = this._e(this._config.kiosk_memory)?.state ?? "N/A";
     let uptimeTxt = "N/A";
-    if (Number.isFinite(minutes)) {
-      const days = Math.floor(minutes / (60 * 24));
-      const hours = Math.floor(minutes % (60 * 24) / 60);
+    if (Number.isFinite(minutes2)) {
+      const days = Math.floor(minutes2 / (60 * 24));
+      const hours = Math.floor(minutes2 % (60 * 24) / 60);
       uptimeTxt = `${days}d ${hours}t`;
     }
     return { name: "Kiosk", icon: "mdi:tablet-dashboard", line1: `Oppetid: ${uptimeTxt}`, line2: `CPU: ${cpu}% \xB7 RAM: ${mem}%` };
@@ -54689,9 +55071,9 @@ var HAUnraidServerCard = class extends HTMLElement {
     });
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  _barColor(pct2) {
-    if (!Number.isFinite(pct2)) return "var(--secondary-text-color)";
-    return pct2 >= 85 ? "var(--danger)" : pct2 >= 65 ? "var(--warn)" : "var(--good)";
+  _barColor(pct3) {
+    if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
+    return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
   }
   _statTile(label, value, icon4) {
     return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
@@ -57492,11 +57874,11 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const clips = (layer) => TRACKS.filter((track2) => track2.hide).map((track2) => hideClip(`cf-hide-${layer}-${track2.id}`, track2.hide)).join("");
     const tracks = TRACKS.map((track2) => `<g class="cf-track" data-circuit="${track2.circuit}" data-id="${track2.id}" data-tone="${track2.tone}"${clip("g", track2)}><path class="cf-track-halo" d="${track2.d}"/><path class="cf-track-core" d="${track2.d}"/><path class="cf-track-hot" d="${track2.d}"/></g>`).join("");
     const markers = TRACKS.map((track2) => `<g class="cf-markers" data-circuit="${track2.circuit}" data-track="${track2.id}"${clip("a", track2)}>${this._markersMarkup(track2, 2)}</g>`).join("");
-    const pct2 = (value, total) => `${(value / total * 100).toFixed(3)}%`;
+    const pct3 = (value, total) => `${(value / total * 100).toFixed(3)}%`;
     const fogs = Object.entries(HX).map(([key, face]) => {
-      const rx2 = pct2(face.r, face.w), ry = pct2(face.r, face.h);
+      const rx2 = pct3(face.r, face.w), ry = pct3(face.r, face.h);
       const radius = face.top ? `${rx2} ${rx2} 0 0 / ${ry} ${ry} 0 0` : `${rx2} / ${ry}`;
-      return `<div class="cf-fog" data-ref="fog-${key}" data-fog="${key}" style="left:${pct2(face.x, VIEW_W)};top:${pct2(face.y, VIEW_H)};width:${pct2(face.w, VIEW_W)};height:${pct2(face.h, VIEW_H)};border-radius:${radius}"><i></i><i></i></div>`;
+      return `<div class="cf-fog" data-ref="fog-${key}" data-fog="${key}" style="left:${pct3(face.x, VIEW_W)};top:${pct3(face.y, VIEW_H)};width:${pct3(face.w, VIEW_W)};height:${pct3(face.h, VIEW_H)};border-radius:${radius}"><i></i><i></i></div>`;
     }).join("");
     const [tx2, ty] = polar2(PUMP.rail, -84);
     const [ex2, ey] = polar2(PUMP.rail, -6);
@@ -57506,7 +57888,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const arc = `M${tx2} ${ty} A${PUMP.rail} ${PUMP.rail} 0 0 1 ${ex2} ${ey}`;
     const blades = [0, 120, 240].map((rotation) => `<g transform="rotate(${rotation})"><path class="cf-pump-glow" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-arc" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-head" d="M${ix2} ${iy} L${hx2} ${hy} L${ox2} ${oy} Z"/></g>`).join("");
     const box = PUMP.box;
-    const pump = `<div class="cf-pump" data-ref="pump" style="left:${pct2(PUMP.x - box, VIEW_W)};top:${pct2(PUMP.y - box, VIEW_H)};width:${pct2(2 * box, VIEW_W)};height:${pct2(2 * box, VIEW_H)}">
+    const pump = `<div class="cf-pump" data-ref="pump" style="left:${pct3(PUMP.x - box, VIEW_W)};top:${pct3(PUMP.y - box, VIEW_H)};width:${pct3(2 * box, VIEW_W)};height:${pct3(2 * box, VIEW_H)}">
         <svg class="cf-pump-ring" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><circle class="cf-pump-rail" r="${PUMP.rail}"/><circle class="cf-pump-face" r="${PUMP.face}"/><circle class="cf-pump-rim" r="${PUMP.rim}"/></svg>
         <svg class="cf-pump-rotor" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><defs><linearGradient id="cf-pump-tail" gradientUnits="userSpaceOnUse" x1="${tx2}" y1="${ty}" x2="${ex2}" y2="${ey}"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset=".6" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>${blades}</svg>
       </div>`;
@@ -57529,7 +57911,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       </svg>
       ${pump}
       <button class="cf-display-hit" type="button" data-action="open-display" aria-label="\xC5bn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button>
-      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct2(PUMP.x - hit, VIEW_W)};top:${pct2(PUMP.y - hit, VIEW_H)};width:${pct2(2 * hit, VIEW_W)};height:${pct2(2 * hit, VIEW_H)}"></button>
+      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct3(PUMP.x - hit, VIEW_W)};top:${pct3(PUMP.y - hit, VIEW_H)};width:${pct3(2 * hit, VIEW_W)};height:${pct3(2 * hit, VIEW_H)}"></button>
       <button class="cf-fault" type="button" data-ref="fault-button" data-action="open-faults" aria-label="Vis aktive Calefa-fejl" hidden><ha-icon icon="mdi:alert-outline"></ha-icon><span>Fejl</span><b data-ref="fault-count"></b></button>
       <button class="cf-info" type="button" data-action="open-legacy-popup" aria-label="Info: Calefa styring og forbrug"><ha-icon icon="mdi:information-outline"></ha-icon><span>Info</span></button>`;
   }
@@ -61480,8 +61862,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     vp.classList.toggle("zoomed", z > 1.01);
     cancelAnimationFrame(this._lraf);
     this._lraf = requestAnimationFrame(() => this._layoutLabels());
-    const pct2 = this.shadowRoot.querySelector(".zoom-pct");
-    if (pct2) pct2.textContent = `${Math.round(z * 100)}%`;
+    const pct3 = this.shadowRoot.querySelector(".zoom-pct");
+    if (pct3) pct3.textContent = `${Math.round(z * 100)}%`;
   }
   _clampZoom() {
     const vp = this.shadowRoot.querySelector(".viewport");
@@ -61814,8 +62196,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     if (this._map && unmappable.length) alerts.push(["info", "mdi:information-outline", `${unmappable.map((r) => r.name).join(", ")} kan ikke placeres p\xE5 kortet`, "V\xE6lg dem i listen i stedet."]);
     const info = [];
     if (active || paused2) {
-      const pct2 = this._num(E2.cleaning_progress), area = this._num(E2.cleaning_area), time = this._num(E2.cleaning_time);
-      if (Number.isFinite(pct2)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct2)} %`]);
+      const pct3 = this._num(E2.cleaning_progress), area = this._num(E2.cleaning_area), time = this._num(E2.cleaning_time);
+      if (Number.isFinite(pct3)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct3)} %`]);
       if (Number.isFinite(area)) info.push(["mdi:texture-box", "Areal", `${area.toLocaleString("da-DK", { maximumFractionDigits: 1 })} m\xB2`]);
       if (Number.isFinite(time)) info.push(["mdi:timer-outline", "Tid", this._duration(time)]);
     } else {
@@ -62047,10 +62429,10 @@ var valid = (value) => value != null && value !== "" && !["unknown", "unavailabl
 var number = (value) => valid(value) && Number.isFinite(Number(value)) ? Number(value) : null;
 var percent = (value) => value == null ? null : Math.max(0, Math.min(100, value));
 var safe = (value) => String(value ?? "\u2014").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-var pct = (value) => value == null ? "\u2014" : `${Math.round(value)} %`;
+var pct2 = (value) => value == null ? "\u2014" : `${Math.round(value)} %`;
 var duration = (seconds) => {
   if (seconds == null || seconds < 0) return "\u2014";
-  const minutes = Math.ceil(seconds / 60), days = Math.floor(minutes / 1440), hours = Math.floor(minutes % 1440 / 60), rest2 = minutes % 60;
+  const minutes2 = Math.ceil(seconds / 60), days = Math.floor(minutes2 / 1440), hours = Math.floor(minutes2 % 1440 / 60), rest2 = minutes2 % 60;
   return days ? `${days} dage ${hours} t` : hours ? `${hours} t ${rest2} min` : `${rest2} min`;
 };
 var date = (value) => {
@@ -62150,7 +62532,7 @@ var AIUsageDashboardCard = class extends HTMLElement {
     heads[0].innerHTML = `<b>Uge ${this._week()}</b><span class="sub">Ugentlige kvoter</span>`;
     heads[1].innerHTML = `<b>Senest opdateret</b><span class="sub">${safe(latest)}</span>`;
     heads[2].innerHTML = `<b>Alle tjenester</b><span class="${data.every((d2) => d2.connected) ? "status" : "bad"}">${data.filter((d2) => d2.connected).length}/${data.length} forbundet</span>`;
-    heads[3].innerHTML = `<b>Laveste kvote</b><span class="sub">5 t ${pct(lowest)} \xB7 uge ${pct(lowWeek)}</span>`;
+    heads[3].innerHTML = `<b>Laveste kvote</b><span class="sub">5 t ${pct2(lowest)} \xB7 uge ${pct2(lowWeek)}</span>`;
     this.shadowRoot.querySelectorAll(".account").forEach((el, i) => {
       const d2 = data[i];
       el.classList.toggle("selected", i === this.selected && this.open);
@@ -62158,9 +62540,9 @@ var AIUsageDashboardCard = class extends HTMLElement {
       el.querySelector(".weekly .meter").dataset.tone = tone(d2.weekly);
       el.querySelector(".gauge").style.setProperty("--v", `${d2.remaining ?? 0}%`);
       this._set(el, "plan", d2.plan);
-      this._set(el, "remaining", d2.limited ? "0 %" : pct(d2.remaining));
+      this._set(el, "remaining", d2.limited ? "0 %" : pct2(d2.remaining));
       this._set(el, "time", duration(d2.time));
-      this._set(el, "weeklyUsage", pct(d2.weeklyUsage));
+      this._set(el, "weeklyUsage", pct2(d2.weeklyUsage));
       this._set(el, "weeklyTime", `${duration(d2.weeklyTime)} til nulstilling`);
       this._bar(el, "usageBar", d2.usage);
       this._bar(el, "weeklyBar", d2.weeklyUsage);
@@ -62173,7 +62555,7 @@ var AIUsageDashboardCard = class extends HTMLElement {
     this.shadowRoot.querySelectorAll(".compareItem").forEach((el, i) => {
       const d2 = data[i];
       el.dataset.tone = d2.limited ? "danger" : tone(d2.remaining);
-      this._set(el, "remaining", d2.limited ? "Gr\xE6nse n\xE5et" : `${pct(d2.remaining)} tilbage`);
+      this._set(el, "remaining", d2.limited ? "Gr\xE6nse n\xE5et" : `${pct2(d2.remaining)} tilbage`);
       this._set(el, "time", duration(d2.time));
       this._bar(el, "bar", d2.remaining);
     });
@@ -62182,7 +62564,7 @@ var AIUsageDashboardCard = class extends HTMLElement {
     if (!this.open) return;
     const d = data[this.selected], a = this.accounts[this.selected];
     const row = (label, value) => `<div class="dataRow"><span>${safe(label)}</span><b>${safe(value)}</b></div>`;
-    const content = `<div class="detailTop"><div class="logo">${a.kind === "claude" ? "AI" : "\u25CE"}</div><div class="identityText"><strong>${safe(a.name)}</strong><div class="sub">${safe(d.plan)}</div></div><span class="${d.limited ? "bad" : d.connected ? "status" : "warn"}">${d.limited ? "Gr\xE6nse n\xE5et" : d.connected ? "\u25CF Aktiv" : "Ikke forbundet"}</span><button class="close" data-action="close" aria-label="Skjul detaljer">\xD7</button></div><div class="columns"><div class="column"><h3>5-timers kvote</h3>${row("Brugt kvote", pct(d.usage))}${row("Tilbage af kvote", pct(d.remaining))}${row("Tid til nulstilling", duration(d.time))}${row("Nulstilles", d.reset)}${row("Gr\xE6nse", d.limited ? "N\xE5et" : "Ikke n\xE5et")}<div class="meter" data-tone="${tone(d.remaining)}"><span style="width:${d.remaining ?? 0}%"></span></div></div><div class="column"><h3>Ugentlig kvote</h3>${row("Brugt kvote", pct(d.weeklyUsage))}${row("Tilbage af kvote", pct(d.weekly))}${row("Tid til nulstilling", duration(d.weeklyTime))}${row("Nulstilles", d.weeklyReset)}<div class="meter" data-tone="${tone(d.weekly)}"><span style="width:${d.weekly ?? 0}%"></span></div></div><div class="column"><h3>Kontooplysninger</h3>${row("Abonnement", d.plan)}${d.kind === "chatgpt" ? row("Credit balance", d.credit) + row("Credits tilg\xE6ngelige", d.creditsAvailable ? "Ja" : "Nej") + row("Reset credits", d.resetCredits) : row("Ekstra forbrug", valid(d.extra) ? d.extra : "\u2014") + row("Ekstra tilbage", valid(d.extraRemaining) ? d.extraRemaining : "\u2014") + row("Ekstra gr\xE6nse", valid(d.extraLimit) ? d.extraLimit : "\u2014") + row("Ekstra brugt", valid(d.extraSpent) ? d.extraSpent : "\u2014") + row("Funktion", d.extraEnabled ? "Aktiveret" : "Deaktiveret")}${row("Forbindelse", d.connected ? "Forbundet" : "Ikke forbundet")}${row("Senest opdateret", d.updated)}</div></div>`;
+    const content = `<div class="detailTop"><div class="logo">${a.kind === "claude" ? "AI" : "\u25CE"}</div><div class="identityText"><strong>${safe(a.name)}</strong><div class="sub">${safe(d.plan)}</div></div><span class="${d.limited ? "bad" : d.connected ? "status" : "warn"}">${d.limited ? "Gr\xE6nse n\xE5et" : d.connected ? "\u25CF Aktiv" : "Ikke forbundet"}</span><button class="close" data-action="close" aria-label="Skjul detaljer">\xD7</button></div><div class="columns"><div class="column"><h3>5-timers kvote</h3>${row("Brugt kvote", pct2(d.usage))}${row("Tilbage af kvote", pct2(d.remaining))}${row("Tid til nulstilling", duration(d.time))}${row("Nulstilles", d.reset)}${row("Gr\xE6nse", d.limited ? "N\xE5et" : "Ikke n\xE5et")}<div class="meter" data-tone="${tone(d.remaining)}"><span style="width:${d.remaining ?? 0}%"></span></div></div><div class="column"><h3>Ugentlig kvote</h3>${row("Brugt kvote", pct2(d.weeklyUsage))}${row("Tilbage af kvote", pct2(d.weekly))}${row("Tid til nulstilling", duration(d.weeklyTime))}${row("Nulstilles", d.weeklyReset)}<div class="meter" data-tone="${tone(d.weekly)}"><span style="width:${d.weekly ?? 0}%"></span></div></div><div class="column"><h3>Kontooplysninger</h3>${row("Abonnement", d.plan)}${d.kind === "chatgpt" ? row("Credit balance", d.credit) + row("Credits tilg\xE6ngelige", d.creditsAvailable ? "Ja" : "Nej") + row("Reset credits", d.resetCredits) : row("Ekstra forbrug", valid(d.extra) ? d.extra : "\u2014") + row("Ekstra tilbage", valid(d.extraRemaining) ? d.extraRemaining : "\u2014") + row("Ekstra gr\xE6nse", valid(d.extraLimit) ? d.extraLimit : "\u2014") + row("Ekstra brugt", valid(d.extraSpent) ? d.extraSpent : "\u2014") + row("Funktion", d.extraEnabled ? "Aktiveret" : "Deaktiveret")}${row("Forbindelse", d.connected ? "Forbundet" : "Ikke forbundet")}${row("Senest opdateret", d.updated)}</div></div>`;
     if (detail.innerHTML !== content) detail.innerHTML = content;
   }
   _week() {
@@ -62368,7 +62750,7 @@ function percentileOf(sortedValues, v) {
   }
   return (below + equal / 2) / sortedValues.length * 100;
 }
-var bandFor = (pct2) => Number.isFinite(pct2) ? PRICE_BANDS.find((b) => pct2 <= b.maxPct) || PRICE_BANDS.at(-1) : void 0;
+var bandFor = (pct3) => Number.isFinite(pct3) ? PRICE_BANDS.find((b) => pct3 <= b.maxPct) || PRICE_BANDS.at(-1) : void 0;
 function analyzePrices(entries) {
   if (!entries.length) return void 0;
   let minEntry = entries[0];
@@ -63466,8 +63848,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const m = this._priceModel();
     const a = m.todayAnalysis;
     const nowPrice = this._num("price") ?? m.current?.price;
-    const pct2 = a ? percentileOf(a.sorted, nowPrice) : void 0;
-    const band = bandFor(pct2);
+    const pct3 = a ? percentileOf(a.sorted, nowPrice) : void 0;
+    const band = bandFor(pct3);
     const dev = deviationPct(nowPrice, a?.avg);
     this._tweenNumber("priceNow", nowPrice, fmtPrice);
     const devTone = !Number.isFinite(dev) ? "neutral" : dev <= 0 ? "green" : dev >= STRONG_DEVIATION_PCT ? "red" : "orange";
@@ -63930,13 +64312,13 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._show("eTotalRow", totalOk);
     this._tweenNumber("eTotal", total, fmtEnergy);
     const share = (v) => totalOk && total > 0 && Number.isFinite(v) ? Math.max(0, v) / total * 100 : void 0;
-    const setBar = (ref, pct2) => this._refs[ref]?.style.setProperty("--p", Number.isFinite(pct2) ? (pct2 / 100).toFixed(3) : "0");
+    const setBar = (ref, pct3) => this._refs[ref]?.style.setProperty("--p", Number.isFinite(pct3) ? (pct3 / 100).toFixed(3) : "0");
     const houseShare = share(house);
     const carShare = share(car);
     setBar("eHouseBar", totalOk ? houseShare : Number.isFinite(house) ? 100 : 0);
     setBar("eCarBar", carShare);
     setBar("eTotalBar", totalOk && total > 0 ? 100 : 0);
-    const shareHtml = (pct2) => Number.isFinite(pct2) ? `${fmtPct(pct2)} %<small>af samlet forbrug</small>` : "";
+    const shareHtml = (pct3) => Number.isFinite(pct3) ? `${fmtPct(pct3)} %<small>af samlet forbrug</small>` : "";
     this._setHtml("eHouseShare", shareHtml(houseShare));
     this._setHtml("eCarShare", shareHtml(carShare));
     this._updateDayCompare();
@@ -64938,9 +65320,9 @@ var BarChart = class {
     let y = "";
     let grid = "";
     for (let v = 0; v <= hi + step / 2; v += step) {
-      const pct2 = 100 - v / hi * 100;
-      y += `<span style="top:${pct2}%">${fmt4(v, d)}</span>`;
-      grid += `<i style="top:${pct2}%"></i>`;
+      const pct3 = 100 - v / hi * 100;
+      y += `<span style="top:${pct3}%">${fmt4(v, d)}</span>`;
+      grid += `<i style="top:${pct3}%"></i>`;
     }
     this.$("y").innerHTML = y;
     this.$("grid").innerHTML = grid;
@@ -65873,9 +66255,9 @@ var PowerSection = class extends Section {
     this.text("mainRet", `${ret.v} ${ret.u}`);
     this.value("mMeas", fmtPower2(meas));
     this.value("mUnm", fmtPower2(unm));
-    const pct2 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
-    const measPct = pct2(meas);
-    const unmPct = pct2(unm);
+    const pct3 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
+    const measPct = pct3(meas);
+    const unmPct = pct3(unm);
     this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
     this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
     this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");

@@ -1,6 +1,9 @@
 import "./ha-card-list-editor.js";
+import { isNewLook } from "../../shared/look.js";
+import { keepScroll } from "../shared/keep-scroll.js";
+import { premiumHtml, premiumTick, PREMIUM_STYLE } from "./premium.js";
 
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 
 class HAPetCareCard extends HTMLElement {
   constructor() {
@@ -24,7 +27,10 @@ class HAPetCareCard extends HTMLElement {
         { key: "water", label: "Vandstatus", type: "entity" }, { key: "water_battery", label: "Vandsensor batteri", type: "entity" },
         { key: "feeder_mode", label: "Fodermode", type: "entity" }, { key: "daily_amount", label: "Daglig mængde", type: "entity" },
         { key: "feeder_error", label: "Foderfejl", type: "entity" }, { key: "container_grams", label: "Beholder gram", type: "entity" },
-        { key: "container_percent", label: "Beholder procent", type: "entity" }, { key: "refill_action", label: "Genopfyld handling", type: "entity" }
+        { key: "container_percent", label: "Beholder procent", type: "entity" }, { key: "refill_action", label: "Genopfyld handling", type: "entity" },
+        { key: "style", label: "Udseende: new (premium) eller classic" }, { key: "style_entity", label: "Skifteknap for udseende (input_boolean: til = premium)", type: "entity" },
+        { key: "heat_sensor", label: "Løbetid: sensor (premium)", type: "entity" }, { key: "heat_start", label: "Løbetid: startdato (input_datetime)", type: "entity" },
+        { key: "heat_script", label: "Løbetid: script der registrerer starten", type: "entity" }, { key: "heat_calendar", label: "Løbetid: kalender", type: "entity" }
       ],
       collections: [{
         key: "meals", label: "Måltider", itemLabel: "måltid", defaults: { name: "Nyt måltid", time: "12:00", icon: "mdi:bowl-mix" },
@@ -42,19 +48,30 @@ class HAPetCareCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Kæledyrskortet kræver en konfiguration");
     this._config = { title: "Kæledyrspleje", pet_name: "Kæledyr", icon: "mdi:dog-side", animation: true, meals: [], ...config };
+    // The heat cycle for the premium look: `heat: {sensor, start, script, calendar, duration}` or the flat heat_* keys.
+    const heat = config.heat || {};
+    const flat = { sensor: config.heat_sensor, start: config.heat_start, script: config.heat_script, calendar: config.heat_calendar, duration: config.heat_duration };
+    this._config.heat = Object.fromEntries(Object.entries({ ...flat, ...heat }).filter(([, v]) => v));
     this._signature = "";
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action"]
-      .map((key) => this._config[key]).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
+    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"]
+      .map((key) => this._config[key]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
     const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
     if (signature === this._signature) return;
     this._signature = signature;
     this._render();
   }
+
+  connectedCallback() {
+    // The premium look's clock: the now marker and the countdown move each minute without a redraw.
+    clearInterval(this._tick);
+    this._tick = setInterval(() => { if (this._premium) premiumTick(this.shadowRoot, this); }, 60000);
+  }
+  disconnectedCallback() { clearInterval(this._tick); this._tick = null; }
 
   getCardSize() { return 7; }
   getGridOptions() { return { rows: "auto", columns: 12, min_columns: 6 }; }
@@ -89,6 +106,30 @@ class HAPetCareCard extends HTMLElement {
     if (!window.confirm(message)) return;
     await this._hass.callService("input_boolean", skipped ? "turn_off" : "turn_on", { entity_id: id });
   }
+  _renderPremium() {
+    if (!this._hass) return;
+    this.shadowRoot.innerHTML = `<style>${PREMIUM_STYLE}</style>${premiumHtml(this)}`;
+    this._ppIntro = true;
+    this._wire();
+    this.shadowRoot.querySelector("[data-heatstart]")?.addEventListener("click", () => this._heatStart());
+  }
+  async _heatStart() {
+    const heat = this._config.heat || {}; if (!heat.script || !this._hass) return;
+    const d = new Date(); const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const day = window.prompt(`Hvilken dag gik ${this._config.pet_name || "hun"} i løbetid? (ÅÅÅÅ-MM-DD)\nKalenderen får forløbet og den næste forventede løbetid.`, today);
+    if (day == null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.trim())) { window.alert("Skriv datoen som ÅÅÅÅ-MM-DD, fx " + today); return; }
+    await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day.trim() } });
+  }
+  _wire() {
+    const root = this.shadowRoot;
+    root.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
+    root.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
+    root.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
+    root.querySelectorAll("[data-feed]").forEach((button) => button.addEventListener("click", () => this._script(button.dataset.feed, `Vil du give ${button.dataset.name || "måltidet"} nu?`)));
+    root.querySelectorAll("[data-skip]").forEach((button) => button.addEventListener("click", () => this._skip(button.dataset.skip, button.dataset.name, button.dataset.skipped === "true")));
+    root.querySelector("[data-refill]")?.addEventListener("click", () => this._script(this._config.refill_action, "Er foderbeholderen fyldt op og skal tælleren nulstilles?"));
+  }
   _meal(meal, index) {
     const skipped = this._on(meal.skip);
     const [label, tone] = skipped ? ["Sprunget over", "skipped"] : this._status(this._state(meal.status));
@@ -100,6 +141,9 @@ class HAPetCareCard extends HTMLElement {
     </article>`;
   }
   _render() {
+    // Premium look (Claude AI, 2026-10-29): `style: new` or `style_entity` on. The classic look below is unchanged.
+    this._premium = isNewLook(this._hass, this._config);
+    if (this._premium) return keepScroll(this, () => this._renderPremium());
     const meals = this._config.meals || [];
     const percent = Math.max(0, Math.min(100, this._number(this._config.container_percent) ?? 0));
     const grams = this._number(this._config.container_grams);
@@ -160,12 +204,7 @@ class HAPetCareCard extends HTMLElement {
       .shell .feeder{position:relative;isolation:isolate;padding:14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pet-accent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
       .shell .section-title{margin:14px 2px 9px}
     </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, måltider og foder samlet ét sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong><ha-icon class="tile-icon" icon="mdi:water"></ha-icon></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` · ${skipped} sprunget` : ""}</strong><ha-icon class="tile-icon" icon="mdi:calendar-check"></ha-icon></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong><ha-icon class="tile-icon" icon="mdi:bowl-mix"></ha-icon></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandskål</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens måltider</span><strong>${next ? `Næste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kræver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong><ha-icon class="tile-icon" icon="mdi:gauge"></ha-icon></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong><ha-icon class="tile-icon" icon="mdi:shield-check-outline"></ha-icon></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
-    this.shadowRoot.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
-    this.shadowRoot.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
-    this.shadowRoot.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
-    this.shadowRoot.querySelectorAll("[data-feed]").forEach((button) => button.addEventListener("click", () => this._script(button.dataset.feed, `Vil du give ${button.dataset.name || "måltidet"} nu?`)));
-    this.shadowRoot.querySelectorAll("[data-skip]").forEach((button) => button.addEventListener("click", () => this._skip(button.dataset.skip, button.dataset.name, button.dataset.skipped === "true")));
-    this.shadowRoot.querySelector("[data-refill]")?.addEventListener("click", () => this._script(this._config.refill_action, "Er foderbeholderen fyldt op og skal tælleren nulstilles?"));
+    this._wire();
   }
 }
 

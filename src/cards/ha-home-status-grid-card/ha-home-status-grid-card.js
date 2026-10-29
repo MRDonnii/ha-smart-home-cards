@@ -248,7 +248,8 @@ class HaHomeStatusCard extends HTMLElement {
   connectedCallback() {
     this._cycleTimer = setInterval(() => {
       const type = this.config?.preset || this.config?.type_name;
-      if (type === "ev") {
+      // The pet tile alternates meals and the heat cycle while it is shown (Claude AI, 2026-10-29).
+      if (type === "ev" || (type === "pet" && this._petHeat)) {
         this._evCycle = (this._evCycle + 1) % 2;
         this.render();
       }
@@ -294,6 +295,7 @@ class HaHomeStatusCard extends HTMLElement {
       cfg.blocked_by_entity,
       cfg.off_count_entity,
       cfg.secondary_entity,
+      cfg.heat_entity,
       ...Object.values(this.smartIds(cfg.smart_charge) || {}),
       ...(cfg.phase_entities || []),
       ...(cfg.status_entities || []),
@@ -311,7 +313,7 @@ class HaHomeStatusCard extends HTMLElement {
     const ids = [...this._watchedIds(), this.config?.style_entity].filter(Boolean);
     const sig = JSON.stringify(
       ids.map((id) => [id, hass?.states?.[id]?.state]),
-    );
+    ) + (this.config?.heat_entity ? hass?.states?.[this.config.heat_entity]?.last_updated || "" : "");
     if (sig !== this._sig) {
       this._sig = sig;
       this.render();
@@ -489,6 +491,12 @@ class HaHomeStatusCard extends HTMLElement {
       const mode = this.text(cfg.entity, "Auto");
       value = error ? "Fejl" : mode === "schedule" ? "Auto" : mode;
       detail = `${done}/${statuses.length} måltider`;
+      // The heat cycle (`heat_entity`, e.g. sensor.hund_lobetid with the attributes dag and dage_til_naeste) only while
+      // she is in heat and in the days before it (Claude AI, 2026-10-29; user: "Hendes forside knap skal også have
+      // løbetids info men kun inden for tidsperioden hun er i løbetid og op til"). It takes turns with the meals.
+      const heat = this.petHeat(cfg);
+      this._petHeat = !!heat;
+      if (heat && this._evCycle % 2 === 1) { detail = heat; cfg.detailHeat = true; }
       meter = done;
       cfg.segments = statuses.length || 5;
       // One ring field per meal, in order (Claude AI, 2026-10-27; user: "deles op i felter til hver del"): given, missed, not yet
@@ -707,6 +715,22 @@ class HaHomeStatusCard extends HTMLElement {
       color,
       pricePulse,
     };
+  }
+
+  // The pet's heat cycle text for the tile, or null outside the heat and the `heat_lead_days` (14) before it. A heat
+  // that has not been registered by the expected day says "ventes nu" for up to 30 days.
+  petHeat(cfg) {
+    const st = this.state(cfg.heat_entity);
+    if (!st) return null;
+    const a = st.attributes || {};
+    const length = Number(/(\d+)\s*$/.exec(st.state)?.[1]) || Number(cfg.heat_days) || 21;
+    const day = Number(a.dag);
+    if (a.dag != null && Number.isFinite(day) && day >= 1 && day <= length)
+      return day >= 9 && day <= 14 ? `Frugtbar · dag ${day}/${length}` : `Løbetid dag ${day}/${length}`;
+    const left = Number(a.dage_til_naeste);
+    if (a.dage_til_naeste == null || a.dage_til_naeste === "" || !Number.isFinite(left)) return null;
+    if (left > Number(cfg.heat_lead_days ?? 14) || left < -30) return null;
+    return left > 1 ? `Løbetid om ca. ${left} dage` : left === 1 ? "Løbetid ca. i morgen" : "Løbetid ventes nu";
   }
 
   // The heat pumps' combined state for the heating tile: null when none runs.
@@ -1007,6 +1031,8 @@ class HaHomeStatusCard extends HTMLElement {
       :host([v2]) .item:not(.security) .label{--bleed:var(--px);margin-inline:calc(-1 * var(--px));padding-inline:var(--px);max-width:none;text-overflow:clip;border-top-color:transparent;background:linear-gradient(color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent),color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)) var(--px) 0/calc(100% - 2 * var(--px)) 1px no-repeat;background-origin:border-box}
       :host([v2]) .item:not(.security) .marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
+      /* The pet's heat cycle in the detail line (Claude AI, 2026-10-29). */
+      .detail.heat,:host([v2]) .detail.heat{color:#ff6fa5;font-weight:700}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
       const tile = this.shadowRoot.querySelector(".item");
       tile.addEventListener("click", () => {
@@ -1061,6 +1087,7 @@ class HaHomeStatusCard extends HTMLElement {
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => { meter.children[index].className = `seg ${segClass(state)}`; });
     setText(".detail", esc(item.detail || " "));
+    this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item.detailHeat);
     // The heating tile's source badges are fitted to the tile instead of scrolling as a marquee (Claude AI, 2026-10-18).
     if (item.type === "heating") { const l = this.shadowRoot.querySelector(".label"); l._marqueeHtml = undefined; l.classList.remove("marquee"); l.innerHTML = item.label; }
     else setText(".label", item.label);
@@ -1136,10 +1163,13 @@ class HaHomeStatusCardEditor extends HTMLElement {
           `<option value="${key}" ${this.config?.preset === key ? "selected" : ""}>${PRESETS[key].name}</option>`,
       )
       .join("");
+    const heatField = this.config?.preset === "pet"
+      ? `<label>Løbetidssensor (valgfri, fx sensor.hund_lobetid)</label><input id="heat-entity" style="box-sizing:border-box;width:100%;padding:9px" value="${String(this.config.heat_entity || "").replace(/"/g, "&quot;")}" placeholder="sensor.…_lobetid">`
+      : "";
     const inversion = this.config?.preset === "security"
       ? `<label class="check"><input id="gate-lock-inverted" type="checkbox" ${this.config.gate_lock_inverted !== false ? "checked" : ""}>Portkontakt er omvendt (åben = låst)</label>`
       : "";
-    this.innerHTML = `<style>select{box-sizing:border-box;width:100%;padding:10px}label{display:block;margin:8px 0 4px}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;height:18px}</style><label>Kortfunktion</label><select>${options}</select>${inversion}`;
+    this.innerHTML = `<style>select{box-sizing:border-box;width:100%;padding:10px}label{display:block;margin:8px 0 4px}.check{display:flex;align-items:center;gap:8px}.check input{width:18px;height:18px}</style><label>Kortfunktion</label><select>${options}</select>${inversion}${heatField}`;
     this.querySelector("select").addEventListener("change", (event) =>
       this.dispatchEvent(
         new CustomEvent("config-changed", {
@@ -1151,6 +1181,11 @@ class HaHomeStatusCardEditor extends HTMLElement {
     );
     this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config));
     wireLookEditor(this, this, () => this.config);
+    this.querySelector("#heat-entity")?.addEventListener("change", (event) => {
+      const config = { ...this.config };
+      if (event.target.value.trim()) config.heat_entity = event.target.value.trim(); else delete config.heat_entity;
+      this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
+    });
     this.querySelector("#gate-lock-inverted")?.addEventListener("change", (event) =>
       this.dispatchEvent(
         new CustomEvent("config-changed", {
