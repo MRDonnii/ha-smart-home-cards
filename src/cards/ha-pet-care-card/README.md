@@ -43,11 +43,20 @@ heat:                                            # valgfri, kun i premium-looket
 - **Løbetid** (med `heat`): de ca. 21 dage som et bånd (blødning dag 1–8, mest frugtbar dag 9–14, sidste del), dagen
   i dag markeret, en ring med hvor langt hun er (%), hvor mange dage der er tilbage, næste fase og hvornår den
   starter, og næste forventede løbetid. Mens hun er i løbetid, ligger panelet lige under toppen. Uden for løbetiden
-  er der en nedtælling, "Hold øje fra" (14 dage før) og knappen "Hun er gået i løbetid", der spørger om dagen og
-  kalder `heat.script` med `dato: ÅÅÅÅ-MM-DD`.
+  er der en nedtælling og "Hold øje fra" (14 dage før).
+- **Startdato**: "Hun er gået i løbetid" (uden for løbetiden) og "Ret startdato" (under den) åbner en lille formular i
+  kortet med I dag / I går / I forgårs og en datovælger. "Gem" kalder `heat.script` med `dato: ÅÅÅÅ-MM-DD`.
 
 Alt bevæger sig langsomt og stopper med `animation: false` eller "reducer bevægelse" i systemet. I stedet for `heat`
 kan de flade nøgler `heat_sensor`, `heat_start`, `heat_script` og `heat_calendar` bruges (dem viser editoren).
+
+### Kalenderen
+
+Før scriptet køres, fjerner kortet de begivenheder i `heat.calendar`, som den nye dato gør forkerte. Rettes datoen
+under en løbetid, bliver den løbetids begivenheder og skønnet for den næste erstattet. Registreres en ny løbetid,
+bliver den sidste stående som historik, og kun skønnet, der blev regnet ud fra den, bliver erstattet. Kortet rører kun
+begivenheder med ordet `løbetidsknappen` i beskrivelsen, så scriptet skal skrive det i sine beskrivelser (fx "Lagt ind
+af løbetidsknappen."). Det virker med kalendere, der kan slette begivenheder, som Local Calendar.
 
 ### Løbetidssensoren
 

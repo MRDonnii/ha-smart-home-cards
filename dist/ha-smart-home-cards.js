@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.237 */
+/* MRDonnii Smart Home Cards v0.5.238 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -41164,6 +41164,7 @@ function heatModel(card) {
     left: inHeat ? duration2 - day2 : null,
     nextPhase: !inHeat ? null : day2 <= 8 ? { name: "Mest frugtbar", in: 9 - day2, date: inDays(9 - day2) } : day2 <= 14 ? { name: "Sidste del", in: 15 - day2, date: inDays(15 - day2) } : null,
     watch: date2(a.naeste_forventet, -14),
+    startRaw: /^\d{4}-\d{2}-\d{2}/.test(card._state(h.start) || "") ? card._state(h.start).slice(0, 10) : "",
     script: h.script,
     calendar: h.calendar,
     sensor: h.sensor,
@@ -41195,12 +41196,31 @@ function heatHtml(card, H3, esc12) {
       ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc12(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
       ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc12(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    <div class="pp-actions">
-      ${H3.script && !H3.inHeat ? `<button class="pp-btn heat" data-heatstart><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
+    ${card._heatForm ? heatFormHtml(card, H3, esc12) : `<div class="pp-actions">
+      ${H3.script ? H3.inHeat ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>` : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
       ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc12(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
-    </div>
+    </div>`}
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
+}
+var isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+var daysAgo = (n) => {
+  const d = /* @__PURE__ */ new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - n);
+  return isoDay(d);
+};
+function heatFormHtml(card, H3, esc12) {
+  const f = card._heatForm;
+  const today = daysAgo(0);
+  const quick = [[0, "I dag"], [1, "I g\xE5r"], [2, "I forg\xE5rs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
+  const note = H3.inHeat ? "Den nuv\xE6rende l\xF8betid i kalenderen bliver erstattet af den nye dato, og sk\xF8nnet for den n\xE6ste bliver regnet om." : "Den sidste l\xF8betid bliver i kalenderen som historik. Den nye bliver lagt ind, og sk\xF8nnet for den n\xE6ste bliver regnet om.";
+  return `<div class="pp-heatform">
+    <h4>${H3.inHeat ? "Hvorn\xE5r startede l\xF8betiden?" : "Hvorn\xE5r gik hun i l\xF8betid?"}</h4>
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc12(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc12(f.error)}</p>` : ""}
+    <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer \u2026" : "Gem"}</button>
+      <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annull\xE9r</button></div></div>`;
 }
 function premiumHtml(card) {
   const c2 = card._config;
@@ -41404,6 +41424,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pp-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}.pp-legend .bleed i{background:#ff5c7c}.pp-legend .fertile i{background:linear-gradient(180deg,#ff7ac0,#c86bff)}.pp-legend .late i{background:#ffa3c4}
 .pp-facts{display:flex;flex-wrap:wrap;gap:12px 26px;margin:4px 0 14px}.pp-facts em{display:block;font-style:normal;font-size:12px;color:var(--pp-heat);font-weight:700}
 .pp-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pp-heatform{margin-top:4px;padding:14px;border-radius:16px;border:1px solid color-mix(in srgb,var(--pp-heat) 40%,transparent);background:color-mix(in srgb,var(--pp-heat) 8%,transparent)}
+.pp-heatform{animation:ppSlide .35s ease-out}
+@keyframes ppSlide{from{transform:translateY(6px)}}
+.pp-heatform h4{margin:0 0 10px;font-size:14px;font-weight:800}.pp-heatform p{margin:10px 0 12px;font-size:12px;color:var(--secondary-text-color)}.pp-heatform p.err{color:var(--pp-danger);font-weight:700}
+.pp-quicks{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.pp-quick{padding:8px 13px;border-radius:999px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);font-size:12.5px;font-weight:700}
+.pp-quick.on{border-color:transparent;background:var(--pp-heat);color:#fff}
+.pp-quicks input{min-height:36px;padding:6px 10px;border-radius:12px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);color:inherit;font:inherit;font-size:13px;color-scheme:dark light}
+.pp-btn[disabled]{opacity:.6;pointer-events:none}
 .pp-note{margin:12px 0 0;font-size:11.5px;color:var(--secondary-text-color)}
 .pp.still *,.pp.still *::before,.pp.still *::after{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){.pp *{animation:none!important;transition:none!important}}
@@ -41413,6 +41442,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 `;
 
 // src/cards/ha-pet-care-card/ha-pet-care-card.js
+var HEAT_MARK = "l\xF8betidsknappen";
 var VERSION31 = "0.4.0";
 var HAPetCareCard = class extends HTMLElement {
   constructor() {
@@ -41558,21 +41588,60 @@ var HAPetCareCard = class extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${PREMIUM_STYLE2}</style>${premiumHtml(this)}`;
     this._ppIntro = true;
     this._wire();
-    this.shadowRoot.querySelector("[data-heatstart]")?.addEventListener("click", () => this._heatStart());
+    const root = this.shadowRoot;
+    const form = (patch) => {
+      this._heatForm = patch && { ...this._heatForm, error: "", ...patch };
+      this._render();
+    };
+    root.querySelector("[data-heatform]")?.addEventListener("click", () => {
+      const start = this._state(this._config.heat?.start) || "";
+      const inHeat = !!root.querySelector(".pp-heat.active");
+      form({ value: inHeat && /^\d{4}-\d{2}-\d{2}/.test(start) ? start.slice(0, 10) : daysAgo(0) });
+    });
+    root.querySelectorAll("[data-hday]").forEach((b) => b.addEventListener("click", () => form({ value: daysAgo(Number(b.dataset.hday)) })));
+    root.querySelector("[data-hdate]")?.addEventListener("change", (e) => form({ value: e.target.value }));
+    root.querySelector("[data-hcancel]")?.addEventListener("click", () => form(null));
+    root.querySelector("[data-hsave]")?.addEventListener("click", () => this._heatSave());
   }
-  async _heatStart() {
+  /** Registers the first day of a heat: replaces the script's events that the new date makes wrong, then runs the script. */
+  async _heatSave() {
     const heat = this._config.heat || {};
+    const day2 = this._heatForm?.value || "";
     if (!heat.script || !this._hass) return;
-    const d = /* @__PURE__ */ new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const day2 = window.prompt(`Hvilken dag gik ${this._config.pet_name || "hun"} i l\xF8betid? (\xC5\xC5\xC5\xC5-MM-DD)
-Kalenderen f\xE5r forl\xF8bet og den n\xE6ste forventede l\xF8betid.`, today);
-    if (day2 == null) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day2.trim())) {
-      window.alert("Skriv datoen som \xC5\xC5\xC5\xC5-MM-DD, fx " + today);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day2) || day2 > daysAgo(0)) {
+      this._heatForm = { ...this._heatForm, error: "V\xE6lg en dag, der ikke ligger i fremtiden." };
+      this._render();
       return;
     }
-    await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day2.trim() } });
+    this._heatForm = { ...this._heatForm, busy: true, error: "" };
+    this._render();
+    try {
+      if (heat.calendar) await this._heatClearCalendar(heat, day2);
+      await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day2 } });
+      this._heatForm = null;
+    } catch (err) {
+      this._heatForm = { ...this._heatForm, busy: false, error: `Det lykkedes ikke: ${err?.message || err}` };
+    }
+    this._render();
+  }
+  /** Within the current heat (a correction) its events and the forecast go; a new heat keeps the last one as history
+   *  and only replaces the forecast made from it. Only events with HEAT_MARK in the description are touched. */
+  async _heatClearCalendar(heat, day2) {
+    const old = (this._state(heat.start) || "").slice(0, 10);
+    const sensor = this._entity(heat.sensor);
+    const length = this._number(heat.duration) ?? (Number(/af ca\. (\d+)/.exec(sensor?.state || "")?.[1]) || Number(sensor?.attributes?.varighed) || 21);
+    const shift = (iso, n) => {
+      const d = /* @__PURE__ */ new Date(`${iso}T12:00:00`);
+      d.setDate(d.getDate() + n);
+      return d.toISOString().slice(0, 10);
+    };
+    const from = !/^\d{4}-\d{2}-\d{2}$/.test(old) ? day2 : day2 <= shift(old, length) ? day2 < old ? day2 : old : shift(old, length);
+    const events = await this._hass.callApi("GET", `calendars/${heat.calendar}?start=${shift(from, -1)}T00:00:00Z&end=${shift(from, 500)}T00:00:00Z`);
+    for (const ev of events || []) {
+      const begins = String(ev.start?.date || ev.start?.dateTime || ev.start || "").slice(0, 10);
+      if (!ev.uid || begins < from || !String(ev.description || "").includes(HEAT_MARK)) continue;
+      await this._hass.callWS({ type: "calendar/event/delete", entity_id: heat.calendar, uid: ev.uid, ...ev.recurrence_id ? { recurrence_id: ev.recurrence_id } : {} });
+    }
   }
   _wire() {
     const root = this.shadowRoot;

@@ -49,6 +49,7 @@ function heatModel(card) {
     left: inHeat ? duration - day : null,
     nextPhase: !inHeat ? null : day <= 8 ? { name: "Mest frugtbar", in: 9 - day, date: inDays(9 - day) } : day <= 14 ? { name: "Sidste del", in: 15 - day, date: inDays(15 - day) } : null,
     watch: date(a.naeste_forventet, -14),
+    startRaw: /^\d{4}-\d{2}-\d{2}/.test(card._state(h.start) || "") ? card._state(h.start).slice(0, 10) : "",
     script: h.script, calendar: h.calendar, sensor: h.sensor,
     // The same window as the front page tile: the 14 days before the expected heat, and up to 30 days late.
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? ""
@@ -81,12 +82,34 @@ function heatHtml(card, H, esc) {
       ${!H.inHeat && H.watch && H.daysToNext > 14 ? `<div><small>Hold øje fra</small><b>${esc(H.watch)}</b><em>${days(H.daysToNext - 14)}</em></div>` : ""}
       ${H.next ? `<div><small>${H.inHeat ? "Næste løbetid ca." : "Næste ca."}</small><b>${esc(H.next)}</b>${Number.isFinite(H.daysToNext) && H.daysToNext >= 0 ? `<em>${days(H.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    <div class="pp-actions">
-      ${H.script && !H.inHeat ? `<button class="pp-btn heat" data-heatstart><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er gået i løbetid</button>` : ""}
+    ${card._heatForm ? heatFormHtml(card, H, esc) : `<div class="pp-actions">
+      ${H.script ? H.inHeat
+        ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>`
+        : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er gået i løbetid</button>` : ""}
       ${H.calendar ? `<button class="pp-btn ghost" data-info="${esc(H.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
-    </div>
+    </div>`}
     <p class="pp-note">Et skøn for en Labrador: ca. 3 uger hver ca. 6. måned. Det bliver mere præcist med hendes egne datoer.</p>
   </section>`;
+}
+
+export const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export const daysAgo = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - n); return isoDay(d); };
+
+// The form for the first day of a heat (Claude AI, 2026-10-29; user: "Skal der ikke være en knap til start løbetid
+// hvis det ikke passer med tiden du har sat"): during the heat it corrects the start, outside it registers a new heat.
+// A date input instead of window.prompt, which the phone apps do not all show.
+function heatFormHtml(card, H, esc) {
+  const f = card._heatForm; const today = daysAgo(0);
+  const quick = [[0, "I dag"], [1, "I går"], [2, "I forgårs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
+  const note = H.inHeat
+    ? "Den nuværende løbetid i kalenderen bliver erstattet af den nye dato, og skønnet for den næste bliver regnet om."
+    : "Den sidste løbetid bliver i kalenderen som historik. Den nye bliver lagt ind, og skønnet for den næste bliver regnet om.";
+  return `<div class="pp-heatform">
+    <h4>${H.inHeat ? "Hvornår startede løbetiden?" : "Hvornår gik hun i løbetid?"}</h4>
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc(f.error)}</p>` : ""}
+    <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer …" : "Gem"}</button>
+      <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annullér</button></div></div>`;
 }
 
 export function premiumHtml(card) {
@@ -286,6 +309,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pp-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}.pp-legend .bleed i{background:#ff5c7c}.pp-legend .fertile i{background:linear-gradient(180deg,#ff7ac0,#c86bff)}.pp-legend .late i{background:#ffa3c4}
 .pp-facts{display:flex;flex-wrap:wrap;gap:12px 26px;margin:4px 0 14px}.pp-facts em{display:block;font-style:normal;font-size:12px;color:var(--pp-heat);font-weight:700}
 .pp-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pp-heatform{margin-top:4px;padding:14px;border-radius:16px;border:1px solid color-mix(in srgb,var(--pp-heat) 40%,transparent);background:color-mix(in srgb,var(--pp-heat) 8%,transparent)}
+.pp-heatform{animation:ppSlide .35s ease-out}
+@keyframes ppSlide{from{transform:translateY(6px)}}
+.pp-heatform h4{margin:0 0 10px;font-size:14px;font-weight:800}.pp-heatform p{margin:10px 0 12px;font-size:12px;color:var(--secondary-text-color)}.pp-heatform p.err{color:var(--pp-danger);font-weight:700}
+.pp-quicks{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.pp-quick{padding:8px 13px;border-radius:999px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);font-size:12.5px;font-weight:700}
+.pp-quick.on{border-color:transparent;background:var(--pp-heat);color:#fff}
+.pp-quicks input{min-height:36px;padding:6px 10px;border-radius:12px;border:1px solid var(--pp-line);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);color:inherit;font:inherit;font-size:13px;color-scheme:dark light}
+.pp-btn[disabled]{opacity:.6;pointer-events:none}
 .pp-note{margin:12px 0 0;font-size:11.5px;color:var(--secondary-text-color)}
 .pp.still *,.pp.still *::before,.pp.still *::after{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){.pp *{animation:none!important;transition:none!important}}

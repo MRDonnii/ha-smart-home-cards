@@ -1,7 +1,10 @@
 import "./ha-card-list-editor.js";
 import { isNewLook } from "../../shared/look.js";
 import { keepScroll } from "../shared/keep-scroll.js";
-import { premiumHtml, premiumTick, PREMIUM_STYLE } from "./premium.js";
+import { premiumHtml, premiumTick, PREMIUM_STYLE, daysAgo } from "./premium.js";
+
+// Calendar events the heat script made carry this word in their description; only those are replaced.
+const HEAT_MARK = "løbetidsknappen";
 
 const VERSION = "0.4.0";
 
@@ -111,15 +114,47 @@ class HAPetCareCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${PREMIUM_STYLE}</style>${premiumHtml(this)}`;
     this._ppIntro = true;
     this._wire();
-    this.shadowRoot.querySelector("[data-heatstart]")?.addEventListener("click", () => this._heatStart());
+    const root = this.shadowRoot;
+    const form = (patch) => { this._heatForm = patch && { ...this._heatForm, error: "", ...patch }; this._render(); };
+    root.querySelector("[data-heatform]")?.addEventListener("click", () => {
+      const start = this._state(this._config.heat?.start) || "";
+      const inHeat = !!root.querySelector(".pp-heat.active");
+      form({ value: inHeat && /^\d{4}-\d{2}-\d{2}/.test(start) ? start.slice(0, 10) : daysAgo(0) });
+    });
+    root.querySelectorAll("[data-hday]").forEach((b) => b.addEventListener("click", () => form({ value: daysAgo(Number(b.dataset.hday)) })));
+    root.querySelector("[data-hdate]")?.addEventListener("change", (e) => form({ value: e.target.value }));
+    root.querySelector("[data-hcancel]")?.addEventListener("click", () => form(null));
+    root.querySelector("[data-hsave]")?.addEventListener("click", () => this._heatSave());
   }
-  async _heatStart() {
-    const heat = this._config.heat || {}; if (!heat.script || !this._hass) return;
-    const d = new Date(); const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const day = window.prompt(`Hvilken dag gik ${this._config.pet_name || "hun"} i løbetid? (ÅÅÅÅ-MM-DD)\nKalenderen får forløbet og den næste forventede løbetid.`, today);
-    if (day == null) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.trim())) { window.alert("Skriv datoen som ÅÅÅÅ-MM-DD, fx " + today); return; }
-    await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day.trim() } });
+  /** Registers the first day of a heat: replaces the script's events that the new date makes wrong, then runs the script. */
+  async _heatSave() {
+    const heat = this._config.heat || {}; const day = this._heatForm?.value || "";
+    if (!heat.script || !this._hass) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day > daysAgo(0)) { this._heatForm = { ...this._heatForm, error: "Vælg en dag, der ikke ligger i fremtiden." }; this._render(); return; }
+    this._heatForm = { ...this._heatForm, busy: true, error: "" }; this._render();
+    try {
+      if (heat.calendar) await this._heatClearCalendar(heat, day);
+      await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day } });
+      this._heatForm = null;
+    } catch (err) {
+      this._heatForm = { ...this._heatForm, busy: false, error: `Det lykkedes ikke: ${err?.message || err}` };
+    }
+    this._render();
+  }
+  /** Within the current heat (a correction) its events and the forecast go; a new heat keeps the last one as history
+   *  and only replaces the forecast made from it. Only events with HEAT_MARK in the description are touched. */
+  async _heatClearCalendar(heat, day) {
+    const old = (this._state(heat.start) || "").slice(0, 10);
+    const sensor = this._entity(heat.sensor);
+    const length = this._number(heat.duration) ?? (Number(/af ca\. (\d+)/.exec(sensor?.state || "")?.[1]) || Number(sensor?.attributes?.varighed) || 21);
+    const shift = (iso, n) => { const d = new Date(`${iso}T12:00:00`); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+    const from = !/^\d{4}-\d{2}-\d{2}$/.test(old) ? day : day <= shift(old, length) ? (day < old ? day : old) : shift(old, length);
+    const events = await this._hass.callApi("GET", `calendars/${heat.calendar}?start=${shift(from, -1)}T00:00:00Z&end=${shift(from, 500)}T00:00:00Z`);
+    for (const ev of events || []) {
+      const begins = String(ev.start?.date || ev.start?.dateTime || ev.start || "").slice(0, 10);
+      if (!ev.uid || begins < from || !String(ev.description || "").includes(HEAT_MARK)) continue;
+      await this._hass.callWS({ type: "calendar/event/delete", entity_id: heat.calendar, uid: ev.uid, ...(ev.recurrence_id ? { recurrence_id: ev.recurrence_id } : {}) });
+    }
   }
   _wire() {
     const root = this.shadowRoot;
