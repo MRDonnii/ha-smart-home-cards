@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.238 */
+/* MRDonnii Smart Home Cards v0.5.239 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -27553,6 +27553,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     if (reason === "recent_window_incomplete") return "Venter p\xE5 et d\xF8gns rene m\xE5linger i de seneste 48 timer";
     if (reason === "too_mild") return "For mildt vejr til at vurdere varmebehovet";
     if (reason === "outside_learned_weather") return "Har ikke set lignende vejr endnu";
+    if (reason === "setpoint_changed") return "Tilpasser sig ny temperatur";
     return "Indsamler m\xE5linger";
   }
   // Dør/vindue- og ekstra-varme-sensorer, som Better Thermostat selv peger på fra rummets termostat.
@@ -27684,7 +27685,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       temperature();
     } else if (s.reason === "learning" && s.signature) {
       const lift = Number(demand.recent_mean_lift_c);
-      lead = s.learnReason === "collecting_days" ? `Rummet er ved at blive l\xE6rt at kende: ${s.validDays} af ${s.requiredDays} d\xF8gn med gyldige m\xE5linger er samlet. Derefter sammenlignes de seneste 48 timer med d\xF8gn med lignende vejr.` : s.learnReason === "recent_window_incomplete" ? "De seneste 48 timer har for f\xE5 rene m\xE5linger \u2013 fx fordi en anden varmekilde har k\xF8rt, en d\xF8r eller et vindue har st\xE5et \xE5bent, eller data har manglet. Status vurderes igen, n\xE5r der er mindst et d\xF8gns m\xE5linger." : s.learnReason === "too_mild" ? "Det er s\xE5 mildt, at forskellen mellem inde og ude er under 3 \xB0C. S\xE5 er tallet for usikkert til at sige noget om rummet." : s.learnReason === "outside_learned_weather" ? `Vejret de seneste 48 timer${Number.isFinite(lift) ? ` (inde-ude-forskel ${this._format(lift, 1)} \xB0C)` : ""} ligner ikke de d\xF8gn, der er l\xE6rt endnu. Status vurderes, n\xE5r der er mindst 5 d\xF8gn med lignende vejr.` : "Integrationen samler stadig m\xE5linger.";
+      lead = s.learnReason === "collecting_days" ? `Rummet er ved at blive l\xE6rt at kende: ${s.validDays} af ${s.requiredDays} d\xF8gn med gyldige m\xE5linger er samlet. Derefter sammenlignes de seneste 48 timer med d\xF8gn med lignende vejr.` : s.learnReason === "recent_window_incomplete" ? "De seneste 48 timer har for f\xE5 rene m\xE5linger \u2013 fx fordi en anden varmekilde har k\xF8rt, en d\xF8r eller et vindue har st\xE5et \xE5bent, eller data har manglet. Status vurderes igen, n\xE5r der er mindst et d\xF8gns m\xE5linger." : s.learnReason === "too_mild" ? "Det er s\xE5 mildt, at forskellen mellem inde og ude er under 3 \xB0C. S\xE5 er tallet for usikkert til at sige noget om rummet." : s.learnReason === "outside_learned_weather" ? `Vejret de seneste 48 timer${Number.isFinite(lift) ? ` (inde-ude-forskel ${this._format(lift, 1)} \xB0C)` : ""} ligner ikke de d\xF8gn, der er l\xE6rt endnu. Status vurderes, n\xE5r der er mindst 5 d\xF8gn med lignende vejr.` : s.learnReason === "setpoint_changed" ? "Temperaturen er \xE6ndret. Mens rummet varmes op eller k\xF8les ned til den nye temperatur \u2013 og et par timer efter \u2013 t\xE6ller forbruget ikke som rummets normale varmebehov, s\xE5 det ikke ligner et h\xF8jt eller lavt forbrug. Derefter vurderes rummet igen." : "Integrationen samler stadig m\xE5linger.";
       facts.push(["Gyldige d\xF8gn", `${s.validDays} af ${s.requiredDays}`]);
       if (Number.isFinite(observed)) facts.push(["Rene timer (48 t)", `${this._format(observed, 1)} t`]);
       if (Number.isFinite(lift)) facts.push(["Inde-ude-forskel", `${this._format(lift, 1)} \xB0C`]);

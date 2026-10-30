@@ -120,6 +120,8 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
     if (reason === "recent_window_incomplete") return "Venter på et døgns rene målinger i de seneste 48 timer";
     if (reason === "too_mild") return "For mildt vejr til at vurdere varmebehovet";
     if (reason === "outside_learned_weather") return "Har ikke set lignende vejr endnu";
+    // Room Energy Optimizer 1.11+: a new setpoint is learning, not a deviation (Claude AI, 2026-10-30).
+    if (reason === "setpoint_changed") return "Tilpasser sig ny temperatur";
     return "Indsamler målinger";
   }
 
@@ -264,7 +266,9 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
             ? "Det er så mildt, at forskellen mellem inde og ude er under 3 °C. Så er tallet for usikkert til at sige noget om rummet."
             : s.learnReason === "outside_learned_weather"
               ? `Vejret de seneste 48 timer${Number.isFinite(lift) ? ` (inde-ude-forskel ${this._format(lift, 1)} °C)` : ""} ligner ikke de døgn, der er lært endnu. Status vurderes, når der er mindst 5 døgn med lignende vejr.`
-              : "Integrationen samler stadig målinger.";
+              : s.learnReason === "setpoint_changed"
+                ? "Temperaturen er ændret. Mens rummet varmes op eller køles ned til den nye temperatur – og et par timer efter – tæller forbruget ikke som rummets normale varmebehov, så det ikke ligner et højt eller lavt forbrug. Derefter vurderes rummet igen."
+                : "Integrationen samler stadig målinger.";
       facts.push(["Gyldige døgn", `${s.validDays} af ${s.requiredDays}`]);
       if (Number.isFinite(observed)) facts.push(["Rene timer (48 t)", `${this._format(observed, 1)} t`]);
       if (Number.isFinite(lift)) facts.push(["Inde-ude-forskel", `${this._format(lift, 1)} °C`]);
