@@ -97,6 +97,9 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
     const validDays = Number.isFinite(Number(demand?.attributes?.valid_days)) ? Number(demand.attributes.valid_days) : 0;
     const requiredDays = Number.isFinite(Number(demand?.attributes?.required_days)) ? Number(demand.attributes.required_days) : 7;
     const learnReason = demand?.attributes?.reason || null;
+    // Room Energy Optimizer 1.12+: the comparison in average watts, and a deviation waiting for its 12 h confirmation.
+    const diffW = Number.isFinite(Number(demand?.attributes?.difference_w)) && demand?.attributes?.difference_w !== null ? Number(demand.attributes.difference_w) : undefined;
+    const confirming = demand?.attributes?.deviation_confirming_since || null;
     const deviationRaw = demand?.attributes?.deviation_percent;
     const deviation = deviationRaw !== null && deviationRaw !== undefined && Number.isFinite(Number(deviationRaw)) ? Number(deviationRaw) : undefined;
     const open = climate?.attributes?.window_open === true || climate?.attributes?.door_open === true;
@@ -109,10 +112,11 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
     else if (stressed) { level = "problem"; reason = "stressed"; title = "Radiator belastet"; detail = "Ventilen står fuldt åben, men rummet når ikke sit mål. Tjek om radiatoren er luftet, eller om den er for lille til rummet."; }
     else if (coldUnderLoad) { level = "problem"; reason = "cold"; title = "Koldt trods åben ventil"; detail = "Rummet er koldere end målet, selv om ventilen er højt åben. Tjek for kuldetræk fra vindue/dør, eller om ventilen sidder fast."; }
     else if (notResponding) { level = "problem"; reason = "no-effect"; title = "Ingen effekt fra varmen"; detail = "Lært varmeeffekt matcher næsten rummets varmetab - radiatoren giver muligvis ikke reel varme. Tjek fremløbet til rummet, og om ventilen faktisk åbner."; }
-    else if (demandStatus === "deviating" && baselineReady) { level = "warn"; reason = "deviating"; title = "Afviger fra normalen"; const normal = signature ? "normalt i lignende vejr" : "vejrkorrigeret normalt"; detail = deviation === undefined ? "Vejrkorrigeret varmebehov ligger uden for rummets lærte mønster" : deviation > 0 ? `Bruger ${this._format(deviation,0)}% mere varme end ${normal}` : `Bruger ${this._format(Math.abs(deviation),0)}% mindre varme end ${normal}`; }
+    else if (demandStatus === "deviating" && baselineReady) { level = "warn"; reason = "deviating"; title = "Afviger fra normalen"; const normal = signature ? "normalt i lignende vejr og forhold" : "vejrkorrigeret normalt"; detail = diffW !== undefined ? `Bruger ca. ${this._format(Math.abs(diffW), 0)} W ${diffW > 0 ? "mere" : "mindre"} end ${normal}${deviation !== undefined ? ` (${deviation > 0 ? "+" : "−"}${this._format(Math.abs(deviation), 0)} %)` : ""}` : deviation === undefined ? "Vejrkorrigeret varmebehov ligger uden for rummets lærte mønster" : deviation > 0 ? `Bruger ${this._format(deviation,0)}% mere varme end ${normal}` : `Bruger ${this._format(Math.abs(deviation),0)}% mindre varme end ${normal}`; }
+    else if (confirming && diffW !== undefined && baselineReady) { level = "info"; reason = "confirming"; title = "Holder øje"; detail = `Bruger ca. ${this._format(Math.abs(diffW), 0)} W ${diffW > 0 ? "mere" : "mindre"} end normalt – bliver først en advarsel, hvis det varer ved i 12 timer`; }
     else if (!baselineReady || demandStatus === "learning") { level = "learning"; reason = "learning"; title = "Indlærer rummet"; detail = signature ? this._learningText(learnReason, validDays, requiredDays) : `${this._format(Math.min(learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer indsamlet`; }
     const active = (valve || 0) > 1 || (output || 0) > 1;
-    return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active, signature, validDays, requiredDays, learnReason };
+    return { climate, demand, current, target, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active, signature, validDays, requiredDays, learnReason, diffW, confirming };
   }
 
   _learningText(reason, validDays, requiredDays) {
@@ -122,6 +126,7 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
     if (reason === "outside_learned_weather") return "Har ikke set lignende vejr endnu";
     // Room Energy Optimizer 1.11+: a new setpoint is learning, not a deviation (Claude AI, 2026-10-30).
     if (reason === "setpoint_changed") return "Tilpasser sig ny temperatur";
+    if (reason === "unusual_conditions") return "Usædvanlige forhold – vurderes senere";
     return "Indsamler målinger";
   }
 
@@ -217,11 +222,13 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
       return `Tallet er radiatorens estimerede varme de seneste 48 timer – også når den er lukket – delt med forskellen mellem inde- og udetemperatur. Det sammenlignes med de døgn, hvor vejret lignede mest${weather ? ` (${weather})` : ""}. Perioder med anden varmekilde eller åben dør/vindue tæller ikke med.`;
     };
     if (s.reason === "deviating") {
-      const more = s.deviation === undefined || s.deviation > 0;
-      if (s.deviation !== undefined) lead = s.signature
+      const more = s.diffW !== undefined ? s.diffW > 0 : s.deviation === undefined || s.deviation > 0;
+      if (s.diffW !== undefined) lead = `${name} har i de seneste 48 timer brugt ca. ${this._format(Math.abs(s.diffW), 0)} W ${s.diffW > 0 ? "mere" : "mindre"} radiatorvarme i gennemsnit end normalt i lignende vejr og forhold – og det har stået på i mindst 12 timer.`;
+      else if (s.deviation !== undefined) lead = s.signature
         ? `${name} har brugt ${this._format(Math.abs(s.deviation), 0)} % ${more ? "mere" : "mindre"} varme de seneste 48 timer end normalt i lignende vejr.`
         : `${name} bruger ${this._format(Math.abs(s.deviation), 0)} % ${more ? "mere" : "mindre"} varme, end rummet plejer, når der tages højde for udetemperaturen.`;
       perDegreeFacts();
+      if (s.diffW !== undefined) facts.push(["Forskel", `${s.diffW > 0 ? "+" : "−"}${this._format(Math.abs(s.diffW), 0)} W`]);
       if (s.deviation !== undefined) facts.push(["Afvigelse", `${s.deviation > 0 ? "+" : "−"}${this._format(Math.abs(s.deviation), 0)} %`]);
       if (!s.signature && Number.isFinite(observed)) facts.push(["Målt over", `${this._format(observed, 1)} timer`]);
       note = s.signature ? signatureNote() : "W/°C er den varme, rummet bruger for hver grad, det er koldere ude end inde. Tallet for de seneste timer sammenlignes med det mønster, rummet har lært.";
@@ -266,7 +273,9 @@ class HAHeatingDiagnosticsCard extends HTMLElement {
             ? "Det er så mildt, at forskellen mellem inde og ude er under 3 °C. Så er tallet for usikkert til at sige noget om rummet."
             : s.learnReason === "outside_learned_weather"
               ? `Vejret de seneste 48 timer${Number.isFinite(lift) ? ` (inde-ude-forskel ${this._format(lift, 1)} °C)` : ""} ligner ikke de døgn, der er lært endnu. Status vurderes, når der er mindst 5 døgn med lignende vejr.`
-              : s.learnReason === "setpoint_changed"
+              : s.learnReason === "unusual_conditions"
+                ? "Vejret ligner de lærte døgn, men forholdene gør ikke – fx har brændeovn, varmepumpe eller åbne vinduer fyldt meget mere eller mindre end normalt. Brændeovnens varme sidder i rummet i timevis bagefter, så sådan et døgn kan ikke sammenlignes med de andre. Rummet vurderes, når der er mindst 5 døgn med lignende vejr og forhold."
+                : s.learnReason === "setpoint_changed"
                 ? "Temperaturen er ændret. Mens rummet varmes op eller køles ned til den nye temperatur – og et par timer efter – tæller forbruget ikke som rummets normale varmebehov, så det ikke ligner et højt eller lavt forbrug. Derefter vurderes rummet igen."
                 : "Integrationen samler stadig målinger.";
       facts.push(["Gyldige døgn", `${s.validDays} af ${s.requiredDays}`]);
