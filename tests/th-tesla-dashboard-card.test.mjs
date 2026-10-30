@@ -663,6 +663,50 @@ console.log("th-tesla-dashboard-card tests passed");
   c._hass.states = { ...st };
   assert.equal(c._ccTarget("lock"), "lock.gk_doors", "unavailable: the twin takes the command");
 }
+// Car controls over Bluetooth at home, Tesla Fleet away (Claude AI, 2026-10-30): a list per control, the first that is
+// reachable shows the state and takes the command; when Bluetooth fails the same command goes to Fleet at once.
+{
+  const st = {
+    "lock.ble_doors": s("locked"), "lock.car_lock": s("unlocked"),
+    "number.ble_charge_limit": s("80", { min: 50, max: 100 }), "number.car_charge_limit": s("90", { min: 50, max: 100 }),
+  };
+  const ctl = { lock: ["lock.ble_doors", "lock.car_lock"], charge_limit: ["number.ble_charge_limit", "number.car_charge_limit"], sentry: [] };
+  const c = card(st, { ...config, car_controls: ctl });
+  assert.deepEqual(Object.keys(c._cfg.carControls), ["lock", "charge_limit"], "an empty list is no control");
+  c._hass.entities = { "lock.ble_doors": { entity_id: "lock.ble_doors", platform: "tesla_ble" }, "lock.car_lock": { entity_id: "lock.car_lock", platform: "tesla_fleet" } };
+  c._hass.devices = {};
+  assert.equal(c._ccState("lock").state, "locked", "at home: Bluetooth's state");
+  assert.equal(c._ccTarget("lock"), "lock.ble_doors", "at home: the command goes over Bluetooth");
+  assert.equal(c._ccTarget("charge_limit"), "number.ble_charge_limit");
+  assert.match(context.ttdTemplate(context.ttdNormalizeConfig({ ...config, car_controls: ctl })), /data-cc="lock"/);
+  // Out of Bluetooth range: Tesla BLE is unavailable, Fleet takes over
+  c._hass.states = { ...st, "lock.ble_doors": s("unavailable"), "number.ble_charge_limit": s("unavailable") };
+  assert.equal(c._ccState("lock").state, "unlocked", "away: Fleet's state");
+  assert.equal(c._ccTarget("lock"), "lock.car_lock", "away: the command goes through Fleet");
+  assert.equal(c._ccTarget("charge_limit"), "number.car_charge_limit");
+  // Bluetooth fails at home: the same command goes through Fleet
+  c._hass.states = { ...st };
+  const calls = []; const said = [];
+  c._hass.callService = async (domain, service, data) => {
+    calls.push(`${domain}.${service} ${data.entity_id}`);
+    if (data.entity_id === "lock.ble_doors") throw new Error("not reachable over Bluetooth");
+  };
+  c._applyCarControls = () => {}; c._ccSay = (text) => said.push(text);
+  c._ccCall("lock", "lock", "lock", "lock", { entity_id: c._ccTarget("lock") }, () => false, "Låser…", "Låst");
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  clearTimeout(c._ccBusyTimer);
+  assert.deepEqual(calls, ["lock.lock lock.ble_doors", "lock.lock lock.car_lock"]);
+  assert.match(said[0], /^Bluetooth svarede ikke – sender via skyen/);
+  // Only one way left and it fails: the error is shown, nothing more is sent
+  calls.length = 0; said.length = 0;
+  c._hass.callService = async (domain, service, data) => { calls.push(data.entity_id); throw new Error("offline"); };
+  c._hass.states = { ...st, "lock.ble_doors": s("unavailable") };
+  c._ccCall("lock", "lock", "lock", "unlock", { entity_id: c._ccTarget("lock") }, () => false, "Låser op…", "Låst op");
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  clearTimeout(c._ccBusyTimer);
+  assert.deepEqual(calls, ["lock.car_lock"]);
+  assert.match(said[0], /^Fejl: offline/);
+}
 // Car controls: round buttons in the hero, only in the full layout, only the configured entities.
 {
   const withCtl = { ...config, car_controls: { lock: "lock.car", climate: "climate.car", charge_limit: "number.car_limit", bogus: "x.y" } };

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.240 */
+/* MRDonnii Smart Home Cards v0.5.241 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -3021,7 +3021,7 @@ function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ct
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
 init_chart_hover();
-var TTD_VERSION = "1.20.1";
+var TTD_VERSION = "1.21.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3036,6 +3036,7 @@ var TTD_CAR_CONTROLS = [
   ["charge_limit", "Ladegr\xE6nse", "mdi:battery-charging-high", "number"],
   ["charge_current", "Ladestr\xF8m", "mdi:current-ac", "number"]
 ];
+var ttdIdList = (value) => (Array.isArray(value) ? value : [value]).filter((id) => typeof id === "string" && id.includes("."));
 var TTD_CC_TWINS = {
   lock: (id) => /_(doors|lock)$/.test(id) && !id.includes("charge"),
   climate: () => true,
@@ -3606,7 +3607,7 @@ function ttdNormalizeConfig(raw) {
     battery,
     precision,
     // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
-    carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, config.car_controls?.[key]]).filter(([, id]) => typeof id === "string" && id.includes("."))),
+    carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, ttdIdList(config.car_controls?.[key])]).filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
@@ -5044,15 +5045,34 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     clearTimeout(this._ccBusyTimer);
     this._ccBusyTimer = setTimeout(() => this._applyCarControls(), TTD_CC_BUSY_MS + 100);
     this._applyCarControls();
-    Promise.resolve(this._hass?.callService(domain, service, data)).catch((err) => {
+    const ways = TTD_CAR_CONTROLS.some(([k]) => k === ctl) ? this._ccTargets(ctl) : [];
+    const from = ways.indexOf(data?.entity_id);
+    const send = (targets) => Promise.resolve(this._hass?.callService(domain, service, { ...data, entity_id: targets[0] })).catch((err) => {
+      if (targets.length > 1) {
+        const via = this._hass?.entities?.[targets[1]]?.platform === "tesla_ble" ? "Bluetooth" : "skyen (Tesla Fleet)";
+        this._ccSay(`${this._ccWay(targets[0])} svarede ikke \u2013 sender via ${via}\u2026`, 6e3, "warn");
+        return send(targets.slice(1));
+      }
       if (this._ccBusy) delete this._ccBusy[key];
       this._ccSay(`Fejl: ${err?.message || err}`, 7e3, "warn");
       this._applyCarControls();
+      return null;
     });
+    send(from >= 0 ? ways.slice(from) : [data?.entity_id]);
+  }
+  /** A way to the car in words: Bluetooth (Tesla BLE through the ESP32) or the integration's name. */
+  _ccWay(id) {
+    const platform = this._hass?.entities?.[id]?.platform;
+    return platform === "tesla_ble" ? "Bluetooth" : platform === "tesla_fleet" ? "Tesla Fleet" : platform === "tesla_custom" ? "Tesla Custom" : "Bilen";
+  }
+  /** The control's cloud entity: the last one listed (its twin in the car's other integration is found by name). */
+  _ccCloud(key) {
+    const ids = this._cfg.carControls[key] || [];
+    return ids[ids.length - 1];
   }
   /** The same control in the car's other integration, when there is one. */
   _ccTwin(key) {
-    const id = this._cfg.carControls[key];
+    const id = this._ccCloud(key);
     const registry = this._hass?.entities;
     const devices = this._hass?.devices;
     if (!id || !registry || !devices) return null;
@@ -5067,21 +5087,30 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._ccTwins[key] = twin?.entity_id || null;
     return this._ccTwins[key];
   }
-  /** The control's state: the configured entity's, or its twin's while the configured one has none. */
+  /** The control's state: the first listed entity that has one, else the cloud entity's twin; the cloud entity's own
+   * (unknown) when none has. */
   _ccState(key) {
-    const o = this._hass?.states?.[this._cfg.carControls[key]];
-    if (o && !["unknown", "unavailable"].includes(o.state)) return o;
+    const states = this._hass?.states || {};
+    const ids = this._cfg.carControls[key] || [];
+    const known = (o) => o && !["unknown", "unavailable"].includes(o.state);
+    for (const id of ids) if (known(states[id])) return states[id];
     const twin = this._ccTwin(key);
-    const t = twin ? this._hass?.states?.[twin] : null;
-    return t && !["unknown", "unavailable"].includes(t.state) ? t : o;
+    const t = twin ? states[twin] : null;
+    return known(t) ? t : states[this._ccCloud(key)];
   }
-  /** Where a command goes: the configured entity (it wakes the car), or the twin when the configured one is unavailable. */
-  _ccTarget(key) {
-    const id = this._cfg.carControls[key];
-    const o = this._hass?.states?.[id];
-    if (o && o.state !== "unavailable") return id;
+  /** Where a command goes, in order: the listed entities that are reachable, then the cloud entity's twin; the cloud entity
+   * itself when none is (unknown still sends the command, which wakes the car). */
+  _ccTargets(key) {
+    const states = this._hass?.states || {};
+    const ids = this._cfg.carControls[key] || [];
+    const up = (id) => !!id && !!states[id] && states[id].state !== "unavailable";
+    const ways = ids.filter(up);
     const twin = this._ccTwin(key);
-    return twin && this._hass?.states?.[twin]?.state !== "unavailable" ? twin : id;
+    if (up(twin) && !ways.includes(twin)) ways.push(twin);
+    return ways.length ? ways : ids.slice(-1);
+  }
+  _ccTarget(key) {
+    return this._ccTargets(key)[0];
   }
   _applyCarControls() {
     if (!this._r.qc) return;
@@ -5257,7 +5286,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const registry = this._hass?.entities;
     const devices = this._hass?.devices;
     const states = this._hass?.states || {};
-    const climate = this._cfg.carControls.climate;
+    const climate = this._ccCloud("climate");
     if (!climate || !registry || !devices) return [];
     const own = registry[climate];
     const name = (dev) => String(dev?.name_by_user || dev?.name || "").toLowerCase();
@@ -7465,7 +7494,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     if (target2.dataset.qcmore != null) {
-      const id = this._cfg.carControls[this._qcOpen];
+      const id = this._ccTarget(this._qcOpen);
       this._openQc(this._qcOpen);
       if (id) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
       return;
@@ -7476,7 +7505,19 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const id = this._ccTarget(target2.dataset.ccset);
       this._ccPending = null;
       clearTimeout(this._ccTimer);
-      if (pending && id && pending.key === target2.dataset.ccset) this._call("number", "set_value", { entity_id: id, value: pending.value });
+      if (pending && id && pending.key === target2.dataset.ccset) {
+        const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === pending.key) || [];
+        this._ccCall(
+          pending.key,
+          pending.key,
+          "number",
+          "set_value",
+          { entity_id: id, value: pending.value },
+          (s) => Number(s.state) === pending.value,
+          `S\xE6tter ${String(label).toLowerCase()} til ${pending.value}\u2026`,
+          `${label} er ${pending.value}`
+        );
+      }
       this._applyCarControls();
     } else if (target2.dataset.ccundo) {
       this._ccPending = null;

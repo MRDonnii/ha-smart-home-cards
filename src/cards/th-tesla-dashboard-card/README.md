@@ -51,6 +51,9 @@ car_controls:                            # Bilstyring: runde knapper nederst i t
   flash: button.tesla_flash_lights
   charge_limit: number.tesla_charge_limit
   charge_current: number.tesla_charge_current   # ladegrænse og -strøm: skyder i det lille panel
+  # En knap kan også have en liste: den første, der kan nå bilen, viser tilstanden og får kommandoen. Fx Tesla BLE
+  # (bilen over Bluetooth via en ESP32-proxy) hjemme og Tesla Fleet ude:
+  # lock: [lock.tesla_ble_doors, lock.tesla_lock]
 location_entity: device_tracker.tesla_location_tracker
 entities:
   battery: sensor.tesla_battery
@@ -273,6 +276,12 @@ Kortet finder så selv:
 
 Det samme gælder med `smart_charge`: kortet finder altid selv det, der ikke er sat med hånden. Det, der sættes under
 `entities`, vinder over det fundne. Bilens knapper (`car_controls`) sættes stadig med hånden.
+
+**Bluetooth hjemme, skyen ude.** Står der en liste ved en knap i `car_controls` (fx `[lock.tesla_ble_doors,
+lock.tesla_lock]`), bruges den første, der ikke er utilgængelig. Med [Tesla BLE](https://github.com/yoziru/ha-tesla-ble)
+er bilen kun tilgængelig over Bluetooth inden for rækkevidde af en ESP32-proxy, så hjemme går kommandoen over
+Bluetooth og ude gennem Tesla Fleet. Svarer Bluetooth ikke, sendes den samme kommando straks via den næste i listen.
+Ekstraknapperne i klimapanelet (afrim, rat, sæder) findes ved siden af den sidste (skyens) klima-entitet.
 
 **Ladeudgifter:** Et panel under de andre viser, hvad opladningen har kostet pr. måned de seneste 12 måneder
 (hjemme og ude i hver sin farve, denne måned fremhævet) og årets samlede udgift i kr. med kWh og pris pr. kWh. Hold
