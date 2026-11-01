@@ -80,4 +80,5 @@ import "./cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js";
 import "./cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js";
 import "./cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js";
 import "./cards/ha-energy-center-card/ha-energy-center-card.js";
+import "./cards/ha-electricity-bill-card/ha-electricity-bill-card.js";
 import "./cards/shared/motion-rest-end.js";

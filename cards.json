@@ -558,5 +558,12 @@
     "filename": "ha-energy-center-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-electricity-bill-card",
+    "name": "HA Electricity Bill Card",
+    "filename": "ha-electricity-bill-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]

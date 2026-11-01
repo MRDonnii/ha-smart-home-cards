@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.241 */
+/* MRDonnii Smart Home Cards v0.5.242 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -467,8 +467,8 @@ function deviceName(hass, entity) {
   if (name) return name;
   return String(entity?.attributes?.friendly_name || id || "").replace(/\s+(battery( level)?|batteri(niveau)?)$/i, "").trim();
 }
-var sinceText = (iso) => {
-  const date2 = new Date(iso);
+var sinceText = (iso2) => {
+  const date2 = new Date(iso2);
   if (Number.isNaN(date2.getTime())) return "";
   const today = /* @__PURE__ */ new Date();
   const time = date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
@@ -567,8 +567,8 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
     }).catch(() => {
     });
   }
-  _ago(iso) {
-    const time = Date.parse(iso || "");
+  _ago(iso2) {
+    const time = Date.parse(iso2 || "");
     if (!Number.isFinite(time)) return "";
     const minutes2 = Math.max(0, Math.round((Date.now() - time) / 6e4));
     if (minutes2 < 60) return minutes2 < 2 ? "lige nu" : `for ${minutes2} min siden`;
@@ -576,8 +576,8 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
     if (hours < 36) return `for ${hours} t siden`;
     return `for ${Math.round(hours / 24)} dage siden`;
   }
-  _since(iso) {
-    const date2 = new Date(iso || "");
+  _since(iso2) {
+    const date2 = new Date(iso2 || "");
     if (Number.isNaN(date2.getTime())) return "";
     const time = date2.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
     return date2.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? `i dag ${time}` : `${date2.toLocaleDateString("da-DK", { day: "numeric", month: "numeric" })} kl. ${time}`;
@@ -1012,7 +1012,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION56 = "0.4.6";
+  const VERSION57 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key) => {
@@ -1430,12 +1430,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION56}`);
+  console.info(`HA POOL CARD v${VERSION57}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION56 = "0.3.5";
+  const VERSION57 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key) => {
     try {
@@ -1668,7 +1668,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION56}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION57}`);
 })();
 
 // src/cards/shared/keep-scroll.js
@@ -5249,12 +5249,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this._attrSet(holdBtn, "aria-pressed", String(on2));
         this._attrSet(holdBtn, "data-on", on2);
         this._attrSet(holdBtn, "data-active", !!a.active);
-        const kr = (v) => `${f.number(Number(v), 2)} kr`;
+        const kr2 = (v) => `${f.number(Number(v), 2)} kr`;
         const target3 = a.target != null ? `${f.number(Number(a.target), 0)} %` : "m\xE5let";
         const why = !on2 ? "Lader fra nettet i stedet for batteriet, mens bilen varmes" : a.active ? `Lader nu og holder ${target3}` : {
           not_plugged_in: "Kun n\xE5r bilen er sat til laderen",
           climate_off: `Holder ${target3}, n\xE5r klimaet k\xF8rer`,
-          too_expensive: `Venter: str\xF8mmen koster ${kr(a.price_now)} (h\xF8jst ${kr(a.price_limit)})`,
+          too_expensive: `Venter: str\xF8mmen koster ${kr2(a.price_now)} (h\xF8jst ${kr2(a.price_limit)})`,
           at_target: `Batteriet er p\xE5 m\xE5let (${target3})`,
           paused: "Ladeplanen st\xE5r p\xE5 pause",
           no_price: "Venter p\xE5 elprisen",
@@ -5531,20 +5531,20 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const d = /* @__PURE__ */ new Date();
     const nowKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const date2 = (key) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 15);
-    const kr = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
+    const kr2 = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
     const perKwh = ttdUnit(`${a.unit_of_measurement || "DKK"}/kWh`);
     const bars = months.map((m, i) => ({
       tip: {
         title: date2(m.key).toLocaleDateString("da-DK", { month: "long", year: "numeric" }),
-        cost: m.charges ? kr(m.cost, 2) : "Ingen ladning",
-        parts: m.pub > 0 ? `Hjemme ${kr(m.home, 2)} \xB7 ude ${kr(m.pub, 2)}` : "",
+        cost: m.charges ? kr2(m.cost, 2) : "Ingen ladning",
+        parts: m.pub > 0 ? `Hjemme ${kr2(m.home, 2)} \xB7 ude ${kr2(m.pub, 2)}` : "",
         energy: m.charges ? [
           `${f.number(m.kwh, 1)} kWh`,
           m.kwh > 0 && m.cost > 0 ? `${f.number(m.cost / m.kwh, 2)} ${perKwh}` : "",
           `${m.charges} ${m.charges === 1 ? "ladning" : "ladninger"}`
         ].filter(Boolean).join(" \xB7 ") : "",
         unpriced: m.unpriced ? `${m.unpriced} uden pris` : "",
-        before: hasBefore && before[i] ? `\xC5ret f\xF8r: ${before[i].charges ? `${kr(before[i].cost)} \xB7 ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : ""
+        before: hasBefore && before[i] ? `\xC5ret f\xF8r: ${before[i].charges ? `${kr2(before[i].cost)} \xB7 ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : ""
       },
       now: m.key === nowKey,
       empty: m.charges === 0,
@@ -5555,13 +5555,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       pub: m.pub / top * 100,
       title: [
         date2(m.key).toLocaleDateString("da-DK", { month: "long", year: "numeric" }),
-        kr(m.cost, 2),
+        kr2(m.cost, 2),
         `${f.number(m.kwh, 1)} kWh`,
         m.kwh > 0 && m.cost > 0 ? `${f.number(m.cost / m.kwh, 2)} ${perKwh}` : "",
         `${m.charges} ${m.charges === 1 ? "ladning" : "ladninger"}`,
-        m.pub > 0 ? `ude ${kr(m.pub, 2)}` : "",
+        m.pub > 0 ? `ude ${kr2(m.pub, 2)}` : "",
         m.unpriced ? `${m.unpriced} uden pris` : "",
-        hasBefore && before[i] ? `\xE5ret f\xF8r ${before[i].charges ? `${kr(before[i].cost)} \xB7 ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : ""
+        hasBefore && before[i] ? `\xE5ret f\xF8r ${before[i].charges ? `${kr2(before[i].cost)} \xB7 ${f.number(before[i].kwh, 0)} kWh` : "ingen ladning"}` : ""
       ].filter(Boolean).join(" \xB7 ")
     }));
     const year = ttdToNumber(o.state) ?? 0;
@@ -5570,11 +5570,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const previous = Number(a.previous_year) || 0;
     const previousKwh = Number(a.previous_year_kwh) || 0;
     return {
-      year: kr(year),
+      year: kr2(year),
       yearSub: `i \xE5r \xB7 ${f.number(yearKwh, 0)} kWh${yearKwh > 0 && year > 0 ? ` \xB7 ${f.number(year / yearKwh, 2)} ${perKwh}` : ""}`,
-      sub: month ? `Denne m\xE5ned ${kr(month.cost)} \xB7 ${f.number(month.kwh, 0)} kWh` : "Pr. m\xE5ned, det seneste \xE5r",
+      sub: month ? `Denne m\xE5ned ${kr2(month.cost)} \xB7 ${f.number(month.kwh, 0)} kWh` : "Pr. m\xE5ned, det seneste \xE5r",
       note: [
-        previous > 0 ? `Sidste \xE5r ${kr(previous)}${previousKwh > 0 ? ` \xB7 ${f.number(previousKwh, 0)} kWh` : ""}` : "",
+        previous > 0 ? `Sidste \xE5r ${kr2(previous)}${previousKwh > 0 ? ` \xB7 ${f.number(previousKwh, 0)} kWh` : ""}` : "",
         Number(a.unpriced) ? `${a.unpriced} uden pris i \xE5r` : ""
       ].filter(Boolean).join(" \xB7 "),
       before: hasBefore,
@@ -8894,8 +8894,8 @@ var BAND_LABEL = { "under 0": "Under 0\xB0", "0\u20135": "0\u20135\xB0", "5\u201
 var TYRES = [["fl", "VF"], ["fr", "HF"], ["rl", "VB"], ["rr", "HB"]];
 var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var num2 = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-var day = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
-var dayShort = (iso) => iso ? new Date(iso).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
+var day = (iso2) => iso2 ? new Date(iso2).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
+var dayShort = (iso2) => iso2 ? new Date(iso2).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
 var pad2 = (n) => String(n).padStart(2, "0");
 var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad2(date2.getMonth() + 1)}-${pad2(date2.getDate())}T${pad2(date2.getHours())}:${pad2(date2.getMinutes())}`;
 var icon = (name, cls = "") => `<ha-icon icon="${name}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
@@ -11889,7 +11889,7 @@ var HAACClimateCard = class extends HTMLElement {
     const climate = this._entity(unit.climate);
     const a = climate?.attributes || {};
     const mode = String(climate?.state || "unknown").toLowerCase();
-    const num4 = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
+    const num5 = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : void 0;
     const status = this._entity(unit.status)?.state;
     const online = this._entity(unit.online);
     const offline = !!online && online.state === "off";
@@ -11906,8 +11906,8 @@ var HAACClimateCard = class extends HTMLElement {
       status,
       waiting: WAITING.includes(status),
       statusText,
-      current: num4(a.current_temperature),
-      target: num4(a.temperature),
+      current: num5(a.current_temperature),
+      target: num5(a.temperature),
       fan: a.fan_mode,
       fans: Array.isArray(a.fan_modes) ? a.fan_modes : [],
       power: this._num(unit.input),
@@ -12020,8 +12020,8 @@ var HAACClimateCard = class extends HTMLElement {
     const left = on && Number.isFinite(until2) ? Math.max(1, Math.round((until2 - Date.now()) / 6e4)) : 0;
     return `<button class="fn tg turbo ${on ? "on" : ""}" data-action="turbo" aria-pressed="${on}" title="${on ? "Stop turbo" : "Anl\xE6ggets boost i 30 minutter"}"><ha-icon icon="mdi:rocket-launch-outline"></ha-icon><span>${on ? `Turbo ${left} min` : "Turbo"}</span></button>`;
   }
-  _clock(iso) {
-    const at = Date.parse(iso || "");
+  _clock(iso2) {
+    const at = Date.parse(iso2 || "");
     return Number.isFinite(at) ? new Date(at).toLocaleTimeString(this._hass?.locale?.language || "da", { hour: "2-digit", minute: "2-digit" }) : "";
   }
   _smart(unit, s) {
@@ -12071,7 +12071,7 @@ var HAACClimateCard = class extends HTMLElement {
     const cool = l.mode === "cool";
     const past = cool ? "under" : "over", short = cool ? "over" : "under";
     const stop = Number(l.stop_level) || 1, start = Number(l.start_level) || 1;
-    const num4 = (v) => this._format(Number(v), 2).replace(/,?0+$/, "");
+    const num5 = (v) => this._format(Number(v), 2).replace(/,?0+$/, "");
     const check = {
       checking_stop: `Tjekker at anl\xE6gget stopper (det k\xF8rer stadig, selv om det har f\xE5et ${stop}\xB0 ${past} m\xE5let)`,
       checking_hold: "Anl\xE6gget slukkede, hvor det skulle k\xF8re roligt videre \u2013 tjekker",
@@ -12111,7 +12111,7 @@ var HAACClimateCard = class extends HTMLElement {
       const band = String(l.outdoor_band).replace("..", "\u2013");
       const tuned = Number(l.start_at) !== 0.2 || Number(l.stop_at) !== 0.3;
       const n = Number(l.bands_learned) || 0;
-      items.push(`Ved ${band} \xB0C ude starter den, n\xE5r rummet er ${num4(l.start_at)}\xB0 ${short} m\xE5let, og stopper ${num4(l.stop_at)}\xB0 ${past}${tuned ? " \u2013 tilpasset vejret" : ""}` + (n ? ` \xB7 m\xE5lt i ${n} temperaturinterval${n === 1 ? "" : "ler"}` : " \xB7 vejret er ikke m\xE5lt endnu"));
+      items.push(`Ved ${band} \xB0C ude starter den, n\xE5r rummet er ${num5(l.start_at)}\xB0 ${short} m\xE5let, og stopper ${num5(l.stop_at)}\xB0 ${past}${tuned ? " \u2013 tilpasset vejret" : ""}` + (n ? ` \xB7 m\xE5lt i ${n} temperaturinterval${n === 1 ? "" : "ler"}` : " \xB7 vejret er ikke m\xE5lt endnu"));
     }
     const WHY = { stop: "k\xF8rte videre efter stop", hold: "slukkede i hold", start: "startede ikke" };
     const WHAT = { stop_level: "stop-niveau", start_level: "start-niveau", park: "m\xE5l parkeres ved stop" };
@@ -23893,7 +23893,7 @@ Error generating stack: ` + l.message + `
   we.prototype.unobserveUsing = function(t) {
     var e = this._observers;
     if (e !== null && e.has(t)) {
-      e.delete(t), oe(this._fragmentFiber.child, false, p24, t, void 0, void 0);
+      e.delete(t), oe(this._fragmentFiber.child, false, p25, t, void 0, void 0);
       for (var a = e = 0; a < Ze.length; a++) {
         var l = Ze[a];
         l.fragmentInstance === this && l.observer === t ? t.unobserve(l.instance) : Ze[e++] = l;
@@ -23901,7 +23901,7 @@ Error generating stack: ` + l.message + `
       Ze.length = e;
     }
   };
-  function p24(t, e) {
+  function p25(t, e) {
     return t.tag === 6 || (t = _t(t), e.unobserve(t)), false;
   }
   var Ze = [], qs = false;
@@ -24836,7 +24836,7 @@ Error generating stack: ` + l.message + `
     }
     t.blockedOn = null;
   }
-  function kr(t) {
+  function kr2(t) {
     if (t.blockedOn !== null) return false;
     for (var e = t.targetContainers; 0 < e.length; ) {
       var a = Fu(t.nativeEvent);
@@ -24850,10 +24850,10 @@ Error generating stack: ` + l.message + `
     return true;
   }
   function cp(t, e, a) {
-    kr(t) && a.delete(e);
+    kr2(t) && a.delete(e);
   }
   function Z2() {
-    Wu = false, cl !== null && kr(cl) && (cl = null), sl !== null && kr(sl) && (sl = null), ul !== null && kr(ul) && (ul = null), no.forEach(cp), io.forEach(cp);
+    Wu = false, cl !== null && kr2(cl) && (cl = null), sl !== null && kr2(sl) && (sl = null), ul !== null && kr2(ul) && (ul = null), no.forEach(cp), io.forEach(cp);
   }
   function rr(t, e) {
     t.blockedOn === e && (t.blockedOn = null, Wu || (Wu = true, St.unstable_scheduleCallback(St.unstable_NormalPriority, Z2)));
@@ -26796,7 +26796,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION56 = "0.3.5";
+  const VERSION57 = "0.3.5";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -26909,7 +26909,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION56}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION57}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -32528,11 +32528,11 @@ var smoothPath = (points) => {
   for (let i = 0; i < points.length - 1; i += 1) {
     const p0 = points[i - 1] || points[i];
     const p1 = points[i];
-    const p24 = points[i + 1];
-    const p3 = points[i + 2] || p24;
-    const c1 = [p1[0] + (p24[0] - p0[0]) / 6, p1[1] + (p24[1] - p0[1]) / 6];
-    const c2 = [p24[0] - (p3[0] - p1[0]) / 6, p24[1] - (p3[1] - p1[1]) / 6];
-    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p24[0].toFixed(1)} ${p24[1].toFixed(1)}`;
+    const p25 = points[i + 1];
+    const p3 = points[i + 2] || p25;
+    const c1 = [p1[0] + (p25[0] - p0[0]) / 6, p1[1] + (p25[1] - p0[1]) / 6];
+    const c2 = [p25[0] - (p3[0] - p1[0]) / 6, p25[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p25[0].toFixed(1)} ${p25[1].toFixed(1)}`;
   }
   return d;
 };
@@ -34130,8 +34130,8 @@ var PROFILES = [
 var DEFAULT = { kind: "living", temp: [20, 23], hum: [40, 60] };
 function comfortProfile(room = {}) {
   const found = PROFILES.find(([pattern]) => pattern.test(`${room.name || ""} ${room.comfort_profile || ""}`))?.[1] || DEFAULT;
-  const num4 = (v, d) => Number.isFinite(Number(v)) && v !== null && v !== "" ? Number(v) : d;
-  return { ...found, temp: [num4(room.comfort_min, found.temp[0]), num4(room.comfort_max, found.temp[1])], hum: [num4(room.humidity_min, found.hum[0]), num4(room.humidity_max, found.hum[1])] };
+  const num5 = (v, d) => Number.isFinite(Number(v)) && v !== null && v !== "" ? Number(v) : d;
+  return { ...found, temp: [num5(room.comfort_min, found.temp[0]), num5(room.comfort_max, found.temp[1])], hum: [num5(room.humidity_min, found.hum[0]), num5(room.humidity_max, found.hum[1])] };
 }
 var fmt = (v, d = 1) => Number(v).toLocaleString("da-DK", { maximumFractionDigits: d, minimumFractionDigits: 0 });
 function roomComfort(room, temp, humidity, co2) {
@@ -35033,7 +35033,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
     const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
-    const f = (name) => host.querySelector(`[data-f="${name}"]`), p24 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p24(t.getHours())}:${p24(t.getMinutes())}`;
+    const f = (name) => host.querySelector(`[data-f="${name}"]`), p25 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p25(t.getHours())}:${p25(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
     const sun = (t) => {
@@ -35087,8 +35087,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p24(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p24(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      const title = `${p25(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
     if (hoursEl && hoursEl._h !== hoursHtml2) {
@@ -36198,7 +36198,7 @@ function insightIds(cfg = {}) {
 var sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 function computeInsights(hass, cfg = {}, hourly = []) {
   const S = (id) => id ? hass?.states?.[id] : void 0, st = (id) => S(id)?.state;
-  const num4 = (id) => {
+  const num5 = (id) => {
     const v = parseFloat(st(id));
     return Number.isFinite(v) ? v : NaN;
   };
@@ -36214,10 +36214,10 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   else if (unlocked.length) add(1, { key: "sec", icon: "mdi:lock-open-variant-outline", tone: "warn", text: `Ul\xE5st: ${names(unlocked.map(fname))}`, entity: unlocked[0] });
   else if ((cfg.locks || []).length || (cfg.openings || []).length) add(8, { key: "sec", icon: "mdi:shield-lock-outline", tone: "ok", text: `Alt lukket og l\xE5st${armed && !away ? " \xB7 alarm til" : ""}`, entity: cfg.alarm });
   if (cfg.waste) {
-    const days = num4(cfg.waste), a = S(cfg.waste)?.attributes || {};
+    const days = num5(cfg.waste), a = S(cfg.waste)?.attributes || {};
     if (Number.isFinite(days) && days <= 1 && !a.kvitteret) add(2, { key: "waste", icon: "mdi:trash-can-outline", tone: "warn", text: `${a.typer || "Affald"} ${days === 0 ? "i dag" : "i morgen"} \u2013 s\xE6t ud`, path: cfg.waste_path });
   }
-  const coming = (cfg.travel || []).map((t) => ({ name: t.name, min: num4(t.travel), dir: st(t.direction) })).filter((t) => t.dir === "towards" && Number.isFinite(t.min) && t.min >= 1).sort((a, b) => a.min - b.min);
+  const coming = (cfg.travel || []).map((t) => ({ name: t.name, min: num5(t.travel), dir: st(t.direction) })).filter((t) => t.dir === "towards" && Number.isFinite(t.min) && t.min >= 1).sort((a, b) => a.min - b.min);
   if (coming.length) {
     const together = coming.every((t) => t.min - coming[0].min < 5);
     add(3, { key: "home", icon: "mdi:home-import-outline", tone: "accent", text: `${together && coming.length > 1 ? "" : `${coming[0].name} `}hjemme om ${dur(coming[0].min)}`.replace(/^h/, "H") });
@@ -36248,10 +36248,10 @@ function computeInsights(hass, cfg = {}, hourly = []) {
     if (start > now && start - now < 864e5 && (!soon || start < soon.start)) soon = { start, text: String(a.message).trim(), all: a.all_day, id };
   }
   if (soon) add(6, { key: "cal", icon: "mdi:calendar-clock", tone: "info", text: `${soon.all ? soon.start.getDate() === now.getDate() ? "I dag" : "I morgen" : when(soon.start).replace(/^kl\./, "Kl.")} \xB7 ${soon.text}`, entity: soon.id });
-  const pw = S(cfg.power), price = num4(cfg.price);
+  const pw = S(cfg.power), price = num5(cfg.price);
   if (pw && valid2(pw.state) && Number.isFinite(price)) {
     const w = parseFloat(pw.state) * (String(pw.attributes?.unit_of_measurement || "W").toLowerCase() === "kw" ? 1e3 : 1);
-    const mean = num4(cfg.price_mean), min = num4(cfg.price_min), at = S(cfg.price_min)?.attributes?.at;
+    const mean = num5(cfg.price_mean), min = num5(cfg.price_min), at = S(cfg.price_min)?.attributes?.at;
     const tone2 = Number.isFinite(mean) ? price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info" : "info";
     let cheap = "";
     if (Number.isFinite(min) && min < price * 0.85 && at) {
@@ -36269,10 +36269,10 @@ function computeInsights(hass, cfg = {}, hourly = []) {
     add(6, { key: `robot-${r.entity}`, icon: String(r.entity).startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum", tone: "accent", text: s === "returning" ? `${r.name} k\xF8rer hjem i dock` : `${r.name} g\xF8r rent${valid2(room) ? ` i ${room}` : ""}`, entity: r.entity });
   }
   const car = cfg.car;
-  if (car?.battery && Number.isFinite(num4(car.battery))) {
-    const bat = Math.round(num4(car.battery)), plugged = car.plugged && st(car.plugged) === "on";
+  if (car?.battery && Number.isFinite(num5(car.battery))) {
+    const bat = Math.round(num5(car.battery)), plugged = car.plugged && st(car.plugged) === "on";
     const start = car.next_start && valid2(st(car.next_start)) ? new Date(st(car.next_start)) : null;
-    const range = num4(car.range);
+    const range = num5(car.range);
     const tail = plugged ? start && start > now ? `lader ${when(start)}` : "tilsluttet" : Number.isFinite(range) ? `${Math.round(range)} km` : "";
     add(9, { key: "car", icon: plugged ? "mdi:car-electric" : "mdi:car-side", tone: bat < 20 ? "warn" : "info", text: `${car.name || "Bil"} ${bat} %${tail ? ` \xB7 ${tail}` : ""}`, path: car.path, entity: car.path ? void 0 : car.battery });
   }
@@ -41682,8 +41682,8 @@ var HAPetCareCard = class extends HTMLElement {
     const old = (this._state(heat.start) || "").slice(0, 10);
     const sensor = this._entity(heat.sensor);
     const length = this._number(heat.duration) ?? (Number(/af ca\. (\d+)/.exec(sensor?.state || "")?.[1]) || Number(sensor?.attributes?.varighed) || 21);
-    const shift = (iso, n) => {
-      const d = /* @__PURE__ */ new Date(`${iso}T12:00:00`);
+    const shift = (iso2, n) => {
+      const d = /* @__PURE__ */ new Date(`${iso2}T12:00:00`);
       d.setDate(d.getDate() + n);
       return d.toISOString().slice(0, 10);
     };
@@ -41973,17 +41973,17 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
   _fmt(v, digits = 1) {
     return Number.isFinite(v) ? v.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits }) : "\u2014";
   }
-  _weekday(iso) {
-    const d = new Date(iso);
+  _weekday(iso2) {
+    const d = new Date(iso2);
     return Number.isNaN(d.getTime()) ? "\u2014" : d.toLocaleDateString("da-DK", { weekday: "short" });
   }
-  _time(iso) {
-    const d = new Date(iso);
+  _time(iso2) {
+    const d = new Date(iso2);
     return Number.isNaN(d.getTime()) ? "--:--" : d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
   }
-  _hourLabel(iso, isFirst) {
+  _hourLabel(iso2, isFirst) {
     if (isFirst) return "Nu";
-    const d = new Date(iso);
+    const d = new Date(iso2);
     return Number.isNaN(d.getTime()) ? "\u2014" : `${d.getHours()}`;
   }
   _compass(deg) {
@@ -42169,8 +42169,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     if (!picture) return "";
     return this._hass?.hassUrl ? this._hass.hassUrl(picture) : picture;
   }
-  _when(iso) {
-    const d = new Date(iso);
+  _when(iso2) {
+    const d = new Date(iso2);
     if (Number.isNaN(d.getTime())) return "";
     return `${d.toLocaleDateString("da-DK", { weekday: "short" })} ${d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}`;
   }
@@ -43260,8 +43260,8 @@ var ThWeatherCard = class extends HTMLElement {
     const pts = fc.map((f, i) => [X(i), Y(f.temperature)]);
     let d = `M${pts[0][0]} ${pts[0][1]}`;
     for (let i = 0; i < n - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p24 = pts[i + 1], p3 = pts[i + 2] || p24;
-      d += `C${p1[0] + (p24[0] - p0[0]) / 6} ${p1[1] + (p24[1] - p0[1]) / 6} ${p24[0] - (p3[0] - p1[0]) / 6} ${p24[1] - (p3[1] - p1[1]) / 6} ${p24[0]} ${p24[1]}`;
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p25 = pts[i + 1], p3 = pts[i + 2] || p25;
+      d += `C${p1[0] + (p25[0] - p0[0]) / 6} ${p1[1] + (p25[1] - p0[1]) / 6} ${p25[0] - (p3[0] - p1[0]) / 6} ${p25[1] - (p3[1] - p1[1]) / 6} ${p25[0]} ${p25[1]}`;
     }
     const tc = (t) => t <= 0 ? "#8ed1ff" : t < 8 ? "#9fd8c4" : t < 16 ? "#e8c37e" : t < 24 ? "#ffb27a" : "#ff8a7a";
     let g = `<defs><linearGradient id="tl" x1="0" y1="0" x2="${W2}" y2="0" gradientUnits="userSpaceOnUse">${fc.map((f, i) => `<stop offset="${(X(i) / W2).toFixed(4)}" stop-color="${tc(f.temperature)}"/>`).join("")}</linearGradient>
@@ -47777,8 +47777,8 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     const target2 = norm(name);
     return node.children.find((child) => norm(child.title) === target2) || node.children.find((child) => norm(child.title).includes(target2)) || null;
   }
-  _ago(iso) {
-    const ms = Date.now() - new Date(iso).getTime();
+  _ago(iso2) {
+    const ms = Date.now() - new Date(iso2).getTime();
     const m = Math.round(ms / 6e4);
     if (m < 1) return "lige nu";
     if (m < 60) return `${m} min siden`;
@@ -47786,8 +47786,8 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     if (h < 24) return `${h} t siden`;
     return `${Math.round(h / 24)} d siden`;
   }
-  _time(iso) {
-    const d = new Date(iso);
+  _time(iso2) {
+    const d = new Date(iso2);
     return Number.isNaN(d.getTime()) ? "--:--" : d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
   }
   _eventKey(event) {
@@ -47814,12 +47814,12 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     for (const cam of this._cameras || []) {
       for (const source of cam.event_sources || []) {
         const state = this._s(source.id);
-        const iso = state?.state;
-        const ts = Date.parse(iso || "");
+        const iso2 = state?.state;
+        const ts = Date.parse(iso2 || "");
         const type = state?.attributes?.event_type || source.fallbackType;
         if (!Number.isFinite(ts) || !type || Date.now() - ts > EVENTS_WINDOW_HOURS * 36e5) continue;
         const eventId = state.attributes?.event_id;
-        const candidate = { ts, iso, cameraKey: cam.key, cameraName: cam.name, cameraEntity: cam.camera_entity, type, eventId };
+        const candidate = { ts, iso: iso2, cameraKey: cam.key, cameraName: cam.name, cameraEntity: cam.camera_entity, type, eventId };
         const exists = this._events.some((event) => this._eventKey(event) === this._eventKey(candidate));
         if (exists) continue;
         this._events.push(candidate);
@@ -47995,8 +47995,8 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     }
     const isoMatch = title.match(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/);
     if (isoMatch) {
-      const iso = new Date(isoMatch[0].replace(" ", "T"));
-      if (!Number.isNaN(iso.getTime())) return iso.getTime();
+      const iso2 = new Date(isoMatch[0].replace(" ", "T"));
+      if (!Number.isNaN(iso2.getTime())) return iso2.getTime();
     }
     const direct = new Date(title);
     return Number.isNaN(direct.getTime()) ? NaN : direct.getTime();
@@ -50541,20 +50541,20 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     if (!box) return;
     const n = this.cfg.nvr || {}, links = this.cfg.quick_links || [], st = this._h.states;
     const v = (id) => st[id];
-    const num4 = (id) => {
+    const num5 = (id) => {
       const x = Number(v(id)?.state);
       return Number.isFinite(x) ? x : null;
     };
     const chips = [];
     const pct3 = (id, label, warn = 90, c2) => {
-      const x = num4(id);
+      const x = num5(id);
       if (x == null) return;
       chips.push([label, `${Math.round(x)} %`, c2 || (x >= warn ? "var(--coral)" : "var(--emer)")]);
     };
     pct3(n.storage_entity, "Lager", 101, "var(--ice)");
     pct3(n.cpu_entity, "CPU");
     pct3(n.memory_entity, "Hukommelse");
-    const temp = num4(n.temp_entity);
+    const temp = num5(n.temp_entity);
     if (temp != null) chips.push(["Temperatur", `${Math.round(temp)} \xB0C`, temp >= 70 ? "var(--coral)" : "var(--emer)"]);
     const cap = v(n.capacity_entity);
     if (cap && Number.isFinite(Number(cap.state))) {
@@ -52908,9 +52908,9 @@ var HaSecurityCenterCard = class extends HTMLElement {
       triggered: ["Alarm udl\xF8st", "Kontroll\xE9r hjemmet med det samme", "mdi:shield-alert-outline", "danger"]
     }[state] || ["Status ukendt", "Systemet svarer ikke som forventet", "mdi:shield-alert-outline", "danger"];
   }
-  _ago(iso) {
-    if (!iso) return "Ukendt";
-    const m = Math.max(0, Math.floor((Date.now() - new Date(iso)) / 6e4));
+  _ago(iso2) {
+    if (!iso2) return "Ukendt";
+    const m = Math.max(0, Math.floor((Date.now() - new Date(iso2)) / 6e4));
     if (m < 1) return "lige nu";
     if (m < 60) return `${m} min siden`;
     const h = Math.floor(m / 60);
@@ -62859,11 +62859,11 @@ function parsePriceList(raw) {
   for (const item2 of raw) {
     if (!item2 || typeof item2 !== "object") continue;
     const price = toNumber2(item2.price);
-    const iso = typeof item2.start === "string" ? item2.start : "";
-    const start = Date.parse(iso);
+    const iso2 = typeof item2.start === "string" ? item2.start : "";
+    const start = Date.parse(iso2);
     if (price === void 0 || !Number.isFinite(start)) continue;
     const end = Date.parse(typeof item2.end === "string" ? item2.end : "");
-    out.push({ iso, start, end, price, dateKey: iso.slice(0, 10), label: iso.slice(11, 16) });
+    out.push({ iso: iso2, start, end, price, dateKey: iso2.slice(0, 10), label: iso2.slice(11, 16) });
   }
   out.sort((a, b) => a.start - b.start);
   out.forEach((e, i) => {
@@ -62874,7 +62874,7 @@ function parsePriceList(raw) {
 function dayDomain(entries, dateKey) {
   const first = entries[0];
   const last = entries[entries.length - 1];
-  const offsetOf = (iso) => (iso.match(/([+-]\d{2}:\d{2}|Z)$/) || [""])[0];
+  const offsetOf = (iso2) => (iso2.match(/([+-]\d{2}:\d{2}|Z)$/) || [""])[0];
   const start = Date.parse(`${dateKey}T00:00:00${offsetOf(first.iso)}`);
   const end = Date.parse(`${shiftDateKey(dateKey, 1)}T00:00:00${offsetOf(last.iso)}`);
   return Number.isFinite(start) && Number.isFinite(end) && end > start ? { start, end } : { start: first.start, end: last.end };
@@ -67258,6 +67258,333 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
   });
 }
 console.info(`%c ENERGY CENTER %c v${VERSION55} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+
+// src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
+var VERSION56 = "0.1.0";
+var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var p24 = (n) => String(n).padStart(2, "0");
+var iso = (d) => `${d.getFullYear()}-${p24(d.getMonth() + 1)}-${p24(d.getDate())}`;
+var parseDate2 = (v) => {
+  const [y, m, d] = String(v || "").split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : null;
+};
+var parseNumber = (v) => {
+  let s = String(v ?? "").trim().replace(/\s|kr\.?|kwh/gi, "");
+  if (!s) return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+};
+var kr = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : `${Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d })} kr`;
+var num4 = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var signed = (v, d = 0) => v == null ? "\u2014" : `${v > 0 ? "+" : v < 0 ? "\u2212" : "\xB1"}${num4(Math.abs(v), d)}`;
+var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._signature = "";
+    this._editId = null;
+    this.shadowRoot.addEventListener("click", (event) => {
+      const el = event.target.closest("[data-act]");
+      if (!el) return;
+      event.stopPropagation();
+      const act = el.dataset.act;
+      if (act === "save") this._save();
+      else if (act === "cancel") this._resetForm();
+      else if (act === "edit") this._edit(el.dataset.id);
+      else if (act === "delete") this._delete(el.dataset.id);
+      else if (act === "approve") this._approve(false);
+      else if (act === "undo") this._approve(true);
+      else if (act === "more") this._more(el.dataset.entity);
+      else if (act === "month") this._fillMonth(el.dataset.month);
+    });
+  }
+  static getStubConfig() {
+    return { title: "Elregning", forecast_entity: "sensor.elregning_prognose_denne_maned", bills_entity: "sensor.elregning_seneste_regning", provider_entity: "sensor.stromligning_provider", agreement_entity: "", agreement_script: "" };
+  }
+  static getConfigElement() {
+    const editor = document.createElement("ha-card-list-editor");
+    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "forecast_entity", label: "Prognose (Elregning)", type: "entity" }, { key: "bills_entity", label: "Seneste regning (Elregning)", type: "entity" }, { key: "provider_entity", label: "Elaftale (fx Str\xF8mligning Provider agreement)", type: "entity" }, { key: "agreement_entity", label: "Ny aftale: status-sensor (valgfri)", type: "entity" }, { key: "agreement_script", label: 'Ny aftale: "Vi har gjort det"-script (valgfrit)', type: "entity" }], collections: [] };
+    return editor;
+  }
+  setConfig(config) {
+    this._config = { ..._HAElectricityBillCard.getStubConfig(), ...config };
+    this._signature = "";
+    this.shadowRoot.innerHTML = "";
+  }
+  set hass(hass) {
+    this._hass = hass;
+    if (!this.shadowRoot.querySelector("ha-card")) this._build();
+    const c2 = this._config, st = (id) => id ? hass.states[id] : void 0;
+    const signature = JSON.stringify([c2.forecast_entity, c2.bills_entity, c2.provider_entity, c2.agreement_entity].map((id) => {
+      const s = st(id);
+      return s ? [s.state, s.last_updated] : null;
+    }));
+    if (signature !== this._signature) {
+      this._signature = signature;
+      this._render();
+    }
+  }
+  _build() {
+    this.shadowRoot.innerHTML = `<style>${STYLE10}</style><ha-card>
+      <div class="head"><span class="badge"><ha-icon icon="mdi:receipt-text-clock-outline"></ha-icon></span><div><h2></h2><p data-provider></p></div></div>
+      <div data-missing hidden class="missing"></div>
+      <section data-hero class="hero"></section>
+      <section data-agreement class="agreement" hidden></section>
+      <section class="block"><h3>Regninger</h3><div data-bills></div></section>
+      <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
+      <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
+        <div class="grid">
+          <label><span>Fra</span><input type="date" data-f="start"></label>
+          <label><span>Til</span><input type="date" data-f="end"></label>
+          <label><span>Bel\xF8b (kr inkl. moms)</span><input type="text" inputmode="decimal" placeholder="fx 1.234,56" data-f="amount"></label>
+          <label><span>kWh p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 1.180" data-f="kwh"></label>
+          <label><span>Leverand\xF8r (valgfrit)</span><input type="text" data-f="supplier"></label>
+          <label><span>Note (valgfri)</span><input type="text" data-f="note"></label>
+        </div>
+        <div class="actions"><span data-msg class="msg"></span><button type="button" class="ghost" data-act="cancel" hidden>Annull\xE9r</button><button type="button" class="primary" data-act="save">Gem regning</button></div>
+      </section></ha-card>`;
+    this._resetForm();
+  }
+  _render() {
+    const root = this.shadowRoot, c2 = this._config, h = this._hass;
+    if (!root || !h) return;
+    root.querySelector("h2").textContent = c2.title || "Elregning";
+    const provider = h.states[c2.provider_entity]?.state;
+    root.querySelector("[data-provider]").textContent = provider && !["unknown", "unavailable"].includes(provider) ? `Aftale: ${provider}` : "HA's egen m\xE5ling mod regningerne";
+    const fc = h.states[c2.forecast_entity], bills = h.states[c2.bills_entity];
+    const missing = !fc || !bills;
+    const miss = root.querySelector("[data-missing]");
+    miss.hidden = !missing;
+    miss.innerHTML = missing ? `<ha-icon icon="mdi:puzzle-outline"></ha-icon><span>Integrationen <b>Elregning</b> er ikke sat op endnu. Indstillinger \u2192 Enheder og tjenester \u2192 Tilf\xF8j integration \u2192 Elregning.</span>` : "";
+    root.querySelectorAll(".hero,.block").forEach((el) => {
+      el.hidden = missing;
+    });
+    this._agreement();
+    if (missing) return;
+    this._hero(fc);
+    this._bills(bills.attributes.regninger || []);
+    this._months(fc.attributes.maaneder || []);
+  }
+  _hero(fc) {
+    const a = fc.attributes, [y, m] = String(a.maaned || "").split("-").map(Number);
+    const month = m ? MONTHS2[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
+    const pct3 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
+    const ratio = a.forhold_regning_maaling, n = a.regninger_i_forhold || 0;
+    const how = ratio ? `Rettet efter ${n === 1 ? "den seneste regning" : `de seneste ${n} regninger`}: de har ligget ${signed((ratio - 1) * 100, 1)} % i forhold til HA's beregning (${kr(a.egen_beregning)}).` : "Ingen hele regninger endnu \u2013 prognosen er HA's egen beregning. Skriv regningerne ind, s\xE5 bliver den mere pr\xE6cis.";
+    this.shadowRoot.querySelector("[data-hero]").innerHTML = `
+      <div class="hero-top"><div><span class="label">Prognose for ${month}${y && y !== (/* @__PURE__ */ new Date()).getFullYear() ? ` ${y}` : ""}</span><b class="big" data-act="more" data-entity="${this._esc(this._config.forecast_entity)}">${kr(bill)}</b></div>
+        <div class="kwh"><b>${num4(a.forventet_kwh)}</b><span>kWh forventet</span></div></div>
+      <div class="bar"><i style="width:${pct3.toFixed(1)}%"></i></div>
+      <div class="facts"><span><b>${kr(soFar)}</b> m\xE5lt indtil nu \xB7 ${num4(a.maalt_kwh_indtil_nu)} kWh</span><span>${num4(a.dage_tilbage, 1)} dage tilbage \xB7 ${kr(a.dagligt_gennemsnit)}/dag (${a.gennemsnit_dage || 0} dage)</span></div>
+      <p class="how">${how}</p>`;
+  }
+  _agreement() {
+    const c2 = this._config, h = this._hass, box = this.shadowRoot.querySelector("[data-agreement]"), s = c2.agreement_entity ? h.states[c2.agreement_entity] : null;
+    if (!s) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    const a = s.attributes, state = s.state, link = a.link || "https://www.elforbundet.dk/billig-el-nu";
+    const done = a.godkendt ? String(a.godkendt).slice(0, 16).replace(" ", " kl. ") : "";
+    const text = {
+      forhandler: ["mdi:handshake-outline", "wait", "Ny aftale for 2027 p\xE5 vej", `Elforbundet forhandler stadig. HA holder \xF8je og giver besked, n\xE5r aftalen er ude \u2013 og igen, n\xE5r den kan v\xE6lges i Str\xF8mligning.`],
+      ude: ["mdi:bell-ring-outline", "act", "2027-aftalen er ude", `Tilmeld jer p\xE5 elforbundet.dk. HA giver besked, n\xE5r den kan v\xE6lges i Str\xF8mligning. Den nuv\xE6rende aftale f\xE5r till\xE6g fra 1. januar.`],
+      i_stromligning: ["mdi:bell-ring-outline", "act", "V\xE6lg 2027-aftalen i HA", `Str\xF8mligning har nu "${this._esc(a.stromligning_produkt)}". HA bruger stadig "${this._esc(a.ha_bruger)}": Indstillinger \u2192 Enheder og tjenester \u2192 Str\xF8mligning \u2192 Konfigurer.`],
+      ha_opdateret: ["mdi:check-circle-outline", "act", "HA bruger 2027-aftalen", `Str\xF8mligning regner nu med "${this._esc(a.ha_bruger)}". Er I ogs\xE5 tilmeldt p\xE5 elforbundet.dk, s\xE5 tryk "Vi har gjort det".`],
+      godkendt: ["mdi:check-decagram", "ok", "Ny aftale klaret", `Tilmeldt og valgt i HA${done ? ` \u2013 godkendt ${this._esc(done)}` : ""}.`]
+    }[state] || ["mdi:help-circle-outline", "wait", "Ny aftale", `Kunne ikke l\xE6se status lige nu. Se selv p\xE5 elforbundet.dk.`];
+    const canApprove = c2.agreement_script && ["ude", "i_stromligning", "ha_opdateret"].includes(state);
+    box.hidden = false;
+    box.className = `agreement ${text[1]}`;
+    box.innerHTML = `<ha-icon icon="${text[0]}"></ha-icon><div class="ag-copy"><b>${text[2]}</b><span>${text[3]}</span></div><div class="ag-btns">
+      ${canApprove ? `<button type="button" class="primary" data-act="approve">Vi har gjort det</button>` : ""}
+      ${state === "godkendt" && c2.agreement_script ? `<button type="button" class="ghost" data-act="undo">Fortryd</button>` : ""}
+      ${state !== "godkendt" ? `<a class="ghost" href="${this._esc(link)}" target="_blank" rel="noopener">elforbundet.dk</a>` : ""}</div>`;
+  }
+  _period(b) {
+    const s = parseDate2(b.start), e = parseDate2(b.end);
+    if (!s || !e) return `${b.start} \u2013 ${b.end}`;
+    const last = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate();
+    if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS2[s.getMonth()][0].toUpperCase()}${MONTHS2[s.getMonth()].slice(1)} ${s.getFullYear()}`;
+    return `${s.getDate()}. ${MON[s.getMonth()]}${s.getFullYear() !== e.getFullYear() ? ` ${s.getFullYear()}` : ""} \u2013 ${e.getDate()}. ${MON[e.getMonth()]} ${e.getFullYear()}`;
+  }
+  _bills(list) {
+    const box = this.shadowRoot.querySelector("[data-bills]");
+    this._list = list;
+    if (!list.length) {
+      box.innerHTML = `<p class="empty">Ingen regninger endnu. Skriv den seneste ind nedenfor \u2013 s\xE5 holder HA den op mod sin egen m\xE5ling.</p>`;
+      return;
+    }
+    box.innerHTML = list.map((b) => {
+      const pct3 = b.difference_pct, cls = pct3 == null ? "" : Math.abs(pct3) < 3 ? "ok" : Math.abs(pct3) < 10 ? "warn" : "bad";
+      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
+      const cover = b.coverage < 1 && b.measured_cost != null ? `<em class="part">HA har kun m\xE5lt ${Math.round(b.coverage * b.days)} af ${b.days} dage</em>` : "";
+      const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
+      const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
+      return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span>${cover}</div>
+        <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>
+        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`;
+    }).join("");
+  }
+  _months(months) {
+    const box = this.shadowRoot.querySelector("[data-months]");
+    box.innerHTML = months.length ? [...months].reverse().map((m) => {
+      const [y, mo] = m.month.split("-").map(Number);
+      return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS2[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
+    }).join("") : `<p class="empty">Ingen m\xE5linger endnu.</p>`;
+  }
+  _f(key) {
+    return this.shadowRoot.querySelector(`[data-f="${key}"]`);
+  }
+  _msg(text, bad = false) {
+    const el = this.shadowRoot.querySelector("[data-msg]");
+    el.textContent = text || "";
+    el.classList.toggle("bad", bad);
+  }
+  _fillMonth(month) {
+    const [y, m] = String(month).split("-").map(Number);
+    if (!y) return;
+    this._resetForm();
+    this._f("start").value = iso(new Date(y, m - 1, 1));
+    this._f("end").value = iso(new Date(y, m, 0));
+    this._f("amount").focus();
+  }
+  _resetForm() {
+    if (!this.shadowRoot.querySelector("[data-f]")) return;
+    const now = /* @__PURE__ */ new Date(), first = new Date(now.getFullYear(), now.getMonth() - 1, 1), last = new Date(now.getFullYear(), now.getMonth(), 0);
+    this._editId = null;
+    this._f("start").value = iso(first);
+    this._f("end").value = iso(last);
+    for (const k of ["amount", "kwh", "note"]) this._f(k).value = "";
+    const provider = this._hass?.states[this._config.provider_entity]?.state;
+    this._f("supplier").value = provider && !["unknown", "unavailable"].includes(provider) ? provider.split(" - ")[0] : "";
+    this.shadowRoot.querySelector("[data-form-title]").textContent = "Skriv en regning ind";
+    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem regning";
+    this.shadowRoot.querySelector("[data-act=cancel]").hidden = true;
+    this._msg("");
+  }
+  _edit(id) {
+    const b = (this._list || []).find((x) => x.id === id);
+    if (!b) return;
+    this._editId = id;
+    this._f("start").value = b.start;
+    this._f("end").value = b.end;
+    this._f("amount").value = num4(b.amount, 2);
+    this._f("kwh").value = b.kwh != null ? num4(b.kwh, 2) : "";
+    this._f("supplier").value = b.supplier || "";
+    this._f("note").value = b.note || "";
+    this.shadowRoot.querySelector("[data-form-title]").textContent = `Ret regningen for ${this._period(b).toLowerCase()}`;
+    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem \xE6ndringer";
+    this.shadowRoot.querySelector("[data-act=cancel]").hidden = false;
+    this._msg("");
+    this.shadowRoot.querySelector(".form").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  async _save() {
+    const start = this._f("start").value, end = this._f("end").value, amount = parseNumber(this._f("amount").value), kwh = parseNumber(this._f("kwh").value);
+    if (!start || !end) return this._msg("V\xE6lg fra og til.", true);
+    if (end < start) return this._msg("Til-datoen ligger f\xF8r fra-datoen.", true);
+    if (amount == null || Number.isNaN(amount) || amount < 0) return this._msg("Skriv regningens bel\xF8b, fx 1.234,56.", true);
+    if (Number.isNaN(kwh)) return this._msg("kWh skal v\xE6re et tal (eller tomt).", true);
+    const data = { start_date: start, end_date: end, amount, kwh: kwh ?? null, supplier: this._f("supplier").value.trim() || null, note: this._f("note").value.trim() || null };
+    const btn = this.shadowRoot.querySelector("[data-act=save]");
+    btn.disabled = true;
+    this._msg("Gemmer \u2026");
+    try {
+      if (this._editId) await this._hass.callService("elregning", "update_bill", { id: this._editId, ...data });
+      else await this._hass.callService("elregning", "add_bill", data);
+      const was = this._editId;
+      this._resetForm();
+      this._msg(was ? "Regningen er rettet." : "Regningen er gemt og holdt op mod HA's m\xE5ling.");
+    } catch (err) {
+      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  async _delete(id) {
+    const b = (this._list || []).find((x) => x.id === id);
+    if (!b) return;
+    if (!window.confirm(`Slet regningen for ${this._period(b).toLowerCase()} (${kr(b.amount)})?`)) return;
+    try {
+      await this._hass.callService("elregning", "delete_bill", { id });
+      if (this._editId === id) this._resetForm();
+    } catch (err) {
+      this._msg(`Kunne ikke slette: ${err?.message || err}`, true);
+    }
+  }
+  async _approve(undo) {
+    const script = String(this._config.agreement_script || "");
+    if (!script.startsWith("script.")) return;
+    if (!undo && !window.confirm("Er I tilmeldt den nye aftale, og er den valgt i Str\xF8mligning i HA? S\xE5 stopper p\xE5mindelserne.")) return;
+    try {
+      await this._hass.callService("script", script.slice(7), { fortryd: undo });
+    } catch (err) {
+      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
+    }
+  }
+  _more(entityId) {
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+  }
+  _esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch2]);
+  }
+  getCardSize() {
+    return 10;
+  }
+};
+var STYLE10 = `
+:host{--eb-accent:#f59e0b;--eb-ok:#22c55e;--eb-warn:#f59e0b;--eb-bad:#ef4444;--eb-muted:var(--secondary-text-color);--eb-line:color-mix(in srgb,var(--primary-text-color) 10%,transparent);--eb-soft:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}
+ha-card{padding:18px;overflow:hidden}
+.head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.badge{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--eb-accent) 18%,transparent);color:var(--eb-accent)}
+h2{margin:0;font-size:18px;font-weight:700}.head p{margin:2px 0 0;color:var(--eb-muted);font-size:13px}
+h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--eb-muted)}h3 small{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px}
+.missing{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--eb-soft);font-size:14px}
+.hero{padding:16px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--eb-accent) 16%,transparent),color-mix(in srgb,var(--eb-accent) 4%,transparent));margin-bottom:12px}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.label{display:block;font-size:13px;color:var(--eb-muted)}
+.big{display:block;font-size:34px;line-height:1.1;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}
+.kwh{text-align:right}.kwh b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.kwh span{font-size:12px;color:var(--eb-muted)}
+.bar{height:8px;border-radius:99px;background:var(--eb-line);margin:12px 0 8px;overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:var(--eb-accent);transition:width .6s ease}
+.facts{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;color:var(--eb-muted)}.facts b{color:var(--primary-text-color)}
+.how{margin:10px 0 0;font-size:13px;color:var(--eb-muted)}
+.agreement{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;margin-bottom:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
+.agreement>ha-icon{flex:none;color:var(--eb-muted)}.agreement.act{border-color:color-mix(in srgb,var(--eb-accent) 55%,transparent);background:color-mix(in srgb,var(--eb-accent) 10%,transparent)}.agreement.act>ha-icon{color:var(--eb-accent)}
+.agreement.ok>ha-icon{color:var(--eb-ok)}
+.ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
+.ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.block{margin-top:14px}
+.bill{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--eb-line)}.bill:first-child{border-top:0}
+.b-main b{display:block;font-size:14px}.sub{display:block;font-size:12px;color:var(--eb-muted);margin-top:2px}.part{display:block;font-size:12px;color:var(--eb-warn);font-style:normal;margin-top:2px}
+.b-num{text-align:right;font-variant-numeric:tabular-nums}.b-num b{display:block;font-size:15px}.b-num span{display:block;font-size:12px;color:var(--eb-muted)}
+.diff.ok{color:var(--eb-ok)!important}.diff.warn{color:var(--eb-warn)!important}.diff.bad{color:var(--eb-bad)!important}
+.b-btns{display:flex;gap:2px}
+.months{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.month{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:12px;border:1px solid var(--eb-line);background:var(--eb-soft);color:inherit;font:inherit;cursor:pointer;text-align:left}
+.month b{font-size:13px;text-transform:capitalize}.month span{font-size:12px;color:var(--eb-muted);font-variant-numeric:tabular-nums}.month em{font-size:11px;color:var(--eb-warn);font-style:normal}
+.month:hover{border-color:var(--eb-accent)}
+.empty{margin:0;font-size:13px;color:var(--eb-muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+label span{display:block;font-size:12px;color:var(--eb-muted);margin-bottom:4px}
+input{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--eb-line);background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit;font-size:14px}
+input:focus{outline:2px solid color-mix(in srgb,var(--eb-accent) 60%,transparent);outline-offset:0}
+.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px}.msg{flex:1;font-size:13px;color:var(--eb-ok)}.msg.bad{color:var(--eb-bad)}
+button,a.ghost{font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.primary{border:0;background:var(--eb-accent);color:#1b1205}.primary:disabled{opacity:.6;cursor:default}
+.ghost{border:1px solid var(--eb-line);background:transparent;color:var(--primary-text-color)}
+.icon{border:0;background:none;padding:6px;color:var(--eb-muted);border-radius:8px}.icon:hover{background:var(--eb-soft);color:var(--primary-text-color)}
+[hidden]{display:none!important}
+@media (max-width:520px){.bill{grid-template-columns:1fr auto}.b-btns{grid-column:1/-1;justify-content:flex-end;margin-top:-6px}.agreement{flex-wrap:wrap}.ag-btns{width:100%;justify-content:flex-start}.big{font-size:30px}}
+`;
+if (!customElements.get("ha-electricity-bill-card")) customElements.define("ha-electricity-bill-card", HAElectricityBillCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-electricity-bill-card", name: "HA Electricity Bill Card", description: "Elregninger mod HA's egen m\xE5ling, prognose for m\xE5neden og status for ny elaftale", preview: true });
+console.info(`%c HA-ELECTRICITY-BILL-CARD %c ${VERSION56} `, "color:#1b1205;background:#f59e0b;font-weight:800", "color:#f59e0b;background:#1b1205");
 
 // src/cards/shared/motion-rest-end.js
 motionRestEnd();
