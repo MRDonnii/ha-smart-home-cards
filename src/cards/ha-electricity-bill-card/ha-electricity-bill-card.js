@@ -1,12 +1,13 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
 
-const VERSION="0.1.0";
+const VERSION="0.1.1";
 
 // 0.1.0 (Claude AI, 2026-11-01; bruger: "jeg vil egentlig også gerne kunne skrive ind hvad mine regninger lyder på og
 // sammeholde det med det vi selv måler så vi kan se hvad det burde lande på næste måned"): kortet til integrationen
 // Elregning. Prognose for månedens regning (HA's måling rettet efter de seneste regninger), regningerne med HA's egen måling
 // for samme dage, målt pr. måned og en formular til at skrive en regning ind eller rette den. Valgfrit: status for en ny
 // elaftale (agreement_entity) med en "Vi har gjort det"-knap (agreement_script), som stopper påmindelserne.
+// 0.1.1 (Claude AI, 2026-11-01): statussensoren må mangle attributter (skabelon-hjælper fra brugerfladen).
 const MONTHS=["januar","februar","marts","april","maj","juni","juli","august","september","oktober","november","december"];
 const MON=["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
 const p2=n=>String(n).padStart(2,"0");
@@ -101,7 +102,9 @@ class HAElectricityBillCard extends HTMLElement{
   _agreement(){
     const c=this._config,h=this._hass,box=this.shadowRoot.querySelector("[data-agreement]"),s=c.agreement_entity?h.states[c.agreement_entity]:null;
     if(!s){box.hidden=true;box.innerHTML="";return;}
-    const a=s.attributes,state=s.state,link=a.link||"https://www.elforbundet.dk/billig-el-nu";
+    // Attributterne er valgfrie (en skabelon-hjælper lavet i brugerfladen har ingen); aftalen hentes så fra provider_entity
+    const provider=h.states[c.provider_entity]?.state;
+    const a={ha_bruger:provider&&!["unknown","unavailable"].includes(provider)?provider:"den nuværende aftale",stromligning_produkt:"2027-aftalen",...s.attributes},state=s.state,link=a.link||"https://www.elforbundet.dk/billig-el-nu";
     const done=a.godkendt?String(a.godkendt).slice(0,16).replace(" "," kl. "):"";
     const text={
       forhandler:["mdi:handshake-outline","wait","Ny aftale for 2027 på vej",`Elforbundet forhandler stadig. HA holder øje og giver besked, når aftalen er ude – og igen, når den kan vælges i Strømligning.`],

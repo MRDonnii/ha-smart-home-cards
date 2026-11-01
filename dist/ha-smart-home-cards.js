@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.242 */
+/* MRDonnii Smart Home Cards v0.5.243 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -67260,7 +67260,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
 console.info(`%c ENERGY CENTER %c v${VERSION55} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION56 = "0.1.0";
+var VERSION56 = "0.1.1";
 var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
@@ -67388,7 +67388,8 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       box.innerHTML = "";
       return;
     }
-    const a = s.attributes, state = s.state, link = a.link || "https://www.elforbundet.dk/billig-el-nu";
+    const provider = h.states[c2.provider_entity]?.state;
+    const a = { ha_bruger: provider && !["unknown", "unavailable"].includes(provider) ? provider : "den nuv\xE6rende aftale", stromligning_produkt: "2027-aftalen", ...s.attributes }, state = s.state, link = a.link || "https://www.elforbundet.dk/billig-el-nu";
     const done = a.godkendt ? String(a.godkendt).slice(0, 16).replace(" ", " kl. ") : "";
     const text = {
       forhandler: ["mdi:handshake-outline", "wait", "Ny aftale for 2027 p\xE5 vej", `Elforbundet forhandler stadig. HA holder \xF8je og giver besked, n\xE5r aftalen er ude \u2013 og igen, n\xE5r den kan v\xE6lges i Str\xF8mligning.`],
