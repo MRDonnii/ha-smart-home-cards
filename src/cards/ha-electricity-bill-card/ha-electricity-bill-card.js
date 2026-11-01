@@ -1,6 +1,6 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
 
-const VERSION="0.1.1";
+const VERSION="0.1.2";
 
 // 0.1.0 (Claude AI, 2026-11-01; bruger: "jeg vil egentlig også gerne kunne skrive ind hvad mine regninger lyder på og
 // sammeholde det med det vi selv måler så vi kan se hvad det burde lande på næste måned"): kortet til integrationen
@@ -8,6 +8,7 @@ const VERSION="0.1.1";
 // for samme dage, målt pr. måned og en formular til at skrive en regning ind eller rette den. Valgfrit: status for en ny
 // elaftale (agreement_entity) med en "Vi har gjort det"-knap (agreement_script), som stopper påmindelserne.
 // 0.1.1 (Claude AI, 2026-11-01): statussensoren må mangle attributter (skabelon-hjælper fra brugerfladen).
+// 0.1.2 (Claude AI, 2026-11-01): regninger for perioder, HA ikke har målt hele, vises uden afvigelse ("Kan ikke sammenlignes").
 const MONTHS=["januar","februar","marts","april","maj","juni","juli","august","september","oktober","november","december"];
 const MON=["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
 const p2=n=>String(n).padStart(2,"0");
@@ -132,10 +133,12 @@ class HAElectricityBillCard extends HTMLElement{
     if(!list.length){box.innerHTML=`<p class="empty">Ingen regninger endnu. Skriv den seneste ind nedenfor – så holder HA den op mod sin egen måling.</p>`;return;}
     box.innerHTML=list.map(b=>{
       const pct=b.difference_pct,cls=pct==null?"":Math.abs(pct)<3?"ok":Math.abs(pct)<10?"warn":"bad";
+      // En periode, HA ikke har målt hele, sammenlignes ikke (afvigelsen ville kun vise de manglende dage)
       const diff=b.difference==null?`<span class="diff">HA har ingen måling for perioden</span>`
+        :!b.complete?`<span class="diff">Kan ikke sammenlignes</span>`
         :`<span class="diff ${cls}">${signed(b.difference)} kr · ${signed(pct,1)} %</span>`;
       const cover=b.coverage<1&&b.measured_cost!=null?`<em class="part">HA har kun målt ${Math.round(b.coverage*b.days)} af ${b.days} dage</em>`:"";
-      const kwh=b.kwh!=null?`${num(b.kwh)} kWh på regningen · ${num(b.measured_kwh)} kWh målt${b.kwh_difference_pct!=null?` (${signed(b.kwh_difference_pct,1)} %)`:""}`:`${num(b.measured_kwh)} kWh målt`;
+      const kwh=b.kwh!=null?`${num(b.kwh)} kWh på regningen · ${num(b.measured_kwh)} kWh målt${b.complete&&b.kwh_difference_pct!=null?` (${signed(b.kwh_difference_pct,1)} %)`:""}`:`${num(b.measured_kwh)} kWh målt`;
       const price=b.bill_price!=null?` · ${num(b.bill_price,2)} kr/kWh på regningen`:b.measured_price!=null?` · ${num(b.measured_price,2)} kr/kWh målt`:"";
       return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier?` · ${this._esc(b.supplier)}`:""}${b.note?` · ${this._esc(b.note)}`:""}</span>${cover}</div>
         <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>

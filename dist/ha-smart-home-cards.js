@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.243 */
+/* MRDonnii Smart Home Cards v0.5.244 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -67260,7 +67260,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
 console.info(`%c ENERGY CENTER %c v${VERSION55} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION56 = "0.1.1";
+var VERSION56 = "0.1.2";
 var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
@@ -67422,9 +67422,9 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     }
     box.innerHTML = list.map((b) => {
       const pct3 = b.difference_pct, cls = pct3 == null ? "" : Math.abs(pct3) < 3 ? "ok" : Math.abs(pct3) < 10 ? "warn" : "bad";
-      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
+      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : !b.complete ? `<span class="diff">Kan ikke sammenlignes</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
       const cover = b.coverage < 1 && b.measured_cost != null ? `<em class="part">HA har kun m\xE5lt ${Math.round(b.coverage * b.days)} af ${b.days} dage</em>` : "";
-      const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
+      const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.complete && b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
       const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
       return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span>${cover}</div>
         <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>
