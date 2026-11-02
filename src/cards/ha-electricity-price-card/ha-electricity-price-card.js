@@ -1,4 +1,4 @@
-const VERSION = "0.12.1";
+const VERSION = "0.12.2";
 // ev_ledger: any entity of the car's EV Ledger; the plan (charge times) and the price resolution are found from it.
 const EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
 const EPC_LEDGER_ENDINGS = ["charge_mode", "next_charge_start", "next_charge_end", "price_resolution", "charge_status",
@@ -261,8 +261,10 @@ class HAElectricityPriceCard extends HTMLElement {
   _shapeSeries(points) {
     const sorted = [...points].sort((a, b) => a.start - b.start).filter((p, i, all) => !i || p.start !== all[i - 1].start);
     sorted.forEach((p, i) => {
-      if (p.end) return;
       const next = sorted[i + 1]?.start;
+      // Strømlignings prognose kommer pr. time, men hvert punkt er mærket som et kvarter: stræk det til næste punkt (højst en
+      // time), så prognosen står som én søjle pr. time uden huller (Claude AI, 2026-11-02)
+      if (p.end) { if (next && next - p.start > p.end - p.start && next - p.start <= 3600000) p.end = next; return; }
       p.end = next && next - p.start <= 3600000 ? next : p.start + 3600000;
     });
     // Quarter prices exist: the card offers the switch between quarters and whole hours.

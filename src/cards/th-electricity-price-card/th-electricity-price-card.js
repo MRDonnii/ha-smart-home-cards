@@ -15,7 +15,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 import { smilPause } from '../../shared/smil-pause.js';
 
-const TEP_VER = '1.18.1';
+const TEP_VER = '1.18.2';
 const LEVEL_NAME = ['Billig', 'Normal pris', 'Dyrt', 'Meget dyrt', 'Ekstremt dyrt'], LEVEL_COL = ['var(--good)', 'var(--warn)', 'var(--bad)', 'var(--bad)', 'var(--xbad,#ff4d8d)'];
 
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -341,7 +341,12 @@ class ThElectricityPriceCard extends HTMLElement {
     const C = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
     const act = [...(this.A(C.current, 'prices') || []), ...(this.A(C.tomorrow, 'prices') || [])].map(p => toP(p, false));
     const lastA = act.length ? act[act.length - 1].e : 0;
-    const fc = (this.A(C.forecast, 'prices') || []).map(p => toP(p, true)).filter(p => p.t >= lastA);
+    // Strømligning laver kun prognoser pr. time, men mærker hvert punkt som et kvarter (00:00–00:15), så søjlerne blev smalle
+    // med 45 min hul. Et punkt strækkes til det næste (højst en time): én søjle pr. time (Claude AI, 2026-11-02; bruger:
+    // "hvis det kun kan vises i time skal den når det er prognose vise dem i 1 søjler i stedet for 15 min")
+    const fc = (this.A(C.forecast, 'prices') || []).map(p => toP(p, true)).sort((a, b) => a.t - b.t);
+    fc.forEach((p, i) => { const step = fc[i + 1] ? fc[i + 1].t - p.t : i ? p.t - fc[i - 1].t : 0; if (step > p.e - p.t && step <= 36e5) p.e = p.t + step; });
+    fc.splice(0, fc.length, ...fc.filter(p => p.t >= lastA));
     return { act, lastA, fc, all: [...act, ...fc] };
   }
   // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
@@ -455,6 +460,9 @@ class ThElectricityPriceCard extends HTMLElement {
     const areaRun = ps => { const a = Math.max(t0, ps[0].t), b = Math.min(t1, ps[ps.length - 1].e), top = [[a, yAt(a)], ...ps.map(p => (p.t + p.e) / 2).filter(m => m > a && m < b).map(m => [m, yAt(m)]), [b, yAt(b)]];
       return `M${X(a).toFixed(2)} ${base}${top.map(([t, y]) => `L${X(t).toFixed(2)} ${y.toFixed(1)}`).join('')}L${X(b).toFixed(2)} ${base}Z`; };
     const isBar = this._ps === 'bar', calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Luft mellem søjlerne. Prognosens timesøjler får samme luft i forhold til bredden som kvartererne, så de ikke flyder
+    // sammen til én blok (Claude AI, 2026-11-02). I 7-dages visningen er alle søjler timer og beholder den faste luft.
+    const gap0 = mode === '48' ? .3 : mode === '7' ? .4 : .7, bgap = p => (mode !== '7' && p.e - p.t > 9e5 + 1e3 ? Math.max(gap0, (X(p.e) - X(p.t)) * .14) : gap0);
     const A1 = pts.filter(p => !p.f), F1 = pts.filter(p => p.f); if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = n => cs.getPropertyValue(n).trim();
     const cG = cv('--good') || '#6be3a8', cW = cv('--warn') || '#e8c37e', cB = cv('--bad') || '#ff9e7a', cE = cv('--ev') || '#b7a4ff';
@@ -465,8 +473,7 @@ class ThElectricityPriceCard extends HTMLElement {
       <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cW}" stop-opacity=".28"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient></defs>`;
     const evBars = [];
     if (this._ps === 'bar') {
-      const gap = mode === '48' ? .3 : mode === '7' ? .4 : .7;
-      pts.forEach((p, i) => { const x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - gap), y = Y(p.p), past = p.e <= now, evp = inCh(p); if (evp) evBars.push({ x, w, y, x2: dear(p) });
+      pts.forEach((p, i) => { const x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - bgap(p)), y = Y(p.p), past = p.e <= now, evp = inCh(p); if (evp) evBars.push({ x, w, y, x2: dear(p) });
         g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone(p.p)}" opacity="${past ? .25 : p.f ? .45 : .9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`; });
     } else {
       if (A1.length) { const d = line(A1); g += `<path d="${d}L${X((A1[A1.length - 1].t + A1[A1.length - 1].e) / 2)} ${base}L${X((A1[0].t + A1[0].e) / 2)} ${base}Z" fill="url(#pa)" class="fadein"/><path d="${d}" fill="none" stroke="url(#pl)" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round" class="draw"/>`; }
@@ -501,7 +508,7 @@ class ThElectricityPriceCard extends HTMLElement {
     let liq = [], liqCol = cE, liqId = 'ev', bsTop = null;
     if (!evBars.length) { const fut = act.filter(p => p.t >= now - 9e5); let best = null; const win = Math.max(1, Math.round(3 * 36e5 / ((fut[0]?.e - fut[0]?.t) || 9e5)));
       for (let i = 0; i + win <= fut.length; i++) { const a2 = fut.slice(i, i + win).reduce((s2, p) => s2 + p.p, 0) / win; if (!best || a2 < best.a) best = { a: a2, t: fut[i].t, e: fut[i + win - 1].e }; }
-      if (best) { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { if (!isBar) return lineBar(p); const x = Math.max(0, X(p.t)), gap = mode === '48' ? .3 : mode === '7' ? .4 : .7; return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - gap), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
+      if (best) { liq = pts.filter(p => p.t < best.e && p.e > best.t).map(p => { if (!isBar) return lineBar(p); const x = Math.max(0, X(p.t)); return { x, w: Math.max(.5, Math.min(W, X(p.e)) - x - bgap(p)), y: Y(p.p) }; }); liqCol = '#2ee6d6'; liqId = 'bs'; } }
     if (liq.length) groups.push({ bars: liq, col: liqCol, id: liqId });
     // Dyr ladning (Claude AI, 2026-10-15; bruger: "grafen er ikke så pæn"): samme lilla væske, der glider over i rødt
     // øverst, og bobler i væskens egne lyse toner i stedet for hvide/grå.
@@ -525,7 +532,7 @@ class ThElectricityPriceCard extends HTMLElement {
       // under linjen pulserer hver dyr strækning som ét areal (ellers ligner det striber)
       if (!isBar) for (const r of runsOf(hotP)) g += `<path d="${areaRun(r)}" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" repeatCount="indefinite"/></path>`;
       hotP.forEach((p, i) => {
-        const gap = mode === '48' ? .3 : mode === '7' ? .4 : .7, x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - (isBar ? gap : 0));
+        const x = Math.max(0, X(p.t)), w = Math.max(.5, Math.min(W, X(p.e)) - x - (isBar ? bgap(p) : 0));
         // søjlerne pulserer som en bølge
         const top = isBar ? Y(p.p) : lineBar(p).y;
         if (isBar) g += `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${((i % 6) * .22).toFixed(2)}s" repeatCount="indefinite"/></rect>`;

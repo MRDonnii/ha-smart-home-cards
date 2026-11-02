@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.244 */
+/* MRDonnii Smart Home Cards v0.5.245 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -13876,7 +13876,7 @@ window.customCards.push({ type: "ha-fjernvarme-house-card-v2", name: "HA Fjernva
 console.info(`%c HA-FJERNVARME-HOUSE-CARD %c ${VERSION15} `, "color:#fff;background:#bb433f;font-weight:700", "color:#bb433f;background:#fff");
 
 // src/cards/ha-electricity-price-card/ha-electricity-price-card.js
-var VERSION16 = "0.12.1";
+var VERSION16 = "0.12.2";
 var EPC_LEDGER_ROLES = { next_charge_start: "sensor._next_charge_start", price_resolution: "select._price_resolution" };
 var EPC_LEDGER_ENDINGS = [
   "charge_mode",
@@ -14141,8 +14141,11 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
   _shapeSeries(points) {
     const sorted = [...points].sort((a, b) => a.start - b.start).filter((p, i, all) => !i || p.start !== all[i - 1].start);
     sorted.forEach((p, i) => {
-      if (p.end) return;
       const next = sorted[i + 1]?.start;
+      if (p.end) {
+        if (next && next - p.start > p.end - p.start && next - p.start <= 36e5) p.end = next;
+        return;
+      }
       p.end = next && next - p.start <= 36e5 ? next : p.start + 36e5;
     });
     if (sorted.some((p) => p.end - p.start < 36e5)) this._hasQuarters = true;
@@ -14636,7 +14639,7 @@ function smilPause(host, rootOf) {
 }
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.18.1";
+var TEP_VER = "1.18.2";
 var LEVEL_NAME = ["Billig", "Normal pris", "Dyrt", "Meget dyrt", "Ekstremt dyrt"];
 var LEVEL_COL = ["var(--good)", "var(--warn)", "var(--bad)", "var(--bad)", "var(--xbad,#ff4d8d)"];
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -15151,7 +15154,12 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const C2 = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
     const act = [...this.A(C2.current, "prices") || [], ...this.A(C2.tomorrow, "prices") || []].map((p) => toP(p, false));
     const lastA = act.length ? act[act.length - 1].e : 0;
-    const fc = (this.A(C2.forecast, "prices") || []).map((p) => toP(p, true)).filter((p) => p.t >= lastA);
+    const fc = (this.A(C2.forecast, "prices") || []).map((p) => toP(p, true)).sort((a, b) => a.t - b.t);
+    fc.forEach((p, i) => {
+      const step = fc[i + 1] ? fc[i + 1].t - p.t : i ? p.t - fc[i - 1].t : 0;
+      if (step > p.e - p.t && step <= 36e5) p.e = p.t + step;
+    });
+    fc.splice(0, fc.length, ...fc.filter((p) => p.t >= lastA));
     return { act, lastA, fc, all: [...act, ...fc] };
   }
   // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
@@ -15343,6 +15351,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       return `M${X(a).toFixed(2)} ${base}${top.map(([t, y]) => `L${X(t).toFixed(2)} ${y.toFixed(1)}`).join("")}L${X(b).toFixed(2)} ${base}Z`;
     };
     const isBar = this._ps === "bar", calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const gap0 = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7, bgap = (p) => mode !== "7" && p.e - p.t > 9e5 + 1e3 ? Math.max(gap0, (X(p.e) - X(p.t)) * 0.14) : gap0;
     const A1 = pts.filter((p) => !p.f), F1 = pts.filter((p) => p.f);
     if (A1.length && F1.length) F1.unshift(A1[A1.length - 1]);
     const cs = getComputedStyle(this), cv = (n) => cs.getPropertyValue(n).trim();
@@ -15357,9 +15366,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
       <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cW}" stop-opacity=".28"/><stop offset="1" stop-color="${cW}" stop-opacity="0"/></linearGradient></defs>`;
     const evBars = [];
     if (this._ps === "bar") {
-      const gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7;
       pts.forEach((p, i) => {
-        const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W2, X(p.e)) - x - gap), y = Y(p.p), past = p.e <= now, evp = inCh(p);
+        const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W2, X(p.e)) - x - bgap(p)), y = Y(p.p), past = p.e <= now, evp = inCh(p);
         if (evp) evBars.push({ x, w, y, x2: dear(p) });
         g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone2(p.p)}" opacity="${past ? 0.25 : p.f ? 0.45 : 0.9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`;
       });
@@ -15409,8 +15417,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
       if (best) {
         liq = pts.filter((p) => p.t < best.e && p.e > best.t).map((p) => {
           if (!isBar) return lineBar(p);
-          const x = Math.max(0, X(p.t)), gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7;
-          return { x, w: Math.max(0.5, Math.min(W2, X(p.e)) - x - gap), y: Y(p.p) };
+          const x = Math.max(0, X(p.t));
+          return { x, w: Math.max(0.5, Math.min(W2, X(p.e)) - x - bgap(p)), y: Y(p.p) };
         });
         liqCol = "#2ee6d6";
         liqId = "bs";
@@ -15442,7 +15450,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       g += `<defs><linearGradient id="hotg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cB}" stop-opacity=".75"/><stop offset="1" stop-color="${cB}" stop-opacity=".05"/></linearGradient></defs>`;
       if (!isBar) for (const r of runsOf(hotP)) g += `<path d="${areaRun(r)}" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" repeatCount="indefinite"/></path>`;
       hotP.forEach((p, i) => {
-        const gap = mode === "48" ? 0.3 : mode === "7" ? 0.4 : 0.7, x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W2, X(p.e)) - x - (isBar ? gap : 0));
+        const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W2, X(p.e)) - x - (isBar ? bgap(p) : 0));
         const top = isBar ? Y(p.p) : lineBar(p).y;
         if (isBar) g += `<rect x="${x.toFixed(2)}" y="${top.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - top).toFixed(1)}" rx="1.5" fill="url(#hotg)" opacity="0" style="pointer-events:none"><animate attributeName="opacity" values="0;.85;0" dur="1.8s" begin="${(i % 6 * 0.22).toFixed(2)}s" repeatCount="indefinite"/></rect>`;
         if (i % (mode === "24" ? 1 : 3)) return;
