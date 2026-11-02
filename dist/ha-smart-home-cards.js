@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.245 */
+/* MRDonnii Smart Home Cards v0.5.246 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -66743,15 +66743,425 @@ var EvSection = class extends Section {
   }
 };
 
+// src/cards/ha-electricity-bill-card/next-month.js
+function nextMonthEstimate(attributes) {
+  const [year, month] = String(attributes?.maaned || "").split("-").map(Number);
+  const dailyCost = Number(attributes?.dagligt_gennemsnit);
+  const dailyKwh = Number(attributes?.dagligt_gennemsnit_kwh);
+  const daysMeasured = Number(attributes?.gennemsnit_dage);
+  const ratio = Number(attributes?.forhold_regning_maaling);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isFinite(dailyCost) || dailyCost < 0 || daysMeasured < 3) return null;
+  const first = new Date(year, month, 1);
+  const days = new Date(year, month + 1, 0).getDate();
+  const adjustment = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+  return {
+    month: first.toLocaleDateString("da-DK", { month: "long", year: "numeric" }),
+    days,
+    daysMeasured,
+    dailyCost,
+    adjustment,
+    cost: Math.round(dailyCost * days * adjustment / 10) * 10,
+    kwh: Number.isFinite(dailyKwh) && dailyKwh >= 0 ? Math.round(dailyKwh * days) : null
+  };
+}
+
+// src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
+var VERSION55 = "0.1.3";
+var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var p24 = (n) => String(n).padStart(2, "0");
+var iso = (d) => `${d.getFullYear()}-${p24(d.getMonth() + 1)}-${p24(d.getDate())}`;
+var parseDate2 = (v) => {
+  const [y, m, d] = String(v || "").split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : null;
+};
+var parseNumber = (v) => {
+  let s = String(v ?? "").trim().replace(/\s|kr\.?|kwh/gi, "");
+  if (!s) return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+};
+var kr = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : `${Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d })} kr`;
+var num4 = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var signed = (v, d = 0) => v == null ? "\u2014" : `${v > 0 ? "+" : v < 0 ? "\u2212" : "\xB1"}${num4(Math.abs(v), d)}`;
+var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._signature = "";
+    this._editId = null;
+    this.shadowRoot.addEventListener("click", (event) => {
+      const el = event.target.closest("[data-act]");
+      if (!el) return;
+      event.stopPropagation();
+      const act = el.dataset.act;
+      if (act === "save") this._save();
+      else if (act === "cancel") this._resetForm();
+      else if (act === "edit") this._edit(el.dataset.id);
+      else if (act === "delete") this._delete(el.dataset.id);
+      else if (act === "approve") this._approve(false);
+      else if (act === "undo") this._approve(true);
+      else if (act === "more") this._more(el.dataset.entity);
+      else if (act === "month") this._fillMonth(el.dataset.month);
+    });
+  }
+  static getStubConfig() {
+    return { title: "Elregning", forecast_entity: "sensor.elregning_prognose_denne_maned", bills_entity: "sensor.elregning_seneste_regning", provider_entity: "sensor.stromligning_provider", agreement_entity: "", agreement_script: "" };
+  }
+  static getConfigElement() {
+    const editor = document.createElement("ha-card-list-editor");
+    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "forecast_entity", label: "Prognose (Elregning)", type: "entity" }, { key: "bills_entity", label: "Seneste regning (Elregning)", type: "entity" }, { key: "provider_entity", label: "Elaftale (fx Str\xF8mligning Provider agreement)", type: "entity" }, { key: "agreement_entity", label: "Ny aftale: status-sensor (valgfri)", type: "entity" }, { key: "agreement_script", label: 'Ny aftale: "Vi har gjort det"-script (valgfrit)', type: "entity" }], collections: [] };
+    return editor;
+  }
+  setConfig(config) {
+    this._config = { ..._HAElectricityBillCard.getStubConfig(), ...config };
+    this._signature = "";
+    this.shadowRoot.innerHTML = "";
+  }
+  set hass(hass) {
+    this._hass = hass;
+    if (!this.shadowRoot.querySelector("ha-card")) this._build();
+    const c2 = this._config, st = (id) => id ? hass.states[id] : void 0;
+    const signature = JSON.stringify([c2.forecast_entity, c2.bills_entity, c2.provider_entity, c2.agreement_entity].map((id) => {
+      const s = st(id);
+      return s ? [s.state, s.last_updated] : null;
+    }));
+    if (signature !== this._signature) {
+      this._signature = signature;
+      this._render();
+    }
+  }
+  _build() {
+    this.shadowRoot.innerHTML = `<style>${STYLE10}</style><ha-card>
+      <div class="head"><span class="badge"><ha-icon icon="mdi:receipt-text-clock-outline"></ha-icon></span><div><h2></h2><p data-provider></p></div></div>
+      <div data-missing hidden class="missing"></div>
+      <section data-hero class="hero"></section>
+      <section data-next class="next" hidden></section>
+      <section data-explanation class="explanation" hidden></section>
+      <section data-agreement class="agreement" hidden></section>
+      <section class="block"><h3>Regninger</h3><div data-bills></div></section>
+      <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
+      <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
+        <div class="grid">
+          <label><span>Fra</span><input type="date" data-f="start"></label>
+          <label><span>Til</span><input type="date" data-f="end"></label>
+          <label><span>Bel\xF8b (kr inkl. moms)</span><input type="text" inputmode="decimal" placeholder="fx 1.234,56" data-f="amount"></label>
+          <label><span>kWh p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 1.180" data-f="kwh"></label>
+          <label><span>Leverand\xF8r (valgfrit)</span><input type="text" data-f="supplier"></label>
+          <label><span>Note (valgfri)</span><input type="text" data-f="note"></label>
+        </div>
+        <div class="actions"><span data-msg class="msg"></span><button type="button" class="ghost" data-act="cancel" hidden>Annull\xE9r</button><button type="button" class="primary" data-act="save">Gem regning</button></div>
+      </section></ha-card>`;
+    this._resetForm();
+  }
+  _render() {
+    const root = this.shadowRoot, c2 = this._config, h = this._hass;
+    if (!root || !h) return;
+    root.querySelector("h2").textContent = c2.title || "Elregning";
+    const provider = h.states[c2.provider_entity]?.state;
+    root.querySelector("[data-provider]").textContent = provider && !["unknown", "unavailable"].includes(provider) ? `Aftale: ${provider}` : "HA's egen m\xE5ling mod regningerne";
+    const fc = h.states[c2.forecast_entity], bills = h.states[c2.bills_entity];
+    const missing = !fc || !bills;
+    const miss = root.querySelector("[data-missing]");
+    miss.hidden = !missing;
+    miss.innerHTML = missing ? `<ha-icon icon="mdi:puzzle-outline"></ha-icon><span>Integrationen <b>Elregning</b> er ikke sat op endnu. Indstillinger \u2192 Enheder og tjenester \u2192 Tilf\xF8j integration \u2192 Elregning.</span>` : "";
+    root.querySelectorAll(".hero,.block").forEach((el) => {
+      el.hidden = missing;
+    });
+    root.querySelector("[data-next]").hidden = missing;
+    root.querySelector("[data-explanation]").hidden = missing;
+    this._agreement();
+    if (missing) return;
+    this._hero(fc);
+    this._next(fc);
+    this._explain(bills.attributes.regninger || []);
+    this._bills(bills.attributes.regninger || []);
+    this._months(fc.attributes.maaneder || []);
+  }
+  _hero(fc) {
+    const a = fc.attributes, [y, m] = String(a.maaned || "").split("-").map(Number);
+    const month = m ? MONTHS2[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
+    const pct3 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
+    const ratio = a.forhold_regning_maaling, n = a.regninger_i_forhold || 0;
+    const how = ratio ? `Rettet efter ${n === 1 ? "den seneste regning" : `de seneste ${n} regninger`}: de har ligget ${signed((ratio - 1) * 100, 1)} % i forhold til HA's beregning (${kr(a.egen_beregning)}).` : "Ingen hele regninger endnu \u2013 prognosen er HA's egen beregning. Skriv regningerne ind, s\xE5 bliver den mere pr\xE6cis.";
+    this.shadowRoot.querySelector("[data-hero]").innerHTML = `
+      <div class="hero-top"><div><span class="label">Prognose for ${month}${y && y !== (/* @__PURE__ */ new Date()).getFullYear() ? ` ${y}` : ""}</span><b class="big" data-act="more" data-entity="${this._esc(this._config.forecast_entity)}">${kr(bill)}</b></div>
+        <div class="kwh"><b>${num4(a.forventet_kwh)}</b><span>kWh forventet</span></div></div>
+      <div class="bar"><i style="width:${pct3.toFixed(1)}%"></i></div>
+      <div class="facts"><span><b>${kr(soFar)}</b> m\xE5lt indtil nu \xB7 ${num4(a.maalt_kwh_indtil_nu)} kWh</span><span>${num4(a.dage_tilbage, 1)} dage tilbage \xB7 ${kr(a.dagligt_gennemsnit)}/dag (${a.gennemsnit_dage || 0} dage)</span></div>
+      <p class="how">${how}</p>`;
+  }
+  _next(fc) {
+    const box = this.shadowRoot.querySelector("[data-next]");
+    const estimate = nextMonthEstimate(fc.attributes);
+    if (!estimate) {
+      box.innerHTML = "<h3>N\xE6ste m\xE5ned</h3><p>Venter p\xE5 mindst tre hele dage med m\xE5linger, f\xF8r der vises et estimat.</p>";
+      return;
+    }
+    const adjustment = estimate.adjustment !== 1 ? ` og rettet med tidligere fakturaer (${num4((estimate.adjustment - 1) * 100, 1)} %)` : "";
+    box.innerHTML = `<h3>Estimat for ${this._esc(estimate.month)}</h3>
+      <div class="next-value">ca. ${kr(estimate.cost)}</div>
+      <p>${estimate.kwh == null ? "" : `${num4(estimate.kwh)} kWh \xB7 `}${estimate.days} dage \xD7 ${kr(estimate.dailyCost)}/dag${adjustment}.</p>
+      <small>Dagssnittet er fra de seneste ${estimate.daysMeasured} hele dage. Fremtidige elpriser og \xE6ndret forbrug kendes ikke, s\xE5 den faktiske regning kan afvige.</small>`;
+  }
+  _explain(bills) {
+    const box = this.shadowRoot.querySelector("[data-explanation]");
+    const bill = bills.find((item2) => item2.complete && item2.measured_cost != null);
+    if (!bill) {
+      box.innerHTML = "<h3>S\xE5dan l\xE6ses regningen</h3><p>Indtast en hel fakturaperiode for at sammenligne fakturaen med HA\u2019s m\xE5ling og se forskellen forklaret.</p>";
+      return;
+    }
+    const direction = bill.difference > 0 ? "h\xF8jere" : bill.difference < 0 ? "lavere" : "p\xE5 niveau";
+    const difference = bill.difference == null ? "" : `Fakturaen er ${kr(Math.abs(bill.difference), 2)} ${direction} end HA\u2019s beregning for de samme dage.`;
+    const consumption = bill.kwh != null ? `${num4(bill.kwh)} kWh p\xE5 fakturaen` : "Fakturaens kWh er ikke indtastet";
+    const price = bill.bill_price != null ? ` Det svarer samlet til ${num4(bill.bill_price, 2)} kr/kWh.` : "";
+    box.innerHTML = `<h3>Hvorfor er regningen p\xE5 ${kr(bill.amount, 2)}?</h3>
+      <p>Seneste sammenlignelige periode: ${this._esc(this._period(bill))}. ${consumption}${price} HA m\xE5lte ${num4(bill.measured_kwh, 1)} kWh og beregnede ${kr(bill.measured_cost, 2)}. ${difference}</p>
+      <small>HA beregner ud fra elm\xE5leren og den registrerede elpris. Faste poster, prisforskelle og forskellig afl\xE6sning kan give en afvigelse. Den pr\xE6cise fordeling kr\xE6ver fakturaens prislinjer.</small>`;
+  }
+  _agreement() {
+    const c2 = this._config, h = this._hass, box = this.shadowRoot.querySelector("[data-agreement]"), s = c2.agreement_entity ? h.states[c2.agreement_entity] : null;
+    if (!s) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    const provider = h.states[c2.provider_entity]?.state;
+    const a = { ha_bruger: provider && !["unknown", "unavailable"].includes(provider) ? provider : "den nuv\xE6rende aftale", stromligning_produkt: "2027-aftalen", ...s.attributes }, state = s.state, link = a.link || "https://www.elforbundet.dk/billig-el-nu";
+    const done = a.godkendt ? String(a.godkendt).slice(0, 16).replace(" ", " kl. ") : "";
+    const text = {
+      forhandler: ["mdi:handshake-outline", "wait", "Ny aftale for 2027 p\xE5 vej", `Elforbundet forhandler stadig. HA holder \xF8je og giver besked, n\xE5r aftalen er ude \u2013 og igen, n\xE5r den kan v\xE6lges i Str\xF8mligning.`],
+      ude: ["mdi:bell-ring-outline", "act", "2027-aftalen er ude", `Tilmeld jer p\xE5 elforbundet.dk. HA giver besked, n\xE5r den kan v\xE6lges i Str\xF8mligning. Den nuv\xE6rende aftale f\xE5r till\xE6g fra 1. januar.`],
+      i_stromligning: ["mdi:bell-ring-outline", "act", "V\xE6lg 2027-aftalen i HA", `Str\xF8mligning har nu "${this._esc(a.stromligning_produkt)}". HA bruger stadig "${this._esc(a.ha_bruger)}": Indstillinger \u2192 Enheder og tjenester \u2192 Str\xF8mligning \u2192 Konfigurer.`],
+      ha_opdateret: ["mdi:check-circle-outline", "act", "HA bruger 2027-aftalen", `Str\xF8mligning regner nu med "${this._esc(a.ha_bruger)}". Er I ogs\xE5 tilmeldt p\xE5 elforbundet.dk, s\xE5 tryk "Vi har gjort det".`],
+      godkendt: ["mdi:check-decagram", "ok", "Ny aftale klaret", `Tilmeldt og valgt i HA${done ? ` \u2013 godkendt ${this._esc(done)}` : ""}.`]
+    }[state] || ["mdi:help-circle-outline", "wait", "Ny aftale", `Kunne ikke l\xE6se status lige nu. Se selv p\xE5 elforbundet.dk.`];
+    const canApprove = c2.agreement_script && ["ude", "i_stromligning", "ha_opdateret"].includes(state);
+    box.hidden = false;
+    box.className = `agreement ${text[1]}`;
+    box.innerHTML = `<ha-icon icon="${text[0]}"></ha-icon><div class="ag-copy"><b>${text[2]}</b><span>${text[3]}</span></div><div class="ag-btns">
+      ${canApprove ? `<button type="button" class="primary" data-act="approve">Vi har gjort det</button>` : ""}
+      ${state === "godkendt" && c2.agreement_script ? `<button type="button" class="ghost" data-act="undo">Fortryd</button>` : ""}
+      ${state !== "godkendt" ? `<a class="ghost" href="${this._esc(link)}" target="_blank" rel="noopener">elforbundet.dk</a>` : ""}</div>`;
+  }
+  _period(b) {
+    const s = parseDate2(b.start), e = parseDate2(b.end);
+    if (!s || !e) return `${b.start} \u2013 ${b.end}`;
+    const last = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate();
+    if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS2[s.getMonth()][0].toUpperCase()}${MONTHS2[s.getMonth()].slice(1)} ${s.getFullYear()}`;
+    return `${s.getDate()}. ${MON[s.getMonth()]}${s.getFullYear() !== e.getFullYear() ? ` ${s.getFullYear()}` : ""} \u2013 ${e.getDate()}. ${MON[e.getMonth()]} ${e.getFullYear()}`;
+  }
+  _bills(list) {
+    const box = this.shadowRoot.querySelector("[data-bills]");
+    this._list = list;
+    if (!list.length) {
+      box.innerHTML = `<p class="empty">Ingen regninger endnu. Skriv den seneste ind nedenfor \u2013 s\xE5 holder HA den op mod sin egen m\xE5ling.</p>`;
+      return;
+    }
+    box.innerHTML = list.map((b) => {
+      const pct3 = b.difference_pct, cls = pct3 == null ? "" : Math.abs(pct3) < 3 ? "ok" : Math.abs(pct3) < 10 ? "warn" : "bad";
+      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : !b.complete ? `<span class="diff">Kan ikke sammenlignes</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
+      const cover = b.coverage < 1 && b.measured_cost != null ? `<em class="part">HA har kun m\xE5lt ${Math.round(b.coverage * b.days)} af ${b.days} dage</em>` : "";
+      const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.complete && b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
+      const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
+      return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span>${cover}</div>
+        <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>
+        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`;
+    }).join("");
+  }
+  _months(months) {
+    const box = this.shadowRoot.querySelector("[data-months]");
+    box.innerHTML = months.length ? [...months].reverse().map((m) => {
+      const [y, mo] = m.month.split("-").map(Number);
+      return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS2[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
+    }).join("") : `<p class="empty">Ingen m\xE5linger endnu.</p>`;
+  }
+  _f(key) {
+    return this.shadowRoot.querySelector(`[data-f="${key}"]`);
+  }
+  _msg(text, bad = false) {
+    const el = this.shadowRoot.querySelector("[data-msg]");
+    el.textContent = text || "";
+    el.classList.toggle("bad", bad);
+  }
+  _fillMonth(month) {
+    const [y, m] = String(month).split("-").map(Number);
+    if (!y) return;
+    this._resetForm();
+    this._f("start").value = iso(new Date(y, m - 1, 1));
+    this._f("end").value = iso(new Date(y, m, 0));
+    this._f("amount").focus();
+  }
+  _resetForm() {
+    if (!this.shadowRoot.querySelector("[data-f]")) return;
+    const now = /* @__PURE__ */ new Date(), first = new Date(now.getFullYear(), now.getMonth() - 1, 1), last = new Date(now.getFullYear(), now.getMonth(), 0);
+    this._editId = null;
+    this._f("start").value = iso(first);
+    this._f("end").value = iso(last);
+    for (const k of ["amount", "kwh", "note"]) this._f(k).value = "";
+    const provider = this._hass?.states[this._config.provider_entity]?.state;
+    this._f("supplier").value = provider && !["unknown", "unavailable"].includes(provider) ? provider.split(" - ")[0] : "";
+    this.shadowRoot.querySelector("[data-form-title]").textContent = "Skriv en regning ind";
+    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem regning";
+    this.shadowRoot.querySelector("[data-act=cancel]").hidden = true;
+    this._msg("");
+  }
+  _edit(id) {
+    const b = (this._list || []).find((x) => x.id === id);
+    if (!b) return;
+    this._editId = id;
+    this._f("start").value = b.start;
+    this._f("end").value = b.end;
+    this._f("amount").value = num4(b.amount, 2);
+    this._f("kwh").value = b.kwh != null ? num4(b.kwh, 2) : "";
+    this._f("supplier").value = b.supplier || "";
+    this._f("note").value = b.note || "";
+    this.shadowRoot.querySelector("[data-form-title]").textContent = `Ret regningen for ${this._period(b).toLowerCase()}`;
+    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem \xE6ndringer";
+    this.shadowRoot.querySelector("[data-act=cancel]").hidden = false;
+    this._msg("");
+    this.shadowRoot.querySelector(".form").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  async _save() {
+    const start = this._f("start").value, end = this._f("end").value, amount = parseNumber(this._f("amount").value), kwh = parseNumber(this._f("kwh").value);
+    if (!start || !end) return this._msg("V\xE6lg fra og til.", true);
+    if (end < start) return this._msg("Til-datoen ligger f\xF8r fra-datoen.", true);
+    if (amount == null || Number.isNaN(amount) || amount < 0) return this._msg("Skriv regningens bel\xF8b, fx 1.234,56.", true);
+    if (Number.isNaN(kwh)) return this._msg("kWh skal v\xE6re et tal (eller tomt).", true);
+    const data = { start_date: start, end_date: end, amount, kwh: kwh ?? null, supplier: this._f("supplier").value.trim() || null, note: this._f("note").value.trim() || null };
+    const btn = this.shadowRoot.querySelector("[data-act=save]");
+    btn.disabled = true;
+    this._msg("Gemmer \u2026");
+    try {
+      if (this._editId) await this._hass.callService("elregning", "update_bill", { id: this._editId, ...data });
+      else await this._hass.callService("elregning", "add_bill", data);
+      const was = this._editId;
+      this._resetForm();
+      this._msg(was ? "Regningen er rettet." : "Regningen er gemt og holdt op mod HA's m\xE5ling.");
+    } catch (err) {
+      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  async _delete(id) {
+    const b = (this._list || []).find((x) => x.id === id);
+    if (!b) return;
+    if (!window.confirm(`Slet regningen for ${this._period(b).toLowerCase()} (${kr(b.amount)})?`)) return;
+    try {
+      await this._hass.callService("elregning", "delete_bill", { id });
+      if (this._editId === id) this._resetForm();
+    } catch (err) {
+      this._msg(`Kunne ikke slette: ${err?.message || err}`, true);
+    }
+  }
+  async _approve(undo) {
+    const script = String(this._config.agreement_script || "");
+    if (!script.startsWith("script.")) return;
+    if (!undo && !window.confirm("Er I tilmeldt den nye aftale, og er den valgt i Str\xF8mligning i HA? S\xE5 stopper p\xE5mindelserne.")) return;
+    try {
+      await this._hass.callService("script", script.slice(7), { fortryd: undo });
+    } catch (err) {
+      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
+    }
+  }
+  _more(entityId) {
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+  }
+  _esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch2]);
+  }
+  getCardSize() {
+    return 10;
+  }
+};
+var STYLE10 = `
+:host{--eb-accent:#f59e0b;--eb-ok:#22c55e;--eb-warn:#f59e0b;--eb-bad:#ef4444;--eb-muted:var(--secondary-text-color);--eb-line:color-mix(in srgb,var(--primary-text-color) 10%,transparent);--eb-soft:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}
+ha-card{padding:18px;overflow:hidden}
+.head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.badge{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--eb-accent) 18%,transparent);color:var(--eb-accent)}
+h2{margin:0;font-size:18px;font-weight:700}.head p{margin:2px 0 0;color:var(--eb-muted);font-size:13px}
+h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--eb-muted)}h3 small{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px}
+.missing{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--eb-soft);font-size:14px}
+.hero{padding:16px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--eb-accent) 16%,transparent),color-mix(in srgb,var(--eb-accent) 4%,transparent));margin-bottom:12px}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.label{display:block;font-size:13px;color:var(--eb-muted)}
+.big{display:block;font-size:34px;line-height:1.1;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}
+.kwh{text-align:right}.kwh b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.kwh span{font-size:12px;color:var(--eb-muted)}
+.bar{height:8px;border-radius:99px;background:var(--eb-line);margin:12px 0 8px;overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:var(--eb-accent);transition:width .6s ease}
+.facts{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;color:var(--eb-muted)}.facts b{color:var(--primary-text-color)}
+.how{margin:10px 0 0;font-size:13px;color:var(--eb-muted)}
+.next,.explanation{padding:14px 16px;border-radius:14px;background:var(--eb-soft);border:1px solid var(--eb-line);margin-bottom:12px}
+.next-value{font-size:25px;font-weight:750;font-variant-numeric:tabular-nums}
+.next p,.explanation p{margin:5px 0;font-size:14px;line-height:1.45}
+.next small,.explanation small{display:block;color:var(--eb-muted);font-size:12px;line-height:1.4}
+.agreement{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;margin-bottom:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
+.agreement>ha-icon{flex:none;color:var(--eb-muted)}.agreement.act{border-color:color-mix(in srgb,var(--eb-accent) 55%,transparent);background:color-mix(in srgb,var(--eb-accent) 10%,transparent)}.agreement.act>ha-icon{color:var(--eb-accent)}
+.agreement.ok>ha-icon{color:var(--eb-ok)}
+.ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
+.ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.block{margin-top:14px}
+.bill{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--eb-line)}.bill:first-child{border-top:0}
+.b-main b{display:block;font-size:14px}.sub{display:block;font-size:12px;color:var(--eb-muted);margin-top:2px}.part{display:block;font-size:12px;color:var(--eb-warn);font-style:normal;margin-top:2px}
+.b-num{text-align:right;font-variant-numeric:tabular-nums}.b-num b{display:block;font-size:15px}.b-num span{display:block;font-size:12px;color:var(--eb-muted)}
+.diff.ok{color:var(--eb-ok)!important}.diff.warn{color:var(--eb-warn)!important}.diff.bad{color:var(--eb-bad)!important}
+.b-btns{display:flex;gap:2px}
+.months{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.month{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:12px;border:1px solid var(--eb-line);background:var(--eb-soft);color:inherit;font:inherit;cursor:pointer;text-align:left}
+.month b{font-size:13px;text-transform:capitalize}.month span{font-size:12px;color:var(--eb-muted);font-variant-numeric:tabular-nums}.month em{font-size:11px;color:var(--eb-warn);font-style:normal}
+.month:hover{border-color:var(--eb-accent)}
+.empty{margin:0;font-size:13px;color:var(--eb-muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+label span{display:block;font-size:12px;color:var(--eb-muted);margin-bottom:4px}
+input{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--eb-line);background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit;font-size:14px}
+input:focus{outline:2px solid color-mix(in srgb,var(--eb-accent) 60%,transparent);outline-offset:0}
+.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px}.msg{flex:1;font-size:13px;color:var(--eb-ok)}.msg.bad{color:var(--eb-bad)}
+button,a.ghost{font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.primary{border:0;background:var(--eb-accent);color:#1b1205}.primary:disabled{opacity:.6;cursor:default}
+.ghost{border:1px solid var(--eb-line);background:transparent;color:var(--primary-text-color)}
+.icon{border:0;background:none;padding:6px;color:var(--eb-muted);border-radius:8px}.icon:hover{background:var(--eb-soft);color:var(--primary-text-color)}
+[hidden]{display:none!important}
+@media (max-width:520px){.bill{grid-template-columns:1fr auto}.b-btns{grid-column:1/-1;justify-content:flex-end;margin-top:-6px}.agreement{flex-wrap:wrap}.ag-btns{width:100%;justify-content:flex-start}.big{font-size:30px}}
+`;
+if (!customElements.get("ha-electricity-bill-card")) customElements.define("ha-electricity-bill-card", HAElectricityBillCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-electricity-bill-card", name: "HA Electricity Bill Card", description: "Elregninger mod HA's egen m\xE5ling, prognose for m\xE5neden og status for ny elaftale", preview: true });
+console.info(`%c HA-ELECTRICITY-BILL-CARD %c ${VERSION55} `, "color:#1b1205;background:#f59e0b;font-weight:800", "color:#f59e0b;background:#1b1205");
+
+// src/cards/ha-energy-center-card/sections/bill.js
+var BillSection = class extends Section {
+  html() {
+    return '<div data-ref="billHost"></div>';
+  }
+  mount(root) {
+    super.mount(root);
+    this.bill = document.createElement("ha-electricity-bill-card");
+    this.config = { ...customElements.get("ha-electricity-bill-card").getStubConfig(), ...this.card.config.bill_card };
+    this.bill.setConfig(this.config);
+    this.refs.billHost.append(this.bill);
+  }
+  ids() {
+    const config = this.config;
+    return [config.forecast_entity, config.bills_entity, config.provider_entity, config.agreement_entity].filter(Boolean);
+  }
+  update() {
+    this.bill.hass = this.card.hass;
+  }
+};
+
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION55 = "0.4.0";
+var VERSION56 = "0.4.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
   { key: "power", label: "Str\xF8m", icon: "mdi:flash", tone: "el", Section: PowerSection },
   { key: "heat", label: "Fjernvarme", icon: "mdi:radiator", tone: "heat", Section: HeatSection },
   { key: "water", label: "Vand", icon: "mdi:water", tone: "water", Section: WaterSection },
-  { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection }
+  { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection },
+  { key: "bill", label: "Elregning", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection }
 ];
 var EV_MODES = {
   disconnected: "Ikke tilsluttet",
@@ -66816,6 +67226,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     if (has("heat_")) keys.add("heat");
     if (has("water_")) keys.add("water");
     if (has("ev_")) keys.add("ev");
+    if (this.config?.bill_card) keys.add("bill");
     return keys;
   }
   _applyTabVisibility() {
@@ -67265,335 +67676,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
     preview: false
   });
 }
-console.info(`%c ENERGY CENTER %c v${VERSION55} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
-
-// src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION56 = "0.1.2";
-var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
-var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
-var p24 = (n) => String(n).padStart(2, "0");
-var iso = (d) => `${d.getFullYear()}-${p24(d.getMonth() + 1)}-${p24(d.getDate())}`;
-var parseDate2 = (v) => {
-  const [y, m, d] = String(v || "").split("-").map(Number);
-  return y && m && d ? new Date(y, m - 1, d) : null;
-};
-var parseNumber = (v) => {
-  let s = String(v ?? "").trim().replace(/\s|kr\.?|kwh/gi, "");
-  if (!s) return null;
-  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
-  const n = Number(s);
-  return Number.isFinite(n) ? n : NaN;
-};
-var kr = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : `${Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d })} kr`;
-var num4 = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
-var signed = (v, d = 0) => v == null ? "\u2014" : `${v > 0 ? "+" : v < 0 ? "\u2212" : "\xB1"}${num4(Math.abs(v), d)}`;
-var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    this._signature = "";
-    this._editId = null;
-    this.shadowRoot.addEventListener("click", (event) => {
-      const el = event.target.closest("[data-act]");
-      if (!el) return;
-      event.stopPropagation();
-      const act = el.dataset.act;
-      if (act === "save") this._save();
-      else if (act === "cancel") this._resetForm();
-      else if (act === "edit") this._edit(el.dataset.id);
-      else if (act === "delete") this._delete(el.dataset.id);
-      else if (act === "approve") this._approve(false);
-      else if (act === "undo") this._approve(true);
-      else if (act === "more") this._more(el.dataset.entity);
-      else if (act === "month") this._fillMonth(el.dataset.month);
-    });
-  }
-  static getStubConfig() {
-    return { title: "Elregning", forecast_entity: "sensor.elregning_prognose_denne_maned", bills_entity: "sensor.elregning_seneste_regning", provider_entity: "sensor.stromligning_provider", agreement_entity: "", agreement_script: "" };
-  }
-  static getConfigElement() {
-    const editor = document.createElement("ha-card-list-editor");
-    editor.definition = { roots: [{ key: "title", label: "Titel" }, { key: "forecast_entity", label: "Prognose (Elregning)", type: "entity" }, { key: "bills_entity", label: "Seneste regning (Elregning)", type: "entity" }, { key: "provider_entity", label: "Elaftale (fx Str\xF8mligning Provider agreement)", type: "entity" }, { key: "agreement_entity", label: "Ny aftale: status-sensor (valgfri)", type: "entity" }, { key: "agreement_script", label: 'Ny aftale: "Vi har gjort det"-script (valgfrit)', type: "entity" }], collections: [] };
-    return editor;
-  }
-  setConfig(config) {
-    this._config = { ..._HAElectricityBillCard.getStubConfig(), ...config };
-    this._signature = "";
-    this.shadowRoot.innerHTML = "";
-  }
-  set hass(hass) {
-    this._hass = hass;
-    if (!this.shadowRoot.querySelector("ha-card")) this._build();
-    const c2 = this._config, st = (id) => id ? hass.states[id] : void 0;
-    const signature = JSON.stringify([c2.forecast_entity, c2.bills_entity, c2.provider_entity, c2.agreement_entity].map((id) => {
-      const s = st(id);
-      return s ? [s.state, s.last_updated] : null;
-    }));
-    if (signature !== this._signature) {
-      this._signature = signature;
-      this._render();
-    }
-  }
-  _build() {
-    this.shadowRoot.innerHTML = `<style>${STYLE10}</style><ha-card>
-      <div class="head"><span class="badge"><ha-icon icon="mdi:receipt-text-clock-outline"></ha-icon></span><div><h2></h2><p data-provider></p></div></div>
-      <div data-missing hidden class="missing"></div>
-      <section data-hero class="hero"></section>
-      <section data-agreement class="agreement" hidden></section>
-      <section class="block"><h3>Regninger</h3><div data-bills></div></section>
-      <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
-      <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
-        <div class="grid">
-          <label><span>Fra</span><input type="date" data-f="start"></label>
-          <label><span>Til</span><input type="date" data-f="end"></label>
-          <label><span>Bel\xF8b (kr inkl. moms)</span><input type="text" inputmode="decimal" placeholder="fx 1.234,56" data-f="amount"></label>
-          <label><span>kWh p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 1.180" data-f="kwh"></label>
-          <label><span>Leverand\xF8r (valgfrit)</span><input type="text" data-f="supplier"></label>
-          <label><span>Note (valgfri)</span><input type="text" data-f="note"></label>
-        </div>
-        <div class="actions"><span data-msg class="msg"></span><button type="button" class="ghost" data-act="cancel" hidden>Annull\xE9r</button><button type="button" class="primary" data-act="save">Gem regning</button></div>
-      </section></ha-card>`;
-    this._resetForm();
-  }
-  _render() {
-    const root = this.shadowRoot, c2 = this._config, h = this._hass;
-    if (!root || !h) return;
-    root.querySelector("h2").textContent = c2.title || "Elregning";
-    const provider = h.states[c2.provider_entity]?.state;
-    root.querySelector("[data-provider]").textContent = provider && !["unknown", "unavailable"].includes(provider) ? `Aftale: ${provider}` : "HA's egen m\xE5ling mod regningerne";
-    const fc = h.states[c2.forecast_entity], bills = h.states[c2.bills_entity];
-    const missing = !fc || !bills;
-    const miss = root.querySelector("[data-missing]");
-    miss.hidden = !missing;
-    miss.innerHTML = missing ? `<ha-icon icon="mdi:puzzle-outline"></ha-icon><span>Integrationen <b>Elregning</b> er ikke sat op endnu. Indstillinger \u2192 Enheder og tjenester \u2192 Tilf\xF8j integration \u2192 Elregning.</span>` : "";
-    root.querySelectorAll(".hero,.block").forEach((el) => {
-      el.hidden = missing;
-    });
-    this._agreement();
-    if (missing) return;
-    this._hero(fc);
-    this._bills(bills.attributes.regninger || []);
-    this._months(fc.attributes.maaneder || []);
-  }
-  _hero(fc) {
-    const a = fc.attributes, [y, m] = String(a.maaned || "").split("-").map(Number);
-    const month = m ? MONTHS2[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
-    const pct3 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
-    const ratio = a.forhold_regning_maaling, n = a.regninger_i_forhold || 0;
-    const how = ratio ? `Rettet efter ${n === 1 ? "den seneste regning" : `de seneste ${n} regninger`}: de har ligget ${signed((ratio - 1) * 100, 1)} % i forhold til HA's beregning (${kr(a.egen_beregning)}).` : "Ingen hele regninger endnu \u2013 prognosen er HA's egen beregning. Skriv regningerne ind, s\xE5 bliver den mere pr\xE6cis.";
-    this.shadowRoot.querySelector("[data-hero]").innerHTML = `
-      <div class="hero-top"><div><span class="label">Prognose for ${month}${y && y !== (/* @__PURE__ */ new Date()).getFullYear() ? ` ${y}` : ""}</span><b class="big" data-act="more" data-entity="${this._esc(this._config.forecast_entity)}">${kr(bill)}</b></div>
-        <div class="kwh"><b>${num4(a.forventet_kwh)}</b><span>kWh forventet</span></div></div>
-      <div class="bar"><i style="width:${pct3.toFixed(1)}%"></i></div>
-      <div class="facts"><span><b>${kr(soFar)}</b> m\xE5lt indtil nu \xB7 ${num4(a.maalt_kwh_indtil_nu)} kWh</span><span>${num4(a.dage_tilbage, 1)} dage tilbage \xB7 ${kr(a.dagligt_gennemsnit)}/dag (${a.gennemsnit_dage || 0} dage)</span></div>
-      <p class="how">${how}</p>`;
-  }
-  _agreement() {
-    const c2 = this._config, h = this._hass, box = this.shadowRoot.querySelector("[data-agreement]"), s = c2.agreement_entity ? h.states[c2.agreement_entity] : null;
-    if (!s) {
-      box.hidden = true;
-      box.innerHTML = "";
-      return;
-    }
-    const provider = h.states[c2.provider_entity]?.state;
-    const a = { ha_bruger: provider && !["unknown", "unavailable"].includes(provider) ? provider : "den nuv\xE6rende aftale", stromligning_produkt: "2027-aftalen", ...s.attributes }, state = s.state, link = a.link || "https://www.elforbundet.dk/billig-el-nu";
-    const done = a.godkendt ? String(a.godkendt).slice(0, 16).replace(" ", " kl. ") : "";
-    const text = {
-      forhandler: ["mdi:handshake-outline", "wait", "Ny aftale for 2027 p\xE5 vej", `Elforbundet forhandler stadig. HA holder \xF8je og giver besked, n\xE5r aftalen er ude \u2013 og igen, n\xE5r den kan v\xE6lges i Str\xF8mligning.`],
-      ude: ["mdi:bell-ring-outline", "act", "2027-aftalen er ude", `Tilmeld jer p\xE5 elforbundet.dk. HA giver besked, n\xE5r den kan v\xE6lges i Str\xF8mligning. Den nuv\xE6rende aftale f\xE5r till\xE6g fra 1. januar.`],
-      i_stromligning: ["mdi:bell-ring-outline", "act", "V\xE6lg 2027-aftalen i HA", `Str\xF8mligning har nu "${this._esc(a.stromligning_produkt)}". HA bruger stadig "${this._esc(a.ha_bruger)}": Indstillinger \u2192 Enheder og tjenester \u2192 Str\xF8mligning \u2192 Konfigurer.`],
-      ha_opdateret: ["mdi:check-circle-outline", "act", "HA bruger 2027-aftalen", `Str\xF8mligning regner nu med "${this._esc(a.ha_bruger)}". Er I ogs\xE5 tilmeldt p\xE5 elforbundet.dk, s\xE5 tryk "Vi har gjort det".`],
-      godkendt: ["mdi:check-decagram", "ok", "Ny aftale klaret", `Tilmeldt og valgt i HA${done ? ` \u2013 godkendt ${this._esc(done)}` : ""}.`]
-    }[state] || ["mdi:help-circle-outline", "wait", "Ny aftale", `Kunne ikke l\xE6se status lige nu. Se selv p\xE5 elforbundet.dk.`];
-    const canApprove = c2.agreement_script && ["ude", "i_stromligning", "ha_opdateret"].includes(state);
-    box.hidden = false;
-    box.className = `agreement ${text[1]}`;
-    box.innerHTML = `<ha-icon icon="${text[0]}"></ha-icon><div class="ag-copy"><b>${text[2]}</b><span>${text[3]}</span></div><div class="ag-btns">
-      ${canApprove ? `<button type="button" class="primary" data-act="approve">Vi har gjort det</button>` : ""}
-      ${state === "godkendt" && c2.agreement_script ? `<button type="button" class="ghost" data-act="undo">Fortryd</button>` : ""}
-      ${state !== "godkendt" ? `<a class="ghost" href="${this._esc(link)}" target="_blank" rel="noopener">elforbundet.dk</a>` : ""}</div>`;
-  }
-  _period(b) {
-    const s = parseDate2(b.start), e = parseDate2(b.end);
-    if (!s || !e) return `${b.start} \u2013 ${b.end}`;
-    const last = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate();
-    if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS2[s.getMonth()][0].toUpperCase()}${MONTHS2[s.getMonth()].slice(1)} ${s.getFullYear()}`;
-    return `${s.getDate()}. ${MON[s.getMonth()]}${s.getFullYear() !== e.getFullYear() ? ` ${s.getFullYear()}` : ""} \u2013 ${e.getDate()}. ${MON[e.getMonth()]} ${e.getFullYear()}`;
-  }
-  _bills(list) {
-    const box = this.shadowRoot.querySelector("[data-bills]");
-    this._list = list;
-    if (!list.length) {
-      box.innerHTML = `<p class="empty">Ingen regninger endnu. Skriv den seneste ind nedenfor \u2013 s\xE5 holder HA den op mod sin egen m\xE5ling.</p>`;
-      return;
-    }
-    box.innerHTML = list.map((b) => {
-      const pct3 = b.difference_pct, cls = pct3 == null ? "" : Math.abs(pct3) < 3 ? "ok" : Math.abs(pct3) < 10 ? "warn" : "bad";
-      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : !b.complete ? `<span class="diff">Kan ikke sammenlignes</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
-      const cover = b.coverage < 1 && b.measured_cost != null ? `<em class="part">HA har kun m\xE5lt ${Math.round(b.coverage * b.days)} af ${b.days} dage</em>` : "";
-      const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.complete && b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
-      const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
-      return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span>${cover}</div>
-        <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>
-        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`;
-    }).join("");
-  }
-  _months(months) {
-    const box = this.shadowRoot.querySelector("[data-months]");
-    box.innerHTML = months.length ? [...months].reverse().map((m) => {
-      const [y, mo] = m.month.split("-").map(Number);
-      return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS2[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
-    }).join("") : `<p class="empty">Ingen m\xE5linger endnu.</p>`;
-  }
-  _f(key) {
-    return this.shadowRoot.querySelector(`[data-f="${key}"]`);
-  }
-  _msg(text, bad = false) {
-    const el = this.shadowRoot.querySelector("[data-msg]");
-    el.textContent = text || "";
-    el.classList.toggle("bad", bad);
-  }
-  _fillMonth(month) {
-    const [y, m] = String(month).split("-").map(Number);
-    if (!y) return;
-    this._resetForm();
-    this._f("start").value = iso(new Date(y, m - 1, 1));
-    this._f("end").value = iso(new Date(y, m, 0));
-    this._f("amount").focus();
-  }
-  _resetForm() {
-    if (!this.shadowRoot.querySelector("[data-f]")) return;
-    const now = /* @__PURE__ */ new Date(), first = new Date(now.getFullYear(), now.getMonth() - 1, 1), last = new Date(now.getFullYear(), now.getMonth(), 0);
-    this._editId = null;
-    this._f("start").value = iso(first);
-    this._f("end").value = iso(last);
-    for (const k of ["amount", "kwh", "note"]) this._f(k).value = "";
-    const provider = this._hass?.states[this._config.provider_entity]?.state;
-    this._f("supplier").value = provider && !["unknown", "unavailable"].includes(provider) ? provider.split(" - ")[0] : "";
-    this.shadowRoot.querySelector("[data-form-title]").textContent = "Skriv en regning ind";
-    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem regning";
-    this.shadowRoot.querySelector("[data-act=cancel]").hidden = true;
-    this._msg("");
-  }
-  _edit(id) {
-    const b = (this._list || []).find((x) => x.id === id);
-    if (!b) return;
-    this._editId = id;
-    this._f("start").value = b.start;
-    this._f("end").value = b.end;
-    this._f("amount").value = num4(b.amount, 2);
-    this._f("kwh").value = b.kwh != null ? num4(b.kwh, 2) : "";
-    this._f("supplier").value = b.supplier || "";
-    this._f("note").value = b.note || "";
-    this.shadowRoot.querySelector("[data-form-title]").textContent = `Ret regningen for ${this._period(b).toLowerCase()}`;
-    this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem \xE6ndringer";
-    this.shadowRoot.querySelector("[data-act=cancel]").hidden = false;
-    this._msg("");
-    this.shadowRoot.querySelector(".form").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-  async _save() {
-    const start = this._f("start").value, end = this._f("end").value, amount = parseNumber(this._f("amount").value), kwh = parseNumber(this._f("kwh").value);
-    if (!start || !end) return this._msg("V\xE6lg fra og til.", true);
-    if (end < start) return this._msg("Til-datoen ligger f\xF8r fra-datoen.", true);
-    if (amount == null || Number.isNaN(amount) || amount < 0) return this._msg("Skriv regningens bel\xF8b, fx 1.234,56.", true);
-    if (Number.isNaN(kwh)) return this._msg("kWh skal v\xE6re et tal (eller tomt).", true);
-    const data = { start_date: start, end_date: end, amount, kwh: kwh ?? null, supplier: this._f("supplier").value.trim() || null, note: this._f("note").value.trim() || null };
-    const btn = this.shadowRoot.querySelector("[data-act=save]");
-    btn.disabled = true;
-    this._msg("Gemmer \u2026");
-    try {
-      if (this._editId) await this._hass.callService("elregning", "update_bill", { id: this._editId, ...data });
-      else await this._hass.callService("elregning", "add_bill", data);
-      const was = this._editId;
-      this._resetForm();
-      this._msg(was ? "Regningen er rettet." : "Regningen er gemt og holdt op mod HA's m\xE5ling.");
-    } catch (err) {
-      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
-    } finally {
-      btn.disabled = false;
-    }
-  }
-  async _delete(id) {
-    const b = (this._list || []).find((x) => x.id === id);
-    if (!b) return;
-    if (!window.confirm(`Slet regningen for ${this._period(b).toLowerCase()} (${kr(b.amount)})?`)) return;
-    try {
-      await this._hass.callService("elregning", "delete_bill", { id });
-      if (this._editId === id) this._resetForm();
-    } catch (err) {
-      this._msg(`Kunne ikke slette: ${err?.message || err}`, true);
-    }
-  }
-  async _approve(undo) {
-    const script = String(this._config.agreement_script || "");
-    if (!script.startsWith("script.")) return;
-    if (!undo && !window.confirm("Er I tilmeldt den nye aftale, og er den valgt i Str\xF8mligning i HA? S\xE5 stopper p\xE5mindelserne.")) return;
-    try {
-      await this._hass.callService("script", script.slice(7), { fortryd: undo });
-    } catch (err) {
-      this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
-    }
-  }
-  _more(entityId) {
-    if (!entityId) return;
-    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
-  }
-  _esc(v) {
-    return String(v ?? "").replace(/[&<>"']/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch2]);
-  }
-  getCardSize() {
-    return 10;
-  }
-};
-var STYLE10 = `
-:host{--eb-accent:#f59e0b;--eb-ok:#22c55e;--eb-warn:#f59e0b;--eb-bad:#ef4444;--eb-muted:var(--secondary-text-color);--eb-line:color-mix(in srgb,var(--primary-text-color) 10%,transparent);--eb-soft:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}
-ha-card{padding:18px;overflow:hidden}
-.head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
-.badge{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--eb-accent) 18%,transparent);color:var(--eb-accent)}
-h2{margin:0;font-size:18px;font-weight:700}.head p{margin:2px 0 0;color:var(--eb-muted);font-size:13px}
-h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--eb-muted)}h3 small{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px}
-.missing{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:var(--eb-soft);font-size:14px}
-.hero{padding:16px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--eb-accent) 16%,transparent),color-mix(in srgb,var(--eb-accent) 4%,transparent));margin-bottom:12px}
-.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
-.label{display:block;font-size:13px;color:var(--eb-muted)}
-.big{display:block;font-size:34px;line-height:1.1;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}
-.kwh{text-align:right}.kwh b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.kwh span{font-size:12px;color:var(--eb-muted)}
-.bar{height:8px;border-radius:99px;background:var(--eb-line);margin:12px 0 8px;overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:var(--eb-accent);transition:width .6s ease}
-.facts{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;color:var(--eb-muted)}.facts b{color:var(--primary-text-color)}
-.how{margin:10px 0 0;font-size:13px;color:var(--eb-muted)}
-.agreement{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;margin-bottom:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
-.agreement>ha-icon{flex:none;color:var(--eb-muted)}.agreement.act{border-color:color-mix(in srgb,var(--eb-accent) 55%,transparent);background:color-mix(in srgb,var(--eb-accent) 10%,transparent)}.agreement.act>ha-icon{color:var(--eb-accent)}
-.agreement.ok>ha-icon{color:var(--eb-ok)}
-.ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
-.ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.block{margin-top:14px}
-.bill{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--eb-line)}.bill:first-child{border-top:0}
-.b-main b{display:block;font-size:14px}.sub{display:block;font-size:12px;color:var(--eb-muted);margin-top:2px}.part{display:block;font-size:12px;color:var(--eb-warn);font-style:normal;margin-top:2px}
-.b-num{text-align:right;font-variant-numeric:tabular-nums}.b-num b{display:block;font-size:15px}.b-num span{display:block;font-size:12px;color:var(--eb-muted)}
-.diff.ok{color:var(--eb-ok)!important}.diff.warn{color:var(--eb-warn)!important}.diff.bad{color:var(--eb-bad)!important}
-.b-btns{display:flex;gap:2px}
-.months{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.month{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 12px;border-radius:12px;border:1px solid var(--eb-line);background:var(--eb-soft);color:inherit;font:inherit;cursor:pointer;text-align:left}
-.month b{font-size:13px;text-transform:capitalize}.month span{font-size:12px;color:var(--eb-muted);font-variant-numeric:tabular-nums}.month em{font-size:11px;color:var(--eb-warn);font-style:normal}
-.month:hover{border-color:var(--eb-accent)}
-.empty{margin:0;font-size:13px;color:var(--eb-muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-label span{display:block;font-size:12px;color:var(--eb-muted);margin-bottom:4px}
-input{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--eb-line);background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit;font-size:14px}
-input:focus{outline:2px solid color-mix(in srgb,var(--eb-accent) 60%,transparent);outline-offset:0}
-.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px}.msg{flex:1;font-size:13px;color:var(--eb-ok)}.msg.bad{color:var(--eb-bad)}
-button,a.ghost{font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
-.primary{border:0;background:var(--eb-accent);color:#1b1205}.primary:disabled{opacity:.6;cursor:default}
-.ghost{border:1px solid var(--eb-line);background:transparent;color:var(--primary-text-color)}
-.icon{border:0;background:none;padding:6px;color:var(--eb-muted);border-radius:8px}.icon:hover{background:var(--eb-soft);color:var(--primary-text-color)}
-[hidden]{display:none!important}
-@media (max-width:520px){.bill{grid-template-columns:1fr auto}.b-btns{grid-column:1/-1;justify-content:flex-end;margin-top:-6px}.agreement{flex-wrap:wrap}.ag-btns{width:100%;justify-content:flex-start}.big{font-size:30px}}
-`;
-if (!customElements.get("ha-electricity-bill-card")) customElements.define("ha-electricity-bill-card", HAElectricityBillCard);
-window.customCards = window.customCards || [];
-window.customCards.push({ type: "ha-electricity-bill-card", name: "HA Electricity Bill Card", description: "Elregninger mod HA's egen m\xE5ling, prognose for m\xE5neden og status for ny elaftale", preview: true });
-console.info(`%c HA-ELECTRICITY-BILL-CARD %c ${VERSION56} `, "color:#1b1205;background:#f59e0b;font-weight:800", "color:#f59e0b;background:#1b1205");
+console.info(`%c ENERGY CENTER %c v${VERSION56} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/shared/motion-rest-end.js
 motionRestEnd();

@@ -25,6 +25,7 @@ import { PowerSection, groupSum } from "./sections/power.js";
 import { HeatSection } from "./sections/heat.js";
 import { WaterSection } from "./sections/water.js";
 import { EvSection } from "./sections/ev.js";
+import { BillSection } from "./sections/bill.js";
 
 const VERSION = "0.4.0";
 const CARD_TAG = "ha-energy-center-card";
@@ -35,6 +36,7 @@ const TABS = [
   { key: "heat", label: "Fjernvarme", icon: "mdi:radiator", tone: "heat", Section: HeatSection },
   { key: "water", label: "Vand", icon: "mdi:water", tone: "water", Section: WaterSection },
   { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection },
+  { key: "bill", label: "Elregning", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection },
 ];
 
 const EV_MODES = {
@@ -110,6 +112,7 @@ class HaEnergyCenterCard extends HTMLElement {
     if (has("heat_")) keys.add("heat");
     if (has("water_")) keys.add("water");
     if (has("ev_")) keys.add("ev");
+    if (this.config?.bill_card) keys.add("bill");
     return keys;
   }
 

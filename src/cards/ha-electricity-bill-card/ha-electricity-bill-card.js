@@ -1,6 +1,7 @@
 import "../ha-ai-usage-card/ha-card-list-editor.js";
+import { nextMonthEstimate } from "./next-month.js";
 
-const VERSION="0.1.2";
+const VERSION="0.1.3";
 
 // 0.1.0 (Claude AI, 2026-11-01; bruger: "jeg vil egentlig også gerne kunne skrive ind hvad mine regninger lyder på og
 // sammeholde det med det vi selv måler så vi kan se hvad det burde lande på næste måned"): kortet til integrationen
@@ -51,6 +52,8 @@ class HAElectricityBillCard extends HTMLElement{
       <div class="head"><span class="badge"><ha-icon icon="mdi:receipt-text-clock-outline"></ha-icon></span><div><h2></h2><p data-provider></p></div></div>
       <div data-missing hidden class="missing"></div>
       <section data-hero class="hero"></section>
+      <section data-next class="next" hidden></section>
+      <section data-explanation class="explanation" hidden></section>
       <section data-agreement class="agreement" hidden></section>
       <section class="block"><h3>Regninger</h3><div data-bills></div></section>
       <section class="block"><h3>Målt pr. måned <small>tryk for at skrive regningen for måneden</small></h3><div data-months class="months"></div></section>
@@ -78,9 +81,13 @@ class HAElectricityBillCard extends HTMLElement{
     const miss=root.querySelector("[data-missing]");miss.hidden=!missing;
     miss.innerHTML=missing?`<ha-icon icon="mdi:puzzle-outline"></ha-icon><span>Integrationen <b>Elregning</b> er ikke sat op endnu. Indstillinger → Enheder og tjenester → Tilføj integration → Elregning.</span>`:"";
     root.querySelectorAll(".hero,.block").forEach(el=>{el.hidden=missing;});
+    root.querySelector("[data-next]").hidden=missing;
+    root.querySelector("[data-explanation]").hidden=missing;
     this._agreement();
     if(missing)return;
     this._hero(fc);
+    this._next(fc);
+    this._explain(bills.attributes.regninger||[]);
     this._bills(bills.attributes.regninger||[]);
     this._months(fc.attributes.maaneder||[]);
   }
@@ -98,6 +105,36 @@ class HAElectricityBillCard extends HTMLElement{
       <div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
       <div class="facts"><span><b>${kr(soFar)}</b> målt indtil nu · ${num(a.maalt_kwh_indtil_nu)} kWh</span><span>${num(a.dage_tilbage,1)} dage tilbage · ${kr(a.dagligt_gennemsnit)}/dag (${a.gennemsnit_dage||0} dage)</span></div>
       <p class="how">${how}</p>`;
+  }
+
+  _next(fc){
+    const box=this.shadowRoot.querySelector("[data-next]");
+    const estimate=nextMonthEstimate(fc.attributes);
+    if(!estimate){
+      box.innerHTML='<h3>Næste måned</h3><p>Venter på mindst tre hele dage med målinger, før der vises et estimat.</p>';
+      return;
+    }
+    const adjustment=estimate.adjustment!==1?` og rettet med tidligere fakturaer (${num((estimate.adjustment-1)*100,1)} %)` : "";
+    box.innerHTML=`<h3>Estimat for ${this._esc(estimate.month)}</h3>
+      <div class="next-value">ca. ${kr(estimate.cost)}</div>
+      <p>${estimate.kwh==null?"":`${num(estimate.kwh)} kWh · `}${estimate.days} dage × ${kr(estimate.dailyCost)}/dag${adjustment}.</p>
+      <small>Dagssnittet er fra de seneste ${estimate.daysMeasured} hele dage. Fremtidige elpriser og ændret forbrug kendes ikke, så den faktiske regning kan afvige.</small>`;
+  }
+
+  _explain(bills){
+    const box=this.shadowRoot.querySelector("[data-explanation]");
+    const bill=bills.find(item=>item.complete&&item.measured_cost!=null);
+    if(!bill){
+      box.innerHTML='<h3>Sådan læses regningen</h3><p>Indtast en hel fakturaperiode for at sammenligne fakturaen med HA’s måling og se forskellen forklaret.</p>';
+      return;
+    }
+    const direction=bill.difference>0?"højere":bill.difference<0?"lavere":"på niveau";
+    const difference=bill.difference==null?"":`Fakturaen er ${kr(Math.abs(bill.difference),2)} ${direction} end HA’s beregning for de samme dage.`;
+    const consumption=bill.kwh!=null?`${num(bill.kwh)} kWh på fakturaen` : "Fakturaens kWh er ikke indtastet";
+    const price=bill.bill_price!=null?` Det svarer samlet til ${num(bill.bill_price,2)} kr/kWh.`:"";
+    box.innerHTML=`<h3>Hvorfor er regningen på ${kr(bill.amount,2)}?</h3>
+      <p>Seneste sammenlignelige periode: ${this._esc(this._period(bill))}. ${consumption}${price} HA målte ${num(bill.measured_kwh,1)} kWh og beregnede ${kr(bill.measured_cost,2)}. ${difference}</p>
+      <small>HA beregner ud fra elmåleren og den registrerede elpris. Faste poster, prisforskelle og forskellig aflæsning kan give en afvigelse. Den præcise fordeling kræver fakturaens prislinjer.</small>`;
   }
 
   _agreement(){
@@ -225,6 +262,10 @@ h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-trans
 .bar{height:8px;border-radius:99px;background:var(--eb-line);margin:12px 0 8px;overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:var(--eb-accent);transition:width .6s ease}
 .facts{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:13px;color:var(--eb-muted)}.facts b{color:var(--primary-text-color)}
 .how{margin:10px 0 0;font-size:13px;color:var(--eb-muted)}
+.next,.explanation{padding:14px 16px;border-radius:14px;background:var(--eb-soft);border:1px solid var(--eb-line);margin-bottom:12px}
+.next-value{font-size:25px;font-weight:750;font-variant-numeric:tabular-nums}
+.next p,.explanation p{margin:5px 0;font-size:14px;line-height:1.45}
+.next small,.explanation small{display:block;color:var(--eb-muted);font-size:12px;line-height:1.4}
 .agreement{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;margin-bottom:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
 .agreement>ha-icon{flex:none;color:var(--eb-muted)}.agreement.act{border-color:color-mix(in srgb,var(--eb-accent) 55%,transparent);background:color-mix(in srgb,var(--eb-accent) 10%,transparent)}.agreement.act>ha-icon{color:var(--eb-accent)}
 .agreement.ok>ha-icon{color:var(--eb-ok)}
