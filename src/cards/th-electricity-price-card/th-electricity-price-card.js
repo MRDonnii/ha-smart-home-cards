@@ -15,7 +15,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from '../../shared/look.js';
 import { smilPause } from '../../shared/smil-pause.js';
 
-const TEP_VER = '1.18.2';
+const TEP_VER = '1.18.3';
 const LEVEL_NAME = ['Billig', 'Normal pris', 'Dyrt', 'Meget dyrt', 'Ekstremt dyrt'], LEVEL_COL = ['var(--good)', 'var(--warn)', 'var(--bad)', 'var(--bad)', 'var(--xbad,#ff4d8d)'];
 
 const tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('da-DK', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -339,14 +339,16 @@ class ThElectricityPriceCard extends HTMLElement {
   esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   slots() {
     const C = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
-    const act = [...(this.A(C.current, 'prices') || []), ...(this.A(C.tomorrow, 'prices') || [])].map(p => toP(p, false));
-    const lastA = act.length ? act[act.length - 1].e : 0;
     // Strømligning laver kun prognoser pr. time, men mærker hvert punkt som et kvarter (00:00–00:15), så søjlerne blev smalle
-    // med 45 min hul. Et punkt strækkes til det næste (højst en time): én søjle pr. time (Claude AI, 2026-11-02; bruger:
-    // "hvis det kun kan vises i time skal den når det er prognose vise dem i 1 søjler i stedet for 15 min")
-    const fc = (this.A(C.forecast, 'prices') || []).map(p => toP(p, true)).sort((a, b) => a.t - b.t);
-    fc.forEach((p, i) => { const step = fc[i + 1] ? fc[i + 1].t - p.t : i ? p.t - fc[i - 1].t : 0; if (step > p.e - p.t && step <= 36e5) p.e = p.t + step; });
-    fc.splice(0, fc.length, ...fc.filter(p => p.t >= lastA));
+    // med 45 min hul. Et punkt strækkes til det næste (højst en time): én søjle pr. time. Det gælder både prognose-sensoren og
+    // morgendagens priser, før de officielle kommer ved 13-tiden – indtil da er de også prognose (forecast_data)
+    // (Claude AI, 2026-11-02/03; bruger: "Min graf er ikke rettet det er stadig 15min søjler … hvor det stadig er forcast")
+    const fill = list => { list.sort((a, b) => a.t - b.t); list.forEach((p, i) => { const step = list[i + 1] ? list[i + 1].t - p.t : i ? p.t - list[i - 1].t : 0; if (step > p.e - p.t && step <= 36e5) p.e = p.t + step; }); return list; };
+    const tomFc = this.s(C.tomorrow)?.attributes?.forecast_data === true, tom = this.A(C.tomorrow, 'prices') || [];
+    const act = fill([...(this.A(C.current, 'prices') || []), ...(tomFc ? [] : tom)].map(p => toP(p, false)));
+    const lastA = act.length ? act[act.length - 1].e : 0, seen = new Set();
+    const fc = fill([...(tomFc ? tom : []), ...(this.A(C.forecast, 'prices') || [])].map(p => toP(p, true)).filter(p => !seen.has(p.t) && seen.add(p.t)))
+      .filter(p => p.t >= lastA);
     return { act, lastA, fc, all: [...act, ...fc] };
   }
   // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----

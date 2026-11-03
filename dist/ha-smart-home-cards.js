@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.246 */
+/* MRDonnii Smart Home Cards v0.5.247 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14639,7 +14639,7 @@ function smilPause(host, rootOf) {
 }
 
 // src/cards/th-electricity-price-card/th-electricity-price-card.js
-var TEP_VER = "1.18.2";
+var TEP_VER = "1.18.3";
 var LEVEL_NAME = ["Billig", "Normal pris", "Dyrt", "Meget dyrt", "Ekstremt dyrt"];
 var LEVEL_COL = ["var(--good)", "var(--warn)", "var(--bad)", "var(--bad)", "var(--xbad,#ff4d8d)"];
 var tn = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -15152,14 +15152,18 @@ var ThElectricityPriceCard = class extends HTMLElement {
   }
   slots() {
     const C2 = this.cfg, toP = (p, f) => ({ t: new Date(p.start).getTime(), e: new Date(p.end || new Date(p.start).getTime() + 36e5).getTime(), p: p.price, f });
-    const act = [...this.A(C2.current, "prices") || [], ...this.A(C2.tomorrow, "prices") || []].map((p) => toP(p, false));
-    const lastA = act.length ? act[act.length - 1].e : 0;
-    const fc = (this.A(C2.forecast, "prices") || []).map((p) => toP(p, true)).sort((a, b) => a.t - b.t);
-    fc.forEach((p, i) => {
-      const step = fc[i + 1] ? fc[i + 1].t - p.t : i ? p.t - fc[i - 1].t : 0;
-      if (step > p.e - p.t && step <= 36e5) p.e = p.t + step;
-    });
-    fc.splice(0, fc.length, ...fc.filter((p) => p.t >= lastA));
+    const fill = (list) => {
+      list.sort((a, b) => a.t - b.t);
+      list.forEach((p, i) => {
+        const step = list[i + 1] ? list[i + 1].t - p.t : i ? p.t - list[i - 1].t : 0;
+        if (step > p.e - p.t && step <= 36e5) p.e = p.t + step;
+      });
+      return list;
+    };
+    const tomFc = this.s(C2.tomorrow)?.attributes?.forecast_data === true, tom = this.A(C2.tomorrow, "prices") || [];
+    const act = fill([...this.A(C2.current, "prices") || [], ...tomFc ? [] : tom].map((p) => toP(p, false)));
+    const lastA = act.length ? act[act.length - 1].e : 0, seen = /* @__PURE__ */ new Set();
+    const fc = fill([...tomFc ? tom : [], ...this.A(C2.forecast, "prices") || []].map((p) => toP(p, true)).filter((p) => !seen.has(p.t) && seen.add(p.t))).filter((p) => p.t >= lastA);
     return { act, lastA, fc, all: [...act, ...fc] };
   }
   // ---- Anbefalinger (Claude AI, 2026-10-15): tryk på prisbadget åbner en popup inde i kortet ----
