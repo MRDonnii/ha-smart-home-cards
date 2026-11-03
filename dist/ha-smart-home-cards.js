@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.248 */
+/* MRDonnii Smart Home Cards v0.5.249 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -26925,7 +26925,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
-var VERSION18 = "0.3.0";
+var VERSION18 = "0.4.0";
 var HAHeatEconomyCard = class extends HTMLElement {
   constructor() {
     super();
@@ -26960,13 +26960,20 @@ var HAHeatEconomyCard = class extends HTMLElement {
       c2.cop_entity,
       c2.outdoor_entity,
       c2.price_entity,
-      c2.tomorrow_entity
+      c2.tomorrow_entity,
+      c2.saving_entity,
+      c2.window_entity,
+      c2.preheat_entity,
+      c2.preferred_entity,
+      c2.auto_entity,
+      c2.style_entity,
+      ...Array.isArray(c2.units) ? c2.units.flatMap((u2) => [u2?.entity, u2?.active_entity, u2?.pause_entity]) : []
     ].filter(Boolean);
   }
   set hass(hass) {
     this._hass = hass;
     const ids = this._watchedIds();
-    const sig = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state]));
+    const sig = JSON.stringify([ids.map((id) => [id, hass?.states?.[id]?.state]), hass?.states?.[this._config.window_entity]?.attributes?.vindue, hass?.states?.[this._config.vp_price_entity]?.attributes?.elpris]);
     if (sig !== this._sig) {
       this._sig = sig;
       this._render();
@@ -27012,6 +27019,7 @@ var HAHeatEconomyCard = class extends HTMLElement {
   }
   _render() {
     if (!this.shadowRoot) return;
+    if (isNewLook(this._hass, this._config)) return this._renderNew();
     const c2 = this._config;
     const vp = this._num(c2.vp_price_entity);
     const fj = this._num(c2.fj_price_entity);
@@ -27057,7 +27065,20 @@ var HAHeatEconomyCard = class extends HTMLElement {
       .empty-hint{font-size:11px;color:var(--secondary-text-color);padding:8px 0}
       .footer-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--edge);font-size:11px;color:var(--secondary-text-color)}
       .footer-row b{color:var(--primary-text-color);font-size:13px}
-      @media(max-width:420px){.stats{grid-template-columns:1fr 1fr}}
+      .x-stats{grid-template-columns:1fr 2fr;margin-top:12px}
+      .stat[data-more]{cursor:pointer}
+      .auto-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--edge);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--secondary-text-color);border-radius:14px;background:transparent;color:var(--primary-text-color);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+      .auto-btn span{flex:1;text-align:left}
+      .auto-btn.on{border-left-color:var(--good);background:color-mix(in srgb,var(--good) 8%,transparent)}
+      .auto-btn.on ha-icon,.auto-btn.on b{color:var(--good)}
+      .units{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+      .unit{display:flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid var(--edge);border-radius:12px;background:transparent;color:var(--secondary-text-color);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
+      .unit ha-icon{--mdc-icon-size:15px}
+      .unit small{font-size:10px;font-weight:600}
+      .unit.on{color:var(--primary-text-color)}
+      .unit.active{border-color:var(--good)}
+      .unit.active ha-icon{color:var(--good)}
+      @media(max-width:420px){.stats{grid-template-columns:1fr 1fr}.x-stats{grid-template-columns:1fr}}
     </style>
     <ha-card>
       <div class="head">
@@ -27089,15 +27110,209 @@ var HAHeatEconomyCard = class extends HTMLElement {
       ${bestToday.length ? `<div class="hours">${bestToday.map((r) => this._hourChip(r)).join("")}</div>` : `<div class="empty-hint">Ingen timer med tydelig fordel i dag</div>`}
 
       <div class="section-title">Bedste timer i morgen${tomorrowForecast ? " (forecast)" : ""}</div>
-      ${bestTomorrow.length ? `<div class="hours">${bestTomorrow.map((r) => this._hourChip(r)).join("")}</div>` : `<div class="empty-hint">Ingen priser for i morgen endnu</div>`}
+      ${bestTomorrow.length ? `<div class="hours">${bestTomorrow.map((r) => this._hourChip(r)).join("")}</div>` : `<div class="empty-hint">${tomorrowPrices.length ? "Ingen timer med tydelig fordel i morgen" : "Ingen priser for i morgen endnu"}</div>`}
 
       ${Number.isFinite(spaCost) ? `<div class="footer-row"><span>Spabad, ca. pr. time (${this._fmt(Number(c2.spa_kw) || 3.2, 1)} kW)</span><b>${this._fmt(spaCost, 1)} kr</b></div>` : ""}
+      ${this._extrasClassic()}
     </ha-card>`;
+    this._bind();
+  }
+  // ---- 0.4.0 (Claude AI, 2026-11-03): "Billigste varmekilde" – window, saving, automatik button, units, new look ----
+  // Optional fields (all entity ids):
+  //   saving_entity     kr/h saved by choosing the cheapest source now
+  //   window_entity     timestamp sensor; attribute `vindue` {start, slut, elpris_snit, varmepumpe_kr_kwh,
+  //                     senere_billigste_kr_kwh, fordel_kr_kwh, loennsom}
+  //   preheat_entity    binary_sensor, on while pre-heating
+  //   preferred_entity  binary_sensor, on while the heat pump is the chosen source (hysteresis)
+  //   auto_entity       input_boolean shown as the "Automatisk varmekilde" button
+  //   units: [{ name, entity (input_boolean: use this unit), active_entity (input_boolean: controlled now),
+  //             pause_entity (timer), climate (climate entity, opened on long press) }]
+  //   style: new | classic, style_entity: input_boolean (on = new) – see src/shared/look.js
+  _time(iso2) {
+    const d = new Date(iso2);
+    return Number.isNaN(d.getTime()) ? "--:--" : d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  }
+  _day(iso2) {
+    const d = new Date(iso2);
+    if (Number.isNaN(d.getTime())) return "";
+    const today = /* @__PURE__ */ new Date();
+    return d.toDateString() === today.toDateString() ? "i dag" : "i morgen";
+  }
+  _windowInfo() {
+    const w = this._e(this._config.window_entity)?.attributes?.vindue;
+    if (!w || typeof w !== "object" || !w.start) return void 0;
+    const now = Date.now();
+    const active = new Date(w.start).getTime() <= now && now < new Date(w.slut).getTime();
+    return { ...w, active, preheat: this._s(this._config.preheat_entity) === "on" };
+  }
+  _units() {
+    const list = Array.isArray(this._config.units) ? this._config.units : [];
+    return list.filter((u2) => u2 && u2.entity).map((u2) => ({
+      name: String(u2.name || u2.entity),
+      entity: u2.entity,
+      on: this._s(u2.entity) === "on",
+      active: this._s(u2.active_entity) === "on",
+      pause: this._s(u2.pause_entity) === "active",
+      climate: u2.climate
+    }));
+  }
+  _toggle(entityId) {
+    if (!entityId || !this._hass) return;
+    const [domain] = entityId.split(".");
+    this._hass.callService(domain === "input_boolean" ? "input_boolean" : "homeassistant", "toggle", { entity_id: entityId });
+  }
+  _bind() {
     this.shadowRoot.querySelectorAll("[data-more]").forEach((el) => {
       el.addEventListener("click", () => {
         if (el.dataset.more) this._more(el.dataset.more);
       });
     });
+    this.shadowRoot.querySelectorAll("[data-toggle]").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this._toggle(el.dataset.toggle);
+      });
+    });
+  }
+  _windowText(w) {
+    if (!w) return "Ingen priser for de n\xE6ste timer";
+    return `${this._day(w.start)} ${this._time(w.start)}\u2013${this._time(w.slut)}`;
+  }
+  _windowStatus(w) {
+    if (!w) return { label: "\u2014", tone: "muted" };
+    if (w.preheat) return { label: "Forvarmer nu", tone: "good" };
+    if (w.loennsom) return { label: w.active ? "L\xF8nsomt nu" : "L\xF8nsomt", tone: "good" };
+    return { label: "Ikke l\xF8nsomt", tone: "muted" };
+  }
+  _autoButton(cls) {
+    const id = this._config.auto_entity;
+    if (!id) return "";
+    const on = this._s(id) === "on";
+    const name = this._e(id)?.attributes?.friendly_name || "Automatisk varmekilde";
+    return `<button type="button" class="${cls}${on ? " on" : ""}" data-toggle="${this._esc(id)}" aria-pressed="${on}" title="${this._esc(name)}">
+      <ha-icon icon="${on ? "mdi:heat-pump" : "mdi:heat-pump-outline"}"></ha-icon><span>${this._esc(name)}</span><b>${on ? "Til" : "Fra"}</b></button>`;
+  }
+  _unitChips(cls) {
+    const units = this._units();
+    if (!units.length) return "";
+    return `<div class="${cls}">${units.map((u2) => {
+      const note = u2.pause ? "Pause" : u2.active ? "Styres" : u2.on ? "Med" : "Ikke med";
+      return `<button type="button" class="unit${u2.on ? " on" : ""}${u2.active ? " active" : ""}${u2.pause ? " pause" : ""}" data-toggle="${this._esc(u2.entity)}" aria-pressed="${u2.on}">
+          <ha-icon icon="${u2.active ? "mdi:heat-pump" : u2.pause ? "mdi:pause-circle-outline" : "mdi:heat-pump-outline"}"></ha-icon><span>${this._esc(u2.name)}</span><small>${note}</small></button>`;
+    }).join("")}</div>`;
+  }
+  _extrasClassic() {
+    const c2 = this._config;
+    const w = this._windowInfo();
+    const saving = this._num(c2.saving_entity);
+    const st = this._windowStatus(w);
+    if (!c2.window_entity && !c2.saving_entity && !c2.auto_entity && !this._units().length) return "";
+    return `
+      ${c2.saving_entity || c2.window_entity ? `<div class="stats x-stats">
+        ${c2.saving_entity ? `<div class="stat" data-more="${this._esc(c2.saving_entity)}"><span>Besparelse nu</span><b>${this._fmt(saving)} kr/t</b></div>` : ""}
+        ${c2.window_entity ? `<div class="stat wide" data-more="${this._esc(c2.window_entity)}"><span>Billigste vindue \xB7 ${this._esc(st.label)}</span><b>${this._esc(this._windowText(w))}${w ? ` \xB7 ${this._fmt(w.varmepumpe_kr_kwh)} kr` : ""}</b></div>` : ""}
+      </div>` : ""}
+      ${c2.auto_entity || this._units().length ? `<div class="section-title">Styring</div>${this._autoButton("auto-btn")}${this._unitChips("units")}` : ""}`;
+  }
+  _renderNew() {
+    const c2 = this._config;
+    const vp = this._num(c2.vp_price_entity);
+    const fj = this._num(c2.fj_price_entity);
+    const cop = this._num(c2.cop_entity);
+    const outdoor = this._num(c2.outdoor_entity);
+    const saving = this._num(c2.saving_entity);
+    const elAttr = Number(this._e(c2.vp_price_entity)?.attributes?.elpris);
+    const el = Number.isFinite(elAttr) ? elAttr : this._num(c2.price_entity);
+    const both = Number.isFinite(vp) && Number.isFinite(fj);
+    const cheaper = both ? vp < fj ? "vp" : "fj" : void 0;
+    const delta = both ? Math.abs(fj - vp) : void 0;
+    const breakEven = Number.isFinite(fj) && Number.isFinite(cop) ? fj * cop : void 0;
+    const preferred = c2.preferred_entity ? this._s(c2.preferred_entity) === "on" : cheaper === "vp";
+    const max = both ? Math.max(vp, fj) : 1;
+    const w = this._windowInfo();
+    const st = this._windowStatus(w);
+    const verdict = cheaper === "vp" ? "Varmepumpen er billigst" : cheaper === "fj" ? "Fjernvarmen er billigst" : "Mangler data";
+    const tone2 = cheaper === "vp" ? "var(--good)" : "var(--accent)";
+    const tile2 = (key, icon4, label, price, sub, entity) => `
+      <div class="src ${cheaper === key ? "win" : ""}" data-more="${this._esc(entity)}">
+        <div class="src-top"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span>${cheaper === key ? "<em>Billigst</em>" : ""}</div>
+        <b>${this._fmt(price)}<small> kr/kWh</small></b>
+        <div class="bar"><i style="width:${Number.isFinite(price) && max > 0 ? Math.max(4, Math.min(100, price / max * 100)).toFixed(1) : 0}%"></i></div>
+        <p>${sub}</p>
+      </div>`;
+    this.shadowRoot.innerHTML = `<style>
+      :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));--tone:${tone2}}
+      *{box-sizing:border-box}
+      ha-card{position:relative;overflow:hidden;padding:20px;border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--tone) 12%,transparent),transparent 60%),var(--card-surface);border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
+      .head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+      .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--secondary-text-color)}
+      h2{margin:4px 0 0;font-size:22px;line-height:1.15;font-weight:750;letter-spacing:-.01em}
+      .sub{margin-top:4px;font-size:12.5px;color:var(--secondary-text-color)}
+      .sub b{color:var(--tone)}
+      .auto{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 10px;border-radius:999px;border:1px solid var(--edge);background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);color:var(--secondary-text-color);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+      .auto ha-icon{--mdc-icon-size:18px}
+      .auto b{padding:2px 8px;border-radius:999px;font-size:11px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent)}
+      .auto.on{color:var(--primary-text-color);border-color:color-mix(in srgb,var(--good) 45%,var(--edge));background:color-mix(in srgb,var(--good) 12%,transparent)}
+      .auto.on ha-icon,.auto.on b{color:var(--good)}
+      .auto.on b{background:color-mix(in srgb,var(--good) 18%,transparent)}
+      .srcs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+      .src{--t:var(--accent);padding:14px;border-radius:18px;border:1px solid color-mix(in srgb,var(--primary-text-color) 8%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--primary-text-color) 5%,transparent),transparent 70%);cursor:pointer}
+      .src.win{--t:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--good) 20%,transparent),0 10px 30px -18px var(--good)}
+      .src-top{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--secondary-text-color)}
+      .src-top ha-icon{--mdc-icon-size:18px;color:var(--t)}
+      .src-top em{margin-left:auto;font-style:normal;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--good)}
+      .src b{display:block;margin-top:8px;font-size:26px;font-weight:750;letter-spacing:-.02em}
+      .src b small{font-size:12px;font-weight:600;color:var(--secondary-text-color)}
+      .bar{height:5px;margin-top:10px;border-radius:99px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);overflow:hidden}
+      .bar i{display:block;height:100%;border-radius:inherit;background:var(--t)}
+      .src p{margin:8px 0 0;font-size:11.5px;color:var(--secondary-text-color)}
+      .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+      .fact{padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);cursor:pointer}
+      .fact span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--secondary-text-color)}
+      .fact b{display:block;margin-top:3px;font-size:15px;font-weight:750}
+      .win-row{display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px 14px;border-radius:16px;border:1px dashed color-mix(in srgb,var(--primary-text-color) 14%,transparent);cursor:pointer}
+      .win-row.good{border-style:solid;border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 8%,transparent)}
+      .win-row ha-icon{--mdc-icon-size:22px;color:var(--secondary-text-color)}
+      .win-row.good ha-icon{color:var(--good)}
+      .win-row div{flex:1;min-width:0}
+      .win-row strong{display:block;font-size:13.5px}
+      .win-row small{display:block;margin-top:2px;font-size:11.5px;color:var(--secondary-text-color)}
+      .win-row em{font-style:normal;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);color:var(--secondary-text-color);white-space:nowrap}
+      .win-row.good em{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+      .units{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+      .unit{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:12px;border:1px solid var(--edge);background:transparent;color:var(--secondary-text-color);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+      .unit ha-icon{--mdc-icon-size:16px}
+      .unit small{font-size:10.5px;font-weight:600;opacity:.8}
+      .unit.on{color:var(--primary-text-color);border-color:color-mix(in srgb,var(--accent) 35%,var(--edge))}
+      .unit.active{border-color:color-mix(in srgb,var(--good) 50%,var(--edge));background:color-mix(in srgb,var(--good) 10%,transparent)}
+      .unit.active ha-icon{color:var(--good)}
+      .unit.pause ha-icon{color:var(--dashboard-warning, var(--warning-color, #ffbd59))}
+      @media(max-width:520px){.facts{grid-template-columns:1fr 1fr}.src b{font-size:22px}h2{font-size:19px}}
+    </style>
+    <ha-card>
+      <div class="head">
+        <div><div class="eyebrow">${this._esc(c2.title)}</div><h2>${this._esc(verdict)}</h2>
+          <div class="sub">${Number.isFinite(delta) ? `<b>${this._fmt(delta)} kr</b> pr. kWh varme i forskel${preferred && cheaper === "vp" ? " \xB7 varmepumpen er valgt" : ""}` : "Venter p\xE5 priser"}</div></div>
+        ${this._autoButton("auto")}
+      </div>
+      <div class="srcs">
+        ${tile2("vp", "mdi:heat-pump", "Varmepumpe", vp, `el ${this._fmt(el)} kr \xF7 COP ${this._fmt(cop, 1)}`, c2.vp_price_entity)}
+        ${tile2("fj", "mdi:radiator", "Fjernvarme", fj, "variabel pris pr. leveret kWh", c2.fj_price_entity)}
+      </div>
+      <div class="facts">
+        ${c2.saving_entity ? `<div class="fact" data-more="${this._esc(c2.saving_entity)}"><span>Sparer nu</span><b>${this._fmt(saving)} kr/t</b></div>` : ""}
+        <div class="fact" data-more="${this._esc(c2.cop_entity)}"><span>COP nu</span><b>${this._fmt(cop, 1)}</b></div>
+        <div class="fact" data-more="${this._esc(c2.outdoor_entity)}"><span>Ude</span><b>${this._fmt(outdoor, 1)}\xB0</b></div>
+        <div class="fact"><span>Lige ved el</span><b>${this._fmt(breakEven)} kr</b></div>
+      </div>
+      ${c2.window_entity ? `<div class="win-row ${st.tone === "good" ? "good" : ""}" data-more="${this._esc(c2.window_entity)}">
+        <ha-icon icon="${w?.preheat ? "mdi:thermometer-plus" : "mdi:clock-star-four-points-outline"}"></ha-icon>
+        <div><strong>Billigste vindue ${this._esc(this._windowText(w))}</strong>
+        <small>${w ? `el ${this._fmt(w.elpris_snit)} kr \xB7 varmepumpe ${this._fmt(w.varmepumpe_kr_kwh)} kr/kWh mod ${this._fmt(w.senere_billigste_kr_kwh)} kr bagefter` : "\u2014"}</small></div>
+        <em>${this._esc(st.label)}</em></div>` : ""}
+      ${this._unitChips("units")}
+    </ha-card>`;
+    this._bind();
   }
   getCardSize() {
     return 9;
