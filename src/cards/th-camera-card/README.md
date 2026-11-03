@@ -29,6 +29,13 @@ quick_links:          # buttons under the cameras
     navigation_path: /dashboard/plates
 ```
 
+## Large view
+
+Tapping a camera opens it large over the whole screen (2.6.0): the full-quality live player with its controls, and every
+camera as a strip of thumbnails at the bottom (a 3-column grid on a phone in portrait). Switch with a thumbnail, the ‹ ›
+buttons or the ←/→ keys; close with ✕, Esc or the phone's back button. Thumbnails show the tile's last image at once and
+refresh every 10 s. Opening an event still uses the event sheet as before.
+
 ## Player
 
 The player plays the recordings as one continuous timeline, not as separate clips:

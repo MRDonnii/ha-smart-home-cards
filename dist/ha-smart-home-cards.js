@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.247 */
+/* MRDonnii Smart Home Cards v0.5.248 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -50202,11 +50202,13 @@ var ThProtectPlayer = class extends HTMLElement {
 if (!customElements.get("th-protect-player")) customElements.define("th-protect-player", ThProtectPlayer);
 
 // src/cards/th-camera-card/th-camera-card.js
-var VC_VER = "2.5.0";
+var VC_VER = "2.6.0";
 var VC_CACHE = "th-camera-card:events";
 var SIGN_FOR = 86400;
 var SIGN_OK = 20 * 36e5;
 var VC_I = {
+  prev: '<path d="M15 18l-6-6 6-6"/>',
+  next: '<path d="M9 18l6-6-6-6"/>',
   cam: '<rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/>',
   person: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/>',
   car: '<path d="M4 15.5V12l2-4.6c.3-.8 1-1.4 1.9-1.4h8.2c.9 0 1.6.6 1.9 1.4L20 12v3.5"/><path d="M3 15.5h18v2.5H3z"/><circle cx="7.5" cy="18.2" r="1.6"/><circle cx="16.5" cy="18.2" r="1.6"/>',
@@ -50315,6 +50317,31 @@ var VC_CSS = `
 .sh-top .x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);cursor:pointer;display:grid;place-items:center}
 .sh-top .flt{margin:0;flex:1;min-width:0}
 .sh-pl{position:sticky;top:calc(max(10px,env(safe-area-inset-top)) + 46px);z-index:2;background:#030408;padding-bottom:6px}
+/* Stor visning: kameraet s\xE5 stort som sk\xE6rmen tillader, de andre kameraer i en r\xE6kke i bunden (Claude AI, 2026-11-03) */
+.vw{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;background:#030408;animation:fd .2s both;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+.vw-top{flex:none;display:flex;align-items:center;gap:10px;padding:0 2px 8px}
+.vw-top .x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;display:grid;place-items:center}
+.vw-top b{font-size:17px;font-weight:700;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vw-top span{margin-left:auto;font-size:12px;color:var(--mut);flex:none}
+.vw-st{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+/* Plads til topbj\xE6lken, afspillerens egne knapper og tidslinje (~150 px) og kamerar\xE6kken */
+.vw-pl{width:min(100%,calc((100dvh - 340px) * 16 / 9))}
+.vw-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
+  color:#fff;background:rgba(10,12,18,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:2;opacity:.85}
+.vw-nav:hover{opacity:1;background:rgba(10,12,18,.8)}.vw-nav.p{left:6px}.vw-nav.n{right:6px}
+.vw-sp{flex:none;display:flex;gap:8px;overflow-x:auto;padding:10px 2px 2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.vw-sp button{flex:none;width:132px;border:0;padding:0;border-radius:11px;overflow:hidden;cursor:pointer;background:#11141b;position:relative;
+  aspect-ratio:16/9;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);opacity:.72;transition:opacity .15s,box-shadow .15s}
+.vw-sp button.on{opacity:1;box-shadow:inset 0 0 0 2px var(--accent,#e8c37e)}
+.vw-sp button:hover{opacity:1}
+.vw-sp img{width:100%;height:100%;object-fit:cover;display:block}
+.vw-sp i{position:absolute;left:0;right:0;bottom:0;padding:10px 6px 4px;font-style:normal;font-size:10.5px;font-weight:600;color:#fff;text-align:left;
+  background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:640px){.vw-pl{width:100%}.vw-nav{width:40px;height:40px}}
+/* Telefon p\xE5 h\xF8jkant: alle kameraer som et gitter i bunden i stedet for en r\xE6kke, der skal rulles */
+@media (max-width:640px) and (orientation:portrait){.vw-sp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow-x:hidden;overflow-y:auto;max-height:38dvh;align-content:start}
+  .vw-sp button{width:auto}}
 .sh-k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:4px 2px 0}
 #nvr{margin-top:10px;display:grid;gap:8px}
 .nvr .k{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:0 2px 6px}
@@ -50350,7 +50377,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     if (!this._ro) this._ro = new ResizeObserver(([en]) => {
       this._w = en.contentRect.width;
       if (!this._h) return;
-      if (this._sheet || this._player?.hasAttribute("pfs") || document.fullscreenElement) {
+      if (this._sheet || this._view || this._player?.hasAttribute("pfs") || document.fullscreenElement) {
         this._modeLater = true;
         return;
       }
@@ -50371,6 +50398,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     window.removeEventListener("location-changed", this._loc);
     this._stopTiles();
     this._closeSheet(true);
+    this._closeView(true);
   }
   set hass(h) {
     const first = !this._h;
@@ -50466,6 +50494,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
           <div class="flt" id="ft"></div><div class="flt" id="fc"></div><div class="list first" id="list">${'<div class="skel"></div>'.repeat(5)}</div></div>`;
       const plP = (cams2) => `<div class="p plp">${cams2 ? '<div class="flt" id="pc"></div>' : ""}<div id="plbox"></div></div>`;
       this._closeSheet(true);
+      this._closeView(true);
       this._modeLater = false;
       w.innerHTML = mode === "wide" ? `<div class="g wide">${camsP}<div class="side">${plP(false)}${evP}</div></div>` : mode === "narrow" ? `<div class="g narrow">${camsP}</div>` : `<div class="g pb ${mode === "pbw" ? "wide" : ""}">${plP(true)}${evP}</div>`;
       w.querySelectorAll(".cam").forEach((b) => b.onclick = () => this._openCam(b.dataset.b));
@@ -50603,7 +50632,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   // synlig flise får HA's egen kamerastrøm (WebRTC via go2rtc) på kameraets laveste kanal; stillbilledet står under, til videoen
   // spiller. Fliser uden for skærmen – eller under fuldskærmsafspilleren – stopper deres strøm.
   async _liveTiles() {
-    if (this.cfg.live_tiles === false || !this._r || this._sheet) return;
+    if (this.cfg.live_tiles === false || !this._r || this._sheet || this._view) return;
     if (!customElements.get("ha-camera-stream")) {
       try {
         const h = await window.loadCardHelpers?.();
@@ -50626,14 +50655,14 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       }
       this._loader?.remove();
       this._loader = null;
-      if (!this.isConnected || this._sheet) return;
+      if (!this.isConnected || this._sheet || this._view) return;
     }
     this._io?.disconnect();
     clearTimeout(this._lvT);
     const max = this.cfg.max_live || 16, on = /* @__PURE__ */ new Set(), queue = [];
     const startNow = (b) => {
       const lv = b.querySelector(".lv");
-      if (!lv || lv.firstChild || on.size >= max || !b.isConnected || this._sheet) return;
+      if (!lv || lv.firstChild || on.size >= max || !b.isConnected || this._sheet || this._view) return;
       const s = this._h.states[b.dataset.live];
       if (!s) return;
       const v = document.createElement("ha-camera-stream");
@@ -50682,7 +50711,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   // Stillbilleder: højst 3 ad gangen (de øverste fliser først) og i mindre størrelse – optageren laver dem ud fra 4K (1,5–5 s
   // hver), og 11 på én gang optog alle browserens forbindelser til HA, så miniaturer og video stod i kø.
   _refresh(force) {
-    if (!this._r || document.hidden || this._sheet) return;
+    if (!this._r || document.hidden || this._sheet || this._view) return;
     const every = (this.cfg.refresh || (this.cams().length > 8 ? 5 : 3)) * 1e3;
     if (force) this._r.querySelectorAll(".cam").forEach((b) => {
       b._at = 0;
@@ -50972,8 +51001,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     else this._pl(this._lastMode === "wide").open(e.cam, +e.t - 2e3, true);
   }
   _openCam(base) {
-    if (this._lastMode === "narrow") this._openSheet(base, null);
-    else this._pl(true).open(base, null);
+    this._openView(base);
   }
   _onPlayerCam(b) {
     const pc = this.$("pc");
@@ -50988,6 +51016,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       if (on) pc.scrollTo({ left: on.offsetLeft - pc.clientWidth / 2 + on.offsetWidth / 2, behavior: "smooth" });
     }
     this._renderSheet();
+    this._renderView();
   }
   // Smal skærm: afspilleren i fuld skærm med kameraets hændelser under sig. Telefonens tilbage-knap lukker den.
   _openSheet(base, at) {
@@ -51053,6 +51082,138 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     if (!this._camEvents(b).length && !asked.has(b) && !this._loadedCams?.has(b)) {
       asked.add(b);
       this._loadEvents(b);
+    }
+  }
+  // Stor visning (Claude AI, 2026-11-03): afspilleren flyttes ind i en helskærm med de andre kameraer i bunden.
+  _openView(base) {
+    if (this._view) {
+      this._player.open(base, null, true);
+      this._renderView();
+      return;
+    }
+    const v = document.createElement("div");
+    v.className = "vw";
+    v.setAttribute("role", "dialog");
+    v.setAttribute("aria-modal", "true");
+    v.innerHTML = `<div class="vw-top"><button class="x" aria-label="Luk">${vci("close", 18)}</button><b></b><span></span></div>
+      <div class="vw-st"><button class="vw-nav p" aria-label="Forrige kamera">${vci("prev", 22, 2)}</button><div class="vw-pl"></div>
+      <button class="vw-nav n" aria-label="N\xE6ste kamera">${vci("next", 22, 2)}</button></div><div class="vw-sp"></div>`;
+    v.querySelector(".x").onclick = () => {
+      if (history.state?.thCameraView) history.back();
+      else this._closeView();
+    };
+    v.querySelector(".vw-nav.p").onclick = () => this._viewStep(-1);
+    v.querySelector(".vw-nav.n").onclick = () => this._viewStep(1);
+    this._r.appendChild(v);
+    this._view = v;
+    this._viewWide = this._lastMode === "wide";
+    this._stopTiles();
+    try {
+      if (!history.state?.thCameraView) history.pushState({ ...history.state || {}, thCameraView: 1 }, "");
+    } catch (e) {
+    }
+    this._vpop ||= () => {
+      if (this._view && !history.state?.thCameraView) this._closeView();
+    };
+    window.addEventListener("popstate", this._vpop);
+    this._vkey ||= (e) => {
+      if (!this._view || this._player?.hasAttribute("pfs") || document.fullscreenElement) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (history.state?.thCameraView) history.back();
+        else this._closeView();
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const t = e.composedPath?.()[0];
+        if (t?.matches?.("input,textarea,select")) return;
+        e.preventDefault();
+        this._viewStep(e.key === "ArrowLeft" ? -1 : 1);
+      }
+    };
+    window.addEventListener("keydown", this._vkey);
+    v.querySelector(".vw-pl").appendChild(this._pl(false));
+    this._player.open(base, null, true);
+    this._renderView();
+    this._renderView(true);
+    this._vthumbs = setInterval(() => this._renderView(true), 1e4);
+  }
+  _closeView(reopening) {
+    if (!this._view) return;
+    window.removeEventListener("popstate", this._vpop);
+    window.removeEventListener("keydown", this._vkey);
+    clearInterval(this._vthumbs);
+    this._view.remove();
+    this._view = null;
+    if (reopening) return;
+    if (this._viewWide) {
+      const box = this.$("plbox");
+      if (box) box.appendChild(this._pl(true));
+    }
+    if (this._modeLater) {
+      this._modeLater = false;
+      if (this._mode() !== this._lastMode) {
+        this._render();
+        return;
+      }
+    }
+    if (this.isConnected) {
+      this._liveTiles();
+      this._refresh(true);
+    }
+  }
+  _viewStep(d) {
+    const cams = this.cams(), i = cams.findIndex((c3) => c3.base === this._player?.cam);
+    if (!cams.length) return;
+    const c2 = cams[((i < 0 ? 0 : i) + d + cams.length) % cams.length];
+    this._player.open(c2.base, null, true);
+    this._renderView();
+  }
+  _renderView(pics) {
+    const v = this._view, b = this._player?.cam;
+    if (!v || !b) return;
+    const cams = this.cams(), i = cams.findIndex((c2) => c2.base === b), cur = cams[i];
+    v.querySelector(".vw-top b").textContent = cur?.name || "";
+    v.querySelector(".vw-top span").textContent = cams.length > 1 ? `${i + 1} / ${cams.length}` : "";
+    v.querySelectorAll(".vw-nav").forEach((n) => {
+      n.hidden = cams.length < 2;
+    });
+    const sp = v.querySelector(".vw-sp"), key = cams.map((c2) => c2.base).join();
+    if (sp._k !== key) {
+      sp._k = key;
+      sp.innerHTML = cams.map((c2) => `<button data-k="${c2.base}" title="${vce(c2.name)}"><img alt=""><i>${vce(c2.name)}</i></button>`).join("");
+      sp.querySelectorAll("button").forEach((x) => x.onclick = () => {
+        this._player.open(x.dataset.k, null, true);
+        this._renderView();
+      });
+      sp.querySelectorAll("button").forEach((x) => {
+        const t = this._r.querySelector(`.cam[data-b="${x.dataset.k}"] img`)?.src;
+        if (t) x.querySelector("img").src = t;
+      });
+      if (!pics) pics = sp.querySelector("img:not([src])") ? true : pics;
+    }
+    if (pics) sp.querySelectorAll("button").forEach((x) => {
+      const c2 = cams.find((k) => k.base === x.dataset.k), pic = this._h?.states[c2?.tile || c2?.id]?.attributes?.entity_picture, img = x.querySelector("img");
+      if (!pic) return;
+      const url = `${pic}${pic.includes("?") ? "&" : "?"}width=320&t=${Math.floor(Date.now() / 1e4)}`;
+      if (!img.getAttribute("src")) {
+        img.src = url;
+        return;
+      }
+      const n = new Image();
+      n.onload = () => {
+        img.src = url;
+      };
+      n.src = url;
+    });
+    let on = null;
+    sp.querySelectorAll("button").forEach((x) => {
+      const o = x.dataset.k === b;
+      x.classList.toggle("on", o);
+      x.setAttribute("aria-pressed", o ? "true" : "false");
+      if (o) on = x;
+    });
+    if (on && sp._on !== b) {
+      sp._on = b;
+      sp.scrollTo({ left: on.offsetLeft - sp.clientWidth / 2 + on.offsetWidth / 2, behavior: "smooth" });
     }
   }
   _camEvents(b) {
