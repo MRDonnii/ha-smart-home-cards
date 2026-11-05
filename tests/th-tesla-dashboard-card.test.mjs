@@ -1020,4 +1020,76 @@ console.log("th-tesla-dashboard-card tests passed");
   }
   delete context.document;
 }
+// EV Ledger 0.16 (NMC; Claude AI, 2026-11-05): "Lad det sidste op lige før afgang" – toggle, three set points, the late
+// part in the timeline. Hidden for LFP and for an EV Ledger without it.
+{
+  const hour = 3600000;
+  const at = (hours) => new Date(Date.now() + hours * hour).toISOString();
+  const cfg = { name: "Bil", ev_ledger: "select.bil_charge_mode" };
+  const base = (chemistry, on = true, extra = {}) => ({
+    "select.bil_charge_mode": s("smart", { options: ["smart", "now"] }),
+    "sensor.bil_charge_status": s("waiting"),
+    "sensor.bil_plan_target_soc": s("100", { unit_of_measurement: "%" }),
+    "sensor.bil_next_charge_start": s(at(2), { deadline: at(8), deadline_target: 100,
+      blocks: [{ start: at(2), end: at(3), estimated: false }, { start: at(6), end: at(7), estimated: false }],
+      top_up: { active: on && chemistry !== "lfp", reason: chemistry === "lfp" ? "lfp" : on ? null : "off", chemistry, from_soc: 80,
+        window_start: at(4.5), window_end: at(7.5), windows: [{ deadline: at(8), from_soc: 80, start: at(4.5), end: at(7.5) }] } }),
+    "switch.bil_charge_the_last_part_just_before_departure_nmc": s(on ? "on" : "off", { active: on && chemistry !== "lfp", reason: chemistry === "lfp" ? "lfp" : on ? null : "off", chemistry, from_soc: 80 }),
+    "number.bil_top_up_from_level": s("80", { min: 50, max: 95, step: 5 }),
+    "number.bil_top_up_done_before_departure": s("30", { min: 0, max: 120, step: 5 }),
+    "number.bil_top_up_window": s("3", { min: 1, max: 8, step: 0.5 }),
+    ...extra,
+  });
+  assert.equal(model(base("lfp"), cfg).sc.topUp, null, "LFP: nothing shown");
+  assert.equal(model(base("lfp"), cfg).sc.late, "", "LFP: no late part");
+  const noReason = base(null); noReason["switch.bil_charge_the_last_part_just_before_departure_nmc"] = s("off", { reason: "lfp", chemistry: null });
+  assert.equal(model(noReason, cfg).sc.topUp, null, "reason lfp: hidden");
+  const lfpOnly = base("nmc"); lfpOnly["switch.bil_charge_the_last_part_just_before_departure_nmc"] = s("on", { reason: null, chemistry: "LFP" });
+  assert.equal(model(lfpOnly, cfg).sc.topUp, null, "chemistry lfp alone: hidden");
+  const old = base("nmc");
+  for (const id of Object.keys(old)) if (/top_up|last_part/.test(id)) delete old[id];
+  assert.equal(model(old, cfg).sc.topUp, null, "older EV Ledger: hidden");
+  const nmc = model(base("nmc"), cfg).sc;
+  assertClean(nmc, "nmc top-up");
+  assert.equal(nmc.topUp.on, true);
+  assert.equal(nmc.topUp.note, "Skåner NMC-batteriet: op til 80 % når strømmen er billigst, resten lige før afgang");
+  assert.equal(nmc.topUp.fields.map((x) => x.value).join(" "), "80 30 3");
+  assert.match(nmc.late, /^Sidste del 80 → 100 % .+–\d\d:\d\d$/, nmc.late);
+  assert.equal(nmc.segments.filter((x) => x.late).length, 1, "the charging inside the window is marked");
+  const unknown = model(base(null), cfg).sc;
+  assert.ok(unknown.topUp, "unknown chemistry: shown");
+  assert.match(unknown.topUp.note, /^Skåner batteriet: op til 80 %/);
+  const off = model(base("nmc", false), cfg).sc;
+  assert.equal(off.topUp.on, false);
+  assert.equal(off.late, "", "off: no late part");
+  assert.equal(off.segments.filter((x) => x.late).length, 0);
+  // Danish entity ids: found by translation key on the car's device, nothing hard-coded.
+  const danish = { "select.bil_charge_mode": "select.gk_ladeplan", "switch.bil_charge_the_last_part_just_before_departure_nmc": "switch.gk_lad_det_sidste_op_lige_for_afgang_nmc",
+    "number.bil_top_up_from_level": "number.gk_billig_op_til", "number.bil_top_up_done_before_departure": "number.gk_faerdig_for_afgang", "number.bil_top_up_window": "number.gk_vindue" };
+  const keys = { "select.gk_ladeplan": "charge_mode", "switch.gk_lad_det_sidste_op_lige_for_afgang_nmc": "nmc_top_up", "number.gk_billig_op_til": "top_up_soc",
+    "number.gk_faerdig_for_afgang": "top_up_margin", "number.gk_vindue": "top_up_window", "sensor.bil_next_charge_start": "next_charge_start" };
+  const dk = {}; for (const [id, st] of Object.entries(base("nmc"))) dk[danish[id] || id] = st;
+  const c = card(dk, { name: "Bil", ev_ledger: "select.gk_ladeplan" });
+  c._hass.entities = Object.fromEntries(Object.entries(keys).map(([id, key]) => [id, { entity_id: id, device_id: "gk", platform: "evledger", translation_key: key }]));
+  assert.ok(c._model().sc.topUp, "found through the registry");
+  const calls = [];
+  c._hass.callService = async (...a) => { calls.push(a); };
+  c._queue = () => {};
+  c._onClick({ target: { closest: () => ({ dataset: { sctopup: "" } }) } });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["switch", "turn_off", { entity_id: "switch.gk_lad_det_sidste_op_lige_for_afgang_nmc" }]], "on → off, no second tap");
+  dk["switch.gk_lad_det_sidste_op_lige_for_afgang_nmc"] = s("off", { chemistry: "nmc", reason: "off" });
+  c._onClick({ target: { closest: () => ({ dataset: { sctopup: "" } }) } });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1))), ["switch", "turn_on", { entity_id: "switch.gk_lad_det_sidste_op_lige_for_afgang_nmc" }]);
+  calls.length = 0;
+  const soc = { value: "86", dataset: {} }; const mar = { value: "45", dataset: {} }; const win = { value: "2.5", dataset: {} };
+  c._r = { scTopSoc: soc, scTopMar: mar, scTopWin: win };
+  c._onChange({ target: soc });
+  c._onChange({ target: mar });
+  c._onChange({ target: win });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["number", "set_value", { entity_id: "number.gk_billig_op_til", value: 85 }],
+    ["number", "set_value", { entity_id: "number.gk_faerdig_for_afgang", value: 45 }], ["number", "set_value", { entity_id: "number.gk_vindue", value: 2.5 }]], "snapped to the step, sent at once");
+  calls.length = 0;
+  mar.value = "30"; c._onChange({ target: mar });
+  assert.equal(calls.length, 0, "an unchanged value is not sent");
+}
 console.log("th-tesla-dashboard-card smart charge tests passed");

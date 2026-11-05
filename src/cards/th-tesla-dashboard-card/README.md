@@ -289,6 +289,13 @@ musen over en måned for kr., kWh, kr/kWh og antal ladninger. Det kommer fra EV 
 (EV Ledger 0.5.0 eller nyere) og vises kun, når den findes. Med EV Ledger 0.5.1 eller nyere står samme måned året
 før som en svag søjle ved siden af, og sidste års total vises under grafen.
 
+**Lad det sidste op lige før afgang (EV Ledger 0.16.0 eller nyere, NMC-batteri):** I ladeplanen er der en knap, der slår
+valget til og fra. Den billige ladning går op til et niveau (standard 80 %), og resten lades lige før afgang, så batteriet
+ikke står højt længe. Når valget er slået til, kan niveauet (%), hvor mange minutter før afgang den skal være færdig, og
+vinduet (timer) indstilles direkte i kortet; hver værdi sendes, når den er sat. Tidslinjen viser den sene del i blåt med
+en linje som "Sidste del 80 → 100 % i morgen kl. 05:30–06:30". Valget vises ikke for et LFP-batteri eller med en ældre EV
+Ledger; er batteritypen ukendt, vises det.
+
 **Klar senest (ugeplan og engangstid):** Med EV Ledger 0.6.0 eller nyere viser "Klar senest" den næste klar-tid med
 dagens mål og hvor den kommer fra (Ugeplan, Engangstid, Lærte afgange, Samme tid hver dag). Et tryk åbner en popup:
 

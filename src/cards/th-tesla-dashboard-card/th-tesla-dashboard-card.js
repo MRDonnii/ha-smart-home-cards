@@ -18,7 +18,7 @@
 import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 import { chartHover } from "../../shared/chart-hover.js";
 
-const TTD_VERSION = "1.21.0";
+const TTD_VERSION = "1.22.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -145,6 +145,9 @@ const TTD_SC_ROLES = {
   week_plan: "switch._week_plan", ready_by_once: "datetime._ready_by_once",
   // Keep the battery at the target while the car heats on the charger, up to a price (EV Ledger).
   heat_hold: "switch._keep_the_battery_at_the_target_while_heating", heat_hold_price: "number._price_limit_while_heating",
+  // Spare an NMC battery (EV Ledger 0.16): the part above a level is charged just before departure.
+  nmc_top_up: "switch._charge_the_last_part_just_before_departure_nmc", top_up_soc: "number._top_up_from_level",
+  top_up_margin: "number._top_up_done_before_departure", top_up_window: "number._top_up_window",
   weekend_ready_by: "switch._another_time_at_the_weekend", ready_by_weekend: "time._ready_by_at_the_weekend",
   public_charge_energy: "number._public_charge_energy",
   public_charge_price: "number._public_charge_price", public_charge_location: "text._public_charge_location",
@@ -628,7 +631,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
   <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekræft billigst</button>
-  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p></div>
+  <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p><p class="sc-hint sc-late" data-r="scLate" hidden></p></div>
   <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small><small class="sc-later" data-r="scHoldW"></small></span>
     <div class="sc-choice" role="radiogroup" aria-label="Ladning over prisgrænsen"><button type="button" role="radio" aria-checked="false" data-scwait="on" data-r="scWaitOn">Vent med resten</button><button type="button" role="radio" aria-checked="false" data-scwait="off" data-r="scWaitOff">Lad til målet</button></div></div>
   <div class="box plan-top">${cell("sc:next_charge_start", "mdi:clock-start", "blue", "scStart", "Næste start", `<em data-r="scStartDay"></em>`)}${cell("sc:next_charge_end", "mdi:check-circle-outline", "green", "scEnd", "Forventet slut", `<em data-r="scEndDay"></em>`)}${cell("sc:planned_cost", "mdi:cash", "amber", "scCost", "Planlagt pris", `<em data-r="scKwh"></em>`)}</div>
@@ -642,6 +645,8 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <div class="ctl2" data-r="scLimit" hidden><button type="button" class="chip" data-sclimit data-r="scLimitChip" aria-pressed="false">${ttdIcon("mdi:cash-lock")}<span>Spørg før dyr ladning</span></button><span class="sc-grp" data-r="scMax" hidden><span>maks.</span><input type="number" step="0.05" min="0" inputmode="decimal" placeholder="auto" data-r="scMaxInput" aria-label="Fast prisgrænse (tom eller 0 = kun besparelsen tæller)" title="Kvarterer op til denne pris lades altid i nat. Tom (0) = kun besparelsen tæller."><small data-r="scMaxUnit"></small></span><span data-r="scLimitPre">spar mindst</span><input type="number" step="0.05" inputmode="decimal" data-r="scLimitInput" aria-label="Maks. pris i Billigst"><small data-r="scLimitUnit"></small><span>behold</span><input type="number" step="5" min="0" max="100" inputmode="numeric" data-r="scFloorInput" aria-label="Lad altid op til"><small>%</small><span class="sc-info" data-r="scLimitInfo"></span></div>
     <div class="sc-row" data-r="scCapX" hidden><button type="button" class="chip" data-sccapx data-r="scCapXChip" aria-pressed="false">${ttdIcon("mdi:cash-lock-open")}<span>Overskrid ved behov</span></button><span class="sc-info" data-r="scCapXInfo"></span></div>
     <div class="sc-row sc-res" data-r="scRes" role="radiogroup" aria-label="Priser i kvarterer eller timer" hidden>${ttdIcon("mdi:timer-cog-outline", "ic blue")}<span class="sc-res-l">Priser i</span><button type="button" class="chip" role="radio" data-scres="quarter" aria-checked="false">Kvarter</button><button type="button" class="chip" role="radio" data-scres="hour" aria-checked="false">Time</button></div>
+    <div class="sc-top" data-r="scTop" hidden><button type="button" class="chip" data-sctopup data-r="scTopChip" aria-pressed="false">${ttdIcon("mdi:battery-clock-outline")}<span>Lad det sidste op lige før afgang</span></button><p class="sc-note" data-r="scTopNote"></p>
+      <div class="ctl2 sc-top-set" data-r="scTopSet" hidden><span class="sc-grp" data-r="scTopSocG"><span>Op til</span><input type="number" inputmode="numeric" data-r="scTopSoc" aria-label="Billig ladning op til (%)"><small>%</small></span><span class="sc-grp" data-r="scTopMarG"><span>færdig</span><input type="number" inputmode="numeric" data-r="scTopMar" aria-label="Færdig minutter før afgang"><small>min før</small></span><span class="sc-grp" data-r="scTopWinG"><span>inden for</span><input type="number" inputmode="decimal" data-r="scTopWin" aria-label="Vindue til den sidste del (timer)"><small>t</small></span></div></div>
   </div>
   <div class="sc-trip" data-r="scTrip">
     <button type="button" class="sc-trip-h" data-sctrip data-r="scTripHead" aria-expanded="false">${ttdIcon("mdi:map-marker-path", "ic blue")}<span><b>Midlertidig plan</b><small data-r="scTripSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
@@ -971,7 +976,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
    rest (phone choices, price cap, manual, quarters/hours, temporary trip, default plan, smart choices) is set on the
    Tesla page. A plan that is chosen anyway stays visible. */
 .dash.charge-layout .cmp,.dash.charge-layout .sc-phone,.dash.charge-layout .sc-res,.dash.charge-layout .sc-trip,
-.dash.charge-layout .sc-def,.dash.charge-layout .sc-opt,.dash.charge-layout .charge-art{display:none!important}
+.dash.charge-layout .sc-def,.dash.charge-layout .sc-opt,.dash.charge-layout .sc-top,.dash.charge-layout .charge-art{display:none!important}
 .dash.charge-layout .sc-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
 .dash.charge-layout [data-scmode="price_cap"]:not([aria-checked="true"]),.dash.charge-layout [data-scmode="manual"]:not([aria-checked="true"]){display:none}
 .sc-modes button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:40px;padding:0 8px;border-radius:10px;
@@ -1050,6 +1055,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .sc-defs button[aria-checked=true]{background:color-mix(in srgb,var(--tdc-amber) 22%,transparent);border-color:color-mix(in srgb,var(--tdc-amber) 65%,transparent)}
 .sc-defs button[aria-checked=true] ha-icon{color:var(--tdc-amber)}
 .sc-note{margin:0;font-size:13px;line-height:1.4;color:var(--tdc-muted)}
+/* The last part just before departure (EV Ledger 0.16, NMC): toggle, note, three set points; the late part in blue. */
+.sc-top{display:grid;gap:8px;justify-items:start;min-width:0}.sc-top .sc-note{justify-self:stretch}
+.sc-top-set{gap:8px 14px}.sc-top-set input[type=number]{width:72px}
+.sc-seg.late{background:var(--tdc-blue);box-shadow:0 0 8px color-mix(in srgb,var(--tdc-blue) 45%,transparent)}
+.sc-chart rect.on.late{fill:var(--tdc-blue);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--tdc-blue) 55%,transparent))}
+.sc-late{color:var(--tdc-blue)}
 @container panel (max-width:380px){.sc-modes button ha-icon:not(.sc-star){display:none}}
 /* narrow panels: the status badge moves below the title instead of cutting it off */
 @container panel (max-width:520px){.ph:has(.badge){flex-wrap:wrap;row-gap:8px}.ph:has(.badge) .ph-t{flex:1 1 calc(100% - 52px)}.ph .badge{margin-left:40px}}
@@ -2454,6 +2465,27 @@ class ThTeslaDashboardCard extends HTMLElement {
     };
   }
 
+  /** EV Ledger 0.16's "charge the last part just before departure" for an NMC battery: hidden for LFP and without it. */
+  _scTopUp(f, planTop = {}) {
+    const sw = this._sc("nmc_top_up");
+    if (!sw || sw.state === "unavailable") return null;
+    const a = sw.attributes || {};
+    const chemistry = String(a.chemistry ?? planTop.chemistry ?? "").toLowerCase();
+    if (chemistry === "lfp" || a.reason === "lfp" || planTop.reason === "lfp") return null;
+    const field = (role, fallback) => {
+      const o = this._sc(role);
+      if (!o || o.state === "unavailable") return null;
+      const value = ttdHasValue(o) ? ttdToNumber(o.state) : null;
+      const at = o.attributes || {};
+      return { value: value == null ? "" : String(value), min: String(at.min ?? fallback[0]), max: String(at.max ?? fallback[1]), step: String(at.step ?? fallback[2]) };
+    };
+    const fields = [field("top_up_soc", [50, 95, 5]), field("top_up_margin", [0, 120, 5]), field("top_up_window", [1, 8, 0.5])];
+    const level = fields[0]?.value !== "" && fields[0] ? Number(fields[0].value) : Number(a.from_soc);
+    const upTo = Number.isFinite(level) ? `op til ${f.number(level, 0)} %` : "den første del";
+    return { on: sw.state === "on", fields,
+      note: `Skåner ${chemistry === "nmc" ? "NMC-" : ""}batteriet: ${upTo} når strømmen er billigst, resten lige før afgang` };
+  }
+
   _scModel(f) {
     const status = this._sc("charge_status");
     const statusKey = ttdHasValue(status) ? status.state : null;
@@ -2473,10 +2505,31 @@ class ThTeslaDashboardCard extends HTMLElement {
     const waiting = plan.waiting_for && typeof plan.waiting_for === "object" ? plan.waiting_for : null;
     const until = Math.min(now + (waiting ? 96 : 48) * 3600000, Math.max(now + 3600000, deadline?.getTime() || 0, trip?.getTime() || 0, ...blocks.map((block) => block.end.getTime())));
     const at = (date) => ttdClamp(((date.getTime() - now) / (until - now)) * 100, 0, 100);
+    // EV Ledger 0.16 (NMC; Claude AI, 2026-11-05): the part above a level waits for a window just before departure. The
+    // charging inside that window is drawn in blue, with a line saying from what to what and when.
+    const topA = plan.top_up && typeof plan.top_up === "object" ? plan.top_up : {};
+    const lateWins = !topA.active ? [] : (Array.isArray(topA.windows) && topA.windows.length ? topA.windows : [{ start: topA.window_start, end: topA.window_end }])
+      .map((w) => ({ start: ttdToDate(w.start), end: ttdToDate(w.end), from: Number(w.from_soc ?? topA.from_soc) }))
+      .filter((w) => w.start && w.end && w.end.getTime() > now && w.start.getTime() < until);
+    const lateParts = lateWins.flatMap((w) => blocks.filter((b) => b.start < w.end && b.end > w.start)
+      .map((b) => ({ start: new Date(Math.max(b.start.getTime(), w.start.getTime(), now)), end: new Date(Math.min(b.end.getTime(), w.end.getTime())), estimated: b.estimated })));
+    const inLate = (s, e) => lateParts.some((part) => s < part.end.getTime() && e > part.start.getTime());
     const segments = blocks.filter((block) => block.start.getTime() < until).map((block) => {
       const left = at(new Date(Math.max(block.start.getTime(), now)));
       return { left, width: Math.max(at(block.end) - left, 0.6), estimated: block.estimated, title: `${f.time(block.start)}–${f.time(block.end)}` };
-    });
+    }).concat(lateParts.filter((part) => part.start.getTime() < until).map((part) => {
+      const left = at(part.start);
+      return { left, width: Math.max(at(part.end) - left, 0.6), estimated: part.estimated, late: true, title: `Sidste del ${f.time(part.start)}–${f.time(part.end)}` };
+    }));
+    const late = (() => {
+      const w = lateWins[0];
+      if (!w) return "";
+      const parts = lateParts.filter((part) => part.start < w.end && part.end > w.start);
+      const from = parts.length ? parts[0].start : w.start; const to = parts.length ? parts[parts.length - 1].end : w.end;
+      const goal = plan.deadline_target != null && Number.isFinite(Number(plan.deadline_target)) ? Number(plan.deadline_target) : target;
+      const level = Number.isFinite(w.from) ? `${f.number(w.from, 0)}${goal != null && goal > w.from ? ` → ${f.number(goal, 0)}` : ""} % ` : "";
+      return `Sidste del ${level}${f.dayTime(from)}–${f.time(to)}${parts.length ? "" : " (vindue)"}${lateWins.length > 1 ? ` (+${lateWins.length - 1})` : ""}`;
+    })();
     const marks = [deadline && deadline.getTime() <= until ? { left: at(deadline), kind: "deadline" } : null, trip && trip.getTime() <= until ? { left: at(trip), kind: "trip" } : null].filter(Boolean);
     const next = blocks[0];
     // The prices the plan chose from (EV Ledger): a small chart of when the car charges – also before it is plugged in.
@@ -2494,7 +2547,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const chart = slots.map((x) => {
       const left = at(new Date(Math.max(x.s, now))); const on = blocks.some((b) => x.s < b.end.getTime() && x.e > b.start.getTime());
       const over = limitP != null && x.p > limitP;
-      return { left, width: at(new Date(Math.min(x.e, until))) - left, h: hOf(x.p), on, est: x.est, over: over && !on, dear: over && on,
+      return { left, width: at(new Date(Math.min(x.e, until))) - left, h: hOf(x.p), on, est: x.est, over: over && !on, dear: over && on, late: on && inLate(x.s, x.e),
         title: `${f.time(new Date(x.s))} · ${f.number(x.p, 2)} kr/kWh${on ? (over ? " · lader over grænsen" : " · lader") : over ? " · over grænsen" : ""}` };
     });
     const limitLine = limitP != null && slots.length && limitP >= lo && limitP <= hi ? { h: hOf(limitP), label: `${f.number(limitP, 2)} kr` } : null;
@@ -2557,7 +2610,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     return {
       badge: { text: label, tone }, sub: sub.join(" · ") || TTD_DASH,
       mode, modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
-      segments, marks, chart, axisRight: f.dayTime(new Date(until)), axisMid: next ? `${f.time(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
+      segments, marks, chart, late, topUp: this._scTopUp(f, topA), axisRight: f.dayTime(new Date(until)), axisMid: next ? `${f.time(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}` : "",
       hint: statusKey === "disconnected" && next ? `Sættes bilen til nu, lader den ${f.dayTime(next.start)}–${f.time(blocks.length === 1 ? lastEnd : next.end)}${blocks.length > 1 ? ` (+${blocks.length - 1} perioder)` : ""}${cost != null ? ` · ${ttdJoin(f.number(cost, 2), costUnit)}` : ""}` : "",
       // Unplugged the plan is only what would happen if it were plugged in now (the hint says so): no start or end
       // time that reads as if it will charge (user, 2026-10-16).
@@ -3631,7 +3684,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       const ly = sc.limitLine ? H - Math.max(3, sc.limitLine.h * (H - 4)) : null;
       r.scChart.innerHTML = sc.chart.length ? `<svg viewBox="0 0 1000 ${H}" preserveAspectRatio="none" role="img" aria-label="Priser og ladetider">${sc.chart.map((b) => {
         const h = Math.max(3, b.h * (H - 4));
-        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"></rect>`;
+        return `<rect x="${(b.left * 10).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(b.width * 10 - 1.5, 1).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" class="${b.on ? "on" : ""}${b.late ? " late" : ""}${b.over ? " over" : ""}${b.dear ? " dear" : ""}${b.est ? " est" : ""}"></rect>`;
       }).join("")}${sc.marks.map((m) => `<line x1="${m.left * 10}" x2="${m.left * 10}" y1="0" y2="${H}" class="${m.kind}"/>`).join("")}${ly != null ? `<line x1="0" x2="1000" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" class="limit"/>` : ""}</svg>${ly != null ? `<span class="sc-lim" style="top:${((ly / H) * 100).toFixed(1)}%">Senere ca. ${ttdEsc(sc.limitLine.label)}</span>` : ""}` : "";
     }
     if (r.scChart) r.scChart.hidden = !sc.chart.length;
@@ -3640,6 +3693,22 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (r.scHint) r.scHint.hidden = !sc.hint;
     this._t("scWait", sc.wait);
     if (r.scWait) r.scWait.hidden = !sc.wait;
+    this._t("scLate", sc.late);
+    if (r.scLate) r.scLate.hidden = !sc.late;
+    this._hide("scTop", !sc.topUp);
+    if (sc.topUp) {
+      const active = this.shadowRoot.activeElement;
+      this._attrSet("scTopChip", "aria-pressed", String(sc.topUp.on));
+      this._t("scTopNote", sc.topUp.note);
+      this._hide("scTopSet", !sc.topUp.on || !sc.topUp.fields.some(Boolean));
+      for (const [ref, field] of [["scTopSoc", sc.topUp.fields[0]], ["scTopMar", sc.topUp.fields[1]], ["scTopWin", sc.topUp.fields[2]]]) {
+        this._hide(`${ref}G`, !field);
+        const input = r[ref];
+        if (!field || !input) continue;
+        for (const name of ["min", "max", "step"]) if (input.getAttribute(name) !== field[name]) input.setAttribute(name, field[name]);
+        if (active !== input && input.value !== field.value) input.value = field.value;
+      }
+    }
     this._hide("scOpt", !sc.options);
     if (sc.options) {
       this._t("scOptSum", sc.options.summary);
@@ -3668,7 +3737,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       r.scTrack.replaceChildren(
         ...sc.segments.map((segment) => {
           const el = document.createElement("i");
-          el.className = "sc-seg";
+          el.className = segment.late ? "sc-seg late" : "sc-seg";
           el.title = segment.title;
           el.style.left = `${segment.left}%`;
           el.style.width = `${segment.width}%`;
@@ -4308,7 +4377,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     // A tap outside the small control panel closes it.
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
-    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-chargers],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold]");
+    const target = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-chargers],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold],[data-sctopup]");
     if (!target) return;
     if (Object.keys(target.dataset).some((key) => key.startsWith("rb"))) { this._rbAction(target); return; }
     if (target.dataset.socok != null || target.dataset.socundo != null) {
@@ -4346,6 +4415,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     else if (target.dataset.scdefault) this._chooseDefault(target.dataset.scdefault);
     else if (target.dataset.sccapx != null) this._toggleCapOverride();
     else if (target.dataset.sclimit != null) this._scCall("smart_price_limit", "switch", "toggle");
+    else if (target.dataset.sctopup != null) this._scCall("nmc_top_up", "switch", this._sc("nmc_top_up")?.state === "on" ? "turn_off" : "turn_on");
     else if (target.dataset.scwait) this._chooseWait(target.dataset.scwait === "on");
     else if (target.dataset.planact) this._planAct(target.dataset.planact);
     else if (target.dataset.scres) this._scCall("price_resolution", "select", "select_option", { option: target.dataset.scres });
@@ -4427,6 +4497,22 @@ class ThTeslaDashboardCard extends HTMLElement {
     }
     else if (el === r.modeSelect) this._setChargerMode(el.value);
     else if ([r.scFixedStart, r.scFixedEnd, r.scCapInput, r.scMinInput, r.scLimitInput, r.scMaxInput, r.scFloorInput, r.scDest, r.scDep, r.scQuietFrom, r.scQuietUntil].includes(el)) this._deferInput(el);
+    else if ([r.scTopSoc, r.scTopMar, r.scTopWin].includes(el) && el) this._commitTopUp(el);
+  }
+
+  /** The NMC set points: sent when the number is let go (change), within the entity's range and step. */
+  _commitTopUp(el) {
+    const r = this._r;
+    const role = el === r.scTopSoc ? "top_up_soc" : el === r.scTopMar ? "top_up_margin" : "top_up_window";
+    if (el.value === "" || el.validity?.badInput || !Number.isFinite(Number(el.value))) return;
+    const at = this._sc(role)?.attributes || {};
+    const lo = Number(at.min ?? el.min), hi = Number(at.max ?? el.max), step = Number(at.step ?? el.step);
+    let value = Number(el.value);
+    if (Number.isFinite(step) && step > 0) value = Math.round(value / step) * step;
+    value = ttdClamp(value, Number.isFinite(lo) ? lo : -Infinity, Number.isFinite(hi) ? hi : Infinity);
+    value = Math.round(value * 100) / 100;
+    el.value = String(value);
+    if (value !== this._scNum(role)) this._scCall(role, "number", "set_value", { value });
   }
 
   /** Time pickers report every step (22 → 23 → 00 …); only the value the user stops at is sent. */
