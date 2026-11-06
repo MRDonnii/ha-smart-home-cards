@@ -565,5 +565,12 @@
     "filename": "ha-electricity-bill-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-music-card",
+    "name": "HA Music Card",
+    "filename": "ha-music-card.js",
+    "category": "Devices and controls",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]

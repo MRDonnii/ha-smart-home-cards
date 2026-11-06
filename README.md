@@ -134,6 +134,36 @@ Never create a new standalone `ha-*-card` repository on GitHub, and never push n
 - Cards remain separated internally and can be maintained independently.
 - The old standalone repositories are archived migration history; all new development and releases happen here.
 
+## Music card: a music app for Music Assistant
+
+`custom:ha-music-card` is a full music app for [Music Assistant](https://music-assistant.io) inside Home Assistant, in the
+style of Spotify and the Music Assistant web app (Danish UI): home with recently played, your playlists, radio and
+recommendations; library pages with infinite scroll, sort, filter and favourites; search with a best result; detail pages for
+albums, playlists, artists and podcasts; a queue you can edit; and a speakers panel where you pick the speaker the card
+controls, add other speakers to its group, set each volume or the group volume, and move the music to another speaker.
+Wide cards get a sidebar, a now-playing bar and a side panel; phones get bottom tabs, a mini player and a full-screen player.
+
+```yaml
+type: custom:ha-music-card
+entities:                      # empty or left out = every Music Assistant player
+  - media_player.living_room
+  - entity_id: media_player.kids
+    name: Kids
+    icon: mdi:speaker-multiple
+ma_url: https://music.example.com   # Music Assistant as the browser can reach it (album art through its image proxy)
+default_player: media_player.living_room
+fill_height: true              # card height = screen height minus top position and bottom_offset
+bottom_offset: 110             # room for a floating bottom navbar
+```
+
+Requirements: the `music_assistant` integration. Track lists, the full queue, recommendations and favourites use the
+[`mass_queue`](https://github.com/droans/mass_queue) custom integration (services only); without it the card still browses,
+searches, plays and groups, but album/playlist pages show no tracks and the queue shows only the current and next item.
+Grouping uses `media_player.join`/`unjoin` and is offered only for players that support it. Options: `config_entry_id`
+(when there is more than one Music Assistant), `ma_internal_url` (the server's own address, if it isn't a private
+`:8095` address), `accent` (a fixed accent colour instead of the colour of the album art), `top_offset`, and
+`fill_height: false` with `height`.
+
 ## Header card: robots only drive while they work
 
 A robot in the header's `activities` drives across the card only in a working state: mowers `mowing`, `edgecut`,

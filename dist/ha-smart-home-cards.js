@@ -536,8 +536,8 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
       return { id, name: deviceName(this._hass, state), value, binary, offline, raw: state.state, changed: state.last_changed, updated: state.last_updated, voltage: Number.isFinite(voltage) ? voltage : null, lastKnown: offline ? this._lastKnown[id] : void 0, icon: this._icon(state) };
     });
     const order = (item2) => {
-      const tone2 = this._tone(item2);
-      return tone2 === "critical" ? 0 : tone2 === "offline" ? 1 : 2;
+      const tone3 = this._tone(item2);
+      return tone3 === "critical" ? 0 : tone3 === "offline" ? 1 : 2;
     };
     return list.sort((a, b) => order(a) - order(b) || (a.value ?? a.lastKnown ?? 101) - (b.value ?? b.lastKnown ?? 101) || a.name.localeCompare(b.name, this._hass?.locale?.language || "da"));
   }
@@ -640,17 +640,17 @@ var HABatteryStatusCard = class _HABatteryStatusCard extends HTMLElement {
   _update(batteries) {
     let criticalCount = 0, warningCount = 0, offlineCount = 0;
     batteries.forEach((item2) => {
-      const tone2 = this._tone(item2);
-      if (tone2 === "critical") criticalCount += 1;
-      if (tone2 === "critical" || tone2 === "warning") warningCount += 1;
-      if (tone2 === "offline") offlineCount += 1;
+      const tone3 = this._tone(item2);
+      if (tone3 === "critical") criticalCount += 1;
+      if (tone3 === "critical" || tone3 === "warning") warningCount += 1;
+      if (tone3 === "offline") offlineCount += 1;
       const node = this.shadowRoot?.querySelector(`[data-entity="${CSS.escape(item2.id)}"]`);
       if (!node) return;
-      node.className = `battery ${tone2}`;
-      node.dataset.tone = tone2;
+      node.className = `battery ${tone3}`;
+      node.dataset.tone = tone3;
       const shown = item2.offline ? item2.lastKnown : item2.value;
       node.querySelector("[data-value]").textContent = item2.binary ? item2.offline ? "\u2014" : item2.raw === "on" ? "Lav" : "OK" : shown == null ? "\u2014" : `${Math.round(shown)}%`;
-      node.querySelector("[data-status]").textContent = tone2 === "critical" ? "Kritisk" : tone2 === "warning" ? "Lav" : tone2 === "offline" ? item2.lastKnown != null ? "Sidst kendt \xB7 offline" : "Offline" : "God";
+      node.querySelector("[data-status]").textContent = tone3 === "critical" ? "Kritisk" : tone3 === "warning" ? "Lav" : tone3 === "offline" ? item2.lastKnown != null ? "Sidst kendt \xB7 offline" : "Offline" : "God";
       if (!this._config.show_entity_id) node.querySelector("[data-detail]").textContent = this._detail(item2);
       node.style.setProperty("--level", `${shown ?? 0}%`);
     });
@@ -1179,8 +1179,8 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       this.signatures.set(id, html);
       el.innerHTML = html;
     }
-    kpi(icon4, label, value, detail, tone2 = "") {
-      return `<article class="kpi ${tone2}">${this.icon(icon4)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
+    kpi(icon5, label, value, detail, tone3 = "") {
+      return `<article class="kpi ${tone3}">${this.icon(icon5)}<span>${label}</span><strong>${value}</strong><small>${detail}</small></article>`;
     }
     update() {
       if (!this.shadowRoot.getElementById("kpis") || !this.ha) return;
@@ -1237,7 +1237,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
     }
     adviceView() {
       const rows = [["filter", "Filtreringsfremdrift", "progress-check"], ["warning", "Statusadvarsel", "alert-circle-outline"], ["next", "N\xE6ste handling", "calendar-check"], ["swim", "Bedste badetid", "weather-sunny"], ["cover", "Coverstatus", "pool"], ["maintenance", "Vedligeholdelse", "wrench"]];
-      return `<div class="advice-grid">${rows.map(([key, label, icon4]) => `<div class="advice-row">${this.icon(icon4)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
+      return `<div class="advice-grid">${rows.map(([key, label, icon5]) => `<div class="advice-row">${this.icon(icon5)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
     }
     winterView() {
       const s = this.state("winter");
@@ -1887,10 +1887,10 @@ var HARoborockVacuumCard = class extends HTMLElement {
       <div class="track"><i style="width:${pct3}%"></i></div>
     </div>`;
   }
-  _switchChip(id, label, icon4) {
+  _switchChip(id, label, icon5) {
     if (!id) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon4}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon5}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _call(service, data = {}) {
     if (!this._config.vacuum) return;
@@ -2451,7 +2451,7 @@ var HaTeslaVehicleCard = class extends HTMLElement {
       <ha-card><ha-icon class="watermark" icon="mdi:car-sports"></ha-icon>
         <header><div class="title"><span class="eyebrow">TESLA \xB7 SAMLET BILCENTER</span><h1>${this.config.title}</h1><div class="headline" data-v="headline"></div></div>
           <div class="battery"><div class="battery-value" data-v="battery">\u2014</div><div class="battery-track"><i data-v="batteryBar"></i></div><small data-v="rangeHeader">\u2014</small></div></header>
-        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon4]) => `<button data-tab="${id}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
+        <nav>${[["overview", "Overblik", "mdi:car-info"], ["vehicle", "Bilinfo", "mdi:car-cog"], ["charge", "Ladning", "mdi:ev-station"], ["trips", "Ture", "mdi:map-marker-path"], ["history", "Historik", "mdi:chart-timeline-variant"]].map(([id, label, icon5]) => `<button data-tab="${id}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>`).join("")}</nav>
         <main>
           <section data-panel="overview">${this._overviewHtml()}</section>
           <section data-panel="vehicle">${this._vehicleInfoHtml()}</section>
@@ -2488,8 +2488,8 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   _historyHtml() {
     return `<div class="history-grid"><article><div class="list-head"><div><small>LADNINGER</small><h2>Ladehistorik</h2></div><div class="pager"><button data-page="charge-prev">\u2039</button><span data-v="chargePage"></span><button data-page="charge-next">\u203A</button></div></div><div class="record" data-v="chargeRecord"></div></article><article><div class="section-head"><div><small>\xD8KONOMI</small><h2>Samlet status</h2></div><ha-icon icon="mdi:chart-donut"></ha-icon></div><div class="history-stats">${this._fact("chargesTotal", "Ladninger")}${this._fact("kwhTotal", "Energi")}${this._fact("priceTotalHistory", "Pris")}${this._fact("lastCharge", "Seneste")}</div><div class="months" data-v="months"></div></article></div>`;
   }
-  _metric(id, icon4, label) {
-    return `<article class="metric"><ha-icon icon="${icon4}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
+  _metric(id, icon5, label) {
+    return `<article class="metric"><ha-icon icon="${icon5}"></ha-icon><div><small>${label}</small><strong data-v="${id}">\u2014</strong></div></article>`;
   }
   _fact(id, label) {
     return `<div class="fact"><small>${label}</small><strong data-v="${id}">\u2014</strong></div>`;
@@ -2520,8 +2520,8 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   _update() {
     if (!this.shadowRoot.querySelector("ha-card")) return;
     const battery = this._n("battery"), range = this._n("range"), power = this._n("chargePower") || 0, charging = power > 0.05;
-    const level = Math.max(0, Math.min(100, battery || 0)), tone2 = level < 20 ? "var(--tesla-danger, var(--error-color, #ff5f68))" : level < 50 ? "var(--tesla-warn, var(--warning-color, #ffb547))" : "var(--tesla-ok, var(--success-color, #4fd18b))";
-    this.style.setProperty("--battery-color", tone2);
+    const level = Math.max(0, Math.min(100, battery || 0)), tone3 = level < 20 ? "var(--tesla-danger, var(--error-color, #ff5f68))" : level < 50 ? "var(--tesla-warn, var(--warning-color, #ffb547))" : "var(--tesla-ok, var(--success-color, #4fd18b))";
+    this.style.setProperty("--battery-color", tone3);
     this.classList.toggle("charging", charging);
     this._set("battery", battery == null ? "\u2014" : `${this._fmt(battery)}%`);
     this._set("rangeHeader", `${this._fmt(range)} km r\xE6kkevidde`);
@@ -2529,7 +2529,7 @@ var HaTeslaVehicleCard = class extends HTMLElement {
     const bar = this.shadowRoot.querySelector('[data-v="batteryBar"]');
     if (bar) {
       bar.style.width = `${level}%`;
-      bar.style.background = tone2;
+      bar.style.background = tone3;
     }
     this._set("online", this._s("online")?.state === "on" ? "\u25CF ONLINE" : "\u25CF OFFLINE");
     this._set("chargerMode", this._chargerLabel());
@@ -2917,8 +2917,8 @@ function ctlStatus(parts, { now = Date.now(), charging = false } = {}) {
 function ctlBattery(soc, target2, charging = false, { low = 20, critical = 10 } = {}) {
   const s = Math.max(0, Math.min(100, Number(soc) || 0));
   const t = Math.max(s, Math.min(100, Number.isFinite(Number(target2)) ? Number(target2) : 100));
-  const tone2 = s <= critical ? "crit" : s <= low ? "warn" : "ok";
-  return `<span class="ctl-bat${charging ? " on" : ""}" data-tone="${tone2}" style="--s:${s.toFixed(1)};--t:${t.toFixed(1)}" role="img" aria-label="Batteri ${Math.round(s)} %${t > s ? `, m\xE5l ${Math.round(t)} %` : ""}"><i class="ctl-bat-f"></i><i class="ctl-bat-g"></i></span>`;
+  const tone3 = s <= critical ? "crit" : s <= low ? "warn" : "ok";
+  return `<span class="ctl-bat${charging ? " on" : ""}" data-tone="${tone3}" style="--s:${s.toFixed(1)};--t:${t.toFixed(1)}" role="img" aria-label="Batteri ${Math.round(s)} %${t > s ? `, m\xE5l ${Math.round(t)} %` : ""}"><i class="ctl-bat-f"></i><i class="ctl-bat-g"></i></span>`;
 }
 var CTL_CSS = `
 .ctl-tl{display:block;position:relative;padding:2px 0 14px}
@@ -3653,25 +3653,25 @@ function ttdPressure(stateObj, options, format) {
   const displayUnit = wanted && bar != null ? wanted : unit;
   const shown = displayUnit === unit ? value : bar / TTD_PRESSURE_TO_BAR[displayUnit.toLowerCase()];
   const digits = Number.isInteger(options.digits) ? options.digits : displayUnit.toLowerCase() === "bar" ? 1 : 0;
-  let tone2 = "ok";
+  let tone3 = "ok";
   let status = TTD_TEXT.tpms.ok;
   if (bar == null) {
-    tone2 = "info";
+    tone3 = "info";
     status = "";
   } else if (bar <= options.critical_low) {
-    tone2 = "crit";
+    tone3 = "crit";
     status = TTD_TEXT.tpms.critical_low;
   } else if (bar >= options.critical_high) {
-    tone2 = "crit";
+    tone3 = "crit";
     status = TTD_TEXT.tpms.critical_high;
   } else if (bar <= options.warning_low) {
-    tone2 = "warn";
+    tone3 = "warn";
     status = TTD_TEXT.tpms.low;
   } else if (bar >= options.warning_high) {
-    tone2 = "warn";
+    tone3 = "warn";
     status = TTD_TEXT.tpms.high;
   }
-  return { text: ttdJoin(format.number(shown, digits), displayUnit), tone: tone2, status, bar };
+  return { text: ttdJoin(format.number(shown, digits), displayUnit), tone: tone3, status, bar };
 }
 function ttdOpaque(path) {
   return /\.jpe?g(?:[?#]|$)/i.test(String(path || ""));
@@ -3684,22 +3684,22 @@ function ttdShortModel(name) {
   const drive = /performance/i.test(text) ? "Performance" : /long range/i.test(text) ? "Long Range" : /\bAWD\b/i.test(text) ? "AWD" : /\bRWD\b|standard range/i.test(text) ? "RWD" : "";
   return ["Tesla", model, drive].filter(Boolean).join(" ");
 }
-function ttdIcon(icon4, cls = "") {
-  return `<ha-icon icon="${icon4}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
+function ttdIcon(icon5, cls = "") {
+  return `<ha-icon icon="${icon5}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 }
 function ttdTemplate(cfg) {
   const e = ttdEsc;
-  const stat = (key, icon4, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon4)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
-  const kpi = (key, icon4, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon4, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
-  const cell = (key, icon4, tone2, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon4, `ic ${tone2}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
+  const stat = (key, icon5, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon5)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
+  const kpi = (key, icon5, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon5, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
+  const cell = (key, icon5, tone3, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon5, `ic ${tone3}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
   const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
   const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><small>${label}</small><b data-r="${ref}V">${TTD_DASH}</b><em data-r="${ref}S"></em></button>`;
-  const item2 = (key, icon4, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon4)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
+  const item2 = (key, icon5, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon5)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
   const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
   const quick = TTD_CAR_CONTROLS.filter(([key]) => cfg.carControls[key]);
-  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon4, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon4)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
+  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon5, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon5)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
   return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
@@ -3733,7 +3733,7 @@ function ttdTemplate(cfg) {
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
-  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon4]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon4)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
+  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon5)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p><p class="sc-hint sc-late" data-r="scLate" hidden></p></div>
   <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small><small class="sc-later" data-r="scHoldW"></small></span>
@@ -3765,13 +3765,13 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="sc-trip-h" data-scdef data-r="scDefHead" aria-expanded="false">${ttdIcon("mdi:calendar-star", "ic amber")}<span><b>Standardplan</b><small data-r="scDefSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scDefBody" hidden>
       <p class="sc-note">K\xF8rer n\xE5r kablet s\xE6ttes i. V\xE6lger du en anden plan, k\xF8rer den \xE9n gang og g\xE5r s\xE5 tilbage hertil.</p>
-      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon4]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon4)}<span>${label}</span></button>`).join("")}</div>
+      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon5)}<span>${label}</span></button>`).join("")}</div>
     </div>
   </div>
   <div class="sc-trip sc-opt" data-r="scOpt" hidden>
     <button type="button" class="sc-trip-h" data-scopt data-r="scOptHead" aria-expanded="false">${ttdIcon("mdi:tune-variant", "ic green")}<span><b>Smarte valg</b><small data-r="scOptSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scOptBody" hidden>
-      <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon4]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon4)}<span>${label}</span></button>`).join("")}</div>
+      <div class="sc-opts">${TTD_SC_OPTIONS.map(([role, label, icon5]) => `<button type="button" class="chip" data-scoptrole="${role}" aria-pressed="false" hidden>${ttdIcon(icon5)}<span>${label}</span></button>`).join("")}</div>
       <div class="ctl2" data-r="scQuiet" hidden>${ttdIcon("mdi:bell-sleep-outline", "ic blue")}<span>Lydl\xF8s</span><input type="time" data-r="scQuietFrom" aria-label="Lydl\xF8s fra"><span>\u2013</span><input type="time" data-r="scQuietUntil" aria-label="Lydl\xF8s til"></div>
       <p class="sc-note" data-r="scOptNote"></p>
     </div>
@@ -5046,8 +5046,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       }
     }
   }
-  _ccSay(text, ms, tone2 = "") {
-    this._ccMsg = { text, tone: tone2, until: Date.now() + ms };
+  _ccSay(text, ms, tone3 = "") {
+    this._ccMsg = { text, tone: tone3, until: Date.now() + ms };
     clearTimeout(this._ccMsgTimer);
     this._ccMsgTimer = setTimeout(() => this._applyCarControls(), ms + 50);
   }
@@ -5199,8 +5199,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._applyCarControls();
       return;
     }
-    const [, label, icon4] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
-    const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon4)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
+    const [, label, icon5] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+    const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon5)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
     pop.innerHTML = key === "climate" ? `${head(true)}<div class="qcp-row"><button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
         <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div></div>
         <div class="qcp-chips" data-qcp="chips"></div>${this._sc("heat_hold") ? `
@@ -5307,7 +5307,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const pool = Object.values(registry).filter((entry) => entry.device_id && (entry.device_id === own?.device_id || carName && name(devices[entry.device_id]) === carName) && !entry.hidden);
     pool.sort((a, b) => (a.device_id === own?.device_id ? 0 : 1) - (b.device_id === own?.device_id ? 0 : 1));
     const known = (id) => states[id] && !["unknown", "unavailable"].includes(states[id].state);
-    return TTD_QC_CHIPS.map(([role, label, icon4, domain, pattern]) => {
+    return TTD_QC_CHIPS.map(([role, label, icon5, domain, pattern]) => {
       const found = pool.filter((entry) => entry.entity_id.startsWith(`${domain}.`) && pattern.test(entry.entity_id)).map((entry) => entry.entity_id);
       if (!found.length) return null;
       const target2 = found.find((id) => states[id] && states[id].state !== "unavailable") || found[0];
@@ -5315,7 +5315,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const value = String(shown?.state || "").toLowerCase();
       const on = domain === "switch" ? value === "on" : !!value && !["off", "unknown", "unavailable"].includes(value);
       const level = domain === "switch" ? on ? "Til" : "Fra" : TTD_HEAT_LEVELS[value] || TTD_DASH;
-      return { role, label, icon: icon4, domain, target: target2, value, on, level, dead: !states[target2] || states[target2].state === "unavailable" };
+      return { role, label, icon: icon5, domain, target: target2, value, on, level, dead: !states[target2] || states[target2].state === "unavailable" };
     }).filter(Boolean);
   }
   _qcChip(role) {
@@ -5620,7 +5620,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   _scModel(f) {
     const status = this._sc("charge_status");
     const statusKey = ttdHasValue(status) ? status.state : null;
-    const [label, tone2] = TTD_SC_STATUS[statusKey] || [statusKey ? ttdHumanize(statusKey) : TTD_TEXT.unavailable, "muted"];
+    const [label, tone3] = TTD_SC_STATUS[statusKey] || [statusKey ? ttdHumanize(statusKey) : TTD_TEXT.unavailable, "muted"];
     const modeObj = this._sc("charge_mode");
     const mode = ttdHasValue(modeObj) ? modeObj.state : null;
     const plan = this._sc("next_charge_start")?.attributes || {};
@@ -5736,7 +5736,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       else if (option.role === "quiet_night" && option.attrs.from && option.attrs.until) notes.push(`Ladestart, f\xE6rdig og planbeskeder kommer uden lyd ${option.attrs.from}\u2013${option.attrs.until}${option.attrs.silent_now ? " (lydl\xF8s nu)" : ""}`);
     }
     return {
-      badge: { text: label, tone: tone2 },
+      badge: { text: label, tone: tone3 },
       sub: sub.join(" \xB7 ") || TTD_DASH,
       mode,
       modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
@@ -7231,34 +7231,34 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const car = this._hass?.states?.[this._loc()]?.attributes || {};
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
-    const esc12 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc13 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
       const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
-      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc12(label)}</div>`;
+      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc13(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
-      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc12(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc13(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
         Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}\u2013${money(station.day_range[1])} ${unit}/kWh` : null,
         Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
         ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`)
-      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc12(line)}</div>`).join("") : "");
+      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc13(line)}</div>`).join("") : "");
       const plugCount = /* @__PURE__ */ new Map();
       for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
-        const key = `${esc12(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
+        const key = `${esc13(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
         plugCount.set(key, (plugCount.get(key) || 0) + (Number(c2.count) || 1));
       }
       const plugs = [...plugCount].map(([key, count]) => `${count > 1 ? `${count} \xD7 ` : ""}${key}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
-        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc12(station.name || station.operator || "Ladested")}</div>`,
+        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc13(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc12(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc13(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
-        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc12(station.usage_cost)}</div>` : "",
-        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc12(station.feed)} (EU's AFIR-data)</div>` : "",
+        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc13(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc13(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
       ].filter(Boolean).join("")}</div>`;
       let marker;
@@ -8747,9 +8747,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const charging = this._isCharging();
     const plugged = ["on", "true", "connected"].includes(String(this._val(c2.plugged) || "").toLowerCase());
     const where = this._val(c2.location);
-    const tone2 = charging ? "var(--chg)" : soc != null && soc < 20 ? "var(--warn)" : "var(--accent)";
+    const tone3 = charging ? "var(--chg)" : soc != null && soc < 20 ? "var(--warn)" : "var(--accent)";
     const card = root.querySelector("ha-card");
-    card.style.setProperty("--tone", tone2);
+    card.style.setProperty("--tone", tone3);
     card.classList.toggle("charging", charging);
     card.classList.toggle("compact", !!c2.compact);
     root.querySelector(".name").textContent = c2.name;
@@ -8949,7 +8949,7 @@ console.info(`%c HA TEXT INPUT %c v${VERSION6} `, "color:white;background:#3b82f
 
 // src/shared/lux.js
 var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
-function luxCss({ base, active, icon: icon4 = "ha-icon", underline = true, gum = true }) {
+function luxCss({ base, active, icon: icon5 = "ha-icon", underline = true, gum = true }) {
   const a = LUX_ACCENT;
   const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
   return `
@@ -8960,9 +8960,9 @@ ${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transpare
   box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
   ${gum ? "animation:luxGum .7s ease-out" : ""}}
 ${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
-${each(active, ` ${icon4}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+${each(active, ` ${icon5}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
 ${LUX_KEYFRAMES}
-@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon4}`)}{animation:none!important;transition:none!important}}`;
+@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon5}`)}{animation:none!important;transition:none!important}}`;
 }
 var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
 @keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
@@ -9121,9 +9121,9 @@ var HAEvTyreCard = class extends HTMLElement {
     const max = Math.max(8, set.tread_mm);
     const pct3 = Math.min(100, set.tread_mm / max * 100);
     const minPct = set.tread_min_mm / max * 100;
-    const tone2 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
+    const tone3 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
     const left = set.km_left != null ? ` \xB7 ca. ${num2(set.km_left)} km tilbage` : "";
-    return `<div class="tread ${tone2}"><div class="tread-h"><span>M\xF8nster</span><b>${num2(set.tread_mm, 1)} mm</b></div>
+    return `<div class="tread ${tone3}"><div class="tread-h"><span>M\xF8nster</span><b>${num2(set.tread_mm, 1)} mm</b></div>
       <div class="tread-bar"><i style="width:${pct3.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
       <small>Anbefalet min. ${num2(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num2(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc5(dayShort(set.tread_at))}</small></div>`;
   }
@@ -9664,10 +9664,10 @@ var HALawnMowerCard = class extends HTMLElement {
     const s = this._s(id);
     return s !== void 0 && !["unknown", "unavailable", ""].includes(s);
   }
-  _switchChip(id, label, icon4) {
+  _switchChip(id, label, icon5) {
     if (!this._hasData(id)) return "";
     const on = this._on(id);
-    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon4}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
+    return `<button class="chip switch ${on ? "" : "off"}" data-switch="${this._esc(id)}"><ha-icon icon="${icon5}"></ha-icon>${label} ${on ? "til" : "fra"}</button>`;
   }
   _select(id, label) {
     if (!this._hasData(id)) return "";
@@ -9859,7 +9859,7 @@ var HALawnMowerCard = class extends HTMLElement {
       ${selectFields.length ? `<div class="section-title">Indstillinger</div><div class="fields">${selectFields.join("")}</div>` : ""}
       ${numberFields.length ? `<div class="section-title">Justeringer</div><div class="fields">${numberFields.join("")}</div>` : ""}
       ${systemChips.length ? `<div class="section-title">System</div><div class="chips">${systemChips.join("")}</div>` : ""}
-      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon4]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
+      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon5]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
       <div class="controls">
         <button data-action="start_mowing" ${canStart ? "" : "disabled"}><ha-icon icon="mdi:play"></ha-icon>Start</button>
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
@@ -10417,12 +10417,12 @@ var PoolForecastCard = class extends HTMLElement {
     const days = points.filter((point) => Number.isFinite(point.high)).slice(0, 5);
     if (!days.length) return "";
     return `<div class="weather-days">${days.map((point) => {
-      const icon4 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
+      const icon5 = typeof point.icon === "string" && point.icon.startsWith("/local/") ? `<img src="${this._escape(point.icon)}" alt="">` : `<ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>`;
       const wind = Number.isFinite(point.wind) ? `<span>${this._fmt(point.wind)} m/s</span>` : "";
       return `
         <div class="weather-day">
           <div class="weather-day-name">${this._escape(this._label(point.ts, true))}</div>
-          ${icon4}
+          ${icon5}
           <div class="weather-range-text"><b>${this._fmt(point.high, 0)}&deg;</b><span>${this._fmt(point.low, 0)}&deg;</span></div>
           <div class="weather-meta"><span>${this._fmt(point.rain, 1)} mm</span>${wind}</div>
           <div class="weather-condition">${this._escape(point.condition)}</div>
@@ -11982,14 +11982,14 @@ var HAACClimateCard = class extends HTMLElement {
     const online = this._entity(unit.online);
     const offline = !!online && online.state === "off";
     const active = !["off", "unknown", "unavailable"].includes(mode);
-    let tone2 = active ? TONES[mode] || "fan" : "off";
-    if (!climate || offline) tone2 = "problem";
+    let tone3 = active ? TONES[mode] || "fan" : "off";
+    if (!climate || offline) tone3 = "problem";
     const statusText = !climate ? "Utilg\xE6ngelig" : offline ? "Anl\xE6gget svarer ikke" : STATUS_LABELS[status] || this._hass?.formatEntityState?.(climate) || mode;
     return {
       climate,
       mode,
       active,
-      tone: tone2,
+      tone: tone3,
       offline,
       status,
       waiting: WAITING.includes(status),
@@ -12053,7 +12053,7 @@ var HAACClimateCard = class extends HTMLElement {
     const shown = MODES.filter((m) => modes.includes(m.id));
     const modeRow = shown.map((m) => `<button class="seg ${s.mode === m.id ? "on" : ""}" data-mode="${m.id}"><ha-icon icon="${m.icon}"></ha-icon><span>${m.label}</span></button>`).join("");
     const opt = (v, cur, map) => `<option value="${this._esc(v)}" ${v === cur ? "selected" : ""}>${this._esc(this._label(map, v))}</option>`;
-    const dropdown = (kind, icon4, label, values, cur, map) => values.length ? `<label class="dd"><span><ha-icon icon="${icon4}"></ha-icon>${label}</span><div class="dd-box"><select data-select="${kind}">${values.map((v) => opt(v, cur, map)).join("")}</select><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div></label>` : "";
+    const dropdown = (kind, icon5, label, values, cur, map) => values.length ? `<label class="dd"><span><ha-icon icon="${icon5}"></ha-icon>${label}</span><div class="dd-box"><select data-select="${kind}">${values.map((v) => opt(v, cur, map)).join("")}</select><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div></label>` : "";
     const select = this._entity(unit.program);
     const climateObj = select ? void 0 : this._entity(unit.unit || unit.climate);
     const options = select ? select.attributes?.options || [] : climateObj?.attributes?.preset_modes || [];
@@ -12071,18 +12071,18 @@ var HAACClimateCard = class extends HTMLElement {
     const copPct = s.cop !== void 0 ? Math.max(1e-3, Math.min(1, s.cop / 6)) : 1e-3;
     const a = Math.PI * (1 - copPct);
     const end = `${(40 + 32 * Math.cos(a)).toFixed(1)} ${(40 - 32 * Math.sin(a)).toFixed(1)}`;
-    const tile2 = (icon4, label, value) => `<div class="tile"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+    const tile3 = (icon5, label, value) => `<div class="tile"><ha-icon icon="${icon5}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
     const tiles = [];
     if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct3}%"></b></i></div></div>`);
-    if (unit.output) tiles.push(tile2("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
+    if (unit.output) tiles.push(tile3("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
     if (unit.cop) tiles.push(`<div class="tile gauge"><svg viewBox="0 0 80 46"><path d="M8 40 A32 32 0 0 1 72 40" class="track"/><path d="M8 40 A32 32 0 0 1 ${end}" class="val"/></svg><div><strong>${this._format(s.cop, 1)}</strong><span>COP</span></div></div>`);
-    if (unit.outdoor) tiles.push(tile2("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}\xB0`));
-    if (unit.unit_temp) tiles.push(tile2("mdi:thermometer-lines", "Anl\xE6g", `${this._format(s.unitTemp, 1)}\xB0`));
-    if (unit.humidity) tiles.push(tile2("mdi:water-percent", "Fugt", `${this._format(s.humidity)} %`));
+    if (unit.outdoor) tiles.push(tile3("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}\xB0`));
+    if (unit.unit_temp) tiles.push(tile3("mdi:thermometer-lines", "Anl\xE6g", `${this._format(s.unitTemp, 1)}\xB0`));
+    if (unit.humidity) tiles.push(tile3("mdi:water-percent", "Fugt", `${this._format(s.humidity)} %`));
     return tiles.length ? `<section class="live">${tiles.join("")}</section>` : "";
   }
   _functions(unit, s) {
-    const btn = (action, icon4, label, on, show2, toggle = false) => show2 ? `<button class="fn ${toggle ? "tg" : ""} ${on ? "on" : ""}" data-action="${action}" ${toggle ? `aria-pressed="${!!on}"` : ""}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>` : "";
+    const btn = (action, icon5, label, on, show2, toggle = false) => show2 ? `<button class="fn ${toggle ? "tg" : ""} ${on ? "on" : ""}" data-action="${action}" ${toggle ? `aria-pressed="${!!on}"` : ""}><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>` : "";
     const follow = this._entity(unit.follow_me);
     const beep = this._entity(unit.beep);
     const supply = this._entity(unit.supply);
@@ -13138,10 +13138,10 @@ var HACalefaDetailsCard = class extends HTMLElement {
   }
   _renderStructure() {
     if (!this.shadowRoot) return;
-    const number2 = (key, label, icon4) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
-    const toggle = (key, label, description, icon4) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon4}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
-    const select = (key, label, icon4) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
-    const metric = (key, label, icon4, tone2) => `<button class="data-metric ${tone2}" data-more="${key}"><ha-icon icon="${icon4}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+    const number2 = (key, label, icon5) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
+    const toggle = (key, label, description, icon5) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
+    const select = (key, label, icon5) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
+    const metric = (key, label, icon5, tone3) => `<button class="data-metric ${tone3}" data-more="${key}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card>
       <header><div><small>WAVIN CALEFA</small><h2>${this._escape(this._config.title)}</h2><p>Styring, m\xE5lerdata og historik samlet</p></div><div class="status" data-summary>Indl\xE6ser\u2026</div></header>
       <nav class="category-tabs" aria-label="Detaljekategori"><button class="active" data-tab="control"><ha-icon icon="mdi:tune-variant"></ha-icon>Styring</button><button data-tab="meter"><ha-icon icon="mdi:meter-gas"></ha-icon>M\xE5lerdata</button><button data-tab="history"><ha-icon icon="mdi:chart-line"></ha-icon>Historik</button></nav>
@@ -14559,7 +14559,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     }).join(
       ""
     )}</div></div>` : ""}</div>`;
-    const tab = (id, name, label, icon4) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon4}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
+    const tab = (id, name, label, icon5) => `<button data-tab="${id}" class="${this._tab === id ? "active" : ""}"><ha-icon icon="${icon5}"></ha-icon><span class="tab-copy"><b>${name}</b><small>${label}</small></span></button>`;
     this._renderShape = this._shape(data);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--good:var(--dashboard-success, var(--success-color, #50d6a0));--danger:var(--dashboard-danger, var(--error-color, #ff6577));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.22)));--surface-local:var(--surface,var(--ha-card-background,var(--card-background-color,#101a28)))}*{box-sizing:border-box}button{font:inherit}ha-card{position:relative;overflow:hidden;padding:15px 16px 13px;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--accent);border-radius:var(--price-card-radius,20px);background:var(--surface-local);color:var(--primary-text-color);box-shadow:var(--dashboard-card-shadow,0 8px 24px rgba(0,0,0,.14))}.head{display:flex;align-items:center;justify-content:space-between;gap:12px}.identity{display:flex;align-items:center;gap:9px}.icon{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.icon ha-icon{--mdc-icon-size:23px}.eyebrow{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.14em}.identity strong{display:block;margin-top:1px;font-size:15px}.price{text-align:right}.price-row{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}.price b{font-size:29px;line-height:1}.price small,.meta{color:var(--secondary-text-color);font-size:9px}.source{display:inline-flex;align-items:center;gap:4px;margin-top:4px;color:var(--secondary-text-color);font-size:8px}.source:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--good)}.week-nav{display:grid;grid-template-columns:1fr;gap:5px;margin:0 0 10px}.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px}.day-choice{position:relative;min-width:0;padding:5px 2px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:linear-gradient(160deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 100%);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22);color:var(--secondary-text-color);cursor:pointer;transition:transform .15s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.day-choice:hover{transform:translateY(calc(var(--dashboard-card-highlight, 1) * -2px));box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.22),0 calc(var(--dashboard-card-highlight, 1) * 12px) calc(var(--dashboard-card-highlight, 1) * 26px) rgba(0,0,0,calc(var(--dashboard-card-highlight, 1) * .26))}.day-choice:active{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.day-choice{transition:none}.day-choice:hover{transform:none}}.day-choice b,.day-choice span{display:block}.day-choice b{text-transform:capitalize;font-size:12px;font-weight:800}.day-choice span{margin-top:2px;font-size:9px;opacity:.75}.day-choice.active{border-color:color-mix(in srgb,#ffffff 30%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 88%,transparent) 0%,color-mix(in srgb,var(--dashboard-accent,var(--accent)) 58%,transparent) 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 6px 14px color-mix(in srgb,var(--dashboard-accent,var(--accent)) 32%,transparent)}.day-choice.active span{opacity:1}.summary{display:grid;grid-template-columns:minmax(110px,1fr) repeat(3,auto);align-items:center;gap:6px}.day{text-transform:capitalize;font-size:16px;font-weight:800}.day .now-label{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.day .now-value{display:block;margin-top:2px;color:var(--primary-text-color);font-size:19px;font-weight:800;text-transform:none;letter-spacing:-.02em}.day .now-value small{margin-left:4px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.res{display:inline-flex;gap:1px;margin-left:8px;padding:2px;border-radius:999px;background:color-mix(in srgb,var(--primary-text-color) 8%,transparent);vertical-align:middle;letter-spacing:0;text-transform:none}.res button{border:0;padding:2px 8px;border-radius:999px;background:transparent;color:var(--secondary-text-color);font-size:10px;font-weight:700;line-height:1.4;cursor:pointer;text-transform:none}.res button:hover{color:var(--primary-text-color)}.res button.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px color-mix(in srgb,var(--accent) 35%,transparent)}.day .day-date{text-transform:capitalize}.day .res{margin-left:8px}
@@ -15449,7 +15449,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const cs = getComputedStyle(this), cv = (n) => cs.getPropertyValue(n).trim();
     const cG = cv("--good") || "#6be3a8", cW = cv("--warn") || "#e8c37e", cB = cv("--bad") || "#ff9e7a", cE = cv("--ev") || "#b7a4ff";
     const cX = cv("--xbad") || "#ff4d8d", cN = cv("--normal") || "#c9d66b";
-    const tone2 = (v) => [cG, cN, cW, cB, cX][this.level(v)];
+    const tone3 = (v) => [cG, cN, cW, cB, cX][this.level(v)];
     let g = `<defs><linearGradient id="pl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H3}">${[[LV.extreme, cX], [LV.very_dear, cB], [LV.dear, cW], [LV.cheap, cN], [-1e9, cG]].map(([v, c2], i, a) => {
       const o = (y) => Math.max(0, Math.min(1, y / H3)).toFixed(3);
       const top = i ? o(Y(a[i - 1][0])) : "0", bot = o(Y(v));
@@ -15461,7 +15461,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
       pts.forEach((p, i) => {
         const x = Math.max(0, X(p.t)), w = Math.max(0.5, Math.min(W2, X(p.e)) - x - bgap(p)), y = Y(p.p), past = p.e <= now, evp = inCh(p);
         if (evp) evBars.push({ x, w, y, x2: dear(p) });
-        g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone2(p.p)}" opacity="${past ? 0.25 : p.f ? 0.45 : 0.9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`;
+        g += `<rect x="${x.toFixed(2)}" y="${y.toFixed(1)}" width="${w.toFixed(2)}" height="${(base - y).toFixed(1)}" rx="1.5" fill="${tone3(p.p)}" opacity="${past ? 0.25 : p.f ? 0.45 : 0.9}" style="transform-origin:${x}px ${base}px;animation:barin .7s cubic-bezier(.16,1,.3,1) ${Math.min(i * 6, 900)}ms both"/>`;
       });
     } else {
       if (A1.length) {
@@ -16625,16 +16625,16 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   _esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
-  _metric(key, label, icon4) {
-    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon4}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon4}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+  _metric(key, label, icon5) {
+    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon5}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
   }
-  _section(title, subtitle, icon4, content) {
-    return `<section><div class="section-title"><ha-icon icon="${icon4}"></ha-icon><div><h3>${title}</h3><p>${subtitle}</p></div></div>${content}</section>`;
+  _section(title, subtitle2, icon5, content) {
+    return `<section><div class="section-title"><ha-icon icon="${icon5}"></ha-icon><div><h3>${title}</h3><p>${subtitle2}</p></div></div>${content}</section>`;
   }
   _render() {
     const m = (...args) => this._metric(...args);
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card><header><div><small>DANTHERM HCH</small><h2>${this._esc(this._config.title)}</h2><p>Drift, ydelse, eftervarme og diagnose samlet</p></div><span class="health" data-health>Indl\xE6ser\u2026</span></header>
-      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon4, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`).join("")}</nav>
+      <nav>${[["overview", "mdi:view-dashboard-outline", "Overblik"], ["fans", "mdi:fan", "Ventilatorer"], ["heat", "mdi:radiator", "Eftervarme"], ["system", "mdi:router-network", "System"], ["history", "mdi:chart-line", "Historik"]].map(([id, icon5, label], i) => `<button class="${i ? "" : "active"}" data-tab="${id}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`).join("")}</nav>
       <div class="panel active" data-panel="overview"><div class="sections two">${this._section("Luft og temperatur", "Indeklima og temperaturbalance", "mdi:home-thermometer-outline", `<div class="metrics">${m("house_temperature", "Hustemperatur", "mdi:home-thermometer-outline")}${m("temperature_delta", "Ind/ud delta", "mdi:swap-vertical")}${m("heat_recovery_status", "Varmegenvinding", "mdi:heat-wave")}${m("heat_recovery_trend", "Udvikling", "mdi:chart-timeline-variant")}</div>`)}${this._section("Balance og filter", "Ydelse og vedligeholdelse", "mdi:air-filter", `<div class="metrics">${m("fan_control_balance", "Styringsbalance", "mdi:fan-chevron-down")}${m("fan_speed_balance", "Omdrejningsbalance", "mdi:fan-speed-2")}${m("last_filter_change", "Seneste filterskift", "mdi:air-filter")}${m("filter_changes", "Filterhistorik", "mdi:history")}</div>`)}</div></div>
       <div class="panel" data-panel="fans"><div class="sections two">${this._section("Ventilatorer", "Styring og aktuelle omdrejninger", "mdi:fan", `<div class="metrics">${m("extract_control", "Udsugning styring", "mdi:gauge")}${m("supply_control", "Indbl\xE6sning styring", "mdi:gauge")}${m("extract_speed", "Udsugning RPM", "mdi:fan-speed-2")}${m("supply_speed", "Indbl\xE6sning RPM", "mdi:fan-speed-2")}</div>`)}${this._section("Driftstilstand", "Aktive specialfunktioner", "mdi:hvac", `<div class="metrics">${m("night_mode", "Natdrift", "mdi:weather-night")}${m("fireplace_mode", "Pejsefunktion", "mdi:fireplace")}${m("standby", "Standby", "mdi:power-sleep")}</div>`)}</div></div>
       <div class="panel" data-panel="heat"><div class="sections two">${this._section("Setpunkter", "M\xE5l for luft og rum", "mdi:thermostat", `<div class="metrics">${m("afterheat_setpoint", "Indbl\xE6sning", "mdi:thermostat")}${m("room_setpoint", "Rum", "mdi:home-thermometer-outline")}${m("extract_setpoint", "Udsugning", "mdi:thermometer-off")}${m("afterheat_active", "Eftervarme", "mdi:radiator")}</div>`)}${this._section("Varmeflade", "Aktuelle luft- og vandtemperaturer", "mdi:heating-coil", `<div class="metrics">${m("air_before_coil", "Luft f\xF8r", "mdi:thermometer-low")}${m("air_after_coil", "Luft efter", "mdi:thermometer-high")}${m("air_delta", "Luft delta-T", "mdi:delta")}${m("water_flow", "Vand freml\xF8b", "mdi:thermometer-chevron-up")}${m("water_return", "Vand retur", "mdi:thermometer-chevron-down")}${m("water_delta", "Vand delta-T", "mdi:delta")}</div>`)}</div></div>
@@ -16672,9 +16672,9 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   _update() {
     if (!this._hass || !this.shadowRoot.querySelector("ha-card")) return;
     for (const [key] of DETAIL_FIELDS) {
-      const state = this._state(key), node = this.shadowRoot.querySelector(`[data-value="${key}"]`), tile2 = this.shadowRoot.querySelector(`[data-more="${key}"]`);
+      const state = this._state(key), node = this.shadowRoot.querySelector(`[data-value="${key}"]`), tile3 = this.shadowRoot.querySelector(`[data-more="${key}"]`);
       if (node) node.textContent = this._format(state, key);
-      if (tile2) tile2.dataset.tone = this._tone(key, state);
+      if (tile3) tile3.dataset.tone = this._tone(key, state);
     }
     const alarm = ["hac1_connection", "rs485_traffic"].some((k) => this._tone(k, this._state(k)) === "bad");
     const h = this.shadowRoot.querySelector("[data-health]");
@@ -27320,16 +27320,16 @@ var HAHeatEconomyCard = class extends HTMLElement {
     const w = this._windowInfo();
     const st = this._windowStatus(w);
     const verdict = cheaper === "vp" ? "Varmepumpen er billigst" : cheaper === "fj" ? "Fjernvarmen er billigst" : "Mangler data";
-    const tone2 = cheaper === "vp" ? "var(--good)" : "var(--accent)";
-    const tile2 = (key, icon4, label, price, sub, entity) => `
+    const tone3 = cheaper === "vp" ? "var(--good)" : "var(--accent)";
+    const tile3 = (key, icon5, label, price, sub, entity) => `
       <div class="src ${cheaper === key ? "win" : ""}" data-more="${this._esc(entity)}">
-        <div class="src-top"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span>${cheaper === key ? "<em>Billigst</em>" : ""}</div>
+        <div class="src-top"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span>${cheaper === key ? "<em>Billigst</em>" : ""}</div>
         <b>${this._fmt(price)}<small> kr/kWh</small></b>
         <div class="bar"><i style="width:${Number.isFinite(price) && max > 0 ? Math.max(4, Math.min(100, price / max * 100)).toFixed(1) : 0}%"></i></div>
         <p>${sub}</p>
       </div>`;
     this.shadowRoot.innerHTML = `<style>
-      :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));--tone:${tone2}}
+      :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--accent:var(--dashboard-accent, var(--primary-color, #62b5ff));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--card-surface:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));--tone:${tone3}}
       *{box-sizing:border-box}
       ha-card{position:relative;overflow:hidden;padding:20px;border-radius:var(--ha-card-border-radius,24px);background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--tone) 12%,transparent),transparent 60%),var(--card-surface);border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}
       .head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -27384,8 +27384,8 @@ var HAHeatEconomyCard = class extends HTMLElement {
         ${this._autoButton("auto")}
       </div>
       <div class="srcs">
-        ${tile2("vp", "mdi:heat-pump", "Varmepumpe", vp, `el ${this._fmt(el)} kr \xF7 COP ${this._fmt(cop, 1)}`, c2.vp_price_entity)}
-        ${tile2("fj", "mdi:radiator", "Fjernvarme", fj, "variabel pris pr. leveret kWh", c2.fj_price_entity)}
+        ${tile3("vp", "mdi:heat-pump", "Varmepumpe", vp, `el ${this._fmt(el)} kr \xF7 COP ${this._fmt(cop, 1)}`, c2.vp_price_entity)}
+        ${tile3("fj", "mdi:radiator", "Fjernvarme", fj, "variabel pris pr. leveret kWh", c2.fj_price_entity)}
       </div>
       <div class="facts">
         ${c2.saving_entity ? `<div class="fact" data-more="${this._esc(c2.saving_entity)}"><span>Sparer nu</span><b>${this._fmt(saving)} kr/t</b></div>` : ""}
@@ -27606,8 +27606,8 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const efficiency = input && output !== void 0 ? output / input : cop;
     return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current, target: target2, level, title, detail };
   }
-  _metric(label, value, icon4) {
-    return `<div class="metric"><ha-icon icon="${icon4}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon5) {
+    return `<div class="metric"><ha-icon icon="${icon5}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _pump(pump, index) {
     const s = this._state(pump);
@@ -28092,8 +28092,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       ${actions ? `<div class="explain-actions">${actions}</div>` : ""}
     </section>`;
   }
-  _metric(label, value, icon4 = "") {
-    return `<div class="metric">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
+  _metric(label, value, icon5 = "") {
+    return `<div class="metric">${icon5 ? `<ha-icon icon="${icon5}"></ha-icon>` : ""}<div><span>${label}</span><strong>${value}</strong></div></div>`;
   }
   _room(room, index, compact) {
     const s = this._state(room);
@@ -31252,9 +31252,9 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     const climate = this._entity(room?.ac?.climate);
     const mode = String(climate?.state || "off").toLowerCase();
     const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
-    const tone2 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
+    const tone3 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "K\xF8ler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
-    return { climate, mode, active, tone: tone2, label };
+    return { climate, mode, active, tone: tone3, label };
   }
   _roomState(room) {
     const climate = this._entity(room.climate);
@@ -31274,13 +31274,13 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     const batteryValues = Object.entries(this._object(climate?.attributes?.batteries)).filter(([entityId]) => entityId.startsWith("climate.")).map(([, entry]) => this._number(entry?.battery)).filter((value) => value !== void 0);
     const batteries = batteryValues.length ? batteryValues : [];
     const ac = room.ac ? this._acState(room) : void 0;
-    let tone2 = "neutral";
-    if (delta !== void 0 && delta < -0.4) tone2 = "cold";
-    else if (delta !== void 0 && delta > 0.7) tone2 = "warm";
-    else if (target2 !== void 0 && current !== void 0) tone2 = "ok";
-    else if (comfortable === false) tone2 = "warn";
-    else if (current !== void 0) tone2 = "ok";
-    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
+    let tone3 = "neutral";
+    if (delta !== void 0 && delta < -0.4) tone3 = "cold";
+    else if (delta !== void 0 && delta > 0.7) tone3 = "warm";
+    else if (target2 !== void 0 && current !== void 0) tone3 = "ok";
+    else if (comfortable === false) tone3 = "warn";
+    else if (current !== void 0) tone3 = "ok";
+    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone3, ac };
   }
   _format(value, digits = 1) {
     if (value === void 0) return "\u2014";
@@ -32221,14 +32221,14 @@ var HAAirQualityCard = class extends HTMLElement {
     const seen = /* @__PURE__ */ new Map();
     const bars = segments.map((segment) => {
       const rank = qualityRank(segment.s);
-      const tone2 = rank === void 0 ? "offline" : AIR_TONES[rank];
+      const tone3 = rank === void 0 ? "offline" : AIR_TONES[rank];
       const label = rank === void 0 ? "Ingen data" : AIR_LABELS[rank];
-      seen.set(label, tone2);
+      seen.set(label, tone3);
       const left = Math.max(0, (Math.max(segment.start, start) - start) / span * 100);
       const width = Math.max(0, (Math.min(segment.end, now) - Math.max(segment.start, start)) / span * 100);
-      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone2})"></i>`;
+      return `<i style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%;background:var(--${tone3})"></i>`;
     }).join("");
-    const legend = [...seen].map(([label, tone2]) => `<span><b style="background:var(--${tone2})"></b>${this._escape(label)}</span>`).join("");
+    const legend = [...seen].map(([label, tone3]) => `<span><b style="background:var(--${tone3})"></b>${this._escape(label)}</span>`).join("");
     return `<section class="chart quality"><div class="chart-head"><strong>M\xE5lerens vurdering</strong><span>${this._hours()} timer</span></div><div class="timeline">${bars}</div><div class="legend">${legend}</div></section>`;
   }
   // Nærmeste punkt på CO₂-/PM-kurven; svg'en fylder hele .plot, så kun den indre PAD skal regnes fra.
@@ -32264,16 +32264,16 @@ var HAAirQualityCard = class extends HTMLElement {
     if (isId(id)) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
   }
   _tile(label, id, value, unit, rank, sub) {
-    const tone2 = rank === void 0 ? "" : AIR_TONES[rank];
+    const tone3 = rank === void 0 ? "" : AIR_TONES[rank];
     const disabled = !isId(id) ? " disabled" : "";
     const shown = value === void 0 ? DASH : this._escape(value);
-    return `<button class="tile ${tone2}" type="button" data-open="${this._escape(id || "")}"${disabled} aria-label="${this._escape(`${label}: ${value ?? "ingen data"} ${unit}`)}"><span>${label}</span><strong>${shown}${value !== void 0 && unit ? `<small>${unit}</small>` : ""}</strong><em>${this._escape(sub)}</em></button>`;
+    return `<button class="tile ${tone3}" type="button" data-open="${this._escape(id || "")}"${disabled} aria-label="${this._escape(`${label}: ${value ?? "ingen data"} ${unit}`)}"><span>${label}</span><strong>${shown}${value !== void 0 && unit ? `<small>${unit}</small>` : ""}</strong><em>${this._escape(sub)}</em></button>`;
   }
   _render() {
     if (!this.shadowRoot || !this._config) return;
     const cfg = this._config;
     const air = airQuality(this._hass, cfg);
-    const tone2 = !air.configured || air.offline ? "offline" : air.tone;
+    const tone3 = !air.configured || air.offline ? "offline" : air.tone;
     const co2Points = this._numeric(cfg.co2);
     const pmPoints = this._numeric(cfg.pm25);
     const qualityState = this._hass?.states?.[cfg.air_quality]?.state;
@@ -32290,7 +32290,7 @@ var HAAirQualityCard = class extends HTMLElement {
     ].join("");
     this._series = {};
     const charts = [isId(cfg.co2) ? this._co2Chart(co2Points) : "", isId(cfg.pm25) ? this._pmChart(pmPoints) : "", isId(cfg.air_quality) ? this._timeline(this._segments(cfg.air_quality)) : ""].join("");
-    this.shadowRoot.innerHTML = `<style>${STYLE2}</style><ha-card><div class="shell ${tone2}${cfg.animation === false ? "" : " animate"}"><div class="backdrop"></div>
+    this.shadowRoot.innerHTML = `<style>${STYLE2}</style><ha-card><div class="shell ${tone3}${cfg.animation === false ? "" : " animate"}"><div class="backdrop"></div>
       <header><div><div class="eyebrow"><i></i>Luftkvalitet \xB7 ${this._hours()} timer</div><h2>${this._escape(title)}</h2></div>
       <div class="pill"><strong>${this._escape(air.configured ? air.label : DASH)}</strong><span>${this._escape(air.co2 !== void 0 ? `CO\u2082 ${this._format(air.co2)} ppm` : air.pm25 !== void 0 ? `PM2,5 ${this._format(air.pm25, 1)}` : "")}</span></div></header>
       <div class="advice">${this._escape(advice)}</div>
@@ -32639,8 +32639,8 @@ var HARoomControlCard = class extends HTMLElement {
   _togglesHtml(d) {
     const m = d.m;
     const list = [...d.toggles];
-    const add = (entity, name, icon4, desc, role) => {
-      if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon: icon4, desc, role });
+    const add = (entity, name, icon5, desc, role) => {
+      if (entity && this._st(entity) && !list.some((x) => x.entity === entity)) list.push({ entity, name, icon: icon5, desc, role });
     };
     add(m.automation, "Presence-automatik", "mdi:motion-sensor", "T\xE6nder og slukker lyset efter bev\xE6gelse i rummet", "presence");
     add(m.ambient, "Ambient lys", "mdi:lamp-outline", "Holder et d\xE6mpet stemningslys, n\xE5r rummet er tomt");
@@ -33198,11 +33198,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const climate = this._entity(room?.ac?.climate);
     const mode = String(climate?.state || "off").toLowerCase();
     const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
-    const tone2 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
+    const tone3 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "K\xF8ler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
     const learning = climate?.attributes?.follow_me_learning;
     const learnLeft = active && String(learning?.state || "").startsWith("checking_") ? Math.max(0, Number(learning.remaining_min) || 0) : null;
-    return { climate, mode, active, tone: tone2, label, learnLeft };
+    return { climate, mode, active, tone: tone3, label, learnLeft };
   }
   _roomState(room) {
     const climate = this._entity(room.climate);
@@ -33222,13 +33222,13 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const batteryValues = Object.entries(this._object(climate?.attributes?.batteries)).filter(([entityId]) => entityId.startsWith("climate.")).map(([, entry]) => this._number(entry?.battery) ?? this._number(this._entity(entry?.battery_id)?.state)).filter((value) => value !== void 0);
     const batteries = batteryValues.length ? batteryValues : [];
     const ac = room.ac ? this._acState(room) : void 0;
-    let tone2 = "neutral";
-    if (delta !== void 0 && delta < -0.4) tone2 = "cold";
-    else if (delta !== void 0 && delta > 0.7) tone2 = "warm";
-    else if (target2 !== void 0 && current !== void 0) tone2 = "ok";
-    else if (comfortable === false) tone2 = "warn";
-    else if (current !== void 0) tone2 = "ok";
-    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone2, ac };
+    let tone3 = "neutral";
+    if (delta !== void 0 && delta < -0.4) tone3 = "cold";
+    else if (delta !== void 0 && delta > 0.7) tone3 = "warm";
+    else if (target2 !== void 0 && current !== void 0) tone3 = "ok";
+    else if (comfortable === false) tone3 = "warn";
+    else if (current !== void 0) tone3 = "ok";
+    return { climate, current, target: target2, humidity, windowOpen, heating, off, delta, comfortable, valve, batteries, tone: tone3, ac };
   }
   // Visningsmodel for et rum: alt det, hovedsiden viser, uden at røre DOM'en.
   _roomModel(room) {
@@ -33663,10 +33663,10 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   }
   // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
   // batteri niveau").
-  _batteryIcon(icon4, pct3) {
-    if (!icon4) return;
+  _batteryIcon(icon5, pct3) {
+    if (!icon5) return;
     const name = !Number.isFinite(pct3) ? "mdi:battery-unknown" : pct3 >= 95 ? "mdi:battery" : pct3 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct3 / 10) * 10)}`;
-    if (icon4.getAttribute("icon") !== name) icon4.setAttribute("icon", name);
+    if (icon5.getAttribute("icon") !== name) icon5.setAttribute("icon", name);
   }
   _metric(node, text, missing, low = false) {
     if (!node) return;
@@ -33866,9 +33866,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       summary.coldest.innerHTML = `Koldest <b>${this._escape(coldest.room.name)} ${this._format(coldest.model.current)}\xB0</b>`;
       summary.warmest.innerHTML = `Varmest <b>${this._escape(warmest.room.name)} ${this._format(warmest.model.current)}\xB0</b>`;
     }
-    const setStat = (stat, tone2, value, sub) => {
+    const setStat = (stat, tone3, value, sub) => {
       if (!stat) return;
-      stat.el.className = `stat ${tone2}`;
+      stat.el.className = `stat ${tone3}`;
       this._setText(stat.value, value);
       this._setText(stat.sub, sub);
     };
@@ -34241,9 +34241,9 @@ var WX_COND = {
 var NIGHT_ICON = { sunny: "mdi:weather-night", partlycloudy: "mdi:weather-night-partly-cloudy" };
 var WX_COLOR = { sun: "#fbbf24", part: "#fcd34d", cloud: "#a5b4c8", rain: "#60a5fa", snow: "#e2e8f0", storm: "#a78bfa", fog: "#94a3b8", wind: "#7dd3fc", night: "#a5b4fc" };
 function wxInfo(condition, night) {
-  const [icon4, label, kind] = WX_COND[condition] || ["mdi:weather-partly-cloudy", condition || "\u2014", "cloud"];
+  const [icon5, label, kind] = WX_COND[condition] || ["mdi:weather-partly-cloudy", condition || "\u2014", "cloud"];
   const k = night && (kind === "sun" || kind === "part") ? "night" : kind;
-  return { icon: night ? NIGHT_ICON[condition] || icon4 : icon4, label, kind: k, color: WX_COLOR[k] };
+  return { icon: night ? NIGHT_ICON[condition] || icon5 : icon5, label, kind: k, color: WX_COLOR[k] };
 }
 var COMPASS = ["N", "NN\xD8", "N\xD8", "\xD8N\xD8", "\xD8", "\xD8S\xD8", "S\xD8", "SS\xD8", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"];
 var compass = (deg) => COMPASS[Math.round((Number(deg) % 360 + 360) % 360 / 22.5) % 16];
@@ -34983,15 +34983,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc12 = (v) => this._escape(v);
+    const esc13 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
-    const gauge = (key, icon4, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
+    const gauge = (key, icon5, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc12(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc13(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc12(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc12(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc13(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc13(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -35012,10 +35012,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc12(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc13(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc12(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc12(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc13(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc13(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
           <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
@@ -35031,19 +35031,19 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc12(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc12(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc13(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc13(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc12(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc13(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc12(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc13(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -35295,11 +35295,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
   // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
   _renderComfortTile(room, refs, model) {
-    const esc12 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
+    const esc13 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
     const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c2.tone] || "neutral";
     refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c2.tone}`;
     this._setText(refs.temp, this._format(model.current));
-    const meta = `<span class="cf-pill"><i></i>${esc12(c2.label)}</span><small>${esc12(c2.detail)}</small>`;
+    const meta = `<span class="cf-pill"><i></i>${esc13(c2.label)}</span><small>${esc13(c2.detail)}</small>`;
     if (refs.meta && refs.meta._h !== meta) {
       refs.meta._h = meta;
       refs.meta.innerHTML = meta;
@@ -35320,7 +35320,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (model.humidity !== void 0) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
       if (room.co2) chips.push([co2 !== void 0 && co2 >= 1e3 ? "bad" : "", "mdi:molecule-co2", co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`]);
       if (model.feels !== void 0) chips.push(["", "mdi:thermometer", `f\xF8les ${this._format(model.feels)}\xB0`]);
-      const html = chips.map(([cls, icon4, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon4}"></ha-icon>${esc12(text)}</span>`).join("");
+      const html = chips.map(([cls, icon5, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon5}"></ha-icon>${esc13(text)}</span>`).join("");
       const box = cf.querySelector(".cf-chips");
       if (box._h !== html) {
         box._h = html;
@@ -35347,7 +35347,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
-    const host = refs.host, esc12 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
+    const host = refs.host, esc13 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
     const f = (name) => host.querySelector(`[data-f="${name}"]`), p25 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p25(t.getHours())}:${p25(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
@@ -35394,7 +35394,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt5(dd)}`]);
     const uv = this._number(a.uv_index);
     if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt5(uv, 0)}`]);
-    const chipHtml = chips.map(([icon4, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc12(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon4}"></ha-icon></span>` : `<ha-icon icon="${icon4}"></ha-icon>`}${esc12(text)}</span>`).join("");
+    const chipHtml = chips.map(([icon5, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc13(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon5}"></ha-icon></span>` : `<ha-icon icon="${icon5}"></ha-icon>`}${esc13(text)}</span>`).join("");
     const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
       chipsEl._h = chipHtml;
@@ -35403,7 +35403,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
       const title = `${p25(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc12(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc13(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
     if (hoursEl && hoursEl._h !== hoursHtml2) {
@@ -35913,28 +35913,28 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const batteries = Object.entries(this._object(climate?.attributes?.batteries)).filter(([id]) => id.startsWith("climate.")).map(([id, row]) => ({ id, value: this._num(row?.battery) })).filter((row) => row.value !== void 0);
     const battery = batteries.length ? Math.min(...batteries.map((row) => row.value)) : void 0;
     const windowOpen = climate?.attributes?.window_open === true || climate?.attributes?.door_open === true;
-    let tone2 = "measure", status = "M\xE5ling uden setpunkt", detail = "Viser temperaturens udvikling";
+    let tone3 = "measure", status = "M\xE5ling uden setpunkt", detail = "Viser temperaturens udvikling";
     if (target2 !== void 0) {
       if (delta > 0.4) {
-        tone2 = "above";
+        tone3 = "above";
         status = "Over m\xE5l";
         detail = `${this._format(Math.abs(delta))}\xB0 over termostatens setpunkt`;
       } else if (delta < -0.4) {
-        tone2 = "below";
+        tone3 = "below";
         status = "Under m\xE5l";
         detail = `${this._format(Math.abs(delta))}\xB0 under termostatens setpunkt`;
       } else {
-        tone2 = "target";
+        tone3 = "target";
         status = "P\xE5 m\xE5l";
         detail = "Temperaturen ligger t\xE6t p\xE5 setpunktet";
       }
     }
     if (action === "heating") {
-      tone2 = "heating";
+      tone3 = "heating";
       status = "Varmer mod m\xE5l";
       detail = `Radiatoren arbejder mod ${this._format(target2)}\xB0`;
     }
-    return { sensor, climate, current, target: target2, delta, action, tone: tone2, status, detail, valves, valve, batteries, battery, windowOpen, off: climate?.state === "off" };
+    return { sensor, climate, current, target: target2, delta, action, tone: tone3, status, detail, valves, valve, batteries, battery, windowOpen, off: climate?.state === "off" };
   }
   // The SVG only holds lines and areas and may stretch freely; text and dots are HTML on top, so nothing is distorted.
   _graph(room, state, index) {
@@ -35996,16 +35996,16 @@ var HATemperatureTargetCard = class extends HTMLElement {
       lines = `<rect x="0" y="${hi.toFixed(2)}" width="${W2}" height="${(lo - hi).toFixed(2)}" class="target-band"/><line x1="0" x2="${W2}" y1="${y(target2).toFixed(2)}" y2="${y(target2).toFixed(2)}" class="target-line"/>${path ? `<path d="${path}" class="temperature-line above" clip-path="url(#tt-a-${index})"/><path d="${path}" class="temperature-line on" clip-path="url(#tt-t-${index})"/><path d="${path}" class="temperature-line below" clip-path="url(#tt-b-${index})"/>` : ""}`;
       tag = `<span class="target-tag" style="top:${pct3(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
     } else if (path) lines = `<path d="${path}" class="temperature-line on"/>`;
-    const tone2 = target2 === void 0 || state.current === void 0 ? "on" : state.current > target2 + 0.35 ? "above" : state.current < target2 - 0.35 ? "below" : "on";
-    const dot = last ? `<span class="now-dot ${tone2}" style="top:${(last[1] / H3 * 100).toFixed(2)}%"></span>` : "";
+    const tone3 = target2 === void 0 || state.current === void 0 ? "on" : state.current > target2 + 0.35 ? "above" : state.current < target2 - 0.35 ? "below" : "on";
+    const dot = last ? `<span class="now-dot ${tone3}" style="top:${(last[1] / H3 * 100).toFixed(2)}%"></span>` : "";
     return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct3(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
   }
   _graphPoint(box, fraction) {
     const g = this._graphs[Number(box.closest("article")?.dataset.index)];
     if (!g?.points.length) return null;
     const p = nearestPoint(g.points, g.start, g.now, fraction);
-    const tone2 = g.target === void 0 || p.v > g.target - 0.35 && p.v < g.target + 0.35 ? "--target" : p.v > g.target ? "--above" : "--below";
-    return { x: (p.t - g.start) / Math.max(g.now - g.start, 1), y: (g.max - p.v) / (g.max - g.min), color: `var(${tone2})`, text: `${hoverTime(p.t, this._hass, { now: p.now })} \xB7 ${this._format(p.v)}\xB0${g.target === void 0 ? "" : ` \xB7 M\xE5l ${this._format(g.target)}\xB0`}` };
+    const tone3 = g.target === void 0 || p.v > g.target - 0.35 && p.v < g.target + 0.35 ? "--target" : p.v > g.target ? "--above" : "--below";
+    return { x: (p.t - g.start) / Math.max(g.now - g.start, 1), y: (g.max - p.v) / (g.max - g.min), color: `var(${tone3})`, text: `${hoverTime(p.t, this._hass, { now: p.now })} \xB7 ${this._format(p.v)}\xB0${g.target === void 0 ? "" : ` \xB7 M\xE5l ${this._format(g.target)}\xB0`}` };
   }
   _room(room, index) {
     const s = this._state(room);
@@ -36567,7 +36567,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   if (pw && valid2(pw.state) && Number.isFinite(price)) {
     const w = parseFloat(pw.state) * (String(pw.attributes?.unit_of_measurement || "W").toLowerCase() === "kw" ? 1e3 : 1);
     const mean = num5(cfg.price_mean), min = num5(cfg.price_min), at = S(cfg.price_min)?.attributes?.at;
-    const tone2 = Number.isFinite(mean) ? price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info" : "info";
+    const tone3 = Number.isFinite(mean) ? price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info" : "info";
     let cheap = "";
     if (Number.isFinite(min) && min < price * 0.85 && at) {
       const [h, m] = String(at).split(":").map(Number);
@@ -36575,7 +36575,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
       t.setHours(h, m || 0, 0, 0);
       if (t > now) cheap = ` \xB7 billigst kl. ${p2(h)}`;
     }
-    add(7, { key: "power", icon: "mdi:flash", tone: tone2, text: `${w >= 1e3 ? `${(w / 1e3).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w / 50) * 50} W`} \xB7 ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
+    add(7, { key: "power", icon: "mdi:flash", tone: tone3, text: `${w >= 1e3 ? `${(w / 1e3).toLocaleString("da-DK", { maximumFractionDigits: 1 })} kW` : `${Math.round(w / 50) * 50} W`} \xB7 ${price.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr/kWh${cheap}`, entity: cfg.price });
   }
   for (const r of cfg.robots || []) {
     const s = st(r.entity);
@@ -36593,7 +36593,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   }
   return out.sort((a, b) => a.prio - b.prio);
 }
-function hoursHtml(hass, hourly = [], esc12 = (v) => v) {
+function hoursHtml(hass, hourly = [], esc13 = (v) => v) {
   const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
   const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
   const sunCache = /* @__PURE__ */ new Map();
@@ -36605,7 +36605,7 @@ function hoursHtml(hass, hourly = [], esc12 = (v) => v) {
   };
   return next.map((h, i) => {
     const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
-    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc12(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
+    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc13(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
   }).join("");
 }
 var INSIGHT_CSS = `
@@ -37976,12 +37976,12 @@ var HAHomeHeaderCard = class extends HTMLElement {
       this._runwaySig = sig;
       el.innerHTML = activity.map((a, i) => a.error ? `<ha-icon class="error" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="left:${8 + i * 22}%;top:${35 + i * 10}%"></ha-icon>` : `<ha-icon class="roaming" data-index="${i}" icon="${this._esc(a.icon || "mdi:robot-vacuum")}" style="animation-delay:${i * -5}s,${i * -3}s"></ha-icon>`).join("");
     }
-    el.querySelectorAll(".roaming").forEach((icon4) => {
-      const i = Number(icon4.dataset.index);
-      icon4.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
-      icon4.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
-      icon4.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
-      icon4.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
+    el.querySelectorAll(".roaming").forEach((icon5) => {
+      const i = Number(icon5.dataset.index);
+      icon5.style.setProperty("--roam-x-desktop", `${desktopX + i * 7}s`);
+      icon5.style.setProperty("--roam-y-desktop", `${desktopY + i * 5}s`);
+      icon5.style.setProperty("--roam-x-mobile", `${mobileX + i * 4}s`);
+      icon5.style.setProperty("--roam-y-mobile", `${mobileY + i * 3}s`);
     });
   }
   _updateStatusGroup() {
@@ -37992,8 +37992,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
     this._currentActiveAlert = activeAlert;
     const v3Class = this._config.weather_style_v3 === true ? " v3-active" : "";
     sg.className = `status-group${v3Class} ${activeAlert ? `has-alert priority-${activeAlert.priority}` : ""}`;
-    const icon4 = sg.querySelector("ha-icon");
-    if (icon4) icon4.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
+    const icon5 = sg.querySelector("ha-icon");
+    if (icon5) icon5.setAttribute("icon", activeAlert ? activeAlert.icon?.startsWith("mdi:") ? activeAlert.icon : "mdi:alert" : mode[0]);
     const textWrap = sg.querySelector(":scope>div");
     const span = textWrap?.querySelector("span");
     if (span) span.textContent = activeAlert ? "Alarm" : this._config.title;
@@ -39299,8 +39299,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       /* The pet's heat cycle in the detail line (Claude AI, 2026-10-29). */
       .detail.heat,:host([v2]) .detail.heat{color:#ff6fa5;font-weight:700}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
-      const tile2 = this.shadowRoot.querySelector(".item");
-      tile2.addEventListener("click", () => {
+      const tile3 = this.shadowRoot.querySelector(".item");
+      tile3.addEventListener("click", () => {
         if (this._heldOpen) {
           this._heldOpen = false;
           return;
@@ -39311,7 +39311,7 @@ var HaHomeStatusCard = class extends HTMLElement {
         clearTimeout(this._holdTimer);
         this._holdTimer = null;
       };
-      tile2.addEventListener("pointerdown", () => {
+      tile3.addEventListener("pointerdown", () => {
         if (this._currentItem?.type !== "ev" || !this._currentItem.popup) return;
         cancelHold();
         this._heldOpen = false;
@@ -39321,8 +39321,8 @@ var HaHomeStatusCard = class extends HTMLElement {
           this._openEvPopup(this._currentItem);
         }, 550);
       });
-      for (const type of ["pointerup", "pointerleave", "pointercancel"]) tile2.addEventListener(type, cancelHold);
-      tile2.addEventListener("contextmenu", (event) => {
+      for (const type of ["pointerup", "pointerleave", "pointercancel"]) tile3.addEventListener(type, cancelHold);
+      tile3.addEventListener("contextmenu", (event) => {
         if (this._currentItem?.type === "ev") event.preventDefault();
       });
       this._rendered = true;
@@ -39347,7 +39347,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       }
       this._decorationType = item2.type;
     }
-    const esc12 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc13 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -39359,14 +39359,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc12(item2.value));
+    setText(".value", esc13(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc12(item2.detail || " "));
+    setText(".detail", esc13(item2.detail || " "));
     this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
     if (item2.type === "heating") {
       const l = this.shadowRoot.querySelector(".label");
@@ -39383,8 +39383,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : q.awayOpen ? `${open} ${open > 1 ? "\xE5bne" : "\xE5ben"} \xB7 ingen hjemme` : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} ${open > 1 ? "\xE5bne" : "\xE5ben"}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc12(title)}">${inner}</span>`;
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc12(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc13(title)}">${inner}</span>`;
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc13(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -40574,14 +40574,14 @@ ${LUX_KEYFRAMES}
     const off = (k) => k === "car_month_entity" ? !c2[k] : c2[k] === "";
     const shown = Object.values(utilityKeys).filter((k) => !off(k)).length;
     this.shadowRoot.querySelector(".utilities")?.style.setProperty("--utility-count", String(Math.max(shown, 1)));
-    const utility = (sel, icon4, label, value, unit, cost, valid2) => {
-      const tile2 = this.shadowRoot.querySelector(sel);
-      tile2.hidden = off(utilityKeys[sel]);
-      if (tile2.hidden) return;
-      tile2.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
+    const utility = (sel, icon5, label, value, unit, cost, valid2) => {
+      const tile3 = this.shadowRoot.querySelector(sel);
+      tile3.hidden = off(utilityKeys[sel]);
+      if (tile3.hidden) return;
+      tile3.style.setProperty("--accent", valid2 ? "var(--success-color,#20e3a2)" : "var(--error-color,#ef4444)");
       const x = this._utilMonth(c2[utilityKeys[sel]], sel === ".car" ? "__car" : c2[{ ".electricity": "electric_month_cost_entity", ".water": "water_month_cost_entity", ".heat": "heat_month_cost_entity" }[sel]], unit);
-      tile2._util = x.hover;
-      tile2.innerHTML = `<ha-icon class="utility-bg" icon="${icon4}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
+      tile3._util = x.hover;
+      tile3.innerHTML = `<ha-icon class="utility-bg" icon="${icon5}"></ha-icon><div class="utility-head">${label}${x.chip}</div><div class="use"><b>${value}</b><span>${unit}</span>${x.bars}</div><div class="cost">${x.foot ? "Indtil nu" : "M\xE5nedspris"}<b>${cost} kr</b></div>${x.foot}`;
     };
     this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
@@ -40597,15 +40597,15 @@ ${LUX_KEYFRAMES}
     const roomsHtml = !classicTiles ? (c2.rooms || []).map((room, i) => this._roomTileV2(room, i)).join("") : (c2.rooms || []).map((room, i) => {
       const temp = this._num(room.temperature), humidity = this._num(room.humidity), target2 = Number(this._state(room.climate)?.attributes?.temperature);
       const delta = Number.isFinite(temp) && Number.isFinite(target2) ? temp - target2 : Number.NaN;
-      const tone2 = !Number.isFinite(temp) ? "unavailable" : delta > 0.7 ? "warm" : delta < -0.7 ? "cold" : "";
-      const icon4 = this._esc(room.icon || "mdi:thermometer");
+      const tone3 = !Number.isFinite(temp) ? "unavailable" : delta > 0.7 ? "warm" : delta < -0.7 ? "cold" : "";
+      const icon5 = this._esc(room.icon || "mdi:thermometer");
       const targetText = Number.isFinite(target2) ? `M\xE5l <b>${this._fmt(target2, 1)}\xB0</b>` : "";
       const humidityText = Number.isFinite(humidity) ? `<span class="ro-humidity">${targetText ? "\xB7 " : ""}${this._fmt(humidity, 0)}%</span>` : "";
       const heating = room.climate ? this._state(room.climate)?.attributes?.hvac_action === "heating" : false;
       const present = room.presence ? this._state(room.presence)?.state === "on" : false;
       const heatBadge = heating ? `<span class="ro-status heating" title="Kalder p\xE5 varme"><ha-icon icon="mdi:fire"></ha-icon></span>` : "";
       const presenceBadge = present ? `<span class="ro-status presence" title="Der er nogen i rummet"><ha-icon icon="mdi:motion-sensor"></ha-icon></span>` : "";
-      return `<div class="ro ${tone2}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0"><ha-icon class="ro-bg" icon="${icon4}"></ha-icon><div class="ro-head"><span class="ro-name">${this._esc(room.name)}</span><div class="ro-badges">${presenceBadge}${heatBadge}</div></div><div class="ro-body"><span class="ro-target">${targetText}${humidityText}</span><strong class="ro-temp">${this._fmt(temp, 1)}\xB0</strong></div></div>`;
+      return `<div class="ro ${tone3}" data-room="${i}" data-room-key="${this._esc(this._roomKey(room.name))}" role="button" tabindex="0"><ha-icon class="ro-bg" icon="${icon5}"></ha-icon><div class="ro-head"><span class="ro-name">${this._esc(room.name)}</span><div class="ro-badges">${presenceBadge}${heatBadge}</div></div><div class="ro-body"><span class="ro-target">${targetText}${humidityText}</span><strong class="ro-temp">${this._fmt(temp, 1)}\xB0</strong></div></div>`;
     }).join("");
     const rooms = this.shadowRoot.querySelector(".rooms");
     const vc = c2.rooms_style_entity && this._hass?.states?.[c2.rooms_style_entity]?.state === "on" && c2.room_popup_dashboard && !this._radMissing;
@@ -41197,8 +41197,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = this._km(p), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-    return `<button class="person" data-path="${esc12(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc12(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc12(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc12(status)}</strong><small>${esc12(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    return `<button class="person" data-path="${esc13(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc13(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc13(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc13(status)}</strong><small>${esc13(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
@@ -41206,7 +41206,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -41224,15 +41224,15 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc12((p.name || "?").trim()[0] || "?");
+    const initial = esc13((p.name || "?").trim()[0] || "?");
     const ring = this._config.battery_style === "ring";
     const C2 = 2 * Math.PI * 15;
     const bat = battery === null ? "" : ring ? `<span class="bring${charging ? " chg" : ""}" title="Batteri ${Math.round(battery)} %${charging ? " \xB7 lader" : ""}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="${(battery / 100 * C2).toFixed(1)} ${C2.toFixed(1)}"></circle></svg><b>${Math.round(battery)}<small>%</small></b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>` : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`;
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc12(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc13(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc12(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc12(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc12(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc13(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc13(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc13(trip || place)}</span></span></small></span>
       ${bat}
     </button>`;
   }
@@ -41247,7 +41247,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -41261,14 +41261,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const spot = away ? this._place(p) : "";
       const where = home ? "" : away ? [spot, Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : ""].filter(Boolean).join(" \xB7 ") || "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc12((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc13((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc12(x.p.navigation_path || "")}" title="${esc12(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc13(x.p.navigation_path || "")}" title="${esc13(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc12(x.name)}</b><small>${esc12(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc13(x.name)}</b><small>${esc13(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -41539,7 +41539,7 @@ function heatModel(card) {
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? "" : a.dage_til_naeste > 1 ? `L\xF8betid om ca. ${a.dage_til_naeste} dage` : a.dage_til_naeste === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu"
   };
 }
-function heatHtml(card, H3, esc12) {
+function heatHtml(card, H3, esc13) {
   if (!H3) return "";
   const cells = Array.from({ length: H3.duration }, (_, i) => {
     const d = i + 1;
@@ -41553,19 +41553,19 @@ function heatHtml(card, H3, esc12) {
   const days = (n) => n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`;
   return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
-      <p>${H3.inHeat ? `<b>${esc12(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
+      <p>${H3.inHeat ? `<b>${esc13(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
     ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc12(H3.start)}</b></div>` : ""}
-      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc12(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
-      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc12(H3.nextPhase.name)}</b><em>fra ${esc12(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
-      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc12(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
-      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc12(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
+      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc13(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc13(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc13(H3.nextPhase.name)}</b><em>fra ${esc13(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
+      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc13(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
+      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc13(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    ${card._heatForm ? heatFormHtml(card, H3, esc12) : `<div class="pp-actions">
+    ${card._heatForm ? heatFormHtml(card, H3, esc13) : `<div class="pp-actions">
       ${H3.script ? H3.inHeat ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>` : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
-      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc12(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
+      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc13(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
     </div>`}
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
@@ -41577,28 +41577,28 @@ var daysAgo = (n) => {
   d.setDate(d.getDate() - n);
   return isoDay(d);
 };
-function heatFormHtml(card, H3, esc12) {
+function heatFormHtml(card, H3, esc13) {
   const f = card._heatForm;
   const today = daysAgo(0);
   const quick = [[0, "I dag"], [1, "I g\xE5r"], [2, "I forg\xE5rs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
   const note = H3.inHeat ? "Den nuv\xE6rende l\xF8betid i kalenderen bliver erstattet af den nye dato, og sk\xF8nnet for den n\xE6ste bliver regnet om." : "Den sidste l\xF8betid bliver i kalenderen som historik. Den nye bliver lagt ind, og sk\xF8nnet for den n\xE6ste bliver regnet om.";
   return `<div class="pp-heatform">
     <h4>${H3.inHeat ? "Hvorn\xE5r startede l\xF8betiden?" : "Hvorn\xE5r gik hun i l\xF8betid?"}</h4>
-    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc12(f.value)}" max="${today}"></div>
-    <p>${note}</p>${f.error ? `<p class="err">${esc12(f.error)}</p>` : ""}
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc13(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc13(f.error)}</p>` : ""}
     <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer \u2026" : "Gem"}</button>
       <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annull\xE9r</button></div></div>`;
 }
 function premiumHtml(card) {
   const c2 = card._config;
-  const esc12 = (v) => card._escape(v);
+  const esc13 = (v) => card._escape(v);
   const meals = c2.meals || [];
   const info = meals.map((meal, i) => {
     const skipped = card._on(meal.skip);
     const enabled = card._on(meal.enabled);
     const status = card._state(meal.status);
-    const tone2 = !enabled ? "disabled" : skipped ? "skipped" : status === "done" ? "done" : status === "missed" ? "missed" : "pending";
-    return { meal, i, skipped, enabled, tone: tone2, t: minutes(meal.time) };
+    const tone3 = !enabled ? "disabled" : skipped ? "skipped" : status === "done" ? "done" : status === "missed" ? "missed" : "pending";
+    return { meal, i, skipped, enabled, tone: tone3, t: minutes(meal.time) };
   });
   const planned = info.filter((m) => m.enabled && !m.skipped);
   const done = planned.filter((m) => m.tone === "done").length;
@@ -41621,19 +41621,19 @@ function premiumHtml(card) {
   const arcs = info.map((m, i) => `<circle class="pp-arc ${m.tone}" cx="60" cy="60" r="52" style="stroke:${MEAL_COLORS[m.tone]};stroke-dasharray:${seg.toFixed(2)} ${(C2 - seg).toFixed(2)};stroke-dashoffset:${(-(i * (seg + gap) + gap / 2)).toFixed(2)};--i:${i}"/>`).join("");
   const chips = [
     `<span class="pp-chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${done} af ${planned.length} m\xE5ltider</span>`,
-    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc12(next.meal.name)} ${esc12(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
+    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc13(next.meal.name)} ${esc13(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
     c2.water ? `<span class="pp-chip ${water ? "water" : "danger"}"><ha-icon icon="${water ? "mdi:water" : "mdi:water-off"}"></ha-icon>${water ? "Vand i sk\xE5len" : "Mangler vand"}</span>` : "",
     H3?.inHeat ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip"></ha-icon>L\xF8betid dag ${H3.day}/${H3.duration}</span>` : H3?.soon ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon>${H3.soon}</span>` : ""
   ].filter(Boolean).join("");
-  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct(m.t)}%" data-info="${esc12(m.meal.status || "")}" title="${esc12(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc12(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
+  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct(m.t)}%" data-info="${esc13(m.meal.status || "")}" title="${esc13(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc13(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
   const label = { done: "Givet", pending: "Afventer", missed: "Misset", skipped: "Springes over", disabled: "Sl\xE5et fra" };
   const mealCards = info.map((m) => `<article class="pp-meal ${m.tone}" style="--i:${m.i}">
-      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc12(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
-        <div><h4>${esc12(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc12(m.meal.status || "")}">${esc12(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
-        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc12(m.meal.enabled)}" aria-label="${esc12(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
+      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc13(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
+        <div><h4>${esc13(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc13(m.meal.status || "")}">${esc13(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
+        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc13(m.meal.enabled)}" aria-label="${esc13(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
       <div class="pp-meal-actions">
-        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc12(m.meal.feed_action)}" data-name="${esc12(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
-        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc12(m.meal.skip)}" data-name="${esc12(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
+        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc13(m.meal.feed_action)}" data-name="${esc13(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
+        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc13(m.meal.skip)}" data-name="${esc13(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
       </div></article>`).join("");
   const hours = [6, 9, 12, 15, 18, 21].map((h) => `<span style="left:${pct(h * 60)}%">${String(h).padStart(2, "0")}</span>`).join("");
   return `<ha-card class="pp ${card._config.animation === false ? "still" : ""}${card._ppIntro ? "" : " intro"}">
@@ -41641,13 +41641,13 @@ function premiumHtml(card) {
     <div class="pp-aurora"></div>
     <div class="pp-paws">${[0, 1, 2, 3, 4, 5].map((i) => `<span style="--p:${i}">${pawSvg}</span>`).join("")}</div>
     <div class="pp-avatar"><svg class="pp-ring" viewBox="0 0 120 120"><circle class="pp-ring-bg" cx="60" cy="60" r="52"/>${arcs}</svg>
-      <div class="pp-face"><ha-icon icon="${esc12(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
-    <div class="pp-id"><span class="pp-eyebrow">${esc12(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc12(c2.pet_name || "K\xE6ledyr")}</h2>
-      <p class="pp-mood ${mood[1]}"><i></i>${esc12(mood[0])}</p><div class="pp-chips">${chips}</div></div>
+      <div class="pp-face"><ha-icon icon="${esc13(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
+    <div class="pp-id"><span class="pp-eyebrow">${esc13(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc13(c2.pet_name || "K\xE6ledyr")}</h2>
+      <p class="pp-mood ${mood[1]}"><i></i>${esc13(mood[0])}</p><div class="pp-chips">${chips}</div></div>
   </section>
   <div class="pp-grid">
     <section class="pp-panel pp-day" style="--d:1">
-      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc12(next.meal.name.toLowerCase())} kl. ${esc12(next.meal.time)}` : ""}</p></div>
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc13(next.meal.name.toLowerCase())} kl. ${esc13(next.meal.time)}` : ""}</p></div>
         ${c2.feeder_mode ? `<button class="pp-mode ${mode === "schedule" ? "on" : ""}" data-mode><ha-icon icon="${mode === "schedule" ? "mdi:calendar-check" : "mdi:hand-back-right"}"></ha-icon>${mode === "schedule" ? "Plan" : "Manuel"}</button>` : ""}</header>
       <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct(now)}%"></span><span class="pp-now" style="left:${pct(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
       <div class="pp-meals">${mealCards}</div>
@@ -41655,7 +41655,7 @@ function premiumHtml(card) {
     <section class="pp-panel pp-supply${c2.water ? "" : " food"}" style="--d:2">
       <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>${c2.water ? "Foder og vand" : "Foder"}</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent2)} % i beholderen`}</p></div></header>
       <div class="pp-supply-row">
-        <button class="pp-silo ${level}" data-info="${esc12(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
+        <button class="pp-silo ${level}" data-info="${esc13(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
           <span class="pp-silo-fill" style="height:${percent2}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent2)}<small>%</small></b></button>
         <div class="pp-stats">
           <div><small>I beholderen</small><b>${Number.isFinite(grams) ? `${card._format(grams)} g` : "\u2014"}</b></div>
@@ -41663,12 +41663,12 @@ function premiumHtml(card) {
           <div><small>Pr. dag</small><b>${Number.isFinite(daily) ? `${card._format(daily)} g` : "\u2014"}</b></div>
           ${c2.refill_action ? `<button class="pp-btn ghost" data-refill><ha-icon icon="mdi:refresh"></ha-icon>Fyldt op</button>` : ""}
         </div>
-        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc12(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
+        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc13(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
           <span class="pp-bowl-water"><i></i><i></i></span>
           <b>${water ? "Vand" : "Tom"}</b>${c2.water_battery ? `<small>${card._format(card._number(c2.water_battery))} % batteri</small>` : ""}</button>` : ""}
       </div>
     </section>
-    ${heatHtml(card, H3, esc12)}
+    ${heatHtml(card, H3, esc13)}
   </div>
 </ha-card>`;
 }
@@ -42021,9 +42021,9 @@ var HAPetCareCard = class extends HTMLElement {
   }
   _meal(meal, index) {
     const skipped = this._on(meal.skip);
-    const [label, tone2] = skipped ? ["Sprunget over", "skipped"] : this._status(this._state(meal.status));
+    const [label, tone3] = skipped ? ["Sprunget over", "skipped"] : this._status(this._state(meal.status));
     const enabled = this._on(meal.enabled);
-    return `<article class="meal ${tone2} ${enabled ? "enabled" : "disabled"}" style="--delay:${index * 65}ms">
+    return `<article class="meal ${tone3} ${enabled ? "enabled" : "disabled"}" style="--delay:${index * 65}ms">
       <div class="meal-head"><span class="meal-icon"><ha-icon icon="${this._escape(meal.icon || "mdi:bowl-mix")}"></ha-icon></span><div><span>${this._escape(meal.time || "\u2014")}</span><h3>${this._escape(meal.name || `M\xE5ltid ${index + 1}`)}</h3></div><button class="switch" data-toggle="${this._escape(meal.enabled)}" aria-label="Sl\xE5 ${this._escape(meal.name)} til eller fra"><i></i></button></div>
       <div class="meal-status"><span><i></i>${this._escape(label)}</span><strong>${skipped ? "Kun i dag" : enabled ? "Planlagt" : "Deaktiveret"}</strong></div>
       <div class="meal-actions"><button class="skip" data-skip="${this._escape(meal.skip)}" data-name="${this._escape(meal.name)}" data-skipped="${skipped}"><ha-icon icon="${skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${skipped ? "Fortryd" : "Spring over"}</button><button class="feed" data-feed="${this._escape(meal.feed_action)}" data-name="${this._escape(meal.name)}"><ha-icon icon="mdi:silverware-fork-knife"></ha-icon>Giv nu</button></div>
@@ -42371,8 +42371,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     if (!Number.isFinite(bearing)) return "";
     return `<svg class="wind-arrow" width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${(bearing + 180) % 360}deg)"><path d="M12 2L6 12h4v10h4V12h4L12 2z"/></svg>`;
   }
-  _chip(icon4, label, value, extra = "") {
-    return `<div class="chip"${extra}><ha-icon icon="${icon4}"></ha-icon><div><span>${this._esc(label)}</span><b>${value}</b></div></div>`;
+  _chip(icon5, label, value, extra = "") {
+    return `<div class="chip"${extra}><ha-icon icon="${icon5}"></ha-icon><div><span>${this._esc(label)}</span><b>${value}</b></div></div>`;
   }
   _heroHtml() {
     const n = this._now();
@@ -42380,7 +42380,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const today = (this._daily || [])[0];
     const hi = this._num(today?.temperature);
     const lo = this._num(today?.templow);
-    const icon4 = this._iconPath(n.condition, this._isDaytimeNow());
+    const icon5 = this._iconPath(n.condition, this._isDaytimeNow());
     const uv = this._uvTone(n.uv);
     const chips = [];
     if (Number.isFinite(n.wind)) {
@@ -42395,7 +42395,7 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     if (Number.isFinite(n.uv)) chips.push(this._chip("mdi:weather-sunny-alert", "UV-indeks", `${this._fmt(n.uv, 0)} <small>${uv.label}</small>`, ` style="--tone:${uv.color}"`));
     return `<div class="hero" data-more="${this._esc(this._config.more_info_entity || this._config.weather_entity)}">
         <div class="hero-main">
-          <img class="hero-icon" src="${icon4}" alt="">
+          <img class="hero-icon" src="${icon5}" alt="">
           <div class="hero-text">
             <div class="hero-temp">${this._fmt(n.temp, 1)}<sup>\xB0</sup></div>
             <div class="hero-cond">${this._esc(this._conditionLabel(n.condition))}</div>
@@ -42475,8 +42475,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
   _factsHtml() {
     return (this._config.radar_details || []).map((item2) => {
       const state = this._s(item2.entity);
-      const icon4 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
-      return `<div class="fact" data-more="${this._esc(item2.entity)}"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span>${this._esc(item2.name || state?.attributes?.friendly_name || item2.entity)}</span><b>${this._esc(this._detailValue(item2.entity))}</b></div>`;
+      const icon5 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
+      return `<div class="fact" data-more="${this._esc(item2.entity)}"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span>${this._esc(item2.name || state?.attributes?.friendly_name || item2.entity)}</span><b>${this._esc(this._detailValue(item2.entity))}</b></div>`;
     }).join("");
   }
   _imageUrl(entity) {
@@ -42502,10 +42502,10 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     }
     return `<div class="warn-list">${list.map((w) => {
       const level = Number(w.niveau ?? w.level) || 2;
-      const tone2 = WARNING_TONES[Math.min(4, Math.max(2, level))];
+      const tone3 = WARNING_TONES[Math.min(4, Math.max(2, level))];
       const title = w.overskrift || w.headline || w.type || w.event || "Varsel";
       const span = [w.start || w.onset, w.slut || w.expires].map((t) => this._when(t)).filter(Boolean).join(" \u2013 ");
-      return `<div class="warn" style="--tone:${tone2}" data-more="${this._esc(id)}">
+      return `<div class="warn" style="--tone:${tone3}" data-more="${this._esc(id)}">
           <ha-icon icon="mdi:alert"></ha-icon>
           <div><b>${this._esc(title)}</b><span>${this._esc(span)}</span>${w.beskrivelse || w.description ? `<small>${this._esc(w.beskrivelse || w.description)}</small>` : ""}</div>
         </div>`;
@@ -42536,18 +42536,18 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     return (section?.items || []).map((item2) => {
       const state = this._s(item2.entity);
       const name = item2.name || state?.attributes?.friendly_name || item2.entity;
-      const icon4 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
+      const icon5 = item2.icon || state?.attributes?.icon || "mdi:information-outline";
       const value = this._detailValue(item2.entity);
       const note = this._detailNote(state);
       return `<div class="row${value === "\u2014" ? " off" : ""}" data-more="${this._esc(item2.entity)}">
-          <ha-icon icon="${this._esc(icon4)}"></ha-icon>
+          <ha-icon icon="${this._esc(icon5)}"></ha-icon>
           <span class="row-label">${this._esc(name)}${note ? `<small>${this._esc(note)}</small>` : ""}</span>
           <b>${this._esc(value)}</b>
         </div>`;
     }).join("");
   }
-  _panel(icon4, title, body, extra = "") {
-    return `<section class="panel"${extra}><div class="panel-head"><ha-icon icon="${icon4}"></ha-icon><span>${this._esc(title)}</span></div>${body}</section>`;
+  _panel(icon5, title, body, extra = "") {
+    return `<section class="panel"${extra}><div class="panel-head"><ha-icon icon="${icon5}"></ha-icon><span>${this._esc(title)}</span></div>${body}</section>`;
   }
   _pollenRows() {
     return (this._config.pollen || []).map((p) => {
@@ -43068,7 +43068,7 @@ var ThWeatherCard = class extends HTMLElement {
   build() {
     this._r = this.attachShadow({ mode: "open" });
     if (this.cfg.padding) this.style.padding = this.cfg.padding;
-    const tile2 = (id, k, ic, a, vis = "", meter = "") => `<div class="tl${vis ? " hv" : ""}" id="t-${id}" style="--a:${a};animation-delay:${180 + this._ti++ * 55}ms"><div class="k">${ico(ic, 13, 1.8)}${k}</div>${vis}<div class="v" id="v-${id}">\u2013</div>${meter}<div class="s" id="s-${id}"></div></div>`;
+    const tile3 = (id, k, ic, a, vis = "", meter = "") => `<div class="tl${vis ? " hv" : ""}" id="t-${id}" style="--a:${a};animation-delay:${180 + this._ti++ * 55}ms"><div class="k">${ico(ic, 13, 1.8)}${k}</div>${vis}<div class="v" id="v-${id}">\u2013</div>${meter}<div class="s" id="s-${id}"></div></div>`;
     this._ti = 0;
     const ring = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/><circle id="hum-r" class="ring" cx="22" cy="22" r="17" fill="none" stroke="#8ed1ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="106.8" transform="rotate(-90 22 22)"/></svg>`;
     const comp = `<svg class="vis" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>${[0, 90, 180, 270].map((a) => `<path d="M22 4v4" stroke="rgba(255,255,255,.4)" stroke-width="1.4" transform="rotate(${a} 22 22)"/>`).join("")}
@@ -43080,8 +43080,8 @@ var ThWeatherCard = class extends HTMLElement {
       <div class="main"><div class="now"><div id="bi"></div><div><div class="big" id="temp">\u2013</div></div><div style="min-width:0"><div class="cd" id="cd">\u2013</div><div class="meta" id="meta"></div></div></div>
         <div class="cel" id="cel"></div></div>
       <div class="cast" id="cast"></div>
-      <div class="tiles">${tile2("wind", "Vind", "wind", "#e8c37e", comp)}${tile2("gust", "Vindst\xF8d", "gust", "#ff9e7a", "", '<div class="meter"><i></i></div>')}${tile2("hum", "Fugtighed", "drop", "#8ed1ff", ring)}${tile2("rain", "Regnrisiko", "rain", "#8ed1ff", spark)}
-        ${tile2("pres", "Lufttryk", "gauge", "#b7a4ff", baro)}${tile2("dew", "Dugpunkt", "dew", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile2("vis", "Sigtbarhed", "eye", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile2("uv", "UV\u2011indeks", "uv", "#ffd27a", "", '<div class="meter uv"><em></em></div>')}</div>
+      <div class="tiles">${tile3("wind", "Vind", "wind", "#e8c37e", comp)}${tile3("gust", "Vindst\xF8d", "gust", "#ff9e7a", "", '<div class="meter"><i></i></div>')}${tile3("hum", "Fugtighed", "drop", "#8ed1ff", ring)}${tile3("rain", "Regnrisiko", "rain", "#8ed1ff", spark)}
+        ${tile3("pres", "Lufttryk", "gauge", "#b7a4ff", baro)}${tile3("dew", "Dugpunkt", "dew", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile3("vis", "Sigtbarhed", "eye", "#6be3a8", "", '<div class="meter"><i></i></div>')}${tile3("uv", "UV\u2011indeks", "uv", "#ffd27a", "", '<div class="meter uv"><em></em></div>')}</div>
       <div class="hh"><span>Time for time</span><span class="sum" id="hsum"></span><div class="tabs" id="tabs"><button data-h="24">24 t</button><button data-h="48">48 t</button></div></div>
       <div class="hs" id="hs"><div class="in" id="hin"><svg id="hsvg"></svg><div class="tip" id="tip"></div></div></div>
       <div class="warns" id="warns"></div><div class="dt" id="dt" hidden><div class="dtabs" id="dtabs"></div><div class="dbody" id="dbody"></div></div></div>`;
@@ -45280,9 +45280,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const out = [];
     if (ctx.open.length) {
       const first = ctx.open[0];
-      const icon4 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
+      const icon5 = first.dc === "window" ? "mdi:window-open-variant" : first.dc === "garage_door" ? "mdi:garage-open-variant" : "mdi:door-open";
       const text = ctx.open.length > 1 ? `${ctx.open.length} \xE5bninger` : `${first.label} \xE5ben`;
-      out.push({ key: "open", tone: "danger", icon: icon4, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
+      out.push({ key: "open", tone: "danger", icon: icon5, text, meta: this._dur(Math.max(...ctx.open.map((p) => this._since(p.st) ?? 0))), anim: "pulse" });
     }
     if (room.temperature && ctx.tempDead) out.push({ key: "offline", tone: "warn", icon: "mdi:thermometer-off", text: "Sensor offline" });
     if (!room.outdoor && ctx.humidity != null && ctx.humidity >= (room.humidity_critical ?? 70)) out.push({ key: "hum", tone: "warn", icon: "mdi:water-alert-outline", text: "H\xF8j fugt", meta: `${this._fmt(ctx.humidity, 0)}%` });
@@ -45568,8 +45568,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     el.style.setProperty("--level", String(m.level / 100));
     if (room.weather) {
       const w = this._state(room.weather);
-      const icon4 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
-      if (t.badgeIcon.getAttribute("icon") !== icon4) t.badgeIcon.setAttribute("icon", icon4);
+      const icon5 = w && WEATHER[w.state]?.[1] || room.icon || "mdi:weather-partly-cloudy";
+      if (t.badgeIcon.getAttribute("icon") !== icon5) t.badgeIcon.setAttribute("icon", icon5);
     }
     t.line.className = `line ${m.line.cls}`;
     this._setText(t.lt, m.line.text);
@@ -45626,8 +45626,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       else el.style.removeProperty("--p");
       if (chip.color) el.style.setProperty("--cc", chip.color);
       else el.style.removeProperty("--cc");
-      const icon4 = el.querySelector("ha-icon");
-      if (icon4.getAttribute("icon") !== chip.icon) icon4.setAttribute("icon", chip.icon);
+      const icon5 = el.querySelector("ha-icon");
+      if (icon5.getAttribute("icon") !== chip.icon) icon5.setAttribute("icon", chip.icon);
       this._setText(el.querySelector(".ct"), chip.text);
       this._setText(el.querySelector(".cm"), chip.meta || "");
       const at = container.children[index];
@@ -45642,8 +45642,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       t.light.classList.toggle("unavail", dead);
       t.light.classList.toggle("pending", this._isPending(room.light));
       t.light.setAttribute("aria-pressed", String(m.lightOn));
-      const icon4 = m.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
-      if (t.lightIcon.getAttribute("icon") !== icon4) t.lightIcon.setAttribute("icon", icon4);
+      const icon5 = m.lightOn ? "mdi:lightbulb-on" : dead ? "mdi:lightbulb-off-outline" : "mdi:lightbulb-outline";
+      if (t.lightIcon.getAttribute("icon") !== icon5) t.lightIcon.setAttribute("icon", icon5);
       this._setText(t.lv, m.lightOn ? `${m.level}%` : dead ? "Offline" : "Fra");
       const members = Array.isArray(m.light?.attributes?.entity_id) ? m.light.attributes.entity_id : [];
       const onCount = members.filter((id) => this._state(id)?.state === "on").length;
@@ -45668,9 +45668,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       else button.style.removeProperty("--bc");
       const anim = cfg.animation || (domain === "fan" ? "spin" : domain === "valve" ? "bob" : domain === "media_player" ? "glow" : "");
       ["spin", "flame", "bob", "glow", "wiggle"].forEach((name2) => button.classList.toggle(`anim-${name2}`, anim === name2));
-      const icon4 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON2[domain] || "mdi:gesture-tap";
+      const icon5 = lock ? st?.state === "locked" ? "mdi:lock" : st?.state === "jammed" ? "mdi:lock-alert" : "mdi:lock-open-variant" : on && cfg.icon_on || cfg.icon || st?.attributes?.icon || DOMAIN_ICON2[domain] || "mdi:gesture-tap";
       const iconEl = button.querySelector("ha-icon");
-      if (iconEl.getAttribute("icon") !== icon4) iconEl.setAttribute("icon", icon4);
+      if (iconEl.getAttribute("icon") !== icon5) iconEl.setAttribute("icon", icon5);
       this._setText(button.querySelector(".arm"), armed ? this._armed.label : "");
       const name = cfg.name || (cfg.entity ? this._name(cfg.entity) : "Handling");
       const stateText = dead ? "ikke tilg\xE6ngelig" : lock ? st.state === "locked" ? "l\xE5st" : st.state === "unlocked" ? "ul\xE5st" : st.state : on ? "til" : "fra";
@@ -45699,20 +45699,20 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   // Kurven ligger bag flisens indhold; hoveren vises kun, når markøren er i kurvens bånd og ikke på en knap.
   _sparkPoint(box, fraction, event) {
-    const t = this._tiles?.find((tile3) => tile3.el === box);
+    const t = this._tiles?.find((tile4) => tile4.el === box);
     const scale = t?.sparkScale;
     const points = t && this._history.get(t.room.temperature);
     if (!scale || !points || points.length < 2 || t.spark.style.display === "none" || !event) return null;
     if (event.target?.closest?.(".btn,.chip.tap")) return null;
-    const tile2 = box.getBoundingClientRect(), band = t.spark.getBoundingClientRect();
+    const tile3 = box.getBoundingClientRect(), band = t.spark.getBoundingClientRect();
     if (!band.height || event.clientY < band.top || event.clientY > band.bottom) return null;
-    box.style.setProperty("--spark-top", `${band.top - tile2.top}px`);
-    box.style.setProperty("--spark-bottom", `${tile2.bottom - band.bottom}px`);
+    box.style.setProperty("--spark-top", `${band.top - tile3.top}px`);
+    box.style.setProperty("--spark-bottom", `${tile3.bottom - band.bottom}px`);
     const nearest = nearestPoint(points, scale.start, scale.end, fraction);
     const y = (37 - (nearest.v - scale.min) / (scale.max - scale.min) * 30) / 40;
     return {
       x: clamp((nearest.t - scale.start) / (scale.end - scale.start), 0, 1),
-      y: (band.top - tile2.top + y * band.height) / tile2.height,
+      y: (band.top - tile3.top + y * band.height) / tile3.height,
       color: "var(--accent)",
       text: `${hoverTime(nearest.t, this._hass)} \xB7 ${this._fmt(nearest.v)}\xB0`
     };
@@ -46785,7 +46785,7 @@ var HAKidTrackerCard = class extends HTMLElement {
       ...Array.isArray(this._config.details) ? this._config.details.map((item2) => [item2.entity, item2.label || "Status", item2.icon || "mdi:information-outline", item2.format]) : []
     ].filter(([id]) => this._hasData(id));
     const deviceDetailsHtml = deviceDetails.map(
-      ([id, label, icon4, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
+      ([id, label, icon5, format]) => `<button class="detail" data-entity="${this._esc(id)}"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span>${this._esc(label)}</span><b>${this._entityValue(id, format)}</b></button>`
     ).join("");
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--accent:${color};--good:var(--dashboard-success,var(--success-color,#54d9aa));--warn:var(--dashboard-warning,var(--warning-color,#ffbd59));--danger:var(--dashboard-danger,var(--error-color,#ff667a));--edge:var(--dashboard-border-neutral,var(--divider-color,rgba(127,145,165,.2)));--panel:var(--surface,var(--ha-card-background,var(--card-background-color,#1c1f26)));--text:var(--primary-text-color,#f5f7fb);--muted:var(--secondary-text-color,#aeb7c4);--shadow:var(--state-card-shadow,var(--ha-card-box-shadow,0 12px 30px rgba(0,0,0,.18)))}
@@ -47089,13 +47089,13 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const e = this.config.entities;
     const result = [];
     for (const alert2 of this.config.alerts || []) {
-      const { entity, kind, title, detail, icon: icon4, action } = alert2;
+      const { entity, kind, title, detail, icon: icon5, action } = alert2;
       const state = this._s(entity)?.state;
       let active = false;
       if (kind === "on") active = state === "on";
       if (kind === "battery") active = Number(state) < action && Number.isFinite(Number(state));
       if (kind === "not-clear") active = state != null && !["none", "no_error", "unknown", "unavailable", "ok", "idle"].includes(String(state).toLowerCase());
-      if (active) result.push({ entity, title, detail, icon: icon4, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
+      if (active) result.push({ entity, title, detail, icon: icon5, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
     }
     for (const state of Object.values(this._hass?.states || {})) {
       const id = state?.entity_id || "";
@@ -47282,9 +47282,9 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const bars = data.map((p, i) => {
       const height = 15 + (p.price - min) / spread * 75;
       const active = now >= p.ts && now < p.ts + 36e5;
-      const tone2 = p.price >= t.critical ? "critical" : p.price >= t.high ? "high" : p.price >= t.medium ? "medium" : "low";
+      const tone3 = p.price >= t.critical ? "critical" : p.price >= t.high ? "high" : p.price >= t.medium ? "medium" : "low";
       const hour = new Date(p.ts).getHours();
-      return `<button class="bar ${tone2} ${active ? "current" : ""}" style="--h:${height}%" data-more="${this.config.entities.priceNow}" title="${String(hour).padStart(2, "0")}:00 \xB7 ${this._fmt(p.price, 2)} ${this.config.currency}/kWh"><i></i>${i % Math.max(1, Math.ceil(data.length / 8)) === 0 ? `<small>${String(hour).padStart(2, "0")}</small>` : ""}</button>`;
+      return `<button class="bar ${tone3} ${active ? "current" : ""}" style="--h:${height}%" data-more="${this.config.entities.priceNow}" title="${String(hour).padStart(2, "0")}:00 \xB7 ${this._fmt(p.price, 2)} ${this.config.currency}/kWh"><i></i>${i % Math.max(1, Math.ceil(data.length / 8)) === 0 ? `<small>${String(hour).padStart(2, "0")}</small>` : ""}</button>`;
     }).join("");
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const first = new Date(data[0].ts);
@@ -47779,11 +47779,11 @@ var HAAlarmCenterCard = class extends HTMLElement {
     return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   _row(a, snoozed, until2) {
-    const icon4 = a.icon?.startsWith("mdi:") ? a.icon : null;
-    const emoji = !icon4 ? a.icon || "\u26A0\uFE0F" : null;
+    const icon5 = a.icon?.startsWith("mdi:") ? a.icon : null;
+    const emoji = !icon5 ? a.icon || "\u26A0\uFE0F" : null;
     return `<div class="row priority-${a.priority} ${snoozed ? "snoozed" : ""}" data-entity="${this._esc(a.entity)}">
       <button class="row-main" data-tap>
-        <span class="row-icon">${icon4 ? `<ha-icon icon="${this._esc(icon4)}"></ha-icon>` : this._esc(emoji)}</span>
+        <span class="row-icon">${icon5 ? `<ha-icon icon="${this._esc(icon5)}"></ha-icon>` : this._esc(emoji)}</span>
         <span class="row-text">
           <strong>${this._esc(a.name)}</strong>
           ${a.secondary_text ? `<span class="sub">${this._esc(a.secondary_text)}</span>` : ""}
@@ -48163,11 +48163,11 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     if (!this._hass || this._tab !== "live") return;
     (this._cameras || []).forEach((cam) => {
       this._setLiveFeed(cam);
-      const tile2 = this.shadowRoot.querySelector(`[data-cam-tile="${cam.key}"]`);
+      const tile3 = this.shadowRoot.querySelector(`[data-cam-tile="${cam.key}"]`);
       const badge = this.shadowRoot.querySelector(`[data-cam-badge="${cam.key}"]`);
-      if (tile2 && badge) {
+      if (tile3 && badge) {
         const activity = this._liveActivity(cam);
-        tile2.className = `cam-tile ${activity.cls}`;
+        tile3.className = `cam-tile ${activity.cls}`;
         badge.querySelector("ha-icon")?.setAttribute("icon", activity.icon);
         const label = badge.querySelector("span");
         if (label && label.textContent !== activity.text) label.textContent = activity.text;
@@ -48645,7 +48645,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     }
     this._eventsRenderSig = signature;
     mount.innerHTML = `<div class="filters">${FILTERS.map(
-      ([key, label, icon4]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon4}"></ha-icon>${label}</button>`
+      ([key, label, icon5]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`
     ).join("")}</div>${this._eventsHtml()}`;
     if (!mount.dataset.bound) {
       mount.dataset.bound = "true";
@@ -48687,7 +48687,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     const hddIssues = (c2.hdd_entities || []).filter((id) => this._s(id)?.state === "on").length;
     const online = (this._cameras || []).filter((cam) => this._s(cam.camera_entity) && this._s(cam.camera_entity)?.state !== "unavailable").length;
     const total = (this._cameras || []).length;
-    const row = (icon4, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon4}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
+    const row = (icon5, label, value, warn) => `<div class="row ${warn ? "warn" : ""}"><ha-icon icon="${icon5}"></ha-icon><span class="row-label">${label}</span><span class="row-value">${value}</span></div>`;
     const html = `
       <div class="row-list">
         ${row("mdi:cctv", "Kameraer online", `${online} / ${total}`, online < total)}
@@ -48906,7 +48906,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         <ha-icon icon="mdi:cctv"></ha-icon>
         <div><strong>${this._esc(c2.title)}</strong><span>${this._esc(c2.subtitle)}</span></div>
       </div>
-      <div class="tabs">${tabs.map(([key, label, icon4]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`).join("")}</div>
+      <div class="tabs">${tabs.map(([key, label, icon5]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>`).join("")}</div>
       <div class="panel" data-panel="live" ${this._tab === "live" ? "" : "hidden"}><div class="live-grid">${(this._cameras || []).map(
       (cam) => `<section class="cam-tile" data-cam-tile="${this._esc(cam.key)}">
             <div class="cam-bar">
@@ -51739,14 +51739,14 @@ var HADoorWindowCard = class extends HTMLElement {
   }
   _tile(item2) {
     const stats = this._statsFor(item2);
-    const icon4 = this._iconFor(item2, stats.isOpen);
+    const icon5 = this._iconFor(item2, stats.isOpen);
     const longThreshold = (this._config.long_open_minutes ?? 30) * 6e4;
     const isLongOpen = stats.isOpen && Number.isFinite(stats.openSinceMs) && stats.openSinceMs >= longThreshold;
     const battery = this._num(this._s(item2.battery_entity)?.state);
     const batteryChip = Number.isFinite(battery) ? `<span class="chip"><ha-icon icon="${battery <= 20 ? "mdi:battery-alert-variant-outline" : "mdi:battery"}"></ha-icon>${battery}%</span>` : "";
     return `<div class="tile ${stats.isOpen ? "open" : "closed"} ${isLongOpen ? "long-open" : ""}" data-more="${this._esc(item2.entity)}">
       <div class="tile-top">
-        <div class="tile-icon"><ha-icon icon="${icon4}"></ha-icon></div>
+        <div class="tile-icon"><ha-icon icon="${icon5}"></ha-icon></div>
         <div class="tile-name">
           <b>${this._esc(item2.name)}</b>
           <span class="state-pill">${stats.isOpen ? "\xC5ben" : "Lukket"}</span>
@@ -51760,7 +51760,7 @@ var HADoorWindowCard = class extends HTMLElement {
       ${batteryChip ? `<div class="tile-foot">${batteryChip}</div>` : ""}
     </div>`;
   }
-  _section(title, icon4, items) {
+  _section(title, icon5, items) {
     if (!items.length) return "";
     const sorted = [...items].sort((a, b) => {
       const sa = this._statsFor(a);
@@ -51769,7 +51769,7 @@ var HADoorWindowCard = class extends HTMLElement {
       if (sa.isOpen && sb.isOpen) return (sb.openSinceMs ?? 0) - (sa.openSinceMs ?? 0);
       return (sb.lastOpenedTs ?? 0) - (sa.lastOpenedTs ?? 0);
     });
-    return `<div class="section-heading"><ha-icon icon="${icon4}"></ha-icon><span>${this._esc(title)}</span></div>
+    return `<div class="section-heading"><ha-icon icon="${icon5}"></ha-icon><span>${this._esc(title)}</span></div>
       <div class="grid">${sorted.map((item2) => this._tile(item2)).join("")}</div>`;
   }
   _render() {
@@ -52728,12 +52728,12 @@ function renderWatchPause(box, hass, cfg) {
   const g = cfg.guard_entity ? hass.states[cfg.guard_entity] : null, p = cfg.pause_entity ? hass.states[cfg.pause_entity] : null;
   const ts = Number(p?.attributes?.timestamp), until2 = Number.isFinite(ts) ? new Date(ts * 1e3) : null, paused2 = !!until2 && until2 > /* @__PURE__ */ new Date();
   const armed = g ? g.state === "on" : null, grund = g?.attributes?.grund || "";
-  const icon4 = paused2 ? "mdi:bell-sleep-outline" : armed ? "mdi:shield-check" : "mdi:shield-home-outline";
+  const icon5 = paused2 ? "mdi:bell-sleep-outline" : armed ? "mdi:shield-check" : "mdi:shield-home-outline";
   const color = paused2 ? "var(--warning-color,#f5b14c)" : armed ? "var(--success-color,#45d19a)" : "var(--secondary-text-color,#9ba5b3)";
   const head = armed == null ? "Notifikationer" : armed ? `Vagten er aktiv \xB7 ${grund}` : "Vagten venter \u2013 I er hjemme";
   const sub = paused2 ? `Beskeder p\xE5 pause til ${untilText(until2)} \xB7 der registreres stadig` : armed === false ? "Registrerer og sender besked, n\xE5r ingen er hjemme" : "Begge telefoner f\xE5r besked";
   const btns = !cfg.pause_entity ? "" : paused2 ? '<button class="go" data-pause="off"><ha-icon icon="mdi:bell-ring-outline"></ha-icon>Genoptag beskeder</button>' : '<button data-pause="1"><ha-icon icon="mdi:bell-sleep-outline"></ha-icon>1 t</button><button data-pause="3">3 t</button><button data-pause="morning">Til i morgen kl. 7</button>';
-  const html = `<div class="st" style="--wp-c:${color}"><ha-icon icon="${icon4}"></ha-icon><span><b>${head}</b><small>${sub}</small></span></div><div class="bt">${btns}</div>`;
+  const html = `<div class="st" style="--wp-c:${color}"><ha-icon icon="${icon5}"></ha-icon><span><b>${head}</b><small>${sub}</small></span></div><div class="bt">${btns}</div>`;
   if (box._v !== html) {
     box._v = html;
     box.innerHTML = html;
@@ -53913,19 +53913,19 @@ var HAAIUsageCard = class extends HTMLElement {
     const sTone = account.hide_session ? "muted" : this._tone(session, connected, reached, sUnit, sMax);
     const wTone = account.hide_weekly ? "muted" : this._tone(weekly, connected, reached, wUnit, wMax);
     const lowest = !sUnit && !wUnit && !account.hide_session && !account.hide_weekly ? Math.min(session ?? 100, weekly ?? 100) : void 0;
-    const tone2 = lowest !== void 0 ? this._tone(lowest, connected, reached) : sTone === "danger" || wTone === "danger" ? "danger" : sTone === "warning" || wTone === "warning" ? "warning" : connected ? "good" : "muted";
+    const tone3 = lowest !== void 0 ? this._tone(lowest, connected, reached) : sTone === "danger" || wTone === "danger" ? "danger" : sTone === "warning" || wTone === "warning" ? "warning" : connected ? "good" : "muted";
     const plan = this._state(account.plan);
     const credit = this._state(account.credits);
     const extra = this._state(account.extra_spent);
     const creditUnit = account.credits_unit || "credits";
     const creditValue = account.credits_unit && !["unknown", "unavailable"].includes(credit) ? this._format(Number(credit), 2) : credit;
     const secondary = extra && !["unknown", "unavailable"].includes(extra) ? `${extra} EUR ekstra` : credit && !["unknown", "unavailable"].includes(credit) ? `${creditValue} ${creditUnit}` : "Ingen ekstraforbrug";
-    return `<article class="account ${tone2}" style="--delay:${index * 70}ms">
+    return `<article class="account ${tone3}" style="--delay:${index * 70}ms">
       <div class="account-head">
         <div class="identity"><span class="service-icon"><ha-icon icon="${this._escape(account.icon || "mdi:robot-outline")}"></ha-icon></span><div><h3>${this._escape(account.name)}</h3><span>${this._escape(account.provider || "AI-tjeneste")}</span></div></div>
         <span class="connection"><i></i>${connected ? "Forbundet" : "Afbrudt"}</span>
       </div>
-      <div class="plan-row"><span>Plan</span><strong>${this._escape(plan && !["unknown", "unavailable"].includes(plan) ? plan : "Ukendt")}</strong><span class="capacity ${tone2}">${reached ? "Gr\xE6nse n\xE5et" : lowest !== void 0 ? `${this._format(lowest)}% laveste reserve` : !account.hide_session && !sUnit ? `${this._format(session)}% tilbage` : !account.hide_session && sUnit ? `${this._format(session, this._unitDigits(sUnit))} ${sUnit}` : !account.hide_weekly && wUnit ? `${this._format(weekly, this._unitDigits(wUnit))} ${wUnit}` : "Aktiv"}</span></div>
+      <div class="plan-row"><span>Plan</span><strong>${this._escape(plan && !["unknown", "unavailable"].includes(plan) ? plan : "Ukendt")}</strong><span class="capacity ${tone3}">${reached ? "Gr\xE6nse n\xE5et" : lowest !== void 0 ? `${this._format(lowest)}% laveste reserve` : !account.hide_session && !sUnit ? `${this._format(session)}% tilbage` : !account.hide_session && sUnit ? `${this._format(session, this._unitDigits(sUnit))} ${sUnit}` : !account.hide_weekly && wUnit ? `${this._format(weekly, this._unitDigits(wUnit))} ${wUnit}` : "Aktiv"}</span></div>
       <div class="windows">
         ${account.hide_session ? "" : this._window(account.session_label || "5 timer", "mdi:clock-fast", session, this._relative(account.session_reset), sTone, sUnit, sMax)}
         ${account.hide_weekly ? "" : this._window(account.weekly_label || "Uge", "mdi:calendar-week", weekly, this._relative(account.weekly_reset), wTone, wUnit, wMax)}
@@ -53933,7 +53933,7 @@ var HAAIUsageCard = class extends HTMLElement {
       <div class="account-foot"><div><span>Senest opdateret</span><strong>${this._age(account.last_update)}</strong></div><div><span>Ekstra kapacitet</span><strong>${this._escape(secondary)}</strong></div><button data-refresh="${this._escape(account.refresh)}" aria-label="Genopfrisk ${this._escape(account.name)}"><ha-icon icon="mdi:refresh"></ha-icon><span>Opdat\xE9r</span></button></div>
     </article>`;
   }
-  _window(label, icon4, remaining, reset, tone2, unit, max) {
+  _window(label, icon5, remaining, reset, tone3, unit, max) {
     const unitLabel = this._unitLabel(unit);
     const digits = this._unitDigits(unit);
     let value;
@@ -53945,9 +53945,9 @@ var HAAIUsageCard = class extends HTMLElement {
       value = remaining !== void 0 ? Math.min(100, Math.log10(Math.max(1, remaining)) * 33) : 0;
     }
     const display = unit ? `${this._format(remaining, digits)}` : this._format(remaining);
-    return `<div class="window ${tone2}" style="--value:${value}">
+    return `<div class="window ${tone3}" style="--value:${value}">
       <div class="ring"><svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="18"></circle><circle class="progress" cx="22" cy="22" r="18"></circle></svg><strong>${display}<small>${unitLabel}</small></strong></div>
-      <div class="window-copy"><span><ha-icon icon="${icon4}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
+      <div class="window-copy"><span><ha-icon icon="${icon5}"></ha-icon>${label}${unit ? "" : " tilbage"}</span><strong>${reset}</strong><div class="bar"><i></i></div></div>
     </div>`;
   }
   async _refresh(entityId, button) {
@@ -53975,8 +53975,8 @@ var HAAIUsageCard = class extends HTMLElement {
       const sTone = account.hide_session ? "muted" : this._tone(session, connected, reached, sUnit, sMax);
       const wTone = account.hide_weekly ? "muted" : this._tone(weekly, connected, reached, wUnit, wMax);
       const lowest = !sUnit && !wUnit && !account.hide_session && !account.hide_weekly ? Math.min(session ?? 100, weekly ?? 100) : void 0;
-      const tone2 = lowest !== void 0 ? this._tone(lowest, connected, reached) : sTone === "danger" || wTone === "danger" ? "danger" : sTone === "warning" || wTone === "warning" ? "warning" : connected ? "good" : "muted";
-      return { connected, reached, lowest: lowest ?? 100, tone: tone2 };
+      const tone3 = lowest !== void 0 ? this._tone(lowest, connected, reached) : sTone === "danger" || wTone === "danger" ? "danger" : sTone === "warning" || wTone === "warning" ? "warning" : connected ? "good" : "muted";
+      return { connected, reached, lowest: lowest ?? 100, tone: tone3 };
     });
     const online = states.filter((state) => state.connected).length;
     const warnings = states.filter((state) => state.reached || state.lowest <= 30).length;
@@ -54167,15 +54167,15 @@ var HASettingsCenterCard = class extends HTMLElement {
     );
   }
   _toggleTile(i) {
-    const tile2 = `<button class="tile-btn" data-action="toggle" data-entity="${this._esc(i.entity)}" data-view="toggle" data-on-label="${this._esc(i.on_label || "Aktiv")}" data-off-label="${this._esc(i.off_label || "Deaktiv")}">
+    const tile3 = `<button class="tile-btn" data-action="toggle" data-entity="${this._esc(i.entity)}" data-view="toggle" data-on-label="${this._esc(i.on_label || "Aktiv")}" data-off-label="${this._esc(i.off_label || "Deaktiv")}">
         ${this._icon(i.icon || "mdi:toggle-switch-outline")}
         <span><b>${this._esc(i.name)}</b><small data-state>Kontrollerer\u2026</small></span>
       </button>`;
-    if (!i.pause?.entity || !i.pause?.script) return this._once(i.entity, tile2);
+    if (!i.pause?.entity || !i.pause?.script) return this._once(i.entity, tile3);
     return this._once(
       i.entity,
       `<div class="tile-wrap" data-view="pause" data-entity="${this._esc(i.entity)}" data-pause="${this._esc(i.pause.entity)}">
-        ${tile2}
+        ${tile3}
         <button class="tile-skip" data-action="pause-popup" data-entity="${this._esc(i.entity)}" aria-label="Spring ${this._esc(i.name)} over" title="Spring over">${this._icon("mdi:skip-next-circle-outline")}</button>
       </div>`
     );
@@ -54327,10 +54327,10 @@ var HASettingsCenterCard = class extends HTMLElement {
       <span class="row-text"><b>Nulstil til automatisk</b><small>Fjerner manuel override i ${this._esc(r.name)}</small></span>
     </button>`;
   }
-  _panelHead(icon4, title, subtitle) {
+  _panelHead(icon5, title, subtitle2) {
     return `<div class="panel-head">
-      <ha-icon icon="${this._esc(icon4 || "mdi:cog-outline")}"></ha-icon>
-      <div><b>${this._esc(title)}</b>${subtitle ? `<small>${subtitle}</small>` : ""}</div>
+      <ha-icon icon="${this._esc(icon5 || "mdi:cog-outline")}"></ha-icon>
+      <div><b>${this._esc(title)}</b>${subtitle2 ? `<small>${subtitle2}</small>` : ""}</div>
     </div>`;
   }
   // ---- pages ----
@@ -54655,9 +54655,9 @@ var HASettingsCenterCard = class extends HTMLElement {
     });
     this.shadowRoot.querySelectorAll('[data-view="pause"]').forEach((n) => {
       const until2 = this._pausedUntil(n.dataset.pause);
-      const tile2 = n.querySelector(".tile-btn");
+      const tile3 = n.querySelector(".tile-btn");
       n.classList.toggle("paused", Boolean(until2));
-      if (until2 && this._on(n.dataset.entity)) tile2.querySelector("[data-state]").textContent = this._pauseShort(until2);
+      if (until2 && this._on(n.dataset.entity)) tile3.querySelector("[data-state]").textContent = this._pauseShort(until2);
     });
     this.shadowRoot.querySelectorAll('[data-view="version"]').forEach((n) => {
       const id = n.dataset.entity, e = this._e(id), sel = n.querySelector("select"), domain = id.split(".")[0];
@@ -54772,9 +54772,9 @@ var HASettingsCenterCard = class extends HTMLElement {
     close.setAttribute("aria-label", "Luk problemoversigt");
     close.style.cssText = "position:absolute;top:12px;right:12px;min-height:42px;padding:9px 14px;border:1px solid var(--divider-color,rgba(255,255,255,.14));border-radius:999px;background:#0d1219;color:#f3f6fb;font:inherit;font-size:13px;font-weight:800;cursor:pointer";
     const title = this._esc(item2.name || "Systemstatus");
-    const icon4 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
+    const icon5 = this._esc(item2.icon || entity?.attributes?.icon || "mdi:alert-circle-outline");
     const detailHtml = problem ? `<div style="display:grid;gap:8px;margin-top:16px">${details.map((value) => `<div style="padding:11px 12px;border:1px solid color-mix(in srgb,var(--error-color,#ef4444) 28%,transparent);border-radius:12px;background:color-mix(in srgb,var(--error-color,#ef4444) 9%,transparent);font-size:13px;line-height:1.45">${this._esc(value)}</div>`).join("")}</div>` : `<div style="margin-top:16px;padding:14px;border-radius:12px;background:color-mix(in srgb,var(--success-color,#20e3a2) 10%,transparent);color:var(--success-color,#20e3a2);font-weight:800">Ingen aktive problemer.</div>`;
-    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon4}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:#a7b2c2;font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:#a7b2c2"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
+    panel.innerHTML = `<div style="display:flex;align-items:center;gap:11px;padding-right:90px"><ha-icon icon="${icon5}" style="--mdc-icon-size:28px;color:${problem ? "var(--error-color,#ef4444)" : "var(--success-color,#20e3a2)"}"></ha-icon><div><div style="font-size:17px;font-weight:900">${title}</div><div style="margin-top:3px;color:#a7b2c2;font-size:12px">${problem ? `${count} ${count === 1 ? "problem kr\xE6ver" : "problemer kr\xE6ver"} opm\xE6rksomhed` : "Alt er normalt"}</div></div></div>${detailHtml}<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--divider-color,rgba(127,145,165,.2));font-size:12px;line-height:1.5;color:#a7b2c2"><b style="display:block;margin-bottom:3px;color:var(--primary-text-color,#fff)">Det skal du kigge efter</b>${this._esc(item2.advice || "Kontroll\xE9r den viste enhed i Home Assistant, dens forbindelse og seneste opdatering.")}</div>`;
     panel.appendChild(close);
     backdrop.appendChild(panel);
     backdrop.addEventListener("click", (event) => {
@@ -55156,8 +55156,8 @@ var HAKioskServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
     return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon4) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon5) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -55181,12 +55181,12 @@ var HAKioskServerCard = class extends HTMLElement {
       <span>${this._esc(action.name)}</span>
     </button>`;
   }
-  _selectRow(label, id, icon4) {
+  _selectRow(label, id, icon5) {
     const e = this._e(id);
     const options = e?.attributes?.options || [];
     if (!options.length) return "";
     return `<div class="select-row">
-      <ha-icon icon="${this._esc(icon4)}"></ha-icon>
+      <ha-icon icon="${this._esc(icon5)}"></ha-icon>
       <span class="select-label">${this._esc(label)}</span>
       <select data-select="${this._esc(id)}">${options.map((o) => `<option value="${this._esc(o)}" ${o === e?.state ? "selected" : ""}>${this._esc(o)}</option>`).join("")}</select>
     </div>`;
@@ -55480,10 +55480,10 @@ var HAOpsStatusCard = class extends HTMLElement {
   _healthTile(item2) {
     const e = this._e(item2.entity);
     const level = this._healthState(e);
-    const icon4 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
+    const icon5 = level === "bad" ? "mdi:alert-circle" : level === "warn" ? "mdi:alert" : "mdi:check-circle";
     const label = item2.state_labels?.[e?.state] || e?.state || "\u2014";
     return `<button class="htile ${level}" data-entity="${this._esc(item2.entity)}">
-      <ha-icon icon="${this._esc(item2.icon || icon4)}"></ha-icon>
+      <ha-icon icon="${this._esc(item2.icon || icon5)}"></ha-icon>
       <span class="htile-text"><b>${this._esc(item2.name)}</b><span>${this._esc(label)}</span></span>
     </button>`;
   }
@@ -55690,8 +55690,8 @@ var HAUnraidServerCard = class extends HTMLElement {
     if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
     return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
   }
-  _statTile(label, value, icon4) {
-    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon4)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
+  _statTile(label, value, icon5) {
+    return `<div class="stat-tile"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
   }
   _gauge(label, id, unit) {
     const v = this._num(id);
@@ -56100,15 +56100,15 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
     const settings = this._slider(room.delay_entity, "mdi:timer-outline", "T\xE6nd-forsinkelse", "sek") + this._slider(room.lux_threshold_entity, "mdi:brightness-5", "Lux-t\xE6rskel", "lx");
     const dim = room.dim_entity || room.dim_time_entity || room.dim_percent_entity ? `<div class="dim">${room.dim_entity ? `<button class="switch-card" data-toggle="${this._esc(room.dim_entity)}"><ha-icon icon="mdi:lightbulb-on-30"></ha-icon><span><b>Nedton f\xF8r sluk</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>` : ""}${this._slider(room.dim_time_entity, "mdi:timer-sand", "Nedton-tid", "sek f\xF8r sluk")}${this._slider(room.dim_percent_entity, "mdi:brightness-percent", "Nedton-lysstyrke", "% af nuv\xE6rende")}</div>` : "";
     return `<section class="room ${index === this._activeRoom ? "active" : ""}" data-room="${index}">
-      ${switches.length ? `<div class="switches">${switches.map(([key, icon4, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon4}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>` : ""}
+      ${switches.length ? `<div class="switches">${switches.map(([key, icon5, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon5}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>` : ""}
       ${settings ? `<div class="settings">${settings}</div>` : ""}
       ${dim}
     </section>`;
   }
-  _slider(entity, icon4, label, unit) {
+  _slider(entity, icon5, label, unit) {
     if (!entity) return "";
     const state = this._state(entity), min = state?.attributes?.min ?? 0, max = state?.attributes?.max ?? 100, step = state?.attributes?.step ?? 1;
-    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon4}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
+    return `<div class="control"><div class="control-head"><span><ha-icon icon="${icon5}"></ha-icon>${label}</span><b data-output="${this._esc(entity)}">\u2014</b></div><input type="range" min="${min}" max="${max}" step="${step}" data-range="${this._esc(entity)}"><small>${unit}</small></div>`;
   }
   _build() {
     if (!this._config) return;
@@ -56587,13 +56587,13 @@ ${LUX_KEYFRAMES}
     const st = this._hass?.states?.[this._config.weather_entity];
     box.hidden = !st;
     if (!st) return;
-    const [txt, icon4] = WEATHER2[st.state] || [st.state, "mdi:weather-cloudy"];
+    const [txt, icon5] = WEATHER2[st.state] || [st.state, "mdi:weather-cloudy"];
     const t = Number(st.attributes?.temperature);
     const u2 = st.attributes?.temperature_unit || "\xB0C";
     const k = `${st.state}|${t}`;
     if (k === this._wxKey) return;
     this._wxKey = k;
-    r.querySelector("[data-wxi]").setAttribute("icon", icon4);
+    r.querySelector("[data-wxi]").setAttribute("icon", icon5);
     r.querySelector("[data-wxt]").textContent = Number.isFinite(t) ? `${Math.round(t)}${u2}` : "\u2013";
     r.querySelector("[data-wxs]").textContent = txt;
   }
@@ -57012,11 +57012,11 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     });
     this.shadowRoot.addEventListener("pointermove", (event) => {
       if (event.pointerType !== "mouse") return;
-      const tile2 = event.target.closest?.(".waste");
-      if (!tile2) return;
-      const rect = tile2.getBoundingClientRect();
-      tile2.style.setProperty("--mx", `${Math.round(event.clientX - rect.left)}px`);
-      tile2.style.setProperty("--my", `${Math.round(event.clientY - rect.top)}px`);
+      const tile3 = event.target.closest?.(".waste");
+      if (!tile3) return;
+      const rect = tile3.getBoundingClientRect();
+      tile3.style.setProperty("--mx", `${Math.round(event.clientX - rect.left)}px`);
+      tile3.style.setProperty("--my", `${Math.round(event.clientY - rect.top)}px`);
     });
   }
   static getStubConfig() {
@@ -57103,11 +57103,11 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   // Dage mellem tømninger: "interval" i konfigurationen, "14 dags" i beskrivelsen, ellers lært på denne enhed, når datoen
   // springer videre lige efter en afhentning (gemt i localStorage)
   _learn(types) {
-    let store = {};
+    let store2 = {};
     try {
-      store = JSON.parse(localStorage.getItem(LEARN_KEY) || "{}") || {};
+      store2 = JSON.parse(localStorage.getItem(LEARN_KEY) || "{}") || {};
     } catch (_) {
-      store = {};
+      store2 = {};
     }
     const today = /* @__PURE__ */ new Date();
     today.setHours(0, 0, 0, 0);
@@ -57115,7 +57115,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     for (const item2 of types) {
       const date2 = item2.attrs.date;
       if (!date2 || !item2.entity) continue;
-      const seen = store[item2.entity] || {};
+      const seen = store2[item2.entity] || {};
       if (seen.date && date2 > seen.date) {
         const before = parseDate(seen.date), after = parseDate(date2), gap = before && after ? dayDiff(before, after) : 0;
         const ago = before ? dayDiff(before, today) : -1;
@@ -57123,15 +57123,15 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       }
       if (seen.date !== date2) {
         seen.date = date2;
-        store[item2.entity] = seen;
+        store2[item2.entity] = seen;
         changed = true;
       }
     }
     if (changed) try {
-      localStorage.setItem(LEARN_KEY, JSON.stringify(store));
+      localStorage.setItem(LEARN_KEY, JSON.stringify(store2));
     } catch (_) {
     }
-    this._learned = store;
+    this._learned = store2;
   }
   _interval(item2) {
     const set = Number(item2.interval);
@@ -57384,8 +57384,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     this._nextDate = attrs.date || "";
     this._nextDays = days;
     this._lastPhase = phase;
-    const tone2 = this._tone(days), heroF = this._road(days), soon = days != null && days <= 1;
-    for (const name of ["urgent", "tomorrow", "soon", "planned", "neutral"]) card.classList.toggle(name, name === tone2);
+    const tone3 = this._tone(days), heroF = this._road(days), soon = days != null && days <= 1;
+    for (const name of ["urgent", "tomorrow", "soon", "planned", "neutral"]) card.classList.toggle(name, name === tone3);
     card.classList.toggle("alert", soon && phase !== "after");
     card.classList.toggle("out", soon);
     card.classList.toggle("done", soon && confirmed);
@@ -57410,8 +57410,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     root.querySelector("[data-unit]").textContent = days === 1 ? "dag" : "dage";
     root.querySelector("[data-status]").textContent = this._label(days);
     root.querySelector("[data-distance]").textContent = days == null ? "Ruten er ikke beregnet" : days === 0 ? phase === "during" ? "Skraldebilen k\xF8rer i omr\xE5det nu" : phase === "after" ? "Dagens afhentning er slut" : "Skraldebilen er ved huset i dag" : days === 1 ? "Skraldebilen er n\xE6sten fremme" : `${days} dage tilbage p\xE5 ruten`;
-    const [icon4, message] = days == null ? ["mdi:information-outline", "Afventer n\xE6ste afhentning"] : soon && confirmed && phase !== "after" ? ["mdi:check-circle-outline", "Beholderen st\xE5r ude \u2013 I f\xE5r ikke flere p\xE5mindelser"] : days === 0 ? phase === "after" ? ["mdi:home-import-outline", "Afhentet \u2013 husk at tage beholderen ind igen"] : ["mdi:bell-ring-outline", hour < 12 || phase === "before" ? "Beholderen skal st\xE5 klar nu \u2013 skraldebilen kommer i dag" : "Afhentning i dag \u2013 tag beholderen ind, n\xE5r den er t\xF8mt"] : days === 1 ? ["mdi:bell-ring-outline", hour >= 16 ? "Tid til at stille beholderen ud \u2013 den t\xF8mmes i morgen" : "Husk at stille beholderen ud i aften"] : days <= 3 ? ["mdi:calendar-clock", "G\xF8r beholderen klar \u2013 afhentning er t\xE6t p\xE5"] : ["mdi:check-circle-outline", "Du beh\xF8ver ikke g\xF8re noget endnu"];
-    root.querySelector(".message>ha-icon").setAttribute("icon", icon4);
+    const [icon5, message] = days == null ? ["mdi:information-outline", "Afventer n\xE6ste afhentning"] : soon && confirmed && phase !== "after" ? ["mdi:check-circle-outline", "Beholderen st\xE5r ude \u2013 I f\xE5r ikke flere p\xE5mindelser"] : days === 0 ? phase === "after" ? ["mdi:home-import-outline", "Afhentet \u2013 husk at tage beholderen ind igen"] : ["mdi:bell-ring-outline", hour < 12 || phase === "before" ? "Beholderen skal st\xE5 klar nu \u2013 skraldebilen kommer i dag" : "Afhentning i dag \u2013 tag beholderen ind, n\xE5r den er t\xF8mt"] : days === 1 ? ["mdi:bell-ring-outline", hour >= 16 ? "Tid til at stille beholderen ud \u2013 den t\xF8mmes i morgen" : "Husk at stille beholderen ud i aften"] : days <= 3 ? ["mdi:calendar-clock", "G\xF8r beholderen klar \u2013 afhentning er t\xE6t p\xE5"] : ["mdi:check-circle-outline", "Du beh\xF8ver ikke g\xF8re noget endnu"];
+    root.querySelector(".message>ha-icon").setAttribute("icon", icon5);
     root.querySelector("[data-message]").textContent = message;
     const ack = root.querySelector(".ack");
     ack.hidden = !(cfg.confirm_entity && soon && phase !== "after");
@@ -58325,8 +58325,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const ring = tiles.length === 2 ? `<button class="cf-delta" type="button" data-delta="${delta}" data-action="delta-history" aria-label="Vis historik for ${delta === "fjv" ? "fjernvarmens" : "varmens"} temperaturforskel"><small>\u0394T</small><strong><b>\u2013</b><em>\xB0C</em></strong></button>` : "";
       return `<div class="cf-block cf-pair ${tiles.length === 2 ? "" : "is-single"}" ${place(anchorY([first, second]))}>${tiles.join("")}${ring}</div>`;
     }
-    const tile2 = this._tileMarkup(spec[1]);
-    return tile2 ? `<div class="cf-block" ${place(PLACE_Y[spec[1]] ?? ANCHORS[spec[1]][1])}>${tile2}</div>` : "";
+    const tile3 = this._tileMarkup(spec[1]);
+    return tile3 ? `<div class="cf-block" ${place(PLACE_Y[spec[1]] ?? ANCHORS[spec[1]][1])}>${tile3}</div>` : "";
   }
   _build() {
     if (!this._config) return;
@@ -58431,14 +58431,14 @@ var HaCalefaFlowCard = class extends HTMLElement {
     callouts.setAttribute("viewBox", `0 0 ${Math.round(bounds.width)} ${Math.round(bounds.height)}`);
     for (const group of callouts.querySelectorAll("[data-callout]")) {
       const id = group.dataset.callout;
-      const tile2 = main.querySelector(`.cf-tile[data-metric="${id}"]`);
-      if (!tile2 || !tile2.offsetParent) {
+      const tile3 = main.querySelector(`.cf-tile[data-metric="${id}"]`);
+      if (!tile3 || !tile3.offsetParent) {
         group.setAttribute("visibility", "hidden");
         continue;
       }
       group.removeAttribute("visibility");
-      const box = tile2.getBoundingClientRect();
-      const left = tile2.closest(".cf-left") !== null;
+      const box = tile3.getBoundingClientRect();
+      const left = tile3.closest(".cf-left") !== null;
       const sx2 = (left ? box.right : box.left) - bounds.left;
       const sy = box.top + box.height / 2 - bounds.top;
       const anchorX = this._config.orientation === "right" ? VIEW_W - ANCHORS[id][0] : ANCHORS[id][0];
@@ -58461,7 +58461,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     return `<ha-card><div class="cf ${this._config.animations ? "" : "no-anim"} ${mirrored ? "cf-mirrored" : ""}" data-ref="root">
       <div class="cf-main" data-ref="main">
         <aside class="cf-side cf-left" data-ref="left">${mirrored ? sides.right : sides.left}</aside>
-        <section class="cf-stage"><div class="cf-stage-box" data-ref="stage">${this._stageMarkup()}</div><div class="cf-ports" aria-hidden="true">${PORTS.map(([code, x, tone2, title]) => `<span data-tone="${tone2}" title="${title}" style="left:${((mirrored ? VIEW_W - x : x) / VIEW_W * 100).toFixed(2)}%">${code}</span>`).join("")}</div></section>
+        <section class="cf-stage"><div class="cf-stage-box" data-ref="stage">${this._stageMarkup()}</div><div class="cf-ports" aria-hidden="true">${PORTS.map(([code, x, tone3, title]) => `<span data-tone="${tone3}" title="${title}" style="left:${((mirrored ? VIEW_W - x : x) / VIEW_W * 100).toFixed(2)}%">${code}</span>`).join("")}</div></section>
         <aside class="cf-side cf-right" data-ref="right">${mirrored ? sides.left : sides.right}</aside>
         <svg class="cf-callouts" data-ref="callouts" aria-hidden="true">${callouts}</svg>
       </div>
@@ -58473,7 +58473,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!this._config.show_footer) return "";
     const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key]) => this._config[key]);
     if (!items.length) return "";
-    return `<footer class="cf-footer">${items.map(([key, label, icon4]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon4}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
+    return `<footer class="cf-footer">${items.map(([key, label, icon5]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
   }
   // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
   _markersMarkup(track2, level, variant = "") {
@@ -58766,8 +58766,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       lan: [lanTone, known(lan) ? "LAN: " + lan.state : "LAN-status ikke tilg\xE6ngelig"],
       peripheral: [peripheralTone, outdoorError ? "Udend\xF8rsf\xF8ler i alarm" : known(outdoor) ? "Udend\xF8rsf\xF8ler tilsluttet" : "Udend\xF8rsf\xF8lerstatus ikke tilg\xE6ngelig"]
     };
-    for (const [key, [tone2, label]] of Object.entries(leds)) {
-      const [color, blink] = tone2.split(" ");
+    for (const [key, [tone3, label]] of Object.entries(leds)) {
+      const [color, blink] = tone3.split(" ");
       for (const led of [this._refs[`led-${key}`], this._refs[`pled-${key}`]]) {
         if (!led) continue;
         if (led.dataset.tone !== color) led.dataset.tone = color;
@@ -58797,7 +58797,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
     const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
-    const stat = (key, label, ref, unit, sub = "", icon4 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon4}"></ha-icon></button>`;
+    const stat = (key, label, ref, unit, sub = "", icon5 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon5}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
         ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>M\xE5lt \xB7 Kamstrup</i>` : "", "mdi:radiator")}
@@ -61866,7 +61866,7 @@ function analyseMap(img, rooms, scale) {
     for (const [k, idx] of roomByColor) if (near(c2, [k >> 16 & 255, k >> 8 & 255, k & 255])) return idx;
     return 0;
   };
-  const cache = /* @__PURE__ */ new Map();
+  const cache2 = /* @__PURE__ */ new Map();
   const classify = (r, g, b, a) => {
     if (!a) return [K_OUT, 0, 0];
     if (a < 255) return near([r, g, b], MAP.overlays[3].rgb, 6) ? [K_KEEP, 0, 1] : [K_KEEP, 0, 0];
@@ -61908,10 +61908,10 @@ function analyseMap(img, rooms, scale) {
       if (p === lastPx) res = last;
       else {
         const o = (srcRow + x) * 4;
-        res = cache.get(p);
+        res = cache2.get(p);
         if (!res) {
           res = classify(data[o], data[o + 1], data[o + 2], data[o + 3]);
-          cache.set(p, res);
+          cache2.set(p, res);
         }
         lastPx = p;
         last = res;
@@ -62755,8 +62755,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   }
   _seg(action, options, current, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
-      const [label, icon4] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc11(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon4 ? `<ha-icon icon="${icon4}"></ha-icon>` : ""}<span>${esc11(label)}</span></button>`;
+      const [label, icon5] = labels[o] || [human(o)];
+      return `<button data-a="${action}" data-v="${esc11(o)}" class="${o === current ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current}">${icon5 ? `<ha-icon icon="${icon5}"></ha-icon>` : ""}<span>${esc11(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -62777,7 +62777,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const hasErr = vstate === "error" || errV && !["none", "unknown", "unavailable"].includes(errV);
     const hasDockErr = errD && !["ok", "unknown", "unavailable"].includes(errD);
     const title = this._config.title || vac?.attributes?.friendly_name || this._deviceName || "Robotst\xF8vsuger";
-    const subtitle = this._config.subtitle ?? `Robotst\xF8vsuger${E2.empty_dust ? " med auto-t\xF8mning" : ""}`;
+    const subtitle2 = this._config.subtitle ?? `Robotst\xF8vsuger${E2.empty_dust ? " med auto-t\xF8mning" : ""}`;
     const room = this._s(E2.current_room);
     let detail;
     if (offline) detail = "Robotten svarer ikke";
@@ -62794,8 +62794,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const mopOff = E2.mop_attached && this._s(E2.mop_attached) === "off";
     const waterOn = waterState && waterState.state !== "off";
     const shortage = E2.water_shortage && this._s(E2.water_shortage) === "on" && waterOn && !waterBoxOff;
-    const emptyState = this._state(E2.empty_mode);
-    const emptyList = (emptyState?.attributes?.options || []).filter((o) => o !== "unknown");
+    const emptyState2 = this._state(E2.empty_mode);
+    const emptyList = (emptyState2?.attributes?.options || []).filter((o) => o !== "unknown");
     const canSegments = this._supports(FEATURE.SEND_COMMAND);
     const emptying = key === "emptying_the_bin" || this._s(E2.empty_dust) === "on";
     const selRooms = this._sel.map((id) => this._rooms.find((r) => r.id === id)).filter(Boolean);
@@ -62825,7 +62825,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon4, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc11(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon4}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon5, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc11(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
@@ -62846,13 +62846,13 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc11(title)}</h2><p>${esc11(subtitle)}</p></div>
+          <div><h2>${esc11(title)}</h2><p>${esc11(subtitle2)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E2.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
       <div class="status"><i class="dot ${dot}"></i><b>${esc11(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc11(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon4, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon4}"></ha-icon><div><b>${esc11(t)}</b>${s ? `<span>${esc11(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon4, l, v, x]) => `<div><ha-icon icon="${icon4}"></ha-icon><span>${esc11(l)}</span><b>${esc11(v)}</b>${x ? `<small>${esc11(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      ${alerts.map(([k, icon5, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon5}"></ha-icon><div><b>${esc11(t)}</b>${s ? `<span>${esc11(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon5, l, v, x]) => `<div><ha-icon icon="${icon5}"></ha-icon><span>${esc11(l)}</span><b>${esc11(v)}</b>${x ? `<small>${esc11(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
@@ -62872,7 +62872,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
           ${fanList.length && this._supports(FEATURE.FAN_SPEED) ? `<div class="set wide"><label>Sugeevne</label>${this._seg("fan", fanList, vac?.attributes?.fan_speed, FAN, offline)}</div>` : ""}
           ${waterList.length ? `<div class="set wide"><label>Vandm\xE6ngde <small>robottens moppebeholder \xB7 fyldes manuelt</small></label>${this._seg("water", waterList, waterState.state, WATER, offline || waterBoxOff)}
             ${waterBoxOff ? `<p class="note">Moppebeholderen er ikke monteret p\xE5 robotten.</p>` : mopOff && waterOn ? `<p class="note">Moppemodulet er ikke monteret \u2013 robotten st\xF8vsuger kun.</p>` : ""}</div>` : ""}
-          ${emptyList.length ? `<div class="set wide"><label>Auto-t\xF8mning i dock</label>${this._seg("empty-mode", emptyList, emptyState.state, Object.fromEntries(Object.entries(EMPTY_MODE).map(([k, v]) => [k, [v]])), offline)}</div>` : ""}
+          ${emptyList.length ? `<div class="set wide"><label>Auto-t\xF8mning i dock</label>${this._seg("empty-mode", emptyList, emptyState2.state, Object.fromEntries(Object.entries(EMPTY_MODE).map(([k, v]) => [k, [v]])), offline)}</div>` : ""}
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
@@ -64356,9 +64356,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       el.textContent = value;
     }
   }
-  _toneClass(el, tone2) {
+  _toneClass(el, tone3) {
     if (!el) return;
-    for (const t of ["green", "blue", "orange", "red", "neutral", "purple"]) el.classList.toggle(`tone-${t}`, t === tone2);
+    for (const t of ["green", "blue", "orange", "red", "neutral", "purple"]) el.classList.toggle(`tone-${t}`, t === tone3);
   }
   _show(ref, visible) {
     const el = this._refs[ref];
@@ -64433,15 +64433,15 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const todayRaw = priceObj?.attributes?.prices;
     const tomorrowRaw = tomorrowObj?.attributes?.prices;
     const tomorrowOn = tomorrowObj?.state === "on";
-    const cache = this._priceCache;
-    if (cache.todayRaw !== todayRaw || cache.tomorrowRaw !== tomorrowRaw || cache.tomorrowOn !== tomorrowOn || cache.dateKey !== todayKey) {
+    const cache2 = this._priceCache;
+    if (cache2.todayRaw !== todayRaw || cache2.tomorrowRaw !== tomorrowRaw || cache2.tomorrowOn !== tomorrowOn || cache2.dateKey !== todayKey) {
       const tomorrowKey = shiftDateKey(todayKey, 1);
       const todayList = parsePriceList(todayRaw);
       const today = todayList.filter((e) => e.dateKey === todayKey);
       const tomorrowSource = parsePriceList(tomorrowRaw);
       const tomorrow = tomorrowOn ? tomorrowSource.filter((e) => e.dateKey === tomorrowKey) : [];
       if (todayRaw !== void 0 && !Array.isArray(todayRaw)) this._warnOnce("prices-shape", `Attributten 'prices' p\xE5 ${this._id("price")} er ikke en liste`);
-      Object.assign(cache, {
+      Object.assign(cache2, {
         todayRaw,
         tomorrowRaw,
         tomorrowOn,
@@ -64453,11 +64453,11 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         todayDomain: today.length ? dayDomain(today, todayKey) : void 0,
         tomorrowDomain: tomorrow.length ? dayDomain(tomorrow, tomorrowKey) : void 0,
         availableAt: typeof tomorrowObj?.attributes?.available_at === "string" ? tomorrowObj.attributes.available_at : void 0,
-        version: (cache.version || 0) + 1
+        version: (cache2.version || 0) + 1
       });
     }
-    const current = cache.today.find((e) => e.start <= now && now < e.end);
-    return { ...cache, now, current };
+    const current = cache2.today.find((e) => e.start <= now && now < e.end);
+    return { ...cache2, now, current };
   }
   _updatePrices(force) {
     const m = this._priceModel();
@@ -64897,10 +64897,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._toneClass(this._refs.chargeChip, chip.tone);
     this._setIcon(this._refs.chargeChipIcon, chip.icon);
     this._text("chargeChipText", chip.text);
-    const art = this._refs.chargerArt;
-    art.classList.toggle("active", charging);
-    art.classList.toggle("connected", !charging && connected);
-    this._toneClass(art, charging ? "green" : connected ? "blue" : "neutral");
+    const art2 = this._refs.chargerArt;
+    art2.classList.toggle("active", charging);
+    art2.classList.toggle("connected", !charging && connected);
+    this._toneClass(art2, charging ? "green" : connected ? "blue" : "neutral");
     this._tweenNumber("chargePower", carKw, fmtPower);
     this._text("chargeSession", fmtEnergy(this._kwh("charger_session_energy")));
     const modeLabel = modeKey ? CHARGER_MODE_LABELS[modeKey] || modeKey.replace(/_/g, " ") : "\u2014";
@@ -66262,12 +66262,12 @@ var Section = class {
     const el = typeof ref === "string" ? this.refs[ref] : ref;
     if (el && el.hidden === visible) el.hidden = !visible;
   }
-  tone(ref, tone2) {
+  tone(ref, tone3) {
     const el = typeof ref === "string" ? this.refs[ref] : ref;
-    if (!el || el.__tone === tone2) return;
+    if (!el || el.__tone === tone3) return;
     if (el.__tone) el.classList.remove(`tone-${el.__tone}`);
-    if (tone2) el.classList.add(`tone-${tone2}`);
-    el.__tone = tone2;
+    if (tone3) el.classList.add(`tone-${tone3}`);
+    el.__tone = tone3;
   }
   style(ref, prop, value) {
     const el = typeof ref === "string" ? this.refs[ref] : ref;
@@ -66537,15 +66537,15 @@ var OverviewSection = class extends Section {
   }
   html() {
     const c2 = this.card;
-    const heroItem = (ref, tone2, ic, label, key) => `
-      <button type="button" class="hero-item tone-${tone2} clickable" data-entity="${escapeHtml3(c2.id(key) || "")}" data-ref="${ref}Item">
+    const heroItem = (ref, tone3, ic, label, key) => `
+      <button type="button" class="hero-item tone-${tone3} clickable" data-entity="${escapeHtml3(c2.id(key) || "")}" data-ref="${ref}Item">
         <span class="badge">${icon3(ic)}</span>
         <span class="hi-label">${label}</span>
         <span class="hi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
         <span class="hi-sub" data-ref="${ref}Sub">\u2014</span>
       </button>`;
-    const kpi = (ref, tone2, ic, label, tab) => `
-      <button type="button" class="card kpi tone-${tone2} clickable" data-goto="${tab}" data-ref="${ref}Card">
+    const kpi = (ref, tone3, ic, label, tab) => `
+      <button type="button" class="card kpi tone-${tone3} clickable" data-goto="${tab}" data-ref="${ref}Card">
         <span class="kpi-top"><span class="badge sm">${icon3(ic)}</span><span class="kpi-label">${label}</span>${icon3("mdi:chevron-right", "chev")}</span>
         <span class="kpi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
         <span class="kpi-foot"><span class="num" data-ref="${ref}Cost">\u2014</span><span data-ref="${ref}Note">i dag</span></span>
@@ -68145,6 +68145,2831 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
   });
 }
 console.info(`%c ENERGY CENTER %c v${VERSION56} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+
+// src/cards/ha-music-card/editor.js
+var SCHEMA = [
+  { name: "entities", selector: { entity: { domain: "media_player", multiple: true } } },
+  { name: "ma_url", selector: { text: { type: "url" } } },
+  { name: "default_player", selector: { entity: { domain: "media_player" } } },
+  { type: "grid", name: "", schema: [
+    { name: "fill_height", selector: { boolean: {} } },
+    { name: "bottom_offset", selector: { number: { min: 0, max: 400, mode: "box", unit_of_measurement: "px" } } },
+    { name: "top_offset", selector: { number: { min: 0, max: 400, mode: "box", unit_of_measurement: "px" } } },
+    { name: "accent", selector: { text: {} } }
+  ] }
+];
+var LABELS = {
+  entities: "H\xF8jttalere (tom = alle Music Assistant-afspillere)",
+  ma_url: "Music Assistant-adresse udefra (til billeder, fx https://music.example.com)",
+  default_player: "Standardh\xF8jttaler",
+  fill_height: "Fyld sk\xE6rmh\xF8jden",
+  bottom_offset: "Plads i bunden (navigationslinje)",
+  top_offset: "Plads i toppen",
+  accent: "Accentfarve (tom = farve fra albumcover)"
+};
+var HaMusicCardEditor = class extends HTMLElement {
+  setConfig(config) {
+    this._config = config || {};
+    this._render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+    else this._render();
+  }
+  _render() {
+    if (!this._hass || !this._config) return;
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.computeLabel = (s) => LABELS[s.name] || s.name;
+      this._form.addEventListener("value-changed", (e) => this._changed(e.detail.value));
+      this.appendChild(this._form);
+    }
+    this._form.hass = this._hass;
+    this._form.schema = SCHEMA;
+    const data = { fill_height: true, bottom_offset: 110, top_offset: 8, ...this._config };
+    data.entities = (this._config.entities || []).map((e) => typeof e === "string" ? e : e.entity_id);
+    this._form.data = data;
+  }
+  _changed(value) {
+    const old = new Map((this._config.entities || []).filter((e) => typeof e === "object").map((e) => [e.entity_id, e]));
+    const config = { ...this._config, ...value, entities: (value.entities || []).map((id) => old.get(id) || id) };
+    for (const k of Object.keys(config)) if (config[k] === "" || config[k] == null) delete config[k];
+    this._config = config;
+    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
+  }
+};
+if (!customElements.get("ha-music-card-editor")) customElements.define("ha-music-card-editor", HaMusicCardEditor);
+
+// src/cards/ha-music-card/styles.js
+var STYLES2 = `
+:host { display: block; --mc-accent: var(--primary-color, #1db954); --mc-accent-rgb: 29, 185, 84; --mc-bg: #0f0f10;
+  --mc-surface: #18181b; --mc-surface-2: #222226; --mc-surface-3: #2c2c31; --mc-text: #f4f4f5; --mc-dim: #a1a1aa;
+  --mc-faint: #71717a; --mc-line: rgba(255,255,255,.07); --mc-radius: 14px; --mc-bar-h: 88px; color-scheme: dark; }
+* { box-sizing: border-box; }
+ha-card.mc { display: block; overflow: hidden; background: var(--mc-bg); color: var(--mc-text); border-radius: var(--ha-card-border-radius, 16px);
+  border: none; height: var(--mc-height, 760px); font-family: var(--paper-font-body1_-_font-family, Roboto, "Segoe UI", system-ui, sans-serif);
+  -webkit-tap-highlight-color: transparent; position: relative; isolation: isolate; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+input, select { font: inherit; color: inherit; }
+.ic { width: 24px; height: 24px; fill: currentColor; flex: none; display: block; }
+.shell { position: relative; height: 100%; display: grid; grid-template-columns: var(--mc-side-w, 232px) minmax(0, 1fr) var(--mc-panel-w, 0px);
+  grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main panel" "bar bar bar"; gap: 8px; padding: 8px; }
+.shell.narrow { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: "main" "mini" "tabs"; gap: 0; padding: 0; }
+.shell.medium { --mc-side-w: 76px; }
+.shell.medium.side-open { --mc-side-w: 232px; }
+
+/* Sidebar */
+.side { grid-area: side; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.narrow .side, .narrow .bar { display: none; }
+.side-box { background: var(--mc-surface); border-radius: var(--mc-radius); padding: 8px; }
+.side-box.grow { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.nav-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 12px; border-radius: 10px; color: var(--mc-dim);
+  font-weight: 600; font-size: 14.5px; text-align: left; transition: color .15s, background .15s; white-space: nowrap; overflow: hidden; }
+.nav-item:hover { color: var(--mc-text); background: rgba(255,255,255,.04); }
+.nav-item.on { color: var(--mc-text); background: rgba(255,255,255,.07); }
+.nav-item.on .ic { color: var(--mc-accent); }
+.nav-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mc-faint); padding: 12px 12px 6px; font-weight: 700; }
+.medium:not(.side-open) .nav-item { justify-content: center; padding: 12px 0; }
+.medium:not(.side-open) .nav-item span, .medium:not(.side-open) .nav-label, .medium:not(.side-open) .side-pl { display: none; }
+.side-pl { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; width: 100%; text-align: left; }
+.side-pl:hover { background: rgba(255,255,255,.05); }
+.side-pl img, .side-pl .ph { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex: none; }
+.side-pl .t { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-pl .s { font-size: 12px; color: var(--mc-dim); }
+
+/* Main column */
+.main { grid-area: main; position: relative; min-height: 0; border-radius: var(--mc-radius); background: var(--mc-surface); overflow: hidden; display: flex; flex-direction: column; }
+.narrow .main { border-radius: 0; background: var(--mc-bg); }
+.top { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 16px; transition: background .2s;
+  pointer-events: none; }
+.top > * { pointer-events: auto; }
+.top.solid { background: rgba(var(--mc-top-rgb, 24, 24, 27), .94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 1px 0 var(--mc-line); }
+.top-title { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .2s; flex: 1; min-width: 0; }
+.top.solid .top-title { opacity: 1; }
+.round { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.55); color: var(--mc-text); flex: none; transition: transform .1s, background .15s; }
+.round:disabled { opacity: .35; cursor: default; }
+.round:not(:disabled):hover { background: rgba(0,0,0,.75); }
+.round:active { transform: scale(.94); }
+.round .ic { width: 22px; height: 22px; }
+.chip-player { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(0,0,0,.55);
+  font-size: 13px; font-weight: 600; max-width: 60%; margin-left: auto; }
+.chip-player .ic { width: 18px; height: 18px; color: var(--mc-accent); }
+.chip-player span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-box { flex: 1; max-width: 420px; display: flex; align-items: center; gap: 8px; background: var(--mc-surface-3); border-radius: 999px; padding: 0 14px; height: 44px;
+  border: 2px solid transparent; transition: border-color .15s, background .15s; }
+.search-box:focus-within { border-color: rgba(255,255,255,.85); background: #333338; }
+.search-box .ic { color: var(--mc-dim); width: 22px; height: 22px; }
+.search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 15px; height: 100%; }
+.search-box input::-webkit-search-cancel-button { display: none; }
+.search-box input::placeholder { color: var(--mc-faint); }
+.content { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; -webkit-overflow-scrolling: touch; }
+.content::-webkit-scrollbar { width: 10px; }
+.content::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+.view { padding: 64px 20px 28px; animation: viewIn .28s ease both; min-height: 100%; }
+.view.hero-view { padding-top: 0; }
+.narrow .view { padding: 60px 14px 20px; }
+.narrow .view.hero-view { padding-top: 0; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Home */
+.greet { font-size: clamp(24px, 3.2vw, 32px); font-weight: 800; letter-spacing: -.02em; margin: 6px 0 18px; }
+.home-bg { position: absolute; left: 0; right: 0; top: 0; height: 320px; background: linear-gradient(180deg, rgba(var(--mc-accent-rgb), .35), transparent);
+  pointer-events: none; transition: background .6s; }
+.view.home { position: relative; }
+.view.home > *:not(.home-bg) { position: relative; }
+.quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 10px; margin-bottom: 30px; }
+.narrow .quick { grid-template-columns: 1fr 1fr; gap: 8px; }
+.qt { display: flex; align-items: center; gap: 12px; height: 60px; border-radius: 8px; background: rgba(255,255,255,.08); overflow: hidden; text-align: left;
+  position: relative; transition: background .15s; padding-right: 8px; }
+.narrow .qt { height: 54px; gap: 8px; }
+.qt:hover { background: rgba(255,255,255,.16); }
+.qt .art { width: 60px; height: 60px; border-radius: 0; flex: none; }
+.narrow .qt .art { width: 54px; height: 54px; }
+.qt .t { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; min-width: 0; }
+.narrow .qt .t { font-size: 12.5px; }
+.qt .eq { margin-right: 6px; }
+.shelf { margin-bottom: 30px; }
+.shelf-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.shelf-h h2 { font-size: 21px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+.narrow .shelf-h h2 { font-size: 19px; }
+.shelf-h button { font-size: 13px; font-weight: 700; color: var(--mc-dim); }
+.shelf-h button:hover { color: var(--mc-text); text-decoration: underline; }
+.row { display: grid; grid-auto-flow: column; grid-auto-columns: var(--mc-tile, 172px); gap: 14px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
+  margin: 0 -20px; padding: 0 8px 6px; scroll-padding-inline: 8px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.narrow .row { --mc-tile: 142px; margin: 0 -14px; padding: 0 14px 4px; scroll-padding-inline: 14px; gap: 12px; }
+.row::-webkit-scrollbar { display: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--mc-tile, 168px), 1fr)); gap: 14px 14px; }
+.narrow .grid { --mc-tile: 140px; gap: 14px 12px; }
+
+/* Tiles */
+.tile { scroll-snap-align: start; padding: 12px; border-radius: 12px; text-align: left; transition: background .2s; position: relative; min-width: 0; }
+.narrow .tile { padding: 0; }
+.tile:hover { background: rgba(255,255,255,.06); }
+.tile .cover { position: relative; aspect-ratio: 1; margin-bottom: 10px; }
+.tile .art { width: 100%; height: 100%; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.tile.circle .art { border-radius: 50%; }
+.tile .t { font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .s { font-size: 13px; color: var(--mc-dim); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+.tile.circle .t, .tile.circle .s { text-align: center; }
+.tile .fab { position: absolute; right: 8px; bottom: 8px; opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; }
+.tile:hover .fab, .tile:focus-within .fab { opacity: 1; transform: none; }
+.touch .tile .fab { display: none; }
+.tile .more { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.55);
+  opacity: 0; transition: opacity .15s; }
+.tile:hover .more, .touch .tile .more { opacity: 1; }
+.touch .tile .more { background: rgba(0,0,0,.45); width: 28px; height: 28px; }
+.tile .more .ic { width: 18px; height: 18px; }
+.art { display: block; object-fit: cover; background: linear-gradient(135deg, #2c2c31, #1f1f23); color: #52525b; }
+div.art, span.art { display: grid; place-items: center; }
+.art-ph { background: linear-gradient(135deg, hsl(var(--h, 240) 28% 30%), hsl(var(--h, 240) 22% 16%)); color: hsla(var(--h, 240), 30%, 80%, .45); }
+div.art .ic, span.art .ic { width: 42%; height: 42%; }
+.fab { width: 48px; height: 48px; border-radius: 50%; background: var(--mc-accent); color: #000; display: grid; place-items: center;
+  box-shadow: 0 8px 18px rgba(0,0,0,.4); transition: transform .12s, filter .15s; }
+.fab:hover { transform: scale(1.06); filter: brightness(1.08); }
+.fab:active { transform: scale(.95); }
+.fab .ic { width: 26px; height: 26px; }
+.fab.big { width: 56px; height: 56px; }
+.fab.big .ic { width: 30px; height: 30px; }
+
+/* Lists */
+.tracks { display: flex; flex-direction: column; }
+.tr { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(0, .7fr) 52px 36px; align-items: center; gap: 14px; padding: 6px 10px; border-radius: 8px;
+  text-align: left; width: 100%; min-height: 56px; transition: background .12s; position: relative; }
+.tr.nohead { grid-template-columns: minmax(0, 1fr) minmax(0, .7fr) 52px 36px; }
+.tr:hover { background: rgba(255,255,255,.07); }
+.tr.on .tt { color: var(--mc-accent); }
+.tr .n { color: var(--mc-dim); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; position: relative; }
+.tr .n .ic { width: 18px; height: 18px; display: none; margin-left: auto; color: var(--mc-text); }
+.tr:hover .n span { display: none; }
+.tr:hover .n .ic { display: block; }
+.tr.on .n span { display: none; }
+.tr .main-c { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tr .main-c .art { width: 42px; height: 42px; border-radius: 5px; flex: none; }
+.tr .tt { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr .ts { font-size: 13px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.tr .al { font-size: 13.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr .d { font-size: 13.5px; color: var(--mc-dim); text-align: right; font-variant-numeric: tabular-nums; }
+.tr .dots { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--mc-dim); opacity: 0; }
+.tr:hover .dots, .touch .tr .dots { opacity: 1; }
+.tr .dots:hover { color: var(--mc-text); background: rgba(255,255,255,.08); }
+.tr-head { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(0, .7fr) 52px 36px; gap: 14px; padding: 0 10px 8px; margin-bottom: 8px; color: var(--mc-dim);
+  font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--mc-line); }
+.tr-head .r { text-align: right; }
+.noalbum .tr, .noalbum .tr-head { grid-template-columns: 32px minmax(0, 1fr) 52px 36px; }
+.noalbum .tr .al, .noalbum .tr-head .al { display: none; }
+.cozy .tr, .cozy .tr-head { grid-template-columns: 28px minmax(0, 1fr) 46px 34px; gap: 10px; }
+.cozy .tr .al, .cozy .tr-head .al { display: none; }
+.cozy .tr.nohead { grid-template-columns: minmax(0, 1fr) 34px; }
+.cozy .tr.nohead .d { display: none; }
+.narrow .tr { padding: 6px 4px; }
+.ep .ts { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.played { color: var(--mc-accent); font-weight: 700; }
+
+/* Equalizer */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; width: 14px; height: 14px; flex: none; }
+.eq i { width: 3px; background: var(--mc-accent); border-radius: 1px; height: 30%; animation: eq .9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.3s; }
+.eq i:nth-child(3) { animation-delay: -.6s; }
+.eq.paused i { animation-play-state: paused; height: 35%; }
+@keyframes eq { 0%,100% { height: 25%; } 50% { height: 100%; } }
+.tr .n .eq { margin-left: auto; }
+
+/* Detail hero */
+.hero { position: relative; display: flex; align-items: flex-end; gap: 24px; padding: 76px 24px 24px; margin: 0 -20px; min-height: 300px;
+  background: linear-gradient(180deg, rgba(var(--mc-hero-rgb, 82, 82, 91), .85), rgba(var(--mc-hero-rgb, 82, 82, 91), .35)); transition: background .5s; }
+.narrow .hero { flex-direction: column; align-items: center; text-align: center; margin: 0 -14px; padding: 64px 18px 18px; gap: 16px; min-height: 0; }
+.hero .art { width: clamp(150px, 22vw, 232px); height: clamp(150px, 22vw, 232px); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); flex: none; }
+.narrow .hero .art { width: min(62vw, 240px); height: min(62vw, 240px); }
+.hero.circle .art { border-radius: 50%; }
+.hero .kind { font-size: 13px; font-weight: 700; }
+.hero h1.mid { font-size: clamp(26px, 3.6vw, 48px); }
+.hero h1.long { font-size: clamp(22px, 2.6vw, 34px); }
+.hero h1 { font-size: clamp(28px, 5vw, 64px); line-height: 1.04; font-weight: 900; letter-spacing: -.03em; margin: 6px 0 12px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-break: break-word; }
+.narrow .hero h1.mid { font-size: clamp(26px, 3.6vw, 48px); }
+.hero h1.long { font-size: clamp(22px, 2.6vw, 34px); }
+.hero h1 { font-size: 26px; margin: 0 0 6px; }
+.hero .meta { font-size: 14px; color: rgba(255,255,255,.82); display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.narrow .hero .meta { justify-content: center; font-size: 13px; }
+.hero .meta b { color: #fff; }
+.hero .meta .link { font-weight: 700; color: #fff; }
+.hero .meta .link:hover { text-decoration: underline; }
+.hero .desc { font-size: 13.5px; color: rgba(255,255,255,.7); margin-top: 8px; max-width: 70ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.actions { display: flex; align-items: center; gap: 20px; padding: 22px 0 18px; position: relative; }
+.actions-bg { position: absolute; left: -20px; right: -20px; top: 0; height: 240px; background: linear-gradient(180deg, rgba(var(--mc-hero-rgb, 82, 82, 91), .28), transparent); pointer-events: none; }
+.narrow .actions-bg { left: -14px; right: -14px; }
+.actions > :not(.actions-bg) { position: relative; }
+.act { color: var(--mc-dim); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; transition: color .15s, transform .1s; }
+.act:hover { color: var(--mc-text); }
+.act:active { transform: scale(.92); }
+.act .ic { width: 30px; height: 30px; }
+.act.on { color: var(--mc-accent); }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); font-weight: 700; font-size: 13.5px; }
+.pill:hover { border-color: #fff; transform: scale(1.02); }
+.pill .ic { width: 18px; height: 18px; }
+
+/* Library */
+.lib-head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.lib-head h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -.02em; }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+.narrow .chips { margin: 0 -14px; padding: 0 14px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.08); font-size: 13.5px; font-weight: 600; white-space: nowrap; transition: background .15s, color .15s; flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.chip:hover { background: rgba(255,255,255,.14); }
+.chip.on { background: var(--mc-text); color: #000; }
+.chip .ic { width: 16px; height: 16px; }
+.lib-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.07); border-radius: 8px; padding: 0 10px; height: 38px; flex: 1; min-width: 160px; max-width: 320px; }
+.filter .ic { width: 18px; height: 18px; color: var(--mc-dim); }
+.filter input { border: 0; outline: 0; background: none; flex: 1; min-width: 0; font-size: 14px; }
+.sort { height: 38px; border-radius: 8px; background: rgba(255,255,255,.07); border: 0; padding: 0 10px; font-size: 13.5px; font-weight: 600; color: var(--mc-text); outline: 0; }
+.sort option { background: #222; }
+.sentinel { height: 40px; }
+
+/* Search */
+.best { display: grid; grid-template-columns: minmax(260px, 2fr) minmax(0, 3fr); gap: 22px; margin-bottom: 26px; }
+.cozy .best, .narrow .best { grid-template-columns: 1fr; }
+.best-tile { background: rgba(255,255,255,.05); border-radius: 12px; padding: 20px; text-align: left; position: relative; transition: background .2s; display: flex; flex-direction: column; gap: 16px; }
+.best-tile:hover { background: rgba(255,255,255,.1); }
+.best-tile .art { width: 96px; height: 96px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.best-tile.circle .art { border-radius: 50%; }
+.best-tile .t { font-size: 28px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.best-tile .s { color: var(--mc-dim); font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.tag { background: rgba(0,0,0,.4); color: var(--mc-text); padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.best-tile .fab { position: absolute; right: 18px; bottom: 18px; }
+.sec-h { font-size: 21px; font-weight: 800; margin: 0 0 12px; }
+.browse { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 190px), 1fr)); gap: 14px; }
+.bt { position: relative; aspect-ratio: 1.7; border-radius: 10px; overflow: hidden; padding: 14px; text-align: left; font-size: 19px; font-weight: 800; transition: transform .15s; }
+.bt:hover { transform: scale(1.02); }
+.bt .ic { position: absolute; right: -8px; bottom: -6px; width: 74px; height: 74px; transform: rotate(22deg); opacity: .9; }
+.recent { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+.recent .chip .x { opacity: .6; }
+
+/* Empty / error / skeleton */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 60px 20px; color: var(--mc-dim); }
+.empty .ic { width: 48px; height: 48px; color: var(--mc-faint); }
+.empty b { color: var(--mc-text); font-size: 17px; }
+.sk { background: linear-gradient(90deg, #232327 0%, #2e2e33 50%, #232327 100%); background-size: 200% 100%; animation: sk 1.2s linear infinite; border-radius: 8px; }
+@keyframes sk { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.sk-tile { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.narrow .sk-tile { padding: 0; }
+.sk-tile .sk:first-child { aspect-ratio: 1; }
+.sk-line { height: 12px; }
+
+/* Right panel (queue / speakers) */
+.panel { grid-area: panel; min-height: 0; background: var(--mc-surface); border-radius: var(--mc-radius); display: none; flex-direction: column; overflow: hidden; }
+.shell.panel-docked .panel { display: flex; }
+.shell.panel-overlay .panel { display: flex; position: absolute; right: 8px; top: 8px; bottom: calc(var(--mc-bar-h) + 16px); width: min(380px, calc(100% - 16px)); z-index: 30;
+  box-shadow: -12px 0 40px rgba(0,0,0,.6); animation: panelIn .22s ease both; }
+@keyframes panelIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.panel-h { display: flex; align-items: center; gap: 8px; padding: 16px 12px 8px 18px; }
+.panel-h h3 { flex: 1; margin: 0; font-size: 17px; font-weight: 800; }
+.panel-tabs { display: flex; gap: 6px; padding: 0 14px 10px; }
+.panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 10px 16px; scrollbar-width: thin; overscroll-behavior: contain; }
+.sub-h { font-size: 13px; font-weight: 700; color: var(--mc-dim); margin: 14px 8px 8px; display: flex; justify-content: space-between; align-items: center; }
+.sub-h button { font-size: 12.5px; color: var(--mc-dim); font-weight: 700; }
+.sub-h button:hover { color: var(--mc-text); }
+.qi { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; width: 100%; text-align: left; position: relative; }
+.qi:hover { background: rgba(255,255,255,.07); }
+.qi .art { width: 44px; height: 44px; border-radius: 5px; flex: none; }
+.qi .tx { flex: 1; min-width: 0; }
+.qi .tt { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qi.on .tt { color: var(--mc-accent); }
+.qi .ts { font-size: 12.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.qi.past { opacity: .5; }
+.qi .qa { display: flex; gap: 2px; }
+.mini-btn { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--mc-dim); }
+.mini-btn:hover { color: var(--mc-text); background: rgba(255,255,255,.08); }
+.mini-btn .ic { width: 19px; height: 19px; }
+.qi .qa { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: #2f2f35; border-radius: 999px; padding: 2px; box-shadow: -10px 0 14px #2f2f35; opacity: 0; pointer-events: none; transition: opacity .12s; }
+.qi:hover .qa, .qi:focus-within .qa { opacity: 1; pointer-events: auto; }
+.touch .qi .qa { position: static; transform: none; opacity: 1; pointer-events: auto; background: none; box-shadow: none; }
+.sp-hint { font-size: 12.5px; color: var(--mc-faint); margin: -4px 8px 10px; line-height: 1.4; }
+.sp-hint .ic { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; }
+.sp-cur .sp-vol .ic { width: 20px; height: 20px; color: var(--mc-accent); flex: none; }
+
+/* Speakers */
+.sp-cur { margin: 4px 4px 12px; padding: 14px; border-radius: 12px; background: linear-gradient(135deg, rgba(var(--mc-accent-rgb), .28), rgba(var(--mc-accent-rgb), .08)); }
+.sp-cur .lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-accent); }
+.sp-cur .nm { font-size: 19px; font-weight: 800; margin: 4px 0 2px; display: flex; align-items: center; gap: 8px; }
+.sp-cur .nm .ic { color: var(--mc-accent); }
+.sp-cur .sub { font-size: 13px; color: var(--mc-dim); }
+.sp { border-radius: 12px; padding: 8px; transition: background .15s; }
+.sp:hover { background: rgba(255,255,255,.05); }
+.sp.active { background: rgba(var(--mc-accent-rgb), .12); }
+.sp-row { display: flex; align-items: center; gap: 12px; }
+.sp-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-align: left; padding: 2px 0; }
+.sp-ic { width: 42px; height: 42px; border-radius: 10px; background: var(--mc-surface-3); display: grid; place-items: center; flex: none; color: var(--mc-dim); position: relative; }
+.sp.active .sp-ic, .sp.grouped .sp-ic { background: rgba(var(--mc-accent-rgb), .22); color: var(--mc-accent); }
+.sp-ic .eq { position: absolute; right: -3px; bottom: -3px; background: var(--mc-bg); border-radius: 4px; padding: 2px; width: 18px; height: 18px; }
+.sp-tx { min-width: 0; flex: 1; }
+.sp-nm { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp.active .sp-nm { color: var(--mc-accent); }
+.sp-st { font-size: 12.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.grp { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.35); color: var(--mc-dim); flex: none; transition: all .15s; }
+.grp:hover { border-color: #fff; color: #fff; }
+.grp.on { background: var(--mc-accent); border-color: var(--mc-accent); color: #000; }
+.grp .ic { width: 20px; height: 20px; }
+.grp:disabled { opacity: .3; cursor: default; }
+.sp-vol { display: flex; align-items: center; gap: 8px; padding: 6px 2px 0 54px; }
+.sp-vol .mini-btn { width: 26px; height: 26px; flex: none; }
+.sp-move { margin: 8px 0 0 54px; font-size: 12.5px; padding: 6px 12px; }
+.sp-badge { font-size: 11px; font-weight: 700; color: var(--mc-dim); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
+
+/* Sliders */
+.rng { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; background: transparent; cursor: pointer; margin: 0; --p: 0%; touch-action: none; }
+.rng::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--mc-text) var(--p), rgba(255,255,255,.22) var(--p)); }
+.rng::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.22); }
+.rng::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--mc-text); }
+.rng::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; margin-top: -4px; opacity: 0; transition: opacity .15s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.rng::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 0; opacity: 0; }
+.rng:hover::-webkit-slider-thumb, .rng:active::-webkit-slider-thumb, .touch .rng::-webkit-slider-thumb { opacity: 1; }
+.rng:hover::-moz-range-thumb, .touch .rng::-moz-range-thumb { opacity: 1; }
+.rng:hover::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--mc-accent) var(--p), rgba(255,255,255,.22) var(--p)); }
+.rng:disabled { cursor: default; opacity: .5; }
+
+/* Bottom now-playing bar */
+.bar { grid-area: bar; height: var(--mc-bar-h); display: grid; grid-template-columns: minmax(180px, 1fr) minmax(300px, 1.6fr) minmax(250px, 1fr); align-items: center; gap: 16px; padding: 0 10px; }
+.np-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.np-left .art { width: 60px; height: 60px; border-radius: 6px; flex: none; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.np-tx { min-width: 0; }
+.np-t { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; max-width: 100%; }
+.np-a { font-size: 12.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; max-width: 100%; margin-top: 3px; }
+button.np-t:hover, button.np-a:hover { text-decoration: underline; color: var(--mc-text); }
+.heart { color: var(--mc-dim); width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; transition: transform .12s, color .15s; }
+.heart:hover { color: var(--mc-text); }
+.heart.on { color: var(--mc-accent); }
+.heart:active { transform: scale(.85); }
+.heart .ic { width: 20px; height: 20px; }
+.np-mid { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.ctrls { display: flex; align-items: center; gap: 18px; }
+.cb { color: var(--mc-dim); width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; position: relative; transition: color .15s, transform .1s; }
+.cb:hover { color: var(--mc-text); }
+.cb:active { transform: scale(.9); }
+.cb.on { color: var(--mc-accent); }
+.cb.on::after { content: ""; position: absolute; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.cb .ic { width: 22px; height: 22px; }
+.cb:disabled { opacity: .35; cursor: default; }
+.pp { width: 38px; height: 38px; border-radius: 50%; background: var(--mc-text); color: #000; display: grid; place-items: center; transition: transform .1s; }
+.pp:hover { transform: scale(1.06); }
+.pp:active { transform: scale(.94); }
+.pp .ic { width: 24px; height: 24px; }
+.seek { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 640px; }
+.seek .tm { font-size: 11.5px; color: var(--mc-dim); font-variant-numeric: tabular-nums; min-width: 38px; text-align: center; }
+.live { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: #fff; background: #e11d48; padding: 2px 7px; border-radius: 4px; }
+.np-right { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.np-right .cb.act-p { color: var(--mc-accent); }
+.vol { display: flex; align-items: center; gap: 4px; width: 140px; flex: none; }
+.spk-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--mc-accent);
+  background: rgba(var(--mc-accent-rgb), .12); max-width: 210px; min-width: 0; }
+.spk-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spk-btn .ic { width: 18px; height: 18px; }
+.spk-btn:hover { background: rgba(var(--mc-accent-rgb), .22); }
+.idle-np .np-mid { opacity: .55; }
+.medium .bar { grid-template-columns: minmax(150px, 1fr) minmax(260px, 1.5fr) auto; }
+.medium .vol { width: 96px; }
+.medium .spk-btn span { display: none; }
+
+/* Narrow: mini player + tabs */
+.mini { grid-area: mini; display: none; position: relative; margin: 0 8px 6px; border-radius: 10px; background: var(--mc-np-bg, #2a2a2f); overflow: hidden;
+  transition: background .5s; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+.narrow .mini { display: block; }
+.mini-in { display: flex; align-items: center; gap: 10px; padding: 7px 8px; }
+.mini .art { width: 42px; height: 42px; border-radius: 6px; flex: none; }
+.mini-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; text-align: left; }
+.mini .np-t { font-size: 13.5px; }
+.mini .np-a { font-size: 12px; color: rgba(255,255,255,.7); }
+.mini .np-a .ic { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; color: var(--mc-accent); }
+.mini .cb { color: var(--mc-text); width: 40px; height: 40px; }
+.mini .cb .ic { width: 26px; height: 26px; }
+.mini-prog { position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
+.mini-prog i { display: block; height: 100%; width: 0; background: #fff; transition: width 1s linear; }
+.tabs { grid-area: tabs; display: none; background: linear-gradient(180deg, rgba(15,15,16,.6), #0f0f10 40%); padding: 4px 4px max(6px, env(safe-area-inset-bottom, 0px)); }
+.narrow .tabs { display: grid; grid-template-columns: repeat(4, 1fr); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 4px; color: var(--mc-dim); font-size: 11px; font-weight: 600; }
+.tab.on { color: var(--mc-text); }
+.tab .ic { width: 25px; height: 25px; }
+
+/* Sheets (narrow) */
+.sheet { position: absolute; inset: 0; z-index: 40; background: var(--mc-bg); display: flex; flex-direction: column; transform: translateY(100%); visibility: hidden;
+  transition: transform .32s cubic-bezier(.2,.8,.2,1), visibility 0s linear .32s; overflow: hidden; }
+.sheet.open { transform: none; visibility: visible; transition: transform .32s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.sheet.dragging { transition: none; }
+.sheet-bg { position: absolute; inset: -40px; background-size: cover; background-position: center; filter: blur(48px) saturate(1.3) brightness(.55); transform: scale(1.15); opacity: .9; pointer-events: none; }
+.sheet-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.65)); }
+.sheet-h { position: relative; display: flex; align-items: center; gap: 8px; padding: max(12px, env(safe-area-inset-top, 0px)) 12px 8px; touch-action: none; }
+.sheet-h .ttl { flex: 1; text-align: center; font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); }
+.sheet-h .ttl small { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6); letter-spacing: .06em; text-transform: uppercase; }
+.grab { position: absolute; top: 5px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: rgba(255,255,255,.35); }
+.sheet-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 18px; }
+.fp { display: flex; flex-direction: column; gap: 18px; padding: 8px 10px 20px; min-height: 100%; justify-content: space-evenly; max-width: 520px; margin: 0 auto; }
+.fp-art { width: 100%; aspect-ratio: 1; max-width: min(100%, calc(var(--mc-height, 800px) - 420px)); margin: 0 auto; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,.6); touch-action: pan-y; }
+.fp-art.art { display: block; }
+.fp-art.paused { transform: scale(.94); transition: transform .35s; }
+.fp-art.playing { transform: none; transition: transform .35s; }
+.fp-row { display: flex; align-items: center; gap: 12px; }
+.fp-tx { flex: 1; min-width: 0; }
+.fp-t { font-size: 22px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; max-width: 100%; }
+.fp-a { font-size: 15px; color: rgba(255,255,255,.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; margin-top: 4px; max-width: 100%; }
+.fp .heart { width: 44px; height: 44px; }
+.fp .heart .ic { width: 28px; height: 28px; }
+.fp-seek .rng { height: 22px; }
+.fp-times { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.fp-ctrls { display: flex; align-items: center; justify-content: space-between; }
+.fp-ctrls .cb { color: #fff; width: 48px; height: 48px; }
+.fp-ctrls .cb .ic { width: 30px; height: 30px; }
+.fp-ctrls .cb.sidebtn .ic { width: 25px; height: 25px; }
+.fp-ctrls .cb.on { color: var(--mc-accent); }
+.fp-ctrls .pp { width: 70px; height: 70px; background: #fff; }
+.fp-ctrls .pp .ic { width: 38px; height: 38px; }
+.fp-vol { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.75); }
+.fp-vol .ic { width: 20px; height: 20px; }
+.fp-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.fp-foot .spk-btn { max-width: 70%; }
+
+/* Menus, toasts */
+.layer { position: absolute; inset: 0; z-index: 60; display: none; }
+.layer.open { display: block; }
+.layer .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.001); }
+.narrow .layer .scrim, .layer.sheetlike .scrim { background: rgba(0,0,0,.55); animation: fade .2s both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.menu { position: absolute; min-width: 230px; max-width: 300px; background: #2a2a2f; border-radius: 10px; padding: 5px; box-shadow: 0 16px 40px rgba(0,0,0,.6); animation: pop .14s ease both; }
+@keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.layer.sheetlike .menu { left: 0 !important; right: 0; top: auto !important; bottom: 0; max-width: none; border-radius: 16px 16px 0 0; padding: 10px 8px max(14px, env(safe-area-inset-bottom, 0px)); animation: up .24s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes up { from { transform: translateY(100%); } to { transform: none; } }
+.menu-head { display: flex; align-items: center; gap: 12px; padding: 8px 10px 12px; border-bottom: 1px solid var(--mc-line); margin-bottom: 6px; }
+.menu-head .art { width: 48px; height: 48px; border-radius: 6px; flex: none; }
+.menu-head .t { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-head .s { color: var(--mc-dim); font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; text-align: left; }
+.layer.sheetlike .mi { padding: 13px 12px; font-size: 15px; }
+.mi:hover { background: rgba(255,255,255,.08); }
+.mi .ic { width: 20px; height: 20px; color: var(--mc-dim); }
+.mi.sep { border-top: 1px solid var(--mc-line); border-radius: 0 0 6px 6px; margin-top: 4px; }
+.toast { position: absolute; left: 50%; bottom: calc(var(--mc-bar-h) + 24px); transform: translate(-50%, 20px); background: #f4f4f5; color: #111; padding: 10px 18px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 80; max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.4); text-align: center; }
+.toast.err { background: #fecaca; color: #450a0a; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.narrow .toast { bottom: 140px; }
+.hidden { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .view, .menu, .sheet, .panel { animation: none !important; transition: none !important; } .eq i { animation: none; height: 60%; } }
+`;
+
+// src/cards/ha-music-card/icons.js
+var ICONS = {
+  home: "M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z",
+  homeOutline: "M12 5.69L17 10.19V18H15V12H9V18H7V10.19L12 5.69M12 3L2 12H5V20H11V14H13V20H19V12H22",
+  magnify: "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z",
+  bookshelf: "M9 3V18H12V3H9M12 5L16 18L19 17L15 4L12 5M5 5V18H8V5H5M3 19V21H21V19H3Z",
+  playlistMusic: "M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z",
+  album: "M12,11A1,1 0 0,0 11,12A1,1 0 0,0 12,13A1,1 0 0,0 13,12A1,1 0 0,0 12,11M12,16.5C9.5,16.5 7.5,14.5 7.5,12C7.5,9.5 9.5,7.5 12,7.5C14.5,7.5 16.5,9.5 16.5,12C16.5,14.5 14.5,16.5 12,16.5M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  accountMusic: "M11,14C12,14 13.05,14.16 14.2,14.44C13.39,15.31 13,16.33 13,17.5C13,18.39 13.25,19.23 13.78,20H3V18C3,16.81 3.91,15.85 5.74,15.12C7.57,14.38 9.33,14 11,14M11,12C9.92,12 9,11.61 8.18,10.83C7.38,10.05 7,9.11 7,8C7,6.92 7.38,6 8.18,5.18C9,4.38 9.92,4 11,4C12.11,4 13.05,4.38 13.83,5.18C14.61,6 15,6.92 15,8C15,9.11 14.61,10.05 13.83,10.83C13.05,11.61 12.11,12 11,12M18.5,10H20L22,10V12H20V17.5A2.5,2.5 0 0,1 17.5,20A2.5,2.5 0 0,1 15,17.5A2.5,2.5 0 0,1 17.5,15C17.86,15 18.19,15.07 18.5,15.21V10Z",
+  musicNote: "M12 3V13.55C11.41 13.21 10.73 13 10 13C7.79 13 6 14.79 6 17S7.79 21 10 21 14 19.21 14 17V7H18V3H12Z",
+  radio: "M20,6A2,2 0 0,1 22,8V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V8C2,7.15 2.53,6.42 3.28,6.13L15.71,1L16.47,2.83L8.83,6H20M20,8H4V12H16V10H18V12H20V8M7,14A3,3 0 0,0 4,17A3,3 0 0,0 7,20A3,3 0 0,0 10,17A3,3 0 0,0 7,14Z",
+  podcast: "M17,18.25V21.5H7V18.25C7,16.87 9.24,15.75 12,15.75C14.76,15.75 17,16.87 17,18.25M12,5.5A6.5,6.5 0 0,1 18.5,12C18.5,13.25 18.15,14.42 17.54,15.41L16,14.04C16.32,13.43 16.5,12.73 16.5,12C16.5,9.5 14.5,7.5 12,7.5C9.5,7.5 7.5,9.5 7.5,12C7.5,12.73 7.68,13.43 8,14.04L6.46,15.41C5.85,14.42 5.5,13.25 5.5,12A6.5,6.5 0 0,1 12,5.5M12,1.5A10.5,10.5 0 0,1 22.5,12C22.5,14.28 21.77,16.39 20.54,18.11L19.04,16.76C19.96,15.4 20.5,13.76 20.5,12A8.5,8.5 0 0,0 12,3.5A8.5,8.5 0 0,0 3.5,12C3.5,13.76 4.04,15.4 4.96,16.76L3.46,18.11C2.23,16.39 1.5,14.28 1.5,12A10.5,10.5 0 0,1 12,1.5M12,9.5A2.5,2.5 0 0,1 14.5,12A2.5,2.5 0 0,1 12,14.5A2.5,2.5 0 0,1 9.5,12A2.5,2.5 0 0,1 12,9.5Z",
+  bookOpenPageVariant: "M19 2L14 6.5V17.5L19 13V2M6.5 5C4.55 5 2.45 5.4 1 6.5V21.16C1 21.41 1.25 21.66 1.5 21.66C1.6 21.66 1.65 21.59 1.75 21.59C3.1 20.94 5.05 20.5 6.5 20.5C8.45 20.5 10.55 20.9 12 22C13.35 21.15 15.8 20.5 17.5 20.5C19.15 20.5 20.85 20.81 22.25 21.56C22.35 21.61 22.4 21.59 22.5 21.59C22.75 21.59 23 21.34 23 21.09V6.5C22.4 6.05 21.75 5.75 21 5.5V19C19.9 18.65 18.7 18.5 17.5 18.5C15.8 18.5 13.35 19.15 12 20V6.5C10.55 5.4 8.45 5 6.5 5Z",
+  play: "M8,5.14V19.14L19,12.14L8,5.14Z",
+  pause: "M14,19H18V5H14M6,19H10V5H6V19Z",
+  skipNext: "M16,18H18V6H16M6,18L14.5,12L6,6V18Z",
+  skipPrevious: "M6,18V6H8V18H6M9.5,12L18,6V18L9.5,12Z",
+  shuffleVariant: "M17,3L22.25,7.5L17,12L22.25,16.5L17,21V18H14.26L11.44,15.18L13.56,13.06L15.5,15H17V12L17,9H15.5L6.5,18H2V15H5.26L14.26,6H17V3M2,6H6.5L9.32,8.82L7.2,10.94L5.26,9H2V6Z",
+  repeat: "M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z",
+  repeatOnce: "M13,15V9H12L10,10V11H11.5V15M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z",
+  heart: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z",
+  heartOutline: "M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z",
+  volumeHigh: "M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z",
+  volumeMedium: "M5,9V15H9L14,20V4L9,9M18.5,12C18.5,10.23 17.5,8.71 16,7.97V16C17.5,15.29 18.5,13.76 18.5,12Z",
+  volumeLow: "M7,9V15H11L16,20V4L11,9H7Z",
+  volumeOff: "M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z",
+  playlistPlay: "M3 10H14V12H3V10M3 6H14V8H3V6M3 14H10V16H3V14M16 13V21L22 17L16 13Z",
+  speaker: "M12,12A3,3 0 0,0 9,15A3,3 0 0,0 12,18A3,3 0 0,0 15,15A3,3 0 0,0 12,12M12,20A5,5 0 0,1 7,15A5,5 0 0,1 12,10A5,5 0 0,1 17,15A5,5 0 0,1 12,20M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8C10.89,8 10,7.1 10,6C10,4.89 10.89,4 12,4M17,2H7C5.89,2 5,2.89 5,4V20A2,2 0 0,0 7,22H17A2,2 0 0,0 19,20V4C19,2.89 18.1,2 17,2Z",
+  speakerMultiple: "M14,10A3,3 0 0,0 11,13A3,3 0 0,0 14,16A3,3 0 0,0 17,13A3,3 0 0,0 14,10M14,18A5,5 0 0,1 9,13A5,5 0 0,1 14,8A5,5 0 0,1 19,13A5,5 0 0,1 14,18M14,2A2,2 0 0,1 16,4A2,2 0 0,1 14,6A2,2 0 0,1 12,4A2,2 0 0,1 14,2M19,0H9A2,2 0 0,0 7,2V18A2,2 0 0,0 9,20H19A2,2 0 0,0 21,18V2A2,2 0 0,0 19,0M5,22H17V24H5A2,2 0 0,1 3,22V4H5",
+  dotsHorizontal: "M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z",
+  dotsVertical: "M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z",
+  chevronLeft: "M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z",
+  chevronRight: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z",
+  chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
+  close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
+  plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
+  check: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
+  arrowUp: "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z",
+  arrowDown: "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z",
+  trashCanOutline: "M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z",
+  playlistRemove: "M14 10H3V12H14V10M14 6H3V8H14V6M3 16H10V14H3V16M14.4 22L17 19.4L19.6 22L21 20.6L18.4 18L21 15.4L19.6 14L17 16.6L14.4 14L13 15.4L15.6 18L13 20.6L14.4 22Z",
+  skipNextCircleOutline: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4M8,8V16L13,12M14,8V16H16V8",
+  playlistPlus: "M3 16H10V14H3M18 14V10H16V14H12V16H16V20H18V16H22V14M14 6H3V8H14M14 10H3V12H14V10Z",
+  radioTower: "M12,10A2,2 0 0,1 14,12C14,12.5 13.82,12.94 13.53,13.29L16.7,22H14.57L12,14.93L9.43,22H7.3L10.47,13.29C10.18,12.94 10,12.5 10,12A2,2 0 0,1 12,10M12,8A4,4 0 0,0 8,12C8,12.5 8.1,13 8.28,13.46L7.4,15.86C6.53,14.81 6,13.47 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12C18,13.47 17.47,14.81 16.6,15.86L15.72,13.46C15.9,13 16,12.5 16,12A4,4 0 0,0 12,8M12,4A8,8 0 0,0 4,12C4,14.36 5,16.5 6.64,17.94L5.92,19.94C3.54,18.11 2,15.23 2,12A10,10 0 0,1 12,2A10,10 0 0,1 22,12C22,15.23 20.46,18.11 18.08,19.94L17.36,17.94C19,16.5 20,14.36 20,12A8,8 0 0,0 12,4Z",
+  account: "M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z",
+  sortVariant: "M3,13H15V11H3M3,6V8H21V6M3,18H9V16H3V18Z",
+  swapHorizontal: "M21,9L17,5V8H10V10H17V13M7,11L3,15L7,19V16H14V14H7V11Z",
+  castAudio: "M2 11V13C7 13 11 17 11 22H13C13 15.9 8.1 11 2 11M20 2H10C8.9 2 8 2.9 8 4V10.5C9 11 9.9 11.7 10.7 12.4C11.6 11 13.2 10 15 10C17.8 10 20 12.2 20 15S17.8 20 15 20H14.8C14.9 20.7 15 21.3 15 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2M15 8C13.9 8 13 7.1 13 6C13 4.9 13.9 4 15 4C16.1 4 17 4.9 17 6S16.1 8 15 8M15 18C14.8 18 14.5 18 14.3 17.9C13.8 16.4 13.1 15.1 12.2 13.9C12.6 12.8 13.7 11.9 15 11.9C16.7 11.9 18 13.2 18 14.9S16.7 18 15 18M2 15V17C4.8 17 7 19.2 7 22H9C9 18.1 5.9 15 2 15M2 19V22H5C5 20.3 3.7 19 2 19",
+  television: "M21,17H3V5H21M21,3H3A2,2 0 0,0 1,5V17A2,2 0 0,0 3,19H8V21H16V19H21A2,2 0 0,0 23,17V5A2,2 0 0,0 21,3Z",
+  speakerWireless: "M20.07,19.07L18.66,17.66C20.11,16.22 21,14.21 21,12C21,9.78 20.11,7.78 18.66,6.34L20.07,4.93C21.88,6.74 23,9.24 23,12C23,14.76 21.88,17.26 20.07,19.07M17.24,16.24L15.83,14.83C16.55,14.11 17,13.11 17,12C17,10.89 16.55,9.89 15.83,9.17L17.24,7.76C18.33,8.85 19,10.35 19,12C19,13.65 18.33,15.15 17.24,16.24M4,3H12A2,2 0 0,1 14,5V19A2,2 0 0,1 12,21H4A2,2 0 0,1 2,19V5A2,2 0 0,1 4,3M8,5A2,2 0 0,0 6,7A2,2 0 0,0 8,9A2,2 0 0,0 10,7A2,2 0 0,0 8,5M8,11A4,4 0 0,0 4,15A4,4 0 0,0 8,19A4,4 0 0,0 12,15A4,4 0 0,0 8,11M8,13A2,2 0 0,1 10,15A2,2 0 0,1 8,17A2,2 0 0,1 6,15A2,2 0 0,1 8,13Z",
+  history: "M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3",
+  formatListBulleted: "M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z",
+  menu: "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",
+  clockOutline: "M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z",
+  playCircle: "M10,16.5V7.5L16,12M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  playlistEdit: "M3 6V8H14V6H3M3 10V12H14V10H3M20 10.1C19.9 10.1 19.7 10.2 19.6 10.3L18.6 11.3L20.7 13.4L21.7 12.4C21.9 12.2 21.9 11.8 21.7 11.6L20.4 10.3C20.3 10.2 20.2 10.1 20 10.1M18.1 11.9L12 17.9V20H14.1L20.2 13.9L18.1 11.9M3 14V16H10V14H3Z",
+  musicBoxMultiple: "M4,6H2V20A2,2 0 0,0 4,22H18V20H4M18,7H15V12.5A2.5,2.5 0 0,1 12.5,15A2.5,2.5 0 0,1 10,12.5A2.5,2.5 0 0,1 12.5,10C13.07,10 13.58,10.19 14,10.5V5H18M20,2H8A2,2 0 0,0 6,4V16A2,2 0 0,0 8,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2Z",
+  arrowCollapseDown: "M19.92,12.08L12,20L4.08,12.08L5.5,10.67L11,16.17V2H13V16.17L18.5,10.66L19.92,12.08M12,20H2V22H22V20H12Z",
+  alertCircleOutline: "M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z",
+  filterVariant: "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z",
+  power: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13"
+};
+var icon4 = (name, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name] || ICONS.musicNote}"/></svg>`;
+
+// src/cards/ha-music-card/api.js
+var CACHE_MS = 6e4;
+var PRIVATE_HOST = /^(?:10\.|127\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|localhost$|[^.]+$|.*\.local$)/i;
+var MEDIA_LABEL = {
+  track: "Nummer",
+  album: "Album",
+  artist: "Kunstner",
+  playlist: "Playliste",
+  radio: "Radio",
+  podcast: "Podcast",
+  podcast_episode: "Episode",
+  audiobook: "Lydbog",
+  folder: "Mappe"
+};
+function imageUrl(item2, config = {}, size = 256) {
+  if (!item2) return "";
+  let src = item2.image ?? item2.media_image ?? item2.entity_picture ?? "";
+  if (src && typeof src === "object") src = imageFromRecord(src, config, size);
+  if (!src && Array.isArray(item2.metadata?.images)) {
+    const img = item2.metadata.images.find((i) => i.type === "thumb") || item2.metadata.images[0];
+    if (img) src = imageFromRecord(img, config, size);
+  }
+  if (!src && item2.album?.image) src = imageUrl(item2.album, config, size);
+  return fixImageUrl(src, config, size);
+}
+function imageFromRecord(img, config, size) {
+  if (!img?.path) return "";
+  if (img.remotely_accessible || /^https?:\/\//.test(img.path)) return img.path;
+  const base = (config.ma_url || "").replace(/\/+$/, "");
+  if (img.proxy_id && base) return `${base}/imageproxy/${img.proxy_id}?size=${size}`;
+  if (!base) return "";
+  return `${base}/imageproxy?path=${encodeURIComponent(img.path)}&provider=${encodeURIComponent(img.provider || "")}&size=${size}`;
+}
+function fixImageUrl(src, config = {}, size = 256) {
+  if (!src || typeof src !== "string") return "";
+  if (src.startsWith("/")) return src;
+  let url;
+  try {
+    url = new URL(src);
+  } catch (_e2) {
+    return src;
+  }
+  const base = (config.ma_url || "").replace(/\/+$/, "");
+  const internal = (config.ma_internal_url || "").replace(/\/+$/, "");
+  const isMa = internal && src.startsWith(internal) || url.port === "8095" && PRIVATE_HOST.test(url.hostname);
+  if (isMa && base) {
+    let path = url.pathname + url.search;
+    if (/\/imageproxy\//.test(url.pathname)) path = path.replace(/([?&]size=)\d+/, `$1${size}`);
+    return base + path;
+  }
+  if (url.protocol === "http:" && typeof location !== "undefined" && location.protocol === "https:") {
+    return src.replace(/^http:/, "https:");
+  }
+  return src;
+}
+function normItem(raw, config) {
+  if (!raw) return null;
+  const media = raw.media_item && typeof raw.media_item === "object" ? raw.media_item : null;
+  const base = media || raw;
+  const item2 = {
+    media_type: base.media_type || mediaTypeFromUri(base.uri),
+    uri: base.uri || base.media_content_id || "",
+    name: base.name || raw.media_title || raw.name || "",
+    version: base.version || "",
+    favorite: base.favorite === true || raw.favorite === true,
+    artists: (base.artists || []).map((a) => ({ name: a.name, uri: a.uri })).filter((a) => a.name),
+    album: base.album ? { name: base.album.name, uri: base.album.uri } : null,
+    duration: Number(raw.duration ?? base.duration) || 0,
+    track_number: base.track_number || base.episode_number || null,
+    year: base.year || base.metadata?.year || null,
+    owner: base.owner || "",
+    image: imageUrl(raw.image ? raw : base, config, 256) || imageUrl(base, config, 256),
+    image_large: imageUrl(raw.image ? raw : base, config, 512) || imageUrl(base, config, 512),
+    queue_item_id: raw.queue_item_id || null,
+    description: base.metadata?.description || "",
+    fully_played: base.fully_played || false,
+    resume_ms: base.resume_position_ms || 0,
+    released: base.metadata?.release_date || base.date_added || ""
+  };
+  if (!item2.artists.length && raw.media_artist) item2.artists = [{ name: raw.media_artist }];
+  if (!item2.album && raw.media_album_name) item2.album = { name: raw.media_album_name };
+  return item2;
+}
+function mediaTypeFromUri(uri = "") {
+  const m = String(uri).match(/^[^:]+:\/\/([a-z_]+)\//);
+  return m ? m[1] : "";
+}
+function uriRef(uri) {
+  const m = String(uri).match(/^([^:]+):\/\/[^/]+\/(.+)$/);
+  return m ? { item_id: m[2], provider_instance_id_or_domain: m[1] } : null;
+}
+var MusicApi = class {
+  constructor(getHass, getConfig) {
+    this._getHass = getHass;
+    this._getConfig = getConfig;
+    this._cache = /* @__PURE__ */ new Map();
+    this._entry = null;
+    this._mqEntry = void 0;
+  }
+  get hass() {
+    return this._getHass();
+  }
+  get config() {
+    return this._getConfig();
+  }
+  get hasMassQueue() {
+    return Boolean(this.hass?.services?.mass_queue);
+  }
+  clearCache() {
+    this._cache.clear();
+  }
+  async _cached(key, fn, ms = CACHE_MS) {
+    const hit = this._cache.get(key);
+    if (hit && Date.now() - hit.t < ms) return hit.p;
+    const p = fn();
+    this._cache.set(key, { t: Date.now(), p });
+    p.catch(() => this._cache.delete(key));
+    return p;
+  }
+  async call(domain, service, data = {}, target2, response = true) {
+    const msg = { type: "call_service", domain, service, service_data: data };
+    if (target2) msg.target = target2;
+    if (response) msg.return_response = true;
+    const res = await this.hass.callWS(msg);
+    return response ? res?.response : res;
+  }
+  async entryId() {
+    if (this.config.config_entry_id) return this.config.config_entry_id;
+    if (this._entry) return this._entry;
+    const entries = await this.hass.callWS({ type: "config_entries/get", domain: "music_assistant" });
+    const entry = entries.find((e) => e.state === "loaded") || entries[0];
+    if (!entry) throw new Error("Music Assistant-integrationen blev ikke fundet");
+    this._entry = entry.entry_id;
+    return this._entry;
+  }
+  async mqEntryId() {
+    if (this._mqEntry !== void 0) return this._mqEntry;
+    if (!this.hasMassQueue) return this._mqEntry = null;
+    try {
+      const entries = await this.hass.callWS({ type: "config_entries/get", domain: "mass_queue" });
+      const entry = entries.find((e) => e.state === "loaded") || entries[0];
+      this._mqEntry = entry ? entry.entry_id : null;
+    } catch (_e2) {
+      this._mqEntry = null;
+    }
+    return this._mqEntry;
+  }
+  // Raw Music Assistant API command through mass_queue.send_command; answers {response: ...}.
+  async command(command, data = {}) {
+    const entry = await this.mqEntryId();
+    if (!entry) throw new Error("mass_queue-integrationen mangler");
+    const res = await this.call("mass_queue", "send_command", { config_entry_id: entry, command, data });
+    return res?.response ?? res;
+  }
+  async library(mediaType, { order_by = "name", favorite, search, limit = 50, offset = 0 } = {}) {
+    const key = `lib|${mediaType}|${order_by}|${favorite}|${search || ""}|${limit}|${offset}`;
+    return this._cached(key, async () => {
+      const data = { config_entry_id: await this.entryId(), media_type: mediaType, limit, offset, order_by };
+      if (favorite) data.favorite = true;
+      if (search) data.search = search;
+      const res = await this.call("music_assistant", "get_library", data);
+      return (res?.items || []).map((i) => normItem(i, this.config)).filter(Boolean);
+    });
+  }
+  async search(query, limit = 10) {
+    const key = `search|${query}|${limit}`;
+    return this._cached(key, async () => {
+      const res = await this.call("music_assistant", "search", { config_entry_id: await this.entryId(), name: query, limit });
+      const out = {};
+      for (const k of ["tracks", "artists", "albums", "playlists", "radio", "podcasts", "audiobooks"]) {
+        out[k] = (res?.[k] || []).map((i) => normItem(i, this.config)).filter(Boolean);
+      }
+      return out;
+    }, 12e4);
+  }
+  async recommendations(entity) {
+    if (!this.hasMassQueue || !entity) return [];
+    return this._cached(`recs|${entity}`, async () => {
+      const res = await this.call("mass_queue", "get_recommendations", { entity });
+      const folders = Array.isArray(res) ? res : res?.response || [];
+      return folders.map((f) => ({ id: f.item_id, name: f.name, items: (f.items || []).map((i) => normItem(i, this.config)).filter((i) => i && i.uri) })).filter((f) => f.items.length);
+    }, 3e5);
+  }
+  async queue(entity) {
+    const res = await this.call("music_assistant", "get_queue", {}, { entity_id: entity });
+    const q = res?.[entity] || Object.values(res || {})[0];
+    if (!q) return null;
+    return {
+      queue_id: q.queue_id,
+      items: q.items || 0,
+      shuffle: q.shuffle_enabled,
+      repeat: q.repeat_mode,
+      current_index: q.current_index ?? 0,
+      elapsed: q.elapsed_time || 0,
+      current: q.current_item ? normItem(q.current_item, this.config) : null,
+      next: q.next_item ? normItem(q.next_item, this.config) : null
+    };
+  }
+  // The whole upcoming queue. mass_queue.get_queue_items is preferred, but it fails on items whose favorite flag is
+  // empty, so the raw player_queues/items command (with the queue's own offset) is the fallback.
+  async queueItems(entity, queueInfo) {
+    if (!this.hasMassQueue) return [];
+    try {
+      const res = await this.call("mass_queue", "get_queue_items", { entity, limit_before: 3, limit_after: 100 });
+      const list = res?.[entity] || Object.values(res || {})[0] || [];
+      return list.map((i) => normItem({ ...i, image: i.media_image }, this.config));
+    } catch (_e2) {
+      const qid = queueInfo?.queue_id || this.hass.states[entity]?.attributes?.active_queue;
+      if (!qid) return [];
+      const offset = Math.max(0, (queueInfo?.current_index || 0) - 3);
+      const res = await this.command("player_queues/items", { queue_id: qid, limit: 100, offset });
+      return (Array.isArray(res) ? res : []).map((i) => normItem(i, this.config));
+    }
+  }
+  async item(uri) {
+    return this._cached(`item|${uri}`, async () => {
+      const raw = await this.command("music/item_by_uri", { uri });
+      return normItem(raw, this.config);
+    }, 3e5);
+  }
+  // Tracks of an album/playlist, episodes of a podcast, chapters of an audiobook, top tracks and albums of an artist.
+  async tracks(item2) {
+    const ref = uriRef(item2.uri);
+    if (!ref) return [];
+    return this._cached(`tracks|${item2.uri}`, async () => {
+      const norm = (list) => (Array.isArray(list) ? list : []).map((i) => normItem(i, this.config)).filter(Boolean);
+      switch (item2.media_type) {
+        case "album":
+          return norm(await this.command("music/albums/album_tracks", ref));
+        case "playlist": {
+          const all = [];
+          for (let page = 0; page < 10; page += 1) {
+            const list = norm(await this.command("music/playlists/playlist_tracks", { ...ref, page }));
+            all.push(...list);
+            if (list.length < 50) break;
+          }
+          return all;
+        }
+        case "podcast":
+          return norm(await this.command("music/podcasts/podcast_episodes", ref));
+        case "artist":
+          return norm(await this.command("music/artists/artist_tracks", ref));
+        default:
+          return [];
+      }
+    });
+  }
+  async artistAlbums(item2) {
+    const ref = uriRef(item2.uri);
+    if (!ref) return [];
+    return this._cached(`artistalbums|${item2.uri}`, async () => {
+      const list = await this.command("music/artists/artist_albums", ref);
+      return (Array.isArray(list) ? list : []).map((i) => normItem(i, this.config)).filter(Boolean);
+    });
+  }
+  play(entity, item2, enqueue = "play", radio = false) {
+    const data = { media_id: Array.isArray(item2) ? item2.map((i) => i.uri) : item2.uri, enqueue };
+    if (!Array.isArray(item2) && item2.media_type) data.media_type = item2.media_type;
+    if (radio) data.radio_mode = true;
+    return this.call("music_assistant", "play_media", data, { entity_id: entity }, false);
+  }
+  transfer(source, target2) {
+    return this.call("music_assistant", "transfer_queue", { source_player: source, auto_play: true }, { entity_id: target2 }, false);
+  }
+  queueAction(action, entity, queueItemId) {
+    const data = { entity };
+    if (queueItemId) data.queue_item_id = queueItemId;
+    return this.call("mass_queue", action, data, void 0, false);
+  }
+  async setFavorite(item2, on) {
+    if (on) return this.command("music/favorites/add_item", { item: item2.uri });
+    const ref = uriRef(item2.uri);
+    if (ref?.provider_instance_id_or_domain === "library") {
+      return this.command("music/favorites/remove_item", { media_type: item2.media_type, library_item_id: ref.item_id });
+    }
+    throw new Error("Kan ikke fjerne favorit for dette element");
+  }
+};
+
+// src/cards/ha-music-card/views.js
+var esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(Number(sec) || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor(sec % 3600 / 60);
+  const s = String(sec % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+function fmtTotal(sec) {
+  const m = Math.round(sec / 60);
+  if (m < 60) return `${m} min.`;
+  return `${Math.floor(m / 60)} t. ${m % 60} min.`;
+}
+var TYPE_ICON = {
+  track: "musicNote",
+  album: "album",
+  artist: "accountMusic",
+  playlist: "playlistMusic",
+  radio: "radio",
+  podcast: "podcast",
+  podcast_episode: "podcast",
+  audiobook: "bookOpenPageVariant",
+  folder: "musicBoxMultiple"
+};
+function art(item2, cls = "art", large = false) {
+  const src = large ? item2?.image_large || item2?.image : item2?.image;
+  const ph2 = `<div class="${cls} art-ph" style="--h:${hue(item2?.name)}">${icon4(TYPE_ICON[item2?.media_type] || "musicNote")}</div>`;
+  if (!src) return ph2;
+  return `<img class="${cls}" src="${esc12(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="${esc12(TYPE_ICON[item2?.media_type] || "musicNote")}">`;
+}
+function hue(name = "") {
+  let h = 0;
+  for (const ch2 of String(name)) h = (h * 31 + ch2.codePointAt(0)) % 360;
+  return h;
+}
+var eq = (playing) => `<span class="eq${playing ? "" : " paused"}"><i></i><i></i><i></i></span>`;
+var artistNames = (item2) => (item2?.artists || []).map((a) => a.name).join(", ");
+function subtitle(item2) {
+  switch (item2.media_type) {
+    case "album":
+      return [item2.year, artistNames(item2)].filter(Boolean).join(" \xB7 ") || "Album";
+    case "playlist":
+      return item2.owner ? `Playliste \xB7 ${item2.owner}` : "Playliste";
+    case "artist":
+      return "Kunstner";
+    case "radio":
+      return "Radio";
+    case "podcast":
+      return artistNames(item2) || item2.owner || "Podcast";
+    case "audiobook":
+      return artistNames(item2) || "Lydbog";
+    case "track":
+      return `Nummer \xB7 ${artistNames(item2)}`;
+    default:
+      return MEDIA_LABEL[item2.media_type] || "";
+  }
+}
+function tile2(ctx, item2) {
+  const key = ctx.reg(item2);
+  const circle = item2.media_type === "artist";
+  return `<div class="tile${circle ? " circle" : ""}" role="button" tabindex="0" data-open="${key}">
+    <div class="cover">${art(item2, "art", true)}
+      ${circle ? "" : `<button class="fab" data-play="${key}" aria-label="Afspil">${icon4("play")}</button>`}
+      <button class="more" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>
+    </div>
+    <div class="t">${esc12(item2.name)}</div><div class="s">${esc12(subtitle(item2))}</div></div>`;
+}
+function skeletonTiles(n = 6) {
+  return Array.from({ length: n }, () => `<div class="sk-tile"><div class="sk"></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>`).join("");
+}
+function skeletonRows(n = 8) {
+  return `<div class="tracks">${Array.from({ length: n }, () => `<div class="tr nohead" style="pointer-events:none"><div class="main-c"><div class="sk" style="width:42px;height:42px"></div><div style="flex:1"><div class="sk sk-line" style="width:60%"></div><div class="sk sk-line" style="width:35%;margin-top:6px"></div></div></div></div>`).join("")}</div>`;
+}
+function shelf(ctx, title, items, moreAction = "") {
+  if (!items?.length) return "";
+  return `<section class="shelf"><div class="shelf-h"><h2>${esc12(title)}</h2>${moreAction ? `<button data-nav="${esc12(moreAction)}">Vis alle</button>` : ""}</div>
+    <div class="row">${items.map((i) => tile2(ctx, i)).join("")}</div></section>`;
+}
+function emptyState(ic, title, text = "", action = "") {
+  return `<div class="empty">${icon4(ic)}<b>${esc12(title)}</b>${text ? `<span>${esc12(text)}</span>` : ""}${action}</div>`;
+}
+function greeting(now = /* @__PURE__ */ new Date()) {
+  const h = now.getHours();
+  if (h < 5) return "God nat";
+  if (h < 10) return "Godmorgen";
+  if (h < 12) return "God formiddag";
+  if (h < 18) return "God eftermiddag";
+  return "God aften";
+}
+var REC_NAMES = {
+  "recently played": "Senest afspillet",
+  "recently added tracks": "Nye numre i biblioteket",
+  "recently added albums": "Nye album i biblioteket",
+  "latest podcast episodes": "Nye podcastafsnit",
+  "random artists": "Kunstnere du m\xE5ske har glemt",
+  "random albums": "Tilf\xE6ldige album",
+  "recently favorited tracks": "Nye favoritnumre",
+  "favorite playlists": "Dine playlister",
+  "favorite radio stations": "Dine radiokanaler",
+  "recent artists": "Senest h\xF8rte kunstnere",
+  "recent tracks": "Senest h\xF8rte numre",
+  "forgotten tracks": "Glemte numre",
+  "forgotten albums": "Glemte album",
+  "forgotten artists": "Glemte kunstnere",
+  "most played tracks": "Mest spillede numre",
+  "never / rarely played": "Sj\xE6ldent spillet",
+  "artist events": "Kunstnere"
+};
+var REC_SKIP = /* @__PURE__ */ new Set(["favorite playlists", "favorite radio stations", "recently played", "artist events"]);
+function homeView(ctx, data) {
+  const quick = (data.recent || []).slice(0, 8);
+  let html = `<div class="view home"><div class="home-bg"></div><div class="greet">${greeting()}</div>`;
+  if (data.loading && !quick.length) {
+    html += `<div class="quick">${Array.from({ length: 6 }, () => '<div class="sk" style="height:60px"></div>').join("")}</div><div class="grid">${skeletonTiles(6)}</div>`;
+  } else if (data.error && !quick.length) {
+    html += emptyState("alertCircleOutline", "Musikken kunne ikke hentes", data.error, `<button class="pill" data-retry>Pr\xF8v igen</button>`);
+  } else {
+    if (quick.length) {
+      html += `<div class="quick">${quick.map((item2) => {
+        const key = ctx.reg(item2);
+        const on = ctx.isCurrent(item2);
+        return `<div class="qt" role="button" tabindex="0" data-open="${key}">${art(item2)}<div class="t">${esc12(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
+      }).join("")}</div>`;
+    }
+    html += shelf(ctx, "Dine playlister", data.playlists, "library:playlist");
+    html += shelf(ctx, "Senest h\xF8rt album", data.albums, "library:album");
+    html += shelf(ctx, "Radio", data.radio, "library:radio");
+    for (const folder of data.recs || []) {
+      const n = String(folder.name || "").toLowerCase();
+      if (REC_SKIP.has(n)) continue;
+      html += shelf(ctx, REC_NAMES[n] || folder.name, folder.items);
+    }
+    html += shelf(ctx, "Podcasts", data.podcasts, "library:podcast");
+    if (!quick.length && !data.playlists?.length && !data.albums?.length && !data.radio?.length) {
+      html += emptyState("musicNote", "Biblioteket er tomt", "Tilf\xF8j musik i Music Assistant, s\xE5 dukker det op her.");
+    }
+  }
+  return `${html}</div>`;
+}
+var LIB_TYPES = [
+  ["playlist", "Playlister", "playlistMusic"],
+  ["album", "Album", "album"],
+  ["artist", "Kunstnere", "accountMusic"],
+  ["track", "Numre", "musicNote"],
+  ["radio", "Radio", "radio"],
+  ["podcast", "Podcasts", "podcast"],
+  ["audiobook", "Lydb\xF8ger", "bookOpenPageVariant"]
+];
+var SORTS = [["name", "Navn (A\u2013\xC5)"], ["timestamp_added_desc", "Senest tilf\xF8jet"], ["last_played_desc", "Senest afspillet"], ["play_count_desc", "Mest afspillet"]];
+function trackRow(ctx, item2, index, opts = {}) {
+  const key = ctx.reg(item2);
+  const on = ctx.isCurrent(item2);
+  const withArt = opts.art !== false;
+  const num5 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}${icon4("play")}</div>`;
+  const sub = opts.sub ?? artistNames(item2);
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" role="button" tabindex="0" data-track="${key}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
+    ${num5}<div class="main-c">${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</div>${sub ? `<div class="ts">${opts.subHtml ? sub : esc12(sub)}</div>` : ""}</div></div>
+    <div class="al">${esc12(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
+    <button class="dots" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
+}
+function trackHead() {
+  return `<div class="tr-head"><div class="r">#</div><div>Titel</div><div class="al">Album</div><div class="r">${icon4("clockOutline", "").replace('class="ic "', 'class="ic" style="width:16px;height:16px;margin-left:auto"')}</div><div></div></div>`;
+}
+function libraryItems(ctx, type, items, offset = 0) {
+  if (type === "track") return items.map((item2, i) => trackRow(ctx, item2, offset + i)).join("");
+  return items.map((item2) => tile2(ctx, item2)).join("");
+}
+function libraryView(ctx, st) {
+  const label = LIB_TYPES.find((t) => t[0] === st.type)?.[1] || "Bibliotek";
+  let body;
+  if (st.loading && !st.items.length) body = st.type === "track" ? skeletonRows(10) : `<div class="grid">${skeletonTiles(12)}</div>`;
+  else if (st.error && !st.items.length) body = emptyState("alertCircleOutline", "Kunne ikke hente biblioteket", st.error, `<button class="pill" data-retry>Pr\xF8v igen</button>`);
+  else if (!st.items.length) body = emptyState(LIB_TYPES.find((t) => t[0] === st.type)?.[2] || "musicNote", st.filter ? "Ingen resultater" : `Ingen ${label.toLowerCase()} endnu`, st.filter ? `Intet matcher \u201C${st.filter}\u201D.` : st.fav ? "Du har ingen favoritter her endnu." : "");
+  else if (st.type === "track") body = `${trackHead()}<div class="tracks" data-list>${libraryItems(ctx, st.type, st.items)}</div>`;
+  else body = `<div class="grid" data-list>${libraryItems(ctx, st.type, st.items)}</div>`;
+  return `<div class="view lib"><div class="lib-head"><h1>${esc12(label)}</h1>
+    <div class="chips">${LIB_TYPES.map(([t, l]) => `<button class="chip${t === st.type ? " on" : ""}" data-libtype="${t}">${l}</button>`).join("")}</div>
+    <div class="lib-tools"><label class="filter">${icon4("magnify")}<input data-filter placeholder="Filtr\xE9r ${esc12(label.toLowerCase())}" value="${esc12(st.filter || "")}" enterkeyhint="search"></label>
+      <button class="chip${st.fav ? " on" : ""}" data-favfilter>${icon4(st.fav ? "heart" : "heartOutline")}Favoritter</button>
+      <select class="sort" data-sort aria-label="Sort\xE9r">${SORTS.map(([v, l]) => `<option value="${v}"${v === st.sort ? " selected" : ""}>${l}</option>`).join("")}</select></div></div>
+    ${body}<div class="sentinel" data-sentinel>${st.loading && st.items.length ? '<div class="sk" style="height:6px;width:120px;margin:16px auto"></div>' : ""}</div></div>`;
+}
+var BROWSE = [
+  ["playlist", "Playlister", "#7c3aed", "playlistMusic"],
+  ["album", "Album", "#0d9488", "album"],
+  ["artist", "Kunstnere", "#e11d48", "accountMusic"],
+  ["track", "Numre", "#2563eb", "musicNote"],
+  ["radio", "Radio", "#ea580c", "radioTower"],
+  ["podcast", "Podcasts", "#16a34a", "podcast"],
+  ["audiobook", "Lydb\xF8ger", "#a16207", "bookOpenPageVariant"]
+];
+function searchView(ctx, st) {
+  let html = `<div class="view search">`;
+  if (!st.query) {
+    if (st.recent?.length) {
+      html += `<h2 class="sec-h">Seneste s\xF8gninger</h2><div class="recent">${st.recent.map((q2, i) => `<span class="chip" role="button" tabindex="0" data-recent="${esc12(q2)}">${icon4("history")}${esc12(q2)}<button class="x" data-unrecent="${i}" aria-label="Fjern">${icon4("close")}</button></span>`).join("")}</div>`;
+    }
+    html += `<h2 class="sec-h">Gennemse alt</h2><div class="browse">${BROWSE.map(([t, l, c2, ic]) => `<button class="bt" style="background:${c2}" data-nav="library:${t}">${l}${icon4(ic)}</button>`).join("")}</div>`;
+    return `${html}</div>`;
+  }
+  const r = st.results;
+  if (st.loading && !r) return `${html}<div class="grid">${skeletonTiles(6)}</div></div>`;
+  if (st.error) return `${html}${emptyState("alertCircleOutline", "S\xF8gningen mislykkedes", st.error)}</div>`;
+  const total = r ? Object.values(r).reduce((n, l) => n + l.length, 0) : 0;
+  if (!total) return `${html}${emptyState("magnify", `Ingen resultater for \u201C${st.query}\u201D`, "Pr\xF8v at stave anderledes eller s\xF8g efter noget andet.")}</div>`;
+  const q = st.query.toLowerCase();
+  const candidates = [...r.artists, ...r.albums, ...r.playlists, ...r.tracks, ...r.radio, ...r.podcasts];
+  const best = candidates.find((i) => i.name.toLowerCase() === q) || r.artists[0] || r.tracks[0] || r.albums[0] || candidates[0];
+  const bkey = ctx.reg(best);
+  html += `<div class="best"><div><h2 class="sec-h">Bedste resultat</h2>
+    <div class="best-tile${best.media_type === "artist" ? " circle" : ""}" role="button" tabindex="0" data-open="${bkey}">${art(best, "art", true)}
+      <div><div class="t">${esc12(best.name)}</div><div class="s">${artistNames(best) ? `${esc12(artistNames(best))}` : ""}<span class="tag">${esc12(MEDIA_LABEL[best.media_type] || "")}</span></div></div>
+      <button class="fab big" data-play="${bkey}" aria-label="Afspil">${icon4("play")}</button></div></div>`;
+  html += r.tracks.length ? `<div><h2 class="sec-h">Numre</h2><div class="tracks cozy-list">${r.tracks.slice(0, 4).map((t, i) => trackRow(ctx, t, i, { number: false })).join("")}</div></div>` : "<div></div>";
+  html += "</div>";
+  html += shelf(ctx, "Kunstnere", r.artists);
+  html += shelf(ctx, "Album", r.albums);
+  html += shelf(ctx, "Playlister", r.playlists);
+  html += shelf(ctx, "Radio", r.radio);
+  html += shelf(ctx, "Podcasts", r.podcasts);
+  html += shelf(ctx, "Lydb\xF8ger", r.audiobooks);
+  return `${html}</div>`;
+}
+function detailView(ctx, st) {
+  const item2 = st.item;
+  const key = ctx.reg(item2);
+  const tracks = st.tracks || [];
+  const isArtist = item2.media_type === "artist";
+  const isPodcast = item2.media_type === "podcast";
+  const total = tracks.reduce((n, t) => n + (t.duration || 0), 0);
+  const meta = [];
+  if (item2.artists?.length) meta.push(item2.artists.map((a) => a.uri ? `<button class="link" data-goto="${esc12(a.uri)}" data-name="${esc12(a.name)}">${esc12(a.name)}</button>` : `<b>${esc12(a.name)}</b>`).join(", "));
+  if (item2.owner) meta.push(`<b>${esc12(item2.owner)}</b>`);
+  if (item2.year) meta.push(esc12(item2.year));
+  if (tracks.length && !isArtist) meta.push(`${tracks.length} ${isPodcast ? "afsnit" : tracks.length === 1 ? "nummer" : "numre"}${total && !isPodcast ? `, ${fmtTotal(total)}` : ""}`);
+  let html = `<div class="view hero-view detail"><div class="hero${isArtist ? " circle" : ""}">${art(item2, "art", true)}
+    <div style="min-width:0"><div class="kind">${esc12(MEDIA_LABEL[item2.media_type] || "")}</div><h1 class="${item2.name.length > 42 ? "long" : item2.name.length > 18 ? "mid" : ""}">${esc12(item2.name)}</h1>
+    <div class="meta">${meta.join(" <span>\u2022</span> ")}</div>${item2.description ? `<div class="desc">${esc12(item2.description.replace(/<[^>]+>/g, ""))}</div>` : ""}</div></div>
+    <div class="actions"><div class="actions-bg"></div><button class="fab big" data-play="${key}" aria-label="Afspil">${icon4(ctx.isCurrent(item2) && ctx.playing ? "pause" : "play")}</button>
+    ${isPodcast ? "" : `<button class="act" data-shuffleplay="${key}" aria-label="Bland">${icon4("shuffleVariant")}</button>`}
+    <button class="act${item2.favorite ? " on" : ""}" data-fav="${key}" aria-label="Favorit">${icon4(item2.favorite ? "heart" : "heartOutline")}</button>
+    <button class="act" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
+  if (st.loading && !tracks.length) html += skeletonRows(8);
+  else if (st.error) html += emptyState("alertCircleOutline", "Kunne ikke hente indholdet", st.error);
+  else if (isArtist) {
+    if (tracks.length) html += `<h2 class="sec-h">Popul\xE6re</h2><div class="tracks">${tracks.slice(0, st.showAll ? 50 : 5).map((t, i) => trackRow(ctx, t, i, { list: "detail" })).join("")}</div>
+      ${tracks.length > 5 ? `<button class="pill" style="margin:10px 0 26px" data-showall>${st.showAll ? "Vis f\xE6rre" : "Se flere"}</button>` : '<div style="height:20px"></div>'}`;
+    html += shelf(ctx, "Album", st.albums);
+    if (!tracks.length && !st.albums?.length) html += emptyState("accountMusic", "Intet fundet for denne kunstner", "Music Assistant har ingen numre eller album for kunstneren.");
+  } else if (isPodcast) {
+    html += tracks.length ? `<div class="tracks">${tracks.map((t, i) => trackRow(ctx, t, i, { cls: "ep", label: t.track_number || i + 1, col3: t.released ? new Date(t.released).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "", sub: t.description ? t.description.replace(/<[^>]+>/g, "").slice(0, 180) : t.fully_played ? "Afspillet" : "" })).join("")}</div>` : emptyState("podcast", "Ingen afsnit");
+  } else if (tracks.length) {
+    const showAlbum = item2.media_type !== "album";
+    html += `<div class="${showAlbum ? "" : "noalbum"}">${trackHead()}<div class="tracks">${tracks.map((t, i) => trackRow(ctx, t, i, { art: showAlbum, label: item2.media_type === "album" ? t.track_number || i + 1 : i + 1, col3: showAlbum ? t.album?.name || "" : "" })).join("")}</div></div>`;
+  } else if (item2.media_type !== "radio") html += emptyState("musicNote", "Ingen numre", "Der er ingen numre her endnu.");
+  return `${html}</div>`;
+}
+function queuePanel(ctx, st) {
+  if (!st.entity) return emptyState("speaker", "Ingen afspiller valgt");
+  if (st.loading && !st.items) return skeletonRows(6);
+  if (!ctx.hasQueueApi) {
+    return `${st.current ? `<div class="sub-h">Afspiller nu</div>${queueRow(ctx, st.current, true, false)}` : ""}${st.next ? `<div class="sub-h">N\xE6ste</div>${queueRow(ctx, st.next, false, false)}` : ""}
+      <div class="empty" style="padding:30px 10px"><span>Installer mass_queue-integrationen for at se og redigere hele k\xF8en.</span></div>`;
+  }
+  const items = st.items || [];
+  const ci2 = items.findIndex((i) => st.current && i.queue_item_id === st.current.queue_item_id);
+  if (!items.length && !st.current) return emptyState("playlistMusic", "K\xF8en er tom", "V\xE6lg noget musik for at komme i gang.");
+  const cur = ci2 >= 0 ? items[ci2] : st.current;
+  const after = ci2 >= 0 ? items.slice(ci2 + 1) : items;
+  let html = cur ? `<div class="sub-h">Afspiller nu</div>${queueRow(ctx, cur, true, false)}` : "";
+  html += `<div class="sub-h"><span>N\xE6ste i k\xF8en</span>${after.length ? "<button data-qclear>Ryd resten</button>" : ""}</div>`;
+  html += after.length ? after.map((i) => queueRow(ctx, i, false, true)).join("") : `<div class="empty" style="padding:24px 10px"><span>Intet i k\xF8 efter dette nummer.</span></div>`;
+  return html;
+}
+function queueRow(ctx, item2, current, editable) {
+  const key = ctx.reg(item2);
+  return `<div class="qi${current ? " on" : ""}" role="button" tabindex="0" data-qplay="${esc12(item2.queue_item_id || "")}">${art(item2)}
+    <div class="tx"><div class="tt">${esc12(item2.name)}</div><div class="ts">${esc12(artistNames(item2) || MEDIA_LABEL[item2.media_type] || "")}</div></div>
+    ${current ? eq(ctx.playing) : ""}
+    ${editable ? `<div class="qa"><button class="mini-btn" data-qact="move_queue_item_next" data-qid="${esc12(item2.queue_item_id)}" title="Spil som n\xE6ste" aria-label="Spil som n\xE6ste">${icon4("skipNextCircleOutline")}</button>
+      <button class="mini-btn" data-qact="move_queue_item_up" data-qid="${esc12(item2.queue_item_id)}" title="Flyt op" aria-label="Flyt op">${icon4("arrowUp")}</button>
+      <button class="mini-btn" data-qact="move_queue_item_down" data-qid="${esc12(item2.queue_item_id)}" title="Flyt ned" aria-label="Flyt ned">${icon4("arrowDown")}</button>
+      <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc12(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
+}
+function speakersPanel(ctx, sp) {
+  const active = sp.players.find((p) => p.entity_id === sp.active);
+  let html = "";
+  if (active) {
+    const members = sp.players.filter((p) => p.groupedWithActive && p.entity_id !== active.entity_id);
+    html += `<div class="sp-cur"><div class="lbl">Styrer nu</div><div class="nm">${icon4(active.icon)}${esc12(active.name)}${members.length ? ` <span style="color:var(--mc-dim);font-weight:700">+${members.length}</span>` : ""}</div>
+      <div class="sub">${esc12(active.status)}</div>
+      ${members.length ? `<div class="sp-vol" style="padding:10px 0 0">${icon4("speakerMultiple")}<input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(sp.groupVolume * 100)}" data-gvol aria-label="Gruppevolumen" style="--p:${Math.round(sp.groupVolume * 100)}%"><span style="font-size:12px;color:var(--mc-dim);min-width:30px">Alle</span></div>` : ""}</div>`;
+  }
+  html += `<div class="sub-h"><span>H\xF8jttalere</span></div><div class="sp-hint">Tryk p\xE5 en h\xF8jttaler for at styre den \xB7 ${icon4("plus")} spiller med p\xE5 ${esc12(active?.name || "den valgte")}</div>`;
+  for (const p of sp.players) {
+    const isActive = p.entity_id === sp.active;
+    const canGroup = !isActive && p.canGroup && active?.canGroup && !p.isGroup && !active?.isGroup;
+    html += `<div class="sp${isActive ? " active" : ""}${p.groupedWithActive && !isActive ? " grouped" : ""}" data-sp="${esc12(p.entity_id)}">
+      <div class="sp-row"><button class="sp-main" data-select="${esc12(p.entity_id)}"><span class="sp-ic">${icon4(p.icon)}${p.playing ? eq(true) : ""}</span>
+        <span class="sp-tx"><div class="sp-nm">${esc12(p.name)}${p.isGroup ? '<span class="sp-badge">Gruppe</span>' : ""}</div><div class="sp-st">${esc12(p.status)}</div></span></button>
+        ${isActive ? "" : `<button class="grp${p.groupedWithActive ? " on" : ""}" data-group="${esc12(p.entity_id)}" ${canGroup ? "" : "disabled"} aria-label="${p.groupedWithActive ? "Fjern fra gruppen" : "Spil sammen med den valgte"}" title="${canGroup ? p.groupedWithActive ? "Fjern fra gruppen" : `Spil sammen med ${esc12(active?.name || "")}` : "Kan ikke grupperes"}">${icon4(p.groupedWithActive ? "check" : "plus")}</button>`}</div>
+      ${p.available ? `<div class="sp-vol"><button class="mini-btn" data-mute="${esc12(p.entity_id)}" aria-label="Lydl\xF8s">${icon4(p.muted ? "volumeOff" : p.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
+        <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(p.volume * 100)}" data-vol="${esc12(p.entity_id)}" aria-label="Volumen ${esc12(p.name)}" style="--p:${Math.round(p.volume * 100)}%"></div>` : ""}
+      ${!isActive && sp.canTransfer && p.available && !p.groupedWithActive ? `<button class="pill sp-move" data-transfer="${esc12(p.entity_id)}">${icon4("swapHorizontal")}Flyt musikken hertil</button>` : ""}</div>`;
+  }
+  return html;
+}
+function barHtml(np) {
+  const key = np.key;
+  return `<div class="np-left">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon4("musicNote")}</div>`}
+      <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc12(np.title)}</button><button class="np-a" data-npopen="artist">${esc12(np.artist || np.playerName)}</button>` : `<span class="np-t">Intet spiller</span><span class="np-a">${esc12(np.playerName || "V\xE6lg en h\xF8jttaler")}</span>`}</div>
+      ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div>
+    <div class="np-mid"><div class="ctrls">
+      <button class="cb${np.shuffle ? " on" : ""}" data-cmd="shuffle" aria-label="Bland" ${np.live || !np.entity ? "disabled" : ""}>${icon4("shuffleVariant")}</button>
+      <button class="cb" data-cmd="prev" aria-label="Forrige" ${np.live || !np.entity ? "disabled" : ""}>${icon4("skipPrevious")}</button>
+      <button class="pp" data-cmd="playpause" aria-label="${np.playing ? "Pause" : "Afspil"}">${icon4(np.playing ? "pause" : "play")}</button>
+      <button class="cb" data-cmd="next" aria-label="N\xE6ste" ${np.live || !np.entity ? "disabled" : ""}>${icon4("skipNext")}</button>
+      <button class="cb${np.repeat !== "off" ? " on" : ""}" data-cmd="repeat" aria-label="Gentag" ${np.live || !np.entity ? "disabled" : ""}>${icon4(np.repeat === "one" ? "repeatOnce" : "repeat")}</button></div>
+      <div class="seek"><span class="tm" data-pos>${np.live ? "" : fmtTime(np.position)}</span>${np.live ? '<span class="live">LIVE</span>' : `<input class="rng" type="range" min="0" max="${Math.max(1, Math.round(np.duration))}" step="1" value="${Math.round(np.position)}" data-seek aria-label="Spoleposition" ${np.duration ? "" : "disabled"}>`}<span class="tm" data-dur>${np.live ? "" : fmtTime(np.duration)}</span></div></div>
+    <div class="np-right"><button class="cb${np.panel === "queue" ? " on act-p" : ""}" data-panel="queue" aria-label="K\xF8" title="K\xF8">${icon4("playlistPlay")}</button>
+      <button class="spk-btn" data-panel="speakers" title="H\xF8jttalere">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>
+      <div class="vol"><button class="cb" data-cmd="mute" aria-label="Lydl\xF8s">${icon4(np.muted ? "volumeOff" : np.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
+      <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(np.volume * 100)}" data-npvol aria-label="Volumen"></div></div>`;
+}
+function miniHtml(np) {
+  return `<div class="mini-in"><button class="mini-open" data-sheet="player">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon4("musicNote")}</div>`}
+    <span class="np-tx"><span class="np-t">${esc12(np.title || "Intet spiller")}</span><span class="np-a">${np.groupCount || np.playing ? icon4(np.groupCount ? "speakerMultiple" : "speaker") + " " : ""}${esc12(np.title ? np.artist ? `${np.artist} \xB7 ${np.speakerLabel}` : np.speakerLabel : np.speakerLabel)}</span></span></button>
+    ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}
+    <button class="cb" data-cmd="playpause" aria-label="${np.playing ? "Pause" : "Afspil"}">${icon4(np.playing ? "pause" : "play")}</button></div>
+    <div class="mini-prog"><i data-miniprog style="width:${np.duration ? Math.min(100, np.position / np.duration * 100) : 0}%"></i></div>`;
+}
+function fullPlayerHtml(np) {
+  return `<div class="fp">${np.title ? art(np.item || { image: np.image, image_large: np.imageLarge, media_type: "track" }, `fp-art art ${np.playing ? "playing" : "paused"}`, true) : `<div class="fp-art art art-ph">${icon4("musicNote")}</div>`}
+    <div><div class="fp-row"><div class="fp-tx"><button class="fp-t" data-npopen="album">${esc12(np.title || "Intet spiller")}</button><button class="fp-a" data-npopen="artist">${esc12(np.artist || np.playerName || "")}</button></div>
+      ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div></div>
+    <div class="fp-seek">${np.live ? '<div style="display:flex;justify-content:center;padding:8px 0"><span class="live">LIVE</span></div>' : `<input class="rng" type="range" min="0" max="${Math.max(1, Math.round(np.duration))}" step="1" value="${Math.round(np.position)}" data-seek aria-label="Spoleposition" ${np.duration ? "" : "disabled"}>
+      <div class="fp-times"><span data-pos>${fmtTime(np.position)}</span><span data-dur>-${fmtTime(Math.max(0, np.duration - np.position))}</span></div>`}</div>
+    <div class="fp-ctrls"><button class="cb sidebtn${np.shuffle ? " on" : ""}" data-cmd="shuffle" aria-label="Bland" ${np.live ? "disabled" : ""}>${icon4("shuffleVariant")}</button>
+      <button class="cb" data-cmd="prev" aria-label="Forrige" ${np.live ? "disabled" : ""}>${icon4("skipPrevious")}</button>
+      <button class="pp" data-cmd="playpause" aria-label="${np.playing ? "Pause" : "Afspil"}">${icon4(np.playing ? "pause" : "play")}</button>
+      <button class="cb" data-cmd="next" aria-label="N\xE6ste" ${np.live ? "disabled" : ""}>${icon4("skipNext")}</button>
+      <button class="cb sidebtn${np.repeat !== "off" ? " on" : ""}" data-cmd="repeat" aria-label="Gentag" ${np.live ? "disabled" : ""}>${icon4(np.repeat === "one" ? "repeatOnce" : "repeat")}</button></div>
+    <div class="fp-vol"><button class="cb" data-cmd="mute" aria-label="Lydl\xF8s" style="color:inherit">${icon4(np.muted ? "volumeOff" : "volumeLow")}</button><input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(np.volume * 100)}" data-npvol aria-label="Volumen">${icon4("volumeHigh")}</div>
+    <div class="fp-foot"><button class="spk-btn" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>
+      <button class="round" style="background:rgba(255,255,255,.12)" data-sheet="queue" aria-label="K\xF8">${icon4("playlistPlay")}</button></div></div>`;
+}
+function menuHtml(item2, actions) {
+  return `<div class="menu-head">${art(item2)}<div style="min-width:0"><div class="t">${esc12(item2.name)}</div><div class="s">${esc12([MEDIA_LABEL[item2.media_type], artistNames(item2)].filter(Boolean).join(" \xB7 "))}</div></div></div>
+    ${actions.map((a) => `<button class="mi${a.sep ? " sep" : ""}" data-mact="${a.id}">${icon4(a.icon)}${esc12(a.label)}</button>`).join("")}`;
+}
+
+// src/cards/ha-music-card/color.js
+var cache = /* @__PURE__ */ new Map();
+function sampleColor(url) {
+  if (!url || typeof document === "undefined") return Promise.resolve(null);
+  if (cache.has(url)) return cache.get(url);
+  const p = new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    const done = (v) => {
+      img.onload = img.onerror = null;
+      resolve(v);
+    };
+    const timer = setTimeout(() => done(null), 8e3);
+    img.onload = () => {
+      clearTimeout(timer);
+      try {
+        const c2 = document.createElement("canvas");
+        c2.width = c2.height = 24;
+        const g = c2.getContext("2d", { willReadFrequently: true });
+        g.drawImage(img, 0, 0, 24, 24);
+        const px2 = g.getImageData(0, 0, 24, 24).data;
+        let r = 0;
+        let gr = 0;
+        let b = 0;
+        let w = 0;
+        for (let i = 0; i < px2.length; i += 4) {
+          const [pr, pg, pb2] = [px2[i], px2[i + 1], px2[i + 2]];
+          const max = Math.max(pr, pg, pb2);
+          const min = Math.min(pr, pg, pb2);
+          const weight = 0.08 + (max - min) / 255 * (max > 30 && min < 235 ? 1 : 0.2);
+          r += pr * weight;
+          gr += pg * weight;
+          b += pb2 * weight;
+          w += weight;
+        }
+        done(w ? [r / w, gr / w, b / w].map(Math.round) : null);
+      } catch (_e2) {
+        done(null);
+      }
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      done(null);
+    };
+    img.src = url;
+  });
+  cache.set(url, p);
+  if (cache.size > 80) cache.delete(cache.keys().next().value);
+  return p;
+}
+function tone2([r, g, b], { minS = 0.4, l: [lo, hi] = [0.45, 0.6] } = {}) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  let l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h /= 6;
+  }
+  if (s > 0.06) s = Math.max(s, minS);
+  l = Math.min(hi, Math.max(lo, l));
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const f = (t) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return (s === 0 ? [l, l, l] : [f(h + 1 / 3), f(h), f(h - 1 / 3)]).map((v) => Math.round(v * 255));
+}
+
+// src/cards/ha-music-card/ha-music-card.js
+var GROUPING = 524288;
+var PAGE = 50;
+var RECENT_KEY = "ha-music-card:recent-searches";
+var ACTIVE_KEY = "ha-music-card:active-player";
+var store = {
+  get(key, fallback) {
+    try {
+      const v = localStorage.getItem(key);
+      return v == null ? fallback : JSON.parse(v);
+    } catch (_e2) {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (_e2) {
+    }
+  }
+};
+var HaMusicCard = class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = void 0;
+    this.api = new MusicApi(() => this._hass, () => this._config);
+    this._items = /* @__PURE__ */ new Map();
+    this._itemSeq = 0;
+    this._hist = [{ name: "home" }];
+    this._histIdx = 0;
+    this._data = { home: null, lib: /* @__PURE__ */ new Map(), detail: /* @__PURE__ */ new Map(), search: /* @__PURE__ */ new Map() };
+    this._panel = null;
+    this._sheets = [];
+    this._queue = null;
+    this._queueItems = null;
+    this._favOverride = /* @__PURE__ */ new Map();
+    this._mode = "wide";
+    this._dragging = null;
+    this._timers = /* @__PURE__ */ new Set();
+    this._visible = true;
+    this._built = false;
+  }
+  static getStubConfig() {
+    return { entities: [], fill_height: true };
+  }
+  static getConfigElement() {
+    return document.createElement("ha-music-card-editor");
+  }
+  setConfig(config) {
+    if (!config || typeof config !== "object") throw new Error("Musikkortet kr\xE6ver en konfiguration");
+    if (config.entities && !Array.isArray(config.entities)) throw new Error("entities skal v\xE6re en liste");
+    this._config = { fill_height: true, bottom_offset: 110, top_offset: 8, ...config };
+    this.api.clearCache();
+    if (this._built) {
+      this._applyAccent();
+      this._applyHeight();
+      this._renderAll();
+    }
+  }
+  set hass(hass) {
+    const first = !this._hass;
+    this._hass = hass;
+    if (!this._built) return;
+    if (first) {
+      this._initActive();
+      this._renderAll();
+      return;
+    }
+    this._onHassUpdate();
+  }
+  get hass() {
+    return this._hass;
+  }
+  getCardSize() {
+    return 12;
+  }
+  getGridOptions() {
+    return { columns: "full", rows: "auto", min_columns: 6 };
+  }
+  connectedCallback() {
+    if (!this._built) this._build();
+    this._ro = new ResizeObserver(() => this._onResize());
+    this._ro.observe(this);
+    this._io = new IntersectionObserver((entries) => {
+      this._visible = entries.some((e) => e.isIntersecting);
+      this._syncTicker();
+    });
+    this._io.observe(this);
+    this._onWinResize = () => this._applyHeight();
+    window.addEventListener("resize", this._onWinResize);
+    this._onVis = () => this._syncTicker();
+    document.addEventListener("visibilitychange", this._onVis);
+    if (this._hass) {
+      this._initActive();
+      this._renderAll();
+    }
+  }
+  disconnectedCallback() {
+    this._ro?.disconnect();
+    this._io?.disconnect();
+    this._libIo?.disconnect();
+    this._ro = this._io = this._libIo = null;
+    window.removeEventListener("resize", this._onWinResize);
+    document.removeEventListener("visibilitychange", this._onVis);
+    clearInterval(this._ticker);
+    this._ticker = null;
+    for (const t of this._timers) clearTimeout(t);
+    this._timers.clear();
+    clearTimeout(this._lpTimer);
+  }
+  _later(fn, ms) {
+    const t = setTimeout(() => {
+      this._timers.delete(t);
+      fn();
+    }, ms);
+    this._timers.add(t);
+    return t;
+  }
+  // ---------- Shell ----------
+  _build() {
+    this._built = true;
+    this._touch = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+    this.shadowRoot.innerHTML = `<style>${STYLES2}</style><ha-card class="mc"><div class="shell wide${this._touch ? " touch" : ""}">
+      <nav class="side"></nav>
+      <main class="main"><header class="top"></header><div class="content"></div></main>
+      <aside class="panel"></aside>
+      <footer class="bar"></footer>
+      <div class="mini"></div>
+      <nav class="tabs"></nav>
+      <div class="sheet"></div>
+      <div class="layer"><div class="scrim" data-closemenu></div><div class="menu"></div></div>
+      <div class="toast" role="status" aria-live="polite"></div></div></ha-card>`;
+    const $ = (s) => this.shadowRoot.querySelector(s);
+    this.$ = {
+      shell: $(".shell"),
+      side: $(".side"),
+      top: $(".top"),
+      content: $(".content"),
+      panel: $(".panel"),
+      bar: $(".bar"),
+      mini: $(".mini"),
+      tabs: $(".tabs"),
+      sheet: $(".sheet"),
+      layer: $(".layer"),
+      menu: $(".menu"),
+      toast: $(".toast")
+    };
+    const root = this.shadowRoot;
+    root.addEventListener("click", (e) => this._onClick(e));
+    root.addEventListener("input", (e) => this._onInput(e));
+    root.addEventListener("change", (e) => this._onChange(e));
+    root.addEventListener("keydown", (e) => this._onKey(e));
+    root.addEventListener("pointerdown", (e) => this._onPointerDown(e));
+    root.addEventListener("contextmenu", (e) => this._onContextMenu(e));
+    root.addEventListener("error", (e) => this._onImgError(e), true);
+    for (const type of ["pointerup", "pointercancel"]) root.addEventListener(type, () => this._endPress());
+    root.addEventListener("pointermove", (e) => this._movePress(e));
+    this.$.content.addEventListener("scroll", () => this._onContentScroll(), { passive: true });
+    this._wireSheetSwipe();
+    this._applyAccent();
+    this._applyHeight();
+  }
+  _onResize() {
+    const w = this.getBoundingClientRect().width;
+    if (!w) return;
+    const mode = w < 700 ? "narrow" : w < 900 ? "medium" : "wide";
+    const changed = mode !== this._mode;
+    this._mode = mode;
+    const sh2 = this.$.shell;
+    sh2.classList.toggle("narrow", mode === "narrow");
+    sh2.classList.toggle("medium", mode === "medium");
+    sh2.classList.toggle("wide", mode === "wide");
+    this._dock = w >= 1100;
+    this._applyPanelLayout();
+    this._applyHeight();
+    const mainW = this.$.content.getBoundingClientRect().width;
+    this.$.content.classList.toggle("cozy", mainW < 640);
+    if (changed) {
+      if (mode !== "narrow") this._closeSheets();
+      if (mode === "narrow" && this._panel) {
+        const p = this._panel;
+        this._panel = null;
+        this._applyPanelLayout();
+        this._openSheet(p);
+      }
+      this._renderTop();
+      this._renderNowPlaying(true);
+    }
+  }
+  _applyPanelLayout() {
+    const sh2 = this.$.shell;
+    const docked = Boolean(this._panel) && this._dock && this._mode === "wide";
+    sh2.classList.toggle("panel-docked", docked);
+    sh2.classList.toggle("panel-overlay", Boolean(this._panel) && !docked && this._mode !== "narrow");
+    sh2.style.gridTemplateColumns = this._mode === "narrow" ? "" : `var(--mc-side-w, 232px) minmax(0, 1fr)${docked ? " 340px" : ""}`;
+    sh2.style.gridTemplateAreas = this._mode === "narrow" ? "" : docked ? '"side main panel" "bar bar bar"' : '"side main" "bar bar"';
+  }
+  _applyHeight() {
+    const c2 = this._config;
+    const card = this.shadowRoot.querySelector("ha-card");
+    if (!card) return;
+    if (c2.fill_height === false) {
+      card.style.setProperty("--mc-height", c2.height ? `${parseInt(c2.height, 10)}px` : "760px");
+      return;
+    }
+    const vh2 = window.innerHeight || 800;
+    const rect = this.getBoundingClientRect();
+    let top = rect.top + (window.scrollY || 0);
+    if (!(top >= 0) || top > vh2 * 0.6) top = 0;
+    top = Math.max(top, Number(c2.top_offset) || 0);
+    const h = Math.max(420, vh2 - top - (Number(c2.bottom_offset) || 0));
+    card.style.setProperty("--mc-height", `${Math.round(h)}px`);
+  }
+  _applyAccent(rgb) {
+    const host = this.$?.shell;
+    if (!host) return;
+    if (this._config.accent) {
+      host.style.setProperty("--mc-accent", this._config.accent);
+      return;
+    }
+    if (rgb) {
+      const a = tone2(rgb, { minS: 0.45, l: [0.52, 0.66] });
+      host.style.setProperty("--mc-accent", `rgb(${a.join(",")})`);
+      host.style.setProperty("--mc-accent-rgb", a.join(","));
+      const d = tone2(rgb, { minS: 0.25, l: [0.2, 0.26] });
+      host.style.setProperty("--mc-np-bg", `rgb(${d.join(",")})`);
+    } else {
+      host.style.removeProperty("--mc-accent");
+      host.style.removeProperty("--mc-accent-rgb");
+      host.style.removeProperty("--mc-np-bg");
+    }
+  }
+  // ---------- Players ----------
+  _playerIds() {
+    const conf = this._config.entities || [];
+    if (conf.length) return conf.map((e) => typeof e === "string" ? e : e.entity_id).filter(Boolean);
+    const ents = this._hass?.entities || {};
+    return Object.keys(this._hass?.states || {}).filter((id) => id.startsWith("media_player.") && ents[id]?.platform === "music_assistant" && !ents[id]?.hidden).sort((a, b) => this._playerName(a).localeCompare(this._playerName(b), "da"));
+  }
+  _playerConf(id) {
+    return (this._config.entities || []).find((e) => typeof e === "object" && e.entity_id === id) || {};
+  }
+  _playerName(id) {
+    const conf = this._playerConf(id);
+    if (conf.name) return conf.name;
+    const fn = this._hass?.states?.[id]?.attributes?.friendly_name || id.split(".")[1];
+    return fn.replace(/\s*\(Music Assistant\)\s*$/i, "").replace(/\s+audio$/i, "").trim();
+  }
+  _player(id) {
+    const s = this._hass?.states?.[id];
+    const a = s?.attributes || {};
+    const conf = this._playerConf(id);
+    const isGroup = a.mass_player_type === "group";
+    const confIcon = String(conf.icon || "").replace(/^mdi:/, "").replace(/-([a-z])/g, (_m, c2) => c2.toUpperCase());
+    const state = s?.state || "unavailable";
+    const playing = state === "playing";
+    const title = a.media_title || "";
+    let status;
+    if (!s || state === "unavailable") status = "Ikke tilg\xE6ngelig";
+    else if (state === "off") status = "Slukket";
+    else if (playing) status = [title, a.media_artist].filter(Boolean).join(" \xB7 ") || "Spiller";
+    else if (state === "paused") status = title ? `P\xE5 pause \xB7 ${title}` : "P\xE5 pause";
+    else status = "Klar";
+    return {
+      entity_id: id,
+      name: this._playerName(id),
+      icon: ICONS[confIcon] ? confIcon : isGroup ? "speakerMultiple" : "speaker",
+      state,
+      playing,
+      available: Boolean(s) && state !== "unavailable",
+      volume: Number(a.volume_level) || 0,
+      muted: Boolean(a.is_volume_muted),
+      isGroup,
+      canGroup: Boolean((Number(a.supported_features) || 0) & GROUPING),
+      members: Array.isArray(a.group_members) ? a.group_members : [],
+      status,
+      title
+    };
+  }
+  _initActive() {
+    if (this._active && this._hass?.states?.[this._active]) return;
+    const ids = this._playerIds();
+    const saved = store.get(ACTIVE_KEY, null);
+    const pick = [this._config.default_player, saved].find((id) => id && ids.includes(id) && this._hass.states[id]);
+    this._active = pick || ids.find((id) => this._hass.states[id]?.state === "playing") || ids[0] || null;
+  }
+  _setActive(id) {
+    if (!id || id === this._active) return;
+    this._active = id;
+    store.set(ACTIVE_KEY, id);
+    this._queue = null;
+    this._queueItems = null;
+    this._renderNowPlaying(true);
+    this._renderPanels(true);
+    this._refreshQueue();
+    this._renderTop();
+  }
+  _groupMembers() {
+    const active = this._player(this._active);
+    const ids = new Set(active.members.filter((m) => m !== this._active));
+    for (const id of this._playerIds()) {
+      if (id !== this._active && this._player(id).members.includes(this._active)) ids.add(id);
+    }
+    return [...ids];
+  }
+  // ---------- Now playing ----------
+  _np() {
+    const id = this._active;
+    const s = this._hass?.states?.[id];
+    const a = s?.attributes || {};
+    const q = this._queue;
+    const cur = q?.current;
+    const title = a.media_title || "";
+    const matches = cur && (!title || cur.name === title || cur.name && title.includes(cur.name));
+    const item2 = matches ? cur : null;
+    const playing = s?.state === "playing";
+    const duration2 = Number(a.media_duration) || (item2?.duration ?? 0);
+    let position = Number(a.media_position) || 0;
+    if (playing && a.media_position_updated_at) position += (Date.now() - Date.parse(a.media_position_updated_at)) / 1e3;
+    if (duration2) position = Math.min(position, duration2);
+    const live = Boolean(title) && (item2?.media_type === "radio" || !duration2 && playing);
+    const members = this._groupMembers();
+    const name = this._playerName(id || "");
+    const uri = item2?.uri || a.media_content_id || "";
+    const favorite = this._favOverride.has(uri) ? this._favOverride.get(uri) : Boolean(item2?.favorite);
+    const picture = a.entity_picture ? fixImageUrl(a.entity_picture, this._config, 512) : "";
+    const image = item2?.image || picture;
+    const imageLarge = item2?.image_large || picture;
+    return {
+      entity: id,
+      playerName: name,
+      title,
+      artist: a.media_artist || artistNames(item2),
+      album: a.media_album_name || item2?.album?.name || "",
+      item: item2 ? { ...item2, image, image_large: imageLarge } : title ? { media_type: "track", image, image_large: imageLarge } : null,
+      image,
+      imageLarge,
+      playing,
+      state: s?.state,
+      duration: duration2,
+      position: Math.max(0, position),
+      live,
+      shuffle: Boolean(a.shuffle),
+      repeat: a.repeat || "off",
+      volume: Number(a.volume_level) || 0,
+      muted: Boolean(a.is_volume_muted),
+      favorite,
+      uri,
+      canFav: Boolean(uri) && (this.api.hasMassQueue || Boolean(this._favButton(id))),
+      groupCount: members.length,
+      speakerLabel: id ? `${name}${members.length ? ` +${members.length}` : ""}` : "V\xE6lg h\xF8jttaler",
+      panel: this._panel
+    };
+  }
+  _favButton(id) {
+    const ents = this._hass?.entities || {};
+    const dev = ents[id]?.device_id;
+    if (!dev) return null;
+    return Object.values(ents).find((e) => e.device_id === dev && /^button\..*favorite_current_song(_\d+)?$/.test(e.entity_id))?.entity_id || null;
+  }
+  _renderNowPlaying(force = false) {
+    if (!this._built || !this._hass) return;
+    const np = this._np();
+    const sig = JSON.stringify([
+      np.entity,
+      np.title,
+      np.artist,
+      np.image,
+      np.playing,
+      np.shuffle,
+      np.repeat,
+      np.muted,
+      np.live,
+      np.favorite,
+      np.speakerLabel,
+      np.panel,
+      np.canFav,
+      Math.round(np.duration),
+      this._mode,
+      Math.round(np.volume * 100)
+    ]);
+    if (force || sig !== this._npSig) {
+      const volChanged = !force && this._npSig && JSON.parse(this._npSig)[15] !== Math.round(np.volume * 100);
+      const onlyVol = volChanged && this._npSig && JSON.stringify(JSON.parse(this._npSig).slice(0, 15)) === JSON.stringify(JSON.parse(sig).slice(0, 15));
+      this._npSig = sig;
+      if (onlyVol) {
+        this._syncRanges(np);
+      } else {
+        this.$.shell.classList.toggle("idle-np", !np.title);
+        if (this._mode !== "narrow") this.$.bar.innerHTML = barHtml(np);
+        else this.$.mini.innerHTML = miniHtml(np);
+        if (this._sheets.at(-1) === "player") this._renderSheet();
+        this._syncRanges(np);
+        this._markCurrent(np);
+        this._sampleAccent(np.imageLarge || np.image);
+      }
+    }
+    this._syncTicker();
+  }
+  _syncRanges(np = this._np()) {
+    const root = this.shadowRoot;
+    for (const el of root.querySelectorAll("[data-seek]")) {
+      if (this._dragging === el) continue;
+      el.max = Math.max(1, Math.round(np.duration));
+      el.value = Math.round(np.position);
+      setP(el);
+    }
+    for (const el of root.querySelectorAll("[data-pos]")) el.textContent = np.live ? "" : fmtTime(np.position);
+    for (const el of root.querySelectorAll(".fp [data-dur]")) el.textContent = `-${fmtTime(Math.max(0, np.duration - np.position))}`;
+    for (const el of root.querySelectorAll("[data-miniprog]")) el.style.width = `${np.duration ? Math.min(100, np.position / np.duration * 100) : 0}%`;
+    for (const el of root.querySelectorAll("[data-npvol]")) {
+      if (this._dragging !== el) {
+        el.value = Math.round(np.volume * 100);
+        setP(el);
+      }
+    }
+  }
+  _syncTicker() {
+    const playing = this._hass?.states?.[this._active]?.state === "playing";
+    const want = playing && this.isConnected && this._visible && document.visibilityState !== "hidden";
+    if (want && !this._ticker) this._ticker = setInterval(() => this._syncRanges(), 1e3);
+    else if (!want && this._ticker) {
+      clearInterval(this._ticker);
+      this._ticker = null;
+    }
+  }
+  _isCurrent(item2) {
+    const np = this._npCache;
+    if (!item2 || !np?.title) return false;
+    if (item2.uri && np.uri && item2.uri === np.uri) return true;
+    return item2.media_type === "track" && item2.name === np.title && (!np.artist || artistNames(item2).split(", ").some((a) => np.artist.includes(a)));
+  }
+  _markCurrent(np) {
+    this._npCache = np;
+    for (const row of this.shadowRoot.querySelectorAll(".tr[data-track]")) {
+      const item2 = this._items.get(row.dataset.track);
+      const on = this._isCurrent(item2);
+      const n = row.querySelector(".n");
+      if (on === row.classList.contains("on") && !(on && n && n.querySelector(".eq")?.classList.contains("paused") === np.playing)) continue;
+      row.classList.toggle("on", on);
+      if (n) n.innerHTML = `${on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc12(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`}${icon4("play")}`;
+    }
+  }
+  async _sampleAccent(url) {
+    if (this._config.accent || url === this._accentUrl) return;
+    this._accentUrl = url;
+    const rgb = url ? await sampleColor(url) : null;
+    if (url !== this._accentUrl) return;
+    this._applyAccent(rgb);
+  }
+  // ---------- hass updates ----------
+  _onHassUpdate() {
+    if (!this._hass.states[this._active]) this._initActive();
+    const ids = this._playerIds();
+    const sig = JSON.stringify(ids.map((id) => {
+      const s = this._hass.states[id];
+      const a2 = s?.attributes || {};
+      return [id, s?.state, a2.media_title, a2.media_artist, a2.volume_level, a2.is_volume_muted, a2.group_members, a2.shuffle, a2.repeat, a2.media_position_updated_at, a2.entity_picture];
+    }));
+    if (sig === this._playersSig) return;
+    this._playersSig = sig;
+    const a = this._hass.states[this._active]?.attributes || {};
+    const trackKey = `${this._active}|${a.media_title}|${a.media_content_id}`;
+    if (trackKey !== this._trackKey) {
+      this._trackKey = trackKey;
+      this._refreshQueue();
+    }
+    this._renderNowPlaying();
+    this._renderPanels();
+    if (this._mode === "narrow") this._renderTopChip();
+  }
+  _refreshQueue() {
+    clearTimeout(this._qTimer);
+    this._timers.delete(this._qTimer);
+    this._qTimer = this._later(async () => {
+      const id = this._active;
+      if (!id) return;
+      try {
+        const q = await this.api.queue(id);
+        if (id !== this._active) return;
+        this._queue = q;
+        if (this._queueShown()) {
+          this._queueLoading = !this._queueItems;
+          this._queueItems = await this.api.queueItems(id, q);
+          this._queueLoading = false;
+        }
+      } catch (_e2) {
+        this._queue = null;
+      }
+      if (id !== this._active) return;
+      this._renderNowPlaying(true);
+      this._renderPanels(true);
+    }, 250);
+  }
+  _queueShown() {
+    return this._panel === "queue" || this._sheets.includes("queue");
+  }
+  // ---------- Full render ----------
+  _renderAll() {
+    if (!this._built || !this._hass) return;
+    this._onResize();
+    this._renderSide();
+    this._renderTabs();
+    this._renderTop();
+    this._renderView(true);
+    this._renderNowPlaying(true);
+    this._renderPanels(true);
+    if (!this._queue) this._refreshQueue();
+  }
+  _ctx() {
+    const np = this._npCache || this._np();
+    this._npCache = np;
+    return { reg: (item2) => this._reg(item2), isCurrent: (item2) => this._isCurrent(item2), playing: np.playing, hasQueueApi: this.api.hasMassQueue };
+  }
+  _reg(item2) {
+    const key = `i${this._itemSeq += 1}`;
+    this._items.set(key, item2);
+    return key;
+  }
+  get _view() {
+    return this._hist[this._histIdx];
+  }
+  _renderSide() {
+    const v = this._view;
+    const item2 = (name, label, ic, on) => `<button class="nav-item${on ? " on" : ""}" data-nav="${name}" title="${label}">${icon4(ic)}<span>${label}</span></button>`;
+    const pls = this._data.home?.playlists || [];
+    this.$.side.innerHTML = `<div class="side-box">
+      ${this._mode === "medium" ? `<button class="nav-item" data-sidetoggle title="Menu">${icon4("menu")}<span>Skjul menu</span></button>` : ""}
+      ${item2("home", "Hjem", "home", v.name === "home")}${item2("search", "S\xF8g", "magnify", v.name === "search")}</div>
+      <div class="side-box grow"><div class="nav-label">Dit bibliotek</div>
+      ${LIB_TYPES.map(([t, l, ic]) => item2(`library:${t}`, l, ic, v.name === "library" && v.type === t)).join("")}
+      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.slice(0, 30).map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc12(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon4("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc12(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
+  }
+  _renderTabs() {
+    const v = this._view;
+    const tab = (act, label, ic, on) => `<button class="tab${on ? " on" : ""}" ${act}>${icon4(ic)}${label}</button>`;
+    this.$.tabs.innerHTML = tab('data-nav="home"', "Hjem", "home", v.name === "home" && !this._sheets.length) + tab('data-nav="search"', "S\xF8g", "magnify", v.name === "search" && !this._sheets.length) + tab(`data-nav="library:${this._lastLib || "playlist"}"`, "Bibliotek", "bookshelf", (v.name === "library" || v.name === "detail") && !this._sheets.length) + tab('data-sheet="speakers"', "H\xF8jttalere", "speakerMultiple", this._sheets.includes("speakers"));
+  }
+  _renderTop() {
+    if (!this._built) return;
+    const v = this._view;
+    const narrow = this._mode === "narrow";
+    const back = `<button class="round" data-back aria-label="Tilbage" ${this._histIdx > 0 ? "" : "disabled"}>${icon4("chevronLeft")}</button>`;
+    const fwd = narrow ? "" : `<button class="round" data-fwd aria-label="Frem" ${this._histIdx < this._hist.length - 1 ? "" : "disabled"}>${icon4("chevronRight")}</button>`;
+    const title = v.name === "detail" ? v.item?.name : v.name === "library" ? LIB_TYPES.find((t) => t[0] === v.type)?.[1] : "";
+    const search = v.name === "search" ? `<label class="search-box">${icon4("magnify")}<input data-search type="text" inputmode="search" placeholder="Hvad vil du h\xF8re?" value="${esc12(v.query || "")}" autocomplete="off" enterkeyhint="search">${v.query ? `<button data-searchclear aria-label="Ryd">${icon4("close")}</button>` : ""}</label>` : "";
+    const showBack = !narrow || this._histIdx > 0;
+    this.$.top.innerHTML = `${showBack ? back : ""}${fwd}${search || `<div class="top-title">${esc12(title || "")}</div>`}${narrow && v.name !== "search" ? this._chipHtml() : ""}`;
+    this._onContentScroll();
+  }
+  _chipHtml() {
+    const np = this._np();
+    return `<button class="chip-player" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>`;
+  }
+  _renderTopChip() {
+    const chip = this.$.top.querySelector(".chip-player");
+    if (chip) chip.outerHTML = this._chipHtml();
+  }
+  _onContentScroll() {
+    const top = this.$.content.scrollTop;
+    this.$.top.classList.toggle("solid", top > (this._view.name === "detail" ? 220 : 24));
+  }
+  // ---------- Navigation ----------
+  _navigate(entry, replace = false) {
+    this._view.scroll = this.$.content.scrollTop;
+    if (replace) this._hist[this._histIdx] = entry;
+    else {
+      this._hist = this._hist.slice(0, this._histIdx + 1);
+      this._hist.push(entry);
+      if (this._hist.length > 50) this._hist.shift();
+      this._histIdx = this._hist.length - 1;
+    }
+    if (entry.name === "library") this._lastLib = entry.type;
+    if (this._mode === "narrow") this._closeSheets();
+    this._closeMenu();
+    this._renderTop();
+    this._renderSide();
+    this._renderTabs();
+    this._renderView(true);
+    if (entry.name === "search" && !this._touch) this.$.top.querySelector("[data-search]")?.focus({ preventScroll: true });
+  }
+  _go(nav) {
+    const [name, type] = nav.split(":");
+    if (name === "library") {
+      const prev = this._hist.findLast?.((h) => h.name === "library" && h.type === type);
+      this._navigate({ name, type, sort: prev?.sort || defaultSort(type), fav: prev?.fav || false, filter: "" });
+    } else if (name === "search") this._navigate({ name, query: this._lastQuery || "" });
+    else this._navigate({ name });
+  }
+  _open(item2) {
+    if (!item2) return;
+    if (["track", "radio", "podcast_episode"].includes(item2.media_type)) {
+      this._play(item2, "play");
+      return;
+    }
+    if (item2.media_type === "folder") return;
+    this._navigate({ name: "detail", item: item2 });
+  }
+  _back() {
+    if (this._histIdx > 0) {
+      this._view.scroll = this.$.content.scrollTop;
+      this._histIdx -= 1;
+      this._afterHistMove();
+    }
+  }
+  _fwd() {
+    if (this._histIdx < this._hist.length - 1) {
+      this._view.scroll = this.$.content.scrollTop;
+      this._histIdx += 1;
+      this._afterHistMove();
+    }
+  }
+  _afterHistMove() {
+    this._renderTop();
+    this._renderSide();
+    this._renderTabs();
+    this._renderView(true);
+  }
+  // ---------- Views ----------
+  _renderView(resetScroll = false) {
+    const v = this._view;
+    this._items.clear();
+    this._libIo?.disconnect();
+    let html = "";
+    const ctx = this._ctx();
+    this.$.content.style.removeProperty("--mc-hero-rgb");
+    if (v.name === "home") {
+      html = homeView(ctx, this._homeData());
+    } else if (v.name === "library") {
+      html = libraryView(ctx, this._libState(v));
+    } else if (v.name === "search") {
+      html = searchView(ctx, this._searchState(v));
+    } else if (v.name === "detail") {
+      html = detailView(ctx, this._detailState(v));
+    }
+    const content = this.$.content;
+    const keep = content.scrollTop;
+    keepScroll(this, () => {
+      content.innerHTML = html;
+    });
+    content.scrollTop = resetScroll ? v.scroll || 0 : keep;
+    this._onContentScroll();
+    if (v.name === "library") this._observeSentinel();
+    if (v.name === "detail") this._sampleHero(v.item);
+    this._renderSide();
+  }
+  _paintIf(check) {
+    if (check()) this._renderView(false);
+  }
+  _homeData() {
+    const d = this._data.home;
+    if (!d || Date.now() - d.t > 3e5 && !d.loading) this._loadHome();
+    return this._data.home;
+  }
+  async _loadHome() {
+    const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [] };
+    this._data.home = d;
+    try {
+      const [rp, ra, rr, fp, podcasts] = await Promise.all([
+        this.api.library("playlist", { order_by: "last_played_desc", limit: 12 }),
+        this.api.library("album", { order_by: "last_played_desc", limit: 16 }),
+        this.api.library("radio", { order_by: "last_played_desc", limit: 16 }),
+        this.api.library("playlist", { favorite: true, order_by: "last_played_desc", limit: 30 }),
+        this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => [])
+      ]);
+      const recent = [];
+      for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
+      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, albums: ra, radio: rr, podcasts });
+      this.api.recommendations(this._active).then((recs) => {
+        d.recs = recs;
+        this._paintIf(() => this._view.name === "home");
+      }).catch(() => {
+      });
+    } catch (e) {
+      Object.assign(d, { loading: false, error: errText(e) });
+    }
+    this._paintIf(() => this._view.name === "home");
+  }
+  _libKey(v) {
+    return `${v.type}|${v.sort}|${v.fav ? 1 : 0}|${v.filter || ""}`;
+  }
+  _libState(v) {
+    const key = this._libKey(v);
+    let st = this._data.lib.get(key);
+    if (!st) {
+      st = { type: v.type, sort: v.sort, fav: v.fav, filter: v.filter, items: [], offset: 0, done: false, loading: false };
+      this._data.lib.set(key, st);
+      this._loadLib(st);
+    }
+    return st;
+  }
+  async _loadLib(st) {
+    if (st.loading || st.done) return;
+    st.loading = true;
+    const first = st.items.length === 0;
+    try {
+      const items = await this.api.library(st.type, { order_by: st.sort, favorite: st.fav, search: st.filter || void 0, limit: PAGE, offset: st.offset });
+      st.offset += items.length;
+      st.done = items.length < PAGE;
+      st.loading = false;
+      const v = this._view;
+      if (v.name !== "library" || this._libKey(v) !== `${st.type}|${st.sort}|${st.fav ? 1 : 0}|${st.filter || ""}`) {
+        st.items.push(...items);
+        return;
+      }
+      const list = this.$.content.querySelector("[data-list]");
+      const start = st.items.length;
+      st.items.push(...items);
+      if (first || !list) this._renderLibBody(st);
+      else {
+        list.insertAdjacentHTML("beforeend", libraryItems(this._ctx(), st.type, items, start));
+        this._updateSentinel(st);
+      }
+    } catch (e) {
+      st.loading = false;
+      st.error = errText(e);
+      if (first) this._renderLibBody(st);
+      else this._toast(`Kunne ikke hente flere: ${st.error}`, true);
+    }
+  }
+  _renderLibBody(st) {
+    if (this._view.name !== "library") return;
+    const html = libraryView(this._ctx(), st);
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const content = this.$.content;
+    const view = content.querySelector(".view.lib");
+    if (!view) {
+      this._renderView(false);
+      return;
+    }
+    const top = content.scrollTop;
+    const newView = tmp.firstElementChild;
+    const head = view.querySelector(".lib-head");
+    const newHead = newView.querySelector(".lib-head");
+    head.querySelector(".chips").replaceWith(newHead.querySelector(".chips"));
+    const favBtn = head.querySelector("[data-favfilter]");
+    favBtn.replaceWith(newHead.querySelector("[data-favfilter]"));
+    while (head.nextSibling) head.nextSibling.remove();
+    let node = newHead.nextSibling;
+    while (node) {
+      const next = node.nextSibling;
+      view.appendChild(node);
+      node = next;
+    }
+    content.scrollTop = top;
+    this._observeSentinel();
+  }
+  _updateSentinel(st) {
+    const s = this.$.content.querySelector("[data-sentinel]");
+    if (s) s.innerHTML = st.loading ? '<div class="sk" style="height:6px;width:120px;margin:16px auto"></div>' : "";
+    this._observeSentinel();
+  }
+  _observeSentinel() {
+    this._libIo?.disconnect();
+    const s = this.$.content.querySelector("[data-sentinel]");
+    if (!s) return;
+    this._libIo = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      const v = this._view;
+      if (v.name !== "library") return;
+      const st = this._data.lib.get(this._libKey(v));
+      if (st && !st.done && !st.loading && st.items.length) {
+        this._loadLib(st);
+        this._updateSentinel(st);
+      }
+    }, { root: this.$.content, rootMargin: "600px" });
+    this._libIo.observe(s);
+  }
+  _searchState(v) {
+    if (!v.query) return { query: "", recent: store.get(RECENT_KEY, []) };
+    let st = this._data.search.get(v.query);
+    if (!st) {
+      st = { query: v.query, loading: true };
+      this._data.search.set(v.query, st);
+      this._runSearch(st);
+    }
+    return st;
+  }
+  async _runSearch(st) {
+    try {
+      st.results = await this.api.search(st.query, 10);
+      st.error = "";
+    } catch (e) {
+      st.error = errText(e);
+    }
+    st.loading = false;
+    this._paintIf(() => this._view.name === "search" && this._view.query === st.query);
+  }
+  _onSearchInput(value) {
+    const q = value.trim();
+    clearTimeout(this._searchTimer);
+    this._timers.delete(this._searchTimer);
+    this._searchTimer = this._later(() => {
+      const v = this._view;
+      if (v.name !== "search" || v.query === q) return;
+      v.query = q;
+      this._lastQuery = q;
+      const clear = this.$.top.querySelector("[data-searchclear]");
+      if (q && !clear) this.$.top.querySelector(".search-box")?.insertAdjacentHTML("beforeend", `<button data-searchclear aria-label="Ryd">${icon4("close")}</button>`);
+      if (!q && clear) clear.remove();
+      if (q.length >= 2) this._rememberSearch(q);
+      this._renderView(true);
+    }, 350);
+  }
+  _rememberSearch(q) {
+    clearTimeout(this._rememberTimer);
+    this._timers.delete(this._rememberTimer);
+    this._rememberTimer = this._later(() => {
+      const list = store.get(RECENT_KEY, []).filter((x) => x.toLowerCase() !== q.toLowerCase() && !q.toLowerCase().startsWith(x.toLowerCase()));
+      store.set(RECENT_KEY, [q, ...list].slice(0, 10));
+    }, 1500);
+  }
+  _detailState(v) {
+    const uri = v.item.uri;
+    let st = this._data.detail.get(uri);
+    if (!st) {
+      st = { item: v.item, loading: true, tracks: [], albums: [] };
+      this._data.detail.set(uri, st);
+      this._loadDetail(st);
+    }
+    return st;
+  }
+  async _loadDetail(st) {
+    const item2 = st.item;
+    const repaint = () => this._paintIf(() => this._view.name === "detail" && this._view.item?.uri === item2.uri);
+    if (this.api.hasMassQueue && /^[^:]+:\/\//.test(item2.uri)) {
+      this.api.item(item2.uri).then((full) => {
+        if (!full) return;
+        st.item = {
+          ...item2,
+          ...Object.fromEntries(Object.entries(full).filter(([, x]) => x !== "" && x != null && !(Array.isArray(x) && !x.length))),
+          image: item2.image || full.image,
+          image_large: item2.image_large || full.image_large
+        };
+        this._view.item = this._view.item?.uri === item2.uri ? st.item : this._view.item;
+        repaint();
+      }).catch(() => {
+      });
+    }
+    try {
+      if (!this.api.hasMassQueue) throw new Error("Installer mass_queue-integrationen for at se indholdet");
+      if (item2.media_type === "artist") {
+        let [tracks, albums] = await Promise.all([this.api.tracks(item2).catch(() => []), this.api.artistAlbums(item2).catch(() => [])]);
+        if (!tracks.length && !albums.length) {
+          const r = await this.api.search(item2.name, 25);
+          const by = (i) => (i.artists || []).some((a) => a.name?.toLowerCase() === item2.name.toLowerCase());
+          tracks = r.tracks.filter(by);
+          albums = r.albums.filter(by);
+        }
+        st.tracks = tracks;
+        st.albums = albums;
+      } else if (["album", "playlist", "podcast"].includes(item2.media_type)) {
+        st.tracks = await this.api.tracks(item2);
+      }
+      st.error = "";
+    } catch (e) {
+      st.error = errText(e);
+    }
+    st.loading = false;
+    repaint();
+  }
+  async _sampleHero(item2) {
+    const url = item2?.image_large || item2?.image;
+    if (!url) return;
+    const rgb = await sampleColor(url);
+    if (!rgb || this._view.item?.uri !== item2.uri) return;
+    const c2 = tone2(rgb, { minS: 0.3, l: [0.3, 0.42] });
+    this.$.content.style.setProperty("--mc-hero-rgb", c2.join(","));
+    const t = tone2(rgb, { minS: 0.25, l: [0.14, 0.18] });
+    this.$.top.style.setProperty("--mc-top-rgb", t.join(","));
+  }
+  // ---------- Panels & sheets ----------
+  _renderPanels(force = false) {
+    if (!this._hass || !this._built) return;
+    const kind = this._panel;
+    if (kind && this._mode !== "narrow") this._renderPanel(force);
+    if (this._sheets.length && this._sheets.at(-1) !== "player") this._renderSheet(force);
+  }
+  _panelBody(kind) {
+    const ctx = this._ctx();
+    if (kind === "queue") return queuePanel(ctx, { entity: this._active, loading: this._queueLoading || !this._queue, items: this._queueItems, current: this._queue?.current, next: this._queue?.next });
+    const players = this._playerIds().map((id) => this._player(id));
+    const members = new Set(this._groupMembers());
+    for (const p of players) p.groupedWithActive = members.has(p.entity_id) || p.entity_id === this._active && members.size > 0;
+    const grouped = players.filter((p) => p.groupedWithActive);
+    const groupVolume = grouped.length ? grouped.reduce((n, p) => n + p.volume, 0) / grouped.length : 0;
+    const np = this._np();
+    return speakersPanel(ctx, { players, active: this._active, groupVolume, canTransfer: Boolean(np.title) && ["playing", "paused"].includes(np.state) });
+  }
+  _renderPanel(force) {
+    const kind = this._panel;
+    if (!kind) {
+      this.$.panel.innerHTML = "";
+      return;
+    }
+    const body = this._panelBody(kind);
+    const sig = `${kind}|${body.replace(/data-(?:menu|open|track)="i\d+"/g, "")}`;
+    if (!force && sig === this._panelSig) return;
+    if (this._dragging && this.$.panel.contains(this._dragging)) return;
+    this._panelSig = sig;
+    const old = this.$.panel.querySelector(".panel-body");
+    const top = old?.scrollTop || 0;
+    if (!old || this.$.panel.dataset.kind !== kind) {
+      this.$.panel.dataset.kind = kind;
+      this.$.panel.innerHTML = `<div class="panel-h"><h3>${kind === "queue" ? "K\xF8" : "H\xF8jttalere"}</h3><button class="round" style="background:transparent" data-closepanel aria-label="Luk">${icon4("close")}</button></div>
+        <div class="panel-tabs"><button class="chip${kind === "queue" ? " on" : ""}" data-panel="queue">${icon4("playlistPlay")}K\xF8</button><button class="chip${kind === "speakers" ? " on" : ""}" data-panel="speakers">${icon4("speakerMultiple")}H\xF8jttalere</button></div>
+        <div class="panel-body"></div>`;
+    }
+    const pb2 = this.$.panel.querySelector(".panel-body");
+    keepScroll(this, () => {
+      pb2.innerHTML = body;
+    });
+    pb2.scrollTop = top;
+    this._syncAllRanges(pb2);
+  }
+  _togglePanel(kind) {
+    if (this._mode === "narrow") {
+      this._openSheet(kind);
+      return;
+    }
+    this._panel = this._panel === kind ? null : kind;
+    this._applyPanelLayout();
+    this._renderPanel(true);
+    this._renderNowPlaying(true);
+    if (kind === "queue" && this._panel) {
+      this._queueItems = null;
+      this._refreshQueue();
+    }
+    this._later(() => this._onResize(), 30);
+  }
+  _openSheet(kind) {
+    if (this._sheets.at(-1) === kind) return;
+    this._sheets = this._sheets.filter((s) => s !== kind);
+    this._sheets.push(kind);
+    if (kind === "queue") {
+      this._queueItems = null;
+      this._refreshQueue();
+    }
+    this._renderSheet(true);
+    this.$.sheet.classList.add("open");
+    this._renderTabs();
+  }
+  _closeSheet() {
+    this._sheets.pop();
+    if (this._sheets.length) this._renderSheet(true);
+    else this.$.sheet.classList.remove("open");
+    this._renderTabs();
+  }
+  _closeSheets() {
+    if (!this._sheets.length) return;
+    this._sheets = [];
+    this.$.sheet.classList.remove("open");
+    this._renderTabs();
+  }
+  _renderSheet(force = false) {
+    const kind = this._sheets.at(-1);
+    if (!kind) return;
+    const sh2 = this.$.sheet;
+    if (kind === "player") {
+      const np = this._np();
+      const bg = np.imageLarge || np.image;
+      if (this._dragging && sh2.contains(this._dragging)) return;
+      sh2.dataset.kind = kind;
+      sh2.innerHTML = `${bg ? `<div class="sheet-bg" style="background-image:url('${esc12(bg).replace(/'/g, "%27")}')"></div>` : '<div class="sheet-bg" style="background:var(--mc-np-bg,#222)"></div>'}
+        <div class="sheet-h"><span class="grab"></span><button class="round" style="background:transparent" data-closesheet aria-label="Luk">${icon4("chevronDown")}</button>
+        <div class="ttl"><small>Afspiller p\xE5</small>${esc12(np.speakerLabel)}</div><button class="round" style="background:transparent" data-npmenu aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>
+        <div class="sheet-body">${fullPlayerHtml(np)}</div>`;
+      this._syncRanges(np);
+      return;
+    }
+    const body = this._panelBody(kind);
+    const sig = `${kind}|${body.replace(/data-(?:menu|open|track)="i\d+"/g, "")}`;
+    if (!force && sig === this._sheetSig) return;
+    if (this._dragging && sh2.contains(this._dragging)) return;
+    this._sheetSig = sig;
+    const old = sh2.querySelector(".sheet-body");
+    const top = sh2.dataset.kind === kind ? old?.scrollTop || 0 : 0;
+    sh2.dataset.kind = kind;
+    sh2.innerHTML = `<div class="sheet-h"><span class="grab"></span><button class="round" style="background:transparent" data-closesheet aria-label="Luk">${icon4(this._sheets.length > 1 ? "chevronLeft" : "chevronDown")}</button>
+      <div class="ttl" style="font-size:16px;color:#fff">${kind === "queue" ? "K\xF8" : "H\xF8jttalere"}</div><span style="width:34px"></span></div>
+      <div class="sheet-body">${body}</div>`;
+    const sb = sh2.querySelector(".sheet-body");
+    sb.scrollTop = top;
+    this._syncAllRanges(sb);
+  }
+  _syncAllRanges(root) {
+    for (const el of root.querySelectorAll(".rng")) setP(el);
+  }
+  _wireSheetSwipe() {
+    const sh2 = this.$.sheet;
+    let startY = null;
+    let dy = 0;
+    sh2.addEventListener("touchstart", (e) => {
+      if (e.target.closest("input, .rng")) {
+        startY = null;
+        return;
+      }
+      const body = sh2.querySelector(".sheet-body");
+      if (body && body.scrollTop > 0 && !e.target.closest(".sheet-h")) {
+        startY = null;
+        return;
+      }
+      startY = e.touches[0].clientY;
+      dy = 0;
+    }, { passive: true });
+    sh2.addEventListener("touchmove", (e) => {
+      if (startY == null) return;
+      dy = Math.max(0, e.touches[0].clientY - startY);
+      if (dy > 6) {
+        sh2.classList.add("dragging");
+        sh2.style.transform = `translateY(${dy}px)`;
+      }
+    }, { passive: true });
+    const end = () => {
+      if (startY == null) return;
+      sh2.classList.remove("dragging");
+      sh2.style.transform = "";
+      if (dy > 110) this._closeSheet();
+      startY = null;
+      dy = 0;
+    };
+    sh2.addEventListener("touchend", end, { passive: true });
+    sh2.addEventListener("touchcancel", end, { passive: true });
+  }
+  // ---------- Menus ----------
+  _openMenu(item2, anchor, extra = {}) {
+    if (!item2) return;
+    this._menuItem = item2;
+    const isContainer = ["album", "playlist", "artist", "radio", "podcast", "audiobook"].includes(item2.media_type);
+    const actions = [
+      { id: "play", label: "Afspil nu", icon: "play" },
+      { id: "next", label: "Afspil som n\xE6ste", icon: "skipNextCircleOutline" },
+      { id: "add", label: "Tilf\xF8j til k\xF8", icon: "playlistPlus" },
+      { id: "replace", label: "Erstat k\xF8", icon: "playlistEdit" }
+    ];
+    if (!["radio", "podcast", "podcast_episode", "audiobook"].includes(item2.media_type)) actions.push({ id: "radio", label: "Start radio", icon: "radioTower" });
+    if (item2.artists?.[0]?.uri && item2.media_type !== "artist") actions.push({ id: "artist", label: "G\xE5 til kunstner", icon: "accountMusic", sep: true });
+    if (item2.album?.uri && item2.media_type === "track") actions.push({ id: "album", label: "G\xE5 til album", icon: "album", sep: !actions.some((a) => a.sep) });
+    if (isContainer && extra.openable !== false && this._view.item?.uri !== item2.uri && item2.media_type !== "radio") actions.push({ id: "open", label: "\xC5bn", icon: "chevronRight", sep: !actions.some((a) => a.sep) });
+    if (this.api.hasMassQueue && /^[^:]+:\/\//.test(item2.uri || "")) actions.push({ id: "fav", label: item2.favorite ? "Fjern fra favoritter" : "F\xF8j til favoritter", icon: item2.favorite ? "heart" : "heartOutline", sep: !actions.some((a) => a.sep) });
+    const layer = this.$.layer;
+    const menu = this.$.menu;
+    menu.innerHTML = menuHtml(item2, actions);
+    const sheetlike = this._mode === "narrow" || this._touch && !anchor;
+    layer.classList.toggle("sheetlike", sheetlike);
+    layer.classList.add("open");
+    if (!sheetlike) {
+      const box = this.$.shell.getBoundingClientRect();
+      const r = anchor ? anchor.getBoundingClientRect() : { left: box.left + box.width / 2, bottom: box.top + box.height / 2, top: box.top + box.height / 2, right: box.left + box.width / 2 };
+      const mw = menu.offsetWidth || 240;
+      const mh2 = menu.offsetHeight || 300;
+      let left = r.right - box.left - mw;
+      if (left < 8) left = Math.min(r.left - box.left, box.width - mw - 8);
+      let top = r.bottom - box.top + 4;
+      if (top + mh2 > box.height - 8) top = Math.max(8, r.top - box.top - mh2 - 4);
+      menu.style.left = `${Math.max(8, left)}px`;
+      menu.style.top = `${top}px`;
+    } else {
+      menu.style.left = "";
+      menu.style.top = "";
+    }
+  }
+  _closeMenu() {
+    this.$.layer?.classList.remove("open");
+    this._menuItem = null;
+  }
+  async _menuAction(id) {
+    const item2 = this._menuItem;
+    this._closeMenu();
+    if (!item2) return;
+    switch (id) {
+      case "play":
+        return this._play(item2, "play");
+      case "next":
+        return this._play(item2, "next", false, "Afspilles som det n\xE6ste");
+      case "add":
+        return this._play(item2, "add", false, "Tilf\xF8jet til k\xF8en");
+      case "replace":
+        return this._play(item2, "replace", false, "K\xF8en er erstattet");
+      case "radio":
+        return this._play(item2, "replace", true, "Radio startet");
+      case "artist":
+        return this._goUri(item2.artists[0].uri, item2.artists[0].name);
+      case "album":
+        return this._goUri(item2.album.uri, item2.album.name);
+      case "open":
+        return this._navigate({ name: "detail", item: item2 });
+      case "fav":
+        return this._toggleFav(item2);
+      default:
+        return void 0;
+    }
+  }
+  _goUri(uri, name) {
+    if (!uri) return;
+    if (this._mode === "narrow") this._closeSheets();
+    if (this._mode !== "narrow" && this._panel && !this._dock) {
+      this._panel = null;
+      this._applyPanelLayout();
+    }
+    this._navigate({ name: "detail", item: { media_type: mediaTypeFromUri(uri), uri, name: name || "", artists: [] } });
+  }
+  // ---------- Actions ----------
+  async _svc(fn, ok) {
+    try {
+      await fn();
+      if (ok) this._toast(ok);
+      return true;
+    } catch (e) {
+      this._toast(`Det lykkedes ikke: ${errText(e)}`, true);
+      return false;
+    }
+  }
+  _play(item2, enqueue = "play", radio = false, ok = "") {
+    if (!this._active) {
+      this._toast("V\xE6lg en h\xF8jttaler f\xF8rst", true);
+      this._openSpeakers();
+      return Promise.resolve(false);
+    }
+    return this._svc(() => this.api.play(this._active, item2, enqueue, radio), ok).then((done) => {
+      if (done) {
+        this._refreshQueue();
+        this._later(() => this._refreshQueue(), 1500);
+      }
+      return done;
+    });
+  }
+  _openSpeakers() {
+    if (this._mode === "narrow") this._openSheet("speakers");
+    else if (this._panel !== "speakers") this._togglePanel("speakers");
+  }
+  _playFromList(row) {
+    const item2 = this._items.get(row.dataset.track);
+    if (!item2) return;
+    if (this._isCurrent(item2) && !row.closest(".search")) {
+      this._cmd("playpause");
+      return;
+    }
+    const v = this._view;
+    let list = null;
+    if (v.name === "detail") {
+      const st = this._data.detail.get(v.item.uri);
+      if (st?.tracks?.length && v.item.media_type !== "podcast") list = st.tracks;
+    } else if (v.name === "library" && v.type === "track") list = this._data.lib.get(this._libKey(v))?.items;
+    if (list) {
+      const idx = list.findIndex((t) => t.uri === item2.uri);
+      if (idx >= 0) {
+        this._play(list.slice(idx, idx + 100), "replace");
+        return;
+      }
+    }
+    this._play(item2, "play");
+  }
+  async _toggleFav(item2) {
+    const on = !item2.favorite;
+    const done = await this._svc(() => this.api.setFavorite(item2, on), on ? "F\xF8jet til dine favoritter" : "Fjernet fra dine favoritter");
+    if (!done) return;
+    item2.favorite = on;
+    this._favOverride.set(item2.uri, on);
+    this.api.clearCache();
+    if (this._data.home) this._data.home.t = 0;
+    if (this._view.name === "detail") this._renderView(false);
+    this._renderNowPlaying(true);
+  }
+  async _toggleNpFav() {
+    const np = this._np();
+    if (!np.uri) return;
+    const on = !np.favorite;
+    const ok = on ? "F\xF8jet til dine favoritter" : "Fjernet fra dine favoritter";
+    const btn = this._favButton(this._active);
+    const done = await this._svc(async () => {
+      if (on) {
+        if (this.api.hasMassQueue) await this.api.setFavorite({ uri: np.uri, media_type: np.item?.media_type || "track" }, true);
+        else await this._hass.callService("button", "press", { entity_id: btn });
+      } else {
+        try {
+          await this.api.setFavorite({ uri: np.uri, media_type: np.item?.media_type || "track" }, false);
+        } catch (_e2) {
+          await this.api.queueAction("unfavorite_current_item", this._active);
+        }
+      }
+    }, ok);
+    if (done) {
+      this._favOverride.set(np.uri, on);
+      this.api.clearCache();
+      this._renderNowPlaying(true);
+    }
+  }
+  _cmd(cmd) {
+    const id = this._active;
+    if (!id) {
+      this._openSpeakers();
+      return;
+    }
+    const np = this._np();
+    const call = (service, data = {}) => this._svc(() => this._hass.callService("media_player", service, { entity_id: id, ...data }));
+    switch (cmd) {
+      case "playpause":
+        call(np.playing ? "media_pause" : "media_play");
+        break;
+      case "next":
+        call("media_next_track");
+        break;
+      case "prev":
+        call("media_previous_track");
+        break;
+      case "shuffle":
+        call("shuffle_set", { shuffle: !np.shuffle });
+        break;
+      case "repeat":
+        call("repeat_set", { repeat: np.repeat === "off" ? "all" : np.repeat === "all" ? "one" : "off" });
+        break;
+      case "mute":
+        call("volume_mute", { is_volume_muted: !np.muted });
+        break;
+      default:
+        break;
+    }
+  }
+  async _toggleGroup(id) {
+    const p = this._player(id);
+    const grouped = this._groupMembers().includes(id);
+    const name = p.name;
+    if (grouped) await this._svc(() => this._hass.callService("media_player", "unjoin", { entity_id: id }), `${name} spiller ikke l\xE6ngere med`);
+    else await this._svc(() => this._hass.callService("media_player", "join", { entity_id: this._active, group_members: [id] }), `${name} spiller nu med`);
+  }
+  async _transfer(id) {
+    const from = this._active;
+    const name = this._playerName(id);
+    const done = await this._svc(() => this.api.transfer(from, id), `Musikken spiller nu p\xE5 ${name}`);
+    if (done) this._setActive(id);
+  }
+  _setVolume(id, value) {
+    return this._svc(() => this._hass.callService("media_player", "volume_set", { entity_id: id, volume_level: Math.max(0, Math.min(1, value / 100)) }));
+  }
+  _setGroupVolume(value) {
+    if (this.api.hasMassQueue) return this._svc(() => this.api.call("mass_queue", "set_group_volume", { entity: this._active, volume_level: Math.max(1, Math.round(value)) }, void 0, false));
+    const ids = [this._active, ...this._groupMembers()];
+    return Promise.all(ids.map((id) => this._setVolume(id, value)));
+  }
+  _toast(msg, err = false) {
+    const t = this.$?.toast;
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.toggle("err", err);
+    t.classList.add("show");
+    clearTimeout(this._toastTimer);
+    this._timers.delete(this._toastTimer);
+    this._toastTimer = this._later(() => t.classList.remove("show"), err ? 4500 : 2600);
+  }
+  // ---------- Events ----------
+  _onClick(e) {
+    if (this._suppressClick) {
+      this._suppressClick = false;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    const t = e.target;
+    const el = t.closest("[data-mact],[data-closemenu],[data-unrecent],[data-searchclear],[data-play],[data-shuffleplay],[data-menu],[data-fav],[data-goto],[data-qact],[data-qclear],[data-qplay],[data-group],[data-mute],[data-transfer],[data-select],[data-npfav],[data-npopen],[data-npmenu],[data-cmd],[data-panel],[data-closepanel],[data-sheet],[data-closesheet],[data-back],[data-fwd],[data-sidetoggle],[data-nav],[data-libtype],[data-favfilter],[data-recent],[data-retry],[data-showall],[data-open],[data-track]");
+    if (!el) return;
+    const d = el.dataset;
+    if (el.disabled) return;
+    if ("mact" in d) return void this._menuAction(d.mact);
+    if ("closemenu" in d) return void this._closeMenu();
+    if ("unrecent" in d) {
+      e.stopPropagation();
+      const list = store.get(RECENT_KEY, []);
+      list.splice(Number(d.unrecent), 1);
+      store.set(RECENT_KEY, list);
+      return void this._renderView(false);
+    }
+    if ("searchclear" in d) {
+      const input = this.$.top.querySelector("[data-search]");
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+      this._view.query = "";
+      this._lastQuery = "";
+      el.remove();
+      return void this._renderView(true);
+    }
+    if ("play" in d) {
+      const item2 = this._items.get(d.play);
+      if (this._view.name === "detail" && item2 && this._view.item?.uri === item2.uri && this._isCurrent(item2)) return void this._cmd("playpause");
+      return void this._play(item2, item2?.media_type === "track" ? "play" : "replace");
+    }
+    if ("shuffleplay" in d) {
+      const item2 = this._items.get(d.shuffleplay);
+      return void this._svc(() => this._hass.callService("media_player", "shuffle_set", { entity_id: this._active, shuffle: true })).then(() => this._play(item2, "replace"));
+    }
+    if ("menu" in d) return void this._openMenu(this._items.get(d.menu), el);
+    if ("fav" in d) return void this._toggleFav(this._items.get(d.fav));
+    if ("goto" in d) return void this._goUri(d.goto, d.name);
+    if ("qact" in d) {
+      const labels = { move_queue_item_next: "Spilles som det n\xE6ste", remove_queue_item: "Fjernet fra k\xF8en" };
+      return void this._svc(() => this.api.queueAction(d.qact, this._active, d.qid), labels[d.qact]).then(() => this._refreshQueue());
+    }
+    if ("qclear" in d) return void this._svc(() => this.api.queueAction("clear_queue_from_here", this._active), "Resten af k\xF8en er ryddet").then(() => this._refreshQueue());
+    if ("qplay" in d) {
+      if (!d.qplay || el.classList.contains("on")) return;
+      return void this._svc(() => this.api.queueAction("play_queue_item", this._active, d.qplay)).then(() => this._refreshQueue());
+    }
+    if ("group" in d) return void this._toggleGroup(d.group);
+    if ("mute" in d) {
+      const p = this._player(d.mute);
+      return void this._svc(() => this._hass.callService("media_player", "volume_mute", { entity_id: d.mute, is_volume_muted: !p.muted }));
+    }
+    if ("transfer" in d) return void this._transfer(d.transfer);
+    if ("select" in d) {
+      this._setActive(d.select);
+      if (this._mode === "narrow" && this._sheets.at(-1) === "speakers" && this._sheets.length > 1) this._closeSheet();
+      return;
+    }
+    if ("npfav" in d) return void this._toggleNpFav();
+    if ("npopen" in d) {
+      const it = this._np().item;
+      const target2 = d.npopen === "artist" ? it?.artists?.[0] : it?.album;
+      if (target2?.uri) this._goUri(target2.uri, target2.name);
+      else if (this._mode === "narrow" && el.closest(".mini")) this._openSheet("player");
+      return;
+    }
+    if ("npmenu" in d) {
+      const it = this._np().item;
+      if (it?.uri) this._openMenu({ ...it, name: it.name || this._np().title }, null);
+      return;
+    }
+    if ("cmd" in d) return void this._cmd(d.cmd);
+    if ("panel" in d) return void this._togglePanel(d.panel);
+    if ("closepanel" in d) {
+      this._panel = null;
+      this._applyPanelLayout();
+      this._renderNowPlaying(true);
+      this._later(() => this._onResize(), 30);
+      return;
+    }
+    if ("sheet" in d) return void this._openSheet(d.sheet);
+    if ("closesheet" in d) return void this._closeSheet();
+    if ("back" in d) return void this._back();
+    if ("fwd" in d) return void this._fwd();
+    if ("sidetoggle" in d) {
+      this.$.shell.classList.toggle("side-open");
+      this._later(() => this._onResize(), 250);
+      return;
+    }
+    if ("nav" in d) return void this._go(d.nav);
+    if ("libtype" in d) {
+      const v = this._view;
+      return void this._navigate({ ...v, type: d.libtype, sort: defaultSort(d.libtype), filter: "", scroll: 0 }, true);
+    }
+    if ("favfilter" in d) {
+      const v = this._view;
+      return void this._navigate({ ...v, fav: !v.fav, scroll: 0 }, true);
+    }
+    if ("recent" in d) {
+      const q = d.recent;
+      this._view.query = q;
+      this._lastQuery = q;
+      this._renderTop();
+      return void this._renderView(true);
+    }
+    if ("retry" in d) {
+      this.api.clearCache();
+      const v = this._view;
+      if (v.name === "home") this._data.home = null;
+      if (v.name === "library") this._data.lib.delete(this._libKey(v));
+      if (v.name === "detail") this._data.detail.delete(v.item.uri);
+      return void this._renderView(false);
+    }
+    if ("showall" in d) {
+      const st = this._data.detail.get(this._view.item.uri);
+      if (st) {
+        st.showAll = !st.showAll;
+        this._renderView(false);
+      }
+      return;
+    }
+    if ("open" in d) return void this._open(this._items.get(d.open));
+    if ("track" in d) return void this._playFromList(el);
+  }
+  _onInput(e) {
+    const el = e.target;
+    if (el.classList?.contains("rng")) {
+      setP(el);
+      if ("seek" in el.dataset) {
+        const pos = el.closest(".seek, .fp-seek")?.querySelector("[data-pos]");
+        if (pos) pos.textContent = fmtTime(el.value);
+      }
+      return;
+    }
+    if ("search" in el.dataset) return void this._onSearchInput(el.value);
+    if ("filter" in el.dataset) {
+      clearTimeout(this._filterTimer);
+      this._timers.delete(this._filterTimer);
+      this._filterTimer = this._later(() => {
+        const v = this._view;
+        if (v.name !== "library") return;
+        v.filter = el.value.trim();
+        const st = this._libState(v);
+        if (!st.loading) this._renderLibBody(st);
+      }, 350);
+    }
+  }
+  _onChange(e) {
+    const el = e.target;
+    const d = el.dataset || {};
+    if ("sort" in d) {
+      const v = this._view;
+      return void this._navigate({ ...v, sort: el.value, scroll: 0 }, true);
+    }
+    if ("seek" in d) {
+      this._dragging = null;
+      return void this._svc(() => this._hass.callService("media_player", "media_seek", { entity_id: this._active, seek_position: Number(el.value) }));
+    }
+    if ("npvol" in d) {
+      this._dragging = null;
+      return void this._setVolume(this._active, Number(el.value));
+    }
+    if ("vol" in d) {
+      this._dragging = null;
+      return void this._setVolume(d.vol, Number(el.value));
+    }
+    if ("gvol" in d) {
+      this._dragging = null;
+      return void this._setGroupVolume(Number(el.value));
+    }
+  }
+  _onKey(e) {
+    if (e.key === "Escape") {
+      if (this.$.layer.classList.contains("open")) {
+        this._closeMenu();
+        return;
+      }
+      if (this._sheets.length) {
+        this._closeSheet();
+        return;
+      }
+      if (this._panel && !this._dock) {
+        this._panel = null;
+        this._applyPanelLayout();
+        return;
+      }
+    }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches?.('[role="button"]')) {
+      e.preventDefault();
+      e.target.click();
+    }
+    if (e.key === "Enter" && "search" in (e.target.dataset || {})) {
+      clearTimeout(this._searchTimer);
+      this._onSearchInput(e.target.value);
+    }
+  }
+  // Long press (touch) opens the item menu; a drag on a range stops in-place updates of that range.
+  _onPointerDown(e) {
+    const t = e.target;
+    if (t.classList?.contains("rng")) {
+      this._dragging = t;
+      const stop = () => {
+        window.removeEventListener("pointerup", stop, true);
+        window.removeEventListener("pointercancel", stop, true);
+        this._later(() => {
+          if (this._dragging === t) this._dragging = null;
+        }, 400);
+      };
+      window.addEventListener("pointerup", stop, true);
+      window.addEventListener("pointercancel", stop, true);
+      return;
+    }
+    if (e.pointerType !== "touch") return;
+    const el = t.closest("[data-open],[data-track],.qi");
+    if (!el || t.closest("button.dots, button.more, .qa, button.fab")) return;
+    this._lp = { x: e.clientX, y: e.clientY, el };
+    clearTimeout(this._lpTimer);
+    this._lpTimer = setTimeout(() => {
+      const key = el.dataset.open || el.dataset.track || el.querySelector("[data-menu]")?.dataset.menu;
+      const item2 = this._items.get(key);
+      if (item2) {
+        this._suppressClick = true;
+        this._openMenu(item2, el);
+        navigator.vibrate?.(10);
+        this._later(() => {
+          this._suppressClick = false;
+        }, 800);
+      }
+      this._lp = null;
+    }, 520);
+  }
+  _movePress(e) {
+    if (!this._lp) return;
+    if (Math.abs(e.clientX - this._lp.x) > 10 || Math.abs(e.clientY - this._lp.y) > 10) this._endPress();
+  }
+  _endPress() {
+    clearTimeout(this._lpTimer);
+    this._lp = null;
+  }
+  _onContextMenu(e) {
+    const el = e.target.closest("[data-open],[data-track]");
+    if (!el) return;
+    e.preventDefault();
+    if (this.$.layer.classList.contains("open")) return;
+    this._openMenu(this._items.get(el.dataset.open || el.dataset.track), null);
+    if (this._mode !== "narrow" && !this._touch) {
+      const box = this.$.shell.getBoundingClientRect();
+      const m = this.$.menu;
+      m.style.left = `${Math.min(e.clientX - box.left, box.width - m.offsetWidth - 8)}px`;
+      m.style.top = `${Math.min(e.clientY - box.top, box.height - m.offsetHeight - 8)}px`;
+    }
+  }
+  _onImgError(e) {
+    const img = e.target;
+    if (img?.tagName !== "IMG" || !img.dataset.ph) return;
+    const ph2 = document.createElement("div");
+    ph2.className = `${img.className} art-ph`;
+    ph2.innerHTML = icon4(img.dataset.ph);
+    img.replaceWith(ph2);
+  }
+};
+function defaultSort(type) {
+  return ["playlist", "radio", "podcast", "audiobook"].includes(type) ? "last_played_desc" : "timestamp_added_desc";
+}
+function setP(el) {
+  const min = Number(el.min) || 0;
+  const max = Number(el.max) || 100;
+  el.style.setProperty("--p", `${max > min ? (Number(el.value) - min) / (max - min) * 100 : 0}%`);
+}
+function errText(e) {
+  const msg = e?.message || e?.error?.message || (typeof e === "string" ? e : "") || e?.code || "ukendt fejl";
+  return String(msg).slice(0, 140);
+}
+if (!customElements.get("ha-music-card")) customElements.define("ha-music-card", HaMusicCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c2) => c2.type === "ha-music-card")) {
+  window.customCards.push({ type: "ha-music-card", name: "HA Music Card", description: "Musik-app til Music Assistant: bibliotek, s\xF8gning, k\xF8 og h\xF8jttalere", preview: false });
+}
 
 // src/cards/shared/motion-rest-end.js
 motionRestEnd();

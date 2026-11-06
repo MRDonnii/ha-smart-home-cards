@@ -60,6 +60,7 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | HA Home Status Grid Card | `ha-home-status-grid-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-status-card) |
 | HA Person Overview Card | `ha-person-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-person-overview-card) |
 | HA Pet Care Card | `ha-pet-care-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-pet-care-card) |
+| HA Music Card | `ha-music-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-music-card) |
 | HA Weather Card | `ha-weather-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-weather-card) |
 | Home Room Overview Card | `ha-home-room-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-home-room-overview-card) |
 | Home Room Overview Card V2 | `ha-home-room-overview-card-v2.js` | [Documentation](https://github.com/MRDonnii/ha-smart-home-cards#room-overview-v2) |
