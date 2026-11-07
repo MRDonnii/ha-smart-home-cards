@@ -13,11 +13,12 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
 const ACTIVE_KEY = "ha-music-card:active-player";
+const SIDE_PLAYLIST_LIMIT = 500;
 
 const store = {
   get(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch (_e) { return fallback; } },
@@ -452,13 +453,14 @@ class HaMusicCard extends HTMLElement {
   _renderSide() {
     const v = this._view;
     const item = (name, label, ic, on) => `<button class="nav-item${on ? " on" : ""}" data-nav="${name}" title="${label}">${icon(ic)}<span>${label}</span></button>`;
-    const pls = this._data.home?.playlists || [];
+    // every library playlist, like Spotify's library list (favourites alone left most of them out)
+    const pls = this._data.home?.sidePlaylists || this._data.home?.playlists || [];
     this.$.side.innerHTML = `<div class="side-box">
       ${this._mode === "medium" ? `<button class="nav-item" data-sidetoggle title="Menu">${icon("menu")}<span>Skjul menu</span></button>` : ""}
       ${item("home", "Hjem", "home", v.name === "home")}${item("search", "Søg", "magnify", v.name === "search")}</div>
       <div class="side-box grow"><div class="nav-label">Dit bibliotek</div>
       ${LIB_TYPES.map(([t, l, ic]) => item(`library:${t}`, l, ic, v.name === "library" && v.type === t)).join("")}
-      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.slice(0, 30).map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
+      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
   }
 
   _renderTabs() {
@@ -568,19 +570,20 @@ class HaMusicCard extends HTMLElement {
   }
 
   async _loadHome() {
-    const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [] };
+    const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [], sidePlaylists: this._data.home?.sidePlaylists || [] };
     this._data.home = d;
     try {
-      const [rp, ra, rr, fp, podcasts] = await Promise.all([
+      const [rp, ra, rr, fp, podcasts, all] = await Promise.all([
         this.api.library("playlist", { order_by: "last_played_desc", limit: 12 }),
         this.api.library("album", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("radio", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("playlist", { favorite: true, order_by: "last_played_desc", limit: 30 }),
-        this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => [])
+        this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => []),
+        this.api.library("playlist", { order_by: "last_played_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => [])
       ]);
       const recent = [];
       for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
-      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, albums: ra, radio: rr, podcasts });
+      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, sidePlaylists: all, albums: ra, radio: rr, podcasts });
       this.api.recommendations(this._active).then((recs) => { d.recs = recs; this._paintIf(() => this._view.name === "home"); }).catch(() => {});
     } catch (e) {
       Object.assign(d, { loading: false, error: errText(e) });

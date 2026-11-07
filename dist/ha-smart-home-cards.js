@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.251 */
+/* MRDonnii Smart Home Cards v0.5.252 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -69437,6 +69437,7 @@ var GROUPING = 524288;
 var PAGE = 50;
 var RECENT_KEY = "ha-music-card:recent-searches";
 var ACTIVE_KEY = "ha-music-card:active-player";
+var SIDE_PLAYLIST_LIMIT = 500;
 var store = {
   get(key, fallback) {
     try {
@@ -69959,13 +69960,13 @@ var HaMusicCard = class extends HTMLElement {
   _renderSide() {
     const v = this._view;
     const item2 = (name, label, ic, on) => `<button class="nav-item${on ? " on" : ""}" data-nav="${name}" title="${label}">${icon4(ic)}<span>${label}</span></button>`;
-    const pls = this._data.home?.playlists || [];
+    const pls = this._data.home?.sidePlaylists || this._data.home?.playlists || [];
     this.$.side.innerHTML = `<div class="side-box">
       ${this._mode === "medium" ? `<button class="nav-item" data-sidetoggle title="Menu">${icon4("menu")}<span>Skjul menu</span></button>` : ""}
       ${item2("home", "Hjem", "home", v.name === "home")}${item2("search", "S\xF8g", "magnify", v.name === "search")}</div>
       <div class="side-box grow"><div class="nav-label">Dit bibliotek</div>
       ${LIB_TYPES.map(([t, l, ic]) => item2(`library:${t}`, l, ic, v.name === "library" && v.type === t)).join("")}
-      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.slice(0, 30).map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc12(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon4("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc12(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
+      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc12(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon4("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc12(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
   }
   _renderTabs() {
     const v = this._view;
@@ -70089,19 +70090,20 @@ var HaMusicCard = class extends HTMLElement {
     return this._data.home;
   }
   async _loadHome() {
-    const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [] };
+    const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [], sidePlaylists: this._data.home?.sidePlaylists || [] };
     this._data.home = d;
     try {
-      const [rp, ra, rr, fp, podcasts] = await Promise.all([
+      const [rp, ra, rr, fp, podcasts, all] = await Promise.all([
         this.api.library("playlist", { order_by: "last_played_desc", limit: 12 }),
         this.api.library("album", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("radio", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("playlist", { favorite: true, order_by: "last_played_desc", limit: 30 }),
-        this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => [])
+        this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => []),
+        this.api.library("playlist", { order_by: "last_played_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => [])
       ]);
       const recent = [];
       for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
-      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, albums: ra, radio: rr, podcasts });
+      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, sidePlaylists: all, albums: ra, radio: rr, podcasts });
       this.api.recommendations(this._active).then((recs) => {
         d.recs = recs;
         this._paintIf(() => this._view.name === "home");
