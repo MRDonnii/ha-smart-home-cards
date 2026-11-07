@@ -13,7 +13,7 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
@@ -240,7 +240,7 @@ class HaMusicCard extends HTMLElement {
   }
 
   _initActive() {
-    if (this._active && this._hass?.states?.[this._active]) return;
+    if (this._active) return;
     const ids = this._playerIds();
     const saved = store.get(ACTIVE_KEY, null);
     const pick = [this._config.default_player, saved].find((id) => id && ids.includes(id) && this._hass.states[id]);
@@ -380,7 +380,10 @@ class HaMusicCard extends HTMLElement {
 
   // ---------- hass updates ----------
   _onHassUpdate() {
-    if (!this._hass.states[this._active]) this._initActive();
+    // Only pick a speaker when none is chosen yet. A chosen one that drops out of hass for a moment (an integration
+    // reload, a reconnect) stays chosen and shows as unavailable, instead of jumping to another speaker and sending the
+    // next "play" somewhere else.
+    if (!this._active) this._initActive();
     const ids = this._playerIds();
     const sig = JSON.stringify(ids.map((id) => {
       const s = this._hass.states[id];

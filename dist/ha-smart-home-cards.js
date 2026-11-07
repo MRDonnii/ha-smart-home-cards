@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.252 */
+/* MRDonnii Smart Home Cards v0.5.253 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -69715,7 +69715,7 @@ var HaMusicCard = class extends HTMLElement {
     };
   }
   _initActive() {
-    if (this._active && this._hass?.states?.[this._active]) return;
+    if (this._active) return;
     const ids = this._playerIds();
     const saved = store.get(ACTIVE_KEY, null);
     const pick = [this._config.default_player, saved].find((id) => id && ids.includes(id) && this._hass.states[id]);
@@ -69887,7 +69887,7 @@ var HaMusicCard = class extends HTMLElement {
   }
   // ---------- hass updates ----------
   _onHassUpdate() {
-    if (!this._hass.states[this._active]) this._initActive();
+    if (!this._active) this._initActive();
     const ids = this._playerIds();
     const sig = JSON.stringify(ids.map((id) => {
       const s = this._hass.states[id];
