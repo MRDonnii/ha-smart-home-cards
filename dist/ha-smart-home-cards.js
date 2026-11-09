@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.253 */
+/* MRDonnii Smart Home Cards v0.5.254 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -26957,7 +26957,19 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
       const lab = this._config?.tab_labels || {}, ico2 = this._config?.tab_icons || {};
       return [...TABS3.map((t) => ({ ...t, label: lab[t.key] ? String(lab[t.key]) : t.label, icon: ico2[t.key] ? String(ico2[t.key]) : t.icon })), ...extra.filter((t) => !TABS3.some((b) => b.key === t.key))].filter((t) => !hidden.has(t.key));
     }
+    // `?tab=air` in the URL opens that tab (front-page tiles link straight to a tab; Claude AI, 2026-11-09). It is consumed once.
     _readTab() {
+      try {
+        const q = new URLSearchParams(location.search).get("tab");
+        if (q && this._tabs().some((t) => t.key === q)) {
+          this._writeTab(q);
+          const u2 = new URL(location.href);
+          u2.searchParams.delete("tab");
+          history.replaceState(history.state, "", u2.pathname + u2.search + u2.hash);
+          return q;
+        }
+      } catch {
+      }
       try {
         const item2 = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
         if (item2 && Date.now() - item2.at < TAB_TTL_MS && Date.now() >= item2.at && this._tabs().some((t) => t.key === item2.key)) return item2.key;
@@ -38405,7 +38417,7 @@ console.info(`%c HA HOME HEADER CARD %c v${VERSION28} `, "color:white;background
 init_chart_hover();
 var AC_MODES = { off: ["Fra", "mdi:power"], heat: ["Varme", "mdi:heat-pump-outline"], cool: ["K\xF8l", "mdi:snowflake"], heat_cool: ["Auto", "mdi:sun-snowflake-variant"], auto: ["Auto", "mdi:thermostat-auto"], dry: ["T\xF8r", "mdi:water-percent"], fan_only: ["Bl\xE6s", "mdi:fan"] };
 var AC_FANS = { auto: "Auto", low: "Lav", medium: "Mellem", high: "H\xF8j", silent: "Stille", turbo: "Turbo", quiet: "Stille" };
-var VERSION29 = "1.8.0";
+var VERSION29 = "1.9.0";
 var PRESETS = {
   "home_energy": {
     "name": "Hus",
@@ -38518,6 +38530,41 @@ var PRESETS = {
     "daily_entity": "sensor.pool_daily",
     "navigation_path": "/hjem-overblik/pool",
     "value_unit": "\xB0C"
+  },
+  // Ventilation unit (heat recovery), e.g. Dantherm HCH5 with its own controller (Claude AI, 2026-11-09). Every
+  // entity is optional; the fault entities decide when the tile turns amber or red.
+  "ventilation": {
+    "name": "Ventilation",
+    "icon": "mdi:hvac",
+    "color": "var(--state-info-icon, var(--info-color, #38bdf8))",
+    "entity": "sensor.ventilation_level",
+    "step_count_entity": "select.ventilation_step_count",
+    "fan_entity": "fan.ventilation",
+    "mode_entity": "select.ventilation_mode",
+    "source_entity": "sensor.ventilation_source",
+    "driver_room_entity": "sensor.ventilation_driver_room",
+    "driver_measure_entity": "sensor.ventilation_driver_measure",
+    "co2_entity": "sensor.ventilation_highest_co2",
+    "co2_room_entity": "sensor.ventilation_highest_co2_room",
+    "rh_entity": "sensor.ventilation_highest_rh",
+    "rh_room_entity": "sensor.ventilation_highest_rh_room",
+    "after_heater_entity": "sensor.ventilation_after_heater_air",
+    "after_heater_setpoint_entity": "sensor.ventilation_after_heater_setpoint",
+    "after_heater_active_entity": "binary_sensor.ventilation_after_heater_active",
+    "recovery_entity": "sensor.ventilation_heat_recovery",
+    "diagnostics_entity": "sensor.ventilation_diagnostics_status",
+    "diagnostics_text_entity": "sensor.ventilation_diagnostics_text",
+    "frost_entity": "sensor.ventilation_frost_state",
+    "control_entity": "sensor.ventilation_control_state",
+    "control_ok_states": ["active_pi_master"],
+    "recovery_status_entity": "sensor.ventilation_heat_recovery_status",
+    "filter_ratio_entity": "sensor.ventilation_filter_power_ratio",
+    "filter_ratio_max": 1.15,
+    "connection_entities": [],
+    "alarm_entities": [],
+    "stale_entity": "",
+    "stale_minutes": 15,
+    "navigation_path": "/energi-overblik/varme-center?tab=air"
   },
   "pet": {
     "name": "Foder",
@@ -38633,6 +38680,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._sig = "";
     this._evCycle = 0;
+    this._staleTick = 0;
   }
   connectedCallback() {
     this._cycleTimer = setInterval(() => {
@@ -38641,6 +38689,7 @@ var HaHomeStatusCard = class extends HTMLElement {
         this._evCycle = (this._evCycle + 1) % 2;
         this.render();
       }
+      if (type === "ventilation" && this.config?.stale_entity && ++this._staleTick % 15 === 0) this.render();
     }, 4e3);
   }
   setConfig(config) {
@@ -38682,6 +38731,28 @@ var HaHomeStatusCard = class extends HTMLElement {
       cfg.off_count_entity,
       cfg.secondary_entity,
       cfg.heat_entity,
+      // ventilation
+      cfg.step_count_entity,
+      cfg.fan_entity,
+      cfg.mode_entity,
+      cfg.driver_room_entity,
+      cfg.driver_measure_entity,
+      cfg.co2_entity,
+      cfg.co2_room_entity,
+      cfg.rh_entity,
+      cfg.rh_room_entity,
+      cfg.after_heater_entity,
+      cfg.after_heater_setpoint_entity,
+      cfg.after_heater_active_entity,
+      cfg.recovery_entity,
+      cfg.diagnostics_entity,
+      cfg.diagnostics_text_entity,
+      cfg.frost_entity,
+      cfg.control_entity,
+      cfg.recovery_status_entity,
+      cfg.filter_ratio_entity,
+      ...(cfg.alarm_entities || []).map((x) => typeof x === "string" ? x : x?.entity),
+      ...(cfg.connection_entities || []).map((x) => typeof x === "string" ? x : x?.entity),
       ...Object.values(this.smartIds(cfg.smart_charge) || {}),
       ...cfg.phase_entities || [],
       ...cfg.status_entities || [],
@@ -38845,6 +38916,18 @@ var HaHomeStatusCard = class extends HTMLElement {
         color = "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))";
       }
       cfg.icon = this.on("binary_sensor.pool_person_i_vandet") ? "mdi:account-swim" : "mdi:pool";
+    } else if (type === "ventilation") {
+      const v = this.ventView(cfg);
+      value = v.value;
+      detail = v.detail;
+      label = v.label;
+      meter = v.meter;
+      color = v.color;
+      cfg.segments = v.segments;
+      cfg.icon = v.icon;
+      cfg.hasError = v.level === "critical";
+      cfg.ventFault = v.level;
+      cfg.ventRunning = v.running;
     } else if (type === "pet") {
       const statuses = (cfg.status_entities || []).map(
         (id) => this.text(id, "").toLowerCase()
@@ -39013,6 +39096,136 @@ var HaHomeStatusCard = class extends HTMLElement {
       pricePulse
     };
   }
+  // The ventilation tile (Claude AI, 2026-11-09; user: "erstatter pool kortet på forsiden med Dantherm og den skal vise
+  // vigtig data derfra. Og indikere hvis nogle fejl"). Value = the running step, detail = what drives it (mode, room and
+  // CO₂/RH) or the fault, label = after-heater air temperature and heat recovery as chips.
+  ventFaults(cfg) {
+    const faults = [];
+    const add = (level, text) => faults.push({ level, text });
+    const raw = (id) => id ? this.state(id)?.state : void 0;
+    const dead = (id) => !!id && (!this.state(id) || ["unavailable", "unknown"].includes(raw(id)));
+    if (cfg.entity && (!this.state(cfg.entity) || raw(cfg.entity) === "unavailable")) return [{ level: "critical", text: "Ingen data fra anl\xE6gget", offline: true }];
+    for (const item2 of cfg.alarm_entities || []) {
+      const id = typeof item2 === "string" ? item2 : item2?.entity;
+      if (id && raw(id) === "on") add("critical", typeof item2 === "object" && item2.name || this.state(id)?.attributes?.friendly_name || "Alarm fra anl\xE6gget");
+    }
+    for (const item2 of cfg.connection_entities || []) {
+      const id = typeof item2 === "string" ? item2 : item2?.entity;
+      if (id && raw(id) !== "on") add("critical", typeof item2 === "object" && item2.name || "Ingen forbindelse til anl\xE6gget");
+    }
+    const diag = String(raw(cfg.diagnostics_entity) || "").toLowerCase();
+    const diagText = String(this.text(cfg.diagnostics_text_entity, "")).split(";")[0].split(":")[0].trim();
+    if (diag === "critical") add("critical", diagText || "Kritisk fejl");
+    else if (diag === "warning") add("warning", diagText || "Advarsel fra diagnose");
+    const frost = String(raw(cfg.frost_entity) || "").toLowerCase();
+    if (frost === "risk") add("critical", "Frostrisiko i veksleren");
+    else if (frost === "watch") add("warning", "Frost i veksleren n\xE6rmer sig");
+    if (cfg.control_entity && !dead(cfg.control_entity)) {
+      const ctl = raw(cfg.control_entity);
+      const ok = cfg.control_ok_states || [];
+      if (ok.length && !ok.includes(ctl)) add("warning", /hcp4|panel/i.test(ctl) ? "Panelet har styringen" : "Styringen venter");
+    }
+    if (String(raw(cfg.recovery_status_entity) || "").toLowerCase() === "low") add("warning", "Lav varmegenvinding");
+    const ratio = this.number(cfg.filter_ratio_entity);
+    const max = Number(cfg.filter_ratio_max) || 0;
+    if (max > 0 && Number.isFinite(ratio) && ratio > max) add("warning", "Filteret stopper til");
+    const staleMin = Number(cfg.stale_minutes) || 0;
+    const stale = this.state(cfg.stale_entity);
+    if (cfg.stale_entity && staleMin > 0 && stale?.last_updated && raw(cfg.fan_entity) !== "off") {
+      const age = (Date.now() - new Date(stale.last_updated).getTime()) / 6e4;
+      if (age > staleMin) add("critical", `Ingen nye data i ${age >= 120 ? `${Math.round(age / 60)} t` : `${Math.round(age)} min`}`);
+    }
+    const seen = /* @__PURE__ */ new Set();
+    return faults.filter((f) => {
+      const k = f.text.toLowerCase().slice(0, 12);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).sort((a, b) => a.level === b.level ? 0 : a.level === "critical" ? -1 : 1);
+  }
+  ventView(cfg) {
+    const level = this.number(cfg.entity);
+    const stepsRaw = this.number(cfg.step_count_entity) || Number(/\d+/.exec(this.text(cfg.step_count_entity, ""))?.[0]);
+    const steps = Math.max(1, Math.min(12, Number(cfg.steps) || (Number.isFinite(stepsRaw) && stepsRaw > 0 ? stepsRaw : 5)));
+    const fanOff = cfg.fan_entity && this.state(cfg.fan_entity)?.state === "off";
+    const running = !fanOff && Number.isFinite(level) && level > 0;
+    const faults = this.ventFaults(cfg);
+    const worst = faults[0]?.level || "";
+    const MODES2 = { smart_auto: "Smart auto", local_auto: "Auto", manual: "Manuel" };
+    const SOURCES = {
+      ha_smart: "",
+      local_auto: "Auto",
+      local_fallback: "Auto (reserve)",
+      night: "Nat",
+      night_air_quality: "Nat",
+      vacation: "Ferie",
+      free_cooling: "Frik\xF8ling",
+      dry_protection: "T\xF8rkebeskyttelse",
+      quick_boost: "Boost",
+      cool_boost: "K\xF8l",
+      bonfire: "B\xE5l i haven",
+      fireplace: "Pejs",
+      standby: "Slukket",
+      manual: "Manuel"
+    };
+    const mode = MODES2[this.text(cfg.mode_entity, "")] || "";
+    const src = this.text(cfg.source_entity, "");
+    const srcText = src in SOURCES ? SOURCES[src] : "";
+    const measure = this.text(cfg.driver_measure_entity, "").toLowerCase();
+    const room = this.text(cfg.driver_room_entity, "");
+    let driver = "";
+    if (/co2/.test(measure)) {
+      const same = this.text(cfg.co2_room_entity, "") === room;
+      const co2 = this.number(cfg.co2_entity);
+      driver = `CO\u2082 ${room}${same && Number.isFinite(co2) ? ` ${this.fmt(co2, 0)}` : ""}`.trim();
+    } else if (/rh|humid|fugt/.test(measure)) {
+      const same = this.text(cfg.rh_room_entity, "") === room;
+      const rh2 = this.number(cfg.rh_entity);
+      driver = `Fugt ${room}${same && Number.isFinite(rh2) ? ` ${this.fmt(rh2, 0)} %` : ""}`.trim();
+    } else if (room) driver = room;
+    const lead = srcText || mode;
+    const normalDetail = fanOff ? "Anl\xE6gget er slukket" : [lead, ["", "Auto", "Nat"].includes(srcText) ? driver : ""].filter(Boolean).join(" \xB7 ") || "Ventilation";
+    const chip = (c2, icon5, text, small, title, cls = "") => `<span class="src-chip${cls}" style="--c:${c2}" title="${title}"><ha-icon icon="${icon5}"></ha-icon><b>${text}</b>${small ? `<small>${small}</small>` : ""}</span>`;
+    const ah2 = this.number(cfg.after_heater_entity);
+    const sp = this.number(cfg.after_heater_setpoint_entity);
+    const heating = this.on(cfg.after_heater_active_entity);
+    const rec = this.number(cfg.recovery_entity);
+    const chips = [
+      Number.isFinite(ah2) ? chip(
+        heating ? "var(--state-heat-icon, #fb923c)" : "var(--state-info-icon, var(--info-color, #38bdf8))",
+        heating ? "mdi:fire" : "mdi:radiator",
+        `${this.fmt(ah2, 1)}\xB0`,
+        Number.isFinite(sp) ? `\u2192${this.fmt(sp, 0)}\xB0` : "",
+        `Eftervarme: luft efter varmeflade ${this.fmt(ah2, 1)} \xB0C${Number.isFinite(sp) ? `, setpunkt ${this.fmt(sp, 0)} \xB0C` : ""}${heating ? " (varmer)" : ""}`,
+        " ah-chip"
+      ) : "",
+      Number.isFinite(rec) ? chip(
+        "var(--state-on-icon, var(--success-color, #20e3a2))",
+        "mdi:heat-wave",
+        `${this.fmt(rec, 0)} %`,
+        "genv.",
+        `Varmegenvinding ${this.fmt(rec, 0)} %`,
+        " rec-chip"
+      ) : ""
+    ].filter(Boolean);
+    const label = chips.length ? `<span class="source-row">${chips.join("")}</span>` : cfg.name || "Ventilation";
+    const red = "var(--dashboard-danger, var(--error-color, #ef4444))";
+    const amber = "var(--dashboard-warning, var(--warning-color, #f59e0b))";
+    const offline = faults.some((f) => f.offline || /ingen nye data|ingen forbindelse/i.test(f.text));
+    const value = worst === "critical" ? offline ? "Offline" : "Fejl" : worst === "warning" ? "Advarsel" : fanOff ? "Slukket" : Number.isFinite(level) ? `Trin ${this.fmt(level, 0)}` : "\u2014";
+    const detail = faults.length ? `${faults[0].text}${faults.length > 1 ? ` (+${faults.length - 1})` : ""}` : normalDetail;
+    return {
+      value,
+      detail,
+      label,
+      level: worst,
+      running,
+      segments: steps,
+      meter: Number.isFinite(level) && !fanOff ? Math.round(level) : 0,
+      color: worst === "critical" ? red : worst === "warning" ? amber : running ? "var(--state-info-icon, var(--info-color, #38bdf8))" : "var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))",
+      icon: worst ? "mdi:fan-alert" : fanOff ? "mdi:fan-off" : "mdi:hvac"
+    };
+  }
   // The pet's heat cycle text for the tile, or null outside the heat and the `heat_lead_days` (14) before it. A heat
   // that has not been registered by the expected day says "ventes nu" for up to 30 days.
   petHeat(cfg) {
@@ -39078,6 +39291,12 @@ var HaHomeStatusCard = class extends HTMLElement {
     }
     if (item2.type === "pool") {
       return `<svg class="pool-waves" viewBox="0 0 220 85" preserveAspectRatio="none"><path d="M0 55 Q22 40 44 55 T88 55 T132 55 T176 55 T220 55"/><path d="M0 68 Q22 53 44 68 T88 68 T132 68 T176 68 T220 68"/></svg>`;
+    }
+    if (item2.type === "ventilation") {
+      const plates = [-12, -6, 0, 6, 12].map((o) => `<line x1="${60 - 14.5 + o}" y1="${42.5 - 14.5 - o}" x2="${60 + 14.5 + o}" y2="${42.5 + 14.5 - o}"/>`).join("");
+      return `<svg class="vent-x${item2.ventRunning ? " run" : ""}" viewBox="0 0 120 85" preserveAspectRatio="xMaxYMid meet" aria-hidden="true">
+        <path class="warm" d="M4 6 L116 79"/><path class="cold" d="M4 79 L116 6"/>
+        <polygon class="plate" points="60,13.5 89,42.5 60,71.5 31,42.5"/><g class="plates">${plates}</g></svg>`;
     }
     if (item2.type === "settings") {
       const icons = [
@@ -39296,6 +39515,28 @@ var HaHomeStatusCard = class extends HTMLElement {
       :host([v2]) .item:not(.security) .label{--bleed:var(--px);margin-inline:calc(-1 * var(--px));padding-inline:var(--px);max-width:none;text-overflow:clip;border-top-color:transparent;background:linear-gradient(color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent),color-mix(in srgb,var(--primary-text-color,#fff) 7%,transparent)) var(--px) 0/calc(100% - 2 * var(--px)) 1px no-repeat;background-origin:border-box}
       :host([v2]) .item:not(.security) .marquee{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--bleed) * .85),#000 calc(100% - var(--bleed) * .85),transparent 100%)}
       @media(prefers-reduced-motion:reduce){:host([v2]) .chip ha-icon{animation:none}}
+      /* Ventilation (Claude AI, 2026-11-09): heat-exchanger cross in the background, chips for after-heater and recovery,
+         amber/red glow on faults. */
+      .vent-x{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.2}
+      .vent-x path{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:7 9;vector-effect:non-scaling-stroke}
+      .vent-x .warm{stroke:var(--state-heat-icon,#fb923c)}.vent-x .cold{stroke:var(--state-info-icon,var(--info-color,#38bdf8))}
+      .vent-x .plate{fill:color-mix(in srgb,var(--accent) 10%,transparent);stroke:var(--accent);stroke-width:1.3;vector-effect:non-scaling-stroke}
+      .vent-x .plates line{stroke:var(--accent);stroke-width:.9;opacity:.7;vector-effect:non-scaling-stroke}
+      .vent-x.run path{animation:ventFlow 2.6s linear infinite}.vent-x.run .cold{animation-duration:3.1s}
+      @keyframes ventFlow{to{stroke-dashoffset:-32}}
+      .item.ventilation .label .source-row{display:inline-flex}
+      .item.vent-critical::after,.item.vent-warning::after{content:"";position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px -6px var(--accent);opacity:.25;animation:ventAlert 1.6s ease-in-out infinite}
+      .item.vent-warning::after{animation-duration:2.8s}
+      @keyframes ventAlert{50%{opacity:.85}}
+      :host([v2]) .item.vent-warning .ring .pr{stroke:var(--accent)}
+      :host([v2]) .item.ventilation .label{container-type:inline-size;overflow:visible;text-transform:none;letter-spacing:0;grid-template-columns:minmax(0,1fr)}
+      :host([v2]) .item.ventilation .label .source-row{display:flex;width:100%;height:20px;gap:4px;min-width:0;max-width:100%}
+      :host([v2]) .item.ventilation .src-chip{flex:1 1 auto;min-width:0;height:20px;justify-content:center;gap:3px;padding:0 5px;border-radius:7px;overflow:hidden;white-space:nowrap}
+      :host([v2]) .item.ventilation .src-chip b{font-size:11px}
+      @container (max-width:170px){:host([v2]) .item.ventilation .rec-chip small{display:none}}
+      @container (max-width:130px){:host([v2]) .item.ventilation .src-chip small{display:none}:host([v2]) .item.ventilation .source-row{gap:3px}:host([v2]) .item.ventilation .src-chip{padding:0 3px;gap:2px}}
+      @container (max-width:96px){:host([v2]) .item.ventilation .rec-chip ha-icon{display:none}}
+      @media(prefers-reduced-motion:reduce){.vent-x.run path,.item.vent-critical::after,.item.vent-warning::after{animation:none}.item.vent-critical::after,.item.vent-warning::after{opacity:.8}}
       /* The pet's heat cycle in the detail line (Claude AI, 2026-10-29). */
       .detail.heat,:host([v2]) .detail.heat{color:#ff6fa5;font-weight:700}
     </style><button class="item"><span class="decoration"></span><span class="chip"><ha-icon></ha-icon></span><div class="value"></div><div class="meter"></div><div class="detail"></div><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="0 100"></circle></svg><div class="label"></div><ha-icon class="bg-icon"></ha-icon></button>`;
@@ -39330,7 +39571,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     this._currentItem = item2;
     const button = this.shadowRoot.querySelector(".item");
     const pulse = Math.max(0, Math.min(1, item2.pricePulse || 0));
-    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${item2.awayOpen ? " away-open" : ""}${pulse > 0 ? " price-alert" : ""}`;
+    button.className = `item ${item2.type}${item2.hasError ? " has-error" : ""}${item2.ventFault ? ` vent-${item2.ventFault}` : ""}${item2.ventRunning ? " vent-running" : ""}${item2.awayOpen ? " away-open" : ""}${pulse > 0 ? " price-alert" : ""}`;
     button.style.setProperty("--accent", item2.color);
     button.style.setProperty("--price-pulse-duration", `${(3.2 - pulse * 2).toFixed(2)}s`);
     button.style.setProperty("--price-pulse-scale", (0.94 - pulse * 0.28).toFixed(2));
@@ -39368,13 +39609,13 @@ var HaHomeStatusCard = class extends HTMLElement {
     });
     setText(".detail", esc13(item2.detail || " "));
     this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
-    if (item2.type === "heating") {
+    if (item2.type === "heating" || item2.type === "ventilation") {
       const l = this.shadowRoot.querySelector(".label");
       l._marqueeHtml = void 0;
       l.classList.remove("marquee");
       l.innerHTML = item2.label;
     } else setText(".label", item2.label);
-    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail), .item:not(.security):not(.heating) .label");
+    observeMarquees(this, this.shadowRoot, ".item:not(.security) :is(.value,.detail), .item:not(.security):not(.heating):not(.ventilation) .label");
     this.shadowRoot.querySelector(".bg-icon").setAttribute("icon", item2.icon || "mdi:information-outline");
     const v2 = isNewLook(this._hass, this.config);
     this.toggleAttribute("v2", v2);
