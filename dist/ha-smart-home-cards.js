@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.254 */
+/* MRDonnii Smart Home Cards v0.5.256 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -14786,12 +14786,13 @@ var TEP_CSS = `
 .seg button.on::after{content:"";position:absolute;left:50%;bottom:2px;width:14px;height:2px;border-radius:2px;transform:translateX(-50%);background:var(--lux-accent,var(--dashboard-accent,#e8c37e));box-shadow:0 0 10px var(--lux-accent,var(--dashboard-accent,#e8c37e));pointer-events:none}
 @keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
 .seg button.on svg{color:color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 80%,#fff);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--lux-accent,var(--dashboard-accent,#e8c37e)) 60%,transparent))}
-.pt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'chip . ctl' 'big comp comp';gap:6px 20px;align-items:end}
+.pt{container:tep-pt/inline-size;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'chip . ctl' 'big comp comp';gap:6px 20px;align-items:end}
 .pt .chip{grid-area:chip;justify-self:start;align-self:center}.pt .ctl{grid-area:ctl;display:flex;gap:6px;align-self:start}.pt .big{grid-area:big}.pt .comp{grid-area:comp}
 .lv{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:8px;vertical-align:.55em;background:var(--good);box-shadow:0 0 8px var(--good);animation:bl 2s infinite}.lv.off{background:var(--mut);box-shadow:none;animation:none}
 .chip{appearance:none;border:0;cursor:pointer;min-width:0;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);transition:background .2s,box-shadow .2s}
 .chip i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:bl 1.6s infinite;flex:none}
-.chip .ct{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip .chv{opacity:.75;transition:transform .25s}
+.chip .ct{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip .ct .s{display:none}
+@container tep-pt (max-width:430px){.chip .ct .l{display:none}.chip .ct .s{display:inline}}.chip .chv{opacity:.75;transition:transform .25s}
 .chip:hover,.chip.open{background:color-mix(in srgb,var(--c) 22%,transparent)}.chip.open .chv{transform:rotate(180deg)}
 .chip:focus-visible{outline:2px solid var(--c);outline-offset:2px}.chip.nb{cursor:default;pointer-events:none}.chip.nb .chv{display:none}
 .big{font-size:40px;font-weight:300;letter-spacing:-.045em;line-height:1;white-space:nowrap}.big small{font-size:14px;font-weight:600;letter-spacing:0;color:var(--mut);margin-left:5px}
@@ -15200,7 +15201,11 @@ var ThElectricityPriceCard = class extends HTMLElement {
     lv.title = live ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
     const rel = mean ? cur / mean : 1, lv0 = this.level(cur), col = LEVEL_COL[lv0];
     this.$("chip").style.setProperty("--c", col);
-    this.shadowRoot.querySelector("#chip .ct").textContent = `${lv0 === 1 ? "Normal pris" : `${LEVEL_NAME[lv0]} nu`} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`;
+    const pct3 = `${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} %`;
+    const long = `${lv0 === 1 ? "Normal pris" : `${LEVEL_NAME[lv0]} nu`} \xB7 ${pct3} ift. snit`;
+    const ct = this.shadowRoot.querySelector("#chip .ct");
+    ct.innerHTML = `<span class="l">${long}</span><span class="s">${lv0 === 1 ? "Normal" : LEVEL_NAME[lv0]} \xB7 ${pct3}</span>`;
+    this.$("chip").title = long;
     this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [
       ["Spotpris", "sensor.stromligning_spotprice_vat", "var(--tep-spot,#3d8bff)"],
