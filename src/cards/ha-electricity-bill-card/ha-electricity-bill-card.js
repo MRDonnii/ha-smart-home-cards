@@ -3,7 +3,7 @@ import { nextMonthEstimate } from "./next-month.js";
 import { yearlyTotals } from "./year-totals.js";
 import { keepScroll } from "../shared/keep-scroll.js";
 
-const VERSION="0.2.1";
+const VERSION="0.3.0";
 
 // 0.1.0 (Claude AI, 2026-11-01; bruger: "jeg vil egentlig også gerne kunne skrive ind hvad mine regninger lyder på og
 // sammeholde det med det vi selv måler så vi kan se hvad det burde lande på næste måned"): kortet til integrationen
@@ -17,6 +17,8 @@ const VERSION="0.2.1";
 // listen viser 5 og scroller resten inde i kortet (brugeren: "der skal være 5 synlige, og resten skal scrolles"), gasregninger i egen liste (Elregning 0.2.0: utility/m3), formularen kan vælge el/gas.
 // 0.2.1 (Claude AI, 2026-11-13): "Naturgas" i stedet for "Gas" – energi-siden kører /local/energy-fjernvarme-labels.js, som
 // omdøber ordet "Gas" til "Fjernvarme".
+// 0.3.0 (Claude AI, 2026-11-13; bruger: "Fanen skal nok ikke hedde Elregning mere"): titlen er "Regninger" med
+// "El · Naturgas · Fjernvarme"; fjernvarmeregninger (Elregning 0.3.0, a conto-markering) i egen liste og i årsoverblikket.
 const MONTHS=["januar","februar","marts","april","maj","juni","juli","august","september","oktober","november","december"];
 const MON=["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
 const p2=n=>String(n).padStart(2,"0");
@@ -48,7 +50,7 @@ class HAElectricityBillCard extends HTMLElement{
       else if(act==="month")this._fillMonth(el.dataset.month);
     });
   }
-  static getStubConfig(){return{title:"Elregning",forecast_entity:"sensor.elregning_prognose_denne_maned",bills_entity:"sensor.elregning_seneste_regning",provider_entity:"sensor.stromligning_provider",agreement_entity:"",agreement_script:""};}
+  static getStubConfig(){return{title:"Regninger",forecast_entity:"sensor.elregning_prognose_denne_maned",bills_entity:"sensor.elregning_seneste_regning",provider_entity:"sensor.stromligning_provider",agreement_entity:"",agreement_script:""};}
   static getConfigElement(){const editor=document.createElement("ha-card-list-editor");editor.definition={roots:[{key:"title",label:"Titel"},{key:"forecast_entity",label:"Prognose (Elregning)",type:"entity"},{key:"bills_entity",label:"Seneste regning (Elregning)",type:"entity"},{key:"provider_entity",label:"Elaftale (fx Strømligning Provider agreement)",type:"entity"},{key:"agreement_entity",label:"Ny aftale: status-sensor (valgfri)",type:"entity"},{key:"agreement_script",label:"Ny aftale: \"Vi har gjort det\"-script (valgfrit)",type:"entity"}],collections:[]};return editor;}
   setConfig(config){this._config={...HAElectricityBillCard.getStubConfig(),...config};this._signature="";this.shadowRoot.innerHTML="";}
   set hass(hass){
@@ -68,11 +70,12 @@ class HAElectricityBillCard extends HTMLElement{
       <section data-agreement class="agreement" hidden></section>
       <section class="block"><h3>Overblik pr. år</h3><div data-years class="years"></div></section>
       <section class="block"><h3>Regninger</h3><div data-bills class="scroll"></div></section>
-      <section class="block" data-gas-block><h3>Gasregninger</h3><div data-gas class="scroll"></div></section>
+      <section class="block" data-gas-block><h3>Naturgasregninger</h3><div data-gas class="scroll"></div></section>
+      <section class="block" data-heat-block><h3>Fjernvarmeregninger</h3><div data-heat class="scroll"></div></section>
       <section class="block"><h3>Målt pr. måned <small>tryk for at skrive regningen for måneden</small></h3><div data-months class="months"></div></section>
       <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
         <div class="grid">
-          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option></select></label>
+          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option><option value="fjernvarme">Fjernvarme</option></select></label>
           <label data-m3-field hidden><span>m³ på regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 647" data-f="m3"></label>
           <label><span>Fra</span><input type="date" data-f="start"></label>
           <label><span>Til</span><input type="date" data-f="end"></label>
@@ -88,9 +91,9 @@ class HAElectricityBillCard extends HTMLElement{
 
   _render(){
     const root=this.shadowRoot,c=this._config,h=this._hass;if(!root||!h)return;
-    root.querySelector("h2").textContent=c.title||"Elregning";
+    root.querySelector("h2").textContent=c.title||"Regninger";
     const provider=h.states[c.provider_entity]?.state;
-    root.querySelector("[data-provider]").textContent=provider&&!["unknown","unavailable"].includes(provider)?`Aftale: ${provider}`:"HA's egen måling mod regningerne";
+    root.querySelector("[data-provider]").textContent=provider&&!["unknown","unavailable"].includes(provider)?`El · Naturgas · Fjernvarme · elaftale: ${provider}`:"El · Naturgas · Fjernvarme";
     const fc=h.states[c.forecast_entity],bills=h.states[c.bills_entity];
     const missing=!fc||!bills;
     const miss=root.querySelector("[data-missing]");miss.hidden=!missing;
@@ -103,9 +106,9 @@ class HAElectricityBillCard extends HTMLElement{
     this._hero(fc);
     this._next(fc);
     this._explain(bills.attributes.regninger||[]);
-    const el=bills.attributes.regninger||[],gas=bills.attributes.gasregninger||[];
-    this._el=el;this._gas=gas;this._list=[...el,...gas];
-    this._years(Array.isArray(bills.attributes.aar)?bills.attributes.aar:yearlyTotals([...el,...gas]));
+    const el=bills.attributes.regninger||[],gas=bills.attributes.gasregninger||[],heat=bills.attributes.fjernvarmeregninger||[];
+    this._el=el;this._gas=gas;this._heatList=heat;this._list=[...el,...gas,...heat];
+    this._years(Array.isArray(bills.attributes.aar)?bills.attributes.aar:yearlyTotals([...el,...gas,...heat]));
     this._lists();
     this._months(fc.attributes.maaneder||[]);
   }
@@ -187,8 +190,9 @@ class HAElectricityBillCard extends HTMLElement{
     const root=this.shadowRoot,boxes=[...root.querySelectorAll(".scroll")],tops=boxes.map(b=>b.scrollTop);
     // innerHTML-redraw: WebKit hopper ellers til kortets top, og listerne mister deres scroll
     keepScroll(this,()=>{
-      this._bills(this._el||[]);this._gasBills(this._gas||[]);
+      this._bills(this._el||[]);this._gasBills(this._gas||[]);this._heatBills(this._heatList||[]);
       root.querySelector("[data-gas-block]").hidden=!(this._gas||[]).length;
+      root.querySelector("[data-heat-block]").hidden=!(this._heatList||[]).length;
       boxes.forEach((b,i)=>{b.scrollTop=tops[i];});
     });
     this._fit();
@@ -216,12 +220,19 @@ class HAElectricityBillCard extends HTMLElement{
     const cover=r=>r&&r.months<11.5?`<em class="part">${num(r.months,r.months<1?1:0)} af 12 mdr.</em>`:"";
     box.innerHTML=[...byYear.entries()].sort((a,b)=>b[0]-a[0]).map(([y,u])=>`<div class="year"><b class="y">${y}</b>
       ${u.el?`<div class="yl"><span class="u"><ha-icon icon="mdi:flash"></ha-icon>El</span><span><b>${kr(u.el.amount)}</b>${u.el.kwh!=null?` · ${num(u.el.kwh)} kWh`:""}${u.el.price_kwh!=null?` · ${num(u.el.price_kwh,2)} kr/kWh`:""}</span>${cover(u.el)}</div>`:""}
+      ${u.fjernvarme?`<div class="yl"><span class="u"><ha-icon icon="mdi:radiator"></ha-icon>Fjernvarme</span><span><b>${kr(u.fjernvarme.amount)}</b>${u.fjernvarme.kwh!=null?` · ${num(u.fjernvarme.kwh)} kWh`:""}${u.fjernvarme.price_kwh!=null?` · ${num(u.fjernvarme.price_kwh,2)} kr/kWh`:""}</span>${cover(u.fjernvarme)}</div>`:""}
       ${u.gas?`<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Naturgas</span><span><b>${kr(u.gas.amount)}</b>${u.gas.m3!=null?` · ${num(u.gas.m3)} m³`:""}${u.gas.price_m3!=null?` · ${num(u.gas.price_m3,2)} kr/m³`:""}</span>${cover(u.gas)}</div>`:""}
     </div>`).join("");
   }
   _gasBills(list){
     const box=this.shadowRoot.querySelector("[data-gas]");
     box.innerHTML=list.map(b=>`<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${b.m3!=null?`${num(b.m3)} m³`:"—"}${b.price_m3!=null?` · ${num(b.price_m3,2)} kr/m³`:""}${b.supplier?` · ${this._esc(b.supplier)}`:""}${b.note?` · ${this._esc(b.note)}`:""}</span></div>
+        <div class="b-num"><b>${kr(b.amount)}</b></div>
+        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`).join("");
+  }
+  _heatBills(list){
+    const box=this.shadowRoot.querySelector("[data-heat]");
+    box.innerHTML=list.map(b=>`<div class="bill"><div class="b-main"><b>${this._period(b)}${b.aconto?` <em class="tag">a conto</em>`:""}</b><span class="sub">${b.kwh!=null?`${num(b.kwh)} kWh varme`:"—"}${b.price_kwh!=null?` · ${num(b.price_kwh,2)} kr/kWh`:""}${b.supplier?` · ${this._esc(b.supplier)}`:""}${b.note?` · ${this._esc(b.note)}`:""}</span></div>
         <div class="b-num"><b>${kr(b.amount)}</b></div>
         <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`).join("");
   }
@@ -270,7 +281,7 @@ class HAElectricityBillCard extends HTMLElement{
     this._editId=id;this._f("start").value=b.start;this._f("end").value=b.end;
     this._f("amount").value=num(b.amount,2);this._f("kwh").value=b.kwh!=null?num(b.kwh,2):"";
     this._f("supplier").value=b.supplier||"";this._f("note").value=b.note||"";
-    this._f("utility").value=b.utility==="gas"?"gas":"el";this._f("m3").value=b.m3!=null?num(b.m3,2):"";this._utilityChanged();
+    this._f("utility").value=["gas","fjernvarme"].includes(b.utility)?b.utility:"el";this._f("m3").value=b.m3!=null?num(b.m3,2):"";this._utilityChanged();
     this.shadowRoot.querySelector("[data-form-title]").textContent=`Ret regningen for ${this._period(b).toLowerCase()}`;
     this.shadowRoot.querySelector("[data-act=save]").textContent="Gem ændringer";
     this.shadowRoot.querySelector("[data-act=cancel]").hidden=false;this._msg("");
@@ -282,12 +293,13 @@ class HAElectricityBillCard extends HTMLElement{
     if(end<start)return this._msg("Til-datoen ligger før fra-datoen.",true);
     if(amount==null||Number.isNaN(amount)||amount<0)return this._msg("Skriv regningens beløb, fx 1.234,56.",true);
     if(Number.isNaN(kwh))return this._msg("kWh skal være et tal (eller tomt).",true);
-    const gas=this._f("utility").value==="gas",m3=gas?parseNumber(this._f("m3").value):null;
+    const utility=this._f("utility").value,gas=utility==="gas",m3=gas?parseNumber(this._f("m3").value):null;
     if(Number.isNaN(m3))return this._msg("m³ skal være et tal (eller tomt).",true);
     const data={start_date:start,end_date:end,amount,kwh:kwh??null,supplier:this._f("supplier").value.trim()||null,note:this._f("note").value.trim()||null};
     // utility/m3 sendes kun for gas, så kortet også virker med Elregning 0.1.x
     if(gas)Object.assign(data,{utility:"gas",m3:m3??null});
-    else if(this._editId&&(this._list||[]).find(x=>x.id===this._editId)?.utility==="gas")data.utility="el";
+    else if(utility==="fjernvarme")data.utility="fjernvarme";
+    else if(this._editId&&["gas","fjernvarme"].includes((this._list||[]).find(x=>x.id===this._editId)?.utility))data.utility="el";
     const btn=this.shadowRoot.querySelector("[data-act=save]");btn.disabled=true;this._msg("Gemmer …");
     try{
       if(this._editId)await this._hass.callService("elregning","update_bill",{id:this._editId,...data});
@@ -338,9 +350,9 @@ h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-trans
 .agreement.ok>ha-icon{color:var(--eb-ok)}
 .ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
 .ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.block{margin-top:14px}.block[hidden]{display:none}
+.block{margin-top:14px}.tag{font-style:normal;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:6px;background:color-mix(in srgb,var(--eb-warn) 18%,transparent);color:var(--eb-warn)}.block[hidden]{display:none}
 .years{display:grid;gap:8px}.year{display:grid;grid-template-columns:56px 1fr;gap:2px 12px;align-items:baseline;padding:10px 12px;border-radius:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
-.year .y{grid-row:span 2;font-size:16px;font-variant-numeric:tabular-nums}.yl{grid-column:2;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px;color:var(--eb-muted);font-variant-numeric:tabular-nums}
+.year .y{grid-row:span 3;font-size:16px;font-variant-numeric:tabular-nums}.yl{grid-column:2;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px;color:var(--eb-muted);font-variant-numeric:tabular-nums}
 .yl b{color:var(--primary-text-color);font-size:14px}.yl .u{display:inline-flex;align-items:center;gap:3px;min-width:44px}.yl .u ha-icon{--mdc-icon-size:15px}.yl .part{display:inline;margin:0}
 .scroll{position:relative}.scroll.scrolls{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%)}
 .scroll.scrolls.at-top{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%)}

@@ -36,7 +36,7 @@ const TABS = [
   { key: "heat", label: "Fjernvarme", icon: "mdi:radiator", tone: "heat", Section: HeatSection },
   { key: "water", label: "Vand", icon: "mdi:water", tone: "water", Section: WaterSection },
   { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection },
-  { key: "bill", label: "Elregning", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection },
+  { key: "bill", label: "Regninger", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection },
 ];
 
 const EV_MODES = {

@@ -44,3 +44,24 @@ assert.equal(Math.round(cs.years[2025][1].estimate), 1000); // halv måned faktu
 assert.equal(cs.years[2024], undefined);               // ikke før første regning
 assert.equal(Math.round(sumYear(cs.years[2025]).v), 4350);
 console.log("cost series ok");
+
+// Claude AI, 2026-11-13: Opvarmning – fjernvarme efter Verdos takst, gas med Evida-skøn, sammenligning
+const hs = await import("../src/cards/ha-elforbrug-kr-card/cost-series.js");
+const t26 = hs.tariffAt(hs.DEFAULT_HEAT_TARIFFS, "2026-05-01");
+// Maj 2026 a conto på regningen: 1.477 kWh + faste dele i 31 dage = 1.160,09 kr
+assert.ok(Math.abs(hs.heatCost(1477, 31, t26, 179) - 1160.09) < 0.2);
+assert.equal(hs.tariffAt(hs.DEFAULT_HEAT_TARIFFS, "2027-02-01").variable, 0.6875);
+const hm = hs.heatMonths({ change: { "2026-05": 41, "2026-06": 851 }, pre: 1614, start: "2026-04-27", statsStart: "2026-05-31T00:00:00", m2: 179, now: new Date(2026, 6, 10) });
+assert.equal(Math.round(hm["2026-04"].kwh + hm["2026-05"].kwh), 1655);
+assert.ok(hm["2026-05"].estimate > 0 && hm["2026-06"].estimate === 0);
+const gm = hs.gasMonths([
+  { start: "2025-06-01", end: "2025-06-30", amount: 300, m3: 30, note: "kun Norlys-delen" },
+  { start: "2023-01-01", end: "2023-01-31", amount: 900, m3: 100, note: "heraf Evida (distribution+afgifter) 500 kr" },
+]);
+assert.ok(gm["2025-06"].evida > 30 * 4.7 && gm["2023-01"].evida === 0);
+assert.equal(Math.round(gm["2025-06"].kwh), 297);
+const series = hs.heatingSeries({ gasBills: [{ start: "2025-06-01", end: "2025-06-30", amount: 300, m3: 30, note: "" }], heatBills: [{ start: "2026-06-01", end: "2026-06-30", amount: 1151.08, kwh: 1477 }], heat: hm, now: new Date(2026, 6, 10) });
+const cmpH = hs.heatingCompare(series, { m2: 179 });
+assert.deepEqual(cmpH.same.months, ["2026-06"]);
+assert.equal(cmpH.acontoMonths[0], "2026-06");
+console.log("heating ok");

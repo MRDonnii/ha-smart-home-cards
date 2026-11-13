@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.259 */
+/* MRDonnii Smart Home Cards v0.5.260 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -40800,7 +40800,7 @@ ${LUX_KEYFRAMES}
     const c2 = this.config, monthly = this._num(c2.monthly_energy_entity);
     const electricCost = this._num(c2.electric_month_cost_entity);
     const water = this._num(c2.water_month_entity), waterCost = this._num(c2.water_month_cost_entity);
-    const heat = this._num(c2.heat_month_entity), heatCost = this._num(c2.heat_month_cost_entity);
+    const heat = this._num(c2.heat_month_entity), heatCost2 = this._num(c2.heat_month_cost_entity);
     const co2 = this._num(c2.co2_entity);
     const diskProblem = (c2.hdd_entities || []).some((id) => this._state(id)?.state === "on");
     const healthy = !diskProblem && (!Number.isFinite(co2) || co2 < 1e3);
@@ -40832,7 +40832,7 @@ ${LUX_KEYFRAMES}
     this._utilStats();
     utility(".electricity", "mdi:lightning-bolt", "Str\xF8m", this._fmt(monthly, 0), "kWh", this._fmt(electricCost, 0), Number.isFinite(monthly) && Number.isFinite(electricCost));
     utility(".water", "mdi:water", "Vand", this._fmt(water, 3), "m\xB3", this._fmt(waterCost, 0), Number.isFinite(water) && Number.isFinite(waterCost));
-    utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost, 0), Number.isFinite(heat) && Number.isFinite(heatCost));
+    utility(".heat", "mdi:radiator", "Fjernvarme", this._fmt(heat, 1), "kWh", this._fmt(heatCost2, 0), Number.isFinite(heat) && Number.isFinite(heatCost2));
     if (c2.car_month_entity) {
       const carKwh = this._num(c2.car_month_entity);
       utility(".car", "mdi:car-electric", "Bil", this._fmt(carKwh, 0), "kWh", this._fmt(this._carMonthCost(), 0), Number.isFinite(carKwh) && Number.isFinite(this._carMonthCost()));
@@ -66935,12 +66935,12 @@ var OverviewSection = class extends Section {
     const el = c2.today("grid_energy", "energy");
     const elCost = c2.today("grid_cost", "monetary");
     const heatE = c2.today("heat_energy", "energy");
-    const heatCost = c2.today("heat_cost", "monetary");
+    const heatCost2 = c2.today("heat_cost", "monetary");
     const water = c2.today("water_total", "volume");
     this.value("kEl", fmtEnergy2(el));
     this.text("kElCost", fmtKr(elCost));
     this.value("kHeat", fmtEnergy2(heatE));
-    this.text("kHeatCost", fmtKr(heatCost));
+    this.text("kHeatCost", fmtKr(heatCost2));
     this.value("kWater", fmtVolume(water));
     this.text("kWaterCost", fmtKr(c2.num("water_cost_today")));
     this.value("kEv", fmtEnergy2(c2.kwh("ev_energy_today")));
@@ -67522,7 +67522,7 @@ function monthlyFromBills(bills) {
 }
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION55 = "0.2.1";
+var VERSION55 = "0.3.0";
 var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
@@ -67571,7 +67571,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     });
   }
   static getStubConfig() {
-    return { title: "Elregning", forecast_entity: "sensor.elregning_prognose_denne_maned", bills_entity: "sensor.elregning_seneste_regning", provider_entity: "sensor.stromligning_provider", agreement_entity: "", agreement_script: "" };
+    return { title: "Regninger", forecast_entity: "sensor.elregning_prognose_denne_maned", bills_entity: "sensor.elregning_seneste_regning", provider_entity: "sensor.stromligning_provider", agreement_entity: "", agreement_script: "" };
   }
   static getConfigElement() {
     const editor = document.createElement("ha-card-list-editor");
@@ -67606,11 +67606,12 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       <section data-agreement class="agreement" hidden></section>
       <section class="block"><h3>Overblik pr. \xE5r</h3><div data-years class="years"></div></section>
       <section class="block"><h3>Regninger</h3><div data-bills class="scroll"></div></section>
-      <section class="block" data-gas-block><h3>Gasregninger</h3><div data-gas class="scroll"></div></section>
+      <section class="block" data-gas-block><h3>Naturgasregninger</h3><div data-gas class="scroll"></div></section>
+      <section class="block" data-heat-block><h3>Fjernvarmeregninger</h3><div data-heat class="scroll"></div></section>
       <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
       <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
         <div class="grid">
-          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option></select></label>
+          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option><option value="fjernvarme">Fjernvarme</option></select></label>
           <label data-m3-field hidden><span>m\xB3 p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 647" data-f="m3"></label>
           <label><span>Fra</span><input type="date" data-f="start"></label>
           <label><span>Til</span><input type="date" data-f="end"></label>
@@ -67626,9 +67627,9 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
   _render() {
     const root = this.shadowRoot, c2 = this._config, h = this._hass;
     if (!root || !h) return;
-    root.querySelector("h2").textContent = c2.title || "Elregning";
+    root.querySelector("h2").textContent = c2.title || "Regninger";
     const provider = h.states[c2.provider_entity]?.state;
-    root.querySelector("[data-provider]").textContent = provider && !["unknown", "unavailable"].includes(provider) ? `Aftale: ${provider}` : "HA's egen m\xE5ling mod regningerne";
+    root.querySelector("[data-provider]").textContent = provider && !["unknown", "unavailable"].includes(provider) ? `El \xB7 Naturgas \xB7 Fjernvarme \xB7 elaftale: ${provider}` : "El \xB7 Naturgas \xB7 Fjernvarme";
     const fc = h.states[c2.forecast_entity], bills = h.states[c2.bills_entity];
     const missing = !fc || !bills;
     const miss = root.querySelector("[data-missing]");
@@ -67644,11 +67645,12 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._hero(fc);
     this._next(fc);
     this._explain(bills.attributes.regninger || []);
-    const el = bills.attributes.regninger || [], gas = bills.attributes.gasregninger || [];
+    const el = bills.attributes.regninger || [], gas = bills.attributes.gasregninger || [], heat = bills.attributes.fjernvarmeregninger || [];
     this._el = el;
     this._gas = gas;
-    this._list = [...el, ...gas];
-    this._years(Array.isArray(bills.attributes.aar) ? bills.attributes.aar : yearlyTotals([...el, ...gas]));
+    this._heatList = heat;
+    this._list = [...el, ...gas, ...heat];
+    this._years(Array.isArray(bills.attributes.aar) ? bills.attributes.aar : yearlyTotals([...el, ...gas, ...heat]));
     this._lists();
     this._months(fc.attributes.maaneder || []);
   }
@@ -67730,7 +67732,9 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     keepScroll(this, () => {
       this._bills(this._el || []);
       this._gasBills(this._gas || []);
+      this._heatBills(this._heatList || []);
       root.querySelector("[data-gas-block]").hidden = !(this._gas || []).length;
+      root.querySelector("[data-heat-block]").hidden = !(this._heatList || []).length;
       boxes.forEach((b, i) => {
         b.scrollTop = tops[i];
       });
@@ -67773,12 +67777,19 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     const cover = (r) => r && r.months < 11.5 ? `<em class="part">${num4(r.months, r.months < 1 ? 1 : 0)} af 12 mdr.</em>` : "";
     box.innerHTML = [...byYear.entries()].sort((a, b) => b[0] - a[0]).map(([y, u2]) => `<div class="year"><b class="y">${y}</b>
       ${u2.el ? `<div class="yl"><span class="u"><ha-icon icon="mdi:flash"></ha-icon>El</span><span><b>${kr(u2.el.amount)}</b>${u2.el.kwh != null ? ` \xB7 ${num4(u2.el.kwh)} kWh` : ""}${u2.el.price_kwh != null ? ` \xB7 ${num4(u2.el.price_kwh, 2)} kr/kWh` : ""}</span>${cover(u2.el)}</div>` : ""}
+      ${u2.fjernvarme ? `<div class="yl"><span class="u"><ha-icon icon="mdi:radiator"></ha-icon>Fjernvarme</span><span><b>${kr(u2.fjernvarme.amount)}</b>${u2.fjernvarme.kwh != null ? ` \xB7 ${num4(u2.fjernvarme.kwh)} kWh` : ""}${u2.fjernvarme.price_kwh != null ? ` \xB7 ${num4(u2.fjernvarme.price_kwh, 2)} kr/kWh` : ""}</span>${cover(u2.fjernvarme)}</div>` : ""}
       ${u2.gas ? `<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Naturgas</span><span><b>${kr(u2.gas.amount)}</b>${u2.gas.m3 != null ? ` \xB7 ${num4(u2.gas.m3)} m\xB3` : ""}${u2.gas.price_m3 != null ? ` \xB7 ${num4(u2.gas.price_m3, 2)} kr/m\xB3` : ""}</span>${cover(u2.gas)}</div>` : ""}
     </div>`).join("");
   }
   _gasBills(list) {
     const box = this.shadowRoot.querySelector("[data-gas]");
     box.innerHTML = list.map((b) => `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${b.m3 != null ? `${num4(b.m3)} m\xB3` : "\u2014"}${b.price_m3 != null ? ` \xB7 ${num4(b.price_m3, 2)} kr/m\xB3` : ""}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span></div>
+        <div class="b-num"><b>${kr(b.amount)}</b></div>
+        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`).join("");
+  }
+  _heatBills(list) {
+    const box = this.shadowRoot.querySelector("[data-heat]");
+    box.innerHTML = list.map((b) => `<div class="bill"><div class="b-main"><b>${this._period(b)}${b.aconto ? ` <em class="tag">a conto</em>` : ""}</b><span class="sub">${b.kwh != null ? `${num4(b.kwh)} kWh varme` : "\u2014"}${b.price_kwh != null ? ` \xB7 ${num4(b.price_kwh, 2)} kr/kWh` : ""}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span></div>
         <div class="b-num"><b>${kr(b.amount)}</b></div>
         <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`).join("");
   }
@@ -67852,7 +67863,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._f("kwh").value = b.kwh != null ? num4(b.kwh, 2) : "";
     this._f("supplier").value = b.supplier || "";
     this._f("note").value = b.note || "";
-    this._f("utility").value = b.utility === "gas" ? "gas" : "el";
+    this._f("utility").value = ["gas", "fjernvarme"].includes(b.utility) ? b.utility : "el";
     this._f("m3").value = b.m3 != null ? num4(b.m3, 2) : "";
     this._utilityChanged();
     this.shadowRoot.querySelector("[data-form-title]").textContent = `Ret regningen for ${this._period(b).toLowerCase()}`;
@@ -67867,11 +67878,12 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     if (end < start) return this._msg("Til-datoen ligger f\xF8r fra-datoen.", true);
     if (amount == null || Number.isNaN(amount) || amount < 0) return this._msg("Skriv regningens bel\xF8b, fx 1.234,56.", true);
     if (Number.isNaN(kwh)) return this._msg("kWh skal v\xE6re et tal (eller tomt).", true);
-    const gas = this._f("utility").value === "gas", m3 = gas ? parseNumber(this._f("m3").value) : null;
+    const utility = this._f("utility").value, gas = utility === "gas", m3 = gas ? parseNumber(this._f("m3").value) : null;
     if (Number.isNaN(m3)) return this._msg("m\xB3 skal v\xE6re et tal (eller tomt).", true);
     const data = { start_date: start, end_date: end, amount, kwh: kwh ?? null, supplier: this._f("supplier").value.trim() || null, note: this._f("note").value.trim() || null };
     if (gas) Object.assign(data, { utility: "gas", m3: m3 ?? null });
-    else if (this._editId && (this._list || []).find((x) => x.id === this._editId)?.utility === "gas") data.utility = "el";
+    else if (utility === "fjernvarme") data.utility = "fjernvarme";
+    else if (this._editId && ["gas", "fjernvarme"].includes((this._list || []).find((x) => x.id === this._editId)?.utility)) data.utility = "el";
     const btn = this.shadowRoot.querySelector("[data-act=save]");
     btn.disabled = true;
     this._msg("Gemmer \u2026");
@@ -67944,9 +67956,9 @@ h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-trans
 .agreement.ok>ha-icon{color:var(--eb-ok)}
 .ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
 .ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.block{margin-top:14px}.block[hidden]{display:none}
+.block{margin-top:14px}.tag{font-style:normal;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:6px;background:color-mix(in srgb,var(--eb-warn) 18%,transparent);color:var(--eb-warn)}.block[hidden]{display:none}
 .years{display:grid;gap:8px}.year{display:grid;grid-template-columns:56px 1fr;gap:2px 12px;align-items:baseline;padding:10px 12px;border-radius:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
-.year .y{grid-row:span 2;font-size:16px;font-variant-numeric:tabular-nums}.yl{grid-column:2;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px;color:var(--eb-muted);font-variant-numeric:tabular-nums}
+.year .y{grid-row:span 3;font-size:16px;font-variant-numeric:tabular-nums}.yl{grid-column:2;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px;color:var(--eb-muted);font-variant-numeric:tabular-nums}
 .yl b{color:var(--primary-text-color);font-size:14px}.yl .u{display:inline-flex;align-items:center;gap:3px;min-width:44px}.yl .u ha-icon{--mdc-icon-size:15px}.yl .part{display:inline;margin:0}
 .scroll{position:relative}.scroll.scrolls{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%)}
 .scroll.scrolls.at-top{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%)}
@@ -68009,7 +68021,7 @@ var TABS2 = [
   { key: "heat", label: "Fjernvarme", icon: "mdi:radiator", tone: "heat", Section: HeatSection },
   { key: "water", label: "Vand", icon: "mdi:water", tone: "water", Section: WaterSection },
   { key: "ev", label: "Billader", icon: "mdi:car-electric", tone: "ev", Section: EvSection },
-  { key: "bill", label: "Elregning", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection }
+  { key: "bill", label: "Regninger", icon: "mdi:receipt-text-outline", tone: "el", Section: BillSection }
 ];
 var EV_MODES = {
   disconnected: "Ikke tilsluttet",
@@ -71404,10 +71416,142 @@ var sumYear = (arr2, upto = 12) => {
   });
   return out.n ? out : null;
 };
+var DEFAULT_HEAT_TARIFFS = [
+  { from: "2026-04-01", variable: 0.5963, abonnement: 500, m2_rate: 10, konvertering: 1e3 },
+  { from: "2027-02-01", variable: 0.6875, abonnement: 600, m2_rate: 11, konvertering: 1e3 }
+];
+var EVIDA_2023 = { per_m3: (0.612 + 0.2441 + 2.531 + 0.41 + 9e-3) * 1.25, per_month: 98.63 * 1.25 / 4 };
+var daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+var isoKey = (d) => key(d.getFullYear(), d.getMonth());
+function tariffAt(tariffs, iso2) {
+  const list = [...tariffs || DEFAULT_HEAT_TARIFFS].sort((a, b) => a.from.localeCompare(b.from));
+  return [...list].reverse().find((t) => t.from <= iso2) || list[0];
+}
+function heatCost(kwh, days, tariff, m2) {
+  const fixed = ((tariff.abonnement || 0) + (tariff.m2_rate || 0) * (m2 || 0) + (tariff.konvertering || 0)) / 365;
+  return kwh * tariff.variable + fixed * days;
+}
+function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m2 = 0, now = /* @__PURE__ */ new Date() }) {
+  const kwh = { ...change };
+  const est = {};
+  if (pre > 0 && start && statsStart && statsStart > start) {
+    const s = /* @__PURE__ */ new Date(`${start}T00:00:00`), e = new Date(statsStart);
+    const days = [];
+    for (let d = new Date(s); d < e; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) days.push(isoKey(d));
+    for (const k of days) est[k] = (est[k] || 0) + pre / days.length;
+  }
+  const out = {};
+  const startKey = start ? isoKey(new Date(start)) : null;
+  for (const k of /* @__PURE__ */ new Set([...Object.keys(kwh), ...Object.keys(est)])) {
+    if (startKey && k < startKey) continue;
+    const [y, m1] = k.split("-").map(Number);
+    const m = m1 - 1;
+    const first = new Date(y, m, 1);
+    const s = start && new Date(start) > first ? new Date(start) : first;
+    const lastDay = y === now.getFullYear() && m === now.getMonth() ? now.getDate() : daysIn(y, m);
+    const days = Math.max(0, lastDay - s.getDate() + 1);
+    const t = tariffAt(tariffs, `${k}-01`);
+    const mk = kwh[k] || 0, ek = est[k] || 0;
+    const total = heatCost(mk + ek, days, t, m2);
+    const share = mk + ek > 0 ? mk / (mk + ek) : 1;
+    out[k] = { kwh: mk + ek, kwhMeasured: mk, kwhEstimated: ek, cost: total, measured: total * share, estimate: total * (1 - share), days };
+  }
+  return out;
+}
+function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, evida = EVIDA_2023 } = {}) {
+  const out = {};
+  for (const b of gasBills || []) {
+    const hasEvida = /Evida \(distribution/.test(b.note || "") || /heraf Evida/.test(b.note || "");
+    const part = monthlyFromBills([b]);
+    for (const [k, r] of Object.entries(part)) {
+      const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
+      o.bill += r.amount;
+      if (r.m3 != null) {
+        o.m3 += r.m3;
+        o.kwh += r.m3 * kwhPerM3 * efficiency;
+      }
+      if (!hasEvida && r.m3 != null) o.evida += r.m3 * evida.per_m3 + evida.per_month * (r.days / r.monthDays);
+    }
+  }
+  return out;
+}
+function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = /* @__PURE__ */ new Date(), opts = {} }) {
+  const gas = gasMonths(gasBills, opts);
+  const aconto = monthlyFromBills(heatBills);
+  const nowKey = key(now.getFullYear(), now.getMonth());
+  const months = {};
+  for (const k of /* @__PURE__ */ new Set([...Object.keys(gas), ...Object.keys(heat), ...Object.keys(aconto)])) {
+    if (k > nowKey) continue;
+    const g = gas[k], h = heat[k], a = aconto[k];
+    months[k] = {
+      gasBill: g?.bill || 0,
+      gasEvida: g?.evida || 0,
+      gasKwh: g?.kwh || 0,
+      gasM3: g?.m3 || 0,
+      heatMeasured: h?.measured || 0,
+      heatEstimate: h?.estimate || 0,
+      heatKwh: h?.kwh || 0,
+      aconto: a?.amount || 0,
+      partial: k === nowKey
+    };
+    const c2 = months[k];
+    c2.v = c2.gasBill + c2.gasEvida + c2.heatMeasured + c2.heatEstimate;
+  }
+  return months;
+}
+function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Date() } = {}) {
+  const ks = Object.keys(months).sort();
+  const sum = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
+  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && !months[k].partial);
+  const gasKs = ks.filter((k) => months[k].gasKwh > 0);
+  const perKwh = (list, f) => {
+    const kwh = sum(list, (c2) => c2.heatKwh || c2.gasKwh);
+    return kwh > 0 ? sum(list, f) / kwh : null;
+  };
+  const pairs = heatKs.map((k) => {
+    const [y, m] = k.split("-").map(Number);
+    return [k, `${y - 1}-${String(m).padStart(2, "0")}`];
+  }).filter(([, g]) => months[g]?.gasKwh > 0);
+  const same = pairs.length ? {
+    months: pairs.map(([k]) => k),
+    heat: pairs.reduce((s, [k]) => s + months[k].heatMeasured + months[k].heatEstimate, 0),
+    heatKwh: pairs.reduce((s, [k]) => s + months[k].heatKwh, 0),
+    gas: pairs.reduce((s, [, g]) => s + months[g].gasBill, 0),
+    gasEvida: pairs.reduce((s, [, g]) => s + months[g].gasEvida, 0),
+    gasKwh: pairs.reduce((s, [, g]) => s + months[g].gasKwh, 0)
+  } : null;
+  const years = [...new Set(gasKs.map((k) => Number(k.slice(0, 4))))].filter((y) => gasKs.filter((k) => k.startsWith(`${y}-`)).length === 12);
+  const gy = years.length ? Math.max(...years) : null;
+  let year = null;
+  if (gy) {
+    const yk = gasKs.filter((k) => k.startsWith(`${gy}-`));
+    const demand = sum(yk, (c2) => c2.gasKwh);
+    const gasBill = sum(yk, (c2) => c2.gasBill);
+    const gasEvida = sum(yk, (c2) => c2.gasEvida);
+    const t = (iso2) => tariffAt(tariffs, iso2);
+    const nowIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    year = {
+      gasYear: gy,
+      demand,
+      gasBill,
+      gasEvida,
+      heatNow: heatCost(demand, 365, t(nowIso), m2),
+      heat2027: heatCost(demand, 365, t("2027-02-01"), m2)
+    };
+  }
+  return {
+    heatPerKwh: perKwh(heatKs, (c2) => c2.heatMeasured + c2.heatEstimate),
+    gasPerKwh: perKwh(gasKs, (c2) => c2.gasBill),
+    gasPerKwhEvida: perKwh(gasKs, (c2) => c2.gasBill + c2.gasEvida),
+    acontoMonths: ks.filter((k) => months[k].aconto > 0 && months[k].heatKwh > 0),
+    same,
+    year
+  };
+}
 
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
-var VERSION57 = "1.0.1";
+var VERSION57 = "1.1.0";
 var MONTHS3 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
@@ -71425,6 +71569,8 @@ function niceMax2(v) {
 }
 var STYLE11 = `
 :host{
+  --c-gas:var(--amber,#f59e0b);
+  --c-fv:var(--deep-orange,#ef5350);
   --ec-text:var(--primary-text-color,#e8eef8);
   --ec-muted:var(--secondary-text-color,#8e9cb4);
   --ec-faint:color-mix(in srgb,var(--ec-muted) 78%,transparent);
@@ -71513,7 +71659,7 @@ var TEMPLATE = `
       <span class="brand-mark"><ha-icon class="ic" icon="mdi:cash-multiple"></ha-icon></span>
       <div><h2 data-ref="title"></h2><p data-ref="subtitle"></p></div>
     </div>
-    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Naturgas</button></div>
+    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="heat">Opvarmning</button></div>
   </div>
   <div class="hero-grid" data-ref="kpis"></div>
   <div class="ctrl">
@@ -71540,7 +71686,20 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     this._ro = new ResizeObserver(() => this._drawChart());
   }
   static getStubConfig() {
-    return { type: `custom:${CARD_TAG3}`, bills_entity: "sensor.elregning_seneste_regning", forecast_entity: "sensor.elregning_prognose_denne_maned", cost_entity: "sensor.teknikrum_hovedmaler_energy_cost", history_entity: "sensor.elforbrug_historik" };
+    return {
+      type: `custom:${CARD_TAG3}`,
+      bills_entity: "sensor.elregning_seneste_regning",
+      forecast_entity: "sensor.elregning_prognose_denne_maned",
+      cost_entity: "sensor.teknikrum_hovedmaler_energy_cost",
+      history_entity: "sensor.elforbrug_historik",
+      heat_entity: "sensor.kamstrup_multical_total_energi",
+      heat_start: "2026-04-27",
+      heat_meter_start: 0,
+      heat_m2: 179,
+      heat_tariffs: DEFAULT_HEAT_TARIFFS,
+      gas_kwh_per_m3: 11,
+      gas_efficiency: 0.9
+    };
   }
   setConfig(config) {
     this.config = { ..._HaElforbrugKrCard.getStubConfig(), title: "Elforbrug i kr", subtitle: "M\xE5ned for m\xE5ned og \xE5r for \xE5r", ...config };
@@ -71597,10 +71756,22 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
         const d = new Date(r.start);
         return [key(d.getFullYear(), d.getMonth()), Number(r.change)];
       }));
-      this._stats = { cost: toMap(res?.[this.config.cost_entity]), kwh: toMap(res?.[this.config.history_entity]) };
+      this._stats = { cost: toMap(res?.[this.config.cost_entity]), kwh: toMap(res?.[this.config.history_entity]), heat: null };
+      const he = this.config.heat_entity;
+      if (he) {
+        const ws = (period, types, start2) => this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start2, end_time: new Date(Date.now() + 36e5).toISOString(), statistic_ids: [he], period, types });
+        const start = (/* @__PURE__ */ new Date(`${this.config.heat_start || "2015-01-01"}T00:00:00`)).toISOString();
+        const [mon, day2] = await Promise.all([ws("month", ["change", "state"], start), ws("day", ["change"], start)]);
+        const rows = (mon?.[he] || []).filter((r) => Number.isFinite(Number(r.change)));
+        const first = rows[0];
+        const pre = first && Number.isFinite(Number(first.state)) ? Number(first.state) - Number(first.change) - Number(this.config.heat_meter_start || 0) : 0;
+        const firstDay = (day2?.[he] || [])[0];
+        this._stats.heat = heatMonths({ change: toMap(rows), pre, start: this.config.heat_start, statsStart: firstDay ? new Date(firstDay.start).toISOString() : null, tariffs: this.config.heat_tariffs, m2: this.config.heat_m2 });
+        this._stats.heatPre = pre;
+      }
       this._error = null;
     } catch (err) {
-      this._stats = { cost: {}, kwh: {} };
+      this._stats = this._stats || { cost: {}, kwh: {} };
       this._error = err?.message || String(err);
     } finally {
       this._loading = false;
@@ -71612,11 +71783,26 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const b = h?.states[this.config.bills_entity];
     const el = b?.attributes?.regninger || [];
     const gas = b?.attributes?.gasregninger || [];
-    this._ref("util").hidden = !gas.length;
-    if (!gas.length) this._util = "el";
+    const heatBills = b?.attributes?.fjernvarmeregninger || [];
+    const canHeat = gas.length || heatBills.length || this._stats?.heat;
+    this._ref("util").hidden = !canHeat;
+    if (!canHeat) this._util = "el";
+    if (this._util === "heat") {
+      const c2 = this.config;
+      const opts = { kwhPerM3: Number(c2.gas_kwh_per_m3) || 11, efficiency: Number(c2.gas_efficiency) || 0.9 };
+      const months = heatingSeries({ gasBills: gas, heatBills, heat: this._stats?.heat || {}, opts });
+      this._heat = { months, cmp: heatingCompare(months, { tariffs: c2.heat_tariffs, m2: c2.heat_m2 }), opts };
+      const years = {};
+      for (const [k, cell] of Object.entries(months)) {
+        const [y, m] = k.split("-").map(Number);
+        (years[y] ||= Array(12).fill(null))[m - 1] = cell;
+      }
+      return { years };
+    }
+    this._heat = null;
     const ratio = Number(h?.states[this.config.forecast_entity]?.attributes?.forhold_regning_maaling) || null;
     const s = this._stats || { cost: {}, kwh: {} };
-    return this._util === "gas" ? buildCostSeries({ bills: gas, utility: "gas" }) : buildCostSeries({ bills: el, cost: s.cost, kwh: s.kwh, ratio });
+    return buildCostSeries({ bills: el, cost: s.cost, kwh: s.kwh, ratio });
   }
   _yearsAvailable() {
     return Object.keys(this._data?.years || {}).map(Number).sort((a, b) => a - b);
@@ -71634,12 +71820,18 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       return;
     }
     if (!this._sel || ![...this._sel].some((y) => years.includes(y))) this._sel = new Set(years.slice(-3));
+    if (this._heat) {
+      this._renderHeat();
+      return;
+    }
+    this._ref("title").textContent = this.config.title;
+    this._ref("subtitle").textContent = this.config.subtitle;
+    this._ref("kpis").classList.remove("heat");
     this._renderKpis();
     this._renderYears(years);
     this._drawChart();
-    const gas = this._util === "gas";
-    this._ref("legend").innerHTML = `<span><i></i>Faktureret</span>${gas ? "" : `<span><i class="h"></i>M\xE5lt i HA</span><span><i class="e"></i>Ansl\xE5et</span>`}`;
-    this._ref("note").textContent = gas ? "Gasregningerne fordelt p\xE5 m\xE5neder efter dage. Kun det, der st\xE5r p\xE5 regningerne." : `Faktureret = regningerne i Elregning, fordelt p\xE5 m\xE5neder efter dage. M\xE5lt = HA's egen m\xE5ling \xD7 forholdet regning/m\xE5ling. Ansl\xE5et = netselskabets kWh \xD7 kr/kWh lagt mellem de n\xE6rmeste regninger f\xF8r og efter, for m\xE5neder uden regning eller m\xE5ling. Den igangv\xE6rende m\xE5ned er forel\xF8big.`;
+    this._ref("legend").innerHTML = `<span><i></i>Faktureret</span><span><i class="h"></i>M\xE5lt i HA</span><span><i class="e"></i>Ansl\xE5et</span>`;
+    this._ref("note").textContent = `Faktureret = regningerne i Elregning, fordelt p\xE5 m\xE5neder efter dage. M\xE5lt = HA's egen m\xE5ling \xD7 forholdet regning/m\xE5ling. Ansl\xE5et = netselskabets kWh \xD7 kr/kWh lagt mellem de n\xE6rmeste regninger f\xF8r og efter, for m\xE5neder uden regning eller m\xE5ling. Den igangv\xE6rende m\xE5ned er forel\xF8big.`;
   }
   _renderKpis() {
     const now = /* @__PURE__ */ new Date();
@@ -71707,6 +71899,10 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
   _drawChart() {
     const host = this._ref("chart");
     if (!this._data || !host.isConnected) return;
+    if (this._heat) {
+      this._drawHeat(host);
+      return;
+    }
     const years = this._yearsAvailable();
     if (!years.length) return;
     const w = Math.max(280, Math.round(host.clientWidth || 600));
@@ -71779,6 +71975,126 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       });
     });
     if (this._pinned != null) this._tip(host, this._pinned, values, month, gw, pad5);
+  }
+  /* ---------- Opvarmning ---------- */
+  _renderHeat() {
+    const { cmp, opts } = this._heat;
+    this._ref("title").textContent = "Opvarmning i kr";
+    this._ref("subtitle").textContent = "Naturgas og fjernvarme p\xE5 samme skala";
+    const kr0 = (v) => v == null ? "\u2013" : `${fmt5(v)} kr`;
+    const kr2 = (v) => v == null ? "\u2013" : `${fmt5(v, 2)} kr`;
+    const items = [];
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt5(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas ${kr2(cmp.gasPerKwh)} \xB7 med Evida-sk\xF8n <span class="d">${kr2(cmp.gasPerKwhEvida)}</span></span></div>`);
+    const sm = cmp.same;
+    if (sm) {
+      const names2 = sm.months.map((k) => MONTHS3[Number(k.slice(5)) - 1]);
+      const label = names2.length > 1 ? `${names2[0]}\u2013${names2[names2.length - 1]}` : names2[0];
+      const d = pct3(sm.heat, sm.gas + sm.gasEvida);
+      items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt5(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r ${kr0(sm.gas)} \xB7 med Evida ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span></span></div>`);
+    }
+    const yr = cmp.year;
+    if (yr) items.push(`<div class="hero-item tone-ev"><span class="hi-label">Et helt \xE5r (varmen fra ${yr.gasYear})</span><span class="hi-val num"><b>${fmt5(yr.heatNow)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Fra feb. 2027: ${kr0(yr.heat2027)} \xB7 gassen kostede ${kr0(yr.gasBill)}, med Evida ca. ${kr0(yr.gasBill + yr.gasEvida)}</span></div>`);
+    const ks = cmp.acontoMonths;
+    if (ks.length) {
+      const m = this._heat.months;
+      const paid = ks.reduce((s, k) => s + m[k].aconto, 0), used = ks.reduce((s, k) => s + m[k].heatMeasured + m[k].heatEstimate, 0);
+      const diff = paid - used;
+      items.push(`<div class="hero-item ${diff >= 0 ? "tone-ok" : "tone-bad"}"><span class="hi-label">A conto mod m\xE5lt (${ks.length} mdr)</span><span class="hi-val num"><b>${fmt5(Math.abs(diff))}</b><small>kr ${diff >= 0 ? "tilbage" : "efterbetaling"}</small></span><span class="hi-sub">Betalt ${kr0(paid)} \xB7 m\xE5lt ${kr0(used)} \u2013 ved \xE5rsopg\xF8relsen</span></div>`);
+    } else {
+      items.push(`<div class="hero-item tone-muted"><span class="hi-label">A conto mod m\xE5lt</span><span class="hi-val num"><b>\u2013</b></span><span class="hi-sub">Ingen fjernvarmeregninger i Elregning endnu</span></div>`);
+    }
+    this._ref("kpis").innerHTML = items.join("");
+    this._ref("years").innerHTML = "";
+    this._ref("years").hidden = true;
+    this._drawChart();
+    this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida-sk\xF8n</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
+    this._ref("note").textContent = `Naturgas: regningerne fordelt p\xE5 m\xE5neder; varmen = m\xB3 \xD7 ${fmt5(opts.kwhPerM3)} kWh \xD7 ${fmt5(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fra maj 2023 mangler Evidas regninger (distribution og gasafgifter), s\xE5 gassen ser for billig ud; Evida-sk\xF8nnet bruger satserne fra jan\u2013apr 2023-regningen (${fmt5(4.758, 2)} kr/m\xB3 + administration), og afgifterne har \xE6ndret sig siden. Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms og faste dele pr. dag (2027-taksten fra 1. februar 2027); dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion: HA har ingen udetemperatur fra f\xF8r 30.05.2026, s\xE5 sammenligningen er pr. kWh varme og samme m\xE5neder.`;
+  }
+  _drawHeat(host) {
+    const months = this._heat.months;
+    const keys = Object.keys(months).sort();
+    if (!keys.length) {
+      host.innerHTML = `<div class="state">Ingen data</div>`;
+      return;
+    }
+    const month = this._view === "month";
+    const w = Math.max(280, Math.round(host.clientWidth || 600));
+    const h = w < 520 ? 240 : 290;
+    const pad5 = { l: 52, r: 6, t: 20, b: 26 };
+    const pw = w - pad5.l - pad5.r, ph2 = h - pad5.t - pad5.b;
+    let groups;
+    if (month) groups = keys.map((k) => ({ k, ...months[k] }));
+    else {
+      const by = {};
+      for (const k of keys) {
+        const y2 = k.slice(0, 4);
+        const c2 = months[k];
+        const o = by[y2] || (by[y2] = { k: y2, gasBill: 0, gasEvida: 0, heatMeasured: 0, heatEstimate: 0, aconto: 0, partial: false });
+        for (const f of ["gasBill", "gasEvida", "heatMeasured", "heatEstimate", "aconto"]) o[f] += c2[f];
+        o.partial ||= c2.partial;
+      }
+      groups = Object.values(by);
+    }
+    groups.forEach((g) => {
+      g.v = g.gasBill + g.gasEvida + g.heatMeasured + g.heatEstimate;
+    });
+    const max = niceMax2(Math.max(1, ...groups.map((g) => Math.max(g.v, g.aconto))) * 1.08);
+    const gw = pw / groups.length;
+    const bw = Math.max(3, Math.min(34, gw * 0.72));
+    const y = (v) => pad5.t + ph2 - v / max * ph2;
+    let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Opvarmning i kr"><defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs><g class="grid axis">`;
+    for (let i = 0; i <= 4; i++) {
+      const gv = max / 4 * i;
+      s += `<line x1="${pad5.l}" x2="${w - pad5.r}" y1="${y(gv)}" y2="${y(gv)}"/><text x="${pad5.l - 8}" y="${y(gv) + 4}" text-anchor="end">${fmt5(gv)}</text>`;
+    }
+    s += `</g><g class="axis">`;
+    const every = month ? Math.max(1, Math.ceil(groups.length / (w < 520 ? 7 : 14))) : 1;
+    groups.forEach((g, i) => {
+      if (i % every) return;
+      const label = month ? `${MONTHS3[Number(g.k.slice(5)) - 1]} ${g.k.slice(2, 4)}` : `${g.k}${g.partial ? "*" : ""}`;
+      s += `<text x="${pad5.l + gw * i + gw / 2}" y="${h - 7}" text-anchor="middle">${label}</text>`;
+    });
+    s += `</g>`;
+    groups.forEach((g, i) => {
+      const x = pad5.l + gw * i + (gw - bw) / 2;
+      let base = 0;
+      for (const [f, col, op, hatch] of [["gasBill", "var(--c-gas)", 1, false], ["gasEvida", "var(--c-gas)", 0.35, true], ["heatMeasured", "var(--c-fv)", 0.85, true], ["heatEstimate", "var(--c-fv)", 0.4, true]]) {
+        const v = g[f];
+        if (!(v > 0)) continue;
+        const top = y(base + v), bh2 = Math.max(1, v / max * ph2);
+        s += `<rect class="bar" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${g.partial && month ? op * 0.6 : op}"/>`;
+        if (hatch) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity=".35"/>`;
+        base += v;
+      }
+      if (g.aconto > 0) s += `<line x1="${(x - 2).toFixed(1)}" x2="${(x + bw + 2).toFixed(1)}" y1="${y(g.aconto).toFixed(1)}" y2="${y(g.aconto).toFixed(1)}" stroke="var(--ec-text)" stroke-width="2"/>`;
+      if (!month) s += `<text class="vlabel" x="${(x + bw / 2).toFixed(1)}" y="${(y(g.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(g.v)}</text>`;
+      s += `<rect class="hit ${this._pinned === i ? "sel" : ""}" data-g="${i}" x="${(pad5.l + gw * i).toFixed(1)}" y="${pad5.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
+    });
+    s += `</svg><div class="tip" hidden></div>`;
+    host.innerHTML = s;
+    const tip = host.querySelector(".tip");
+    const show2 = (i) => {
+      const g = groups[i];
+      const title = month ? `${MONTHS_LONG2[Number(g.k.slice(5)) - 1]} ${g.k.slice(0, 4)}` : `${g.k}${g.partial ? " (indtil nu)" : ""}`;
+      const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt5(v)} kr</span></div>` : "";
+      tip.innerHTML = `<h4>${esc13(title)}</h4>${row("var(--c-gas)", "Naturgas", g.gasBill)}${row("var(--c-gas)", "Evida-sk\xF8n", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
+      tip.hidden = false;
+      const cx2 = pad5.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
+      tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx2 - tw / 2))}px`;
+      tip.style.top = "0px";
+    };
+    host.querySelectorAll(".hit").forEach((r) => {
+      const i = Number(r.dataset.g);
+      r.addEventListener("pointerenter", () => show2(i));
+      r.addEventListener("click", () => {
+        this._pinned = this._pinned === i ? null : i;
+        show2(i);
+      });
+      r.addEventListener("pointerleave", () => {
+        if (this._pinned == null) tip.hidden = true;
+      });
+    });
+    if (this._pinned != null && groups[this._pinned]) show2(this._pinned);
   }
   _tip(host, g, values, month, gw, pad5) {
     const tip = host.querySelector(".tip");

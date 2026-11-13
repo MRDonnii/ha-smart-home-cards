@@ -51,3 +51,142 @@ export const sumYear = (arr, upto = 12) => {
   return out.n ? out : null;
 };
 
+
+/* ---------- Opvarmning: naturgas og fjernvarme på samme skala (Claude AI, 2026-11-13) ----------
+ * Brugeren: "Det skal holdes op imod gas og ikke være for sig selv, da det er sammenligning jeg ønsker."
+ */
+
+// Verdo Varme Randers inkl. moms (fra regningerne). Faste dele er kr pr. år og regnes pr. dag.
+export const DEFAULT_HEAT_TARIFFS = [
+  { from: "2026-04-01", variable: 0.5963, abonnement: 500, m2_rate: 10, konvertering: 1000 },
+  { from: "2027-02-01", variable: 0.6875, abonnement: 600, m2_rate: 11, konvertering: 1000 },
+];
+// Evida-delen af gasregningen (distribution, nødforsyning, naturgasafgift, CO2, NOx + administration), inkl. moms,
+// skønnet ud fra den eneste regning med Evida på (jan–apr 2023: 914 m³, 4.471,78 kr).
+export const EVIDA_2023 = { per_m3: (0.612 + 0.2441 + 2.531 + 0.41 + 0.009) * 1.25, per_month: (98.63 * 1.25) / 4 };
+
+const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+const isoKey = (d) => key(d.getFullYear(), d.getMonth());
+
+export function tariffAt(tariffs, iso) {
+  const list = [...(tariffs || DEFAULT_HEAT_TARIFFS)].sort((a, b) => a.from.localeCompare(b.from));
+  return [...list].reverse().find((t) => t.from <= iso) || list[0];
+}
+
+/** Fjernvarmens pris for kWh varme i en periode (variabel + faste dele pr. dag), inkl. moms. */
+export function heatCost(kwh, days, tariff, m2) {
+  const fixed = ((tariff.abonnement || 0) + (tariff.m2_rate || 0) * (m2 || 0) + (tariff.konvertering || 0)) / 365;
+  return kwh * tariff.variable + fixed * days;
+}
+
+/**
+ * Målt fjernvarme pr. måned. change = {"YYYY-MM": kWh} fra varmemålerens statistik; pre = kWh før statistikken
+ * (målerstand ved første statistik − målerstand ved start) fordelt efter dage fra start til statistikkens start.
+ */
+export function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m2 = 0, now = new Date() }) {
+  const kwh = { ...change };
+  const est = {};
+  if (pre > 0 && start && statsStart && statsStart > start) {
+    const s = new Date(`${start}T00:00:00`), e = new Date(statsStart);
+    const days = [];
+    for (let d = new Date(s); d < e; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) days.push(isoKey(d));
+    for (const k of days) est[k] = (est[k] || 0) + pre / days.length;
+  }
+  const out = {};
+  const startKey = start ? isoKey(new Date(start)) : null;
+  for (const k of new Set([...Object.keys(kwh), ...Object.keys(est)])) {
+    if (startKey && k < startKey) continue;
+    const [y, m1] = k.split("-").map(Number);
+    const m = m1 - 1;
+    const first = new Date(y, m, 1);
+    const s = start && new Date(start) > first ? new Date(start) : first;
+    const lastDay = y === now.getFullYear() && m === now.getMonth() ? now.getDate() : daysIn(y, m);
+    const days = Math.max(0, lastDay - s.getDate() + 1);
+    const t = tariffAt(tariffs, `${k}-01`);
+    const mk = kwh[k] || 0, ek = est[k] || 0;
+    const total = heatCost(mk + ek, days, t, m2);
+    // Kronerne fordeles på målt og skønnet efter kWh
+    const share = mk + ek > 0 ? mk / (mk + ek) : 1;
+    out[k] = { kwh: mk + ek, kwhMeasured: mk, kwhEstimated: ek, cost: total, measured: total * share, estimate: total * (1 - share), days };
+  }
+  return out;
+}
+
+/** Gas pr. måned fra regningerne (fordelt efter dage), med skønnet Evida-del hvor regningen ikke har den. */
+export function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, evida = EVIDA_2023 } = {}) {
+  const out = {};
+  for (const b of gasBills || []) {
+    const hasEvida = /Evida \(distribution/.test(b.note || "") || /heraf Evida/.test(b.note || "");
+    const part = monthlyFromBills([b]);
+    for (const [k, r] of Object.entries(part)) {
+      const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
+      o.bill += r.amount;
+      if (r.m3 != null) { o.m3 += r.m3; o.kwh += r.m3 * kwhPerM3 * efficiency; }
+      if (!hasEvida && r.m3 != null) o.evida += r.m3 * evida.per_m3 + evida.per_month * (r.days / r.monthDays);
+    }
+  }
+  return out;
+}
+
+/** Én tidslinje: hver måned har gas (faktureret + skønnet Evida) og/eller fjernvarme (målt/skønnet), + a conto. */
+export function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = new Date(), opts = {} }) {
+  const gas = gasMonths(gasBills, opts);
+  const aconto = monthlyFromBills(heatBills);
+  const nowKey = key(now.getFullYear(), now.getMonth());
+  const months = {};
+  for (const k of new Set([...Object.keys(gas), ...Object.keys(heat), ...Object.keys(aconto)])) {
+    if (k > nowKey) continue;
+    const g = gas[k], h = heat[k], a = aconto[k];
+    months[k] = {
+      gasBill: g?.bill || 0, gasEvida: g?.evida || 0, gasKwh: g?.kwh || 0, gasM3: g?.m3 || 0,
+      heatMeasured: h?.measured || 0, heatEstimate: h?.estimate || 0, heatKwh: h?.kwh || 0,
+      aconto: a?.amount || 0, partial: k === nowKey,
+    };
+    const c = months[k];
+    c.v = c.gasBill + c.gasEvida + c.heatMeasured + c.heatEstimate;
+  }
+  return months;
+}
+
+/** Sammenligning: kr pr. kWh varme, samme måneder år mod år, og et helt år "fjernvarme vs. hvis vi havde beholdt gassen". */
+export function heatingCompare(months, { tariffs, m2 = 0, now = new Date() } = {}) {
+  const ks = Object.keys(months).sort();
+  const sum = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
+  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && !months[k].partial);
+  const gasKs = ks.filter((k) => months[k].gasKwh > 0);
+  const perKwh = (list, f) => { const kwh = sum(list, (c) => (c.heatKwh || c.gasKwh)); return kwh > 0 ? sum(list, f) / kwh : null; };
+  // Samme kalendermåneder: fjernvarmens hele måneder mod de samme måneder et år før (gas)
+  const pairs = heatKs.map((k) => { const [y, m] = k.split("-").map(Number); return [k, `${y - 1}-${String(m).padStart(2, "0")}`]; }).filter(([, g]) => months[g]?.gasKwh > 0);
+  const same = pairs.length ? {
+    months: pairs.map(([k]) => k),
+    heat: pairs.reduce((s, [k]) => s + months[k].heatMeasured + months[k].heatEstimate, 0),
+    heatKwh: pairs.reduce((s, [k]) => s + months[k].heatKwh, 0),
+    gas: pairs.reduce((s, [, g]) => s + months[g].gasBill, 0),
+    gasEvida: pairs.reduce((s, [, g]) => s + months[g].gasEvida, 0),
+    gasKwh: pairs.reduce((s, [, g]) => s + months[g].gasKwh, 0),
+  } : null;
+  // Seneste hele gasår som varmebehov
+  const years = [...new Set(gasKs.map((k) => Number(k.slice(0, 4))))].filter((y) => gasKs.filter((k) => k.startsWith(`${y}-`)).length === 12);
+  const gy = years.length ? Math.max(...years) : null;
+  let year = null;
+  if (gy) {
+    const yk = gasKs.filter((k) => k.startsWith(`${gy}-`));
+    const demand = sum(yk, (c) => c.gasKwh);
+    const gasBill = sum(yk, (c) => c.gasBill);
+    const gasEvida = sum(yk, (c) => c.gasEvida);
+    const t = (iso) => tariffAt(tariffs, iso);
+    const nowIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    year = {
+      gasYear: gy, demand, gasBill, gasEvida,
+      heatNow: heatCost(demand, 365, t(nowIso), m2),
+      heat2027: heatCost(demand, 365, t("2027-02-01"), m2),
+    };
+  }
+  return {
+    heatPerKwh: perKwh(heatKs, (c) => c.heatMeasured + c.heatEstimate),
+    gasPerKwh: perKwh(gasKs, (c) => c.gasBill),
+    gasPerKwhEvida: perKwh(gasKs, (c) => c.gasBill + c.gasEvida),
+    acontoMonths: ks.filter((k) => months[k].aconto > 0 && (months[k].heatKwh > 0)),
+    same, year,
+  };
+}
