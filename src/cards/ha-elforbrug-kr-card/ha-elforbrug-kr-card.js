@@ -305,7 +305,7 @@ class HaElforbrugKrCard extends HTMLElement {
 
   _renderYears(years) {
     const box = this._ref("years");
-    box.hidden = this._view !== "month";
+    box.hidden = this._view !== "month" || !!this._heat; // Opvarmning er én tidslinje uden år-valg
     box.innerHTML = [...years].reverse().map((y) => `<button type="button" class="yr ${this._sel.has(y) ? "on" : ""}" data-year="${y}" style="--yc:${this._color(y)}" aria-pressed="${this._sel.has(y)}"><i></i>${y}</button>`).join("");
   }
 

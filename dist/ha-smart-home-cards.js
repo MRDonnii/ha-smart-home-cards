@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.261 */
+/* MRDonnii Smart Home Cards v0.5.262 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -71865,7 +71865,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
   }
   _renderYears(years) {
     const box = this._ref("years");
-    box.hidden = this._view !== "month";
+    box.hidden = this._view !== "month" || !!this._heat;
     box.innerHTML = [...years].reverse().map((y) => `<button type="button" class="yr ${this._sel.has(y) ? "on" : ""}" data-year="${y}" style="--yc:${this._color(y)}" aria-pressed="${this._sel.has(y)}"><i></i>${y}</button>`).join("");
   }
   _onClick(e) {
