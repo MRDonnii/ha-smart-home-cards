@@ -29,3 +29,18 @@ assert.equal(Math.round(y["2025|el"].kwh), 59);
 assert.equal(y["2025|gas"].price_m3, 10);
 assert.equal(years[0].year, 2025);
 console.log("year totals ok");
+
+// Claude AI, 2026-11-13: ha-elforbrug-kr-card – faktureret før målt før anslået
+const { buildCostSeries, sumYear } = await import("../src/cards/ha-elforbrug-kr-card/cost-series.js");
+const cs = buildCostSeries({
+  bills: [{ start: "2025-01-01", end: "2025-01-31", amount: 2000, kwh: 800 }, { start: "2025-02-01", end: "2025-02-14", amount: 500, kwh: 200 }],
+  cost: { "2024-11": 5, "2025-03": 1000, "2025-01": 999 }, kwh: { "2025-02": 400, "2025-04": 100, "2024-12": 50 }, ratio: 1.1, now: new Date(2025, 4, 10),
+});
+assert.equal(cs.years[2025][0].bill, 2000);          // faktureret vinder over målt
+assert.equal(cs.years[2025][0].measured, 0);
+assert.equal(Math.round(cs.years[2025][2].measured), 1100); // målt × forhold
+assert.equal(Math.round(cs.years[2025][3].estimate), 250);  // 100 kWh × 2,5 kr/kWh (seneste regnede måned)
+assert.equal(Math.round(cs.years[2025][1].estimate), 1000); // halv måned faktureret -> anslået
+assert.equal(cs.years[2024], undefined);               // ikke før første regning
+assert.equal(Math.round(sumYear(cs.years[2025]).v), 4350);
+console.log("cost series ok");

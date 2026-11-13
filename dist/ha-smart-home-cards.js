@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.257 */
+/* MRDonnii Smart Home Cards v0.5.258 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -312,7 +312,7 @@ window.shcMotion = Object.freeze({ wake, rest, get resting() {
     } catch {
     }
     if (gen !== fontGen) return;
-    for (const key of FONT_VARS) root.style.setProperty(key, family);
+    for (const key2 of FONT_VARS) root.style.setProperty(key2, family);
     root.style.fontFamily = family;
   }
   function tick() {
@@ -361,14 +361,14 @@ var HACardListEditor = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -435,14 +435,14 @@ var ruleKey = (rule) => JSON.stringify([rule.entity_filter || "", rule.device_cl
 function scanRuleMatches(states, rules) {
   const matches = {};
   for (const rule of rules.filter(isFilterRule)) {
-    const key = ruleKey(rule);
-    if (matches[key]) continue;
+    const key2 = ruleKey(rule);
+    if (matches[key2]) continue;
     const include = regex(rule.entity_filter), exclude = regex(rule.exclude_filter);
     if (include === void 0 || exclude === void 0) {
-      matches[key] = [];
+      matches[key2] = [];
       continue;
     }
-    matches[key] = Object.keys(states).filter((id) => (!include || include.test(id)) && (!rule.device_class || states[id]?.attributes?.device_class === rule.device_class) && (!exclude || !exclude.test(id)));
+    matches[key2] = Object.keys(states).filter((id) => (!include || include.test(id)) && (!rule.device_class || states[id]?.attributes?.device_class === rule.device_class) && (!exclude || !exclude.test(id)));
   }
   return matches;
 }
@@ -455,7 +455,7 @@ function ruleHeld(rule, entity, now = Date.now()) {
 function matchSignature(states, rules, matches) {
   const timed = rules.filter((rule) => isFilterRule(rule) && Number(rule.for_minutes) > 0);
   return JSON.stringify([
-    Object.entries(matches).map(([key, ids]) => [key, ids.map((id) => [id, states[id]?.state])]),
+    Object.entries(matches).map(([key2, ids]) => [key2, ids.map((id) => [id, states[id]?.state])]),
     timed.map((rule) => (matches[ruleKey(rule)] || []).map((id) => ruleHeld(rule, states[id])))
   ]);
 }
@@ -735,7 +735,7 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
       roots: [
         { key: "title", label: "Titel" },
         { key: "subtitle", label: "Undertitel" },
-        ...["camera", "secondary_camera", "image", "power_switch", "power", "daily_energy", "monthly_energy", "ams_power", "ams_energy", "online", "status", "stage", "task", "progress", "current_layer", "total_layers", "remaining_time", "end_time", "nozzle_temperature", "nozzle_target", "bed_temperature", "bed_target", "active_tray", "ams_humidity", "ams_temperature", "chamber_light", "speed", "pause_button", "resume_button", "stop_button", "error", "hms_error", "aux_fan", "chamber_fan", "cooling_fan"].map((key) => ({ key, label: key.replaceAll("_", " "), type: "entity" })),
+        ...["camera", "secondary_camera", "image", "power_switch", "power", "daily_energy", "monthly_energy", "ams_power", "ams_energy", "online", "status", "stage", "task", "progress", "current_layer", "total_layers", "remaining_time", "end_time", "nozzle_temperature", "nozzle_target", "bed_temperature", "bed_target", "active_tray", "ams_humidity", "ams_temperature", "chamber_light", "speed", "pause_button", "resume_button", "stop_button", "error", "hms_error", "aux_fan", "chamber_fan", "cooling_fan"].map((key2) => ({ key: key2, label: key2.replaceAll("_", " "), type: "entity" })),
         { key: "animation", label: "Animation", type: "boolean" },
         { key: "show_camera", label: "Vis kamera", type: "boolean" },
         { key: "show_ams", label: "Vis AMS", type: "boolean" }
@@ -776,7 +776,7 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
     return { rows: "auto", columns: 12, min_columns: 6 };
   }
   _entityIds() {
-    return [...new Set([...Object.entries(this._config).filter(([key]) => !["title", "subtitle"].includes(key)).flatMap(([, value]) => typeof value === "string" && value.includes(".") ? [value] : []), ...(this._config.ams_trays || []).map((tray) => tray.entity)].filter(Boolean))];
+    return [...new Set([...Object.entries(this._config).filter(([key2]) => !["title", "subtitle"].includes(key2)).flatMap(([, value]) => typeof value === "string" && value.includes(".") ? [value] : []), ...(this._config.ams_trays || []).map((tray) => tray.entity)].filter(Boolean))];
   }
   _state(id) {
     return id ? this._hass?.states?.[id] : void 0;
@@ -804,12 +804,12 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
   _error() {
     return [this._config.error, this._config.hms_error].some((id) => this._state(id)?.state === "on");
   }
-  _text(key, value) {
-    const node = this.shadowRoot?.querySelector(`[data-value="${key}"]`);
+  _text(key2, value) {
+    const node = this.shadowRoot?.querySelector(`[data-value="${key2}"]`);
     if (node) node.textContent = value;
   }
-  _metric(key, id, digits = 0) {
-    this._text(key, `${this._fmt(this._number(id), digits)}${this._unit(id) ? ` ${this._unit(id)}` : ""}`);
+  _metric(key2, id, digits = 0) {
+    this._text(key2, `${this._fmt(this._number(id), digits)}${this._unit(id) ? ` ${this._unit(id)}` : ""}`);
   }
   _relativeTime(id) {
     const raw = this._value(id);
@@ -835,7 +835,7 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
   _build() {
     if (!this._config) return;
     const showCamera = this._config.show_camera !== false;
-    const fanHtml = [["aux_fan", "Hj\xE6lpebl\xE6ser"], ["chamber_fan", "Kammerbl\xE6ser"], ["cooling_fan", "K\xF8lebl\xE6ser"]].filter(([key]) => this._config[key]).map(([key, label]) => `<button class="fan" data-entity="${this._escape(this._config[key])}" data-fan="${key}"><span class="fan-icon"><ha-icon icon="mdi:fan"></ha-icon></span><span class="fan-copy"><b>${label}</b><small><i><em></em></i></small></span><strong data-value="${key}">\u2014</strong></button>`).join("");
+    const fanHtml = [["aux_fan", "Hj\xE6lpebl\xE6ser"], ["chamber_fan", "Kammerbl\xE6ser"], ["cooling_fan", "K\xF8lebl\xE6ser"]].filter(([key2]) => this._config[key2]).map(([key2, label]) => `<button class="fan" data-entity="${this._escape(this._config[key2])}" data-fan="${key2}"><span class="fan-icon"><ha-icon icon="mdi:fan"></ha-icon></span><span class="fan-copy"><b>${label}</b><small><i><em></em></i></small></span><strong data-value="${key2}">\u2014</strong></button>`).join("");
     const heroHtml = `<section class="hero"><div class="hero-ambient"><i></i><i></i><i></i></div><div class="hero-top"><div class="hero-primary"><span class="hero-machine"><ha-icon icon="mdi:printer-3d-nozzle-outline"></ha-icon><i></i></span><div><span class="hero-label">Aktuelt print</span><span class="task-viewport"><strong class="task" data-value="task">\u2014</strong></span><small><ha-icon icon="mdi:layers-triple-outline"></ha-icon><span data-value="stage">\u2014</span></small></div></div><div class="hero-stats"><div><span><ha-icon icon="mdi:layers-outline"></ha-icon>Lag</span><strong data-value="layers">\u2014</strong></div><div><span><ha-icon icon="mdi:timer-sand"></ha-icon>Resterende</span><strong data-value="remaining">\u2014</strong></div><div><span><ha-icon icon="mdi:flag-checkered"></ha-icon>F\xE6rdig</span><strong data-value="end">\u2014</strong></div><div class="heat"><span><ha-icon icon="mdi:printer-3d-nozzle-heat-outline"></ha-icon>Dyse</span><strong><b data-value="nozzle">\u2014</b>\xB0 <small>/ <span data-value="nozzle-target">\u2014</span>\xB0</small></strong></div><div class="heat"><span><ha-icon icon="mdi:radiator"></ha-icon>Printbed</span><strong><b data-value="bed">\u2014</b>\xB0 <small>/ <span data-value="bed-target">\u2014</span>\xB0</small></strong></div><div class="power"><span><ha-icon icon="mdi:flash-outline"></ha-icon>Str\xF8m nu</span><strong data-value="power">\u2014</strong></div></div></div><div class="print-status"><div class="print-status-meta"><span><i></i><b data-value="progress-status">Afventer</b><small>Live printforl\xF8b</small></span><strong data-value="progress">\u2014</strong></div><div class="print-status-bar"><i><b></b></i></div></div></section>`;
     const visualHtml = showCamera ? `<section class="visual"><div class="camera-host" style="min-height:330px;background:#080b0f"></div><div class="camera-switch"><button class="active" data-camera="0"><ha-icon icon="mdi:camera-overhead"></ha-icon>Top</button><button data-camera="1"><ha-icon icon="mdi:camera-side"></ha-icon>Side</button></div></section>` : "";
     const amsHtml = "";
@@ -954,12 +954,12 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
     this._metric("daily", this._config.daily_energy, 2);
     this._metric("monthly", this._config.monthly_energy, 2);
     this._text("ams-energy", `${this._fmt(this._number(this._config.ams_power), 1)} W / ${this._fmt(this._number(this._config.ams_energy), 2)} kWh`);
-    [["aux_fan", this._config.aux_fan], ["chamber_fan", this._config.chamber_fan], ["cooling_fan", this._config.cooling_fan]].forEach(([key, id]) => {
+    [["aux_fan", this._config.aux_fan], ["chamber_fan", this._config.chamber_fan], ["cooling_fan", this._config.cooling_fan]].forEach(([key2, id]) => {
       const state = this._state(id);
       const value = this._value(id);
       const percentage = Math.max(0, Math.min(100, Number(state?.attributes?.percentage ?? state?.state) || 0));
-      this._text(key, value);
-      const fan = this.shadowRoot.querySelector(`[data-fan="${key}"]`);
+      this._text(key2, value);
+      const fan = this.shadowRoot.querySelector(`[data-fan="${key2}"]`);
       fan?.classList.toggle("on", state?.state === "on" || percentage > 0);
       fan?.style.setProperty("--fan", `${percentage}%`);
     });
@@ -1012,12 +1012,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION57 = "0.4.6";
+  const VERSION58 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
-  const savePoolTab = (key) => {
+  const savePoolTab = (key2) => {
     try {
-      sessionStorage.setItem(POOL_TAB_KEY, JSON.stringify({ key, at: Date.now() }));
+      sessionStorage.setItem(POOL_TAB_KEY, JSON.stringify({ key: key2, at: Date.now() }));
     } catch {
     }
   };
@@ -1213,8 +1213,8 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       this.patch("advice", this.adviceView());
       this.patch("winter", this.winterView());
     }
-    timer(key) {
-      const s = this.state(key);
+    timer(key2) {
+      const s = this.state(key2);
       if (s?.state !== "active") return "Inaktiv";
       const finish = s.attributes?.finishes_at;
       const seconds = finish ? Math.max(0, Math.floor((new Date(finish).getTime() - Date.now()) / 1e3)) : null;
@@ -1233,11 +1233,11 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
       const allowed = { Inaktiv: ["prepare"], "Klar til BACKWASH": ["backwash", "abort"], "BACKWASH k\xF8rer": ["abort"], "Klar til RINSE": ["rinse", "abort"], "RINSE k\xF8rer": ["abort"], "S\xE6t p\xE5 FILTER": ["finish", "abort"] };
       const can = allowed[state] || [];
       const blocked = this.raw("winter") !== "off";
-      return `<div class="workflow">${phases.map(([label, key], i) => `<button class="phase ${can.includes(key) ? "ready" : ""} ${key === "abort" ? "danger" : ""}" data-script="${key}" ${!can.includes(key) || blocked && key !== "abort" ? "disabled" : ""}><small>0${i + 1}</small>${this.icon(["cog", "filter", "stop", "water", "check"][i])}<b>${label}</b></button>`).join("")}</div><div class="timers"><span>${this.icon("information-outline")}<em class="tl">Status</em> <b>${safe2(state)}</b></span><span>${this.icon("filter")}<em class="tl">Backwash</em> <b data-timer="backwashTimer">${this.timer("backwashTimer")}</b></span><span>${this.icon("water")}<em class="tl">Rinse</em> <b data-timer="rinseTimer">${this.timer("rinseTimer")}</b></span></div><p class="hint">Flyt kun multiventilen, n\xE5r pumpen er stoppet. Bekr\xE6ft hvert trin f\xF8r start.</p>`;
+      return `<div class="workflow">${phases.map(([label, key2], i) => `<button class="phase ${can.includes(key2) ? "ready" : ""} ${key2 === "abort" ? "danger" : ""}" data-script="${key2}" ${!can.includes(key2) || blocked && key2 !== "abort" ? "disabled" : ""}><small>0${i + 1}</small>${this.icon(["cog", "filter", "stop", "water", "check"][i])}<b>${label}</b></button>`).join("")}</div><div class="timers"><span>${this.icon("information-outline")}<em class="tl">Status</em> <b>${safe2(state)}</b></span><span>${this.icon("filter")}<em class="tl">Backwash</em> <b data-timer="backwashTimer">${this.timer("backwashTimer")}</b></span><span>${this.icon("water")}<em class="tl">Rinse</em> <b data-timer="rinseTimer">${this.timer("rinseTimer")}</b></span></div><p class="hint">Flyt kun multiventilen, n\xE5r pumpen er stoppet. Bekr\xE6ft hvert trin f\xF8r start.</p>`;
     }
     adviceView() {
       const rows = [["filter", "Filtreringsfremdrift", "progress-check"], ["warning", "Statusadvarsel", "alert-circle-outline"], ["next", "N\xE6ste handling", "calendar-check"], ["swim", "Bedste badetid", "weather-sunny"], ["cover", "Coverstatus", "pool"], ["maintenance", "Vedligeholdelse", "wrench"]];
-      return `<div class="advice-grid">${rows.map(([key, label, icon5]) => `<div class="advice-row">${this.icon(icon5)}<span>${label}</span><b>${key === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key)}</b></div>`).join("")}</div>`;
+      return `<div class="advice-grid">${rows.map(([key2, label, icon5]) => `<div class="advice-row">${this.icon(icon5)}<span>${label}</span><b>${key2 === "cover" ? this.on("cover") ? "P\xE5" : "Af" : this.txt(key2)}</b></div>`).join("")}</div>`;
     }
     winterView() {
       const s = this.state("winter");
@@ -1374,9 +1374,9 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
         return;
       }
       if (el.dataset.script) {
-        const key = el.dataset.script;
-        if (["backwash", "rinse", "finish", "prepare"].includes(key) && !window.confirm("Bekr\xE6ft at multiventilen st\xE5r korrekt, og pumpen er stoppet f\xF8r ventilen flyttes.")) return;
-        this.call("script.turn_on", ACTIONS[key]);
+        const key2 = el.dataset.script;
+        if (["backwash", "rinse", "finish", "prepare"].includes(key2) && !window.confirm("Bekr\xE6ft at multiventilen st\xE5r korrekt, og pumpen er stoppet f\xF8r ventilen flyttes.")) return;
+        this.call("script.turn_on", ACTIONS[key2]);
       }
     }
     change(e) {
@@ -1430,16 +1430,16 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION57}`);
+  console.info(`HA POOL CARD v${VERSION58}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION57 = "0.3.5";
+  const VERSION58 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
-  const savePoolTab = (key) => {
+  const savePoolTab = (key2) => {
     try {
-      sessionStorage.setItem(POOL_TAB_KEY, JSON.stringify({ key, at: Date.now() }));
+      sessionStorage.setItem(POOL_TAB_KEY, JSON.stringify({ key: key2, at: Date.now() }));
     } catch {
     }
   };
@@ -1668,7 +1668,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION57}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION58}`);
 })();
 
 // src/cards/shared/keep-scroll.js
@@ -1681,7 +1681,7 @@ function keepScroll(host, render) {
   const y = window.scrollY;
   const root = host.shadowRoot;
   const focused = root?.activeElement;
-  const key = focused && Object.keys(focused.dataset || {}).length ? Object.entries(focused.dataset).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (c2) => `-${c2.toLowerCase()}`)}="${CSS.escape(v)}"]`).join("") : "";
+  const key2 = focused && Object.keys(focused.dataset || {}).length ? Object.entries(focused.dataset).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (c2) => `-${c2.toLowerCase()}`)}="${CSS.escape(v)}"]`).join("") : "";
   const restore = () => {
     for (const [el, top, left] of saved) {
       if (el.scrollTop !== top) el.scrollTop = top;
@@ -1692,7 +1692,7 @@ function keepScroll(host, render) {
   try {
     return render();
   } finally {
-    if (key && !focused.isConnected) root.querySelector(key)?.focus({ preventScroll: true });
+    if (key2 && !focused.isConnected) root.querySelector(key2)?.focus({ preventScroll: true });
     restore();
     let moved = false;
     const mark = () => {
@@ -1881,10 +1881,10 @@ var HARoborockVacuumCard = class extends HTMLElement {
   }
   _consumable(label, hoursLeft) {
     const warn = Number.isFinite(hoursLeft) && hoursLeft <= 0;
-    const pct3 = Number.isFinite(hoursLeft) ? Math.max(0, Math.min(100, hoursLeft / 300 * 100)) : 0;
+    const pct4 = Number.isFinite(hoursLeft) ? Math.max(0, Math.min(100, hoursLeft / 300 * 100)) : 0;
     return `<div class="consumable ${warn ? "warn" : ""}">
       <div class="consumable-head"><span>${label}</span><b>${Number.isFinite(hoursLeft) ? `${this._fmt(hoursLeft)} t` : "\u2014"}</b></div>
-      <div class="track"><i style="width:${pct3}%"></i></div>
+      <div class="track"><i style="width:${pct4}%"></i></div>
     </div>`;
   }
   _switchChip(id, label, icon5) {
@@ -2379,9 +2379,9 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._tab) this._tab = this._hasChargeContext() ? "charge" : "vehicle";
-    const key = JSON.stringify(this.config);
-    if (this._structureKey !== key) {
-      this._structureKey = key;
+    const key2 = JSON.stringify(this.config);
+    if (this._structureKey !== key2) {
+      this._structureKey = key2;
       this._build();
     }
     this._syncTabOrder();
@@ -2393,15 +2393,15 @@ var HaTeslaVehicleCard = class extends HTMLElement {
   getGridOptions() {
     return { columns: "full", rows: "auto" };
   }
-  _s(key) {
-    return this._hass?.states?.[this.config.entities[key]];
+  _s(key2) {
+    return this._hass?.states?.[this.config.entities[key2]];
   }
-  _n(key) {
-    const value = Number(this._s(key)?.state);
+  _n(key2) {
+    const value = Number(this._s(key2)?.state);
     return Number.isFinite(value) ? value : null;
   }
-  _txt(key, fallback = "\u2014") {
-    const value = this._s(key)?.state;
+  _txt(key2, fallback = "\u2014") {
+    const value = this._s(key2)?.state;
     return value && !["unknown", "unavailable"].includes(value) ? value : fallback;
   }
   _fmt(value, digits = 0) {
@@ -2596,12 +2596,12 @@ var HaTeslaVehicleCard = class extends HTMLElement {
     const v = this._txt("chargerMode", "");
     return { connected_charging: "\u26A1 LADER", connected_requesting: "\u25F7 VENTER", connected_finished: "\u2713 F\xC6RDIG", disconnected: "\u25CB FRAKOBLET" }[v] || v.replaceAll("_", " ").toUpperCase();
   }
-  _stateText(key, labels = {}) {
-    const value = this._txt(key, "");
+  _stateText(key2, labels = {}) {
+    const value = this._txt(key2, "");
     return labels[value] || (!value ? "\u2014" : value === "unavailable" ? "Utilg\xE6ngelig" : value.replaceAll("_", " "));
   }
-  _psi(key) {
-    const value = this._n(key);
+  _psi(key2) {
+    const value = this._n(key2);
     return value == null ? "\u2014" : `${this._fmt(value, 1)} psi`;
   }
   _montaLabel() {
@@ -2693,9 +2693,9 @@ var HaTeslaVehicleCard = class extends HTMLElement {
     }
     this._hass.callService("switch", start ? "turn_on" : "turn_off", {}, { entity_id: entityId });
   }
-  _press(key, message) {
+  _press(key2, message) {
     if (!confirm(message)) return;
-    this._hass.callService("button", "press", {}, { entity_id: this.config.entities[key] });
+    this._hass.callService("button", "press", {}, { entity_id: this.config.entities[key2] });
   }
   _moreInfo(entityId) {
     const ev = new Event("hass-more-info", { bubbles: true, composed: true });
@@ -2723,15 +2723,15 @@ var HaTeslaChargePopupCard = class extends HTMLElement {
     if (wrap) wrap.style.borderLeft = "0";
     this._update();
   }
-  _s(key) {
-    return this._hass?.states?.[this.config.entities[key]];
+  _s(key2) {
+    return this._hass?.states?.[this.config.entities[key2]];
   }
-  _n(key) {
-    const n = Number(this._s(key)?.state);
+  _n(key2) {
+    const n = Number(this._s(key2)?.state);
     return Number.isFinite(n) ? n : null;
   }
-  _txt(key, fallback = "\u2014") {
-    const value = this._s(key)?.state;
+  _txt(key2, fallback = "\u2014") {
+    const value = this._s(key2)?.state;
     return value && !["unknown", "unavailable"].includes(value) ? value : fallback;
   }
   _fmt(value, digits = 0) {
@@ -3278,7 +3278,7 @@ var TTD_SC_MODES = [
   ["manual", "Manuel", "mdi:hand-back-right-outline"]
 ];
 var TTD_SC_DEFAULTS = ["smart", "fixed", "price_cap", "now", "manual"];
-var ttdScLabel = (mode) => TTD_SC_MODES.find(([key]) => key === mode)?.[1] || ttdHumanize(mode || "");
+var ttdScLabel = (mode) => TTD_SC_MODES.find(([key2]) => key2 === mode)?.[1] || ttdHumanize(mode || "");
 var TTD_SC_STATUS = {
   plan_only: ["Kun plan", "muted"],
   manual: ["Manuel", "muted"],
@@ -3456,11 +3456,11 @@ var TtdFormat = class {
     this.hour12 = locale.time_format === "12" ? true : locale.time_format === "24" ? false : void 0;
     this._cache = /* @__PURE__ */ new Map();
   }
-  _intl(key, create) {
-    let formatter = this._cache.get(key);
+  _intl(key2, create) {
+    let formatter = this._cache.get(key2);
     if (!formatter) {
       formatter = create();
-      this._cache.set(key, formatter);
+      this._cache.set(key2, formatter);
     }
     return formatter;
   }
@@ -3559,14 +3559,14 @@ function ttdNormalizeConfig(raw) {
   const config = JSON.parse(JSON.stringify(raw || {}));
   const vehicle = config.vehicle && typeof config.vehicle === "object" ? config.vehicle : {};
   const entities = {};
-  for (const [key, value] of Object.entries(config.entities || {})) {
-    if (typeof value === "string" && value.includes(".")) entities[key] = value.trim();
+  for (const [key2, value] of Object.entries(config.entities || {})) {
+    if (typeof value === "string" && value.includes(".")) entities[key2] = value.trim();
   }
   const controls = {};
-  for (const key of TTD_CONTROL_KEYS) {
-    const value = config.controls?.[key];
+  for (const key2 of TTD_CONTROL_KEYS) {
+    const value = config.controls?.[key2];
     const entity = typeof value === "string" ? value : value?.entity;
-    if (typeof entity === "string" && entity.includes(".")) controls[key] = { ...typeof value === "object" ? value : {}, entity: entity.trim() };
+    if (typeof entity === "string" && entity.includes(".")) controls[key2] = { ...typeof value === "object" ? value : {}, entity: entity.trim() };
   }
   const map = { hours_to_show: 6, theme_mode: "auto", default_zoom: 14, style: "default", satellite_labels: true, ...config.map || {} };
   map.style = map.style === "satellite" ? "satellite" : "default";
@@ -3592,9 +3592,9 @@ function ttdNormalizeConfig(raw) {
     parkedImage: typeof vehicle.photos?.parked === "string" && vehicle.photos.parked ? vehicle.photos.parked : null,
     // A picture of the car from above (front up) for the tyres, and where its wheels are in it (% of width/height).
     topImage: typeof vehicle.photos?.top === "string" && vehicle.photos.top ? vehicle.photos.top : null,
-    topWheels: Object.fromEntries(Object.entries({ fl: [13, 19], fr: [87, 19], rl: [13, 79], rr: [87, 79] }).map(([key, fallback]) => {
-      const value = vehicle.photos?.top_wheels?.[key];
-      return [key, Array.isArray(value) && value.length === 2 && value.every((n) => Number.isFinite(Number(n))) ? value.map(Number) : fallback];
+    topWheels: Object.fromEntries(Object.entries({ fl: [13, 19], fr: [87, 19], rl: [13, 79], rr: [87, 79] }).map(([key2, fallback]) => {
+      const value = vehicle.photos?.top_wheels?.[key2];
+      return [key2, Array.isArray(value) && value.length === 2 && value.every((n) => Number.isFinite(Number(n))) ? value.map(Number) : fallback];
     })),
     // The cable in the plugged-in photo ({ path, width, height } in the photo's pixels): animated while charging.
     cable: typeof vehicle.photos?.cable?.path === "string" && Number(vehicle.photos.cable.width) > 0 && Number(vehicle.photos.cable.height) > 0 ? { path: vehicle.photos.cable.path, width: Number(vehicle.photos.cable.width), height: Number(vehicle.photos.cable.height) } : null,
@@ -3612,11 +3612,11 @@ function ttdNormalizeConfig(raw) {
     battery,
     precision,
     // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
-    carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, ttdIdList(config.car_controls?.[key])]).filter(([, ids]) => ids.length)),
+    carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key2]) => [key2, ttdIdList(config.car_controls?.[key2])]).filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
-    plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key]) || typeof config.smart_charge === "string" && config.smart_charge.includes(".") || typeof config.ev_ledger === "string" && config.ev_ledger.includes("."),
+    plan: TTD_PLAN_ENTITY_KEYS.some((key2) => entities[key2]) || TTD_PLAN_CONTROL_KEYS.some((key2) => controls[key2]) || typeof config.smart_charge === "string" && config.smart_charge.includes(".") || typeof config.ev_ledger === "string" && config.ev_ledger.includes("."),
     refresh: (Array.isArray(config.refresh_entities) ? config.refresh_entities : []).filter((id) => typeof id === "string" && id.includes("."))
   };
 }
@@ -3630,18 +3630,18 @@ function ttdDeriveStatus(snapshot) {
   const chargerCharging = mode === "connected_charging" || monta === "busy-charging" || s.power != null && s.power >= 0.3;
   const charging = atCharger ? chargerCharging : s.charging === true || chargingState === "Charging" || chargerCharging;
   const reached = s.soc != null && s.target != null && s.soc >= s.target - 0.5;
-  let key;
-  if (charging) key = "charging";
+  let key2;
+  if (charging) key2 = "charging";
   else if (plugged) {
-    if (chargingState === "Complete" || mode === "connected_finished" && (reached || s.target == null)) key = "complete";
-    else if (monta === "busy-scheduled" || s.scheduled === true || chargingState === "Stopped" || chargingState === "NoPower" || mode === "connected_finished") key = "waiting";
-    else if (mode === "connected_requesting" || chargingState === "Starting") key = "ready";
-    else key = "plugged";
-  } else if (s.asleep === true || s.vehicleState === "asleep") key = "asleep";
-  else if (s.online === true || s.vehicleState === "online") key = "online";
-  else if (s.online === false || s.vehicleState === "offline") key = "offline";
-  else key = "unknown";
-  return { key, label: TTD_TEXT.status[key], tone: TTD_STATUS_TONES[key], icon: TTD_STATUS_ICONS[key], plugged: plugged || charging, charging };
+    if (chargingState === "Complete" || mode === "connected_finished" && (reached || s.target == null)) key2 = "complete";
+    else if (monta === "busy-scheduled" || s.scheduled === true || chargingState === "Stopped" || chargingState === "NoPower" || mode === "connected_finished") key2 = "waiting";
+    else if (mode === "connected_requesting" || chargingState === "Starting") key2 = "ready";
+    else key2 = "plugged";
+  } else if (s.asleep === true || s.vehicleState === "asleep") key2 = "asleep";
+  else if (s.online === true || s.vehicleState === "online") key2 = "online";
+  else if (s.online === false || s.vehicleState === "offline") key2 = "offline";
+  else key2 = "unknown";
+  return { key: key2, label: TTD_TEXT.status[key2], tone: TTD_STATUS_TONES[key2], icon: TTD_STATUS_ICONS[key2], plugged: plugged || charging, charging };
 }
 function ttdPressure(stateObj, options, format) {
   const value = ttdHasValue(stateObj) ? ttdToNumber(stateObj.state) : null;
@@ -3689,17 +3689,17 @@ function ttdIcon(icon5, cls = "") {
 }
 function ttdTemplate(cfg) {
   const e = ttdEsc;
-  const stat = (key, icon5, ref, label) => `<button class="stat" data-more="${key}">${ttdIcon(icon5)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
-  const kpi = (key, icon5, ref, label) => `<button class="kpi" data-more="${key}">${ttdIcon(icon5, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
-  const cell = (key, icon5, tone3, ref, label, extra = "") => `<button class="cell" data-more="${key}">${ttdIcon(icon5, `ic ${tone3}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
-  const row = (key, label, ref, extra = "") => `<button class="row" data-more="${key}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
-  const tire = (key, ref, label) => `<button class="tire" data-more="${key}" data-r="${ref}"><small>${label}</small><b data-r="${ref}V">${TTD_DASH}</b><em data-r="${ref}S"></em></button>`;
-  const item2 = (key, icon5, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon5)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
+  const stat = (key2, icon5, ref, label) => `<button class="stat" data-more="${key2}">${ttdIcon(icon5)}<span class="stat-t"><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></button>`;
+  const kpi = (key2, icon5, ref, label) => `<button class="kpi" data-more="${key2}">${ttdIcon(icon5, "tile-i")}<b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></button>`;
+  const cell = (key2, icon5, tone3, ref, label, extra = "") => `<button class="cell" data-more="${key2}">${ttdIcon(icon5, `ic ${tone3}`)}<span><small>${label}</small><b data-r="${ref}">${TTD_DASH}</b>${extra}</span></button>`;
+  const row = (key2, label, ref, extra = "") => `<button class="row" data-more="${key2}"><span class="row-l">${label}</span><span class="row-v"${extra ? ` data-r="${ref}Box"` : ""}>${extra}<b data-r="${ref}">${TTD_DASH}</b></span></button>`;
+  const tire = (key2, ref, label) => `<button class="tire" data-more="${key2}" data-r="${ref}"><small>${label}</small><b data-r="${ref}V">${TTD_DASH}</b><em data-r="${ref}S"></em></button>`;
+  const item2 = (key2, icon5, ref, label) => `<div class="lc"><span class="lc-i">${ttdIcon(icon5)}</span><span><b data-r="${ref}">${TTD_DASH}</b><small>${label}</small></span></div>`;
   const ranges = cfg.map.ranges.map((hours) => `<button type="button" data-range="${hours}" aria-pressed="false">${hours === 0 ? "Nu" : `${hours}t`}</button>`).join("");
-  const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key, range]) => `<option value="${key}">${range.label}</option>`).join("");
+  const chartOptions = Object.entries(TTD_CHART_RANGES).map(([key2, range]) => `<option value="${key2}">${range.label}</option>`).join("");
   const full = cfg.layout !== "charge";
-  const quick = TTD_CAR_CONTROLS.filter(([key]) => cfg.carControls[key]);
-  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key, label, icon5, domain]) => `<button type="button" class="qc-b${domain === "number" || key === "climate" ? " qc-v" : ""}" ${domain === "number" || key === "climate" ? `data-qc="${key}"` : `data-cc="${key}"`} aria-label="${label}" title="${label}">${ttdIcon(icon5)}<span data-qcv="${key}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
+  const quick = TTD_CAR_CONTROLS.filter(([key2]) => cfg.carControls[key2]);
+  const quickHtml = quick.length ? `<div class="qc" data-r="qc" role="toolbar" aria-label="Bilstyring">${quick.map(([key2, label, icon5, domain]) => `<button type="button" class="qc-b${domain === "number" || key2 === "climate" ? " qc-v" : ""}" ${domain === "number" || key2 === "climate" ? `data-qc="${key2}"` : `data-cc="${key2}"`} aria-label="${label}" title="${label}">${ttdIcon(icon5)}<span data-qcv="${key2}"></span><i class="qc-spin" aria-hidden="true"></i></button>`).join("")}<div class="qc-cap" data-r="qcCap" aria-live="polite" hidden></div><div class="qc-pop" data-r="qcPop" hidden></div></div>` : "";
   return `<div class="wrap" data-r="wrap"><div class="dash${full ? "" : " charge-layout"}${cfg.plan ? "" : " no-plan"}">
 <section class="panel hero" data-r="hero" aria-label="Bilstatus">
   <div class="hero-info">
@@ -3733,7 +3733,7 @@ function ttdTemplate(cfg) {
 </section>
 ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="Smart opladning">
   <header class="ph">${ttdIcon("mdi:clock-outline", "ph-i")}<div class="ph-t"><h3>Smart opladning</h3><p data-r="scSub">${TTD_DASH}</p></div><span class="badge" data-r="scBadge"><span data-r="scBadgeText">${TTD_DASH}</span></span></header>
-  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key}">${ttdIcon(icon5)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
+  <div class="sc-modes" role="radiogroup" aria-label="Ladeplan">${TTD_SC_MODES.map(([key2, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scmode="${key2}">${ttdIcon(icon5)}<span>${label}</span>${ttdIcon("mdi:star", "sc-star")}</button>`).join("")}</div>
   <button type="button" class="btn go wide sc-confirm" data-scconfirm data-r="scConfirm" hidden>Bekr\xE6ft billigst</button>
   <div class="sc-time" data-r="scTime"><div class="sc-chart" data-r="scChart" hidden></div><div class="sc-track" data-r="scTrack"></div><div class="sc-axis"><span data-r="scAxisL">Nu</span><span data-r="scAxisM"></span><span data-r="scAxisR"></span></div><p class="sc-hint" data-r="scHint" hidden></p><p class="sc-hint sc-wait" data-r="scWait" hidden></p><p class="sc-hint sc-late" data-r="scLate" hidden></p></div>
   <div class="sc-hold" data-r="scHold" hidden>${ttdIcon("mdi:cash-clock", "ic amber")}<span><b data-r="scHoldT"></b><small data-r="scHoldS"></small><small class="sc-later" data-r="scHoldW"></small></span>
@@ -3765,7 +3765,7 @@ ${cfg.smart_charge ? `<section class="panel plan sc" data-r="plan" aria-label="S
     <button type="button" class="sc-trip-h" data-scdef data-r="scDefHead" aria-expanded="false">${ttdIcon("mdi:calendar-star", "ic amber")}<span><b>Standardplan</b><small data-r="scDefSum">${TTD_DASH}</small></span>${ttdIcon("mdi:chevron-down", "sc-chev")}</button>
     <div class="sc-trip-b" data-r="scDefBody" hidden>
       <p class="sc-note">K\xF8rer n\xE5r kablet s\xE6ttes i. V\xE6lger du en anden plan, k\xF8rer den \xE9n gang og g\xE5r s\xE5 tilbage hertil.</p>
-      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key]) => TTD_SC_DEFAULTS.includes(key)).map(([key, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key}">${ttdIcon(icon5)}<span>${label}</span></button>`).join("")}</div>
+      <div class="sc-modes sc-defs" role="radiogroup" aria-label="Standardplan">${TTD_SC_MODES.filter(([key2]) => TTD_SC_DEFAULTS.includes(key2)).map(([key2, label, icon5]) => `<button type="button" role="radio" aria-checked="false" data-scdefault="${key2}">${ttdIcon(icon5)}<span>${label}</span></button>`).join("")}</div>
     </div>
   </div>
   <div class="sc-trip sc-opt" data-r="scOpt" hidden>
@@ -3793,7 +3793,7 @@ ${full ? `<section class="panel map" data-r="mapPanel" aria-label="Bilens placer
 </section>
 <section class="panel tpms" data-r="tpms" aria-label="D\xE6ktryk">
   <header class="ph">${ttdIcon("mdi:tire", "ph-i")}<div class="ph-t"><h3>D\xE6ktryk</h3><p data-r="tpmsSum">${TTD_DASH}</p></div><span class="meta" data-r="tpmsTime"></span></header>
-  <div class="tpms-body">${tire("tpms_front_left", "tFL", "Venstre for")}${tire("tpms_front_right", "tFR", "H\xF8jre for")}${cfg.topImage ? `<div class="topcar topphoto" data-r="topPhoto"><img data-r="topImg" alt="" decoding="async">${["FL", "FR", "RL", "RR"].map((key) => `<i class="wheel" data-r="w${key}" style="left:${cfg.topWheels[key.toLowerCase()][0]}%;top:${cfg.topWheels[key.toLowerCase()][1]}%"></i>`).join("")}</div>` : TTD_TOP_CAR}${tire("tpms_rear_left", "tRL", "Venstre bag")}${tire("tpms_rear_right", "tRR", "H\xF8jre bag")}</div>
+  <div class="tpms-body">${tire("tpms_front_left", "tFL", "Venstre for")}${tire("tpms_front_right", "tFR", "H\xF8jre for")}${cfg.topImage ? `<div class="topcar topphoto" data-r="topPhoto"><img data-r="topImg" alt="" decoding="async">${["FL", "FR", "RL", "RR"].map((key2) => `<i class="wheel" data-r="w${key2}" style="left:${cfg.topWheels[key2.toLowerCase()][0]}%;top:${cfg.topWheels[key2.toLowerCase()][1]}%"></i>`).join("")}</div>` : TTD_TOP_CAR}${tire("tpms_rear_left", "tRL", "Venstre bag")}${tire("tpms_rear_right", "tRR", "H\xF8jre bag")}</div>
 </section>
 <section class="panel list drive" data-r="drive" aria-label="K\xF8rsel og historik">
   <header class="ph">${ttdIcon("mdi:road-variant", "ph-i")}<div class="ph-t"><h3>K\xF8rsel &amp; historik</h3></div><button class="icon-btn" data-more="trips" aria-label="\xC5bn ture">${ttdIcon("mdi:chevron-right")}</button></header>
@@ -4633,8 +4633,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return this._fmt;
   }
   /* ------------------------------------------------------ state access */
-  _id(key) {
-    return this._cfg.entities[key] || (this._cfg.smart_charge ? this._autoIds()[key] : void 0);
+  _id(key2) {
+    return this._cfg.entities[key2] || (this._cfg.smart_charge ? this._autoIds()[key2] : void 0);
   }
   /** The car's location tracker: set by hand, or found from EV Ledger. */
   _loc() {
@@ -4648,7 +4648,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const sig = JSON.stringify(sources);
     if (this._autoMap && this._autoSrc === registry && this._autoSig === sig && this._autoStates === !!this._hass?.states) return this._autoMap;
     const map = {};
-    for (const [key, role] of Object.entries(TTD_LEDGER_KEYS)) if (sc[role] && this._hass?.states?.[sc[role]]) map[key] = sc[role];
+    for (const [key2, role] of Object.entries(TTD_LEDGER_KEYS)) if (sc[role] && this._hass?.states?.[sc[role]]) map[key2] = sc[role];
     const states = this._hass?.states || {};
     const battery = sources.battery;
     if (battery) map.battery = battery;
@@ -4665,13 +4665,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       pool = Object.values(registry).filter((entry) => ids.has(entry.device_id) && !entry.hidden);
     }
     const prefix = (battery?.split(".")[1] || "").replace(/_battery(_level)?$/, "");
-    for (const [key, [domain, keys, endings]] of Object.entries(TTD_CAR_KEYS)) {
-      if (map[key]) continue;
+    for (const [key2, [domain, keys, endings]] of Object.entries(TTD_CAR_KEYS)) {
+      if (map[key2]) continue;
       const hit = pool.find((entry) => entry.entity_id.startsWith(`${domain}.`) && keys.includes(entry.translation_key)) || pool.find((entry) => entry.entity_id.startsWith(`${domain}.`) && endings.some((end) => entry.entity_id.endsWith(end)) && !entry.entity_id.includes("destination"));
-      if (hit) map[key] = hit.entity_id;
+      if (hit) map[key2] = hit.entity_id;
       else if (prefix) {
         const guess = endings.map((end) => `${domain}.${prefix}${end}`).find((id) => states[id]);
-        if (guess) map[key] = guess;
+        if (guess) map[key2] = guess;
       }
     }
     const power = sources.charger_power && registry?.[sources.charger_power];
@@ -4690,41 +4690,41 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._autoStates = !!this._hass?.states;
     return map;
   }
-  _so(key) {
-    const id = this._id(key);
+  _so(key2) {
+    const id = this._id(key2);
     return id ? this._hass?.states?.[id] : void 0;
   }
-  _num(key) {
-    const stateObj = this._so(key);
+  _num(key2) {
+    const stateObj = this._so(key2);
     return ttdHasValue(stateObj) ? ttdToNumber(stateObj.state) : null;
   }
-  _text(key) {
-    const stateObj = this._so(key);
+  _text(key2) {
+    const stateObj = this._so(key2);
     return ttdHasValue(stateObj) ? String(stateObj.state).trim() : null;
   }
-  _bool(key) {
-    const stateObj = this._so(key);
+  _bool(key2) {
+    const stateObj = this._so(key2);
     if (!ttdHasValue(stateObj)) return null;
     if (stateObj.state === "on") return true;
     return stateObj.state === "off" ? false : null;
   }
-  _attr(key, name) {
-    return this._so(key)?.attributes?.[name];
+  _attr(key2, name) {
+    return this._so(key2)?.attributes?.[name];
   }
-  _unit(key, fallback = "") {
-    return ttdUnit(this._so(key)?.attributes?.unit_of_measurement ?? fallback);
+  _unit(key2, fallback = "") {
+    return ttdUnit(this._so(key2)?.attributes?.unit_of_measurement ?? fallback);
   }
-  _digits(key, fallback) {
-    const precision = this._cfg.precision[key];
+  _digits(key2, fallback) {
+    const precision = this._cfg.precision[key2];
     return Number.isInteger(precision) ? precision : fallback;
   }
-  _value(key, digits, unitFallback = "") {
-    const value = this._num(key);
-    return value == null ? TTD_DASH : ttdJoin(this._format().number(value, this._digits(key, digits)), this._unit(key, unitFallback));
+  _value(key2, digits, unitFallback = "") {
+    const value = this._num(key2);
+    return value == null ? TTD_DASH : ttdJoin(this._format().number(value, this._digits(key2, digits)), this._unit(key2, unitFallback));
   }
-  _control(key) {
-    const fallback = { target_soc: "target_soc", deadline: "ready_by_time" }[key];
-    const id = this._cfg.controls[key]?.entity || fallback && this._scIds()[fallback];
+  _control(key2) {
+    const fallback = { target_soc: "target_soc", deadline: "ready_by_time" }[key2];
+    const id = this._cfg.controls[key2]?.entity || fallback && this._scIds()[fallback];
     const stateObj = id ? this._hass?.states?.[id] : void 0;
     return stateObj && stateObj.state !== "unavailable" ? { id, stateObj, domain: id.split(".")[0] } : null;
   }
@@ -4944,16 +4944,16 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const mode = this._sc("charge_mode")?.state;
     const now = ttdToNumber(alternatives.now?.cost);
     const clock2 = (role) => ttdIsClock(this._sc(role)?.state) ? ttdClock(this._sc(role).state) : null;
-    const items = [["now", "Lad nu"], ["smart", "Billigst"], ["fixed", "Fast tid"]].map(([key, name]) => {
+    const items = [["now", "Lad nu"], ["smart", "Billigst"], ["fixed", "Fast tid"]].map(([key2, name]) => {
       let label = name;
-      const plan = alternatives[key] || {};
+      const plan = alternatives[key2] || {};
       const cost = ttdToNumber(plan.cost);
       const start = ttdToDate(plan.start);
       const end = ttdToDate(plan.end);
       const detail = start && end ? `${start.getTime() <= Date.now() + 6e4 ? "nu" : f.time(start)}\u2013${f.time(end)}${ttdToNumber(plan.blocks) > 1 ? " (delt)" : ""}` : "Intet at lade";
-      if (key === "fixed" && clock2("fixed_start") && clock2("fixed_end")) label = `${label} ${clock2("fixed_start")}\u2013${clock2("fixed_end")}`;
-      const saving = key !== "now" && cost != null && now != null && now - cost >= 0.5 ? `spar ${ttdJoin(f.number(now - cost, 2), unit)}` : "";
-      return { key, label, price: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), unit), detail, saving, active: key === mode, estimated: !!plan.estimated };
+      if (key2 === "fixed" && clock2("fixed_start") && clock2("fixed_end")) label = `${label} ${clock2("fixed_start")}\u2013${clock2("fixed_end")}`;
+      const saving = key2 !== "now" && cost != null && now != null && now - cost >= 0.5 ? `spar ${ttdJoin(f.number(now - cost, 2), unit)}` : "";
+      return { key: key2, label, price: cost == null ? TTD_DASH : ttdJoin(f.number(cost, 2), unit), detail, saving, active: key2 === mode, estimated: !!plan.estimated };
     });
     return items.some((item2) => item2.price !== TTD_DASH) ? items : null;
   }
@@ -5011,11 +5011,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   /** The car controls: state per button, the value per slider (unless one is being set). */
   /** How a car control stands, in words, and whether it is "on" (lit) or calls for attention. */
-  _ccText(key, o, f) {
+  _ccText(key2, o, f) {
     if (!o) return [TTD_TEXT.unavailable, false, false];
-    if (o.state === "unknown" && key !== "flash") return ["Venter p\xE5 bilen \u2013 tryk sender kommandoen", false, false];
+    if (o.state === "unknown" && key2 !== "flash") return ["Venter p\xE5 bilen \u2013 tryk sender kommandoen", false, false];
     const temp = Number(o.attributes?.current_temperature);
-    switch (key) {
+    switch (key2) {
       case "lock":
         return [{ locked: "L\xE5st", unlocked: "Ul\xE5st", locking: "L\xE5ser\u2026", unlocking: "L\xE5ser op\u2026", open: "\xC5ben" }[o.state] || ttdHumanize(o.state), false, ["unlocked", "open"].includes(o.state)];
       case "climate":
@@ -5027,7 +5027,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       case "flash":
         return ["Blink lys", false, false];
       default: {
-        const unit = o.attributes?.unit_of_measurement || (key === "charge_limit" ? "%" : "A");
+        const unit = o.attributes?.unit_of_measurement || (key2 === "charge_limit" ? "%" : "A");
         return [Number.isFinite(Number(o.state)) ? `${f.number(Number(o.state), 0)} ${unit}` : TTD_TEXT.unavailable, false, false];
       }
     }
@@ -5035,13 +5035,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** A command that was sent and is waiting for the car: done when its entity shows the result, given up after a while. */
   _ccSettle(st) {
     const now = Date.now();
-    for (const [key, item2] of Object.entries(this._ccBusy || {})) {
+    for (const [key2, item2] of Object.entries(this._ccBusy || {})) {
       const o = String(item2.ctl).startsWith("chip:") ? this._hass?.states?.[this._qcChips().find((chip) => `chip:${chip.role}` === item2.ctl)?.target] : st(item2.ctl);
       if (o && item2.done(o)) {
-        delete this._ccBusy[key];
+        delete this._ccBusy[key2];
         if (item2.ok) this._ccSay(item2.ok, 4e3);
       } else if (now >= item2.until) {
-        delete this._ccBusy[key];
+        delete this._ccBusy[key2];
         this._ccSay(`${item2.label} svarede ikke \u2013 pr\xF8v igen`, 6e3, "warn");
       }
     }
@@ -5052,9 +5052,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._ccMsgTimer = setTimeout(() => this._applyCarControls(), ms + 50);
   }
   /** Send a car command and show at once that it is on its way; the button cannot be pressed again until the car answers. */
-  _ccCall(key, ctl, domain, service, data, done, text, ok) {
+  _ccCall(key2, ctl, domain, service, data, done, text, ok) {
     const label = TTD_CAR_CONTROLS.find(([k]) => k === ctl)?.[1] || TTD_QC_CHIPS.find(([k]) => `chip:${k}` === ctl)?.[1] || "Bilen";
-    this._ccBusy = { ...this._ccBusy || {}, [key]: { ctl, done, text, ok, label, until: Date.now() + TTD_CC_BUSY_MS } };
+    this._ccBusy = { ...this._ccBusy || {}, [key2]: { ctl, done, text, ok, label, until: Date.now() + TTD_CC_BUSY_MS } };
     clearTimeout(this._ccBusyTimer);
     this._ccBusyTimer = setTimeout(() => this._applyCarControls(), TTD_CC_BUSY_MS + 100);
     this._applyCarControls();
@@ -5066,7 +5066,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         this._ccSay(`${this._ccWay(targets[0])} svarede ikke \u2013 sender via ${via}\u2026`, 6e3, "warn");
         return send(targets.slice(1));
       }
-      if (this._ccBusy) delete this._ccBusy[key];
+      if (this._ccBusy) delete this._ccBusy[key2];
       this._ccSay(`Fejl: ${err?.message || err}`, 7e3, "warn");
       this._applyCarControls();
       return null;
@@ -5079,78 +5079,78 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     return platform === "tesla_ble" ? "Bluetooth" : platform === "tesla_fleet" ? "Tesla Fleet" : platform === "tesla_custom" ? "Tesla Custom" : "Bilen";
   }
   /** The control's cloud entity: the last one listed (its twin in the car's other integration is found by name). */
-  _ccCloud(key) {
-    const ids = this._cfg.carControls[key] || [];
+  _ccCloud(key2) {
+    const ids = this._cfg.carControls[key2] || [];
     return ids[ids.length - 1];
   }
   /** The same control in the car's other integration, when there is one. */
-  _ccTwin(key) {
-    const id = this._ccCloud(key);
+  _ccTwin(key2) {
+    const id = this._ccCloud(key2);
     const registry = this._hass?.entities;
     const devices = this._hass?.devices;
     if (!id || !registry || !devices) return null;
     this._ccTwins = this._ccTwinsSrc === registry ? this._ccTwins || {} : {};
     this._ccTwinsSrc = registry;
-    if (key in this._ccTwins) return this._ccTwins[key];
+    if (key2 in this._ccTwins) return this._ccTwins[key2];
     const own = registry[id];
     const name = (dev) => String(dev?.name_by_user || dev?.name || "").toLowerCase();
     const carName = own?.device_id ? name(devices[own.device_id]) : "";
     const domain = id.split(".")[0];
-    const twin = carName ? Object.values(registry).find((entry) => entry.entity_id !== id && entry.entity_id.startsWith(`${domain}.`) && entry.device_id && entry.device_id !== own.device_id && name(devices[entry.device_id]) === carName && TTD_CC_TWINS[key]?.(entry.entity_id)) : null;
-    this._ccTwins[key] = twin?.entity_id || null;
-    return this._ccTwins[key];
+    const twin = carName ? Object.values(registry).find((entry) => entry.entity_id !== id && entry.entity_id.startsWith(`${domain}.`) && entry.device_id && entry.device_id !== own.device_id && name(devices[entry.device_id]) === carName && TTD_CC_TWINS[key2]?.(entry.entity_id)) : null;
+    this._ccTwins[key2] = twin?.entity_id || null;
+    return this._ccTwins[key2];
   }
   /** The control's state: the first listed entity that has one, else the cloud entity's twin; the cloud entity's own
    * (unknown) when none has. */
-  _ccState(key) {
+  _ccState(key2) {
     const states = this._hass?.states || {};
-    const ids = this._cfg.carControls[key] || [];
+    const ids = this._cfg.carControls[key2] || [];
     const known = (o) => o && !["unknown", "unavailable"].includes(o.state);
     for (const id of ids) if (known(states[id])) return states[id];
-    const twin = this._ccTwin(key);
+    const twin = this._ccTwin(key2);
     const t = twin ? states[twin] : null;
-    return known(t) ? t : states[this._ccCloud(key)];
+    return known(t) ? t : states[this._ccCloud(key2)];
   }
   /** Where a command goes, in order: the listed entities that are reachable, then the cloud entity's twin; the cloud entity
    * itself when none is (unknown still sends the command, which wakes the car). */
-  _ccTargets(key) {
+  _ccTargets(key2) {
     const states = this._hass?.states || {};
-    const ids = this._cfg.carControls[key] || [];
+    const ids = this._cfg.carControls[key2] || [];
     const up = (id) => !!id && !!states[id] && states[id].state !== "unavailable";
     const ways = ids.filter(up);
-    const twin = this._ccTwin(key);
+    const twin = this._ccTwin(key2);
     if (up(twin) && !ways.includes(twin)) ways.push(twin);
     return ways.length ? ways : ids.slice(-1);
   }
-  _ccTarget(key) {
-    return this._ccTargets(key)[0];
+  _ccTarget(key2) {
+    return this._ccTargets(key2)[0];
   }
   _applyCarControls() {
     if (!this._r.qc) return;
     const f = this._format();
-    const st = (key) => this._ccState(key);
+    const st = (key2) => this._ccState(key2);
     this._ccSettle(st);
     const busy = this._ccBusy || {};
     const busyFor = (ctl) => Object.values(busy).find((item2) => item2.ctl === ctl);
     for (const button of this.shadowRoot.querySelectorAll(".qc-b")) {
-      const key = button.dataset.cc || button.dataset.qc;
-      const o = st(key);
-      const dead = !o || o.state === "unavailable" && key !== "flash";
-      const [label, on, warn] = this._ccText(key, o, f);
-      const working2 = busyFor(key);
+      const key2 = button.dataset.cc || button.dataset.qc;
+      const o = st(key2);
+      const dead = !o || o.state === "unavailable" && key2 !== "flash";
+      const [label, on, warn] = this._ccText(key2, o, f);
+      const working2 = busyFor(key2);
       button.disabled = !!dead;
       this._attrSet(button, "data-on", !!on && !working2);
       this._attrSet(button, "data-warn", !!warn);
-      this._attrSet(button, "data-armed", this._armed === `cc:${key}`);
+      this._attrSet(button, "data-armed", this._armed === `cc:${key2}`);
       this._attrSet(button, "data-busy", !!working2);
       this._attrSet(button, "aria-busy", String(!!working2));
-      this._attrSet(button, "data-open", this._qcOpen === key);
+      this._attrSet(button, "data-open", this._qcOpen === key2);
       this._attrSet(button, "title", working2 ? working2.text : label);
-      if (key === "lock") button.querySelector("ha-icon")?.setAttribute("icon", ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : ["locking", "unlocking"].includes(o?.state) ? "mdi:lock-clock" : "mdi:lock");
-      const value = button.querySelector(`[data-qcv="${key}"]`);
+      if (key2 === "lock") button.querySelector("ha-icon")?.setAttribute("icon", ["unlocked", "open"].includes(o?.state) ? "mdi:lock-open-variant" : ["locking", "unlocking"].includes(o?.state) ? "mdi:lock-clock" : "mdi:lock");
+      const value = button.querySelector(`[data-qcv="${key2}"]`);
       let shown = "";
-      if (key === "climate" && o && !["off", "unknown", "unavailable"].includes(o.state) && o.attributes?.temperature != null && Number.isFinite(Number(o.attributes.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}\xB0`;
-      else if (["charge_limit", "charge_current"].includes(key)) shown = !dead && o && Number.isFinite(Number(o.state)) ? label : "";
+      if (key2 === "climate" && o && !["off", "unknown", "unavailable"].includes(o.state) && o.attributes?.temperature != null && Number.isFinite(Number(o.attributes.temperature))) shown = `${f.number(Number(o.attributes.temperature), 0)}\xB0`;
+      else if (["charge_limit", "charge_current"].includes(key2)) shown = !dead && o && Number.isFinite(Number(o.state)) ? label : "";
       if (value && value.textContent !== shown) value.textContent = shown;
     }
     const armedKey = this._armed?.startsWith("cc:") ? this._armed.slice(3) : null;
@@ -5166,30 +5166,30 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }
     this._applyQcPop(st, f, busyFor);
     for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
-      const key = input.dataset.ccnum;
-      const o = st(key);
+      const key2 = input.dataset.ccnum;
+      const o = st(key2);
       const a = o?.attributes || {};
-      const pending = this._ccPending?.key === key ? this._ccPending.value : null;
+      const pending = this._ccPending?.key === key2 ? this._ccPending.value : null;
       const value = pending ?? (o && Number.isFinite(Number(o.state)) ? Number(o.state) : null);
-      const unit = a.unit_of_measurement || (key === "charge_limit" ? "%" : "A");
+      const unit = a.unit_of_measurement || (key2 === "charge_limit" ? "%" : "A");
       if (this.shadowRoot.activeElement !== input || pending === null) {
         this._attrSet(input, "min", a.min ?? 0);
         this._attrSet(input, "max", a.max ?? 100);
         this._attrSet(input, "step", a.step ?? 1);
         if (value !== null && input.value !== String(value)) input.value = String(value);
       }
-      input.disabled = value === null || !!busyFor(key);
+      input.disabled = value === null || !!busyFor(key2);
       const lo = Number(input.min) || 0;
       const hi = Number(input.max) || 100;
       if (value !== null) input.style.setProperty("--p", `${hi > lo ? (value - lo) / (hi - lo) * 100 : 0}%`);
-      const out = this.shadowRoot.querySelector(`[data-ccv="${key}"]`);
-      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}${busyFor(key) ? " \u2026" : ""}`;
+      const out = this.shadowRoot.querySelector(`[data-ccv="${key2}"]`);
+      const shown = value === null ? TTD_DASH : `${f.number(value, 0)} ${unit}${busyFor(key2) ? " \u2026" : ""}`;
       if (out && out.textContent !== shown) out.textContent = shown;
     }
   }
   /** The small panel above the buttons: the climate (on/off and temperature) or a number (charge limit, current). */
-  _openQc(key) {
-    this._qcOpen = this._qcOpen === key ? null : key;
+  _openQc(key2) {
+    this._qcOpen = this._qcOpen === key2 ? null : key2;
     this._qcTemp = null;
     const pop = this._r.qcPop;
     if (!pop) return;
@@ -5199,15 +5199,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._applyCarControls();
       return;
     }
-    const [, label, icon5] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+    const [, label, icon5] = TTD_CAR_CONTROLS.find(([k]) => k === key2) || [];
     const head = (more) => `<div class="qcp-h"><span class="qcp-i">${ttdIcon(icon5)}</span><div class="qcp-t"><b>${label}</b><small data-qcp="sub"></small></div>${more ? `<button type="button" class="qcp-x" data-qcmore aria-label="Flere indstillinger" title="Flere indstillinger">${ttdIcon("mdi:dots-horizontal")}</button>` : ""}<button type="button" class="qcp-x" data-qcclose aria-label="Luk">${ttdIcon("mdi:close")}</button></div>`;
-    pop.innerHTML = key === "climate" ? `${head(true)}<div class="qcp-row"><button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
+    pop.innerHTML = key2 === "climate" ? `${head(true)}<div class="qcp-row"><button type="button" class="qcp-power" data-qcpower>${ttdIcon("mdi:power")}<span data-qcp="power"></span><i class="qc-spin" aria-hidden="true"></i></button>
         <div class="qcp-temp"><button type="button" data-qctemp="-1" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-qcp="temp">${TTD_DASH}</b><button type="button" data-qctemp="1" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div></div>
         <div class="qcp-chips" data-qcp="chips"></div>${this._sc("heat_hold") ? `
         <div class="qcp-hold">
           <button type="button" class="qcp-hold-t" data-qchold aria-pressed="false">${ttdIcon("mdi:battery-charging-80")}<span><b>Hold batteriet p\xE5 m\xE5let</b><small data-qcp="holdsub"></small></span><i class="qcp-tog" aria-hidden="true"></i></button>
           <label class="qcp-hold-p"><span>Kun n\xE5r str\xF8mmen koster h\xF8jst</span><input type="number" step="0.05" min="0" inputmode="decimal" data-qcholdprice aria-label="Maks pris pr. kWh"><small data-qcp="holdunit">kr/kWh</small></label>
-        </div>` : ""}` : `${head(false)}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>\xC5bn i Home Assistant \u203A</button>`;
+        </div>` : ""}` : `${head(false)}<div class="cc-num"><b data-ccv="${key2}">${TTD_DASH}</b><input type="range" data-ccnum="${key2}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>\xC5bn i Home Assistant \u203A</button>`;
     this._applyCarControls();
     pop.removeAttribute("data-down");
     const card = this.shadowRoot.querySelector("ha-card") || this;
@@ -5217,11 +5217,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   _applyQcPop(st, f, busyFor) {
     const pop = this._r.qcPop;
-    const key = this._qcOpen;
-    if (!pop || !key || pop.hidden) return;
-    const o = st(key);
+    const key2 = this._qcOpen;
+    if (!pop || !key2 || pop.hidden) return;
+    const o = st(key2);
     const sub = pop.querySelector('[data-qcp="sub"]');
-    if (key === "climate") {
+    if (key2 === "climate") {
       const temp = Number(o?.attributes?.current_temperature);
       const outside = this._num("temperature_outside");
       const subText = [
@@ -5288,7 +5288,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (tEl && tEl.textContent !== tText) tEl.textContent = tText;
       if (tEl) this._attrSet(tEl, "data-busy", this._qcTemp != null || !!(this._ccBusy || {}).climate_temp);
     } else if (sub) {
-      const [label] = this._ccText(key, o, f);
+      const [label] = this._ccText(key2, o, f);
       const text = `Nu ${label}`;
       if (sub.textContent !== text) sub.textContent = text;
     }
@@ -5396,28 +5396,28 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     }, 1200);
   }
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
-  _carControl(key) {
-    const id = this._ccTarget(key);
-    const o = this._ccState(key);
-    if (!o || Object.values(this._ccBusy || {}).some((item2) => item2.ctl === key)) return;
-    if (key === "climate") {
+  _carControl(key2) {
+    const id = this._ccTarget(key2);
+    const o = this._ccState(key2);
+    if (!o || Object.values(this._ccBusy || {}).some((item2) => item2.ctl === key2)) return;
+    if (key2 === "climate") {
       this._openQc("climate");
       return;
     }
-    const critical = key === "lock" && o.state !== "unlocked" && o.state !== "open" || key === "charge_port" || key === "sentry" && o.state === "on";
-    if (critical && this._armed !== `cc:${key}`) {
+    const critical = key2 === "lock" && o.state !== "unlocked" && o.state !== "open" || key2 === "charge_port" || key2 === "sentry" && o.state === "on";
+    if (critical && this._armed !== `cc:${key2}`) {
       this._disarm(false);
-      this._armed = `cc:${key}`;
+      this._armed = `cc:${key2}`;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
       this._queue(true);
       return;
     }
     this._disarm(true);
-    if (key === "lock") {
+    if (key2 === "lock") {
       const lock = o.state !== "locked";
       this._ccCall(
-        key,
-        key,
+        key2,
+        key2,
         "lock",
         lock ? "lock" : "unlock",
         { entity_id: id },
@@ -5425,11 +5425,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         lock ? "L\xE5ser bilen\u2026" : "L\xE5ser op\u2026",
         lock ? "Bilen er l\xE5st" : "Bilen er l\xE5st op"
       );
-    } else if (key === "charge_port") {
+    } else if (key2 === "charge_port") {
       const open = !["open", "opening"].includes(o.state);
       this._ccCall(
-        key,
-        key,
+        key2,
+        key2,
         "cover",
         open ? "open_cover" : "close_cover",
         { entity_id: id },
@@ -5437,11 +5437,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         open ? "\xC5bner ladeporten\u2026" : "Lukker ladeporten\u2026",
         open ? "Ladeporten er \xE5ben" : "Ladeporten er lukket"
       );
-    } else if (key === "sentry") {
+    } else if (key2 === "sentry") {
       const on = o.state !== "on";
       this._ccCall(
-        key,
-        key,
+        key2,
+        key2,
         "switch",
         on ? "turn_on" : "turn_off",
         { entity_id: id },
@@ -5449,9 +5449,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         on ? "Sl\xE5r vagtpost til\u2026" : "Sl\xE5r vagtpost fra\u2026",
         on ? "Vagtpost er til" : "Vagtpost er fra"
       );
-    } else if (key === "flash") {
+    } else if (key2 === "flash") {
       const before = o.state;
-      this._ccCall(key, key, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker\u2026", "Bilen blinkede");
+      this._ccCall(key2, key2, "button", "press", { entity_id: id }, (s) => s.state !== before, "Blinker\u2026", "Bilen blinkede");
     }
   }
   /** EV Ledger's plan as the shared timeline of the charging panel (the Tesla page and the quick charge popup): the
@@ -5543,7 +5543,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const top = Math.max(1, ...months.map((m) => m.home + m.pub), ...hasBefore ? before.map((m) => m.home + m.pub) : []);
     const d = /* @__PURE__ */ new Date();
     const nowKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const date2 = (key) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 15);
+    const date2 = (key2) => new Date(Number(key2.slice(0, 4)), Number(key2.slice(5, 7)) - 1, 15);
     const kr2 = (value, digits = 0) => ttdJoin(f.number(value, digits), unit);
     const perKwh = ttdUnit(`${a.unit_of_measurement || "DKK"}/kWh`);
     const bars = months.map((m, i) => ({
@@ -5739,7 +5739,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       badge: { text: label, tone: tone3 },
       sub: sub.join(" \xB7 ") || TTD_DASH,
       mode,
-      modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key]) => key),
+      modes: Array.isArray(modeObj?.attributes?.options) ? modeObj.attributes.options.map(String) : TTD_SC_MODES.map(([key2]) => key2),
       segments,
       marks,
       chart,
@@ -5993,9 +5993,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** Typing changes the draft; the total follows kWh × price per kWh, the price per kWh follows a total typed in. */
   _ceInput(el) {
     const d = this._ceDraft;
-    const key = el.dataset.cein;
-    if (!d || !key) return;
-    d[key] = el.value;
+    const key2 = el.dataset.cein;
+    if (!d || !key2) return;
+    d[key2] = el.value;
     d.error = "";
     d.saved = "";
     const body = this._r.ceBody;
@@ -6005,13 +6005,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (input && input !== el) input.value = value;
     };
     const kwh = ttdCeNum(d.kwh);
-    if (key === "per" || key === "kwh" && d.last === "per") {
+    if (key2 === "per" || key2 === "kwh" && d.last === "per") {
       const per = ttdCeNum(d.per);
-      if (key === "per") d.last = "per";
+      if (key2 === "per") d.last = "per";
       if (kwh > 0 && per != null) set("total", ttdCeText(kwh * per, 2));
-    } else if (key === "total" || key === "kwh") {
+    } else if (key2 === "total" || key2 === "kwh") {
       const total = ttdCeNum(d.total);
-      if (key === "total") d.last = "total";
+      if (key2 === "total") d.last = "total";
       if (kwh > 0 && total != null) set("per", ttdCeText(total / kwh, 2));
     }
     const sum = body?.querySelector("[data-cesum]");
@@ -6111,9 +6111,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const weekend = ttdClock(this._sc("ready_by_weekend")?.state) || "09:00";
     const weekendOn = this._sc("weekend_ready_by")?.state === "on";
     const days = {};
-    for (const [key] of TTD_RB_DAYS) {
-      const day2 = a.days?.[key];
-      days[key] = day2 ? { on: true, time: ttdClock(day2.time) || same, target: day2.target ?? "" } : a.days ? { on: false, time: same, target: "" } : { on: true, time: weekendOn && (key === "sat" || key === "sun") ? weekend : same, target: "" };
+    for (const [key2] of TTD_RB_DAYS) {
+      const day2 = a.days?.[key2];
+      days[key2] = day2 ? { on: true, time: ttdClock(day2.time) || same, target: day2.target ?? "" } : a.days ? { on: false, time: same, target: "" } : { on: true, time: weekendOn && (key2 === "sat" || key2 === "sun") ? weekend : same, target: "" };
     }
     const next = ttdToDate(a.next_ready_by);
     this._rbDraft = {
@@ -6159,8 +6159,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const targets = (value) => `<option value=""${value === "" || value == null ? " selected" : ""}>Normal ${Math.round(normal)} %</option>${[50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100].map((v) => `<option value="${v}"${Number(value) === v ? " selected" : ""}>${v} %</option>`).join("")}`;
     const now = /* @__PURE__ */ new Date();
     const max = new Date(now.getTime() + 14 * 864e5);
-    const onDays = TTD_RB_DAYS.filter(([key]) => d.days[key].on);
-    const earliest = onDays.map(([key]) => d.days[key].time).sort()[0];
+    const onDays = TTD_RB_DAYS.filter(([key2]) => d.days[key2].on);
+    const earliest = onDays.map(([key2]) => d.days[key2].time).sort()[0];
     const scroll = this._r.rbDlg?.scrollTop || 0;
     body.innerHTML = `
       <header class="rb-h">
@@ -6193,11 +6193,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
             <input type="time" step="60" data-rbin="weekend" value="${ttdEsc(d.weekend)}" ${d.weekendOn ? "" : "disabled"} aria-label="Weekend">
           </div>
           <p class="rb-note">M\xE5let er ${Math.round(normal)} % (M\xE5l SOC). Med ugeplanen kan hver dag f\xE5 sin egen tid og sit eget m\xE5l, og dage uden k\xF8rsel kan springes over.</p>` : `
-          <div class="rb-week">${TTD_RB_DAYS.map(([key, name]) => {
-      const day2 = d.days[key];
+          <div class="rb-week">${TTD_RB_DAYS.map(([key2, name]) => {
+      const day2 = d.days[key2];
       return `<div class="rb-wd${day2.on ? "" : " off"}">
-              <button type="button" class="rb-tog" data-rbday="${key}" aria-pressed="${day2.on}" aria-label="${name} ${day2.on ? "til" : "fri"}">${ttdIcon(day2.on ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>${name}</span></button>
-              ${day2.on ? `<input type="time" step="60" data-rbin="time:${key}" value="${ttdEsc(day2.time)}" aria-label="${name} klar senest"><select data-rbin="target:${key}" aria-label="${name} m\xE5l">${targets(day2.target)}</select>` : `<span class="rb-free">Fri dag \u2013 ingen klar-tid</span>`}
+              <button type="button" class="rb-tog" data-rbday="${key2}" aria-pressed="${day2.on}" aria-label="${name} ${day2.on ? "til" : "fri"}">${ttdIcon(day2.on ? "mdi:checkbox-marked-circle" : "mdi:checkbox-blank-circle-outline")}<span>${name}</span></button>
+              ${day2.on ? `<input type="time" step="60" data-rbin="time:${key2}" value="${ttdEsc(day2.time)}" aria-label="${name} klar senest"><select data-rbin="target:${key2}" aria-label="${name} m\xE5l">${targets(day2.target)}</select>` : `<span class="rb-free">Fri dag \u2013 ingen klar-tid</span>`}
             </div>`;
     }).join("")}</div>
           <div class="rb-tools">
@@ -6217,11 +6217,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** Inputs only change the draft (no redraw while typing). */
   _rbInput(el) {
     const d = this._rbDraft;
-    const key = el.dataset.rbin;
-    if (!d || !key) return;
-    if (key.startsWith("time:")) d.days[key.slice(5)].time = el.value;
-    else if (key.startsWith("target:")) d.days[key.slice(7)].target = el.value;
-    else d[key] = el.value;
+    const key2 = el.dataset.rbin;
+    if (!d || !key2) return;
+    if (key2.startsWith("time:")) d.days[key2.slice(5)].time = el.value;
+    else if (key2.startsWith("target:")) d.days[key2.slice(7)].target = el.value;
+    else d[key2] = el.value;
   }
   _rbAction(target2) {
     const d = this._rbDraft;
@@ -6235,12 +6235,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       day2.on = !day2.on;
     } else if (target2.dataset.rbweekend != null) d.weekendOn = !d.weekendOn;
     else if (target2.dataset.rbcopy != null) {
-      for (const key of ["tue", "wed", "thu", "fri"]) d.days[key] = { ...d.days.mon };
+      for (const key2 of ["tue", "wed", "thu", "fri"]) d.days[key2] = { ...d.days.mon };
     } else if (target2.dataset.rblearned != null) {
       const learned = this._sc("learn_departure")?.attributes?.departures || {};
-      TTD_RB_DAYS.forEach(([key], i) => {
+      TTD_RB_DAYS.forEach(([key2], i) => {
         const time = learned[TTD_RB_LEARNED[i]];
-        d.days[key] = time ? { ...d.days[key], on: true, time } : { ...d.days[key], on: false };
+        d.days[key2] = time ? { ...d.days[key2], on: true, time } : { ...d.days[key2], on: false };
       });
     } else if (target2.dataset.rbsave != null) return this._rbSave();
     else if (target2.dataset.rboncesave != null) return this._rbOnceSave();
@@ -6289,14 +6289,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const d = this._rbDraft;
     if (d.mode === "week") {
       const days = {};
-      for (const [key, name] of TTD_RB_DAYS) {
-        const day2 = d.days[key];
+      for (const [key2, name] of TTD_RB_DAYS) {
+        const day2 = d.days[key2];
         if (day2.on && !ttdIsClock(day2.time)) {
           d.error = `V\xE6lg en tid for ${name.toLowerCase()}.`;
           this._rbRender();
           return;
         }
-        days[key] = day2.on ? { time: day2.time, ...day2.target !== "" && day2.target != null ? { target: Number(day2.target) } : {} } : null;
+        days[key2] = day2.on ? { time: day2.time, ...day2.target !== "" && day2.target != null ? { target: Number(day2.target) } : {} } : null;
       }
       if (!Object.values(days).some(Boolean)) {
         d.error = "Mindst \xE9n dag skal have en klar-senest-tid.";
@@ -6349,8 +6349,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   _tpmsModel(f) {
     const tires = {};
     let newest = null;
-    for (const [ref, key] of [["FL", "tpms_front_left"], ["FR", "tpms_front_right"], ["RL", "tpms_rear_left"], ["RR", "tpms_rear_right"]]) {
-      const stateObj = this._so(key);
+    for (const [ref, key2] of [["FL", "tpms_front_left"], ["FR", "tpms_front_right"], ["RL", "tpms_rear_left"], ["RR", "tpms_rear_right"]]) {
+      const stateObj = this._so(key2);
       tires[ref] = ttdPressure(stateObj, this._cfg.tpms, f);
       const seen = ttdToNumber(stateObj?.attributes?.tpms_last_seen_pressure_timestamp);
       if (ttdHasValue(stateObj) && seen != null && (newest == null || seen > newest)) newest = seen;
@@ -6679,13 +6679,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (this.shadowRoot.activeElement !== input && input.value !== dl.input) input.value = dl.input;
     }
     this._hide("planCtl", !m.sc && !p.soc && !dl.editable && !rb);
-    for (const key of ["FL", "FR", "RL", "RR"]) {
-      const tire = m.tpms.tires[key];
-      this._attrSet(`t${key}`, "data-tone", tire.tone);
-      this._attrSet(`w${key}`, "data-tone", tire.tone);
-      this._t(`t${key}V`, tire.text);
-      this._t(`t${key}S`, { ok: "Normalt", warn: tire.status, crit: tire.status }[tire.tone] || tire.status);
-      if (r[`t${key}`]) this._attrSet(`t${key}`, "aria-label", `${r[`t${key}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
+    for (const key2 of ["FL", "FR", "RL", "RR"]) {
+      const tire = m.tpms.tires[key2];
+      this._attrSet(`t${key2}`, "data-tone", tire.tone);
+      this._attrSet(`w${key2}`, "data-tone", tire.tone);
+      this._t(`t${key2}V`, tire.text);
+      this._t(`t${key2}S`, { ok: "Normalt", warn: tire.status, crit: tire.status }[tire.tone] || tire.status);
+      if (r[`t${key2}`]) this._attrSet(`t${key2}`, "aria-label", `${r[`t${key2}`].querySelector("small").textContent}: ${tire.text}${tire.status ? `, ${tire.status}` : ""}`);
     }
     this._t("tpmsTime", m.tpms.measured);
     if (r.topImg && r.topImg.dataset.src !== this._cfg.topImage) {
@@ -6693,10 +6693,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       r.topImg.src = this._url(this._cfg.topImage);
     }
     const names2 = { FL: "venstre for", FR: "h\xF8jre for", RL: "venstre bag", RR: "h\xF8jre bag" };
-    const tires = ["FL", "FR", "RL", "RR"].map((key) => [key, m.tpms.tires[key]]);
+    const tires = ["FL", "FR", "RL", "RR"].map((key2) => [key2, m.tpms.tires[key2]]);
     const off = tires.filter(([, tire]) => ["warn", "crit"].includes(tire.tone));
     const known = tires.filter(([, tire]) => tire.tone !== "muted");
-    const summary = !known.length ? TTD_TEXT.tpms.unknown : !off.length ? "Alle fire d\xE6k har normalt tryk" : Object.entries(off.reduce((acc, [key, tire]) => ({ ...acc, [tire.status]: [...acc[tire.status] || [], names2[key]] }), {})).map(([status, where]) => `${status}: ${where.join(", ")}`).join(" \xB7 ");
+    const summary = !known.length ? TTD_TEXT.tpms.unknown : !off.length ? "Alle fire d\xE6k har normalt tryk" : Object.entries(off.reduce((acc, [key2, tire]) => ({ ...acc, [tire.status]: [...acc[tire.status] || [], names2[key2]] }), {})).map(([status, where]) => `${status}: ${where.join(", ")}`).join(" \xB7 ");
     this._t("tpmsSum", summary);
     this._t("month", m.drive.month);
     this._t("totalDist", m.drive.total);
@@ -6832,7 +6832,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet(button, "data-armed", armed);
       button.hidden = !sc.modes.includes(button.dataset.scmode);
       const label = button.querySelector("span");
-      const text = armed ? "Bekr\xE6ft" : TTD_SC_MODES.find(([key]) => key === button.dataset.scmode)?.[1] || "";
+      const text = armed ? "Bekr\xE6ft" : TTD_SC_MODES.find(([key2]) => key2 === button.dataset.scmode)?.[1] || "";
       if (label && label.textContent !== text) label.textContent = text;
       const isDefault = sc.def?.mode === button.dataset.scmode;
       this._attrSet(button, "data-default", isDefault);
@@ -6844,13 +6844,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet("scDefHead", "aria-expanded", String(!!this._defOpen));
       this._hide("scDefBody", !this._defOpen);
       for (const button of this.shadowRoot.querySelectorAll(".sc-defs [data-scdefault]")) {
-        const key = button.dataset.scdefault;
-        const armed = this._armed === `default:${key}`;
-        this._attrSet(button, "aria-checked", String(key === sc.def.mode));
+        const key2 = button.dataset.scdefault;
+        const armed = this._armed === `default:${key2}`;
+        this._attrSet(button, "aria-checked", String(key2 === sc.def.mode));
         this._attrSet(button, "data-armed", armed);
-        button.hidden = !sc.def.options.includes(key);
+        button.hidden = !sc.def.options.includes(key2);
         const label = button.querySelector("span");
-        const text = armed ? "Bekr\xE6ft" : ttdScLabel(key);
+        const text = armed ? "Bekr\xE6ft" : ttdScLabel(key2);
         if (label && label.textContent !== text) label.textContent = text;
       }
     }
@@ -7205,9 +7205,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (!this._chargersOn || this._chargerView?.map !== view.map) return;
     const at = this._chargerArea(view);
     if (!at) return;
-    const key = `${at.lat.toFixed(3)},${at.lng.toFixed(3)},${at.radius.toFixed(1)}`;
-    if (key === this._chargerKey) return;
-    this._chargerKey = key;
+    const key2 = `${at.lat.toFixed(3)},${at.lng.toFixed(3)},${at.radius.toFixed(1)}`;
+    if (key2 === this._chargerKey) return;
+    this._chargerKey = key2;
     let reply;
     try {
       reply = await this._hass.callWS({ type: "evledger/chargers", entity_id: this._ledgerEntity(), latitude: at.lat, longitude: at.lng, radius_km: Number(at.radius.toFixed(2)) });
@@ -7216,7 +7216,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       console.warn("th-tesla-dashboard-card: ladesteder", err);
       return;
     }
-    if (this._chargerView?.map !== view.map || key !== this._chargerKey || !this._chargersOn) return;
+    if (this._chargerView?.map !== view.map || key2 !== this._chargerKey || !this._chargersOn) return;
     this._drawChargers(this._chargerView, reply);
     clearTimeout(this._chargerRetry);
     if (reply?.afir?.loading && (this._chargerTries = (this._chargerTries || 0) + 1) <= 6) {
@@ -7231,34 +7231,34 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const car = this._hass?.states?.[this._loc()]?.attributes || {};
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
-    const esc13 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc14 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
       const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
-      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc13(label)}</div>`;
+      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc14(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
-      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc13(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc14(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
         Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}\u2013${money(station.day_range[1])} ${unit}/kWh` : null,
         Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
         ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`)
-      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc13(line)}</div>`).join("") : "");
+      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc14(line)}</div>`).join("") : "");
       const plugCount = /* @__PURE__ */ new Map();
       for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
-        const key = `${esc13(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
-        plugCount.set(key, (plugCount.get(key) || 0) + (Number(c2.count) || 1));
+        const key2 = `${esc14(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
+        plugCount.set(key2, (plugCount.get(key2) || 0) + (Number(c2.count) || 1));
       }
-      const plugs = [...plugCount].map(([key, count]) => `${count > 1 ? `${count} \xD7 ` : ""}${key}`);
+      const plugs = [...plugCount].map(([key2, count]) => `${count > 1 ? `${count} \xD7 ` : ""}${key2}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
-        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc13(station.name || station.operator || "Ladested")}</div>`,
+        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc14(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc13(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc14(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
-        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc13(station.usage_cost)}</div>` : "",
-        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc13(station.feed)} (EU's AFIR-data)</div>` : "",
+        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc14(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc14(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
       ].filter(Boolean).join("")}</div>`;
       let marker;
@@ -7330,14 +7330,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     } else {
       const keys = [];
       for (let step = 0; keys.length < spec.days && step < spec.days * 4 + 8; step += 1) {
-        const key = f.dayKey(new Date(now.getTime() - step * 6 * 36e5), tz);
-        if (!keys.includes(key)) keys.push(key);
+        const key2 = f.dayKey(new Date(now.getTime() - step * 6 * 36e5), tz);
+        if (!keys.includes(key2)) keys.push(key2);
       }
-      slots = keys.reverse().map((key, index) => {
-        const date2 = /* @__PURE__ */ new Date(`${key}T12:00:00Z`);
+      slots = keys.reverse().map((key2, index) => {
+        const date2 = /* @__PURE__ */ new Date(`${key2}T12:00:00Z`);
         const fromEnd = keys.length - 1 - index;
-        const axis = range === "7d" ? f.weekday(date2, "short", "UTC").replace(/\.$/, "") : fromEnd % 5 === 0 ? String(Number(key.slice(8))) : "";
-        return { key, future: false, axis, tip: `${f.weekday(date2, "long", "UTC")} ${Number(key.slice(8))}.${Number(key.slice(5, 7))}.` };
+        const axis = range === "7d" ? f.weekday(date2, "short", "UTC").replace(/\.$/, "") : fromEnd % 5 === 0 ? String(Number(key2.slice(8))) : "";
+        return { key: key2, future: false, axis, tip: `${f.weekday(date2, "long", "UTC")} ${Number(key2.slice(8))}.${Number(key2.slice(5, 7))}.` };
       });
     }
     const series = (id) => {
@@ -7348,9 +7348,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       for (const row of rows) {
         const start = typeof row.start === "number" ? row.start : Date.parse(row.start);
         if (!Number.isFinite(start)) continue;
-        const key = range === "today" ? f.dayKey(start, tz) === todayKey ? f.hour(start, tz) : null : f.dayKey(start, tz);
+        const key2 = range === "today" ? f.dayKey(start, tz) === todayKey ? f.hour(start, tz) : null : f.dayKey(start, tz);
         const change = ttdToNumber(row.change);
-        if (key != null && change != null) values.set(key, (values.get(key) || 0) + Math.max(0, change));
+        if (key2 != null && change != null) values.set(key2, (values.get(key2) || 0) + Math.max(0, change));
         const state = ttdToNumber(row.state);
         if (state != null && (!last || start > last.start)) last = { start, state };
       }
@@ -7500,13 +7500,13 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     r.tip.style.left = `${ttdClamp(x - r.tip.offsetWidth / 2, 0, Math.max(0, width - r.tip.offsetWidth))}px`;
   }
   /* ------------------------------------------------------ interaction */
-  _moreId(key) {
-    if (!key) return null;
-    if (key.startsWith("sc:")) return this._scIds()[key.slice(3)] || null;
-    if (key === "location") return this._loc();
-    if (key === "target_soc") return this._targetEntity();
-    if (key === "deadline") return this._deadlineEntity();
-    return this._cfg.entities[key] || this._cfg.controls[key]?.entity || null;
+  _moreId(key2) {
+    if (!key2) return null;
+    if (key2.startsWith("sc:")) return this._scIds()[key2.slice(3)] || null;
+    if (key2 === "location") return this._loc();
+    if (key2 === "target_soc") return this._targetEntity();
+    if (key2 === "deadline") return this._deadlineEntity();
+    return this._cfg.entities[key2] || this._cfg.controls[key2]?.entity || null;
   }
   _onClick(event) {
     if (event.target && event.target === this._r.rbDlg) {
@@ -7518,7 +7518,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     const ce = event.target?.closest?.("[data-ceopen],[data-ceclose],[data-cepick],[data-cesave],[data-ceremember]");
-    if (ce && Object.keys(ce.dataset || {}).some((key) => key.startsWith("ce"))) {
+    if (ce && Object.keys(ce.dataset || {}).some((key2) => key2.startsWith("ce"))) {
       this._ceAction(ce);
       return;
     }
@@ -7529,7 +7529,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (this._qcOpen && !event.target?.closest?.(".qc-pop,[data-qc]")) this._openQc(this._qcOpen);
     const target2 = event.target?.closest?.("[data-range],[data-action],[data-more],[data-nav],[data-mapstyle],[data-chargers],[data-scmode],[data-scdefault],[data-scdef],[data-sccapx],[data-sclimit],[data-scwait],[data-planact],[data-cc],[data-ccset],[data-ccundo],[data-sctrip],[data-scround],[data-scclear],[data-scconfirm],[data-scphone],[data-scinfo],[data-scsend],[data-scres],[data-qc],[data-qcclose],[data-qcpower],[data-qctemp],[data-qcmore],[data-scopt],[data-scoptrole],[data-pctoggle],[data-pcsave],[data-qcchip],[data-rbopen],[data-rbclose],[data-rbsave],[data-rbmode],[data-rbday],[data-rbweekend],[data-rbcopy],[data-rblearned],[data-rboncesave],[data-rbonceclear],[data-socok],[data-socundo],[data-qchold],[data-sctopup]");
     if (!target2) return;
-    if (Object.keys(target2.dataset).some((key) => key.startsWith("rb"))) {
+    if (Object.keys(target2.dataset).some((key2) => key2.startsWith("rb"))) {
       this._rbAction(target2);
       return;
     }
@@ -7656,14 +7656,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const el = event.target;
     const r = this._r;
     if (el?.dataset?.ccnum) {
-      const key = el.dataset.ccnum;
-      const id = this._ccTarget(key);
+      const key2 = el.dataset.ccnum;
+      const id = this._ccTarget(key2);
       const value = Number(el.value);
-      const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === key) || [];
+      const [, label] = TTD_CAR_CONTROLS.find(([k]) => k === key2) || [];
       this._ccPending = null;
       if (id) this._ccCall(
-        key,
-        key,
+        key2,
+        key2,
         "number",
         "set_value",
         { entity_id: id, value },
@@ -7797,10 +7797,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** Switching plan can start or stop the charger, so it takes a second tap within a few seconds. */
   _chooseMode(mode) {
     if (this._sc("charge_mode")?.state === mode) return;
-    const key = `mode:${mode}`;
-    if (this._cfg.confirm_mode_change && this._armed !== key) {
+    const key2 = `mode:${mode}`;
+    if (this._cfg.confirm_mode_change && this._armed !== key2) {
       this._disarm(false);
-      this._armed = key;
+      this._armed = key2;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
       this._queue(true);
       return;
@@ -7811,10 +7811,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** Over the price limit: wait with the rest (only below the limit this plug-in) or charge to the target; second tap confirms. */
   _chooseWait(on) {
     if (this._sc("price_limit_wait")?.state === "on" === on) return;
-    const key = `wait:${on}`;
-    if (this._armed !== key) {
+    const key2 = `wait:${on}`;
+    if (this._armed !== key2) {
       this._disarm(false);
-      this._armed = key;
+      this._armed = key2;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
       this._queue(true);
       return;
@@ -7824,8 +7824,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   }
   /** The plan box's overrides, each with a second tap: charge to the target after all (the plan waited with the dear
    * rest), or back to the default plan after "Lad nu" or a pause. */
-  _planAct(key) {
-    const armKey = `plan:${key}`;
+  _planAct(key2) {
+    const armKey = `plan:${key2}`;
     if (this._armed !== armKey) {
       this._disarm(false);
       this._armed = armKey;
@@ -7834,8 +7834,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return;
     }
     this._disarm(true);
-    if (key === "full") this._scCall("price_limit_wait", "switch", "turn_off");
-    else if (key === "back") {
+    if (key2 === "full") this._scCall("price_limit_wait", "switch", "turn_off");
+    else if (key2 === "back") {
       const def = this._sc("charge_mode")?.attributes?.default_mode;
       if (def) this._scCall("charge_mode", "select", "select_option", { option: def });
     }
@@ -7843,10 +7843,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
   /** The default plan decides what runs when the cable goes in, so it takes a second tap as well. */
   _chooseDefault(mode) {
     if (this._sc("default_charge_mode")?.state === mode) return;
-    const key = `default:${mode}`;
-    if (this._cfg.confirm_mode_change && this._armed !== key) {
+    const key2 = `default:${mode}`;
+    if (this._cfg.confirm_mode_change && this._armed !== key2) {
       this._disarm(false);
-      this._armed = key;
+      this._armed = key2;
       this._armTimer = setTimeout(() => this._disarm(true), TTD_ARM_MS);
       this._queue(true);
       return;
@@ -7960,21 +7960,21 @@ if (!window.customCards.some((card) => card.type === TTD_TAG)) {
 }
 
 // src/shared/look.js
-function isNewLook(hass, config, { entity = "style_entity", key = "style", fallback = false } = {}) {
+function isNewLook(hass, config, { entity = "style_entity", key: key2 = "style", fallback = false } = {}) {
   const id = config?.[entity];
   const state = id ? hass?.states?.[id]?.state : void 0;
   if (state === "on" || state === "off") return state === "on";
-  const value = config?.[key];
+  const value = config?.[key2];
   if (value === "new" || value === "v2") return true;
   if (value === "classic") return false;
   return fallback;
 }
 var esc2 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-function lookEditorHtml(config, { entity = "style_entity", key = "style", fallback = false, label = "Udseende" } = {}) {
-  const value = config?.[key] === "v2" ? "new" : config?.[key] || (fallback ? "new" : "classic");
+function lookEditorHtml(config, { entity = "style_entity", key: key2 = "style", fallback = false, label = "Udseende" } = {}) {
+  const value = config?.[key2] === "v2" ? "new" : config?.[key2] || (fallback ? "new" : "classic");
   return `<div class="look-editor" style="margin:12px 0;padding:10px;border:1px solid var(--divider-color);border-radius:10px">
     <label style="display:block;font-weight:600;margin:0 0 4px">${esc2(label)}</label>
-    <select data-look-key="${esc2(key)}" style="box-sizing:border-box;width:100%;padding:9px">
+    <select data-look-key="${esc2(key2)}" style="box-sizing:border-box;width:100%;padding:9px">
       <option value="new"${value === "new" ? " selected" : ""}>Ny</option><option value="classic"${value === "classic" ? " selected" : ""}>Klassisk</option></select>
     <label style="display:block;font-weight:600;margin:10px 0 4px">Skifteknap (valgfri input_boolean)</label>
     <input data-look-key="${esc2(entity)}" value="${esc2(config?.[entity] || "")}" placeholder="input_boolean.dashboard_\u2026" style="box-sizing:border-box;width:100%;padding:9px">
@@ -7989,9 +7989,9 @@ function wireLookEditor(root, editor, getConfig) {
     editor.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config } }));
   }));
 }
-function lookFormSchema({ entity = "style_entity", key = "style" } = {}) {
+function lookFormSchema({ entity = "style_entity", key: key2 = "style" } = {}) {
   return [
-    { name: key, selector: { select: { mode: "dropdown", options: [{ value: "new", label: "Ny" }, { value: "classic", label: "Klassisk" }] } } },
+    { name: key2, selector: { select: { mode: "dropdown", options: [{ value: "new", label: "Ny" }, { value: "classic", label: "Klassisk" }] } } },
     { name: entity, selector: { entity: { domain: "input_boolean" } } }
   ];
 }
@@ -9119,12 +9119,12 @@ var HAEvTyreCard = class extends HTMLElement {
   _treadBar(set) {
     if (set.tread_mm == null) return "";
     const max = Math.max(8, set.tread_mm);
-    const pct3 = Math.min(100, set.tread_mm / max * 100);
+    const pct4 = Math.min(100, set.tread_mm / max * 100);
     const minPct = set.tread_min_mm / max * 100;
     const tone3 = set.tread_mm <= 1.6 ? "crit" : set.tread_mm < set.tread_min_mm ? "warn" : set.tread_mm < set.tread_min_mm + 1 ? "low" : "ok";
     const left = set.km_left != null ? ` \xB7 ca. ${num2(set.km_left)} km tilbage` : "";
     return `<div class="tread ${tone3}"><div class="tread-h"><span>M\xF8nster</span><b>${num2(set.tread_mm, 1)} mm</b></div>
-      <div class="tread-bar"><i style="width:${pct3.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
+      <div class="tread-bar"><i style="width:${pct4.toFixed(1)}%"></i><em style="left:${minPct.toFixed(1)}%" title="Anbefalet minimum ${num2(set.tread_min_mm, 1)} mm"></em></div>
       <small>Anbefalet min. ${num2(set.tread_min_mm, 0)} mm${set.wear_mm_per_1000_km != null ? ` \xB7 slid ${num2(set.wear_mm_per_1000_km, 2)} mm/1000 km` : ""}${left} \xB7 m\xE5lt ${esc5(dayShort(set.tread_at))}</small></div>`;
   }
   _currentHtml(set, k) {
@@ -9223,7 +9223,7 @@ var HAEvTyreCard = class extends HTMLElement {
     const history2 = (set?.treads || []).slice().reverse().map((r) => `<li><span>${esc5(day(r.at))}</span><b>${num2(r.mm, 1)} mm</b><small>${r.each ? r.each.map((v) => num2(v, 1)).join(" / ") : ""}${r.odometer_km != null ? ` \xB7 ${num2(r.odometer_km)} km` : ""}</small><button type="button" class="ib sm" data-deltread="${esc5(r.id)}" aria-label="Slet m\xE5ling" title="Slet m\xE5ling">${icon(this._confirm === `t:${r.id}` ? "mdi:check" : "mdi:delete-outline")}</button></li>`).join("");
     return this._form("M\xE5l m\xF8nsterdybde", "M\xE5l i midten af slidbanen med en dybdem\xE5ler", `
       <label class="f"><span>Hjuls\xE6t</span><select data-treadset>${options}</select></label>
-      <div class="tyres">${TYRES.map(([key, label]) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="0.1" min="0" max="20" data-tyre="${key}" placeholder="${last?.each ? "" : "mm"}"></label>`).join("")}</div>
+      <div class="tyres">${TYRES.map(([key2, label]) => `<label class="f"><span>${label}</span><input type="number" inputmode="decimal" step="0.1" min="0" max="20" data-tyre="${key2}" placeholder="${last?.each ? "" : "mm"}"></label>`).join("")}</div>
       <label class="f"><span>Hvorn\xE5r</span><input type="datetime-local" data-f="at" value="${localInput()}" max="${localInput()}"></label>
       <p class="mini">Udfyld \xE9t eller alle fire d\xE6k \u2014 det laveste t\xE6ller. To m\xE5linger med nogle tusinde km imellem giver slid pr. 1000 km og hvor langt s\xE6ttet r\xE6kker.</p>
       ${history2 ? `<ul class="treads">${history2}</ul>` : ""}`, "Gem m\xE5ling");
@@ -9231,10 +9231,10 @@ var HAEvTyreCard = class extends HTMLElement {
   _editHtml() {
     const s = this._set(this._editId) || { kind: this._newKind || "winter" };
     const isNew = !s.id;
-    const v = (key) => s[key] == null ? "" : esc5(s[key]);
-    const text = (key, label, ph2 = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key}" value="${v(key)}" placeholder="${esc5(ph2)}" autocomplete="off"></label>`;
-    const n = (key, label, ph2 = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key}" data-num value="${v(key)}" placeholder="${esc5(ph2)}"></label>`;
-    const kinds = Object.entries(KINDS).map(([key, k]) => `<button type="button" class="choice sm" role="radio" aria-checked="${(s.kind || "summer") === key}" data-kind="${key}" style="--k:${k.color}">${icon(k.icon)}<span><b>${k.label}</b></span></button>`).join("");
+    const v = (key2) => s[key2] == null ? "" : esc5(s[key2]);
+    const text = (key2, label, ph2 = "", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="text" data-f="${key2}" value="${v(key2)}" placeholder="${esc5(ph2)}" autocomplete="off"></label>`;
+    const n = (key2, label, ph2 = "", step = "1", cls = "") => `<label class="f ${cls}"><span>${label}</span><input type="number" inputmode="decimal" step="${step}" data-f="${key2}" data-num value="${v(key2)}" placeholder="${esc5(ph2)}"></label>`;
+    const kinds = Object.entries(KINDS).map(([key2, k]) => `<button type="button" class="choice sm" role="radio" aria-checked="${(s.kind || "summer") === key2}" data-kind="${key2}" style="--k:${k.color}">${icon(k.icon)}<span><b>${k.label}</b></span></button>`).join("");
     const del = isNew ? "" : `<button type="button" class="btn stop" data-delset>${this._confirm === "set" ? "Tryk igen for at slette" : "Slet"}</button>`;
     return this._form(isNew ? "Nyt hjuls\xE6t" : `Ret ${esc5(s.name)}`, isNew ? "D\xE6k og f\xE6lge" : esc5(s.size || ""), `
       ${text("name", "Navn", 'Fx Vinter 18"')}
@@ -9267,8 +9267,8 @@ var HAEvTyreCard = class extends HTMLElement {
     );
   }
   // ------------------------------------------------------------------ wire
-  _val(key) {
-    const el = this.shadowRoot.querySelector(`[data-f="${key}"]`);
+  _val(key2) {
+    const el = this.shadowRoot.querySelector(`[data-f="${key2}"]`);
     if (!el) return void 0;
     if (el.type === "checkbox") return el.checked;
     const raw = el.value.trim();
@@ -9299,9 +9299,9 @@ var HAEvTyreCard = class extends HTMLElement {
       this._render();
     });
     on("[data-deltread]", async (el) => {
-      const key = `t:${el.dataset.deltread}`;
-      if (this._confirm !== key) {
-        this._confirm = key;
+      const key2 = `t:${el.dataset.deltread}`;
+      if (this._confirm !== key2) {
+        this._confirm = key2;
         this._render();
         return;
       }
@@ -9345,7 +9345,7 @@ var HAEvTyreCard = class extends HTMLElement {
       if (note) data.note = note;
       ok = await this._call("change_tyres", data);
     } else if (this._view === "tread") {
-      const each = TYRES.map(([key]) => this.shadowRoot.querySelector(`[data-tyre="${key}"]`).value.trim().replace(",", ".")).filter((v) => v !== "").map(Number);
+      const each = TYRES.map(([key2]) => this.shadowRoot.querySelector(`[data-tyre="${key2}"]`).value.trim().replace(",", ".")).filter((v) => v !== "").map(Number);
       if (!each.length || each.some((v) => Number.isNaN(v))) {
         this._err = "Skriv mindst \xE9n dybde i mm.";
         this._paint();
@@ -9361,8 +9361,8 @@ var HAEvTyreCard = class extends HTMLElement {
       }
       const kind = this.shadowRoot.querySelector('[data-kind][aria-checked="true"]')?.dataset.kind || "summer";
       const data = { name, kind };
-      for (const key of ["brand", "model", "load_speed", "dot", "rim_name", "storage", "note", "purchased"]) data[key] = this._val(key);
-      for (const key of ["width_mm", "aspect_pct", "rim_inch", "rim_width_in", "rim_offset_mm", "price", "km_before"]) data[key] = this._val(key);
+      for (const key2 of ["brand", "model", "load_speed", "dot", "rim_name", "storage", "note", "purchased"]) data[key2] = this._val(key2);
+      for (const key2 of ["width_mm", "aspect_pct", "rim_inch", "rim_width_in", "rim_offset_mm", "price", "km_before"]) data[key2] = this._val(key2);
       if (data.km_before == null) data.km_before = 0;
       if (this._editId) {
         data.set_id = this._editId;
@@ -9746,20 +9746,20 @@ var HALawnMowerCard = class extends HTMLElement {
       ["auto_schedule_boost", "Boost"],
       ["auto_schedule_grass_type", "Gr\xE6stype"],
       ["auto_schedule_soil_type", "Jordtype"]
-    ].map(([key, label]) => this._select(this._config[key], label)).filter(Boolean);
+    ].map(([key2, label]) => this._select(this._config[key2], label)).filter(Boolean);
     const numberFields = [
       ["rain_delay", "Regnforsinkelse"],
       ["time_extension", "Tidsforl\xE6ngelse"],
       ["torque", "Moment"],
       ["lawn_size", "Pl\xE6nest\xF8rrelse"],
       ["lawn_perimeter", "Pl\xE6neomkreds"]
-    ].map(([key, label]) => this._numberField(this._config[key], label)).filter(Boolean);
+    ].map(([key2, label]) => this._numberField(this._config[key2], label)).filter(Boolean);
     const buttons = [
       ["edge_cut", "Kantklip", "mdi:vector-polyline-edit"],
       ["reset_blade_runtime", "Nulstil knivtid", "mdi:restore"],
       ["reset_battery_cycles", "Nulstil batteri-cyklusser", "mdi:battery-sync"]
     ].filter(
-      ([key]) => this._config[key] && this._s(this._config[key]) !== "unavailable"
+      ([key2]) => this._config[key2] && this._s(this._config[key2]) !== "unavailable"
     );
     const systemChips = [
       this._switchChip(this._config.firmware_auto_update, "Auto-firmware", "mdi:cloud-download"),
@@ -9859,7 +9859,7 @@ var HALawnMowerCard = class extends HTMLElement {
       ${selectFields.length ? `<div class="section-title">Indstillinger</div><div class="fields">${selectFields.join("")}</div>` : ""}
       ${numberFields.length ? `<div class="section-title">Justeringer</div><div class="fields">${numberFields.join("")}</div>` : ""}
       ${systemChips.length ? `<div class="section-title">System</div><div class="chips">${systemChips.join("")}</div>` : ""}
-      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key, label, icon5]) => `<button data-press="${this._esc(this._config[key])}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
+      ${buttons.length ? `<div class="section-title">Handlinger</div><div class="btn-row">${buttons.map(([key2, label, icon5]) => `<button data-press="${this._esc(this._config[key2])}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`).join("")}</div>` : ""}
       <div class="controls">
         <button data-action="start_mowing" ${canStart ? "" : "disabled"}><ha-icon icon="mdi:play"></ha-icon>Start</button>
         <button data-action="pause" ${canPause ? "" : "disabled"}><ha-icon icon="mdi:pause"></ha-icon>Pause</button>
@@ -10015,7 +10015,7 @@ var HALightSceneCard = class extends HTMLElement {
     const value = Number(bE?.state);
     const min = Number(bE?.attributes?.min) || 0;
     const max = Number(bE?.attributes?.max) || 100;
-    const pct3 = Number.isFinite(value) ? Math.min(100, Math.max(0, (value - min) / (max - min) * 100)) : 0;
+    const pct4 = Number.isFinite(value) ? Math.min(100, Math.max(0, (value - min) / (max - min) * 100)) : 0;
     const unit = bE?.attributes?.unit_of_measurement || "%";
     const cE = this._e(light.color_entity);
     const options = cE?.attributes?.options || [];
@@ -10031,7 +10031,7 @@ var HALightSceneCard = class extends HTMLElement {
           <button class="step-btn" data-step="1" data-entity="${this._esc(light.brightness_entity)}"><ha-icon icon="mdi:plus"></ha-icon></button>
         </div>` : ""}
       </div>
-      ${light.brightness_entity ? `<div class="bar"><i style="width:${pct3}%"></i></div>` : ""}
+      ${light.brightness_entity ? `<div class="bar"><i style="width:${pct4}%"></i></div>` : ""}
       ${light.color_entity && options.length ? `<div class="swatches">${options.map(
       (opt) => `<button class="swatch ${opt === current ? "selected" : ""}" data-color-entity="${this._esc(light.color_entity)}" data-color="${this._esc(opt)}" style="--sw:${COLOR_SWATCH[opt] || "#888"}" title="${this._esc(opt)}">${opt === current ? '<ha-icon icon="mdi:check"></ha-icon>' : ""}</button>`
     ).join("")}</div>` : ""}
@@ -10348,8 +10348,8 @@ var PoolForecastCard = class extends HTMLElement {
       ...weatherByDay.get(this._dayKey(point.ts)) || {}
     }));
   }
-  _path(points, x, y, key) {
-    return points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key])).map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key])}`).join(" ");
+  _path(points, x, y, key2) {
+    return points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key2])).map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key2])}`).join(" ");
   }
   _renderChart(points) {
     if (!points.length) return `<div class="empty">Forecast-data er ikke klar endnu</div>`;
@@ -10628,10 +10628,10 @@ var PoolHistoryCard = class extends HTMLElement {
   _escape(value) {
     return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
-  _path(points, x, y, key) {
-    const usable = points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key]));
+  _path(points, x, y, key2) {
+    const usable = points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key2]));
     if (!usable.length) return "";
-    return usable.map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key])}`).join(" ");
+    return usable.map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key2])}`).join(" ");
   }
   _renderChart(days) {
     if (!days?.length) {
@@ -11164,7 +11164,7 @@ var PoolWaterQualityCard = class extends HTMLElement {
       if (id) byEntity.set(id, series);
     }
     const measurements = /* @__PURE__ */ new Map();
-    const addSeries = (series, key) => {
+    const addSeries = (series, key2) => {
       for (const item2 of series) {
         const ts = Date.parse(item2.last_updated || item2.last_changed || "");
         const value = Number(item2.state);
@@ -11172,7 +11172,7 @@ var PoolWaterQualityCard = class extends HTMLElement {
         const second = Math.round(ts / 1e3);
         const point = measurements.get(second) || { ts, ph: null, chlorine: null };
         point.ts = Math.min(point.ts, ts);
-        point[key] = value;
+        point[key2] = value;
         measurements.set(second, point);
       }
     };
@@ -11258,8 +11258,8 @@ var PoolWaterQualityCard = class extends HTMLElement {
   _escape(value) {
     return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
   }
-  _path(points, x, y, key) {
-    return points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key])).map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key])}`).join(" ");
+  _path(points, x, y, key2) {
+    return points.map((point, index) => ({ point, index })).filter(({ point }) => Number.isFinite(point[key2])).map(({ point, index }, part) => `${part ? "L" : "M"} ${x(index)} ${y(point[key2])}`).join(" ");
   }
   _renderChart(points) {
     if (!points?.length || !points.some((point) => Number.isFinite(point.ph) || Number.isFinite(point.chlorine))) {
@@ -11273,11 +11273,11 @@ var PoolWaterQualityCard = class extends HTMLElement {
     const chlorineValues = points.map((point) => point.chlorine).filter(Number.isFinite);
     const chlorineMax = Math.max(3, Math.ceil((Math.max(0, ...chlorineValues) + 0.5) * 2) / 2);
     const chlorineY = (value) => Math.round((top + (1 - value / chlorineMax) * plotH) * 10) / 10;
-    const segments = (key, y) => points.slice(1).map((point, index) => {
+    const segments = (key2, y) => points.slice(1).map((point, index) => {
       const previous = points[index];
-      if (!Number.isFinite(previous[key]) || !Number.isFinite(point[key])) return "";
-      const level = this._quality(key, point[key]).level;
-      return `<line class="quality-segment ${key} ${level}" x1="${x(index)}" y1="${y(previous[key])}" x2="${x(index + 1)}" y2="${y(point[key])}"></line>`;
+      if (!Number.isFinite(previous[key2]) || !Number.isFinite(point[key2])) return "";
+      const level = this._quality(key2, point[key2]).level;
+      return `<line class="quality-segment ${key2} ${level}" x1="${x(index)}" y1="${y(previous[key2])}" x2="${x(index + 1)}" y2="${y(point[key2])}"></line>`;
     }).join("");
     const qualitySegments = segments("ph", phY) + segments("chlorine", chlorineY);
     this._chartGeo = { points, x, phY, chlorineY, left, plotW, count, width, height };
@@ -11751,14 +11751,14 @@ var HACardListEditor2 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -11917,7 +11917,7 @@ var HAACClimateCard = class extends HTMLElement {
     const e = document.createElement("ha-card-list-editor");
     e.definition = {
       roots: [{ key: "title", label: "Titel" }, { key: "animation", label: "Animation", type: "boolean" }],
-      collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: FIELDS.map(([key, label, type]) => ({ key, label, ...type ? { type } : {} })) }]
+      collections: [{ key: "units", label: "AC-anl\xE6g", itemLabel: "anl\xE6g", defaults: { name: "Nyt anl\xE6g" }, fields: FIELDS.map(([key2, label, type]) => ({ key: key2, label, ...type ? { type } : {} })) }]
     };
     return e;
   }
@@ -12067,13 +12067,13 @@ var HAACClimateCard = class extends HTMLElement {
   }
   _live(unit, s) {
     const maxPower = Number(unit.max_power) || 1500;
-    const pct3 = s.power !== void 0 ? Math.max(2, Math.min(100, s.power / maxPower * 100)) : 0;
+    const pct4 = s.power !== void 0 ? Math.max(2, Math.min(100, s.power / maxPower * 100)) : 0;
     const copPct = s.cop !== void 0 ? Math.max(1e-3, Math.min(1, s.cop / 6)) : 1e-3;
     const a = Math.PI * (1 - copPct);
     const end = `${(40 + 32 * Math.cos(a)).toFixed(1)} ${(40 - 32 * Math.sin(a)).toFixed(1)}`;
     const tile3 = (icon5, label, value) => `<div class="tile"><ha-icon icon="${icon5}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
     const tiles = [];
-    if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct3}%"></b></i></div></div>`);
+    if (unit.input) tiles.push(`<div class="tile wide"><ha-icon icon="mdi:lightning-bolt"></ha-icon><div><span>Elforbrug</span><strong>${this._format(s.power)} W</strong><i class="bar"><b style="width:${pct4}%"></b></i></div></div>`);
     if (unit.output) tiles.push(tile3("mdi:radiator", "Varme", s.output !== void 0 ? `${this._format(s.output / 1e3, 1)} kW` : "\u2014"));
     if (unit.cop) tiles.push(`<div class="tile gauge"><svg viewBox="0 0 80 46"><path d="M8 40 A32 32 0 0 1 72 40" class="track"/><path d="M8 40 A32 32 0 0 1 ${end}" class="val"/></svg><div><strong>${this._format(s.cop, 1)}</strong><span>COP</span></div></div>`);
     if (unit.outdoor) tiles.push(tile3("mdi:sun-thermometer-outline", "Ude", `${this._format(s.outdoor, 1)}\xB0`));
@@ -13081,7 +13081,7 @@ var DATA_FIELDS = [
 ];
 var HACalefaDetailsCard = class extends HTMLElement {
   static getStubConfig() {
-    return { title: "Calefa styring", entities: Object.fromEntries([...CONTROL_FIELDS, ...DATA_FIELDS].map(([key]) => [key, ""])) };
+    return { title: "Calefa styring", entities: Object.fromEntries([...CONTROL_FIELDS, ...DATA_FIELDS].map(([key2]) => [key2, ""])) };
   }
   static async getConfigElement() {
     return document.createElement("ha-calefa-details-card-editor");
@@ -13129,8 +13129,8 @@ var HACalefaDetailsCard = class extends HTMLElement {
   getGridOptions() {
     return { rows: "auto", columns: 12, min_columns: 6 };
   }
-  _entity(key) {
-    const id = this._config.entities?.[key];
+  _entity(key2) {
+    const id = this._config.entities?.[key2];
     return id ? this._hass?.states?.[id] : void 0;
   }
   _escape(value) {
@@ -13138,10 +13138,10 @@ var HACalefaDetailsCard = class extends HTMLElement {
   }
   _renderStructure() {
     if (!this.shadowRoot) return;
-    const number2 = (key, label, icon5) => `<div class="control number-control" data-control="${key}"><button class="info" data-more="${key}" aria-label="Vis ${label}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
-    const toggle = (key, label, description, icon5) => `<button class="control toggle" data-toggle="${key}"><span class="control-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
-    const select = (key, label, icon5) => `<label class="control select-control" data-control="${key}"><span class="select-label"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></span><select data-select="${key}" aria-label="${label}"></select></label>`;
-    const metric = (key, label, icon5, tone3) => `<button class="data-metric ${tone3}" data-more="${key}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+    const number2 = (key2, label, icon5) => `<div class="control number-control" data-control="${key2}"><button class="info" data-more="${key2}" aria-label="Vis ${label}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button><div class="stepper"><button data-step="-1" aria-label="S\xE6nk ${label}">\u2212</button><strong data-value="${key2}">\u2014</strong><button data-step="1" aria-label="H\xE6v ${label}">+</button></div></div>`;
+    const toggle = (key2, label, description, icon5) => `<button class="control toggle" data-toggle="${key2}"><span class="control-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><b>${label}</b><small>${description}</small></span><span class="switch" aria-hidden="true"><i></i></span></button>`;
+    const select = (key2, label, icon5) => `<label class="control select-control" data-control="${key2}"><span class="select-label"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></span><select data-select="${key2}" aria-label="${label}"></select></label>`;
+    const metric = (key2, label, icon5, tone3) => `<button class="data-metric ${tone3}" data-more="${key2}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong data-value="${key2}">\u2014</strong></span></button>`;
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card>
       <header><div><small>WAVIN CALEFA</small><h2>${this._escape(this._config.title)}</h2><p>Styring, m\xE5lerdata og historik samlet</p></div><div class="status" data-summary>Indl\xE6ser\u2026</div></header>
       <nav class="category-tabs" aria-label="Detaljekategori"><button class="active" data-tab="control"><ha-icon icon="mdi:tune-variant"></ha-icon>Styring</button><button data-tab="meter"><ha-icon icon="mdi:meter-gas"></ha-icon>M\xE5lerdata</button><button data-tab="history"><ha-icon icon="mdi:chart-line"></ha-icon>Historik</button></nav>
@@ -13167,13 +13167,13 @@ var HACalefaDetailsCard = class extends HTMLElement {
   }
   _updateValues(force = false) {
     if (!this._hass || !this.shadowRoot.querySelector("ha-card")) return;
-    for (const [key, , type] of CONTROL_FIELDS) {
-      const state = this._entity(key);
+    for (const [key2, , type] of CONTROL_FIELDS) {
+      const state = this._entity(key2);
       if (type === "number" || type === "sensor") {
-        const value = this.shadowRoot.querySelector(`[data-value="${key}"]`);
+        const value = this.shadowRoot.querySelector(`[data-value="${key2}"]`);
         if (value) value.textContent = state ? `${state.state}${state.attributes?.unit_of_measurement ? ` ${state.attributes.unit_of_measurement}` : ""}` : "\u2014";
         if (type === "number") {
-          const holder = this.shadowRoot.querySelector(`[data-control="${key}"]`);
+          const holder = this.shadowRoot.querySelector(`[data-control="${key2}"]`);
           holder?.querySelectorAll("[data-step]").forEach((button) => {
             const direction = Number(button.dataset.step), current = Number(state?.state), bound = direction < 0 ? Number(state?.attributes?.min) : Number(state?.attributes?.max);
             button.disabled = !state || !Number.isFinite(current) || Number.isFinite(bound) && (direction < 0 ? current <= bound : current >= bound);
@@ -13181,7 +13181,7 @@ var HACalefaDetailsCard = class extends HTMLElement {
         }
       }
       if (type === "switch") {
-        const button = this.shadowRoot.querySelector(`[data-toggle="${key}"]`), active = state?.state === "on";
+        const button = this.shadowRoot.querySelector(`[data-toggle="${key2}"]`), active = state?.state === "on";
         if (button) {
           button.classList.toggle("active", active);
           button.classList.toggle("unavailable", !state || state.state === "unavailable");
@@ -13189,7 +13189,7 @@ var HACalefaDetailsCard = class extends HTMLElement {
         }
       }
       if (type === "select") {
-        const select = this.shadowRoot.querySelector(`[data-select="${key}"]`);
+        const select = this.shadowRoot.querySelector(`[data-select="${key2}"]`);
         if (!select) continue;
         const options = Array.isArray(state?.attributes?.options) ? state.attributes.options : [];
         const optionSignature = JSON.stringify(options);
@@ -13208,8 +13208,8 @@ var HACalefaDetailsCard = class extends HTMLElement {
         select.disabled = !state || state.state === "unavailable";
       }
     }
-    for (const [key] of DATA_FIELDS) {
-      const state = this._entity(key), value = this.shadowRoot.querySelector(`[data-value="${key}"]`);
+    for (const [key2] of DATA_FIELDS) {
+      const state = this._entity(key2), value = this.shadowRoot.querySelector(`[data-value="${key2}"]`);
       if (value) value.textContent = state && !["unknown", "unavailable", ""].includes(state.state) ? `${state.state}${state.attributes?.unit_of_measurement ? ` ${state.attributes.unit_of_measurement}` : ""}` : "\u2014";
     }
     const auto = this._entity("auto_standby"), autoStatus = this._entity("auto_standby_status"), heating = this._entity("heating_state");
@@ -13231,7 +13231,7 @@ var HACalefaDetailsCard = class extends HTMLElement {
     }
     const step = event.target.closest?.("[data-step]");
     if (step) {
-      const holder = step.closest("[data-control]"), key = holder?.dataset.control, state = this._entity(key);
+      const holder = step.closest("[data-control]"), key2 = holder?.dataset.control, state = this._entity(key2);
       if (!state) return;
       const amount = Number(state.attributes?.step) || 1, current = Number(state.state), direction = Number(step.dataset.step);
       const min = Number(state.attributes?.min), max = Number(state.attributes?.max);
@@ -13262,8 +13262,8 @@ var HACalefaDetailsCard = class extends HTMLElement {
       this._showMore(event.target.closest("[data-more]").dataset.more);
     }
   }
-  _showMore(key) {
-    const entityId = this._config.entities?.[key];
+  _showMore(key2) {
+    const entityId = this._config.entities?.[key2];
     if (entityId) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
   }
   async _mountHistoryCards() {
@@ -13280,7 +13280,7 @@ var HACalefaDetailsCard = class extends HTMLElement {
     for (const [name, series] of Object.entries(definitions)) {
       const target2 = this.shadowRoot.querySelector(`[data-history="${name}"]`);
       if (!target2) continue;
-      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
+      const entities = series.map(([key2, label, color]) => ({ entity: this._config.entities?.[key2], name: label, color })).filter((item2) => item2.entity);
       if (!entities.length) {
         target2.textContent = "Ingen historik-entiteter valgt";
         continue;
@@ -13428,31 +13428,31 @@ var HAFjernvarmeHouseCard = class extends HTMLElement {
   getGridOptions() {
     return { rows: "auto", columns: 12, min_columns: 6 };
   }
-  _entityId(key) {
-    const configured = this._config.entities?.[key];
+  _entityId(key2) {
+    const configured = this._config.entities?.[key2];
     if (configured) return configured;
-    if (key === "summer_cutoff") return Object.keys(this._hass?.states || {}).find((id) => /wavin_calefa.*itc_max_outdoor_temp$/.test(id));
+    if (key2 === "summer_cutoff") return Object.keys(this._hass?.states || {}).find((id) => /wavin_calefa.*itc_max_outdoor_temp$/.test(id));
     return void 0;
   }
-  _entity(key) {
-    const id = this._entityId(key);
+  _entity(key2) {
+    const id = this._entityId(key2);
     return id ? this._hass?.states?.[id] : void 0;
   }
-  _num(key) {
-    const n = Number.parseFloat(String(this._entity(key)?.state ?? "").replace(",", "."));
+  _num(key2) {
+    const n = Number.parseFloat(String(this._entity(key2)?.state ?? "").replace(",", "."));
     return Number.isFinite(n) ? n : void 0;
   }
-  _on(key) {
-    return ["on", "true", "active", "open", "opening", "running", "heat", "heating", "ja", "til", "aktiv", "k\xF8rer"].includes(String(this._entity(key)?.state || "").toLowerCase());
+  _on(key2) {
+    return ["on", "true", "active", "open", "opening", "running", "heat", "heating", "ja", "til", "aktiv", "k\xF8rer"].includes(String(this._entity(key2)?.state || "").toLowerCase());
   }
-  _flowing(key) {
-    const n = this._num(key);
-    return Number.isFinite(n) ? n > 0.01 : this._on(key);
+  _flowing(key2) {
+    const n = this._num(key2);
+    return Number.isFinite(n) ? n > 0.01 : this._on(key2);
   }
-  _fmt(key, digits = 1, fallbackUnit = "") {
-    const e = this._entity(key);
+  _fmt(key2, digits = 1, fallbackUnit = "") {
+    const e = this._entity(key2);
     if (!e || ["unknown", "unavailable", ""].includes(e.state)) return "\u2014";
-    const n = this._num(key);
+    const n = this._num(key2);
     if (!Number.isFinite(n)) return this._esc(e.state);
     const lang = this._hass?.locale?.language || this._hass?.language || "da";
     const unit = e.attributes?.unit_of_measurement || fallbackUnit;
@@ -13461,9 +13461,9 @@ var HAFjernvarmeHouseCard = class extends HTMLElement {
   _esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
-  _temp(key) {
-    const n = this._num(key);
-    return Number.isFinite(n) ? `${this._fmt(key, 1, "\xB0C")}` : "\u2014";
+  _temp(key2) {
+    const n = this._num(key2);
+    return Number.isFinite(n) ? `${this._fmt(key2, 1, "\xB0C")}` : "\u2014";
   }
   _tempColor(value) {
     if (!Number.isFinite(value)) return "#8295a5";
@@ -13490,21 +13490,21 @@ var HAFjernvarmeHouseCard = class extends HTMLElement {
     const duration2 = 6.1 + count * 0.08;
     return `<g class="pipe ${cls} ${active ? "active" : ""}"><path class="pipe-rim" d="${path}"/><path class="pipe-core" d="${path}"/><path class="pipe-heat" d="${path}"/><path class="water-sheen" d="${path}"/>${Array.from({ length: count }, (_, i) => `<g class="water-pulse"><ellipse cx="0" cy="0" rx="4.5" ry="1.8"/><circle cx="-8" cy="0" r=".8"/><animateMotion dur="${duration2}s" begin="-${(i * duration2 / count).toFixed(2)}s" repeatCount="indefinite" rotate="auto" path="${path}"/></g>`).join("")}</g>`;
   }
-  _metric(label, key, digits = 1, cls = "") {
-    return `<div class="metric entity-hit ${cls}" data-key="${key}" tabindex="0"><small>${label}</small><strong>${this._fmt(key, digits)}</strong></div>`;
+  _metric(label, key2, digits = 1, cls = "") {
+    return `<div class="metric entity-hit ${cls}" data-key="${key2}" tabindex="0"><small>${label}</small><strong>${this._fmt(key2, digits)}</strong></div>`;
   }
-  _status(label, key) {
-    const e = this._entity(key), bad = /fejl|alarm|kritisk/i.test(key) && this._on(key);
-    return `<div class="metric entity-hit ${bad ? "bad" : ""}" data-key="${key}" tabindex="0"><small>${label}</small><strong>${e ? this._esc(e.state) : "\u2014"}</strong></div>`;
+  _status(label, key2) {
+    const e = this._entity(key2), bad = /fejl|alarm|kritisk/i.test(key2) && this._on(key2);
+    return `<div class="metric entity-hit ${bad ? "bad" : ""}" data-key="${key2}" tabindex="0"><small>${label}</small><strong>${e ? this._esc(e.state) : "\u2014"}</strong></div>`;
   }
   _standbyStatus() {
     const e = this._entity("auto_standby_status"), countdown = e?.attributes?.countdown;
     const value = e ? `${this._esc(e.state)}${countdown ? ` \xB7 ${this._esc(countdown)}` : ""}` : "\u2014";
     return `<div class="metric entity-hit" data-key="auto_standby_status" tabindex="0"><small>Auto standby</small><strong>${value}</strong></div>`;
   }
-  _binaryStatus(label, key, onText, offText) {
-    const e = this._entity(key);
-    return `<div class="metric entity-hit" data-key="${key}" tabindex="0"><small>${label}</small><strong>${e ? this._on(key) ? onText : offText : "\u2014"}</strong></div>`;
+  _binaryStatus(label, key2, onText, offText) {
+    const e = this._entity(key2);
+    return `<div class="metric entity-hit" data-key="${key2}" tabindex="0"><small>${label}</small><strong>${e ? this._on(key2) ? onText : offText : "\u2014"}</strong></div>`;
   }
   _handleMoreInfo(event) {
     if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
@@ -13987,8 +13987,8 @@ var HAElectricityPriceCardEditor = class extends HTMLElement {
     this._hass = hass;
     if (!this.childElementCount) this._render();
   }
-  _change(key, value) {
-    this._config = { ...this._config, [key]: value };
+  _change(key2, value) {
+    this._config = { ...this._config, [key2]: value };
     this.dispatchEvent(
       new CustomEvent("config-changed", {
         detail: { config: this._config },
@@ -14242,9 +14242,9 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     sorted.forEach((p) => {
       const hour = new Date(p.start);
       hour.setMinutes(0, 0, 0);
-      const key = hour.getTime();
-      if (!hours.has(key)) hours.set(key, { start: key, end: key + 36e5, sum: 0, minutes: 0 });
-      const slot = hours.get(key);
+      const key2 = hour.getTime();
+      if (!hours.has(key2)) hours.set(key2, { start: key2, end: key2 + 36e5, sum: 0, minutes: 0 });
+      const slot = hours.get(key2);
       const minutes2 = (p.end - p.start) / 6e4;
       slot.sum += p.price * minutes2;
       slot.minutes += minutes2;
@@ -14327,9 +14327,9 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
   _days(points) {
     const map = /* @__PURE__ */ new Map();
     points.forEach((p) => {
-      const d = new Date(p.start), key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(p);
+      const d = new Date(p.start), key2 = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!map.has(key2)) map.set(key2, []);
+      map.get(key2).push(p);
     });
     return [...map.values()].map((x) => x.sort((a, b) => a.start - b.start));
   }
@@ -14367,8 +14367,8 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
         b = stops[i + 1];
         break;
       }
-    const pct3 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
-    return `color-mix(in oklab,${a[1]} ${100 - pct3}%,${b[1]} ${pct3}%)`;
+    const pct4 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
+    return `color-mix(in oklab,${a[1]} ${100 - pct4}%,${b[1]} ${pct4}%)`;
   }
   _pulse(value) {
     return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
@@ -15201,10 +15201,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
     lv.title = live ? "Str\xF8mligning live" : "Str\xF8mligning ikke live";
     const rel = mean ? cur / mean : 1, lv0 = this.level(cur), col = LEVEL_COL[lv0];
     this.$("chip").style.setProperty("--c", col);
-    const pct3 = `${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} %`;
-    const long = `${lv0 === 1 ? "Normal pris" : `${LEVEL_NAME[lv0]} nu`} \xB7 ${pct3} ift. snit`;
+    const pct4 = `${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} %`;
+    const long = `${lv0 === 1 ? "Normal pris" : `${LEVEL_NAME[lv0]} nu`} \xB7 ${pct4} ift. snit`;
     const ct = this.shadowRoot.querySelector("#chip .ct");
-    ct.innerHTML = `<span class="l">${long}</span><span class="s">${lv0 === 1 ? "Normal" : LEVEL_NAME[lv0]} \xB7 ${pct3}</span>`;
+    ct.innerHTML = `<span class="l">${long}</span><span class="s">${lv0 === 1 ? "Normal" : LEVEL_NAME[lv0]} \xB7 ${pct4}</span>`;
     this.$("chip").title = long;
     this.set("now", `${tn(cur, 2)}<small>kr/kWh</small>`);
     const parts = [
@@ -15329,7 +15329,7 @@ var ThElectricityPriceCard = class extends HTMLElement {
     if (!adv || !this._h) return;
     const C2 = this.cfg, now = Math.floor(Date.now() / 6e4) * 6e4, ch2 = chIn === void 0 ? this.charge() : chIn, S = this.slots(), all = [...S.all].sort((a, b) => a.t - b.t);
     const cur = this.n(C2.current), mean = this.n(C2.mean), rel = mean ? cur / mean : 1, lvN = this.level(cur), col = LEVEL_COL[lvN];
-    const W2 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct3 = (v) => {
+    const W2 = (s) => `${tt(new Date(s))}${this.dayWord(s, now)}`, pct4 = (v) => {
       const r = mean ? Math.round((v / mean - 1) * 100) : 0;
       return `${r >= 0 ? "+" : "\u2212"}${Math.abs(r)} %`;
     };
@@ -15346,10 +15346,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
     const le = new Date(S.lastA), sub = S.lastA ? `Faktiske priser til ${le.getHours() === 0 && le.getMinutes() === 0 ? `midnat${this.dayWord(S.lastA - 6e4, now)}` : W2(S.lastA)}${S.fc.length ? " \xB7 derefter prognose" : ""}` : "Prognose";
     const win = this.scan(all, 3 * 36e5, now), best = win.reduce((m, c2) => !m || c2.avg < m.avg ? c2 : m, null), worst = win.reduce((m, c2) => !m || c2.avg > m.avg ? c2 : m, null);
     const nb = win.filter((c2) => c2.s > now + 9e5 && c2.s <= now + 8 * 36e5 && c2.avg < cur * 0.85).sort((a, b) => a.avg - b.avg)[0], soon = !!nb;
-    const sm = lvN === 0 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W2(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb ? ` Billigst bliver det ${W2(nb.s)} (\xD8 ${tn(nb.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct3(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W2(nb.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
+    const sm = lvN === 0 ? ["Billig str\xF8m lige nu", `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit \u2013 k\xF8r gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * 0.85 ? ` Billigst bliver det ${W2(best.s)} (\xD8 ${tn(best.avg)} kr).` : ""}`] : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit \u2013 udskyd det, du kan.${nb ? ` Billigst bliver det ${W2(nb.s)} (\xD8 ${tn(nb.avg)} kr).` : ""}`] : ["Normal pris", `${tn(cur)} kr/kWh er ${pct4(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W2(nb.s)}.` : "Ingen markant billigere tid de n\xE6ste timer \u2013 k\xF8r som du plejer."}`];
     let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? "leaf" : lvN >= 2 ? "peak" : "clock", 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
-    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct3(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
-      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct3(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
+    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}\u2013${tt(new Date(best.e))}</b><span>\xD8 ${tn(best.avg)} kr \xB7 ${pct4(best.avg)}${best.fc ? " \xB7 prognose" : ""}</span></div>
+      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}\u2013${tt(new Date(worst.e))}</b><span>\xD8 ${tn(worst.avg)} kr \xB7 ${pct4(worst.avg)}${worst.fc ? " \xB7 prognose" : ""}</span></div></div>`;
     const hrOk = (hrs) => (s, dur3) => {
       if (!hrs) return true;
       const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5;
@@ -15935,13 +15935,13 @@ var HAVentilationCard = class extends HTMLElement {
     const levels = Array.isArray(options) ? options.map(Number).filter((level) => Number.isInteger(level) && level > 0) : [];
     return levels.length ? levels : [1, 2, 3, 4, 5, 6];
   }
-  _state(key) {
-    const id = this._config.entities?.[key];
+  _state(key2) {
+    const id = this._config.entities?.[key2];
     const entity = id ? this._hass?.states?.[id] : void 0;
     return entity && !["unknown", "unavailable", ""].includes(entity.state) ? entity : void 0;
   }
-  _number(key, suffix = "", digits = 0) {
-    const value = Number(this._state(key)?.state);
+  _number(key2, suffix = "", digits = 0) {
+    const value = Number(this._state(key2)?.state);
     const language = this._hass?.locale?.language || this._hass?.language || "en";
     return Number.isFinite(value) ? `${value.toLocaleString(language, { maximumFractionDigits: digits })}${suffix}` : "\u2014";
   }
@@ -15963,11 +15963,11 @@ var HAVentilationCard = class extends HTMLElement {
     }
     return Number.isFinite(this._lastRecovery) ? `\u2248${this._lastRecovery.toLocaleString(language, { maximumFractionDigits: 0 })}%` : "\u2014";
   }
-  _on(key) {
-    return ["on", "open", "opening", "true", "active"].includes(String(this._state(key)?.state).toLowerCase());
+  _on(key2) {
+    return ["on", "open", "opening", "true", "active"].includes(String(this._state(key2)?.state).toLowerCase());
   }
-  _entityValue(key, fallbackSuffix = "", digits = 0) {
-    const entity = this._state(key);
+  _entityValue(key2, fallbackSuffix = "", digits = 0) {
+    const entity = this._state(key2);
     if (!entity) return "\u2014";
     const value = Number(entity.state);
     if (!Number.isFinite(value)) return this._escape(entity.state);
@@ -15975,8 +15975,8 @@ var HAVentilationCard = class extends HTMLElement {
     const suffix = entity.attributes?.unit_of_measurement || fallbackSuffix;
     return `${value.toLocaleString(language, { maximumFractionDigits: digits })}${suffix ? ` ${suffix}` : ""}`;
   }
-  _statusValue(key, active, inactive) {
-    return this._state(key) ? this._on(key) ? active : inactive : "\u2014";
+  _statusValue(key2, active, inactive) {
+    return this._state(key2) ? this._on(key2) ? active : inactive : "\u2014";
   }
   _modeLabel() {
     const raw = String(this._state("mode")?.state || "").trim();
@@ -15998,11 +15998,11 @@ var HAVentilationCard = class extends HTMLElement {
     const state = String(this._state("air_quality")?.state || "").toLowerCase();
     return { good: "God", moderate: "Moderat", poor: "D\xE5rlig" }[state] || (state ? this._escape(this._state("air_quality").state) : "\u2014");
   }
-  _detail(label, value, stateClass = "", key = "") {
-    return `<div class="detail ${stateClass} ${key ? "entity-hit" : ""}"${key ? ` data-key="${key}" tabindex="0"` : ""}><small>${label}</small><strong>${value}</strong></div>`;
+  _detail(label, value, stateClass = "", key2 = "") {
+    return `<div class="detail ${stateClass} ${key2 ? "entity-hit" : ""}"${key2 ? ` data-key="${key2}" tabindex="0"` : ""}><small>${label}</small><strong>${value}</strong></div>`;
   }
-  _temperatureColor(key) {
-    const value = Number(this._state(key)?.state);
+  _temperatureColor(key2) {
+    const value = Number(this._state(key2)?.state);
     if (!Number.isFinite(value)) return "#8c9aa8";
     const stops = [[-10, [42, 91, 201]], [14, [57, 125, 219]], [22, [235, 126, 70]], [30, [235, 84, 61]], [40, [215, 48, 57]]];
     if (value <= stops[0][0]) return `rgb(${stops[0][1].join(",")})`;
@@ -16015,12 +16015,12 @@ var HAVentilationCard = class extends HTMLElement {
     return `rgb(${stops[stops.length - 1][1].join(",")})`;
   }
   _relativeTemperatureColors(keys) {
-    const samples = keys.map((key) => ({ key, value: Number(this._state(key)?.state) })).filter((sample) => Number.isFinite(sample.value));
-    if (samples.length < 2) return Object.fromEntries(keys.map((key) => [key, this._temperatureColor(key)]));
+    const samples = keys.map((key2) => ({ key: key2, value: Number(this._state(key2)?.state) })).filter((sample) => Number.isFinite(sample.value));
+    if (samples.length < 2) return Object.fromEntries(keys.map((key2) => [key2, this._temperatureColor(key2)]));
     const minimum = Math.min(...samples.map((sample) => sample.value));
     const maximum = Math.max(...samples.map((sample) => sample.value));
     const span = maximum - minimum;
-    if (span < 0.2) return Object.fromEntries(keys.map((key) => [key, "rgb(165,180,185)"]));
+    if (span < 0.2) return Object.fromEntries(keys.map((key2) => [key2, "rgb(165,180,185)"]));
     const palette = [[24, 96, 235], [64, 185, 222], [230, 180, 80], [230, 42, 38]];
     const colorFor = (value) => {
       const position = Math.max(0, Math.min(1, (value - minimum) / span));
@@ -16029,9 +16029,9 @@ var HAVentilationCard = class extends HTMLElement {
       const amount = scaled - index;
       return `rgb(${palette[index].map((channel, channelIndex) => Math.round(channel + (palette[index + 1][channelIndex] - channel) * amount)).join(",")})`;
     };
-    return Object.fromEntries(keys.map((key) => {
-      const sample = samples.find((item2) => item2.key === key);
-      return [key, sample ? colorFor(sample.value) : this._temperatureColor(key)];
+    return Object.fromEntries(keys.map((key2) => {
+      const sample = samples.find((item2) => item2.key === key2);
+      return [key2, sample ? colorFor(sample.value) : this._temperatureColor(key2)];
     }));
   }
   _escape(value) {
@@ -16071,12 +16071,12 @@ var HAVentilationCard = class extends HTMLElement {
       <path class="flow-stream pulse" pathLength="100" d="${path}" style="animation-delay:${phase}s"/>
     </g>`;
   }
-  _temperature(key, label, x, y, anchor, extraClass = "") {
-    return `<g class="temp ${extraClass} entity-hit" data-key="${key}" tabindex="0" transform="translate(${x} ${y})" text-anchor="${anchor}"><text class="label">${label}</text><text class="value" y="24">${this._number(key, "\xB0", 1)}</text></g>`;
+  _temperature(key2, label, x, y, anchor, extraClass = "") {
+    return `<g class="temp ${extraClass} entity-hit" data-key="${key2}" tabindex="0" transform="translate(${x} ${y})" text-anchor="${anchor}"><text class="label">${label}</text><text class="value" y="24">${this._number(key2, "\xB0", 1)}</text></g>`;
   }
   _bindMoreInfo() {
-    const open = (key) => {
-      const entityId = this._config.entities?.[key];
+    const open = (key2) => {
+      const entityId = this._config.entities?.[key2];
       if (!entityId) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
     };
@@ -16119,7 +16119,7 @@ var HAVentilationCard = class extends HTMLElement {
     }));
     this.shadowRoot.querySelectorAll("[data-number-key]").forEach((button) => button.addEventListener("click", (event) => {
       event.stopPropagation();
-      const key = button.dataset.numberKey, entity = this._state(key);
+      const key2 = button.dataset.numberKey, entity = this._state(key2);
       const current = Number(entity?.state), step = Number(entity?.attributes?.step ?? 1);
       if (!Number.isFinite(current) || !Number.isFinite(step)) return;
       const min = Number(entity.attributes?.min ?? -Infinity), max = Number(entity.attributes?.max ?? Infinity);
@@ -16127,8 +16127,8 @@ var HAVentilationCard = class extends HTMLElement {
       this._hass?.callService("number", "set_value", { entity_id: entity.entity_id, value });
     }));
   }
-  _select(key, option) {
-    const entity = this._state(key);
+  _select(key2, option) {
+    const entity = this._state(key2);
     if (entity) this._hass?.callService("select", "select_option", { entity_id: entity.entity_id, option });
   }
   _modeText() {
@@ -16193,11 +16193,11 @@ var HAVentilationCard = class extends HTMLElement {
         <div class="feature"><small>EFTERVARME</small><div class="climate-control"><button data-climate-delta="-1">\u2212</button><div><b>${Number.isFinite(target2) ? `${target2.toLocaleString("da-DK")}\xB0` : "\u2014"}</b><span>${Number.isFinite(current) ? `${current.toLocaleString("da-DK", { maximumFractionDigits: 1 })}\xB0` : "\u2014"} \xB7 ${heating ? "Varmer" : "Inaktiv"}</span></div><button data-climate-delta="1">+</button></div><div class="subline">Ventil ${this._number("afterheat_valve", "%")} \xB7 f\xF8r ${this._number("afterheat_before", "\xB0", 1)} \xB7 frost ${this._number("afterheat_frost", "\xB0", 1)}</div></div>
         <div class="feature"><small>PEJS</small><div class="segmented fireplace-buttons">${[["Slukket", "FRA"], ["15 min", "15 MIN"], ["30 min", "30 MIN"]].map(([value, label]) => `<button data-fireplace="${value}" class="${fireplace === value ? "active" : ""}">${label}</button>`).join("")}</div><div class="subline">Resterende ${this._number("fireplace_remaining", " s")}</div></div>
       </div>
-      <details class="advanced"><summary>Avanceret \xB7 profiler og Auto-indstillinger</summary><div class="advanced-grid"><div><h3>Fanprofiler</h3>${profileRows}</div><div><h3>Auto-indstillinger</h3>${settingKeys.map(([key, label]) => this._numberControl(key, label)).join("")}</div></div></details>
+      <details class="advanced"><summary>Avanceret \xB7 profiler og Auto-indstillinger</summary><div class="advanced-grid"><div><h3>Fanprofiler</h3>${profileRows}</div><div><h3>Auto-indstillinger</h3>${settingKeys.map(([key2, label]) => this._numberControl(key2, label)).join("")}</div></div></details>
     </section>`;
   }
-  _numberControl(key, label) {
-    return `<div class="number-control"><span>${label}</span><button data-number-key="${key}" data-number-direction="-1">\u2212</button><b>${this._entityValue(key)}</b><button data-number-key="${key}" data-number-direction="1">+</button></div>`;
+  _numberControl(key2, label) {
+    return `<div class="number-control"><span>${label}</span><button data-number-key="${key2}" data-number-direction="-1">\u2212</button><b>${this._entityValue(key2)}</b><button data-number-key="${key2}" data-number-direction="1">+</button></div>`;
   }
   _openDetailsPopup() {
     if (!Object.keys(this._config.details_entities || {}).length) return;
@@ -16301,7 +16301,7 @@ ${error?.message || error}`);
     for (const [name, series] of Object.entries(definitions)) {
       if (mountId !== this._historyMountId) return;
       const target2 = this.shadowRoot.querySelector(`[data-overview-history="${name}"]`);
-      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((item2) => item2.entity);
+      const entities = series.map(([key2, label, color]) => ({ entity: this._config.entities?.[key2], name: label, color })).filter((item2) => item2.entity);
       if (!target2 || !entities.length) continue;
       const compact = name !== "temperatures";
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", name: name === "temperatures" ? "Temperaturer" : name === "co2" ? "CO\u2082" : "Varmegenvinding", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, height: compact ? 122 : 165, font_size: 68, animate: false, hour24: true, show: { icon: false, name: true, state: true, legend: !compact, labels: false, points: false, fill: compact ? true : "fade" } });
@@ -16589,7 +16589,7 @@ var DETAIL_FIELDS = [
 ];
 var HAVentilationDetailsCard = class extends HTMLElement {
   static getStubConfig() {
-    return { title: "Dantherm detaljer", entities: Object.fromEntries(DETAIL_FIELDS.map(([key]) => [key, ""])) };
+    return { title: "Dantherm detaljer", entities: Object.fromEntries(DETAIL_FIELDS.map(([key2]) => [key2, ""])) };
   }
   static async getConfigElement() {
     return document.createElement("ha-ventilation-details-card-editor");
@@ -16623,15 +16623,15 @@ var HAVentilationDetailsCard = class extends HTMLElement {
   getCardSize() {
     return 9;
   }
-  _state(key) {
-    const id = this._config?.entities?.[key];
+  _state(key2) {
+    const id = this._config?.entities?.[key2];
     return id ? this._hass?.states?.[id] : void 0;
   }
   _esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
   }
-  _metric(key, label, icon5) {
-    return `<button class="metric" data-more="${key}"><ha-icon class="metric-bg" icon="${icon5}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><small>${label}</small><strong data-value="${key}">\u2014</strong></span></button>`;
+  _metric(key2, label, icon5) {
+    return `<button class="metric" data-more="${key2}"><ha-icon class="metric-bg" icon="${icon5}"></ha-icon><span class="metric-icon"><ha-icon icon="${icon5}"></ha-icon></span><span><small>${label}</small><strong data-value="${key2}">\u2014</strong></span></button>`;
   }
   _section(title, subtitle2, icon5, content) {
     return `<section><div class="section-title"><ha-icon icon="${icon5}"></ha-icon><div><h3>${title}</h3><p>${subtitle2}</p></div></div>${content}</section>`;
@@ -16649,13 +16649,13 @@ var HAVentilationDetailsCard = class extends HTMLElement {
     this._mountHistory();
     this._update();
   }
-  _format(state, key) {
+  _format(state, key2) {
     if (!state || ["unknown", "unavailable", ""].includes(state.state)) return "\u2014";
     if (state.state === "on") return "Aktiv";
     if (state.state === "off") return "Ikke aktiv";
     const labels = { good: "God", acceptable: "Acceptabel", low: "Lav", normal: "Stabil", watch: "Hold \xF8je", degraded: "Faldende", unit_sensor: "Enhedens f\xF8ler", weather_entity: "Vejrentitet", OFF: "Fra" };
     if (labels[state.state]) return labels[state.state];
-    if (key === "last_filter_change") {
+    if (key2 === "last_filter_change") {
       const date2 = new Date(state.state);
       if (!Number.isNaN(date2.getTime())) return date2.toLocaleDateString("da-DK", { day: "2-digit", month: "short", year: "numeric" });
     }
@@ -16666,20 +16666,20 @@ var HAVentilationDetailsCard = class extends HTMLElement {
     }
     return state.state.replaceAll("_", " ");
   }
-  _tone(key, state) {
+  _tone(key2, state) {
     if (!state || ["unknown", "unavailable", ""].includes(state.state)) return "bad";
-    if (key === "heat_recovery_status") return state.state === "good" ? "good" : state.state === "acceptable" ? "warn" : "bad";
-    if (key === "heat_recovery_trend") return state.state === "normal" ? "good" : state.state === "watch" ? "warn" : "bad";
-    if (["hac1_connection", "rs485_traffic"].includes(key)) return state.state === "on" ? "good" : "bad";
-    if (["night_mode", "fireplace_mode", "standby", "afterheat_active"].includes(key)) return state.state === "on" ? "warn" : "good";
+    if (key2 === "heat_recovery_status") return state.state === "good" ? "good" : state.state === "acceptable" ? "warn" : "bad";
+    if (key2 === "heat_recovery_trend") return state.state === "normal" ? "good" : state.state === "watch" ? "warn" : "bad";
+    if (["hac1_connection", "rs485_traffic"].includes(key2)) return state.state === "on" ? "good" : "bad";
+    if (["night_mode", "fireplace_mode", "standby", "afterheat_active"].includes(key2)) return state.state === "on" ? "warn" : "good";
     return "info";
   }
   _update() {
     if (!this._hass || !this.shadowRoot.querySelector("ha-card")) return;
-    for (const [key] of DETAIL_FIELDS) {
-      const state = this._state(key), node = this.shadowRoot.querySelector(`[data-value="${key}"]`), tile3 = this.shadowRoot.querySelector(`[data-more="${key}"]`);
-      if (node) node.textContent = this._format(state, key);
-      if (tile3) tile3.dataset.tone = this._tone(key, state);
+    for (const [key2] of DETAIL_FIELDS) {
+      const state = this._state(key2), node = this.shadowRoot.querySelector(`[data-value="${key2}"]`), tile3 = this.shadowRoot.querySelector(`[data-more="${key2}"]`);
+      if (node) node.textContent = this._format(state, key2);
+      if (tile3) tile3.dataset.tone = this._tone(key2, state);
     }
     const alarm = ["hac1_connection", "rs485_traffic"].some((k) => this._tone(k, this._state(k)) === "bad");
     const h = this.shadowRoot.querySelector("[data-health]");
@@ -16711,7 +16711,7 @@ var HAVentilationDetailsCard = class extends HTMLElement {
     const defs = { fans: [["extract_speed", "Udsugning", "#00bfa5"], ["supply_speed", "Indbl\xE6sning", "#42a5f5"]], temperatures: [["outdoor_temperature", "Ude", "#42a5f5"], ["supply_temperature", "Indbl\xE6sning", "#f59e0b"], ["extract_temperature", "Udsugning", "#00bfa5"], ["exhaust_temperature", "Afkast", "#ab47bc"]], co2: [["co2", "CO\u2082", "#22c55e"]], recovery: [["heat_recovery", "Genvindingsgrad", "#26c6da"]], heat: [["air_before_coil", "Luft f\xF8r", "#42a5f5"], ["air_after_coil", "Luft efter", "#f59e0b"], ["air_delta", "Luft delta-T", "#ab47bc"], ["water_flow", "Vand freml\xF8b", "#ef5350"], ["water_return", "Vand retur", "#26c6da"], ["water_delta", "Vand delta-T", "#22c55e"]] };
     for (const [name, series] of Object.entries(defs)) {
       const target2 = this.shadowRoot.querySelector(`[data-history="${name}"]`);
-      const entities = series.map(([key, label, color]) => ({ entity: this._config.entities?.[key], name: label, color })).filter((x) => x.entity);
+      const entities = series.map(([key2, label, color]) => ({ entity: this._config.entities?.[key2], name: label, color })).filter((x) => x.entity);
       if (!target2 || !entities.length) continue;
       const card = await helpers.createCardElement({ type: "custom:mini-graph-card", entities, hours_to_show: 24, points_per_hour: 2, line_width: 3, height: 170, animate: false, hour24: true, show: { icon: false, name: false, state: true, legend: true, labels: false, points: false, fill: "fade" } });
       card.hass = this._hass;
@@ -18255,7 +18255,7 @@ Error generating stack: ` + l.message + `
   function la() {
   }
   var tu = null;
-  function nf(t) {
+  function nf2(t) {
     return t = t.target || t.srcElement || window, t.correspondingUseElement && (t = t.correspondingUseElement), t.nodeType === 3 ? t.parentNode : t;
   }
   var yn = null, On = null;
@@ -18479,7 +18479,7 @@ Error generating stack: ` + l.message + `
   function Qp(t) {
     if (t.propertyName === "value" && rc(Zi)) {
       var e = [];
-      Vp(e, Zi, t, nf(t)), Gp(Pv, e);
+      Vp(e, Zi, t, nf2(t)), Gp(Pv, e);
     }
   }
   function ty(t, e, a) {
@@ -22925,7 +22925,7 @@ Error generating stack: ` + l.message + `
       l = l.return;
     }
     Gp(function() {
-      var f = i, b = nf(a), y = [];
+      var f = i, b = nf2(a), y = [];
       t: {
         var m = Pp.get(t);
         if (m !== void 0) {
@@ -24754,7 +24754,7 @@ Error generating stack: ` + l.message + `
     }
   }
   function Fu(t) {
-    return t = nf(t), Wf(t);
+    return t = nf2(t), Wf(t);
   }
   var ac = null;
   function Wf(t) {
@@ -26901,7 +26901,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION57 = "0.3.5";
+  const VERSION58 = "0.3.5";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS3 = [
@@ -26982,22 +26982,22 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
       }
       return null;
     }
-    _writeTab(key) {
+    _writeTab(key2) {
       try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ key, at: Date.now() }));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ key: key2, at: Date.now() }));
       } catch {
       }
     }
-    _dispatchTab(key) {
-      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: this._tabs().map((tab) => ({ [tab.conditional]: tab.key === key ? "show" : "hide" })) } } }));
+    _dispatchTab(key2) {
+      document.dispatchEvent(new CustomEvent("ll-custom", { detail: { local_conditional_card: { action: "set", ids: this._tabs().map((tab) => ({ [tab.conditional]: tab.key === key2 ? "show" : "hide" })) } } }));
     }
-    switchTab(key) {
-      if (!this._tabs().some((t) => t.key === key)) return;
+    switchTab(key2) {
+      if (!this._tabs().some((t) => t.key === key2)) return;
       this._userSwitched = true;
-      this._active = key;
-      this._writeTab(key);
+      this._active = key2;
+      this._writeTab(key2);
       this._syncTabs();
-      this._dispatchTab(key);
+      this._dispatchTab(key2);
     }
     _syncTabs() {
       for (const button of this.shadowRoot.querySelectorAll("[data-tab]")) {
@@ -27017,8 +27017,8 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
     _updateStats() {
       if (!this._config.show_stats || !this._hass) return;
       const values = { district: this._hass.states[this._config.district_power]?.state, ventilation: this._hass.states[this._config.ventilation_level]?.state, cost: this._hass.states[this._config.cost_today]?.state };
-      for (const [key, value] of Object.entries(values)) {
-        const node = this.shadowRoot.querySelector(`[data-value="${key}"]`);
+      for (const [key2, value] of Object.entries(values)) {
+        const node = this.shadowRoot.querySelector(`[data-value="${key2}"]`);
         if (node) node.textContent = value && !["unknown", "unavailable"].includes(value) ? value : "\u2014";
       }
     }
@@ -27026,7 +27026,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION57}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION58}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -27338,9 +27338,9 @@ var HAHeatEconomyCard = class extends HTMLElement {
     const st = this._windowStatus(w);
     const verdict = cheaper === "vp" ? "Varmepumpen er billigst" : cheaper === "fj" ? "Fjernvarmen er billigst" : "Mangler data";
     const tone3 = cheaper === "vp" ? "var(--good)" : "var(--accent)";
-    const tile3 = (key, icon5, label, price, sub, entity) => `
-      <div class="src ${cheaper === key ? "win" : ""}" data-more="${this._esc(entity)}">
-        <div class="src-top"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span>${cheaper === key ? "<em>Billigst</em>" : ""}</div>
+    const tile3 = (key2, icon5, label, price, sub, entity) => `
+      <div class="src ${cheaper === key2 ? "win" : ""}" data-more="${this._esc(entity)}">
+        <div class="src-top"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span>${cheaper === key2 ? "<em>Billigst</em>" : ""}</div>
         <b>${this._fmt(price)}<small> kr/kWh</small></b>
         <div class="bar"><i style="width:${Number.isFinite(price) && max > 0 ? Math.max(4, Math.min(100, price / max * 100)).toFixed(1) : 0}%"></i></div>
         <p>${sub}</p>
@@ -27460,14 +27460,14 @@ var HACardListEditor3 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -27707,14 +27707,14 @@ var HACardListEditor4 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -28056,8 +28056,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       tips = ["Tjek freml\xF8bet til rummet.", "Tjek om ventilen faktisk \xE5bner.", "Luft radiatoren."];
     } else if (s.reason === "no-data") {
       lead = "Diagnosen kan ikke beregnes, fordi en eller flere m\xE5linger mangler.";
-      for (const [key, label] of [["climate", "Termostat"], ["demand_status", "Behovsstatus"], ["valve", "Ventil\xE5bning"], ["output", "Varmeafgivelse"], ["utilisation", "Kapacitetsudnyttelse"], ["loss", "L\xE6rt varmetab"]]) {
-        const id = room[key];
+      for (const [key2, label] of [["climate", "Termostat"], ["demand_status", "Behovsstatus"], ["valve", "Ventil\xE5bning"], ["output", "Varmeafgivelse"], ["utilisation", "Kapacitetsudnyttelse"], ["loss", "L\xE6rt varmetab"]]) {
+        const id = room[key2];
         const raw = id ? this._hass?.states?.[id] : void 0;
         const problem = !id ? "Ikke sat op" : !raw ? "Findes ikke" : raw.state === "unavailable" ? "Utilg\xE6ngelig" : ["unknown", ""].includes(raw.state) ? "Ukendt" : "";
         if (problem) checks.push({ flag: true, icon: "mdi:alert-circle-outline", label, value: problem, sub: id || "" });
@@ -28425,9 +28425,9 @@ var HRVCard = class extends HTMLElement {
     }
   }
   _requestRebuildIfNeeded() {
-    const key = this._cardIdentityKey();
-    if (!key || _hrvRebuiltCardKeys.has(key)) return;
-    _hrvRebuiltCardKeys.add(key);
+    const key2 = this._cardIdentityKey();
+    if (!key2 || _hrvRebuiltCardKeys.has(key2)) return;
+    _hrvRebuiltCardKeys.add(key2);
     this.dispatchEvent(new CustomEvent("ll-rebuild", {
       bubbles: true,
       composed: true
@@ -28542,16 +28542,16 @@ var HRVCard = class extends HTMLElement {
     const labels = this._config?.labels || {};
     const temperatureThresholds = this._config?.temperature_thresholds || {};
     const rpmBucketKeys = /* @__PURE__ */ new Set(["fan1_rpm", "fan2_rpm"]);
-    const stateParts = entityKeys.map((key) => {
-      const entityId = entities[key] || "";
+    const stateParts = entityKeys.map((key2) => {
+      const entityId = entities[key2] || "";
       const entity = entityId && this._hass ? this._hass.states[entityId] : void 0;
       let stateValue = entity?.state ?? "";
-      if (rpmBucketKeys.has(key)) {
+      if (rpmBucketKeys.has(key2)) {
         const numeric = Number.parseFloat(stateValue);
         if (Number.isFinite(numeric)) stateValue = String(Math.round(numeric / 20) * 20);
       }
       return [
-        key,
+        key2,
         entityId,
         stateValue,
         entity?.attributes?.unit_of_measurement ?? "",
@@ -28566,40 +28566,40 @@ var HRVCard = class extends HTMLElement {
       states: stateParts
     });
   }
-  _entityId(key) {
-    return this._config?.entities?.[key];
+  _entityId(key2) {
+    return this._config?.entities?.[key2];
   }
-  _entity(key) {
-    const entityId = this._entityId(key);
+  _entity(key2) {
+    const entityId = this._entityId(key2);
     return entityId && this._hass ? this._hass.states[entityId] : void 0;
   }
-  _domain(key) {
-    return this._entityId(key)?.split(".")[0];
+  _domain(key2) {
+    return this._entityId(key2)?.split(".")[0];
   }
-  _state(key) {
-    const entity = this._entity(key);
+  _state(key2) {
+    const entity = this._entity(key2);
     if (!entity || entity.state === "unknown" || entity.state === "unavailable") return;
     return entity.state;
   }
-  _number(key) {
-    const value = Number.parseFloat(this._state(key));
+  _number(key2) {
+    const value = Number.parseFloat(this._state(key2));
     return Number.isFinite(value) ? value : void 0;
   }
-  _unit(key, fallback = "") {
-    return this._entity(key)?.attributes?.unit_of_measurement || fallback;
+  _unit(key2, fallback = "") {
+    return this._entity(key2)?.attributes?.unit_of_measurement || fallback;
   }
-  _formatTemp(key) {
-    const value = this._number(key);
+  _formatTemp(key2) {
+    const value = this._number(key2);
     if (value === void 0) return "\u2014";
-    return `${value.toFixed(1)}${this._unit(key, "\xB0C")}`;
+    return `${value.toFixed(1)}${this._unit(key2, "\xB0C")}`;
   }
-  _temperatureLabel(key, fallbackKey) {
-    const configuredLabel = this._config?.labels?.[key];
+  _temperatureLabel(key2, fallbackKey) {
+    const configuredLabel = this._config?.labels?.[key2];
     const label = typeof configuredLabel === "string" ? configuredLabel.trim() : "";
     return this._escapeHtml(label || this._t(fallbackKey));
   }
-  _formatState(key, suffix = "") {
-    const value = this._state(key);
+  _formatState(key2, suffix = "") {
+    const value = this._state(key2);
     if (value === void 0) return "\u2014";
     return `${value}${suffix}`;
   }
@@ -28627,10 +28627,10 @@ var HRVCard = class extends HTMLElement {
     const normalized = rawState?.toString().trim().toLowerCase().replace(/[\s-]+/g, "_") || "";
     return compactModeLabels[this._language()]?.[normalized];
   }
-  _formatDisplayState(key, suffix = "") {
-    const entity = this._entity(key);
+  _formatDisplayState(key2, suffix = "") {
+    const entity = this._entity(key2);
     if (!entity || entity.state === "unknown" || entity.state === "unavailable") return "\u2014";
-    if (key === "mode") {
+    if (key2 === "mode") {
       const compact = this._compactModeLabel(entity.state);
       if (compact) return `${compact}${suffix}`;
     }
@@ -28640,9 +28640,9 @@ var HRVCard = class extends HTMLElement {
     } catch (_error) {
       formatted = void 0;
     }
-    return `${formatted && formatted !== entity.state ? formatted : this._fallbackDisplayState(key, entity.state)}${suffix}`;
+    return `${formatted && formatted !== entity.state ? formatted : this._fallbackDisplayState(key2, entity.state)}${suffix}`;
   }
-  _fallbackDisplayState(key, value) {
+  _fallbackDisplayState(key2, value) {
     const raw = value?.toString() || "";
     const normalized = raw.trim().toLowerCase().replace(/[\s-]+/g, "_");
     const modeLabels = {
@@ -28681,7 +28681,7 @@ var HRVCard = class extends HTMLElement {
         night_mode: "Nattilstand"
       }
     };
-    if (key === "mode" && modeLabels[this._language()]?.[normalized]) return modeLabels[this._language()][normalized];
+    if (key2 === "mode" && modeLabels[this._language()]?.[normalized]) return modeLabels[this._language()][normalized];
     const bypassLabels = {
       en: {
         open: "Open",
@@ -28720,8 +28720,8 @@ var HRVCard = class extends HTMLElement {
         "255": "\xC5ben"
       }
     };
-    if (key === "bypass" && bypassLabels[this._language()]?.[normalized]) return bypassLabels[this._language()][normalized];
-    const options = this._entity(key)?.attributes?.options;
+    if (key2 === "bypass" && bypassLabels[this._language()]?.[normalized]) return bypassLabels[this._language()][normalized];
+    const options = this._entity(key2)?.attributes?.options;
     const matchedOption = Array.isArray(options) ? options.find((option) => option.toString().toLowerCase() === raw.toLowerCase()) : void 0;
     return this._humanizeState(matchedOption || raw);
   }
@@ -28731,14 +28731,14 @@ var HRVCard = class extends HTMLElement {
     if (/^-?\d+(\.\d+)?$/.test(text)) return text;
     return text.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase(this._language() === "da" ? "da-DK" : "en-US"));
   }
-  _formatSelectState(key) {
-    return this._formatDisplayState(key);
+  _formatSelectState(key2) {
+    return this._formatDisplayState(key2);
   }
   _escapeHtml(value) {
     return value?.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;") || "";
   }
-  _formatNumber(key, decimals = 0, suffix = "") {
-    const value = this._number(key);
+  _formatNumber(key2, decimals = 0, suffix = "") {
+    const value = this._number(key2);
     if (value === void 0) return "\u2014";
     return `${value.toFixed(decimals)}${suffix}`;
   }
@@ -28758,10 +28758,10 @@ var HRVCard = class extends HTMLElement {
     const extract = this._number("extract_temperature");
     return Number.isFinite(outdoor) && Number.isFinite(supply) && Number.isFinite(extract) && outdoor > extract && supply < outdoor;
   }
-  _formatRpm(key) {
-    const value = this._number(key);
+  _formatRpm(key2) {
+    const value = this._number(key2);
     if (value === void 0) return "\u2014";
-    return `${value.toFixed(0)} ${this._unit(key, "rpm")}`;
+    return `${value.toFixed(0)} ${this._unit(key2, "rpm")}`;
   }
   _fanAnimationEnabled() {
     const appearance = this._config?.appearance || {};
@@ -28771,14 +28771,14 @@ var HRVCard = class extends HTMLElement {
     const appearance = this._config?.appearance || {};
     return (appearance.pipe_animation ?? appearance.animation) !== false;
   }
-  _fanBadgeSvg(key, x, y, iconScale = 1.6) {
-    if (!this._entityId(key)) return "";
-    const value = this._number(key);
+  _fanBadgeSvg(key2, x, y, iconScale = 1.6) {
+    if (!this._entityId(key2)) return "";
+    const value = this._number(key2);
     const spinning = this._fanAnimationEnabled() && Number.isFinite(value) && value > 0;
     const durationSeconds = 2.6 - (Number.isFinite(value) ? Math.max(0, Math.min(1, value / 100)) : 0) * 2.15;
     const duration2 = durationSeconds.toFixed(2);
     return `
-            <g ${this._svgEntityAttrs(key)} tabindex="0" transform="translate(${x} ${y})">
+            <g ${this._svgEntityAttrs(key2)} tabindex="0" transform="translate(${x} ${y})">
               <rect x="-24" y="-27" width="48" height="54" rx="9" class="fan-badge-box"></rect>
               <g transform="translate(0 -9) scale(${iconScale})">
                 <g class="fan-icon" style="animation-duration: ${duration2}s; animation-delay: ${this._phaseDelay(durationSeconds)}; animation-play-state: ${spinning ? "running" : "paused"};">
@@ -28788,7 +28788,7 @@ var HRVCard = class extends HTMLElement {
                   <circle class="fan-hub" r="1.6"></circle>
                 </g>
               </g>
-              <text x="0" y="19" text-anchor="middle" class="inline-afterheat-value" style="font-size:9px;">${this._formatRpm(key)}</text>
+              <text x="0" y="19" text-anchor="middle" class="inline-afterheat-value" style="font-size:9px;">${this._formatRpm(key2)}</text>
             </g>
     `;
   }
@@ -28805,28 +28805,28 @@ var HRVCard = class extends HTMLElement {
   _formatAirQuality() {
     const state = this._state("air_quality");
     if (state === void 0) return "\u2014";
-    const key = {
+    const key2 = {
       good: "air_quality_good",
       moderate: "air_quality_moderate",
       poor: "air_quality_poor"
     }[state.toString().trim().toLowerCase()];
-    return key ? this._t(key) : this._humanizeState(state);
+    return key2 ? this._t(key2) : this._humanizeState(state);
   }
   _formatHeatTransfer() {
     const state = this._state("heat_transfer");
     if (state === void 0) return "\u2014";
-    const key = {
+    const key2 = {
       inactive: "heat_transfer_inactive",
       low: "heat_transfer_low",
       normal: "heat_transfer_normal",
       high: "heat_transfer_high"
     }[state.toString().trim().toLowerCase()];
-    return key ? this._t(key) : this._humanizeState(state);
+    return key2 ? this._t(key2) : this._humanizeState(state);
   }
-  _formatDeltaT(key) {
-    const value = this._number(key);
+  _formatDeltaT(key2) {
+    const value = this._number(key2);
     if (value === void 0) return "\u2014";
-    return `${Math.abs(value).toFixed(1)}${this._unit(key, "\xB0C")}`;
+    return `${Math.abs(value).toFixed(1)}${this._unit(key2, "\xB0C")}`;
   }
   _isAfterheatActive() {
     const state = this._state("afterheat_active");
@@ -28917,7 +28917,7 @@ var HRVCard = class extends HTMLElement {
   _language() {
     return (this._hass?.locale?.language || this._hass?.language || "en").toString().toLowerCase().startsWith("da") ? "da" : "en";
   }
-  _t(key) {
+  _t(key2) {
     const translations = {
       en: {
         airflow_diagram: "HRV airflow diagram",
@@ -29036,7 +29036,7 @@ var HRVCard = class extends HTMLElement {
         heat_transfer_high: "H\xF8j"
       }
     };
-    return translations[this._language()]?.[key] || translations.en[key] || key;
+    return translations[this._language()]?.[key2] || translations.en[key2] || key2;
   }
   _normalizedBypassState() {
     const state = this._state("bypass");
@@ -29150,9 +29150,9 @@ var HRVCard = class extends HTMLElement {
       yellow: 22,
       orange: 27,
       red: 32
-    }).map(([key, fallback]) => {
-      const value = Number.parseFloat(configured[key]);
-      return [key, Number.isFinite(value) ? value : fallback];
+    }).map(([key2, fallback]) => {
+      const value = Number.parseFloat(configured[key2]);
+      return [key2, Number.isFinite(value) ? value : fallback];
     }));
   }
   _rgb(channels) {
@@ -30194,7 +30194,7 @@ var HRVCardEditor = class extends HTMLElement {
   _language() {
     return (this._hass?.locale?.language || this._hass?.language || "en").toString().toLowerCase().startsWith("da") ? "da" : "en";
   }
-  _t(key) {
+  _t(key2) {
     const translations = {
       en: {
         temperatures: "Temperatures",
@@ -30301,7 +30301,7 @@ var HRVCardEditor = class extends HTMLElement {
         hide_afterheat_on_bypass: "Skjul varmefladens frem/retur/\u0394T under bypass"
       }
     };
-    return translations[this._language()]?.[key] || translations.en[key] || key;
+    return translations[this._language()]?.[key2] || translations.en[key2] || key2;
   }
   _schema() {
     return [
@@ -30581,8 +30581,8 @@ var HRVCardEditor = class extends HTMLElement {
   _valueChanged(event) {
     event.stopPropagation();
     const value = event.detail.value || {};
-    const thresholdValue = (key, fallback) => {
-      const parsed = Number.parseFloat(value[key]);
+    const thresholdValue = (key2, fallback) => {
+      const parsed = Number.parseFloat(value[key2]);
       return Number.isFinite(parsed) ? parsed : fallback;
     };
     const next = structuredClone(this._config || {});
@@ -30641,15 +30641,15 @@ var HRVCardEditor = class extends HTMLElement {
       afterheat_coil_opacity: Number.isFinite(Number(value.afterheat_coil_opacity)) ? Number(value.afterheat_coil_opacity) : 60,
       hide_afterheat_on_bypass: value.hide_afterheat_on_bypass === true
     };
-    Object.keys(next.entities).forEach((key) => {
-      if (next.entities[key] === void 0) delete next.entities[key];
+    Object.keys(next.entities).forEach((key2) => {
+      if (next.entities[key2] === void 0) delete next.entities[key2];
     });
-    Object.keys(next.labels).forEach((key) => {
-      if (next.labels[key] === void 0) delete next.labels[key];
+    Object.keys(next.labels).forEach((key2) => {
+      if (next.labels[key2] === void 0) delete next.labels[key2];
     });
     if (Object.keys(next.labels).length === 0) delete next.labels;
-    Object.keys(next.appearance).forEach((key) => {
-      if (next.appearance[key] === void 0) delete next.appearance[key];
+    Object.keys(next.appearance).forEach((key2) => {
+      if (next.appearance[key2] === void 0) delete next.appearance[key2];
     });
     this.dispatchEvent(new CustomEvent("config-changed", {
       detail: { config: next },
@@ -30837,8 +30837,8 @@ var HAPowerFlowCard = class extends HTMLElement {
       b = stops[i + 1];
       break;
     }
-    const pct3 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
-    return `color-mix(in oklab,${a[1]} ${100 - pct3}%,${b[1]} ${pct3}%)`;
+    const pct4 = Math.round((price - a[0]) / Math.max(1e-4, b[0] - a[0]) * 1e3) / 10;
+    return `color-mix(in oklab,${a[1]} ${100 - pct4}%,${b[1]} ${pct4}%)`;
   }
   _pulse(value) {
     return Number.isFinite(value) && value > 6 ? Math.min(1, (value - 6) / 6) : 0;
@@ -31098,14 +31098,14 @@ var HACardListEditor5 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -31504,11 +31504,11 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     try {
       const helpers = await window.loadCardHelpers();
       if (!this._popupEl || this._config.rooms?.[this._popupRoomIndex] !== room) return;
-      for (const [key, definition] of Object.entries(definitions)) {
-        const host = content.querySelector(`[data-card-host="${key}"]`);
+      for (const [key2, definition] of Object.entries(definitions)) {
+        const host = content.querySelector(`[data-card-host="${key2}"]`);
         if (!host) continue;
         if (!definition) {
-          host.innerHTML = `<div class="empty">${key === "ac" ? "Ingen AC er tilknyttet dette rum" : "Ingen optimeringsdata er tilknyttet dette rum"}</div>`;
+          host.innerHTML = `<div class="empty">${key2 === "ac" ? "Ingen AC er tilknyttet dette rum" : "Ingen optimeringsdata er tilknyttet dette rum"}</div>`;
           continue;
         }
         const card = helpers.createCardElement(definition);
@@ -31776,14 +31776,14 @@ var HACardListEditor6 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -32123,12 +32123,12 @@ var HAAirQualityCard = class extends HTMLElement {
     const size = (last - first) / MAX_POINTS || 1;
     const buckets = /* @__PURE__ */ new Map();
     for (const point of points) {
-      const key = Math.min(MAX_POINTS - 1, Math.floor((point.t - first) / size));
-      const bucket2 = buckets.get(key) || { t: 0, v: 0, n: 0 };
+      const key2 = Math.min(MAX_POINTS - 1, Math.floor((point.t - first) / size));
+      const bucket2 = buckets.get(key2) || { t: 0, v: 0, n: 0 };
       bucket2.t += point.t;
       bucket2.v += point.v;
       bucket2.n += 1;
-      buckets.set(key, bucket2);
+      buckets.set(key2, bucket2);
     }
     const result = [...buckets.values()].map((bucket2) => ({ t: bucket2.t / bucket2.n, v: bucket2.v / bucket2.n }));
     result[result.length - 1] = points[points.length - 1];
@@ -32192,10 +32192,10 @@ var HAAirQualityCard = class extends HTMLElement {
       const ly = y(limit.value).toFixed(1);
       return `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${ly}" y2="${ly}" class="limit" style="stroke:var(--${limit.above})"/>`;
     }).join("");
-    const pct3 = (value) => `${(value / W * 100).toFixed(2)}%`;
-    const labels = shown.map((limit) => `<span class="lim" style="left:${pct3(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
+    const pct4 = (value) => `${(value / W * 100).toFixed(2)}%`;
+    const labels = shown.map((limit) => `<span class="lim" style="left:${pct4(W - PAD.r)};top:${y(limit.value).toFixed(1)}px;color:var(--${limit.above})">${this._escape(limit.label)}</span>`).join("");
     const hours = this._hours();
-    const ticks2 = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct3(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct3(W - PAD.r)}">Nu</span>`;
+    const ticks2 = [0, 0.25, 0.5, 0.75].map((f) => `<span class="tick${f === 0 ? " first" : ""}" style="left:${pct4(PAD.l + f * (W - PAD.l - PAD.r))}">-${Math.round(hours * (1 - f))} t</span>`).join("") + `<span class="tick last" style="left:${pct4(W - PAD.r)}">Nu</span>`;
     return `<div class="plot${small ? " small" : ""}" data-plot="${kind}"><svg viewBox="0 0 ${W} ${height}" preserveAspectRatio="none" role="img" aria-label="${kind === "co2" ? "CO\u2082" : "PM2,5"} de seneste ${hours} timer"><defs>${gradient}</defs>${lines}<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${bottom}" y2="${bottom}" class="axis"/><polygon points="${area}" fill="url(#${kind}-fill)"/><polyline points="${line}" class="line" stroke="url(#${kind}-line)"/></svg>${labels}${ticks2}</div>`;
   }
   _co2Chart(points) {
@@ -32564,7 +32564,7 @@ var HARoomControlCard = class extends HTMLElement {
     const d = this._model();
     const m = d.m;
     const ids = [this._lockId(m), m.presence, m.override, m.timer, m.automation, m.ambient, m.profile, m.lux, m.luxThreshold, ...m.openings || [], ...m.important || [], ...d.lights, ...d.toggles.map((t) => t.entity), ...d.specials.map((s) => s.id), ...d.media.map((x) => x.id)];
-    const key = JSON.stringify(ids.map((id) => {
+    const key2 = JSON.stringify(ids.map((id) => {
       const s = this._st(id);
       return s ? [s.state, s.attributes?.brightness, s.attributes?.rgb_color, s.attributes?.media_title, s.attributes?.volume_level, s.attributes?.finishes_at, s.attributes?.entity_picture, s.last_changed] : 0;
     })) + Math.floor(Date.now() / 6e4);
@@ -32577,9 +32577,9 @@ var HARoomControlCard = class extends HTMLElement {
       clearInterval(this._lockTick);
       this._lockTick = null;
     }
-    if (key === this._key && !locked) return;
-    if (key === this._key && locked && this._lockMin === Math.floor(Date.now() / 6e4)) return;
-    this._key = key;
+    if (key2 === this._key && !locked) return;
+    if (key2 === this._key && locked && this._lockMin === Math.floor(Date.now() / 6e4)) return;
+    this._key = key2;
     this._lockMin = Math.floor(Date.now() / 6e4);
     if (!this._built) {
       this._built = true;
@@ -32646,10 +32646,10 @@ var HARoomControlCard = class extends HTMLElement {
     const tiles = d.lights.map((id) => {
       const s = this._st(id);
       const on = s.state === "on";
-      const pct3 = this._pct(s);
+      const pct4 = this._pct(s);
       const dead = DEAD3.has(s.state);
       const dim = (s.attributes?.supported_color_modes || []).some((x) => x !== "onoff");
-      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc6(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct3}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc6(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc6(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct3}%` : "Til" : "Fra"}</span></button>`;
+      return `<button type="button" class="tile lt ${on ? "on" : ""} ${dead ? "dead" : ""}" data-light="${esc6(id)}" data-dim="${dim ? 1 : 0}" style="--p:${pct4}%;--lc:${this._lightColor(s)}"><i class="fill"></i><span class="li"><ha-icon icon="${esc6(s.attributes?.icon || (on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"))}"></ha-icon></span><span class="n"><b>${esc6(this._name(id))}</b><small>${dead ? "Utilg\xE6ngelig" : on ? dim ? "Tr\xE6k for at d\xE6mpe" : "T\xE6ndt" : "Slukket"}</small></span><span class="pct">${on ? dim ? `${pct4}%` : "Til" : "Fra"}</span></button>`;
     });
     return `<section class="sec"><div class="sh"><h4>Lys</h4><span class="cnt">${lit}/${d.lights.length}</span><i class="rule"></i></div><div class="lights">${tiles.join("")}</div></section>`;
   }
@@ -33606,9 +33606,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       return;
     }
     const models = (this._config.rooms || []).map((room) => this._roomModel(room));
-    for (const key of this._dirty) {
-      if (key === "summary") this._renderSummary(models);
-      else if (models[key]) this._renderRoom(key, models[key]);
+    for (const key2 of this._dirty) {
+      if (key2 === "summary") this._renderSummary(models);
+      else if (models[key2]) this._renderRoom(key2, models[key2]);
     }
     this._dirty.clear();
   }
@@ -33672,17 +33672,17 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     if (!out.length && l.state === "on" && Array.isArray(l.attributes?.rgb_color)) out.push(l.attributes.rgb_color.slice(0, 3).map((v) => Math.round(v)));
     return out;
   }
-  _lightVars(l, on, pct3) {
+  _lightVars(l, on, pct4) {
     const cols = on ? this._lightColors(l) : [];
-    if (!cols.length) return `--lv:${on ? pct3 : 0}%`;
+    if (!cols.length) return `--lv:${on ? pct4 : 0}%`;
     const stops = cols.length === 1 ? [`rgba(${cols[0]},.18)`, `rgba(${cols[0]},.45)`] : cols.map((c2, i) => `rgba(${c2},${(0.22 + 0.23 * i / (cols.length - 1)).toFixed(2)})`);
-    return `--lv:${pct3}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
+    return `--lv:${pct4}%;--lc:${cols[cols.length - 1].join(",")};--lfill:linear-gradient(90deg,${stops.join(",")})`;
   }
   // The battery icon follows the level: full, 90 … 10, empty (Claude AI, 2026-10-19; user: "Batteri ikoner skal da følge
   // batteri niveau").
-  _batteryIcon(icon5, pct3) {
+  _batteryIcon(icon5, pct4) {
     if (!icon5) return;
-    const name = !Number.isFinite(pct3) ? "mdi:battery-unknown" : pct3 >= 95 ? "mdi:battery" : pct3 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct3 / 10) * 10)}`;
+    const name = !Number.isFinite(pct4) ? "mdi:battery-unknown" : pct4 >= 95 ? "mdi:battery" : pct4 < 5 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, Math.floor(pct4 / 10) * 10)}`;
     if (icon5.getAttribute("icon") !== name) icon5.setAttribute("icon", name);
   }
   _metric(node, text, missing, low = false) {
@@ -34085,12 +34085,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   _applyControls() {
     const src = this._ctlSource;
     if (!src || !this._config?.rooms) return;
-    const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/(en|et)$/, "");
+    const key2 = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/(en|et)$/, "");
     this._config = { ...this._config, rooms: this._config.rooms.map((r) => {
       if (r.controls || r.outdoor) return r;
-      const m = src.v3.find((x) => r.climate && x.climate === r.climate || r.temperature && x.temperature === r.temperature || key(x.name) === key(r.name));
+      const m = src.v3.find((x) => r.climate && x.climate === r.climate || r.temperature && x.temperature === r.temperature || key2(x.name) === key2(r.name));
       if (!m) return r;
-      const pop = m.popup ? src.pops[m.popup] : Object.values(src.pops).find((x) => key(x.name) === key(r.name));
+      const pop = m.popup ? src.pops[m.popup] : Object.values(src.pops).find((x) => key2(x.name) === key2(r.name));
       const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening, co2: m.co2 };
       const ctl = { name: r.name, icon: r.icon, light: m.light, actions: m.actions, alert: m.alert, ...pop ? this._popupControls(pop) : {} };
       if (ctl.model?.profile) info.profile = ctl.model.profile;
@@ -34213,11 +34213,11 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     try {
       const helpers = await window.loadCardHelpers();
       if (!this._popupEl || this._config.rooms?.[this._popupRoomIndex] !== room) return;
-      for (const [key, definition] of Object.entries(definitions)) {
-        const host = content.querySelector(`[data-card-host="${key}"]`);
+      for (const [key2, definition] of Object.entries(definitions)) {
+        const host = content.querySelector(`[data-card-host="${key2}"]`);
         if (!host) continue;
         if (!definition) {
-          host.innerHTML = `<div class="empty">${key === "ac" ? "Ingen AC er tilknyttet dette rum" : "Ingen optimeringsdata er tilknyttet dette rum"}</div>`;
+          host.innerHTML = `<div class="empty">${key2 === "ac" ? "Ingen AC er tilknyttet dette rum" : "Ingen optimeringsdata er tilknyttet dette rum"}</div>`;
           continue;
         }
         const card = helpers.createCardElement(definition);
@@ -34922,12 +34922,12 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     super._applyControls();
     const src = this._ctlSource;
     if (!src || !this._config?.rooms) return;
-    const key = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    const key2 = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     let changed = false;
     const rooms = this._config.rooms.map((r) => {
       if (!r.outdoor || r.controls) return r;
-      const names2 = r.controls_room ? [key(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key(r.name)];
-      const m = src.v3.find((x) => names2.includes(key(x.name)));
+      const names2 = r.controls_room ? [key2(r.controls_room)] : ["udenfor", "udendors", "ude", "haven", "have", key2(r.name)];
+      const m = src.v3.find((x) => names2.includes(key2(x.name)));
       if (!m) return r;
       const pop = m.popup ? src.pops[m.popup] : void 0;
       const info = { presence: m.presence, light: m.light, status: m.status, alert: m.alert, actions: m.actions, opening: m.opening };
@@ -35000,15 +35000,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId2);
-    const esc13 = (v) => this._escape(v);
+    const esc14 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
-    const gauge = (key, icon5, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
+    const gauge = (key2, icon5, label) => `<div class="g na" data-m="${key2}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc13(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc14(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc13(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc13(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc14(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc14(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
@@ -35029,10 +35029,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc13(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc14(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc13(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc13(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc14(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc14(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
           <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
@@ -35048,19 +35048,19 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc13(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc13(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc14(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc14(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc13(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc14(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc13(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc14(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem \u2013 tallene for ventiler og varme kan v\xE6re ufuldst\xE6ndige.</span></div>
@@ -35312,11 +35312,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
   // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
   _renderComfortTile(room, refs, model) {
-    const esc13 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
+    const esc14 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
     const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c2.tone] || "neutral";
     refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c2.tone}`;
     this._setText(refs.temp, this._format(model.current));
-    const meta = `<span class="cf-pill"><i></i>${esc13(c2.label)}</span><small>${esc13(c2.detail)}</small>`;
+    const meta = `<span class="cf-pill"><i></i>${esc14(c2.label)}</span><small>${esc14(c2.detail)}</small>`;
     if (refs.meta && refs.meta._h !== meta) {
       refs.meta._h = meta;
       refs.meta.innerHTML = meta;
@@ -35337,7 +35337,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (model.humidity !== void 0) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
       if (room.co2) chips.push([co2 !== void 0 && co2 >= 1e3 ? "bad" : "", "mdi:molecule-co2", co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`]);
       if (model.feels !== void 0) chips.push(["", "mdi:thermometer", `f\xF8les ${this._format(model.feels)}\xB0`]);
-      const html = chips.map(([cls, icon5, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon5}"></ha-icon>${esc13(text)}</span>`).join("");
+      const html = chips.map(([cls, icon5, text]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon5}"></ha-icon>${esc14(text)}</span>`).join("");
       const box = cf.querySelector(".cf-chips");
       if (box._h !== html) {
         box._h = html;
@@ -35364,7 +35364,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
-    const host = refs.host, esc13 = (v) => this._escape(v), st = (id) => this._entity(id), fmt5 = (v, digits = 1) => this._format(v, digits);
+    const host = refs.host, esc14 = (v) => this._escape(v), st = (id) => this._entity(id), fmt6 = (v, digits = 1) => this._format(v, digits);
     const f = (name) => host.querySelector(`[data-f="${name}"]`), p25 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p25(t.getHours())}:${p25(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
@@ -35393,25 +35393,25 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const observed = st(room.observed)?.state;
     this._setText(f("wxlabel"), observed || info.label);
-    const range = (x) => x && x.templow !== void 0 ? `${fmt5(x.templow)}\xB0\u2013${fmt5(x.temperature)}\xB0` : "";
+    const range = (x) => x && x.templow !== void 0 ? `${fmt6(x.templow)}\xB0\u2013${fmt6(x.temperature)}\xB0` : "";
     const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
-    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt5(Math.min(...lows))}\xB0\u2013${fmt5(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt6(Math.min(...lows))}\xB0\u2013${fmt6(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
     const chips = [];
-    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt5(model.feels)}\xB0`]);
-    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt5(model.humidity, 0)} %` : "Ude nu");
+    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt6(model.feels)}\xB0`]);
+    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt6(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
       const n = this._number(v);
       return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
     };
     const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
-    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt5(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt5(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
+    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt6(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt6(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
     const rain = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
-    if (rain !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt5(rain ?? rainFc)} mm`, rain !== void 0 && rainFc !== void 0 ? `prognose ${fmt5(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt5(d0.precipitation_probability, 0)} %` : ""]);
+    if (rain !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt6(rain ?? rainFc)} mm`, rain !== void 0 && rainFc !== void 0 ? `prognose ${fmt6(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt6(d0.precipitation_probability, 0)} %` : ""]);
     const dd = this._number(st(room.degree_days)?.state);
-    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt5(dd)}`]);
+    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt6(dd)}`]);
     const uv = this._number(a.uv_index);
-    if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt5(uv, 0)}`]);
-    const chipHtml = chips.map(([icon5, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc13(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon5}"></ha-icon></span>` : `<ha-icon icon="${icon5}"></ha-icon>`}${esc13(text)}</span>`).join("");
+    if (uv !== void 0 && uv >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt6(uv, 0)}`]);
+    const chipHtml = chips.map(([icon5, color, text, sub, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub ? ` title="${esc14(sub)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon5}"></ha-icon></span>` : `<ha-icon icon="${icon5}"></ha-icon>`}${esc14(text)}</span>`).join("");
     const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
       chipsEl._h = chipHtml;
@@ -35419,8 +35419,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p25(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt5(x.temperature)}\xB0 \xB7 ${fmt5(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt5(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc13(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      const title = `${p25(t.getHours())}:00 \xB7 ${hi.label} \xB7 ${fmt6(x.temperature)}\xB0 \xB7 ${fmt6(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt6(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi.color}" title="${esc14(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
     if (hoursEl && hoursEl._h !== hoursHtml2) {
@@ -35469,7 +35469,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       const m = Math.round((Date.now() - Date.parse(t)) / 6e4);
       return m < 60 ? `${m} min` : `${Math.floor(m / 60)} t`;
     };
-    const pct3 = (l) => Math.round((l.attributes?.brightness ?? 255) / 255 * 100);
+    const pct4 = (l) => Math.round((l.attributes?.brightness ?? 255) / 255 * 100);
     this._config.rooms.forEach((r, i) => {
       const host = this.shadowRoot.querySelector(`.zone[data-room="${i}"] [data-f="roominfo"]`);
       if (!host) return;
@@ -35497,7 +35497,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (l) {
         const on = l.state === "on";
         const dim = (l.attributes?.supported_color_modes || []).some((m) => m !== "onoff");
-        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, pct3(l))}" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct3(l)} %` : "Fra"}</span></button>`);
+        acts.push(`<button type="button" class="qa light ${on ? "on" : ""}" data-dim="${dim ? 1 : 0}" data-act="${this._escape(info.light)}" style="${this._lightVars(l, on, pct4(l))}" title="Tryk: t\xE6nd/sluk \xB7 tr\xE6k til siden: d\xE6mp"><i></i><ha-icon icon="${on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon><span>${on ? `${pct4(l)} %` : "Fra"}</span></button>`);
       }
       (info?.actions || []).slice(0, 2).forEach((x) => {
         const s2 = st(x.entity);
@@ -35747,14 +35747,14 @@ var HACardListEditor7 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -36005,17 +36005,17 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const area = path && pts.length > 1 ? `${path} L${last[0].toFixed(2)} ${H3} L${first[0].toFixed(2)} ${H3} Z` : "";
     const grid = [];
     for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) grid.push(v);
-    const pct3 = (v) => (y(v) / H3 * 100).toFixed(2);
+    const pct4 = (v) => (y(v) / H3 * 100).toFixed(2);
     let zones = "", lines = "", tag = "";
     if (target2 !== void 0) {
       const hi = y(target2 + 0.35), lo = y(target2 - 0.35);
       zones = `<clipPath id="tt-a-${index}"><rect x="-5" y="-50" width="${W2 + 10}" height="${(hi + 50).toFixed(2)}"/></clipPath><clipPath id="tt-t-${index}"><rect x="-5" y="${hi.toFixed(2)}" width="${W2 + 10}" height="${(lo - hi).toFixed(2)}"/></clipPath><clipPath id="tt-b-${index}"><rect x="-5" y="${lo.toFixed(2)}" width="${W2 + 10}" height="${(H3 - lo + 50).toFixed(2)}"/></clipPath>`;
       lines = `<rect x="0" y="${hi.toFixed(2)}" width="${W2}" height="${(lo - hi).toFixed(2)}" class="target-band"/><line x1="0" x2="${W2}" y1="${y(target2).toFixed(2)}" y2="${y(target2).toFixed(2)}" class="target-line"/>${path ? `<path d="${path}" class="temperature-line above" clip-path="url(#tt-a-${index})"/><path d="${path}" class="temperature-line on" clip-path="url(#tt-t-${index})"/><path d="${path}" class="temperature-line below" clip-path="url(#tt-b-${index})"/>` : ""}`;
-      tag = `<span class="target-tag" style="top:${pct3(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
+      tag = `<span class="target-tag" style="top:${pct4(target2)}%">M\xE5l ${this._format(target2)}\xB0</span>`;
     } else if (path) lines = `<path d="${path}" class="temperature-line on"/>`;
     const tone3 = target2 === void 0 || state.current === void 0 ? "on" : state.current > target2 + 0.35 ? "above" : state.current < target2 - 0.35 ? "below" : "on";
     const dot = last ? `<span class="now-dot ${tone3}" style="top:${(last[1] / H3 * 100).toFixed(2)}%"></span>` : "";
-    return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct3(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
+    return `<div class="chart"><div class="y-axis">${grid.map((v) => `<span style="top:${pct4(v)}%">${this._format(v, step < 1 ? 1 : 0)}\xB0</span>`).join("")}</div><div class="plot"><svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none" aria-label="Temperaturgraf for ${this._escape(room.name)}"><defs><linearGradient id="tt-f-${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="fill-top"/><stop offset="1" class="fill-bottom"/></linearGradient>${zones}</defs>${grid.map((v) => `<line x1="0" x2="${W2}" y1="${y(v).toFixed(2)}" y2="${y(v).toFixed(2)}" class="grid-line"/>`).join("")}${area ? `<path d="${area}" fill="url(#tt-f-${index})"/>` : ""}${lines}</svg>${tag}${dot}</div><div class="times"><span>\u2212${hours} t</span><span>\u2212${Math.round(hours / 2)} t</span><span>Nu</span></div></div>`;
   }
   _graphPoint(box, fraction) {
     const g = this._graphs[Number(box.closest("article")?.dataset.index)];
@@ -36377,19 +36377,19 @@ var HACardListEditor8 = class extends HTMLElement {
   _sig(value) {
     if (Array.isArray(value)) return `[${value.map((item2) => this._sig(item2)).join(",")}]`;
     if (value && typeof value === "object") {
-      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this._sig(value[key])}`).join(",")}}`;
+      return `{${Object.keys(value).sort().map((key2) => `${JSON.stringify(key2)}:${this._sig(value[key2])}`).join(",")}}`;
     }
     return JSON.stringify(value);
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -36427,9 +36427,9 @@ var HACardListEditor8 = class extends HTMLElement {
       const start = page * pageSize;
       return `<section class="section"><h3>${collection.label} (${items.length})</h3>${items.slice(start, start + pageSize).map((item2, offset) => {
         const index = start + offset;
-        const key = `${collection.key}:${index}`;
-        const active = this._activeItem === key;
-        return `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><span class="item-actions"><button class="edit" data-edit="${key}" aria-expanded="${active}">${active ? "Luk" : "Redig\xE9r"}</button><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></span></div>${active ? `<div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div>` : ""}</div>`;
+        const key2 = `${collection.key}:${index}`;
+        const active = this._activeItem === key2;
+        return `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><span class="item-actions"><button class="edit" data-edit="${key2}" aria-expanded="${active}">${active ? "Luk" : "Redig\xE9r"}</button><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></span></div>${active ? `<div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div>` : ""}</div>`;
       }).join("")}${pageCount > 1 ? `<div class="item-actions"><button class="edit" data-page="${collection.key}" data-direction="-1" ${page === 0 ? "disabled" : ""}>Forrige</button><span>Side ${page + 1} af ${pageCount}</span><button class="edit" data-page="${collection.key}" data-direction="1" ${page === pageCount - 1 ? "disabled" : ""}>N\xE6ste</button></div>` : ""}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this._configSig = this._sig(this._config);
@@ -36442,17 +36442,17 @@ var HACardListEditor8 = class extends HTMLElement {
       const next = this._activeItem === button.dataset.edit ? "" : button.dataset.edit;
       const previous = this._activeItem;
       this._activeItem = next;
-      for (const key of [previous, next]) {
-        if (!key) continue;
-        const itemButton = [...this.shadowRoot.querySelectorAll("[data-edit]")].find((node) => node.dataset.edit === key);
+      for (const key2 of [previous, next]) {
+        if (!key2) continue;
+        const itemButton = [...this.shadowRoot.querySelectorAll("[data-edit]")].find((node) => node.dataset.edit === key2);
         if (!itemButton) continue;
         const item2 = itemButton.closest(".item");
         item2.querySelector(".fields")?.remove();
-        const active = key === next;
+        const active = key2 === next;
         itemButton.textContent = active ? "Luk" : "Redig\xE9r";
         itemButton.setAttribute("aria-expanded", String(active));
         if (!active) continue;
-        const [collectionKey, rawIndex] = key.split(":");
+        const [collectionKey, rawIndex] = key2.split(":");
         const collection = collections.find((entry) => entry.key === collectionKey);
         const index = Number(rawIndex);
         const fields = document.createElement("div");
@@ -36610,7 +36610,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   }
   return out.sort((a, b) => a.prio - b.prio);
 }
-function hoursHtml(hass, hourly = [], esc13 = (v) => v) {
+function hoursHtml(hass, hourly = [], esc14 = (v) => v) {
   const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
   const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
   const sunCache = /* @__PURE__ */ new Map();
@@ -36622,7 +36622,7 @@ function hoursHtml(hass, hourly = [], esc13 = (v) => v) {
   };
   return next.map((h, i) => {
     const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
-    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc13(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
+    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc14(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
   }).join("");
 }
 var INSIGHT_CSS = `
@@ -36901,9 +36901,9 @@ var V3NightSky = class {
     const h = c2.clientHeight;
     if (!w || !h) return false;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const key = `${w}x${h}@${dpr}`;
-    if (key === this.key) return true;
-    this.key = key;
+    const key2 = `${w}x${h}@${dpr}`;
+    if (key2 === this.key) return true;
+    this.key = key2;
     this.moonKey = "";
     c2.width = Math.round(w * dpr);
     c2.height = Math.round(h * dpr);
@@ -36928,9 +36928,9 @@ var V3NightSky = class {
   _moonSprite() {
     const m = this.p.moon;
     if (!m) return;
-    const key = `${m.r}|${Math.round(m.phase * 400)}|${m.night ? 1 : 0}|${m.south ? 1 : 0}|${this.dpr}`;
-    if (key === this.moonKey && this.moonImg) return;
-    this.moonKey = key;
+    const key2 = `${m.r}|${Math.round(m.phase * 400)}|${m.night ? 1 : 0}|${m.south ? 1 : 0}|${this.dpr}`;
+    if (key2 === this.moonKey && this.moonImg) return;
+    this.moonKey = key2;
     const r = m.r;
     const G = Math.ceil(r * (m.night ? 4 : 1.2));
     const dpr = this.dpr;
@@ -37137,9 +37137,9 @@ var V3WeatherParticles = class {
     const w = c2.clientWidth;
     const h = c2.clientHeight;
     if (!w || !h) return;
-    const key = `${this.p.condition}|${w}x${h}|${Math.round(this.p.ground)}|${this.p.dim < 1 ? "n" : "d"}`;
-    if (key === this.key) return;
-    this.key = key;
+    const key2 = `${this.p.condition}|${w}x${h}|${Math.round(this.p.ground)}|${this.p.dim < 1 ? "n" : "d"}`;
+    if (key2 === this.key) return;
+    this.key = key2;
     if (c2.width !== w || c2.height !== h) {
       c2.width = w;
       c2.height = h;
@@ -37644,11 +37644,11 @@ var HAHomeHeaderCard = class extends HTMLElement {
         out.push(r);
         continue;
       }
-      const key = JSON.stringify([r.header_title, r.header_title_one || "", r.header_text || ""]);
-      let g = groups.get(key);
+      const key2 = JSON.stringify([r.header_title, r.header_title_one || "", r.header_text || ""]);
+      let g = groups.get(key2);
       if (!g) {
         g = { ...r, members: [] };
-        groups.set(key, g);
+        groups.set(key2, g);
         out.push(g);
       }
       g.members.push(r);
@@ -39593,7 +39593,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       }
       this._decorationType = item2.type;
     }
-    const esc13 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
+    const esc14 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch2]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -39605,14 +39605,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc13(item2.value));
+    setText(".value", esc14(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state, index) => {
       meter.children[index].className = `seg ${segClass(state)}`;
     });
-    setText(".detail", esc13(item2.detail || " "));
+    setText(".detail", esc14(item2.detail || " "));
     this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
     if (item2.type === "heating" || item2.type === "ventilation") {
       const l = this.shadowRoot.querySelector(".label");
@@ -39629,8 +39629,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : q.awayOpen ? `${open} ${open > 1 ? "\xE5bne" : "\xE5ben"} \xB7 ingen hjemme` : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} ${open > 1 ? "\xE5bne" : "\xE5ben"}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc13(title)}">${inner}</span>`;
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc13(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc14(title)}">${inner}</span>`;
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic}"></ha-icon><b>${esc14(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -39693,7 +39693,7 @@ var HaHomeStatusCardEditor = class extends HTMLElement {
   }
   render() {
     const options = Object.keys(PRESETS).map(
-      (key) => `<option value="${key}" ${this.config?.preset === key ? "selected" : ""}>${PRESETS[key].name}</option>`
+      (key2) => `<option value="${key2}" ${this.config?.preset === key2 ? "selected" : ""}>${PRESETS[key2].name}</option>`
     ).join("");
     const heatField = this.config?.preset === "pet" ? `<label>L\xF8betidssensor (valgfri, fx sensor.hund_lobetid)</label><input id="heat-entity" style="box-sizing:border-box;width:100%;padding:9px" value="${String(this.config.heat_entity || "").replace(/"/g, "&quot;")}" placeholder="sensor.\u2026_lobetid">` : "";
     const inversion = this.config?.preset === "security" ? `<label class="check"><input id="gate-lock-inverted" type="checkbox" ${this.config.gate_lock_inverted !== false ? "checked" : ""}>Portkontakt er omvendt (\xE5ben = l\xE5st)</label>` : "";
@@ -40248,9 +40248,9 @@ ${LUX_KEYFRAMES}
     if (!box || !room) return;
     const r = this._roomInfo(room);
     const f = (v, d = 1) => this._fmt(v, d);
-    const key = JSON.stringify([r.temp, r.humidity, r.target, r.heating, r.window, r.battery, r.valve, r.present, r.cl?.state, JSON.stringify(this._pending || {}), r.series.length, r.ac && [r.ac.mode, r.ac.running, r.ac.a.temperature, r.ac.a.fan_mode, r.ac.a.preset_mode, r.ac.paused]]);
-    if (!force && key === this._roomSheetKey) return;
-    this._roomSheetKey = key;
+    const key2 = JSON.stringify([r.temp, r.humidity, r.target, r.heating, r.window, r.battery, r.valve, r.present, r.cl?.state, JSON.stringify(this._pending || {}), r.series.length, r.ac && [r.ac.mode, r.ac.running, r.ac.a.temperature, r.ac.a.fan_mode, r.ac.a.preset_mode, r.ac.paused]]);
+    if (!force && key2 === this._roomSheetKey) return;
+    this._roomSheetKey = key2;
     box.className = `box ${!Number.isFinite(r.temp) ? "na" : r.delta > 0.7 ? "warm" : r.delta < -0.7 ? "cold" : ""}`;
     const pts = [...r.series.map((p) => ({ t: p.t + 18e5, v: p.v })), ...Number.isFinite(r.temp) ? [{ t: Date.now(), v: r.temp, now: true }] : []];
     let chart = '<div class="empty">Ingen historik endnu</div>';
@@ -40301,8 +40301,8 @@ ${LUX_KEYFRAMES}
     const months = this._state(c2.car_month_cost_entity)?.attributes?.months;
     if (!Array.isArray(months)) return Number.NaN;
     const now = /* @__PURE__ */ new Date();
-    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const m = months.find((x) => x?.month === key);
+    const key2 = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const m = months.find((x) => x?.month === key2);
     return m ? Number(m.cost) : Number.NaN;
   }
   async _utilStats() {
@@ -40368,9 +40368,9 @@ ${LUX_KEYFRAMES}
     const ours = yDay >= 1 ? byDay.get(yDay) : void 0;
     const theirs = lastM.find((d) => new Date(d.t).getDate() === yDay)?.v;
     if (Number.isFinite(ours) && Number.isFinite(theirs) && theirs > 0) {
-      const pct3 = (ours - theirs) / theirs * 100;
-      if (Math.abs(pct3) < 3) chip = `<span class="uchip same" title="Som sidste m\xE5ned p\xE5 samme tid">\u2248 sidste md.</span>`;
-      else chip = `<span class="uchip ${pct3 > 0 ? "up" : "down"}" title="Mod sidste m\xE5ned p\xE5 samme tid">${pct3 > 0 ? "\u25B2" : "\u25BC"} ${this._fmt(Math.abs(pct3), 0)} %</span>`;
+      const pct4 = (ours - theirs) / theirs * 100;
+      if (Math.abs(pct4) < 3) chip = `<span class="uchip same" title="Som sidste m\xE5ned p\xE5 samme tid">\u2248 sidste md.</span>`;
+      else chip = `<span class="uchip ${pct4 > 0 ? "up" : "down"}" title="Mod sidste m\xE5ned p\xE5 samme tid">${pct4 > 0 ? "\u25B2" : "\u25BC"} ${this._fmt(Math.abs(pct4), 0)} %</span>`;
     }
     const todayUse = clean[today - 1];
     const elapsed = (now - m0) / 864e5;
@@ -40433,9 +40433,9 @@ ${LUX_KEYFRAMES}
     if (!rooms || !panel) return;
     const configured = Array.isArray(this.config?.robots) ? this.config.robots : [], liveKeys = /* @__PURE__ */ new Set();
     configured.forEach((robot, index) => {
-      const key = String(robot.id || robot.name || robot.entity || index);
-      liveKeys.add(key);
-      let node = this._robotNodes.get(key);
+      const key2 = String(robot.id || robot.name || robot.entity || index);
+      liveKeys.add(key2);
+      let node = this._robotNodes.get(key2);
       const premium = !!this._rtPremium && !robot.outdoors;
       if (node && node.isConnected && node.classList.contains("pmr") !== premium) {
         node.remove();
@@ -40444,9 +40444,9 @@ ${LUX_KEYFRAMES}
       if (!node || !node.isConnected) {
         node = document.createElement("span");
         node.className = premium ? "room-robot pmr" : "room-robot";
-        node.dataset.robot = key;
+        node.dataset.robot = key2;
         node.innerHTML = premium ? this._robotPremiumMarkup(robot) : '<span class="room-robot-x"><ha-icon class="room-robot-icon"></ha-icon></span>';
-        this._robotNodes.set(key, node);
+        this._robotNodes.set(key2, node);
       }
       node.querySelector(".room-robot-icon")?.setAttribute("icon", robot.icon || (String(robot.entity || "").startsWith("lawn_mower.") ? "mdi:robot-mower" : "mdi:robot-vacuum"));
       node.title = robot.name || this._state(robot.entity)?.attributes?.friendly_name || "Robot";
@@ -40467,16 +40467,16 @@ ${LUX_KEYFRAMES}
       if (room) room.append(node);
       else node.hidden = true;
     });
-    for (const [key, node] of this._robotNodes) if (!liveKeys.has(key)) {
+    for (const [key2, node] of this._robotNodes) if (!liveKeys.has(key2)) {
       node.remove();
-      this._robotNodes.delete(key);
+      this._robotNodes.delete(key2);
     }
   }
   async _loadEvents() {
     if (!this._hass?.callApi || this._loadingEvents) return;
     const calendars = this.config.calendars || [];
-    const key = JSON.stringify([calendars.map((x) => x.entity), this.config.event_days, this.config.max_events]);
-    if (key === this._eventsKey && Date.now() - (this._eventsAt || 0) < 3e5) return;
+    const key2 = JSON.stringify([calendars.map((x) => x.entity), this.config.event_days, this.config.max_events]);
+    if (key2 === this._eventsKey && Date.now() - (this._eventsAt || 0) < 3e5) return;
     this._loadingEvents = true;
     try {
       const start = /* @__PURE__ */ new Date();
@@ -40487,7 +40487,7 @@ ${LUX_KEYFRAMES}
       calendars.forEach((cal, index) => (lists[index] || []).forEach((event) => events.push({ ...event, calendar: cal })));
       const limit = Math.min(100, Math.max(1, Number(this.config.max_events) || 40));
       this._events = events.sort((a, b) => new Date(a.start?.dateTime || a.start?.date) - new Date(b.start?.dateTime || b.start?.date)).slice(0, limit);
-      this._eventsKey = key;
+      this._eventsKey = key2;
       this._eventsAt = Date.now();
       this._renderEvents();
     } catch (_) {
@@ -40901,7 +40901,7 @@ var HaHomeSummaryCardEditor = class extends HTMLElement {
   render() {
     const fields = [["title", "Titel"], ["event_days", "Kalenderdage"], ["max_events", "Maks. h\xE6ndelser"], ["rooms_navigation_path", "Navigation til rum"], ["rooms_style_entity", "Kontakt: Varme Center-rum i stedet for fliser (valgfri)"], ["default_target", "Standard-setpunkt for rum uden termostat (\xB0)"], ["room_popup_dashboard", "Rum-popup fra dashboard (Varme Center)"], ["room_controls_dashboard", "Styring til rum-popup fra dashboard"], ["calendar_navigation_path", "Navigation til kalender"], ["monthly_energy_entity", "Str\xF8m denne m\xE5ned"], ["electric_month_cost_entity", "Akkumuleret str\xF8mpris denne m\xE5ned"], ["water_month_entity", "Vand denne m\xE5ned"], ["water_month_cost_entity", "Vandpris denne m\xE5ned"], ["heat_month_entity", "Fjernvarme denne m\xE5ned"], ["heat_month_cost_entity", "Fjernvarmepris denne m\xE5ned"], ["car_month_entity", "Bil: kWh denne m\xE5ned (valgfri flise)"], ["car_month_cost_entity", "Bil: pris denne m\xE5ned (eller EV Ledgers ladeudgifter i \xE5r)"], ["car_path", "Bil: side ved tryk"], ["room_gap", "Afstand mellem rumfliser (px)"], ["co2_entity", "CO\u2082"], ["air_quality_entity", "Luftkvalitet"], ["water_flow_entity", "Vandflow"], ["storage_entity", "Protect lager"]];
     const robots = JSON.stringify(this.config?.robots || [], null, 2);
-    this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key, label]) => `<label>${label}</label><input data-key="${key}" value="${this.config?.[key] || SUMMARY_DEFAULTS[key] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
+    this.innerHTML = `<style>label{display:block;margin:10px 0 4px;font-weight:600}input,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color,var(--card-background-color));color:inherit}textarea{min-height:170px;font:12px/1.4 monospace;resize:vertical}.hint{margin-top:5px;color:var(--secondary-text-color);font-size:11px}.error{color:var(--error-color);font-size:11px}</style>${fields.map(([key2, label]) => `<label>${label}</label><input data-key="${key2}" value="${this.config?.[key2] || SUMMARY_DEFAULTS[key2] || ""}">`).join("")}<label>Robotter</label><textarea data-robots>${robots}</textarea><div class="hint">Entity, navn, ikon og enten rum-entity, fast rum eller udend\xF8rs. Rumkortet f\xF8lger live-status uden genindl\xE6sning.</div><div class="error"></div>`;
     this.insertAdjacentHTML("beforeend", lookEditorHtml(this.config, { entity: "room_tiles_entity", key: "room_tiles", fallback: true, label: "Rumfliser" }));
     wireLookEditor(this, this, () => this.config);
     this.querySelectorAll("input[data-key]").forEach((input) => input.addEventListener("change", () => this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this.config, [input.dataset.key]: input.value } } }))));
@@ -41109,7 +41109,7 @@ var HaHomeDesktopLayoutCardEditor = class extends HTMLElement {
   // niveauer foerst, saa signaturen kun aendrer sig ved en AEGTE vaerdi-aendring.
   _sig(value) {
     if (Array.isArray(value)) return `[${value.map((item2) => this._sig(item2)).join(",")}]`;
-    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this._sig(value[key])}`).join(",")}}`;
+    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key2) => `${JSON.stringify(key2)}:${this._sig(value[key2])}`).join(",")}}`;
     return JSON.stringify(value);
   }
   // HA's dashboard-editor sender configen tilbage igen (config-changed-roundtrip)
@@ -41241,8 +41241,8 @@ var HaHomeDesktopLayoutCardEditor = class extends HTMLElement {
     const map = { columns: this.config.columns || "", gap: this.config.gap || "", mobile_breakpoint: Number(this.config.mobile_breakpoint) || 1100, phone_breakpoint: Number(this.config.phone_breakpoint) || 700, bottom_gap: Number(this.config.bottom_gap) || 110 };
     this.shadowRoot.querySelectorAll(".settings input").forEach((input) => {
       if (this.shadowRoot.activeElement === input) return;
-      const key = input.dataset.key;
-      if (key in map) input.value = map[key];
+      const key2 = input.dataset.key;
+      if (key2 in map) input.value = map[key2];
     });
   }
 };
@@ -41443,8 +41443,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = this._km(p), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-    return `<button class="person" data-path="${esc13(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc13(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc13(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc13(status)}</strong><small>${esc13(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc14 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    return `<button class="person" data-path="${esc14(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc14(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc14(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc14(status)}</strong><small>${esc14(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
@@ -41452,7 +41452,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc14 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state = tracker?.state || person?.state || "unknown";
@@ -41470,15 +41470,15 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc13((p.name || "?").trim()[0] || "?");
+    const initial = esc14((p.name || "?").trim()[0] || "?");
     const ring = this._config.battery_style === "ring";
     const C2 = 2 * Math.PI * 15;
     const bat = battery === null ? "" : ring ? `<span class="bring${charging ? " chg" : ""}" title="Batteri ${Math.round(battery)} %${charging ? " \xB7 lader" : ""}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="${(battery / 100 * C2).toFixed(1)} ${C2.toFixed(1)}"></circle></svg><b>${Math.round(battery)}<small>%</small></b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>` : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`;
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc13(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc14(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc13(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc13(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc13(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc14(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc14(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc14(trip || place)}</span></span></small></span>
       ${bat}
     </button>`;
   }
@@ -41493,7 +41493,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc14 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -41507,14 +41507,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const spot = away ? this._place(p) : "";
       const where = home ? "" : away ? [spot, Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : ""].filter(Boolean).join(" \xB7 ") || "Ude" : this._valid(state) ? state : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc13((p.name || "?")[0])}</span>`;
+      const av = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc14((p.name || "?")[0])}</span>`;
       return { p, home, where, av, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc13(x.p.navigation_path || "")}" title="${esc13(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc14(x.p.navigation_path || "")}" title="${esc14(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc13(x.name)}</b><small>${esc13(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc14(x.name)}</b><small>${esc14(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -41643,14 +41643,14 @@ var HACardListEditor9 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -41745,19 +41745,19 @@ function heatModel(card) {
   const duration2 = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
   const day2 = Number(a.dag);
   const inHeat = Number.isFinite(day2) && day2 >= 1 && day2 <= duration2;
-  const fmt5 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+  const fmt6 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
   const date2 = (v, shift = 0) => {
     if (!v) return "";
     const d = /* @__PURE__ */ new Date(`${String(v).slice(0, 10)}T12:00:00`);
     if (Number.isNaN(d.getTime())) return "";
     d.setDate(d.getDate() + shift);
-    return fmt5(d);
+    return fmt6(d);
   };
   const inDays = (n) => {
     const d = /* @__PURE__ */ new Date();
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() + n);
-    return fmt5(d);
+    return fmt6(d);
   };
   const phase = (d) => d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
   const phaseText = { bleed: "Bl\xF8dning", fertile: "Mest frugtbar", late: "Sidste del" };
@@ -41785,7 +41785,7 @@ function heatModel(card) {
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? "" : a.dage_til_naeste > 1 ? `L\xF8betid om ca. ${a.dage_til_naeste} dage` : a.dage_til_naeste === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu"
   };
 }
-function heatHtml(card, H3, esc13) {
+function heatHtml(card, H3, esc14) {
   if (!H3) return "";
   const cells = Array.from({ length: H3.duration }, (_, i) => {
     const d = i + 1;
@@ -41799,19 +41799,19 @@ function heatHtml(card, H3, esc13) {
   const days = (n) => n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`;
   return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
-      <p>${H3.inHeat ? `<b>${esc13(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
+      <p>${H3.inHeat ? `<b>${esc14(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
     ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc13(H3.start)}</b></div>` : ""}
-      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc13(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
-      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc13(H3.nextPhase.name)}</b><em>fra ${esc13(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
-      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc13(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
-      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc13(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
+      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc14(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc14(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc14(H3.nextPhase.name)}</b><em>fra ${esc14(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
+      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc14(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
+      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc14(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    ${card._heatForm ? heatFormHtml(card, H3, esc13) : `<div class="pp-actions">
+    ${card._heatForm ? heatFormHtml(card, H3, esc14) : `<div class="pp-actions">
       ${H3.script ? H3.inHeat ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>` : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
-      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc13(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
+      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc14(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
     </div>`}
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
@@ -41823,21 +41823,21 @@ var daysAgo = (n) => {
   d.setDate(d.getDate() - n);
   return isoDay(d);
 };
-function heatFormHtml(card, H3, esc13) {
+function heatFormHtml(card, H3, esc14) {
   const f = card._heatForm;
   const today = daysAgo(0);
   const quick = [[0, "I dag"], [1, "I g\xE5r"], [2, "I forg\xE5rs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
   const note = H3.inHeat ? "Den nuv\xE6rende l\xF8betid i kalenderen bliver erstattet af den nye dato, og sk\xF8nnet for den n\xE6ste bliver regnet om." : "Den sidste l\xF8betid bliver i kalenderen som historik. Den nye bliver lagt ind, og sk\xF8nnet for den n\xE6ste bliver regnet om.";
   return `<div class="pp-heatform">
     <h4>${H3.inHeat ? "Hvorn\xE5r startede l\xF8betiden?" : "Hvorn\xE5r gik hun i l\xF8betid?"}</h4>
-    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc13(f.value)}" max="${today}"></div>
-    <p>${note}</p>${f.error ? `<p class="err">${esc13(f.error)}</p>` : ""}
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc14(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc14(f.error)}</p>` : ""}
     <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer \u2026" : "Gem"}</button>
       <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annull\xE9r</button></div></div>`;
 }
 function premiumHtml(card) {
   const c2 = card._config;
-  const esc13 = (v) => card._escape(v);
+  const esc14 = (v) => card._escape(v);
   const meals = c2.meals || [];
   const info = meals.map((meal, i) => {
     const skipped = card._on(meal.skip);
@@ -41867,19 +41867,19 @@ function premiumHtml(card) {
   const arcs = info.map((m, i) => `<circle class="pp-arc ${m.tone}" cx="60" cy="60" r="52" style="stroke:${MEAL_COLORS[m.tone]};stroke-dasharray:${seg.toFixed(2)} ${(C2 - seg).toFixed(2)};stroke-dashoffset:${(-(i * (seg + gap) + gap / 2)).toFixed(2)};--i:${i}"/>`).join("");
   const chips = [
     `<span class="pp-chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${done} af ${planned.length} m\xE5ltider</span>`,
-    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc13(next.meal.name)} ${esc13(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
+    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc14(next.meal.name)} ${esc14(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
     c2.water ? `<span class="pp-chip ${water ? "water" : "danger"}"><ha-icon icon="${water ? "mdi:water" : "mdi:water-off"}"></ha-icon>${water ? "Vand i sk\xE5len" : "Mangler vand"}</span>` : "",
     H3?.inHeat ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip"></ha-icon>L\xF8betid dag ${H3.day}/${H3.duration}</span>` : H3?.soon ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon>${H3.soon}</span>` : ""
   ].filter(Boolean).join("");
-  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct(m.t)}%" data-info="${esc13(m.meal.status || "")}" title="${esc13(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc13(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
+  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct(m.t)}%" data-info="${esc14(m.meal.status || "")}" title="${esc14(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc14(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
   const label = { done: "Givet", pending: "Afventer", missed: "Misset", skipped: "Springes over", disabled: "Sl\xE5et fra" };
   const mealCards = info.map((m) => `<article class="pp-meal ${m.tone}" style="--i:${m.i}">
-      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc13(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
-        <div><h4>${esc13(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc13(m.meal.status || "")}">${esc13(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
-        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc13(m.meal.enabled)}" aria-label="${esc13(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
+      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc14(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
+        <div><h4>${esc14(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc14(m.meal.status || "")}">${esc14(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
+        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc14(m.meal.enabled)}" aria-label="${esc14(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
       <div class="pp-meal-actions">
-        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc13(m.meal.feed_action)}" data-name="${esc13(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
-        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc13(m.meal.skip)}" data-name="${esc13(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
+        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc14(m.meal.feed_action)}" data-name="${esc14(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
+        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc14(m.meal.skip)}" data-name="${esc14(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
       </div></article>`).join("");
   const hours = [6, 9, 12, 15, 18, 21].map((h) => `<span style="left:${pct(h * 60)}%">${String(h).padStart(2, "0")}</span>`).join("");
   return `<ha-card class="pp ${card._config.animation === false ? "still" : ""}${card._ppIntro ? "" : " intro"}">
@@ -41887,13 +41887,13 @@ function premiumHtml(card) {
     <div class="pp-aurora"></div>
     <div class="pp-paws">${[0, 1, 2, 3, 4, 5].map((i) => `<span style="--p:${i}">${pawSvg}</span>`).join("")}</div>
     <div class="pp-avatar"><svg class="pp-ring" viewBox="0 0 120 120"><circle class="pp-ring-bg" cx="60" cy="60" r="52"/>${arcs}</svg>
-      <div class="pp-face"><ha-icon icon="${esc13(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
-    <div class="pp-id"><span class="pp-eyebrow">${esc13(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc13(c2.pet_name || "K\xE6ledyr")}</h2>
-      <p class="pp-mood ${mood[1]}"><i></i>${esc13(mood[0])}</p><div class="pp-chips">${chips}</div></div>
+      <div class="pp-face"><ha-icon icon="${esc14(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
+    <div class="pp-id"><span class="pp-eyebrow">${esc14(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc14(c2.pet_name || "K\xE6ledyr")}</h2>
+      <p class="pp-mood ${mood[1]}"><i></i>${esc14(mood[0])}</p><div class="pp-chips">${chips}</div></div>
   </section>
   <div class="pp-grid">
     <section class="pp-panel pp-day" style="--d:1">
-      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc13(next.meal.name.toLowerCase())} kl. ${esc13(next.meal.time)}` : ""}</p></div>
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc14(next.meal.name.toLowerCase())} kl. ${esc14(next.meal.time)}` : ""}</p></div>
         ${c2.feeder_mode ? `<button class="pp-mode ${mode === "schedule" ? "on" : ""}" data-mode><ha-icon icon="${mode === "schedule" ? "mdi:calendar-check" : "mdi:hand-back-right"}"></ha-icon>${mode === "schedule" ? "Plan" : "Manuel"}</button>` : ""}</header>
       <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct(now)}%"></span><span class="pp-now" style="left:${pct(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
       <div class="pp-meals">${mealCards}</div>
@@ -41901,7 +41901,7 @@ function premiumHtml(card) {
     <section class="pp-panel pp-supply${c2.water ? "" : " food"}" style="--d:2">
       <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>${c2.water ? "Foder og vand" : "Foder"}</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent2)} % i beholderen`}</p></div></header>
       <div class="pp-supply-row">
-        <button class="pp-silo ${level}" data-info="${esc13(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
+        <button class="pp-silo ${level}" data-info="${esc14(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
           <span class="pp-silo-fill" style="height:${percent2}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent2)}<small>%</small></b></button>
         <div class="pp-stats">
           <div><small>I beholderen</small><b>${Number.isFinite(grams) ? `${card._format(grams)} g` : "\u2014"}</b></div>
@@ -41909,12 +41909,12 @@ function premiumHtml(card) {
           <div><small>Pr. dag</small><b>${Number.isFinite(daily) ? `${card._format(daily)} g` : "\u2014"}</b></div>
           ${c2.refill_action ? `<button class="pp-btn ghost" data-refill><ha-icon icon="mdi:refresh"></ha-icon>Fyldt op</button>` : ""}
         </div>
-        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc13(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
+        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc14(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
           <span class="pp-bowl-water"><i></i><i></i></span>
           <b>${water ? "Vand" : "Tom"}</b>${c2.water_battery ? `<small>${card._format(card._number(c2.water_battery))} % batteri</small>` : ""}</button>` : ""}
       </div>
     </section>
-    ${heatHtml(card, H3, esc13)}
+    ${heatHtml(card, H3, esc14)}
   </div>
 </ha-card>`;
 }
@@ -42120,7 +42120,7 @@ var HAPetCareCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"].map((key) => this._config[key]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
+    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"].map((key2) => this._config[key2]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
     const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
     if (signature === this._signature) return;
     this._signature = signature;
@@ -42557,8 +42557,8 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
   _iconPath(condition, isDay) {
     const base = VALID_CONDITIONS.has(condition) && condition !== "exceptional" ? condition : "not-available";
     const night = isDay === false && base !== "clear-night" && base !== "not-available";
-    const key = `${base}${night ? "_night" : ""}`;
-    return window.HAWeatherCardAssets?.weather?.[key] || window.HAWeatherCardAssets?.weather?.["not-available"] || "";
+    const key2 = `${base}${night ? "_night" : ""}`;
+    return window.HAWeatherCardAssets?.weather?.[key2] || window.HAWeatherCardAssets?.weather?.["not-available"] || "";
   }
   _isDaytimeNow() {
     return this._s(this._config.sun_entity)?.state === "above_horizon";
@@ -42813,11 +42813,11 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
     const now = this._now();
     const elevation = this._num(sun?.attributes?.elevation);
     const uv = this._uvTone(now.uv);
-    const pct3 = Number.isFinite(elevation) ? Math.max(0, Math.min(100, (elevation + 10) / 80 * 100)) : 0;
+    const pct4 = Number.isFinite(elevation) ? Math.max(0, Math.min(100, (elevation + 10) / 80 * 100)) : 0;
     return `<div class="row" data-more="${this._esc(c2.sun_entity)}"><ha-icon icon="mdi:weather-sunset-up"></ha-icon><span class="row-label">Solopgang</span><b>${this._time(sun?.attributes?.next_rising)}</b></div>
       <div class="row" data-more="${this._esc(c2.sun_entity)}"><ha-icon icon="mdi:weather-sunset-down"></ha-icon><span class="row-label">Solnedgang</span><b>${this._time(sun?.attributes?.next_setting)}</b></div>
       <div class="row" data-more="${this._esc(c2.weather_entity)}" style="--tone:${uv.color}"><ha-icon icon="mdi:weather-sunny-alert"></ha-icon><span class="row-label">UV-indeks</span><b class="toned">${this._fmt(now.uv, 1)} \xB7 ${uv.label}</b></div>
-      <div class="sun-arc"><div class="sun-track"><div class="sun-fill" style="width:${pct3}%"></div><div class="sun-dot" style="left:${pct3}%"></div></div>
+      <div class="sun-arc"><div class="sun-track"><div class="sun-fill" style="width:${pct4}%"></div><div class="sun-dot" style="left:${pct4}%"></div></div>
         <div class="sun-labels"><span>Solh\xF8jde ${this._fmt(elevation, 1)}\xB0</span><span>Retning ${this._esc(this._compass(this._num(sun?.attributes?.azimuth)))}</span></div></div>`;
   }
   _panelsHtml() {
@@ -43484,9 +43484,9 @@ var ThWeatherCard = class extends HTMLElement {
   sky(state, night, S) {
     const el = this.$("sky"), elev = S?.elev ?? (night ? -20 : 30), phase = night ? elev > -8 ? "dusk" : "night" : elev < 8 ? "golden" : "day";
     const wet = ["rainy", "pouring", "lightning", "lightning-rainy", "snowy", "snowy-rainy", "hail"].includes(state), grey = wet || ["cloudy", "fog"].includes(state);
-    const key = state + phase;
-    if (el._k === key) return;
-    el._k = key;
+    const key2 = state + phase;
+    if (el._k === key2) return;
+    el._k = key2;
     const BG = {
       night: "radial-gradient(120% 100% at 85% 0%,#1c2852 0%,#0d1430 40%,#080a14 75%)",
       dusk: "radial-gradient(120% 100% at 85% 0%,#4a3a6a 0%,#22264a 40%,#0b0d18 78%)",
@@ -43537,9 +43537,9 @@ var ThWeatherCard = class extends HTMLElement {
           <circle cx="${sx2}" cy="${sy}" r="20" fill="url(#sg)" opacity=".55" class="pulse"/><circle cx="${sx2}" cy="${sy}" r="7" fill="#fff3d0"/></svg><div class="row"><span>Sol op<b>${hhmm(S.rise)}</b></span><span style="text-align:center">Dagslys<b>${Math.floor(dayLen / 60)} t ${Math.round(dayLen % 60)} m</b></span><span style="text-align:right">Sol ned<b>${hhmm(S.set)}</b></span></div>`;
     } else {
       const p = moonPhase(), idx = Math.round(p * 8) % 8, ill = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100), tl = (S.nextRise - now) / 6e4;
-      const nf = (0.5 - p + 1) % 1 * 29.53;
+      const nf2 = (0.5 - p + 1) % 1 * 29.53;
       el.innerHTML = hdr("Natten", `sol op ${hhmm(S.nextRise)}`) + `<div class="mn" style="margin-top:8px">${bigIcon("moon", p).replace('class="bi"', 'class="bi" style="width:72px"')}<div><b>${MOON[idx]}</b><small>${ill} % oplyst</small>
-        <small>${nf < 1 ? "Fuldm\xE5ne i nat" : `Fuldm\xE5ne om ${Math.round(nf)} dage`}</small><small>Lyst om ${Math.floor(tl / 60)} t ${Math.round(tl % 60)} m</small></div></div>`;
+        <small>${nf2 < 1 ? "Fuldm\xE5ne i nat" : `Fuldm\xE5ne om ${Math.round(nf2)} dage`}</small><small>Lyst om ${Math.floor(tl / 60)} t ${Math.round(tl % 60)} m</small></div></div>`;
     }
   }
   nowcast() {
@@ -43666,21 +43666,21 @@ var ThWeatherCard = class extends HTMLElement {
       });
     }
     const tab = tabs.find((t) => t.id === this._dtab), body = this.$("dbody");
-    let html, key;
+    let html, key2;
     if (tab.id === "radar") {
-      key = "radar" + (force ? Date.now() : "");
+      key2 = "radar" + (force ? Date.now() : "");
       if (this._dk && this._dk.startsWith("radar") && !force) {
         this.radarCells();
         return;
       }
     } else {
       const ents = tab.id === "pollen" ? this.cfg.pollen.map((p) => p.entity) : tab.sec.items.map((i) => i.entity);
-      key = tab.id + ents.map((e) => this._h.states[e]?.state).join("|");
+      key2 = tab.id + ents.map((e) => this._h.states[e]?.state).join("|");
     }
-    if (key === this._dk) return;
+    if (key2 === this._dk) return;
     const fresh = this._dlast !== tab.id;
     this._dlast = tab.id;
-    this._dk = key;
+    this._dk = key2;
     if (tab.id === "radar") html = this.dRadar();
     else if (tab.id === "pollen") html = this.dPollen();
     else html = this.dSection(tab.sec);
@@ -44092,23 +44092,23 @@ var HAWeatherChartsCard = class extends HTMLElement {
     return { columns: "full", rows: "auto" };
   }
   // ------------------------------------------------------------------ data
-  _id(key) {
-    return this._config.entities?.[key] || this._config.entities?.[KEY[key]] || `${this._config.prefix}${KEY[key]}`;
+  _id(key2) {
+    return this._config.entities?.[key2] || this._config.entities?.[KEY[key2]] || `${this._config.prefix}${KEY[key2]}`;
   }
-  _st(key) {
-    return this._hass?.states?.[this._id(key)];
+  _st(key2) {
+    return this._hass?.states?.[this._id(key2)];
   }
-  _has(key) {
-    const s = this._st(key);
+  _has(key2) {
+    const s = this._st(key2);
     return !!s;
   }
-  _live(key) {
-    const s = this._st(key);
+  _live(key2) {
+    const s = this._st(key2);
     return s && !["unavailable", "unknown"].includes(s.state) ? s : null;
   }
   /** The hourly `timer` attribute of a forecast sensor as [t, value] for one field. */
-  _timer(key, field = "v") {
-    const rows = this._live(key)?.attributes?.timer;
+  _timer(key2, field = "v") {
+    const rows = this._live(key2)?.attributes?.timer;
     return Array.isArray(rows) ? rows.map((r) => [Date.parse(r.t), num3(r[field])]).filter(([t]) => Number.isFinite(t)) : [];
   }
   _fc(field, scale = 1) {
@@ -44195,16 +44195,16 @@ var HAWeatherChartsCard = class extends HTMLElement {
     this._loading = false;
     this._scheduleRender();
   }
-  _h(key) {
-    return this._hist?.[this._id(key)] || [];
+  _h(key2) {
+    return this._hist?.[this._id(key2)] || [];
   }
   // ---------------------------------------------------------------- charts
   _charts() {
     const now = Date.now();
     const span = { from: now - 24 * H2, to: now + 48 * H2 };
     const out = {};
-    const ensOr = (key, field, fallback) => {
-      const t = this._timer(key, field);
+    const ensOr = (key2, field, fallback) => {
+      const t = this._timer(key2, field);
       return t.some(([, v]) => v != null) ? t : fallback;
     };
     const windUnit = this._hass?.states?.[this._config.weather]?.attributes?.wind_speed_unit;
@@ -44372,17 +44372,17 @@ var HAWeatherChartsCard = class extends HTMLElement {
     const width = Math.max(260, grid.getBoundingClientRect().width || 600);
     const cols = width >= 900 ? 2 : 1;
     const panelW = Math.floor((width - (cols - 1) * 14) / cols) - 2;
-    for (const key of order) {
-      let panel = grid.querySelector(`[data-chart="${key}"]`);
+    for (const key2 of order) {
+      let panel = grid.querySelector(`[data-chart="${key2}"]`);
       if (!panel) {
         panel = document.createElement("section");
         panel.className = "p";
-        panel.dataset.chart = key;
+        panel.dataset.chart = key2;
         grid.appendChild(panel);
         this._wireHover(panel);
       }
-      panel.innerHTML = this._panel(key, charts[key], panelW);
-      panel._chart = charts[key];
+      panel.innerHTML = this._panel(key2, charts[key2], panelW);
+      panel._chart = charts[key2];
       if (panel._drawn) panel.setAttribute("still", "");
       else setTimeout(() => {
         panel._drawn = true;
@@ -44394,8 +44394,8 @@ var HAWeatherChartsCard = class extends HTMLElement {
     order.forEach((k) => grid.appendChild(grid.querySelector(`[data-chart="${k}"]`)));
     grid.style.gridTemplateColumns = `repeat(${cols},minmax(0,1fr))`;
   }
-  _panel(key, ch2, W2) {
-    const hidden = this._hidden[key] || {};
+  _panel(key2, ch2, W2) {
+    const hidden = this._hidden[key2] || {};
     const heatH = ch2.heat?.length ? ch2.heat.length * 13 + 6 : 0;
     const Hh = 210 + heatH;
     const padL = 40;
@@ -44471,7 +44471,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
     shown.forEach((s, i) => {
       const A = ax2(s);
       if (!A) return;
-      const id = `g${key}${i}`;
+      const id = `g${key2}${i}`;
       if (s.type === "band") {
         const b = s.band.filter(inSpan);
         if (b.length < 2) return;
@@ -44524,7 +44524,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
       svg += `<line class="now" x1="${x}" x2="${x}" y1="${y0 - 2}" y2="${y12}"/><text class="nowl" x="${x}" y="${y0 + 8}" text-anchor="middle">nu</text>`;
     }
     svg += `<line class="cross" x1="0" x2="0" y1="${y0}" y2="${y12}" style="display:none"/>`;
-    const legend = ch2.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc8(key)}|${esc8(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc8(s.name)}</button>`).join("");
+    const legend = ch2.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc8(key2)}|${esc8(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc8(s.name)}</button>`).join("");
     const empty = !L && !R;
     return `<header><div><h3>${esc8(ch2.title)}</h3><p>${esc8(ch2.sub || "")}</p></div><span class="unit">${esc8(ch2.unit)}${ch2.right ? ` \xB7 ${esc8(ch2.right.unit)}` : ""}</span></header>
       ${empty ? `<div class="empty">Ingen data endnu</div>` : `<svg viewBox="0 0 ${W2} ${Hh}" width="${W2}" height="${Hh}" data-x0="${x0}" data-x1="${x12}" data-from="${from}" data-to="${to}"><defs>${defs.join("")}</defs>${svg}</svg>`}
@@ -44666,14 +44666,14 @@ var HACardListEditor10 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -44954,14 +44954,14 @@ var HACardListEditor11 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -45784,13 +45784,13 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     };
     this._setText(this._pills.temp.querySelector("b"), `${this._fmt(avg)}\xB0`, true);
     this._setText(this._pills.temp.querySelector("em"), outdoor == null ? "" : ` \xB7 ude ${this._fmt(outdoor, 0)}\xB0`);
-    for (const key of ["occupied", "lit", "open", "running"]) {
-      const pill = this._pills[key];
-      this._setText(pill.querySelector("b"), String(counts[key]), true);
-      pill.classList.toggle("zero", counts[key] === 0);
-      pill.classList.toggle("hot", key === "open" && counts[key] > 0);
-      pill.classList.toggle("sel", this._filter === key);
-      pill.setAttribute("aria-pressed", String(this._filter === key));
+    for (const key2 of ["occupied", "lit", "open", "running"]) {
+      const pill = this._pills[key2];
+      this._setText(pill.querySelector("b"), String(counts[key2]), true);
+      pill.classList.toggle("zero", counts[key2] === 0);
+      pill.classList.toggle("hot", key2 === "open" && counts[key2] > 0);
+      pill.classList.toggle("sel", this._filter === key2);
+      pill.setAttribute("aria-pressed", String(this._filter === key2));
     }
     const parts = [];
     if (counts.occupied) parts.push(`aktivitet i ${counts.occupied} rum`);
@@ -45846,8 +45846,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
     const visible = chips.slice(0, 3);
     const current = new Map([...container.children].filter((el) => !el.classList.contains("out")).map((el) => [el.dataset.key, el]));
     const keep = new Set(visible.map((c2) => c2.key));
-    current.forEach((el, key) => {
-      if (keep.has(key)) return;
+    current.forEach((el, key2) => {
+      if (keep.has(key2)) return;
       el.classList.add("out");
       container.append(el);
       setTimeout(() => el.remove(), 340);
@@ -46127,11 +46127,11 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   _tapAction(t, index) {
     const cfg = t.room.actions[index];
     const button = t.acts[index];
-    const key = `${t.room.index}:${index}`;
+    const key2 = `${t.room.index}:${index}`;
     if (cfg.entity && DEAD4.has(this._state(cfg.entity)?.state ?? "unavailable")) return this._moreInfo(cfg.entity);
-    if (this._needsConfirm(cfg) && this._armed?.key !== key) {
+    if (this._needsConfirm(cfg) && this._armed?.key !== key2) {
       const label = cfg.entity?.startsWith("lock.") ? "L\xE5s op?" : cfg.confirm_text || "Sluk?";
-      this._armed = { key, label };
+      this._armed = { key: key2, label };
       clearTimeout(this._armTimer);
       this._armTimer = setTimeout(() => {
         this._armed = null;
@@ -46141,7 +46141,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       this._update();
       return;
     }
-    if (this._armed?.key === key) {
+    if (this._armed?.key === key2) {
       this._armed = null;
       clearTimeout(this._armTimer);
     }
@@ -47508,9 +47508,9 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const groups = /* @__PURE__ */ new Map();
     for (const point of parsed) {
       const d = new Date(point.ts);
-      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(point);
+      const key2 = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!groups.has(key2)) groups.set(key2, []);
+      groups.get(key2).push(point);
     }
     const days = [...groups.values()].slice(0, 6);
     const selected = Math.max(0, Math.min(days.length - 1, Math.round(this._num(e.priceForecastDaySelector) || 0)));
@@ -47799,7 +47799,7 @@ var SmartHomeOverviewCardEditor = class extends HTMLElement {
         <div><label>K\xE6ledyrs navn</label><input data-field="pet_name" value="${(c2.pet_name ?? "").replace(/"/g, "&quot;")}"></div>
         <div><label>Bilens navn</label><input data-field="car_name" value="${(c2.car_name ?? "").replace(/"/g, "&quot;")}"></div>
       </div>
-      ${jsonFields.map(([key, label]) => `<label>${label}</label><textarea data-json="${key}">${JSON.stringify(c2[key] ?? "", null, 2)}</textarea>`).join("")}
+      ${jsonFields.map(([key2, label]) => `<label>${label}</label><textarea data-json="${key2}">${JSON.stringify(c2[key2] ?? "", null, 2)}</textarea>`).join("")}
     `;
     this.shadowRoot.querySelectorAll("input[data-field]").forEach((input) => {
       input.onchange = () => this._emit({ ...this._config, [input.dataset.field]: input.value });
@@ -48429,14 +48429,14 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     });
   }
   async _setLiveFeed(cam) {
-    const key = cam.key;
-    if (this._liveFeeds[key] === cam.camera_entity) {
-      const card = this.shadowRoot.querySelector(`[data-feed="${key}"] [data-live-card]`);
+    const key2 = cam.key;
+    if (this._liveFeeds[key2] === cam.camera_entity) {
+      const card = this.shadowRoot.querySelector(`[data-feed="${key2}"] [data-live-card]`);
       if (card) card.hass = this._hass;
       return;
     }
-    this._liveFeeds[key] = cam.camera_entity;
-    const feed = this.shadowRoot.querySelector(`[data-feed="${key}"]`);
+    this._liveFeeds[key2] = cam.camera_entity;
+    const feed = this.shadowRoot.querySelector(`[data-feed="${key2}"]`);
     if (!feed) return;
     const generation = this._liveGeneration;
     const state = this._s(cam.camera_entity);
@@ -48447,7 +48447,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     feed.classList.remove("ready");
     const snapshot = document.createElement("img");
     snapshot.className = "snapshot";
-    snapshot.alt = cam.name || key;
+    snapshot.alt = cam.name || key2;
     snapshot.decoding = "async";
     const entityPicture = state.attributes?.entity_picture;
     if (entityPicture) snapshot.src = this._hass.hassUrl(entityPicture);
@@ -48455,7 +48455,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     feed.replaceChildren(snapshot);
     try {
       const helpers = await window.loadCardHelpers();
-      if (generation !== this._liveGeneration || this._liveFeeds[key] !== cam.camera_entity) return;
+      if (generation !== this._liveGeneration || this._liveFeeds[key2] !== cam.camera_entity) return;
       const card = await helpers.createCardElement({
         type: "picture-elements",
         camera_image: cam.camera_entity,
@@ -48469,7 +48469,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       card.dataset.liveCard = "";
       card.hass = this._hass;
       feed.appendChild(card);
-      this._revealWhenReady(feed, card, generation, key);
+      this._revealWhenReady(feed, card, generation, key2);
     } catch (error) {
       feed.innerHTML = `<div class="missing"><div><ha-icon icon="mdi:alert-circle-outline"></ha-icon><br>Stream kunne ikke indl\xE6ses</div></div>`;
       console.error("HA Camera Hub Card", error);
@@ -48482,14 +48482,14 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     if (node.shadowRoot && this._mediaReady(node.shadowRoot)) return true;
     return Array.from(node.children || []).some((child) => this._mediaReady(child));
   }
-  _revealWhenReady(feed, card, generation, key, attempt = 0) {
+  _revealWhenReady(feed, card, generation, key2, attempt = 0) {
     if (generation !== this._liveGeneration || !card.isConnected) return;
     if (attempt >= 4 && this._mediaReady(card) || attempt >= 80) {
       feed.classList.add("ready");
       setTimeout(() => feed.querySelector(".snapshot")?.remove(), 320);
       return;
     }
-    setTimeout(() => this._revealWhenReady(feed, card, generation, key, attempt + 1), 100);
+    setTimeout(() => this._revealWhenReady(feed, card, generation, key2, attempt + 1), 100);
   }
   async _fetchEvents() {
     if (!this._hass?.callApi || this._eventsFetching) return;
@@ -48854,10 +48854,10 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     this._thumbGeneration += 1;
     const nodes = Array.from(mount.querySelectorAll("[data-thumb-key]"));
     const keys = [...new Set(nodes.map((node) => node.dataset.thumbKey))];
-    await Promise.all(keys.map(async (key) => {
-      const items = await this._ensureCamThumbs(key);
+    await Promise.all(keys.map(async (key2) => {
+      const items = await this._ensureCamThumbs(key2);
       if (!items.length || !mount.isConnected) return;
-      const jobs = Array.from(mount.querySelectorAll(`[data-thumb-key="${CSS.escape(key)}"]`)).map((node) => {
+      const jobs = Array.from(mount.querySelectorAll(`[data-thumb-key="${CSS.escape(key2)}"]`)).map((node) => {
         const ts = Number(node.dataset.thumbTs);
         const sourceUrl = this._closestThumbUrl(items, ts, node.dataset.eventId);
         return sourceUrl ? { node, sourceUrl } : null;
@@ -48891,7 +48891,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     }
     this._eventsRenderSig = signature;
     mount.innerHTML = `<div class="filters">${FILTERS.map(
-      ([key, label, icon5]) => `<button class="filter-chip ${this._filter === key ? "active" : ""}" data-filter="${key}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`
+      ([key2, label, icon5]) => `<button class="filter-chip ${this._filter === key2 ? "active" : ""}" data-filter="${key2}"><ha-icon icon="${icon5}"></ha-icon>${label}</button>`
     ).join("")}</div>${this._eventsHtml()}`;
     if (!mount.dataset.bound) {
       mount.dataset.bound = "true";
@@ -49152,7 +49152,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
         <ha-icon icon="mdi:cctv"></ha-icon>
         <div><strong>${this._esc(c2.title)}</strong><span>${this._esc(c2.subtitle)}</span></div>
       </div>
-      <div class="tabs">${tabs.map(([key, label, icon5]) => `<button class="tab ${this._tab === key ? "active" : ""}" data-tab="${key}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>`).join("")}</div>
+      <div class="tabs">${tabs.map(([key2, label, icon5]) => `<button class="tab ${this._tab === key2 ? "active" : ""}" data-tab="${key2}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span></button>`).join("")}</div>
       <div class="panel" data-panel="live" ${this._tab === "live" ? "" : "hidden"}><div class="live-grid">${(this._cameras || []).map(
       (cam) => `<section class="cam-tile" data-cam-tile="${this._esc(cam.key)}">
             <div class="cam-bar">
@@ -49906,10 +49906,10 @@ var ThProtectPlayer = class extends HTMLElement {
     const cid = this._cam && this._o.cid(this._cam.base);
     if (!cid) return null;
     if (!this._pb) q = "hd";
-    const key = `${cid}|${q}|${k}`;
-    let e = this._cache.get(key);
+    const key2 = `${cid}|${q}|${k}`;
+    let e = this._cache.get(key2);
     if (e?.failed && Date.now() - e.failed > 2e4) {
-      this._cache.delete(key);
+      this._cache.delete(key2);
       e = null;
     }
     if (e) {
@@ -49919,14 +49919,14 @@ var ThProtectPlayer = class extends HTMLElement {
     if ((k + 1) * SEG > Date.now() - READY_LAG) return null;
     const inflight = [...this._cache.values()].filter((x) => !x.ok && !x.failed);
     if (!scrub && (inflight.length >= 4 || q === "hd" && inflight.filter((x) => x.q === "hd").length >= 2)) return null;
-    e = { key, k, q, cid, used: Date.now(), ctrl: new AbortController() };
+    e = { key: key2, k, q, cid, used: Date.now(), ctrl: new AbortController() };
     const fresh = (k + 1) * SEG > Date.now() - FRESH;
     e.p = (async () => {
       const res = await this._fetch(this._path(cid, q, k), { signal: e.ctrl.signal, ...fresh ? { cache: "no-store" } : {} });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const b = await res.blob();
       if (b.size < 4096) throw new Error("tom");
-      if (e.ctrl.signal.aborted || this._cache.get(key) !== e) throw new Error("for\xE6ldet");
+      if (e.ctrl.signal.aborted || this._cache.get(key2) !== e) throw new Error("for\xE6ldet");
       e.url = URL.createObjectURL(b);
       e.bytes = b.size;
       this._bytes += b.size;
@@ -49937,7 +49937,7 @@ var ThProtectPlayer = class extends HTMLElement {
     e.p.catch(() => {
       e.failed = Date.now();
     });
-    this._cache.set(key, e);
+    this._cache.set(key2, e);
     if (scrub) {
       (this._scrubs ||= []).push(e);
       while (this._scrubs.length > 2) {
@@ -51026,9 +51026,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     return this.cfg.layout === "playback" ? wide ? "pbw" : "pbn" : wide ? "wide" : "narrow";
   }
   _render() {
-    const cams = this.cams(), w = this.$("w"), mode = this._mode(), key = mode + cams.map((c2) => c2.id).join();
-    if (key !== this._key) {
-      this._key = key;
+    const cams = this.cams(), w = this.$("w"), mode = this._mode(), key2 = mode + cams.map((c2) => c2.id).join();
+    if (key2 !== this._key) {
+      this._key = key2;
       this._lastMode = mode;
       if (!cams.length) {
         w.innerHTML = `<div class="p"><div class="hd"><div><div class="k">Kameraer</div><h2>UniFi Protect</h2></div></div><div class="empty">Ingen UniFi\u2011kameraer fundet endnu.</div></div>`;
@@ -51136,14 +51136,14 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       return Number.isFinite(x) ? x : null;
     };
     const chips = [];
-    const pct3 = (id, label, warn = 90, c2) => {
+    const pct4 = (id, label, warn = 90, c2) => {
       const x = num5(id);
       if (x == null) return;
       chips.push([label, `${Math.round(x)} %`, c2 || (x >= warn ? "var(--coral)" : "var(--emer)")]);
     };
-    pct3(n.storage_entity, "Lager", 101, "var(--ice)");
-    pct3(n.cpu_entity, "CPU");
-    pct3(n.memory_entity, "Hukommelse");
+    pct4(n.storage_entity, "Lager", 101, "var(--ice)");
+    pct4(n.cpu_entity, "CPU");
+    pct4(n.memory_entity, "Hukommelse");
     const temp = num5(n.temp_entity);
     if (temp != null) chips.push(["Temperatur", `${Math.round(temp)} \xB0C`, temp >= 70 ? "var(--coral)" : "var(--emer)"]);
     const cap = v(n.capacity_entity);
@@ -51433,9 +51433,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     const src = camFilter ? this._camEvents(camFilter).sort((a, b) => b.t - a.t) : this._events || [];
     const ev = src.filter((e) => (camFilter || this._fc === "all" || e.cam === this._fc) && (camFilter || this._ft === "all" || e.type === this._ft));
     if (!target2 && this.$("evn")) this.$("evn").textContent = `${ev.length} h\xE6ndelse${ev.length === 1 ? "" : "r"}`;
-    const shown = ev.slice(0, 60), key = shown.map((e) => e.id).join() + "|" + (this._sel || "");
-    if (l._key === key && l.childElementCount) return;
-    l._key = key;
+    const shown = ev.slice(0, 60), key2 = shown.map((e) => e.id).join() + "|" + (this._sel || "");
+    if (l._key === key2 && l.childElementCount) return;
+    l._key = key2;
     l._ev = shown;
     if (!ev.length) {
       const filtered = !camFilter && (this._fc !== "all" || this._ft !== "all");
@@ -51725,9 +51725,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     v.querySelectorAll(".vw-nav").forEach((n) => {
       n.hidden = cams.length < 2;
     });
-    const sp = v.querySelector(".vw-sp"), key = cams.map((c2) => c2.base).join();
-    if (sp._k !== key) {
-      sp._k = key;
+    const sp = v.querySelector(".vw-sp"), key2 = cams.map((c2) => c2.base).join();
+    if (sp._k !== key2) {
+      sp._k = key2;
       sp.innerHTML = cams.map((c2) => `<button data-k="${c2.base}" title="${vce(c2.name)}"><img alt=""><i>${vce(c2.name)}</i></button>`).join("");
       sp.querySelectorAll("button").forEach((x) => x.onclick = () => {
         this._player.open(x.dataset.k, null, true);
@@ -51773,9 +51773,9 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   }
   // Hændelser for en hel dag, når tidslinjen vises længere tilbage end det seneste døgn.
   _loadDay(b, day2) {
-    const key = `${b}|${day2}`;
+    const key2 = `${b}|${day2}`;
     this._dayL ||= /* @__PURE__ */ new Map();
-    if (this._dayL.has(key)) return this._dayL.get(key);
+    if (this._dayL.has(key2)) return this._dayL.get(key2);
     const p = (async () => {
       await this._nodesP;
       const n = this._nodes?.find((x) => x.cam?.base === b);
@@ -51786,8 +51786,8 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       (this._dayEv ||= {})[b] = [...this._dayEv[b] || [], ...this._parse(r.children, n).filter((e) => !have.has(e.id))];
       this._evVer++;
     })();
-    p.catch(() => this._dayL.delete(key));
-    this._dayL.set(key, p);
+    p.catch(() => this._dayL.delete(key2));
+    this._dayL.set(key2, p);
     return p;
   }
   async _thumbUrl(e) {
@@ -52285,11 +52285,11 @@ var HaHomeCameraCard = class extends HTMLElement {
     const allowed = new Set(this._groupCameras(group).map((camera) => camera.key));
     try {
       const saved = JSON.parse(localStorage.getItem(this._autoKey(group)) || "null");
-      if (Array.isArray(saved)) return new Set(saved.filter((key) => allowed.has(key)));
+      if (Array.isArray(saved)) return new Set(saved.filter((key2) => allowed.has(key2)));
     } catch (_) {
     }
     const configured = Array.isArray(group.auto_camera_keys) ? group.auto_camera_keys : [...allowed];
-    return new Set(configured.filter((key) => allowed.has(key)));
+    return new Set(configured.filter((key2) => allowed.has(key2)));
   }
   _setAutoCameraKeys(group, keys) {
     try {
@@ -52305,13 +52305,13 @@ var HaHomeCameraCard = class extends HTMLElement {
       return group.fallback_camera || group.default_camera || null;
     }
   }
-  _setDefaultCamera(group, key) {
+  _setDefaultCamera(group, key2) {
     if (group.fallback_select_entity) {
-      if (key) this._hass?.callService("input_select", "select_option", { entity_id: group.fallback_select_entity, option: key });
+      if (key2) this._hass?.callService("input_select", "select_option", { entity_id: group.fallback_select_entity, option: key2 });
       return;
     }
     try {
-      if (key) localStorage.setItem(this._defaultKey(group), key);
+      if (key2) localStorage.setItem(this._defaultKey(group), key2);
       else localStorage.removeItem(this._defaultKey(group));
     } catch (_) {
     }
@@ -52497,11 +52497,11 @@ var HaHomeCameraCard = class extends HTMLElement {
     }));
     choices.querySelectorAll("[data-pin]").forEach((button) => button.addEventListener("click", (event) => {
       event.stopPropagation();
-      const key = button.dataset.pin;
+      const key2 = button.dataset.pin;
       if (group.fallback_select_entity) {
-        if (defaultCamera !== key) this._setDefaultCamera(group, key);
+        if (defaultCamera !== key2) this._setDefaultCamera(group, key2);
       } else {
-        this._setDefaultCamera(group, defaultCamera === key ? "" : key);
+        this._setDefaultCamera(group, defaultCamera === key2 ? "" : key2);
       }
       dialog.close();
       this._openPicker(index, anchor);
@@ -52673,8 +52673,8 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
     if (!config.groups.length) config.groups.push({ name: "Kamerafelt 1", camera_keys: config.cameras.map((camera) => camera.key), fallback_camera: config.cameras[0].key, mode: "auto" });
     const allKeys = config.cameras.map((camera) => camera.key);
     config.groups.forEach((group) => {
-      group.camera_keys = Array.isArray(group.camera_keys) ? group.camera_keys.filter((key) => allKeys.includes(key)) : [...allKeys];
-      group.auto_camera_keys = Array.isArray(group.auto_camera_keys) ? group.auto_camera_keys.filter((key) => group.camera_keys.includes(key)) : [...group.camera_keys];
+      group.camera_keys = Array.isArray(group.camera_keys) ? group.camera_keys.filter((key2) => allKeys.includes(key2)) : [...allKeys];
+      group.auto_camera_keys = Array.isArray(group.auto_camera_keys) ? group.auto_camera_keys.filter((key2) => group.camera_keys.includes(key2)) : [...group.camera_keys];
       group.mode ||= "auto";
       group.fallback_camera ||= group.camera_keys[0] || "";
     });
@@ -52724,7 +52724,7 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
   _typesForEntry(entry) {
     const state = this._hass?.states?.[entry.entity_id];
     const advertised = Array.isArray(state?.attributes?.event_types) ? state.attributes.event_types : [];
-    const fromAttributes = advertised.map((key) => DETECTION_TYPES.find((type) => type.key === key)).filter(Boolean);
+    const fromAttributes = advertised.map((key2) => DETECTION_TYPES.find((type) => type.key === key2)).filter(Boolean);
     if (fromAttributes.length) return fromAttributes;
     const direct = this._detectionType(entry);
     return direct ? [direct] : [];
@@ -52840,7 +52840,7 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const keys = new Set(group.auto_camera_keys || group.camera_keys || []);
       if (keys.has(button.dataset.cameraAuto)) keys.delete(button.dataset.cameraAuto);
       else keys.add(button.dataset.cameraAuto);
-      group.auto_camera_keys = this.config.cameras.map((camera) => camera.key).filter((key) => keys.has(key) && group.camera_keys.includes(key));
+      group.auto_camera_keys = this.config.cameras.map((camera) => camera.key).filter((key2) => keys.has(key2) && group.camera_keys.includes(key2));
       this._emit();
       this._render();
     }));
@@ -52861,8 +52861,8 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const camera = this.config.cameras[Number(button.dataset.removeCatalogCamera)];
       this.config.cameras.splice(Number(button.dataset.removeCatalogCamera), 1);
       this.config.groups.forEach((group) => {
-        group.camera_keys = group.camera_keys.filter((key) => key !== camera.key);
-        group.auto_camera_keys = (group.auto_camera_keys || []).filter((key) => key !== camera.key);
+        group.camera_keys = group.camera_keys.filter((key2) => key2 !== camera.key);
+        group.auto_camera_keys = (group.auto_camera_keys || []).filter((key2) => key2 !== camera.key);
         if (group.fallback_camera === camera.key) group.fallback_camera = group.camera_keys[0] || "";
       });
       this._emit();
@@ -52876,8 +52876,8 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const keys = new Set(group.camera_keys || []);
       if (input.checked) keys.add(input.dataset.cameraAllow);
       else keys.delete(input.dataset.cameraAllow);
-      group.camera_keys = this.config.cameras.map((camera) => camera.key).filter((key) => keys.has(key));
-      group.auto_camera_keys = (group.auto_camera_keys || []).filter((key) => group.camera_keys.includes(key));
+      group.camera_keys = this.config.cameras.map((camera) => camera.key).filter((key2) => keys.has(key2));
+      group.auto_camera_keys = (group.auto_camera_keys || []).filter((key2) => group.camera_keys.includes(key2));
       if (!group.camera_keys.includes(group.fallback_camera)) group.fallback_camera = group.camera_keys[0] || "";
       this._emit();
       this._render();
@@ -52889,7 +52889,7 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const enabled = new Set(Array.isArray(camera.enabled_detections) ? camera.enabled_detections : discovered.map((item2) => item2.key));
       if (input.checked) enabled.add(input.dataset.detectionToggle);
       else enabled.delete(input.dataset.detectionToggle);
-      camera.enabled_detections = DETECTION_TYPES.map((type) => type.key).filter((key) => enabled.has(key));
+      camera.enabled_detections = DETECTION_TYPES.map((type) => type.key).filter((key2) => enabled.has(key2));
     }
     this._emit();
   }
@@ -52901,8 +52901,8 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
       const oldKey = camera.key;
       camera[input.dataset.catalogField] = input.value;
       if (input.dataset.catalogField === "key" && oldKey !== input.value) this.config.groups.forEach((group) => {
-        group.camera_keys = group.camera_keys.map((key) => key === oldKey ? input.value : key);
-        group.auto_camera_keys = (group.auto_camera_keys || []).map((key) => key === oldKey ? input.value : key);
+        group.camera_keys = group.camera_keys.map((key2) => key2 === oldKey ? input.value : key2);
+        group.auto_camera_keys = (group.auto_camera_keys || []).map((key2) => key2 === oldKey ? input.value : key2);
         if (group.fallback_camera === oldKey) group.fallback_camera = input.value;
       });
     }
@@ -53046,8 +53046,8 @@ var HaLicensePlateCard = class extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra den afgr\xE6nsede indk\xF8rselszone</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:car-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="plate">\u2014</span><small data-v="known">UKENDT K\xD8RET\xD8J</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:percent-outline"></ha-icon><span>Sikkerhed</span><b data-v="confidence">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live indk\xF8rsel</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Overv\xE5gning</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
     this._built = true;
   }
-  _set(key, value) {
-    const n = this.shadowRoot.querySelector(`[data-v="${key}"]`);
+  _set(key2, value) {
+    const n = this.shadowRoot.querySelector(`[data-v="${key2}"]`);
     if (n && n.textContent !== String(value)) n.textContent = value;
   }
   _ensurePlayButton() {
@@ -53149,15 +53149,15 @@ var HaLicensePlateCard = class extends HTMLElement {
     return `/api/unifiprotect/thumbnail/${encodeURIComponent(e.camera_device_id)}/${encodeURIComponent(e.event_id)}?width=${w}&height=${h}`;
   }
   async _loadImage(e, w = 1280, h = 720) {
-    const key = this._url(e, w, h);
-    if (this._blobs.has(key)) return this._blobs.get(key);
+    const key2 = this._url(e, w, h);
+    if (this._blobs.has(key2)) return this._blobs.get(key2);
     const p = (async () => {
-      const response = typeof this._hass?.fetchWithAuth === "function" ? await this._hass.fetchWithAuth(key) : await fetch(key, { credentials: "same-origin", headers: { Authorization: `Bearer ${this._hass?.auth?.data?.access_token || ""}` } });
+      const response = typeof this._hass?.fetchWithAuth === "function" ? await this._hass.fetchWithAuth(key2) : await fetch(key2, { credentials: "same-origin", headers: { Authorization: `Bearer ${this._hass?.auth?.data?.access_token || ""}` } });
       if (!response.ok) throw Error(String(response.status));
       return URL.createObjectURL(await response.blob());
     })();
-    p.catch(() => this._blobs.delete(key));
-    this._blobs.set(key, p);
+    p.catch(() => this._blobs.delete(key2));
+    this._blobs.set(key2, p);
     while (this._blobs.size > 30) {
       const [old, value] = this._blobs.entries().next().value;
       value.then((u2) => URL.revokeObjectURL(u2), () => {
@@ -53271,8 +53271,8 @@ var HaPersonDetectionCard = class extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${this._css()}</style><ha-card><div class="glow"></div><header><div><span class="eyebrow">${this.config.subtitle}</span><h1>${this.config.title}</h1><p>Registreringer fra kameraerne uden for huset</p></div><div class="status"><i></i><span data-v="status">KLAR</span></div></header><div class="wp" data-wp hidden></div><nav><button class="active" data-filter="all">Alle</button><button data-filter="unknown">Ukendte</button><button data-filter="known">Kendte</button><span data-v="retention">14 DAGE</span></nav><main><section class="focus"><div class="media" data-media><div class="placeholder"><ha-icon icon="mdi:account-search"></ha-icon><span>Venter p\xE5 registrering</span></div><div class="scan"></div><div class="media-badge"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span>PROTECT EVENT</span></div></div><div class="detail"><div class="plate"><span data-v="camera">\u2014</span><small data-v="known">UKENDT PERSON</small></div><div class="facts"><div><ha-icon icon="mdi:clock-outline"></ha-icon><span>Tidspunkt</span><b data-v="time">\u2014</b></div><div><ha-icon icon="mdi:cctv"></ha-icon><span>Kamera</span><b data-v="camera-fact">\u2014</b></div><div><ha-icon icon="mdi:identifier"></ha-icon><span>Event</span><b data-v="event">\u2014</b></div></div><div class="actions"><button data-action="live"><ha-icon icon="mdi:cctv"></ha-icon>Live overv\xE5gning</button><button data-action="overview"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Personvagt-side</button></div></div></section><section class="history"><div class="section-head"><div><span class="eyebrow">HISTORIK</span><h2>Seneste h\xE6ndelser</h2></div><span class="counter" data-v="count">0 / 10</span></div><div class="event-list" data-list></div></section></main></ha-card>`;
     this._built = true;
   }
-  _set(key, value) {
-    const n = this.shadowRoot.querySelector(`[data-v="${key}"]`);
+  _set(key2, value) {
+    const n = this.shadowRoot.querySelector(`[data-v="${key2}"]`);
     if (n && n.textContent !== String(value)) n.textContent = value;
   }
   _updateHeader(state) {
@@ -53497,14 +53497,14 @@ var HACardListEditor12 = class extends HTMLElement {
     this._render();
   }
   _get(path, source = this._config) {
-    return path.split(".").reduce((value, key) => value?.[key], source);
+    return path.split(".").reduce((value, key2) => value?.[key2], source);
   }
   _set(path, value, source = this._config) {
     const parts = path.split(".");
     let target2 = source;
-    parts.slice(0, -1).forEach((key) => {
-      target2[key] = target2[key] && typeof target2[key] === "object" ? target2[key] : {};
-      target2 = target2[key];
+    parts.slice(0, -1).forEach((key2) => {
+      target2[key2] = target2[key2] && typeof target2[key2] === "object" ? target2[key2] : {};
+      target2 = target2[key2];
     });
     if (value === "" || value === void 0) delete target2[parts.at(-1)];
     else target2[parts.at(-1)] = value;
@@ -54087,12 +54087,12 @@ var HAAIUsageCard = class extends HTMLElement {
     if (unit === "requests") return 0;
     return 0;
   }
-  _unitValueOf(account, key, unitKey) {
+  _unitValueOf(account, key2, unitKey) {
     const unit = account[unitKey];
-    if (!unit) return this._number(account[key]);
-    return this._raw(account[key]);
+    if (!unit) return this._number(account[key2]);
+    return this._raw(account[key2]);
   }
-  _unitMaxOf(account, key, unitKey, maxKey) {
+  _unitMaxOf(account, key2, unitKey, maxKey) {
     const unit = account[unitKey];
     if (!unit) return void 0;
     const max = Number(account[maxKey]);
@@ -55398,9 +55398,9 @@ var HAKioskServerCard = class extends HTMLElement {
     });
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  _barColor(pct3) {
-    if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
-    return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
+  _barColor(pct4) {
+    if (!Number.isFinite(pct4)) return "var(--secondary-text-color)";
+    return pct4 >= 85 ? "var(--danger)" : pct4 >= 65 ? "var(--warn)" : "var(--good)";
   }
   _statTile(label, value, icon5) {
     return `<div class="stat-tile"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
@@ -55932,9 +55932,9 @@ var HAUnraidServerCard = class extends HTMLElement {
     });
     el.addEventListener("contextmenu", (e) => e.preventDefault());
   }
-  _barColor(pct3) {
-    if (!Number.isFinite(pct3)) return "var(--secondary-text-color)";
-    return pct3 >= 85 ? "var(--danger)" : pct3 >= 65 ? "var(--warn)" : "var(--good)";
+  _barColor(pct4) {
+    if (!Number.isFinite(pct4)) return "var(--secondary-text-color)";
+    return pct4 >= 85 ? "var(--danger)" : pct4 >= 65 ? "var(--warn)" : "var(--good)";
   }
   _statTile(label, value, icon5) {
     return `<div class="stat-tile"><ha-icon icon="${this._esc(icon5)}"></ha-icon><span class="stat-text"><b>${this._esc(value)}</b><span>${this._esc(label)}</span></span></div>`;
@@ -56107,7 +56107,7 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
     this._timer = 0;
   }
   static getStubConfig() {
-    return { title: "Taleudsendelse", subtitle: "Send beskeder nu eller planl\xE6g dem", message_entity: "input_text.tts_message", volume_entity: "input_number.tts_volume", target_entity: "input_select.tts_target", send_script: "script.tts_send_valgt_enhed_volume", animation: true, presets: [{ label: "Vi spiser snart", message: "Hey, vi spiser lige om lidt. Kom du bare.", icon: "mdi:food" }, { label: "Tid til at sove", message: "Nu er det tid til at g\xE5 i seng. Ud og b\xF8rste bisser.", icon: "mdi:bed" }, { label: "Tag telefonen", message: "Kan du lige tage telefonen?", icon: "mdi:phone" }], plans: [1, 2, 3].map((n) => ({ name: `Plan ${n}`, enabled_entity: `input_boolean.tts_plan_${n}_enabled`, message_entity: `input_text.tts_plan_${n}_message`, time_entity: `input_datetime.tts_plan_${n}_time`, volume_entity: `input_number.tts_plan_${n}_volume`, target_1_entity: `input_select.tts_plan_${n}_target_1`, target_2_entity: `input_select.tts_plan_${n}_target_2`, target_3_entity: `input_select.tts_plan_${n}_target_3`, ...Object.fromEntries(DAYS2.map(([key]) => [`${key}_entity`, `input_boolean.tts_plan_${n}_${key}`])) })) };
+    return { title: "Taleudsendelse", subtitle: "Send beskeder nu eller planl\xE6g dem", message_entity: "input_text.tts_message", volume_entity: "input_number.tts_volume", target_entity: "input_select.tts_target", send_script: "script.tts_send_valgt_enhed_volume", animation: true, presets: [{ label: "Vi spiser snart", message: "Hey, vi spiser lige om lidt. Kom du bare.", icon: "mdi:food" }, { label: "Tid til at sove", message: "Nu er det tid til at g\xE5 i seng. Ud og b\xF8rste bisser.", icon: "mdi:bed" }, { label: "Tag telefonen", message: "Kan du lige tage telefonen?", icon: "mdi:phone" }], plans: [1, 2, 3].map((n) => ({ name: `Plan ${n}`, enabled_entity: `input_boolean.tts_plan_${n}_enabled`, message_entity: `input_text.tts_plan_${n}_message`, time_entity: `input_datetime.tts_plan_${n}_time`, volume_entity: `input_number.tts_plan_${n}_volume`, target_1_entity: `input_select.tts_plan_${n}_target_1`, target_2_entity: `input_select.tts_plan_${n}_target_2`, target_3_entity: `input_select.tts_plan_${n}_target_3`, ...Object.fromEntries(DAYS2.map(([key2]) => [`${key2}_entity`, `input_boolean.tts_plan_${n}_${key2}`])) })) };
   }
   static getConfigElement() {
     const editor = document.createElement("ha-card-list-editor");
@@ -56166,7 +56166,7 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
     this._sync();
   }
   _plan(p, i) {
-    return `<div class="plan ${i === this._activePlan ? "active" : ""}" data-plan="${i}"><div class="field"><span>Planens besked</span><input class="plan-message" data-entity="${this._esc(p.message_entity)}" placeholder="Skriv planlagt besked"><button class="enable" data-toggle="${this._esc(p.enabled_entity)}"><i class="switch"></i><span data-enable-label>Plan sl\xE5et fra</span></button></div><div class="field"><span>Tidspunkt</span><input type="time" data-entity="${this._esc(p.time_entity)}"><div class="volume-head"><span>Lydstyrke</span><b data-plan-volume>\u2014</b></div><input type="range" min="0" max="100" step="5" data-entity="${this._esc(p.volume_entity)}"></div><div class="field targets"><span>H\xF8jttalere</span>${[1, 2, 3].map((n) => this._select(p[`target_${n}_entity`], "plan-target")).join("")}</div><div class="days">${DAYS2.map(([key, label]) => `<button class="day" data-toggle="${this._esc(p[`${key}_entity`])}">${label}</button>`).join("")}</div></div>`;
+    return `<div class="plan ${i === this._activePlan ? "active" : ""}" data-plan="${i}"><div class="field"><span>Planens besked</span><input class="plan-message" data-entity="${this._esc(p.message_entity)}" placeholder="Skriv planlagt besked"><button class="enable" data-toggle="${this._esc(p.enabled_entity)}"><i class="switch"></i><span data-enable-label>Plan sl\xE5et fra</span></button></div><div class="field"><span>Tidspunkt</span><input type="time" data-entity="${this._esc(p.time_entity)}"><div class="volume-head"><span>Lydstyrke</span><b data-plan-volume>\u2014</b></div><input type="range" min="0" max="100" step="5" data-entity="${this._esc(p.volume_entity)}"></div><div class="field targets"><span>H\xF8jttalere</span>${[1, 2, 3].map((n) => this._select(p[`target_${n}_entity`], "plan-target")).join("")}</div><div class="days">${DAYS2.map(([key2, label]) => `<button class="day" data-toggle="${this._esc(p[`${key2}_entity`])}">${label}</button>`).join("")}</div></div>`;
   }
   _bind() {
     const root = this.shadowRoot;
@@ -56342,11 +56342,11 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
       ["presence_entity", "mdi:timer-sand", "Vedvarende tilstedev\xE6relse"],
       ["lux_enabled_entity", "mdi:brightness-6", "Brug lux-krav"],
       ["vacuum_exception_entity", "mdi:robot-vacuum-variant-off", "Undtag ved st\xF8vsugning"]
-    ].filter(([key]) => room[key]);
+    ].filter(([key2]) => room[key2]);
     const settings = this._slider(room.delay_entity, "mdi:timer-outline", "T\xE6nd-forsinkelse", "sek") + this._slider(room.lux_threshold_entity, "mdi:brightness-5", "Lux-t\xE6rskel", "lx");
     const dim = room.dim_entity || room.dim_time_entity || room.dim_percent_entity ? `<div class="dim">${room.dim_entity ? `<button class="switch-card" data-toggle="${this._esc(room.dim_entity)}"><ha-icon icon="mdi:lightbulb-on-30"></ha-icon><span><b>Nedton f\xF8r sluk</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>` : ""}${this._slider(room.dim_time_entity, "mdi:timer-sand", "Nedton-tid", "sek f\xF8r sluk")}${this._slider(room.dim_percent_entity, "mdi:brightness-percent", "Nedton-lysstyrke", "% af nuv\xE6rende")}</div>` : "";
     return `<section class="room ${index === this._activeRoom ? "active" : ""}" data-room="${index}">
-      ${switches.length ? `<div class="switches">${switches.map(([key, icon5, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key])}"><ha-icon icon="${icon5}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>` : ""}
+      ${switches.length ? `<div class="switches">${switches.map(([key2, icon5, label]) => `<button class="switch-card" data-toggle="${this._esc(room[key2])}"><ha-icon icon="${icon5}"></ha-icon><span><b>${label}</b><small data-switch-state>Fra</small></span><i class="switch"></i></button>`).join("")}</div>` : ""}
       ${settings ? `<div class="settings">${settings}</div>` : ""}
       ${dim}
     </section>`;
@@ -56639,9 +56639,9 @@ var HAFamilyCalendarCard = class _HAFamilyCalendarCard extends HTMLElement {
   _tick() {
     if (!this._built) return;
     const now = Date.now();
-    const key = this._visible().filter((e) => this._on(e, now)).map((e) => `${e.calendar_entity}|${e.s}`).join("~") + `|${dayKey(/* @__PURE__ */ new Date())}`;
-    if (key !== this._liveKey) {
-      this._liveKey = key;
+    const key2 = this._visible().filter((e) => this._on(e, now)).map((e) => `${e.calendar_entity}|${e.s}`).join("~") + `|${dayKey(/* @__PURE__ */ new Date())}`;
+    if (key2 !== this._liveKey) {
+      this._liveKey = key2;
       this._render();
       return;
     }
@@ -57689,11 +57689,11 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     for (const item2 of known) {
       const date2 = parseDate(item2.attrs.date);
       if (!date2) continue;
-      const key = dayDiff(start, date2);
-      if (!pickups.has(key)) pickups.set(key, []);
-      pickups.get(key).push(item2);
+      const key2 = dayDiff(start, date2);
+      if (!pickups.has(key2)) pickups.set(key2, []);
+      pickups.get(key2).push(item2);
     }
-    const last = Math.max(0, ...[...pickups.keys()].filter((key) => key < 42)), weeks = Math.min(6, Math.max(4, Math.ceil((last + 1) / 7)));
+    const last = Math.max(0, ...[...pickups.keys()].filter((key2) => key2 < 42)), weeks = Math.min(6, Math.max(4, Math.ceil((last + 1) / 7)));
     let html = `<i class="wk"></i>${["M", "T", "O", "T", "F", "L", "S"].map((day2) => `<i class="dow">${day2}</i>`).join("")}`;
     for (let week = 0; week < weeks; week++) {
       const monday2 = new Date(start);
@@ -57918,10 +57918,10 @@ function calefaUnitLabel(entryId, devices) {
 }
 function calefaBindings(rows, entryId) {
   const found = new Map(rows.filter((row) => row.config_entry_id === entryId).map((row) => [row.unique_id?.slice(entryId.length + 1), row.entity_id]));
-  const entities = Object.fromEntries(Object.entries(CALEFA_SENSOR_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor.")));
+  const entities = Object.fromEntries(Object.entries(CALEFA_SENSOR_KEYS).map(([key2, unique]) => [key2, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor.")));
   const controls = Object.fromEntries([
-    ...Object.entries(CALEFA_CONTROL_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => /^(number|select|switch)\./.test(id || "")),
-    ...Object.entries(CALEFA_READOUT_KEYS).map(([key, unique]) => [key, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor."))
+    ...Object.entries(CALEFA_CONTROL_KEYS).map(([key2, unique]) => [key2, found.get(unique)]).filter(([, id]) => /^(number|select|switch)\./.test(id || "")),
+    ...Object.entries(CALEFA_READOUT_KEYS).map(([key2, unique]) => [key2, found.get(unique)]).filter(([, id]) => id?.startsWith("sensor."))
   ]);
   const alarms = [...CALEFA_ALARM_KEYS].map((unique) => found.get(unique)).filter((id) => id?.startsWith("binary_sensor."));
   return { entities, controls, alarms };
@@ -58306,8 +58306,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       alarm_entities: Array.isArray(config.alarm_entities) ? config.alarm_entities.filter((id) => typeof id === "string" && id.startsWith("binary_sensor.")) : [],
       popup_card: config.popup_card && typeof config.popup_card === "object" && !Array.isArray(config.popup_card) ? config.popup_card : null
     };
-    for (const key of ENTITY_KEYS) this._config[key] = text(config[key]);
-    this._entityIds = [...new Set([...ENTITY_KEYS.map((key) => this._config[key]), ...Object.values(this._config.display_entities), ...this._config.alarm_entities].filter(Boolean))];
+    for (const key2 of ENTITY_KEYS) this._config[key2] = text(config[key2]);
+    this._entityIds = [...new Set([...ENTITY_KEYS.map((key2) => this._config[key2]), ...Object.values(this._config.display_entities), ...this._config.alarm_entities].filter(Boolean))];
     this._build();
     if (this._hass) this._update();
     this._resolveCalefa();
@@ -58333,10 +58333,10 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const { entities, controls, alarms } = calefaBindings(rows, entry);
       const selected = Boolean(source.calefa_entry);
       let changed = false;
-      for (const key of Object.keys(CALEFA_SENSOR_KEYS)) {
-        const id = entities[key] || "";
-        if ((selected || !source[key] && id) && this._config[key] !== id) {
-          this._config[key] = id;
+      for (const key2 of Object.keys(CALEFA_SENSOR_KEYS)) {
+        const id = entities[key2] || "";
+        if ((selected || !source[key2] && id) && this._config[key2] !== id) {
+          this._config[key2] = id;
           changed = true;
         }
       }
@@ -58349,9 +58349,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
           changed = true;
         }
       } else {
-        for (const [key, id] of Object.entries(controls)) {
-          if (!source.display_entities?.[key] && this._config.display_entities[key] !== id) {
-            this._config.display_entities[key] = id;
+        for (const [key2, id] of Object.entries(controls)) {
+          if (!source.display_entities?.[key2] && this._config.display_entities[key2] !== id) {
+            this._config.display_entities[key2] = id;
             changed = true;
           }
         }
@@ -58362,7 +58362,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       }
       if (changed) {
         this._entityIds = [...new Set([
-          ...ENTITY_KEYS.map((key) => this._config[key]),
+          ...ENTITY_KEYS.map((key2) => this._config[key2]),
           ...Object.values(this._config.display_entities),
           ...this._config.alarm_entities
         ].filter(Boolean))];
@@ -58404,26 +58404,26 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._closeFaults();
     this._popupCard?._closeDetailsPopup?.();
   }
-  _stateObj(key) {
-    const id = this._config?.[key];
+  _stateObj(key2) {
+    const id = this._config?.[key2];
     return id && this._hass?.states ? this._hass.states[id] || null : null;
   }
-  _available(key) {
-    const state = this._stateObj(key);
+  _available(key2) {
+    const state = this._stateObj(key2);
     return Boolean(state) && !UNAVAILABLE.has(String(state.state ?? "").trim().toLowerCase());
   }
-  _num(key) {
-    return this._available(key) ? toNumber(this._stateObj(key).state) : null;
+  _num(key2) {
+    return this._available(key2) ? toNumber(this._stateObj(key2).state) : null;
   }
-  _unit(key) {
-    return this._stateObj(key)?.attributes?.unit_of_measurement || "";
+  _unit(key2) {
+    return this._stateObj(key2)?.attributes?.unit_of_measurement || "";
   }
-  _activity(key, context) {
-    return interpretActivity(this._stateObj(key), context);
+  _activity(key2, context) {
+    return interpretActivity(this._stateObj(key2), context);
   }
-  _valvePosition(key) {
-    const state = this._stateObj(key);
-    if (!state || !this._available(key)) return null;
+  _valvePosition(key2) {
+    const state = this._stateObj(key2);
+    if (!state || !this._available(key2)) return null;
     const direct = toNumber(state.state);
     if (direct !== null) return clamp2(direct, 0, 100);
     const attr = toNumber(state.attributes?.current_position ?? state.attributes?.position);
@@ -58439,11 +58439,11 @@ var HaCalefaFlowCard = class extends HTMLElement {
       return new Intl.NumberFormat(void 0, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
     }
   }
-  _format(key, kind = "number") {
-    if (!this._available(key)) return "\u2013";
-    const value = this._num(key);
-    if (value === null) return String(this._stateObj(key).state);
-    const unit = this._unit(key);
+  _format(key2, kind = "number") {
+    if (!this._available(key2)) return "\u2013";
+    const value = this._num(key2);
+    if (value === null) return String(this._stateObj(key2).state);
+    const unit = this._unit(key2);
     let decimals = 1;
     let shownUnit = unit;
     if (kind === "temperature") {
@@ -58458,8 +58458,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const text = this._formatNumber(value, decimals);
     return shownUnit ? `${text} ${shownUnit}` : text;
   }
-  _formatParts(key, kind) {
-    const text = this._format(key, kind);
+  _formatParts(key2, kind) {
+    const text = this._format(key2, kind);
     if (text === "\u2013") return ["\u2013", ""];
     const match = text.match(/^(.+?)\s+(°C|%|bar|kW|W|L\/h|L\/min|m³\/h)$/i);
     return match ? [match[1], match[2]] : [text, ""];
@@ -58545,7 +58545,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   // Bypass mode in the controller's own words (Auto / Planlæg / Komfort / Øko) and its temperature.
   _bypassSettings() {
-    const entity = (key) => this._hass?.states?.[this._config.display_entities?.[key]];
+    const entity = (key2) => this._hass?.states?.[this._config.display_entities?.[key2]];
     const mode = entity("bypass_mode");
     const raw = String(mode?.state ?? "").trim().toLowerCase();
     const label = UNAVAILABLE.has(raw) ? "" : OPTION_LABELS.bypass_mode.find((row) => row.some((text) => text.toLowerCase() === raw))?.[0] ?? mode.state;
@@ -58593,9 +58593,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._circuitNodes = /* @__PURE__ */ new Map();
     this._trackNodes = /* @__PURE__ */ new Map();
     this.shadowRoot.querySelectorAll("[data-circuit]").forEach((el) => {
-      const key = el.dataset.circuit;
-      if (!this._circuitNodes.has(key)) this._circuitNodes.set(key, []);
-      this._circuitNodes.get(key).push(el);
+      const key2 = el.dataset.circuit;
+      if (!this._circuitNodes.has(key2)) this._circuitNodes.set(key2, []);
+      this._circuitNodes.get(key2).push(el);
       const id = el.dataset.id || el.dataset.track;
       if (!this._trackNodes.has(id)) this._trackNodes.set(id, []);
       this._trackNodes.get(id).push(el);
@@ -58717,9 +58717,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _footerMarkup() {
     if (!this._config.show_footer) return "";
-    const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key]) => this._config[key]);
+    const items = [["room_temperature", "Bolig", "mdi:home-thermometer-outline"], ["outdoor_temperature", "Ude", "mdi:thermometer"], ["power", "Effekt", "mdi:flash-outline"], ["pressure", "Tryk", "mdi:gauge"]].filter(([key2]) => this._config[key2]);
     if (!items.length) return "";
-    return `<footer class="cf-footer">${items.map(([key, label, icon5]) => `<button type="button" data-action="more-info" data-key="${key}" data-footer="${key}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
+    return `<footer class="cf-footer">${items.map(([key2, label, icon5]) => `<button type="button" data-action="more-info" data-key="${key2}" data-footer="${key2}"><ha-icon icon="${icon5}"></ha-icon><span><small>${label}</small><strong>\u2013</strong></span></button>`).join("")}</footer>`;
   }
   // Bypass arrows are smaller and sparser: valve 37 holds a trickle of a few to about 160 L/h.
   _markersMarkup(track2, level, variant = "") {
@@ -58735,11 +58735,11 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const clips = (layer) => TRACKS.filter((track2) => track2.hide).map((track2) => hideClip(`cf-hide-${layer}-${track2.id}`, track2.hide)).join("");
     const tracks = TRACKS.map((track2) => `<g class="cf-track" data-circuit="${track2.circuit}" data-id="${track2.id}" data-tone="${track2.tone}"${clip("g", track2)}><path class="cf-track-halo" d="${track2.d}"/><path class="cf-track-core" d="${track2.d}"/><path class="cf-track-hot" d="${track2.d}"/></g>`).join("");
     const markers = TRACKS.map((track2) => `<g class="cf-markers" data-circuit="${track2.circuit}" data-track="${track2.id}"${clip("a", track2)}>${this._markersMarkup(track2, 2)}</g>`).join("");
-    const pct3 = (value, total) => `${(value / total * 100).toFixed(3)}%`;
-    const fogs = Object.entries(HX).map(([key, face]) => {
-      const rx2 = pct3(face.r, face.w), ry = pct3(face.r, face.h);
+    const pct4 = (value, total) => `${(value / total * 100).toFixed(3)}%`;
+    const fogs = Object.entries(HX).map(([key2, face]) => {
+      const rx2 = pct4(face.r, face.w), ry = pct4(face.r, face.h);
       const radius = face.top ? `${rx2} ${rx2} 0 0 / ${ry} ${ry} 0 0` : `${rx2} / ${ry}`;
-      return `<div class="cf-fog" data-ref="fog-${key}" data-fog="${key}" style="left:${pct3(face.x, VIEW_W)};top:${pct3(face.y, VIEW_H)};width:${pct3(face.w, VIEW_W)};height:${pct3(face.h, VIEW_H)};border-radius:${radius}"><i></i><i></i></div>`;
+      return `<div class="cf-fog" data-ref="fog-${key2}" data-fog="${key2}" style="left:${pct4(face.x, VIEW_W)};top:${pct4(face.y, VIEW_H)};width:${pct4(face.w, VIEW_W)};height:${pct4(face.h, VIEW_H)};border-radius:${radius}"><i></i><i></i></div>`;
     }).join("");
     const [tx2, ty] = polar2(PUMP.rail, -84);
     const [ex2, ey] = polar2(PUMP.rail, -6);
@@ -58749,12 +58749,12 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const arc = `M${tx2} ${ty} A${PUMP.rail} ${PUMP.rail} 0 0 1 ${ex2} ${ey}`;
     const blades = [0, 120, 240].map((rotation) => `<g transform="rotate(${rotation})"><path class="cf-pump-glow" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-arc" stroke="url(#cf-pump-tail)" d="${arc}"/><path class="cf-pump-head" d="M${ix2} ${iy} L${hx2} ${hy} L${ox2} ${oy} Z"/></g>`).join("");
     const box = PUMP.box;
-    const pump = `<div class="cf-pump" data-ref="pump" style="left:${pct3(PUMP.x - box, VIEW_W)};top:${pct3(PUMP.y - box, VIEW_H)};width:${pct3(2 * box, VIEW_W)};height:${pct3(2 * box, VIEW_H)}">
+    const pump = `<div class="cf-pump" data-ref="pump" style="left:${pct4(PUMP.x - box, VIEW_W)};top:${pct4(PUMP.y - box, VIEW_H)};width:${pct4(2 * box, VIEW_W)};height:${pct4(2 * box, VIEW_H)}">
         <svg class="cf-pump-ring" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><circle class="cf-pump-rail" r="${PUMP.rail}"/><circle class="cf-pump-face" r="${PUMP.face}"/><circle class="cf-pump-rim" r="${PUMP.rim}"/></svg>
         <svg class="cf-pump-rotor" viewBox="${-box} ${-box} ${2 * box} ${2 * box}" aria-hidden="true"><defs><linearGradient id="cf-pump-tail" gradientUnits="userSpaceOnUse" x1="${tx2}" y1="${ty}" x2="${ex2}" y2="${ey}"><stop offset="0" stop-color="currentColor" stop-opacity="0"/><stop offset=".6" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>${blades}</svg>
       </div>`;
     const valves = Object.entries(VALVES).filter(([id]) => this._config[id]).map(([id, v]) => `<g class="cf-valve" data-ref="valve-${id}" transform="translate(${v.x} ${v.y})"><circle class="cf-valve-track" r="${v.r}"/><circle class="cf-valve-level" r="${v.r}" pathLength="100" transform="rotate(-90)"/><g class="cf-valve-runner"><circle r="${v.r + 6}" fill="none" stroke="none"/><circle class="cf-valve-dot" cx="0" cy="${-v.r}" r="6"/></g><text class="cf-valve-pct cf-minor" x="${v.r + 9}" y="7" data-ref="valve-${id}-text">\u2013</text></g>`).join("");
-    const leds = LED_POSITIONS.map(([key, x, label]) => `<circle class="cf-display-led" data-ref="led-${key}" cx="${x}" cy="164" r="4.4" aria-label="${label}"/>`).join("");
+    const leds = LED_POSITIONS.map(([key2, x, label]) => `<circle class="cf-display-led" data-ref="led-${key2}" cx="${x}" cy="164" r="4.4" aria-label="${label}"/>`).join("");
     const photo = this._config.background_image ? `<img class="cf-photo" data-ref="photo" alt="" decoding="async" style="object-fit:${this._config.background_fit === "cover" ? "cover" : "contain"}">` : "";
     const hit = PUMP.rim + 2;
     return `${photo}
@@ -58772,13 +58772,13 @@ var HaCalefaFlowCard = class extends HTMLElement {
       </svg>
       ${pump}
       <button class="cf-display-hit" type="button" data-action="open-display" aria-label="\xC5bn Calefa-display"><ha-icon icon="mdi:gesture-tap"></ha-icon></button>
-      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct3(PUMP.x - hit, VIEW_W)};top:${pct3(PUMP.y - hit, VIEW_H)};width:${pct3(2 * hit, VIEW_W)};height:${pct3(2 * hit, VIEW_H)}"></button>
+      <button class="cf-pump-hit" type="button" data-action="more-info" data-key="pump" aria-label="Pumpe status og detaljer" style="left:${pct4(PUMP.x - hit, VIEW_W)};top:${pct4(PUMP.y - hit, VIEW_H)};width:${pct4(2 * hit, VIEW_W)};height:${pct4(2 * hit, VIEW_H)}"></button>
       <button class="cf-fault" type="button" data-ref="fault-button" data-action="open-faults" aria-label="Vis aktive Calefa-fejl" hidden><ha-icon icon="mdi:alert-outline"></ha-icon><span>Fejl</span><b data-ref="fault-count"></b></button>
       <button class="cf-info" type="button" data-action="open-legacy-popup" aria-label="Info: Calefa styring og forbrug"><ha-icon icon="mdi:information-outline"></ha-icon><span>Info</span></button>`;
   }
   _modalMarkup() {
-    const leds = CONTROLLER_LEDS.map(([key2, label, path]) => `<span class="ctl-led" title="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg><i data-ref="pled-${key2}" role="img" aria-label="${label}"></i></span>`).join("");
-    const key = (ctl, label, glyph) => `<button type="button" data-action="display-key" data-ctl="${ctl}" aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph}</svg></button>`;
+    const leds = CONTROLLER_LEDS.map(([key4, label, path]) => `<span class="ctl-led" title="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg><i data-ref="pled-${key4}" role="img" aria-label="${label}"></i></span>`).join("");
+    const key2 = (ctl, label, glyph) => `<button type="button" data-action="display-key" data-ctl="${ctl}" aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph}</svg></button>`;
     return `<div class="cf-modal" data-ref="modal"${this._displayOpen ? "" : " hidden"}><div class="cf-modal-backdrop" data-action="close-display"></div>
       <section class="ctl-wrap" role="dialog" aria-modal="true" aria-label="Calefa II V styring" tabindex="-1" data-ref="device">
         <button class="ctl-close" type="button" data-action="close-display" aria-label="Luk styring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -58788,9 +58788,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
           <div class="ctl-leds">${leds}</div>
           <div class="ctl-usb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12h16"/><path d="M18.5 9.8 21.8 12l-3.3 2.2z" class="is-fill"/><circle cx="3.6" cy="12" r="1.5" class="is-fill"/><path d="M7.5 12 10.4 7.6h3.4"/><circle cx="14.9" cy="7.6" r="1.2" class="is-fill"/><path d="m10 12 2.9 4.4h2.5"/><path d="M15.4 15.3h2.2v2.2h-2.2z" class="is-fill"/></svg></div>
           <div class="ctl-keys" role="group" aria-label="Touch-knapper">
-            ${key("down", "Pil ned", '<path d="M5 7h14l-7 11z" class="is-fill"/>')}
-            ${key("enter", "Enter \u2013 kort tryk v\xE6lger, hold for menu eller tilbage", '<path d="M19.5 5.5v6.8H6.2"/><path d="M9.6 8.6 5.6 12.3l4 3.7"/>')}
-            ${key("up", "Pil op", '<path d="M5 17h14L12 6z" class="is-fill"/>')}
+            ${key2("down", "Pil ned", '<path d="M5 7h14l-7 11z" class="is-fill"/>')}
+            ${key2("enter", "Enter \u2013 kort tryk v\xE6lger, hold for menu eller tilbage", '<path d="M19.5 5.5v6.8H6.2"/><path d="M9.6 8.6 5.6 12.3l4 3.7"/>')}
+            ${key2("up", "Pil op", '<path d="M5 17h14L12 6z" class="is-fill"/>')}
           </div>
         </div>
         <p class="ctl-hint" data-ref="display-hint"></p>
@@ -58905,9 +58905,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     for (const [name, value] of Object.entries(values)) if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value);
   }
   _setMarkerSpeed(speed, level, variant = "") {
-    const key = `${level}:${variant}`;
-    if (!level || this._markerLevels?.[speed] === key) return;
-    this._markerLevels[speed] = key;
+    const key2 = `${level}:${variant}`;
+    if (!level || this._markerLevels?.[speed] === key2) return;
+    this._markerLevels[speed] = key2;
     for (const track2 of TRACKS.filter((entry) => entry.speed === speed)) {
       const group = this.shadowRoot.querySelector(`[data-track="${track2.id}"]`);
       if (group) group.innerHTML = this._markersMarkup(track2, level, variant);
@@ -58951,7 +58951,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._toggle(heatFog, "is-on", Boolean(model.heatPrimary));
     this._toggle(dhwFog, "is-on", model.waterMoving);
     this._toggle(dhwFog, "is-warm", !model.waterMoving && model.bypassFlow);
-    const first = (...keys) => keys.map((key2) => this._num(key2)).find((value) => value !== null) ?? null;
+    const first = (...keys) => keys.map((key4) => this._num(key4)).find((value) => value !== null) ?? null;
     this._setFog(heatFog, first("fjv_supply", "heating_supply") ?? 60, first("fjv_return", "heating_supply") ?? 35);
     this._setFog(dhwFog, first("dhw_temperature", "fjv_supply") ?? 55, first("cold_water_temperature") ?? 10);
     const pump = this._refs.pump;
@@ -58973,9 +58973,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
       this._text(this._refs[`valve-${id}-text`], position === null ? "\u2013" : `${pos}%`);
     }
     this._applyStatusLeds(model);
-    const key = model.dhwTap && this._config.dhw_temperature ? "dhw_temperature" : this._config.heating_supply ? "heating_supply" : "fjv_supply";
+    const key2 = model.dhwTap && this._config.dhw_temperature ? "dhw_temperature" : this._config.heating_supply ? "heating_supply" : "fjv_supply";
     this._text(this._refs["mini-title"], model.dhwTap ? "BV" : model.heatingActive ? "VARME" : model.dhwBypass ? "BYPASS" : "STANDBY");
-    this._text(this._refs["mini-value"], this._config[key] ? this._format(key, "temperature").replace(" \xB0C", "\xB0").replace(/,\d/, "") : "\u2013");
+    this._text(this._refs["mini-value"], this._config[key2] ? this._format(key2, "temperature").replace(" \xB0C", "\xB0").replace(/,\d/, "") : "\u2013");
     this._syncAnimation();
   }
   // SMIL markers and CSS rotations only run while the card is visible and motion is wanted.
@@ -58992,9 +58992,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     else if (!markers && !svg.animationsPaused?.()) svg.pauseAnimations();
   }
   _applyStatusLeds(model) {
-    const state = (key) => this._config[key] ? this._hass?.states?.[this._config[key]] : null;
+    const state = (key2) => this._config[key2] ? this._hass?.states?.[this._config[key2]] : null;
     const known = (entity) => entity && !UNAVAILABLE.has(String(entity.state).toLowerCase());
-    const live = ["fjv_supply", "dhw_temperature", "heating_supply"].some((key) => known(state(key)));
+    const live = ["fjv_supply", "dhw_temperature", "heating_supply"].some((key2) => known(state(key2)));
     const alarms = this._config.alarm_entities.map((id) => [id, this._hass?.states?.[id]]).filter(([, entity]) => entity && interpretActivity(entity) === true);
     const hasError = alarms.some(([id, entity]) => /fejl|error|failure|critical|kritisk/i.test(id + " " + (entity.attributes?.friendly_name || "")));
     const mode = model.dhwTap ? ["cyan", "Varmt vand aktivt"] : model.heatingActive ? ["red", "Varme aktiv"] : model.dhwBypass ? ["cyan slow", "Bypass aktiv"] : ["off", "Ingen varme eller varmt vand"];
@@ -59012,9 +59012,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
       lan: [lanTone, known(lan) ? "LAN: " + lan.state : "LAN-status ikke tilg\xE6ngelig"],
       peripheral: [peripheralTone, outdoorError ? "Udend\xF8rsf\xF8ler i alarm" : known(outdoor) ? "Udend\xF8rsf\xF8ler tilsluttet" : "Udend\xF8rsf\xF8lerstatus ikke tilg\xE6ngelig"]
     };
-    for (const [key, [tone3, label]] of Object.entries(leds)) {
+    for (const [key2, [tone3, label]] of Object.entries(leds)) {
       const [color, blink] = tone3.split(" ");
-      for (const led of [this._refs[`led-${key}`], this._refs[`pled-${key}`]]) {
+      for (const led of [this._refs[`led-${key2}`], this._refs[`pled-${key2}`]]) {
         if (!led) continue;
         if (led.dataset.tone !== color) led.dataset.tone = color;
         if (led.dataset.blink !== (blink || "")) led.dataset.blink = blink || "";
@@ -59024,14 +59024,14 @@ var HaCalefaFlowCard = class extends HTMLElement {
   }
   _applyFooter() {
     this.shadowRoot.querySelectorAll("[data-footer]").forEach((el) => {
-      const key = el.dataset.footer;
-      const kind = key === "power" ? "power" : key === "pressure" ? "pressure" : "temperature";
-      this._text(el.querySelector("strong"), this._format(key, kind));
+      const key2 = el.dataset.footer;
+      const kind = key2 === "power" ? "power" : key2 === "pressure" ? "pressure" : "temperature";
+      this._text(el.querySelector("strong"), this._format(key2, kind));
     });
   }
   // ---- "I dag": consumption, price and hourly chart ---------------------------------------------
   _todayEnabled() {
-    return this._config.show_today !== false && ["energy_meter", "energy_today", "heating_energy_today", "dhw_energy_today"].some((key) => this._config[key]);
+    return this._config.show_today !== false && ["energy_meter", "energy_today", "heating_energy_today", "dhw_energy_today"].some((key2) => this._config[key2]);
   }
   _todayMeterKey() {
     return this._config.energy_meter ? "energy_meter" : this._config.energy_today ? "energy_today" : null;
@@ -59043,7 +59043,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const split = this._config.heating_energy_today || this._config.dhw_energy_today;
     const stacked = !meter && split;
     const slots = Array.from({ length: 24 }, (_, hour) => `<g class="cf-hour" data-hour="${hour}"><rect class="cf-bar-slot" x="${hour * 10 + 1.6}" y="6" width="6.8" height="94"/><rect class="cf-bar cf-bar-heat" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/><rect class="cf-bar cf-bar-dhw" x="${hour * 10 + 1.6}" y="100" width="6.8" height="0"/></g>`).join("");
-    const stat = (key, label, ref, unit, sub = "", icon5 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key}" ${this._config[key] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon5}"></ha-icon></button>`;
+    const stat = (key2, label, ref, unit, sub = "", icon5 = "") => `<button class="cf-stat" type="button" data-action="more-info" data-key="${key2}" ${this._config[key2] ? "" : "disabled"}><small>${label}</small><strong><b data-ref="${ref}">\u2013</b><em>${unit}</em></strong>${sub}<ha-icon class="cf-stat-icon" icon="${icon5}"></ha-icon></button>`;
     return `<section class="cf-today" data-ref="today" aria-label="Forbrug og pris i dag">
       <div class="cf-today-stats">
         ${stat(meterKey || "heating_energy_today", "Forbrug i dag", "today-energy", "kWh", meter ? `<i>M\xE5lt \xB7 Kamstrup</i>` : "", "mdi:radiator")}
@@ -59079,7 +59079,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       this._todayRows = {};
       this._todayFetched = 0;
     }
-    const live = (key) => this._config[key] ? this._num(key) : null;
+    const live = (key2) => this._config[key2] ? this._num(key2) : null;
     const heat = live("heating_energy_today");
     const dhw = live("dhw_energy_today");
     const meterKey = this._todayMeterKey();
@@ -59099,7 +59099,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     this._text(this._refs["today-price"], perKwh === null ? "" : `${this._formatNumber(perKwh, 2)} kr/kWh`);
     this._text(this._refs["today-heat"], heat === null ? "\u2013" : `${this._formatNumber(heat, 1)} kWh`);
     this._text(this._refs["today-dhw"], dhw === null ? "\u2013" : `${this._formatNumber(dhw, 1)} kWh`);
-    const series = (key, liveTotal) => this._config[key] ? buildTodaySeries(this._todayRows[this._config[key]], liveTotal, midnight, now) : null;
+    const series = (key2, liveTotal) => this._config[key2] ? buildTodaySeries(this._todayRows[this._config[key2]], liveTotal, midnight, now) : null;
     const meterHours = meterKey ? series(meterKey, meter) : null;
     const heatHours = meterHours ? null : series("heating_energy_today", heat);
     const dhwHours = meterHours ? null : series("dhw_energy_today", dhw);
@@ -59181,7 +59181,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     }
     if (this._todayFetched && now - this._todayFetched < TODAY_REFETCH_MS) return;
     const meterKey = this._todayMeterKey();
-    const ids = (meterKey ? [meterKey] : ["heating_energy_today", "dhw_energy_today"]).map((key) => this._config[key]).filter(Boolean);
+    const ids = (meterKey ? [meterKey] : ["heating_energy_today", "dhw_energy_today"]).map((key2) => this._config[key2]).filter(Boolean);
     if (!ids.length) return;
     const midnight = this._todayMidnight;
     this._todayLoading = true;
@@ -59371,13 +59371,13 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const option = this._options(node, state).find((item2) => item2.value === state.state);
     return (option?.label || state.state).toUpperCase();
   }
-  _lcdStatus(key) {
-    const entity = this._entity(key);
+  _lcdStatus(key2) {
+    const entity = this._entity(key2);
     return entity && this._live(entity[1]) ? String(entity[1].state).toUpperCase() : "--";
   }
   _readout(code, units) {
-    const [key, kind] = READOUTS[code];
-    const entity = this._entity(key);
+    const [key2, kind] = READOUTS[code];
+    const entity = this._entity(key2);
     if (!entity || !this._live(entity[1])) return "--";
     const state = entity[1];
     if (kind === "binary") return interpretActivity(state) ? "1" : "0";
@@ -59396,7 +59396,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const codes = spec.grid.filter((code) => this._entity(READOUTS[code][0]));
     const pages = [];
     for (let index = 0; index < codes.length; index += 6) pages.push({ grid: codes.slice(index, index + 6) });
-    const rows = (spec.rows || []).filter(([, key]) => this._entity(key));
+    const rows = (spec.rows || []).filter(([, key2]) => this._entity(key2));
     for (let index = 0; index < rows.length; index += LCD_ROWS) pages.push({ rows: rows.slice(index, index + LCD_ROWS) });
     return pages.length ? pages : [{ rows: [] }];
   }
@@ -59408,14 +59408,14 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (frame.kind === "edit") return this._editLcd(frame);
     return this._infoLcd(frame);
   }
-  _railCell(key) {
-    if (key === "bv") {
+  _railCell(key2) {
+    if (key2 === "bv") {
       const entity = this._entity("dhw_setpoint");
       const value = entity && this._live(entity[1]) ? toNumber(entity[1].state) : null;
       return `<span>${value === null ? "--" : `${Math.round(value)}\xB0`}</span>`;
     }
-    if (key === "varme") return `<span>${escapeHtml(this._shiftText())}</span>`;
-    if (key === "indstil") return `<span>${lcdIcon("gear")}</span>`;
+    if (key2 === "varme") return `<span>${escapeHtml(this._shiftText())}</span>`;
+    if (key2 === "indstil") return `<span>${lcdIcon("gear")}</span>`;
     return `<span>${this._activeAlarms().length ? lcdIcon("warning") : ""}</span>`;
   }
   _shiftText(value) {
@@ -59424,27 +59424,27 @@ var HaCalefaFlowCard = class extends HTMLElement {
     return shift === null ? "--" : `${shift > 0 ? "+" : shift < 0 ? "\u2212" : "+"}${Math.abs(shift).toFixed(1)}\xB0`;
   }
   _frontLcd() {
-    const key = this._frontKey;
+    const key2 = this._frontKey;
     const order = ["bv", "varme", "indstil", "alarm"];
-    const rail = [1, 2, 3].map((offset) => this._railCell(order[(order.indexOf(key) + offset) % order.length])).join("");
+    const rail = [1, 2, 3].map((offset) => this._railCell(order[(order.indexOf(key2) + offset) % order.length])).join("");
     const pending = this._frontEdit ? " is-pending" : "";
     let main;
-    if (key === "bv") {
+    if (key2 === "bv") {
       const entity = this._entity("dhw_setpoint");
       const value = this._frontEdit?.value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
       main = `<div class="lcd-front-title">${lcdIcon("bv")}<b>BV</b></div><div class="lcd-front-value"><span>\u2013</span><strong class="lcd-big${pending}">${value === null ? "--" : `${this._lcdNumber(value, entity?.[1]?.attributes?.step)}\xB0`}</strong><span>+</span></div>`;
-    } else if (key === "varme") {
+    } else if (key2 === "varme") {
       const entity = this._entity("parallel_shift");
       const shift = this._frontEdit?.value ?? (entity && this._live(entity[1]) ? toNumber(entity[1].state) : null);
       const level = shift === null ? 50 : clamp2((shift + 9) / 18 * 100, 0, 100);
       main = `<div class="lcd-front-title">${lcdIcon("varme")}<b>VARME</b></div><div class="lcd-front-value is-shift"><strong class="lcd-big${pending}">${escapeHtml(this._shiftText(shift))}</strong><span class="lcd-thermo" style="--level:${level.toFixed(0)}%"><i></i><b></b></span></div>`;
-    } else if (key === "indstil") {
+    } else if (key2 === "indstil") {
       main = `<div class="lcd-front-center"><b>INDSTIL.</b>${lcdIcon("gear", "is-large")}</div>`;
     } else {
       const count = this._activeAlarms().length;
       main = `<div class="lcd-front-center"><b>ALARM</b>${lcdIcon("warning", "is-large")}<small>${count} aktiv${count === 1 ? "" : "e"}</small></div>`;
     }
-    return `<div class="lcd-front" data-screen="front-${key}"><div class="lcd-front-main">${main}</div><div class="lcd-rail">${rail}</div></div>`;
+    return `<div class="lcd-front" data-screen="front-${key2}"><div class="lcd-front-main">${main}</div><div class="lcd-rail">${rail}</div></div>`;
   }
   _menuLcd(frame) {
     const rows = this._rows(frame);
@@ -59469,7 +59469,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     const page = pages[frame.page];
     const units = Boolean(STATUS_PAGES[source].units);
     const title = `${frame.node.label} ${frame.page + 1}/${pages.length}`;
-    const cells = page.grid ? `<div class="lcd-grid${units ? " has-divider" : ""}">${page.grid.map((code) => `<div><span>${code}${units ? "" : ":"}</span><strong>${escapeHtml(this._readout(code, units))}</strong></div>`).join("")}</div>` : `<div class="lcd-lines">${page.rows.length ? page.rows.map(([label, key]) => `<div><span>${escapeHtml(label)}:</span><strong>${escapeHtml(this._lcdStatus(key))}</strong></div>`).join("") : "<p>Ingen data</p>"}</div>`;
+    const cells = page.grid ? `<div class="lcd-grid${units ? " has-divider" : ""}">${page.grid.map((code) => `<div><span>${code}${units ? "" : ":"}</span><strong>${escapeHtml(this._readout(code, units))}</strong></div>`).join("")}</div>` : `<div class="lcd-lines">${page.rows.length ? page.rows.map(([label, key2]) => `<div><span>${escapeHtml(label)}:</span><strong>${escapeHtml(this._lcdStatus(key2))}</strong></div>`).join("") : "<p>Ingen data</p>"}</div>`;
     const head = units ? `<header class="lcd-head"><b>${escapeHtml(title)}</b></header>` : `<header class="lcd-rule"><i></i><b>${escapeHtml(title)}</b><i></i></header>`;
     const prev = frame.page > 0 ? '<i class="lcd-tri is-left"></i>' : "<i></i>";
     const next = frame.page < pages.length - 1 ? '<i class="lcd-tri is-right"></i>' : "<i></i>";
@@ -59532,21 +59532,21 @@ var HaCalefaFlowCard = class extends HTMLElement {
   // held UP/DOWN repeat while a value is being edited.
   _handlePointer(event) {
     if (event.type === "pointerdown") {
-      const key = event.composedPath().find((node) => node?.dataset?.ctl);
-      if (!key || !this._displayOpen || (event.button ?? 0) > 0) return;
+      const key2 = event.composedPath().find((node) => node?.dataset?.ctl);
+      if (!key2 || !this._displayOpen || (event.button ?? 0) > 0) return;
       event.preventDefault();
-      key.setPointerCapture?.(event.pointerId);
+      key2.setPointerCapture?.(event.pointerId);
       clearTimeout(this._pressTimer);
-      this._press = { ctl: key.dataset.ctl, el: key, long: false };
-      key.classList.add("is-pressed");
-      if (key.dataset.ctl === "enter") {
+      this._press = { ctl: key2.dataset.ctl, el: key2, long: false };
+      key2.classList.add("is-pressed");
+      if (key2.dataset.ctl === "enter") {
         this._pressTimer = setTimeout(() => {
           if (!this._press) return;
           this._press.long = true;
           this._displayEnter(true);
         }, LONG_PRESS_MS);
       } else {
-        const direction = key.dataset.ctl === "up" ? 1 : -1;
+        const direction = key2.dataset.ctl === "up" ? 1 : -1;
         const repeat = (delay) => {
           this._pressTimer = setTimeout(() => {
             if (!this._press || !(this._frontEdit || this._stack.at(-1)?.kind === "edit")) return;
@@ -59578,7 +59578,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const state = this._hass?.states?.[id];
       if (interpretActivity(state) !== true) return [];
       const label = state.attributes?.friendly_name || id.split(".")[1].replaceAll("_", " ");
-      const detail = ["message", "description", "problem", "reason", "error"].map((key) => state.attributes?.[key]).find((value) => typeof value === "string" && value.trim());
+      const detail = ["message", "description", "problem", "reason", "error"].map((key2) => state.attributes?.[key2]).find((value) => typeof value === "string" && value.trim());
       const critical = /fejl|error|failure|fault|critical|kritisk/i.test(`${id} ${label}`);
       return [{ id, label, detail: detail || (critical ? "Aktiv fejl i Calefa-enheden" : "Aktiv advarsel fra Calefa-enheden"), critical }];
     });
@@ -59690,13 +59690,13 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!target2) return;
     const action = target2.dataset.action;
     if (action === "more-info") {
-      const key = target2.dataset.key;
-      const id = key === "pump" ? this._config.pump || this._config.pump_speed : key === "bypass" ? this._config.dhw_active : this._config?.[key];
+      const key2 = target2.dataset.key;
+      const id = key2 === "pump" ? this._config.pump || this._config.pump_speed : key2 === "bypass" ? this._config.dhw_active : this._config?.[key2];
       if (!id || !this._hass?.states?.[id]) return;
       this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "delta-history") {
-      const key = target2.dataset.delta === "fjv" ? "fjv_delta" : "heating_delta";
-      const id = this._config?.[key];
+      const key2 = target2.dataset.delta === "fjv" ? "fjv_delta" : "heating_delta";
+      const id = this._config?.[key2];
       if (id && this._hass?.states?.[id]) this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: id } }));
     } else if (action === "open-display") this._openDisplay();
     else if (action === "open-faults") this._openFaults();
@@ -59771,9 +59771,9 @@ var HaCalefaFlowCardEditor = class extends HTMLElement {
     this._orientation.addEventListener("change", () => {
       this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, orientation: this._orientation.value } } }));
     });
-    for (const [input, key] of [[this._animations, "animations"], [this._showToday, "show_today"], [this._showFooter, "show_footer"]]) {
+    for (const [input, key2] of [[this._animations, "animations"], [this._showToday, "show_today"], [this._showFooter, "show_footer"]]) {
       input.addEventListener("change", () => {
-        this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, [key]: input.checked } } }));
+        this.dispatchEvent(new CustomEvent("config-changed", { bubbles: true, composed: true, detail: { config: { ...this._config, [key2]: input.checked } } }));
       });
     }
   }
@@ -60387,7 +60387,7 @@ var HaHomeDesktopLayoutCardEditor2 = class extends HTMLElement {
   // niveauer foerst, saa signaturen kun aendrer sig ved en AEGTE vaerdi-aendring.
   _sig(value) {
     if (Array.isArray(value)) return `[${value.map((item2) => this._sig(item2)).join(",")}]`;
-    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${this._sig(value[key])}`).join(",")}}`;
+    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key2) => `${JSON.stringify(key2)}:${this._sig(value[key2])}`).join(",")}}`;
     return JSON.stringify(value);
   }
   // HA's dashboard-editor sender configen tilbage igen (config-changed-roundtrip)
@@ -60519,8 +60519,8 @@ var HaHomeDesktopLayoutCardEditor2 = class extends HTMLElement {
     const map = { columns: this.config.columns || "", gap: this.config.gap || "", mobile_breakpoint: Number(this.config.mobile_breakpoint) || 1100, phone_breakpoint: Number(this.config.phone_breakpoint) || 700, bottom_gap: Number(this.config.bottom_gap) || 110 };
     this.shadowRoot.querySelectorAll(".settings input").forEach((input) => {
       if (this.shadowRoot.activeElement === input) return;
-      const key = input.dataset.key;
-      if (key in map) input.value = map[key];
+      const key2 = input.dataset.key;
+      if (key2 in map) input.value = map[key2];
     });
   }
 };
@@ -61522,26 +61522,26 @@ var HaNavbarCardEditor = class extends HTMLElement {
     if (pi2 === -1) return rute;
     return Array.isArray(rute.popup) ? rute.popup[pi2] : null;
   }
-  _saet(obj, key, value) {
-    if (value === "" || value === void 0 || value === null) delete obj[key];
-    else obj[key] = value;
+  _saet(obj, key2, value) {
+    if (value === "" || value === void 0 || value === null) delete obj[key2];
+    else obj[key2] = value;
   }
-  _saetRod(key, value) {
-    this._saet(this._config, key, value);
+  _saetRod(key2, value) {
+    this._saet(this._config, key2, value);
     this._emit();
   }
-  _saetFelt(ri2, pi2, key, value) {
+  _saetFelt(ri2, pi2, key2, value) {
     const n = this._node(ri2, pi2);
     if (n) {
-      this._saet(n, key, value);
+      this._saet(n, key2, value);
       this._emit();
     }
   }
-  _saetBadge(ri2, pi2, key, value) {
+  _saetBadge(ri2, pi2, key2, value) {
     const n = this._node(ri2, pi2);
     if (!n) return;
     if (!n.badge) n.badge = {};
-    this._saet(n.badge, key, value);
+    this._saet(n.badge, key2, value);
     if (!Object.keys(n.badge).length) delete n.badge;
     this._emit();
   }
@@ -61583,42 +61583,42 @@ var HaNavbarCardEditor = class extends HTMLElement {
     }
   }
   /* ---------- felter ---------- */
-  _attr(kind, ri2, pi2, key) {
-    return `data-kind="${kind}" data-ri="${ri2}" data-pi="${pi2}" data-key="${key}"`;
+  _attr(kind, ri2, pi2, key2) {
+    return `data-kind="${kind}" data-ri="${ri2}" data-pi="${pi2}" data-key="${key2}"`;
   }
-  _tekst(label, key, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
+  _tekst(label, key2, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
     return `<label><span>${label}</span>
-      <input type="text" ${this._attr(kind, ri2, pi2, key)}
+      <input type="text" ${this._attr(kind, ri2, pi2, key2)}
         value="${this._esc(value)}" placeholder="${this._esc(ph2)}"></label>`;
   }
   // Genbruger HA-frontendens egen ikonvaelger (allerede indlaest, ingen ny
   // afhaengighed) i stedet for et fritekstfelt hvor et tastefejl i et
   // mdi:-navn bare giver et tomt ikon uden nogen advarsel.
-  _ikonVaelger(label, key, value, kind, ri2 = -1, pi2 = -1) {
+  _ikonVaelger(label, key2, value, kind, ri2 = -1, pi2 = -1) {
     return `<label><span>${label}</span>
-      <ha-icon-picker ${this._attr(kind, ri2, pi2, key)} value="${this._esc(value)}"></ha-icon-picker></label>`;
+      <ha-icon-picker ${this._attr(kind, ri2, pi2, key2)} value="${this._esc(value)}"></ha-icon-picker></label>`;
   }
-  _tal(label, key, value, kind, ri2 = -1, pi2 = -1, disabled = false, min = null, max = null) {
+  _tal(label, key2, value, kind, ri2 = -1, pi2 = -1, disabled = false, min = null, max = null) {
     return `<label class="${disabled ? "deaktiveret" : ""}"><span>${label}</span>
-      <input type="number" ${this._attr(kind, ri2, pi2, key)} ${disabled ? "disabled" : ""}
+      <input type="number" ${this._attr(kind, ri2, pi2, key2)} ${disabled ? "disabled" : ""}
         ${min !== null ? `min="${min}"` : ""} ${max !== null ? `max="${max}"` : ""}
         value="${value === void 0 ? "" : this._esc(value)}"></label>`;
   }
-  _bool(label, key, checked, kind, ri2 = -1, pi2 = -1) {
-    return `<label class="tjek"><input type="checkbox" ${this._attr(kind, ri2, pi2, key)}
+  _bool(label, key2, checked, kind, ri2 = -1, pi2 = -1) {
+    return `<label class="tjek"><input type="checkbox" ${this._attr(kind, ri2, pi2, key2)}
       ${checked ? "checked" : ""}><span>${label}</span></label>`;
   }
   // Udtryk kan vaere flerlinjede, saa de faar et textarea - et input ville
   // klemme dem sammen til een linje og aedelegge formateringen.
-  _udtryk(label, key, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
+  _udtryk(label, key2, value, kind, ri2 = -1, pi2 = -1, ph2 = "") {
     return `<label class="bred"><span>${label}</span>
-      <textarea rows="2" ${this._attr(kind, ri2, pi2, key)}
+      <textarea rows="2" ${this._attr(kind, ri2, pi2, key2)}
         placeholder="${this._esc(ph2)}">${this._esc(value)}</textarea></label>`;
   }
-  _valg(label, key, value, muligheder, kind, ri2 = -1, pi2 = -1) {
+  _valg(label, key2, value, muligheder, kind, ri2 = -1, pi2 = -1) {
     const valgt = value || muligheder[0][0];
     return `<label><span>${label}</span>
-      <select ${this._attr(kind, ri2, pi2, key)}>
+      <select ${this._attr(kind, ri2, pi2, key2)}>
         ${muligheder.map(([v, t]) => `<option value="${v}" ${valgt === v ? "selected" : ""}>${t}</option>`).join("")}
       </select></label>`;
   }
@@ -61795,10 +61795,10 @@ var HaNavbarCardEditor = class extends HTMLElement {
     const kind = el.dataset.kind;
     const ri2 = Number(el.dataset.ri);
     const pi2 = Number(el.dataset.pi);
-    const key = el.dataset.key;
-    if (kind === "root") return this._saetRod(key, value);
-    if (kind === "field") return this._saetFelt(ri2, pi2, key, value);
-    if (kind === "badge") return this._saetBadge(ri2, pi2, key, value);
+    const key2 = el.dataset.key;
+    if (kind === "root") return this._saetRod(key2, value);
+    if (kind === "field") return this._saetFelt(ri2, pi2, key2, value);
+    if (kind === "badge") return this._saetBadge(ri2, pi2, key2, value);
     if (kind === "badge-toggle") return this._skiftBadge(ri2, pi2, value);
   }
   _handling(el) {
@@ -62327,10 +62327,10 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const mapState = this._state(this._ent.map);
     const pic = mapState?.attributes?.entity_picture;
     if (pic && this._roomsState === "ready") {
-      const key = `${pic}|${mapState.state}`;
-      if (key !== this._mapUrl) {
+      const key2 = `${pic}|${mapState.state}`;
+      if (key2 !== this._mapUrl) {
         if (document.hidden) this._pendingMap = true;
-        else this._loadMap(pic, key);
+        else this._loadMap(pic, key2);
       }
     }
     const ids = Object.values(this._ent).flat().filter(Boolean);
@@ -62401,7 +62401,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     const related = Object.values(all).filter((e) => devIds.has(e.device_id) && !e.hidden);
     const find = (domain, test) => related.find((e) => e.entity_id.startsWith(`${domain}.`) && test(e))?.entity_id;
-    const tk = (domain, key) => find(domain, (e) => e.translation_key === key);
+    const tk = (domain, key2) => find(domain, (e) => e.translation_key === key2);
     const pick = (name, auto) => cfg[name] === false ? void 0 : cfg[name] || auto;
     const mapName = this._s(tk("select", "selected_map"));
     const images = related.filter((e) => e.entity_id.startsWith("image."));
@@ -62475,15 +62475,15 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     this._renderLabels();
     if (this._hass) this.hass = this._hass;
   }
-  _loadMap(pic, key = pic) {
-    this._mapUrl = key;
+  _loadMap(pic, key2 = pic) {
+    this._mapUrl = key2;
     this._pendingMap = false;
     if (!this._map) this._mapState = "loading";
     this._renderMapMessage();
     const img = new Image();
     img.decoding = "async";
     img.onload = () => {
-      if (this._mapUrl !== key) return;
+      if (this._mapUrl !== key2) return;
       try {
         const cv = document.createElement("canvas");
         cv.width = img.naturalWidth;
@@ -62516,12 +62516,12 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       this._renderMapMessage();
     };
     img.onerror = () => {
-      if (this._mapUrl !== key) return;
+      if (this._mapUrl !== key2) return;
       this._mapState = "error";
       this._mapError = "Kortbilledet kunne ikke hentes";
       this._renderMapMessage();
     };
-    const url = `${pic}${pic.includes("?") ? "&" : "?"}_=${encodeURIComponent(key.split("|")[1] || Date.now())}`;
+    const url = `${pic}${pic.includes("?") ? "&" : "?"}_=${encodeURIComponent(key2.split("|")[1] || Date.now())}`;
     img.src = this._hass.hassUrl ? this._hass.hassUrl(url) : url;
   }
   _themeRGBA(varName, fallback) {
@@ -62723,8 +62723,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     vp.classList.toggle("zoomed", z > 1.01);
     cancelAnimationFrame(this._lraf);
     this._lraf = requestAnimationFrame(() => this._layoutLabels());
-    const pct3 = this.shadowRoot.querySelector(".zoom-pct");
-    if (pct3) pct3.textContent = `${Math.round(z * 100)}%`;
+    const pct4 = this.shadowRoot.querySelector(".zoom-pct");
+    if (pct4) pct4.textContent = `${Math.round(z * 100)}%`;
   }
   _clampZoom() {
     const vp = this.shadowRoot.querySelector(".viewport");
@@ -63013,11 +63013,11 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     if (!panel || !this._hass || !this._ent) return;
     const E2 = this._ent, vac = this._state(this._config.entity);
     const vstate = vac?.state || "unavailable";
-    const key = this._statusKey();
-    const active = ACTIVE.has(key) || vstate === "cleaning";
-    const paused2 = key === "paused" || vstate === "paused";
-    const docked = vstate === "docked" || ["charging", "charging_complete", "emptying_the_bin"].includes(key);
-    const offline = vstate === "unavailable" || key === "device_offline";
+    const key2 = this._statusKey();
+    const active = ACTIVE.has(key2) || vstate === "cleaning";
+    const paused2 = key2 === "paused" || vstate === "paused";
+    const docked = vstate === "docked" || ["charging", "charging_complete", "emptying_the_bin"].includes(key2);
+    const offline = vstate === "unavailable" || key2 === "device_offline";
     const battery = this._num(E2.battery);
     const errV = this._s(E2.vacuum_error), errD = this._s(E2.dock_error);
     const hasErr = vstate === "error" || errV && !["none", "unknown", "unavailable"].includes(errV);
@@ -63043,7 +63043,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const emptyState2 = this._state(E2.empty_mode);
     const emptyList = (emptyState2?.attributes?.options || []).filter((o) => o !== "unknown");
     const canSegments = this._supports(FEATURE.SEND_COMMAND);
-    const emptying = key === "emptying_the_bin" || this._s(E2.empty_dust) === "on";
+    const emptying = key2 === "emptying_the_bin" || this._s(E2.empty_dust) === "on";
     const selRooms = this._sel.map((id) => this._rooms.find((r) => r.id === id)).filter(Boolean);
     const rest2 = this._rooms.filter((r) => !this._sel.includes(r.id));
     const n = selRooms.length;
@@ -63057,8 +63057,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     if (this._map && unmappable.length) alerts.push(["info", "mdi:information-outline", `${unmappable.map((r) => r.name).join(", ")} kan ikke placeres p\xE5 kortet`, "V\xE6lg dem i listen i stedet."]);
     const info = [];
     if (active || paused2) {
-      const pct3 = this._num(E2.cleaning_progress), area = this._num(E2.cleaning_area), time = this._num(E2.cleaning_time);
-      if (Number.isFinite(pct3)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct3)} %`]);
+      const pct4 = this._num(E2.cleaning_progress), area = this._num(E2.cleaning_area), time = this._num(E2.cleaning_time);
+      if (Number.isFinite(pct4)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct4)} %`]);
       if (Number.isFinite(area)) info.push(["mdi:texture-box", "Areal", `${area.toLocaleString("da-DK", { maximumFractionDigits: 1 })} m\xB2`]);
       if (Number.isFinite(time)) info.push(["mdi:timer-outline", "Tid", this._duration(time)]);
     } else {
@@ -63075,7 +63075,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
-      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active || paused2 || key === "returning_home")),
+      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active || paused2 || key2 === "returning_home")),
       this._supports(FEATURE.RETURN_HOME) && act("home", "mdi:home-import-outline", "Send hjem", !offline && !docked),
       E2.empty_dust && act("empty", "mdi:delete-empty-outline", emptying ? "T\xF8mmer \u2026" : "T\xF8m st\xF8v", !offline && docked && !emptying),
       this._supports(FEATURE.LOCATE) && act("locate", "mdi:map-marker-question-outline", "Find", !offline)
@@ -63096,7 +63096,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E2.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc11(STATUS_LABELS2[key] || human(key))}</b>${detail ? `<span>${esc11(detail)}</span>` : ""}</div>
+      <div class="status"><i class="dot ${dot}"></i><b>${esc11(STATUS_LABELS2[key2] || human(key2))}</b>${detail ? `<span>${esc11(detail)}</span>` : ""}</div>
       ${alerts.map(([k, icon5, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon5}"></ha-icon><div><b>${esc11(t)}</b>${s ? `<span>${esc11(s)}</span>` : ""}</div></div>`).join("")}
       ${info.length ? `<div class="info">${info.map(([icon5, l, v, x]) => `<div><ha-icon icon="${icon5}"></ha-icon><span>${esc11(l)}</span><b>${esc11(v)}</b>${x ? `<small>${esc11(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
@@ -63364,12 +63364,12 @@ var AIUsageDashboardCard = class extends HTMLElement {
       }
     }));
   }
-  _set(root, key, value) {
-    const el = root.querySelector(`[data-k="${key}"]`);
+  _set(root, key2, value) {
+    const el = root.querySelector(`[data-k="${key2}"]`);
     if (el && el.textContent !== String(value)) el.textContent = value;
   }
-  _bar(root, key, value) {
-    const el = root.querySelector(`[data-k="${key}"]`);
+  _bar(root, key2, value) {
+    const el = root.querySelector(`[data-k="${key2}"]`);
     if (el) el.style.width = `${value ?? 0}%`;
   }
   _update() {
@@ -63525,13 +63525,13 @@ var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt5 = numberFormats.get(digits);
-  if (!fmt5) {
-    fmt5 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt5);
+  let fmt6 = numberFormats.get(digits);
+  if (!fmt6) {
+    fmt6 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt6);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt5.format(rounded === 0 ? 0 : rounded);
+  return fmt6.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -63611,7 +63611,7 @@ function percentileOf(sortedValues, v) {
   }
   return (below + equal / 2) / sortedValues.length * 100;
 }
-var bandFor = (pct3) => Number.isFinite(pct3) ? PRICE_BANDS.find((b) => pct3 <= b.maxPct) || PRICE_BANDS.at(-1) : void 0;
+var bandFor = (pct4) => Number.isFinite(pct4) ? PRICE_BANDS.find((b) => pct4 <= b.maxPct) || PRICE_BANDS.at(-1) : void 0;
 function analyzePrices(entries) {
   if (!entries.length) return void 0;
   let minEntry = entries[0];
@@ -64296,30 +64296,30 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     }
   }
   /* ---------- logning uden spam ---------- */
-  _warnOnce(key, ...args) {
-    if (this._warned.has(key)) return;
-    this._warned.add(key);
+  _warnOnce(key2, ...args) {
+    if (this._warned.has(key2)) return;
+    this._warned.add(key2);
     console.warn(`[${this._config?.log_prefix || DEFAULT_CONFIG.log_prefix}]`, ...args);
   }
   /* ---------- dataadgang ---------- */
-  _id(key) {
-    return this._config?.entities?.[key];
+  _id(key2) {
+    return this._config?.entities?.[key2];
   }
-  _stateObj(key) {
-    const id = this._id(key);
+  _stateObj(key2) {
+    const id = this._id(key2);
     return id ? this._hass?.states?.[id] : void 0;
   }
-  _num(key) {
-    return toNumber2(this._stateObj(key)?.state);
+  _num(key2) {
+    return toNumber2(this._stateObj(key2)?.state);
   }
-  _kw(key) {
-    const res = convertByUnit(this._stateObj(key), POWER_TO_KW);
-    if (!res.known) this._warnOnce(`unit-${key}`, `Ukendt effekt-enhed "${res.unit}" p\xE5 ${this._id(key)} \u2013 forventede W/kW/MW`);
+  _kw(key2) {
+    const res = convertByUnit(this._stateObj(key2), POWER_TO_KW);
+    if (!res.known) this._warnOnce(`unit-${key2}`, `Ukendt effekt-enhed "${res.unit}" p\xE5 ${this._id(key2)} \u2013 forventede W/kW/MW`);
     return res.value;
   }
-  _kwh(key) {
-    const res = convertByUnit(this._stateObj(key), ENERGY_TO_KWH);
-    if (!res.known) this._warnOnce(`unit-${key}`, `Ukendt energi-enhed "${res.unit}" p\xE5 ${this._id(key)} \u2013 forventede Wh/kWh/MWh`);
+  _kwh(key2) {
+    const res = convertByUnit(this._stateObj(key2), ENERGY_TO_KWH);
+    if (!res.known) this._warnOnce(`unit-${key2}`, `Ukendt energi-enhed "${res.unit}" p\xE5 ${this._id(key2)} \u2013 forventede Wh/kWh/MWh`);
     return res.value;
   }
   /** Hvilke entity-nøgler påvirker hvilken sektion. */
@@ -64332,8 +64332,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   }
   _allEntityIds() {
     const ids = /* @__PURE__ */ new Set();
-    for (const [key, value] of Object.entries(this._config.entities)) {
-      if (key === "price_components" && Array.isArray(value)) value.forEach((v) => v && ids.add(v));
+    for (const [key2, value] of Object.entries(this._config.entities)) {
+      if (key2 === "price_components" && Array.isArray(value)) value.forEach((v) => v && ids.add(v));
       else if (typeof value === "string" && value) ids.add(value);
     }
     return [...ids];
@@ -64345,8 +64345,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       const changed = /* @__PURE__ */ new Set();
       const groups = _HAElectricityDashboardCard.GROUPS;
       for (const [group, keys] of Object.entries(groups)) {
-        for (const key of keys) {
-          const id = this._id(key);
+        for (const key2 of keys) {
+          const id = this._id(key2);
           if (!id) continue;
           const obj = this._hass.states[id];
           if (force || this._seen.get(id) !== obj) {
@@ -64619,10 +64619,10 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
    */
   _tweenNumber(ref, to, format) {
     if (!this._refs[ref]) return;
-    const key = `tw-${ref}`;
+    const key2 = `tw-${ref}`;
     const running = this._tweens.get(ref);
-    const from = running ? running.current : this._shown.get(key);
-    this._shown.set(key, to);
+    const from = running ? running.current : this._shown.get(key2);
+    this._shown.set(key2, to);
     const finalText = format(to);
     const canAnimate = !this._reducedMotion && this._active && Number.isFinite(from) && Number.isFinite(to) && format(from) !== finalText;
     if (!canAnimate) {
@@ -64709,8 +64709,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const m = this._priceModel();
     const a = m.todayAnalysis;
     const nowPrice = this._num("price") ?? m.current?.price;
-    const pct3 = a ? percentileOf(a.sorted, nowPrice) : void 0;
-    const band = bandFor(pct3);
+    const pct4 = a ? percentileOf(a.sorted, nowPrice) : void 0;
+    const band = bandFor(pct4);
     const dev = deviationPct(nowPrice, a?.avg);
     this._tweenNumber("priceNow", nowPrice, fmtPrice);
     const devTone = !Number.isFinite(dev) ? "neutral" : dev <= 0 ? "green" : dev >= STRONG_DEVIATION_PCT ? "red" : "orange";
@@ -65173,13 +65173,13 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     this._show("eTotalRow", totalOk);
     this._tweenNumber("eTotal", total, fmtEnergy);
     const share = (v) => totalOk && total > 0 && Number.isFinite(v) ? Math.max(0, v) / total * 100 : void 0;
-    const setBar = (ref, pct3) => this._refs[ref]?.style.setProperty("--p", Number.isFinite(pct3) ? (pct3 / 100).toFixed(3) : "0");
+    const setBar = (ref, pct4) => this._refs[ref]?.style.setProperty("--p", Number.isFinite(pct4) ? (pct4 / 100).toFixed(3) : "0");
     const houseShare = share(house);
     const carShare = share(car);
     setBar("eHouseBar", totalOk ? houseShare : Number.isFinite(house) ? 100 : 0);
     setBar("eCarBar", carShare);
     setBar("eTotalBar", totalOk && total > 0 ? 100 : 0);
-    const shareHtml = (pct3) => Number.isFinite(pct3) ? `${fmtPct(pct3)} %<small>af samlet forbrug</small>` : "";
+    const shareHtml = (pct4) => Number.isFinite(pct4) ? `${fmtPct(pct4)} %<small>af samlet forbrug</small>` : "";
     this._setHtml("eHouseShare", shareHtml(houseShare));
     this._setHtml("eCarShare", shareHtml(carShare));
     this._updateDayCompare();
@@ -66002,16 +66002,16 @@ var StatsStore = class {
     const result = /* @__PURE__ */ new Map();
     const waits = [];
     for (const id of new Set(ids.filter(Boolean))) {
-      const key = `${id}|${period}|${start}|${end}`;
-      const cached = this._cache.get(key);
+      const key2 = `${id}|${period}|${start}|${end}`;
+      const cached = this._cache.get(key2);
       if (cached && (cached.expires === Infinity || cached.expires > now)) {
         result.set(id, cached.rows);
         continue;
       }
-      let p = this._inflight.get(key);
+      let p = this._inflight.get(key2);
       if (!p) {
-        p = this._enqueue(id, period, start, end).finally(() => this._inflight.delete(key));
-        this._inflight.set(key, p);
+        p = this._enqueue(id, period, start, end).finally(() => this._inflight.delete(key2));
+        this._inflight.set(key2, p);
       }
       waits.push(p.then((rows) => result.set(id, rows)));
     }
@@ -66181,9 +66181,9 @@ var BarChart = class {
     let y = "";
     let grid = "";
     for (let v = 0; v <= hi + step / 2; v += step) {
-      const pct3 = 100 - v / hi * 100;
-      y += `<span style="top:${pct3}%">${fmt4(v, d)}</span>`;
-      grid += `<i style="top:${pct3}%"></i>`;
+      const pct4 = 100 - v / hi * 100;
+      y += `<span style="top:${pct4}%">${fmt4(v, d)}</span>`;
+      grid += `<i style="top:${pct4}%"></i>`;
     }
     this.$("y").innerHTML = y;
     this.$("grid").innerHTML = grid;
@@ -66274,10 +66274,10 @@ var BarChart = class {
 
 // src/cards/ha-energy-center-card/components/history.js
 var PERIOD_LABELS = { day: "Dag", week: "Uge", month: "M\xE5ned", year: "\xC5r" };
-function periodRange(key, now = Date.now()) {
+function periodRange(key2, now = Date.now()) {
   const sod = startOfDay2(now);
   const buckets = [];
-  if (key === "day") {
+  if (key2 === "day") {
     const end = addDays2(sod, 1);
     for (let t = sod; t < end; t += HOUR_MS2) {
       const h = new Date(t).getHours();
@@ -66285,11 +66285,11 @@ function periodRange(key, now = Date.now()) {
     }
     return { stat: "hour", fetchStart: sod - HOUR_MS2, end, buckets, caption: "I dag, pr. time" };
   }
-  if (key === "week" || key === "month") {
-    const days = key === "week" ? 7 : 30;
+  if (key2 === "week" || key2 === "month") {
+    const days = key2 === "week" ? 7 : 30;
     for (let i = days - 1; i >= 0; i--) {
       const t = addDays2(sod, -i);
-      const label = key === "week" ? fmtDay(t).split(" ")[0].replace(".", "") : String(new Date(t).getDate());
+      const label = key2 === "week" ? fmtDay(t).split(" ")[0].replace(".", "") : String(new Date(t).getDate());
       buckets.push({ start: t, end: addDays2(t, 1), label, tip: i === 0 ? "I dag" : fmtDay(t) });
     }
     return { stat: "day", fetchStart: buckets[0].start, end: addDays2(sod, 1), buckets, caption: `Seneste ${days} dage` };
@@ -66517,9 +66517,9 @@ var Section = class {
   }
   style(ref, prop, value) {
     const el = typeof ref === "string" ? this.refs[ref] : ref;
-    const key = `__s_${prop}`;
-    if (!el || el[key] === value) return;
-    el[key] = value;
+    const key2 = `__s_${prop}`;
+    if (!el || el[key2] === value) return;
+    el[key2] = value;
     el.style.setProperty(prop, value);
   }
   /** Bar-fyld via transform: scaleX (0–1). */
@@ -66581,7 +66581,7 @@ var LINKS = [
   ["home", "ev"],
   ["home", "unmeasured"]
 ];
-var toneOf = (key) => NODES.find((n) => n.key === key).tone;
+var toneOf = (key2) => NODES.find((n) => n.key === key2).tone;
 var SPREAD = { 1: [46], 2: [26, 70], 3: [13, 46, 79] };
 function flowPositions(keys) {
   const pos = {};
@@ -66783,8 +66783,8 @@ var OverviewSection = class extends Section {
   }
   html() {
     const c2 = this.card;
-    const heroItem = (ref, tone3, ic, label, key) => `
-      <button type="button" class="hero-item tone-${tone3} clickable" data-entity="${escapeHtml3(c2.id(key) || "")}" data-ref="${ref}Item">
+    const heroItem = (ref, tone3, ic, label, key2) => `
+      <button type="button" class="hero-item tone-${tone3} clickable" data-entity="${escapeHtml3(c2.id(key2) || "")}" data-ref="${ref}Item">
         <span class="badge">${icon3(ic)}</span>
         <span class="hi-label">${label}</span>
         <span class="hi-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></span>
@@ -67021,8 +67021,8 @@ var PowerSection = class extends Section {
         </dl>
       </div>`
     ).join("");
-    const mini = (ref, label, ic, key, extra = "") => `
-      <div class="card mini tone-el ${key ? "clickable" : ""}" ${key ? `data-entity="${ent(key)}" tabindex="0" role="button"` : ""} data-ref="${ref}Card">
+    const mini = (ref, label, ic, key2, extra = "") => `
+      <div class="card mini tone-el ${key2 ? "clickable" : ""}" ${key2 ? `data-entity="${ent(key2)}" tabindex="0" role="button"` : ""} data-ref="${ref}Card">
         <div class="card-head">${icon3(ic)}<h3>${label}</h3></div>
         <div class="mini-val num"><b data-ref="${ref}V">\u2014</b><small data-ref="${ref}U"></small></div>
         ${extra}
@@ -67116,9 +67116,9 @@ var PowerSection = class extends Section {
     this.text("mainRet", `${ret.v} ${ret.u}`);
     this.value("mMeas", fmtPower2(meas));
     this.value("mUnm", fmtPower2(unm));
-    const pct3 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
-    const measPct = pct3(meas);
-    const unmPct = pct3(unm);
+    const pct4 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
+    const measPct = pct4(meas);
+    const unmPct = pct4(unm);
     this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
     this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
     this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
@@ -67492,16 +67492,33 @@ function yearlyTotals(bills) {
     if (!s || !e || e < s) continue;
     const total = daysBetween(s, e), u2 = b.utility || "el";
     for (let y = s.getFullYear(); y <= e.getFullYear(); y++) {
-      const f = s > new Date(y, 0, 1) ? s : new Date(y, 0, 1), l = e < new Date(y, 11, 31) ? e : new Date(y, 11, 31), d = daysBetween(f, l), share = d / total, key = `${y}|${u2}`;
-      const r = acc.get(key) || { year: y, utility: u2, amount: 0, kwh: null, m3: null, days: 0, bills: 0 };
+      const f = s > new Date(y, 0, 1) ? s : new Date(y, 0, 1), l = e < new Date(y, 11, 31) ? e : new Date(y, 11, 31), d = daysBetween(f, l), share = d / total, key2 = `${y}|${u2}`;
+      const r = acc.get(key2) || { year: y, utility: u2, amount: 0, kwh: null, m3: null, days: 0, bills: 0 };
       r.amount += Number(b.amount) * share;
       r.days += d;
       r.bills++;
       for (const k of ["kwh", "m3"]) if (b[k] != null) r[k] = (r[k] || 0) + Number(b[k]) * share;
-      acc.set(key, r);
+      acc.set(key2, r);
     }
   }
   return [...acc.values()].sort((a, b) => b.year - a.year || a.utility.localeCompare(b.utility)).map((r) => ({ ...r, months: Math.round(r.days / 30.4375 * 10) / 10, price_kwh: r.kwh ? r.amount / r.kwh : null, price_m3: r.m3 ? r.amount / r.m3 : null }));
+}
+function monthlyFromBills(bills) {
+  const out = {};
+  for (const b of bills || []) {
+    const s = parseDate2(b.start), e = parseDate2(b.end);
+    if (!s || !e || e < s) continue;
+    const total = daysBetween(s, e);
+    for (let d = new Date(s.getFullYear(), s.getMonth(), 1); d <= e; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+      const ms = new Date(d.getFullYear(), d.getMonth(), 1), me = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const f = s > ms ? s : ms, l = e < me ? e : me, days = daysBetween(f, l), share = days / total, key2 = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const r = out[key2] || (out[key2] = { amount: 0, kwh: null, m3: null, days: 0, monthDays: me.getDate() });
+      r.amount += Number(b.amount) * share;
+      r.days += days;
+      for (const k of ["kwh", "m3"]) if (b[k] != null) r[k] = (r[k] || 0) + Number(b[k]) * share;
+    }
+  }
+  return out;
 }
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
@@ -67638,13 +67655,13 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
   _hero(fc) {
     const a = fc.attributes, [y, m] = String(a.maaned || "").split("-").map(Number);
     const month = m ? MONTHS2[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
-    const pct3 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
+    const pct4 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
     const ratio = a.forhold_regning_maaling, n = a.regninger_i_forhold || 0;
     const how = ratio ? `Rettet efter ${n === 1 ? "den seneste regning" : `de seneste ${n} regninger`}: de har ligget ${signed((ratio - 1) * 100, 1)} % i forhold til HA's beregning (${kr(a.egen_beregning)}).` : "Ingen hele regninger endnu \u2013 prognosen er HA's egen beregning. Skriv regningerne ind, s\xE5 bliver den mere pr\xE6cis.";
     this.shadowRoot.querySelector("[data-hero]").innerHTML = `
       <div class="hero-top"><div><span class="label">Prognose for ${month}${y && y !== (/* @__PURE__ */ new Date()).getFullYear() ? ` ${y}` : ""}</span><b class="big" data-act="more" data-entity="${this._esc(this._config.forecast_entity)}">${kr(bill)}</b></div>
         <div class="kwh"><b>${num4(a.forventet_kwh)}</b><span>kWh forventet</span></div></div>
-      <div class="bar"><i style="width:${pct3.toFixed(1)}%"></i></div>
+      <div class="bar"><i style="width:${pct4.toFixed(1)}%"></i></div>
       <div class="facts"><span><b>${kr(soFar)}</b> m\xE5lt indtil nu \xB7 ${num4(a.maalt_kwh_indtil_nu)} kWh</span><span>${num4(a.dage_tilbage, 1)} dage tilbage \xB7 ${kr(a.dagligt_gennemsnit)}/dag (${a.gennemsnit_dage || 0} dage)</span></div>
       <p class="how">${how}</p>`;
   }
@@ -67772,8 +67789,8 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       return;
     }
     box.innerHTML = list.map((b) => {
-      const pct3 = b.difference_pct, cls = pct3 == null ? "" : Math.abs(pct3) < 3 ? "ok" : Math.abs(pct3) < 10 ? "warn" : "bad";
-      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : !b.complete ? `<span class="diff">Kan ikke sammenlignes</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct3, 1)} %</span>`;
+      const pct4 = b.difference_pct, cls = pct4 == null ? "" : Math.abs(pct4) < 3 ? "ok" : Math.abs(pct4) < 10 ? "warn" : "bad";
+      const diff = b.difference == null ? `<span class="diff">HA har ingen m\xE5ling for perioden</span>` : !b.complete ? `<span class="diff">Kan ikke sammenlignes</span>` : `<span class="diff ${cls}">${signed(b.difference)} kr \xB7 ${signed(pct4, 1)} %</span>`;
       const cover = b.coverage < 1 && b.measured_cost != null ? `<em class="part">HA har kun m\xE5lt ${Math.round(b.coverage * b.days)} af ${b.days} dage</em>` : "";
       const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.complete && b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
       const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
@@ -67789,8 +67806,8 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS2[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
     }).join("") : `<p class="empty">Ingen m\xE5linger endnu.</p>`;
   }
-  _f(key) {
-    return this.shadowRoot.querySelector(`[data-f="${key}"]`);
+  _f(key2) {
+    return this.shadowRoot.querySelector(`[data-f="${key2}"]`);
   }
   _utilityChanged() {
     const gas = this._f("utility")?.value === "gas", m3 = this.shadowRoot.querySelector("[data-m3-field]");
@@ -68026,7 +68043,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
   setConfig(config) {
     if (config && typeof config !== "object") throw new Error("Ugyldig konfiguration");
     const c2 = config || {};
-    this._explicit = new Set(Object.entries(c2.entities || {}).filter(([, id]) => id).map(([key]) => key));
+    this._explicit = new Set(Object.entries(c2.entities || {}).filter(([, id]) => id).map(([key2]) => key2));
     this._explicitPhases = Array.isArray(c2.phases);
     this.config = {
       ...DEFAULT_CONFIG2,
@@ -68052,7 +68069,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     const listed = Array.isArray(this.config?.tabs) ? this.config.tabs.map(String) : null;
     if (listed && listed.length) return /* @__PURE__ */ new Set(["overview", ...listed]);
     const states = this._hass?.states || {};
-    const has = (prefix) => Object.entries(this.config?.entities || {}).some(([key, id]) => key.startsWith(prefix) && id && states[id]);
+    const has = (prefix) => Object.entries(this.config?.entities || {}).some(([key2, id]) => key2.startsWith(prefix) && id && states[id]);
     const keys = /* @__PURE__ */ new Set(["overview", "power"]);
     if (has("heat_")) keys.add("heat");
     if (has("water_")) keys.add("water");
@@ -68193,10 +68210,10 @@ var HaEnergyCenterCard = class extends HTMLElement {
     this._safe(entry.key, () => entry.section.update(force ? null : changed));
     if (changed.size) this._safe(`${entry.key}-live`, () => entry.section.onLive(changed));
   }
-  _ensureSection(key) {
-    const entry = this._sections.get(key);
+  _ensureSection(key2) {
+    const entry = this._sections.get(key2);
     if (!entry || entry.built || !this._hass) return entry;
-    this._safe(`${key}-build`, () => {
+    this._safe(`${key2}-build`, () => {
       entry.el.innerHTML = entry.section.html();
       entry.section.mount(entry.el);
       entry.ids = [...new Set(entry.section.ids())];
@@ -68276,19 +68293,19 @@ var HaEnergyCenterCard = class extends HTMLElement {
       this._dlgGroup = void 0;
     });
   }
-  switchTab(key) {
-    if (key === this._tab || !this._sections.has(key)) return;
+  switchTab(key2) {
+    if (key2 === this._tab || !this._sections.has(key2)) return;
     const prev = this._current();
     prev?.section.hidden?.();
     if (prev) prev.el.hidden = true;
-    this._tab = key;
-    this._writeTab(key);
+    this._tab = key2;
+    this._writeTab(key2);
     this.shadowRoot.querySelectorAll(".tab").forEach((b) => {
-      const on = b.dataset.tab === key;
+      const on = b.dataset.tab === key2;
       b.classList.toggle("on", on);
       b.setAttribute("aria-selected", String(on));
     });
-    const entry = this._sections.get(key);
+    const entry = this._sections.get(key2);
     entry.el.hidden = false;
     if (!this._reducedMotion) {
       entry.el.classList.remove("enter");
@@ -68299,7 +68316,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
       this._updateSection(entry, false);
       entry.section.shown();
       this._checkHour(entry);
-    } else this._ensureSection(key);
+    } else this._ensureSection(key2);
   }
   _readTab() {
     try {
@@ -68308,9 +68325,9 @@ var HaEnergyCenterCard = class extends HTMLElement {
       return void 0;
     }
   }
-  _writeTab(key) {
+  _writeTab(key2) {
     try {
-      sessionStorage.setItem(`${CARD_TAG2}:tab`, key);
+      sessionStorage.setItem(`${CARD_TAG2}:tab`, key2);
     } catch {
     }
   }
@@ -68394,11 +68411,11 @@ var HaEnergyCenterCard = class extends HTMLElement {
     el.animate([{ opacity: 0.45, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }], { duration: 280, easing: "cubic-bezier(.2,.8,.2,1)" });
   }
   /* ---------- dataadgang ---------- */
-  id(key) {
-    return this.config?.entities?.[key] || void 0;
+  id(key2) {
+    return this.config?.entities?.[key2] || void 0;
   }
-  stateObj(key) {
-    const id = this.id(key);
+  stateObj(key2) {
+    const id = this.id(key2);
     return id ? this._hass?.states?.[id] : void 0;
   }
   /**
@@ -68406,10 +68423,10 @@ var HaEnergyCenterCard = class extends HTMLElement {
    * entity exists in HA. Tiles, flow nodes and charts whose keys are not set up are hidden, so a home without
    * e.g. a water meter, an EV charger or a live heat meter gets no empty "—" parts (Claude AI).
    */
-  has(key) {
-    const id = this.id(key);
+  has(key2) {
+    const id = this.id(key2);
     if (!id) return false;
-    return Boolean(this._explicit?.has(key)) || Boolean(this._hass?.states?.[id]);
+    return Boolean(this._explicit?.has(key2)) || Boolean(this._hass?.states?.[id]);
   }
   /** Phases to show: the configured list, or the default A/B/C only when their entities exist. */
   phasesInUse() {
@@ -68418,8 +68435,8 @@ var HaEnergyCenterCard = class extends HTMLElement {
     const states = this._hass?.states || {};
     return phases.some((p) => ["power", "apparent", "power_factor", "current", "voltage", "frequency"].some((k) => p[k] && states[p[k]])) ? phases : [];
   }
-  num(key) {
-    return toNumber3(this.stateObj(key)?.state);
+  num(key2) {
+    return toNumber3(this.stateObj(key2)?.state);
   }
   numOf(entityId) {
     return entityId ? toNumber3(this._hass?.states?.[entityId]?.state) : void 0;
@@ -68433,20 +68450,20 @@ var HaEnergyCenterCard = class extends HTMLElement {
     const s = entityId ? this._hass?.states?.[entityId] : void 0;
     return s ? this._norm(s, "power", "effekt") : void 0;
   }
-  watts(key) {
-    return this.wattsOf(this.id(key));
+  watts(key2) {
+    return this.wattsOf(this.id(key2));
   }
-  kwh(key) {
-    const s = this.stateObj(key);
+  kwh(key2) {
+    const s = this.stateObj(key2);
     return s ? this._norm(s, "energy", "energi") : void 0;
   }
-  flowLpm(key) {
-    const s = this.stateObj(key);
+  flowLpm(key2) {
+    const s = this.stateObj(key2);
     return s ? this._norm(s, "flow", "flow") : void 0;
   }
   /** Live-værdi i statistikkens enhed (kWh / m³ / valuta). */
-  statLive(key, kind) {
-    const s = this.stateObj(key);
+  statLive(key2, kind) {
+    const s = this.stateObj(key2);
     if (!s) return void 0;
     if (kind === "energy") return this._norm(s, "energy", "energi");
     if (kind === "volume") return this._norm(s, "volume", "volumen");
@@ -68464,10 +68481,10 @@ var HaEnergyCenterCard = class extends HTMLElement {
       this._safe("today", done);
     });
   }
-  today(key, kind) {
-    const t = this._today.get(this.id(key));
+  today(key2, kind) {
+    const t = this._today.get(this.id(key2));
     if (!t || t.sod !== startOfDay2()) return void 0;
-    return sumSince(t.rows, t.sod, this.statLive(key, kind));
+    return sumSince(t.rows, t.sod, this.statLive(key2, kind));
   }
   waterFlowState(lpm) {
     if (!Number.isFinite(lpm)) return { label: "Ingen data", tone: "" };
@@ -68491,9 +68508,9 @@ var HaEnergyCenterCard = class extends HTMLElement {
       this.warnOnce(`section-${name}`, `Fejl i "${name}" \u2013 resten af kortet opdateres fortsat`, err);
     }
   }
-  warnOnce(key, ...args) {
-    if (this._warned.has(key)) return;
-    this._warned.add(key);
+  warnOnce(key2, ...args) {
+    if (this._warned.has(key2)) return;
+    this._warned.add(key2);
     console.warn(`[${this.config?.log_prefix || DEFAULT_CONFIG2.log_prefix}]`, ...args);
   }
 };
@@ -69194,12 +69211,12 @@ var MusicApi = class {
   clearCache() {
     this._cache.clear();
   }
-  async _cached(key, fn, ms = CACHE_MS) {
-    const hit = this._cache.get(key);
+  async _cached(key2, fn, ms = CACHE_MS) {
+    const hit = this._cache.get(key2);
     if (hit && Date.now() - hit.t < ms) return hit.p;
     const p = fn();
-    this._cache.set(key, { t: Date.now(), p });
-    p.catch(() => this._cache.delete(key));
+    this._cache.set(key2, { t: Date.now(), p });
+    p.catch(() => this._cache.delete(key2));
     return p;
   }
   async call(domain, service, data = {}, target2, response = true) {
@@ -69238,8 +69255,8 @@ var MusicApi = class {
     return res?.response ?? res;
   }
   async library(mediaType, { order_by = "name", favorite, search, limit = 50, offset = 0 } = {}) {
-    const key = `lib|${mediaType}|${order_by}|${favorite}|${search || ""}|${limit}|${offset}`;
-    return this._cached(key, async () => {
+    const key2 = `lib|${mediaType}|${order_by}|${favorite}|${search || ""}|${limit}|${offset}`;
+    return this._cached(key2, async () => {
       const data = { config_entry_id: await this.entryId(), media_type: mediaType, limit, offset, order_by };
       if (favorite) data.favorite = true;
       if (search) data.search = search;
@@ -69248,8 +69265,8 @@ var MusicApi = class {
     });
   }
   async search(query, limit = 10) {
-    const key = `search|${query}|${limit}`;
-    return this._cached(key, async () => {
+    const key2 = `search|${query}|${limit}`;
+    return this._cached(key2, async () => {
       const res = await this.call("music_assistant", "search", { config_entry_id: await this.entryId(), name: query, limit });
       const out = {};
       for (const k of ["tracks", "artists", "albums", "playlists", "radio", "podcasts", "audiobooks"]) {
@@ -69421,12 +69438,12 @@ function subtitle(item2) {
   }
 }
 function tile2(ctx, item2) {
-  const key = ctx.reg(item2);
+  const key2 = ctx.reg(item2);
   const circle = item2.media_type === "artist";
-  return `<div class="tile${circle ? " circle" : ""}" role="button" tabindex="0" data-open="${key}">
+  return `<div class="tile${circle ? " circle" : ""}" role="button" tabindex="0" data-open="${key2}">
     <div class="cover">${art(item2, "art", true)}
-      ${circle ? "" : `<button class="fab" data-play="${key}" aria-label="Afspil">${icon4("play")}</button>`}
-      <button class="more" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>
+      ${circle ? "" : `<button class="fab" data-play="${key2}" aria-label="Afspil">${icon4("play")}</button>`}
+      <button class="more" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>
     </div>
     <div class="t">${esc12(item2.name)}</div><div class="s">${esc12(subtitle(item2))}</div></div>`;
 }
@@ -69482,9 +69499,9 @@ function homeView(ctx, data) {
   } else {
     if (quick.length) {
       html += `<div class="quick">${quick.map((item2) => {
-        const key = ctx.reg(item2);
+        const key2 = ctx.reg(item2);
         const on = ctx.isCurrent(item2);
-        return `<div class="qt" role="button" tabindex="0" data-open="${key}">${art(item2)}<div class="t">${esc12(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
+        return `<div class="qt" role="button" tabindex="0" data-open="${key2}">${art(item2)}<div class="t">${esc12(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
       }).join("")}</div>`;
     }
     html += shelf(ctx, "Dine playlister", data.playlists, "library:playlist");
@@ -69513,15 +69530,15 @@ var LIB_TYPES = [
 ];
 var SORTS = [["name", "Navn (A\u2013\xC5)"], ["timestamp_added_desc", "Senest tilf\xF8jet"], ["last_played_desc", "Senest afspillet"], ["play_count_desc", "Mest afspillet"]];
 function trackRow(ctx, item2, index, opts = {}) {
-  const key = ctx.reg(item2);
+  const key2 = ctx.reg(item2);
   const on = ctx.isCurrent(item2);
   const withArt = opts.art !== false;
   const num5 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}${icon4("play")}</div>`;
   const sub = opts.sub ?? artistNames(item2);
-  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" role="button" tabindex="0" data-track="${key}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" role="button" tabindex="0" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
     ${num5}<div class="main-c">${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</div>${sub ? `<div class="ts">${opts.subHtml ? sub : esc12(sub)}</div>` : ""}</div></div>
     <div class="al">${esc12(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
-    <button class="dots" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
+    <button class="dots" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
 }
 function trackHead() {
   return `<div class="tr-head"><div class="r">#</div><div>Titel</div><div class="al">Album</div><div class="r">${icon4("clockOutline", "").replace('class="ic "', 'class="ic" style="width:16px;height:16px;margin-left:auto"')}</div><div></div></div>`;
@@ -69588,7 +69605,7 @@ function searchView(ctx, st) {
 }
 function detailView(ctx, st) {
   const item2 = st.item;
-  const key = ctx.reg(item2);
+  const key2 = ctx.reg(item2);
   const tracks = st.tracks || [];
   const isArtist = item2.media_type === "artist";
   const isPodcast = item2.media_type === "podcast";
@@ -69601,10 +69618,10 @@ function detailView(ctx, st) {
   let html = `<div class="view hero-view detail"><div class="hero${isArtist ? " circle" : ""}">${art(item2, "art", true)}
     <div style="min-width:0"><div class="kind">${esc12(MEDIA_LABEL[item2.media_type] || "")}</div><h1 class="${item2.name.length > 42 ? "long" : item2.name.length > 18 ? "mid" : ""}">${esc12(item2.name)}</h1>
     <div class="meta">${meta.join(" <span>\u2022</span> ")}</div>${item2.description ? `<div class="desc">${esc12(item2.description.replace(/<[^>]+>/g, ""))}</div>` : ""}</div></div>
-    <div class="actions"><div class="actions-bg"></div><button class="fab big" data-play="${key}" aria-label="Afspil">${icon4(ctx.isCurrent(item2) && ctx.playing ? "pause" : "play")}</button>
-    ${isPodcast ? "" : `<button class="act" data-shuffleplay="${key}" aria-label="Bland">${icon4("shuffleVariant")}</button>`}
-    <button class="act${item2.favorite ? " on" : ""}" data-fav="${key}" aria-label="Favorit">${icon4(item2.favorite ? "heart" : "heartOutline")}</button>
-    <button class="act" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
+    <div class="actions"><div class="actions-bg"></div><button class="fab big" data-play="${key2}" aria-label="Afspil">${icon4(ctx.isCurrent(item2) && ctx.playing ? "pause" : "play")}</button>
+    ${isPodcast ? "" : `<button class="act" data-shuffleplay="${key2}" aria-label="Bland">${icon4("shuffleVariant")}</button>`}
+    <button class="act${item2.favorite ? " on" : ""}" data-fav="${key2}" aria-label="Favorit">${icon4(item2.favorite ? "heart" : "heartOutline")}</button>
+    <button class="act" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
   if (st.loading && !tracks.length) html += skeletonRows(8);
   else if (st.error) html += emptyState("alertCircleOutline", "Kunne ikke hente indholdet", st.error);
   else if (isArtist) {
@@ -69638,14 +69655,14 @@ function queuePanel(ctx, st) {
   return html;
 }
 function queueRow(ctx, item2, current, editable) {
-  const key = ctx.reg(item2);
+  const key2 = ctx.reg(item2);
   return `<div class="qi${current ? " on" : ""}" role="button" tabindex="0" data-qplay="${esc12(item2.queue_item_id || "")}">${art(item2)}
     <div class="tx"><div class="tt">${esc12(item2.name)}</div><div class="ts">${esc12(artistNames(item2) || MEDIA_LABEL[item2.media_type] || "")}</div></div>
     ${current ? eq(ctx.playing) : ""}
     ${editable ? `<div class="qa"><button class="mini-btn" data-qact="move_queue_item_next" data-qid="${esc12(item2.queue_item_id)}" title="Spil som n\xE6ste" aria-label="Spil som n\xE6ste">${icon4("skipNextCircleOutline")}</button>
       <button class="mini-btn" data-qact="move_queue_item_up" data-qid="${esc12(item2.queue_item_id)}" title="Flyt op" aria-label="Flyt op">${icon4("arrowUp")}</button>
       <button class="mini-btn" data-qact="move_queue_item_down" data-qid="${esc12(item2.queue_item_id)}" title="Flyt ned" aria-label="Flyt ned">${icon4("arrowDown")}</button>
-      <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc12(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
+      <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc12(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
 }
 function speakersPanel(ctx, sp) {
   const active = sp.players.find((p) => p.entity_id === sp.active);
@@ -69671,7 +69688,7 @@ function speakersPanel(ctx, sp) {
   return html;
 }
 function barHtml(np) {
-  const key = np.key;
+  const key2 = np.key;
   return `<div class="np-left">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon4("musicNote")}</div>`}
       <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc12(np.title)}</button><button class="np-a" data-npopen="artist">${esc12(np.artist || np.playerName)}</button>` : `<span class="np-t">Intet spiller</span><span class="np-a">${esc12(np.playerName || "V\xE6lg en h\xF8jttaler")}</span>`}</div>
       ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div>
@@ -69802,17 +69819,17 @@ var RECENT_KEY = "ha-music-card:recent-searches";
 var ACTIVE_KEY = "ha-music-card:active-player";
 var SIDE_PLAYLIST_LIMIT = 500;
 var store = {
-  get(key, fallback) {
+  get(key2, fallback) {
     try {
-      const v = localStorage.getItem(key);
+      const v = localStorage.getItem(key2);
       return v == null ? fallback : JSON.parse(v);
     } catch (_e2) {
       return fallback;
     }
   },
-  set(key, value) {
+  set(key2, value) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      localStorage.setItem(key2, JSON.stringify(value));
     } catch (_e2) {
     }
   }
@@ -70313,9 +70330,9 @@ var HaMusicCard = class extends HTMLElement {
     return { reg: (item2) => this._reg(item2), isCurrent: (item2) => this._isCurrent(item2), playing: np.playing, hasQueueApi: this.api.hasMassQueue };
   }
   _reg(item2) {
-    const key = `i${this._itemSeq += 1}`;
-    this._items.set(key, item2);
-    return key;
+    const key2 = `i${this._itemSeq += 1}`;
+    this._items.set(key2, item2);
+    return key2;
   }
   get _view() {
     return this._hist[this._histIdx];
@@ -70481,11 +70498,11 @@ var HaMusicCard = class extends HTMLElement {
     return `${v.type}|${v.sort}|${v.fav ? 1 : 0}|${v.filter || ""}`;
   }
   _libState(v) {
-    const key = this._libKey(v);
-    let st = this._data.lib.get(key);
+    const key2 = this._libKey(v);
+    let st = this._data.lib.get(key2);
     if (!st) {
       st = { type: v.type, sort: v.sort, fav: v.fav, filter: v.filter, items: [], offset: 0, done: false, loading: false };
-      this._data.lib.set(key, st);
+      this._data.lib.set(key2, st);
       this._loadLib(st);
     }
     return st;
@@ -71275,8 +71292,8 @@ var HaMusicCard = class extends HTMLElement {
     this._lp = { x: e.clientX, y: e.clientY, el };
     clearTimeout(this._lpTimer);
     this._lpTimer = setTimeout(() => {
-      const key = el.dataset.open || el.dataset.track || el.querySelector("[data-menu]")?.dataset.menu;
-      const item2 = this._items.get(key);
+      const key2 = el.dataset.open || el.dataset.track || el.querySelector("[data-menu]")?.dataset.menu;
+      const item2 = this._items.get(key2);
       if (item2) {
         this._suppressClick = true;
         this._openMenu(item2, el);
@@ -71334,6 +71351,456 @@ if (!customElements.get("ha-music-card")) customElements.define("ha-music-card",
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === "ha-music-card")) {
   window.customCards.push({ type: "ha-music-card", name: "HA Music Card", description: "Musik-app til Music Assistant: bibliotek, s\xF8gning, k\xF8 og h\xF8jttalere", preview: false });
+}
+
+// src/cards/ha-elforbrug-kr-card/cost-series.js
+var key = (y, m) => `${y}-${String(m + 1).padStart(2, "0")}`;
+function buildCostSeries({ bills = [], cost = {}, kwh = {}, ratio = null, now = /* @__PURE__ */ new Date(), utility = "el" }) {
+  const billed = monthlyFromBills(bills);
+  const years = {};
+  const first = Object.keys(billed).sort()[0];
+  const priced = bills.filter((b) => b.kwh);
+  const avgPrice = priced.length ? priced.reduce((s, b) => s + Number(b.amount), 0) / priced.reduce((s, b) => s + Number(b.kwh), 0) : null;
+  const keys = /* @__PURE__ */ new Set([...Object.keys(billed), ...utility === "el" ? Object.keys(cost) : []]);
+  if (utility === "el" && first && avgPrice) {
+    for (const k of Object.keys(kwh)) if (k >= first) keys.add(k);
+  }
+  const nowKey = key(now.getFullYear(), now.getMonth());
+  const idx = (k) => {
+    const [y, m] = k.split("-").map(Number);
+    return y * 12 + m;
+  };
+  const prices = Object.entries(billed).filter(([, b]) => b.kwh && b.days >= b.monthDays * 0.9).map(([k, b]) => [idx(k), b.amount / b.kwh]).sort((a, b) => a[0] - b[0]);
+  const priceAt = (k) => {
+    const i = idx(k);
+    const before = [...prices].reverse().find((p) => p[0] <= i);
+    const after = prices.find((p) => p[0] >= i);
+    if (before && after && after[0] !== before[0]) return before[1] + (after[1] - before[1]) * (i - before[0]) / (after[0] - before[0]);
+    return (before || after)?.[1] ?? avgPrice;
+  };
+  const costFirst = Object.keys(cost).sort()[0];
+  for (const k of [...keys].sort()) {
+    if (k > nowKey) continue;
+    const [y, m1] = k.split("-").map(Number);
+    const m = m1 - 1;
+    const b = billed[k];
+    const cell = { bill: 0, measured: 0, estimate: 0, partial: k === nowKey };
+    if (b && b.days >= b.monthDays * 0.9) cell.bill = b.amount;
+    else if (utility === "el" && cost[k] != null && k !== costFirst) cell.measured = cost[k] * (ratio || 1);
+    else if (utility === "el" && kwh[k] != null && avgPrice) cell.estimate = kwh[k] * priceAt(k);
+    else if (b) cell.bill = b.amount;
+    cell.v = cell.bill + cell.measured + cell.estimate;
+    if (!(cell.v > 0)) continue;
+    (years[y] ||= Array(12).fill(null))[m] = cell;
+  }
+  return { years, avgPrice };
+}
+var sumYear = (arr2, upto = 12) => {
+  const out = { v: 0, bill: 0, measured: 0, estimate: 0, n: 0 };
+  (arr2 || []).slice(0, upto).forEach((c2) => {
+    if (!c2) return;
+    out.n++;
+    for (const k of ["v", "bill", "measured", "estimate"]) out[k] += c2[k];
+  });
+  return out.n ? out : null;
+};
+
+// src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
+var CARD_TAG3 = "ha-elforbrug-kr-card";
+var VERSION57 = "1.0.0";
+var MONTHS3 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
+var KIND = { bill: "faktureret", measured: "m\xE5lt i HA", estimate: "ansl\xE5et" };
+var nf = (d = 0) => new Intl.NumberFormat("da-DK", { maximumFractionDigits: d, minimumFractionDigits: d });
+var fmt5 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf(d).format(n);
+var pct3 = (a, b) => b > 0 && a != null ? (a - b) / b * 100 : null;
+var fmtPct2 = (p) => p == null ? "\u2013" : `${p > 0 ? "+" : p < 0 ? "\u2212" : ""}${nf(0).format(Math.abs(p))} %`;
+var esc13 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+function niceMax2(v) {
+  if (!(v > 0)) return 100;
+  const e = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const s of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (v <= s * e) return s * e;
+  return 10 * e;
+}
+var STYLE11 = `
+:host{
+  --ec-text:var(--primary-text-color,#e8eef8);
+  --ec-muted:var(--secondary-text-color,#8e9cb4);
+  --ec-faint:color-mix(in srgb,var(--ec-muted) 78%,transparent);
+  --ec-surface:var(--ha-card-background,var(--card-background-color,#161f33));
+  --ec-surface-2:var(--contrast1,color-mix(in srgb,var(--ec-text) 4%,transparent));
+  --ec-border:var(--divider-color,rgba(148,163,194,.14));
+  --ec-line:color-mix(in srgb,var(--ec-text) 9%,transparent);
+  --ec-accent:var(--dashboard-accent,var(--primary-color,#4f8cff));
+  --ec-shadow:var(--ha-card-box-shadow,0 8px 24px -12px rgba(0,0,0,.5));
+  --c-el:var(--energy-grid-consumption-color,var(--blue-dark,#4f8cff));
+  --c-heat:var(--orange,#ff8a3d);
+  --c-water:var(--energy-water-color,#26c6da);
+  --c-ev:var(--energy-ev-charging,var(--green,#2fd3a0));
+  --c-warn:var(--dashboard-warning,var(--warning-color,#f4b740));
+  --c-bad:var(--dashboard-danger,var(--error-color,#ff5d6c));
+  --c-ok:var(--dashboard-success,var(--success-color,#34d399));
+  --c-price:var(--yellow,#ffd400);
+  --r:var(--ha-card-border-radius,18px);
+  display:block;container-type:inline-size;color:var(--ec-text);
+  font-family:var(--primary-font-family,var(--ha-font-family-body,system-ui,sans-serif));
+  -webkit-tap-highlight-color:transparent;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:inherit;cursor:pointer}
+.ic{--mdc-icon-size:20px;display:inline-flex;flex:none}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tone-el{--tone:var(--c-el)}.tone-heat{--tone:var(--c-heat)}.tone-ev{--tone:var(--c-ev)}.tone-ok{--tone:var(--c-ok)}
+.tone-bad{--tone:var(--c-bad)}.tone-warn{--tone:var(--c-warn)}.tone-muted{--tone:var(--ec-muted)}
+.shell{position:relative;display:flex;flex-direction:column;gap:18px;min-width:0;padding:16px;border-radius:var(--r);background:var(--dashboard-card-bg,var(--ec-surface));border:var(--ha-card-border-width,1px) solid var(--ec-border);box-shadow:var(--ec-shadow)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;color:var(--ec-accent);background:color-mix(in srgb,var(--ec-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--ec-accent) 32%,transparent)}
+.brand-mark .ic{--mdc-icon-size:26px}
+.brand h2{margin:0;font-size:22px;line-height:1.15;font-weight:700;letter-spacing:-.015em}
+.brand p{margin:3px 0 0;font-size:13px;color:var(--ec-muted)}
+.hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hero-item{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:14px;position:relative;overflow:hidden;background:var(--ec-surface-2)}
+.hero-item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tone,var(--ec-muted));opacity:.85}
+.hi-label{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--ec-muted)}
+.hi-val{display:flex;align-items:baseline;gap:6px}
+.hi-val b{font-size:26px;font-weight:700;line-height:1.05}
+.hi-val small{font-size:14px;font-weight:600;color:var(--ec-muted)}
+.hi-sub{font-size:12.5px;color:var(--ec-muted)}
+.hi-sub .d{font-weight:700;color:var(--tone,var(--ec-muted))}
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--ec-surface-2);border:1px solid var(--ec-border)}
+.seg button{padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--ec-muted);transition:color .15s ease,background-color .15s ease}
+.seg button:hover{color:var(--ec-text)}
+.seg button.on{color:var(--ec-text);background:color-mix(in srgb,var(--ec-accent) 24%,transparent)}
+.years{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.years::-webkit-scrollbar{display:none}
+.yr{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:9px;font-size:12.5px;font-weight:650;color:var(--ec-muted);background:transparent;border:1px solid var(--ec-border);white-space:nowrap;transition:color .15s ease,background-color .15s ease,border-color .15s ease}
+.yr i{width:9px;height:9px;border-radius:3px;background:var(--yc);opacity:.35}
+.yr.on{color:var(--ec-text);background:color-mix(in srgb,var(--yc) 14%,transparent);border-color:color-mix(in srgb,var(--yc) 45%,transparent)}
+.yr.on i{opacity:1}
+button:focus-visible{outline:2px solid var(--ec-accent);outline-offset:2px}
+.chart{position:relative;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.grid line{stroke:var(--ec-line);stroke-width:1}
+.axis text{fill:var(--ec-muted);font-size:11px}
+.bar{transition:opacity .15s ease}
+.hit{fill:transparent}
+.hit:hover,.hit.sel{fill:color-mix(in srgb,var(--ec-text) 5%,transparent)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ec-muted)}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:12px;height:12px;border-radius:3px;background:var(--ec-accent)}.legend i.h{background:repeating-linear-gradient(45deg,var(--ec-accent) 0 2px,color-mix(in srgb,var(--ec-accent) 45%,transparent) 2px 5px)}.legend i.e{background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--ec-accent) 55%,transparent) 0 2px,transparent 2px 5px);border:1px dashed var(--ec-accent)}
+.tip .kinds{margin-top:4px;font-size:11.5px;color:var(--ec-muted)}
+.vlabel{fill:var(--ec-text);font-size:11.5px;font-weight:650}
+.tip{position:absolute;z-index:2;min-width:150px;max-width:230px;padding:10px 12px;border-radius:12px;background:var(--ha-card-background,var(--ec-surface));border:1px solid var(--ec-border);box-shadow:var(--ec-shadow);font-size:12.5px;pointer-events:none}
+.tip h4{margin:0 0 6px;font-size:13px;font-weight:700}
+.tip .row{display:flex;align-items:center;gap:8px;padding:2px 0}
+.tip .row i{width:9px;height:9px;border-radius:3px;background:var(--yc)}
+.tip .row .nm{color:var(--ec-muted)}
+.tip .row .v{margin-left:auto;font-weight:650}
+.tip .row .dd{font-size:11.5px;color:var(--ec-muted);min-width:44px;text-align:right}
+.note{font-size:12px;color:var(--ec-muted);line-height:1.5}
+.state{padding:28px 8px;text-align:center;color:var(--ec-muted);font-size:13.5px}
+@container (max-width:760px){.hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:420px){.hi-val b{font-size:22px}.brand h2{font-size:19px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+`;
+var TEMPLATE = `
+<style>${STYLE11}</style>
+<section class="shell" part="shell">
+  <div class="top">
+    <div class="brand">
+      <span class="brand-mark"><ha-icon class="ic" icon="mdi:cash-multiple"></ha-icon></span>
+      <div><h2 data-ref="title"></h2><p data-ref="subtitle"></p></div>
+    </div>
+    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Gas</button></div>
+  </div>
+  <div class="hero-grid" data-ref="kpis"></div>
+  <div class="ctrl">
+    <div class="seg" role="tablist" aria-label="Visning"><button type="button" data-view="month" class="on">M\xE5ned for m\xE5ned</button><button type="button" data-view="year">\xC5r for \xE5r</button></div>
+    <div class="years swiper" data-ref="years" role="group" aria-label="V\xE6lg \xE5r"></div>
+  </div>
+  <div class="chart" data-ref="chart"><div class="state">Henter \u2026</div></div>
+  <div class="legend" data-ref="legend"></div>
+  <p class="note" data-ref="note"></p>
+</section>`;
+var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = TEMPLATE;
+    this._ref = (n) => this.shadowRoot.querySelector(`[data-ref="${n}"]`);
+    this._view = "month";
+    this._util = "el";
+    this._sel = null;
+    this._stats = null;
+    this._pinned = null;
+    this._sig = "";
+    this.shadowRoot.addEventListener("click", (e) => this._onClick(e));
+    this._ro = new ResizeObserver(() => this._drawChart());
+  }
+  static getStubConfig() {
+    return { type: `custom:${CARD_TAG3}`, bills_entity: "sensor.elregning_seneste_regning", forecast_entity: "sensor.elregning_prognose_denne_maned", cost_entity: "sensor.teknikrum_hovedmaler_energy_cost", history_entity: "sensor.elforbrug_historik" };
+  }
+  setConfig(config) {
+    this.config = { ..._HaElforbrugKrCard.getStubConfig(), title: "Elforbrug i kr", subtitle: "M\xE5ned for m\xE5ned og \xE5r for \xE5r", ...config };
+    this._ref("title").textContent = this.config.title;
+    this._ref("subtitle").textContent = this.config.subtitle;
+    this._stats = null;
+    if (this._hass) this._load();
+  }
+  set hass(hass) {
+    const first = !this._hass;
+    this._hass = hass;
+    if (first && this.config) {
+      this._load();
+      return;
+    }
+    const b = hass.states[this.config?.bills_entity];
+    const sig = b ? b.last_updated : "";
+    if (sig !== this._sig) {
+      this._sig = sig;
+      this._render();
+    }
+  }
+  getCardSize() {
+    return 8;
+  }
+  getGridOptions() {
+    return { columns: 12, min_columns: 6 };
+  }
+  connectedCallback() {
+    this._ro.observe(this._ref("chart"));
+    this._timer = setInterval(() => {
+      if (!document.hidden) this._load();
+    }, 30 * 60 * 1e3);
+    if (this._hass && this.config && !this._stats) this._load();
+  }
+  disconnectedCallback() {
+    this._ro.disconnect();
+    clearInterval(this._timer);
+  }
+  async _load() {
+    if (this._loading || !this._hass || !this.config) return;
+    this._loading = true;
+    const ids = [this.config.cost_entity, this.config.history_entity].filter(Boolean);
+    try {
+      const res = ids.length ? await this._hass.callWS({
+        type: "recorder/statistics_during_period",
+        start_time: "2015-01-01T00:00:00Z",
+        end_time: new Date(Date.now() + 36e5).toISOString(),
+        statistic_ids: ids,
+        period: "month",
+        types: ["change"]
+      }) : {};
+      const toMap = (rows) => Object.fromEntries((rows || []).filter((r) => Number.isFinite(Number(r.change))).map((r) => {
+        const d = new Date(r.start);
+        return [key(d.getFullYear(), d.getMonth()), Number(r.change)];
+      }));
+      this._stats = { cost: toMap(res?.[this.config.cost_entity]), kwh: toMap(res?.[this.config.history_entity]) };
+      this._error = null;
+    } catch (err) {
+      this._stats = { cost: {}, kwh: {} };
+      this._error = err?.message || String(err);
+    } finally {
+      this._loading = false;
+      this._render();
+    }
+  }
+  _series() {
+    const h = this._hass;
+    const b = h?.states[this.config.bills_entity];
+    const el = b?.attributes?.regninger || [];
+    const gas = b?.attributes?.gasregninger || [];
+    this._ref("util").hidden = !gas.length;
+    if (!gas.length) this._util = "el";
+    const ratio = Number(h?.states[this.config.forecast_entity]?.attributes?.forhold_regning_maaling) || null;
+    const s = this._stats || { cost: {}, kwh: {} };
+    return this._util === "gas" ? buildCostSeries({ bills: gas, utility: "gas" }) : buildCostSeries({ bills: el, cost: s.cost, kwh: s.kwh, ratio });
+  }
+  _yearsAvailable() {
+    return Object.keys(this._data?.years || {}).map(Number).sort((a, b) => a - b);
+  }
+  _render() {
+    if (!this.config || !this._hass) return;
+    this._data = this._series();
+    const chart = this._ref("chart");
+    const years = this._yearsAvailable();
+    if (!years.length) {
+      this._ref("kpis").innerHTML = "";
+      this._ref("years").innerHTML = "";
+      this._ref("legend").innerHTML = "";
+      chart.innerHTML = `<div class="state">${this._stats ? `Ingen regninger endnu i <b>${esc13(this.config.bills_entity)}</b>.` : "Henter \u2026"}</div>`;
+      return;
+    }
+    if (!this._sel || ![...this._sel].some((y) => years.includes(y))) this._sel = new Set(years.slice(-3));
+    this._renderKpis();
+    this._renderYears(years);
+    this._drawChart();
+    const gas = this._util === "gas";
+    this._ref("legend").innerHTML = `<span><i></i>Faktureret</span>${gas ? "" : `<span><i class="h"></i>M\xE5lt i HA</span><span><i class="e"></i>Ansl\xE5et</span>`}`;
+    this._ref("note").textContent = gas ? "Gasregningerne fordelt p\xE5 m\xE5neder efter dage. Kun det, der st\xE5r p\xE5 regningerne." : `Faktureret = regningerne i Elregning, fordelt p\xE5 m\xE5neder efter dage. M\xE5lt = HA's egen m\xE5ling \xD7 forholdet regning/m\xE5ling. Ansl\xE5et = netselskabets kWh \xD7 kr/kWh lagt mellem de n\xE6rmeste regninger f\xF8r og efter, for m\xE5neder uden regning eller m\xE5ling. Den igangv\xE6rende m\xE5ned er forel\xF8big.`;
+  }
+  _renderKpis() {
+    const now = /* @__PURE__ */ new Date();
+    const cy = now.getFullYear();
+    const cm = now.getMonth();
+    const yrs = this._data.years;
+    const cells = [];
+    for (const y of this._yearsAvailable()) (yrs[y] || []).forEach((c2, m) => {
+      if (c2 && !(y === cy && m === cm)) cells.push({ y, m, ...c2 });
+    });
+    const last12 = cells.slice(-12);
+    const s12 = last12.length === 12 ? last12.reduce((s, c2) => s + c2.v, 0) : null;
+    const ytd = sumYear(yrs[cy], cm);
+    const ytdPrev = sumYear(yrs[cy - 1], cm);
+    const prevFull = sumYear(yrs[cy - 1]);
+    const tone3 = (d) => d == null ? "tone-muted" : d > 3 ? "tone-bad" : d < -3 ? "tone-ok" : "tone-muted";
+    const dYtd = ytd && ytdPrev && ytdPrev.n === ytd.n ? pct3(ytd.v, ytdPrev.v) : null;
+    const peak = last12.length ? last12.reduce((a, b) => b.v > a.v ? b : a) : null;
+    const items = [];
+    items.push(`<div class="hero-item tone-el"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt5(ytd?.v)}</b><small>kr</small></span><span class="hi-sub ${tone3(dYtd)}">${dYtd != null ? `<span class="d">${fmtPct2(dYtd)}</span> mod samme periode sidste \xE5r` : ytd ? `${ytd.n} hele m\xE5neder` : "\u2013"}</span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt5(s12)}</b><small>kr</small></span><span class="hi-sub">${s12 != null ? `ca. ${fmt5(s12 / 12)} kr pr. m\xE5ned` : "Under 12 m\xE5neder"}</span></div>`);
+    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Hele ${cy - 1}</span><span class="hi-val num"><b>${fmt5(prevFull?.v)}</b><small>kr</small></span><span class="hi-sub">${prevFull ? `${prevFull.n} m\xE5neder${prevFull.measured + prevFull.estimate > 1 ? ` \xB7 ${fmt5((prevFull.measured + prevFull.estimate) / prevFull.v * 100)} % m\xE5lt/ansl\xE5et` : " \xB7 alt faktureret"}` : "\u2013"}</span></div>`);
+    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Dyreste m\xE5ned (12 mdr)</span><span class="hi-val num"><b>${fmt5(peak?.v)}</b><small>kr</small></span><span class="hi-sub">${peak ? `${MONTHS_LONG2[peak.m]} ${peak.y}` : "\u2013"}</span></div>`);
+    this._ref("kpis").innerHTML = items.join("");
+  }
+  _color(year) {
+    const maxY = Math.max(...this._yearsAvailable());
+    return PALETTE[Math.min(maxY - year, PALETTE.length - 1)];
+  }
+  _renderYears(years) {
+    const box = this._ref("years");
+    box.hidden = this._view !== "month";
+    box.innerHTML = [...years].reverse().map((y) => `<button type="button" class="yr ${this._sel.has(y) ? "on" : ""}" data-year="${y}" style="--yc:${this._color(y)}" aria-pressed="${this._sel.has(y)}"><i></i>${y}</button>`).join("");
+  }
+  _onClick(e) {
+    const u2 = e.target.closest("[data-util]");
+    if (u2) {
+      this._util = u2.dataset.util;
+      this.shadowRoot.querySelectorAll("[data-util]").forEach((b) => b.classList.toggle("on", b === u2));
+      this._pinned = null;
+      this._sel = null;
+      this._render();
+      return;
+    }
+    const seg = e.target.closest("[data-view]");
+    if (seg) {
+      this._view = seg.dataset.view;
+      this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("on", b === seg));
+      this._pinned = null;
+      this._renderYears(this._yearsAvailable());
+      this._drawChart();
+      return;
+    }
+    const yr = e.target.closest("[data-year]");
+    if (yr) {
+      const y = Number(yr.dataset.year);
+      if (this._sel.has(y)) {
+        if (this._sel.size > 1) this._sel.delete(y);
+      } else this._sel.add(y);
+      this._pinned = null;
+      this._renderYears(this._yearsAvailable());
+      this._drawChart();
+    }
+  }
+  _drawChart() {
+    const host = this._ref("chart");
+    if (!this._data || !host.isConnected) return;
+    const years = this._yearsAvailable();
+    if (!years.length) return;
+    const w = Math.max(280, Math.round(host.clientWidth || 600));
+    const h = w < 520 ? 240 : 290;
+    const pad5 = { l: 52, r: 6, t: 20, b: 26 };
+    const pw = w - pad5.l - pad5.r;
+    const ph2 = h - pad5.t - pad5.b;
+    const now = /* @__PURE__ */ new Date();
+    const cy = now.getFullYear();
+    const month = this._view === "month";
+    const sel = month ? [...this._sel].sort((a, b) => a - b) : years;
+    const groups = month ? 12 : years.length;
+    const values = month ? Array.from({ length: 12 }, (_, m) => sel.map((y2) => ({ y: y2, ...this._data.years[y2]?.[m] || { v: null } }))) : years.map((y2) => {
+      const t = sumYear(this._data.years[y2]);
+      return [{ y: y2, ...t || { v: null }, partial: y2 === cy }];
+    });
+    const max = niceMax2(Math.max(1, ...values.flat().map((x) => x.v || 0)) * 1.08);
+    const gw = pw / groups;
+    const per = values[0].length;
+    const bw = Math.max(3, Math.min(34, gw * 0.78 / per));
+    const y = (v) => pad5.t + ph2 - v / max * ph2;
+    let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${month ? "Elforbrug i kr pr. m\xE5ned" : "Elforbrug i kr pr. \xE5r"}">`;
+    s += `<defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs>`;
+    s += `<g class="grid axis">`;
+    for (let i = 0; i <= 4; i++) {
+      const gv = max / 4 * i;
+      const gy = y(gv);
+      s += `<line x1="${pad5.l}" x2="${w - pad5.r}" y1="${gy}" y2="${gy}"/><text x="${pad5.l - 8}" y="${gy + 4}" text-anchor="end">${fmt5(gv)}</text>`;
+    }
+    s += `</g><g class="axis">`;
+    for (let g = 0; g < groups; g++) {
+      const cx2 = pad5.l + gw * g + gw / 2;
+      const label = month ? MONTHS3[g] : `${years[g]}${years[g] === cy ? "*" : ""}`;
+      s += `<text x="${cx2}" y="${h - 7}" text-anchor="middle">${label}</text>`;
+    }
+    s += `</g>`;
+    for (let g = 0; g < groups; g++) {
+      const x0 = pad5.l + gw * g + (gw - bw * per) / 2;
+      values[g].forEach((d, i) => {
+        if (d.v == null) return;
+        const col = this._color(d.y);
+        const x = x0 + i * bw;
+        const bwx = (bw - 2).toFixed(1);
+        let base = 0;
+        const open = month && d.partial;
+        for (const [k, op, hatch] of [["bill", open ? 0.55 : 1, open], ["measured", 0.8, true], ["estimate", 0.4, true]]) {
+          const v = d[k] || 0;
+          if (!(v > 0)) continue;
+          const top = y(base + v);
+          const bh2 = Math.max(1, v / max * ph2);
+          s += `<rect class="bar" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${op}"/>`;
+          if (hatch) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity="${k === "estimate" ? 0.5 : 0.35}"/>`;
+          base += v;
+        }
+        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(d.v)}</text>`;
+      });
+      s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad5.l + gw * g).toFixed(1)}" y="${pad5.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
+    }
+    s += `</svg><div class="tip" hidden></div>`;
+    host.innerHTML = s;
+    host.querySelectorAll(".hit").forEach((r) => {
+      const show2 = () => this._tip(host, Number(r.dataset.g), values, month, gw, pad5);
+      r.addEventListener("pointerenter", show2);
+      r.addEventListener("click", () => {
+        this._pinned = this._pinned === Number(r.dataset.g) ? null : Number(r.dataset.g);
+        show2();
+      });
+      r.addEventListener("pointerleave", () => {
+        if (this._pinned == null) host.querySelector(".tip").hidden = true;
+      });
+    });
+    if (this._pinned != null) this._tip(host, this._pinned, values, month, gw, pad5);
+  }
+  _tip(host, g, values, month, gw, pad5) {
+    const tip = host.querySelector(".tip");
+    const rows = values[g].filter((d) => d.v != null);
+    if (!rows.length) {
+      tip.hidden = true;
+      return;
+    }
+    const title = month ? MONTHS_LONG2[g] : `${rows[0].y}${rows[0].partial ? " (indtil nu)" : ""}`;
+    const kinds = (d) => Object.keys(KIND).filter((k) => d[k] > 0.5).map((k) => `${KIND[k]} ${fmt5(d[k])}`).join(" \xB7 ");
+    tip.innerHTML = `<h4>${esc13(title)}</h4>` + [...rows].reverse().map((d) => `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt5(d.v)} kr</span></div>${Object.keys(KIND).filter((k) => d[k] > 0.5).length > 1 || !(d.bill > 0.5) ? `<div class="kinds">${kinds(d)}</div>` : ""}`).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
+    tip.hidden = false;
+    const cx2 = pad5.l + gw * g + gw / 2;
+    const tw = tip.offsetWidth || 180;
+    tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx2 - tw / 2))}px`;
+    tip.style.top = "0px";
+  }
+};
+if (!customElements.get(CARD_TAG3)) customElements.define(CARD_TAG3, HaElforbrugKrCard);
+window.customCards = window.customCards || [];
+if (!window.customCards.some((c2) => c2.type === CARD_TAG3)) {
+  window.customCards.push({ type: CARD_TAG3, name: "Elforbrug i kr", description: `Elforbruget i kroner m\xE5ned for m\xE5ned og \xE5r for \xE5r, fra regningerne og HA's m\xE5ling (v${VERSION57}).`, preview: false });
 }
 
 // src/cards/shared/motion-rest-end.js

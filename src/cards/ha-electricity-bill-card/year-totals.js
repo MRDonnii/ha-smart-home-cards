@@ -17,3 +17,19 @@ export function yearlyTotals(bills){
   return [...acc.values()].sort((a,b)=>b.year-a.year||a.utility.localeCompare(b.utility)).map(r=>({...r,months:Math.round(r.days/30.4375*10)/10,price_kwh:r.kwh?r.amount/r.kwh:null,price_m3:r.m3?r.amount/r.m3:null}));
 }
 
+
+// Claude AI, 2026-11-13: regningerne fordelt på kalendermåneder efter dage ("2025-01" -> {amount, kwh, m3, days, monthDays}).
+export function monthlyFromBills(bills){
+  const out={};
+  for(const b of bills||[]){
+    const s=parseDate(b.start),e=parseDate(b.end);if(!s||!e||e<s)continue;const total=daysBetween(s,e);
+    for(let d=new Date(s.getFullYear(),s.getMonth(),1);d<=e;d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+      const ms=new Date(d.getFullYear(),d.getMonth(),1),me=new Date(d.getFullYear(),d.getMonth()+1,0);
+      const f=s>ms?s:ms,l=e<me?e:me,days=daysBetween(f,l),share=days/total,key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      const r=out[key]||(out[key]={amount:0,kwh:null,m3:null,days:0,monthDays:me.getDate()});
+      r.amount+=Number(b.amount)*share;r.days+=days;
+      for(const k of ["kwh","m3"])if(b[k]!=null)r[k]=(r[k]||0)+Number(b[k])*share;
+    }
+  }
+  return out;
+}
