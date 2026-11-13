@@ -141,6 +141,8 @@ export function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = 
       gasBill: g?.bill || 0, gasEvida: g?.evida || 0, gasKwh: g?.kwh || 0, gasM3: g?.m3 || 0,
       heatMeasured: h?.measured || 0, heatEstimate: h?.estimate || 0, heatKwh: h?.kwh || 0,
       aconto: a?.amount || 0, partial: k === nowKey,
+      // Kun hele måneder med fjernvarme sammenlignes (ikke opstartsmåneden)
+      heatFull: !!h && h.days >= new Date(Number(k.slice(0, 4)), Number(k.slice(5)), 0).getDate(),
     };
     const c = months[k];
     c.v = c.gasBill + c.gasEvida + c.heatMeasured + c.heatEstimate;
@@ -152,7 +154,7 @@ export function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = 
 export function heatingCompare(months, { tariffs, m2 = 0, now = new Date() } = {}) {
   const ks = Object.keys(months).sort();
   const sum = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
-  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && !months[k].partial);
+  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && months[k].heatFull && !months[k].partial);
   const gasKs = ks.filter((k) => months[k].gasKwh > 0);
   const perKwh = (list, f) => { const kwh = sum(list, (c) => (c.heatKwh || c.gasKwh)); return kwh > 0 ? sum(list, f) / kwh : null; };
   // Samme kalendermåneder: fjernvarmens hele måneder mod de samme måneder et år før (gas)

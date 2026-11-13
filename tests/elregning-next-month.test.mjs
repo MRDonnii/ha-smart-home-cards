@@ -62,6 +62,7 @@ assert.ok(gm["2025-06"].evida > 30 * 4.7 && gm["2023-01"].evida === 0);
 assert.equal(Math.round(gm["2025-06"].kwh), 297);
 const series = hs.heatingSeries({ gasBills: [{ start: "2025-06-01", end: "2025-06-30", amount: 300, m3: 30, note: "" }], heatBills: [{ start: "2026-06-01", end: "2026-06-30", amount: 1151.08, kwh: 1477 }], heat: hm, now: new Date(2026, 6, 10) });
 const cmpH = hs.heatingCompare(series, { m2: 179 });
+assert.ok(!series["2026-04"].heatFull && series["2026-06"].heatFull); // opstartsmåneden er ikke hel
 assert.deepEqual(cmpH.same.months, ["2026-06"]);
 assert.equal(cmpH.acontoMonths[0], "2026-06");
 console.log("heating ok");

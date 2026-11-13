@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.260 */
+/* MRDonnii Smart Home Cards v0.5.261 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -71492,7 +71492,9 @@ function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = /* @__P
       heatEstimate: h?.estimate || 0,
       heatKwh: h?.kwh || 0,
       aconto: a?.amount || 0,
-      partial: k === nowKey
+      partial: k === nowKey,
+      // Kun hele måneder med fjernvarme sammenlignes (ikke opstartsmåneden)
+      heatFull: !!h && h.days >= new Date(Number(k.slice(0, 4)), Number(k.slice(5)), 0).getDate()
     };
     const c2 = months[k];
     c2.v = c2.gasBill + c2.gasEvida + c2.heatMeasured + c2.heatEstimate;
@@ -71502,7 +71504,7 @@ function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = /* @__P
 function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Date() } = {}) {
   const ks = Object.keys(months).sort();
   const sum = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
-  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && !months[k].partial);
+  const heatKs = ks.filter((k) => months[k].heatKwh > 0 && months[k].heatFull && !months[k].partial);
   const gasKs = ks.filter((k) => months[k].gasKwh > 0);
   const perKwh = (list, f) => {
     const kwh = sum(list, (c2) => c2.heatKwh || c2.gasKwh);
