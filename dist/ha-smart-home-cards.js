@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.256 */
+/* MRDonnii Smart Home Cards v0.5.257 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -67479,13 +67479,38 @@ function nextMonthEstimate(attributes) {
   };
 }
 
+// src/cards/ha-electricity-bill-card/year-totals.js
+var parseDate2 = (v) => {
+  const [y, m, d] = String(v || "").split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : null;
+};
+var daysBetween = (a, b) => Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5) + 1;
+function yearlyTotals(bills) {
+  const acc = /* @__PURE__ */ new Map();
+  for (const b of bills || []) {
+    const s = parseDate2(b.start), e = parseDate2(b.end);
+    if (!s || !e || e < s) continue;
+    const total = daysBetween(s, e), u2 = b.utility || "el";
+    for (let y = s.getFullYear(); y <= e.getFullYear(); y++) {
+      const f = s > new Date(y, 0, 1) ? s : new Date(y, 0, 1), l = e < new Date(y, 11, 31) ? e : new Date(y, 11, 31), d = daysBetween(f, l), share = d / total, key = `${y}|${u2}`;
+      const r = acc.get(key) || { year: y, utility: u2, amount: 0, kwh: null, m3: null, days: 0, bills: 0 };
+      r.amount += Number(b.amount) * share;
+      r.days += d;
+      r.bills++;
+      for (const k of ["kwh", "m3"]) if (b[k] != null) r[k] = (r[k] || 0) + Number(b[k]) * share;
+      acc.set(key, r);
+    }
+  }
+  return [...acc.values()].sort((a, b) => b.year - a.year || a.utility.localeCompare(b.utility)).map((r) => ({ ...r, months: Math.round(r.days / 30.4375 * 10) / 10, price_kwh: r.kwh ? r.amount / r.kwh : null, price_m3: r.m3 ? r.amount / r.m3 : null }));
+}
+
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION55 = "0.1.3";
+var VERSION55 = "0.2.0";
 var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
 var iso = (d) => `${d.getFullYear()}-${p24(d.getMonth() + 1)}-${p24(d.getDate())}`;
-var parseDate2 = (v) => {
+var parseDate3 = (v) => {
   const [y, m, d] = String(v || "").split("-").map(Number);
   return y && m && d ? new Date(y, m - 1, d) : null;
 };
@@ -67500,12 +67525,19 @@ var parseNumber = (v) => {
 var kr = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : `${Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d })} kr`;
 var num4 = (v, d = 0) => v == null || !Number.isFinite(Number(v)) ? "\u2014" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var signed = (v, d = 0) => v == null ? "\u2014" : `${v > 0 ? "+" : v < 0 ? "\u2212" : "\xB1"}${num4(Math.abs(v), d)}`;
+var VISIBLE = 5;
 var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this._signature = "";
     this._editId = null;
+    this.shadowRoot.addEventListener("scroll", (event) => {
+      if (event.target.classList?.contains("scroll")) this._edge(event.target);
+    }, { capture: true, passive: true });
+    this.shadowRoot.addEventListener("change", (event) => {
+      if (event.target.matches?.("[data-f=utility]")) this._utilityChanged();
+    });
     this.shadowRoot.addEventListener("click", (event) => {
       const el = event.target.closest("[data-act]");
       if (!el) return;
@@ -67555,10 +67587,14 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       <section data-next class="next" hidden></section>
       <section data-explanation class="explanation" hidden></section>
       <section data-agreement class="agreement" hidden></section>
-      <section class="block"><h3>Regninger</h3><div data-bills></div></section>
+      <section class="block"><h3>Overblik pr. \xE5r</h3><div data-years class="years"></div></section>
+      <section class="block"><h3>Regninger</h3><div data-bills class="scroll"></div></section>
+      <section class="block" data-gas-block><h3>Gasregninger</h3><div data-gas class="scroll"></div></section>
       <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
       <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
         <div class="grid">
+          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Gas</option></select></label>
+          <label data-m3-field hidden><span>m\xB3 p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 647" data-f="m3"></label>
           <label><span>Fra</span><input type="date" data-f="start"></label>
           <label><span>Til</span><input type="date" data-f="end"></label>
           <label><span>Bel\xF8b (kr inkl. moms)</span><input type="text" inputmode="decimal" placeholder="fx 1.234,56" data-f="amount"></label>
@@ -67581,8 +67617,8 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     const miss = root.querySelector("[data-missing]");
     miss.hidden = !missing;
     miss.innerHTML = missing ? `<ha-icon icon="mdi:puzzle-outline"></ha-icon><span>Integrationen <b>Elregning</b> er ikke sat op endnu. Indstillinger \u2192 Enheder og tjenester \u2192 Tilf\xF8j integration \u2192 Elregning.</span>` : "";
-    root.querySelectorAll(".hero,.block").forEach((el) => {
-      el.hidden = missing;
+    root.querySelectorAll(".hero,.block").forEach((el2) => {
+      el2.hidden = missing;
     });
     root.querySelector("[data-next]").hidden = missing;
     root.querySelector("[data-explanation]").hidden = missing;
@@ -67591,7 +67627,12 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._hero(fc);
     this._next(fc);
     this._explain(bills.attributes.regninger || []);
-    this._bills(bills.attributes.regninger || []);
+    const el = bills.attributes.regninger || [], gas = bills.attributes.gasregninger || [];
+    this._el = el;
+    this._gas = gas;
+    this._list = [...el, ...gas];
+    this._years(Array.isArray(bills.attributes.aar) ? bills.attributes.aar : yearlyTotals([...el, ...gas]));
+    this._lists();
     this._months(fc.attributes.maaneder || []);
   }
   _hero(fc) {
@@ -67661,15 +67702,71 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       ${state !== "godkendt" ? `<a class="ghost" href="${this._esc(link)}" target="_blank" rel="noopener">elforbundet.dk</a>` : ""}</div>`;
   }
   _period(b) {
-    const s = parseDate2(b.start), e = parseDate2(b.end);
+    const s = parseDate3(b.start), e = parseDate3(b.end);
     if (!s || !e) return `${b.start} \u2013 ${b.end}`;
     const last = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate();
     if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS2[s.getMonth()][0].toUpperCase()}${MONTHS2[s.getMonth()].slice(1)} ${s.getFullYear()}`;
     return `${s.getDate()}. ${MON[s.getMonth()]}${s.getFullYear() !== e.getFullYear() ? ` ${s.getFullYear()}` : ""} \u2013 ${e.getDate()}. ${MON[e.getMonth()]} ${e.getFullYear()}`;
   }
+  _lists() {
+    const root = this.shadowRoot, boxes = [...root.querySelectorAll(".scroll")], tops = boxes.map((b) => b.scrollTop);
+    keepScroll(this, () => {
+      this._bills(this._el || []);
+      this._gasBills(this._gas || []);
+      root.querySelector("[data-gas-block]").hidden = !(this._gas || []).length;
+      boxes.forEach((b, i) => {
+        b.scrollTop = tops[i];
+      });
+    });
+    this._fit();
+  }
+  // Listen er præcis 5 rækker høj (rækkerne er forskellige høje); måles igen, når kortet skifter bredde
+  _fit() {
+    if (!this._ro && window.ResizeObserver) {
+      this._ro = new ResizeObserver(() => this._fitNow());
+      this._ro.observe(this);
+    }
+    requestAnimationFrame(() => this._fitNow());
+  }
+  _fitNow() {
+    for (const box of this.shadowRoot.querySelectorAll(".scroll")) {
+      const rows = box.querySelectorAll(":scope>.bill");
+      const h = rows.length > VISIBLE ? rows[VISIBLE].offsetTop - rows[0].offsetTop : 0;
+      box.style.maxHeight = h > 0 ? `${h}px` : "";
+      box.classList.toggle("scrolls", h > 0);
+      this._edge(box);
+    }
+  }
+  _edge(box) {
+    const end = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
+    box.classList.toggle("at-end", end);
+    box.classList.toggle("at-top", box.scrollTop <= 1);
+  }
+  _years(rows) {
+    const box = this.shadowRoot.querySelector("[data-years]");
+    const byYear = /* @__PURE__ */ new Map();
+    for (const r of rows) {
+      if (!byYear.has(r.year)) byYear.set(r.year, {});
+      byYear.get(r.year)[r.utility || "el"] = r;
+    }
+    if (!byYear.size) {
+      box.innerHTML = `<p class="empty">Ingen regninger endnu.</p>`;
+      return;
+    }
+    const cover = (r) => r && r.months < 11.5 ? `<em class="part">${num4(r.months, r.months < 1 ? 1 : 0)} af 12 mdr.</em>` : "";
+    box.innerHTML = [...byYear.entries()].sort((a, b) => b[0] - a[0]).map(([y, u2]) => `<div class="year"><b class="y">${y}</b>
+      ${u2.el ? `<div class="yl"><span class="u"><ha-icon icon="mdi:flash"></ha-icon>El</span><span><b>${kr(u2.el.amount)}</b>${u2.el.kwh != null ? ` \xB7 ${num4(u2.el.kwh)} kWh` : ""}${u2.el.price_kwh != null ? ` \xB7 ${num4(u2.el.price_kwh, 2)} kr/kWh` : ""}</span>${cover(u2.el)}</div>` : ""}
+      ${u2.gas ? `<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Gas</span><span><b>${kr(u2.gas.amount)}</b>${u2.gas.m3 != null ? ` \xB7 ${num4(u2.gas.m3)} m\xB3` : ""}${u2.gas.price_m3 != null ? ` \xB7 ${num4(u2.gas.price_m3, 2)} kr/m\xB3` : ""}</span>${cover(u2.gas)}</div>` : ""}
+    </div>`).join("");
+  }
+  _gasBills(list) {
+    const box = this.shadowRoot.querySelector("[data-gas]");
+    box.innerHTML = list.map((b) => `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${b.m3 != null ? `${num4(b.m3)} m\xB3` : "\u2014"}${b.price_m3 != null ? ` \xB7 ${num4(b.price_m3, 2)} kr/m\xB3` : ""}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span></div>
+        <div class="b-num"><b>${kr(b.amount)}</b></div>
+        <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`).join("");
+  }
   _bills(list) {
     const box = this.shadowRoot.querySelector("[data-bills]");
-    this._list = list;
     if (!list.length) {
       box.innerHTML = `<p class="empty">Ingen regninger endnu. Skriv den seneste ind nedenfor \u2013 s\xE5 holder HA den op mod sin egen m\xE5ling.</p>`;
       return;
@@ -67681,7 +67778,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       const kwh = b.kwh != null ? `${num4(b.kwh)} kWh p\xE5 regningen \xB7 ${num4(b.measured_kwh)} kWh m\xE5lt${b.complete && b.kwh_difference_pct != null ? ` (${signed(b.kwh_difference_pct, 1)} %)` : ""}` : `${num4(b.measured_kwh)} kWh m\xE5lt`;
       const price = b.bill_price != null ? ` \xB7 ${num4(b.bill_price, 2)} kr/kWh p\xE5 regningen` : b.measured_price != null ? ` \xB7 ${num4(b.measured_price, 2)} kr/kWh m\xE5lt` : "";
       return `<div class="bill"><div class="b-main"><b>${this._period(b)}</b><span class="sub">${kwh}${price}${b.supplier ? ` \xB7 ${this._esc(b.supplier)}` : ""}${b.note ? ` \xB7 ${this._esc(b.note)}` : ""}</span>${cover}</div>
-        <div class="b-num"><b>${kr(b.amount)}</b><span>HA: ${kr(b.measured_cost)}</span>${diff}</div>
+        <div class="b-num"><b>${kr(b.amount)}</b>${b.measured_cost != null ? `<span>HA: ${kr(b.measured_cost)}</span>` : ""}${diff}</div>
         <div class="b-btns"><button type="button" class="icon" data-act="edit" data-id="${this._esc(b.id)}" title="Ret"><ha-icon icon="mdi:pencil-outline"></ha-icon></button><button type="button" class="icon" data-act="delete" data-id="${this._esc(b.id)}" title="Slet"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div></div>`;
     }).join("");
   }
@@ -67694,6 +67791,10 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
   }
   _f(key) {
     return this.shadowRoot.querySelector(`[data-f="${key}"]`);
+  }
+  _utilityChanged() {
+    const gas = this._f("utility")?.value === "gas", m3 = this.shadowRoot.querySelector("[data-m3-field]");
+    if (m3) m3.hidden = !gas;
   }
   _msg(text, bad = false) {
     const el = this.shadowRoot.querySelector("[data-msg]");
@@ -67714,7 +67815,9 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._editId = null;
     this._f("start").value = iso(first);
     this._f("end").value = iso(last);
-    for (const k of ["amount", "kwh", "note"]) this._f(k).value = "";
+    for (const k of ["amount", "kwh", "m3", "note"]) this._f(k).value = "";
+    this._f("utility").value = "el";
+    this._utilityChanged();
     const provider = this._hass?.states[this._config.provider_entity]?.state;
     this._f("supplier").value = provider && !["unknown", "unavailable"].includes(provider) ? provider.split(" - ")[0] : "";
     this.shadowRoot.querySelector("[data-form-title]").textContent = "Skriv en regning ind";
@@ -67732,6 +67835,9 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._f("kwh").value = b.kwh != null ? num4(b.kwh, 2) : "";
     this._f("supplier").value = b.supplier || "";
     this._f("note").value = b.note || "";
+    this._f("utility").value = b.utility === "gas" ? "gas" : "el";
+    this._f("m3").value = b.m3 != null ? num4(b.m3, 2) : "";
+    this._utilityChanged();
     this.shadowRoot.querySelector("[data-form-title]").textContent = `Ret regningen for ${this._period(b).toLowerCase()}`;
     this.shadowRoot.querySelector("[data-act=save]").textContent = "Gem \xE6ndringer";
     this.shadowRoot.querySelector("[data-act=cancel]").hidden = false;
@@ -67744,7 +67850,11 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     if (end < start) return this._msg("Til-datoen ligger f\xF8r fra-datoen.", true);
     if (amount == null || Number.isNaN(amount) || amount < 0) return this._msg("Skriv regningens bel\xF8b, fx 1.234,56.", true);
     if (Number.isNaN(kwh)) return this._msg("kWh skal v\xE6re et tal (eller tomt).", true);
+    const gas = this._f("utility").value === "gas", m3 = gas ? parseNumber(this._f("m3").value) : null;
+    if (Number.isNaN(m3)) return this._msg("m\xB3 skal v\xE6re et tal (eller tomt).", true);
     const data = { start_date: start, end_date: end, amount, kwh: kwh ?? null, supplier: this._f("supplier").value.trim() || null, note: this._f("note").value.trim() || null };
+    if (gas) Object.assign(data, { utility: "gas", m3: m3 ?? null });
+    else if (this._editId && (this._list || []).find((x) => x.id === this._editId)?.utility === "gas") data.utility = "el";
     const btn = this.shadowRoot.querySelector("[data-act=save]");
     btn.disabled = true;
     this._msg("Gemmer \u2026");
@@ -67753,7 +67863,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       else await this._hass.callService("elregning", "add_bill", data);
       const was = this._editId;
       this._resetForm();
-      this._msg(was ? "Regningen er rettet." : "Regningen er gemt og holdt op mod HA's m\xE5ling.");
+      this._msg(was ? "Regningen er rettet." : gas ? "Gasregningen er gemt." : "Regningen er gemt og holdt op mod HA's m\xE5ling.");
     } catch (err) {
       this._msg(`Kunne ikke gemme: ${err?.message || err}`, true);
     } finally {
@@ -67817,7 +67927,14 @@ h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-trans
 .agreement.ok>ha-icon{color:var(--eb-ok)}
 .ag-copy{flex:1;min-width:0}.ag-copy b{display:block;font-size:14px}.ag-copy span{display:block;font-size:13px;color:var(--eb-muted);margin-top:2px}
 .ag-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.block{margin-top:14px}
+.block{margin-top:14px}.block[hidden]{display:none}
+.years{display:grid;gap:8px}.year{display:grid;grid-template-columns:56px 1fr;gap:2px 12px;align-items:baseline;padding:10px 12px;border-radius:12px;background:var(--eb-soft);border:1px solid var(--eb-line)}
+.year .y{grid-row:span 2;font-size:16px;font-variant-numeric:tabular-nums}.yl{grid-column:2;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13px;color:var(--eb-muted);font-variant-numeric:tabular-nums}
+.yl b{color:var(--primary-text-color);font-size:14px}.yl .u{display:inline-flex;align-items:center;gap:3px;min-width:44px}.yl .u ha-icon{--mdc-icon-size:15px}.yl .part{display:inline;margin:0}
+.scroll{position:relative}.scroll.scrolls{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 14px,#000 calc(100% - 28px),transparent 100%)}
+.scroll.scrolls.at-top{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent 100%)}
+.scroll.scrolls.at-end{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 14px);mask-image:linear-gradient(to bottom,transparent 0,#000 14px)}.scroll.scrolls.at-top.at-end{-webkit-mask-image:none;mask-image:none}
+label[hidden]{display:none!important}
 .bill{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--eb-line)}.bill:first-child{border-top:0}
 .b-main b{display:block;font-size:14px}.sub{display:block;font-size:12px;color:var(--eb-muted);margin-top:2px}.part{display:block;font-size:12px;color:var(--eb-warn);font-style:normal;margin-top:2px}
 .b-num{text-align:right;font-variant-numeric:tabular-nums}.b-num b{display:block;font-size:15px}.b-num span{display:block;font-size:12px;color:var(--eb-muted)}
@@ -67830,7 +67947,7 @@ h3{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;text-trans
 .empty{margin:0;font-size:13px;color:var(--eb-muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 label span{display:block;font-size:12px;color:var(--eb-muted);margin-bottom:4px}
-input{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--eb-line);background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit;font-size:14px}
+input,select{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--eb-line);background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit;font-size:14px}
 input:focus{outline:2px solid color-mix(in srgb,var(--eb-accent) 60%,transparent);outline-offset:0}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px}.msg{flex:1;font-size:13px;color:var(--eb-ok)}.msg.bad{color:var(--eb-bad)}
 button,a.ghost{font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
