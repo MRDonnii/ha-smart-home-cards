@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.262 */
+/* MRDonnii Smart Home Cards v0.5.263 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -71420,7 +71420,24 @@ var DEFAULT_HEAT_TARIFFS = [
   { from: "2026-04-01", variable: 0.5963, abonnement: 500, m2_rate: 10, konvertering: 1e3 },
   { from: "2027-02-01", variable: 0.6875, abonnement: 600, m2_rate: 11, konvertering: 1e3 }
 ];
-var EVIDA_2023 = { per_m3: (0.612 + 0.2441 + 2.531 + 0.41 + 9e-3) * 1.25, per_month: 98.63 * 1.25 / 4 };
+var EVIDA_RATES = [
+  { from: "2023-01-01", dist: 0.532, nod: 0.2441, energi: 2.531, co2: 0.41, nox: 9e-3, fixed: 300 },
+  { from: "2023-04-01", dist: 0.852, nod: 0.2441, energi: 2.531, co2: 0.41, nox: 9e-3, fixed: 300 },
+  { from: "2023-10-01", dist: 0.852, nod: 0.03586, energi: 2.531, co2: 0.41, nox: 9e-3, fixed: 300 },
+  { from: "2024-01-01", dist: 1.171, nod: 0.03586, energi: 2.726, co2: 0.442, nox: 9e-3, fixed: 300 },
+  { from: "2024-07-01", dist: 1.054, nod: 0.03586, energi: 2.726, co2: 0.442, nox: 9e-3, fixed: 300 },
+  { from: "2024-10-01", dist: 0.843, nod: 0.05957, energi: 2.726, co2: 0.442, nox: 9e-3, fixed: 300 },
+  { from: "2025-01-01", dist: 0.134, nod: 0.05957, energi: 1.369, co2: 1.922, nox: 0.01, fixed: 1641.15 },
+  { from: "2025-10-01", dist: 0.134, nod: 0.06589, energi: 1.369, co2: 1.922, nox: 0.01, fixed: 1641.15 },
+  { from: "2026-01-01", dist: 0.134, nod: 0.06589, energi: 1.383, co2: 1.942, nox: 0.01, fixed: 1641.15 }
+];
+var VAT = 1.25;
+var evidaAt = (iso2, rates = EVIDA_RATES) => [...rates].sort((a, b) => a.from.localeCompare(b.from)).reverse().find((r) => r.from <= iso2) || rates[0];
+function evidaCost(m3, days, rate) {
+  const variable = m3 * (rate.dist + rate.nod + rate.energi + rate.co2 + rate.nox) * VAT;
+  const fixed = rate.fixed / 365 * days * VAT;
+  return [variable, fixed];
+}
 var daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
 var isoKey = (d) => key(d.getFullYear(), d.getMonth());
 function tariffAt(tariffs, iso2) {
@@ -71458,10 +71475,10 @@ function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m2 = 0, 
   }
   return out;
 }
-function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, evida = EVIDA_2023 } = {}) {
+function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, rates = EVIDA_RATES } = {}) {
   const out = {};
   for (const b of gasBills || []) {
-    const hasEvida = /Evida \(distribution/.test(b.note || "") || /heraf Evida/.test(b.note || "");
+    const hasEvida = /heraf Evida/.test(b.note || "");
     const part = monthlyFromBills([b]);
     for (const [k, r] of Object.entries(part)) {
       const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
@@ -71470,7 +71487,10 @@ function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, evida = EVIDA_20
         o.m3 += r.m3;
         o.kwh += r.m3 * kwhPerM3 * efficiency;
       }
-      if (!hasEvida && r.m3 != null) o.evida += r.m3 * evida.per_m3 + evida.per_month * (r.days / r.monthDays);
+      if (!hasEvida && r.m3 != null) {
+        const [v, f] = evidaCost(r.m3, r.days, evidaAt(`${k}-01`, rates));
+        o.evida += v + f;
+      }
     }
   }
   return out;
@@ -71553,7 +71573,7 @@ function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Dat
 
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
-var VERSION57 = "1.1.0";
+var VERSION57 = "1.2.0";
 var MONTHS3 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
@@ -71986,16 +72006,16 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const kr0 = (v) => v == null ? "\u2013" : `${fmt5(v)} kr`;
     const kr2 = (v) => v == null ? "\u2013" : `${fmt5(v, 2)} kr`;
     const items = [];
-    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt5(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas ${kr2(cmp.gasPerKwh)} \xB7 med Evida-sk\xF8n <span class="d">${kr2(cmp.gasPerKwhEvida)}</span></span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt5(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas alt inkl. <span class="d">${kr2(cmp.gasPerKwhEvida)}</span> \xB7 kun Norlys-delen ${kr2(cmp.gasPerKwh)}</span></div>`);
     const sm = cmp.same;
     if (sm) {
       const names2 = sm.months.map((k) => MONTHS3[Number(k.slice(5)) - 1]);
       const label = names2.length > 1 ? `${names2[0]}\u2013${names2[names2.length - 1]}` : names2[0];
       const d = pct3(sm.heat, sm.gas + sm.gasEvida);
-      items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt5(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r ${kr0(sm.gas)} \xB7 med Evida ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span></span></div>`);
+      items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt5(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r alt inkl. ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span> (Norlys-delen ${kr0(sm.gas)})</span></div>`);
     }
     const yr = cmp.year;
-    if (yr) items.push(`<div class="hero-item tone-ev"><span class="hi-label">Et helt \xE5r (varmen fra ${yr.gasYear})</span><span class="hi-val num"><b>${fmt5(yr.heatNow)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Fra feb. 2027: ${kr0(yr.heat2027)} \xB7 gassen kostede ${kr0(yr.gasBill)}, med Evida ca. ${kr0(yr.gasBill + yr.gasEvida)}</span></div>`);
+    if (yr) items.push(`<div class="hero-item tone-ev"><span class="hi-label">Et helt \xE5r (varmen fra ${yr.gasYear})</span><span class="hi-val num"><b>${fmt5(yr.heatNow)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Fra feb. 2027: ${kr0(yr.heat2027)} \xB7 naturgassen kostede alt inkl. ${kr0(yr.gasBill + yr.gasEvida)} (Norlys ${kr0(yr.gasBill)} + Evida/afgifter ${kr0(yr.gasEvida)})</span></div>`);
     const ks = cmp.acontoMonths;
     if (ks.length) {
       const m = this._heat.months;
@@ -72009,8 +72029,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     this._ref("years").innerHTML = "";
     this._ref("years").hidden = true;
     this._drawChart();
-    this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida-sk\xF8n</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
-    this._ref("note").textContent = `Naturgas: regningerne fordelt p\xE5 m\xE5neder; varmen = m\xB3 \xD7 ${fmt5(opts.kwhPerM3)} kWh \xD7 ${fmt5(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fra maj 2023 mangler Evidas regninger (distribution og gasafgifter), s\xE5 gassen ser for billig ud; Evida-sk\xF8nnet bruger satserne fra jan\u2013apr 2023-regningen (${fmt5(4.758, 2)} kr/m\xB3 + administration), og afgifterne har \xE6ndret sig siden. Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms og faste dele pr. dag (2027-taksten fra 1. februar 2027); dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion: HA har ingen udetemperatur fra f\xF8r 30.05.2026, s\xE5 sammenligningen er pr. kWh varme og samme m\xE5neder.`;
+    this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida + afgifter (beregnet)</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
+    this._ref("note").textContent = `Alle bel\xF8b er inkl. moms og alle afgifter og till\xE6g. Naturgas: Norlys-regningerne (gaspris, transmission, abonnement) + den del, Evida fakturerer selv fra maj 2023 \u2013 distribution, fast grundpris/kapacitet/m\xE5ler, n\xF8dforsyningstarif og statens energi-, CO2- og NOx-afgift \u2013 beregnet ud fra officielle satser for hver periode, indtil Evidas egne regninger er lagt ind (kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1, E.A.4.5.6 og E.A.7.20.6; Evida "Historiske tariffer" Evida Nord og tarifblad 01.01.2025; administrationsbidrag 2023\u201324 fra husets egen Evida-regning). Varmen = m\xB3 \xD7 ${fmt5(opts.kwhPerM3)} kWh \xD7 ${fmt5(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms + abonnement, m\xB2-bidrag og konverteringstill\xE6g pr. dag (2027-taksten fra 1. februar 2027; konverteringstill\xE6gget antaget u\xE6ndret). Dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion \u2013 HA har ingen udetemperatur fra f\xF8r 30.05.2026.`;
   }
   _drawHeat(host) {
     const months = this._heat.months;
@@ -72079,7 +72099,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       const g = groups[i];
       const title = month ? `${MONTHS_LONG2[Number(g.k.slice(5)) - 1]} ${g.k.slice(0, 4)}` : `${g.k}${g.partial ? " (indtil nu)" : ""}`;
       const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt5(v)} kr</span></div>` : "";
-      tip.innerHTML = `<h4>${esc13(title)}</h4>${row("var(--c-gas)", "Naturgas", g.gasBill)}${row("var(--c-gas)", "Evida-sk\xF8n", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
+      tip.innerHTML = `<h4>${esc13(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", "Evida + afgifter (beregnet)", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
       tip.hidden = false;
       const cx2 = pad5.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
       tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx2 - tw / 2))}px`;

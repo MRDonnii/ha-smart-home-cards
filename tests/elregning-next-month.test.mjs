@@ -58,7 +58,9 @@ const gm = hs.gasMonths([
   { start: "2025-06-01", end: "2025-06-30", amount: 300, m3: 30, note: "kun Norlys-delen" },
   { start: "2023-01-01", end: "2023-01-31", amount: 900, m3: 100, note: "heraf Evida (distribution+afgifter) 500 kr" },
 ]);
-assert.ok(gm["2025-06"].evida > 30 * 4.7 && gm["2023-01"].evida === 0);
+// Juni 2025: 30 m³ × (0,134 + 0,05957 + 1,369 + 1,922 + 0,010) × 1,25 + 1.641,15 kr/år × 30/365 × 1,25
+assert.ok(Math.abs(gm["2025-06"].evida - (30 * 3.49457 * 1.25 + (1641.15 / 365) * 30 * 1.25)) < 0.01 && gm["2023-01"].evida === 0);
+assert.equal(hs.evidaAt("2024-08-01").dist, 1.054);
 assert.equal(Math.round(gm["2025-06"].kwh), 297);
 const series = hs.heatingSeries({ gasBills: [{ start: "2025-06-01", end: "2025-06-30", amount: 300, m3: 30, note: "" }], heatBills: [{ start: "2026-06-01", end: "2026-06-30", amount: 1151.08, kwh: 1477 }], heat: hm, now: new Date(2026, 6, 10) });
 const cmpH = hs.heatingCompare(series, { m2: 179 });

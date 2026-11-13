@@ -61,9 +61,31 @@ export const DEFAULT_HEAT_TARIFFS = [
   { from: "2026-04-01", variable: 0.5963, abonnement: 500, m2_rate: 10, konvertering: 1000 },
   { from: "2027-02-01", variable: 0.6875, abonnement: 600, m2_rate: 11, konvertering: 1000 },
 ];
-// Evida-delen af gasregningen (distribution, nødforsyning, naturgasafgift, CO2, NOx + administration), inkl. moms,
-// skønnet ud fra den eneste regning med Evida på (jan–apr 2023: 914 m³, 4.471,78 kr).
-export const EVIDA_2023 = { per_m3: (0.612 + 0.2441 + 2.531 + 0.41 + 0.009) * 1.25, per_month: (98.63 * 1.25) / 4 };
+// Det, Norlys' gasregninger fra maj 2023 ikke indeholder: Evida fakturerer selv distribution, nødforsyningstarif (for
+// Energinet) og statens afgifter (energi-, CO2- og NOx-afgift) + moms. Satser ekskl. moms pr. m³ og fast kr/år, gældende
+// fra datoen (Evida Nord, privat G4-måler). Kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1 (energiafgift),
+// E.A.4.5.6 (CO2), E.A.7.20.6 (NOx); Evida "Historiske tariffer" for Evida Nord, tarifblad 01.01.2025 og Evidas
+// regneark for 2026; nødforsyning fra evida.dk/kundeservice/priser-og-betingelser. Administrationsbidrag 2023–24 (300 kr/år)
+// er regnet ud fra husets egen Evida-regning jan–apr 2023 (ikke offentliggjort); NOx 2024–25 er ikke bekræftet officielt.
+export const EVIDA_RATES = [
+  { from: "2023-01-01", dist: 0.532, nod: 0.2441, energi: 2.531, co2: 0.41, nox: 0.009, fixed: 300 },
+  { from: "2023-04-01", dist: 0.852, nod: 0.2441, energi: 2.531, co2: 0.41, nox: 0.009, fixed: 300 },
+  { from: "2023-10-01", dist: 0.852, nod: 0.03586, energi: 2.531, co2: 0.41, nox: 0.009, fixed: 300 },
+  { from: "2024-01-01", dist: 1.171, nod: 0.03586, energi: 2.726, co2: 0.442, nox: 0.009, fixed: 300 },
+  { from: "2024-07-01", dist: 1.054, nod: 0.03586, energi: 2.726, co2: 0.442, nox: 0.009, fixed: 300 },
+  { from: "2024-10-01", dist: 0.843, nod: 0.05957, energi: 2.726, co2: 0.442, nox: 0.009, fixed: 300 },
+  { from: "2025-01-01", dist: 0.134, nod: 0.05957, energi: 1.369, co2: 1.922, nox: 0.01, fixed: 1641.15 },
+  { from: "2025-10-01", dist: 0.134, nod: 0.06589, energi: 1.369, co2: 1.922, nox: 0.01, fixed: 1641.15 },
+  { from: "2026-01-01", dist: 0.134, nod: 0.06589, energi: 1.383, co2: 1.942, nox: 0.01, fixed: 1641.15 },
+];
+export const VAT = 1.25;
+export const evidaAt = (iso, rates = EVIDA_RATES) => [...rates].sort((a, b) => a.from.localeCompare(b.from)).reverse().find((r) => r.from <= iso) || rates[0];
+/** Evida-delen inkl. moms for m³ og dage i en måned: [variabel, fast]. */
+export function evidaCost(m3, days, rate) {
+  const variable = m3 * (rate.dist + rate.nod + rate.energi + rate.co2 + rate.nox) * VAT;
+  const fixed = (rate.fixed / 365) * days * VAT;
+  return [variable, fixed];
+}
 
 const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
 const isoKey = (d) => key(d.getFullYear(), d.getMonth());
@@ -112,17 +134,17 @@ export function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m
   return out;
 }
 
-/** Gas pr. måned fra regningerne (fordelt efter dage), med skønnet Evida-del hvor regningen ikke har den. */
-export function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, evida = EVIDA_2023 } = {}) {
+/** Gas pr. måned fra regningerne (fordelt efter dage) + Evida-delen beregnet ud fra officielle satser, hvor regningen ikke har den. */
+export function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, rates = EVIDA_RATES } = {}) {
   const out = {};
   for (const b of gasBills || []) {
-    const hasEvida = /Evida \(distribution/.test(b.note || "") || /heraf Evida/.test(b.note || "");
+    const hasEvida = /heraf Evida/.test(b.note || "");
     const part = monthlyFromBills([b]);
     for (const [k, r] of Object.entries(part)) {
       const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
       o.bill += r.amount;
       if (r.m3 != null) { o.m3 += r.m3; o.kwh += r.m3 * kwhPerM3 * efficiency; }
-      if (!hasEvida && r.m3 != null) o.evida += r.m3 * evida.per_m3 + evida.per_month * (r.days / r.monthDays);
+      if (!hasEvida && r.m3 != null) { const [v, f] = evidaCost(r.m3, r.days, evidaAt(`${k}-01`, rates)); o.evida += v + f; }
     }
   }
   return out;
