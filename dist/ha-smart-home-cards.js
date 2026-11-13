@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.258 */
+/* MRDonnii Smart Home Cards v0.5.259 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -67522,7 +67522,7 @@ function monthlyFromBills(bills) {
 }
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION55 = "0.2.0";
+var VERSION55 = "0.2.1";
 var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
@@ -67610,7 +67610,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
       <section class="block"><h3>M\xE5lt pr. m\xE5ned <small>tryk for at skrive regningen for m\xE5neden</small></h3><div data-months class="months"></div></section>
       <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
         <div class="grid">
-          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Gas</option></select></label>
+          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option></select></label>
           <label data-m3-field hidden><span>m\xB3 p\xE5 regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 647" data-f="m3"></label>
           <label><span>Fra</span><input type="date" data-f="start"></label>
           <label><span>Til</span><input type="date" data-f="end"></label>
@@ -67773,7 +67773,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     const cover = (r) => r && r.months < 11.5 ? `<em class="part">${num4(r.months, r.months < 1 ? 1 : 0)} af 12 mdr.</em>` : "";
     box.innerHTML = [...byYear.entries()].sort((a, b) => b[0] - a[0]).map(([y, u2]) => `<div class="year"><b class="y">${y}</b>
       ${u2.el ? `<div class="yl"><span class="u"><ha-icon icon="mdi:flash"></ha-icon>El</span><span><b>${kr(u2.el.amount)}</b>${u2.el.kwh != null ? ` \xB7 ${num4(u2.el.kwh)} kWh` : ""}${u2.el.price_kwh != null ? ` \xB7 ${num4(u2.el.price_kwh, 2)} kr/kWh` : ""}</span>${cover(u2.el)}</div>` : ""}
-      ${u2.gas ? `<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Gas</span><span><b>${kr(u2.gas.amount)}</b>${u2.gas.m3 != null ? ` \xB7 ${num4(u2.gas.m3)} m\xB3` : ""}${u2.gas.price_m3 != null ? ` \xB7 ${num4(u2.gas.price_m3, 2)} kr/m\xB3` : ""}</span>${cover(u2.gas)}</div>` : ""}
+      ${u2.gas ? `<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Naturgas</span><span><b>${kr(u2.gas.amount)}</b>${u2.gas.m3 != null ? ` \xB7 ${num4(u2.gas.m3)} m\xB3` : ""}${u2.gas.price_m3 != null ? ` \xB7 ${num4(u2.gas.price_m3, 2)} kr/m\xB3` : ""}</span>${cover(u2.gas)}</div>` : ""}
     </div>`).join("");
   }
   _gasBills(list) {
@@ -71407,7 +71407,7 @@ var sumYear = (arr2, upto = 12) => {
 
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
-var VERSION57 = "1.0.0";
+var VERSION57 = "1.0.1";
 var MONTHS3 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
@@ -71513,7 +71513,7 @@ var TEMPLATE = `
       <span class="brand-mark"><ha-icon class="ic" icon="mdi:cash-multiple"></ha-icon></span>
       <div><h2 data-ref="title"></h2><p data-ref="subtitle"></p></div>
     </div>
-    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Gas</button></div>
+    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Naturgas</button></div>
   </div>
   <div class="hero-grid" data-ref="kpis"></div>
   <div class="ctrl">

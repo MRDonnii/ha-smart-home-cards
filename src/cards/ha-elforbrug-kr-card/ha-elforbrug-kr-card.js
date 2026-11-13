@@ -10,7 +10,7 @@
 import { buildCostSeries, key, sumYear } from "./cost-series.js";
 
 const CARD_TAG = "ha-elforbrug-kr-card";
-const VERSION = "1.0.0";
+const VERSION = "1.0.1"; // 1.0.1: "Naturgas" – energy-fjernvarme-labels.js omdøber ordet "Gas" på energi-siden
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const MONTHS_LONG = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 const PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
@@ -121,7 +121,7 @@ const TEMPLATE = `
       <span class="brand-mark"><ha-icon class="ic" icon="mdi:cash-multiple"></ha-icon></span>
       <div><h2 data-ref="title"></h2><p data-ref="subtitle"></p></div>
     </div>
-    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Gas</button></div>
+    <div class="seg" data-ref="util" role="tablist" aria-label="Forsyning" hidden><button type="button" data-util="el" class="on">El</button><button type="button" data-util="gas">Naturgas</button></div>
   </div>
   <div class="hero-grid" data-ref="kpis"></div>
   <div class="ctrl">

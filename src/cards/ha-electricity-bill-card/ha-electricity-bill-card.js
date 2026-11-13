@@ -3,7 +3,7 @@ import { nextMonthEstimate } from "./next-month.js";
 import { yearlyTotals } from "./year-totals.js";
 import { keepScroll } from "../shared/keep-scroll.js";
 
-const VERSION="0.2.0";
+const VERSION="0.2.1";
 
 // 0.1.0 (Claude AI, 2026-11-01; bruger: "jeg vil egentlig også gerne kunne skrive ind hvad mine regninger lyder på og
 // sammeholde det med det vi selv måler så vi kan se hvad det burde lande på næste måned"): kortet til integrationen
@@ -15,6 +15,8 @@ const VERSION="0.2.0";
 // 0.2.0 (Claude AI, 2026-11-13; bruger: "tilføj alle de her gamle regninger, så vi kan danne et overblik" og "Der er også en
 // gas-del i HA"): "Overblik pr. år" (el kWh/kr/kr pr. kWh og gas m³/kr, fra attributten aar eller regnet her), regnings- og gas-
 // listen viser 5 og scroller resten inde i kortet (brugeren: "der skal være 5 synlige, og resten skal scrolles"), gasregninger i egen liste (Elregning 0.2.0: utility/m3), formularen kan vælge el/gas.
+// 0.2.1 (Claude AI, 2026-11-13): "Naturgas" i stedet for "Gas" – energi-siden kører /local/energy-fjernvarme-labels.js, som
+// omdøber ordet "Gas" til "Fjernvarme".
 const MONTHS=["januar","februar","marts","april","maj","juni","juli","august","september","oktober","november","december"];
 const MON=["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
 const p2=n=>String(n).padStart(2,"0");
@@ -70,7 +72,7 @@ class HAElectricityBillCard extends HTMLElement{
       <section class="block"><h3>Målt pr. måned <small>tryk for at skrive regningen for måneden</small></h3><div data-months class="months"></div></section>
       <section class="block form"><h3 data-form-title>Skriv en regning ind</h3>
         <div class="grid">
-          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Gas</option></select></label>
+          <label><span>Forsyning</span><select data-f="utility"><option value="el">El</option><option value="gas">Naturgas</option></select></label>
           <label data-m3-field hidden><span>m³ på regningen (valgfrit)</span><input type="text" inputmode="decimal" placeholder="fx 647" data-f="m3"></label>
           <label><span>Fra</span><input type="date" data-f="start"></label>
           <label><span>Til</span><input type="date" data-f="end"></label>
@@ -214,7 +216,7 @@ class HAElectricityBillCard extends HTMLElement{
     const cover=r=>r&&r.months<11.5?`<em class="part">${num(r.months,r.months<1?1:0)} af 12 mdr.</em>`:"";
     box.innerHTML=[...byYear.entries()].sort((a,b)=>b[0]-a[0]).map(([y,u])=>`<div class="year"><b class="y">${y}</b>
       ${u.el?`<div class="yl"><span class="u"><ha-icon icon="mdi:flash"></ha-icon>El</span><span><b>${kr(u.el.amount)}</b>${u.el.kwh!=null?` · ${num(u.el.kwh)} kWh`:""}${u.el.price_kwh!=null?` · ${num(u.el.price_kwh,2)} kr/kWh`:""}</span>${cover(u.el)}</div>`:""}
-      ${u.gas?`<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Gas</span><span><b>${kr(u.gas.amount)}</b>${u.gas.m3!=null?` · ${num(u.gas.m3)} m³`:""}${u.gas.price_m3!=null?` · ${num(u.gas.price_m3,2)} kr/m³`:""}</span>${cover(u.gas)}</div>`:""}
+      ${u.gas?`<div class="yl"><span class="u"><ha-icon icon="mdi:fire"></ha-icon>Naturgas</span><span><b>${kr(u.gas.amount)}</b>${u.gas.m3!=null?` · ${num(u.gas.m3)} m³`:""}${u.gas.price_m3!=null?` · ${num(u.gas.price_m3,2)} kr/m³`:""}</span>${cover(u.gas)}</div>`:""}
     </div>`).join("");
   }
   _gasBills(list){
