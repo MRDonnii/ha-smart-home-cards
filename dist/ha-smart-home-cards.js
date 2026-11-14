@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.263 */
+/* MRDonnii Smart Home Cards v0.5.264 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -39034,7 +39034,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       const heatDayPrimary = this.number(cfg.daily_entity);
       const heatDayFallback = this.number(cfg.fallback_daily_entity);
       const heatDay = Number.isFinite(heatDayPrimary) ? heatDayPrimary : heatDayFallback;
-      detail = Number.isFinite(heatDay) ? heatDay >= 100 ? `${this.fmt(heatDay / 1e3, 1)} MWh` : `${this.fmt(heatDay, 0)} kWh` : Number.isFinite(pressure) ? `${this.fmt(pressure, 1)} bar` : "Afventer";
+      detail = Number.isFinite(heatDay) ? `${this.fmt(heatDay, 0)} kWh` : Number.isFinite(pressure) ? `${this.fmt(pressure, 1)} bar` : "Afventer";
       const cheapest = this.text(cfg.source_entity, "").toLowerCase();
       let sourceIcon = "mdi:help-circle-outline";
       let sourceText = "?";

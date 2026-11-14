@@ -661,10 +661,9 @@ class HaHomeStatusCard extends HTMLElement {
       const heatDay = Number.isFinite(heatDayPrimary)
         ? heatDayPrimary
         : heatDayFallback;
+      // Always kWh (Claude AI, 2026-11-14; user: "0,1 MWh" over 100 kWh should stay kWh).
       detail = Number.isFinite(heatDay)
-        ? heatDay >= 100
-          ? `${this.fmt(heatDay / 1000, 1)} MWh`
-          : `${this.fmt(heatDay, 0)} kWh`
+        ? `${this.fmt(heatDay, 0)} kWh`
         : Number.isFinite(pressure)
           ? `${this.fmt(pressure, 1)} bar`
           : "Afventer";
