@@ -20,7 +20,8 @@ import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 import { roomComfort, comfortScale } from "../shared/comfort.js";
 
-const VERSION = "1.8.0";
+const VERSION = "1.9.0";
+const isEnt = (id) => typeof id === "string" && id.includes(".");
 const TAG = "ha-room-climate-card";
 const DASH = "—";
 const SPARK_W = 240;
@@ -45,6 +46,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .flow ha-icon{--mdc-icon-size:22px;color:var(--rc-muted)}
 .flow span{display:block;color:var(--rc-muted);font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .flow strong{display:block;margin-top:2px;font-size:13.5px;font-weight:800}
+.flow.curve{margin-top:8px}.flow.curve[hidden]{display:none}.flow.curve.warn strong{color:#f5a524}.flow.curve.ok strong{color:var(--rc-ok)}
+.head-side{display:flex;flex-direction:column}
 .flow-line{position:absolute;left:14px;right:14px;bottom:6px;height:2px;border-radius:2px;background:rgba(255,255,255,.08)}
 .flow.on ha-icon{color:var(--rc-hot);filter:drop-shadow(0 0 8px rgba(255,138,61,.6))}
 .flow.on .flow-line{background:linear-gradient(90deg,transparent,var(--rc-hot2),var(--rc-hot),transparent);background-size:200% 100%;animation:flow 1.6s linear infinite}
@@ -96,6 +99,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .badge.show{display:grid}.badge ha-icon{--mdc-icon-size:16px}
 .badge.window{color:var(--rc-open);background:color-mix(in srgb,var(--rc-open) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-open) 45%,transparent)}
 .badge.learn.show{display:inline-flex;align-items:center;gap:3px;width:auto;padding:0 8px 0 7px;color:#f5a524;background:color-mix(in srgb,#f5a524 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#f5a524 45%,transparent)}.badge.learn b{font-size:11px;font-weight:800;white-space:nowrap}
+.badge.mould.show{display:inline-flex;align-items:center;gap:3px;width:auto;padding:0 8px 0 7px;color:#f5a524;background:color-mix(in srgb,#f5a524 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#f5a524 45%,transparent)}.badge.mould.bad{color:var(--rc-danger);background:color-mix(in srgb,var(--rc-danger) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-danger) 45%,transparent)}.badge.mould b{font-size:11px;font-weight:800}
+.badge.sun{color:#facc15;background:color-mix(in srgb,#facc15 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,#facc15 45%,transparent)}
 .badge.battery{color:var(--rc-danger);background:color-mix(in srgb,var(--rc-danger) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-danger) 45%,transparent)}
 .badge.ac.on{color:var(--room-color);background:color-mix(in srgb,var(--room-color) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent);animation:badge 2.2s ease-in-out infinite}
 
@@ -276,7 +281,7 @@ const POPUP_STYLE = `
 .pc{display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:99px;color:var(--rc-muted);background:rgba(255,255,255,.06);font-size:11.5px;font-weight:750;white-space:nowrap}
 .pc ha-icon{--mdc-icon-size:15px;color:var(--pcc,var(--rc-muted))}
 .pc.warn{color:var(--rc-warm);background:color-mix(in srgb,var(--rc-warm) 14%,transparent)}.pc.warn ha-icon{color:var(--rc-warm)}
-.pc[hidden]{display:none}
+.pc[hidden]{display:none}.pc.bad{color:var(--rc-danger);background:color-mix(in srgb,var(--rc-danger) 14%,transparent)}.pc.bad ha-icon{color:var(--rc-danger)}
 .tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));margin:20px 24px 0;padding:5px;border-radius:18px;background:rgba(10,14,20,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .tabs .ind{position:absolute;left:5px;top:5px;bottom:5px;width:calc((100% - 10px) / var(--n));border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--room-color) 30%,transparent),color-mix(in srgb,var(--room-color) 12%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent),0 6px 18px -8px var(--room-color);transform:translateX(calc(var(--i) * 100%));transition:transform .38s cubic-bezier(.2,1.1,.3,1)}
 .tab{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 6px;border:0;border-radius:13px;background:none;color:var(--rc-muted);font-size:12.5px;font-weight:800;cursor:pointer;transition:color .25s}
@@ -452,8 +457,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const zones = indexed.filter(({ room }) => !room.outdoor && room.climate);
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId = (id) => typeof id === "string" && id.includes(".");
-    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, ...(room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : [])].filter(isId));
-    this._summaryIds = [this._config.total_demand, this._config.data_problem].filter(isId);
+    this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, room.mould, room.sun, ...(room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : [])].filter(isId));
+    this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice].filter(isId);
     const esc = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
     const gauge = (key, icon, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span><strong>${DASH}</strong><i></i></div>`;
@@ -465,6 +470,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
           <span class="z-title"><strong>${esc(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller dør er åben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
+            <span class="badge sun" data-b="sun" title="Solen varmer rummet – målet er sænket midlertidigt"><ha-icon icon="mdi:weather-sunny"></ha-icon></span>
+            <span class="badge mould" data-b="mould" title="Fugt ved væggens koldeste punkt (skimmelrisiko)"><ha-icon icon="mdi:wall"></ha-icon><b></b></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
             <span class="badge learn" data-b="learn" title="AC'en lærer anlæggets Follow Me – se AC-fanen"><ha-icon icon="mdi:school-outline"></ha-icon><b></b></span>
           </span>
@@ -515,7 +522,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
         <div class="shell">
           <header class="head">
             <div><div class="eyebrow"><i class="live"></i>Rumklima · live</div><h2>${esc(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner · ${sensors.length} målepunkter</p></div>
-            <div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH}</strong></div><i class="flow-line"></i></div>
+            <div class="head-side"><div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH}</strong></div><i class="flow-line"></i></div>
+            <div class="flow curve" data-s="curve" ${isEnt(this._config.flow_advice) ? "" : "hidden"}><ha-icon icon="mdi:thermometer-auto"></ha-icon><div><span>Anbefalet fremløb</span><strong data-s="curveText">${DASH}</strong></div></div></div>
           </header>
           <div class="notice" data-s="notice"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Rumoptimeringen melder et dataproblem – tallene for ventiler og varme kan være ufuldstændige.</span></div>
           <section class="group"><div class="group-head"><h3>Rum</h3><span class="count">${zones.length + sensors.length}</span><i class="rule"></i><div class="legend">${legend}</div></div>
@@ -549,11 +557,11 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       const f = (name) => host.querySelector(`[data-f="${name}"]`);
       return { kind, host, view: "", status: f("status"), temp: f("temp"), target: f("target"), meta: f("meta"), feels: f("feels"), humidity: f("humidity"), humbar: f("humbar"), day: f("day"), rail: f("rail"), step: f("step"), visual: f("visual"), visualKind: "",
         gauges: Object.fromEntries(["humidity", "co2", "valve", "feels", "battery"].map((n) => [n, host.querySelector(`.gauges [data-m="${n}"]`)])),
-        badges: { window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]'), learn: host.querySelector('[data-b="learn"]') }, spark: sparkRefs(host) };
+        badges: { sun: host.querySelector('[data-b="sun"]'), mould: host.querySelector('[data-b="mould"]'), window: host.querySelector('[data-b="window"]'), battery: host.querySelector('[data-b="battery"]'), ac: host.querySelector('[data-b="ac"]'), learn: host.querySelector('[data-b="learn"]') }, spark: sparkRefs(host) };
     });
     const s = (name) => root.querySelector(`[data-s="${name}"]`);
     const stat = (name) => { const el = s(name); return el ? { el, value: el.querySelector("strong"), sub: el.querySelector("em") } : undefined; };
-    this._summary = { view: "", flow: s("flow"), flowText: s("flowText"), avg: s("avg"), band: s("band"), coldest: s("coldest"), warmest: s("warmest"), notice: s("notice"),
+    this._summary = { view: "", flow: s("flow"), flowText: s("flowText"), curve: s("curve"), curveText: s("curveText"), avg: s("avg"), band: s("band"), coldest: s("coldest"), warmest: s("warmest"), notice: s("notice"),
       dots: [...root.querySelectorAll("[data-dot]")].map((el) => ({ el, index: Number(el.dataset.dot) })), heat: stat("heat"), open: stat("open"), ac: stat("ac"), demand: stat("demand") };
     this._zonesEl = root.querySelector(".zones");
     this._tilesEl = root.querySelector(".zones > .tiles");
@@ -607,7 +615,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const refs = this._refs[index]; if (!refs) return;
     const room = this._config.rooms[index];
     const wx = room.outdoor && this._premium ? [this._wxRev, Math.floor(Date.now() / 60000), ...[room.weather, room.observed, room.rain_today, room.degree_days].map((id) => this._hass?.states?.[id]?.last_updated)].join(",") : "";
-    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._statsRevision, Math.floor(Date.now() / 600000), this._premium ? 1 : 0, wx].join("|");
+    const view = [model.accent, model.status, model.acActive ? this._acMiniLabel(model) : "", model.current, model.target, this._pending[index]?.value, model.humidity, model.air?.co2, model.valve, model.feels, model.batteryMin, model.windowOpen, model.acActive, model.ac?.learnLeft, model.heating, this._mould(room), this._sunActive(room), this._statsRevision, Math.floor(Date.now() / 600000), this._premium ? 1 : 0, wx].join("|");
     if (refs.view === view) return; refs.view = view;
     if (refs.kind === "zone") this._renderZone(room, refs, model, index);
     else if (refs.kind === "sensor") this._renderTile(room, refs, model);
@@ -658,6 +666,11 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     refs.gauges.battery?.classList.toggle("mid", model.batteryMin !== undefined && !model.batteryLow && model.batteryMin <= 40);
     refs.badges.window?.classList.toggle("show", model.windowOpen);
     refs.badges.battery?.classList.toggle("show", model.batteryLow);
+    const mould = this._mould(room);
+    refs.badges.mould?.classList.toggle("show", mould !== undefined && mould >= 70);
+    refs.badges.mould?.classList.toggle("bad", mould !== undefined && mould >= 80);
+    if (mould !== undefined && mould >= 70) this._setText(refs.badges.mould.querySelector("b"), `${this._format(mould, 0)} %`);
+    refs.badges.sun?.classList.toggle("show", this._sunActive(room));
     const learnLeft = model.acActive ? model.ac?.learnLeft : null;
     refs.badges.learn?.classList.toggle("show", learnLeft != null);
     if (learnLeft != null) this._setText(refs.badges.learn.querySelector("b"), `${learnLeft} min`);
@@ -925,6 +938,8 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
                 <span class="pc" data-c="feels"><ha-icon icon="mdi:thermometer"></ha-icon><span></span></span>
                 <span class="pc" data-c="valve" style="--pcc:var(--rc-hot)"><ha-icon icon="mdi:valve"></ha-icon><span></span></span>
                 <span class="pc" data-c="battery" style="--pcc:var(--rc-ok)"><ha-icon icon="mdi:battery-outline"></ha-icon><span></span></span>
+                ${isEnt(room.mould) ? '<span class="pc" data-c="mould" style="--pcc:#a16207"><ha-icon icon="mdi:wall"></ha-icon><span></span></span>' : ""}
+                ${isEnt(room.sun) ? '<span class="pc" data-c="sun" style="--pcc:#facc15"><ha-icon icon="mdi:weather-sunny"></ha-icon><span></span></span>' : ""}
                 <span class="pc warn" data-c="window"><ha-icon icon="mdi:window-open-variant"></ha-icon><span>Åben</span></span>
               </div>
             </div>
@@ -957,6 +972,35 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     content.querySelector('[data-c="battery"]')?.classList.toggle("warn", !!model.batteryLow);
     this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/dør åben" : undefined);
+    const mould = this._mould(room);
+    chip("mould", mould === undefined ? undefined : `Skimmelrisiko ${this._format(mould, 0)} %`);
+    content.querySelector('[data-c="mould"]')?.classList.toggle("warn", mould !== undefined && mould >= 70 && mould < 80);
+    content.querySelector('[data-c="mould"]')?.classList.toggle("bad", mould !== undefined && mould >= 80);
+    chip("sun", this._sunActive(room) ? "Sol – sænket 1°" : undefined);
+  }
+
+  // Humidity at the room's coldest wall point (DIN 4108-2), from the room's `mould` sensor.
+  _mould(room) {
+    const v = Number(this._hass?.states?.[room.mould]?.state);
+    return isEnt(room.mould) && Number.isFinite(v) ? v : undefined;
+  }
+
+  _sunActive(room) { return isEnt(room.sun) && this._hass?.states?.[room.sun]?.state === "on"; }
+
+  _renderSummary(models) {
+    super._renderSummary(models);
+    const sm = this._summary; const id = this._config.flow_advice;
+    if (!sm?.curve || !isEnt(id)) return;
+    const st = this._hass?.states?.[id]; const v = Number(st?.state); const adj = Number(st?.attributes?.justering_k);
+    let text = "Samler data", tone = "";
+    if (st && st.state !== "" && Number.isFinite(v) && Number.isFinite(adj)) {
+      if (Math.abs(adj) < 0.75) { text = `Passer · ${this._format(v)}°`; tone = "ok"; }
+      else if (adj > 0) { text = `For lavt · ${this._format(v)}°`; tone = "warn"; }
+      else { text = `Kan sænkes · ${this._format(v)}°`; tone = "warn"; }
+    }
+    sm.curve.classList.toggle("ok", tone === "ok"); sm.curve.classList.toggle("warn", tone === "warn");
+    sm.curve.title = st?.attributes?.vurdering || "";
+    this._setText(sm.curveText, text);
   }
 
   async _mountPopupCards(content, room) {
