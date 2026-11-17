@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.265 */
+/* MRDonnii Smart Home Cards v0.5.266 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -34494,7 +34494,7 @@ function roomComfort(room, temp, humidity, co2) {
 var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.9.0";
+var VERSION25 = "1.9.1";
 var isEnt = (id) => typeof id === "string" && id.includes(".");
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
@@ -35004,7 +35004,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, room.mould, room.sun, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
-    this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice].filter(isId2);
+    this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice, this._config.flow_advice_adjust].filter(isId2);
     const esc14 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key2, icon5, label) => `<div class="g na" data-m="${key2}"><ha-icon icon="${icon5}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
@@ -35728,7 +35728,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     if (!sm?.curve || !isEnt(id)) return;
     const st = this._hass?.states?.[id];
     const v = Number(st?.state);
-    const adj = Number(st?.attributes?.justering_k);
+    const adj = Number(st?.attributes?.justering_k ?? this._hass?.states?.[this._config.flow_advice_adjust]?.state);
     let text = "Samler data", tone3 = "";
     if (st && st.state !== "" && Number.isFinite(v) && Number.isFinite(adj)) {
       if (Math.abs(adj) < 0.75) {

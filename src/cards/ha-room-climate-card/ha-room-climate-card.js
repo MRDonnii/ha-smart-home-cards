@@ -20,7 +20,7 @@ import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 import { roomComfort, comfortScale } from "../shared/comfort.js";
 
-const VERSION = "1.9.0";
+const VERSION = "1.9.1";
 const isEnt = (id) => typeof id === "string" && id.includes(".");
 const TAG = "ha-room-climate-card";
 const DASH = "—";
@@ -458,7 +458,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const sensors = indexed.filter(({ room }) => !room.outdoor && !room.climate);
     const isId = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, room.mould, room.sun, ...(room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : [])].filter(isId));
-    this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice].filter(isId);
+    this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice, this._config.flow_advice_adjust].filter(isId);
     const esc = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH}</span></div>` : ""}</div>`;
     const gauge = (key, icon, label) => `<div class="g na" data-m="${key}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span><strong>${DASH}</strong><i></i></div>`;
@@ -991,7 +991,9 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     super._renderSummary(models);
     const sm = this._summary; const id = this._config.flow_advice;
     if (!sm?.curve || !isEnt(id)) return;
-    const st = this._hass?.states?.[id]; const v = Number(st?.state); const adj = Number(st?.attributes?.justering_k);
+    const st = this._hass?.states?.[id]; const v = Number(st?.state);
+    // The adjustment comes from the sensor's justering_k attribute, or from its own sensor (UI template helpers have no attributes).
+    const adj = Number(st?.attributes?.justering_k ?? this._hass?.states?.[this._config.flow_advice_adjust]?.state);
     let text = "Samler data", tone = "";
     if (st && st.state !== "" && Number.isFinite(v) && Number.isFinite(adj)) {
       if (Math.abs(adj) < 0.75) { text = `Passer · ${this._format(v)}°`; tone = "ok"; }
