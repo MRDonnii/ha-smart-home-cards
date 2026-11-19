@@ -17,12 +17,20 @@
 
 import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 import { chartHover } from "../../shared/chart-hover.js";
+import { rsClock, rsDateInput, rsDays, rsEpoch, rsLabel, rsNext, rsOnceAt, rsQuickDate, rsTime } from "../../shared/ready-schedule.js";
 
-const TTD_VERSION = "1.22.0";
+const TTD_VERSION = "1.23.0";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 const TTD_TAG = "th-tesla-dashboard-card";
+// "Klar kl." (Claude AI): helpers the dashboard config points at; without the required ones the feature does not exist.
+const TTD_RS_REQUIRED = ["weekly", "time", "days", "once"];
+const TTD_RS_KEYS = [...TTD_RS_REQUIRED, "temperature", "lead", "stop_after", "min_battery", "allow_away", "last_goal", "stop_at", "status", "route"];
+const TTD_RS_DAYS = [[1, "Man"], [2, "Tir"], [3, "Ons"], [4, "Tor"], [5, "Fre"], [6, "Lør"], [7, "Søn"]];
+const TTD_RS_LEAD = [5, 10, 15, 20, 30, 45, 60];
+const TTD_RS_STOP = [5, 10, 15, 20, 30];
+const TTD_RS_BATTERY = [10, 15, 20, 25, 30, 35, 40, 50, 60];
 const TTD_DASH = "—";
 const TTD_EMPTY_STATES = new Set(["", "unknown", "unavailable", "none", "null", "undefined", "nan"]);
 // Car controls: key, label, icon, the entity's domain.
@@ -494,6 +502,8 @@ function ttdNormalizeConfig(raw) {
     carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, ttdIdList(config.car_controls?.[key])])
       .filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
+    readySchedule: config.layout !== "charge" && TTD_RS_REQUIRED.every((key) => typeof config.ready_schedule?.[key] === "string" && config.ready_schedule[key].includes("."))
+      ? Object.fromEntries(TTD_RS_KEYS.map((key) => [key, config.ready_schedule[key] || null])) : null,
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
     plan: TTD_PLAN_ENTITY_KEYS.some((key) => entities[key]) || TTD_PLAN_CONTROL_KEYS.some((key) => controls[key])
@@ -731,7 +741,7 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
 </section>
 ${cfg.tyres !== false ? `<section class="panel tyres" data-r="tyres" aria-label="Hjul" hidden><div data-r="tyresHost"></div></section>` : ""}` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "Åbn hele Tesla-oversigten" : "Flere indstillinger på Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
-</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}<dialog class="rb-dlg ce-dlg" data-r="ceDlg" aria-label="Ret opladning"><div class="rb ce" data-r="ceBody"></div></dialog></div>`;
+</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}<dialog class="rb-dlg ce-dlg" data-r="ceDlg" aria-label="Ret opladning"><div class="rb ce" data-r="ceBody"></div></dialog>${cfg.readySchedule && cfg.carControls.climate ? `<dialog class="rb-dlg" data-r="rsDlg" aria-label="Klar kl."><div class="rb" data-r="rsBody"></div></dialog>` : ""}</div>`;
 }
 
 const TTD_STYLES = `
@@ -1262,6 +1272,24 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .qcp-hold-p{display:grid;grid-template-columns:minmax(0,1fr) 78px auto;gap:6px;align-items:center;font-size:12px;color:var(--tdc-muted)}
 .qcp-hold-p input{min-width:0;height:32px;padding:0 8px;border-radius:9px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-text) 5%,transparent);color:var(--tdc-text);font:inherit;font-size:14px}
 .qcp-more{justify-self:center;border:0;background:transparent;color:var(--tdc-muted);font-size:13px;cursor:pointer;padding:2px 6px}.qcp-more:hover{color:var(--tdc-blue)}
+.qcp-rs{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:7px 10px;border-radius:14px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);text-align:left;cursor:pointer}
+.qcp-rs ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}.qcp-rs[data-on]>ha-icon:first-child{color:var(--tdc-blue)}
+.qcp-rs span{display:grid;min-width:0}.qcp-rs b{font-size:13.5px;font-weight:650}.qcp-rs small{font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-r=rsBody] .rb-x{width:44px;height:44px}[data-r=rsBody] [data-rsact=onceset]{min-height:44px}
+.rs-two select{-webkit-appearance:none;appearance:none;padding-right:30px;background-color:color-mix(in srgb,var(--tdc-text) 5%,var(--tdc-dlg-bg,#121821));color:var(--tdc-text);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.rs-seg{grid-template-columns:repeat(3,minmax(0,1fr))}.rs-seg button{min-height:44px}
+.rs-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rs-two .rb-f input,.rs-two .rb-f select{min-height:44px}
+.rs-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.rs-days button{display:grid;place-items:center;text-align:center;min-height:44px;padding:0;border-radius:10px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-muted);font-size:13px;font-weight:650;cursor:pointer}
+.rs-days button[aria-pressed="true"]{background:var(--tdc-blue);border-color:transparent;color:var(--text-primary-color,#fff)}
+.rs-tog{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:44px;padding:0;border:0;background:none;color:var(--tdc-text);text-align:left;font-size:14px;font-weight:600;cursor:pointer}
+.rs-tog small{display:block;font-size:12px;font-weight:400;color:var(--tdc-muted)}
+.rs-tog[aria-checked="true"] .qcp-tog{background:var(--tdc-blue)}.rs-tog[aria-checked="true"] .qcp-tog::after{transform:translateX(16px)}
+.rs-temp{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;text-align:center}.rs-temp b{font-size:18px}
+.rs-temp button{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);cursor:pointer}
+.rs-msg{margin:0;font-size:13px;font-weight:600;color:var(--tdc-red)}.rs-msg:empty{display:none}
+.rs-foot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rs-foot .btn{min-height:46px}
+.rs-cancel{background:color-mix(in srgb,var(--tdc-text) 8%,transparent);color:var(--tdc-text)}
 .qc-pop .cc-num{margin-top:0;grid-template-columns:auto 1fr}.qc-pop .cc-num input{grid-column:1/-1}
 @container ttd (max-width:699px){.qc{grid-area:2/1/3/3;margin-left:0}.qc{gap:4px;padding:4px}.qc-b{height:36px;min-width:34px;padding:0 6px;font-size:12px;gap:3px}.qc-b ha-icon{--mdc-icon-size:18px}}
 @container ttd (max-width:380px){.qc{gap:4px}.qc-b{min-width:32px;padding:0 5px}.qc-b ha-icon{--mdc-icon-size:18px}}
@@ -1408,6 +1436,8 @@ class ThTeslaDashboardCard extends HTMLElement {
       if (["kwh", "per", "total"].includes(el?.dataset?.cein)) setTimeout(() => { if (this.shadowRoot.activeElement === el) el.select(); }, 0);
     });
     this.shadowRoot.addEventListener("input", (event) => this._onInput(event));
+    this.shadowRoot.addEventListener("input", (event) => { if (event.target?.dataset?.rsin) this._rsInput(event.target); });
+    this.shadowRoot.addEventListener("change", (event) => { if (event.target?.dataset?.rsin) this._rsInput(event.target); });
     this.shadowRoot.addEventListener("keydown", (event) => this._onKey(event));
     this.shadowRoot.addEventListener("focusout", (event) => this._commitInput(event.target));
   }
@@ -2122,6 +2152,7 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._attrSet(capEl, "data-tone", cap[1] || null);
     }
     this._applyQcPop(st, f, busyFor);
+    this._rsLive();
     for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
       const key = input.dataset.ccnum; const o = st(key); const a = o?.attributes || {};
       const pending = this._ccPending?.key === key ? this._ccPending.value : null;
@@ -2159,7 +2190,7 @@ class ThTeslaDashboardCard extends HTMLElement {
         <div class="qcp-hold">
           <button type="button" class="qcp-hold-t" data-qchold aria-pressed="false">${ttdIcon("mdi:battery-charging-80")}<span><b>Hold batteriet på målet</b><small data-qcp="holdsub"></small></span><i class="qcp-tog" aria-hidden="true"></i></button>
           <label class="qcp-hold-p"><span>Kun når strømmen koster højst</span><input type="number" step="0.05" min="0" inputmode="decimal" data-qcholdprice aria-label="Maks pris pr. kWh"><small data-qcp="holdunit">kr/kWh</small></label>
-        </div>` : ""}`
+        </div>` : ""}${this._rs() ? `<button type="button" class="qcp-rs" data-rsopen>${ttdIcon("mdi:clock-check-outline")}<span><b>Klar kl.</b><small data-qcp="rs"></small></span>${ttdIcon("mdi:chevron-right")}</button>` : ""}`
       : `${head(false)}<div class="cc-num"><b data-ccv="${key}">${TTD_DASH}</b><input type="range" data-ccnum="${key}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>Åbn i Home Assistant ›</button>`;
     this._applyCarControls();
     // Not room above the buttons inside the card (a phone): open downwards instead.
@@ -2223,6 +2254,12 @@ class ThTeslaDashboardCard extends HTMLElement {
         const unit = pop.querySelector('[data-qcp="holdunit"]');
         const u = ttdUnit(limit?.attributes?.unit_of_measurement || "kr/kWh");
         if (unit && unit.textContent !== u) unit.textContent = u;
+      }
+      const rsRow = pop.querySelector("[data-rsopen]"); const rs = rsRow ? this._rs() : null;
+      if (rsRow && rs) {
+        this._attrSet(rsRow, "data-on", !!rs.next);
+        const line = pop.querySelector('[data-qcp="rs"]'); const text = this._rsLine(rs);
+        if (line && line.textContent !== text) line.textContent = text;
       }
       const target = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
       const tEl = pop.querySelector('[data-qcp="temp"]');
@@ -2305,6 +2342,187 @@ class ThTeslaDashboardCard extends HTMLElement {
       this._ccCall("climate_temp", "climate", "climate", "set_temperature", { entity_id: id, temperature: t },
         (s) => Math.abs(Number(s.attributes?.temperature) - t) < 0.01, `Sætter ${this._format().number(t, 1)} °C…`, `Klima sat til ${this._format().number(t, 1)} °C`);
     }, 1200);
+  }
+
+  /* ------------------------------------------------- "Klar kl." (Claude AI) */
+
+  /** The saved plan as the helpers hold it; null when the feature is not configured (nothing is shown or sent then). */
+  _rs() {
+    const cfg = this._cfg?.readySchedule; const states = this._hass?.states;
+    if (!cfg || !states || !this._cfg.carControls.climate) return null;
+    if (TTD_RS_REQUIRED.some((key) => !states[cfg[key]])) return null;
+    const value = (key) => (cfg[key] ? states[cfg[key]]?.state : undefined);
+    const number = (key, fallback) => { const n = Number(value(key)); return value(key) != null && Number.isFinite(n) ? n : fallback; };
+    const nowS = Math.floor(Date.now() / 1000);
+    const plan = {
+      nowS, weeklyOn: value("weekly") === "on", time: String(value("time") || "").slice(0, 5), days: rsDays(value("days")),
+      onceS: rsEpoch(value("once")), lastS: rsEpoch(value("last_goal")), stopS: rsEpoch(value("stop_at")),
+      temperature: number("temperature", 21), leadMin: number("lead", 20), stopAfter: number("stop_after", 15),
+      minBattery: number("min_battery", 30), allowAway: value("allow_away") === "on", status: String(value("status") || ""), route: String(value("route") || ""),
+    };
+    plan.next = rsNext({ ...plan, days: plan.days.join(",") });
+    return plan;
+  }
+
+  /** One line: warming now, the next run, or that nothing is planned. */
+  _rsLine(plan) {
+    if (plan.stopS > plan.nowS) return `Varmer nu · stopper senest kl. ${rsClock(plan.stopS)}`;
+    return rsLabel(plan.next, plan.nowS);
+  }
+
+  _rsOpen() {
+    const dlg = this._r.rsDlg; const plan = this._rs();
+    if (!dlg || !plan) return;
+    if (this._qcOpen) this._openQc(this._qcOpen);
+    this._rsDraft = { weeklyOn: plan.weeklyOn, time: plan.time || "07:00", days: [...plan.days], temperature: plan.temperature,
+      leadMin: plan.leadMin, stopAfter: plan.stopAfter, minBattery: plan.minBattery, allowAway: plan.allowAway,
+      onceChoice: "tomorrow", onceDate: rsQuickDate("tomorrow", plan.nowS), onceTime: plan.time || "07:00" };
+    this._rsRender(plan);
+    if (!dlg.open) { if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", ""); }
+  }
+
+  _rsClose() {
+    const dlg = this._r.rsDlg;
+    if (dlg?.open) { if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute("open"); }
+    this._rsDraft = null;
+  }
+
+  _rsOptions(list, current, unit) {
+    const values = [...new Set([...list, current])].filter(Number.isFinite).sort((a, b) => a - b);
+    return values.map((value) => `<option value="${value}"${value === current ? " selected" : ""}>${value} ${unit}</option>`).join("");
+  }
+
+  /** The one-time part: the planned time with Annullér, or the form to set one. */
+  _rsOnceHtml(plan) {
+    const d = this._rsDraft;
+    if (plan.onceS > plan.nowS) {
+      const once = rsNext({ nowS: plan.nowS, weeklyOn: false, onceS: plan.onceS, leadMin: plan.leadMin });
+      return `<div class="rb-once-on"><div><b>${rsLabel(once, plan.nowS)}</b><small>Varmen starter kl. ${rsClock(once.start)}. Ugeplanen er uændret.</small></div><button type="button" class="btn stop" data-rsact="oncecancel">Annullér</button></div>`;
+    }
+    const choice = (key, label) => `<button type="button" role="radio" aria-checked="${d.onceChoice === key}" data-rsact="choice" data-rschoice="${key}">${label}</button>`;
+    return `<div class="rb-seg rs-seg" role="radiogroup" aria-label="Dag">${choice("today", "I dag")}${choice("tomorrow", "I morgen")}${choice("date", "Dato")}</div>
+      <div class="rs-two"><label class="rb-f" data-rsdatebox${d.onceChoice === "date" ? "" : " hidden"}>Dato<input type="date" data-rsin="onceDate" min="${rsDateInput(plan.nowS)}" value="${d.onceDate}"></label>
+      <label class="rb-f">Klar kl.<input type="time" data-rsin="onceTime" value="${d.onceTime}"></label></div>
+      <button type="button" class="btn go" data-rsact="onceset">Sæt engangstid</button>`;
+  }
+
+  _rsRender(plan) {
+    const body = this._r.rsBody; const d = this._rsDraft;
+    if (!body || !d) return;
+    const days = TTD_RS_DAYS.map(([day, label]) => `<button type="button" aria-pressed="${d.days.includes(day)}" data-rsact="day" data-rsday="${day}">${label}</button>`).join("");
+    body.innerHTML = `<div class="rb-h"><span class="rb-hi">${ttdIcon("mdi:clock-check-outline")}</span><div><h3>Klar kl.</h3><p data-rs="line"></p></div><button type="button" class="rb-x" data-rsact="close" aria-label="Luk">${ttdIcon("mdi:close")}</button></div>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:calendar-today")}Engang</h4><div class="rb-week" data-rs="once">${this._rsOnceHtml(plan)}</div><p class="rs-msg" role="alert" data-rs="oncemsg"></p></section>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:calendar-week")}Ugeplan</h4>
+        <button type="button" class="rs-tog" role="switch" aria-checked="${d.weeklyOn}" data-rsact="weekly"><span>Varm bilen op efter ugeplanen</span><i class="qcp-tog" aria-hidden="true"></i></button>
+        <label class="rb-f">Klar kl.<input type="time" data-rsin="time" value="${d.time}"></label>
+        <div class="rs-days" role="group" aria-label="Ugedage">${days}</div></section>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:tune-variant")}Indstillinger</h4>
+        <div class="rs-temp"><button type="button" data-rsact="temp" data-rsstep="-0.5" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-rs="temp"></b><button type="button" data-rsact="temp" data-rsstep="0.5" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div>
+        <div class="rs-two"><label class="rb-f">Start før klar-tid<select data-rsin="leadMin">${this._rsOptions(TTD_RS_LEAD, d.leadMin, "min")}</select></label>
+        <label class="rb-f">Stop efter klar-tid<select data-rsin="stopAfter">${this._rsOptions(TTD_RS_STOP, d.stopAfter, "min")}</select></label>
+        <label class="rb-f">Mindste batteri uden lader<select data-rsin="minBattery">${this._rsOptions(TTD_RS_BATTERY, d.minBattery, "%")}</select></label></div>
+        <button type="button" class="rs-tog" role="switch" aria-checked="${d.allowAway}" data-rsact="away"><span>Også når bilen ikke er hjemme<small>Ellers springes starten over</small></span><i class="qcp-tog" aria-hidden="true"></i></button>
+        <p class="rb-note" data-rs="status"></p></section>
+      <p class="rs-msg" role="alert" data-rs="msg"></p>
+      <div class="rs-foot"><button type="button" class="btn rs-cancel" data-rsact="close">Luk</button><button type="button" class="btn go" data-rsact="save">Gem</button></div>`;
+    this._rsOnceSig = plan.onceS > plan.nowS ? plan.onceS : 0;
+    this._rsTemp();
+    this._rsLive();
+  }
+
+  _rsTemp() {
+    const el = this._r.rsBody?.querySelector('[data-rs="temp"]');
+    if (el) el.textContent = `${this._format().number(this._rsDraft.temperature, 1)} °C`;
+  }
+
+  /** What the car or the automation changes while the popup is open; the form being filled in is left alone. */
+  _rsLive() {
+    const body = this._r.rsBody; const dlg = this._r.rsDlg;
+    if (!body || !dlg?.open || !this._rsDraft) return;
+    const plan = this._rs();
+    if (!plan) return;
+    const line = body.querySelector('[data-rs="line"]'); const text = this._rsLine(plan);
+    if (line && line.textContent !== text) line.textContent = text;
+    const status = body.querySelector('[data-rs="status"]');
+    const note = [plan.status, plan.route].filter((part) => part && !["unknown", "unavailable"].includes(part)).join(" · ");
+    if (status && status.textContent !== note) status.textContent = note;
+    const sig = plan.onceS > plan.nowS ? plan.onceS : 0;
+    if (sig !== this._rsOnceSig) {
+      this._rsOnceSig = sig;
+      const box = body.querySelector('[data-rs="once"]');
+      if (box) box.innerHTML = this._rsOnceHtml(plan);
+    }
+  }
+
+  _rsInput(input) {
+    const d = this._rsDraft; const key = input.dataset.rsin;
+    if (!d) return;
+    d[key] = ["leadMin", "stopAfter", "minBattery"].includes(key) ? Number(input.value) : input.value;
+  }
+
+  _rsMsg(which, text) {
+    const el = this._r.rsBody?.querySelector(`[data-rs="${which}"]`);
+    if (el) el.textContent = text;
+  }
+
+  _rsAction(target) {
+    if (target.dataset.rsopen != null) { this._rsOpen(); return; }
+    const d = this._rsDraft; const act = target.dataset.rsact;
+    if (!d) return;
+    if (act === "close") { this._rsClose(); return; }
+    if (act === "day") {
+      const day = Number(target.dataset.rsday); const on = !d.days.includes(day);
+      d.days = on ? [...d.days, day].sort((a, b) => a - b) : d.days.filter((item) => item !== day);
+      target.setAttribute("aria-pressed", String(on));
+    } else if (act === "weekly" || act === "away") {
+      const key = act === "weekly" ? "weeklyOn" : "allowAway";
+      d[key] = !d[key]; target.setAttribute("aria-checked", String(d[key]));
+    } else if (act === "temp") {
+      d.temperature = ttdClamp(d.temperature + Number(target.dataset.rsstep), 15, 28); this._rsTemp();
+    } else if (act === "choice") {
+      d.onceChoice = target.dataset.rschoice;
+      for (const button of this._r.rsBody.querySelectorAll("[data-rschoice]")) button.setAttribute("aria-checked", String(button === target));
+      const box = this._r.rsBody.querySelector("[data-rsdatebox]"); if (box) box.hidden = d.onceChoice !== "date";
+      this._rsMsg("oncemsg", "");
+    } else if (act === "onceset") this._rsSetOnce();
+    else if (act === "oncecancel") this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: "" }]]);
+    else if (act === "save") this._rsSave();
+  }
+
+  _rsSetOnce() {
+    const d = this._rsDraft; const nowS = Math.floor(Date.now() / 1000);
+    const date = d.onceChoice === "date" ? d.onceDate : rsQuickDate(d.onceChoice, nowS);
+    const result = rsOnceAt(date, d.onceTime, nowS);
+    if (!result.ok) { this._rsMsg("oncemsg", result.error); return; }
+    this._rsMsg("oncemsg", "");
+    this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: String(result.goal) }]]);
+  }
+
+  /** Saves what was changed in the weekly plan and the settings; the one-time run is not touched. */
+  async _rsSave() {
+    const d = this._rsDraft; const plan = this._rs(); const cfg = this._cfg.readySchedule;
+    if (!d || !plan) return;
+    if (!rsTime(d.time)) { this._rsMsg("msg", "Vælg et klokkeslæt for ugeplanen."); return; }
+    if (d.weeklyOn && !d.days.length) { this._rsMsg("msg", "Vælg mindst én ugedag."); return; }
+    const calls = [];
+    const number = (key, now, was) => { if (cfg[key] && now !== was) calls.push(["input_number", "set_value", cfg[key], { value: now }]); };
+    const toggle = (key, now, was) => { if (cfg[key] && now !== was) calls.push(["input_boolean", now ? "turn_on" : "turn_off", cfg[key], {}]); };
+    if (d.time !== plan.time) calls.push(["input_datetime", "set_datetime", cfg.time, { time: `${d.time}:00` }]);
+    if (d.days.join(",") !== plan.days.join(",")) calls.push(["input_text", "set_value", cfg.days, { value: d.days.join(",") }]);
+    number("temperature", d.temperature, plan.temperature); number("lead", d.leadMin, plan.leadMin);
+    number("stop_after", d.stopAfter, plan.stopAfter); number("min_battery", d.minBattery, plan.minBattery);
+    toggle("allow_away", d.allowAway, plan.allowAway); toggle("weekly", d.weeklyOn, plan.weeklyOn);
+    if (await this._rsWrite("msg", calls)) this._rsClose();
+  }
+
+  async _rsWrite(which, calls) {
+    try {
+      for (const [domain, service, entity, data] of calls) await this._hass.callService(domain, service, { entity_id: entity, ...data });
+      return true;
+    } catch (err) {
+      this._rsMsg(which, `Kunne ikke gemme: ${err?.message || "ukendt fejl"}`);
+      return false;
+    }
   }
 
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
@@ -3285,6 +3503,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     this._watch = [...new Set([
       ...Object.values(cfg.entities), ...Object.values(cfg.controls).map((control) => control.entity),
       this._loc(), cfg.chart.distance_entity, cfg.chart.energy_entity, ...Object.values(this._scIds()),
+      ...Object.values(cfg.readySchedule || {}),
     ].filter(Boolean))];
     this._seen.clear();
     this._force = true;
@@ -4368,6 +4587,9 @@ class ThTeslaDashboardCard extends HTMLElement {
     // A tap on the backdrop around the ready-by popup closes it.
     if (event.target && event.target === this._r.rbDlg) { this._rbClose(); return; }
     if (event.target && event.target === this._r.ceDlg) { this._ceClose(); return; }
+    if (event.target && event.target === this._r.rsDlg) { this._rsClose(); return; }
+    const rsTarget = event.target?.closest?.("[data-rsopen],[data-rsact]");
+    if (rsTarget?.dataset && (rsTarget.dataset.rsopen != null || rsTarget.dataset.rsact)) { this._rsAction(rsTarget); return; }
     const ce = event.target?.closest?.("[data-ceopen],[data-ceclose],[data-cepick],[data-cesave],[data-ceremember]");
     if (ce && Object.keys(ce.dataset || {}).some((key) => key.startsWith("ce"))) { this._ceAction(ce); return; }
     // "Opladninger uden pris" opens the correction with the first charge without a price.

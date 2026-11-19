@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.266 */
+/* MRDonnii Smart Home Cards v0.5.267 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -3021,10 +3021,104 @@ function ctlTips(root, host = (el) => el.closest(".ctl-host") || el.closest(".ct
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
 init_chart_hover();
-var TTD_VERSION = "1.22.0";
+
+// src/shared/ready-schedule.js
+var RS_COLLISION_S = 3 * 3600;
+var pad2 = (value) => String(value).padStart(2, "0");
+var WEEKDAYS = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
+var MONTHS = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
+function rsDays(value) {
+  const days = String(value ?? "").split(",").map((part) => Number(part.trim())).filter((day2) => Number.isInteger(day2) && day2 >= 1 && day2 <= 7);
+  return [...new Set(days)].sort((a, b) => a - b);
+}
+function rsTime(value) {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(value ?? ""));
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  return hour <= 23 && minute <= 59 ? [hour, minute] : null;
+}
+function rsEpoch(value) {
+  const number2 = Math.floor(Number(value));
+  return Number.isFinite(number2) && number2 > 0 ? number2 : 0;
+}
+var isoDay = (date2) => date2.getDay() || 7;
+function rsWeeklyGoal({ nowS, time, days, onceS = 0, lastS = 0 }) {
+  const clock2 = rsTime(time);
+  const list = rsDays(days);
+  if (!clock2 || !list.length) return 0;
+  const base = new Date(nowS * 1e3);
+  for (let offset = 0; offset < 9; offset += 1) {
+    const date2 = new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset, clock2[0], clock2[1], 0, 0);
+    const goal = Math.floor(date2.getTime() / 1e3);
+    if (!list.includes(isoDay(date2)) || goal <= nowS) continue;
+    if (onceS > nowS && Math.abs(goal - onceS) < RS_COLLISION_S) continue;
+    if (lastS > 0 && Math.abs(goal - lastS) < RS_COLLISION_S) continue;
+    return goal;
+  }
+  return 0;
+}
+function rsNext({ nowS, weeklyOn, time, days, onceS = 0, lastS = 0, leadMin = 20 }) {
+  const once = onceS > nowS ? onceS : 0;
+  const week = weeklyOn ? rsWeeklyGoal({ nowS, time, days, onceS, lastS }) : 0;
+  if (!once && !week) return null;
+  const kind = once && (!week || once <= week) ? "once" : "week";
+  const goal = kind === "once" ? once : week;
+  return { kind, goal, start: goal - Math.round(Number(leadMin) * 60) };
+}
+function dayDiff(goalS, nowS) {
+  const a = new Date(nowS * 1e3);
+  const b = new Date(goalS * 1e3);
+  return Math.round((new Date(b.getFullYear(), b.getMonth(), b.getDate()) - new Date(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5);
+}
+function rsClock(goalS) {
+  const date2 = new Date(goalS * 1e3);
+  return `${pad2(date2.getHours())}.${pad2(date2.getMinutes())}`;
+}
+function rsDayWord(goalS, nowS) {
+  const diff = dayDiff(goalS, nowS);
+  const date2 = new Date(goalS * 1e3);
+  if (diff === 0) return "i dag";
+  if (diff === 1) return "i morgen";
+  const day2 = WEEKDAYS[date2.getDay()];
+  return diff < 7 ? day2 : `${day2} ${date2.getDate()}. ${MONTHS[date2.getMonth()]}`;
+}
+function rsLabel(next, nowS) {
+  if (!next) return "Ikke planlagt";
+  return `${next.kind === "once" ? "Engang" : "N\xE6ste"}: ${rsDayWord(next.goal, nowS)} kl. ${rsClock(next.goal)}`;
+}
+function rsDateInput(epochS) {
+  const date2 = new Date(epochS * 1e3);
+  return `${date2.getFullYear()}-${pad2(date2.getMonth() + 1)}-${pad2(date2.getDate())}`;
+}
+function rsQuickDate(choice, nowS) {
+  const base = new Date(nowS * 1e3);
+  const date2 = new Date(base.getFullYear(), base.getMonth(), base.getDate() + (choice === "tomorrow" ? 1 : 0), 12);
+  return rsDateInput(Math.floor(date2.getTime() / 1e3));
+}
+function rsOnceAt(dateText, timeText, nowS) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateText ?? ""));
+  const clock2 = rsTime(timeText);
+  if (!match) return { ok: false, error: "V\xE6lg en dato." };
+  if (!clock2) return { ok: false, error: "V\xE6lg et klokkesl\xE6t." };
+  const date2 = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), clock2[0], clock2[1], 0, 0);
+  const goal = Math.floor(date2.getTime() / 1e3);
+  if (!Number.isFinite(goal)) return { ok: false, error: "Datoen findes ikke." };
+  if (goal <= nowS) return { ok: false, error: `Kl. ${rsClock(goal)} ${rsDayWord(goal, nowS)} er allerede passeret. V\xE6lg et senere tidspunkt.` };
+  return { ok: true, goal };
+}
+
+// src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
+var TTD_VERSION = "1.23.0";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
+var TTD_RS_REQUIRED = ["weekly", "time", "days", "once"];
+var TTD_RS_KEYS = [...TTD_RS_REQUIRED, "temperature", "lead", "stop_after", "min_battery", "allow_away", "last_goal", "stop_at", "status", "route"];
+var TTD_RS_DAYS = [[1, "Man"], [2, "Tir"], [3, "Ons"], [4, "Tor"], [5, "Fre"], [6, "L\xF8r"], [7, "S\xF8n"]];
+var TTD_RS_LEAD = [5, 10, 15, 20, 30, 45, 60];
+var TTD_RS_STOP = [5, 10, 15, 20, 30];
+var TTD_RS_BATTERY = [10, 15, 20, 25, 30, 35, 40, 50, 60];
 var TTD_DASH = "\u2014";
 var TTD_EMPTY_STATES = /* @__PURE__ */ new Set(["", "unknown", "unavailable", "none", "null", "undefined", "nan"]);
 var TTD_CAR_CONTROLS = [
@@ -3614,6 +3708,7 @@ function ttdNormalizeConfig(raw) {
     // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
     carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key2]) => [key2, ttdIdList(config.car_controls?.[key2])]).filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
+    readySchedule: config.layout !== "charge" && TTD_RS_REQUIRED.every((key2) => typeof config.ready_schedule?.[key2] === "string" && config.ready_schedule[key2].includes(".")) ? Object.fromEntries(TTD_RS_KEYS.map((key2) => [key2, config.ready_schedule[key2] || null])) : null,
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
     plan: TTD_PLAN_ENTITY_KEYS.some((key2) => entities[key2]) || TTD_PLAN_CONTROL_KEYS.some((key2) => controls[key2]) || typeof config.smart_charge === "string" && config.smart_charge.includes(".") || typeof config.ev_ledger === "string" && config.ev_ledger.includes("."),
@@ -3835,7 +3930,7 @@ ${cfg.smart_charge ? `<section class="panel cost" data-r="cost" aria-label="Lade
 </section>
 ${cfg.tyres !== false ? `<section class="panel tyres" data-r="tyres" aria-label="Hjul" hidden><div data-r="tyresHost"></div></section>` : ""}` : ""}` : ""}
 ${cfg.navigation_path ? `<button type="button" class="panel navlink" data-nav>${ttdIcon("mdi:car-info", "ph-i")}<span>${full ? "\xC5bn hele Tesla-oversigten" : "Flere indstillinger p\xE5 Tesla-siden"}</span>${ttdIcon("mdi:chevron-right")}</button>` : ""}
-</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}<dialog class="rb-dlg ce-dlg" data-r="ceDlg" aria-label="Ret opladning"><div class="rb ce" data-r="ceBody"></div></dialog></div>`;
+</div>${cfg.smart_charge ? `<dialog class="rb-dlg" data-r="rbDlg" aria-label="Klar senest"><div class="rb" data-r="rbBody"></div></dialog>` : ""}<dialog class="rb-dlg ce-dlg" data-r="ceDlg" aria-label="Ret opladning"><div class="rb ce" data-r="ceBody"></div></dialog>${cfg.readySchedule && cfg.carControls.climate ? `<dialog class="rb-dlg" data-r="rsDlg" aria-label="Klar kl."><div class="rb" data-r="rsBody"></div></dialog>` : ""}</div>`;
 }
 var TTD_STYLES = `
 :host{display:block}
@@ -4365,6 +4460,24 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .qcp-hold-p{display:grid;grid-template-columns:minmax(0,1fr) 78px auto;gap:6px;align-items:center;font-size:12px;color:var(--tdc-muted)}
 .qcp-hold-p input{min-width:0;height:32px;padding:0 8px;border-radius:9px;border:1px solid var(--tdc-line);background:color-mix(in srgb,var(--tdc-text) 5%,transparent);color:var(--tdc-text);font:inherit;font-size:14px}
 .qcp-more{justify-self:center;border:0;background:transparent;color:var(--tdc-muted);font-size:13px;cursor:pointer;padding:2px 6px}.qcp-more:hover{color:var(--tdc-blue)}
+.qcp-rs{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:7px 10px;border-radius:14px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);text-align:left;cursor:pointer}
+.qcp-rs ha-icon{--mdc-icon-size:20px;color:var(--tdc-muted)}.qcp-rs[data-on]>ha-icon:first-child{color:var(--tdc-blue)}
+.qcp-rs span{display:grid;min-width:0}.qcp-rs b{font-size:13.5px;font-weight:650}.qcp-rs small{font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-r=rsBody] .rb-x{width:44px;height:44px}[data-r=rsBody] [data-rsact=onceset]{min-height:44px}
+.rs-two select{-webkit-appearance:none;appearance:none;padding-right:30px;background-color:color-mix(in srgb,var(--tdc-text) 5%,var(--tdc-dlg-bg,#121821));color:var(--tdc-text);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.rs-seg{grid-template-columns:repeat(3,minmax(0,1fr))}.rs-seg button{min-height:44px}
+.rs-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rs-two .rb-f input,.rs-two .rb-f select{min-height:44px}
+.rs-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.rs-days button{display:grid;place-items:center;text-align:center;min-height:44px;padding:0;border-radius:10px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-muted);font-size:13px;font-weight:650;cursor:pointer}
+.rs-days button[aria-pressed="true"]{background:var(--tdc-blue);border-color:transparent;color:var(--text-primary-color,#fff)}
+.rs-tog{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:44px;padding:0;border:0;background:none;color:var(--tdc-text);text-align:left;font-size:14px;font-weight:600;cursor:pointer}
+.rs-tog small{display:block;font-size:12px;font-weight:400;color:var(--tdc-muted)}
+.rs-tog[aria-checked="true"] .qcp-tog{background:var(--tdc-blue)}.rs-tog[aria-checked="true"] .qcp-tog::after{transform:translateX(16px)}
+.rs-temp{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;text-align:center}.rs-temp b{font-size:18px}
+.rs-temp button{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-text);cursor:pointer}
+.rs-msg{margin:0;font-size:13px;font-weight:600;color:var(--tdc-red)}.rs-msg:empty{display:none}
+.rs-foot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rs-foot .btn{min-height:46px}
+.rs-cancel{background:color-mix(in srgb,var(--tdc-text) 8%,transparent);color:var(--tdc-text)}
 .qc-pop .cc-num{margin-top:0;grid-template-columns:auto 1fr}.qc-pop .cc-num input{grid-column:1/-1}
 @container ttd (max-width:699px){.qc{grid-area:2/1/3/3;margin-left:0}.qc{gap:4px;padding:4px}.qc-b{height:36px;min-width:34px;padding:0 6px;font-size:12px;gap:3px}.qc-b ha-icon{--mdc-icon-size:18px}}
 @container ttd (max-width:380px){.qc{gap:4px}.qc-b{min-width:32px;padding:0 5px}.qc-b ha-icon{--mdc-icon-size:18px}}
@@ -4511,6 +4624,12 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       }, 0);
     });
     this.shadowRoot.addEventListener("input", (event) => this._onInput(event));
+    this.shadowRoot.addEventListener("input", (event) => {
+      if (event.target?.dataset?.rsin) this._rsInput(event.target);
+    });
+    this.shadowRoot.addEventListener("change", (event) => {
+      if (event.target?.dataset?.rsin) this._rsInput(event.target);
+    });
     this.shadowRoot.addEventListener("keydown", (event) => this._onKey(event));
     this.shadowRoot.addEventListener("focusout", (event) => this._commitInput(event.target));
   }
@@ -5165,6 +5284,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._attrSet(capEl, "data-tone", cap[1] || null);
     }
     this._applyQcPop(st, f, busyFor);
+    this._rsLive();
     for (const input of this.shadowRoot.querySelectorAll("[data-ccnum]")) {
       const key2 = input.dataset.ccnum;
       const o = st(key2);
@@ -5207,7 +5327,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         <div class="qcp-hold">
           <button type="button" class="qcp-hold-t" data-qchold aria-pressed="false">${ttdIcon("mdi:battery-charging-80")}<span><b>Hold batteriet p\xE5 m\xE5let</b><small data-qcp="holdsub"></small></span><i class="qcp-tog" aria-hidden="true"></i></button>
           <label class="qcp-hold-p"><span>Kun n\xE5r str\xF8mmen koster h\xF8jst</span><input type="number" step="0.05" min="0" inputmode="decimal" data-qcholdprice aria-label="Maks pris pr. kWh"><small data-qcp="holdunit">kr/kWh</small></label>
-        </div>` : ""}` : `${head(false)}<div class="cc-num"><b data-ccv="${key2}">${TTD_DASH}</b><input type="range" data-ccnum="${key2}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>\xC5bn i Home Assistant \u203A</button>`;
+        </div>` : ""}${this._rs() ? `<button type="button" class="qcp-rs" data-rsopen>${ttdIcon("mdi:clock-check-outline")}<span><b>Klar kl.</b><small data-qcp="rs"></small></span>${ttdIcon("mdi:chevron-right")}</button>` : ""}` : `${head(false)}<div class="cc-num"><b data-ccv="${key2}">${TTD_DASH}</b><input type="range" data-ccnum="${key2}" aria-label="${label}"></div><button type="button" class="qcp-more" data-qcmore>\xC5bn i Home Assistant \u203A</button>`;
     this._applyCarControls();
     pop.removeAttribute("data-down");
     const card = this.shadowRoot.querySelector("ha-card") || this;
@@ -5281,6 +5401,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const unit = pop.querySelector('[data-qcp="holdunit"]');
         const u2 = ttdUnit(limit?.attributes?.unit_of_measurement || "kr/kWh");
         if (unit && unit.textContent !== u2) unit.textContent = u2;
+      }
+      const rsRow = pop.querySelector("[data-rsopen]");
+      const rs = rsRow ? this._rs() : null;
+      if (rsRow && rs) {
+        this._attrSet(rsRow, "data-on", !!rs.next);
+        const line = pop.querySelector('[data-qcp="rs"]');
+        const text = this._rsLine(rs);
+        if (line && line.textContent !== text) line.textContent = text;
       }
       const target2 = this._qcTemp ?? (o?.attributes?.temperature != null ? Number(o.attributes.temperature) : NaN);
       const tEl = pop.querySelector('[data-qcp="temp"]');
@@ -5394,6 +5522,236 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         `Klima sat til ${this._format().number(t, 1)} \xB0C`
       );
     }, 1200);
+  }
+  /* ------------------------------------------------- "Klar kl." (Claude AI) */
+  /** The saved plan as the helpers hold it; null when the feature is not configured (nothing is shown or sent then). */
+  _rs() {
+    const cfg = this._cfg?.readySchedule;
+    const states = this._hass?.states;
+    if (!cfg || !states || !this._cfg.carControls.climate) return null;
+    if (TTD_RS_REQUIRED.some((key2) => !states[cfg[key2]])) return null;
+    const value = (key2) => cfg[key2] ? states[cfg[key2]]?.state : void 0;
+    const number2 = (key2, fallback) => {
+      const n = Number(value(key2));
+      return value(key2) != null && Number.isFinite(n) ? n : fallback;
+    };
+    const nowS = Math.floor(Date.now() / 1e3);
+    const plan = {
+      nowS,
+      weeklyOn: value("weekly") === "on",
+      time: String(value("time") || "").slice(0, 5),
+      days: rsDays(value("days")),
+      onceS: rsEpoch(value("once")),
+      lastS: rsEpoch(value("last_goal")),
+      stopS: rsEpoch(value("stop_at")),
+      temperature: number2("temperature", 21),
+      leadMin: number2("lead", 20),
+      stopAfter: number2("stop_after", 15),
+      minBattery: number2("min_battery", 30),
+      allowAway: value("allow_away") === "on",
+      status: String(value("status") || ""),
+      route: String(value("route") || "")
+    };
+    plan.next = rsNext({ ...plan, days: plan.days.join(",") });
+    return plan;
+  }
+  /** One line: warming now, the next run, or that nothing is planned. */
+  _rsLine(plan) {
+    if (plan.stopS > plan.nowS) return `Varmer nu \xB7 stopper senest kl. ${rsClock(plan.stopS)}`;
+    return rsLabel(plan.next, plan.nowS);
+  }
+  _rsOpen() {
+    const dlg = this._r.rsDlg;
+    const plan = this._rs();
+    if (!dlg || !plan) return;
+    if (this._qcOpen) this._openQc(this._qcOpen);
+    this._rsDraft = {
+      weeklyOn: plan.weeklyOn,
+      time: plan.time || "07:00",
+      days: [...plan.days],
+      temperature: plan.temperature,
+      leadMin: plan.leadMin,
+      stopAfter: plan.stopAfter,
+      minBattery: plan.minBattery,
+      allowAway: plan.allowAway,
+      onceChoice: "tomorrow",
+      onceDate: rsQuickDate("tomorrow", plan.nowS),
+      onceTime: plan.time || "07:00"
+    };
+    this._rsRender(plan);
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+  }
+  _rsClose() {
+    const dlg = this._r.rsDlg;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+    this._rsDraft = null;
+  }
+  _rsOptions(list, current, unit) {
+    const values = [.../* @__PURE__ */ new Set([...list, current])].filter(Number.isFinite).sort((a, b) => a - b);
+    return values.map((value) => `<option value="${value}"${value === current ? " selected" : ""}>${value} ${unit}</option>`).join("");
+  }
+  /** The one-time part: the planned time with Annullér, or the form to set one. */
+  _rsOnceHtml(plan) {
+    const d = this._rsDraft;
+    if (plan.onceS > plan.nowS) {
+      const once = rsNext({ nowS: plan.nowS, weeklyOn: false, onceS: plan.onceS, leadMin: plan.leadMin });
+      return `<div class="rb-once-on"><div><b>${rsLabel(once, plan.nowS)}</b><small>Varmen starter kl. ${rsClock(once.start)}. Ugeplanen er u\xE6ndret.</small></div><button type="button" class="btn stop" data-rsact="oncecancel">Annull\xE9r</button></div>`;
+    }
+    const choice = (key2, label) => `<button type="button" role="radio" aria-checked="${d.onceChoice === key2}" data-rsact="choice" data-rschoice="${key2}">${label}</button>`;
+    return `<div class="rb-seg rs-seg" role="radiogroup" aria-label="Dag">${choice("today", "I dag")}${choice("tomorrow", "I morgen")}${choice("date", "Dato")}</div>
+      <div class="rs-two"><label class="rb-f" data-rsdatebox${d.onceChoice === "date" ? "" : " hidden"}>Dato<input type="date" data-rsin="onceDate" min="${rsDateInput(plan.nowS)}" value="${d.onceDate}"></label>
+      <label class="rb-f">Klar kl.<input type="time" data-rsin="onceTime" value="${d.onceTime}"></label></div>
+      <button type="button" class="btn go" data-rsact="onceset">S\xE6t engangstid</button>`;
+  }
+  _rsRender(plan) {
+    const body = this._r.rsBody;
+    const d = this._rsDraft;
+    if (!body || !d) return;
+    const days = TTD_RS_DAYS.map(([day2, label]) => `<button type="button" aria-pressed="${d.days.includes(day2)}" data-rsact="day" data-rsday="${day2}">${label}</button>`).join("");
+    body.innerHTML = `<div class="rb-h"><span class="rb-hi">${ttdIcon("mdi:clock-check-outline")}</span><div><h3>Klar kl.</h3><p data-rs="line"></p></div><button type="button" class="rb-x" data-rsact="close" aria-label="Luk">${ttdIcon("mdi:close")}</button></div>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:calendar-today")}Engang</h4><div class="rb-week" data-rs="once">${this._rsOnceHtml(plan)}</div><p class="rs-msg" role="alert" data-rs="oncemsg"></p></section>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:calendar-week")}Ugeplan</h4>
+        <button type="button" class="rs-tog" role="switch" aria-checked="${d.weeklyOn}" data-rsact="weekly"><span>Varm bilen op efter ugeplanen</span><i class="qcp-tog" aria-hidden="true"></i></button>
+        <label class="rb-f">Klar kl.<input type="time" data-rsin="time" value="${d.time}"></label>
+        <div class="rs-days" role="group" aria-label="Ugedage">${days}</div></section>
+      <section class="rb-sec"><h4>${ttdIcon("mdi:tune-variant")}Indstillinger</h4>
+        <div class="rs-temp"><button type="button" data-rsact="temp" data-rsstep="-0.5" aria-label="Koldere">${ttdIcon("mdi:minus")}</button><b data-rs="temp"></b><button type="button" data-rsact="temp" data-rsstep="0.5" aria-label="Varmere">${ttdIcon("mdi:plus")}</button></div>
+        <div class="rs-two"><label class="rb-f">Start f\xF8r klar-tid<select data-rsin="leadMin">${this._rsOptions(TTD_RS_LEAD, d.leadMin, "min")}</select></label>
+        <label class="rb-f">Stop efter klar-tid<select data-rsin="stopAfter">${this._rsOptions(TTD_RS_STOP, d.stopAfter, "min")}</select></label>
+        <label class="rb-f">Mindste batteri uden lader<select data-rsin="minBattery">${this._rsOptions(TTD_RS_BATTERY, d.minBattery, "%")}</select></label></div>
+        <button type="button" class="rs-tog" role="switch" aria-checked="${d.allowAway}" data-rsact="away"><span>Ogs\xE5 n\xE5r bilen ikke er hjemme<small>Ellers springes starten over</small></span><i class="qcp-tog" aria-hidden="true"></i></button>
+        <p class="rb-note" data-rs="status"></p></section>
+      <p class="rs-msg" role="alert" data-rs="msg"></p>
+      <div class="rs-foot"><button type="button" class="btn rs-cancel" data-rsact="close">Luk</button><button type="button" class="btn go" data-rsact="save">Gem</button></div>`;
+    this._rsOnceSig = plan.onceS > plan.nowS ? plan.onceS : 0;
+    this._rsTemp();
+    this._rsLive();
+  }
+  _rsTemp() {
+    const el = this._r.rsBody?.querySelector('[data-rs="temp"]');
+    if (el) el.textContent = `${this._format().number(this._rsDraft.temperature, 1)} \xB0C`;
+  }
+  /** What the car or the automation changes while the popup is open; the form being filled in is left alone. */
+  _rsLive() {
+    const body = this._r.rsBody;
+    const dlg = this._r.rsDlg;
+    if (!body || !dlg?.open || !this._rsDraft) return;
+    const plan = this._rs();
+    if (!plan) return;
+    const line = body.querySelector('[data-rs="line"]');
+    const text = this._rsLine(plan);
+    if (line && line.textContent !== text) line.textContent = text;
+    const status = body.querySelector('[data-rs="status"]');
+    const note = [plan.status, plan.route].filter((part) => part && !["unknown", "unavailable"].includes(part)).join(" \xB7 ");
+    if (status && status.textContent !== note) status.textContent = note;
+    const sig = plan.onceS > plan.nowS ? plan.onceS : 0;
+    if (sig !== this._rsOnceSig) {
+      this._rsOnceSig = sig;
+      const box = body.querySelector('[data-rs="once"]');
+      if (box) box.innerHTML = this._rsOnceHtml(plan);
+    }
+  }
+  _rsInput(input) {
+    const d = this._rsDraft;
+    const key2 = input.dataset.rsin;
+    if (!d) return;
+    d[key2] = ["leadMin", "stopAfter", "minBattery"].includes(key2) ? Number(input.value) : input.value;
+  }
+  _rsMsg(which, text) {
+    const el = this._r.rsBody?.querySelector(`[data-rs="${which}"]`);
+    if (el) el.textContent = text;
+  }
+  _rsAction(target2) {
+    if (target2.dataset.rsopen != null) {
+      this._rsOpen();
+      return;
+    }
+    const d = this._rsDraft;
+    const act = target2.dataset.rsact;
+    if (!d) return;
+    if (act === "close") {
+      this._rsClose();
+      return;
+    }
+    if (act === "day") {
+      const day2 = Number(target2.dataset.rsday);
+      const on = !d.days.includes(day2);
+      d.days = on ? [...d.days, day2].sort((a, b) => a - b) : d.days.filter((item2) => item2 !== day2);
+      target2.setAttribute("aria-pressed", String(on));
+    } else if (act === "weekly" || act === "away") {
+      const key2 = act === "weekly" ? "weeklyOn" : "allowAway";
+      d[key2] = !d[key2];
+      target2.setAttribute("aria-checked", String(d[key2]));
+    } else if (act === "temp") {
+      d.temperature = ttdClamp(d.temperature + Number(target2.dataset.rsstep), 15, 28);
+      this._rsTemp();
+    } else if (act === "choice") {
+      d.onceChoice = target2.dataset.rschoice;
+      for (const button of this._r.rsBody.querySelectorAll("[data-rschoice]")) button.setAttribute("aria-checked", String(button === target2));
+      const box = this._r.rsBody.querySelector("[data-rsdatebox]");
+      if (box) box.hidden = d.onceChoice !== "date";
+      this._rsMsg("oncemsg", "");
+    } else if (act === "onceset") this._rsSetOnce();
+    else if (act === "oncecancel") this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: "" }]]);
+    else if (act === "save") this._rsSave();
+  }
+  _rsSetOnce() {
+    const d = this._rsDraft;
+    const nowS = Math.floor(Date.now() / 1e3);
+    const date2 = d.onceChoice === "date" ? d.onceDate : rsQuickDate(d.onceChoice, nowS);
+    const result = rsOnceAt(date2, d.onceTime, nowS);
+    if (!result.ok) {
+      this._rsMsg("oncemsg", result.error);
+      return;
+    }
+    this._rsMsg("oncemsg", "");
+    this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: String(result.goal) }]]);
+  }
+  /** Saves what was changed in the weekly plan and the settings; the one-time run is not touched. */
+  async _rsSave() {
+    const d = this._rsDraft;
+    const plan = this._rs();
+    const cfg = this._cfg.readySchedule;
+    if (!d || !plan) return;
+    if (!rsTime(d.time)) {
+      this._rsMsg("msg", "V\xE6lg et klokkesl\xE6t for ugeplanen.");
+      return;
+    }
+    if (d.weeklyOn && !d.days.length) {
+      this._rsMsg("msg", "V\xE6lg mindst \xE9n ugedag.");
+      return;
+    }
+    const calls = [];
+    const number2 = (key2, now, was) => {
+      if (cfg[key2] && now !== was) calls.push(["input_number", "set_value", cfg[key2], { value: now }]);
+    };
+    const toggle = (key2, now, was) => {
+      if (cfg[key2] && now !== was) calls.push(["input_boolean", now ? "turn_on" : "turn_off", cfg[key2], {}]);
+    };
+    if (d.time !== plan.time) calls.push(["input_datetime", "set_datetime", cfg.time, { time: `${d.time}:00` }]);
+    if (d.days.join(",") !== plan.days.join(",")) calls.push(["input_text", "set_value", cfg.days, { value: d.days.join(",") }]);
+    number2("temperature", d.temperature, plan.temperature);
+    number2("lead", d.leadMin, plan.leadMin);
+    number2("stop_after", d.stopAfter, plan.stopAfter);
+    number2("min_battery", d.minBattery, plan.minBattery);
+    toggle("allow_away", d.allowAway, plan.allowAway);
+    toggle("weekly", d.weeklyOn, plan.weeklyOn);
+    if (await this._rsWrite("msg", calls)) this._rsClose();
+  }
+  async _rsWrite(which, calls) {
+    try {
+      for (const [domain, service, entity, data] of calls) await this._hass.callService(domain, service, { entity_id: entity, ...data });
+      return true;
+    } catch (err) {
+      this._rsMsg(which, `Kunne ikke gemme: ${err?.message || "ukendt fejl"}`);
+      return false;
+    }
   }
   /** A car control: the first tap asks ("Tryk igen"), the second within a few seconds acts – on this car's entity only. */
   _carControl(key2) {
@@ -6465,7 +6823,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._loc(),
       cfg.chart.distance_entity,
       cfg.chart.energy_entity,
-      ...Object.values(this._scIds())
+      ...Object.values(this._scIds()),
+      ...Object.values(cfg.readySchedule || {})
     ].filter(Boolean))];
     this._seen.clear();
     this._force = true;
@@ -7517,6 +7876,15 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._ceClose();
       return;
     }
+    if (event.target && event.target === this._r.rsDlg) {
+      this._rsClose();
+      return;
+    }
+    const rsTarget = event.target?.closest?.("[data-rsopen],[data-rsact]");
+    if (rsTarget?.dataset && (rsTarget.dataset.rsopen != null || rsTarget.dataset.rsact)) {
+      this._rsAction(rsTarget);
+      return;
+    }
     const ce = event.target?.closest?.("[data-ceopen],[data-ceclose],[data-cepick],[data-cesave],[data-ceremember]");
     if (ce && Object.keys(ce.dataset || {}).some((key2) => key2.startsWith("ce"))) {
       this._ceAction(ce);
@@ -7913,8 +8281,8 @@ function ttdRbWhen(f, date2, long = false) {
   return `${day2} ${TTD_TEXT.at} ${f.time(date2)}`;
 }
 function ttdLocalInput(date2) {
-  const pad5 = (value) => String(value).padStart(2, "0");
-  return `${date2.getFullYear()}-${pad5(date2.getMonth() + 1)}-${pad5(date2.getDate())}T${pad5(date2.getHours())}:${pad5(date2.getMinutes())}`;
+  const pad6 = (value) => String(value).padStart(2, "0");
+  return `${date2.getFullYear()}-${pad6(date2.getMonth() + 1)}-${pad6(date2.getDate())}T${pad6(date2.getHours())}:${pad6(date2.getMinutes())}`;
 }
 function ttdCeNum(value) {
   const text = String(value ?? "").trim().replace(/\s/g, "");
@@ -8984,8 +9352,8 @@ var esc5 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "
 var num2 = (v, digits = 0) => v == null || Number.isNaN(Number(v)) ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 var day = (iso2) => iso2 ? new Date(iso2).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" }) : "";
 var dayShort = (iso2) => iso2 ? new Date(iso2).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "";
-var pad2 = (n) => String(n).padStart(2, "0");
-var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad2(date2.getMonth() + 1)}-${pad2(date2.getDate())}T${pad2(date2.getHours())}:${pad2(date2.getMinutes())}`;
+var pad3 = (n) => String(n).padStart(2, "0");
+var localInput = (date2 = /* @__PURE__ */ new Date()) => `${date2.getFullYear()}-${pad3(date2.getMonth() + 1)}-${pad3(date2.getDate())}T${pad3(date2.getHours())}:${pad3(date2.getMinutes())}`;
 var icon = (name, cls = "") => `<ha-icon icon="${name}"${cls ? ` class="${cls}"` : ""}></ha-icon>`;
 function dotAge(dot) {
   const m = /^(\d{2})(\d{2})$/.exec(String(dot || "").trim());
@@ -33849,9 +34217,9 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       let lo = Math.floor(Math.min(...values, ...targets) - 0.6);
       let hi = Math.ceil(Math.max(...values, ...targets) + 0.6);
       if (hi - lo < 4) {
-        const pad5 = (4 - (hi - lo)) / 2;
-        lo -= pad5;
-        hi += pad5;
+        const pad6 = (4 - (hi - lo)) / 2;
+        lo -= pad6;
+        hi += pad6;
       }
       const pos = (value) => (value - lo) / (hi - lo) * 100;
       if (targets.length) {
@@ -41872,12 +42240,12 @@ function heatHtml(card, H3, esc14) {
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
 }
-var isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+var isoDay2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 var daysAgo = (n) => {
   const d = /* @__PURE__ */ new Date();
   d.setHours(12, 0, 0, 0);
   d.setDate(d.getDate() - n);
-  return isoDay(d);
+  return isoDay2(d);
 };
 function heatFormHtml(card, H3, esc14) {
   const f = card._heatForm;
@@ -43956,8 +44324,8 @@ var ThWeatherCard = class extends HTMLElement {
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
       F\xF8les som <b>${fmt2(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt2(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
       Vind <b>${fmt2((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt2((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
-    const hs = this.$("hs"), sc = hs.scrollLeft, pad5 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
-    const lo = sc + 22 - pad5, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad5 - tw);
+    const hs = this.$("hs"), sc = hs.scrollLeft, pad6 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
+    const lo = sc + 22 - pad6, hi = Math.max(lo, sc + hs.clientWidth - 22 - pad6 - tw);
     let L = (i + 1) * this._cw + 8;
     if (L > hi) L = i * this._cw - tw - 8;
     tip.style.left = Math.max(lo, Math.min(hi, L)) + "px";
@@ -44477,9 +44845,9 @@ var HAWeatherChartsCard = class extends HTMLElement {
         hi += 1;
         lo -= opt.min != null ? 0 : 1;
       }
-      const pad5 = (hi - lo) * 0.08;
-      if (opt.max == null) hi += pad5;
-      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad5;
+      const pad6 = (hi - lo) * 0.08;
+      if (opt.max == null) hi += pad6;
+      if (opt.min == null && !(opt.zero || ch2.zero)) lo -= pad6;
       const tk = ticks(lo, hi);
       lo = opt.min ?? tk[0];
       hi = opt.max ?? tk[tk.length - 1];
@@ -49682,9 +50050,9 @@ var STEPS = [5e3, 1e4, 3e4, 6e4, 2 * 6e4, 5 * 6e4, 10 * 6e4, 15 * 6e4, 30 * 6e4,
 var SPEEDS = [1, 2, 4, 8];
 var QKEY = "th-camera-player:quality";
 var isoZ = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "+00:00");
-var pad3 = (n) => String(n).padStart(2, "0");
-var hms = (d, sec = true) => `${pad3(d.getHours())}.${pad3(d.getMinutes())}${sec ? "." + pad3(d.getSeconds()) : ""}`;
-var ymd = (d) => `${d.getFullYear()}-${pad3(d.getMonth() + 1)}-${pad3(d.getDate())}`;
+var pad4 = (n) => String(n).padStart(2, "0");
+var hms = (d, sec = true) => `${pad4(d.getHours())}.${pad4(d.getMinutes())}${sec ? "." + pad4(d.getSeconds()) : ""}`;
+var ymd = (d) => `${d.getFullYear()}-${pad4(d.getMonth() + 1)}-${pad4(d.getDate())}`;
 var durMs = (s) => {
   const g = (r) => +((String(s || "").match(r) || [])[1] || 0);
   return (g(/(\d+)h/) * 3600 + g(/(\d+)m/) * 60 + g(/(\d+)s/)) * 1e3;
@@ -56513,9 +56881,9 @@ var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Oversk
 var HOUR2 = 36e5;
 var STORE = "ha-family-calendar-card";
 var esc10 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-var pad4 = (n) => String(n).padStart(2, "0");
-var hhmm2 = (d) => `${pad4(d.getHours())}.${pad4(d.getMinutes())}`;
-var dayKey = (d) => `${d.getFullYear()}-${pad4(d.getMonth() + 1)}-${pad4(d.getDate())}`;
+var pad5 = (n) => String(n).padStart(2, "0");
+var hhmm2 = (d) => `${pad5(d.getHours())}.${pad5(d.getMinutes())}`;
+var dayKey = (d) => `${d.getFullYear()}-${pad5(d.getMonth() + 1)}-${pad5(d.getDate())}`;
 var startOfDay = (d) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -57012,7 +57380,7 @@ ${LUX_KEYFRAMES}
       return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc10(e.summary || "")}">${esc10(e.summary || "")}</button>`;
     });
     const hrs = [];
-    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad4(h)}</span></div>`);
+    for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad5(h)}</span></div>`);
     r.querySelector("[data-tl]").innerHTML = hrs.join("") + blocks.join("") + `<div class="now" data-now-tl="${d0 + h0 * HOUR2}|${span}"></div>`;
     r.querySelector("[data-tlh]").textContent = todays.length ? `${todays.length} ${todays.length === 1 ? "aftale" : "aftaler"}` : "Fri";
     const wkEnd = +addDays(monday(new Date(t)), 7);
@@ -57118,7 +57486,7 @@ ${LUX_KEYFRAMES}
       const de = ds + 864e5;
       return ev.filter((e) => e.allDay && e.e > ds && e.s < de).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("");
     };
-    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad4(h0 + i)}</span>` : "").join("")}</div>`;
+    const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad5(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
       <div class="ad" style="border-right:1px solid var(--edge)"></div>${days.map((d) => `<div class="ad">${allDay(d)}</div>`).join("")}
       ${axis}${days.map((d) => colHtml(d)).join("")}</div>`;
@@ -57269,9 +57637,9 @@ var VERSION50 = "0.3.0";
 var HORIZON = 28;
 var RING = 276.46;
 var DAY3 = 864e5;
-var MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var MONTHS2 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-var WEEKDAYS = ["S\xF8ndag", "Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "L\xF8rdag"];
+var WEEKDAYS2 = ["S\xF8ndag", "Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "L\xF8rdag"];
 var HINTS = [
   [/plast|glas|metal|madkarton|mdk/i, ["Plastflasker, b\xF8tter og bakker", "M\xE6lke- og juicekartoner", "D\xE5ser, l\xE5g og folie i metal", "Glas og flasker \u2013 skyllet"]],
   [/rest|madaffald/i, ["Madrester og skr\xE6ller", "Kaffegrums og teposer", "Bleer og hygiejneaffald", "Snavset emballage"]],
@@ -57291,7 +57659,7 @@ var parseDate = (value) => {
   const [y, m, d] = String(value || "").split("-").map(Number);
   return y && m && d ? new Date(y, m - 1, d) : null;
 };
-var dayDiff = (a, b) => Math.round((b - a) / DAY3);
+var dayDiff2 = (a, b) => Math.round((b - a) / DAY3);
 var clock = (date2) => `${p23(date2.getHours())}:${p23(date2.getMinutes())}`;
 var tickFrames = (n) => {
   let frames = "";
@@ -57419,8 +57787,8 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       if (!date2 || !item2.entity) continue;
       const seen = store2[item2.entity] || {};
       if (seen.date && date2 > seen.date) {
-        const before = parseDate(seen.date), after = parseDate(date2), gap = before && after ? dayDiff(before, after) : 0;
-        const ago = before ? dayDiff(before, today) : -1;
+        const before = parseDate(seen.date), after = parseDate(date2), gap = before && after ? dayDiff2(before, after) : 0;
+        const ago = before ? dayDiff2(before, today) : -1;
         if (ago >= 0 && ago <= 3 && gap >= 5 && gap <= 120) seen.interval = gap;
       }
       if (seen.date !== date2) {
@@ -57700,7 +58068,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     truck.dataset.entity = lead?.entity || cfg.next_entity || "";
     truck.title = `${attrs.name || "N\xE6ste afhentning"} \xB7 ${attrs.date_short || ""}`;
     const nextDate = parseDate(attrs.date);
-    root.querySelector("[data-cal-month]").textContent = nextDate ? MONTHS[nextDate.getMonth()] : "\u2014";
+    root.querySelector("[data-cal-month]").textContent = nextDate ? MONTHS2[nextDate.getMonth()] : "\u2014";
     root.querySelector("[data-cal-day]").textContent = nextDate ? nextDate.getDate() : "\u2014";
     root.querySelector("[data-next-date]").textContent = attrs.date_long || attrs.date_short || "Dato ukendt";
     root.querySelector("[data-next-name]").textContent = attrs.name || "N\xE6ste afhentning";
@@ -57745,7 +58113,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     for (const item2 of known) {
       const date2 = parseDate(item2.attrs.date);
       if (!date2) continue;
-      const key2 = dayDiff(start, date2);
+      const key2 = dayDiff2(start, date2);
       if (!pickups.has(key2)) pickups.set(key2, []);
       pickups.get(key2).push(item2);
     }
@@ -57758,11 +58126,11 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
       for (let weekday = 0; weekday < 7; weekday++) {
         const index = week * 7 + weekday, date2 = new Date(start);
         date2.setDate(start.getDate() + index);
-        const offset = dayDiff(today, date2), items = pickups.get(index) || [];
+        const offset = dayDiff2(today, date2), items = pickups.get(index) || [];
         const cls = ["cell", weekday > 4 ? "we" : "", offset < 0 ? "past" : "", offset === 0 ? "today" : "", items.length ? "has" : "", items.length && offset >= 0 && offset <= 1 ? "near" : ""].filter(Boolean).join(" ");
         const label = items.map((item2) => item2.name || item2.attrs.name || "Affald").join(" + ");
-        const inner = `${date2.getDate() === 1 ? `<small>${MONTHS[date2.getMonth()]}</small>` : ""}${date2.getDate()}<span class="dots">${items.map((item2) => `<i style="--c:${this._esc(item2.color || "#22c55e")}"></i>`).join("")}</span>`;
-        html += items.length ? `<button class="${cls}" type="button" data-entity="${this._esc(items[0].entity)}" title="${this._esc(`${WEEKDAYS[date2.getDay()]} ${date2.getDate()}. ${MONTHS[date2.getMonth()]}: ${label}`)}" style="--k:${index};--c:${this._esc(items[0].color || "#22c55e")}">${inner}</button>` : `<span class="${cls}" style="--k:${index}">${inner}</span>`;
+        const inner = `${date2.getDate() === 1 ? `<small>${MONTHS2[date2.getMonth()]}</small>` : ""}${date2.getDate()}<span class="dots">${items.map((item2) => `<i style="--c:${this._esc(item2.color || "#22c55e")}"></i>`).join("")}</span>`;
+        html += items.length ? `<button class="${cls}" type="button" data-entity="${this._esc(items[0].entity)}" title="${this._esc(`${WEEKDAYS2[date2.getDay()]} ${date2.getDate()}. ${MONTHS2[date2.getMonth()]}: ${label}`)}" style="--k:${index};--c:${this._esc(items[0].color || "#22c55e")}">${inner}</button>` : `<span class="${cls}" style="--k:${index}">${inner}</span>`;
       }
     }
     const end = new Date(start);
@@ -57778,7 +58146,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
   _type(item2, isNext) {
     const days = item2.days, fill = this._fill(item2), date2 = parseDate(item2.attrs.date), hints = this._hints(item2), n = Math.min(hints.length, 6);
     const chip = isNext ? `<em class="chip">${days === 0 ? "I dag" : days === 1 ? "I morgen" : "N\xE6ste"}</em>` : "";
-    const when2 = date2 ? `<strong>${WEEKDAYS[date2.getDay()]} ${date2.getDate()}. ${MONTHS[date2.getMonth()]}</strong> \xB7 ${this._esc(item2.attrs.description || "Planlagt afhentning")}` : this._esc(item2.attrs.date_short || "Dato ukendt");
+    const when2 = date2 ? `<strong>${WEEKDAYS2[date2.getDay()]} ${date2.getDate()}. ${MONTHS2[date2.getMonth()]}</strong> \xB7 ${this._esc(item2.attrs.description || "Planlagt afhentning")}` : this._esc(item2.attrs.date_short || "Dato ukendt");
     const ticker = !n ? "" : n === 1 ? `<span class="ticker"><em>H\xF8rer til</em><span class="tk"><i>${this._esc(hints[0])}</i></span></span>` : `<span class="ticker"><em>H\xF8rer til</em><span class="tk tk${n}">${[...hints.slice(0, n), hints[0]].map((text) => `<i>${this._esc(text)}</i>`).join("")}</span></span>`;
     return `<button class="waste${isNext ? " next" : ""}${days != null && days <= 3 ? " close" : ""}" type="button" data-entity="${this._esc(item2.entity)}" style="--c:${this._esc(item2.color || "#22c55e")};--fill:${fill.toFixed(3)};--i:${item2.index}"><span class="spot"></span><span class="can" aria-hidden="true"><i class="lid"></i><span class="tank"><i class="liquid"><i class="wave"></i></i><i class="bubble"></i><i class="bubble"></i></span><ha-icon icon="${this._esc(item2.icon || item2.attrs.icon || "mdi:trash-can-outline")}"></ha-icon><i class="wheels"></i></span><span class="waste-copy">${chip}<b>${this._esc(item2.name || item2.attrs.name || "Affald")}</b><span class="when">${when2}</span>${ticker}</span><span class="waste-days"><b data-count="${days ?? ""}" data-delay="${item2.index * 90 + 300}" data-duration="1000">${days ?? "\u2014"}</b><span>${days === 1 ? "dag" : "dage"}</span></span><span class="bar"><i></i></span></button>`;
   }
@@ -59222,8 +59590,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (plot <= 0) return null;
     const hour = clamp2(Math.floor((fraction * box.clientWidth - padLeft) / plot * 24), 0, data.current);
     const kwh = data.lower[hour] + data.upper[hour];
-    const pad5 = (value) => String(value).padStart(2, "0");
-    const parts = [`Kl. ${pad5(hour)}\u2013${pad5(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} \xB7 vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
+    const pad6 = (value) => String(value).padStart(2, "0");
+    const parts = [`Kl. ${pad6(hour)}\u2013${pad6(hour + 1)}`, data.split ? `varme ${this._formatNumber(data.lower[hour], 2)} \xB7 vand ${this._formatNumber(data.upper[hour], 2)} kWh` : `${this._formatNumber(kwh, 2)} kWh`];
     if (data.perKwh !== null) parts.push(`${this._formatNumber(kwh * data.perKwh, 2)} kr`, `i alt ${this._formatNumber(data.cumulative[hour] * data.perKwh, 2)} kr`);
     return { x: (padLeft + (hour + 0.5) / 24 * plot) / box.clientWidth, y: 1 - kwh / data.kwhMax * 0.94, color: "var(--cf-chart-heat)", text: parts.join(" \xB7 ") };
   }
@@ -60373,7 +60741,7 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
     const mobile = this.shadowRoot?.querySelector(".mobile"), surface = this.shadowRoot?.querySelector(".surface"), last = mobile?.lastElementChild;
     if (!last || !surface) return;
     const desktop = window.matchMedia(`(min-width:${(this._mobileBreakpoint || 1100) + 1}px)`).matches;
-    let next = 0, pad5 = 0;
+    let next = 0, pad6 = 0;
     if (!desktop) {
       const nav = this._navSpace();
       if (nav == null) {
@@ -60394,12 +60762,12 @@ var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
       else {
         const doc = document.scrollingElement || document.documentElement;
         const below = doc.scrollHeight - (surface.getBoundingClientRect().bottom + window.scrollY) - (this._pad || 0);
-        pad5 = Math.max(0, Math.round(window.innerHeight - navTop + gap - below));
+        pad6 = Math.max(0, Math.round(window.innerHeight - navTop + gap - below));
       }
     }
-    if (Math.abs(pad5 - (this._pad || 0)) >= 2) {
-      this._pad = pad5;
-      this.style.paddingBottom = pad5 ? `${pad5}px` : "";
+    if (Math.abs(pad6 - (this._pad || 0)) >= 2) {
+      this._pad = pad6;
+      this.style.paddingBottom = pad6 ? `${pad6}px` : "";
     }
     if (Math.abs(next - this._fill) < 2) return;
     this._lastExpect = last.offsetHeight - this._fill + next;
@@ -67579,7 +67947,7 @@ function monthlyFromBills(bills) {
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
 var VERSION55 = "0.3.0";
-var MONTHS2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+var MONTHS3 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
 var iso = (d) => `${d.getFullYear()}-${p24(d.getMonth() + 1)}-${p24(d.getDate())}`;
@@ -67712,7 +68080,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
   }
   _hero(fc) {
     const a = fc.attributes, [y, m] = String(a.maaned || "").split("-").map(Number);
-    const month = m ? MONTHS2[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
+    const month = m ? MONTHS3[m - 1] : "m\xE5neden", bill = Number(fc.state), soFar = Number(a.maalt_indtil_nu);
     const pct4 = bill > 0 && Number.isFinite(soFar) ? Math.max(0, Math.min(100, soFar / bill * 100)) : 0;
     const ratio = a.forhold_regning_maaling, n = a.regninger_i_forhold || 0;
     const how = ratio ? `Rettet efter ${n === 1 ? "den seneste regning" : `de seneste ${n} regninger`}: de har ligget ${signed((ratio - 1) * 100, 1)} % i forhold til HA's beregning (${kr(a.egen_beregning)}).` : "Ingen hele regninger endnu \u2013 prognosen er HA's egen beregning. Skriv regningerne ind, s\xE5 bliver den mere pr\xE6cis.";
@@ -67780,7 +68148,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     const s = parseDate3(b.start), e = parseDate3(b.end);
     if (!s || !e) return `${b.start} \u2013 ${b.end}`;
     const last = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate();
-    if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS2[s.getMonth()][0].toUpperCase()}${MONTHS2[s.getMonth()].slice(1)} ${s.getFullYear()}`;
+    if (s.getDate() === 1 && e.getFullYear() === s.getFullYear() && e.getMonth() === s.getMonth() && e.getDate() === last) return `${MONTHS3[s.getMonth()][0].toUpperCase()}${MONTHS3[s.getMonth()].slice(1)} ${s.getFullYear()}`;
     return `${s.getDate()}. ${MON[s.getMonth()]}${s.getFullYear() !== e.getFullYear() ? ` ${s.getFullYear()}` : ""} \u2013 ${e.getDate()}. ${MON[e.getMonth()]} ${e.getFullYear()}`;
   }
   _lists() {
@@ -67870,7 +68238,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     const box = this.shadowRoot.querySelector("[data-months]");
     box.innerHTML = months.length ? [...months].reverse().map((m) => {
       const [y, mo] = m.month.split("-").map(Number);
-      return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS2[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
+      return `<button type="button" class="month" data-act="month" data-month="${m.month}" title="Skriv regningen for ${MONTHS3[mo - 1]} ${y}"><b>${MON[mo - 1]} ${String(y).slice(2)}</b><span>${kr(m.cost)}</span><span>${num4(m.kwh)} kWh</span>${m.coverage < 1 ? `<em>${Math.round(m.coverage * 100)} % af m\xE5neden</em>` : ""}</button>`;
     }).join("") : `<p class="empty">Ingen m\xE5linger endnu.</p>`;
   }
   _f(key2) {
@@ -71630,7 +71998,7 @@ function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Dat
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
 var VERSION57 = "1.2.0";
-var MONTHS3 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var MONTHS4 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
 var KIND = { bill: "faktureret", measured: "m\xE5lt i HA", estimate: "ansl\xE5et" };
@@ -71985,9 +72353,9 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     if (!years.length) return;
     const w = Math.max(280, Math.round(host.clientWidth || 600));
     const h = w < 520 ? 240 : 290;
-    const pad5 = { l: 52, r: 6, t: 20, b: 26 };
-    const pw = w - pad5.l - pad5.r;
-    const ph2 = h - pad5.t - pad5.b;
+    const pad6 = { l: 52, r: 6, t: 20, b: 26 };
+    const pw = w - pad6.l - pad6.r;
+    const ph2 = h - pad6.t - pad6.b;
     const now = /* @__PURE__ */ new Date();
     const cy = now.getFullYear();
     const month = this._view === "month";
@@ -72001,24 +72369,24 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const gw = pw / groups;
     const per = values[0].length;
     const bw = Math.max(3, Math.min(34, gw * 0.78 / per));
-    const y = (v) => pad5.t + ph2 - v / max * ph2;
+    const y = (v) => pad6.t + ph2 - v / max * ph2;
     let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${month ? "Elforbrug i kr pr. m\xE5ned" : "Elforbrug i kr pr. \xE5r"}">`;
     s += `<defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs>`;
     s += `<g class="grid axis">`;
     for (let i = 0; i <= 4; i++) {
       const gv = max / 4 * i;
       const gy = y(gv);
-      s += `<line x1="${pad5.l}" x2="${w - pad5.r}" y1="${gy}" y2="${gy}"/><text x="${pad5.l - 8}" y="${gy + 4}" text-anchor="end">${fmt5(gv)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt5(gv)}</text>`;
     }
     s += `</g><g class="axis">`;
     for (let g = 0; g < groups; g++) {
-      const cx2 = pad5.l + gw * g + gw / 2;
-      const label = month ? MONTHS3[g] : `${years[g]}${years[g] === cy ? "*" : ""}`;
+      const cx2 = pad6.l + gw * g + gw / 2;
+      const label = month ? MONTHS4[g] : `${years[g]}${years[g] === cy ? "*" : ""}`;
       s += `<text x="${cx2}" y="${h - 7}" text-anchor="middle">${label}</text>`;
     }
     s += `</g>`;
     for (let g = 0; g < groups; g++) {
-      const x0 = pad5.l + gw * g + (gw - bw * per) / 2;
+      const x0 = pad6.l + gw * g + (gw - bw * per) / 2;
       values[g].forEach((d, i) => {
         if (d.v == null) return;
         const col = this._color(d.y);
@@ -72037,12 +72405,12 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
         }
         if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(d.v)}</text>`;
       });
-      s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad5.l + gw * g).toFixed(1)}" y="${pad5.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
+      s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad6.l + gw * g).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     }
     s += `</svg><div class="tip" hidden></div>`;
     host.innerHTML = s;
     host.querySelectorAll(".hit").forEach((r) => {
-      const show2 = () => this._tip(host, Number(r.dataset.g), values, month, gw, pad5);
+      const show2 = () => this._tip(host, Number(r.dataset.g), values, month, gw, pad6);
       r.addEventListener("pointerenter", show2);
       r.addEventListener("click", () => {
         this._pinned = this._pinned === Number(r.dataset.g) ? null : Number(r.dataset.g);
@@ -72052,7 +72420,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
         if (this._pinned == null) host.querySelector(".tip").hidden = true;
       });
     });
-    if (this._pinned != null) this._tip(host, this._pinned, values, month, gw, pad5);
+    if (this._pinned != null) this._tip(host, this._pinned, values, month, gw, pad6);
   }
   /* ---------- Opvarmning ---------- */
   _renderHeat() {
@@ -72065,7 +72433,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt5(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas alt inkl. <span class="d">${kr2(cmp.gasPerKwhEvida)}</span> \xB7 kun Norlys-delen ${kr2(cmp.gasPerKwh)}</span></div>`);
     const sm = cmp.same;
     if (sm) {
-      const names2 = sm.months.map((k) => MONTHS3[Number(k.slice(5)) - 1]);
+      const names2 = sm.months.map((k) => MONTHS4[Number(k.slice(5)) - 1]);
       const label = names2.length > 1 ? `${names2[0]}\u2013${names2[names2.length - 1]}` : names2[0];
       const d = pct3(sm.heat, sm.gas + sm.gasEvida);
       items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt5(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r alt inkl. ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span> (Norlys-delen ${kr0(sm.gas)})</span></div>`);
@@ -72098,8 +72466,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const month = this._view === "month";
     const w = Math.max(280, Math.round(host.clientWidth || 600));
     const h = w < 520 ? 240 : 290;
-    const pad5 = { l: 52, r: 6, t: 20, b: 26 };
-    const pw = w - pad5.l - pad5.r, ph2 = h - pad5.t - pad5.b;
+    const pad6 = { l: 52, r: 6, t: 20, b: 26 };
+    const pw = w - pad6.l - pad6.r, ph2 = h - pad6.t - pad6.b;
     let groups;
     if (month) groups = keys.map((k) => ({ k, ...months[k] }));
     else {
@@ -72119,22 +72487,22 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const max = niceMax2(Math.max(1, ...groups.map((g) => Math.max(g.v, g.aconto))) * 1.08);
     const gw = pw / groups.length;
     const bw = Math.max(3, Math.min(34, gw * 0.72));
-    const y = (v) => pad5.t + ph2 - v / max * ph2;
+    const y = (v) => pad6.t + ph2 - v / max * ph2;
     let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Opvarmning i kr"><defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs><g class="grid axis">`;
     for (let i = 0; i <= 4; i++) {
       const gv = max / 4 * i;
-      s += `<line x1="${pad5.l}" x2="${w - pad5.r}" y1="${y(gv)}" y2="${y(gv)}"/><text x="${pad5.l - 8}" y="${y(gv) + 4}" text-anchor="end">${fmt5(gv)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${y(gv)}" y2="${y(gv)}"/><text x="${pad6.l - 8}" y="${y(gv) + 4}" text-anchor="end">${fmt5(gv)}</text>`;
     }
     s += `</g><g class="axis">`;
     const every = month ? Math.max(1, Math.ceil(groups.length / (w < 520 ? 7 : 14))) : 1;
     groups.forEach((g, i) => {
       if (i % every) return;
-      const label = month ? `${MONTHS3[Number(g.k.slice(5)) - 1]} ${g.k.slice(2, 4)}` : `${g.k}${g.partial ? "*" : ""}`;
-      s += `<text x="${pad5.l + gw * i + gw / 2}" y="${h - 7}" text-anchor="middle">${label}</text>`;
+      const label = month ? `${MONTHS4[Number(g.k.slice(5)) - 1]} ${g.k.slice(2, 4)}` : `${g.k}${g.partial ? "*" : ""}`;
+      s += `<text x="${pad6.l + gw * i + gw / 2}" y="${h - 7}" text-anchor="middle">${label}</text>`;
     });
     s += `</g>`;
     groups.forEach((g, i) => {
-      const x = pad5.l + gw * i + (gw - bw) / 2;
+      const x = pad6.l + gw * i + (gw - bw) / 2;
       let base = 0;
       for (const [f, col, op, hatch] of [["gasBill", "var(--c-gas)", 1, false], ["gasEvida", "var(--c-gas)", 0.35, true], ["heatMeasured", "var(--c-fv)", 0.85, true], ["heatEstimate", "var(--c-fv)", 0.4, true]]) {
         const v = g[f];
@@ -72146,7 +72514,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       }
       if (g.aconto > 0) s += `<line x1="${(x - 2).toFixed(1)}" x2="${(x + bw + 2).toFixed(1)}" y1="${y(g.aconto).toFixed(1)}" y2="${y(g.aconto).toFixed(1)}" stroke="var(--ec-text)" stroke-width="2"/>`;
       if (!month) s += `<text class="vlabel" x="${(x + bw / 2).toFixed(1)}" y="${(y(g.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(g.v)}</text>`;
-      s += `<rect class="hit ${this._pinned === i ? "sel" : ""}" data-g="${i}" x="${(pad5.l + gw * i).toFixed(1)}" y="${pad5.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
+      s += `<rect class="hit ${this._pinned === i ? "sel" : ""}" data-g="${i}" x="${(pad6.l + gw * i).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     });
     s += `</svg><div class="tip" hidden></div>`;
     host.innerHTML = s;
@@ -72157,7 +72525,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt5(v)} kr</span></div>` : "";
       tip.innerHTML = `<h4>${esc13(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", "Evida + afgifter (beregnet)", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
       tip.hidden = false;
-      const cx2 = pad5.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
+      const cx2 = pad6.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
       tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx2 - tw / 2))}px`;
       tip.style.top = "0px";
     };
@@ -72174,7 +72542,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     });
     if (this._pinned != null && groups[this._pinned]) show2(this._pinned);
   }
-  _tip(host, g, values, month, gw, pad5) {
+  _tip(host, g, values, month, gw, pad6) {
     const tip = host.querySelector(".tip");
     const rows = values[g].filter((d) => d.v != null);
     if (!rows.length) {
@@ -72185,7 +72553,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const kinds = (d) => Object.keys(KIND).filter((k) => d[k] > 0.5).map((k) => `${KIND[k]} ${fmt5(d[k])}`).join(" \xB7 ");
     tip.innerHTML = `<h4>${esc13(title)}</h4>` + [...rows].reverse().map((d) => `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt5(d.v)} kr</span></div>${Object.keys(KIND).filter((k) => d[k] > 0.5).length > 1 || !(d.bill > 0.5) ? `<div class="kinds">${kinds(d)}</div>` : ""}`).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
     tip.hidden = false;
-    const cx2 = pad5.l + gw * g + gw / 2;
+    const cx2 = pad6.l + gw * g + gw / 2;
     const tw = tip.offsetWidth || 180;
     tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx2 - tw / 2))}px`;
     tip.style.top = "0px";

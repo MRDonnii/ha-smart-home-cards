@@ -452,3 +452,28 @@ otte sekunder og beder derefter `refresh_entities` om ny status.
 Statusteksten udledes ét sted (`deriveStatus`) ud fra Tesla, Monta og laderens
 tilstand: `Lader`, `Opladning færdig`, `Venter på opladning`, `Klar til opladning`,
 `Tilsluttet`, `Online`, `Sover`, `Offline` eller `Ukendt`.
+
+## Klar kl. (forvarmning)
+
+Klima-popuppen kan få rækken **Klar kl.**: en ugeplan (tid og ugedage) og en engangstid (I dag, I morgen eller en dato).
+Funktionen findes kun, når `ready_schedule` er sat, og kortet starter aldrig selv bilen. Kortet gemmer valgene i helpers,
+og en automation i Home Assistant står for start, stop og sikkerhed. Uden `ready_schedule` ændrer intet sig.
+
+```yaml
+ready_schedule:
+  weekly: input_boolean.min_bil_klar_aktiv        # krævet: ugeplan til/fra
+  time: input_datetime.min_bil_klar_tid           # krævet: kun klokkeslæt
+  days: input_text.min_bil_klar_dage              # krævet: ISO-ugedage, fx 1,2,3,4,5
+  once: input_text.min_bil_klar_engang            # krævet: engangstid som epoch-sekunder, tom = ingen
+  temperature: input_number.min_bil_klar_temperatur
+  lead: input_number.min_bil_klar_forvarmning     # minutter før klar-tiden
+  stop_after: input_number.min_bil_klar_stop_efter # minutter efter klar-tiden
+  min_battery: input_number.min_bil_klar_min_batteri
+  allow_away: input_boolean.min_bil_klar_ude
+  last_goal: input_text.min_bil_klar_sidste_maal
+  stop_at: input_text.min_bil_klar_stop_ved
+  status: input_text.min_bil_klar_status
+  route: input_text.min_bil_klar_rute             # sidste rute og resultat
+```
+
+To kørsler med under 3 timers afstand tæller som samme morgen: kun én kører, og engangstiden vinder.
