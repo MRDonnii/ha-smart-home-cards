@@ -719,6 +719,10 @@ console.log("th-tesla-dashboard-card tests passed");
   assert.doesNotMatch(html, /panel carctl/, "no separate panel: the card does not grow");
   assert.match(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-qc="climate"|data-cc="lock"/, "also in the charge popup");
   assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig(config)), /Bilstyring/);
+  // "Klar kl." also in the compact charge popup (user, 2026-11-19).
+  const ready_schedule = { weekly: "input_boolean.a", time: "input_datetime.a", days: "input_text.a", once: "input_text.b" };
+  assert.match(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge", ready_schedule })), /data-r="rsDlg"/);
+  assert.doesNotMatch(context.ttdTemplate(context.ttdNormalizeConfig({ ...withCtl, layout: "charge" })), /data-r="rsDlg"/);
 }
 // Monta only where it is configured.
 {

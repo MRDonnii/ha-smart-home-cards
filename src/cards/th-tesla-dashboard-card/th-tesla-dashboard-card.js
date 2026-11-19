@@ -19,7 +19,7 @@ import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips,
 import { chartHover } from "../../shared/chart-hover.js";
 import { rsClock, rsDateInput, rsDays, rsEpoch, rsLabel, rsNext, rsOnceAt, rsQuickDate, rsTime } from "../../shared/ready-schedule.js";
 
-const TTD_VERSION = "1.23.0";
+const TTD_VERSION = "1.23.1";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -502,7 +502,7 @@ function ttdNormalizeConfig(raw) {
     carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key]) => [key, ttdIdList(config.car_controls?.[key])])
       .filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
-    readySchedule: config.layout !== "charge" && TTD_RS_REQUIRED.every((key) => typeof config.ready_schedule?.[key] === "string" && config.ready_schedule[key].includes("."))
+    readySchedule: TTD_RS_REQUIRED.every((key) => typeof config.ready_schedule?.[key] === "string" && config.ready_schedule[key].includes("."))
       ? Object.fromEntries(TTD_RS_KEYS.map((key) => [key, config.ready_schedule[key] || null])) : null,
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.

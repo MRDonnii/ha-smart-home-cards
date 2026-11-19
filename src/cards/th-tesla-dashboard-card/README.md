@@ -455,7 +455,7 @@ tilstand: `Lader`, `Opladning færdig`, `Venter på opladning`, `Klar til opladn
 
 ## Klar kl. (forvarmning)
 
-Klima-popuppen kan få rækken **Klar kl.**: en ugeplan (tid og ugedage) og en engangstid (I dag, I morgen eller en dato).
+Klima-popuppen kan få rækken **Klar kl.**, både i den fulde visning og i den kompakte lade-popup (`layout: charge`): en ugeplan (tid og ugedage) og en engangstid (I dag, I morgen eller en dato).
 Funktionen findes kun, når `ready_schedule` er sat, og kortet starter aldrig selv bilen. Kortet gemmer valgene i helpers,
 og en automation i Home Assistant står for start, stop og sikkerhed. Uden `ready_schedule` ændrer intet sig.
 

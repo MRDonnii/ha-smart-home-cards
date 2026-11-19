@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.267 */
+/* MRDonnii Smart Home Cards v0.5.268 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -3109,7 +3109,7 @@ function rsOnceAt(dateText, timeText, nowS) {
 }
 
 // src/cards/th-tesla-dashboard-card/th-tesla-dashboard-card.js
-var TTD_VERSION = "1.23.0";
+var TTD_VERSION = "1.23.1";
 var TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 var TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
 var TTD_TAG = "th-tesla-dashboard-card";
@@ -3708,7 +3708,7 @@ function ttdNormalizeConfig(raw) {
     // The car's own controls (full layout only, i.e. the Tesla page): every one takes a second tap.
     carControls: Object.fromEntries(TTD_CAR_CONTROLS.map(([key2]) => [key2, ttdIdList(config.car_controls?.[key2])]).filter(([, ids]) => ids.length)),
     layout: config.layout === "charge" ? "charge" : "full",
-    readySchedule: config.layout !== "charge" && TTD_RS_REQUIRED.every((key2) => typeof config.ready_schedule?.[key2] === "string" && config.ready_schedule[key2].includes(".")) ? Object.fromEntries(TTD_RS_KEYS.map((key2) => [key2, config.ready_schedule[key2] || null])) : null,
+    readySchedule: TTD_RS_REQUIRED.every((key2) => typeof config.ready_schedule?.[key2] === "string" && config.ready_schedule[key2].includes(".")) ? Object.fromEntries(TTD_RS_KEYS.map((key2) => [key2, config.ready_schedule[key2] || null])) : null,
     navigation_path: typeof config.navigation_path === "string" && config.navigation_path.startsWith("/") ? config.navigation_path : null,
     // Entities asked to refresh (homeassistant.update_entity) when the card becomes visible, e.g. a cloud-polled charger.
     plan: TTD_PLAN_ENTITY_KEYS.some((key2) => entities[key2]) || TTD_PLAN_CONTROL_KEYS.some((key2) => controls[key2]) || typeof config.smart_charge === "string" && config.smart_charge.includes(".") || typeof config.ev_ledger === "string" && config.ev_ledger.includes("."),
