@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.6";
+const VERSION = "0.8.7";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -336,7 +336,7 @@ class HATeslaGlanceCard extends HTMLElement {
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
       .compact .car{grid-column:3;grid-row:1}
-      .compact .car img{max-height:84px;margin-bottom:-4px}
+      .compact .car img{max-height:84px;margin-bottom:-4px;object-position:center bottom}
       .compact .soc b{font-size:28px}
       .compact .chips{gap:4px}
       /* One row always (user, 2026-10-14: the card must not grow when Sentry comes on); a bit smaller on phones. */

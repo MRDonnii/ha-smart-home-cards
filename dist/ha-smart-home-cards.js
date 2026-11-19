@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.270 */
+/* MRDonnii Smart Home Cards v0.5.271 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -8388,7 +8388,7 @@ function lookFormSchema({ entity = "style_entity", key: key2 = "style" } = {}) {
 var LOOK_LABELS = { style: "Udseende", style_entity: "Skifteknap (input_boolean: til = ny, fra = klassisk)" };
 
 // src/cards/ha-tesla-glance-card/ha-tesla-glance-card.js
-var VERSION5 = "0.8.6";
+var VERSION5 = "0.8.7";
 var DEAD = /* @__PURE__ */ new Set(["unavailable", "unknown", "none", ""]);
 var CHARGING = /* @__PURE__ */ new Set(["charging", "on", "true", "starting"]);
 var DEFAULTS = {
@@ -8737,7 +8737,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
       .compact .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(90px,24%);gap:4px 12px}
       .compact .stats{grid-column:2;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:5px;margin:0}
       .compact .car{grid-column:3;grid-row:1}
-      .compact .car img{max-height:84px;margin-bottom:-4px}
+      .compact .car img{max-height:84px;margin-bottom:-4px;object-position:center bottom}
       .compact .soc b{font-size:28px}
       .compact .chips{gap:4px}
       /* One row always (user, 2026-10-14: the card must not grow when Sentry comes on); a bit smaller on phones. */
