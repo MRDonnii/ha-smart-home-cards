@@ -14,6 +14,13 @@ globalThis.CustomEvent = class { constructor(type, o = {}) { this.type = type; t
 
 const api = await import("../src/cards/ha-music-card/api.js");
 const views = await import("../src/cards/ha-music-card/views.js");
+const artistLinks = views.nowPlayingArtists({ item: { artists: [
+  { name: "First & Artist", uri: "library://artist/1" },
+  { name: "Second", uri: "library://artist/2" },
+] } }, "np-a");
+assert.match(artistLinks, /data-artist-index="0">First &amp; Artist<\/button>/);
+assert.match(artistLinks, /data-artist-index="1">Second<\/button>/);
+assert.equal(views.nowPlayingArtists({ artist: "Radio", item: null }, "np-a"), '<span class="np-a">Radio</span>');
 await import("../src/cards/ha-music-card/ha-music-card.js");
 
 // Card registration and config validation.

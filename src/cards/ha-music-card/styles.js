@@ -333,6 +333,9 @@ div.art .ic, span.art .ic { width: 42%; height: 42%; }
 .np-tx { min-width: 0; }
 .np-t { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; max-width: 100%; }
 .np-a { font-size: 12.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: left; max-width: 100%; margin-top: 3px; }
+.np-artists, .fp-artists { display: flex; align-items: baseline; overflow: hidden; white-space: nowrap; }
+.artist-separator { flex: none; color: var(--mc-dim); }
+.np-artists .np-a, .fp-artists .fp-a { flex: none; }
 button.np-t:hover, button.np-a:hover { text-decoration: underline; color: var(--mc-text); }
 .heart { color: var(--mc-dim); width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; transition: transform .12s, color .15s; }
 .heart:hover { color: var(--mc-text); }

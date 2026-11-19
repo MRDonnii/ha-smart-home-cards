@@ -299,10 +299,15 @@ export function speakersPanel(ctx, sp) {
 }
 
 // Now-playing pieces. `np` is the card's now-playing model; values that tick (position, volume) are set in place.
+export function nowPlayingArtists(np, cls) {
+  const artists = (np.item?.artists || []).map((artist, index) => ({ artist, index })).filter(({ artist }) => artist?.name && artist?.uri);
+  if (artists.length) return artists.map(({ artist, index }) => `<button class="${cls}" data-npopen="artist" data-artist-index="${index}">${esc(artist.name)}</button>`).join('<span class="artist-separator">, </span>');
+  return `<span class="${cls}">${esc(np.artist || np.playerName || "")}</span>`;
+}
 export function barHtml(np) {
   const key = np.key;
   return `<div class="np-left">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon("musicNote")}</div>`}
-      <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc(np.title)}</button><button class="np-a" data-npopen="artist">${esc(np.artist || np.playerName)}</button>`
+      <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc(np.title)}</button><div class="np-artists">${nowPlayingArtists(np, "np-a")}</div>`
         : `<span class="np-t">Intet spiller</span><span class="np-a">${esc(np.playerName || "Vælg en højttaler")}</span>`}</div>
       ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div>
     <div class="np-mid"><div class="ctrls">
@@ -328,7 +333,7 @@ export function miniHtml(np) {
 
 export function fullPlayerHtml(np) {
   return `<div class="fp">${np.title ? art(np.item || { image: np.image, image_large: np.imageLarge, media_type: "track" }, `fp-art art ${np.playing ? "playing" : "paused"}`, true) : `<div class="fp-art art art-ph">${icon("musicNote")}</div>`}
-    <div><div class="fp-row"><div class="fp-tx"><button class="fp-t" data-npopen="album">${esc(np.title || "Intet spiller")}</button><button class="fp-a" data-npopen="artist">${esc(np.artist || np.playerName || "")}</button></div>
+    <div><div class="fp-row"><div class="fp-tx"><button class="fp-t" data-npopen="album">${esc(np.title || "Intet spiller")}</button><div class="fp-artists">${nowPlayingArtists(np, "fp-a")}</div></div>
       ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div></div>
     <div class="fp-seek">${np.live ? '<div style="display:flex;justify-content:center;padding:8px 0"><span class="live">LIVE</span></div>' : `<input class="rng" type="range" min="0" max="${Math.max(1, Math.round(np.duration))}" step="1" value="${Math.round(np.position)}" data-seek aria-label="Spoleposition" ${np.duration ? "" : "disabled"}>
       <div class="fp-times"><span data-pos>${fmtTime(np.position)}</span><span data-dur>-${fmtTime(Math.max(0, np.duration - np.position))}</span></div>`}</div>

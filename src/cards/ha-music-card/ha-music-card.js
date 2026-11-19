@@ -13,7 +13,7 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
@@ -1143,7 +1143,7 @@ class HaMusicCard extends HTMLElement {
     if ("npfav" in d) return void this._toggleNpFav();
     if ("npopen" in d) {
       const it = this._np().item;
-      const target = d.npopen === "artist" ? it?.artists?.[0] : it?.album;
+      const target = d.npopen === "artist" ? it?.artists?.[Number(d.artistIndex || 0)] : it?.album;
       if (target?.uri) this._goUri(target.uri, target.name);
       else if (this._mode === "narrow" && el.closest(".mini")) this._openSheet("player");
       return;
