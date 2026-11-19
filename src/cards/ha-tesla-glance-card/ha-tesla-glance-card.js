@@ -9,7 +9,7 @@
 import { isNewLook, lookFormSchema, LOOK_LABELS } from "../../shared/look.js";
 import { CTL_CSS, ctlBattery, ctlParts, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 
-const VERSION = "0.8.5";
+const VERSION = "0.8.6";
 
 const DEAD = new Set(["unavailable", "unknown", "none", ""]);
 const CHARGING = new Set(["charging", "on", "true", "starting"]);
@@ -220,6 +220,10 @@ class HATeslaGlanceCard extends HTMLElement {
       :host([v2]) .name{font-size:16px}
       /* The car's name keeps its room; a long place in the status pill is cut instead (Claude AI, 2026-10-14). */
       .pill>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+      .pill .mq{display:inline-block;font-style:normal}.pill>span.run{text-overflow:clip}
+      .pill>span.run .mq{animation:tgMarquee var(--mqd,8s) ease-in-out infinite alternate}
+      @keyframes tgMarquee{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(var(--mq,0))}}
+      @media(prefers-reduced-motion:reduce){.pill>span.run{text-overflow:ellipsis}.pill>span.run .mq{animation:none}}
       :host([v2]) .pill{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 40%,transparent),0 0 12px -4px var(--tone,var(--accent))}
       :host([v2]) .stat{border:0;background:linear-gradient(160deg,color-mix(in srgb,var(--tone,var(--accent)) 12%,transparent),color-mix(in srgb,var(--primary-text-color) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tone,var(--accent)) 18%,transparent)}
       :host([v2]) .stat b{font-size:13.5px}
@@ -347,7 +351,7 @@ class HATeslaGlanceCard extends HTMLElement {
     <ha-card>
       <div class="grid">
         <div class="info">
-          <div class="top"><span class="vchip"><ha-icon icon="mdi:car-electric"></ha-icon></span><span class="name"></span><span class="pill"><ha-icon></ha-icon><span></span></span></div>
+          <div class="top"><span class="vchip"><ha-icon icon="mdi:car-electric"></ha-icon></span><span class="name"></span><span class="pill"><ha-icon></ha-icon><span><i class="mq"></i></span></span></div>
           <div class="soc"><b></b><span class="range"></span></div>
           <div class="bar"><div class="fill"></div><i class="marker" hidden></i></div>
           <div class="line"></div>
@@ -567,7 +571,34 @@ class HATeslaGlanceCard extends HTMLElement {
     if (this._escHandler) document.removeEventListener("keydown", this._escHandler);
     this._escHandler = null;
   }
-  disconnectedCallback() { this._closePopup(); }
+  disconnectedCallback() { this._closePopup(); this._pillRo?.disconnect(); this._pillRo = null; }
+
+  /** Status/place in the pill. Too long (e.g. "Parkeret · Randers Sygehus") → it slides back and forth instead of being cut.
+   *  Only the one text node moves (no copies), so the card never grows; re-measured on text or size change. */
+  _pillText(text) {
+    const box = this.shadowRoot.querySelector(".pill>span"); const mq = box?.querySelector(".mq");
+    if (!mq) return;
+    if (mq.textContent !== text) mq.textContent = text;
+    if (!this._pillRo && typeof ResizeObserver === "function") {
+      this._pillRo = new ResizeObserver(() => this._pillMeasure()); this._pillRo.observe(box);
+    }
+    this._pillMeasure();
+  }
+
+  _pillMeasure() {
+    cancelAnimationFrame(this._pillRaf);
+    this._pillRaf = requestAnimationFrame(() => {
+      const box = this.shadowRoot.querySelector(".pill>span"); const mq = box?.querySelector(".mq");
+      if (!mq) return;
+      const over = Math.ceil(mq.scrollWidth - box.clientWidth);
+      const run = box.clientWidth > 0 && over > 2;
+      const shift = run ? `${-over}px` : "0px";
+      if (box.classList.contains("run") === run && box.style.getPropertyValue("--mq") === shift) return;
+      box.classList.toggle("run", run);
+      box.style.setProperty("--mq", shift);
+      box.style.setProperty("--mqd", `${Math.min(16, 5 + over / 18).toFixed(1)}s`);
+    });
+  }
   _tap() {
     if (this._config.popup && this._plugged() && this._openPopup()) return;
     const path = this._config.navigation_path;
@@ -615,7 +646,7 @@ class HATeslaGlanceCard extends HTMLElement {
     card.classList.toggle("driving", !charging && ["D", "R", "N"].includes(gear));
     if (!charging && where) pillText += ` · ${where === "home" ? "Hjemme" : where === "not_home" ? "Ude" : where}`;
     root.querySelector(".pill ha-icon").setAttribute("icon", pillIcon);
-    root.querySelector(".pill span").textContent = pillText;
+    this._pillText(pillText);
 
     root.querySelector(".soc b").innerHTML = soc == null ? "—" : `${this._fmt(soc)}<small>%</small>`;
     const range = this._num(c.range);
