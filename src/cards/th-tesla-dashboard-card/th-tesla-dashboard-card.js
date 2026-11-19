@@ -17,9 +17,9 @@
 
 import { CTL_CSS, ctlBattery, ctlLine, ctlParts, ctlStatus, ctlSummary, ctlTips, ctlTrack } from "../../shared/charge-timeline.js";
 import { chartHover } from "../../shared/chart-hover.js";
-import { rsClock, rsDateInput, rsDays, rsEpoch, rsLabel, rsNext, rsOnceAt, rsQuickDate, rsTime } from "../../shared/ready-schedule.js";
+import { rsClock, rsDateInput, rsDays, rsEpoch, rsLabel, rsNearestAt, rsNext, rsOnceAt, rsQuickDate, rsTime } from "../../shared/ready-schedule.js";
 
-const TTD_VERSION = "1.23.1";
+const TTD_VERSION = "1.23.2";
 // The smart charge plan comes from the user's own template sensors; without any of them the panel is left out.
 const TTD_PLAN_ENTITY_KEYS = ["best_charge_start", "best_charge_end", "best_charge_price", "missing_wall_kwh", "charge_minutes_needed"];
 const TTD_PLAN_CONTROL_KEYS = ["apply_plan", "target_soc", "deadline"];
@@ -1277,7 +1277,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .qcp-rs span{display:grid;min-width:0}.qcp-rs b{font-size:13.5px;font-weight:650}.qcp-rs small{font-size:12px;color:var(--tdc-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 [data-r=rsBody] .rb-x{width:44px;height:44px}[data-r=rsBody] [data-rsact=onceset]{min-height:44px}
 .rs-two select{-webkit-appearance:none;appearance:none;padding-right:30px;background-color:color-mix(in srgb,var(--tdc-text) 5%,var(--tdc-dlg-bg,#121821));color:var(--tdc-text);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat}
-.rs-seg{grid-template-columns:repeat(3,minmax(0,1fr))}.rs-seg button{min-height:44px}
+.rs-seg{grid-template-columns:repeat(2,minmax(0,1fr))}.rs-hint{display:block;margin:-2px 0 0;font-size:12.5px;color:var(--tdc-muted)}.rs-hint:empty{display:none}.rs-seg button{min-height:44px}
 .rs-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rs-two .rb-f input,.rs-two .rb-f select{min-height:44px}
 .rs-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .rs-days button{display:grid;place-items:center;text-align:center;min-height:44px;padding:0;border-radius:10px;border:1px solid var(--tdc-line);background:var(--tdc-tile);color:var(--tdc-muted);font-size:13px;font-weight:650;cursor:pointer}
@@ -2376,7 +2376,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     if (this._qcOpen) this._openQc(this._qcOpen);
     this._rsDraft = { weeklyOn: plan.weeklyOn, time: plan.time || "07:00", days: [...plan.days], temperature: plan.temperature,
       leadMin: plan.leadMin, stopAfter: plan.stopAfter, minBattery: plan.minBattery, allowAway: plan.allowAway,
-      onceChoice: "tomorrow", onceDate: rsQuickDate("tomorrow", plan.nowS), onceTime: plan.time || "07:00" };
+      onceChoice: "next", onceDate: rsQuickDate("tomorrow", plan.nowS), onceTime: plan.time || "07:00" };
     this._rsRender(plan);
     if (!dlg.open) { if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", ""); }
   }
@@ -2400,10 +2400,24 @@ class ThTeslaDashboardCard extends HTMLElement {
       return `<div class="rb-once-on"><div><b>${rsLabel(once, plan.nowS)}</b><small>Varmen starter kl. ${rsClock(once.start)}. Ugeplanen er uændret.</small></div><button type="button" class="btn stop" data-rsact="oncecancel">Annullér</button></div>`;
     }
     const choice = (key, label) => `<button type="button" role="radio" aria-checked="${d.onceChoice === key}" data-rsact="choice" data-rschoice="${key}">${label}</button>`;
-    return `<div class="rb-seg rs-seg" role="radiogroup" aria-label="Dag">${choice("today", "I dag")}${choice("tomorrow", "I morgen")}${choice("date", "Dato")}</div>
+    return `<div class="rb-seg rs-seg" role="radiogroup" aria-label="Dag">${choice("next", "Næste gang")}${choice("date", "Dato")}</div>
       <div class="rs-two"><label class="rb-f" data-rsdatebox${d.onceChoice === "date" ? "" : " hidden"}>Dato<input type="date" data-rsin="onceDate" min="${rsDateInput(plan.nowS)}" value="${d.onceDate}"></label>
       <label class="rb-f">Klar kl.<input type="time" data-rsin="onceTime" value="${d.onceTime}"></label></div>
+      <small class="rs-hint" data-rs="oncehint">${this._rsOnceHint()}</small>
       <button type="button" class="btn go" data-rsact="onceset">Sæt engangstid</button>`;
+  }
+
+  /** The one-time goal the form points at right now (nearest coming time for "Næste gang"). */
+  _rsOnceGoal(nowS = Math.floor(Date.now() / 1000)) {
+    const d = this._rsDraft;
+    if (!d) return { ok: false, error: "" };
+    return d.onceChoice === "date" ? rsOnceAt(d.onceDate, d.onceTime, nowS) : rsNearestAt(d.onceTime, nowS);
+  }
+
+  /** "Bliver i dag kl. 06.45" under the form, so the day is never a guess. */
+  _rsOnceHint() {
+    const nowS = Math.floor(Date.now() / 1000); const result = this._rsOnceGoal(nowS);
+    return result.ok ? `Bliver ${rsLabel({ kind: "once", goal: result.goal }, nowS).replace(/^Engang: /, "")}` : "";
   }
 
   _rsRender(plan) {
@@ -2458,6 +2472,7 @@ class ThTeslaDashboardCard extends HTMLElement {
     const d = this._rsDraft; const key = input.dataset.rsin;
     if (!d) return;
     d[key] = ["leadMin", "stopAfter", "minBattery"].includes(key) ? Number(input.value) : input.value;
+    if (key === "onceTime" || key === "onceDate") this._rsMsg("oncehint", this._rsOnceHint());
   }
 
   _rsMsg(which, text) {
@@ -2483,16 +2498,14 @@ class ThTeslaDashboardCard extends HTMLElement {
       d.onceChoice = target.dataset.rschoice;
       for (const button of this._r.rsBody.querySelectorAll("[data-rschoice]")) button.setAttribute("aria-checked", String(button === target));
       const box = this._r.rsBody.querySelector("[data-rsdatebox]"); if (box) box.hidden = d.onceChoice !== "date";
-      this._rsMsg("oncemsg", "");
+      this._rsMsg("oncemsg", ""); this._rsMsg("oncehint", this._rsOnceHint());
     } else if (act === "onceset") this._rsSetOnce();
     else if (act === "oncecancel") this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: "" }]]);
     else if (act === "save") this._rsSave();
   }
 
   _rsSetOnce() {
-    const d = this._rsDraft; const nowS = Math.floor(Date.now() / 1000);
-    const date = d.onceChoice === "date" ? d.onceDate : rsQuickDate(d.onceChoice, nowS);
-    const result = rsOnceAt(date, d.onceTime, nowS);
+    const result = this._rsOnceGoal();
     if (!result.ok) { this._rsMsg("oncemsg", result.error); return; }
     this._rsMsg("oncemsg", "");
     this._rsWrite("oncemsg", [["input_text", "set_value", this._cfg.readySchedule.once, { value: String(result.goal) }]]);

@@ -102,6 +102,19 @@ export function rsQuickDate(choice, nowS) {
   return rsDateInput(Math.floor(date.getTime() / 1000));
 }
 
+/** The nearest coming moment with this clock time: later today, otherwise tomorrow (also across a clock change).
+ *  Set at 01.00 for 06.45 it is the same morning. { ok: true, goal } or { ok: false, error }. */
+export function rsNearestAt(timeText, nowS) {
+  const clock = rsTime(timeText);
+  if (!clock) return { ok: false, error: "Vælg et klokkeslæt." };
+  const base = new Date(nowS * 1000);
+  for (let add = 0; add < 3; add += 1) {
+    const goal = Math.floor(new Date(base.getFullYear(), base.getMonth(), base.getDate() + add, clock[0], clock[1], 0, 0).getTime() / 1000);
+    if (goal > nowS) return { ok: true, goal };
+  }
+  return { ok: false, error: "Vælg et klokkeslæt." };
+}
+
 /** A one-time ready time from the form: { ok: true, goal } or { ok: false, error } with the reason in Danish. */
 export function rsOnceAt(dateText, timeText, nowS) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateText ?? ""));

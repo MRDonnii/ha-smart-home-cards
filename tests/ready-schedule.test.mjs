@@ -1,7 +1,7 @@
 // "Klar kl." next-run logic in the Danish time zone (clock changes included). Change by Claude AI.
 process.env.TZ = "Europe/Copenhagen";
 import assert from "node:assert/strict";
-import { RS_COLLISION_S, rsDateInput, rsDayWord, rsDays, rsEpoch, rsLabel, rsNext, rsOnceAt, rsQuickDate, rsWeeklyGoal } from "../src/shared/ready-schedule.js";
+import { RS_COLLISION_S, rsDateInput, rsDayWord, rsDays, rsEpoch, rsLabel, rsNext, rsNearestAt, rsOnceAt, rsQuickDate, rsWeeklyGoal } from "../src/shared/ready-schedule.js";
 
 const at = (text) => Math.floor(new Date(text).getTime() / 1000);
 const WORK = "1,2,3,4,5";
@@ -78,3 +78,10 @@ assert.equal(rsOnceAt("", "06:45", now).ok, false); assert.equal(rsOnceAt("2026-
 assert.equal(rsOnceAt("2027-03-28", "02:30", at("2027-03-27T12:00:00+01:00")).goal, at("2027-03-28T03:30:00+02:00"));
 
 console.log("ready-schedule tests passed");
+
+// "Næste gang": the nearest coming time – set at 01.00 for 06.45 it is the same morning, after 06.45 it is tomorrow.
+assert.deepEqual(rsNearestAt("06:45", at("2026-11-19T01:00:00+01:00")), { ok: true, goal: at("2026-11-19T06:45:00+01:00") });
+assert.deepEqual(rsNearestAt("06:45", at("2026-11-19T06:45:00+01:00")), { ok: true, goal: at("2026-11-20T06:45:00+01:00") }, "this very minute has passed");
+assert.equal(rsNearestAt("06:45", at("2026-11-19T20:00:00+01:00")).goal, at("2026-11-20T06:45:00+01:00"));
+assert.equal(rsNearestAt("06:45", at("2026-12-31T23:30:00+01:00")).goal, at("2027-01-01T06:45:00+01:00"), "new year");
+assert.equal(rsNearestAt("", at("2026-11-19T01:00:00+01:00")).ok, false);
