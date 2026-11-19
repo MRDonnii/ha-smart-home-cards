@@ -118,6 +118,35 @@ assert.deepEqual(calls.at(-1).service_data, { source_player: "media_player.kitch
 let seq = 0;
 const reg = new Map();
 const ctx = { reg: (item) => { const k = `k${(seq += 1)}`; reg.set(k, item); return k; }, isCurrent: (i) => i.uri === "library://track/1", playing: true, hasQueueApi: true };
+const playlistTrack = { ...n, artists: [
+  { name: "First & Artist", uri: "library://artist/3" },
+  { name: "Second Artist", uri: "spotify://artist/42" },
+  { name: "No artist ID" },
+] };
+const playlistRow = views.trackRow(ctx, playlistTrack, 0);
+assert.match(playlistRow, /class="tt">Example Song<\/button>/);
+assert.match(playlistRow, /data-goto="library:\/\/artist\/3"[^>]*>First &amp; Artist<\/button>/);
+assert.match(playlistRow, /data-goto="spotify:\/\/artist\/42"[^>]*>Second Artist<\/button>, No artist ID/);
+assert.doesNotMatch(views.trackRow(ctx, playlistTrack, 0, { sub: "Podcast <description>" }), /data-goto/);
+const laterTrack = { ...n, uri: "library://track/7", name: "Next song" };
+const playlistUri = "library://playlist/2";
+const playback = [];
+const player = {
+  _active: "media_player.kitchen",
+  _items: new Map([["selected", playlistTrack]]),
+  _view: { name: "detail", item: { uri: playlistUri, media_type: "playlist" } },
+  _data: { detail: new Map([[playlistUri, { tracks: [playlistTrack, playlistTrack, { ...n, uri: "" }, laterTrack] }]]) },
+  _isCurrent: () => false,
+  _play: async (...args) => { playback.push(args); return true; },
+};
+await Card.prototype._playFromList.call(player, { dataset: { track: "selected", idx: "1" } });
+assert.deepEqual(playback, [[playlistTrack, "replace"], [[laterTrack], "add"]]);
+const navigation = [];
+player._goUri = (...args) => navigation.push(args);
+const artistButton = { dataset: { goto: "spotify://artist/42", name: "Second Artist" } };
+Card.prototype._onClick.call(player, { target: { closest: () => artistButton } });
+assert.deepEqual(navigation, [["spotify://artist/42", "Second Artist"]]);
+assert.equal(playback.length, 2);
 const home = views.homeView(ctx, { recent: [n], playlists: [], albums: lib, radio: [] });
 assert.match(home, /Senest hørt album/);
 assert.match(home, /Example Album/);

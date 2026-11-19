@@ -13,7 +13,7 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.3";
+const VERSION = "0.1.4";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
@@ -988,7 +988,7 @@ class HaMusicCard extends HTMLElement {
 
   _openSpeakers() { if (this._mode === "narrow") this._openSheet("speakers"); else if (this._panel !== "speakers") this._togglePanel("speakers"); }
 
-  _playFromList(row) {
+  async _playFromList(row) {
     const item = this._items.get(row.dataset.track);
     if (!item) return;
     if (this._isCurrent(item) && !row.closest(".search")) { this._cmd("playpause"); return; }
@@ -997,6 +997,18 @@ class HaMusicCard extends HTMLElement {
     if (v.name === "detail") {
       const st = this._data.detail.get(v.item.uri);
       if (st?.tracks?.length && v.item.media_type !== "podcast") list = st.tracks;
+      if (v.item.media_type === "playlist") {
+        const index = Number(row.dataset.idx);
+        const next = list?.[index] === item ? list.slice(index + 1, index + 100).filter((track) => track.uri) : [];
+        const player = this._active;
+        const selection = this._playlistSelection = {};
+        // Start the selected track on its own so loading the rest cannot block it.
+        if (await this._play(item, "replace") && next.length &&
+            this._playlistSelection === selection && this._active === player) {
+          await this._play(next, "add");
+        }
+        return;
+      }
     } else if (v.name === "library" && v.type === "track") list = this._data.lib.get(this._libKey(v))?.items;
     if (list) {
       const idx = list.findIndex((t) => t.uri === item.uri);
@@ -1242,7 +1254,7 @@ class HaMusicCard extends HTMLElement {
     }
     if (e.pointerType !== "touch") return;
     const el = t.closest("[data-open],[data-track],.qi");
-    if (!el || t.closest("button.dots, button.more, .qa, button.fab")) return;
+    if (!el || t.closest("button.dots, button.more, .qa, button.fab, button[data-goto]")) return;
     this._lp = { x: e.clientX, y: e.clientY, el };
     clearTimeout(this._lpTimer);
     this._lpTimer = setTimeout(() => {

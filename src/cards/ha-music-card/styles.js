@@ -144,7 +144,9 @@ div.art .ic, span.art .ic { width: 42%; height: 42%; }
 .tr .main-c { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .tr .main-c .art { width: 42px; height: 42px; border-radius: 5px; flex: none; }
 .tr .tt { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr button.tt { display: block; max-width: 100%; text-align: left; }
 .tr .ts { font-size: 13px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.tr .ts button:hover, .tr .ts button:focus-visible { color: var(--mc-text); text-decoration: underline; }
 .tr .al { font-size: 13.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tr .d { font-size: 13.5px; color: var(--mc-dim); text-align: right; font-variant-numeric: tabular-nums; }
 .tr .dots { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--mc-dim); opacity: 0; }

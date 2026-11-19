@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.272 */
+/* MRDonnii Smart Home Cards v0.5.273 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -69219,7 +69219,9 @@ div.art .ic, span.art .ic { width: 42%; height: 42%; }
 .tr .main-c { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .tr .main-c .art { width: 42px; height: 42px; border-radius: 5px; flex: none; }
 .tr .tt { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr button.tt { display: block; max-width: 100%; text-align: left; }
 .tr .ts { font-size: 13px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.tr .ts button:hover, .tr .ts button:focus-visible { color: var(--mc-text); text-decoration: underline; }
 .tr .al { font-size: 13.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tr .d { font-size: 13.5px; color: var(--mc-dim); text-align: right; font-variant-numeric: tabular-nums; }
 .tr .dots { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--mc-dim); opacity: 0; }
@@ -70029,9 +70031,9 @@ function trackRow(ctx, item2, index, opts = {}) {
   const on = ctx.isCurrent(item2);
   const withArt = opts.art !== false;
   const num5 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}${icon4("play")}</div>`;
-  const sub = opts.sub ?? artistNames(item2);
-  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" role="button" tabindex="0" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
-    ${num5}<div class="main-c">${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</div>${sub ? `<div class="ts">${opts.subHtml ? sub : esc12(sub)}</div>` : ""}</div></div>
+  const sub = opts.sub == null ? (item2.artists || []).map((artist) => artist.uri ? `<button type="button" data-goto="${esc12(artist.uri)}" data-name="${esc12(artist.name)}">${esc12(artist.name)}</button>` : esc12(artist.name)).join(", ") : opts.subHtml ? opts.sub : esc12(opts.sub);
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
+    ${num5}<div class="main-c">${withArt ? art(item2) : ""}<div style="min-width:0"><button type="button" class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</button>${sub ? `<div class="ts">${sub}</div>` : ""}</div></div>
     <div class="al">${esc12(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
     <button class="dots" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
 }
@@ -71448,7 +71450,7 @@ var HaMusicCard = class extends HTMLElement {
     if (this._mode === "narrow") this._openSheet("speakers");
     else if (this._panel !== "speakers") this._togglePanel("speakers");
   }
-  _playFromList(row) {
+  async _playFromList(row) {
     const item2 = this._items.get(row.dataset.track);
     if (!item2) return;
     if (this._isCurrent(item2) && !row.closest(".search")) {
@@ -71460,6 +71462,16 @@ var HaMusicCard = class extends HTMLElement {
     if (v.name === "detail") {
       const st = this._data.detail.get(v.item.uri);
       if (st?.tracks?.length && v.item.media_type !== "podcast") list = st.tracks;
+      if (v.item.media_type === "playlist") {
+        const index = Number(row.dataset.idx);
+        const next = list?.[index] === item2 ? list.slice(index + 1, index + 100).filter((track2) => track2.uri) : [];
+        const player = this._active;
+        const selection = this._playlistSelection = {};
+        if (await this._play(item2, "replace") && next.length && this._playlistSelection === selection && this._active === player) {
+          await this._play(next, "add");
+        }
+        return;
+      }
     } else if (v.name === "library" && v.type === "track") list = this._data.lib.get(this._libKey(v))?.items;
     if (list) {
       const idx = list.findIndex((t) => t.uri === item2.uri);
@@ -71788,7 +71800,7 @@ var HaMusicCard = class extends HTMLElement {
     }
     if (e.pointerType !== "touch") return;
     const el = t.closest("[data-open],[data-track],.qi");
-    if (!el || t.closest("button.dots, button.more, .qa, button.fab")) return;
+    if (!el || t.closest("button.dots, button.more, .qa, button.fab, button[data-goto]")) return;
     this._lp = { x: e.clientX, y: e.clientY, el };
     clearTimeout(this._lpTimer);
     this._lpTimer = setTimeout(() => {
