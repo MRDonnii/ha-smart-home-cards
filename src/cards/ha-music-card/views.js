@@ -140,14 +140,15 @@ export function trackRow(ctx, item, index, opts = {}) {
   const key = ctx.reg(item);
   const on = ctx.isCurrent(item);
   const withArt = opts.art !== false;
-  const num = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc(opts.label ?? index + 1)}</span>`}${icon("play")}</div>`;
+  const num = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc(opts.label ?? index + 1)}</span>`}</div>`;
+  const playing = on && ctx.playing;
   const sub = opts.sub == null
     ? (item.artists || []).map((artist) => artist.uri
       ? `<button type="button" data-goto="${esc(artist.uri)}" data-name="${esc(artist.name)}">${esc(artist.name)}</button>`
       : esc(artist.name)).join(", ")
     : (opts.subHtml ? opts.sub : esc(opts.sub));
-  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key}" data-idx="${index}" data-label="${esc(opts.label ?? index + 1)}" data-uri="${esc(item.uri)}">
-    ${num}<div class="main-c">${withArt ? art(item) : ""}<div style="min-width:0"><button type="button" class="tt">${esc(item.name)}${item.version ? ` <span style="color:var(--mc-dim)">(${esc(item.version)})</span>` : ""}</button>${sub ? `<div class="ts">${sub}</div>` : ""}</div></div>
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${playing ? " playing" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key}" data-idx="${index}" data-label="${esc(opts.label ?? index + 1)}" data-uri="${esc(item.uri)}">
+    ${num}<div class="main-c"><button type="button" class="track-play" aria-label="${playing ? "Sæt på pause" : "Afspil"}: ${esc(item.name)}">${icon("play", "track-play-icon")}${icon("pause", "track-pause-icon")}</button>${withArt ? art(item) : ""}<div style="min-width:0"><div class="tt">${esc(item.name)}${item.version ? ` <span style="color:var(--mc-dim)">(${esc(item.version)})</span>` : ""}</div>${sub ? `<div class="ts">${sub}</div>` : ""}</div></div>
     <div class="al">${esc(opts.col3 ?? item.album?.name ?? "")}</div><div class="d">${item.duration ? fmtTime(item.duration) : ""}</div>
     <button class="dots" data-menu="${key}" aria-label="Flere valg">${icon("dotsHorizontal")}</button></div>`;
 }

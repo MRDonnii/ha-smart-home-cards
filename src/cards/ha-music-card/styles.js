@@ -137,14 +137,14 @@ div.art .ic, span.art .ic { width: 42%; height: 42%; }
 .tr:hover { background: rgba(255,255,255,.07); }
 .tr.on .tt { color: var(--mc-accent); }
 .tr .n { color: var(--mc-dim); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; position: relative; }
-.tr .n .ic { width: 18px; height: 18px; display: none; margin-left: auto; color: var(--mc-text); }
-.tr:hover .n span { display: none; }
-.tr:hover .n .ic { display: block; }
-.tr.on .n span { display: none; }
 .tr .main-c { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.track-play { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.13); color: var(--mc-text); }
+.track-play:hover, .track-play:focus-visible { background: var(--mc-text); color: var(--mc-bg); }
+.track-play .ic { width: 18px; height: 18px; }
+.track-play .track-pause-icon, .tr.playing .track-play-icon { display: none; }
+.tr.playing .track-pause-icon { display: block; }
 .tr .main-c .art { width: 42px; height: 42px; border-radius: 5px; flex: none; }
 .tr .tt { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tr button.tt { display: block; max-width: 100%; text-align: left; }
 .tr .ts { font-size: 13px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .tr .ts button:hover, .tr .ts button:focus-visible { color: var(--mc-text); text-decoration: underline; }
 .tr .al { font-size: 13.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

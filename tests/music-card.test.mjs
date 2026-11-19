@@ -124,29 +124,33 @@ const playlistTrack = { ...n, artists: [
   { name: "No artist ID" },
 ] };
 const playlistRow = views.trackRow(ctx, playlistTrack, 0);
-assert.match(playlistRow, /class="tt">Example Song<\/button>/);
+assert.match(playlistRow, /class="track-play" aria-label="Sæt på pause: Example Song"/);
 assert.match(playlistRow, /data-goto="library:\/\/artist\/3"[^>]*>First &amp; Artist<\/button>/);
 assert.match(playlistRow, /data-goto="spotify:\/\/artist\/42"[^>]*>Second Artist<\/button>, No artist ID/);
 assert.doesNotMatch(views.trackRow(ctx, playlistTrack, 0, { sub: "Podcast <description>" }), /data-goto/);
 const laterTrack = { ...n, uri: "library://track/7", name: "Next song" };
+const following = Array.from({ length: 9 }, (_, index) => ({ ...laterTrack, uri: `library://track/${index + 7}` }));
 const playlistUri = "library://playlist/2";
 const playback = [];
 const player = {
   _active: "media_player.kitchen",
   _items: new Map([["selected", playlistTrack]]),
   _view: { name: "detail", item: { uri: playlistUri, media_type: "playlist" } },
-  _data: { detail: new Map([[playlistUri, { tracks: [playlistTrack, playlistTrack, { ...n, uri: "" }, laterTrack] }]]) },
+  _data: { detail: new Map([[playlistUri, { tracks: [playlistTrack, playlistTrack, { ...n, uri: "" }, ...following] }]]) },
   _isCurrent: () => false,
   _play: async (...args) => { playback.push(args); return true; },
+  _svc: async (fn) => { await fn(); return true; },
+  api: { play: async (entity, ...args) => { assert.equal(entity, "media_player.kitchen"); playback.push(args); } },
+  _refreshQueue: () => {},
 };
 await Card.prototype._playFromList.call(player, { dataset: { track: "selected", idx: "1" } });
-assert.deepEqual(playback, [[playlistTrack, "replace"], [[laterTrack], "add"]]);
+assert.deepEqual(playback, [[playlistTrack, "replace"], [following.slice(0, 8), "add"], [following.slice(8), "add"]]);
 const navigation = [];
 player._goUri = (...args) => navigation.push(args);
 const artistButton = { dataset: { goto: "spotify://artist/42", name: "Second Artist" } };
 Card.prototype._onClick.call(player, { target: { closest: () => artistButton } });
 assert.deepEqual(navigation, [["spotify://artist/42", "Second Artist"]]);
-assert.equal(playback.length, 2);
+assert.equal(playback.length, 3);
 const home = views.homeView(ctx, { recent: [n], playlists: [], albums: lib, radio: [] });
 assert.match(home, /Senest hørt album/);
 assert.match(home, /Example Album/);

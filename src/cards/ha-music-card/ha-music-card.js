@@ -13,7 +13,7 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.4";
+const VERSION = "0.1.5";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
@@ -363,10 +363,15 @@ class HaMusicCard extends HTMLElement {
     for (const row of this.shadowRoot.querySelectorAll(".tr[data-track]")) {
       const item = this._items.get(row.dataset.track);
       const on = this._isCurrent(item);
+      const playing = on && np.playing;
       const n = row.querySelector(".n");
+      if (row.classList.contains("playing") !== playing) {
+        row.classList.toggle("playing", playing);
+        row.querySelector(".track-play")?.setAttribute("aria-label", `${playing ? "Sæt på pause" : "Afspil"}: ${item?.name || ""}`);
+      }
       if (on === row.classList.contains("on") && !(on && n && n.querySelector(".eq")?.classList.contains("paused") === np.playing)) continue;
       row.classList.toggle("on", on);
-      if (n) n.innerHTML = `${on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`}${icon("play")}`;
+      if (n) n.innerHTML = on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`;
     }
   }
 
@@ -967,18 +972,19 @@ class HaMusicCard extends HTMLElement {
   }
 
   // ---------- Actions ----------
-  async _svc(fn, ok) {
+  async _svc(fn, ok, errorLabel = "Det lykkedes ikke") {
     try {
       await fn();
       if (ok) this._toast(ok);
       return true;
     } catch (e) {
-      this._toast(`Det lykkedes ikke: ${errText(e)}`, true);
+      this._toast(`${errorLabel}: ${errText(e)}`, true);
       return false;
     }
   }
 
   _play(item, enqueue = "play", radio = false, ok = "") {
+    if (enqueue !== "add") this._playlistSelection = null;
     if (!this._active) { this._toast("Vælg en højttaler først", true); this._openSpeakers(); return Promise.resolve(false); }
     return this._svc(() => this.api.play(this._active, item, enqueue, radio), ok).then((done) => {
       if (done) { this._refreshQueue(); this._later(() => this._refreshQueue(), 1500); }
@@ -1001,11 +1007,15 @@ class HaMusicCard extends HTMLElement {
         const index = Number(row.dataset.idx);
         const next = list?.[index] === item ? list.slice(index + 1, index + 100).filter((track) => track.uri) : [];
         const player = this._active;
+        const start = this._play(item, "replace");
         const selection = this._playlistSelection = {};
-        // Start the selected track on its own so loading the rest cannot block it.
-        if (await this._play(item, "replace") && next.length &&
-            this._playlistSelection === selection && this._active === player) {
-          await this._play(next, "add");
+        if (await start) {
+          // Keep each request small: Music Assistant resolves every track before replying.
+          for (let i = 0; i < next.length && this._playlistSelection === selection && this._active === player; i += 8) {
+            const batch = next.slice(i, i + 8);
+            if (!await this._svc(() => this.api.play(player, batch, "add"), "", "Kunne ikke lægge flere numre i kø")) break;
+          }
+          if (next.length && this._playlistSelection === selection && this._active === player) this._refreshQueue();
         }
         return;
       }

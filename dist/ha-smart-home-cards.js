@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.273 */
+/* MRDonnii Smart Home Cards v0.5.274 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -69212,14 +69212,14 @@ div.art .ic, span.art .ic { width: 42%; height: 42%; }
 .tr:hover { background: rgba(255,255,255,.07); }
 .tr.on .tt { color: var(--mc-accent); }
 .tr .n { color: var(--mc-dim); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; position: relative; }
-.tr .n .ic { width: 18px; height: 18px; display: none; margin-left: auto; color: var(--mc-text); }
-.tr:hover .n span { display: none; }
-.tr:hover .n .ic { display: block; }
-.tr.on .n span { display: none; }
 .tr .main-c { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.track-play { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.13); color: var(--mc-text); }
+.track-play:hover, .track-play:focus-visible { background: var(--mc-text); color: var(--mc-bg); }
+.track-play .ic { width: 18px; height: 18px; }
+.track-play .track-pause-icon, .tr.playing .track-play-icon { display: none; }
+.tr.playing .track-pause-icon { display: block; }
 .tr .main-c .art { width: 42px; height: 42px; border-radius: 5px; flex: none; }
 .tr .tt { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tr button.tt { display: block; max-width: 100%; text-align: left; }
 .tr .ts { font-size: 13px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .tr .ts button:hover, .tr .ts button:focus-visible { color: var(--mc-text); text-decoration: underline; }
 .tr .al { font-size: 13.5px; color: var(--mc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -70030,10 +70030,11 @@ function trackRow(ctx, item2, index, opts = {}) {
   const key2 = ctx.reg(item2);
   const on = ctx.isCurrent(item2);
   const withArt = opts.art !== false;
-  const num5 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}${icon4("play")}</div>`;
+  const num5 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}</div>`;
+  const playing = on && ctx.playing;
   const sub = opts.sub == null ? (item2.artists || []).map((artist) => artist.uri ? `<button type="button" data-goto="${esc12(artist.uri)}" data-name="${esc12(artist.name)}">${esc12(artist.name)}</button>` : esc12(artist.name)).join(", ") : opts.subHtml ? opts.sub : esc12(opts.sub);
-  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
-    ${num5}<div class="main-c">${withArt ? art(item2) : ""}<div style="min-width:0"><button type="button" class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</button>${sub ? `<div class="ts">${sub}</div>` : ""}</div></div>
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${playing ? " playing" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
+    ${num5}<div class="main-c"><button type="button" class="track-play" aria-label="${playing ? "S\xE6t p\xE5 pause" : "Afspil"}: ${esc12(item2.name)}">${icon4("play", "track-play-icon")}${icon4("pause", "track-pause-icon")}</button>${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</div>${sub ? `<div class="ts">${sub}</div>` : ""}</div></div>
     <div class="al">${esc12(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
     <button class="dots" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
 }
@@ -70754,10 +70755,15 @@ var HaMusicCard = class extends HTMLElement {
     for (const row of this.shadowRoot.querySelectorAll(".tr[data-track]")) {
       const item2 = this._items.get(row.dataset.track);
       const on = this._isCurrent(item2);
+      const playing = on && np.playing;
       const n = row.querySelector(".n");
+      if (row.classList.contains("playing") !== playing) {
+        row.classList.toggle("playing", playing);
+        row.querySelector(".track-play")?.setAttribute("aria-label", `${playing ? "S\xE6t p\xE5 pause" : "Afspil"}: ${item2?.name || ""}`);
+      }
       if (on === row.classList.contains("on") && !(on && n && n.querySelector(".eq")?.classList.contains("paused") === np.playing)) continue;
       row.classList.toggle("on", on);
-      if (n) n.innerHTML = `${on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc12(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`}${icon4("play")}`;
+      if (n) n.innerHTML = on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc12(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`;
     }
   }
   async _sampleAccent(url) {
@@ -71422,17 +71428,18 @@ var HaMusicCard = class extends HTMLElement {
     this._navigate({ name: "detail", item: { media_type: mediaTypeFromUri(uri), uri, name: name || "", artists: [] } });
   }
   // ---------- Actions ----------
-  async _svc(fn, ok) {
+  async _svc(fn, ok, errorLabel = "Det lykkedes ikke") {
     try {
       await fn();
       if (ok) this._toast(ok);
       return true;
     } catch (e) {
-      this._toast(`Det lykkedes ikke: ${errText(e)}`, true);
+      this._toast(`${errorLabel}: ${errText(e)}`, true);
       return false;
     }
   }
   _play(item2, enqueue = "play", radio = false, ok = "") {
+    if (enqueue !== "add") this._playlistSelection = null;
     if (!this._active) {
       this._toast("V\xE6lg en h\xF8jttaler f\xF8rst", true);
       this._openSpeakers();
@@ -71466,9 +71473,14 @@ var HaMusicCard = class extends HTMLElement {
         const index = Number(row.dataset.idx);
         const next = list?.[index] === item2 ? list.slice(index + 1, index + 100).filter((track2) => track2.uri) : [];
         const player = this._active;
+        const start = this._play(item2, "replace");
         const selection = this._playlistSelection = {};
-        if (await this._play(item2, "replace") && next.length && this._playlistSelection === selection && this._active === player) {
-          await this._play(next, "add");
+        if (await start) {
+          for (let i = 0; i < next.length && this._playlistSelection === selection && this._active === player; i += 8) {
+            const batch = next.slice(i, i + 8);
+            if (!await this._svc(() => this.api.play(player, batch, "add"), "", "Kunne ikke l\xE6gge flere numre i k\xF8")) break;
+          }
+          if (next.length && this._playlistSelection === selection && this._active === player) this._refreshQueue();
         }
         return;
       }
