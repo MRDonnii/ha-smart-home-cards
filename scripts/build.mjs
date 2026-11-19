@@ -38,7 +38,7 @@ await build({
   target: ["es2022"],
   legalComments: "eof",
   plugins: [{ name: "calefa-unit-asset", setup(build) {
-    build.onLoad({ filter: /ha-calefa-flow-card\/ha-calefa-flow-card\.js$/ }, async ({ path: filename }) => ({
+    build.onLoad({ filter: /ha-calefa-flow-card[\\/]ha-calefa-flow-card\.js$/ }, async ({ path: filename }) => ({
       contents: (await readFile(filename, "utf8")).replace('const CALEFA_DEFAULT_UNIT_IMAGE = "";', `const CALEFA_DEFAULT_UNIT_IMAGE = ${JSON.stringify(unitDataUrl)};`),
       loader: "js",
     }));
@@ -47,6 +47,11 @@ await build({
 });
 
 const bundle = await readFile(outfile, "utf8");
+// The Calefa unit image is inlined by the plugin above. Its filter once missed Windows paths and shipped an empty image
+// (v0.5.272-v0.5.274), so a bundle without it is an error, not a warning.
+if (!bundle.includes(`CALEFA_DEFAULT_UNIT_IMAGE = ${JSON.stringify(unitDataUrl)}`)) {
+  throw new Error("Calefa unit image was not inlined into dist/ha-smart-home-cards.js");
+}
 await writeFile(outfile, bundle.replace(/[ \t]+$/gm, ""));
 
 console.log(`Built ${cards.length} cards into dist/ha-smart-home-cards.js`);

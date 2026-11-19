@@ -47,6 +47,10 @@ jobs:
       - run: npm test
         if: steps.meta.outputs.should_release == 'true'
 
+      # HACS installs the committed dist/ at the tag, so it must be exactly what the build produces.
+      - run: git diff --exit-code -- dist
+        if: steps.meta.outputs.should_release == 'true'
+
       - name: Create version tag
         if: steps.meta.outputs.should_release == 'true' && github.ref_type != 'tag'
         shell: bash
