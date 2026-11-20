@@ -4,6 +4,7 @@ import { Hch5UnitDiagram, type DiagramParts } from "./Hch5UnitDiagram";
 import { AfterheatThermostat } from "./AfterheatThermostat";
 import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
+import { afterheatLevelOf } from "./afterheatlevel";
 import { FROST_LOCK_BLOCKED, coolBlocked, frostLockOf, frostRefusal } from "./frostlock";
 import { ArrowRight, CloudFog, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
 import css from "./webui.css";
@@ -437,6 +438,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const afterheatEnabled = climate ? climate.state !== "off" : true;
   // Frost lock (HCH5 Control): the climate entity drops "off" and raises min_temp while it freezes.
   const frostLock = frostLockOf(climate?.attributes);
+  // HAC1 level and the Pi controller's reason (gateway 1.9.0+); null with older integrations.
+  const afterheatLevel = afterheatLevelOf(climate?.attributes);
   const actualAfterheat: AfterheatValue = afterheatEnabled ? afterheatSetpoint : "off";
   const selection = value("afterheat_selection");
   const selectionNumber = number(selection);
@@ -713,7 +716,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             cutoff={afterheatCutoff} outdoor={outdoor} airBefore={beforeHeater} airAfter={afterHeater}
             registered={actualAfterheatSelection} lastOn={afterheatSetpoint}
             current={committedAfterheat} onConfirm={confirmAfterheat} onCancel={() => setAfterheatDraft(null)} busy={busy !== null}
-            showBefore={has("afterheat_before")} showRegistered={has("afterheat_selection")} frostLock={frostLock}/>}
+            showBefore={has("afterheat_before")} showRegistered={has("afterheat_selection")} frostLock={frostLock} level={afterheatLevel}/>}
           {showT2 ? <>
             <div className="pro-card-head compact air-calc-head"><div><h2>Beregnet fra målt T2</h2><p>Luftmængde anslået for aktuelt trin{num("supply_airflow") === null ? "" : ` · ${whole(num("supply_airflow"))} m³/h`}</p></div></div>
             <div className={`climate-metrics ${t2Metrics.length === 1 ? "metrics-1" : "metrics-2"}`} onClick={openTile}>{t2Metrics}</div>

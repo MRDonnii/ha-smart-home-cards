@@ -1,5 +1,6 @@
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { Flame, Power, Snowflake } from "./icons";
+import { AFTERHEAT_LEVEL_MAX, levelLabel, levelPercent, wantedLabel, type AfterheatLevel } from "./afterheatlevel";
 import { AFTERHEAT_MAX as MAX, AFTERHEAT_MIN as MIN, FROST_LOCK_NOTE, NO_FROST_LOCK, allowedWhileLocked, canStepDown, clampSetpoint, frostRefusal, stepDown, stepUp, type AfterheatValue, type FrostLock } from "./frostlock";
 
 // Thermostat-style control for the HAC1 afterheat setpoint. The value is only
@@ -48,9 +49,28 @@ export interface AfterheatThermostatProps {
   showRegistered?: boolean;
   /** Frost lock from the Pi: no "off" and nothing below `floor` while it freezes. */
   frostLock?: FrostLock;
+  /** HAC1 output level and the Pi controller's reason; left out with older integrations. */
+  level?: AfterheatLevel | null;
 }
 
-export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false, showBefore = true, showRegistered = true, frostLock = NO_FROST_LOCK }: AfterheatThermostatProps) {
+/** "Trin N/10" with a bar, the controller's wanted level as a marker, and its reason. */
+export function AfterheatLevelBar({ info }: { info: AfterheatLevel }) {
+  const wanted = wantedLabel(info);
+  return <div className="thermostat-level">
+    {/* A stale level is null: the controller has fallen back, so its wanted level means nothing either. */}
+    {info.level !== null && <>
+      <div className="thermostat-level-head"><strong>{levelLabel(info)}</strong>{wanted && <em>{wanted}</em>}</div>
+      <div className="thermostat-level-bar" role="meter" aria-label="HAC1-trin" aria-valuemin={0} aria-valuemax={AFTERHEAT_LEVEL_MAX}
+        aria-valuenow={info.level} aria-valuetext={wanted ? `${levelLabel(info)}, ${wanted}` : levelLabel(info)}>
+        {Array.from({ length: AFTERHEAT_LEVEL_MAX }, (_, i) => <i key={i} className={info.level !== null && i < info.level ? "lit" : undefined}/>)}
+        {info.wanted !== null && <b className="thermostat-level-marker" style={{ left: `${levelPercent(info.wanted)}%` }}/>}
+      </div>
+    </>}
+    {info.reason && <p className="thermostat-level-reason">{info.reason}</p>}
+  </div>;
+}
+
+export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false, showBefore = true, showRegistered = true, frostLock = NO_FROST_LOCK, level = null }: AfterheatThermostatProps) {
   const locked = frostLock.locked;
   const floor = locked ? frostLock.floor : MIN;
   const pending = value !== current;
@@ -85,7 +105,7 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
   const ticks = Array.from({ length: MAX - MIN + 1 }, (_, i) => MIN + i);
   const knob = off ? null : point(angleOf(value));
 
-  return <div className={`afterheat-thermostat tone-${tone}`}>
+  return <div className={`afterheat-thermostat tone-${tone}${level ? " has-level" : ""}`}>
     <div className="thermostat-dial">
       <svg ref={svgRef} viewBox="0 0 200 200" role="slider" aria-label="Eftervarme setpunkt" aria-valuemin={floor} aria-valuemax={MAX}
         aria-valuenow={off ? undefined : value} aria-valuetext={off ? "Slukket" : `${value} grader`} tabIndex={0}
@@ -140,6 +160,7 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
         <button type="button" aria-label="Hæv eftervarme" disabled={!off && value >= MAX} onClick={() => onChange(stepUp(value, frostLock))}>+</button>
       </div>
     </div>
+    {level && <AfterheatLevelBar info={level}/>}
     {pending && <div className="thermostat-confirm" role="alertdialog" aria-modal="true" aria-label="Bekræft ændring af eftervarme">
       <div className="thermostat-confirm-box">
         <span className="thermostat-confirm-title">Eftervarme</span>

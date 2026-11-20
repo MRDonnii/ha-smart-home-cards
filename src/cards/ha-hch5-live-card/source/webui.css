@@ -967,6 +967,7 @@ button { font: inherit; color: inherit; }
 /* Same afterheat thermostat as the controller WebUI, adapted to this card. */
 .afterheat-setpoint-card { align-content: stretch; }
 .afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); grid-template-areas: "dial readings"; gap: 14px; align-items: center; --tone: #58b9ff; }
+.afterheat-thermostat.has-level { grid-template-areas: "dial readings" "level level"; grid-template-rows: minmax(0, 1fr) auto; }
 .afterheat-thermostat.tone-heating { --tone: #ff8a47; }
 .afterheat-thermostat.tone-lockout { --tone: #ffad55; }
 .afterheat-thermostat.tone-off { --tone: #6c8494; }
@@ -1008,9 +1009,25 @@ button { font: inherit; color: inherit; }
 .thermostat-actions .thermostat-power.on { border-color: color-mix(in srgb, var(--tone) 55%, #294658); color: var(--tone); }
 @container hch-card (max-width: 680px) {
   .afterheat-thermostat { grid-template-columns: 1fr; grid-template-areas: "dial" "readings"; justify-items: center; }
+  .afterheat-thermostat.has-level { grid-template-areas: "dial" "readings" "level"; grid-template-rows: none; }
   .thermostat-dial { max-width: 240px; }
   .thermostat-side { width: 100%; }
 }
+.thermostat-level { grid-area: level; min-width: 0; width: 100%; display: grid; gap: 6px; padding: 9px 11px; border: 1px solid #1f3948; border-radius: 10px; background: #0a1822; }
+.thermostat-level-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.thermostat-level-head strong { color: #dff6ff; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.thermostat-level-head em { color: #7f97a6; font-size: 10px; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
+.thermostat-level-bar { position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; height: 8px; }
+.thermostat-level-bar i { border-radius: 2px; background: #1c3442; }
+.thermostat-level-bar i.lit { background: var(--tone); }
+.thermostat-level-marker { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: #eaf6fd; box-shadow: 0 0 0 1px rgb(0 0 0 / 45%); transition: left .4s ease; }
+.thermostat-level-reason { margin: 0; color: #9fb6c4; font-size: 11px; line-height: 1.35; }
+:host([light]) .thermostat-level { background: var(--surface, #fff); border-color: #c3d6e2; }
+:host([light]) .thermostat-level-head strong { color: #0f2733; }
+:host([light]) .thermostat-level-bar i { background: #dbe7ee; }
+:host([light]) .thermostat-level-bar i.lit { background: var(--tone); }
+:host([light]) .thermostat-level-marker { background: #0f2733; box-shadow: 0 0 0 1px #fff; }
+:host([light]) .thermostat-level-reason { color: #44606f; }
 :host([light]) .thermostat-track { stroke: #dbe7ee; }
 :host([light]) .thermostat-tick { stroke: #c3d4de; }
 :host([light]) .thermostat-center strong, :host([light]) .thermostat-head span, :host([light]) .thermostat-readings strong { color: #0f2733; }
