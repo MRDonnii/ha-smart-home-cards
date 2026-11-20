@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.276 */
+/* MRDonnii Smart Home Cards v0.5.277 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -69809,6 +69809,15 @@ var MusicApi = class {
       return out;
     }, 12e4);
   }
+  // What this Music Assistant user played last (playlists, albums, artists, radio), newest first: Music Assistant
+  // keeps a play history per user, so each person gets their own. null when it can not be asked (no mass_queue).
+  async recentlyPlayed(limit = 30) {
+    if (!this.hasMassQueue) return null;
+    return this._cached(`played|${limit}`, async () => {
+      const r = await this.command("music/recently_played_items", { limit });
+      return (Array.isArray(r) ? r : []).map((i) => normItem(i, this.config)).filter((i) => i && i.uri && i.name);
+    }, 6e4);
+  }
   async recommendations(entity) {
     if (!this.hasMassQueue || !entity) return [];
     return this._cached(`recs|${entity}`, async () => {
@@ -71018,17 +71027,40 @@ var HaMusicCard = class extends HTMLElement {
     const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [], sidePlaylists: this._data.home?.sidePlaylists || [] };
     this._data.home = d;
     try {
-      const [rp, ra, rr, fp, podcasts, all] = await Promise.all([
+      const [rp, ra, rr, added, podcasts, all, played] = await Promise.all([
         this.api.library("playlist", { order_by: "last_played_desc", limit: 12 }),
         this.api.library("album", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("radio", { order_by: "last_played_desc", limit: 16 }),
-        this.api.library("playlist", { favorite: true, order_by: "last_played_desc", limit: 30 }),
+        this.api.library("playlist", { order_by: "timestamp_added_desc", limit: 60 }),
         this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => []),
-        this.api.library("playlist", { order_by: "last_played_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => [])
+        this.api.library("playlist", { order_by: "timestamp_added_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => []),
+        this.api.recentlyPlayed(40).catch(() => null)
       ]);
-      const recent = [];
-      for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
-      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, sidePlaylists: all, albums: ra, radio: rr, podcasts });
+      let recent, playlists, sidePlaylists;
+      if (Array.isArray(played)) {
+        const key2 = (i) => `${i.media_type}|${String(i.name).trim().toLowerCase()}`;
+        const seen = /* @__PURE__ */ new Set();
+        const mine = played.filter((i) => ["playlist", "album", "artist", "radio", "podcast", "audiobook"].includes(i.media_type) && !seen.has(key2(i)) && seen.add(key2(i)));
+        const playedFirst = (list) => {
+          const lib = new Map(list.map((i) => [key2(i), i]));
+          const first = mine.filter((i) => i.media_type === "playlist" && lib.has(key2(i))).map((i) => lib.get(key2(i)));
+          const used = new Set(first.map(key2));
+          return [...first, ...list.filter((i) => !used.has(key2(i)))];
+        };
+        playlists = playedFirst(added).slice(0, 30);
+        sidePlaylists = playedFirst(all);
+        recent = mine.slice(0, 8);
+        for (const p of playlists) {
+          if (recent.length >= 8) break;
+          if (!recent.some((r) => key2(r) === key2(p))) recent.push(p);
+        }
+      } else {
+        recent = [];
+        for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
+        playlists = rp;
+        sidePlaylists = all;
+      }
+      Object.assign(d, { loading: false, recent, playlists, sidePlaylists, albums: ra, radio: rr, podcasts });
       this.api.recommendations(this._active).then((recs) => {
         d.recs = recs;
         this._paintIf(() => this._view.name === "home");

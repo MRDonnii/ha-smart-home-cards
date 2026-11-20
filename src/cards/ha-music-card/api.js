@@ -180,6 +180,16 @@ export class MusicApi {
     }, 120000);
   }
 
+  // What this Music Assistant user played last (playlists, albums, artists, radio), newest first: Music Assistant
+  // keeps a play history per user, so each person gets their own. null when it can not be asked (no mass_queue).
+  async recentlyPlayed(limit = 30) {
+    if (!this.hasMassQueue) return null;
+    return this._cached(`played|${limit}`, async () => {
+      const r = await this.command("music/recently_played_items", { limit });
+      return (Array.isArray(r) ? r : []).map((i) => normItem(i, this.config)).filter((i) => i && i.uri && i.name);
+    }, 60000);
+  }
+
   async recommendations(entity) {
     if (!this.hasMassQueue || !entity) return [];
     return this._cached(`recs|${entity}`, async () => {

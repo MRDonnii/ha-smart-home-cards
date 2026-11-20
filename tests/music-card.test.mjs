@@ -98,6 +98,12 @@ const fallback = calls.find((c) => c.service_data?.command === "player_queues/it
 assert.deepEqual(fallback.service_data.data, { queue_id: "queue-1", limit: 100, offset: 0 });
 assert.equal(fallback.service_data.config_entry_id, "mq-entry");
 
+// The home page as in Spotify: the user's own play history through mass_queue's raw command (only how many).
+const played = await music.recentlyPlayed(40);
+assert.deepEqual(played, []);
+const playedCall = calls.find((c) => c.service_data?.command === "music/recently_played_items");
+assert.deepEqual(playedCall.service_data.data, { limit: 40 });
+
 const tracks = await music.tracks({ media_type: "album", uri: "library://album/4" });
 assert.equal(tracks[0].name, "One");
 assert.deepEqual(calls.find((c) => c.service_data?.command === "music/albums/album_tracks").service_data.data, { item_id: "4", provider_instance_id_or_domain: "library" });

@@ -581,17 +581,40 @@ class HaMusicCard extends HTMLElement {
     const d = { t: Date.now(), loading: true, recent: this._data.home?.recent || [], playlists: this._data.home?.playlists || [], sidePlaylists: this._data.home?.sidePlaylists || [] };
     this._data.home = d;
     try {
-      const [rp, ra, rr, fp, podcasts, all] = await Promise.all([
+      // As Spotify does it: the shortcuts are what this user played last, and "Dine playlister" is the user's own
+      // library with the playlists they played last first, then the newest added. Music Assistant's favourites and its
+      // "last played" order are not used here: the order is shared by every user, so another person's listening
+      // would show up.
+      const [rp, ra, rr, added, podcasts, all, played] = await Promise.all([
         this.api.library("playlist", { order_by: "last_played_desc", limit: 12 }),
         this.api.library("album", { order_by: "last_played_desc", limit: 16 }),
         this.api.library("radio", { order_by: "last_played_desc", limit: 16 }),
-        this.api.library("playlist", { favorite: true, order_by: "last_played_desc", limit: 30 }),
+        this.api.library("playlist", { order_by: "timestamp_added_desc", limit: 60 }),
         this.api.library("podcast", { order_by: "last_played_desc", limit: 16 }).catch(() => []),
-        this.api.library("playlist", { order_by: "last_played_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => [])
+        this.api.library("playlist", { order_by: "timestamp_added_desc", limit: SIDE_PLAYLIST_LIMIT }).catch(() => []),
+        this.api.recentlyPlayed(40).catch(() => null)
       ]);
-      const recent = [];
-      for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
-      Object.assign(d, { loading: false, recent, playlists: fp.length ? fp : rp, sidePlaylists: all, albums: ra, radio: rr, podcasts });
+      let recent, playlists, sidePlaylists;
+      if (Array.isArray(played)) {
+        const key = (i) => `${i.media_type}|${String(i.name).trim().toLowerCase()}`;
+        const seen = new Set();
+        const mine = played.filter((i) => ["playlist", "album", "artist", "radio", "podcast", "audiobook"].includes(i.media_type) && !seen.has(key(i)) && seen.add(key(i)));
+        const playedFirst = (list) => {
+          const lib = new Map(list.map((i) => [key(i), i]));
+          const first = mine.filter((i) => i.media_type === "playlist" && lib.has(key(i))).map((i) => lib.get(key(i)));
+          const used = new Set(first.map(key));
+          return [...first, ...list.filter((i) => !used.has(key(i)))];
+        };
+        playlists = playedFirst(added).slice(0, 30);
+        sidePlaylists = playedFirst(all);
+        recent = mine.slice(0, 8);
+        for (const p of playlists) { if (recent.length >= 8) break; if (!recent.some((r) => key(r) === key(p))) recent.push(p); }
+      } else {
+        recent = [];
+        for (let i = 0; recent.length < 8 && i < 8; i += 1) for (const list of [rp, ra, rr]) if (list[i] && recent.length < 8) recent.push(list[i]);
+        playlists = rp; sidePlaylists = all;
+      }
+      Object.assign(d, { loading: false, recent, playlists, sidePlaylists, albums: ra, radio: rr, podcasts });
       this.api.recommendations(this._active).then((recs) => { d.recs = recs; this._paintIf(() => this._view.name === "home"); }).catch(() => {});
     } catch (e) {
       Object.assign(d, { loading: false, error: errText(e) });
