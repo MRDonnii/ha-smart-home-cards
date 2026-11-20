@@ -796,8 +796,9 @@ class HaHomeStatusCard extends HTMLElement {
     if (diag === "critical") add("critical", diagText || "Kritisk fejl");
     else if (diag === "warning") add("warning", diagText || "Advarsel fra diagnose");
     const frost = String(raw(cfg.frost_entity) || "").toLowerCase();
-    if (frost === "risk") add("critical", "Frostrisiko i veksleren");
-    else if (frost === "watch") add("warning", "Frost i veksleren nærmer sig");
+    // "watch" (exhaust T4 below about 3 °C) is normal in frosty weather with a high
+    // recovery and the unit defrosts by itself, so only a real risk is shown.
+    if (frost === "risk") add("warning", "Frostrisiko i veksleren");
     if (cfg.control_entity && !dead(cfg.control_entity)) {
       const ctl = raw(cfg.control_entity);
       const ok = cfg.control_ok_states || [];

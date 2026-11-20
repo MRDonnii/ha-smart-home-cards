@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.277 */
+/* MRDonnii Smart Home Cards v0.5.278 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -39640,8 +39640,7 @@ var HaHomeStatusCard = class extends HTMLElement {
     if (diag === "critical") add("critical", diagText || "Kritisk fejl");
     else if (diag === "warning") add("warning", diagText || "Advarsel fra diagnose");
     const frost = String(raw(cfg.frost_entity) || "").toLowerCase();
-    if (frost === "risk") add("critical", "Frostrisiko i veksleren");
-    else if (frost === "watch") add("warning", "Frost i veksleren n\xE6rmer sig");
+    if (frost === "risk") add("warning", "Frostrisiko i veksleren");
     if (cfg.control_entity && !dead(cfg.control_entity)) {
       const ctl = raw(cfg.control_entity);
       const ok = cfg.control_ok_states || [];
