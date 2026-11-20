@@ -1,12 +1,11 @@
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { Flame, Power, Snowflake } from "./icons";
+import { AFTERHEAT_MAX as MAX, AFTERHEAT_MIN as MIN, FROST_LOCK_NOTE, NO_FROST_LOCK, allowedWhileLocked, canStepDown, clampSetpoint, frostRefusal, stepDown, stepUp, type AfterheatValue, type FrostLock } from "./frostlock";
 
 // Thermostat-style control for the HAC1 afterheat setpoint. The value is only
 // a local draft here; nothing is sent until the user confirms the change.
-export type AfterheatValue = number | "off";
+export type { AfterheatValue } from "./frostlock";
 
-const MIN = 10;
-const MAX = 35;
 const START = 135; // degrees, 0 = right, clockwise; the scale opens at the bottom
 const SWEEP = 270;
 const CX = 100, CY = 100, R = 78;
@@ -47,10 +46,16 @@ export interface AfterheatThermostatProps {
   /** Readings without an entity behind them are left out: T2 before the coil (and so the lift) and HAC1's readback. */
   showBefore?: boolean;
   showRegistered?: boolean;
+  /** Frost lock from the Pi: no "off" and nothing below `floor` while it freezes. */
+  frostLock?: FrostLock;
 }
 
-export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false, showBefore = true, showRegistered = true }: AfterheatThermostatProps) {
+export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff, outdoor, airBefore, airAfter, registered, lastOn = 20, current, onConfirm, onCancel, busy = false, showBefore = true, showRegistered = true, frostLock = NO_FROST_LOCK }: AfterheatThermostatProps) {
+  const locked = frostLock.locked;
+  const floor = locked ? frostLock.floor : MIN;
   const pending = value !== current;
+  // A draft made before the lock engaged cannot be confirmed while it freezes.
+  const confirmable = allowedWhileLocked(value, frostLock);
   const label = (v: AfterheatValue) => v === "off" ? "OFF" : `${v} °C`;
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
@@ -70,7 +75,7 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
     if (offset < 0) offset += 360;
     // The gap at the bottom snaps to the nearest end.
     if (offset > SWEEP) offset = offset - SWEEP < (360 - SWEEP) / 2 ? SWEEP : 0;
-    return Math.round(MIN + (offset / SWEEP) * (MAX - MIN));
+    return clampSetpoint(Math.round(MIN + (offset / SWEEP) * (MAX - MIN)), frostLock);
   };
   const pick = (event: ReactPointerEvent) => {
     const next = valueFromPointer(event);
@@ -82,11 +87,11 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
 
   return <div className={`afterheat-thermostat tone-${tone}`}>
     <div className="thermostat-dial">
-      <svg ref={svgRef} viewBox="0 0 200 200" role="slider" aria-label="Eftervarme setpunkt" aria-valuemin={MIN} aria-valuemax={MAX}
+      <svg ref={svgRef} viewBox="0 0 200 200" role="slider" aria-label="Eftervarme setpunkt" aria-valuemin={floor} aria-valuemax={MAX}
         aria-valuenow={off ? undefined : value} aria-valuetext={off ? "Slukket" : `${value} grader`} tabIndex={0}
         onKeyDown={event => {
-          if (event.key === "ArrowUp" || event.key === "ArrowRight") { event.preventDefault(); onChange(off ? MIN : Math.min(MAX, value + 1)); }
-          if (event.key === "ArrowDown" || event.key === "ArrowLeft") { event.preventDefault(); onChange(off || value <= MIN ? "off" : value - 1); }
+          if (event.key === "ArrowUp" || event.key === "ArrowRight") { event.preventDefault(); onChange(stepUp(value, frostLock)); }
+          if (event.key === "ArrowDown" || event.key === "ArrowLeft") { event.preventDefault(); if (canStepDown(value, frostLock)) onChange(stepDown(value, frostLock)); }
         }}
         onPointerDown={event => { dragging.current = true; event.currentTarget.setPointerCapture(event.pointerId); pick(event); }}
         onPointerMove={event => { if (dragging.current) pick(event); }}
@@ -126,11 +131,13 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
         {showBefore && <div><small>Løft</small><strong>{airBefore === null || airAfter === null ? "—" : fmt(airAfter - airBefore)}</strong></div>}
         {showRegistered && <div><small>I HAC1</small><strong>{registered}</strong></div>}
       </div>
+      {locked && <p className="thermostat-note frost-lock-note" role="note"><Snowflake size={12}/> {FROST_LOCK_NOTE}{floor > MIN ? ` (mindst ${floor} °C)` : ""}.</p>}
       {lockout && !off && <p className="thermostat-note">Sommerstop: udetemperaturen er {fmt(outdoor)}. HAC1 varmer først under {cutoff}{" "}°C ude.</p>}
       <div className="thermostat-actions">
-        <button type="button" aria-label="Sænk eftervarme" disabled={off} onClick={() => onChange(off || value <= MIN ? "off" : value - 1)}>−</button>
-        <button type="button" className={`thermostat-power${off ? "" : " on"}`} aria-pressed={!off} onClick={() => onChange(off ? lastOn : "off")}><Power size={15}/>{off ? "Tænd" : "Sluk"}</button>
-        <button type="button" aria-label="Hæv eftervarme" disabled={!off && value >= MAX} onClick={() => onChange(off ? MIN : Math.min(MAX, value + 1))}>+</button>
+        <button type="button" aria-label="Sænk eftervarme" disabled={!canStepDown(value, frostLock)} onClick={() => onChange(stepDown(value, frostLock))}>−</button>
+        <button type="button" className={`thermostat-power${off ? "" : " on"}`} aria-pressed={!off} disabled={locked && !off} title={locked && !off ? FROST_LOCK_NOTE : undefined}
+          onClick={() => onChange(off ? clampSetpoint(lastOn, frostLock) : locked ? value : "off")}><Power size={15}/>{off ? "Tænd" : "Sluk"}</button>
+        <button type="button" aria-label="Hæv eftervarme" disabled={!off && value >= MAX} onClick={() => onChange(stepUp(value, frostLock))}>+</button>
       </div>
     </div>
     {pending && <div className="thermostat-confirm" role="alertdialog" aria-modal="true" aria-label="Bekræft ændring af eftervarme">
@@ -138,12 +145,13 @@ export function AfterheatThermostat({ value, onChange, heating, lockout, cutoff,
         <span className="thermostat-confirm-title">Eftervarme</span>
         <div className="thermostat-confirm-values"><span>{label(current)}</span><em>→</em><strong>{label(value)}</strong></div>
         <div className="thermostat-confirm-adjust">
-          <button type="button" aria-label="Sænk eftervarme" disabled={busy || off} onClick={() => onChange(off || value <= MIN ? "off" : value - 1)}>−</button>
-          <button type="button" aria-label="Hæv eftervarme" disabled={busy || (!off && value >= MAX)} onClick={() => onChange(off ? MIN : Math.min(MAX, value + 1))}>+</button>
+          <button type="button" aria-label="Sænk eftervarme" disabled={busy || !canStepDown(value, frostLock)} onClick={() => onChange(stepDown(value, frostLock))}>−</button>
+          <button type="button" aria-label="Hæv eftervarme" disabled={busy || (!off && value >= MAX)} onClick={() => onChange(stepUp(value, frostLock))}>+</button>
         </div>
+        {!confirmable && <p className="thermostat-note frost-lock-note" role="note">{frostRefusal(value, frostLock)}</p>}
         <div className="thermostat-confirm-actions">
           <button type="button" className="thermostat-cancel" disabled={busy} onClick={onCancel}>Fortryd</button>
-          <button type="button" className="thermostat-ok" disabled={busy} onClick={onConfirm}>Bekræft</button>
+          <button type="button" className="thermostat-ok" disabled={busy || !confirmable} onClick={onConfirm}>Bekræft</button>
         </div>
       </div>
     </div>}

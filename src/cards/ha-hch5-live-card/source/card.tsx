@@ -4,6 +4,7 @@ import { Hch5UnitDiagram, type DiagramParts } from "./Hch5UnitDiagram";
 import { AfterheatThermostat } from "./AfterheatThermostat";
 import { describeControl } from "./control";
 import { bypassTravel, formatRemaining } from "./bypass";
+import { FROST_LOCK_BLOCKED, coolBlocked, frostLockOf, frostRefusal } from "./frostlock";
 import { ArrowRight, CloudFog, Flame, Gauge, Leaf, Roof, Snowflake, Wind, Zap } from "./icons";
 import css from "./webui.css";
 
@@ -434,6 +435,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const climate = entity("afterheat_climate");
   const afterheatSetpoint = number(climate?.attributes?.temperature) ?? 20;
   const afterheatEnabled = climate ? climate.state !== "off" : true;
+  // Frost lock (HCH5 Control): the climate entity drops "off" and raises min_temp while it freezes.
+  const frostLock = frostLockOf(climate?.attributes);
   const actualAfterheat: AfterheatValue = afterheatEnabled ? afterheatSetpoint : "off";
   const selection = value("afterheat_selection");
   const selectionNumber = number(selection);
@@ -454,6 +457,10 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const coolAvailable = has("cool_30");
   const coolRemaining = num("cool_remaining") ?? 0;
   const coolActive = coolRemaining > 0;
+  // The integration makes the start buttons unavailable while frost-locked; "Stop køl" stays usable.
+  const stateOf = (key: string) => ids[key] ? hass.states[ids[key]]?.state : undefined;
+  const coolChoiceBlocked = (key: string) => coolBlocked(frostLock, stateOf(key));
+  const coolStartBlocked = COOL_CHOICES.filter(([key]) => has(key)).every(([key]) => coolChoiceBlocked(key));
   // HA has no readback of which boost runs. A button's state is the time it
   // was last pressed, so the running boost is the one whose press time plus
   // its length matches the end the controller reports.
@@ -501,6 +508,8 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
   const setAfterheatTarget = (next: AfterheatValue) => setAfterheatDraft(next === committedAfterheat ? null : next);
   const confirmAfterheat = () => {
     if (afterheatDraft === null) return;
+    const refusal = frostRefusal(afterheatDraft, frostLock);
+    if (refusal) { setNotice(refusal, true); return; }
     const seq = ++afterheatSeq.current;
     setAfterheatSent(afterheatDraft);
     setAfterheatDraft(null);
@@ -606,7 +615,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             <div className="status-action-icon"><Snowflake size={24}/></div>
             <div><span>Frikøling</span><strong>{coolActive ? "Køl aktiv" : has("cooling_state") ? coolingLabel(coolingState) : "Ikke aktiv"}</strong><small>{coolActive ? `${remaining(coolRemaining)} · bypass åben og boost` : !coolingAutomation ? "Bypass åben og boost" : shownCoolingEnabled ? "Automatik aktiv" : "Automatik slået fra"}</small></div>
             <div className="fireplace-actions cooling-actions">
-              {coolAvailable && <button className={coolActive ? "active" : ""} aria-haspopup="dialog" disabled={busy !== null || fireplace || standbyActive} title={fireplace ? "Ikke under pejsefunktion" : "Åbn bypass og kør boost i en periode"} onClick={() => setCoolDialog(true)}>Køl</button>}
+              {coolAvailable && <button className={coolActive ? "active" : ""} aria-haspopup="dialog" disabled={busy !== null || fireplace || standbyActive || (coolStartBlocked && !coolActive)} title={coolStartBlocked && !coolActive ? FROST_LOCK_BLOCKED : fireplace ? "Ikke under pejsefunktion" : "Åbn bypass og kør boost i en periode"} onClick={() => setCoolDialog(true)}>Køl</button>}
               {coolAvailable && coolActive && has("cool_stop") && <button className="stop" disabled={busy !== null} onClick={() => void command("cool-stop", "cool_stop", "button", "press", {}, "Køl stoppet.")}>Stop</button>}
               {has("cooling_control") && <button className={shownCoolingEnabled ? "active" : ""} aria-pressed={shownCoolingEnabled} disabled={busy !== null} onClick={() => !shownCoolingEnabled && void command("cooling", "cooling_control", "switch", "turn_on", {}, "Frikøling aktiveret.", "on")}>Til</button>}
               {has("cooling_control") && <button className={!shownCoolingEnabled ? "active" : ""} aria-pressed={!shownCoolingEnabled} disabled={busy !== null} onClick={() => shownCoolingEnabled && void command("cooling", "cooling_control", "switch", "turn_off", {}, "Frikøling deaktiveret.", "off")}>Fra</button>}
@@ -625,7 +634,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
     has("co2") && <div key="co2" className="climate-metric green" data-sensor="co2"><Leaf size={21}/><span>CO₂</span><strong>{whole(co2)} <small>ppm</small></strong><em>{co2 === null ? "Ukendt" : co2 < 800 ? "God" : co2 < 1200 ? "Moderat" : "Høj"}</em><i style={{ width: `${co2 === null ? 0 : Math.min(100, Math.max(5, co2 / 16))}%` }}/></div>,
     has("humidity") && <div key="humidity" className="climate-metric blue" data-sensor="humidity"><span className="metric-drop">●</span><span>Luftfugtighed</span><strong>{whole(humidity)} <small>%</small></strong><em>{humidity === null ? "Ukendt" : humidity < 60 ? "Normal" : "Høj"}</em><i style={{ width: `${humidity ?? 0}%` }}/></div>,
     has("filter_life") && <div key="filter" className="climate-metric cyan" data-sensor="filter_life"><span className="metric-filter">▧</span><span>Filter</span><strong>{whole(filterLife)} <small>%</small></strong><em>{filterLife === null ? "Ukendt" : filterLife > 40 ? "OK" : filterLife > 15 ? "Snart skift" : "Skift filter"}</em><i style={{ width: `${Math.max(0, Math.min(100, filterLife ?? 0))}%` }}/></div>,
-    has("afterheat_climate") && <div key="afterheat" className="climate-metric neutral" data-sensor="afterheat_selection"><span className="metric-heat">≋</span><span>Eftervarme setpunkt</span><strong>{shownAfterheat === "off" ? "OFF" : temp(shownAfterheat)}</strong><em>{afterheatStatus}</em><i style={{ width: `${shownAfterheat === "off" ? 0 : ((shownAfterheat - 10) / 25) * 100}%` }}/></div>,
+    has("afterheat_climate") && <div key="afterheat" className="climate-metric neutral" data-sensor="afterheat_selection"><span className="metric-heat">≋</span><span>Eftervarme setpunkt</span><strong>{shownAfterheat === "off" ? "OFF" : temp(shownAfterheat)}</strong><em>{frostLock.locked ? `${afterheatStatus} · frostsikring` : afterheatStatus}</em><i style={{ width: `${shownAfterheat === "off" ? 0 : ((shownAfterheat - 10) / 25) * 100}%` }}/></div>,
   ].filter(Boolean);
   // Cost lines need the matching price entity.
   const diagnoseMetrics = [
@@ -704,7 +713,7 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
             cutoff={afterheatCutoff} outdoor={outdoor} airBefore={beforeHeater} airAfter={afterHeater}
             registered={actualAfterheatSelection} lastOn={afterheatSetpoint}
             current={committedAfterheat} onConfirm={confirmAfterheat} onCancel={() => setAfterheatDraft(null)} busy={busy !== null}
-            showBefore={has("afterheat_before")} showRegistered={has("afterheat_selection")}/>}
+            showBefore={has("afterheat_before")} showRegistered={has("afterheat_selection")} frostLock={frostLock}/>}
           {showT2 ? <>
             <div className="pro-card-head compact air-calc-head"><div><h2>Beregnet fra målt T2</h2><p>Luftmængde anslået for aktuelt trin{num("supply_airflow") === null ? "" : ` · ${whole(num("supply_airflow"))} m³/h`}</p></div></div>
             <div className={`climate-metrics ${t2Metrics.length === 1 ? "metrics-1" : "metrics-2"}`} onClick={openTile}>{t2Metrics}</div>
@@ -728,9 +737,9 @@ function Overview({ hass, config, host }: { hass: Hass; config: Config; host: HT
           <div className="standby-dialog-heading"><div><span className="eyebrow">FRIKØLING</span><h2>{coolActive ? "Køl kører" : "Køl huset"}</h2></div><button type="button" aria-label="Luk" onClick={() => setCoolDialog(false)}>×</button></div>
           <p className="standby-dialog-lead">{coolActive
             ? `Bypass er åben og anlægget kører boost · ${remaining(coolRemaining)}. Derefter går det tilbage til normal drift.`
-            : `Bypass åbnes, anlægget kører boost, og eftervarmen holdes nede. Bagefter går det selv tilbage til normal drift.${outdoor === null ? "" : ` Udeluft lige nu ${temp(outdoor)}.`}`}</p>
+            : `Bypass åbnes, anlægget kører boost, og eftervarmen holdes nede. Bagefter går det selv tilbage til normal drift.${outdoor === null ? "" : ` Udeluft lige nu ${temp(outdoor)}.`}${frostLock.locked ? " Spærret: frostsikring holder eftervarmen tændt, mens det fryser." : ""}`}</p>
           <div className="standby-choices">
-            {COOL_CHOICES.map(([key, label]) => <button key={key} type="button" disabled={busy !== null || !has(key)} onClick={() => { setCoolDialog(false); void command(key, key, "button", "press", {}, `Køl startet i ${label}.`); }}><strong>{label}</strong><small>Bypass åben og boost</small></button>)}
+            {COOL_CHOICES.map(([key, label]) => <button key={key} type="button" disabled={busy !== null || !has(key) || coolChoiceBlocked(key)} title={has(key) && coolChoiceBlocked(key) ? FROST_LOCK_BLOCKED : undefined} onClick={() => { setCoolDialog(false); void command(key, key, "button", "press", {}, `Køl startet i ${label}.`); }}><strong>{label}</strong><small>Bypass åben og boost</small></button>)}
           </div>
           {coolActive && <button type="button" className="standby-on-action" disabled={busy !== null} onClick={() => { setCoolDialog(false); void command("cool-stop", "cool_stop", "button", "press", {}, "Køl stoppet."); }}>Stop køl</button>}
         </section>

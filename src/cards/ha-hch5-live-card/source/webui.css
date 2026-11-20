@@ -998,6 +998,8 @@ button { font: inherit; color: inherit; }
 .thermostat-readings small { display: block; color: #6f8898; font-size: 9px; font-weight: 700; }
 .thermostat-readings strong { color: #dff6ff; font-size: 13px; font-weight: 800; }
 .thermostat-note { margin: 0; padding: 8px 10px; border: 1px solid #5a4a22; border-radius: 9px; background: rgb(255 173 85 / 9%); color: #ffc98a; font-size: 11px; line-height: 1.35; }
+.thermostat-note.frost-lock-note { display: flex; align-items: center; gap: 6px; border-color: #2d5a78; background: rgb(88 185 255 / 10%); color: #9fd6ff; }
+.thermostat-confirm-box .frost-lock-note { margin-top: 10px; }
 .thermostat-actions { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
 .thermostat-actions button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #294658; border-radius: 12px; background: #0c1b25; color: #cfe6f2; font-size: 20px; font-weight: 700; cursor: pointer; transition: .18s ease; }
 .thermostat-actions button:hover:not(:disabled) { border-color: var(--tone); color: #fff; }
@@ -1012,6 +1014,7 @@ button { font: inherit; color: inherit; }
 :host([light]) .thermostat-track { stroke: #dbe7ee; }
 :host([light]) .thermostat-tick { stroke: #c3d4de; }
 :host([light]) .thermostat-center strong, :host([light]) .thermostat-head span, :host([light]) .thermostat-readings strong { color: #0f2733; }
+:host([light]) .thermostat-note.frost-lock-note { border-color: #9cc9e6; background: rgb(88 185 255 / 12%); color: #1d5f8a; }
 :host([light]) .thermostat-readings div, :host([light]) .thermostat-actions button { background: var(--surface, #fff); border-color: #c3d6e2; color: #20394a; }
 :host([light]) .thermostat-knob { fill: #fff; }
 @container hch-card (max-width: 680px) { .afterheat-setpoint-card { grid-template-columns: minmax(0, 1fr); } .afterheat-thermostat { width: 100%; } .thermostat-dial { max-width: 280px; } }
