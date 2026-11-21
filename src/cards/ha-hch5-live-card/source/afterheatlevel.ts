@@ -53,3 +53,38 @@ export function wantedLabel(info: AfterheatLevel): string | null {
 
 /** Position on the bar in percent. */
 export const levelPercent = (value: number) => (clampLevel(value) / AFTERHEAT_LEVEL_MAX) * 100;
+
+/**
+ * Afterheat valve opening in % (0..100). HAC1 drives the valve actuator with
+ * 0-10 V, one volt per level, so it is the HAC1 level × 10 (10 % per level).
+ * Taken from the valve sensor (entities.afterheat_valve) when it has a value,
+ * else the climate's `valve_percent` attribute, else `hac1_level` × 10. The
+ * on/off flag "Eftervarme aktiv" says nothing about how far the valve is open.
+ */
+export function valvePercentOf(sensorValue: unknown, attributes?: Record<string, unknown>): number | null {
+  const own = finite(sensorValue) ?? finite(attributes?.valve_percent);
+  if (own !== null) return Math.round(Math.min(100, Math.max(0, own)));
+  const level = finite(attributes?.hac1_level);
+  return level === null ? null : Math.round(clampLevel(level)) * 10;
+}
+
+export interface AfterheatReadbackInput {
+  valvePercent: number | null;
+  /** HAC1 level 0..10, or null; derived from the valve when only that is known. */
+  level: number | null;
+  /** The climate's `control_active`: "pi" while the Pi steps HAC1. */
+  controlActive?: unknown;
+  heating: boolean;
+  lockout: boolean;
+}
+
+/** Text of the "Ekstern eftervarme" readback: the valve opening and the HAC1 level. */
+export function afterheatReadback({ valvePercent, level, controlActive, heating, lockout }: AfterheatReadbackInput): { value: string; note: string } {
+  const value = valvePercent !== null ? `Ventilåbning ${valvePercent} %` : heating ? "Aktiv" : lockout ? "Spærret" : "Ikke aktiv";
+  const step = level !== null ? clampLevel(Math.round(level)) : valvePercent !== null ? Math.round(valvePercent / 10) : null;
+  const note = lockout ? "Sommerstop: ude ≥ 15 °C"
+    : step !== null ? `HAC1 trin ${step}/${AFTERHEAT_LEVEL_MAX}${controlActive === "pi" ? " · Pi styrer" : ""}`
+    // Older integrations without the level: HAC1 regulates itself from the setpoint.
+    : "Kun setpunkt styres";
+  return { value, note };
+}

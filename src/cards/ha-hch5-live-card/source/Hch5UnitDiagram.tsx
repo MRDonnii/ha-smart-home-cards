@@ -38,6 +38,10 @@ export interface Hch5UnitDiagramProps {
   bypassTravelTotal?: number | null;
   /** HAC1 outdoor lockout: afterheat never runs at 15 C outdoor or above. */
   afterheatLockout?: boolean;
+  /** "Ekstern eftervarme" readback text (valve opening and HAC1 level); Aktiv/Ikke aktiv when left out. */
+  afterheatReadout?: { value: string; note: string } | null;
+  /** Entity key the afterheat readback opens: the valve opening, or the on/off flag. */
+  afterheatSensor?: string;
   /** Afterheater drawn after the unit: an electric element (default) or a water coil fed with flow/return water. */
   afterheatCoil?: AfterheatCoil;
   /** What currently decides the ventilation, shown bottom-right below T4. */
@@ -513,7 +517,7 @@ function WaterCoil({ heating, lockout, flowWater, returnWater }: { heating: bool
 }
 
 export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
-  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatCoil="electric",control=null,controlCompact=false,inlineControls=null,supplySensor="afterheat_after",bypassSensor="bypass_raw",unitName=null,unitLabel=null}=props;
+  const {onSensor,outdoor,extract,exhaust,afterHeater,beforeHeater=null,frost,flowWater,returnWater,supplyRpm,extractRpm,supplyPercent,extractPercent,fanLevel=null,bypassActual,bypassRequest,heating,recovery,busActive=false,bypassRaw=null,bypassTravelDirection=null,bypassTravelSeconds=null,bypassTravelTotal=null,afterheatLockout=false,afterheatReadout=null,afterheatSensor="afterheat_active",afterheatCoil="electric",control=null,controlCompact=false,inlineControls=null,supplySensor="afterheat_after",bypassSensor="bypass_raw",unitName=null,unitLabel=null}=props;
   const show={...ALL_PARTS,...props.parts};
   // Without an afterheater the unit's own supply sensor is T2.
   const supplyName=show.afterheat?"T2AH":"T2";
@@ -570,7 +574,7 @@ export function Hch5UnitDiagram(props:Hch5UnitDiagramProps) {
     (show.supplyFan||show.supplyFanPercent)&&<div key="supply" className="unit-readback" data-sensor={show.supplyFan?"supply_fan_rpm":"supply_fan_percent"}><span className="readback-icon fan"/><div><small>Tilluft ventilator</small><strong>{show.supplyFan?<>{int(supplyRpm)} RPM</>:<>{int(supplyPercent)}%</>}</strong>{show.supplyFan&&show.supplyFanPercent&&<em data-sensor="supply_fan_percent">{int(supplyPercent)}%</em>}</div></div>,
     (show.extractFan||show.extractFanPercent)&&<div key="extract" className="unit-readback" data-sensor={show.extractFan?"extract_fan_rpm":"extract_fan_percent"}><span className="readback-icon fan"/><div><small>Fraluft ventilator</small><strong>{show.extractFan?<>{int(extractRpm)} RPM</>:<>{int(extractPercent)}%</>}</strong>{show.extractFan&&show.extractFanPercent&&<em data-sensor="extract_fan_percent">{int(extractPercent)}%</em>}</div></div>,
     show.bypass&&<div key="bypass" className="unit-readback" data-sensor={bypassSensor}><span className={`readback-icon damper ${bypassOpen?"active":""}`}/><div><small>Bypass-spjæld</small><strong>{bypassPhase?bypassLabel:bypassOpen?"Åbent":"Lukket"}</strong><em>{bypassAwaitingEnd?"Afventer endestilling":bypassRemaining===null?`Ønske: ${bypassWanted?"On":"Auto"}`:`ca. ${formatRemaining(bypassRemaining)} tilbage`}</em></div></div>,
-    show.afterheat&&<div key="afterheat" className="unit-readback" data-sensor="afterheat_active"><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div>,
+    show.afterheat&&<div key="afterheat" className="unit-readback" data-sensor={afterheatSensor}><span className={`readback-icon heater ${heating?"active":""}`}/><div><small>Ekstern eftervarme</small><strong>{afterheatReadout?afterheatReadout.value:heating?"Aktiv":afterheatLockout?"Spærret":"Ikke aktiv"}</strong><em>{afterheatReadout?afterheatReadout.note:afterheatLockout?"Sommerstop: ude ≥ 15 °C":"Kun setpunkt styres"}</em></div></div>,
   ].filter(Boolean);
   return <div className={`hch5-visual${bypassOpen?" is-bypass":" is-recovery"}`}>
     <svg ref={svgRef} viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`} role="img" aria-label={`Luftstrøm i ${unitName??"anlægget"} med intern bypass${show.afterheat?" og ekstern eftervarme":""}`}>

@@ -89,3 +89,27 @@ for (const props of [base, { ...base, level: null }, { ...base, level: afterheat
 }
 
 console.log("Validated HCH5 afterheat level");
+
+// Valve opening: HAC1 level × 10 %, from the sensor, the climate attribute or the level.
+{
+  const { valvePercentOf, afterheatReadback } = mod;
+  assert.equal(valvePercentOf("30", {}), 30);
+  assert.equal(valvePercentOf(null, { valve_percent: 70, hac1_level: 3 }), 70);
+  assert.equal(valvePercentOf(undefined, { hac1_level: 3 }), 30);
+  assert.equal(valvePercentOf(undefined, { hac1_level: 14 }), 100);
+  assert.equal(valvePercentOf("unknown", { hac1_level: null }), null);
+  assert.equal(valvePercentOf(undefined, undefined), null);
+  assert.equal(valvePercentOf(130, {}), 100);
+
+  assert.deepEqual(afterheatReadback({ valvePercent: 20, level: 2, controlActive: "pi", heating: true, lockout: false }),
+    { value: "Ventilåbning 20 %", note: "HAC1 trin 2/10 · Pi styrer" });
+  assert.deepEqual(afterheatReadback({ valvePercent: 30, level: null, controlActive: "native", heating: true, lockout: false }),
+    { value: "Ventilåbning 30 %", note: "HAC1 trin 3/10" });
+  assert.deepEqual(afterheatReadback({ valvePercent: 0, level: 0, controlActive: "native", heating: false, lockout: true }),
+    { value: "Ventilåbning 0 %", note: "Sommerstop: ude ≥ 15 °C" });
+  // Older integrations without level or valve keep the old texts.
+  assert.deepEqual(afterheatReadback({ valvePercent: null, level: null, heating: true, lockout: false }),
+    { value: "Aktiv", note: "Kun setpunkt styres" });
+  assert.deepEqual(afterheatReadback({ valvePercent: null, level: null, heating: false, lockout: true }),
+    { value: "Spærret", note: "Sommerstop: ude ≥ 15 °C" });
+}

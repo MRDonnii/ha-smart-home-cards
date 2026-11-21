@@ -13,6 +13,7 @@ entities:
   water_flow: sensor.example_afterheat_water_flow
   water_return: sensor.example_afterheat_water_return
   afterheat_active: binary_sensor.example_afterheat_active
+  afterheat_valve: sensor.example_afterheat_valve
   power: sensor.example_unit_power
   attic_temperature: sensor.example_attic_temperature
   # … the other unit entities
@@ -25,6 +26,7 @@ The card only shows what it has entities for. An entity counts when it is config
 - Each status pill, temperature reading, fan and bypass readback, control (mode, levels, boost buttons, bypass, fireplace, bonfire, OFF, free cooling/Køl) and tile (indoor climate, diagnostics and energy, "Beregnet fra målt T2") is shown only with its own entity. Cost lines need the matching price entity.
 - Frost lock ("Frostsikring", HCH5 Control): while it freezes the Pi keeps the water afterheat on at a minimum setpoint. The card reads it from `afterheat_climate`: when its `hvac_modes` no longer contain `off`, the lock is on and `min_temp` is the lowest allowed setpoint. The thermostat's power button is then disabled with the note "Frostsikring: eftervarmen kan ikke slukkes i frostvejr", minus, the arrow keys and the dial stop at that floor, and a draft of OFF or below the floor cannot be confirmed. The Køl buttons are disabled with "Spærret af frostsikring" while locked or when their button entity is unavailable; "Stop køl" stays usable. Older integrations that always offer `off` keep the normal behaviour.
 - HAC1 level ("Trin", HCH5 Control gateway 1.9.0+): when `afterheat_climate` has the attributes `hac1_level` (0..10), `level_wanted` (the level the Pi controller wants) and `control_reason`, the thermostat shows "Trin N/10" as a bar with a marker at the wanted level, and the controller's reason below it. Older integrations without these attributes show nothing extra; a null level (stale reading) hides the bar but keeps the reason.
+- Valve opening ("Ventilåbning"): HAC1 drives the afterheat valve with 0-10 V, one volt per level, so the opening is the HAC1 level × 10 (10 % per level). The "Ekstern eftervarme" readback shows "Ventilåbning N %" and, below it, "HAC1 trin N/10" (with "· Pi styrer" while the Pi controller steps HAC1); the "Eftervarme setpunkt" tile adds "ventil N %". The value comes from the optional `afterheat_valve` entity (e.g. the integration's "Eftervarme ventil" sensor), else the `valve_percent` attribute of `afterheat_climate`, else its `hac1_level` × 10. Tapping the readback opens `afterheat_valve` when it is configured, else `afterheat_active`. `afterheat_active` is only an on/off flag and is not used for the opening. Without any of these the readback shows Aktiv/Ikke aktiv and "Kun setpunkt styres" as before.
 - An MKII, RCV or HCV unit connected directly over Modbus works too: the mode buttons follow its operation-mode select, `bypass_control` may be its "Bypass (manuel)" switch, `effective_level` may read `level_3`, and an alarm sensor as `diagnostics_status` (without `diagnostics_alarm_text`) shows its alarm code.
 
 ```yaml

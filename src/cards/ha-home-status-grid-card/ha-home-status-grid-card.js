@@ -141,6 +141,10 @@ const PRESETS = {
     "after_heater_entity": "sensor.ventilation_after_heater_air",
     "after_heater_setpoint_entity": "sensor.ventilation_after_heater_setpoint",
     "after_heater_active_entity": "binary_sensor.ventilation_after_heater_active",
+    // Optional: the user's afterheat target (the arrow shows it instead of the setpoint HAC1 is given, which moves
+    // while a controller steps HAC1) and the valve opening in % (HAC1 level × 10). Left out = as before.
+    "after_heater_target_entity": "",
+    "after_heater_valve_entity": "",
     "recovery_entity": "sensor.ventilation_heat_recovery",
     "diagnostics_entity": "sensor.ventilation_diagnostics_status",
     "diagnostics_text_entity": "sensor.ventilation_diagnostics_text",
@@ -337,7 +341,7 @@ class HaHomeStatusCard extends HTMLElement {
       // ventilation
       cfg.step_count_entity, cfg.fan_entity, cfg.mode_entity, cfg.driver_room_entity, cfg.driver_measure_entity,
       cfg.co2_entity, cfg.co2_room_entity, cfg.rh_entity, cfg.rh_room_entity, cfg.after_heater_entity,
-      cfg.after_heater_setpoint_entity, cfg.after_heater_active_entity, cfg.recovery_entity, cfg.diagnostics_entity,
+      cfg.after_heater_setpoint_entity, cfg.after_heater_target_entity, cfg.after_heater_valve_entity, cfg.after_heater_active_entity, cfg.recovery_entity, cfg.diagnostics_entity,
       cfg.diagnostics_text_entity, cfg.frost_entity, cfg.control_entity, cfg.recovery_status_entity, cfg.filter_ratio_entity,
       ...(cfg.alarm_entities || []).map((x) => (typeof x === "string" ? x : x?.entity)),
       ...(cfg.connection_entities || []).map((x) => (typeof x === "string" ? x : x?.entity)),
@@ -854,13 +858,19 @@ class HaHomeStatusCard extends HTMLElement {
     // Chips: air after the after-heater (flame while it heats) and heat recovery.
     const chip = (c, icon, text, small, title, cls = "") => `<span class="src-chip${cls}" style="--c:${c}" title="${title}"><ha-icon icon="${icon}"></ha-icon><b>${text}</b>${small ? `<small>${small}</small>` : ""}</span>`;
     const ah = this.number(cfg.after_heater_entity);
-    const sp = this.number(cfg.after_heater_setpoint_entity);
+    // Only a configured entity with a value counts (Number("") would be 0).
+    const optional = (id) => (id && this.state(id) ? this.number(id) : NaN);
+    const target = optional(cfg.after_heater_target_entity);
+    const sp = Number.isFinite(target) ? target : this.number(cfg.after_heater_setpoint_entity);
+    const spText = Number.isFinite(sp) ? this.fmt(sp, Number.isInteger(sp) ? 0 : 1) : "";
+    const valve = optional(cfg.after_heater_valve_entity);
+    const valveText = Number.isFinite(valve) ? `${this.fmt(valve, 0)} %` : "";
     const heating = this.on(cfg.after_heater_active_entity);
     const rec = this.number(cfg.recovery_entity);
     const chips = [
       Number.isFinite(ah) ? chip(heating ? "var(--state-heat-icon, #fb923c)" : "var(--state-info-icon, var(--info-color, #38bdf8))",
-        heating ? "mdi:fire" : "mdi:radiator", `${this.fmt(ah, 1)}°`, Number.isFinite(sp) ? `→${this.fmt(sp, 0)}°` : "",
-        `Eftervarme: luft efter varmeflade ${this.fmt(ah, 1)} °C${Number.isFinite(sp) ? `, setpunkt ${this.fmt(sp, 0)} °C` : ""}${heating ? " (varmer)" : ""}`, " ah-chip") : "",
+        heating ? "mdi:fire" : "mdi:radiator", `${this.fmt(ah, 1)}°`, [spText ? `→${spText}°` : "", valveText].filter(Boolean).join(" · "),
+        `Eftervarme: luft efter varmeflade ${this.fmt(ah, 1)} °C${spText ? `, ${Number.isFinite(target) ? "mål" : "setpunkt"} ${spText} °C` : ""}${valveText ? `, ventilåbning ${valveText}` : ""}${heating ? " (varmer)" : ""}`, " ah-chip") : "",
       Number.isFinite(rec) ? chip("var(--state-on-icon, var(--success-color, #20e3a2))", "mdi:heat-wave", `${this.fmt(rec, 0)} %`, "genv.",
         `Varmegenvinding ${this.fmt(rec, 0)} %`, " rec-chip") : "",
     ].filter(Boolean);
