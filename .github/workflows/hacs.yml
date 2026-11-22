@@ -1,0 +1,15 @@
+name: HACS validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hacs/action@main
+        with:
+          category: plugin
+          # PolyForm Noncommercial is not an SPDX license GitHub detects, so HACS cannot validate it
+          ignore: license
