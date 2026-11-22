@@ -1,6 +1,6 @@
 # Card catalog
 
-The suite currently contains **60 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
+The suite currently contains **95 source modules**. Entries for cards migrated from standalone repositories link to the archived original repositories for detailed configuration examples. New cards are always developed, added and released in this repository — never as new standalone repositories.
 
 `ha-home-status-grid-card.js` also provides `custom:ha-home-desktop-layout-card`, a responsive layout card for desktop, mobile and portrait screens. It shares the Home Status source module and therefore does not require a second resource file.
 
@@ -48,6 +48,12 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | Temperature Target Card | `ha-temperature-target-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-temperature-target-card) |
 | HA Air Quality Card | `ha-air-quality-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-air-quality-card) |
 | Water Meter Card | `ha-water-meter-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-water-meter-card) |
+| Huawei Solar Card | `huawei-solar-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/huawei-solar-card) – Huawei SUN2000/LUNA2000/EMMA page: flow, panels, battery, prices, controls and popups |
+| TH Energy Card | `th-energy-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-energy-card) – Complete energy page for Huawei Solar in the TH style (with the flow and battery cards inside) |
+| TH Energy Flow Card | `th-energy-flow-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-energy-flow-card) – Animated sun/grid/battery/house/EV flow, now and today |
+| TH Battery Card | `th-battery-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-battery-card) – Home battery: state of charge, power, day totals, mode and limits |
+| FB Energy Cards | `fb-energy-cards.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/fb-energy-cards) – Three large, calm Huawei Solar cards: `fb-energy-flow-card`, `fb-energy-battery-card`, `fb-energy-today-card` |
+| HA Elforbrug Historik Card | `ha-elforbrug-historik-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-elforbrug-historik-card) – Electricity use month by month and year by year from long-term statistics |
 
 ## Home and people
 
@@ -69,6 +75,9 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | Kid Tracker Card | `ha-kid-tracker-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-kid-tracker-card) |
 | Smart Home Overview Card | `smart-home-overview-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/smart-home-overview-card) |
 | HA Waste Journey Card | `ha-waste-journey-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-waste-journey-card) |
+| TH Home Card | `th-home-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-home-card) – Front page: status, rooms, security, lights and temperatures |
+| TH Pages | `th-pages.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-pages) – Three pages in the TH style: `th-weather-page-card`, `th-security-card`, `th-tech-card` |
+| MR Weather Studio Card | `mr-weather-studio-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/mr-weather-studio-card) – Weather with tabs: overview, hour by hour, radar and details |
 
 ## Security and cameras
 
@@ -96,3 +105,6 @@ The suite currently contains **60 source modules**. Entries for cards migrated f
 | Ops Status Card | `ha-ops-status-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-ops-status-card) |
 | HA TTS Center Card | `ha-tts-center-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-tts-center-card) |
 | Unraid Server Card | `ha-unraid-server-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-unraid-server-card) |
+| Scroll Stack Card | `scroll-stack-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/scroll-stack-card) – Vertical stack that scrolls inside a layout column; optional CSS per child card |
+| TH Theme Card | `th-theme-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-theme-card) – Invisible opt-in switch: TH glass look for the navbar and standard cards on one dashboard |
+| HA Dashboard Kiosk Card | `ha-dashboard-kiosk-card.js` | [Docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-dashboard-kiosk-card) – Invisible opt-in switch: hides the top bar and sidebar on one dashboard |

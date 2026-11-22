@@ -48,6 +48,9 @@ The district heating, water and EV tabs appear only when at least one of their e
 Assistant, so an installation without district heating, a water meter or a car gets no empty tabs. To choose
 the tabs yourself, list them: `tabs: [power, heat, water, ev]` (the overview is always shown).
 
+The tab bar carries the class `swiper`, so with [hass-swipe-navigation](https://github.com/zanna-37/hass-swipe-navigation)
+a sideways swipe on the tabs scrolls the tabs instead of switching dashboard view. No separate fix resource is needed.
+
 ## Other options
 
 | Option | Default | Description |

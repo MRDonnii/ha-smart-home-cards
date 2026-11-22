@@ -72,7 +72,7 @@ HACS adds the bundled resource `ha-smart-home-cards.js`. Do not load a standalon
 
 The generated [catalog](docs/CARDS.md) groups all cards by purpose. Entries for cards migrated from standalone repositories still link to the archived original repositories for detailed configuration examples.
 
-Recent additions include the Tesla glance card, the Tesla dashboard, TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
+Recent additions include the Huawei Solar card, the TH home/energy/battery/flow cards and TH pages (weather, security, tech), the FB energy cards, Weather Studio, the electricity history card, the scroll stack, and two opt-in dashboard modules (TH theme and kiosk mode), as well as the Tesla glance card, the Tesla dashboard, TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
 
 ### Room Overview V2
 
@@ -245,6 +245,51 @@ stand still after 30 seconds without a touch, click, key or scroll; the next one
 the browser redraw the page on every frame: on a wall display this took views from 30–55 % GPU to 0–5 % at rest.
 Alarm, error, warning and critical animations always keep moving. To keep every animation running on one device, set
 `localStorage.setItem("shc-motion", "always")` in that browser.
+
+## Huawei Solar cards
+
+`custom:huawei-solar-card`, `custom:th-energy-card` (with `custom:th-energy-flow-card` and `custom:th-battery-card`
+inside), the three `custom:fb-energy-*-card`s and the solar parts of `custom:th-home-card` read the
+[Huawei Solar integration](https://github.com/wlcrs/huawei_solar). Its entity ids are `<domain>.<device>_<name>`, so the
+cards build them from the device names and work without listing entities when the devices keep the integration's
+standard names. Other device names, or single values from elsewhere, are set per card:
+
+```yaml
+huawei:                 # the device part of the entity ids (these are the defaults)
+  inverter: inverter
+  batteries: batteries
+  emma: emma
+  meter: power_meter
+  charger: charger
+  battery: battery      # th-battery-card only: the per-unit sensors sensor.<battery>_1_…
+entities:               # any single value by the card's key (see the card's README); null hides it
+  pv: sensor.my_pv_power
+```
+
+Values that do not come from the integration (prices, weather, rooms, cameras …) have no default and are only shown
+when configured. `huawei: false` turns the derived ids off.
+
+## Opt-in dashboard modules: TH theme and kiosk mode
+
+Two dashboard-wide modules are part of the bundle but do **nothing** until a dashboard asks for them with an
+invisible card. Put the card once, anywhere on the dashboard (in a panel view after the first card, which is never
+rendered); it then applies to every view of that dashboard, and leaving the dashboard undoes it. Other dashboards and
+other Home Assistant installations using the bundle are never touched. Outside edit mode the cards render nothing.
+
+| Card | What it does |
+|---|---|
+| `custom:th-theme-card` | Glass look with a gold accent for `ha-navbar-card` (`navbar: true`) and a dark glass surface for standard cards on all views (`cards: true`). |
+| `custom:ha-dashboard-kiosk-card` | Hides the top bar (`hide_header`) and the docked sidebar (`hide_sidebar`, restored when you leave); a long press on a header card's menu button shows/hides the top bar per device (`header_toggle`). The top bar always shows in edit mode. |
+
+```yaml
+# e.g. as the second card of a panel view
+type: custom:ha-dashboard-kiosk-card
+hide_header: true
+hide_sidebar: true
+```
+
+Remove the card to switch the module off. See [th-theme-card](src/cards/th-theme-card) and
+[ha-dashboard-kiosk-card](src/cards/ha-dashboard-kiosk-card).
 
 ## Privacy
 

@@ -579,5 +579,89 @@
     "filename": "ha-elforbrug-kr-card.js",
     "category": "Energy and climate",
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "huawei-solar-card",
+    "name": "Huawei Solar Card",
+    "filename": "huawei-solar-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-energy-card",
+    "name": "TH Energy Card",
+    "filename": "th-energy-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-energy-flow-card",
+    "name": "TH Energy Flow Card",
+    "filename": "th-energy-flow-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-battery-card",
+    "name": "TH Battery Card",
+    "filename": "th-battery-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "fb-energy-cards",
+    "name": "FB Energy Cards",
+    "filename": "fb-energy-cards.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-elforbrug-historik-card",
+    "name": "HA Elforbrug Historik Card",
+    "filename": "ha-elforbrug-historik-card.js",
+    "category": "Energy and climate",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-home-card",
+    "name": "TH Home Card",
+    "filename": "th-home-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-pages",
+    "name": "TH Pages",
+    "filename": "th-pages.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "mr-weather-studio-card",
+    "name": "MR Weather Studio Card",
+    "filename": "mr-weather-studio-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "scroll-stack-card",
+    "name": "Scroll Stack Card",
+    "filename": "scroll-stack-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "th-theme-card",
+    "name": "TH Theme Card",
+    "filename": "th-theme-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
+    "slug": "ha-dashboard-kiosk-card",
+    "name": "HA Dashboard Kiosk Card",
+    "filename": "ha-dashboard-kiosk-card.js",
+    "category": "System and utilities",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   }
 ]

@@ -296,6 +296,8 @@ class HaEnergyCenterCard extends HTMLElement {
     for (const s of this._sections.values()) s.section.hidden?.();
     this._sections.clear();
     this._today.clear();
+    // The tab bar has the class "swiper": hass-swipe-navigation ignores swipes that start on such elements, so the tabs
+    // can be swiped sideways without the dashboard changing view (was the separate ha-swipe-fix.js resource).
     this.shadowRoot.innerHTML = `
 <style>${STYLE}</style>
 <div class="shell">
@@ -304,7 +306,7 @@ class HaEnergyCenterCard extends HTMLElement {
       <span class="brand-mark">${icon("mdi:lightning-bolt-circle")}</span>
       <div><h1>${escapeHtml(c.title)}</h1><p>${escapeHtml(c.subtitle)}</p></div>
     </div>
-    <nav class="tabs" role="tablist">${TABS.map(
+    <nav class="tabs swiper" role="tablist">${TABS.map(
     (t) => `<button type="button" role="tab" class="tab tone-${t.tone} ${t.key === this._tab ? "on" : ""}" data-tab="${t.key}" aria-selected="${t.key === this._tab}">${icon(t.icon)}<span>${t.label}</span></button>`,
   ).join("")}</nav>
   </header>
