@@ -764,9 +764,9 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
       card.hass = hass;
     });
     const ids = this._entityIds();
-    const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
-    if (signature === this._signature) return;
-    this._signature = signature;
+    const signature2 = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
+    if (signature2 === this._signature) return;
+    this._signature = signature2;
     this._update();
   }
   getCardSize() {
@@ -926,9 +926,9 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
   _update() {
     if (!this._built || !this._hass) return;
     this._setMedia();
-    const active = this._active();
+    const active2 = this._active();
     const card = this.shadowRoot.querySelector("ha-card");
-    card.classList.toggle("printing", active);
+    card.classList.toggle("printing", active2);
     card.classList.toggle("no-animation", this._config.animation === false);
     const taskValue = this._value(this._config.task), taskNode = this.shadowRoot.querySelector(".task");
     if (taskNode?.textContent !== taskValue) {
@@ -938,7 +938,7 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
     this._text("stage", this._value(this._config.stage) !== "\u2014" ? this._value(this._config.stage).replaceAll("_", " ") : this._value(this._config.status));
     const progress = Math.max(0, Math.min(100, this._number(this._config.progress) || 0));
     this._text("progress", `${this._fmt(progress)}%`);
-    this._text("progress-status", active ? "Printer" : progress >= 100 ? "F\xE6rdig" : "Klar");
+    this._text("progress-status", active2 ? "Printer" : progress >= 100 ? "F\xE6rdig" : "Klar");
     this.shadowRoot.querySelector(".print-status-bar > i")?.style.setProperty("--progress", `${progress}%`);
     this._text("layers", `${this._value(this._config.current_layer)} / ${this._value(this._config.total_layers)}`);
     this._text("remaining", `${this._fmt(this._number(this._config.remaining_time), 1)}${this._unit(this._config.remaining_time) ? ` ${this._unit(this._config.remaining_time)}` : ""}`);
@@ -969,7 +969,7 @@ var HABambuLabDashboardCard = class _HABambuLabDashboardCard extends HTMLElement
     if (powerIcon) powerIcon.setAttribute("icon", powerOn ? "mdi:power-plug-off" : "mdi:power-plug");
     const pauseButton = this.shadowRoot.querySelector('[data-action="pause"]');
     const resumeButton = this.shadowRoot.querySelector('[data-action="resume"]');
-    if (pauseButton) pauseButton.disabled = !active;
+    if (pauseButton) pauseButton.disabled = !active2;
     if (resumeButton) resumeButton.disabled = !["pause", "paused"].includes(String(this._value(this._config.status)).toLowerCase());
   }
   async _call(entity, domain, service) {
@@ -1935,7 +1935,7 @@ var HARoborockVacuumCard = class extends HTMLElement {
     );
     const battery = this._num(this._config.battery);
     const mapUrl = this._e(this._config.map_image)?.attributes?.entity_picture;
-    const active = ["cleaning", "returning", "cleaning_spot"].includes(state2);
+    const active2 = ["cleaning", "returning", "cleaning_spot"].includes(state2);
     const rooms = (this._config.rooms || []).map(
       (r) => this._room(typeof r === "string" ? r : r.area_id)
     );
@@ -1957,7 +1957,7 @@ var HARoborockVacuumCard = class extends HTMLElement {
       .identity div{min-width:0}
       .identity strong{display:block;font-size:16px}
       .status{display:flex;align-items:center;gap:6px;color:var(--secondary-text-color);font-size:11px;font-weight:700}
-      .status i{width:7px;height:7px;border-radius:50%;background:${active ? "var(--good)" : state2 === "error" || hasError ? "var(--danger)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
+      .status i{width:7px;height:7px;border-radius:50%;background:${active2 ? "var(--good)" : state2 === "error" || hasError ? "var(--danger)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
       .battery{text-align:right}
       .battery strong{font-size:20px}
       .battery span{display:block;color:var(--secondary-text-color);font-size:10px}
@@ -6979,9 +6979,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("estimate", c2.estimate || "");
     this._hide("cmp", !c2.compare);
     if (c2.compare) {
-      const signature = JSON.stringify([c2.compare, this._armed]);
-      if (r.cmp.dataset.sig !== signature) {
-        r.cmp.dataset.sig = signature;
+      const signature2 = JSON.stringify([c2.compare, this._armed]);
+      if (r.cmp.dataset.sig !== signature2) {
+        r.cmp.dataset.sig = signature2;
         r.cmp.innerHTML = c2.compare.map((item2) => `<button type="button" role="radio" class="cmp-i" data-scmode="${item2.key}" aria-checked="${item2.active}"${this._armed === `mode:${item2.key}` ? " data-armed" : ""}><small>${ttdEsc(this._armed === `mode:${item2.key}` ? "Tryk igen for at v\xE6lge" : item2.label)}</small><b>${ttdEsc(item2.price)}${item2.estimated ? "*" : ""}</b><span>${ttdEsc(item2.detail)}</span>${item2.saving ? `<em>${ttdEsc(item2.saving)}</em>` : ""}</button>`).join("");
       }
     }
@@ -7256,7 +7256,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     if (r.scLate) r.scLate.hidden = !sc.late;
     this._hide("scTop", !sc.topUp);
     if (sc.topUp) {
-      const active2 = this.shadowRoot.activeElement;
+      const active3 = this.shadowRoot.activeElement;
       this._attrSet("scTopChip", "aria-pressed", String(sc.topUp.on));
       this._t("scTopNote", sc.topUp.note);
       this._hide("scTopSet", !sc.topUp.on || !sc.topUp.fields.some(Boolean));
@@ -7265,7 +7265,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
         const input = r[ref];
         if (!field || !input) continue;
         for (const name of ["min", "max", "step"]) if (input.getAttribute(name) !== field[name]) input.setAttribute(name, field[name]);
-        if (active2 !== input && input.value !== field.value) input.value = field.value;
+        if (active3 !== input && input.value !== field.value) input.value = field.value;
       }
     }
     this._hide("scOpt", !sc.options);
@@ -7285,14 +7285,14 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       const hasWindow = quietOn && ttdIsClock(from) && ttdIsClock(until2);
       this._hide("scQuiet", !hasWindow);
       if (hasWindow) {
-        const active2 = this.shadowRoot.activeElement;
-        if (active2 !== r.scQuietFrom && r.scQuietFrom.value !== ttdClock(from)) r.scQuietFrom.value = ttdClock(from);
-        if (active2 !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until2)) r.scQuietUntil.value = ttdClock(until2);
+        const active3 = this.shadowRoot.activeElement;
+        if (active3 !== r.scQuietFrom && r.scQuietFrom.value !== ttdClock(from)) r.scQuietFrom.value = ttdClock(from);
+        if (active3 !== r.scQuietUntil && r.scQuietUntil.value !== ttdClock(until2)) r.scQuietUntil.value = ttdClock(until2);
       }
     }
-    const signature = JSON.stringify([sc.segments, sc.marks]);
-    if (r.scTrack && r.scTrack.dataset.sig !== signature) {
-      r.scTrack.dataset.sig = signature;
+    const signature2 = JSON.stringify([sc.segments, sc.marks]);
+    if (r.scTrack && r.scTrack.dataset.sig !== signature2) {
+      r.scTrack.dataset.sig = signature2;
       r.scTrack.replaceChildren(
         ...sc.segments.map((segment) => {
           const el = document.createElement("i");
@@ -7319,11 +7319,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("scEndDay", sc.endDay);
     this._t("scCost", sc.cost);
     this._t("scKwh", sc.kwh);
-    const active = this.shadowRoot.activeElement;
+    const active2 = this.shadowRoot.activeElement;
     this._hide("scFixed", !sc.fixed);
     if (sc.fixed) {
-      if (active !== r.scFixedStart && r.scFixedStart.value !== sc.fixed.start) r.scFixedStart.value = sc.fixed.start;
-      if (active !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
+      if (active2 !== r.scFixedStart && r.scFixedStart.value !== sc.fixed.start) r.scFixedStart.value = sc.fixed.start;
+      if (active2 !== r.scFixedEnd && r.scFixedEnd.value !== sc.fixed.end) r.scFixedEnd.value = sc.fixed.end;
     }
     const resolution = this._sc("price_resolution")?.state;
     this._hide("scRes", !["quarter", "hour"].includes(resolution));
@@ -7332,7 +7332,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("scLimit", !sc.limit);
     if (sc.limit) {
       this._attrSet("scLimitChip", "aria-pressed", String(sc.limit.on));
-      if (active !== r.scLimitInput && r.scLimitInput.value !== sc.limit.value) r.scLimitInput.value = sc.limit.value;
+      if (active2 !== r.scLimitInput && r.scLimitInput.value !== sc.limit.value) r.scLimitInput.value = sc.limit.value;
       this._t("scLimitUnit", sc.limit.unit);
       this._t("scLimitPre", sc.limit.saving ? "spar mindst" : "maks.");
       if (r.scLimitInput) {
@@ -7341,11 +7341,11 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       }
       this._hide("scMax", !sc.limit.max);
       if (sc.limit.max) {
-        if (active !== r.scMaxInput && r.scMaxInput.value !== sc.limit.max.value) r.scMaxInput.value = sc.limit.max.value;
+        if (active2 !== r.scMaxInput && r.scMaxInput.value !== sc.limit.max.value) r.scMaxInput.value = sc.limit.max.value;
         this._t("scMaxUnit", sc.limit.max.unit);
       }
       const floor = sc.limit.floor == null ? "" : String(sc.limit.floor);
-      if (active !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
+      if (active2 !== r.scFloorInput && r.scFloorInput.value !== floor) r.scFloorInput.value = floor;
       this._t("scLimitInfo", sc.limit.info);
     }
     const choice = sc.limit?.choice;
@@ -7372,10 +7372,10 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       this._t("scCapXInfo", sc.cap.over.info);
     }
     if (sc.cap) {
-      if (active !== r.scCapInput && r.scCapInput.value !== sc.cap.value) r.scCapInput.value = sc.cap.value;
+      if (active2 !== r.scCapInput && r.scCapInput.value !== sc.cap.value) r.scCapInput.value = sc.cap.value;
       this._t("scCapUnit", sc.cap.unit);
       const min = sc.cap.min == null ? "" : String(sc.cap.min);
-      if (active !== r.scMinInput && r.scMinInput.value !== min) r.scMinInput.value = min;
+      if (active2 !== r.scMinInput && r.scMinInput.value !== min) r.scMinInput.value = min;
     }
     const trip = sc.trip;
     this._t("scTripSum", trip.summary);
@@ -7383,8 +7383,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._attrSet("scTripHead", "aria-expanded", String(!!this._tripOpen));
     this._hide("scTripBody", !this._tripOpen);
     const dep = trip.departure ? ttdLocalInput(trip.departure) : "";
-    if (active !== r.scDep && r.scDep.value !== dep) r.scDep.value = dep;
-    if (active !== r.scDest && r.scDest.value !== trip.destination) r.scDest.value = trip.destination;
+    if (active2 !== r.scDep && r.scDep.value !== dep) r.scDep.value = dep;
+    if (active2 !== r.scDest && r.scDest.value !== trip.destination) r.scDest.value = trip.destination;
     this._attrSet("scRound", "aria-pressed", String(trip.roundTrip));
     this._t("scTripInfo", trip.info);
     this._hide("scClear", !trip.active && !trip.destination);
@@ -7404,9 +7404,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._hide("modeSelect", !model);
     this._hide("chargerMode", !!model);
     if (!model) return;
-    const signature = model.options.join("");
-    if (select.dataset.sig !== signature) {
-      select.dataset.sig = signature;
+    const signature2 = model.options.join("");
+    if (select.dataset.sig !== signature2) {
+      select.dataset.sig = signature2;
       select.replaceChildren(...model.options.map((option) => {
         const el = document.createElement("option");
         el.value = option;
@@ -7758,9 +7758,9 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const cfg = this._cfg.chart;
     const live = [cfg.distance_entity, cfg.energy_entity, this._id("daily_energy")].map((id) => this._hass.states[id]?.state).join("|");
     const now = /* @__PURE__ */ new Date();
-    const signature = [this._chartRange, this._stats[this._chartRange]?.at, live, f.hour(now, f.serverTz), f.dayKey(now, f.serverTz), this._env].join("|");
-    if (!force && signature === this._chartSig) return;
-    this._chartSig = signature;
+    const signature2 = [this._chartRange, this._stats[this._chartRange]?.at, live, f.hour(now, f.serverTz), f.dayKey(now, f.serverTz), this._env].join("|");
+    if (!force && signature2 === this._chartSig) return;
+    this._chartSig = signature2;
     const data = this._chartData();
     this._chart = data;
     const dUnit = ttdUnit(this._hass.states[cfg.distance_entity]?.attributes?.unit_of_measurement || "km");
@@ -9373,20 +9373,20 @@ console.info(`%c HA TEXT INPUT %c v${VERSION6} `, "color:white;background:#3b82f
 
 // src/shared/lux.js
 var LUX_ACCENT = "var(--lux-accent,var(--dashboard-accent,var(--primary-color,#62b5ff)))";
-function luxCss({ base, active, icon: icon6 = "ha-icon", underline = true, gum = true }) {
+function luxCss({ base, active: active2, icon: icon6 = "ha-icon", underline = true, gum = true }) {
   const a = LUX_ACCENT;
   const each = (list, suffix) => list.split(",").map((x) => `${x.trim()}${suffix}`).join(",");
   return `
 ${base}{position:relative;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background .3s ease,box-shadow .3s ease,color .3s ease}
 ${each(base, ":active")}{transform:scale(.9);transition-duration:.08s}
-${active}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
+${active2}{background:linear-gradient(180deg,color-mix(in srgb,${a} 28%,transparent),color-mix(in srgb,${a} 7%,transparent))!important;
   color:color-mix(in srgb,${a} 70%,#fff)!important;border-color:color-mix(in srgb,${a} 45%,transparent)!important;
   box-shadow:inset 0 0 0 1px color-mix(in srgb,${a} 45%,transparent),inset 0 1px 0 rgba(255,255,255,.12),0 8px 24px -8px color-mix(in srgb,${a} 60%,transparent)!important;
   ${gum ? "animation:luxGum .7s ease-out" : ""}}
-${underline ? `${each(active, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
-${each(active, ` ${icon6}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
+${underline ? `${each(active2, "::after")}{content:"";position:absolute;left:50%;bottom:3px;width:16px;height:2px;border-radius:2px;transform:translateX(-50%);background:${a};box-shadow:0 0 10px ${a};pointer-events:none}` : ""}
+${each(active2, ` ${icon6}`)}{color:color-mix(in srgb,${a} 80%,#fff)!important;filter:drop-shadow(0 0 6px color-mix(in srgb,${a} 60%,transparent))}
 ${LUX_KEYFRAMES}
-@media (prefers-reduced-motion:reduce){${base},${active},${each(active, ` ${icon6}`)}{animation:none!important;transition:none!important}}`;
+@media (prefers-reduced-motion:reduce){${base},${active2},${each(active2, ` ${icon6}`)}{animation:none!important;transition:none!important}}`;
 }
 var LUX_KEYFRAMES = `@keyframes luxGum{0%{transform:none}25%{transform:scale(1.12,.86)}50%{transform:scale(.93,1.08)}70%{transform:scale(1.04,.97)}100%{transform:none}}
 @keyframes luxGumLoop{0%,58%,100%{transform:none}63%{transform:scale(1.24,.78)}68%{transform:translateY(-3px) scale(.82,1.2)}73%{transform:scale(1.12,.9)}78%{transform:translateY(-1px) scale(.95,1.06)}84%{transform:scale(1.03,.98)}90%{transform:none}}`;
@@ -9512,8 +9512,8 @@ var HAEvTyreCard = class extends HTMLElement {
     }
   }
   _header(sub2, actions = "") {
-    const active = this._set(this._a.set_id);
-    const k = active ? kindOf(active.kind) : null;
+    const active2 = this._set(this._a.set_id);
+    const k = active2 ? kindOf(active2.kind) : null;
     return `<header class="th"><span class="th-i" style="--k:${k ? k.color : "var(--tc-muted)"}">${icon("mdi:tire")}</span>
       <div class="th-t"><h3>${esc5(this._config.title)}</h3><p>${sub2}</p></div>${actions}</header>`;
   }
@@ -9525,11 +9525,11 @@ var HAEvTyreCard = class extends HTMLElement {
         <div class="intro">${icon("mdi:tire", "intro-i")}<div><b>Tilf\xF8j dine hjuls\xE6t</b><p>Fx sommer- og vinterhjul med d\xE6k- og f\xE6lgst\xF8rrelse. S\xE5 viser kortet hvilket s\xE6t der sidder p\xE5, forbruget p\xE5 hvert s\xE6t \u2014 ogs\xE5 sammenlignet ved samme udetemperatur \u2014 slid og hvorn\xE5r det er tid til at skifte.</p>
         <button type="button" class="btn go" data-new>${icon("mdi:plus")}Tilf\xF8j hjuls\xE6t</button></div></div>`;
     }
-    const active = this._set(a.set_id);
-    const k = active ? kindOf(active.kind) : null;
-    const sub2 = active ? `${esc5(active.name)} p\xE5 siden ${esc5(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
+    const active2 = this._set(a.set_id);
+    const k = active2 ? kindOf(active2.kind) : null;
+    const sub2 = active2 ? `${esc5(active2.name)} p\xE5 siden ${esc5(day(a.mounted_at))}` : "Intet s\xE6t registreret p\xE5 bilen";
     const actions = `<div class="th-a"><button type="button" class="btn go" data-change>${icon("mdi:swap-horizontal")}<span>Skift hjul</span></button><button type="button" class="ib" data-new title="Nyt hjuls\xE6t" aria-label="Nyt hjuls\xE6t">${icon("mdi:plus")}</button></div>`;
-    return `${this._header(sub2, actions)}${this._tipHtml()}${active ? this._currentHtml(active, k) : `<p class="note">Tryk <b>Skift hjul</b> og v\xE6lg det s\xE6t, der sidder p\xE5 nu (du kan v\xE6lge en dato tilbage i tiden).</p>`}
+    return `${this._header(sub2, actions)}${this._tipHtml()}${active2 ? this._currentHtml(active2, k) : `<p class="note">Tryk <b>Skift hjul</b> og v\xE6lg det s\xE6t, der sidder p\xE5 nu (du kan v\xE6lge en dato tilbage i tiden).</p>`}
       ${this._setsHtml()}${this._compareHtml()}${this._historyHtml()}`;
   }
   _tipHtml() {
@@ -10156,7 +10156,7 @@ var HALawnMowerCard = class extends HTMLElement {
     const battery = this._config.battery ? this._num(this._config.battery) : void 0;
     const errorState = this._config.error ? this._s(this._config.error) : void 0;
     const hasError = errorState && !["no_error", "unknown", "unavailable"].includes(errorState);
-    const active = state2 === "mowing" || state2 === "returning";
+    const active2 = state2 === "mowing" || state2 === "returning";
     const offline = this._config.connectivity ? !this._on(this._config.connectivity) : false;
     const firmwareUpdate = this._config.firmware ? this._on(this._config.firmware) : false;
     const rainWet = this._config.rain_sensor ? this._on(this._config.rain_sensor) : false;
@@ -10221,7 +10221,7 @@ var HALawnMowerCard = class extends HTMLElement {
       .icon ha-icon{--mdc-icon-size:24px}
       .identity strong{display:block;font-size:16px}
       .status{display:flex;align-items:center;gap:6px;color:var(--secondary-text-color);font-size:11px;font-weight:700}
-      .status i{width:7px;height:7px;border-radius:50%;background:${hasError ? "var(--danger)" : active ? "var(--good)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
+      .status i{width:7px;height:7px;border-radius:50%;background:${hasError ? "var(--danger)" : active2 ? "var(--good)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
       .battery{text-align:right}
       .battery strong{font-size:20px}
       .battery span{display:block;color:var(--secondary-text-color);font-size:10px}
@@ -11892,7 +11892,7 @@ var HASimpleVacuumCard = class extends HTMLElement {
     const vacuum = this._e(this._config.vacuum);
     const state2 = vacuum?.state || "unknown";
     const battery = this._config.battery ? this._num(this._config.battery) : Number(vacuum?.attributes?.battery_level);
-    const active = state2 === "cleaning" || state2 === "returning";
+    const active2 = state2 === "cleaning" || state2 === "returning";
     const binFull = this._config.bin_full ? this._e(this._config.bin_full)?.state === "on" : false;
     const hasError = state2 === "error" || binFull;
     const total = this._num(this._config.missions_total);
@@ -11911,7 +11911,7 @@ var HASimpleVacuumCard = class extends HTMLElement {
       .icon ha-icon{--mdc-icon-size:24px}
       .identity strong{display:block;font-size:16px}
       .status{display:flex;align-items:center;gap:6px;color:var(--secondary-text-color);font-size:11px;font-weight:700}
-      .status i{width:7px;height:7px;border-radius:50%;background:${active ? "var(--good)" : state2 === "error" ? "var(--danger)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
+      .status i{width:7px;height:7px;border-radius:50%;background:${active2 ? "var(--good)" : state2 === "error" ? "var(--danger)" : "var(--secondary-text-color)"};box-shadow:0 0 8px currentColor}
       .battery{text-align:right}
       .battery strong{font-size:20px}
       .battery span{display:block;color:var(--secondary-text-color);font-size:10px}
@@ -12253,8 +12253,8 @@ var AC_UNIT_VISUAL_STYLE = `
 @keyframes acUnitSwing{50%{transform:rotateX(55deg)}}
 @keyframes acUnitAir{0%{opacity:0;transform:translate(0,0) rotate(9deg)}25%{opacity:.75}100%{opacity:0;transform:translate(40px,16px) rotate(9deg)}}
 `;
-function acUnitVisualMarkup(label, active) {
-  return `<div class="ac-unit-visual ${active ? "active" : "off"}">
+function acUnitVisualMarkup(label, active2) {
+  return `<div class="ac-unit-visual ${active2 ? "active" : "off"}">
     <div class="indoor">
       <div class="display" data-role="ac-unit-display">${label}</div>
       <div class="vent"><i></i><i></i><i></i><i></i><i></i></div>
@@ -12405,14 +12405,14 @@ var HAACClimateCard = class extends HTMLElement {
     const status = this._entity(unit.status)?.state;
     const online = this._entity(unit.online);
     const offline = !!online && online.state === "off";
-    const active = !["off", "unknown", "unavailable"].includes(mode);
-    let tone3 = active ? TONES[mode] || "fan" : "off";
+    const active2 = !["off", "unknown", "unavailable"].includes(mode);
+    let tone3 = active2 ? TONES[mode] || "fan" : "off";
     if (!climate || offline) tone3 = "problem";
     const statusText = !climate ? "Utilg\xE6ngelig" : offline ? "Anl\xE6gget svarer ikke" : STATUS_LABELS[status] || this._hass?.formatEntityState?.(climate) || mode;
     return {
       climate,
       mode,
-      active,
+      active: active2,
       tone: tone3,
       offline,
       status,
@@ -12785,14 +12785,14 @@ var HAACClimateCard = class extends HTMLElement {
     const units = this._config.units || [];
     const states = units.map((u2) => this._state(u2));
     const single = units.length === 1;
-    const active = states.filter((s) => s.active).length;
+    const active2 = states.filter((s) => s.active).length;
     const power2 = states.reduce((sum, s) => sum + (s.power || 0), 0);
     this.shadowRoot.innerHTML = `<style>${STYLE}${AC_UNIT_VISUAL_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""} ${single ? "single" : ""}">
         <div class="shell">
           <header>
-            <div><div class="eyebrow"><i class="${active ? "on" : ""}"></i>Smart klimastyring</div><h2>${this._esc(this._config.title)}</h2></div>
-            ${single ? "" : `<div class="summary"><div><span>Aktive</span><strong>${active} / ${units.length}</strong></div><div><span>El nu</span><strong>${this._format(power2)} W</strong></div></div>`}
+            <div><div class="eyebrow"><i class="${active2 ? "on" : ""}"></i>Smart klimastyring</div><h2>${this._esc(this._config.title)}</h2></div>
+            ${single ? "" : `<div class="summary"><div><span>Aktive</span><strong>${active2} / ${units.length}</strong></div><div><span>El nu</span><strong>${this._format(power2)} W</strong></div></div>`}
           </header>
           <div class="grid">${units.map((u2, i) => this._unit(u2, i)).join("")}</div>
         </div>
@@ -13290,7 +13290,7 @@ var CalefaNumberControlCard = class extends HTMLElement {
     const displayValue = this._formatValue(details.value, details.step, details.unit);
     const atMinimum = details.available && details.value <= details.minimum;
     const atMaximum = details.available && details.value >= details.maximum;
-    const signature = JSON.stringify([
+    const signature2 = JSON.stringify([
       displayValue,
       details.available,
       details.pending,
@@ -13299,8 +13299,8 @@ var CalefaNumberControlCard = class extends HTMLElement {
       this._config.name,
       this._config.description
     ]);
-    if (!force && signature === this._lastSignature) return;
-    this._lastSignature = signature;
+    if (!force && signature2 === this._lastSignature) return;
+    this._lastSignature = signature2;
     const accent = this._escape(this._config.accent);
     this.shadowRoot.innerHTML = `
       <style>
@@ -13524,10 +13524,10 @@ var HACalefaDetailsCard = class extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Ugyldig konfiguration");
     const next = { title: "Calefa styring", ...config, entities: { ...config.entities || {} } };
-    const signature = JSON.stringify(next);
+    const signature2 = JSON.stringify(next);
     this._config = next;
-    if (signature === this._configSignature) return;
-    this._configSignature = signature;
+    if (signature2 === this._configSignature) return;
+    this._configSignature = signature2;
     this._signature = "";
     this._renderStructure();
     this._updateValues(true);
@@ -13535,12 +13535,12 @@ var HACalefaDetailsCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = Object.values(this._config.entities || {}).filter(Boolean);
-    const signature = JSON.stringify(ids.map((id) => {
+    const signature2 = JSON.stringify(ids.map((id) => {
       const state2 = hass?.states?.[id];
       return [id, state2?.state, state2?.attributes?.min, state2?.attributes?.max, state2?.attributes?.step, state2?.attributes?.options];
     }));
-    if (signature !== this._signature) {
-      this._signature = signature;
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._updateValues();
       this._historyCards?.forEach((card) => {
         card.hass = hass;
@@ -13605,11 +13605,11 @@ var HACalefaDetailsCard = class extends HTMLElement {
         }
       }
       if (type === "switch") {
-        const button = this.shadowRoot.querySelector(`[data-toggle="${key2}"]`), active = state2?.state === "on";
+        const button = this.shadowRoot.querySelector(`[data-toggle="${key2}"]`), active2 = state2?.state === "on";
         if (button) {
-          button.classList.toggle("active", active);
+          button.classList.toggle("active", active2);
           button.classList.toggle("unavailable", !state2 || state2.state === "unavailable");
-          button.setAttribute("aria-pressed", String(active));
+          button.setAttribute("aria-pressed", String(active2));
         }
       }
       if (type === "select") {
@@ -13823,10 +13823,10 @@ var HAFjernvarmeHouseCard = class extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Ugyldig konfiguration");
     const nextConfig = { title: "Fjernvarme", animation: true, show_details: true, details_title: "Calefa styring", ...config, entities: { ...config.entities || {} }, details_entities: { ...config.details_entities || {} } };
-    const signature = JSON.stringify(nextConfig);
+    const signature2 = JSON.stringify(nextConfig);
     this._config = nextConfig;
-    if (signature === this._configSignature) return;
-    this._configSignature = signature;
+    if (signature2 === this._configSignature) return;
+    this._configSignature = signature2;
     this._signature = "";
     this._render(true);
   }
@@ -13910,9 +13910,9 @@ var HAFjernvarmeHouseCard = class extends HTMLElement {
     if (!Number.isFinite(value)) return "var(--secondary-text-color)";
     return value >= 20 ? "var(--success-color, #62cf8e)" : "var(--error-color, #ef6666)";
   }
-  _pipe(cls, path, active = true, count2 = 8) {
+  _pipe(cls, path, active2 = true, count2 = 8) {
     const duration2 = 6.1 + count2 * 0.08;
-    return `<g class="pipe ${cls} ${active ? "active" : ""}"><path class="pipe-rim" d="${path}"/><path class="pipe-core" d="${path}"/><path class="pipe-heat" d="${path}"/><path class="water-sheen" d="${path}"/>${Array.from({ length: count2 }, (_, i) => `<g class="water-pulse"><ellipse cx="0" cy="0" rx="4.5" ry="1.8"/><circle cx="-8" cy="0" r=".8"/><animateMotion dur="${duration2}s" begin="-${(i * duration2 / count2).toFixed(2)}s" repeatCount="indefinite" rotate="auto" path="${path}"/></g>`).join("")}</g>`;
+    return `<g class="pipe ${cls} ${active2 ? "active" : ""}"><path class="pipe-rim" d="${path}"/><path class="pipe-core" d="${path}"/><path class="pipe-heat" d="${path}"/><path class="water-sheen" d="${path}"/>${Array.from({ length: count2 }, (_, i) => `<g class="water-pulse"><ellipse cx="0" cy="0" rx="4.5" ry="1.8"/><circle cx="-8" cy="0" r=".8"/><animateMotion dur="${duration2}s" begin="-${(i * duration2 / count2).toFixed(2)}s" repeatCount="indefinite" rotate="auto" path="${path}"/></g>`).join("")}</g>`;
   }
   _metric(label, key2, digits = 1, cls = "") {
     return `<div class="metric entity-hit ${cls}" data-key="${key2}" tabindex="0"><small>${label}</small><strong>${this._fmt(key2, digits)}</strong></div>`;
@@ -15537,8 +15537,8 @@ var ThElectricityPriceCard = class extends HTMLElement {
       floor: pa2.price_limit_floor == null ? NaN : Number(pa2.price_limit_floor),
       cheaper: Array.isArray(pa2.limit_cheaper) ? pa2.limit_cheaper.map((w) => ({ ...w, t: Date.parse(w.start), e: Date.parse(w.end) })).filter((w) => Number.isFinite(w.t)) : null
     } : null;
-    const active = mode && !["off", "manual"].includes(mode) && (blocks.length > 0 || !!limit?.held);
-    if (!(c2.force || plugged && active)) return null;
+    const active2 = mode && !["off", "manual"].includes(mode) && (blocks.length > 0 || !!limit?.held);
+    if (!(c2.force || plugged && active2)) return null;
     const kwh2 = this.n(c2.energy), cost = this.n(c2.cost), alt = this.A(c2.cost, "alternatives") || {}, now = alt.now?.cost;
     return {
       blocks,
@@ -16310,26 +16310,26 @@ var HAVentilationCard = class extends HTMLElement {
       card.hass = hass;
     });
     if (this._detailsPopupCard) this._detailsPopupCard.hass = hass;
-    const signature = JSON.stringify(Object.values(this._config.entities || {}).map((id) => {
+    const signature2 = JSON.stringify(Object.values(this._config.entities || {}).map((id) => {
       const entity = hass?.states?.[id];
       return entity ? [entity.state, entity.attributes?.temperature, entity.attributes?.current_temperature, entity.attributes?.hvac_action] : null;
     }));
-    if (signature === this._signature && signature === this._pendingSignature) return;
+    if (signature2 === this._signature && signature2 === this._pendingSignature) return;
     if (!this.isConnected) {
       clearTimeout(this._renderTimer);
       this._renderTimer = void 0;
       this._pendingSignature = void 0;
-      this._detachedSignature = signature;
+      this._detachedSignature = signature2;
       return;
     }
     if (this._signature === "") {
       clearTimeout(this._renderTimer);
       this._renderTimer = void 0;
       this._pendingSignature = void 0;
-      this._render(signature);
+      this._render(signature2);
       return;
     }
-    this._pendingSignature = signature;
+    this._pendingSignature = signature2;
     if (this._renderTimer) return;
     this._renderTimer = setTimeout(() => {
       this._renderTimer = void 0;
@@ -16399,8 +16399,8 @@ var HAVentilationCard = class extends HTMLElement {
     const suffix = entity.attributes?.unit_of_measurement || fallbackSuffix;
     return `${value.toLocaleString(language, { maximumFractionDigits: digits })}${suffix ? ` ${suffix}` : ""}`;
   }
-  _statusValue(key2, active, inactive) {
-    return this._state(key2) ? this._on(key2) ? active : inactive : "\u2014";
+  _statusValue(key2, active2, inactive) {
+    return this._state(key2) ? this._on(key2) ? active2 : inactive : "\u2014";
   }
   _modeLabel() {
     const raw = String(this._state("mode")?.state || "").trim();
@@ -16735,9 +16735,9 @@ ${error?.message || error}`);
       this._historyCards.push(card);
     }
   }
-  _render(signature = "") {
+  _render(signature2 = "") {
     if (!this.shadowRoot) return;
-    this._signature = signature;
+    this._signature = signature2;
     const bypass = this._on("bypass");
     const afterheat = this._config.show_afterheat === true;
     const showAfterheatValues = afterheat && !bypass;
@@ -27441,10 +27441,10 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
     }
     setConfig(config) {
       const next = { title: "Varme Center", subtitle: "Temperatur, luft og fjernvarme samlet \xE9t sted", show_stats: false, ...config };
-      const signature = JSON.stringify(next);
-      if (signature === this._signature) return;
+      const signature2 = JSON.stringify(next);
+      if (signature2 === this._signature) return;
       this._config = next;
-      this._signature = signature;
+      this._signature = signature2;
       this._active = this._readTab() || "temperature";
       this._render();
     }
@@ -27514,9 +27514,9 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
     }
     _syncTabs() {
       for (const button of this.shadowRoot.querySelectorAll("[data-tab]")) {
-        const active = button.dataset.tab === this._active;
-        button.classList.toggle("on", active);
-        button.setAttribute("aria-selected", String(active));
+        const active2 = button.dataset.tab === this._active;
+        button.classList.toggle("on", active2);
+        button.setAttribute("aria-selected", String(active2));
       }
     }
     _render() {
@@ -27760,8 +27760,8 @@ var HAHeatEconomyCard = class extends HTMLElement {
     const w = this._e(this._config.window_entity)?.attributes?.vindue;
     if (!w || typeof w !== "object" || !w.start) return void 0;
     const now = Date.now();
-    const active = new Date(w.start).getTime() <= now && now < new Date(w.slut).getTime();
-    return { ...w, active, preheat: this._s(this._config.preheat_entity) === "on" };
+    const active2 = new Date(w.start).getTime() <= now && now < new Date(w.slut).getTime();
+    return { ...w, active: active2, preheat: this._s(this._config.preheat_entity) === "on" };
   }
   _units() {
     const list = Array.isArray(this._config.units) ? this._config.units : [];
@@ -28060,12 +28060,12 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = [this._config.total_output, this._config.total_cost, ...(this._config.pumps || []).flatMap((p) => Object.values(p))].filter((v) => typeof v === "string" && v.includes("."));
-    const signature = JSON.stringify(ids.map((id) => {
+    const signature2 = JSON.stringify(ids.map((id) => {
       const e = hass?.states?.[id];
       return [id, e?.state, e?.attributes?.current_temperature, e?.attributes?.temperature, e?.attributes?.hvac_action];
     }));
-    if (signature === this._signature) return;
-    this._signature = signature;
+    if (signature2 === this._signature) return;
+    this._signature = signature2;
     this._render();
   }
   getCardSize() {
@@ -28098,7 +28098,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const dailyEnergy = this._number(pump.daily_energy);
     const dailyCost = this._number(pump.daily_cost);
     const action = String(climate?.attributes?.hvac_action || climate?.state || "unknown").toLowerCase();
-    const active = ["heating", "cooling", "drying", "fan"].includes(action);
+    const active2 = ["heating", "cooling", "drying", "fan"].includes(action);
     const heating = action === "heating";
     const cooling = action === "cooling";
     const current2 = Number.isFinite(Number(climate?.attributes?.current_temperature)) ? Number(climate.attributes.current_temperature) : void 0;
@@ -28109,11 +28109,11 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
       level = "problem";
       title = "Manglende data";
       detail = "En eller flere energim\xE5linger er utilg\xE6ngelige";
-    } else if (active && ((output || 0) <= 0 || (input || 0) <= 0)) {
+    } else if (active2 && ((output || 0) <= 0 || (input || 0) <= 0)) {
       level = "problem";
       title = "Kontroll\xE9r drift";
       detail = "Pumpen melder aktiv drift uden m\xE5lbar energi";
-    } else if (active && cop !== void 0 && cop < 2) {
+    } else if (active2 && cop !== void 0 && cop < 2) {
       level = "warn";
       title = "Lav virkningsgrad";
       detail = "COP er lavere end forventet under aktiv drift";
@@ -28134,7 +28134,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
       detail = "Ingen aktiv opvarmning eller k\xF8ling";
     }
     const efficiency = input && output !== void 0 ? output / input : cop;
-    return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active, heating, cooling, current: current2, target: target2, level, title, detail };
+    return { climate, output, input, cop, efficiency, dailyEnergy, dailyCost, action, active: active2, heating, cooling, current: current2, target: target2, level, title, detail };
   }
   _metric(label, value, icon6) {
     return `<div class="metric"><ha-icon icon="${icon6}"></ha-icon><div><span>${label}</span><strong>${value}</strong></div></div>`;
@@ -28158,7 +28158,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
   _render() {
     const pumps = this._config.pumps || [];
     const states = pumps.map((p) => this._state(p));
-    const active = states.filter((s) => s.active).length;
+    const active2 = states.filter((s) => s.active).length;
     const problems = states.filter((s) => ["problem", "warn"].includes(s.level)).length;
     const totalOutput = this._number(this._config.total_output);
     const totalInput = states.reduce((sum, s) => sum + (s.input || 0), 0);
@@ -28166,7 +28166,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const noAnimation = this._config.animation === false ? "no-animation" : "";
     this.shadowRoot.innerHTML = `<style>
     :host{display:block;--heat:#ff8a3d;--warm:#ffc85e;--cool:var(--state-cool-icon, var(--info-color, #58aef9));--good:var(--dashboard-success, var(--success-color, #56d39d));--bad:var(--dashboard-danger, var(--error-color, #ff667a));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(255,255,255,.11)));--card-surface:var(--dashboard-card-bg,var(--surface,var(--ha-card-background,var(--card-background-color,#111820))))}*{box-sizing:border-box}ha-card{overflow:hidden;border-radius:24px;background:var(--card-surface);color:var(--primary-text-color);box-shadow:var(--ha-card-box-shadow)}.shell{position:relative;padding:22px;isolation:isolate}.backdrop{position:absolute;inset:-20%;z-index:-1;background:radial-gradient(circle at 10% 0,rgba(88,174,249,.14),transparent 25%),radial-gradient(circle at 92% 5%,rgba(255,138,61,.16),transparent 26%);pointer-events:none}
-    header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.eyebrow i{width:7px;height:7px;border-radius:50%;background:${problems ? "var(--bad)" : active ? "var(--heat)" : "var(--good)"};box-shadow:0 0 12px currentColor;animation:pulse 1.8s ease-in-out infinite}h2{margin:5px 0 0;font-size:25px;line-height:1.08;letter-spacing:-.035em}.summary{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.summary>div{min-width:88px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.1)}.summary span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.summary strong{display:block;margin-top:3px;font-size:16px}
+    header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--secondary-text-color);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.eyebrow i{width:7px;height:7px;border-radius:50%;background:${problems ? "var(--bad)" : active2 ? "var(--heat)" : "var(--good)"};box-shadow:0 0 12px currentColor;animation:pulse 1.8s ease-in-out infinite}h2{margin:5px 0 0;font-size:25px;line-height:1.08;letter-spacing:-.035em}.summary{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.summary>div{min-width:88px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--accent);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 55%),rgba(0,0,0,.08);box-shadow:0 4px 12px rgba(0,0,0,.1)}.summary span{display:block;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.summary strong{display:block;margin-top:3px;font-size:16px}
     .system{position:relative;height:68px;margin-bottom:16px;overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--edge));border-radius:18px;background:linear-gradient(90deg,rgba(88,174,249,.08),rgba(255,138,61,.09))}.system-line{position:absolute;left:9%;right:9%;top:50%;height:3px;background:linear-gradient(90deg,var(--cool),var(--warm),var(--heat));box-shadow:0 0 16px rgba(255,138,61,.25)}.system-line:after{content:"";position:absolute;left:-60px;top:-2px;width:60px;height:7px;background:linear-gradient(90deg,transparent,#fff,transparent);animation:flow 3s linear infinite}.node{position:absolute;top:50%;display:flex;align-items:center;gap:9px;padding:8px 11px;transform:translateY(-50%);border:1px solid color-mix(in srgb,currentColor 35%,var(--edge));border-radius:12px;background:var(--ha-card-background);box-shadow:0 7px 20px rgba(0,0,0,.2)}.node ha-icon{flex:0 0 24px;width:24px;height:24px;--mdc-icon-size:24px}.node span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase}.node strong{display:block;font-size:11px}.node.power{left:3%;color:var(--cool)}.node.pumps{left:50%;transform:translate(-50%,-50%);color:var(--warm)}.node.output{right:3%;color:var(--heat)}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}.pump{--tone:var(--good);position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;padding:16px;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--tone);border-radius:19px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 5%,transparent),rgba(0,0,0,.035));box-shadow:0 8px 25px rgba(0,0,0,.08);transition:transform .2s ease,box-shadow .2s ease}.pump.heating{--tone:var(--heat)}.pump.cooling{--tone:var(--cool)}.pump.warn{--tone:var(--warm)}.pump.problem{--tone:var(--bad)}.pump.off{--tone:var(--secondary-text-color)}.pump:hover{transform:translateY(-2px);box-shadow:0 13px 30px rgba(0,0,0,.15),0 0 0 1px color-mix(in srgb,var(--tone) 18%,transparent)}.glow{position:absolute;right:-60px;top:-70px;width:170px;height:170px;border-radius:50%;background:var(--tone);opacity:.08;filter:blur(28px);pointer-events:none}.active .glow,.problem .glow{animation:breathe 2.3s ease-in-out infinite}
     .head{display:flex;justify-content:space-between;gap:10px}.identity{display:flex;gap:10px;align-items:flex-start;min-width:0}.identity>ha-icon{flex:0 0 42px;width:42px;height:42px;padding:8px;border-radius:11px;--mdc-icon-size:25px;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,transparent)}.identity>div{min-width:0}h3{margin:3px 0 4px;font-size:16px}.status{display:flex;align-items:center;gap:6px;color:var(--secondary-text-color);font-size:10px;font-weight:700}.status i{flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:var(--tone);box-shadow:0 0 8px var(--tone)}.temp{text-align:right}.temp strong{display:block;font-size:22px;line-height:1}.temp span{display:block;margin-top:5px;color:var(--secondary-text-color);font-size:9px}.note{display:flex;align-items:center;gap:9px;min-height:42px;margin:12px 0;padding:9px 10px;border-radius:10px;color:color-mix(in srgb,var(--tone) 80%,var(--primary-text-color));background:color-mix(in srgb,var(--tone) 9%,transparent);font-size:10px;line-height:1.35}.note ha-icon{flex:0 0 18px;width:18px;height:18px;--mdc-icon-size:18px;color:var(--tone)}
@@ -28175,7 +28175,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}.metric{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:8px 9px;border:1px solid color-mix(in srgb,var(--tone) 18%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--tone);border-radius:10px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 8%,transparent),rgba(0,0,0,.03));box-shadow:0 3px 10px rgba(0,0,0,.08)}.metric ha-icon{flex:0 0 20px;width:20px;height:20px;--mdc-icon-size:20px;color:var(--tone)}.metric>div{min-width:0}.metric span{display:block;overflow:hidden;text-overflow:ellipsis;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase;white-space:nowrap}.metric strong{display:block;margin-top:3px;font-size:11px;white-space:nowrap}.details{display:flex;align-items:center;justify-content:flex-end;width:100%;margin-top:auto;padding:13px 0 0;border:0;background:none;color:var(--secondary-text-color);font:inherit;font-size:10px;cursor:pointer}.details:hover{color:var(--tone)}.details ha-icon{width:17px;height:17px;--mdc-icon-size:17px;margin-left:4px}.no-animation *{animation:none!important}
     @keyframes pulse{50%{opacity:.35;transform:scale(1.5)}}@keyframes flow{to{transform:translateX(calc(100vw + 80px))}}@keyframes breathe{50%{opacity:.18;transform:scale(1.15)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes air{0%{transform:translateX(-10px);opacity:0}25%{opacity:.8}100%{transform:translateX(65px);opacity:0}}
     @media(max-width:1050px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.machine{padding-left:18px;padding-right:18px}}@media(max-width:760px){.shell{padding:15px}header{display:block}.summary{justify-content:flex-start;margin-top:12px}.summary>div{flex:1}.node span{display:none}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:420px){.node.pumps{display:none}.machine .output strong{font-size:18px}.metrics{grid-template-columns:1fr 1fr}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-  </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div><header><div><div class="eyebrow"><i></i>Elektrisk klimadrift</div><h2>${this._escape(this._config.title)}</h2></div><div class="summary"><div><span>Aktive</span><strong>${active} / ${pumps.length}</strong></div><div><span>Output nu</span><strong>${this._format(totalOutput)} W</strong></div><div><span>El nu</span><strong>${this._format(totalInput)} W</strong></div><div><span>Pris i dag</span><strong>${this._format(totalCost, 2)} kr.</strong></div></div></header><div class="system"><div class="system-line"></div><div class="node power"><ha-icon icon="mdi:transmission-tower"></ha-icon><div><span>Elektrisk input</span><strong>${this._format(totalInput)} W</strong></div></div><div class="node pumps"><ha-icon icon="mdi:heat-pump"></ha-icon><div><span>Varmepumper</span><strong>${active} i drift</strong></div></div><div class="node output"><ha-icon icon="mdi:home-thermometer"></ha-icon><div><span>Leveret output</span><strong>${this._format(totalOutput)} W</strong></div></div></div><div class="grid">${pumps.map((pump, index) => this._pump(pump, index)).join("")}</div></div></ha-card>`;
+  </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div><header><div><div class="eyebrow"><i></i>Elektrisk klimadrift</div><h2>${this._escape(this._config.title)}</h2></div><div class="summary"><div><span>Aktive</span><strong>${active2} / ${pumps.length}</strong></div><div><span>Output nu</span><strong>${this._format(totalOutput)} W</strong></div><div><span>El nu</span><strong>${this._format(totalInput)} W</strong></div><div><span>Pris i dag</span><strong>${this._format(totalCost, 2)} kr.</strong></div></div></header><div class="system"><div class="system-line"></div><div class="node power"><ha-icon icon="mdi:transmission-tower"></ha-icon><div><span>Elektrisk input</span><strong>${this._format(totalInput)} W</strong></div></div><div class="node pumps"><ha-icon icon="mdi:heat-pump"></ha-icon><div><span>Varmepumper</span><strong>${active2} i drift</strong></div></div><div class="node output"><ha-icon icon="mdi:home-thermometer"></ha-icon><div><span>Leveret output</span><strong>${this._format(totalOutput)} W</strong></div></div></div><div class="grid">${pumps.map((pump, index) => this._pump(pump, index)).join("")}</div></div></ha-card>`;
     this.shadowRoot.querySelectorAll("article.pump").forEach((article) => {
       const open = () => this._open(pumps[Number(article.dataset.index)]?.climate);
       article.addEventListener("click", open);
@@ -28315,7 +28315,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       const linked = this._linked(room);
       ids.push(...Object.values(room), ...linked.openings, linked.externalHeat);
     }
-    const signature = JSON.stringify(ids.filter((id) => typeof id === "string" && id.includes(".")).map((id) => {
+    const signature2 = JSON.stringify(ids.filter((id) => typeof id === "string" && id.includes(".")).map((id) => {
       const entity = hass?.states?.[id];
       return [
         id,
@@ -28335,8 +28335,8 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
         JSON.stringify(entity?.attributes?.normal_range_w_per_degree ?? null)
       ];
     }));
-    if (signature === this._signature) return;
-    this._signature = signature;
+    if (signature2 === this._signature) return;
+    this._signature = signature2;
     this._render();
   }
   getCardSize() {
@@ -28383,7 +28383,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const demandStatus = String(demand?.state || "unknown").toLowerCase();
     const learningHours = Number.isFinite(Number(demand?.attributes?.baseline_learning_hours)) ? Number(demand.attributes.baseline_learning_hours) : 0;
     const baselineReady = demand?.attributes?.baseline_ready === true;
-    const signature = demand?.attributes?.method === "energy_signature";
+    const signature2 = demand?.attributes?.method === "energy_signature";
     const validDays = Number.isFinite(Number(demand?.attributes?.valid_days)) ? Number(demand.attributes.valid_days) : 0;
     const requiredDays = Number.isFinite(Number(demand?.attributes?.required_days)) ? Number(demand.attributes.required_days) : 7;
     const learnReason = demand?.attributes?.reason || null;
@@ -28425,7 +28425,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       level = "warn";
       reason = "deviating";
       title = "Afviger fra normalen";
-      const normal = signature ? "normalt i lignende vejr og forhold" : "vejrkorrigeret normalt";
+      const normal = signature2 ? "normalt i lignende vejr og forhold" : "vejrkorrigeret normalt";
       detail = diffW !== void 0 ? `Bruger ca. ${this._format(Math.abs(diffW), 0)} W ${diffW > 0 ? "mere" : "mindre"} end ${normal}${deviation !== void 0 ? ` (${deviation > 0 ? "+" : "\u2212"}${this._format(Math.abs(deviation), 0)} %)` : ""}` : deviation === void 0 ? "Vejrkorrigeret varmebehov ligger uden for rummets l\xE6rte m\xF8nster" : deviation > 0 ? `Bruger ${this._format(deviation, 0)}% mere varme end ${normal}` : `Bruger ${this._format(Math.abs(deviation), 0)}% mindre varme end ${normal}`;
     } else if (confirming && diffW !== void 0 && baselineReady) {
       level = "info";
@@ -28436,10 +28436,10 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       level = "learning";
       reason = "learning";
       title = "Indl\xE6rer rummet";
-      detail = signature ? this._learningText(learnReason, validDays, requiredDays) : `${this._format(Math.min(learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer indsamlet`;
+      detail = signature2 ? this._learningText(learnReason, validDays, requiredDays) : `${this._format(Math.min(learningHours, this._config.learning_hours), 1)} af ${this._config.learning_hours} timer indsamlet`;
     }
-    const active = (valve || 0) > 1 || (output || 0) > 1;
-    return { climate, demand, current: current2, target: target2, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active, signature, validDays, requiredDays, learnReason, diffW, confirming };
+    const active2 = (valve || 0) > 1 || (output || 0) > 1;
+    return { climate, demand, current: current2, target: target2, delta, valve, output, utilisation, loss, heatingPower, hours, cost, share, rated, area, stressed, demandStatus, learningHours, baselineReady, deviation, open, level, reason, title, detail, active: active2, signature: signature2, validDays, requiredDays, learnReason, diffW, confirming };
   }
   _learningText(reason, validDays, requiredDays) {
     if (reason === "collecting_days") return `${validDays} af ${requiredDays} d\xF8gn indsamlet`;
@@ -28690,7 +28690,7 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
     const attentionRooms = rooms.map((room, index) => ({ room, state: states[index] })).filter(({ state: state2 }) => state2.level === "problem" || state2.level === "warn").sort((a, b) => a.state.level === b.state.level ? 0 : a.state.level === "problem" ? -1 : 1);
     const problems = states.filter((state2) => state2.level === "problem" || state2.level === "warn").length;
     const learning = states.filter((state2) => state2.level === "learning").length;
-    const active = states.filter((state2) => state2.active).length;
+    const active2 = states.filter((state2) => state2.active).length;
     const total = this._number(this._config.total_demand);
     const globalProblem = this._entity(this._config.data_problem)?.state === "on";
     const health = globalProblem ? "Dataproblem" : problems ? `${problems} b\xF8r ses efter` : learning ? "Systemet l\xE6rer" : "Alle rum normale";
@@ -28728,13 +28728,13 @@ var HAHeatingDiagnosticsCard = class extends HTMLElement {
       @media(max-width:900px){.room-grid.compact{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}}
     </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div>
       <header><div><div class="eyebrow"><i></i>Rumdiagnose i realtid</div><h2>${this._escape(this._config.title)}</h2></div><div class="overview">
-        <div class="health"><span>Systemstatus</span><strong>${health}</strong></div><div><span>Aktive rum</span><strong>${active} / ${rooms.length}</strong></div><div><span>Varmebehov</span><strong>${this._format(total)} W</strong></div>
+        <div class="health"><span>Systemstatus</span><strong>${health}</strong></div><div><span>Aktive rum</span><strong>${active2} / ${rooms.length}</strong></div><div><span>Varmebehov</span><strong>${this._format(total)} W</strong></div>
       </div></header>
       ${attentionRooms.length ? `<div class="attention-list">
         <div class="attention-label"><ha-icon icon="mdi:alert-decagram-outline"></ha-icon>Kr\xE6ver et kig</div>
         <div class="attention-items">${attentionRooms.map(({ room, state: state2 }) => `<button type="button" class="attention-chip ${state2.level}" data-jump="${rooms.indexOf(room)}"><span class="chip-text"><strong>${this._escape(room.name)}</strong><span>${state2.title}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button>`).join("")}</div>
       </div>` : ""}
-      <div class="flow"><div class="flow-line"></div><div class="flow-node source"><ha-icon icon="mdi:radiator"></ha-icon><div><small>M\xE5linger</small><strong>${active} aktive</strong></div></div><div class="flow-node model"><ha-icon icon="mdi:brain"></ha-icon><div><small>L\xE6ringsmodel</small><strong>${learning} l\xE6rer</strong></div></div><div class="flow-node rooms"><ha-icon icon="mdi:shield-check"></ha-icon><div><small>Diagnose</small><strong>${problems || globalProblem ? "Kr\xE6ver blik" : "Overv\xE5ger"}</strong></div></div></div>
+      <div class="flow"><div class="flow-line"></div><div class="flow-node source"><ha-icon icon="mdi:radiator"></ha-icon><div><small>M\xE5linger</small><strong>${active2} aktive</strong></div></div><div class="flow-node model"><ha-icon icon="mdi:brain"></ha-icon><div><small>L\xE6ringsmodel</small><strong>${learning} l\xE6rer</strong></div></div><div class="flow-node rooms"><ha-icon icon="mdi:shield-check"></ha-icon><div><small>Diagnose</small><strong>${problems || globalProblem ? "Kr\xE6ver blik" : "Overv\xE5ger"}</strong></div></div></div>
       <div class="room-grid ${compact ? "compact" : ""}" style="${compact ? `--compact-cols:${compactCols}` : ""}">${rooms.map((room, index) => this._room(room, index, compact)).join("")}</div>
     </div></ha-card>`;
     this.shadowRoot.querySelectorAll(".details").forEach((button) => button.addEventListener("click", (event) => {
@@ -29871,13 +29871,13 @@ var HRVCard = class extends HTMLElement {
     `;
   }
   _afterheatCircle(x, y = 46) {
-    const active = this._isAfterheatActive();
-    const statusText = active ? this._t("afterheat_active") : this._t("afterheat_inactive");
+    const active2 = this._isAfterheatActive();
+    const statusText = active2 ? this._t("afterheat_active") : this._t("afterheat_inactive");
     return `
             <g tabindex="0" transform="translate(${x} ${y})">
               <rect class="status-circle" x="-32" y="-32" width="64" height="64" rx="13"></rect>
               <ellipse class="status-circle-gloss" cx="-13" cy="-18" rx="20" ry="11"></ellipse>
-              <rect class="afterheat-ring ${active ? "active" : "inactive"}" x="-29" y="-29" width="58" height="58" rx="10"></rect>
+              <rect class="afterheat-ring ${active2 ? "active" : "inactive"}" x="-29" y="-29" width="58" height="58" rx="10"></rect>
               <rect class="status-circle-rim" x="-32" y="-32" width="64" height="64" rx="13"></rect>
               <text x="0" y="-10" text-anchor="middle" class="status-label">${this._t("afterheat_short")}</text>
               <g ${this._svgEntityAttrs("afterheat_active")} tabindex="0">
@@ -29955,14 +29955,14 @@ var HRVCard = class extends HTMLElement {
   }
   _inlineAfterheatSvg(x, y) {
     if (!this._hasAfterheat()) return "";
-    const active = this._isAfterheatActive();
+    const active2 = this._isAfterheatActive();
     const hasFlow = Boolean(this._entityId("water_flow"));
     const hasReturn = Boolean(this._entityId("water_return"));
     const hasDelta = Boolean(this._entityId("water_delta"));
     return `
       <g class="inline-afterheat" transform="translate(${x} ${y})">
-        <rect x="-48" y="-33" width="96" height="66" rx="12" class="afterheat-coil-glow ${active ? "active" : ""}"></rect>
-        <rect x="-42" y="-27" width="84" height="54" rx="9" fill="#808080" class="afterheat-coil ${active ? "active" : ""}"></rect>
+        <rect x="-48" y="-33" width="96" height="66" rx="12" class="afterheat-coil-glow ${active2 ? "active" : ""}"></rect>
+        <rect x="-42" y="-27" width="84" height="54" rx="9" fill="#808080" class="afterheat-coil ${active2 ? "active" : ""}"></rect>
         ${hasFlow || hasReturn ? `
           <rect x="-38" y="-23" width="36" height="46" rx="5" class="afterheat-warm-side"></rect>
           <rect x="2" y="-23" width="36" height="46" rx="5" class="afterheat-cool-side"></rect>
@@ -29982,7 +29982,7 @@ var HRVCard = class extends HTMLElement {
             </g>
           ` : ""}
         ` : `
-          <g class="afterheat-coil-lines ${active ? "active" : ""}">
+          <g class="afterheat-coil-lines ${active2 ? "active" : ""}">
             <line x1="-25" y1="-18" x2="-25" y2="5"></line><line x1="-14" y1="-18" x2="-14" y2="5"></line>
             <line x1="-3" y1="-18" x2="-3" y2="5"></line><line x1="8" y1="-18" x2="8" y2="5"></line>
             <line x1="19" y1="-18" x2="19" y2="5"></line><line x1="29" y1="-18" x2="29" y2="5"></line>
@@ -31739,16 +31739,16 @@ var HARadiatorOverviewCard = class extends HTMLElement {
       ...Object.values(room.ac || {}),
       ...Object.values(room.optimization || {})
     ]).filter((id) => typeof id === "string" && id.includes(".")) || [];
-    const signature = JSON.stringify(ids.map((id) => {
+    const signature2 = JSON.stringify(ids.map((id) => {
       const entity = hass?.states?.[id];
       return [id, entity?.state, entity?.attributes?.current_temperature, entity?.attributes?.temperature, entity?.attributes?.hvac_action];
     }));
-    if (signature !== this._signature) {
+    if (signature2 !== this._signature) {
       if (!this.isConnected) {
-        this._detachedSignature = signature;
+        this._detachedSignature = signature2;
         if (firstHass) this._rendered = false;
       } else {
-        this._signature = signature;
+        this._signature = signature2;
         if (firstHass) this._rendered = false;
         this._render();
       }
@@ -31781,10 +31781,10 @@ var HARadiatorOverviewCard = class extends HTMLElement {
   _acState(room) {
     const climate = this._entity(room?.ac?.climate);
     const mode = String(climate?.state || "off").toLowerCase();
-    const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
+    const active2 = !!climate && !["off", "unknown", "unavailable"].includes(mode);
     const tone3 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "K\xF8ler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
-    return { climate, mode, active, tone: tone3, label };
+    return { climate, mode, active: active2, tone: tone3, label };
   }
   _roomState(room) {
     const climate = this._entity(room.climate);
@@ -32367,8 +32367,8 @@ var AC_UNIT_VISUAL_STYLE2 = `
 @keyframes acUnitSwing{50%{transform:rotateX(55deg)}}
 @keyframes acUnitAir{0%{opacity:0;transform:translate(0,0) rotate(9deg)}25%{opacity:.75}100%{opacity:0;transform:translate(40px,16px) rotate(9deg)}}
 `;
-function acUnitVisualMarkup2(label, active) {
-  return `<div class="ac-unit-visual ${active ? "active" : "off"}">
+function acUnitVisualMarkup2(label, active2) {
+  return `<div class="ac-unit-visual ${active2 ? "active" : "off"}">
     <div class="indoor">
       <div class="display" data-role="ac-unit-display">${label}</div>
       <div class="vent"><i></i><i></i><i></i><i></i><i></i></div>
@@ -32543,9 +32543,9 @@ var HAAirQualityCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const signature = [this._config.co2, this._config.pm25, this._config.air_quality].map((id) => hass?.states?.[id]?.state).join("|");
-    if (signature !== this._signature) {
-      this._signature = signature;
+    const signature2 = [this._config.co2, this._config.pm25, this._config.air_quality].map((id) => hass?.states?.[id]?.state).join("|");
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._render();
     }
     this._ensureHistory();
@@ -33727,12 +33727,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
   _acState(room) {
     const climate = this._entity(room?.ac?.climate);
     const mode = String(climate?.state || "off").toLowerCase();
-    const active = !!climate && !["off", "unknown", "unavailable"].includes(mode);
+    const active2 = !!climate && !["off", "unknown", "unavailable"].includes(mode);
     const tone3 = mode === "cool" ? "cool" : mode === "heat" ? "hot" : mode === "dry" ? "dry" : "fan";
     const label = mode === "cool" ? "K\xF8ler via AC" : mode === "heat" ? "Varmer via AC" : mode === "dry" ? "Affugter via AC" : mode === "fan_only" ? "Ventilerer via AC" : "";
     const learning = climate?.attributes?.follow_me_learning;
-    const learnLeft = active && String(learning?.state || "").startsWith("checking_") ? Math.max(0, Number(learning.remaining_min) || 0) : null;
-    return { climate, mode, active, tone: tone3, label, learnLeft };
+    const learnLeft = active2 && String(learning?.state || "").startsWith("checking_") ? Math.max(0, Number(learning.remaining_min) || 0) : null;
+    return { climate, mode, active: active2, tone: tone3, label, learnLeft };
   }
   _roomState(room) {
     const climate = this._entity(room.climate);
@@ -36532,12 +36532,12 @@ var HATemperatureTargetCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = this._config.rooms?.flatMap((r) => [r.temperature, r.climate]).filter(Boolean) || [];
-    const signature = JSON.stringify(ids.map((id) => {
+    const signature2 = JSON.stringify(ids.map((id) => {
       const e = hass?.states?.[id];
       return [id, e?.state, e?.attributes?.current_temperature, e?.attributes?.temperature, e?.attributes?.hvac_action, e?.attributes?.calibration_balance, e?.attributes?.batteries, e?.attributes?.window_open, e?.attributes?.door_open];
     }));
-    if (signature !== this._signature) {
-      this._signature = signature;
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._render();
     }
     this._requestHistory();
@@ -37109,8 +37109,8 @@ var HACardListEditor8 = class extends HTMLElement {
       return `<section class="section"><h3>${collection.label} (${items.length})</h3>${items.slice(start, start + pageSize).map((item2, offset) => {
         const index = start + offset;
         const key2 = `${collection.key}:${index}`;
-        const active = this._activeItem === key2;
-        return `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><span class="item-actions"><button class="edit" data-edit="${key2}" aria-expanded="${active}">${active ? "Luk" : "Redig\xE9r"}</button><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></span></div>${active ? `<div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div>` : ""}</div>`;
+        const active2 = this._activeItem === key2;
+        return `<div class="item"><div class="item-head"><strong>${this._escape(item2.name || `${collection.itemLabel || "Element"} ${index + 1}`)}</strong><span class="item-actions"><button class="edit" data-edit="${key2}" aria-expanded="${active2}">${active2 ? "Luk" : "Redig\xE9r"}</button><button class="remove" data-remove="${collection.key}" data-index="${index}">Fjern</button></span></div>${active2 ? `<div class="fields">${collection.fields.map((field) => this._control(field, this._get(field.key, item2), collection.key, index)).join("")}</div>` : ""}</div>`;
       }).join("")}${pageCount > 1 ? `<div class="item-actions"><button class="edit" data-page="${collection.key}" data-direction="-1" ${page === 0 ? "disabled" : ""}>Forrige</button><span>Side ${page + 1} af ${pageCount}</span><button class="edit" data-page="${collection.key}" data-direction="1" ${page === pageCount - 1 ? "disabled" : ""}>N\xE6ste</button></div>` : ""}<button class="add" data-add="${collection.key}">+ Tilf\xF8j ${collection.itemLabel || "element"}</button></section>`;
     }).join("")}</div>`;
     this._configSig = this._sig(this._config);
@@ -37129,10 +37129,10 @@ var HACardListEditor8 = class extends HTMLElement {
         if (!itemButton) continue;
         const item2 = itemButton.closest(".item");
         item2.querySelector(".fields")?.remove();
-        const active = key2 === next;
-        itemButton.textContent = active ? "Luk" : "Redig\xE9r";
-        itemButton.setAttribute("aria-expanded", String(active));
-        if (!active) continue;
+        const active2 = key2 === next;
+        itemButton.textContent = active2 ? "Luk" : "Redig\xE9r";
+        itemButton.setAttribute("aria-expanded", String(active2));
+        if (!active2) continue;
         const [collectionKey, rawIndex] = key2.split(":");
         const collection = collections.find((entry) => entry.key === collectionKey);
         const index = Number(rawIndex);
@@ -38357,9 +38357,9 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const snoozed = this._snoozed();
     return (this._config.activities || []).filter((a) => !snoozed.has(a.error) && !snoozed.has(a.entity)).map((a) => {
       const state2 = this._s(a.entity), err = a.error && !["off", "none", "no_error", "unknown", "unavailable", void 0].includes(this._s(a.error));
-      const active = this._activityStates(a).includes(String(state2 ?? "").toLowerCase());
+      const active2 = this._activityStates(a).includes(String(state2 ?? "").toLowerCase());
       const low = Number(this._s(a.battery)) < 10 && !this._on(a.charging);
-      return { ...a, state: state2, active, error: err || state2 === "error" || low };
+      return { ...a, state: state2, active: active2, error: err || state2 === "error" || low };
     }).filter((a) => a.active || a.error);
   }
   _fx(type, windSpeed = this._weather().wind) {
@@ -39598,8 +39598,8 @@ var HaHomeStatusCard = class extends HTMLElement {
     } else if (type === "pool") {
       const temp = this.number(cfg.entity);
       value = `${this.fmt(temp, 1)}\xB0C`;
-      const active = this.on(cfg.active_entity);
-      detail = active ? "Pumpen k\xF8rer" : this.text(cfg.status_entity, "Pumpen st\xE5r");
+      const active2 = this.on(cfg.active_entity);
+      detail = active2 ? "Pumpen k\xF8rer" : this.text(cfg.status_entity, "Pumpen st\xE5r");
       if (Number.isFinite(temp)) {
         meter = Math.max(1, Math.min(5, Math.round((temp - 10) / 20 * 5)));
         color = temp < 18 ? "var(--dashboard-danger, var(--error-color, #ef4444))" : temp < 23 ? "var(--dashboard-warning, var(--warning-color, #f59e0b))" : "var(--dashboard-success, var(--success-color, #20e3a2))";
@@ -39652,8 +39652,8 @@ var HaHomeStatusCard = class extends HTMLElement {
         const raw = this.text(id, "");
         const low = raw.toLowerCase();
         if (!raw || ["unavailable", "unknown"].includes(low)) return "error";
-        const active = ["on", "open", "true", "1"].includes(low);
-        return active === inverted ? "locked" : "unlocked";
+        const active2 = ["on", "open", "true", "1"].includes(low);
+        return active2 === inverted ? "locked" : "unlocked";
       };
       const segStates = (cfg.lock_entities || []).map((id) => lockSegState(id));
       segStates.push(boolSegState(cfg.terrace_lock_entity, !!cfg.terrace_lock_inverted));
@@ -39762,11 +39762,11 @@ var HaHomeStatusCard = class extends HTMLElement {
     } else if (type === "settings") {
       const editing = this.on(cfg.entity);
       const off = this.number(cfg.off_count_entity);
-      const active = (cfg.appliance_entities || []).filter(
+      const active2 = (cfg.appliance_entities || []).filter(
         (id) => this.on(id)
       ).length;
       value = editing ? "Edit" : "Klar";
-      detail = active ? `${active} maskiner k\xF8rer` : Number.isFinite(off) && off > 0 ? `${off} autom. slukket` : "Indstillinger";
+      detail = active2 ? `${active2} maskiner k\xF8rer` : Number.isFinite(off) && off > 0 ? `${off} autom. slukket` : "Indstillinger";
       meter = Math.min(5, Number.isFinite(off) ? off : 0);
       color = editing ? "var(--state-off-icon, var(--disabled-text-color, #f59e0b))" : "var(--state-info-icon, var(--info-color, #38bdf8))";
     } else {
@@ -42120,8 +42120,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const v = String(this._s(p.charging)?.state || "").trim().toLowerCase();
     return ["charging", "lader", "oplader", "on", "true"].includes(v);
   }
-  _segments(active, color, glow) {
-    return `<span class="segments">${[1, 2, 3, 4, 5].map((i) => `<i style="background:${i <= active ? color : "var(--presence-segment-off,rgba(120,140,160,.22))"};box-shadow:${i <= active ? `0 0 7px ${glow}` : "none"}"></i>`).join("")}</span>`;
+  _segments(active2, color, glow) {
+    return `<span class="segments">${[1, 2, 3, 4, 5].map((i) => `<i style="background:${i <= active2 ? color : "var(--presence-segment-off,rgba(120,140,160,.22))"};box-shadow:${i <= active2 ? `0 0 7px ${glow}` : "none"}"></i>`).join("")}</span>`;
   }
   _person(p) {
     const person = this._s(p.entity), tracker = this._s(p.tracker) || person, state2 = tracker?.state || person?.state || "unknown";
@@ -42812,9 +42812,9 @@ var HAPetCareCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"].map((key2) => this._config[key2]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
-    const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
-    if (signature === this._signature) return;
-    this._signature = signature;
+    const signature2 = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
+    if (signature2 === this._signature) return;
+    this._signature = signature2;
     this._render();
   }
   connectedCallback() {
@@ -43403,10 +43403,10 @@ var HAWeatherCard = class _HAWeatherCard extends HTMLElement {
       ["vind", "Vind", "mdi:weather-windy", windyUrl("wind")],
       ["lyn", "Lyn", "mdi:weather-lightning", lightningUrl]
     ];
-    const active = tabs.find((t) => t[0] === this._radarTab) || tabs[0];
-    const body = active[3] ? `<div class="radar-frame"><iframe src="${active[3]}" frameborder="0" loading="lazy"></iframe></div>` : `<div class="radar-img-wrap" data-more="${this._esc(active[4])}"><img class="radar-img" data-entity="${this._esc(active[4])}" src="${this._esc(this._imageUrl(active[4]))}" alt="${active[0] === "satellit" ? "Satellitkort" : "Radarkort"}"></div>`;
+    const active2 = tabs.find((t) => t[0] === this._radarTab) || tabs[0];
+    const body = active2[3] ? `<div class="radar-frame"><iframe src="${active2[3]}" frameborder="0" loading="lazy"></iframe></div>` : `<div class="radar-img-wrap" data-more="${this._esc(active2[4])}"><img class="radar-img" data-entity="${this._esc(active2[4])}" src="${this._esc(this._imageUrl(active2[4]))}" alt="${active2[0] === "satellit" ? "Satellitkort" : "Radarkort"}"></div>`;
     const facts = (this._config.radar_details || []).length ? `<div class="facts" data-radar-facts>${this._factsHtml()}</div>` : "";
-    return `<div class="subtabs">${tabs.map((t) => `<button class="subtab ${t[0] === active[0] ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`).join("")}</div>
+    return `<div class="subtabs">${tabs.map((t) => `<button class="subtab ${t[0] === active2[0] ? "active" : ""}" data-radar="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`).join("")}</div>
       ${body}${facts}`;
   }
   _factsHtml() {
@@ -45469,9 +45469,9 @@ var HaHomeRoomOverviewCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const signature = this._stateSignature();
-    if (signature !== this._lastStateSignature) {
-      this._lastStateSignature = signature;
+    const signature2 = this._stateSignature();
+    if (signature2 !== this._lastStateSignature) {
+      this._lastStateSignature = signature2;
       this._render();
     }
     this._loadHistory();
@@ -46196,12 +46196,12 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       if (!OPEN_STATES.has(st.state)) return null;
       return { ...chip, tone: "critical", icon: cfg.icon || "mdi:water-alert", text: cfg.text || `${name}!`, anim: "pulse", running: false };
     }
-    let active;
-    if (cfg.above != null) active = (this._num(st) ?? -Infinity) > Number(cfg.above);
-    else if (cfg.active_states) active = arr(cfg.active_states).includes(st.state);
-    else if (cfg.hide_states) active = !arr(cfg.hide_states).includes(st.state);
-    else active = ["on", "open", "playing", "running", "true", "active", "home"].includes(st.state);
-    if (!active) return null;
+    let active2;
+    if (cfg.above != null) active2 = (this._num(st) ?? -Infinity) > Number(cfg.above);
+    else if (cfg.active_states) active2 = arr(cfg.active_states).includes(st.state);
+    else if (cfg.hide_states) active2 = !arr(cfg.hide_states).includes(st.state);
+    else active2 = ["on", "open", "playing", "running", "true", "active", "home"].includes(st.state);
+    if (!active2) return null;
     if (kind === "task") {
       const progress = this._num(cfg.progress);
       const remaining = this._minutes(this._state(cfg.remaining));
@@ -46656,9 +46656,9 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _patchSpark(t, room) {
     const points = this._history.get(room.temperature);
-    const signature = points?.length ? `${this._historyVersion}:${points.length}` : "";
-    if (t.sparkSig === signature) return;
-    t.sparkSig = signature;
+    const signature2 = points?.length ? `${this._historyVersion}:${points.length}` : "";
+    if (t.sparkSig === signature2) return;
+    t.sparkSig = signature2;
     if (!points || points.length < 2) {
       t.spark.style.display = "none";
       return;
@@ -47180,9 +47180,9 @@ var HourlyWeatherScrollCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const entity = hass.states[this._entityId];
-    const signature = entity?.last_updated || "missing";
-    if (signature !== this._signature) {
-      this._signature = signature;
+    const signature2 = entity?.last_updated || "missing";
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._render();
     }
   }
@@ -47968,9 +47968,9 @@ var SmartHomeOverviewCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     for (const card of this._cameraCards || []) card.hass = hass;
-    const signature = this._signature();
-    if (!this._built || signature !== this._lastSignature) {
-      this._lastSignature = signature;
+    const signature2 = this._signature();
+    if (!this._built || signature2 !== this._lastSignature) {
+      this._lastSignature = signature2;
       this._render();
     }
   }
@@ -48028,11 +48028,11 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     for (const alert2 of this.config.alerts || []) {
       const { entity, kind, title, detail, icon: icon6, action } = alert2;
       const state2 = this._s(entity)?.state;
-      let active = false;
-      if (kind === "on") active = state2 === "on";
-      if (kind === "battery") active = Number(state2) < action && Number.isFinite(Number(state2));
-      if (kind === "not-clear") active = state2 != null && !["none", "no_error", "unknown", "unavailable", "ok", "idle"].includes(String(state2).toLowerCase());
-      if (active) result.push({ entity, title, detail, icon: icon6, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
+      let active2 = false;
+      if (kind === "on") active2 = state2 === "on";
+      if (kind === "battery") active2 = Number(state2) < action && Number.isFinite(Number(state2));
+      if (kind === "not-clear") active2 = state2 != null && !["none", "no_error", "unknown", "unavailable", "ok", "idle"].includes(String(state2).toLowerCase());
+      if (active2) result.push({ entity, title, detail, icon: icon6, action: typeof action === "string" ? action : null, toggle: alert2.toggle ? entity : null });
     }
     for (const state2 of Object.values(this._hass?.states || {})) {
       const id = state2?.entity_id || "";
@@ -48218,10 +48218,10 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     const now = Date.now();
     const bars = data.map((p, i) => {
       const height = 15 + (p.price - min) / spread * 75;
-      const active = now >= p.ts && now < p.ts + 36e5;
+      const active2 = now >= p.ts && now < p.ts + 36e5;
       const tone3 = p.price >= t.critical ? "critical" : p.price >= t.high ? "high" : p.price >= t.medium ? "medium" : "low";
       const hour = new Date(p.ts).getHours();
-      return `<button class="bar ${tone3} ${active ? "current" : ""}" style="--h:${height}%" data-more="${this.config.entities.priceNow}" title="${String(hour).padStart(2, "0")}:00 \xB7 ${this._fmt(p.price, 2)} ${this.config.currency}/kWh"><i></i>${i % Math.max(1, Math.ceil(data.length / 8)) === 0 ? `<small>${String(hour).padStart(2, "0")}</small>` : ""}</button>`;
+      return `<button class="bar ${tone3} ${active2 ? "current" : ""}" style="--h:${height}%" data-more="${this.config.entities.priceNow}" title="${String(hour).padStart(2, "0")}:00 \xB7 ${this._fmt(p.price, 2)} ${this.config.currency}/kWh"><i></i>${i % Math.max(1, Math.ceil(data.length / 8)) === 0 ? `<small>${String(hour).padStart(2, "0")}</small>` : ""}</button>`;
     }).join("");
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const first = new Date(data[0].ts);
@@ -48240,8 +48240,8 @@ var SmartHomeOverviewCard = class extends HTMLElement {
     this._hass?.callService("input_number", "set_value", { entity_id: e.priceForecastDaySelector, value });
   }
   _meter(level, segments = 5) {
-    const active = Math.max(0, Math.min(segments, Math.ceil(level / (100 / segments))));
-    return `<div class="meter">${Array.from({ length: segments }, (_, i) => `<i class="${i < active ? "on" : ""}" style="--delay:${i * 0.11}s"></i>`).join("")}</div>`;
+    const active2 = Math.max(0, Math.min(segments, Math.ceil(level / (100 / segments))));
+    return `<div class="meter">${Array.from({ length: segments }, (_, i) => `<i class="${i < active2 ? "on" : ""}" style="--delay:${i * 0.11}s"></i>`).join("")}</div>`;
   }
   _render() {
     if (!this.shadowRoot || !this._hass) return;
@@ -48739,7 +48739,7 @@ var HAAlarmCenterCard = class extends HTMLElement {
     const all = this._computeAll();
     const snoozeEntries = this._snoozeEntries();
     const snoozedIds = new Set(snoozeEntries.keys());
-    const active = all.filter((a) => !snoozedIds.has(a.entity));
+    const active2 = all.filter((a) => !snoozedIds.has(a.entity));
     const snoozed = all.filter((a) => snoozedIds.has(a.entity));
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--good:var(--dashboard-success, var(--success-color, #54d9aa));--warn:var(--dashboard-warning, var(--warning-color, #ffbd59));--danger:var(--dashboard-danger, var(--error-color, #ff667a));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)))}
@@ -48798,16 +48798,16 @@ var HAAlarmCenterCard = class extends HTMLElement {
     <ha-card>
       <div class="head">
         <strong>${this._esc(this._config.title)}</strong>
-        <span class="count ${active.length ? "" : "zero"}">${active.length ? `${active.length} aktiv${active.length === 1 ? "" : "e"}` : "Alt i orden"}</span>
+        <span class="count ${active2.length ? "" : "zero"}">${active2.length ? `${active2.length} aktiv${active2.length === 1 ? "" : "e"}` : "Alt i orden"}</span>
       </div>
-      ${!active.length && !snoozed.length ? `<div class="empty">Ingen aktive alarmer eller fejl lige nu.</div>` : ""}
-      ${active.length ? `<div class="section-title">Aktive</div><div class="rows">${active.map((a) => this._row(a, false)).join("")}</div>` : ""}
+      ${!active2.length && !snoozed.length ? `<div class="empty">Ingen aktive alarmer eller fejl lige nu.</div>` : ""}
+      ${active2.length ? `<div class="section-title">Aktive</div><div class="rows">${active2.map((a) => this._row(a, false)).join("")}</div>` : ""}
       ${snoozed.length ? `<div class="section-title">Midlertidigt skjult</div><div class="rows">${snoozed.map((a) => this._row(a, true, snoozeEntries.get(a.entity))).join("")}</div>` : ""}
     </ha-card>`;
     this.shadowRoot.querySelectorAll("[data-snooze]").forEach((btn) => {
       btn.addEventListener("click", (ev2) => {
         ev2.stopPropagation();
-        const alert2 = [...active, ...snoozed].find((a) => a.entity === btn.dataset.snooze);
+        const alert2 = [...active2, ...snoozed].find((a) => a.entity === btn.dataset.snooze);
         if (snoozedIds.has(btn.dataset.snooze)) this._unsnooze(btn.dataset.snooze);
         else if (alert2) this._openSnoozeDialog(alert2);
       });
@@ -48815,14 +48815,14 @@ var HAAlarmCenterCard = class extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-tap]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const entity = btn.closest(".row")?.dataset.entity;
-        const alert2 = [...active, ...snoozed].find((a) => a.entity === entity);
+        const alert2 = [...active2, ...snoozed].find((a) => a.entity === entity);
         if (alert2) this._rowTap(alert2);
       });
     });
     this.shadowRoot.querySelectorAll("[data-ack]").forEach((btn) => {
       btn.addEventListener("click", (ev2) => {
         ev2.stopPropagation();
-        const alert2 = active.find((a) => a.entity === btn.dataset.ack);
+        const alert2 = active2.find((a) => a.entity === btn.dataset.ack);
         if (alert2?.acknowledge_action) this._runAction(alert2.acknowledge_action, alert2.entity);
       });
     });
@@ -48919,10 +48919,10 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
   setConfig(config) {
     const stub = _HACameraHubCard.getStubConfig();
     const nextConfig = { ...stub, ...config, nvr: { ...stub.nvr, ...config?.nvr || {} }, quick_links: Array.isArray(config?.quick_links) ? structuredClone(config.quick_links) : [] };
-    const signature = JSON.stringify(nextConfig);
+    const signature2 = JSON.stringify(nextConfig);
     this._config = nextConfig;
-    if (signature === this._configSignature) return;
-    this._configSignature = signature;
+    if (signature2 === this._configSignature) return;
+    this._configSignature = signature2;
     this._cameras = (this._config.cameras || []).map((c2) => {
       const eventPrefix = `event.${c2.area}_${c2.key}`;
       const eventSources = [
@@ -49571,8 +49571,8 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
     const mount = this.shadowRoot.querySelector("[data-events-mount]");
     if (!mount) return;
     const visible = (this._filter === "all" ? this._events : this._events.filter((event) => this._typeInfo(event.type).cls === this._filter)).slice(0, 150);
-    const signature = JSON.stringify([this._filter, visible.map((event) => [this._eventKey(event), event.eventId])]);
-    if (!forceStructure && signature === this._eventsRenderSig && mount.hasChildNodes()) {
+    const signature2 = JSON.stringify([this._filter, visible.map((event) => [this._eventKey(event), event.eventId])]);
+    if (!forceStructure && signature2 === this._eventsRenderSig && mount.hasChildNodes()) {
       mount.querySelectorAll("[data-event-meta]").forEach((meta) => {
         const value = `${meta.dataset.eventLabel} \xB7 ${this._time(meta.dataset.eventIso)} \xB7 ${this._ago(meta.dataset.eventIso)}`;
         if (meta.textContent !== value) meta.textContent = value;
@@ -49580,7 +49580,7 @@ var HACameraHubCard = class _HACameraHubCard extends HTMLElement {
       this._hydrateEventThumbs(mount);
       return;
     }
-    this._eventsRenderSig = signature;
+    this._eventsRenderSig = signature2;
     mount.innerHTML = `<div class="filters">${FILTERS.map(
       ([key2, label, icon6]) => `<button class="filter-chip ${this._filter === key2 ? "active" : ""}" data-filter="${key2}"><ha-icon icon="${icon6}"></ha-icon>${label}</button>`
     ).join("")}</div>${this._eventsHtml()}`;
@@ -50142,10 +50142,10 @@ var HACameraHubCardEditor = class extends HTMLElement {
     nextConfig.nvr = { ...stub.nvr, ...nextConfig.nvr || {} };
     nextConfig.nvr.hdd_entities ||= [];
     nextConfig.cameras ||= [];
-    const signature = JSON.stringify(nextConfig);
+    const signature2 = JSON.stringify(nextConfig);
     this.config = nextConfig;
-    if (signature === this._configSignature && this.shadowRoot.hasChildNodes()) return;
-    this._configSignature = signature;
+    if (signature2 === this._configSignature && this.shadowRoot.hasChildNodes()) return;
+    this._configSignature = signature2;
     this._render();
   }
   set hass(hass) {
@@ -52864,13 +52864,13 @@ var HaHomeCameraCard = class extends HTMLElement {
     };
     this.classList.toggle("fill-height", Boolean(nextConfig.fill_height));
     this.classList.toggle("frameless", Boolean(nextConfig.frameless));
-    const signature = JSON.stringify(nextConfig);
-    if (signature === this._configSignature) {
+    const signature2 = JSON.stringify(nextConfig);
+    if (signature2 === this._configSignature) {
       this.config = nextConfig;
       return;
     }
     this.config = nextConfig;
-    this._configSignature = signature;
+    this._configSignature = signature2;
     this._generation += 1;
     this._feedEntities = {};
     this._hassSignature = "";
@@ -52880,12 +52880,12 @@ var HaHomeCameraCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     this._preloadSnapshots();
-    const signature = this._allWatched().map((id) => {
+    const signature2 = this._allWatched().map((id) => {
       const state2 = hass?.states?.[id];
       return `${id}:${state2?.state || ""}:${state2?.last_changed || ""}:${state2?.attributes?.entity_picture || ""}`;
     }).join("|");
-    if (signature === this._hassSignature) return;
-    this._hassSignature = signature;
+    if (signature2 === this._hassSignature) return;
+    this._hassSignature = signature2;
     this._update();
   }
   getCardSize() {
@@ -52955,9 +52955,9 @@ var HaHomeCameraCard = class extends HTMLElement {
     const allowed = this._groupCameras(group);
     const autoKeys = this._getAutoCameraKeys(group);
     const cameras = allowed.filter((camera) => autoKeys.has(camera.key));
-    const active = cameras.map((camera) => ({ camera, changed: this._activityTimestamp(camera) })).filter((item2) => item2.changed > 0).sort((a, b) => b.changed - a.changed);
+    const active2 = cameras.map((camera) => ({ camera, changed: this._activityTimestamp(camera) })).filter((item2) => item2.changed > 0).sort((a, b) => b.changed - a.changed);
     const selected = this._state(group.selector_entity)?.state;
-    return active[0]?.camera || cameras.find((camera) => camera.key === selected);
+    return active2[0]?.camera || cameras.find((camera) => camera.key === selected);
   }
   _selected(group, index) {
     const cameras = this._groupCameras(group);
@@ -53160,10 +53160,10 @@ var HaHomeCameraCard = class extends HTMLElement {
     const cameras = this._groupCameras(group);
     const autoKeys = this._getAutoCameraKeys(group);
     choices.innerHTML = `<button class="choice ${automatic ? "active" : ""}" data-pick-auto><ha-icon icon="mdi:auto-fix"></ha-icon><span>Automatisk valg</span>${automatic ? '<ha-icon class="check" icon="mdi:check"></ha-icon>' : ""}</button>${cameras.map((camera) => {
-      const active = this._manual[index] === camera.key;
+      const active2 = this._manual[index] === camera.key;
       const isDefault = defaultCamera === camera.key;
       const inAuto = autoKeys.has(camera.key);
-      return `<div class="choice-row"><button class="choice ${active ? "active" : ""}" data-pick-camera="${this._escape(camera.key)}"><ha-icon icon="mdi:cctv"></ha-icon><span>${this._escape(camera.name || camera.key)}</span>${active ? '<ha-icon class="check" icon="mdi:check"></ha-icon>' : ""}</button><button class="auto-pin ${inAuto ? "active" : ""}" data-auto-pin="${this._escape(camera.key)}" aria-pressed="${inAuto}" title="Med i automatisk skift">Auto</button><button class="pin ${isDefault ? "active" : ""}" data-pin="${this._escape(camera.key)}"><ha-icon icon="${isDefault ? "mdi:star" : "mdi:star-outline"}"></ha-icon></button></div>`;
+      return `<div class="choice-row"><button class="choice ${active2 ? "active" : ""}" data-pick-camera="${this._escape(camera.key)}"><ha-icon icon="mdi:cctv"></ha-icon><span>${this._escape(camera.name || camera.key)}</span>${active2 ? '<ha-icon class="check" icon="mdi:check"></ha-icon>' : ""}</button><button class="auto-pin ${inAuto ? "active" : ""}" data-auto-pin="${this._escape(camera.key)}" aria-pressed="${inAuto}" title="Med i automatisk skift">Auto</button><button class="pin ${isDefault ? "active" : ""}" data-pin="${this._escape(camera.key)}"><ha-icon icon="${isDefault ? "mdi:star" : "mdi:star-outline"}"></ha-icon></button></div>`;
     }).join("")}<p class="hint">Auto v\xE6lger hvilke kameraer automatikken m\xE5 skifte til. Stjernen s\xE6tter favorit/fallback.</p>`;
     choices.querySelector("[data-pick-auto]")?.addEventListener("click", () => {
       this._manual[index] = "__auto__";
@@ -53225,8 +53225,8 @@ var HaHomeCameraCard = class extends HTMLElement {
       panel.querySelector("[data-activity-icon]").setAttribute("icon", activity.icon);
       panel.querySelector("[data-activity-text]").textContent = activity.text;
       panel.querySelectorAll(".chip").forEach((chip) => {
-        const active = chip.dataset.auto !== void 0 ? !this._manual[index] : chip.dataset.camera === camera.key;
-        chip.classList.toggle("active", active);
+        const active2 = chip.dataset.auto !== void 0 ? !this._manual[index] : chip.dataset.camera === camera.key;
+        chip.classList.toggle("active", active2);
       });
       this._setFeed(index, camera);
     });
@@ -53326,10 +53326,10 @@ var HaHomeCameraCardEditor = class extends HTMLElement {
   setConfig(config) {
     const nextConfig = structuredClone(config || HaHomeCameraCard.getStubConfig());
     this._ensureCatalogSchema(nextConfig);
-    const signature = JSON.stringify(nextConfig);
+    const signature2 = JSON.stringify(nextConfig);
     this.config = nextConfig;
-    if (signature === this._configSignature && this.shadowRoot.hasChildNodes()) return;
-    this._configSignature = signature;
+    if (signature2 === this._configSignature && this.shadowRoot.hasChildNodes()) return;
+    this._configSignature = signature2;
     this._render();
   }
   set hass(hass) {
@@ -54286,9 +54286,9 @@ var HaSecurityCenterCard = class extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const signature = this._signature();
-    if (signature !== this._lastSignature) {
-      this._lastSignature = signature;
+    const signature2 = this._signature();
+    if (signature2 !== this._lastSignature) {
+      this._lastSignature = signature2;
       this._render();
     }
   }
@@ -54741,12 +54741,12 @@ var HAAIUsageCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const ids = (this._config.accounts || []).flatMap((account) => Object.values(account)).filter((value) => typeof value === "string" && value.includes("."));
-    const signature = JSON.stringify(ids.map((id) => {
+    const signature2 = JSON.stringify(ids.map((id) => {
       const entity = hass?.states?.[id];
       return [id, entity?.state, entity?.last_updated];
     }));
-    if (signature === this._signature) return;
-    this._signature = signature;
+    if (signature2 === this._signature) return;
+    this._signature = signature2;
     this._render();
   }
   getCardSize() {
@@ -55665,9 +55665,9 @@ var HASettingsCenterCard = class extends HTMLElement {
     if (!this._tabs().some(([id]) => id === tab)) tab = "home";
     this._tab = tab;
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((b) => {
-      const active = b.dataset.tab === tab;
-      b.classList.toggle("active", active);
-      b.setAttribute("aria-selected", active);
+      const active2 = b.dataset.tab === tab;
+      b.classList.toggle("active", active2);
+      b.setAttribute("aria-selected", active2);
     });
     this.shadowRoot.querySelectorAll("[data-page]").forEach((p) => {
       p.hidden = p.dataset.page !== tab;
@@ -56913,10 +56913,10 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
     this.shadowRoot.querySelector("[data-volume]").textContent = `${volume}%`;
     this.shadowRoot.querySelector("[data-summary-volume]").textContent = `${volume}%`;
     this.shadowRoot.querySelectorAll("[data-volume-value]").forEach((b) => b.classList.toggle("active", Number(b.dataset.volumeValue) === volume));
-    let active = 0;
+    let active2 = 0;
     this._config.plans.forEach((p, i) => {
       const on = this._value(p.enabled_entity) === "on";
-      if (on) active++;
+      if (on) active2++;
       this.shadowRoot.querySelector(`[data-tab="${i}"]`)?.classList.toggle("on", on);
       const plan = this.shadowRoot.querySelector(`[data-plan="${i}"]`);
       if (!plan) return;
@@ -56932,13 +56932,13 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
       range.value = pv2;
       plan.querySelector("[data-plan-volume]").textContent = `${pv2}%`;
     });
-    this.shadowRoot.querySelector("[data-summary-plans]").textContent = `${active}/${this._config.plans.length}`;
+    this.shadowRoot.querySelector("[data-summary-plans]").textContent = `${active2}/${this._config.plans.length}`;
     this.shadowRoot.querySelectorAll("select[data-entity]").forEach((select) => {
       const entity = select.dataset.entity, options = this._options(entity);
-      const signature = options.join("|");
-      if (select.dataset.options !== signature) {
+      const signature2 = options.join("|");
+      if (select.dataset.options !== signature2) {
         select.innerHTML = options.map((o) => `<option value="${this._esc(o)}">${this._esc(o)}</option>`).join("");
-        select.dataset.options = signature;
+        select.dataset.options = signature2;
       }
       select.value = this._value(entity);
     });
@@ -57097,10 +57097,10 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
     root.querySelector("[data-day-state]") && (root.querySelector("[data-day-state]").textContent = dayOn ? "Aktiv lige nu" : "Inaktiv lige nu");
     root.querySelector("[data-day-summary]") && (root.querySelector("[data-day-summary]").textContent = dayOn ? "Aktivt" : "Inaktivt");
     root.querySelectorAll("[data-value]").forEach((node) => node.textContent = this._value(node.dataset.value, "\u2014").slice(0, 5));
-    const select = root.querySelector("[data-select]"), options = this._options(d.mode_entity), signature = options.join("|");
-    if (select && select.dataset.options !== signature) {
+    const select = root.querySelector("[data-select]"), options = this._options(d.mode_entity), signature2 = options.join("|");
+    if (select && select.dataset.options !== signature2) {
       select.innerHTML = options.map((option) => `<option value="${this._esc(option)}">${this._esc(option)}</option>`).join("");
-      select.dataset.options = signature;
+      select.dataset.options = signature2;
     }
     if (select) select.value = this._value(d.mode_entity);
     root.querySelectorAll("[data-time]").forEach((input) => {
@@ -57974,9 +57974,9 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
     if (!this.shadowRoot?.querySelector("ha-card")) this._build();
     const cfg = this._config || {}, calendar = this._state(cfg.calendar_entity);
     const nextState = this._state(cfg.next_entity);
-    const signature = JSON.stringify([cfg.next_entity, nextState?.state, nextState?.attributes?.date, nextState?.attributes?.name, this._value(this._sunEntity()), (/* @__PURE__ */ new Date()).getHours(), this._value(cfg.confirm_entity), calendar?.state, calendar?.attributes?.start_time, ...(cfg.waste_types || []).map((item2) => [item2.entity, this._value(item2.entity), this._state(item2.entity)?.attributes?.date])]);
-    if (signature !== this._signature) {
-      this._signature = signature;
+    const signature2 = JSON.stringify([cfg.next_entity, nextState?.state, nextState?.attributes?.date, nextState?.attributes?.name, this._value(this._sunEntity()), (/* @__PURE__ */ new Date()).getHours(), this._value(cfg.confirm_entity), calendar?.state, calendar?.attributes?.start_time, ...(cfg.waste_types || []).map((item2) => [item2.entity, this._value(item2.entity), this._state(item2.entity)?.attributes?.date])]);
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._render();
     }
   }
@@ -60285,9 +60285,9 @@ var HaCalefaFlowCard = class extends HTMLElement {
     if (!this._faultOpen) return;
     const list = this._refs["fault-list"];
     if (!list) return;
-    const signature = faults.map((fault) => fault.id).join("|");
-    if (list.dataset.ids !== signature) {
-      list.dataset.ids = signature;
+    const signature2 = faults.map((fault) => fault.id).join("|");
+    if (list.dataset.ids !== signature2) {
+      list.dataset.ids = signature2;
       list.replaceChildren();
       if (!faults.length) {
         const empty = document.createElement("p");
@@ -60355,7 +60355,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
       if (node.children) for (const child of node.children) stack.push(child);
     }
   }
-  _decorateLegacyPopup(card, active) {
+  _decorateLegacyPopup(card, active2) {
     const panel = card._detailsPopupEl?.querySelector?.('[role="dialog"]');
     if (!panel || panel.querySelector(".cf-legacy-tabs")) return;
     const bar = document.createElement("nav");
@@ -60366,8 +60366,8 @@ var HaCalefaFlowCard = class extends HTMLElement {
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = label;
-      button.setAttribute("aria-current", label === active ? "page" : "false");
-      button.style.cssText = `min-height:36px;padding:4px 14px;border:1px solid ${label === active ? "var(--dashboard-tab-selected-border,var(--primary-color,#5bc7e8))" : "var(--divider-color,#526775)"};border-radius:10px;background:${label === active ? "var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--primary-color,#5bc7e8) 16%,transparent))" : "color-mix(in srgb,var(--primary-text-color,#f0f8fb) 5%,transparent)"};color:var(--primary-text-color,#f0f8fb);font:700 13px var(--primary-font-family,system-ui);cursor:pointer`;
+      button.setAttribute("aria-current", label === active2 ? "page" : "false");
+      button.style.cssText = `min-height:36px;padding:4px 14px;border:1px solid ${label === active2 ? "var(--dashboard-tab-selected-border,var(--primary-color,#5bc7e8))" : "var(--divider-color,#526775)"};border-radius:10px;background:${label === active2 ? "var(--dashboard-tab-selected-bg,color-mix(in srgb,var(--primary-color,#5bc7e8) 16%,transparent))" : "color-mix(in srgb,var(--primary-text-color,#f0f8fb) 5%,transparent)"};color:var(--primary-text-color,#f0f8fb);font:700 13px var(--primary-font-family,system-ui);cursor:pointer`;
       button.addEventListener("click", () => {
         open();
         this._decorateLegacyPopup(card, label);
@@ -63624,7 +63624,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const wrap = this.shadowRoot.querySelector(".markers");
     if (!wrap || !this._map) return;
     const { robot, dock } = this._map;
-    const active = ACTIVE.has(this._statusKey());
+    const active2 = ACTIVE.has(this._statusKey());
     const away = robot && dock && Math.hypot(robot.x - dock.x, robot.y - dock.y) > 0.04;
     if (!wrap.firstElementChild) {
       wrap.innerHTML = `<span class="dock" title="Dock" hidden><ha-icon icon="mdi:home-lightning-bolt-outline"></ha-icon></span><span class="robot" title="Robot" hidden><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>`;
@@ -63636,9 +63636,9 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       dockEl.style.top = `${dock.y * 100}%`;
     }
     robotEl.hidden = !robot;
-    robotEl.classList.toggle("live", active);
+    robotEl.classList.toggle("live", active2);
     if (robot) {
-      robotEl.style.transitionDuration = `${active ? this._glide || 0 : 0.6}s`;
+      robotEl.style.transitionDuration = `${active2 ? this._glide || 0 : 0.6}s`;
       robotEl.style.left = `${robot.x * 100}%`;
       robotEl.style.top = `${robot.y * 100}%`;
     }
@@ -63705,7 +63705,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const E2 = this._ent, vac = this._state(this._config.entity);
     const vstate = vac?.state || "unavailable";
     const key2 = this._statusKey();
-    const active = ACTIVE.has(key2) || vstate === "cleaning";
+    const active2 = ACTIVE.has(key2) || vstate === "cleaning";
     const paused2 = key2 === "paused" || vstate === "paused";
     const docked = vstate === "docked" || ["charging", "charging_complete", "emptying_the_bin"].includes(key2);
     const offline = vstate === "unavailable" || key2 === "device_offline";
@@ -63719,11 +63719,11 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     let detail;
     if (offline) detail = "Robotten svarer ikke";
     else if (hasErr) detail = ERRORS[errV] || human(errV) || "Se robotten";
-    else if (active) detail = room && room !== "unknown" ? `Arbejder i ${room}` : "Arbejder";
+    else if (active2) detail = room && room !== "unknown" ? `Arbejder i ${room}` : "Arbejder";
     else if (docked && battery >= 100) detail = "Opladet og klar til reng\xF8ring";
     else if (docked) detail = "Oplader i dock";
     else detail = room && room !== "unknown" ? `St\xE5r i ${room}` : "";
-    const dot = hasErr || offline ? "bad" : active ? "live" : paused2 ? "warn" : "ok";
+    const dot = hasErr || offline ? "bad" : active2 ? "live" : paused2 ? "warn" : "ok";
     const fanList = (vac?.attributes?.fan_speed_list || []).filter((f) => !["off", "custom"].includes(f));
     const waterState = this._state(E2.water_amount);
     const waterList = (waterState?.attributes?.options || []).filter((o) => !["custom", "unknown"].includes(o));
@@ -63747,7 +63747,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const unmappable = this._rooms.filter((r) => !r.mappable || this._map && !this._map.rooms[this._rooms.indexOf(r)]);
     if (this._map && unmappable.length) alerts.push(["info", "mdi:information-outline", `${unmappable.map((r) => r.name).join(", ")} kan ikke placeres p\xE5 kortet`, "V\xE6lg dem i listen i stedet."]);
     const info = [];
-    if (active || paused2) {
+    if (active2 || paused2) {
       const pct6 = this._num(E2.cleaning_progress), area = this._num(E2.cleaning_area), time = this._num(E2.cleaning_time);
       if (Number.isFinite(pct6)) info.push(["mdi:progress-check", "Fremdrift", `${Math.round(pct6)} %`]);
       if (Number.isFinite(area)) info.push(["mdi:texture-box", "Areal", `${area.toLocaleString("da-DK", { maximumFractionDigits: 1 })} m\xB2`]);
@@ -63761,12 +63761,12 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       }
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
-    const primary = active ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
+    const primary = active2 ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
     const act = (a, icon6, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc11(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon6}"></ha-icon><span>${label}</span></button>`;
     const actions = [
-      this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active && !paused2),
-      this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active)),
-      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active || paused2 || key2 === "returning_home")),
+      this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active2 && !paused2),
+      this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active2)),
+      this._supports(FEATURE.STOP) && act("stop", "mdi:stop", "Stop", !offline && (active2 || paused2 || key2 === "returning_home")),
       this._supports(FEATURE.RETURN_HOME) && act("home", "mdi:home-import-outline", "Send hjem", !offline && !docked),
       E2.empty_dust && act("empty", "mdi:delete-empty-outline", emptying ? "T\xF8mmer \u2026" : "T\xF8m st\xF8v", !offline && docked && !emptying),
       this._supports(FEATURE.LOCATE) && act("locate", "mdi:map-marker-question-outline", "Find", !offline)
@@ -63777,7 +63777,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc11(id)}" ${offline || active ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc11(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc11(id)}" ${offline || active2 ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc11(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
@@ -64064,12 +64064,12 @@ var AIUsageDashboardCard = class extends HTMLElement {
     if (el) el.style.width = `${value ?? 0}%`;
   }
   _update() {
-    const signature = JSON.stringify(this.ids.flat().map((id) => {
+    const signature2 = JSON.stringify(this.ids.flat().map((id) => {
       const s = this._state(id);
       return [s?.state, s?.last_updated];
     }));
-    if (signature === this.signature) return;
-    this.signature = signature;
+    if (signature2 === this.signature) return;
+    this.signature = signature2;
     this.data = this.accounts.map((a) => this._data(a));
     this._paint();
   }
@@ -64945,9 +64945,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     return this._connected && this._visible && document.visibilityState !== "hidden";
   }
   _updateActivity() {
-    const active = this._active;
-    this.toggleAttribute("paused", !active);
-    if (!active) {
+    const active2 = this._active;
+    this.toggleAttribute("paused", !active2);
+    if (!active2) {
       this._stopTimers();
       return;
     }
@@ -67388,13 +67388,13 @@ var EnergyFlow = class {
     }
     for (const [a, b] of LINKS) {
       const w = v[a === "home" ? b : a];
-      const active = Number.isFinite(w) && w > ACTIVE_W;
+      const active2 = Number.isFinite(w) && w > ACTIVE_W;
       const dash = this.dashes[`${a}-${b}`];
-      const dur3 = active ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
+      const dur3 = active2 ? Math.max(0.6, 3.2 - 0.8 * Math.log10(w / 10)).toFixed(1) : "";
       if (dash.__dur === dur3) continue;
       dash.__dur = dur3;
-      dash.classList.toggle("on", active);
-      if (active) dash.style.setProperty("--dur", `${dur3}s`);
+      dash.classList.toggle("on", active2);
+      if (active2) dash.style.setProperty("--dur", `${dur3}s`);
     }
   }
 };
@@ -68278,12 +68278,12 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     this._hass = hass;
     if (!this.shadowRoot.querySelector("ha-card")) this._build();
     const c2 = this._config, st = (id) => id ? hass.states[id] : void 0;
-    const signature = JSON.stringify([c2.forecast_entity, c2.bills_entity, c2.provider_entity, c2.agreement_entity].map((id) => {
+    const signature2 = JSON.stringify([c2.forecast_entity, c2.bills_entity, c2.provider_entity, c2.agreement_entity].map((id) => {
       const s = st(id);
       return s ? [s.state, s.last_updated] : null;
     }));
-    if (signature !== this._signature) {
-      this._signature = signature;
+    if (signature2 !== this._signature) {
+      this._signature = signature2;
       this._render();
     }
   }
@@ -68845,9 +68845,9 @@ var HaEnergyCenterCard = class extends HTMLElement {
     return this._connected && this._visible && document.visibilityState !== "hidden";
   }
   _updateActivity() {
-    const active = this.active;
-    this.toggleAttribute("paused", !active);
-    if (!active) {
+    const active2 = this.active;
+    this.toggleAttribute("paused", !active2);
+    if (!active2) {
       clearTimeout(this._hourTimer);
       this._hourTimer = void 0;
       return;
@@ -70383,22 +70383,22 @@ function queueRow(ctx, item2, current2, editable) {
       <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc12(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
 }
 function speakersPanel(ctx, sp) {
-  const active = sp.players.find((p) => p.entity_id === sp.active);
+  const active2 = sp.players.find((p) => p.entity_id === sp.active);
   let html = "";
-  if (active) {
-    const members = sp.players.filter((p) => p.groupedWithActive && p.entity_id !== active.entity_id);
-    html += `<div class="sp-cur"><div class="lbl">Styrer nu</div><div class="nm">${icon4(active.icon)}${esc12(active.name)}${members.length ? ` <span style="color:var(--mc-dim);font-weight:700">+${members.length}</span>` : ""}</div>
-      <div class="sub">${esc12(active.status)}</div>
+  if (active2) {
+    const members = sp.players.filter((p) => p.groupedWithActive && p.entity_id !== active2.entity_id);
+    html += `<div class="sp-cur"><div class="lbl">Styrer nu</div><div class="nm">${icon4(active2.icon)}${esc12(active2.name)}${members.length ? ` <span style="color:var(--mc-dim);font-weight:700">+${members.length}</span>` : ""}</div>
+      <div class="sub">${esc12(active2.status)}</div>
       ${members.length ? `<div class="sp-vol" style="padding:10px 0 0">${icon4("speakerMultiple")}<input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(sp.groupVolume * 100)}" data-gvol aria-label="Gruppevolumen" style="--p:${Math.round(sp.groupVolume * 100)}%"><span style="font-size:12px;color:var(--mc-dim);min-width:30px">Alle</span></div>` : ""}</div>`;
   }
-  html += `<div class="sub-h"><span>H\xF8jttalere</span></div><div class="sp-hint">Tryk p\xE5 en h\xF8jttaler for at styre den \xB7 ${icon4("plus")} spiller med p\xE5 ${esc12(active?.name || "den valgte")}</div>`;
+  html += `<div class="sub-h"><span>H\xF8jttalere</span></div><div class="sp-hint">Tryk p\xE5 en h\xF8jttaler for at styre den \xB7 ${icon4("plus")} spiller med p\xE5 ${esc12(active2?.name || "den valgte")}</div>`;
   for (const p of sp.players) {
     const isActive = p.entity_id === sp.active;
-    const canGroup = !isActive && p.canGroup && active?.canGroup && !p.isGroup && !active?.isGroup;
+    const canGroup = !isActive && p.canGroup && active2?.canGroup && !p.isGroup && !active2?.isGroup;
     html += `<div class="sp${isActive ? " active" : ""}${p.groupedWithActive && !isActive ? " grouped" : ""}" data-sp="${esc12(p.entity_id)}">
       <div class="sp-row"><button class="sp-main" data-select="${esc12(p.entity_id)}"><span class="sp-ic">${icon4(p.icon)}${p.playing ? eq(true) : ""}</span>
         <span class="sp-tx"><div class="sp-nm">${esc12(p.name)}${p.isGroup ? '<span class="sp-badge">Gruppe</span>' : ""}</div><div class="sp-st">${esc12(p.status)}</div></span></button>
-        ${isActive ? "" : `<button class="grp${p.groupedWithActive ? " on" : ""}" data-group="${esc12(p.entity_id)}" ${canGroup ? "" : "disabled"} aria-label="${p.groupedWithActive ? "Fjern fra gruppen" : "Spil sammen med den valgte"}" title="${canGroup ? p.groupedWithActive ? "Fjern fra gruppen" : `Spil sammen med ${esc12(active?.name || "")}` : "Kan ikke grupperes"}">${icon4(p.groupedWithActive ? "check" : "plus")}</button>`}</div>
+        ${isActive ? "" : `<button class="grp${p.groupedWithActive ? " on" : ""}" data-group="${esc12(p.entity_id)}" ${canGroup ? "" : "disabled"} aria-label="${p.groupedWithActive ? "Fjern fra gruppen" : "Spil sammen med den valgte"}" title="${canGroup ? p.groupedWithActive ? "Fjern fra gruppen" : `Spil sammen med ${esc12(active2?.name || "")}` : "Kan ikke grupperes"}">${icon4(p.groupedWithActive ? "check" : "plus")}</button>`}</div>
       ${p.available ? `<div class="sp-vol"><button class="mini-btn" data-mute="${esc12(p.entity_id)}" aria-label="Lydl\xF8s">${icon4(p.muted ? "volumeOff" : p.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
         <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(p.volume * 100)}" data-vol="${esc12(p.entity_id)}" aria-label="Volumen ${esc12(p.name)}" style="--p:${Math.round(p.volume * 100)}%"></div>` : ""}
       ${!isActive && sp.canTransfer && p.available && !p.groupedWithActive ? `<button class="pill sp-move" data-transfer="${esc12(p.entity_id)}">${icon4("swapHorizontal")}Flyt musikken hertil</button>` : ""}</div>`;
@@ -70836,8 +70836,8 @@ var HaMusicCard = class extends HTMLElement {
     this._renderTop();
   }
   _groupMembers() {
-    const active = this._player(this._active);
-    const ids = new Set(active.members.filter((m) => m !== this._active));
+    const active2 = this._player(this._active);
+    const ids = new Set(active2.members.filter((m) => m !== this._active));
     for (const id of this._playerIds()) {
       if (id !== this._active && this._player(id).members.includes(this._active)) ids.add(id);
     }
@@ -77666,10 +77666,10 @@ var EnergyFlowCard = class extends EnergyCard {
     const charging = battery !== null && battery > threshold, discharging = battery !== null && battery < -threshold;
     const complete = [solar, home, grid, battery].every((v) => v !== null);
     const status = this.dataStatus(["solar", "home", "grid", "battery"]);
-    const active = complete && !status.problem;
+    const active2 = complete && !status.problem;
     const summary = !complete ? "Der mangler m\xE5linger fra anl\xE6gget." : status.problem ? "Tallene er \xE6ldre. Vi venter p\xE5 nye m\xE5linger." : charging && importing ? "Batteriet lades op. Der hentes ogs\xE5 str\xF8m fra elnettet." : solarOn && exporting ? "Solen producerer str\xF8m. Overskud sendes til elnettet." : solarOn && discharging ? "Solen og batteriet leverer str\xF8m." : discharging ? "Batteriet leverer str\xF8m." : solarOn ? "Solcellerne producerer str\xF8m." : importing ? "Der hentes str\xF8m fra elnettet." : "Anl\xE6gget bruger kun lidt str\xF8m lige nu.";
     const node = (cls, label, value, caption, mdi, key2) => `<button class="node ${cls}" data-entity="${escape(this.config.entities[key2])}" aria-label="${label}: ${escape(value.replace(/<[^>]*>/g, ""))}. ${caption}. \xC5bn m\xE5ling.">${icon5(mdi)}<span class="node-label">${label}</span><span class="node-value">${value}</span><span class="node-caption">${caption}</span></button>`;
-    const path = (route, on, reverse, color) => `<g data-route="${route}" data-reverse="${reverse}"><path class="track"/><path class="flow ${on && active ? "moving" : ""} ${reverse ? "reverse" : ""}" style="--flow-color:${color}" ${on && active ? "" : 'visibility="hidden"'}/><path class="arrow" fill="${color}" ${on && active ? "" : 'visibility="hidden"'}/></g>`;
+    const path = (route, on, reverse, color) => `<g data-route="${route}" data-reverse="${reverse}"><path class="track"/><path class="flow ${on && active2 ? "moving" : ""} ${reverse ? "reverse" : ""}" style="--flow-color:${color}" ${on && active2 ? "" : 'visibility="hidden"'}/><path class="arrow" fill="${color}" ${on && active2 ? "" : 'visibility="hidden"'}/></g>`;
     this.mount(`<ha-card><div class="pad"><div class="head"><div><div class="eyebrow">Str\xF8mmen hjemme</div><h2>${escape(this.config.title || "Hvor g\xE5r str\xF8mmen hen?")}</h2></div><span class="head-icon">${icon5("home-lightning-bolt-outline")}</span></div><p>Pilene viser, hvilken vej str\xF8mmen l\xF8ber.</p>
       <div class="flow-map"><svg class="wires" viewBox="0 0 600 430" preserveAspectRatio="none" aria-hidden="true">
       ${path("solar", solarOn, false, "var(--fb-gold)")}${path("grid", importing || exporting, exporting, "var(--fb-blue)")}${path("battery", charging || discharging, discharging, "var(--fb-green)")}
@@ -80498,9 +80498,9 @@ var MRWeatherStudioCard = class extends HTMLElement {
         const index = TABS3.findIndex((t) => t[0] === this._tab), next = ev2.key === "Home" ? 0 : ev2.key === "End" ? 3 : (index + (ev2.key === "ArrowRight" ? 1 : -1) + 4) % 4;
         this._tab = TABS3[next][0];
         this._render();
-        const active = this._shell.querySelector(`[data-tab="${this._tab}"]`);
-        active.focus({ preventScroll: true });
-        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+        const active2 = this._shell.querySelector(`[data-tab="${this._tab}"]`);
+        active2.focus({ preventScroll: true });
+        active2.scrollIntoView({ block: "nearest", inline: "nearest" });
       });
     });
     this._shell.querySelectorAll("[data-metric]").forEach((b) => b.addEventListener("click", () => {
@@ -80715,28 +80715,60 @@ function findCardConfig(config, type) {
   return hit;
 }
 var subscribers = /* @__PURE__ */ new Set();
+var SETTLE_MS = 4e3;
+var SETTLE_STEP = 150;
 var timer = null;
+var lastSignature = null;
+var active = true;
+var settleUntil = 0;
+var settleTimer = null;
+function signature(screen) {
+  return [screen?.root || null, screen?.config || null, !!screen?.editMode, String(globalThis.location?.pathname || "")];
+}
+function mayBeLovelace() {
+  const first = String(globalThis.location?.pathname || "").split("/")[1] || "";
+  const panel = first ? globalThis.document?.querySelector?.("home-assistant")?.hass?.panels?.[first] : null;
+  return !panel || panel.component_name === "lovelace";
+}
 function runAll() {
   if (globalThis.document?.hidden) return;
   const screen = lovelaceOnScreen();
-  for (const fn of subscribers) {
-    try {
-      fn(screen);
-    } catch (err) {
-      console.warn("dashboard module", err);
+  const sig = signature(screen);
+  const same = !!lastSignature && sig.every((value, i) => value === lastSignature[i]);
+  lastSignature = sig;
+  if (!same || active) {
+    active = false;
+    for (const fn of subscribers) {
+      try {
+        if (fn(screen)) active = true;
+      } catch (err) {
+        active = true;
+        console.warn("dashboard module", err);
+      }
     }
   }
+  if (!screen?.config && !settleTimer && Date.now() < settleUntil && mayBeLovelace()) {
+    settleTimer = setTimeout(() => {
+      settleTimer = null;
+      runAll();
+    }, SETTLE_STEP);
+  }
+}
+function settle() {
+  settleUntil = Date.now() + SETTLE_MS;
+  setTimeout(runAll, 50);
 }
 function onDashboardTick(fn, { interval = 1500 } = {}) {
   subscribers.add(fn);
+  lastSignature = null;
   if (!timer && typeof globalThis.setInterval === "function" && globalThis.addEventListener) {
     timer = setInterval(runAll, interval);
-    const soon = () => setTimeout(runAll, 50);
-    globalThis.addEventListener("location-changed", soon);
-    globalThis.addEventListener("popstate", soon);
-    globalThis.document?.addEventListener?.("visibilitychange", soon);
-    setTimeout(runAll, 0);
+    globalThis.addEventListener("location-changed", settle);
+    globalThis.addEventListener("popstate", settle);
+    globalThis.document?.addEventListener?.("visibilitychange", () => setTimeout(runAll, 50));
+    settleUntil = Date.now() + SETTLE_MS;
   }
+  if (timer) setTimeout(runAll, 0);
   return () => subscribers.delete(fn);
 }
 function activatorHtml(title, lines) {
@@ -80855,17 +80887,17 @@ var lastRoot = null;
 var lastPath = null;
 var announced = false;
 var navbarObservers = /* @__PURE__ */ new WeakMap();
-function syncNavbar(el) {
+function syncNavbar(el, on) {
   const root = el.shadowRoot;
   if (!root) return;
-  setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, state.navbar);
-  if (state.navbar && !navbarObservers.has(root)) {
+  setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, on);
+  if (on && !navbarObservers.has(root)) {
     const observer = new MutationObserver(() => {
       if (state.navbar) setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, true);
     });
     observer.observe(root, { childList: true });
     navbarObservers.set(root, observer);
-  } else if (!state.navbar && navbarObservers.has(root)) {
+  } else if (!on && navbarObservers.has(root)) {
     navbarObservers.get(root).disconnect();
     navbarObservers.delete(root);
   }
@@ -80882,8 +80914,9 @@ function apply(screen, force = false) {
   const root = screen?.root || null;
   const path = globalThis.location?.pathname || "";
   const changed = options.navbar !== state.navbar || options.cards !== state.cards || root !== lastRoot || path !== lastPath;
-  if (!changed && !force) return;
+  if (!changed && !force) return state.navbar || state.cards;
   const leftRoot = lastRoot && lastRoot !== root ? lastRoot : null;
+  const prev = state;
   if ((options.navbar || options.cards) && !announced) {
     announced = true;
     console.info(`%c TH-THEME %c ${TH_THEME_VERSION} `, "background:#e8c37e;color:#111;font-weight:700", "background:#222;color:#fff");
@@ -80892,13 +80925,15 @@ function apply(screen, force = false) {
   lastRoot = root;
   lastPath = path;
   if (leftRoot?.shadowRoot) {
-    setStyle(leftRoot.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, false);
-    eachNavbar(leftRoot.shadowRoot, syncNavbar);
+    if (prev.cards) setStyle(leftRoot.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, false);
+    if (prev.navbar) eachNavbar(leftRoot.shadowRoot, (el) => syncNavbar(el, false));
   }
-  if (!root?.shadowRoot) return;
-  setStyle(root.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, state.cards);
-  eachNavbar(root.shadowRoot, syncNavbar);
-  if (state.navbar && changed) [400, 1500, 4e3].forEach((ms) => setTimeout(() => apply(lovelaceOnScreen(), true), ms));
+  if (root?.shadowRoot) {
+    if (state.cards || prev.cards) setStyle(root.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, state.cards);
+    if (state.navbar || prev.navbar) eachNavbar(root.shadowRoot, (el) => syncNavbar(el, state.navbar));
+    if (state.navbar && changed) [400, 1500, 4e3].forEach((ms) => setTimeout(() => apply(lovelaceOnScreen(), true), ms));
+  }
+  return state.navbar || state.cards;
 }
 var started = false;
 function startThemeModule() {
@@ -80985,21 +81020,59 @@ function applyTopbar(screen, o) {
 function setDock(dock) {
   ha()?.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock }, bubbles: true, composed: true }));
 }
-function applySidebar(o) {
+var DOCKS = ["docked", "auto", "always_hidden"];
+function readMarker() {
+  const raw = store2.get(localStorage, PREV_DOCK_KEY);
+  if (!raw) return null;
+  let value = raw;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+  }
+  const marker = typeof value === "string" ? { dock: value, path: "" } : { dock: value?.dock, path: typeof value?.path === "string" ? value.path : "" };
+  if (!DOCKS.includes(marker.dock) || marker.dock === "always_hidden") {
+    store2.set(localStorage, PREV_DOCK_KEY, null);
+    return null;
+  }
+  return marker;
+}
+var writeMarker = (marker) => store2.set(localStorage, PREV_DOCK_KEY, marker ? JSON.stringify(marker) : null);
+function savedDock() {
+  try {
+    return JSON.parse(localStorage.getItem("dockedSidebar"));
+  } catch {
+    return void 0;
+  }
+}
+function hideSidebar(screen) {
   const dock = ha()?.hass?.dockedSidebar;
   if (!dock) return;
-  if (o?.hide_sidebar) {
-    if (dock !== "always_hidden") {
-      store2.set(sessionStorage, PREV_DOCK_KEY, dock);
-      setDock("always_hidden");
-    }
-  } else {
-    const prev = store2.get(sessionStorage, PREV_DOCK_KEY);
-    if (prev && dock === "always_hidden") {
-      store2.set(sessionStorage, PREV_DOCK_KEY, null);
-      setDock(prev);
-    }
+  const path = screen?.urlPath || "";
+  if (dock !== "always_hidden") {
+    writeMarker({ dock, path });
+    setDock("always_hidden");
+    return;
   }
+  const marker = readMarker();
+  if (marker && marker.path !== path) writeMarker({ ...marker, path });
+}
+function releaseSidebar(screen) {
+  const marker = readMarker();
+  if (!marker) return false;
+  if (!screen?.config) {
+    const first = String(globalThis.location?.pathname || "").split("/")[1] || "";
+    if (!first || first === marker.path) return true;
+  }
+  const dock = ha()?.hass?.dockedSidebar;
+  if (!dock) return true;
+  if (dock === "always_hidden") {
+    writeMarker(null);
+    setDock(marker.dock);
+    return false;
+  }
+  if (savedDock() === "always_hidden") return true;
+  writeMarker(null);
+  return false;
 }
 var bound = /* @__PURE__ */ new WeakSet();
 var current = null;
@@ -81076,12 +81149,13 @@ function tick(screen) {
   current = o;
   if (!o) {
     screen?.root?.shadowRoot?.getElementById(STYLE_ID)?.remove();
-    if (store2.get(sessionStorage, PREV_DOCK_KEY)) applySidebar(null);
-    return;
+    return releaseSidebar(screen);
   }
-  applySidebar(o);
+  if (o.hide_sidebar) hideSidebar(screen);
+  else releaseSidebar(screen);
   applyTopbar(screen, o);
   bindHeaders(screen, o);
+  return true;
 }
 var started2 = false;
 function startKioskModule() {

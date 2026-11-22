@@ -76,23 +76,28 @@ const forbidden = [
   ["credential-like value", /\b(?:api[_-]?key|access[_-]?token|bearer|password)\s*[:=]\s*["'][^"'\n]{8,}["']/i]
 ];
 
-async function sourceFiles(directory) {
+// Every file below `directory` (recursively) whose name ends with one of `extensions`; all files when none are given.
+async function sourceFiles(directory, extensions = []) {
   const result = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const filename = path.join(directory, entry.name);
-    if (entry.isDirectory()) result.push(...await sourceFiles(filename));
-    else if (entry.isFile() && entry.name.endsWith(".js")) result.push(filename);
+    if (entry.isDirectory()) result.push(...await sourceFiles(filename, extensions));
+    else if (entry.isFile() && (!extensions.length || extensions.some((ext) => entry.name.endsWith(ext)))) result.push(filename);
   }
   return result;
 }
 
-const auditedFiles = [
-  ...await sourceFiles(path.join(root, "src", "cards")),
+// Sources and card READMEs (src/cards, src/shared, src/index.js), the tests and their helpers, the catalog, the docs
+// and the built bundle.
+const auditedFiles = [...new Set([
+  ...await sourceFiles(path.join(root, "src"), [".js", ".mjs", ".ts", ".tsx", ".css", ".json", ".md"]),
+  ...await sourceFiles(path.join(root, "tests"), [".mjs", ".js", ".html", ".md"]),
+  ...await sourceFiles(path.join(root, "tests", "helpers")),
   path.join(root, "cards.json"),
   path.join(root, "README.md"),
   path.join(root, "docs", "CARDS.md"),
   path.join(root, "dist", "ha-smart-home-cards.js")
-];
+])];
 for (const filename of auditedFiles) {
   const contents = await readFile(filename, "utf8");
   for (const [label, pattern] of forbidden) {

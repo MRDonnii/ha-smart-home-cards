@@ -39,28 +39,66 @@ export function findCardConfig(config, type) {
 }
 
 /**
- * Runs `tick(screen)` for each subscriber every `interval` ms (only while the page is visible) and right after
- * navigation. `screen` is lovelaceOnScreen() or null. The loop starts with the first subscriber.
+ * Runs `tick(screen)` for each subscriber right after navigation and every `interval` ms while the page is visible.
+ * `screen` is lovelaceOnScreen() or null. A tick returns true while its module is active (an activator was found or
+ * something is still to be undone); while no module is active, the periodic tick only compares the screen (root,
+ * config, edit mode, URL) and calls the subscribers when it changed. Right after start and navigation, a dashboard that
+ * is still loading is looked at again every SETTLE_STEP ms for SETTLE_MS, so a kiosk top bar goes away quickly.
+ * The loop starts with the first subscriber.
  */
 const subscribers = new Set();
+const SETTLE_MS = 4000;
+const SETTLE_STEP = 150;
 let timer = null;
+let lastSignature = null;
+let active = true;
+let settleUntil = 0;
+let settleTimer = null;
+
+function signature(screen) {
+  return [screen?.root || null, screen?.config || null, !!screen?.editMode, String(globalThis.location?.pathname || "")];
+}
+
+/** False only when HA knows the panel of the URL and it is not a Lovelace dashboard (no point in looking again soon). */
+function mayBeLovelace() {
+  const first = String(globalThis.location?.pathname || "").split("/")[1] || "";
+  const panel = first ? globalThis.document?.querySelector?.("home-assistant")?.hass?.panels?.[first] : null;
+  return !panel || panel.component_name === "lovelace";
+}
+
 function runAll() {
   if (globalThis.document?.hidden) return;
   const screen = lovelaceOnScreen();
-  for (const fn of subscribers) {
-    try { fn(screen); } catch (err) { console.warn("dashboard module", err); }
+  const sig = signature(screen);
+  const same = !!lastSignature && sig.every((value, i) => value === lastSignature[i]);
+  lastSignature = sig;
+  if (!same || active) {
+    active = false;
+    for (const fn of subscribers) {
+      try { if (fn(screen)) active = true; } catch (err) { active = true; console.warn("dashboard module", err); }
+    }
+  }
+  if (!screen?.config && !settleTimer && Date.now() < settleUntil && mayBeLovelace()) {
+    settleTimer = setTimeout(() => { settleTimer = null; runAll(); }, SETTLE_STEP);
   }
 }
+
+function settle() {
+  settleUntil = Date.now() + SETTLE_MS;
+  setTimeout(runAll, 50);
+}
+
 export function onDashboardTick(fn, { interval = 1500 } = {}) {
   subscribers.add(fn);
+  lastSignature = null; // the new subscriber gets the current screen on the next run
   if (!timer && typeof globalThis.setInterval === "function" && globalThis.addEventListener) {
     timer = setInterval(runAll, interval);
-    const soon = () => setTimeout(runAll, 50);
-    globalThis.addEventListener("location-changed", soon);
-    globalThis.addEventListener("popstate", soon);
-    globalThis.document?.addEventListener?.("visibilitychange", soon);
-    setTimeout(runAll, 0);
+    globalThis.addEventListener("location-changed", settle);
+    globalThis.addEventListener("popstate", settle);
+    globalThis.document?.addEventListener?.("visibilitychange", () => setTimeout(runAll, 50));
+    settleUntil = Date.now() + SETTLE_MS;
   }
+  if (timer) setTimeout(runAll, 0);
   return () => subscribers.delete(fn);
 }
 

@@ -2,7 +2,10 @@
 // and panels are unchanged. It is OFF unless the dashboard on screen contains the invisible card
 // `custom:ha-dashboard-kiosk-card` (anywhere, in any view); the card's config holds the options:
 //   - hide_header: the top bar is hidden (always shown in edit mode).
-//   - hide_sidebar: the sidebar is set to "always hidden" (it opens as a drawer) and restored when you leave.
+//   - hide_sidebar: the sidebar is set to "always hidden" (it opens as a drawer) and restored when you leave. HA keeps
+//     that setting per browser (localStorage `dockedSidebar`), so the setting to restore is kept there too
+//     (PREV_DOCK_KEY): a tab closed on the kiosk dashboard gets the sidebar back in the next tab that shows another
+//     dashboard, or leaves the kiosk dashboard.
 //   - header_toggle: a tap on a header card's menu button (☰) opens the sidebar as before; a long press (hold_ms)
 //     shows/hides the top bar. The choice is remembered per device/browser (localStorage `storage_key`).
 // Was a /local resource bound to one dashboard path (v2).
@@ -67,21 +70,65 @@ function setDock(dock) {
   ha()?.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock }, bubbles: true, composed: true }));
 }
 
-function applySidebar(o) {
+const DOCKS = ["docked", "auto", "always_hidden"];
+/** The saved restore marker { dock, path } (path = url of the kiosk dashboard), or null. */
+function readMarker() {
+  const raw = store.get(localStorage, PREV_DOCK_KEY);
+  if (!raw) return null;
+  let value = raw;
+  try { value = JSON.parse(raw); } catch { /* plain string */ }
+  const marker = typeof value === "string" ? { dock: value, path: "" } : { dock: value?.dock, path: typeof value?.path === "string" ? value.path : "" };
+  if (!DOCKS.includes(marker.dock) || marker.dock === "always_hidden") {
+    store.set(localStorage, PREV_DOCK_KEY, null);
+    return null;
+  }
+  return marker;
+}
+const writeMarker = (marker) => store.set(localStorage, PREV_DOCK_KEY, marker ? JSON.stringify(marker) : null);
+/** HA's own saved sidebar setting (what a new tab starts with). */
+function savedDock() {
+  try { return JSON.parse(localStorage.getItem("dockedSidebar")); } catch { return undefined; }
+}
+
+/** Kiosk with hide_sidebar on screen: remember the user's setting (once) and hide the sidebar. */
+function hideSidebar(screen) {
   const dock = ha()?.hass?.dockedSidebar;
   if (!dock) return;
-  if (o?.hide_sidebar) {
-    if (dock !== "always_hidden") {
-      store.set(sessionStorage, PREV_DOCK_KEY, dock);
-      setDock("always_hidden");
-    }
-  } else {
-    const prev = store.get(sessionStorage, PREV_DOCK_KEY);
-    if (prev && dock === "always_hidden") {
-      store.set(sessionStorage, PREV_DOCK_KEY, null);
-      setDock(prev);
-    }
+  const path = screen?.urlPath || "";
+  if (dock !== "always_hidden") {
+    writeMarker({ dock, path });
+    setDock("always_hidden");
+    return;
   }
+  // Already hidden (by this module in this or an earlier tab, or by the user): keep a marker, follow the dashboard.
+  const marker = readMarker();
+  if (marker && marker.path !== path) writeMarker({ ...marker, path });
+}
+
+/**
+ * Any other screen: give the sidebar back if this module hid it. Returns true while a marker is kept.
+ * While nothing is resolved (a reload or a switch in progress) and the URL is still the kiosk dashboard's, it waits,
+ * so a reload of the kiosk dashboard does not flash the sidebar.
+ */
+function releaseSidebar(screen) {
+  const marker = readMarker();
+  if (!marker) return false;
+  if (!screen?.config) {
+    const first = String(globalThis.location?.pathname || "").split("/")[1] || "";
+    if (!first || first === marker.path) return true;
+  }
+  const dock = ha()?.hass?.dockedSidebar;
+  if (!dock) return true;
+  if (dock === "always_hidden") {
+    writeMarker(null);
+    setDock(marker.dock);
+    return false;
+  }
+  // Not hidden in this tab. Keep the marker while HA's saved setting is still hidden (another tab shows the kiosk
+  // dashboard, or one was closed on it), so the next tab can restore it; otherwise it is stale.
+  if (savedDock() === "always_hidden") return true;
+  writeMarker(null);
+  return false;
 }
 
 const bound = new WeakSet();
@@ -148,6 +195,7 @@ function bindHeaders(screen, o) {
 }
 
 let lastScreen = null;
+/** One detector tick; returns true while kiosk mode is on or the sidebar is still to be given back. */
 function tick(screen) {
   const o = kioskOptions(screen?.config ? findCardConfig(screen.config, KIOSK_TYPE) : null);
   // Leaving a kiosk dashboard: take the style off its (cached) hui-root and give the sidebar back.
@@ -157,12 +205,13 @@ function tick(screen) {
   current = o;
   if (!o) {
     screen?.root?.shadowRoot?.getElementById(STYLE_ID)?.remove();
-    if (store.get(sessionStorage, PREV_DOCK_KEY)) applySidebar(null);
-    return;
+    return releaseSidebar(screen);
   }
-  applySidebar(o);
+  if (o.hide_sidebar) hideSidebar(screen);
+  else releaseSidebar(screen);
   applyTopbar(screen, o);
   bindHeaders(screen, o);
+  return true;
 }
 
 let started = false;

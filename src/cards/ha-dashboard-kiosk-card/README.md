@@ -4,7 +4,10 @@
 
 - Home Assistant's top bar is hidden on every view of the dashboard (it is always shown in edit mode).
 - The docked sidebar is set to "always hidden" (it opens as a drawer from the menu button) while you are on the
-  dashboard, and your own sidebar setting comes back when you leave it.
+  dashboard, and your own sidebar setting comes back when you leave it. Like Home Assistant's own sidebar setting, the
+  setting to give back is kept per browser (localStorage), so a tab closed on the kiosk dashboard does not leave the
+  sidebar hidden: the next tab that shows another dashboard (or leaves the kiosk dashboard) gives it back. A reload of
+  the kiosk dashboard does not flash the sidebar.
 - A tap on the menu button (☰) of a header card (`ha-home-header-card` / `ha-home-header-card-front`) opens the sidebar
   as before; a **long press** shows/hides the top bar. That choice is remembered per device/browser, so a wall tablet
   and a PC can differ.

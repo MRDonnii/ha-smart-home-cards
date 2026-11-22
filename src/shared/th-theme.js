@@ -72,16 +72,16 @@ let lastPath = null;
 let announced = false;
 const navbarObservers = new WeakMap();
 
-function syncNavbar(el) {
+function syncNavbar(el, on) {
   const root = el.shadowRoot;
   if (!root) return;
-  setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, state.navbar);
+  setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, on);
   // ha-navbar-card rebuilds its shadow root; put the style back right away (before paint) while the theme is on.
-  if (state.navbar && !navbarObservers.has(root)) {
+  if (on && !navbarObservers.has(root)) {
     const observer = new MutationObserver(() => { if (state.navbar) setStyle(root, NAVBAR_STYLE_ID, TH_THEME_NAVBAR_CSS, true); });
     observer.observe(root, { childList: true });
     navbarObservers.set(root, observer);
-  } else if (!state.navbar && navbarObservers.has(root)) {
+  } else if (!on && navbarObservers.has(root)) {
     navbarObservers.get(root).disconnect();
     navbarObservers.delete(root);
   }
@@ -95,13 +95,15 @@ function eachNavbar(root, fn, depth = 0) {
   }
 }
 
+/** Applies the theme to the screen; returns true while any part of it is on (the detector keeps ticking). */
 function apply(screen, force = false) {
   const options = themeOptions(screen?.config ? findCardConfig(screen.config, TH_THEME_TYPE) : null) || { navbar: false, cards: false };
   const root = screen?.root || null;
   const path = globalThis.location?.pathname || "";
   const changed = options.navbar !== state.navbar || options.cards !== state.cards || root !== lastRoot || path !== lastPath;
-  if (!changed && !force) return;
+  if (!changed && !force) return state.navbar || state.cards;
   const leftRoot = lastRoot && lastRoot !== root ? lastRoot : null;
+  const prev = state;
   if ((options.navbar || options.cards) && !announced) {
     announced = true;
     console.info(`%c TH-THEME %c ${TH_THEME_VERSION} `, "background:#e8c37e;color:#111;font-weight:700", "background:#222;color:#fff");
@@ -109,15 +111,18 @@ function apply(screen, force = false) {
   state = options;
   lastRoot = root;
   lastPath = path;
+  // Styles only exist where the theme was on, so nothing is searched or removed on dashboards without the theme.
   if (leftRoot?.shadowRoot) {
-    setStyle(leftRoot.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, false);
-    eachNavbar(leftRoot.shadowRoot, syncNavbar);
+    if (prev.cards) setStyle(leftRoot.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, false);
+    if (prev.navbar) eachNavbar(leftRoot.shadowRoot, (el) => syncNavbar(el, false));
   }
-  if (!root?.shadowRoot) return;
-  setStyle(root.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, state.cards);
-  eachNavbar(root.shadowRoot, syncNavbar);
-  // Cards of a newly shown view render a moment later.
-  if (state.navbar && changed) [400, 1500, 4000].forEach((ms) => setTimeout(() => apply(lovelaceOnScreen(), true), ms));
+  if (root?.shadowRoot) {
+    if (state.cards || prev.cards) setStyle(root.shadowRoot, VIEW_STYLE_ID, TH_THEME_VIEW_CSS, state.cards);
+    if (state.navbar || prev.navbar) eachNavbar(root.shadowRoot, (el) => syncNavbar(el, state.navbar));
+    // Cards of a newly shown view render a moment later.
+    if (state.navbar && changed) [400, 1500, 4000].forEach((ms) => setTimeout(() => apply(lovelaceOnScreen(), true), ms));
+  }
+  return state.navbar || state.cards;
 }
 
 /** Starts the (inert) detector once; called when the bundle loads. */
