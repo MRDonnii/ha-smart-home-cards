@@ -1,0 +1,26 @@
+name: Hassfest (integrations)
+
+on:
+  push:
+    branches: [main]
+    paths: ["integrations/**", ".github/workflows/hassfest.yml"]
+  pull_request:
+    paths: ["integrations/**", ".github/workflows/hassfest.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lay out integrations as custom_components
+        run: |
+          mkdir -p custom_components
+          for d in integrations/*/; do
+            [ -f "$d/manifest.json" ] && cp -r "$d" custom_components/
+          done
+          ls custom_components
+      - uses: home-assistant/actions/hassfest@master

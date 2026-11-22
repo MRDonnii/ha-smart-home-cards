@@ -1,0 +1,249 @@
+import "./ha-card-list-editor.js";
+import { isNewLook } from "../../shared/look.js";
+import { keepScroll } from "../shared/keep-scroll.js";
+import { premiumHtml, premiumTick, PREMIUM_STYLE, daysAgo } from "./premium.js";
+
+// Calendar events the heat script made carry this word in their description; only those are replaced.
+const HEAT_MARK = "løbetidsknappen";
+
+const VERSION = "0.4.0";
+
+class HAPetCareCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = undefined;
+    this._signature = "";
+  }
+
+  static getStubConfig() {
+    return { title: "Kæledyrspleje", pet_name: "Kæledyr", icon: "mdi:dog-side", meals: [] };
+  }
+
+  static getConfigElement() {
+    const editor = document.createElement("ha-card-list-editor");
+    editor.definition = {
+      roots: [
+        { key: "title", label: "Titel" }, { key: "pet_name", label: "Kæledyrsnavn" },
+        { key: "icon", label: "Ikon" }, { key: "animation", label: "Animation", type: "boolean" },
+        { key: "water", label: "Vandstatus", type: "entity" }, { key: "water_battery", label: "Vandsensor batteri", type: "entity" },
+        { key: "feeder_mode", label: "Fodermode", type: "entity" }, { key: "daily_amount", label: "Daglig mængde", type: "entity" },
+        { key: "feeder_error", label: "Foderfejl", type: "entity" }, { key: "container_grams", label: "Beholder gram", type: "entity" },
+        { key: "container_percent", label: "Beholder procent", type: "entity" }, { key: "refill_action", label: "Genopfyld handling", type: "entity" },
+        { key: "style", label: "Udseende: new (premium) eller classic" }, { key: "style_entity", label: "Skifteknap for udseende (input_boolean: til = premium)", type: "entity" },
+        { key: "heat_sensor", label: "Løbetid: sensor (premium)", type: "entity" }, { key: "heat_start", label: "Løbetid: startdato (input_datetime)", type: "entity" },
+        { key: "heat_script", label: "Løbetid: script der registrerer starten", type: "entity" }, { key: "heat_calendar", label: "Løbetid: kalender", type: "entity" }
+      ],
+      collections: [{
+        key: "meals", label: "Måltider", itemLabel: "måltid", defaults: { name: "Nyt måltid", time: "12:00", icon: "mdi:bowl-mix" },
+        fields: [
+          { key: "name", label: "Navn" }, { key: "time", label: "Tid" }, { key: "icon", label: "Ikon" },
+          { key: "enabled", label: "Aktiv", type: "entity" }, { key: "status", label: "Status", type: "entity" },
+          { key: "feed_action", label: "Giv nu handling", type: "entity" },
+          { key: "skip", label: "Spring over i dag", type: "entity" }
+        ]
+      }]
+    };
+    return editor;
+  }
+
+  setConfig(config) {
+    if (!config) throw new Error("Kæledyrskortet kræver en konfiguration");
+    this._config = { title: "Kæledyrspleje", pet_name: "Kæledyr", icon: "mdi:dog-side", animation: true, meals: [], ...config };
+    // The heat cycle for the premium look: `heat: {sensor, start, script, calendar, duration}` or the flat heat_* keys.
+    const heat = config.heat || {};
+    const flat = { sensor: config.heat_sensor, start: config.heat_start, script: config.heat_script, calendar: config.heat_calendar, duration: config.heat_duration };
+    this._config.heat = Object.fromEntries(Object.entries({ ...flat, ...heat }).filter(([, v]) => v));
+    this._signature = "";
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    const ids = ["water", "water_battery", "feeder_mode", "daily_amount", "feeder_error", "container_grams", "container_percent", "refill_action", "style_entity"]
+      .map((key) => this._config[key]).concat(Object.values(this._config.heat || {})).concat((this._config.meals || []).flatMap((meal) => [meal.enabled, meal.status, meal.feed_action, meal.skip])).filter(Boolean);
+    const signature = JSON.stringify(ids.map((id) => [id, hass?.states?.[id]?.state, hass?.states?.[id]?.last_updated]));
+    if (signature === this._signature) return;
+    this._signature = signature;
+    this._render();
+  }
+
+  connectedCallback() {
+    // The premium look's clock: the now marker and the countdown move each minute without a redraw.
+    clearInterval(this._tick);
+    this._tick = setInterval(() => { if (this._premium) premiumTick(this.shadowRoot, this); }, 60000);
+  }
+  disconnectedCallback() { clearInterval(this._tick); this._tick = null; }
+
+  getCardSize() { return 7; }
+  getGridOptions() { return { rows: "auto", columns: 12, min_columns: 6 }; }
+  _entity(id) { return id ? this._hass?.states?.[id] : undefined; }
+  _state(id) { return this._entity(id)?.state; }
+  _on(id) { return this._state(id) === "on"; }
+  _number(id) { const value = Number(this._state(id)); return Number.isFinite(value) ? value : undefined; }
+  _escape(value) { return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
+  _format(value, digits = 0) { return Number.isFinite(value) ? value.toLocaleString(this._hass?.locale?.language || "da", { maximumFractionDigits: digits, minimumFractionDigits: digits }) : "—"; }
+  _status(value) {
+    const map = { done: ["Uddelt", "done"], pending: ["Afventer", "pending"], missed: ["Misset", "danger"] };
+    return map[value] || [value && !["unknown", "unavailable"].includes(value) ? value : "Ukendt", "muted"];
+  }
+  _waterOk() { return this._on(this._config.water); }
+  _error() { return this._on(this._config.feeder_error); }
+  _showMore(id) { if (!id) return; this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: id }, bubbles: true, composed: true })); }
+  async _toggle(id) { if (!id || !this._hass) return; const domain = id.split(".")[0]; await this._hass.callService(domain, "toggle", { entity_id: id }); }
+  async _mode() {
+    const id = this._config.feeder_mode; if (!id || !this._hass) return;
+    const next = this._state(id) === "schedule" ? "manual" : "schedule";
+    await this._hass.callService("select", "select_option", { entity_id: id, option: next });
+  }
+  async _script(id, message) {
+    if (!id || !this._hass || !window.confirm(message)) return;
+    await this._hass.callService("script", "turn_on", { entity_id: id });
+  }
+  async _skip(id, name, skipped) {
+    if (!id || !this._hass) return;
+    const message = skipped
+      ? `Vil du sætte ${name || "måltidet"} tilbage på planen i dag?`
+      : `Vil du springe ${name || "måltidet"} over i dag? Det kommer automatisk med igen i morgen.`;
+    if (!window.confirm(message)) return;
+    await this._hass.callService("input_boolean", skipped ? "turn_off" : "turn_on", { entity_id: id });
+  }
+  _renderPremium() {
+    if (!this._hass) return;
+    this.shadowRoot.innerHTML = `<style>${PREMIUM_STYLE}</style>${premiumHtml(this)}`;
+    this._ppIntro = true;
+    this._wire();
+    const root = this.shadowRoot;
+    const form = (patch) => { this._heatForm = patch && { ...this._heatForm, error: "", ...patch }; this._render(); };
+    root.querySelector("[data-heatform]")?.addEventListener("click", () => {
+      const start = this._state(this._config.heat?.start) || "";
+      const inHeat = !!root.querySelector(".pp-heat.active");
+      form({ value: inHeat && /^\d{4}-\d{2}-\d{2}/.test(start) ? start.slice(0, 10) : daysAgo(0) });
+    });
+    root.querySelectorAll("[data-hday]").forEach((b) => b.addEventListener("click", () => form({ value: daysAgo(Number(b.dataset.hday)) })));
+    root.querySelector("[data-hdate]")?.addEventListener("change", (e) => form({ value: e.target.value }));
+    root.querySelector("[data-hcancel]")?.addEventListener("click", () => form(null));
+    root.querySelector("[data-hsave]")?.addEventListener("click", () => this._heatSave());
+  }
+  /** Registers the first day of a heat: replaces the script's events that the new date makes wrong, then runs the script. */
+  async _heatSave() {
+    const heat = this._config.heat || {}; const day = this._heatForm?.value || "";
+    if (!heat.script || !this._hass) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day > daysAgo(0)) { this._heatForm = { ...this._heatForm, error: "Vælg en dag, der ikke ligger i fremtiden." }; this._render(); return; }
+    this._heatForm = { ...this._heatForm, busy: true, error: "" }; this._render();
+    try {
+      if (heat.calendar) await this._heatClearCalendar(heat, day);
+      await this._hass.callService("script", "turn_on", { entity_id: heat.script, variables: { dato: day } });
+      this._heatForm = null;
+    } catch (err) {
+      this._heatForm = { ...this._heatForm, busy: false, error: `Det lykkedes ikke: ${err?.message || err}` };
+    }
+    this._render();
+  }
+  /** Within the current heat (a correction) its events and the forecast go; a new heat keeps the last one as history
+   *  and only replaces the forecast made from it. Only events with HEAT_MARK in the description are touched. */
+  async _heatClearCalendar(heat, day) {
+    const old = (this._state(heat.start) || "").slice(0, 10);
+    const sensor = this._entity(heat.sensor);
+    const length = this._number(heat.duration) ?? (Number(/af ca\. (\d+)/.exec(sensor?.state || "")?.[1]) || Number(sensor?.attributes?.varighed) || 21);
+    const shift = (iso, n) => { const d = new Date(`${iso}T12:00:00`); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+    const from = !/^\d{4}-\d{2}-\d{2}$/.test(old) ? day : day <= shift(old, length) ? (day < old ? day : old) : shift(old, length);
+    const events = await this._hass.callApi("GET", `calendars/${heat.calendar}?start=${shift(from, -1)}T00:00:00Z&end=${shift(from, 500)}T00:00:00Z`);
+    for (const ev of events || []) {
+      const begins = String(ev.start?.date || ev.start?.dateTime || ev.start || "").slice(0, 10);
+      if (!ev.uid || begins < from || !String(ev.description || "").includes(HEAT_MARK)) continue;
+      await this._hass.callWS({ type: "calendar/event/delete", entity_id: heat.calendar, uid: ev.uid, ...(ev.recurrence_id ? { recurrence_id: ev.recurrence_id } : {}) });
+    }
+  }
+  _wire() {
+    const root = this.shadowRoot;
+    root.querySelectorAll("[data-info]").forEach((el) => el.addEventListener("click", () => this._showMore(el.dataset.info)));
+    root.querySelector("[data-mode]")?.addEventListener("click", () => this._mode());
+    root.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => this._toggle(button.dataset.toggle)));
+    root.querySelectorAll("[data-feed]").forEach((button) => button.addEventListener("click", () => this._script(button.dataset.feed, `Vil du give ${button.dataset.name || "måltidet"} nu?`)));
+    root.querySelectorAll("[data-skip]").forEach((button) => button.addEventListener("click", () => this._skip(button.dataset.skip, button.dataset.name, button.dataset.skipped === "true")));
+    root.querySelector("[data-refill]")?.addEventListener("click", () => this._script(this._config.refill_action, "Er foderbeholderen fyldt op og skal tælleren nulstilles?"));
+  }
+  _meal(meal, index) {
+    const skipped = this._on(meal.skip);
+    const [label, tone] = skipped ? ["Sprunget over", "skipped"] : this._status(this._state(meal.status));
+    const enabled = this._on(meal.enabled);
+    return `<article class="meal ${tone} ${enabled ? "enabled" : "disabled"}" style="--delay:${index * 65}ms">
+      <div class="meal-head"><span class="meal-icon"><ha-icon icon="${this._escape(meal.icon || "mdi:bowl-mix")}"></ha-icon></span><div><span>${this._escape(meal.time || "—")}</span><h3>${this._escape(meal.name || `Måltid ${index + 1}`)}</h3></div><button class="switch" data-toggle="${this._escape(meal.enabled)}" aria-label="Slå ${this._escape(meal.name)} til eller fra"><i></i></button></div>
+      <div class="meal-status"><span><i></i>${this._escape(label)}</span><strong>${skipped ? "Kun i dag" : enabled ? "Planlagt" : "Deaktiveret"}</strong></div>
+      <div class="meal-actions"><button class="skip" data-skip="${this._escape(meal.skip)}" data-name="${this._escape(meal.name)}" data-skipped="${skipped}"><ha-icon icon="${skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${skipped ? "Fortryd" : "Spring over"}</button><button class="feed" data-feed="${this._escape(meal.feed_action)}" data-name="${this._escape(meal.name)}"><ha-icon icon="mdi:silverware-fork-knife"></ha-icon>Giv nu</button></div>
+    </article>`;
+  }
+  _render() {
+    // Premium look (Claude AI, 2026-10-29): `style: new` or `style_entity` on. The classic look below is unchanged.
+    this._premium = isNewLook(this._hass, this._config);
+    if (this._premium) return keepScroll(this, () => this._renderPremium());
+    const meals = this._config.meals || [];
+    const percent = Math.max(0, Math.min(100, this._number(this._config.container_percent) ?? 0));
+    const grams = this._number(this._config.container_grams);
+    const daily = this._number(this._config.daily_amount);
+    const mode = this._state(this._config.feeder_mode);
+    const water = this._waterOk();
+    const error = this._error();
+    const scheduledMeals = meals.filter((meal) => this._on(meal.enabled) && !this._on(meal.skip));
+    const completed = scheduledMeals.filter((meal) => this._state(meal.status) === "done").length;
+    const skipped = meals.filter((meal) => this._on(meal.skip)).length;
+    const next = scheduledMeals.find((meal) => this._state(meal.status) === "pending");
+    const levelTone = percent <= 10 ? "danger" : percent <= 30 ? "warning" : "good";
+    const noAnimation = this._config.animation === false ? "no-animation" : "";
+    this.shadowRoot.innerHTML = `<style>
+      :host{display:block;--pet-accent:var(--dashboard-accent,#62b5ff);--pet-good:var(--dashboard-success,#54d9aa);--pet-warning:var(--dashboard-warning,#ffbd59);--pet-danger:var(--dashboard-danger,#ff667a);--pet-muted:var(--dashboard-icon-muted,#8390a2);--pet-edge:var(--dashboard-border-neutral,rgba(255,255,255,.11));--pet-surface:var(--surface,var(--ha-card-background,#142131))}*{box-sizing:border-box}button{font:inherit}ha-card{overflow:hidden;border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--pet-edge));border-radius:28px;background:linear-gradient(145deg,color-mix(in srgb,var(--pet-surface) 96%,var(--pet-accent) 4%),var(--pet-surface));color:var(--primary-text-color);box-shadow:var(--dashboard-shadow-deep,var(--ha-card-box-shadow));}.shell{position:relative;padding:24px;isolation:isolate}.ambient{position:absolute;inset:-20%;z-index:-1;pointer-events:none;background:radial-gradient(circle at 4% 0,color-mix(in srgb,var(--pet-accent) 16%,transparent),transparent 27%),radial-gradient(circle at 95% 15%,color-mix(in srgb,var(--pet-good) 10%,transparent),transparent 25%)}
+      header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--pet-accent);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.eyebrow i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor;animation:pulse 2.4s ease-in-out infinite}h2{margin:6px 0 2px;font-size:clamp(25px,3vw,36px);letter-spacing:-.045em}.subtitle{color:var(--secondary-text-color);font-size:12px}.summary{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.summary>div{min-width:92px;padding:10px 13px;border:1px solid var(--pet-edge);border-radius:14px;background:color-mix(in srgb,var(--pet-surface) 87%,transparent)}.summary span{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.summary strong{display:block;margin-top:3px;font-size:15px}.summary .danger strong{color:var(--pet-danger)}.summary .good strong{color:var(--pet-good)}
+      .dashboard{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,.65fr);gap:12px}.main,.feeder{min-width:0;padding:16px;border:1px solid var(--pet-edge);border-radius:21px;background:rgba(0,0,0,.055)}.care-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.care{display:flex;align-items:center;gap:11px;min-width:0;padding:12px;border:1px solid var(--pet-edge);border-radius:15px;background:rgba(255,255,255,.025);cursor:pointer}.care-icon{display:grid;place-items:center;position:relative;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--tone) 14%,transparent);color:var(--tone)}.care-icon ha-icon{width:24px;height:24px;--mdc-icon-size:24px}.water{--tone:var(--pet-good)}.water.low{--tone:var(--pet-warning)}.water.ok .care-icon:after{content:"";position:absolute;inset:5px;border-radius:50%;border:1px solid currentColor;opacity:.4;animation:ripple 2s ease-out infinite}.mode{--tone:var(--pet-accent)}.care span{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;text-transform:uppercase}.care strong{display:block;overflow:hidden;margin-top:3px;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.care small{display:block;margin-top:2px;color:var(--secondary-text-color);font-size:8px}
+      .section-title{display:flex;align-items:end;justify-content:space-between;margin:5px 2px 9px}.section-title span{color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.section-title strong{font-size:10px}.meals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:9px}.meal{--tone:var(--pet-muted);min-width:0;padding:12px;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--pet-edge));border-radius:16px;background:linear-gradient(150deg,color-mix(in srgb,var(--tone) 7%,transparent),rgba(0,0,0,.035));animation:rise .35s both;animation-delay:var(--delay)}.meal.done{--tone:var(--pet-good)}.meal.pending{--tone:var(--pet-accent)}.meal.danger{--tone:var(--pet-danger)}.meal.skipped{--tone:var(--pet-warning)}.meal.disabled{opacity:.66}.meal-head{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:8px}.meal-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--tone) 13%,transparent);color:var(--tone)}.meal-icon ha-icon{width:20px;height:20px;--mdc-icon-size:20px}.meal-head div>span{display:block;color:var(--tone);font-size:9px;font-weight:800}.meal h3{overflow:hidden;margin:2px 0 0;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.switch{position:relative;width:31px;height:18px;padding:0;border:1px solid var(--pet-edge);border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer}.switch i{position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;background:var(--pet-muted);transition:.2s}.enabled .switch{background:color-mix(in srgb,var(--pet-good) 25%,transparent)}.enabled .switch i{left:16px;background:var(--pet-good);box-shadow:0 0 7px var(--pet-good)}.meal-status{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:11px 0 9px;color:var(--secondary-text-color);font-size:8px}.meal-status span{display:flex;align-items:center;gap:5px;color:var(--tone);font-weight:800;text-transform:uppercase}.meal-status i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor}.meal-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.feed,.skip{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;min-height:34px;padding:0 6px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--pet-edge));border-radius:10px;background:color-mix(in srgb,var(--tone) 9%,transparent);color:var(--tone);font-size:8px;font-weight:800;cursor:pointer}.feed:hover,.skip:hover{background:color-mix(in srgb,var(--tone) 16%,transparent)}.feed ha-icon,.skip ha-icon{width:14px;height:14px;--mdc-icon-size:14px}
+      .feeder{display:flex;flex-direction:column}.feeder-head{display:flex;align-items:center;justify-content:space-between}.feeder-head span{color:var(--secondary-text-color);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.health{display:flex;align-items:center;gap:6px;color:var(--pet-good);font-size:8px;font-weight:800;text-transform:uppercase}.health.error{color:var(--pet-danger)}.health i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}.health.error i{animation:pulse 1.3s infinite}.tank-wrap{display:grid;grid-template-columns:86px 1fr;align-items:center;gap:14px;margin:18px 0}.tank{position:relative;width:78px;height:112px;margin:auto;border:2px solid color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 45%,var(--pet-edge));border-radius:17px 17px 24px 24px;overflow:hidden;background:rgba(0,0,0,.1)}.fill{position:absolute;right:0;bottom:0;left:0;height:${percent}%;background:linear-gradient(180deg,color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 68%,var(--pet-accent)),var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}));transition:height .8s ease}.fill:before{content:"";position:absolute;top:-5px;left:-10%;width:120%;height:10px;border-radius:50%;background:color-mix(in srgb,var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"}) 72%,white);animation:wave 3s ease-in-out infinite}.tank strong{position:absolute;inset:0;display:grid;place-items:center;z-index:1;font-size:20px;text-shadow:0 1px 5px rgba(0,0,0,.55)}.tank-data span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase}.tank-data strong{display:block;margin:3px 0 12px;font-size:14px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}.metric{padding:10px;border:1px solid var(--pet-edge);border-radius:12px;background:rgba(255,255,255,.025);cursor:pointer}.metric span{display:block;color:var(--secondary-text-color);font-size:7px;text-transform:uppercase}.metric strong{display:block;margin-top:4px;font-size:11px}.refill{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:39px;margin-top:9px;border:1px solid color-mix(in srgb,var(--pet-accent) 35%,var(--pet-edge));border-radius:12px;background:color-mix(in srgb,var(--pet-accent) 10%,transparent);color:var(--pet-accent);font-size:9px;font-weight:800;cursor:pointer}.refill ha-icon{width:17px;height:17px;--mdc-icon-size:17px}.no-animation *{animation:none!important;transition:none!important}
+      @keyframes pulse{50%{opacity:.45;transform:scale(1.35)}}@keyframes ripple{0%{transform:scale(.65);opacity:.6}100%{transform:scale(1.3);opacity:0}}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@keyframes wave{50%{transform:translateX(7%) rotate(2deg)}}@media(max-width:760px){.shell{padding:15px}header{display:block}.summary{justify-content:flex-start;margin-top:13px}.summary>div{flex:1}.dashboard{grid-template-columns:1fr}.care-row{grid-template-columns:1fr 1fr}.meals{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.tank-wrap{margin:12px 0}}@media(max-width:420px){.care-row{grid-template-columns:1fr}.summary>div{min-width:80px;padding:9px}.meal-head{grid-template-columns:32px minmax(0,1fr) auto}.meal-icon{width:32px;height:32px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+      /* Tiles use the same design as the front page status buttons (custom:ha-home-status-card):
+         accent edge, card surface, shadow, big value first, detail and label below and a large faint drifting icon.
+         Buttons, switches and the tank drawing keep their own look. */
+      .shell .summary>div,.shell .care,.shell .meal,.shell .metric{--tile-accent:var(--state-info-icon,var(--info-color,#38bdf8));position:relative;isolation:isolate;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;min-width:0;padding:10px 12px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--tile-accent) 78%,transparent);color:var(--gray800,var(--primary-text-color,#f8fafc));text-align:left}
+      .shell .summary>div{min-width:124px;min-height:85px;border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .care,.shell .meal,.shell .metric{border-radius:12px;background:color-mix(in srgb,var(--primary-text-color,#fff) 5%,var(--surface,var(--ha-card-background,var(--card-background-color,#172536))));box-shadow:0 4px 12px rgba(0,0,0,.14)}
+      .shell .summary>.good,.shell .water.ok{--tile-accent:var(--state-on-icon,var(--success-color,#20e3a2))}
+      .shell .summary>.danger{--tile-accent:var(--error-color,#ef4444)}
+      .shell .water.low{--tile-accent:var(--warning-color,#f59e0b)}
+      .shell .meal{--tile-accent:var(--tone);justify-content:flex-start}
+      .shell .metric:first-child{--tile-accent:var(--${levelTone === "good" ? "pet-good" : levelTone === "warning" ? "pet-warning" : "pet-danger"})}
+      .shell .metric:nth-child(2){--tile-accent:${error ? "var(--pet-danger)" : "var(--pet-good)"}}
+      .shell .summary>div>strong,.shell .care>div>strong,.shell .metric>strong,.shell .meal .meal-head div>span{order:1;position:relative;z-index:2;display:block;margin:0;overflow:visible;color:var(--gray800,var(--primary-text-color,#f8fafc));font-size:18px;font-weight:750;line-height:21px;letter-spacing:0;white-space:normal;text-overflow:clip}
+      .shell .care>div>small,.shell .meal .meal-status{order:3;position:relative;z-index:2;margin:0;padding-right:35px;color:var(--gray600,var(--secondary-text-color,#a7b2c2));font-size:11px;font-weight:400;line-height:14px}
+      .shell .summary>div>span,.shell .care>div>span,.shell .metric>span,.shell .meal h3{order:4;position:relative;z-index:2;display:block;margin:0;padding-right:35px;overflow:visible;color:var(--gray700,var(--secondary-text-color,#cbd5e1));font-size:11px;font-weight:700;line-height:14px;letter-spacing:0;text-transform:none;white-space:normal;text-overflow:clip}
+      .shell .care{display:block}.shell .care>div{position:relative;z-index:2;display:flex;flex-direction:column;min-width:0}
+      .shell .meal-head,.shell .meal-head>div{display:contents}
+      .shell .meal .meal-head div>span{padding-right:44px}
+      .shell .meal .switch{position:absolute;top:11px;right:12px;z-index:3}
+      .shell .meal .meal-status{padding-right:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:0 6px;margin-top:1px}
+      .shell .meal .meal-status span{color:inherit;font-weight:400;text-transform:none}.shell .meal .meal-status i{color:var(--tone)}
+      .shell .meal .meal-status strong{font-weight:400}.shell .meal .meal-status strong:before{content:"·";margin-right:6px}
+      .shell .meal h3{margin-top:1px}
+      .shell .meal .meal-actions{order:5;position:relative;z-index:2;margin-top:10px}
+      .shell .tile-icon,.shell .care .care-icon,.shell .meal .meal-icon{position:absolute;right:-10px;bottom:-10px;left:auto;top:auto;z-index:1;display:block;flex:none;width:58px;height:58px;--mdc-icon-size:58px;border-radius:0;background:none;color:var(--tile-accent);opacity:.12;pointer-events:none;animation:petTileDrift 5s ease-in-out infinite}
+      .shell .care .care-icon ha-icon,.shell .meal .meal-icon ha-icon{width:58px;height:58px;--mdc-icon-size:58px}
+      @keyframes petTileDrift{50%{transform:translate(-4px,-3px) scale(1.04) rotate(-4deg);opacity:.22}}
+      @media(prefers-reduced-motion:reduce){.shell .tile-icon,.shell .care .care-icon,.shell .meal .meal-icon{animation:none}}
+      @media(max-width:600px){.shell .summary>div,.shell .care,.shell .meal,.shell .metric{padding:9px}.shell .summary>div{min-width:0}.shell .summary>div>strong,.shell .care>div>strong,.shell .metric>strong,.shell .meal .meal-head div>span{font-size:16px;line-height:19px}.shell .care>div>small,.shell .meal .meal-status,.shell .summary>div>span,.shell .care>div>span,.shell .metric>span,.shell .meal h3{font-size:10px;line-height:13px}.shell .meal .switch{top:9px;right:9px}}
+      /* Free layout like the front page and the settings page: no card surface, no glow and no
+         framed panels. Water, plan and each meal are tiles of their own; the food container is
+         one tile with its gauges inside. */
+      ha-card{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}
+      .ambient{display:none}
+      .shell{padding:0}
+      .shell .main{padding:0;border:0;border-radius:0;background:none}
+      .shell .care,.shell .meal{border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .feeder{position:relative;isolation:isolate;padding:14px;border:0;border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pet-accent);border-radius:15px;background:var(--surface,var(--ha-card-background,var(--card-background-color,#172536)));box-shadow:var(--dashboard-shadow-strong,var(--ha-card-box-shadow,0 8px 22px rgba(0,0,0,.22)))}
+      .shell .section-title{margin:14px 2px 9px}
+    </style><ha-card class="${noAnimation}"><div class="shell"><div class="ambient"></div><header><div><div class="eyebrow"><i></i>${this._escape(this._config.title)}</div><h2>${this._escape(this._config.pet_name)}</h2><div class="subtitle">Vand, måltider og foder samlet ét sted</div></div><div class="summary"><div class="${water ? "good" : "danger"}"><span>Vand</span><strong>${water ? "Klar" : "Fyld op"}</strong><ha-icon class="tile-icon" icon="mdi:water"></ha-icon></div><div><span>I dag</span><strong>${completed} / ${scheduledMeals.length}${skipped ? ` · ${skipped} sprunget` : ""}</strong><ha-icon class="tile-icon" icon="mdi:calendar-check"></ha-icon></div><div class="${error ? "danger" : "good"}"><span>Foderautomat</span><strong>${error ? "Fejl" : "Klar"}</strong><ha-icon class="tile-icon" icon="mdi:bowl-mix"></ha-icon></div></div></header><div class="dashboard"><section class="main"><div class="care-row"><div class="care water ${water ? "ok" : "low"}" data-info="${this._escape(this._config.water)}"><span class="care-icon"><ha-icon icon="mdi:water"></ha-icon></span><div><span>Vandskål</span><strong>${water ? "Der er vand" : "Skal fyldes"}</strong><small>${this._config.water_battery ? `Sensorbatteri ${this._format(this._number(this._config.water_battery))}%` : "Tryk for detaljer"}</small></div></div><div class="care mode" data-mode><span class="care-icon"><ha-icon icon="${mode === "schedule" ? "mdi:calendar-clock" : "mdi:gesture-tap-button"}"></ha-icon></span><div><span>Fodertilstand</span><strong>${mode === "schedule" ? "Automatisk plan" : "Manuel styring"}</strong><small>Tryk for at skifte</small></div></div></div><div class="section-title"><span>Dagens måltider</span><strong>${next ? `Næste: ${this._escape(next.name)} ${this._escape(next.time)}` : "Dagens plan er afsluttet"}</strong></div><div class="meals">${meals.map((meal, index) => this._meal(meal, index)).join("")}</div></section><aside class="feeder"><div class="feeder-head"><span>Foderbeholder</span><div class="health ${error ? "error" : ""}"><i></i>${error ? "Kræver tilsyn" : "System OK"}</div></div><div class="tank-wrap"><div class="tank"><div class="fill"></div><strong>${this._format(percent)}%</strong></div><div class="tank-data"><span>Resterende</span><strong>${this._format(grams)} g</strong><span>Daglig portion</span><strong>${this._format(daily)} g</strong></div></div><div class="metric-grid"><div class="metric" data-info="${this._escape(this._config.container_percent)}"><span>Kapacitet</span><strong>${levelTone === "danger" ? "Kritisk lav" : levelTone === "warning" ? "Snart tom" : "Godt niveau"}</strong><ha-icon class="tile-icon" icon="mdi:gauge"></ha-icon></div><div class="metric" data-info="${this._escape(this._config.feeder_error)}"><span>Kontrol</span><strong>${error ? "Fejl fundet" : "Ingen fejl"}</strong><ha-icon class="tile-icon" icon="mdi:shield-check-outline"></ha-icon></div></div><button class="refill" data-refill><ha-icon icon="mdi:reload"></ha-icon>Nulstil efter opfyldning</button></aside></div></div></ha-card>`;
+    this._wire();
+  }
+}
+
+if (!customElements.get("ha-pet-care-card")) customElements.define("ha-pet-care-card", HAPetCareCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-pet-care-card", name: "HA Pet Care Card", description: "Samlet kæledyrs-, vand- og foderoversigt", preview: true });
+console.info(`%c HA PET CARE CARD %c v${VERSION} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");

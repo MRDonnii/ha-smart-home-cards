@@ -1,0 +1,1 @@
+{"name":"ha-power-flow-card","version":"0.5.1","description":"Home Assistant Lovelace custom card","license":"PolyForm-Noncommercial-1.0.0","scripts":{"check":"node --check ha-power-flow-card.js"}}

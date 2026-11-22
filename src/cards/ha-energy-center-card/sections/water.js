@@ -1,0 +1,89 @@
+import { Section } from "./base.js";
+import { HistoryPanel } from "../components/history.js";
+import { tile } from "./heat.js";
+import { escapeHtml, fmt, fmtVolume, icon } from "../utils/format.js";
+
+const TODAY_KEYS = [["water_total", "volume"]];
+
+export class WaterSection extends Section {
+  constructor(card) {
+    super(card);
+    this.panels = [
+      new HistoryPanel(card, { key: "wt-hist", title: "Vandforbrug", icon: "mdi:chart-bar", tone: "water", stat: "water_total", kind: "volume", periods: ["day", "week", "month", "year"], period: "day" }),
+    ];
+  }
+
+  ids() {
+    return ["water_flow", "water_price", "water_cost_today", ...TODAY_KEYS.map(([k]) => k)].map((k) => this.card.id(k)).filter(Boolean);
+  }
+
+  html() {
+    const c = this.card;
+    return `
+<div class="layout">
+  <section class="card utility tone-water a-full">
+    <div class="hero-head"><div class="card-head">${icon("mdi:water")}<div><h3>Vand</h3><small data-ref="sub">Vandmåler · live</small></div></div><span class="live" data-ref="live"><i></i>Live</span></div>
+    <div class="util-body" data-ref="body">
+      <div class="util-main clickable" data-entity="${escapeHtml(c.id("water_flow") || "")}" tabindex="0" role="button" data-ref="main">
+        <small>Flow lige nu</small>
+        <div class="mega num"><b data-ref="flowV">—</b><small>L/min</small></div>
+        <span class="status" data-ref="status">—</span>
+        ${icon("mdi:water", "tile-ic")}
+      </div>
+      <div class="tiles" data-ref="tiles">
+        ${tile("today", "Forbrug i dag", c.id("water_total"), "mdi:water-outline")}
+        ${tile("cost", "Pris i dag", c.id("water_cost_today"), "mdi:cash")}
+        ${tile("price", "Pris pr. m³", c.id("water_price"), "mdi:tag-outline")}
+      </div>
+    </div>
+  </section>
+  ${this.panels[0].html("a-full tall")}
+</div>`;
+  }
+
+  /** Without a flow sensor there is no live box, badge or "live" subtitle; tiles without entities are hidden. */
+  _arrange() {
+    const c = this.card;
+    if (!this.setupChanged(["water_flow", "water_total", "water_cost_today", "water_price"])) return;
+    const live = c.has("water_flow");
+    this.show("main", live);
+    this.show("live", live);
+    this.show("sub", live);
+    const tiles = this.fit("tiles", [["todayTile", c.has("water_total")], ["costTile", c.has("water_cost_today")], ["priceTile", c.has("water_price")]]);
+    this.show("tiles", tiles > 0);
+    this.refs.body?.classList.toggle("solo", !live);
+    this.show("body", live || tiles > 0);
+    this.show(this.panels[0].el, c.has(this.panels[0].o.stat));
+  }
+
+  shown() {
+    super.shown();
+    this.card.loadToday(TODAY_KEYS, () => this._updateToday());
+  }
+
+  hourTick() {
+    super.hourTick();
+    this.card.loadToday(TODAY_KEYS, () => this._updateToday());
+  }
+
+  update() {
+    const c = this.card;
+    this._arrange();
+    const lpm = c.flowLpm("water_flow");
+    this.text("flowV", Number.isFinite(lpm) ? fmt(lpm, lpm < 10 ? 1 : 0) : "—", true);
+    const st = c.waterFlowState(lpm);
+    this.text("status", st.label);
+    this.tone("status", st.tone);
+    const cost = c.num("water_cost_today");
+    this.text("costV", Number.isFinite(cost) ? fmt(cost, 2) : "—");
+    this.text("costU", "kr");
+    const price = c.num("water_price");
+    this.text("priceV", Number.isFinite(price) ? fmt(price, 2) : "—");
+    this.text("priceU", "kr/m³");
+    this._updateToday();
+  }
+
+  _updateToday() {
+    this.value("today", fmtVolume(this.card.today("water_total", "volume")));
+  }
+}

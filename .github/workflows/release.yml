@@ -1,0 +1,71 @@
+name: Release bundle
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            SHOULD_RELEASE=true
+          else
+            VERSION="$(node -p "require('./package.json').version")"
+            TAG="v${VERSION}"
+            if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+              SHOULD_RELEASE=false
+            else
+              SHOULD_RELEASE=true
+            fi
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "should_release=${SHOULD_RELEASE}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.meta.outputs.should_release == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+        if: steps.meta.outputs.should_release == 'true'
+
+      - run: npm test
+        if: steps.meta.outputs.should_release == 'true'
+
+      # HACS installs the committed dist/ at the tag, so it must be exactly what the build produces.
+      - run: git diff --exit-code -- dist
+        if: steps.meta.outputs.should_release == 'true'
+
+      - name: Create version tag
+        if: steps.meta.outputs.should_release == 'true' && github.ref_type != 'tag'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.meta.outputs.tag }}" "$GITHUB_SHA"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      # No release asset on purpose (Claude AI, 2026-10-24): HACS downloads a release asset through github.com, whose
+      # redirect carries a CSP header longer than Home Assistant's aiohttp accepts (8190 bytes) – every install failed.
+      # Without an asset HACS takes dist/ha-smart-home-cards.js at the tag from raw.githubusercontent.com instead.
+      - uses: softprops/action-gh-release@v2
+        if: steps.meta.outputs.should_release == 'true'
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true

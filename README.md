@@ -1,0 +1,263 @@
+# MRDonnii Smart Home Cards
+
+One organized Home Assistant card collection instead of dozens of separate HACS installations.
+
+The collection keeps every card as an independent source module, but publishes one tested JavaScript bundle and one HACS update. Existing custom element names and Lovelace YAML remain unchanged.
+
+## Status
+
+This repository is the single, canonical home for all cards. New cards are developed, committed, pushed and released here — never as new standalone repositories. The old standalone card repositories are archived migration history and receive no new development. Do not remove an existing standalone HACS installation until the corresponding card is confirmed here.
+
+
+## New or classic look (all cards with two looks)
+
+Cards that have a new and a classic look can switch between them the same way:
+
+| Card | Choice in the card editor | Helper switch (input_boolean, on = new, off = classic) |
+|---|---|---|
+| `ha-home-status-card` | `style: new / classic` | `style_entity` |
+| `ha-person-overview-card` | `style: new / classic` | `style_entity` |
+| `ha-tesla-glance-card` | `style: new / classic` | `style_entity` |
+| `ha-home-summary-card` (room tiles) | `room_tiles: premium / new / classic` | `room_tiles_entity` (input_boolean on = new, or an input_select with Premium / Nye / Klassiske) |
+| `th-electricity-price-card` (new) / `ha-electricity-price-card` (classic, configured under `classic:`) | `style: new / classic` | `style_entity` (or `switch_entity`) |
+| `ha-room-climate-card` (new = premium: glass tiles, thermostat dial, Udendørs with the day's weather) | `style: new / classic` | `style_entity` |
+
+`ha-room-climate-card`'s premium Udendørs room takes optional `weather` (a `weather.*` entity with an hourly forecast),
+`observed` (text sensor for the observed weather), `rain_today` and `degree_days`; sunrise and sunset come from the home
+location. It also gets the light, buttons and Styring of the rooms page's outdoor room (`controls_room`, default "Udenfor").
+
+Premium room tiles (front page) and the premium measuring points in `ha-room-climate-card` judge rooms without a thermostat by
+their kind (`src/cards/shared/comfort.js`): bedroom 16–19 °C, bathroom 22–26 °C, WC 19–23 °C, utility rooms 17–24 °C, others
+20–23 °C, humidity 40–60 % (bathroom up to 70 %), CO₂ from the air-quality limits. Override per room with `comfort_min`,
+`comfort_max`, `humidity_min`, `humidity_max` or `comfort_profile` (e.g. "sove").
+
+Without a helper the editor's choice applies. With a helper (e.g. `input_boolean.dashboard_nye_statuskort`, created under
+Settings → Devices & services → Helpers → Toggle) the helper decides as long as it exists, so a button in a settings page
+can switch every card at once.
+
+## Screenshots
+
+Rendered from the neutral demo dashboard used for compatibility testing — animated synthetic camera feeds and placeholder names only, no household data. The mobile preview is captured at the iPhone 17 Pro logical viewport (402 × 874) with Home Assistant Companion page zoom set to 75%.
+
+| Desktop | Mobile |
+|---|---|
+| ![Animated desktop dashboard preview](docs/screenshots/dashboard-pc-animated.gif) | ![Animated iPhone 17 Pro dashboard preview](docs/screenshots/dashboard-iphone-17-pro.gif) |
+
+### Tesla dashboard
+
+The full Tesla page (`custom:th-tesla-dashboard-card`) with example data. The car images and the complete view YAML are in the [card's README](src/cards/th-tesla-dashboard-card#hele-tesla-siden).
+
+| Desktop | Mobile |
+|---|---|
+| ![Tesla dashboard on desktop](docs/screenshots/tesla-dashboard-desktop.webp) | <img src="docs/screenshots/tesla-dashboard-mobile.webp" alt="Tesla dashboard on mobile" width="260"> |
+
+### Tesla glance
+
+A small front page card for one car (`custom:ha-tesla-glance-card`): battery, range, charging and consumption. See the [card's README](src/cards/ha-tesla-glance-card).
+
+Tyre sets from EV Ledger 0.7+ (`custom:ha-ev-tyre-card`, `entity: sensor.<car>_tyres`): which set is on the car, tyre and rim size, use per set and season, the sets compared at the same outside temperature, tread wear and a change reminder; change tyres, log tread depth and add sets in the card. The Tesla dashboard card shows it as its own panel (`tyres: false` hides it). See the [card's README](src/cards/ha-ev-tyre-card).
+
+![Tesla glance card, parked and charging](docs/screenshots/tesla-glance-card.webp)
+
+## Install with HACS
+
+1. Open HACS.
+2. Add `https://github.com/MRDonnii/ha-smart-home-cards` as a custom Dashboard repository.
+3. Install **MRDonnii Smart Home Cards**.
+4. Reload the browser.
+
+HACS adds the bundled resource `ha-smart-home-cards.js`. Do not load a standalone resource for the same card at the same time after migration.
+
+## Card catalog
+
+The generated [catalog](docs/CARDS.md) groups all cards by purpose. Entries for cards migrated from standalone repositories still link to the archived original repositories for detailed configuration examples.
+
+Recent additions include the Tesla glance card, the Tesla dashboard, TTS center, light automation, family calendar, waste journey and battery status cards. The Home Status module also provides `custom:ha-home-desktop-layout-card` for separate desktop, mobile and portrait compositions.
+
+### Room Overview V2
+
+`custom:ha-home-room-overview-card-v2` is the new compact room overview. Each room keeps only temperature, humidity, one status line and a single room-light action visible. Pressing the room opens a solid, lightly blurred control dialog for climate, covers, media, openings and optional extra entities. An existing Bubble Card room popup can remain linked as the advanced fallback.
+
+V2 uses a separate custom-element name, so it can be tested next to the original room card without replacing it. State updates change existing nodes in place and do not rebuild open dialogs or restart their contents.
+
+```yaml
+type: custom:ha-home-room-overview-card-v2
+title: All rooms
+desktop_columns: 4
+rooms:
+  - name: Living room
+    icon: mdi:sofa-outline
+    temperature: sensor.living_room_temperature
+    humidity: sensor.living_room_humidity
+    light: light.living_room
+    presence: binary_sensor.living_room_presence
+    opening: binary_sensor.living_room_window
+    climate: climate.living_room
+    cover: cover.living_room
+    media_player: media_player.living_room
+    extra_entities: switch.living_room_air_cleaner
+    popup: '#living-room'
+```
+
+## Repository layout
+
+```text
+src/cards/<card>/   Independent card source and local assets
+src/index.js        Generated bundle entry
+scripts/            Build and validation
+docs/CARDS.md       Searchable card catalog
+dist/               Generated HACS bundle, not committed
+```
+
+## Development
+
+```bash
+npm ci
+npm test
+```
+
+## Adding a new card
+
+Always create new cards inside this repository:
+
+1. Create `src/cards/<card-name>/` with the card source and local assets.
+2. Register the card in `cards.json` (slug, name, filename, category).
+3. Run `npm test` to regenerate the bundle entry and validate.
+4. Commit, push to `main` and publish a release from this repository.
+
+Never create a new standalone `ha-*-card` repository on GitHub, and never push new card development to the archived standalone repositories.
+
+## Compatibility promise
+
+- Existing `custom:...` card types stay unchanged.
+- Existing Lovelace configuration remains valid.
+- Cards remain separated internally and can be maintained independently.
+- The old standalone repositories are archived migration history; all new development and releases happen here.
+
+## Music card: a music app for Music Assistant
+
+`custom:ha-music-card` is a full music app for [Music Assistant](https://music-assistant.io) inside Home Assistant, in the
+style of Spotify and the Music Assistant web app (Danish UI): home with recently played, your playlists, radio and
+recommendations; library pages with infinite scroll, sort, filter and favourites; search with a best result; detail pages for
+albums, playlists, artists and podcasts; a queue you can edit; and a speakers panel where you pick the speaker the card
+controls, add other speakers to its group, set each volume or the group volume, and move the music to another speaker.
+Wide cards get a sidebar, a now-playing bar and a side panel; phones get bottom tabs, a mini player and a full-screen player.
+
+```yaml
+type: custom:ha-music-card
+entities:                      # empty or left out = every Music Assistant player
+  - media_player.living_room
+  - entity_id: media_player.kids
+    name: Kids
+    icon: mdi:speaker-multiple
+ma_url: https://music.example.com   # Music Assistant as the browser can reach it (album art through its image proxy)
+default_player: media_player.living_room
+fill_height: true              # card height = screen height minus top position and bottom_offset
+bottom_offset: 110             # room for a floating bottom navbar
+```
+
+Requirements: the `music_assistant` integration. Track lists, the full queue, recommendations and favourites use the
+[`mass_queue`](https://github.com/droans/mass_queue) custom integration (services only); without it the card still browses,
+searches, plays and groups, but album/playlist pages show no tracks and the queue shows only the current and next item.
+Grouping uses `media_player.join`/`unjoin` and is offered only for players that support it. Options: `config_entry_id`
+(when there is more than one Music Assistant), `ma_internal_url` (the server's own address, if it isn't a private
+`:8095` address), `accent` (a fixed accent colour instead of the colour of the album art), `top_offset`, and
+`fill_height: false` with `height`.
+
+## Header card: robots only drive while they work
+
+A robot in the header's `activities` drives across the card only in a working state: mowers `mowing`, `edgecut`,
+`starting`, `leaving`, `returning`; vacuums `cleaning`, `segment_cleaning`, `zoned_cleaning`, `spot_cleaning`, `mopping`,
+`returning`. `paused` no longer counts (Mammotion mowers report it while standing ready off the charger). Other models can
+set `active_states` per activity, for example `active_states: [mowing, returning]`.
+
+## Header card: sidebar as a drawer on desktop
+
+`ha-home-header-card` takes `desktop_sidebar: drawer`. It sets Home Assistant's sidebar to "always hidden" in that browser,
+so on a PC the dashboard gets the full width and the header's menu button opens the sidebar as an overlay drawer, as on a
+phone. `desktop_sidebar: docked` puts the docked sidebar back; without the option the user's own choice is left alone.
+
+## Weather card: radar image, warnings and extra measurements
+
+v0.4.80 redesigns the card: a hero with key figures, a 7-day list with temperature range bars, the radar beside it on
+wide screens, and the extra measurements as compact panels in up to three columns. v0.4.81 fills very wide screens: from 1300 px
+everything below the hourly forecast flows as three balanced columns.
+
+`ha-weather-card` can show an `image` entity in its radar section (`radar_image_entity`, for example a national radar
+with lightning) and a satellite map as its own tab (`satellite_image_entity`, v0.5.19), warnings from a sensor's attribute list (`warnings_entity`, yellow/orange/red banners at the top) and
+any sensors as groups of tiles (`detail_sections`). Tiles and the radar image update in place, so the card is not rebuilt
+and the wind map is not reloaded on every sensor update. See the
+[card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/ha-weather-card).
+
+## Electricity price card: fixed price levels
+
+`th-electricity-price-card` (v1.18.0) colours its bars, badge and summary by fixed price levels in kr/kWh instead of
+the day's own range: cheap below `cheap`, dear from `dear`, very dear from `very_dear`, extremely dear from `extreme`.
+Each is a number or an entity (e.g. `input_number`), default 1.50 / 3.00 / 3.75 / 5.00. See the
+[card docs](https://github.com/MRDonnii/ha-smart-home-cards/blob/main/src/cards/th-electricity-price-card) for the
+helper package and the config.
+
+## Home header card: sky clouds
+
+v0.4.82 (v0.4.83: keeps drawing when the dashboard moves the card) draws the clouds of the V3 weather backdrop (`weather_style_v3: true`) as a soft, drifting cloud layer (WebGL,
+value-noise clouds as in a 3D sky) instead of the drawn cloud shapes. The amount follows the weather entity's
+`cloud_coverage` (or the condition), the clouds drift with `wind_bearing`/`wind_speed`, and they are lit white by day,
+warm at dusk and dark at night (`sun_entity` elevation). They are drawn at a third of the card's size at most ~20 times
+a second, stop while the card is off screen or the page is hidden, and stand still with `animation: false` or reduced
+motion. Set `weather_v3_clouds: css` to keep the drawn clouds; without WebGL the drawn clouds are used automatically.
+
+## Home header card: rain, snow, hail, wind and lightning
+
+v0.4.84 draws the V3 weather's precipitation as particles (as in HA Smartdash): slanting rain streaks that lean with
+`wind_bearing`/`wind_speed` and splash on the card's lower edge over a wet sheen, heavier and denser when pouring;
+swaying snowflakes that settle along the lower edge; hail as quick icy streaks that bounce; sleet as rain and snow
+together; streaks of wind when windy; and soft lightning flashes (sometimes a double flicker) during thunder. They are
+drawn on one canvas at most 30 times a second (about 0.2 ms per frame), stop while the card is off screen or the page
+is hidden, and stand still with `animation: false` or reduced motion. Set `weather_v3_fx: css` to keep the previous
+CSS effects.
+
+Snow lying on the ground can stay along the card's lower edge as a soft, uneven drift for as long as it lies, whatever
+the weather is now: set `snow_ground_entity` (a binary sensor that is on while snow lies, or a depth sensor in cm, from
+1 cm) and optionally `snow_depth_entity` (cm; the drift grows a little with the depth). It is bright by day and a cool
+blue-white at night (`sun_entity`), is painted once and does not animate unless something is falling on it.
+
+```yaml
+snow_ground_entity: binary_sensor.snow_on_ground
+snow_depth_entity: sensor.snow_depth
+```
+
+## Home header card: stars, moon and mist
+
+v0.4.85 (v0.4.86: softer earthshine, fewer star spikes, no stars behind the moon, grey mist at night) replaces the V3 weather's drawn star pattern with a sky of crisp stars of different brightness and a faint
+tint, each twinkling on its own, the brightest with a soft glow. They come out one by one in the dusk (`sun_entity`
+elevation), only as far as the cloud cover leaves the sky open (behind the drifting clouds, none in fog, rain or snow),
+and now and then a shooting star crosses. The moon is drawn in its real phase (with its seas and the earthshine on the
+dark side) and only while it is above the horizon, computed for Home Assistant's home location; by day it can stand
+pale in a clear sky. It sits in the free space next to the weather (the drawn moon stays where the card has none). Fog
+is drawn as long, low banks of mist drifting past, thickest near the ground. The sky is drawn about 14 times a second
+(about 0.2 ms per frame), stops while the card is off screen or the page is hidden, and stands still with
+`animation: false` or reduced motion. Set `weather_v3_stars: css` to keep the drawn stars and moon.
+
+## Animations rest when nobody uses the screen
+
+The cards' endless animations (drifting tile icons, breathing glows, flowing lines) run while someone uses the screen and
+stand still after 30 seconds without a touch, click, key or scroll; the next one wakes them. A running animation makes
+the browser redraw the page on every frame: on a wall display this took views from 30–55 % GPU to 0–5 % at rest.
+Alarm, error, warning and critical animations always keep moving. To keep every animation running on one device, set
+`localStorage.setItem("shc-motion", "always")` in that browser.
+
+## Privacy
+
+The collection ships with neutral example values. Personal names, addresses, private network addresses, credentials and household-specific defaults are not permitted in published source or release artifacts. See [the privacy policy](docs/PRIVACY.md).
+
+## Integrations are separate
+
+Backend integrations such as Wavin Calefa, [Dantherm Control](https://github.com/MRDonnii/dantherm-control-ha) and Room Energy Optimizer are not part of this frontend bundle and continue in their own repositories.
+
+## License
+
+Starting with the version after v0.5.284, the code is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE) (SPDX: `PolyForm-Noncommercial-1.0.0`). It is free for non-commercial use: private, home and hobby use, teaching and non-profit associations. Commercial use requires written permission from the author, [MRDonnii](https://github.com/MRDonnii).
+
+Versions released before this change (up to and including v0.5.284) remain under their previous licence (MIT) for those exact versions.
+
+Bundled files from other projects keep their own licence and copyright; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

@@ -1,0 +1,1195 @@
+/* The drawing looks down on the unit (its top and afterheat end are visible),
+   so the vanishing point sits above it: the exhaust end turns away, gets
+   smaller and rises towards the horizon instead of pinching to the middle,
+   which read as seen from eye level. The padding keeps the raised top in the card. */
+.hch5-visual { flex: 1; display: flex; flex-direction: column; margin-top: 4px; padding-top: 16px; perspective: 1900px; perspective-origin: 25% -80%; }
+.hch5-visual .unit-readback-row { margin-top: auto; }
+/* Seen from the afterheat end: the left side stays put while the exhaust
+   end turns slightly away from the viewer. */
+.hch5-visual > svg { width: 100%; height: auto; display: block; transform: rotateY(9deg); transform-origin: 0 50%; }
+.hch-side-inset { fill: none; stroke: #8199a7; stroke-width: 1; opacity: .45; }
+.hch-floor-shadow { fill: rgb(0 0 0 / 32%); filter: blur(9px); }
+.hch-cabinet,.hch-top-panel,.hch-side-panel { stroke: #77909f; stroke-width: 1.4; }
+.hch-top-fold { fill: none; stroke: rgb(220 236 243 / 34%); stroke-width: 1.4; }
+.hch-side-seam { fill: none; stroke: rgb(10 24 33 / 55%); stroke-width: 1.5; }
+.hch-opening-gasket { fill: none; stroke: #0b1a22; stroke-width: 7; opacity: .85; }
+.hch-cabinet-fastener circle { fill: #273b46; stroke: #a1b5bf; stroke-width: 1; }
+.hch-cabinet-fastener path { stroke: #b3c7cf; stroke-width: 1; }
+.hch-cavity-rail { fill: none; stroke: rgb(138 165 179 / 20%); stroke-width: 3; }
+.hch-inner { fill: #08151d; stroke: #334d5c; stroke-width: 1.5; }
+.hch-filter rect { fill: url(#filterMesh); stroke: #95a9b5; stroke-width: 2; }
+.hch-filter path { stroke: #8499a5; stroke-width: 1.3; opacity: .7; }
+/* Every label in the drawing gets a dark halo so it stays legible over the fog. */
+.hch-part-label,.hch-channel-label,.hch-core-port,.hch-exchanger-title,.hch-bus-label { paint-order: stroke; stroke: #08141c; stroke-width: 4px; stroke-linejoin: round; }
+.hch-part-label { fill: #b3c6d1; font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+.hch-fan-ring { fill: #0b1821; stroke: #607887; stroke-width: 3; }
+.hch-fan-shroud { fill: none; stroke: #2c4452; stroke-width: 2; }
+/* Motion-blur disc: only visible while the impeller turns. */
+.hch-fan-blur { fill: url(#fanBlur); opacity: 0; transition: opacity .6s var(--ease); }
+.hch-fan.running .hch-fan-blur { opacity: 1; }
+.hch-fan-hub { fill: #17303d; stroke: #5f7a8a; stroke-width: 1; }
+.hch-fan-back { fill: #09141b; stroke: #4d6574; stroke-width: 2.4; }
+.hch-fan-drum { fill: url(#fanDrum); stroke: #4d6574; stroke-width: 1; stroke-linejoin: round; }
+.hch-fan-motor { fill: #29404d; stroke: #6f8b9b; stroke-width: .8; stroke-linejoin: round; }
+.hch-fan-cap { fill: url(#fanHub); stroke: #9fb9c7; stroke-width: 1; }
+.hch-fan-cap-centre { fill: #0e1d26; stroke: #7c99aa; stroke-width: 1; }
+.hch-fan-rotor { transform-box: view-box; transform-origin: 0 0; }
+.hch-fan.running .hch-fan-rotor { animation: pro-fan-spin var(--fan-speed) linear infinite; }
+.hch-fan-rotor path { fill: #68bcf0; stroke: #a8ddff; stroke-width: .7; stroke-linejoin: round; }
+.hch-fan.running .hch-fan-rotor path { opacity: .88; }
+.hch-fan.stopped .hch-fan-rotor { opacity: .45; }
+@keyframes pro-fan-spin { to { transform: rotate(360deg); } }
+.hch-exchanger polygon { stroke: #9aa9b1; stroke-width: 2; stroke-linejoin: round; }
+.hch-exchanger path { stroke: #c2ccd1; stroke-width: 1.3; opacity: .54; }
+.hch-exchanger.bypassed { opacity: .38; }
+.hch-exchanger .core-face-top { fill: #7d8d95; }
+.hch-exchanger .core-face-side { fill: #34464f; }
+.hch-exchanger .core-plate-edge { opacity: .42; }
+.hch-filter .filter-face-top { fill: #6f828c; stroke: #95a9b5; stroke-width: 1.4; stroke-linejoin: round; }
+.hch-filter .filter-face-side { fill: #354852; stroke: #95a9b5; stroke-width: 1.4; stroke-linejoin: round; }
+.hch-cavity-floor { fill: url(#cavityFloor); }
+.hch-cavity-wall { fill: url(#cavityWall); }
+.hch-cavity-edge { fill: none; stroke: #2b4555; stroke-width: 1.2; }
+.hch-exchanger-title { fill: #d3e0e6; font-size: 19px; font-weight: 750; }
+.hch-recovery { fill: #fff; font-size: 34px; font-weight: 850; text-shadow: 0 2px 8px #000; }
+.hch-bypass rect { fill: #0b1b25; stroke: #426074; }
+.hch-bypass text { fill: #a9beca; font-size: 10px; font-weight: 700; }
+/* The blade and the fog glide between the ~2 s updates of the damper's
+   time-based position (the real damper runs for about three minutes). */
+.bypass-blade { fill: #72c6f8; transform-box: fill-box; transform-origin: center; transition: transform 1s linear, fill .6s; }
+.hch-bypass.open .bypass-blade { fill: #58dfa1; }
+/* Damper on the lower fan motor; the orange actuator matches the real unit. */
+.hch-bypass .damper-frame { fill: #0b1b25; stroke: #6f8591; stroke-width: 1.4; }
+.hch-bypass .bypass-blade { fill: #72c6f8; }
+.hch-bypass.open .bypass-blade { fill: #58dfa1; }
+.hch-bypass .bypass-actuator { fill: #e2711d; stroke: #ffae66; stroke-width: 1; }
+.hch-bypass-channel { fill: #0a1820; stroke: #2f4756; stroke-width: 1.4; stroke-dasharray: 5 5; }
+.hch-bypass-channel-glow { fill: rgb(255 159 90 / 7%); stroke: #ff9f5a; stroke-width: 1.4; transition: opacity 2.6s ease-in-out; }
+.hch-fog-route { transition: opacity 1s linear; }
+.hch-bypass.moving .bypass-actuator { animation: pro-actuator-run .7s ease-in-out infinite alternate; }
+@keyframes pro-actuator-run { to { fill: #ffb070; filter: drop-shadow(0 0 5px rgb(255 159 90 / 75%)); } }
+/* Damper travel in the core: direction, % open and a bar that follows the
+   reported position; the fill pulses while the actuator runs, because the
+   real damper can hold one reported step for a minute. */
+.hch-bypass-progress .hch-exchanger-title { fill: #ffd2a6; }
+.bypass-progress-track { fill: none; stroke: rgb(4 12 18 / 82%); stroke-width: 11; stroke-linecap: round; }
+.bypass-progress-fill { fill: none; stroke: #ffa45c; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 1s linear; animation: pro-bypass-progress 1.4s ease-in-out infinite alternate; }
+@keyframes pro-bypass-progress { from { opacity: .55; } to { opacity: 1; } }
+/* Start of the travel not seen (e.g. after a gateway restart): no %, just a runner. */
+.bypass-progress-fill.indeterminate { stroke-dasharray: 22 78; animation: pro-bypass-runner 1.8s linear infinite; }
+@keyframes pro-bypass-runner { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+.hch-bypass-countdown { fill: #d7c3ad; font-size: 14px; font-weight: 700; paint-order: stroke; stroke: #08141c; stroke-width: 4px; stroke-linejoin: round; }
+.hch-lockout-badge rect { fill: rgb(40 26 8 / 90%); stroke: #e9a54a; stroke-width: 1.2; }
+.hch-lockout-badge text { fill: #ffd08a; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; }
+.hch-channel-label { fill: #7f98a6; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+.hch-core-port { fill: #d3dde2; font-size: 16px; font-weight: 800; opacity: .9; }
+.hch-coil rect { fill: #112631; stroke: #506f80; stroke-width: 2; }
+.coil-pipe { fill: none; stroke: #956b47; stroke-width: 3.2; }
+.hch-coil.active .coil-pipe { stroke: #ff9b48; filter: url(#airGlow); }
+.water-port { fill: #72bde9; }
+.hch-service-box { fill: #0a1820; stroke: #3c5665; }
+.hch-port rect { fill: url(#metalEdge); stroke: #8ba0ac; stroke-width: 2.5; filter: drop-shadow(0 5px 5px rgb(0 0 0 / 32%)); }
+.hch-port path { fill: none; stroke-width: 9; stroke-linecap: round; filter: url(#airGlow); }
+.hch-port-outdoor path,.hch-port-supply path { stroke: #5fe0a0; }
+.hch-port-extract path,.hch-port-exhaust path { stroke: #ff8e46; }
+.hch-port-outdoor path { stroke: #4fbaff; }
+.hch-port-extract path { stroke: #ff6f6f; }
+.hch-rear-duct-body { fill: url(#rearDuctMetal); stroke: #6f8591; stroke-width: 1.4; }
+.hch-rear-duct-shine { fill: none; stroke: rgb(214 228 235 / 42%); stroke-width: 3; stroke-linecap: round; }
+.hch-rear-duct-shade { fill: none; stroke: rgb(0 0 0 / 32%); stroke-width: 5; stroke-linecap: round; }
+.hch-rear-duct-seam { fill: none; stroke: rgb(170 190 201 / 38%); stroke-width: 1.6; }
+.hch-rear-duct-flange { fill: url(#ductPipe); stroke: #8ba0ad; stroke-width: 1.4; }
+.hch-supply-flow { stroke: url(#supplyFlow); }
+.hch-extract-flow { stroke: url(#extractFlow); }
+
+/* Diffuse fog/mist flow: one continuous, evenly solid blurred band the
+   full length of the path — no dashes, so opacity/width never thins out
+   partway along it, matching the density of the previous densest spots. */
+.hch-fog-group { pointer-events: none; }
+.hch-fog { fill: none; stroke-linecap: round; }
+.hch-fog-a { stroke-width: 38; opacity: .27; }
+.hch-fog-b { stroke-width: 24; opacity: .18; }
+.hch-fog-supply { stroke: url(#supplyFlow); }
+.hch-fog-extract { stroke: url(#extractFlow); }
+.hch-fog[style*="0s"], .hch-fog-a[style*="0s"] { opacity: .1; }
+
+/* Two softly blurred highlights travel down each path. The path data starts
+   upstream for both air streams, so decreasing dashoffset moves the wisps in
+   the physical flow direction. Different lengths and phases avoid a train of
+   identical bright dots. The continuous fog beneath them keeps the air full. */
+.hch-wisp-group { pointer-events: none; }
+.hch-air-wisp { fill: none; stroke: currentColor; stroke-linecap: round; }
+.hch-air-wisps.hch-fog-supply .hch-air-wisp { stroke: url(#supplyWisp); }
+.hch-air-wisps.hch-fog-extract .hch-air-wisp { stroke: url(#extractWisp); }
+.hch-air-wisp-wide { stroke-width: 20; stroke-dasharray: 46 198; opacity: .2; animation: pro-air-wisp-wide calc(var(--flow-speed) / 5) linear infinite; }
+.hch-air-wisp-fine { stroke-width: 7; stroke-dasharray: 17 121; opacity: .42; animation: pro-air-wisp-fine calc(var(--flow-speed) / 9) linear infinite; animation-delay: -1.7s; }
+@keyframes pro-air-wisp-wide { to { stroke-dashoffset: -244; } }
+@keyframes pro-air-wisp-fine { to { stroke-dashoffset: -138; } }
+.hch-air-wisp[style*="0s"] { animation: none; opacity: .08; }
+
+.hch-airflow-guide { fill: none; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 30; opacity: .48; animation: pro-airflow var(--flow-speed) linear infinite; }
+.hch-airflow-guide[style*="0s"] { animation: none; opacity: .16; }
+/* 1 + 30 dash units: two complete periods prevent a jump at each loop. */
+@keyframes pro-airflow { to { stroke-dashoffset: -62; } }
+
+/* A slow, uniform opacity breathe — never spatial, so the band never reads
+   as thinner in one place than another — gives the fog a sense of life
+   without touching the dash pattern (there isn't one) or its density. */
+.hch-fog-group { opacity: .96; }
+/* HA has no WebUI motion setting; the system preference turns the motion off. */
+@media (prefers-reduced-motion: reduce) {
+  .hch-fog-group, .hch-air-wisp, .hch-airflow-guide, .hch-fan-rotor, .hch-bus-core,
+  .hch-bypass.moving .bypass-actuator, .bypass-progress-fill, .bypass-progress-fill.indeterminate { animation: none !important; }
+  .hch-fog-a, .hch-fog-b { opacity: .09; }
+  .hch-air-wisp { opacity: .08; }
+}
+
+/* Temperature ports double as the visual duct outlet/inlet caps: a
+   semi-transparent glass plate sitting directly on the flow centreline so
+   the fog is visible passing through/behind it, while the reading itself
+   stays fully legible via a solid backing chip plus text shadow. */
+.hch-temp-port-plate { fill: rgb(8 20 28 / 74%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }
+.hch-temp-port-title { fill: #b7cbd6; font-size: 15px; font-weight: 750; letter-spacing: .02em; paint-order: stroke; stroke: #08141c; stroke-width: 3px; stroke-linejoin: round; }
+.hch-temp-port-value { fill: #f5fafd; font-size: 28px; font-weight: 850; paint-order: stroke; stroke: #08141c; stroke-width: 3.5px; stroke-linejoin: round; }
+.hch-temp-port.tone-cold .hch-temp-port-value { fill: #7fd0ff; }
+.hch-temp-port.tone-warm .hch-temp-port-value { fill: #ffb066; }
+.hch-temp-port.tone-green .hch-temp-port-value { fill: #74ecab; }
+.hch-sensor-pin circle { fill: #70ccff; stroke: #d2f2ff; stroke-width: 1; }
+.hch-sensor-pin line { stroke: #688597; stroke-width: 1; }
+.hch-sensor-pin rect { fill: #0a1822; stroke: #284859; }
+.hch-sensor-pin text { fill: #a3b9c6; font-size: 13px; font-weight: 700; }
+.hch-sensor-pin .pin-value { fill: #e8f6fc; font-size: 16px; font-weight: 800; }
+.hch-water-callout rect { fill: #0a1822; stroke: #25495c; }
+.hch-water-callout text { fill: #a3b9c6; font-size: 13.5px; font-weight: 650; }
+.hch-water-callout .water-value { fill: #e8f7fd; font-size: 16px; font-weight: 800; }
+
+.unit-readback-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: -4px; }
+.unit-readback { min-height: 67px; display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 9px; padding: 9px 11px; border: 1px solid #1d3b4d; border-radius: 10px; background: #0a1922; }
+.unit-readback > div { min-width: 0; display: grid; gap: 2px; }
+.unit-readback small { color: #8aa2b1; font-size: 11px; }
+.unit-readback strong { color: #e9f6fb; font-size: 15px; white-space: nowrap; }
+.unit-readback em { color: #87a0af; font-size: 11px; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.readback-icon { width: 38px; height: 38px; border-radius: 50%; position: relative; display: block; background: #112a3a; border: 1px solid #2d5770; }
+.readback-icon.fan::before { content: "✤"; position: absolute; inset: 0; display: grid; place-items: center; color: #68c6ff; font-size: 22px; }
+.readback-icon.damper::before { content: "▤"; position: absolute; inset: 0; display: grid; place-items: center; color: #9bb4c2; font-size: 20px; }
+.readback-icon.damper.active::before { color: #63df9f; }
+.readback-icon.heater::before { content: "≋"; position: absolute; inset: 0; display: grid; place-items: center; color: #7893a3; font-size: 24px; transform: rotate(90deg); }
+.readback-icon.heater.active::before { color: #ffae5c; text-shadow: 0 0 10px #ff8b3d; }
+
+.pro-control-column { grid-area: controls; min-width: 0; display: grid; gap: 10px; }
+.pro-control-card { padding: 15px; border-radius: 13px; }
+.control-label { display: block; margin: 15px 0 7px; color: #93a9b6; font-size: 9px; font-weight: 700; }
+.pro-segment { display: grid; gap: 5px; padding: 4px; border: 1px solid #203d4e; border-radius: 10px; background: #0b1922; }
+.pro-segment.three { grid-template-columns: repeat(3,1fr); }
+.pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.fireplace-actions button { min-height: 38px; border: 1px solid #294658; border-radius: 8px; background: #0c1b25; color: #a9bdc9; font-size: 9px; font-weight: 750; cursor: pointer; transition: .18s var(--ease); }
+.pro-segment button:hover,.pro-levels button:hover,.mini-buttons button:hover,.setpoint-stepper button:hover,.fireplace-actions button:hover { border-color: #4e92bb; color: #dff5ff; background: #10283a; }
+.pro-segment button.active,.pro-levels button.active,.mini-buttons button.active { color: #fff; border-color: #3baeff; background: linear-gradient(145deg,#15538a,#1265ae); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%),0 0 14px rgb(44 165 255 / 26%); }
+.pro-segment button:disabled,.pro-levels button:disabled,.mini-buttons button:disabled,.setpoint-stepper button:disabled { opacity: .45; cursor: wait; }
+.pro-levels { display: grid; grid-template-columns: repeat(var(--levels,6),1fr); gap: 5px; }
+.active-decision { margin-top: 12px; padding: 10px 11px; display: grid; gap: 2px; border: 1px solid #1e3949; border-radius: 9px; background: #0a1821; }
+.active-decision span { color: #718a99; font-size: 7px; text-transform: uppercase; letter-spacing: .09em; }
+.active-decision strong { font-size: 10px; }
+.active-decision small { color: #78909f; font-size: 8px; line-height: 1.4; }
+.pro-control-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini-control { min-height: 108px; padding: 13px; border-radius: 12px; }
+.mini-control-title { display: flex; align-items: center; gap: 8px; color: #ddecf4; font-size: 11px; }
+.mini-control-title svg { color: #5ec3ff; }
+.mini-buttons { display: grid; gap: 5px; margin-top: 12px; }
+.mini-buttons.three { grid-template-columns: repeat(3,1fr); }
+.mini-buttons.two { grid-template-columns: repeat(2,1fr); }
+.control-footnote,.text-action { display: block; margin-top: 7px; color: #7891a0; font-size: 8px; }
+.text-action { padding: 0; border: 0; background: transparent; color: #73c8ff; cursor: pointer; }
+.status-action-card { min-height: 86px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 11px 12px; border-radius: 12px; }
+.status-action-icon { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 10px; background: #0c2c44; color: #5fc5ff; }
+.status-action-icon.flame { background: #352314; color: #ffad55; }
+.status-action-icon.flame.auto-active { position: relative; isolation: isolate; color: #ffbc62; background: #4a2714; box-shadow: 0 0 0 1px #c67330, 0 0 15px rgb(255 133 52 / 38%); }
+.status-action-icon.flame.auto-active::after { content: ""; position: absolute; inset: -5px; z-index: -1; border: 2px solid #f5a04e; border-radius: 14px; animation: hch-auto-fireplace-pulse 2.2s ease-out infinite; }
+.status-action-icon.flame.auto-active svg { animation: hch-auto-fireplace-glow 1.8s ease-in-out infinite alternate; }
+@keyframes hch-auto-fireplace-pulse { 0% { opacity: .7; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes hch-auto-fireplace-glow { from { filter: drop-shadow(0 0 2px #ffac56); } to { filter: drop-shadow(0 0 8px #ff883e); } }
+@media (prefers-reduced-motion: reduce) { .status-action-icon.flame.auto-active::after,.status-action-icon.flame.auto-active svg { animation: none; } }
+.status-action-card > div:nth-child(2) { display: grid; gap: 2px; }
+.status-action-card span { color: #78919f; font-size: 8px; }
+.status-action-card strong { font-size: 10px; }
+.status-action-card small { color: #66808f; font-size: 7px; }
+.status-action-card > button,.fireplace-actions button { min-width: 34px; height: 32px; padding: 0 7px; border: 1px solid #284657; border-radius: 8px; background: #0c1d27; color: #a9c2ce; cursor: pointer; }
+.fireplace-actions { display: flex; gap: 4px; }
+.afterheat-setpoint-card { grid-area: afterheat; min-height: 84px; display: grid; gap: 10px; align-content: center; padding: 13px 14px; border-radius: 12px; }
+.afterheat-copy { display: grid; gap: 2px; }
+.afterheat-copy span { color: #86a0af; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.afterheat-copy strong { font-size: 10px; }
+.afterheat-copy small { color: #698291; font-size: 7px; line-height: 1.35; }
+.setpoint-stepper { display: grid; grid-template-columns: 38px 68px 38px; align-items: center; border: 1px solid #274657; border-radius: 9px; overflow: hidden; }
+.setpoint-stepper button { border: 0; border-radius: 0; font-size: 19px; }
+.setpoint-stepper strong { height: 38px; display: grid; place-items: center; background: #0a1821; font-size: 12px; }
+.climate-panel { grid-area: climate; min-width: 0; padding: 12px 15px; border-radius: 13px; }
+.climate-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+.climate-metrics.metrics-5 { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.climate-metrics.metrics-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.afterheat-setpoint-card .air-calc-head { margin-top: 4px; }
+.afterheat-setpoint-card .climate-metric { min-height: 66px; padding: 6px 10px; }
+/* Let the left panel's tile rows share the height of the taller right column. */
+.climate-panel { display: flex; flex-direction: column; }
+.climate-panel > .climate-metrics { flex: 1 1 auto; }
+.climate-metric { min-height: 90px; position: relative; display: grid; grid-template-columns: 24px 1fr; grid-template-rows: auto auto auto 6px; gap: 2px 8px; align-content: center; padding: 8px 12px; border: 1px solid #1e3a4a; border-radius: 10px; background: #0a1922; overflow: hidden; }
+.climate-metric > svg,.climate-metric > .metric-drop,.climate-metric > .metric-filter,.climate-metric > .metric-heat { grid-row: 1/4; align-self: start; color: #65d99a; font-size: 20px; }
+.climate-metric.blue > .metric-drop { color: #68bfff; }
+.climate-metric.cyan > .metric-filter { color: #70d8f5; }
+.climate-metric.neutral > .metric-heat { color: #a8c0cd; transform: rotate(90deg); }
+.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat) { color: #7992a1; font-size: 8px; }
+.climate-metric strong { font-size: 17px; }
+.climate-metric strong small { color: #78919f; font-size: 8px; }
+.climate-metric em { color: #77909f; font-size: 8px; font-style: normal; }
+.climate-metric > i { grid-column: 1/-1; display: block; height: 4px; margin-top: 7px; border-radius: 99px; background: linear-gradient(90deg,#52dc91,#69c6ff); box-shadow: 0 0 12px rgb(82 220 145 / 18%); }
+.climate-metric::after { content: ""; position: absolute; bottom: 10px; left: 12px; right: 12px; height: 4px; border-radius: 99px; background: #172b36; z-index: -1; }
+
+/* RS485/Modbus wiring between the unit, HAC1 and the Raspberry Pi. */
+.hch-bus-cable { fill: none; stroke: #2b3d48; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.hch-bus-core { fill: none; stroke: #e9b45f; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .5; }
+.hch-wiring.active .hch-bus-core { stroke-dasharray: 4 14; opacity: .95; animation: pro-bus-data 1.1s linear infinite; }
+@keyframes pro-bus-data { to { stroke-dashoffset: -36; } }
+.hch-bus-joint { fill: #e9b45f; }
+.hch-cable-gland { fill: #1a2a33; stroke: #6f8591; stroke-width: 1.2; }
+.hch-bus-label { fill: #d9b574; font-size: 15px; font-weight: 750; letter-spacing: .03em; }
+.hch-signal-wire { fill: none; stroke: #b98a5a; stroke-width: 1.3; stroke-dasharray: 3 3; stroke-linejoin: round; opacity: .8; }
+.hch-device .device-body { fill: #0a1822; stroke: #3d6275; stroke-width: 1.4; }
+.hch-device text { fill: #d9e6ec; font-size: 16px; font-weight: 750; }
+.hch-device .device-sub { fill: #a3b9c6; font-size: 13px; font-weight: 650; }
+.hch-pi .pi-board { fill: #123524; stroke: #3fae74; stroke-width: 1.4; }
+.hch-pi .pi-chip { fill: #1d2a30; stroke: #5d7885; }
+.hch-pi .pi-gpio { fill: #d9b574; }
+/* ---------------------------------------------------------------------------
+   Everything below: the WebUI overview around the drawing (frontend-v2
+   app.css, pro-dashboard.css and overview.css), scoped to the card. The
+   WebUI's screen-width media queries are container queries on the card's own
+   width, because an HA column is rarely as wide as the screen.
+   ------------------------------------------------------------------------ */
+:host { display: block; --surface-soft: #10222e; --border: #1d3442; --text: #eef7fb; --muted: #8da4b4; --blue: #58b9ff; --green: #52df92; --orange: #ffad55; --red: #ff7777; --ease: cubic-bezier(.2,.75,.25,1); }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+.hch-card { display: block; container: hch-card / inline-size; padding: 14px 16px 16px; border: 0; border-radius: var(--ha-card-border-radius, 12px); background: radial-gradient(circle at 55% -15%,rgb(41 97 132 / 13%),transparent 38%),linear-gradient(180deg,#08131c,#071018); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+.eyebrow { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+.live-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #57ca82; box-shadow: 0 0 0 4px rgb(87 202 130 / 10%), 0 0 14px rgb(87 202 130 / 40%); }
+.status-chip { display: inline-flex; align-items: center; gap: 7px; width: max-content; padding: 7px 10px; border: 1px solid #25404f; border-radius: 999px; background: #0d1d27; color: var(--text); font-size: 9px; font-weight: 750; }
+.status-chip.muted { color: var(--muted); background: var(--surface-soft); }
+.status-chip.muted .live-dot { background: var(--muted); box-shadow: none; }
+.surface { border: 1px solid #1d3544; border-radius: 14px; background: linear-gradient(145deg,#0d1d27,#0a1720); box-shadow: 0 13px 36px rgb(0 0 0 / 15%); }
+
+.dashboard-overview { display: grid; gap: 12px; }
+.overview-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 0 4px 10px; }
+.overview-heading-row h1 { margin: 4px 0 5px; font-size: clamp(27px,2.2vw,38px); letter-spacing: -.045em; }
+.overview-heading-row p { margin: 0; color: var(--muted); font-size: 11px; }
+.overview-status-pills { display: flex; gap: 10px; align-items: stretch; }
+.overview-status-pills > div { min-width: 130px; min-height: 60px; position: relative; display: grid; grid-template-columns: 18px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-content: center; padding: 9px 13px; border: 1px solid #1f3948; border-radius: 11px; background: linear-gradient(150deg,#0e202b,#0a1822); box-shadow: 0 10px 24px rgb(0 0 0 / 12%); }
+.overview-status-pills svg,.overview-status-pills .status-led { grid-row: 1/3; align-self: center; color: var(--green); }
+.overview-status-pills small { color: #7790a1; font-size: 8px; }
+.overview-status-pills strong { margin-top: 2px; font-size: 11px; color: #dff6ff; }
+.overview-status-pills .power-pill { cursor: pointer; }
+.overview-status-pills .power-pill:focus-visible { outline: 3px solid #70ccff; outline-offset: 2px; }
+.status-led { width: 10px; height: 10px; border-radius: 999px; background: #4fe18c; box-shadow: 0 0 0 4px rgb(79 225 140 / 9%),0 0 16px rgb(79 225 140 / 55%); }
+.status-led.warn { background: var(--orange); box-shadow: 0 0 0 4px rgb(255 173 85 / 9%),0 0 16px rgb(255 173 85 / 35%); }
+
+.dashboard-main-grid { display: grid; grid-template-columns: minmax(0,1.62fr) minmax(360px,.72fr); grid-template-areas: "unit controls" "climate afterheat"; gap: 12px; align-items: stretch; }
+.pro-air-card { grid-area: unit; min-width: 0; display: flex; flex-direction: column; padding: 15px 16px 13px; border-radius: 13px; overflow: hidden; }
+.pro-card-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.pro-card-head h2 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
+.pro-card-head p { margin: 3px 0 0; color: #7f96a6; font-size: 9px; }
+.pro-card-head.compact h2 { font-size: 15px; }
+.pro-card-head > svg { flex: 0 0 auto; color: #5ec3ff; }
+
+/* overview.css: the external afterheater's duct hardware and the summer-stop note. */
+.hch-duct-collar .hch-duct-pipe{fill:url(#ductPipe);stroke:#6f8591;stroke-width:1.4}.hch-duct-collar .hch-duct-rim{fill:url(#metalFace);stroke:#8ba0ad;stroke-width:2.4}.hch-duct-collar .hch-duct-inner{fill:#07131a;stroke:#3b5260;stroke-width:1.6}.hch-external-coil .coil-case{fill:#172a35;stroke:#607987;stroke-width:2}.hch-external-coil .coil-duct{fill:#0a1821;stroke:#3f5a69;stroke-width:2}.hch-external-coil .coil-pipe{fill:none;stroke:#80614a;stroke-width:3}.hch-external-coil.active .coil-pipe{stroke:#f1a15c;filter:drop-shadow(0 0 5px rgb(241 161 92 / 35%))}
+.afterheat-lockout{margin-top:3px;padding:5px 8px;border:1px solid #e9a54a;border-radius:7px;background:rgb(40 26 8 / 70%);color:#ffd08a;font-size:9px;font-weight:700;line-height:1.35}
+
+/* Save feedback; the WebUI shows it in its top bar. */
+.hch-notice { position: sticky; bottom: 10px; z-index: 2; justify-self: center; max-width: 100%; padding: 9px 14px; border: 1px solid #2f6a8c; border-radius: 10px; background: rgb(11 36 52 / 95%); color: #dff4ff; font-size: 11px; font-weight: 700; box-shadow: 0 10px 28px rgb(0 0 0 / 35%); }
+.hch-notice.error { border-color: #b35555; background: rgb(58 30 32 / 96%); color: #ffd6d6; }
+
+/* Compact drawing (narrow card): the SVG scales to the card width and keeps
+   the live motion; labels that would be too small to read are hidden and the
+   WebUI's mobile flow panel carries the readings. Never a sideways scroll. */
+.hch-mobile-flow { display: none; }
+.hch5-visual.compact { padding-top: 2px; perspective: none; }
+.hch5-visual.compact > svg { transform: none; }
+.hch5-visual.compact :is(.hch-part-label,.hch-channel-label,.hch-core-port,.hch-bus-label,.hch-device text,.hch-exchanger-title,.hch-bypass-countdown,.hch-lockout-badge) { display: none; }
+.hch5-visual.compact .hch-recovery { font-size: 58px; }
+.hch5-visual.compact .hch-device text.device-compact { display: inline; font-size: 34px; font-weight: 800; }
+.hch5-visual.compact .hch-mobile-flow { display: grid; gap: 8px; margin: 6px 0 12px; padding: 12px; border: 1px solid #28495a; border-radius: 12px; background: radial-gradient(circle at 50% 30%,#153448,#0a1922 72%); }
+.hch5-visual.compact .hch-mobile-flow-head { display: none; }
+.hch-mobile-lane { display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: center; gap: 6px; }
+.hch-mobile-reading { min-width: 0; display: grid; gap: 3px; padding: 10px; color: inherit; font: inherit; text-align: left; cursor: pointer; border: 1px solid #315269; border-radius: 9px; background: #0d2636; }
+.hch-mobile-lane.extract .hch-mobile-reading { border-color: #66503d; background: #2a211e; }
+.hch-mobile-reading small { color: #a6c1d0; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hch-mobile-reading strong { color: #eefaff; font-size: 18px; line-height: 1; }
+.hch-mobile-route { display: flex; align-items: center; color: var(--blue); font-size: 10px; }
+.hch-mobile-lane.extract .hch-mobile-route { color: var(--orange); }
+.hch-mobile-route i { height: 2px; flex: 1; background: currentColor; opacity: .6; }
+.hch-mobile-core { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 8px; padding: 8px 5px; border: 1px solid #315365; border-radius: 9px; background: #102a38; }
+.hch-mobile-core span { color: #9ab3c0; font-size: 8px; font-weight: 800; }
+.hch-mobile-core strong { color: var(--green); font-size: 16px; }
+.hch-mobile-core .bypass-open { color: var(--blue); }
+.hch-mobile-subreadings { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 10px; }
+.hch-mobile-subreadings > button,.hch-mobile-water { min-width: 0; min-height: 52px; display: grid; align-content: center; gap: 3px; padding: 7px 9px; border: 1px solid color-mix(in srgb, var(--hch-border) 48%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--hch-base) 90%, var(--hch-accent) 10%); color: #91aab8; font: inherit; font-size: 9px; text-align: left; }
+.hch-mobile-subreadings > button { cursor: pointer; }
+.hch-mobile-subreadings strong { color: #e1f0f6; font-size: 12px; }
+.hch-mobile-water > span { color: #91aab8; }
+.hch-mobile-water strong { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.hch-mobile-water strong button { min-width: 0; min-height: 28px; padding: 0 1px; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 800; cursor: pointer; }
+.hch-mobile-water strong span { color: #91aab8; }
+.hch5-visual.compact .unit-readback-row { grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 0; }
+.hch5-visual.compact .unit-readback { min-height: 56px; grid-template-columns: 30px minmax(0,1fr); gap: 7px; padding: 8px 9px; }
+.hch5-visual.compact .readback-icon { width: 30px; height: 30px; }
+.hch5-visual.compact .readback-icon::before { font-size: 16px !important; }
+.hch5-visual.compact .unit-readback small { font-size: 9px; }
+.hch5-visual.compact .unit-readback strong { font-size: 11px; white-space: normal; }
+.hch5-visual.compact .unit-readback em { font-size: 8px; white-space: normal; }
+
+/* HA only: where the fireplace card shares its row with the cooling card,
+   its two buttons left the title a few pixels ("Pejsefu…"), so there they
+   move under the text. Alone in a full-width row they stay on the right. */
+.pro-control-pair { container: control-pair / inline-size; }
+@container hch-card (min-width: 661px) {
+  @container control-pair (max-width: 420px) {
+    .status-action-card:has(.fireplace-actions) { grid-template-columns: 42px minmax(0,1fr); }
+    .status-action-card .fireplace-actions { grid-column: 2; }
+  }
+}
+
+/* WebUI @media (max-width: 1350px): content narrower than ~1080 px. */
+@container hch-card (max-width: 1080px) {
+  .dashboard-main-grid { grid-template-columns: minmax(0,1fr); grid-template-areas: "unit" "controls" "climate" "afterheat"; }
+  .pro-control-column { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pro-control-card { grid-column: 1/-1; }
+}
+/* WebUI @media (max-width: 980px). */
+@container hch-card (max-width: 960px) {
+  .overview-heading-row { align-items: flex-start; flex-direction: column; }
+  .overview-status-pills { width: 100%; }
+  .overview-status-pills > div { flex: 1; min-width: 0; }
+  .unit-readback-row,.climate-metrics,.climate-metrics.metrics-5 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+/* WebUI @media (max-width: 680px). */
+@container hch-card (max-width: 660px) {
+  .overview-heading-row { gap: 9px; padding-bottom: 0; }
+  .overview-heading-row h1 { font-size: clamp(23px,7cqi,28px); margin: 3px 0; }
+  .overview-heading-row p { display: none; }
+  .overview-status-pills { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .overview-status-pills > div { min-width: 0; min-height: 48px; padding: 6px 7px; grid-template-columns: 11px 1fr; column-gap: 5px; }
+  .overview-status-pills svg,.overview-status-pills .status-led { width: 8px; height: 8px; }
+  .overview-status-pills strong { font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pro-air-card { padding: 13px; }
+  .pro-air-card .pro-card-head p { display: none; }
+  .pro-control-column { grid-template-columns: minmax(0,1fr); }
+  .pro-control-card { grid-column: auto; }
+  .pro-control-pair { grid-template-columns: minmax(0,1fr); }
+  .climate-metrics,.climate-metrics.metrics-5 { grid-template-columns: 1fr 1fr; }
+  .setpoint-stepper { justify-self: stretch; grid-template-columns: 42px 1fr 42px; }
+}
+@container hch-card (max-width: 560px) {
+  .hch-card { padding: 10px 8px 12px; }
+  .pro-air-card { padding: 11px 9px; }
+}
+
+/* Smartdash keeps the real HCH5 SVG and puts its daily controls in one
+   clear dock. The dashboard panel supplies the only card background. */
+.hch-card:has(.hch-smartdash) { height: 100%; box-sizing: border-box; padding: 10px 12px; overflow: hidden; background: transparent; border-radius: 0; }
+.hch-smartdash { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--ink, #eef4fa); }
+.hch-smartdash-calc { display: flex; gap: 12px; justify-content: flex-end; color: var(--ink-muted,#a8b8c5); font-size: 11px; white-space: nowrap; overflow: hidden; }
+.hch-smartdash-calc b { color: var(--ink,#eef4fa); font-weight: 700; }
+.air-calc-head { margin-top: 14px; }
+.dashboard-overview .diagnostics-alarm { display: flex; gap: 10px; align-items: baseline; margin: 0 0 12px; padding: 9px 13px; border: 1px solid #5a4a22; border-radius: 10px; background: rgb(255 173 85 / 10%); color: #dff6ff; font-size: 12px; cursor: pointer; }
+.dashboard-overview .diagnostics-alarm strong { color: #ffad55; }
+.dashboard-overview .diagnostics-alarm.critical { border-color: #6b2a2a; background: rgb(255 90 90 / 12%); }
+.dashboard-overview .diagnostics-alarm.critical strong { color: #ff7a7a; }
+.dashboard-overview .diagnostics-alarm.info { border-color: #1f3948; background: rgb(112 204 255 / 8%); }
+.dashboard-overview .diagnostics-alarm.info strong { color: #70ccff; }
+.hch-smartdash-alarm { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #ffad55; }
+.hch-smartdash-alarm.critical { color: #ff7a7a; }
+.hch-smartdash-alarm b { color: inherit !important; font-weight: 600; }
+.hch-smartdash-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; white-space: nowrap; }
+.hch-smartdash-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+.hch-smartdash-head strong span { color: var(--ink-muted, #a8b8c5); font-weight: 500; }
+.hch-smartdash-state { color: #69d9ab; font-size: 11px; }
+.hch-smartdash-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.hch-smartdash-art { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.hch-smartdash-art .hch5-visual { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; perspective: none; }
+.hch-smartdash-art .hch5-visual > svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-height: 0; flex: 1 1 auto; transform: scale(.9,1.15); transform-origin: center; }
+.hch-smartdash-art :is(.unit-readback-row,.hch-mobile-flow) { display: none; }
+.hch-smartdash-controls { flex: none; min-width: 0; display: grid; grid-template-columns: 1fr 1.1fr .9fr; gap: 10px 12px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--ink,#eef4fa) 15%, transparent); }
+.hch-smartdash-readings { display: none; }
+.hch-smartdash-control-row { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hch-smartdash-control-label { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; color: var(--ink,#eef4fa); font-size: 11px; font-weight: 700; }
+.hch-smartdash-control-label span,.hch-smartdash-control-label em { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hch-smartdash-control-label em { color: var(--ink-muted,#a8b8c5); font-size: 10px; font-style: normal; font-weight: 500; }
+.hch-smartdash-choice { min-width: 0; display: flex; gap: 4px; }
+.hch-smartdash-choice button { min-width: 0; min-height: 35px; flex: 1; padding: 4px 6px; border: 1px solid color-mix(in srgb, var(--ink,#eef4fa) 22%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--ink,#eef4fa) 7%, transparent); color: var(--ink,#eef4fa); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .16s ease,border-color .16s ease,box-shadow .16s ease; }
+.hch-smartdash-choice button:not(:disabled):hover { background: color-mix(in srgb, var(--hch-accent,#58b9ff) 16%, transparent); border-color: color-mix(in srgb, var(--hch-accent,#58b9ff) 55%, transparent); }
+.hch-smartdash-choice button[aria-pressed="true"] { background: color-mix(in srgb, var(--hch-accent,#58b9ff) 28%, transparent); border-color: var(--hch-accent,#58b9ff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hch-accent,#58b9ff) 28%, transparent); }
+.hch-smartdash-choice button:disabled { opacity: .45; cursor: default; }
+.hch-smartdash-choice button[aria-pressed="true"]:disabled { opacity: 1; }
+.hch-smartdash-choice button:focus-visible { outline: 2px solid var(--hch-accent,#58b9ff); outline-offset: 2px; }
+.hch-smartdash-boost { grid-column: 1; }
+.hch-smartdash-fireplace { grid-column: 2 / 4; }
+.hch-smartdash-notice { position: absolute; right: 12px; bottom: 12px; max-width: 75%; padding: 5px 8px; border-radius: 7px; background: #783e42; color: #fff; font-size: 10px; }
+@container hch-card (max-width: 650px) {
+  .hch-smartdash-controls { gap: 5px 7px; padding-top: 5px; }
+  .hch-smartdash-control-row { gap: 3px; }
+  .hch-smartdash-control-label { font-size: 9px; }
+  .hch-smartdash-control-label em { font-size: 8px; }
+  .hch-smartdash-choice { gap: 2px; }
+  .hch-smartdash-choice button { min-height: 28px; padding: 2px; border-radius: 6px; font-size: 9px; }
+}
+:host([mobile]) .hch-card:has(.hch-smartdash) { height: auto; min-height: 0; padding: 8px; overflow: visible; }
+:host([mobile]) .hch-smartdash { height: auto; }
+:host([mobile]) .hch-smartdash-body { gap: 5px; }
+:host([mobile]) .hch-smartdash-art { flex: none; }
+:host([mobile]) .hch-smartdash-art .hch5-visual { height: auto; display: block; }
+:host([mobile]) .hch-smartdash-art .hch5-visual > svg { height: auto; max-height: none; transform: none; }
+:host([mobile]) .hch-smartdash-controls { grid-template-columns: 1fr 1fr; gap: 9px 7px; padding-top: 9px; }
+:host([mobile]) .hch-smartdash-readings { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
+:host([mobile]) .hch-smartdash-readings span { min-width: 0; display: flex; flex-direction: column; overflow: hidden; padding: 5px; border-radius: 7px; background: color-mix(in srgb,var(--ink,#fff) 5%,transparent); color: var(--ink-muted,#a8b8c5); font-size: 9px; white-space: nowrap; }
+:host([mobile]) .hch-smartdash-readings b { color: var(--ink,#eef4fa); font-size: 11px; }
+:host([mobile]) .hch-smartdash-mode,:host([mobile]) .hch-smartdash-level,:host([mobile]) .hch-smartdash-fireplace { grid-column: 1 / -1; }
+:host([mobile]) .hch-smartdash-bypass { grid-column: 1; }
+:host([mobile]) .hch-smartdash-boost { grid-column: 2; }
+:host([mobile]) .hch-smartdash-control-label { font-size: 10px; }
+:host([mobile]) .hch-smartdash-control-label em { font-size: 9px; }
+:host([mobile]) .hch-smartdash-choice button { min-height: 31px; font-size: 10px; }
+/* WebUI @media (max-width: 360px). */
+@container hch-card (max-width: 340px) {
+  .hch5-visual.compact .hch-mobile-flow { padding: 9px; }
+  .hch-mobile-reading { padding: 8px 6px; }
+  .hch-mobile-reading small { font-size: 8px; }
+  .hch-mobile-reading strong { font-size: 16px; }
+  .hch-mobile-lane { grid-template-columns: minmax(0,1fr) 22px minmax(0,1fr); gap: 4px; }
+  .hch-mobile-core span { font-size: 7px; }
+}
+
+/* HA theme surfaces and a tighter card layout. The diagram keeps its full
+   viewBox; only the surrounding spacing changes. */
+:host { --hch-base: var(--surface, var(--ha-card-background, var(--card-background-color, #0c1822))); --hch-accent: var(--dashboard-accent, var(--primary-color, #58b9ff)); --hch-border: var(--dashboard-border-neutral, var(--divider-color, #294658)); }
+.hch-card { padding: 10px 12px 12px; background: var(--hch-base); color: var(--primary-text-color, var(--text)); }
+.surface { border-color: color-mix(in srgb, var(--hch-border) 78%, transparent); background: var(--hch-base); box-shadow: var(--dashboard-shadow-soft, var(--ha-card-box-shadow, 0 6px 18px rgb(0 0 0 / 14%))); }
+.overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow { background: color-mix(in srgb, var(--hch-base) 88%, var(--hch-accent) 12%); border-color: color-mix(in srgb, var(--hch-border) 76%, transparent); }
+.pro-segment,.pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.setpoint-stepper strong,.status-action-card > button,.fireplace-actions button { background: var(--dashboard-button-neutral-bg, color-mix(in srgb, var(--hch-base) 93%, var(--primary-text-color, #fff) 7%)); border-color: var(--dashboard-button-neutral-border, var(--hch-border)); color: var(--primary-text-color, var(--text)); }
+.pro-segment button.active,.pro-levels button.active,.mini-buttons button.active,.status-action-card > button.active,.fireplace-actions button.active { background: var(--dashboard-button-active-bg, color-mix(in srgb, var(--hch-accent) 24%, var(--hch-base))); border-color: var(--dashboard-button-active-border, var(--hch-accent)); color: var(--primary-text-color, #fff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hch-accent) 32%, transparent), 0 0 12px color-mix(in srgb, var(--hch-accent) 22%, transparent); }
+.pro-segment button:disabled.active,.pro-levels button:disabled.active,.mini-buttons button:disabled.active,.status-action-card > button:disabled.active,.fireplace-actions button:disabled.active { opacity: 1; }
+.hch-card button:focus-visible { outline: 2px solid var(--hch-accent); outline-offset: 2px; }
+.dashboard-overview,.dashboard-main-grid { gap: 8px; }
+.overview-heading-row { gap: 12px; padding-bottom: 4px; }
+.overview-heading-row h1 { font-size: clamp(21px, 2vw, 30px); }
+.overview-status-pills { gap: 6px; }
+.overview-status-pills > div { min-height: 48px; padding: 6px 9px; }
+.pro-air-card,.pro-control-card { padding: 11px 12px; }
+.pro-control-column,.pro-control-pair { gap: 8px; }
+.mini-control { min-height: 90px; padding: 10px; }
+.mini-buttons { margin-top: 8px; }
+.control-label { margin: 10px 0 5px; }
+.active-decision { margin-top: 8px; padding: 7px 9px; }
+.status-action-card { min-height: 70px; padding: 8px 10px; }
+.climate-panel { padding: 10px 12px; }
+.climate-metric { min-height: 74px; padding: 7px 10px; }
+.afterheat-setpoint-card { min-height: 72px; padding: 9px 12px; }
+@container hch-card (max-width: 560px) {
+  .hch-card { padding: 8px; }
+  .pro-air-card { padding: 9px 8px; }
+  .overview-status-pills > div { min-height: 42px; }
+  .hch5-visual.compact .hch-mobile-flow { margin: 4px 0 8px; padding: 9px; }
+}
+
+/* One HA card, one surface: sections are separated by space and fine rules
+   instead of a stack of differently colored cards. */
+.surface { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:host([embedded]) .hch-card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.dashboard-main-grid > .surface,.pro-control-column > .surface,.pro-control-pair > .surface { border-top: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); }
+.overview-status-pills > div,.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { background: transparent; box-shadow: none; }
+.overview-status-pills > div { border: 0; border-left: 1px solid color-mix(in srgb, var(--hch-border) 55%, transparent); border-radius: 0; }
+.unit-readback,.climate-metric,.active-decision,.hch5-visual.compact .hch-mobile-flow,.hch-mobile-reading,.hch-mobile-core { border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+
+/* Match WebUI mobile: retain the labelled unit and place four large air
+   readings directly below it. The SVG still scales inside the HA column. */
+@container hch-card (max-width: 660px) {
+  .hch5-visual { overflow: visible; padding-top: 0; perspective: none; }
+  .hch5-visual > svg { display: block; width: 100%; max-width: 100%; height: auto; transform: none; }
+  .hch-mobile-flow { display: grid; gap: 5px; margin: 0 0 9px; padding: 8px; border: 1px solid color-mix(in srgb, var(--hch-border) 48%, transparent); border-radius: 12px; background: transparent; }
+  .hch-mobile-flow-head,.hch-mobile-route,.hch-mobile-subreadings { display: none; }
+  .hch-mobile-lane { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; }
+  .hch-mobile-reading { padding: 7px 8px; background: transparent; border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+  .hch-mobile-reading strong { font-size: 15px; }
+  .hch-mobile-core { padding: 5px; background: transparent; border-color: color-mix(in srgb, var(--hch-border) 48%, transparent); }
+  .unit-readback-row { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+  .unit-readback { min-height: 56px; }
+  .unit-readback small { font-size: 9px; }
+  .unit-readback strong { font-size: 11px; }
+  .unit-readback em { font-size: 8px; }
+}
+
+/* Only the full HA card on a portrait-sized mobile viewport. Give the moving
+   unit more height, with one readable T1-T4 badge beside each matching pipe. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch5-visual { position: relative; }
+    .dashboard-overview .hch5-visual > svg {
+      width: 90%; max-width: 90%; height: auto; margin: 24px auto;
+      transform: scaleY(1.42); transform-origin: center;
+    }
+    .dashboard-overview .hch5-visual :is(.hch-temp-port,.hch-sensor-pin,.hch-water-callout) { display: none; }
+    .dashboard-overview .hch-mobile-flow { gap: 0; padding: 8px 2px; }
+    .dashboard-overview .hch-mobile-lane { display: contents; }
+    .dashboard-overview .hch-mobile-reading {
+      position: absolute; z-index: 1; width: clamp(88px, 25cqi, 98px); height: 44px; box-sizing: border-box;
+      display: grid; align-content: center; gap: 2px; padding: 4px 6px; border-radius: 8px;
+      background: rgb(10 27 38 / 90%); box-shadow: 0 3px 12px rgb(0 0 0 / 28%);
+    }
+    .dashboard-overview .hch-mobile-reading small { font-size: 8px; }
+    .dashboard-overview .hch-mobile-reading strong { font-size: 14px; }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:first-child { top: calc(12px + 6cqi); }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { top: calc(36px + 14cqi); }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { right: 0; }
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:first-child,
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child { left: 0; }
+    .dashboard-overview .hch-mobile-core { display: none; }
+    .dashboard-overview .hch-mobile-subreadings { display: grid; }
+    .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 9px; }
+    .dashboard-overview .hch-mobile-subreadings strong { font-size: 12px; }
+  }
+}
+
+/* Sensor readbacks open the matching Home Assistant history dialog. */
+.dashboard-overview .hch-temp-port[role="button"], .dashboard-overview .hch-sensor-pin[role="button"], .dashboard-overview .hch-water-callout [role="button"], .dashboard-overview .hch-mobile-flow [data-sensor], .dashboard-overview .unit-readback[data-sensor], .dashboard-overview .climate-metric[data-sensor] { cursor: pointer; }
+.dashboard-overview .hch-temp-port:focus-visible, .dashboard-overview .hch-sensor-pin:focus-visible, .dashboard-overview .hch-water-callout [role="button"]:focus-visible { outline: 3px solid #70ccff; outline-offset: 3px; }
+
+.dashboard-overview .hch-mobile-flow button:focus-visible { outline: 2px solid var(--hch-accent, #58b9ff); outline-offset: 2px; }
+.dashboard-overview .hch-mobile-flow button { touch-action: manipulation; }
+
+/* Theme-aware text and tiles. The panels around the unit follow the active HA
+   theme (light and dark); the drawing itself keeps its own dark palette. */
+:host { --text: var(--primary-text-color, #eef7fb); --muted: var(--secondary-text-color, #8da4b4); --surface-soft: color-mix(in srgb, var(--primary-text-color, #fff) 5%, transparent); --border: var(--hch-border); --hch-tile: color-mix(in srgb, var(--primary-text-color, #fff) 4%, transparent); }
+.hch5-visual > svg { --text: #eef7fb; --muted: #8da4b4; --surface-soft: #10222e; --border: #1d3442; }
+.status-chip { border-color: var(--hch-border); background: var(--hch-tile); }
+.overview-status-pills small,.control-label,.active-decision span,.active-decision small,.control-footnote,.status-action-card span,.status-action-card small,.afterheat-copy span,.afterheat-copy small,.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat),.climate-metric strong small,.climate-metric em,.pro-card-head p { color: var(--muted); }
+.overview-status-pills strong,.mini-control-title,.unit-readback strong { color: var(--text); }
+.unit-readback small,.unit-readback em { color: var(--muted); }
+.readback-icon { background: color-mix(in srgb, var(--hch-accent) 12%, transparent); border-color: color-mix(in srgb, var(--hch-accent) 30%, transparent); }
+.readback-icon.damper::before,.readback-icon.heater::before,.climate-metric.neutral > .metric-heat { color: var(--muted); }
+.text-action { color: var(--hch-accent); }
+.status-action-icon { background: color-mix(in srgb, var(--hch-accent) 14%, transparent); color: var(--hch-accent); }
+.status-action-icon.flame { background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); }
+.setpoint-stepper { border-color: var(--hch-border); }
+.climate-metric::after { background: color-mix(in srgb, var(--primary-text-color, #fff) 10%, transparent); }
+.pro-segment button:hover,.pro-levels button:hover,.mini-buttons button:hover,.setpoint-stepper button:hover,.status-action-card > button:hover,.fireplace-actions button:hover { border-color: var(--hch-accent); color: var(--text); background: color-mix(in srgb, var(--hch-accent) 10%, transparent); }
+.afterheat-lockout { background: color-mix(in srgb, var(--orange) 12%, transparent); color: var(--text); }
+@container hch-card (max-width: 660px) {
+  .hch-mobile-reading small { color: var(--muted); }
+  .hch-mobile-reading strong { color: var(--text); }
+}
+/* Portrait phones float the readings over the drawing on a dark plate. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-mobile-reading small { color: #a6c1d0; }
+    .dashboard-overview .hch-mobile-reading strong { color: #eefaff; }
+  }
+}
+
+/* Light theme: the drawing gets a light palette derived from the dark one (same hues,
+   inverted lightness); shadows stay dark. Set by the card when HA is in light mode. */
+:host([light]) .hch-side-inset{stroke:#5a707c}
+:host([light]) .hch-floor-shadow{fill:rgb(0 0 0 / 16%)}
+:host([light]) .hch-cabinet,:host([light]) .hch-top-panel,:host([light]) .hch-side-panel{stroke:#627886}
+:host([light]) .hch-top-fold{stroke:rgb(19 39 48 / 34%)}
+:host([light]) .hch-side-seam{stroke:rgb(223 236 244 / 55%)}
+:host([light]) .hch-opening-gasket{stroke:#deecf3}
+:host([light]) .hch-cabinet-fastener circle{fill:#bbcdd6;stroke:#42545d}
+:host([light]) .hch-cabinet-fastener path{stroke:#31434b}
+:host([light]) .hch-cavity-rail{stroke:rgb(78 102 115 / 20%)}
+:host([light]) .hch-inner{fill:#f0f6fa;stroke:#a5bcca}
+:host([light]) .hch-filter rect{stroke:#4c5e68}
+:host([light]) .hch-filter path{stroke:#5c6f79}
+:host([light]) .hch-part-label,:host([light]) .hch-channel-label,:host([light]) .hch-core-port,:host([light]) .hch-exchanger-title,:host([light]) .hch-bus-label{stroke:#e4eff6}
+:host([light]) .hch-part-label{fill:#30414a}
+:host([light]) .hch-fan-ring{fill:#f0f6f9;stroke:#7a909d}
+:host([light]) .hch-fan-shroud{stroke:#afc4d1}
+:host([light]) .hch-fan-hub{fill:#f1f6f9;stroke:#778f9e}
+:host([light]) .hch-fan-back{fill:#f0f6f9;stroke:#8da3b0}
+:host([light]) .hch-fan-drum{stroke:#8da3b0}
+:host([light]) .hch-fan-motor{fill:#b4c8d4;stroke:#667f8e}
+:host([light]) .hch-fan-cap{stroke:#3a515e}
+:host([light]) .hch-fan-cap-centre{fill:#f1f6f9;stroke:#577181}
+:host([light]) .hch-fan-rotor path{fill:#2194db;stroke:#043453}
+:host([light]) .hch-exchanger polygon{stroke:#4f5d64}
+:host([light]) .hch-exchanger path{stroke:#2f383c}
+:host([light]) .hch-exchanger .core-face-top{fill:#6b7a81}
+:host([light]) .hch-exchanger .core-face-side{fill:#b1c2ca}
+:host([light]) .hch-filter .filter-face-top{fill:#74868f;stroke:#4c5e68}
+:host([light]) .hch-filter .filter-face-side{fill:#aec0c9;stroke:#4c5e68}
+:host([light]) .hch-cavity-edge{stroke:#acc3d2}
+:host([light]) .hch-exchanger-title{fill:#1a262b}
+:host([light]) .hch-recovery{fill:#212121;text-shadow:0 2px 8px #f7f7f7}
+:host([light]) .hch-bypass rect{fill:#f0f6fa;stroke:#8da8ba}
+:host([light]) .hch-bypass text{fill:#374a54}
+:host([light]) .bypass-blade{fill:#1798e5}
+:host([light]) .hch-bypass.open .bypass-blade{fill:#31cb85}
+:host([light]) .hch-bypass .damper-frame{fill:#f0f6fa;stroke:#70848e}
+:host([light]) .hch-bypass .bypass-blade{fill:#1798e5}
+:host([light]) .hch-bypass.open .bypass-blade{fill:#31cb85}
+:host([light]) .hch-bypass .bypass-actuator{fill:#d67126;stroke:#f0780d}
+:host([light]) .hch-bypass-channel{fill:#f0f6fa;stroke:#abc1ce}
+:host([light]) .hch-bypass-channel-glow{fill:rgb(240 108 13 / 7%);stroke:#f06c0d}
+:host([light]) to{fill:#f0720d;filter:drop-shadow(0 0 5px rgb(255 159 90 / 38%))}
+:host([light]) .hch-bypass-progress .hch-exchanger-title{fill:#552c04}
+:host([light]) .bypass-progress-track{stroke:rgb(238 245 250 / 82%)}
+:host([light]) .bypass-progress-fill{stroke:#f0710d}
+:host([light]) .hch-bypass-countdown{fill:#503e2a;stroke:#e4eff6}
+:host([light]) .hch-lockout-badge rect{fill:rgb(251 246 239 / 90%);stroke:#d78b25}
+:host([light]) .hch-lockout-badge text{fill:#f0950d}
+:host([light]) .hch-channel-label{fill:#5b717e}
+:host([light]) .hch-core-port{fill:#1e272b}
+:host([light]) .hch-coil rect{fill:#f0f6f9;stroke:#819dad}
+:host([light]) .coil-pipe{stroke:#b48e6e}
+:host([light]) .hch-coil.active .coil-pipe{stroke:#f0740d}
+:host([light]) .water-port{fill:#2b94d1}
+:host([light]) .hch-service-box{fill:#f0f6fa;stroke:#9cb3c1}
+:host([light]) .hch-port rect{stroke:#556872;filter:drop-shadow(0 5px 5px rgb(0 0 0 / 16%))}
+:host([light]) .hch-port-outdoor path,:host([light]) .hch-port-supply path{stroke:#31cb7f}
+:host([light]) .hch-port-extract path,:host([light]) .hch-port-exhaust path{stroke:#f0650d}
+:host([light]) .hch-port-outdoor path{stroke:#0d97f0}
+:host([light]) .hch-port-extract path{stroke:#f00d0d}
+:host([light]) .hch-rear-duct-body{stroke:#70848e}
+:host([light]) .hch-rear-duct-shine{stroke:rgb(23 37 43 / 42%)}
+:host([light]) .hch-rear-duct-shade{stroke:rgb(247 247 247 / 32%)}
+:host([light]) .hch-rear-duct-seam{stroke:rgb(56 74 83 / 38%)}
+:host([light]) .hch-rear-duct-flange{stroke:#546772}
+:host([light]) .hch-air-wisps.hch-fog-supply{color:#3bc2b4}
+:host([light]) .hch-air-wisps.hch-fog-extract{color:#593005}
+:host([light]) .hch-temp-port-plate{fill:rgb(240 246 250 / 90%);stroke:#92afc2;filter:drop-shadow(0 6px 14px rgb(0 0 0 / 18%))}
+:host([light]) .hch-temp-port-title{fill:#2b3d46;stroke:#e4eff6}
+:host([light]) .hch-temp-port-value{fill:#0d2635;stroke:#e4eff6}
+:host([light]) .hch-temp-port.tone-cold .hch-temp-port-value{fill:#0d9cf0}
+:host([light]) .hch-temp-port.tone-warm .hch-temp-port-value{fill:#f07b0d}
+:host([light]) .hch-temp-port.tone-green .hch-temp-port-value{fill:#28d577}
+:host([light]) .hch-sensor-pin circle{fill:#0d9ff0;stroke:#032e3f}
+:host([light]) .hch-sensor-pin line{stroke:#6a8495}
+:host([light]) .hch-sensor-pin rect{fill:#f0f6fa;stroke:#a8c5d5}
+:host([light]) .hch-sensor-pin text{fill:#3b4f5a}
+:host([light]) .hch-sensor-pin .pin-value{fill:#0a2a38}
+:host([light]) .hch-water-callout rect{fill:#f0f6fa;stroke:#a6c6d7}
+:host([light]) .hch-water-callout text{fill:#3b4f5a}
+:host([light]) .hch-water-callout .water-value{fill:#082c3a}
+:host([light]) .unit-readback{border:1px solid #b4cfe0;background:#f0f6fa}
+:host([light]) .unit-readback small{color:#506673}
+:host([light]) .unit-readback strong{color:#0c2a36}
+:host([light]) .unit-readback em{color:#526876}
+:host([light]) .readback-icon{background:#f0f6fa;border:1px solid #92b8cf}
+:host([light]) .readback-icon.fan::before{color:#0d9af0}
+:host([light]) .readback-icon.damper::before{color:#3f5562}
+:host([light]) .readback-icon.damper.active::before{color:#33c97c}
+:host([light]) .readback-icon.heater::before{color:#5e7685}
+:host([light]) .readback-icon.heater.active::before{color:#f07f0d;text-shadow:0 0 10px #f0680d}
+:host([light]) .control-label{color:#4b5f6a}
+:host([light]) .pro-segment{border:1px solid #b3cddd;background:#f0f6f9}
+:host([light]) .pro-segment button,:host([light]) .pro-levels button,:host([light]) .mini-buttons button,:host([light]) .setpoint-stepper button,:host([light]) .fireplace-actions button{border:1px solid #a9c3d4;background:#f0f6f9;color:#384a54}
+:host([light]) .pro-segment button:hover,:host([light]) .pro-levels button:hover,:host([light]) .mini-buttons button:hover,:host([light]) .setpoint-stepper button:hover,:host([light]) .fireplace-actions button:hover{border-color:#4987ac;color:#032c3f;background:#f0f6fa}
+:host([light]) .pro-segment button.active,:host([light]) .pro-levels button.active,:host([light]) .mini-buttons button.active{color:#212121;border-color:#0d92f0;background:linear-gradient(145deg,#1b5486,#1a65a7);box-shadow:inset 0 0 0 1px rgb(255 255 255 / 4%),0 0 14px rgb(44 165 255 / 13%)}
+:host([light]) .active-decision{border:1px solid #b8d0df;background:#f0f6fa}
+:host([light]) .active-decision span{color:#687e8c}
+:host([light]) .active-decision small{color:#627885}
+:host([light]) .mini-control-title{color:#122630}
+:host([light]) .mini-control-title svg{color:#0d9bf0}
+:host([light]) .control-footnote,:host([light]) .text-action{color:#617785}
+:host([light]) .text-action{color:#0d97f0}
+:host([light]) .status-action-icon{background:#eef6fb;color:#0d9df0}
+:host([light]) .status-action-icon.flame{background:#f9f4f1;color:#f0820d}
+:host([light]) .status-action-icon.flame.auto-active{background:#fff1dc;color:#db6a0c;box-shadow:0 0 0 1px #da873d,0 0 13px rgb(225 115 28 / 25%)}
+:host([light]) .status-action-card span{color:#627885}
+:host([light]) .status-action-card small{color:#728997}
+:host([light]) .status-action-card > button,:host([light]) .fireplace-actions button{border:1px solid #aac5d5;background:#f0f6fa;color:#334954}
+:host([light]) .afterheat-copy span{color:#526977}
+:host([light]) .afterheat-copy small{color:#708694}
+:host([light]) .setpoint-stepper{border:1px solid #aac6d6}
+:host([light]) .setpoint-stepper strong{background:#f0f6fa}
+:host([light]) .climate-metric{border:1px solid #b7d0df;background:#f0f6fa}
+:host([light]) .climate-metric > svg,:host([light]) .climate-metric > .metric-drop,:host([light]) .climate-metric > .metric-filter,:host([light]) .climate-metric > .metric-heat{color:#3ac378}
+:host([light]) .climate-metric.blue > .metric-drop{color:#0d90f0}
+:host([light]) .climate-metric.cyan > .metric-filter{color:#1bb6e1}
+:host([light]) .climate-metric.neutral > .metric-heat{color:#344955}
+:host([light]) .climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat){color:#607684}
+:host([light]) .climate-metric strong small{color:#627885}
+:host([light]) .climate-metric em{color:#627886}
+:host([light]) .climate-metric > i{background:linear-gradient(90deg,#33ca78,#0d99f0);box-shadow:0 0 12px rgb(82 220 145 / 9%)}
+:host([light]) .climate-metric::after{background:#f1f6f8}
+:host([light]) .hch-bus-cable{stroke:#b8c9d3}
+:host([light]) .hch-bus-core{stroke:#d49228}
+:host([light]) .hch-bus-joint{fill:#d49228}
+:host([light]) .hch-cable-gland{fill:#f2f6f8;stroke:#70848e}
+:host([light]) .hch-bus-label{fill:#bf913d}
+:host([light]) .hch-signal-wire{stroke:#a0764b}
+:host([light]) .hch-device .device-body{fill:#f0f6fa;stroke:#8daebf}
+:host([light]) .hch-device text{fill:#17252b}
+:host([light]) .hch-device .device-sub{fill:#3b4f5a}
+:host([light]) .hch-pi .pi-board{fill:#f0f9f5;stroke:#44a773}
+:host([light]) .hch-pi .pi-chip{fill:#f3f6f7;stroke:#7c94a0}
+:host([light]) .hch-pi .pi-gpio{fill:#bf913d}
+:host([light]) svg *[fill="#1a2d37" i]{fill:#c9dbe4}
+:host([light]) svg stop[stop-color="#0a1a24" i]{stop-color:#dcebf4}
+:host([light]) svg stop[stop-color="#0b1a23" i]{stop-color:#ddebf3}
+:host([light]) svg stop[stop-color="#0c1a22" i]{stop-color:#deebf2}
+:host([light]) svg stop[stop-color="#14242e" i]{stop-color:#d2e1ea}
+:host([light]) svg stop[stop-color="#15242d" i]{stop-color:#d3e1e9}
+:host([light]) svg stop[stop-color="#173041" i]{stop-color:#c0d7e6}
+:host([light]) svg stop[stop-color="#1a2a33" i]{stop-color:#cddce4}
+:host([light]) svg stop[stop-color="#1b3445" i]{stop-color:#bcd3e2}
+:host([light]) svg stop[stop-color="#1d303b" i]{stop-color:#c5d7e0}
+:host([light]) svg stop[stop-color="#223440" i]{stop-color:#c1d1db}
+:host([light]) svg stop[stop-color="#25353e" i]{stop-color:#c2d1d9}
+:host([light]) svg stop[stop-color="#263640" i]{stop-color:#c0cfd8}
+:host([light]) svg stop[stop-color="#263843" i]{stop-color:#bdced8}
+:host([light]) svg stop[stop-color="#2c4452" i]{stop-color:#afc4d1}
+:host([light]) svg stop[stop-color="#3a4c57" i]{stop-color:#a9bac4}
+:host([light]) svg stop[stop-color="#40515b" i]{stop-color:#a5b5be}
+:host([light]) svg stop[stop-color="#455760" i]{stop-color:#a0b1b9}
+:host([light]) svg stop[stop-color="#4a5d68" i]{stop-color:#99aab3}
+:host([light]) svg stop[stop-color="#596b76" i]{stop-color:#8a9ba5}
+:host([light]) svg stop[stop-color="#5f7a8a" i]{stop-color:#778f9e}
+:host([light]) svg stop[stop-color="#68bcf0" i]{stop-color:#2194db}
+:host([light]) svg stop[stop-color="#6b7d88" i]{stop-color:#788993}
+:host([light]) svg stop[stop-color="#7b8991" i]{stop-color:#6f7c83}
+:host([light]) svg stop[stop-color="#8a99a2" i]{stop-color:#5e6c74}
+:host([light]) svg stop[stop-color="#8e9aa1" i]{stop-color:#5f6a70}
+:host([light]) svg stop[stop-color="#a8ddff" i]{stop-color:#043453}
+:host([light]) svg stop[stop-color="#c9d8e0" i]{stop-color:#202e35}
+:host([light]) svg *[stroke="#aab9c1" i]{stroke:#3f4d54}
+/* Light theme air flow: the fog keeps its own colours (masks and flow gradients are not
+   remapped) and gets more cover so it reads on the light cabinet. */
+:host([light]) .hch-fog-a { opacity: .5; }
+:host([light]) .hch-fog-b { opacity: .36; }
+:host([light]) .hch-fog[style*="0s"], :host([light]) .hch-fog-a[style*="0s"] { opacity: .18; }
+:host([light]) .hch-air-wisps.hch-fog-supply { color: #1f9e8f; }
+:host([light]) .hch-air-wisps.hch-fog-extract { color: #e0762a; }
+:host([light]) .hch-air-wisp-wide { opacity: .35; }
+:host([light]) .hch-air-wisp-fine { opacity: .6; }
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    :host([light]) .dashboard-overview .hch-mobile-reading { background: rgb(240 246 249 / 92%); box-shadow: 0 3px 12px rgb(0 0 0 / 14%); }
+    :host([light]) .dashboard-overview .hch-mobile-reading small { color: #52636d; }
+    :host([light]) .dashboard-overview .hch-mobile-reading strong { color: #14222a; }
+  }
+}
+
+/* Mobile sub-readings follow the theme text colour. */
+.hch-mobile-subreadings strong,.hch-mobile-water strong,.hch-mobile-water strong button { color: var(--text); }
+.hch-mobile-subreadings > button,.hch-mobile-water { color: var(--muted); }
+.hch-mobile-water > span,.hch-mobile-water strong span { color: var(--muted); }
+
+/* Water afterheat coil (card option afterheat_coil: water): copper tube through
+   aluminium fins, water tinted by its measured temperature. It only flows, and
+   only shows full colour, while the afterheat is active. */
+.hch-water-coil .coil-fin { fill: none; stroke: #7d95a2; stroke-width: 1; opacity: .34; }
+.hch-water-coil .water-tube-shell { fill: none; stroke: #08141b; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
+.hch-water-coil .water-tube-core { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: opacity .5s ease; }
+.hch-water-coil .water-pipe-shell { fill: none; stroke: #08141b; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.hch-water-coil .water-pipe-core { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; transition: stroke .8s ease, opacity .5s ease; }
+.hch-water-coil .water-flow { opacity: 0; transition: opacity .6s ease; }
+.hch-water-coil .water-flow path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+/* Lighter bands of water sliding through the pipe, and small bubbles riding along. */
+.hch-water-coil .water-current { stroke: rgb(255 255 255 / 30%); stroke-width: 3.2; stroke-dasharray: 12 9; }
+.hch-water-coil .water-bubbles { stroke: rgb(255 255 255 / 85%); stroke-width: 1.6; stroke-dasharray: 0.1 17; }
+.hch-water-coil.active .water-flow { opacity: 1; }
+.hch-water-coil.active .water-current { animation: hch-water-current 1.4s linear infinite; }
+.hch-water-coil.active .water-bubbles { animation: hch-water-bubbles 1.1s linear infinite; }
+@keyframes hch-water-current { to { stroke-dashoffset: -21; } }
+@keyframes hch-water-bubbles { to { stroke-dashoffset: -17.1; } }
+.hch-water-coil.active .water-tube-core,.hch-water-coil.active .water-pipe-core { opacity: 1; }
+.hch-water-coil .valve-body { fill: #1d303b; stroke: #8ea5b2; stroke-width: 1.3; stroke-linejoin: round; }
+.hch-water-coil .valve-actuator { fill: #b8773c; stroke: #08141b; stroke-width: 1; }
+.hch-water-coil.active .valve-actuator { fill: #f0a050; }
+@media (prefers-reduced-motion: reduce) { .hch-water-coil.active .water-flow path { animation: none; } }
+:host([light]) .hch-water-coil :is(.water-pipe-shell,.water-tube-shell) { stroke: #52697a; }
+:host([light]) .hch-water-coil .valve-body { fill: #f0f6fa; stroke: #52697a; }
+:host([light]) .hch-water-coil .valve-actuator { stroke: #52697a; }
+.hch-control-panel .control-body { fill: rgb(8 20 28 / 82%); stroke: #3a5b70; stroke-width: 1.4; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 35%)); }
+.hch-control-panel.tone-boost .control-body { stroke: #c9894a; }
+.hch-control-panel.tone-reduced .control-body { stroke: #4f86b0; }
+.hch-control-panel.tone-paused .control-body { stroke: #8a6a3a; stroke-dasharray: 6 5; }
+.hch-control-text { display: flex; flex-direction: column; gap: 3px; height: 100%; overflow: hidden; color: #a3b9c6; font-family: inherit; }
+.hch-control-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #7fa3b8; }
+.hch-control-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: #f5fafd; font-size: 19px; font-weight: 850; line-height: 1.15; }
+.hch-control-title em { flex: none; font-style: normal; font-size: 15px; font-weight: 800; color: #74ecab; }
+.hch-control-panel.tone-boost .hch-control-title em { color: #ffb066; }
+.hch-control-panel.tone-reduced .hch-control-title em { color: #7fd0ff; }
+.hch-control-reason { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 650; line-height: 1.3; color: #c8dbe5; }
+.hch-control-footer { margin-top: auto; font-size: 11.5px; font-weight: 700; color: #7fa3b8; }
+:host([light]) .hch-control-panel .control-body{fill:rgb(240 246 250 / 92%);stroke:#92afc2;filter:drop-shadow(0 6px 14px rgb(0 0 0 / 18%))}
+:host([light]) .hch-control-panel.tone-boost .control-body{stroke:#e0a060}
+:host([light]) .hch-control-panel.tone-reduced .control-body{stroke:#5f9cc8}
+:host([light]) .hch-control-eyebrow,:host([light]) .hch-control-footer{color:#4f6b7c}
+:host([light]) .hch-control-title{color:#0d2635}
+:host([light]) .hch-control-title em{color:#1f9d57}
+:host([light]) .hch-control-panel.tone-boost .hch-control-title em{color:#d06d0b}
+:host([light]) .hch-control-panel.tone-reduced .hch-control-title em{color:#0d7fc4}
+:host([light]) .hch-control-reason{color:#2b3d46}
+.pro-levels button.is-normal { border-color: #3baeff; border-style: dashed; color: #dff5ff; }
+.hch-smartdash-choice button.is-normal { border-color: var(--hch-accent,#58b9ff); border-style: dashed; }
+:host([light]) .pro-levels button.is-normal { border-color: #1f7fc4; color: #0d2635; }
+
+/* Claude AI 2026-09-25: større tekst og værdier på mobil (kortbredde <= 660px). */
+@container hch-card (max-width: 660px) {
+  .hch-part-label { font-size: 18px; }
+  .hch-exchanger-title { font-size: 20.5px; }
+  .hch-bypass text { font-size: 14px; }
+  .hch-bypass-countdown { font-size: 17px; }
+  .hch-lockout-badge text { font-size: 16.5px; }
+  .hch-channel-label { font-size: 17px; }
+  .hch-core-port { font-size: 19px; }
+  .hch-temp-port-title { font-size: 18px; }
+  .hch-sensor-pin text { font-size: 16px; }
+  .hch-sensor-pin .pin-value { font-size: 19px; }
+  .hch-water-callout text { font-size: 16.5px; }
+  .hch-water-callout .water-value { font-size: 19px; }
+  .unit-readback small { font-size: 15px; }
+  .unit-readback strong { font-size: 18px; }
+  .unit-readback em { font-size: 15px; }
+  .control-label { font-size: 13px; }
+  .pro-segment button,.pro-levels button,.mini-buttons button,.setpoint-stepper button,.fireplace-actions button { font-size: 13px; }
+  .active-decision span { font-size: 11.5px; }
+  .active-decision strong { font-size: 14px; }
+  .active-decision small { font-size: 12.5px; }
+  .mini-control-title { font-size: 15px; }
+  .control-footnote,.text-action { font-size: 12.5px; }
+  .status-action-card span { font-size: 12.5px; }
+  .status-action-card strong { font-size: 14px; }
+  .status-action-card small { font-size: 11.5px; }
+  .afterheat-copy span { font-size: 12.5px; }
+  .afterheat-copy strong { font-size: 14px; }
+  .afterheat-copy small { font-size: 11.5px; }
+  .setpoint-stepper button { font-size: 20.5px; }
+  .setpoint-stepper strong { font-size: 16px; }
+  .climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat) { font-size: 12.5px; }
+  .climate-metric strong { font-size: 20px; }
+  .climate-metric strong small { font-size: 12.5px; }
+  .climate-metric em { font-size: 12.5px; }
+  .hch-bus-label { font-size: 18px; }
+  .hch-device text { font-size: 19px; }
+  .hch-device .device-sub { font-size: 16px; }
+  .eyebrow { font-size: 12.5px; }
+  .status-chip { font-size: 13px; }
+  .overview-heading-row p { font-size: 15px; }
+  .overview-status-pills small { font-size: 12.5px; }
+  .overview-status-pills strong { font-size: 15px; }
+  .pro-card-head h2 { font-size: 19px; }
+  .pro-card-head p { font-size: 13px; }
+  .pro-card-head.compact h2 { font-size: 18px; }
+  .afterheat-lockout { font-size: 13px; }
+  .hch-notice { font-size: 15px; }
+  .hch-mobile-reading small { font-size: 13px; }
+  .hch-mobile-reading strong { font-size: 21px; }
+  .hch-mobile-route { font-size: 14px; }
+  .hch-mobile-core span { font-size: 12.5px; }
+  .hch-mobile-core strong { font-size: 19px; }
+  .hch-mobile-subreadings > button,.hch-mobile-water { font-size: 13px; }
+  .hch-mobile-subreadings strong { font-size: 16px; }
+  .hch5-visual.compact .readback-icon::before { font-size: 19px; }
+  .hch5-visual.compact .unit-readback small { font-size: 13px; }
+  .hch5-visual.compact .unit-readback strong { font-size: 15px; }
+  .hch5-visual.compact .unit-readback em { font-size: 12.5px; }
+  .dashboard-overview .hch-mobile-reading small { font-size: 12.5px; }
+  .dashboard-overview .hch-mobile-reading strong { font-size: 17px; }
+  .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 13px; }
+  .dashboard-overview .hch-mobile-subreadings strong { font-size: 16px; }
+  .hch-control-eyebrow { font-size: 15.5px; }
+  .hch-control-title { font-size: 20.5px; }
+  .hch-control-title em { font-size: 18px; }
+  .hch-control-reason { font-size: 16px; }
+  .hch-control-footer { font-size: 15.5px; }
+}
+@container hch-card (max-width: 660px) { .overview-status-pills strong { font-size: 13px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-reading small { font-size: 12.5px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-reading strong { font-size: 19px; } }
+@container hch-card (max-width: 340px) { .hch-mobile-core span { font-size: 11.5px; } }
+@container hch-card (max-width: 660px) { .hch-mobile-reading strong { font-size: 18px; } }
+@container hch-card (max-width: 660px) { .unit-readback small { font-size: 13px; } }
+@container hch-card (max-width: 660px) { .unit-readback strong { font-size: 15px; } }
+@container hch-card (max-width: 660px) { .unit-readback em { font-size: 12.5px; white-space: normal; overflow: visible; text-overflow: clip; } }
+
+/* Claude AI 2026-09-25: på mobil er T1-T4-boksene kun så brede som indholdet,
+   så anlægstegningen kan fylde hele bredden, og styringspanelet får større tekst. */
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch5-visual > svg { width: 100%; max-width: 100%; }
+    .dashboard-overview .hch-mobile-reading { width: max-content; max-width: 30cqi; height: auto; gap: 1px; padding: 3px 7px; }
+    .dashboard-overview .hch-mobile-lane.supply .hch-mobile-reading:last-child,
+    .dashboard-overview .hch-mobile-lane.extract .hch-mobile-reading:last-child { top: calc(30px + 14cqi); }
+    .dashboard-overview .hch-mobile-reading small { font-size: 11px; }
+    .dashboard-overview .hch-mobile-reading strong { font-size: 16.5px; }
+    .dashboard-overview .hch-mobile-subreadings > button,.dashboard-overview .hch-mobile-water { font-size: 13px; }
+    .dashboard-overview .hch-mobile-subreadings strong { font-size: 16px; }
+    .hch-control-eyebrow { display: none; }
+    .hch-control-title { font-size: 28px; }
+    .hch-control-title em { font-size: 20px; }
+    .hch-control-reason { font-size: 20px; line-height: 1.2; }
+    .hch-control-footer { font-size: 17px; }
+  }
+}
+/* Claude AI 2026-09-26: på mobil står vand frem/retur og afkøl i tegningens
+   nederste venstre hjørne under varmefladen, ligesom på desktop. */
+.hch-mobile-water-badge { display: none; }
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-mobile-water-badge {
+      position: absolute; z-index: 1; left: 0; top: calc(78px + 14cqi); display: grid; gap: 0; padding: 2px 4px; line-height: 1.15;
+      border: 1px solid color-mix(in srgb, var(--hch-border) 48%, transparent); border-radius: 8px;
+      background: rgb(10 27 38 / 90%); box-shadow: 0 3px 12px rgb(0 0 0 / 28%);
+    }
+    .dashboard-overview .hch-mobile-water-badge small { color: #a6c1d0; font-size: 10px; white-space: nowrap; }
+    .dashboard-overview .hch-mobile-water-badge small b { color: #eefaff; font-weight: 800; }
+    .dashboard-overview .hch-mobile-water-badge strong { display: flex; align-items: baseline; gap: 1px; color: #eefaff; font-size: 13px; white-space: nowrap; }
+    .dashboard-overview .hch-mobile-water-badge strong span { color: #91aab8; }
+    .dashboard-overview .hch-mobile-water-badge button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+    .dashboard-overview .hch-mobile-subreadings .hch-mobile-water { display: none; }
+    .dashboard-overview .hch-mobile-subreadings { grid-template-columns: 1fr; }
+  }
+}
+:host([light]) .dashboard-overview .hch-mobile-water-badge { background: rgb(240 246 249 / 92%); }
+:host([light]) .dashboard-overview .hch-mobile-water-badge :is(small,strong,small b) { color: #14222a; }
+/* Solid core: tap to see the air inside for a minute; the recovery value opens its history. */
+.hch-core-toggle { fill: transparent; stroke: none; cursor: pointer; outline: none; }
+.hch-core-toggle:focus-visible { stroke: rgb(127 208 255 / 70%); stroke-width: 2; stroke-dasharray: 6 5; }
+.hch-recovery-hit { cursor: pointer; outline: none; }
+.hch-recovery-hit rect { fill: transparent; }
+.hch-recovery-hit:hover rect,.hch-recovery-hit:focus-visible rect { fill: rgb(127 208 255 / 10%); stroke: rgb(127 208 255 / 45%); stroke-width: 1.2; }
+/* Light theme: pale wisps vanish on a light drawing, so they use the full air colours. */
+:host([light]) .hch-air-wisps.hch-fog-supply .hch-air-wisp { stroke: url(#supplyFlow); }
+:host([light]) .hch-air-wisps.hch-fog-extract .hch-air-wisp { stroke: url(#extractFlow); }
+
+/* Same afterheat thermostat as the controller WebUI, adapted to this card. */
+.afterheat-setpoint-card { align-content: stretch; }
+.afterheat-thermostat { height: 100%; display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); grid-template-areas: "dial readings"; gap: 14px; align-items: center; --tone: #58b9ff; }
+.afterheat-thermostat.has-level { grid-template-areas: "dial readings" "level level"; grid-template-rows: minmax(0, 1fr) auto; }
+.afterheat-thermostat.tone-heating { --tone: #ff8a47; }
+.afterheat-thermostat.tone-lockout { --tone: #ffad55; }
+.afterheat-thermostat.tone-off { --tone: #6c8494; }
+.thermostat-dial { grid-area: dial; position: relative; width: 100%; aspect-ratio: 1; }
+.thermostat-dial svg { width: 100%; height: 100%; touch-action: none; cursor: pointer; overflow: visible; }
+.thermostat-dial svg:focus-visible { outline: none; }
+.thermostat-dial svg:focus-visible .thermostat-knob { stroke: #fff; stroke-width: 3; }
+.thermostat-track { fill: none; stroke: #16293a; stroke-width: 14; stroke-linecap: round; }
+.thermostat-value { fill: none; stroke-width: 14; stroke-linecap: round; transition: d .25s ease; }
+.thermostat-glow { fill: none; stroke: #ff7a3d; stroke-width: 16; stroke-linecap: round; opacity: .45; animation: thermostat-pulse 2.4s ease-in-out infinite; }
+@keyframes thermostat-pulse { 50% { opacity: .15; } }
+.thermostat-tick { stroke: #25404f; stroke-width: 1.4; stroke-linecap: round; }
+.thermostat-tick.major { stroke: #3d5a6b; stroke-width: 2; }
+.thermostat-tick.lit { stroke: var(--tone); }
+.thermostat-scale { fill: #6f8898; font-size: 9px; font-weight: 700; }
+.thermostat-knob { fill: #eaf6fd; stroke: var(--tone); stroke-width: 4; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 45%)); }
+.thermostat-center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2px; pointer-events: none; text-align: center; }
+.thermostat-center strong { font-size: clamp(34px, 4.2cqi, 46px); line-height: 1; font-weight: 800; color: #eef8fd; letter-spacing: -.02em; }
+.thermostat-center strong small { font-size: .38em; font-weight: 700; margin-left: 2px; color: #a8bfcc; vertical-align: super; }
+.thermostat-state { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 16%, transparent); color: var(--tone); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.thermostat-sub { color: #7f97a6; font-size: 10px; font-weight: 600; }
+.thermostat-side { grid-area: readings; min-width: 0; display: grid; gap: 12px; align-content: center; }
+.thermostat-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.thermostat-head span { color: #dff6ff; font-size: 15px; font-weight: 800; }
+.thermostat-head em { color: #6f8898; font-size: 10px; font-style: normal; font-weight: 600; }
+.thermostat-readings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.thermostat-readings div { min-width: 0; }
+.thermostat-readings div { padding: 8px 10px; border: 1px solid #1f3948; border-radius: 9px; background: #0a1822; }
+.thermostat-readings small { display: block; color: #6f8898; font-size: 9px; font-weight: 700; }
+.thermostat-readings strong { color: #dff6ff; font-size: 13px; font-weight: 800; }
+.thermostat-note { margin: 0; padding: 8px 10px; border: 1px solid #5a4a22; border-radius: 9px; background: rgb(255 173 85 / 9%); color: #ffc98a; font-size: 11px; line-height: 1.35; }
+.thermostat-note.frost-lock-note { display: flex; align-items: center; gap: 6px; border-color: #2d5a78; background: rgb(88 185 255 / 10%); color: #9fd6ff; }
+.thermostat-confirm-box .frost-lock-note { margin-top: 10px; }
+.thermostat-actions { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
+.thermostat-actions button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #294658; border-radius: 12px; background: #0c1b25; color: #cfe6f2; font-size: 20px; font-weight: 700; cursor: pointer; transition: .18s ease; }
+.thermostat-actions button:hover:not(:disabled) { border-color: var(--tone); color: #fff; }
+.thermostat-actions button:disabled { opacity: .4; cursor: default; }
+.thermostat-actions .thermostat-power { font-size: 12px; font-weight: 800; }
+.thermostat-actions .thermostat-power.on { border-color: color-mix(in srgb, var(--tone) 55%, #294658); color: var(--tone); }
+@container hch-card (max-width: 680px) {
+  .afterheat-thermostat { grid-template-columns: 1fr; grid-template-areas: "dial" "readings"; justify-items: center; }
+  .afterheat-thermostat.has-level { grid-template-areas: "dial" "readings" "level"; grid-template-rows: none; }
+  .thermostat-dial { max-width: 240px; }
+  .thermostat-side { width: 100%; }
+}
+.thermostat-level { grid-area: level; min-width: 0; width: 100%; display: grid; gap: 6px; padding: 9px 11px; border: 1px solid #1f3948; border-radius: 10px; background: #0a1822; }
+.thermostat-level-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.thermostat-level-head strong { color: #dff6ff; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.thermostat-level-head em { color: #7f97a6; font-size: 10px; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
+.thermostat-level-bar { position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; height: 8px; }
+.thermostat-level-bar i { border-radius: 2px; background: #1c3442; }
+.thermostat-level-bar i.lit { background: var(--tone); }
+.thermostat-level-marker { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: #eaf6fd; box-shadow: 0 0 0 1px rgb(0 0 0 / 45%); transition: left .4s ease; }
+.thermostat-level-reason { margin: 0; color: #9fb6c4; font-size: 11px; line-height: 1.35; }
+:host([light]) .thermostat-level { background: var(--surface, #fff); border-color: #c3d6e2; }
+:host([light]) .thermostat-level-head strong { color: #0f2733; }
+:host([light]) .thermostat-level-bar i { background: #dbe7ee; }
+:host([light]) .thermostat-level-bar i.lit { background: var(--tone); }
+:host([light]) .thermostat-level-marker { background: #0f2733; box-shadow: 0 0 0 1px #fff; }
+:host([light]) .thermostat-level-reason { color: #44606f; }
+:host([light]) .thermostat-track { stroke: #dbe7ee; }
+:host([light]) .thermostat-tick { stroke: #c3d4de; }
+:host([light]) .thermostat-center strong, :host([light]) .thermostat-head span, :host([light]) .thermostat-readings strong { color: #0f2733; }
+:host([light]) .thermostat-note.frost-lock-note { border-color: #9cc9e6; background: rgb(88 185 255 / 12%); color: #1d5f8a; }
+:host([light]) .thermostat-readings div, :host([light]) .thermostat-actions button { background: var(--surface, #fff); border-color: #c3d6e2; color: #20394a; }
+:host([light]) .thermostat-knob { fill: #fff; }
+@container hch-card (max-width: 680px) { .afterheat-setpoint-card { grid-template-columns: minmax(0, 1fr); } .afterheat-thermostat { width: 100%; } .thermostat-dial { max-width: 280px; } }
+@media (prefers-reduced-motion: reduce) { .thermostat-glow { animation: none; } }
+
+/* Bonfire in the garden: full-width card under the fireplace pair, as in the WebUI. */
+.bonfire-card { grid-template-columns: 44px minmax(0,1fr) auto; }
+.bonfire-card .status-action-icon.smoke { color: #b9c7d1; background: rgb(185 199 209 / 12%); }
+.bonfire-card.active { border-color: #8aa0ae; }
+.bonfire-card.active .status-action-icon.smoke { color: #fff; background: rgb(185 199 209 / 28%); }
+.bonfire-actions { flex-wrap: wrap; justify-content: flex-end; }
+.bonfire-actions button { min-width: 44px; }
+
+/* OFF in the level row and its popup, as in the WebUI (theme colours). */
+.pro-levels.with-off { grid-template-columns: repeat(var(--levels,6),1fr) 1.25fr; }
+.pro-levels .level-off { font-weight: 800; letter-spacing: .04em; color: var(--error-color, #d97a5b); }
+.pro-levels .level-off.active { color: #fff; border-color: var(--error-color, #d97a5b); background: color-mix(in srgb, var(--error-color, #d97a5b) 72%, var(--hch-base)); box-shadow: none; }
+.standby-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / 55%); }
+.standby-dialog { width: min(460px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 16px; border-radius: 14px; display: grid; gap: 12px; }
+.standby-dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.standby-dialog-heading h2 { margin: 2px 0 0; font-size: 17px; color: var(--text); }
+.standby-dialog-heading button { width: 32px; height: 32px; border: 1px solid var(--hch-border); border-radius: 8px; background: transparent; color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; }
+.standby-dialog-lead { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.standby-choices { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+.standby-choices button:last-child { grid-column: 1 / -1; }
+.standby-choices button { display: grid; gap: 2px; text-align: left; padding: 9px 11px; border: 1px solid var(--hch-border); border-radius: 10px; background: color-mix(in srgb, var(--hch-base) 93%, var(--primary-text-color, #fff) 7%); color: var(--text); cursor: pointer; }
+.standby-choices button:hover { border-color: var(--error-color, #d97a5b); }
+.standby-choices button.active { border-color: var(--error-color, #d97a5b); background: color-mix(in srgb, var(--error-color, #d97a5b) 14%, transparent); }
+.standby-choices small { color: var(--muted); font-size: 11px; }
+.standby-on-action { min-height: 42px; border: 1px solid var(--success-color, #4fbf8a); border-radius: 10px; background: color-mix(in srgb, var(--success-color, #4fbf8a) 14%, transparent); color: var(--success-color, #4fbf8a); font-weight: 800; cursor: pointer; }
+
+/* Afterheat change waits for confirmation: a popup over the thermostat card. */
+.afterheat-thermostat { position: relative; }
+.thermostat-confirm { position: absolute; inset: -6px; z-index: 5; display: grid; place-items: center; padding: 8px; border-radius: 14px; background: color-mix(in srgb, var(--hch-base) 72%, transparent); backdrop-filter: blur(3px); }
+.thermostat-confirm-box { width: min(320px, 100%); display: grid; gap: 10px; padding: 14px; border: 1px solid var(--warning-color, #ffad55); border-radius: 14px; background: var(--hch-base); box-shadow: 0 14px 36px rgb(0 0 0 / 40%); text-align: center; }
+.thermostat-confirm-title { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.thermostat-confirm-values { display: flex; align-items: baseline; justify-content: center; gap: 10px; color: var(--muted); font-size: 18px; }
+.thermostat-confirm-values em { font-style: normal; }
+.thermostat-confirm-values strong { color: var(--text); font-size: 30px; }
+.thermostat-confirm-adjust, .thermostat-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.thermostat-confirm button { min-height: 42px; border-radius: 10px; border: 1px solid var(--hch-border); background: transparent; color: var(--text); font-size: 13px; font-weight: 800; cursor: pointer; }
+.thermostat-confirm-adjust button { font-size: 20px; }
+.thermostat-confirm .thermostat-ok { border-color: var(--warning-color, #ffad55); background: color-mix(in srgb, var(--warning-color, #ffad55) 24%, transparent); }
+.thermostat-confirm button:disabled { opacity: .45; cursor: wait; }
+
+/* Tiles use the same design as the front page status buttons
+   (custom:ha-home-status-card): accent edge, card surface, shadow, big value
+   on top, detail and label below, and a large faint drifting icon. */
+.dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) {
+  --tile-accent: var(--state-info-icon, var(--info-color, #38bdf8));
+  position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box; min-width: 0; min-height: 85px;
+  display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 0; padding: 10px 12px;
+  border: 0; border-left: calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb, var(--tile-accent) 78%, transparent); border-radius: 15px;
+  background: var(--surface, var(--ha-card-background, var(--card-background-color, #172536)));
+  box-shadow: var(--dashboard-shadow-strong, var(--ha-card-box-shadow, 0 8px 22px rgba(0,0,0,.22)));
+  color: var(--gray800, var(--primary-text-color, #f8fafc)); font: inherit; text-align: left;
+}
+.dashboard-overview .unit-readback > div,.dashboard-overview .status-action-card > div:nth-child(2) { position: relative; z-index: 2; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+.dashboard-overview article.status-action-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; justify-content: stretch; gap: 8px; }
+.dashboard-overview .status-action-card > :is(button,.fireplace-actions) { position: relative; z-index: 2; }
+.dashboard-overview article.status-action-card:has(.fireplace-actions) { grid-template-columns: minmax(0,1fr) auto; }
+.dashboard-overview .status-action-card .fireplace-actions { grid-column: auto; }
+.dashboard-overview article.status-action-card.bonfire-card { grid-template-columns: minmax(0,1fr); }
+.dashboard-overview .status-action-card.bonfire-card .fireplace-actions { justify-content: start; }
+
+/* Value */
+.dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong,.hch-mobile-subreadings > button > strong,.hch-mobile-water > strong) {
+  order: 1; position: relative; z-index: 2; margin: 0; color: var(--gray800, var(--primary-text-color, #f8fafc));
+  font-size: 18px; font-weight: 750; line-height: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dashboard-overview .climate-metric > strong small { color: var(--gray600, var(--secondary-text-color, #a7b2c2)); font-size: 11px; font-weight: 700; }
+.dashboard-overview .hch-mobile-subreadings > button > strong { order: -1; }
+.dashboard-overview .hch-mobile-water > strong button { font: inherit; color: inherit; }
+/* Meter */
+.dashboard-overview .climate-metric > i { order: 2; position: relative; z-index: 2; height: 6px; margin: 5px 0 3px; border-radius: 99px; background: var(--tile-accent); box-shadow: 0 0 7px color-mix(in srgb, var(--tile-accent) 28%, transparent); }
+.dashboard-overview .climate-metric::after { content: none; }
+/* Detail */
+.dashboard-overview :is(.unit-readback em,.climate-metric > em,.status-action-card > div > small) {
+  order: 3; position: relative; z-index: 2; color: var(--gray600, var(--secondary-text-color, #a7b2c2));
+  font-size: 11px; font-style: normal; line-height: 14px; white-space: normal; overflow: visible; padding-right: 35px;
+}
+/* Label */
+.dashboard-overview :is(.unit-readback small,.climate-metric > span:not(.metric-drop):not(.metric-filter):not(.metric-heat),.status-action-card > div > span,.overview-status-pills > div > small,.hch-mobile-subreadings > button,.hch-mobile-water > span) {
+  order: 4; position: relative; z-index: 2; color: var(--gray700, var(--secondary-text-color, #cbd5e1));
+  font-size: 11px; font-weight: 700; line-height: 14px; white-space: normal; padding-right: 35px;
+}
+.dashboard-overview .hch-mobile-subreadings > button { padding-right: 12px; }
+
+/* The small icons become the large faint background icon. */
+.dashboard-overview :is(.readback-icon,.climate-metric > svg,.climate-metric > .metric-drop,.climate-metric > .metric-filter,.climate-metric > .metric-heat,.status-action-icon,.overview-status-pills > div > svg) {
+  position: absolute; right: -10px; bottom: -10px; z-index: 1; width: 58px; height: 58px; margin: 0; padding: 0;
+  display: grid; place-items: center; border: 0; border-radius: 0; background: none; box-shadow: none;
+  color: var(--tile-accent); font-size: 50px; line-height: 1; opacity: .12; pointer-events: none;
+  animation: hch-tile-drift 5s ease-in-out infinite;
+}
+.dashboard-overview .climate-metric.neutral > .metric-heat { transform: none; color: var(--tile-accent); }
+.dashboard-overview :is(.climate-metric > svg,.status-action-icon svg,.overview-status-pills > div > svg) { width: 50px; height: 50px; }
+.dashboard-overview .readback-icon::before { position: static; color: var(--tile-accent) !important; font-size: 50px !important; text-shadow: none !important; }
+.dashboard-overview .status-action-icon.flame.auto-active { opacity: .3; }
+.dashboard-overview .status-action-icon.flame.auto-active::after { content: none; }
+.dashboard-overview .overview-status-pills .status-led { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; z-index: 2; }
+@keyframes hch-tile-drift { 50% { transform: translate(-4px,-3px) scale(1.04) rotate(-4deg); opacity: .22; } }
+@media (prefers-reduced-motion: reduce) { .dashboard-overview :is(.readback-icon,.climate-metric > svg,.climate-metric > span,.status-action-icon,.overview-status-pills > div > svg) { animation: none; } }
+
+/* Accent per tile, as on the front page. */
+.dashboard-overview :is(.unit-readback:has(.damper:not(.active)),.unit-readback:has(.heater:not(.active)),.climate-metric.neutral) { --tile-accent: var(--dashboard-icon-muted, var(--disabled-text-color, #64748b)); }
+.dashboard-overview :is(.unit-readback:has(.damper.active),.climate-metric.green,.overview-status-pills > div) { --tile-accent: var(--state-on-icon, var(--success-color, #20e3a2)); }
+.dashboard-overview .overview-status-pills > div:has(.status-led.warn) { --tile-accent: var(--warning-color, #f59e0b); }
+.dashboard-overview :is(.unit-readback:has(.heater.active),.status-action-card:has(.flame)) { --tile-accent: var(--orange, var(--warning-color, #fb923c)); }
+.dashboard-overview .climate-metric.cyan { --tile-accent: #22d3ee; }
+
+@media (min-width: 1101px) and (max-height: 950px) {
+  .dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) { min-height: 66px; padding: 5px 10px; }
+  .dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong) { font-size: 16px; line-height: 18px; }
+}
+@media (max-width: 600px) {
+  .dashboard-overview :is(.unit-readback,.climate-metric,.status-action-card,.overview-status-pills > div,.hch-mobile-subreadings > button,.hch-mobile-water) { padding: 9px; }
+  .dashboard-overview :is(.unit-readback strong,.climate-metric > strong,.status-action-card > div > strong,.overview-status-pills > div > strong,.hch-mobile-subreadings > button > strong,.hch-mobile-water > strong) { font-size: 16px; }
+  .dashboard-overview :is(.unit-readback em,.climate-metric > em,.status-action-card > div > small,.unit-readback small,.climate-metric > span,.status-action-card > div > span,.overview-status-pills > div > small,.hch-mobile-subreadings > button,.hch-mobile-water > span) { font-size: 10px; }
+  .dashboard-overview .overview-status-pills { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+}
+
+/* On a phone the controls sit inside the unit card, straight under the animated drawing and
+   above Frost; their own column is hidden there. Elsewhere only the column is shown. */
+.hch-inline-controls { display: none; }
+@media (max-width: 660px) {
+  @container hch-card (max-width: 660px) {
+    .dashboard-overview .hch-inline-controls { display: grid; gap: 8px; margin: 4px 0 10px; }
+    .dashboard-overview .dashboard-main-grid > .pro-control-column { display: none; }
+  }
+}
+
+/* Bål in a half-width pair next to Pejsefunktion: four choices on one row (Claude AI). */
+.pro-control-pair .bonfire-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: 1 / -1; }
+.pro-control-pair .bonfire-actions button { min-width: 0; padding: 0 2px; }
+
+/* Parts without entities are left out (Claude AI): the grid, the tile rows and the control pairs close the gap. */
+.dashboard-main-grid.without-climate { grid-template-areas: "unit controls" "afterheat afterheat"; }
+.dashboard-main-grid.without-afterheat { grid-template-areas: "unit controls" "climate climate"; }
+.dashboard-main-grid.without-climate.without-afterheat { grid-template-areas: "unit controls"; }
+@container hch-card (max-width: 1080px) {
+  .dashboard-main-grid.without-climate { grid-template-areas: "unit" "controls" "afterheat"; }
+  .dashboard-main-grid.without-afterheat { grid-template-areas: "unit" "controls" "climate"; }
+  .dashboard-main-grid.without-climate.without-afterheat { grid-template-areas: "unit" "controls"; }
+}
+.climate-metrics.metrics-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.climate-metrics.metrics-1 { grid-template-columns: minmax(0,1fr); }
+.unit-readback-row.readbacks-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.unit-readback-row.readbacks-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.unit-readback-row.readbacks-1 { grid-template-columns: minmax(0,1fr); }
+@container hch-card (max-width: 960px) {
+  .climate-metrics.metrics-3,.unit-readback-row.readbacks-3 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+.pro-control-pair > :only-child { grid-column: 1 / -1; }
+.mini-buttons.one { grid-template-columns: minmax(0,1fr); }
+/* An MKII connected directly has more operation modes than the three of HCH5 Control. */
+.pro-segment.many { grid-template-columns: repeat(auto-fit,minmax(78px,1fr)); }
+.hch-smartdash-mode.many { grid-column: 1 / -1; }
+@container hch-card (max-width: 960px) {
+  .unit-readback-row.readbacks-3 > :last-child,.climate-metrics.metrics-3 > :last-child { grid-column: 1 / -1; }
+}
