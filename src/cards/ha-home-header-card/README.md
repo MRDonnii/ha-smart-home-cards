@@ -15,7 +15,9 @@ weather: weather.home
 | `seasonal_decor` | `true` | Seasonal decoration on the card. Set to `false` to turn it off. Also in the card editor. |
 | `seasonal_date` | – | Hidden test option: force a date (`"YYYY-MM-DD"`) to preview the decoration, e.g. `"2026-12-31"`. Leave it out in normal use. |
 
-Preview on one device without changing the card: add `?jul=1` (Christmas), `?jul=nytaar` (New Year's Eve) or `?jul=YYYY-MM-DD` to the dashboard URL. The device remembers it until you open `?jul=0`.
+Preview without changing the card: add `?jul=1` (Christmas), `?jul=nytaar` (New Year's Eve) or `?jul=YYYY-MM-DD` to the dashboard URL (only while it is in the address).
+
+Optional helpers: `input_boolean.dashboard_juletema` turns the decoration off when `off`; `input_datetime.dashboard_juletema_start` / `input_datetime.dashboard_juletema_slut` (date only) set the Christmas period (month and day repeat every year and may cross New Year). Without them it is 1–30 December. 31 December and 1 January are always New Year.
 
 The decoration follows the browser's local date and changes by itself at midnight, without a page reload:
 

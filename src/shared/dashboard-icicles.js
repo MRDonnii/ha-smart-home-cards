@@ -4,21 +4,19 @@
 //   input_number.dashboard_istapper_til        → icicles appear when the outdoor temperature drops below this (°C, default 0)
 //   input_number.dashboard_istapper_fra        → and disappear again when it rises to this or above (°C, default 1)
 //   input_text.dashboard_istapper_sensor       → optional: the outdoor temperature sensor; else the first weather entity
-// Preview on one device: add ?istapper=1 to the dashboard URL (?istapper=0 ends it).
+// Preview: add ?istapper=1 to the dashboard URL (only while it is in the address).
 // A transparent layer over the page (pointer-events: none) draws small icicles along the top edge of each innermost
 // rounded card/tile. It never touches the cards' own DOM, so taps and redraws are not affected; icicles on a card that a
 // popup or dialog covers are hidden. Nothing runs while the switch is off or the page is hidden.
 (() => {
   if (window.__smartHomeIcicles) return;
   window.__smartHomeIcicles = true;
-  const PREVIEW = "smart-home-icicles-preview";
   const H = { on: "input_boolean.dashboard_istapper", below: "input_number.dashboard_istapper_til",
     above: "input_number.dashboard_istapper_fra", sensor: "input_text.dashboard_istapper_sensor" };
   let layer = null; let boxes = []; let lastScan = 0; let lastPath = ""; let frozen = false; let timer = null;
 
-  const q = new URLSearchParams(location.search).get("istapper");
-  try { if (q === "1") localStorage.setItem(PREVIEW, "1"); if (q === "0") localStorage.removeItem(PREVIEW); } catch { /* private mode */ }
-  const preview = () => { try { return localStorage.getItem(PREVIEW) === "1"; } catch { return false; } };
+  // Preview only while ?istapper=1 is in the address (not remembered, so a kiosk never gets stuck in it).
+  const preview = () => new URLSearchParams(location.search).get("istapper") === "1";
 
   const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : NaN; };
   function outdoor(states) {

@@ -320,5 +320,6 @@ happens until you create the helpers:
 | `input_text.dashboard_istapper_sensor` | Optional outdoor temperature sensor id (default: the first `weather` entity) |
 
 `ha-settings-center-card` can show them: add the switch to `overview.dashboard_items` and the two limits to
-`overview.dashboard_number_items` (rows with −/+; `sensor_entity` shows the current outdoor temperature). Add
-`?istapper=1` to a dashboard URL to preview on that device (`?istapper=0` ends it).
+`overview.dashboard_number_items`, or give them their own block with a description in `overview.dashboard_sections`
+(`[{title, icon, note, toggles, numbers, entities}]`; numbers get −/+, entities open the helper's dialog). Add
+`?istapper=1` to a dashboard URL to preview (only while it is in the address).

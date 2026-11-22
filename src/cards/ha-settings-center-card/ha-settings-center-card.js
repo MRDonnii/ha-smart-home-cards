@@ -1,4 +1,4 @@
-const VERSION = "0.7.1";
+const VERSION = "0.7.2";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -511,6 +511,11 @@ class HASettingsCenterCard extends HTMLElement {
           ${(o.dashboard_number_items || []).length ? `<div class="row-list" style="margin-top:8px">${o.dashboard_number_items.map((i) => this._number(i)).join("")}</div>` : ""}
           ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
         </div>
+        ${(o.dashboard_sections || []).map((g) => `<div class="section">
+          ${this._panelHead(g.icon || "mdi:tune-variant", g.title || "", g.note || "")}
+          ${(g.toggles || []).length ? `<div class="toggle-grid">${g.toggles.map((i) => this._toggleTile(i)).join("")}</div>` : ""}
+          ${(g.numbers || []).length || (g.entities || []).length ? `<div class="row-list" style="margin-top:8px">${(g.numbers || []).map((i) => this._number(i)).join("")}${(g.entities || []).map((i) => this._entityRow(i)).join("")}</div>` : ""}
+        </div>`).join("")}
         ${(o.card_versions || []).length ? `<div class="section">
           ${this._panelHead("mdi:layers-triple-outline", "Kortversioner", "Vælg hvilken version af kortene der vises – skift frem og tilbage og sammenlign")}
           <div class="row-list">${o.card_versions.map((i) => this._versionRow(i)).join("")}</div>

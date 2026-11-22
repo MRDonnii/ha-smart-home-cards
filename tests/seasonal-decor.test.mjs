@@ -33,16 +33,21 @@ for (const s of ["xmas", "nye", "newyear"]) {
 }
 console.log("seasonal-decor tests passed");
 
-// URL preview (?jul=…), remembered per device until ?jul=0
+// URL preview (?jul=…) – only while in the address; date range from helpers
 {
   const { urlSeasonPreview } = await import("../src/cards/ha-home-header-card/seasonal-decor.js");
-  const mem = new Map(); const store = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
-  assert.equal(urlSeasonPreview("", store), undefined);
-  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=1", store))), "xmas");
-  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("", store))), "xmas"); // remembered
-  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=nytaar", store))), "nye");
-  assert.equal(urlSeasonPreview("?jul=2027-01-01", store), "2027-01-01");
-  assert.equal(urlSeasonPreview("?jul=0", store), undefined);
-  assert.equal(urlSeasonPreview("?jul=nonsense", store), undefined);
-  console.log("seasonal URL preview tests passed");
+  assert.equal(urlSeasonPreview(""), undefined);
+  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=1"))), "xmas");
+  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=nytaar"))), "nye");
+  assert.equal(urlSeasonPreview("?jul=2027-01-01"), "2027-01-01");
+  assert.equal(urlSeasonPreview("?jul=nonsense"), undefined);
+  const d = (s) => seasonalDate(s);
+  assert.equal(seasonOf(d("2026-11-23")), "");
+  assert.equal(seasonOf(d("2026-11-23"), { start: "2026-11-20", end: "2026-12-30" }), "xmas");
+  assert.equal(seasonOf(d("2026-11-19"), { start: "2026-11-20", end: "2026-12-30" }), "");
+  assert.equal(seasonOf(d("2027-01-05"), { start: "11-28", end: "01-06" }), "xmas");   // across New Year
+  assert.equal(seasonOf(d("2027-01-07"), { start: "11-28", end: "01-06" }), "");
+  assert.equal(seasonOf(d("2026-12-31"), { start: "12-10", end: "12-20" }), "nye");
+  assert.equal(seasonOf(d("2026-12-05"), { start: "unknown", end: "unknown" }), "xmas"); // bad helper → default
+  console.log("seasonal URL preview and range tests passed");
 }

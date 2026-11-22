@@ -10,11 +10,18 @@
 // stays), and pause while the card is off screen or the page is hidden.
 
 // The season for a local date: "" (none), "xmas", "nye" (31 Dec) or "newyear" (1 Jan).
-export function seasonOf(date) {
-  const m = date.getMonth() + 1, d = date.getDate();
-  if (m === 12) return d <= 30 ? "xmas" : "nye";
-  if (m === 1 && d === 1) return "newyear";
-  return "";
+// `range` (optional, Claude AI 2026-11-23; user: "selv bestemme, hvornår det skal starte og slutte") sets the Christmas
+// period from two dates ("YYYY-MM-DD" or "MM-DD"; only month and day count, so it repeats every year and may cross New
+// Year, e.g. 11-28 → 01-06). Without it, Christmas is 1–30 December. 31 Dec and 1 Jan are always New Year.
+const monthDay = (v) => { const m = /^(?:\d{4}-)?(\d{1,2})-(\d{1,2})/.exec(String(v ?? "").trim()); return m ? Number(m[1]) * 100 + Number(m[2]) : NaN; };
+export function seasonOf(date, range) {
+  const k = (date.getMonth() + 1) * 100 + date.getDate();
+  if (k === 1231) return "nye";
+  if (k === 101) return "newyear";
+  let a = 1201, b = 1230;
+  const s = monthDay(range?.start), e = monthDay(range?.end);
+  if (Number.isFinite(s) && Number.isFinite(e)) { a = s; b = e; }
+  return (a <= b ? k >= a && k <= b : k >= a || k <= b) ? "xmas" : "";
 }
 
 // `seasonal_date: "YYYY-MM-DD"` forces a date (for previews); anything else uses the real local date.
@@ -23,19 +30,14 @@ export function seasonalDate(forced, now = new Date()) {
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : now;
 }
 
-// Preview from the URL on one device (Claude AI, 2026-11-22; user: "kan jeg se jule tema også med en url?"):
-// ?jul=1 → Christmas (15 Dec), ?jul=nytaar → New Year's Eve, ?jul=YYYY-MM-DD → that date, ?jul=0 → back to the real date.
-// The choice is remembered on the device (localStorage) until ?jul=0.
-const PREVIEW_KEY = "smart-home-seasonal-preview";
-export function urlSeasonPreview(search = globalThis.location?.search || "", store = globalThis.localStorage) {
+// Preview from the URL (Claude AI, 2026-11-22/23): ?jul=1 → Christmas (15 Dec), ?jul=nytaar → New Year's Eve,
+// ?jul=YYYY-MM-DD → that date. Only while the parameter is in the address (not remembered), so a kiosk never gets stuck
+// in the preview.
+export function urlSeasonPreview(search = globalThis.location?.search || "") {
   const v = new URLSearchParams(search).get("jul");
   const year = new Date().getFullYear();
   const map = { "1": `${year}-12-15`, jul: `${year}-12-15`, nytaar: `${year}-12-31`, nytår: `${year}-12-31`, nytaarsdag: `${year + 1}-01-01` };
-  try {
-    if (v === "0") store?.removeItem(PREVIEW_KEY);
-    else if (v && (map[v] || /^\d{4}-\d{2}-\d{2}$/.test(v))) store?.setItem(PREVIEW_KEY, map[v] || v);
-    return store?.getItem(PREVIEW_KEY) || undefined;
-  } catch { return map[v] || undefined; }
+  return map[v] || (/^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : undefined);
 }
 
 const pct = (v) => `${+v.toFixed(2)}%`;

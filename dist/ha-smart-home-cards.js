@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.290 */
+/* MRDonnii Smart Home Cards v0.5.291 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -343,7 +343,6 @@ window.shcMotion = Object.freeze({ wake, rest, get resting() {
 (() => {
   if (window.__smartHomeIcicles) return;
   window.__smartHomeIcicles = true;
-  const PREVIEW = "smart-home-icicles-preview";
   const H3 = {
     on: "input_boolean.dashboard_istapper",
     below: "input_number.dashboard_istapper_til",
@@ -356,19 +355,7 @@ window.shcMotion = Object.freeze({ wake, rest, get resting() {
   let lastPath2 = "";
   let frozen = false;
   let timer2 = null;
-  const q = new URLSearchParams(location.search).get("istapper");
-  try {
-    if (q === "1") localStorage.setItem(PREVIEW, "1");
-    if (q === "0") localStorage.removeItem(PREVIEW);
-  } catch {
-  }
-  const preview = () => {
-    try {
-      return localStorage.getItem(PREVIEW) === "1";
-    } catch {
-      return false;
-    }
-  };
+  const preview = () => new URLSearchParams(location.search).get("istapper") === "1";
   const num6 = (v) => {
     const n = parseFloat(v);
     return Number.isFinite(n) ? n : NaN;
@@ -37547,28 +37534,31 @@ ha-card.has-insights .status-group{top:41%}
 `;
 
 // src/cards/ha-home-header-card/seasonal-decor.js
-function seasonOf(date2) {
-  const m = date2.getMonth() + 1, d = date2.getDate();
-  if (m === 12) return d <= 30 ? "xmas" : "nye";
-  if (m === 1 && d === 1) return "newyear";
-  return "";
+var monthDay = (v) => {
+  const m = /^(?:\d{4}-)?(\d{1,2})-(\d{1,2})/.exec(String(v ?? "").trim());
+  return m ? Number(m[1]) * 100 + Number(m[2]) : NaN;
+};
+function seasonOf(date2, range) {
+  const k = (date2.getMonth() + 1) * 100 + date2.getDate();
+  if (k === 1231) return "nye";
+  if (k === 101) return "newyear";
+  let a = 1201, b = 1230;
+  const s = monthDay(range?.start), e = monthDay(range?.end);
+  if (Number.isFinite(s) && Number.isFinite(e)) {
+    a = s;
+    b = e;
+  }
+  return (a <= b ? k >= a && k <= b : k >= a || k <= b) ? "xmas" : "";
 }
 function seasonalDate(forced, now = /* @__PURE__ */ new Date()) {
   const m = typeof forced === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(forced.trim());
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : now;
 }
-var PREVIEW_KEY = "smart-home-seasonal-preview";
-function urlSeasonPreview(search = globalThis.location?.search || "", store3 = globalThis.localStorage) {
+function urlSeasonPreview(search = globalThis.location?.search || "") {
   const v = new URLSearchParams(search).get("jul");
   const year = (/* @__PURE__ */ new Date()).getFullYear();
   const map = { "1": `${year}-12-15`, jul: `${year}-12-15`, nytaar: `${year}-12-31`, nyt\u00E5r: `${year}-12-31`, nytaarsdag: `${year + 1}-01-01` };
-  try {
-    if (v === "0") store3?.removeItem(PREVIEW_KEY);
-    else if (v && (map[v] || /^\d{4}-\d{2}-\d{2}$/.test(v))) store3?.setItem(PREVIEW_KEY, map[v] || v);
-    return store3?.getItem(PREVIEW_KEY) || void 0;
-  } catch {
-    return map[v] || void 0;
-  }
+  return map[v] || (/^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : void 0);
 }
 var pct2 = (v) => `${+v.toFixed(2)}%`;
 var SWAGS = 10;
@@ -37655,7 +37645,7 @@ function seasonHtml(season, { snow: withSnow = false } = {}) {
 }
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.10.1";
+var VERSION28 = "0.10.2";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -38871,7 +38861,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
   // snow may fall) changes or the card was rebuilt. Outside the season nothing is added and nothing runs.
   _updateSeason(now) {
     const card = this.shadowRoot?.querySelector("ha-card");
-    const season = this._config.seasonal_decor === false || !card ? "" : seasonOf(seasonalDate(this._config.seasonal_date || urlSeasonPreview(), now));
+    const st = this._hass?.states || {}, preview = this._config.seasonal_date || urlSeasonPreview(), season = !card || this._config.seasonal_decor === false || !preview && st["input_boolean.dashboard_juletema"]?.state === "off" ? "" : seasonOf(seasonalDate(preview, now), { start: st["input_datetime.dashboard_juletema_start"]?.state, end: st["input_datetime.dashboard_juletema_slut"]?.state });
     if (!season) {
       if (this._seasonEl) {
         this._seasonStop();
@@ -55312,7 +55302,7 @@ window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", de
 console.info(`%c HA AI USAGE CARD %c v${VERSION42} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION43 = "0.7.1";
+var VERSION43 = "0.7.2";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -55787,6 +55777,11 @@ var HASettingsCenterCard = class extends HTMLElement {
           ${(o.dashboard_number_items || []).length ? `<div class="row-list" style="margin-top:8px">${o.dashboard_number_items.map((i) => this._number(i)).join("")}</div>` : ""}
           ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
         </div>
+        ${(o.dashboard_sections || []).map((g) => `<div class="section">
+          ${this._panelHead(g.icon || "mdi:tune-variant", g.title || "", g.note || "")}
+          ${(g.toggles || []).length ? `<div class="toggle-grid">${g.toggles.map((i) => this._toggleTile(i)).join("")}</div>` : ""}
+          ${(g.numbers || []).length || (g.entities || []).length ? `<div class="row-list" style="margin-top:8px">${(g.numbers || []).map((i) => this._number(i)).join("")}${(g.entities || []).map((i) => this._entityRow(i)).join("")}</div>` : ""}
+        </div>`).join("")}
         ${(o.card_versions || []).length ? `<div class="section">
           ${this._panelHead("mdi:layers-triple-outline", "Kortversioner", "V\xE6lg hvilken version af kortene der vises \u2013 skift frem og tilbage og sammenlign")}
           <div class="row-list">${o.card_versions.map((i) => this._versionRow(i)).join("")}</div>
