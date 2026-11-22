@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.289 */
+/* MRDonnii Smart Home Cards v0.5.290 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -37557,6 +37557,19 @@ function seasonalDate(forced, now = /* @__PURE__ */ new Date()) {
   const m = typeof forced === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(forced.trim());
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : now;
 }
+var PREVIEW_KEY = "smart-home-seasonal-preview";
+function urlSeasonPreview(search = globalThis.location?.search || "", store3 = globalThis.localStorage) {
+  const v = new URLSearchParams(search).get("jul");
+  const year = (/* @__PURE__ */ new Date()).getFullYear();
+  const map = { "1": `${year}-12-15`, jul: `${year}-12-15`, nytaar: `${year}-12-31`, nyt\u00E5r: `${year}-12-31`, nytaarsdag: `${year + 1}-01-01` };
+  try {
+    if (v === "0") store3?.removeItem(PREVIEW_KEY);
+    else if (v && (map[v] || /^\d{4}-\d{2}-\d{2}$/.test(v))) store3?.setItem(PREVIEW_KEY, map[v] || v);
+    return store3?.getItem(PREVIEW_KEY) || void 0;
+  } catch {
+    return map[v] || void 0;
+  }
+}
 var pct2 = (v) => `${+v.toFixed(2)}%`;
 var SWAGS = 10;
 var SAG = 12;
@@ -37642,7 +37655,7 @@ function seasonHtml(season, { snow: withSnow = false } = {}) {
 }
 
 // src/cards/ha-home-header-card/ha-home-header-card.js
-var VERSION28 = "0.10.0";
+var VERSION28 = "0.10.1";
 var V3_BG = {
   sunny: { day: ["#29b6f6", "#0288d1"], twilight: ["#7986cb", "#e1bee7", "#ffe0b2"], night: ["#080c16", "#162032"] },
   partly: { day: ["#4fc3f7", "#1976d2"], twilight: ["#5c6bc0", "#ce93d8", "#ffccbc"], night: ["#111827", "#1e293b"] },
@@ -38858,7 +38871,7 @@ var HAHomeHeaderCard = class extends HTMLElement {
   // snow may fall) changes or the card was rebuilt. Outside the season nothing is added and nothing runs.
   _updateSeason(now) {
     const card = this.shadowRoot?.querySelector("ha-card");
-    const season = this._config.seasonal_decor === false || !card ? "" : seasonOf(seasonalDate(this._config.seasonal_date, now));
+    const season = this._config.seasonal_decor === false || !card ? "" : seasonOf(seasonalDate(this._config.seasonal_date || urlSeasonPreview(), now));
     if (!season) {
       if (this._seasonEl) {
         this._seasonStop();

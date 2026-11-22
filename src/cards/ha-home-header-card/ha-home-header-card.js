@@ -1,8 +1,8 @@
 import "./ha-card-list-editor.js?v=0.8.52";
 import{fillAlertText,isFilterRule,matchSignature,ruleHeld,ruleKey,scanRuleMatches}from"../shared/alert-rules.js";
 import{computeInsights,insightIds,hoursHtml,INSIGHT_CSS}from"./insights.js";
-import{seasonOf,seasonalDate,seasonHtml}from"./seasonal-decor.js";
-const VERSION="0.10.0";
+import{seasonOf,seasonalDate,seasonHtml,urlSeasonPreview}from"./seasonal-decor.js";
+const VERSION="0.10.1";
 
 // Vejr-baggrund "V3": port af AnasBox' "Animated Weather Card V3" (button-card)
 // til dette kort som et ALTERNATIVT baggrundslag, slaaet fra som standard.
@@ -425,7 +425,7 @@ class HAHomeHeaderCard extends HTMLElement{
   _mode(){const s=this._s(this._config.mode_entity);const m={"Hjemme":["mdi:home-heart","Hjemme"],"Ingen hjemme":["mdi:home-export-outline","Ingen hjemme"],Nat:["mdi:weather-night","Nat"],Stille:["mdi:volume-mute","Stille"],Gæster:["mdi:account-group","Gæster"],Ferie:["mdi:palm-tree","Ferie"]};return m[s]||["mdi:home-heart",s||"Hjemme"]}
   // Seasonal decoration (see seasonal-decor.js): checked on the clock tick, redrawn only when the season (or whether
   // snow may fall) changes or the card was rebuilt. Outside the season nothing is added and nothing runs.
-  _updateSeason(now){const card=this.shadowRoot?.querySelector("ha-card");const season=this._config.seasonal_decor===false||!card?"":seasonOf(seasonalDate(this._config.seasonal_date,now));if(!season){if(this._seasonEl){this._seasonStop();this._seasonEl.remove();this._seasonEl=null}return}const key=`${season}|${season==="xmas"&&!this._seasonPrecip()?"snow":""}`;const el=this._seasonEl;if(el&&el.parentNode===card&&el.dataset.k===key)return;this._seasonStop();el?.remove();const d=document.createElement("div");d.className="season";d.setAttribute("aria-hidden","true");d.dataset.k=key;d.innerHTML=seasonHtml(season,{snow:key.endsWith("snow")});card.insertBefore(d,card.querySelector(".runway"));this._seasonEl=d;this._seasonWatch(d)}
+  _updateSeason(now){const card=this.shadowRoot?.querySelector("ha-card");const season=this._config.seasonal_decor===false||!card?"":seasonOf(seasonalDate(this._config.seasonal_date||urlSeasonPreview(),now));if(!season){if(this._seasonEl){this._seasonStop();this._seasonEl.remove();this._seasonEl=null}return}const key=`${season}|${season==="xmas"&&!this._seasonPrecip()?"snow":""}`;const el=this._seasonEl;if(el&&el.parentNode===card&&el.dataset.k===key)return;this._seasonStop();el?.remove();const d=document.createElement("div");d.className="season";d.setAttribute("aria-hidden","true");d.dataset.k=key;d.innerHTML=seasonHtml(season,{snow:key.endsWith("snow")});card.insertBefore(d,card.querySelector(".runway"));this._seasonEl=d;this._seasonWatch(d)}
   _seasonPrecip(){if(this._config.weather_style_v3===true)return["rain","snow","storm"].includes(this._v3Category());return this._config.show_weather_fx!==false&&["rain","pouring","storm","hail","sleet","snow"].includes(this._fxType())}
   // Pause the decoration's animations while the page is hidden or the card is off screen (the kiosk runs around the clock).
   _seasonWatch(el){let off=false;const set=()=>el.classList.toggle("paused",document.hidden||off);this._seasonVis=set;document.addEventListener("visibilitychange",set);if(typeof IntersectionObserver==="function"){this._seasonIo=new IntersectionObserver(e=>{off=!e.some(x=>x.isIntersecting);set()});this._seasonIo.observe(el)}set()}

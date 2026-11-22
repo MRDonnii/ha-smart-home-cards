@@ -32,3 +32,17 @@ for (const s of ["xmas", "nye", "newyear"]) {
   assert.doesNotMatch(html, /https?:|url\(/, "no external assets");
 }
 console.log("seasonal-decor tests passed");
+
+// URL preview (?jul=…), remembered per device until ?jul=0
+{
+  const { urlSeasonPreview } = await import("../src/cards/ha-home-header-card/seasonal-decor.js");
+  const mem = new Map(); const store = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) };
+  assert.equal(urlSeasonPreview("", store), undefined);
+  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=1", store))), "xmas");
+  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("", store))), "xmas"); // remembered
+  assert.equal(seasonOf(seasonalDate(urlSeasonPreview("?jul=nytaar", store))), "nye");
+  assert.equal(urlSeasonPreview("?jul=2027-01-01", store), "2027-01-01");
+  assert.equal(urlSeasonPreview("?jul=0", store), undefined);
+  assert.equal(urlSeasonPreview("?jul=nonsense", store), undefined);
+  console.log("seasonal URL preview tests passed");
+}

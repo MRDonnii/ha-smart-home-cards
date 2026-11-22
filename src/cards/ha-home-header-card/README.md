@@ -15,6 +15,8 @@ weather: weather.home
 | `seasonal_decor` | `true` | Seasonal decoration on the card. Set to `false` to turn it off. Also in the card editor. |
 | `seasonal_date` | – | Hidden test option: force a date (`"YYYY-MM-DD"`) to preview the decoration, e.g. `"2026-12-31"`. Leave it out in normal use. |
 
+Preview on one device without changing the card: add `?jul=1` (Christmas), `?jul=nytaar` (New Year's Eve) or `?jul=YYYY-MM-DD` to the dashboard URL. The device remembers it until you open `?jul=0`.
+
 The decoration follows the browser's local date and changes by itself at midnight, without a page reload:
 
 - **1–30 December**: a garland of small twinkling lights along the top edge, a star with a holly sprig and a few

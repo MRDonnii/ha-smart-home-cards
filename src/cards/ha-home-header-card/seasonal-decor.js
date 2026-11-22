@@ -23,6 +23,21 @@ export function seasonalDate(forced, now = new Date()) {
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12) : now;
 }
 
+// Preview from the URL on one device (Claude AI, 2026-11-22; user: "kan jeg se jule tema også med en url?"):
+// ?jul=1 → Christmas (15 Dec), ?jul=nytaar → New Year's Eve, ?jul=YYYY-MM-DD → that date, ?jul=0 → back to the real date.
+// The choice is remembered on the device (localStorage) until ?jul=0.
+const PREVIEW_KEY = "smart-home-seasonal-preview";
+export function urlSeasonPreview(search = globalThis.location?.search || "", store = globalThis.localStorage) {
+  const v = new URLSearchParams(search).get("jul");
+  const year = new Date().getFullYear();
+  const map = { "1": `${year}-12-15`, jul: `${year}-12-15`, nytaar: `${year}-12-31`, nytår: `${year}-12-31`, nytaarsdag: `${year + 1}-01-01` };
+  try {
+    if (v === "0") store?.removeItem(PREVIEW_KEY);
+    else if (v && (map[v] || /^\d{4}-\d{2}-\d{2}$/.test(v))) store?.setItem(PREVIEW_KEY, map[v] || v);
+    return store?.getItem(PREVIEW_KEY) || undefined;
+  } catch { return map[v] || undefined; }
+}
+
 const pct = (v) => `${+v.toFixed(2)}%`;
 
 // The garland: 10 swags across the card in a 1000×24 box stretched to the card's width (the wire keeps its width).
