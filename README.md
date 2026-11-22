@@ -306,3 +306,19 @@ Starting with the version after v0.5.284, the code is licensed under the [PolyFo
 Versions released before this change (up to and including v0.5.284) remain under their previous licence (MIT) for those exact versions.
 
 Bundled files from other projects keep their own licence and copyright; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+## Icicles when it freezes (opt-in)
+
+The bundle can draw small, discreet icicles along the top edge of the dashboard cards when it is below freezing. Nothing
+happens until you create the helpers:
+
+| Helper | Meaning |
+| --- | --- |
+| `input_boolean.dashboard_istapper` | On/off |
+| `input_number.dashboard_istapper_til` | Icicles appear below this outdoor temperature (°C, default 0) |
+| `input_number.dashboard_istapper_fra` | …and disappear again at or above this (°C, default 1) |
+| `input_text.dashboard_istapper_sensor` | Optional outdoor temperature sensor id (default: the first `weather` entity) |
+
+`ha-settings-center-card` can show them: add the switch to `overview.dashboard_items` and the two limits to
+`overview.dashboard_number_items` (rows with −/+; `sensor_entity` shows the current outdoor temperature). Add
+`?istapper=1` to a dashboard URL to preview on that device (`?istapper=0` ends it).

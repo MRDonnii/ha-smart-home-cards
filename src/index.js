@@ -1,5 +1,6 @@
 import "./cards/shared/motion-rest.js";
 import "./shared/dashboard-globals.js";
+import "./shared/dashboard-icicles.js";
 import "./cards/ha-battery-status-card/ha-battery-status-card.js";
 import "./cards/ha-bambulab-dashboard-card/ha-bambulab-dashboard-card.js";
 import "./cards/ha-pool-card/ha-pool-card.js";

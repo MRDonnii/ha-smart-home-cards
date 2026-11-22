@@ -1,4 +1,4 @@
-const VERSION = "0.7.0";
+const VERSION = "0.7.1";
 
 const TABS = [
   ["home", "Hjem", "mdi:home-heart"],
@@ -508,6 +508,7 @@ class HASettingsCenterCard extends HTMLElement {
         <div class="section">
           ${this._panelHead("mdi:monitor-dashboard", "Dashboard", "Visning og betjening på vægpaneler")}
           <div class="toggle-grid">${(o.dashboard_items || []).map((i) => this._toggleTile(i)).join("")}</div>
+          ${(o.dashboard_number_items || []).length ? `<div class="row-list" style="margin-top:8px">${o.dashboard_number_items.map((i) => this._number(i)).join("")}</div>` : ""}
           ${o.font_entity ? `<div class="row-list" style="margin-top:8px">${this._entityRow({ entity: o.font_entity, name: "Dashboard-font", icon: "mdi:format-font" })}</div>` : ""}
         </div>
         ${(o.card_versions || []).length ? `<div class="section">

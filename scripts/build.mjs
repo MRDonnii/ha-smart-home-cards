@@ -23,6 +23,8 @@ const entry = [
   `import "./cards/shared/motion-rest.js";`,
   // Dashboard-wide helpers (left accent, card highlight, font) that used to be a /local resource on each HA.
   `import "./shared/dashboard-globals.js";`,
+  // Icicles on the cards when it freezes (opt-in via input_boolean.dashboard_istapper).
+  `import "./shared/dashboard-icicles.js";`,
   ...cards.map((card) => `import ${JSON.stringify(`./cards/${card.slug}/${card.filename}`)};`),
   `import "./cards/shared/motion-rest-end.js";`,
 ].join("\n");

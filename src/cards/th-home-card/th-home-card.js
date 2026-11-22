@@ -174,6 +174,8 @@ class ThHomeCard extends HTMLElement {
     const now = new Date(), h2 = d => `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
     let rise = sun ? new Date(sun.attributes.next_rising) : null, set = sun ? new Date(sun.attributes.next_setting) : null;
     if (rise && set) { if (rise > set) rise = new Date(rise - 864e5); if (rise.getDate() !== now.getDate()) rise = new Date(rise - 864e5); if (set.getDate() !== now.getDate()) set = new Date(set - 864e5); }
+    // late in the evening the shifted times can end up reversed or invalid; then use a plain 7–18 day (Claude AI, 2026-11-22)
+    if (!(rise < set) || !Number.isFinite(set - rise)) rise = null;
     if (!rise) { rise = new Date(now); rise.setHours(7, 0, 0, 0); set = new Date(now); set.setHours(18, 0, 0, 0); }
     const t0 = rise.getTime() - 54e5, t1 = set.getTime() + 54e5, W = 1000, H = 100, X = t => (t - t0) / (t1 - t0) * W;
     // 5-minute buckets for solar and consumption
