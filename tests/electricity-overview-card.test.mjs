@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { installFakeDom } from "./helpers/fake-dom.mjs";
 installFakeDom();
-const { hourly, cheapestWindow, level, monthRows } = await import("../src/cards/ha-electricity-overview-card/ha-electricity-overview-card.js");
+const { hourly, cheapestWindow, level, monthRows, startNowAvg } = await import("../src/cards/ha-electricity-overview-card/ha-electricity-overview-card.js");
 
 test("hourly averages quarter prices per hour", () => {
   const q = (h, m, p) => ({ price: p, start: new Date(2026, 10, 23, h, m).toISOString() });
@@ -25,4 +25,10 @@ test("level compares with the day's average", () => {
 test("monthRows splits the kr between house and car at the month's average price", () => {
   const m = monthRows({ "2026-10-01": { kwh: 30, kr: 75, car: 10 }, "2026-10-02": { kwh: 10, kr: 25, car: 0 }, "2026-11-01": { kwh: 0, kr: 0, car: 0 } });
   assert.equal(m.length, 1); assert.equal(m[0].avg, 2.5); assert.equal(m[0].carKr, 25); assert.equal(m[0].houseKr, 75); assert.equal(m[0].house, 30);
+});
+
+test("startNowAvg averages the hours from the current one", () => {
+  const hrs = [3, 2, 1, 4].map((p, i) => ({ t: new Date(2026, 10, 23, i), p }));
+  assert.equal(startNowAvg(hrs, 2, new Date(2026, 10, 23, 1, 40)), 1.5);
+  assert.ok(Number.isNaN(startNowAvg(hrs, 3, new Date(2026, 10, 23, 2, 0))));
 });

@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.298 */
+/* MRDonnii Smart Home Cards v0.5.299 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -73921,7 +73921,7 @@ window.customCards.push({ type: "ha-gas-savings-card", name: "HA Gas Savings Car
 console.info(`%c HA-GAS-SAVINGS-CARD %c ${VERSION59} `, "color:#111;background:#4fe0a6;font-weight:700", "color:#4fe0a6;background:#111");
 
 // src/cards/ha-electricity-overview-card/ha-electricity-overview-card.js
-var VERSION60 = "1.1.0";
+var VERSION60 = "1.2.0";
 var MONTHS6 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var fmt8 = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "\u2014";
 var esc16 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
@@ -73954,6 +73954,12 @@ function cheapestWindow(hours, len = 3, from = /* @__PURE__ */ new Date(0)) {
   }
   return best;
 }
+function startNowAvg(hours, len, from = /* @__PURE__ */ new Date()) {
+  const h0 = new Date(from.getFullYear(), from.getMonth(), from.getDate(), from.getHours()).getTime();
+  const i = hours.findIndex((x) => x.t.getTime() === h0);
+  if (i < 0 || i + len > hours.length) return NaN;
+  return hours.slice(i, i + len).reduce((s, x) => s + x.p, 0) / len;
+}
 var level = (p, avg) => p <= avg * 0.92 ? "cheap" : p >= avg * 1.12 ? "dear" : "normal";
 function monthRows(days) {
   const by = {};
@@ -73978,7 +73984,8 @@ var HAElectricityOverviewCard = class extends HTMLElement {
   }
   setConfig(c2) {
     if (!c2?.price) throw new Error("Kortet kr\xE6ver price (str\xF8mprisen med prices-attribut)");
-    this._config = { title: "Str\xF8m lige nu", max_kwh_day: 250, window_hours: 3, ...c2 };
+    this._config = { title: "Str\xF8m lige nu", max_kwh_day: 250, window_hours: 3, car_capacity: 75, charger_kw: 11, appliances: [{ name: "Vaskemaskine", icon: "mdi:washing-machine", kwh: 1, hours: 2 }, { name: "Opvasker", icon: "mdi:dishwasher", kwh: 1.2, hours: 3 }, { name: "T\xF8rretumbler", icon: "mdi:tumble-dryer", kwh: 2.5, hours: 2 }], ...c2 };
+    this._uid = this._uid || Math.random().toString(36).slice(2, 8);
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     this._days = null;
     this._hours = null;
@@ -74118,8 +74125,10 @@ var HAElectricityOverviewCard = class extends HTMLElement {
     fp.style.setProperty("--s1", spd(grid));
     fp.style.setProperty("--s2", spd(car || 0));
     fp.style.setProperty("--ps", `${Math.max(0.8, 3 - Math.min(4, house || 0) * 0.5).toFixed(2)}s`);
-    set("grid", Number.isFinite(grid) ? `${fmt8(grid, 1)} kW` : "\u2014");
+    const pN = this._num(c2.price);
+    set("grid", Number.isFinite(grid) ? `${fmt8(grid, 1)} kW \xB7 ${fmt8(grid * pN, 2)} kr/t` : "\u2014");
     set("house2", Number.isFinite(house) ? `${fmt8(house, 1)} kW` : "\u2014");
+    set("krt", Number.isFinite(house) && Number.isFinite(pN) ? `${fmt8(house * pN, 2)} kr i timen` : "");
     const charging = car > 0.05 || ["charging", "on"].includes(String(this._hass.states[c2.car_status]?.state || "").toLowerCase());
     const plugged = charging || this._hass.states[c2.car_plugged]?.state === "on" || /connected|plugged|tilsluttet|ready|waiting/i.test(String(this._hass.states[c2.charger_mode]?.state || "").replace(/disconnected/i, ""));
     fp.classList.toggle("charging", charging);
@@ -74195,9 +74204,10 @@ var HAElectricityOverviewCard = class extends HTMLElement {
     <section class="panel stat"><span>Betalt pr. kWh</span><b class="${mNow && mNow.avg <= tAvg ? "s" : "r"}" data-count="${(mNow?.avg || 0).toFixed(2)}" data-dec="2" data-suf=" kr">${fmt8(mNow?.avg, 2)} kr</b><small>snit i ${MONTHS6[now.getMonth()]}${mNow?.car > 0 ? ` \xB7 bilen ${fmt8(mNow.car / mNow.kwh * 100)} % af forbruget` : ""}</small></section>
   </div>
   <section class="panel">
-    <div class="head"><span class="hicon amber"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Prisen ${tomorrow.length ? "i dag og i morgen" : "i dag"}</h3><p>Time for time \xB7 gr\xF8n = billig, gul = normal, r\xF8d = dyr i forhold til dagens snit${win ? ` \xB7 de billigste ${c2.window_hours} timer er markeret` : ""}</p></div>${win ? `<span class="fsum pos">${winTxt}</span>` : ""}</div>
-    ${this._priceBars(today, tomorrow, win, now, tAvg)}
+    <div class="head"><span class="hicon amber"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Prisen ${tomorrow.length ? "i dag og i morgen" : "i dag"}</h3><p>Kurvens farve er prisen: gr\xF8n = billig, gul = normal, r\xF8d = dyr \xB7 billigste og dyreste ${c2.window_hours} timer markeret</p></div>${win ? `<span class="fsum pos">${winTxt}</span>` : ""}</div>
+    ${this._priceCurve(today, tomorrow, win, now, tAvg)}
   </section>
+  ${this._smartHtml(all, pNow, now)}
   <section class="panel">
     <div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-month"></ha-icon></span><div><h3>M\xE5ned for m\xE5ned</h3><p>Hele husets el i kr \xB7 bilens del til m\xE5nedens snitpris</p></div></div>
     ${this._monthsHtml(months, monthK)}
@@ -74213,10 +74223,116 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     return `<section class="panel flowp"><div class="fl">
       <div class="node gridn"><div class="orb"><ha-icon icon="mdi:transmission-tower"></ha-icon></div><b>${fmt8(pNow, 2)} kr/kWh</b><span>Elnettet</span></div>
       <div class="wire w1"><i></i><em data-live="grid">\u2014</em></div>
-      <div class="node house"><div class="orb"><span class="ping"></span><span class="ping p2"></span><ha-icon icon="mdi:home-lightning-bolt"></ha-icon></div><b data-live="house2">\u2014</b><span>Huset</span></div>
+      <div class="node house"><div class="orb"><span class="ping"></span><span class="ping p2"></span><ha-icon icon="mdi:home-lightning-bolt"></ha-icon></div><b data-live="house2">\u2014</b><span>Huset</span><em class="krt" data-live="krt">\u2014</em></div>
       ${c2.car_power || c2.car_battery ? `<div class="wire w2"><i></i><em data-live="car2"></em></div>
       <div class="node car"><div class="orb batt"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="arc" data-live-arc cx="50" cy="50" r="44" stroke-dasharray="0 999"/><circle class="sweep" cx="50" cy="50" r="44"/></svg><ha-icon icon="mdi:car-electric"></ha-icon><span class="bolt"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></div><b data-live="soc">\u2014</b><span data-live="carstate">${esc16(c2.car_name || "Bilen")}</span></div>` : ""}
     </div></section>`;
+  }
+  // Priskurven (Claude AI, 2026-11-24; bruger: "det er jo strøm, og det er jo priser … flot og sjovt og eksklusivt"):
+  // en blød kurve over de kommende timer, hvis farve ER prisen (grøn nede, rød oppe), en lyspuls der løber langs den,
+  // "nu" som en pulserende kugle, de billigste timer som et åndende grønt bånd og de dyreste som et rødt.
+  _priceCurve(today, tomorrow, win, now, tAvg) {
+    const all = [...today, ...tomorrow];
+    if (all.length < 3) return `<p class="muted">Ingen priser endnu.</p>`;
+    const W2 = 1200, H3 = 240, PT = 38, PB = 30;
+    const n = all.length;
+    const step = W2 / n;
+    const ps = all.map((x) => x.p);
+    const lo = Math.min(...ps), hi2 = Math.max(...ps);
+    const min = lo - (hi2 - lo) * 0.18, max = hi2 + (hi2 - lo) * 0.12 || hi2 + 1;
+    const X2 = (i) => step / 2 + i * step;
+    const Y = (v) => PT + (1 - (v - min) / (max - min)) * (H3 - PT - PB);
+    const pts = all.map((x, i) => [X2(i), Y(x.p)]);
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p25 = pts[i + 1], p3 = pts[i + 2] || p25;
+      const t = 0.18;
+      d += ` C${(p1[0] + (p25[0] - p0[0]) * t).toFixed(1)},${(p1[1] + (p25[1] - p0[1]) * t).toFixed(1)} ${(p25[0] - (p3[0] - p1[0]) * t).toFixed(1)},${(p25[1] - (p3[1] - p1[1]) * t).toFixed(1)} ${p25[0].toFixed(1)},${p25[1].toFixed(1)}`;
+    }
+    const area = `${d} L${pts[n - 1][0].toFixed(1)},${H3 - PB} L${pts[0][0].toFixed(1)},${H3 - PB} Z`;
+    const off = (v) => Math.max(0, Math.min(1, (Y(v) - Y(max)) / (Y(min) - Y(max))));
+    const g = `eoc${this._uid}`;
+    const stops = `<stop offset="0" stop-color="var(--bad)"/><stop offset="${off(tAvg * 1.12).toFixed(3)}" stop-color="var(--bad)"/><stop offset="${off(tAvg).toFixed(3)}" stop-color="var(--e)"/><stop offset="${off(tAvg * 0.92).toFixed(3)}" stop-color="var(--ok)"/><stop offset="1" stop-color="var(--ok)"/>`;
+    const h0 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).getTime();
+    const ni = all.findIndex((x) => x.t.getTime() === h0);
+    const fi2 = ni + now.getMinutes() / 60;
+    const nx = ni >= 0 ? step / 2 + fi2 * step : -1;
+    const pv2 = ni >= 0 ? all[ni].p + (all[Math.min(n - 1, ni + 1)].p - all[ni].p) * now.getMinutes() / 60 : NaN;
+    const ny = Number.isFinite(pv2) ? Y(pv2) : 0;
+    const dear = (() => {
+      const neg = all.map((x) => ({ t: x.t, p: -x.p }));
+      const w = cheapestWindow(neg, this._config.window_hours, now);
+      return w ? { ...w, avg: -w.avg } : null;
+    })();
+    const band = (w, cls) => {
+      if (!w) return "";
+      const x0 = w.i * step, x1 = (w.i + this._config.window_hours) * step;
+      return `<rect class="band ${cls}" x="${x0.toFixed(1)}" y="${PT - 14}" width="${(x1 - x0).toFixed(1)}" height="${H3 - PT - PB + 14}" rx="10"/>`;
+    };
+    const pc = (x) => `${(x / W2 * 100).toFixed(2)}%`;
+    const tc = (y) => `${(y / H3 * 100).toFixed(2)}%`;
+    const tomI = today.length && tomorrow.length ? today.length : -1;
+    const lbl2 = (w, cls, txt) => w ? `<div class="clab ${cls}" style="left:${pc((w.i + this._config.window_hours / 2) * step)};top:${tc(PT - 30)}">${txt}</div>` : "";
+    return `<div class="curve">
+      <svg viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none">
+        <defs><linearGradient id="${g}" gradientUnits="userSpaceOnUse" x1="0" y1="${Y(max).toFixed(1)}" x2="0" y2="${Y(min).toFixed(1)}">${stops}</linearGradient>
+          <linearGradient id="${g}a" gradientUnits="userSpaceOnUse" x1="0" y1="${PT}" x2="0" y2="${H3 - PB}"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <mask id="${g}m"><rect x="0" y="0" width="${W2}" height="${H3}" fill="url(#${g}a)"/></mask></defs>
+        ${band(win, "cheap")}${band(dear, "dear")}
+        ${[0.25, 0.5, 0.75].map((f) => `<line class="gridl" x1="0" x2="${W2}" y1="${(PT + f * (H3 - PT - PB)).toFixed(1)}" y2="${(PT + f * (H3 - PT - PB)).toFixed(1)}"/>`).join("")}
+        <path class="area" d="${area}" fill="url(#${g})" mask="url(#${g}m)"/>
+        <path class="cl" d="${d}" stroke="url(#${g})" pathLength="1000"/>
+        <path class="shine" d="${d}" pathLength="1000"/>
+        ${nx > 0 ? `<rect class="past" x="0" y="${PT - 14}" width="${nx.toFixed(1)}" height="${H3 - PT - PB + 14}"/><line class="beam" x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${(ny + 10).toFixed(1)}" y2="${H3 - PB}"/>` : ""}
+        ${tomI > 0 ? `<line class="tom" x1="${(tomI * step).toFixed(1)}" x2="${(tomI * step).toFixed(1)}" y1="${PT - 18}" y2="${H3 - PB}"/>` : ""}
+      </svg>
+      ${lbl2(win, "cheap", `<ha-icon icon="mdi:leaf"></ha-icon>Billigst ${hh3(win?.start || now)}\u2013${hh3(win?.end || now)} \xB7 ${fmt8(win?.avg, 2)} kr`)}
+      ${dear && (!win || Math.abs(dear.i - win.i) >= this._config.window_hours) ? lbl2(dear, "dear", `<ha-icon icon="mdi:fire"></ha-icon>Undg\xE5 ${hh3(dear.start)}\u2013${hh3(dear.end)} \xB7 ${fmt8(dear.avg, 2)} kr`) : ""}
+      ${nx > 0 ? `<div class="norb ${level(pv2, tAvg)}" style="left:${pc(nx)};top:${tc(ny)}"><i></i><i></i><b>${fmt8(pv2, 2)}</b></div>` : ""}
+      ${tomI > 0 ? `<div class="tomlab" style="left:${pc(tomI * step)}">i morgen</div>` : ""}
+      <div class="hax">${all.map((x, i) => x.t.getHours() % 3 === 0 ? `<span style="left:${pc(X2(i))}">${hh3(x.t)}</span>` : "").join("")}</div>
+    </div>`;
+  }
+  // Lad bilen smart og hvad apparaterne koster (Claude AI, 2026-11-24): start nu mod start i de billigste timer, i kr,
+  // med mønter der falder ned og et "spar"-mærke der tæller op.
+  _smartHtml(all, pNow, now) {
+    const c2 = this._config;
+    if (all.length < 2) return "";
+    const soc = this._num(c2.car_battery);
+    const lim = Number.isFinite(this._num(c2.car_limit)) ? this._num(c2.car_limit) : 80;
+    let need = Number.isFinite(soc) ? Math.max(0, (lim - soc) / 100 * c2.car_capacity) : 0;
+    let typical = false;
+    if (need < 3) {
+      need = 30;
+      typical = true;
+    }
+    const hrs = Math.max(1, Math.ceil(need / c2.charger_kw));
+    const nowAvg = startNowAvg(all, hrs, now);
+    const best = cheapestWindow(all, hrs, now);
+    const carNow = need * nowAvg, carBest = best ? need * best.avg : NaN;
+    const save = carNow - carBest;
+    const coins = (kr2, maxKr) => {
+      const k = Math.max(1, Math.round(kr2 / maxKr * 12));
+      return Array.from({ length: k }, (_, i) => `<i style="--i:${i}"></i>`).join("");
+    };
+    const mk = Math.max(carNow || 0, carBest || 0, 1);
+    const apps = (c2.appliances || []).map((a) => {
+      const n0 = startNowAvg(all, a.hours || 1, now), b = cheapestWindow(all, a.hours || 1, now);
+      return { ...a, now: a.kwh * n0, best: b ? a.kwh * b.avg : NaN, at: b?.start };
+    }).filter((a) => Number.isFinite(a.now));
+    const amax = Math.max(...apps.map((a) => a.now), 0.01);
+    return `<section class="panel smart">
+    <div class="head"><span class="hicon purple"><ha-icon icon="mdi:car-electric"></ha-icon></span><div><h3>Lad ${esc16(c2.car_name || "bilen")} smart</h3><p>${typical ? `En typisk opladning p\xE5 ${fmt8(need)} kWh` : `Fra ${fmt8(soc)} % til ${fmt8(lim)} % \xB7 ${fmt8(need, 1)} kWh`} \xB7 ca. ${hrs} t med ${fmt8(c2.charger_kw)} kW</p></div>
+      ${Number.isFinite(save) && save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank"></ha-icon>Spar <b data-count="${Math.round(save)}" data-suf=" kr">${fmt8(save)} kr</b></span>` : `<span class="save ok"><ha-icon icon="mdi:check-decagram"></ha-icon>Nu er et godt tidspunkt</span>`}</div>
+    <div class="duel">
+      <div class="side now"><div class="stack2">${Number.isFinite(carNow) ? coins(carNow, mk) : ""}</div><div class="dt"><span>Starter nu</span><b data-count="${Math.round(carNow || 0)}" data-suf=" kr">${fmt8(carNow)} kr</b><small>kl. ${hh3(now)}\u2013${hh3(new Date(now.getTime() + hrs * 36e5))} \xB7 ${fmt8(nowAvg, 2)} kr/kWh</small></div></div>
+      <div class="vs"><span>vs</span></div>
+      <div class="side best"><div class="stack2">${Number.isFinite(carBest) ? coins(carBest, mk) : ""}</div><div class="dt"><span>Starter kl. ${hh3(best?.start || now)}${best && best.start.getDate() !== now.getDate() ? " i morgen" : ""}</span><b data-count="${Math.round(carBest || 0)}" data-suf=" kr">${fmt8(carBest)} kr</b><small>${best ? `kl. ${hh3(best.start)}\u2013${hh3(best.end)} \xB7 ${fmt8(best.avg, 2)} kr/kWh` : "Ingen priser endnu"}</small></div></div>
+    </div>
+    ${apps.length ? `<div class="apps">${apps.map((a, i) => `<div class="app" style="--i:${i}"><ha-icon icon="${esc16(a.icon || "mdi:power-plug")}"></ha-icon><span>${esc16(a.name)}<small>${fmt8(a.kwh, 1)} kWh</small></span>
+      <div class="ab"><i class="n" style="width:${(a.now / amax * 100).toFixed(1)}%"></i><i class="b" style="width:${(a.best / amax * 100).toFixed(1)}%"></i></div>
+      <b>${fmt8(a.now, 2)} kr nu</b><em>${Number.isFinite(a.best) ? `${fmt8(a.best, 2)} kr kl. ${hh3(a.at)}` : ""}</em></div>`).join("")}</div>` : ""}
+  </section>`;
   }
   _priceBars(today, tomorrow, win, now, tAvg) {
     const all = [...today, ...tomorrow];
@@ -74357,6 +74473,41 @@ var STYLE14 = `
 .charging .bolt{opacity:1;transform:scale(1);animation:blink 1.4s ease-in-out infinite}@keyframes blink{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 0%,transparent),0 0 18px var(--c)}}
 .plugged:not(.charging) .w2{background:color-mix(in srgb,var(--c) 22%,transparent)}
 @media(max-width:720px){.flowp{padding:18px 10px 14px}.node{width:92px}.orb{width:64px;height:64px}.orb ha-icon{--mdc-icon-size:28px}.wire{margin-top:28px;min-width:18px}.node b{font-size:13px}.wire em{font-size:11px}.bolt{width:22px;height:22px}.bolt ha-icon{--mdc-icon-size:13px}}
+
+.curve{position:relative;height:250px;margin-top:6px}.curve svg{position:absolute;inset:0 0 20px 0;width:100%;height:calc(100% - 20px);overflow:visible}
+.curve .gridl{stroke:color-mix(in srgb,var(--primary-text-color) 7%,transparent);stroke-dasharray:2 8;vector-effect:non-scaling-stroke}
+.curve .area{opacity:.32;animation:fadein 1.4s .5s both}@keyframes fadein{from{opacity:0}}
+.curve .cl{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:1000;animation:cdraw 1.8s cubic-bezier(.4,.1,.2,1) both;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--e) 45%,transparent))}@keyframes cdraw{from{stroke-dashoffset:1000}}
+.curve .shine{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-dasharray:22 978;opacity:.9;filter:drop-shadow(0 0 8px #fff);animation:shine 5.5s linear 1.8s infinite;stroke-dashoffset:1000}@keyframes shine{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+.curve .past{fill:var(--s);opacity:.55}
+.curve .beam{stroke:var(--lv);stroke-width:2;vector-effect:non-scaling-stroke;stroke-dasharray:3 5;opacity:.75}
+.curve .tom{stroke:color-mix(in srgb,var(--primary-text-color) 30%,transparent);stroke-width:1.5;stroke-dasharray:4 6;vector-effect:non-scaling-stroke}
+.curve .band{animation:breathe 3.2s ease-in-out infinite}.curve .band.cheap{fill:color-mix(in srgb,var(--ok) 14%,transparent);stroke:color-mix(in srgb,var(--ok) 45%,transparent);stroke-dasharray:4 6;vector-effect:non-scaling-stroke}.curve .band.dear{fill:color-mix(in srgb,var(--bad) 11%,transparent);stroke:color-mix(in srgb,var(--bad) 40%,transparent);stroke-dasharray:4 6;vector-effect:non-scaling-stroke;animation-delay:1.6s}@keyframes breathe{50%{opacity:.45}}
+.clab{position:absolute;transform:translate(-50%,0);display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:850;white-space:nowrap;backdrop-filter:blur(6px);animation:rise .6s 1.2s both}.clab ha-icon{--mdc-icon-size:14px}
+.clab.cheap{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 45%,transparent)}.clab.dear{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 40%,transparent)}
+.norb{position:absolute;width:0;height:0;z-index:2;--oc:var(--e)}.norb.cheap{--oc:var(--ok)}.norb.dear{--oc:var(--bad)}
+.norb::after{content:"";position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;background:var(--oc);box-shadow:0 0 0 3px color-mix(in srgb,var(--oc) 35%,transparent),0 0 22px var(--oc)}
+.norb i{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--oc);animation:ring2 2.2s ease-out infinite}.norb i+i{animation-delay:1.1s}@keyframes ring2{to{transform:scale(3.2);opacity:0}}
+.norb b{position:absolute;left:12px;top:-30px;padding:3px 8px;border-radius:8px;font-size:12px;font-weight:900;background:color-mix(in srgb,var(--oc) 25%,var(--s));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--oc) 55%,transparent);white-space:nowrap}
+.tomlab{position:absolute;top:2px;transform:translateX(6px);font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:var(--secondary-text-color)}
+.hax{position:absolute;left:0;right:0;bottom:0;height:16px}.hax span{position:absolute;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:var(--secondary-text-color)}
+.smart .head{flex-wrap:wrap}.save{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-weight:850;font-size:14px;color:#0b1a12;background:linear-gradient(120deg,var(--ok),color-mix(in srgb,var(--ok) 60%,#fff));box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent),0 8px 24px color-mix(in srgb,var(--ok) 30%,transparent);position:relative;overflow:hidden;animation:pulse 2.4s infinite}
+.save::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-100%);animation:gloss 3.2s ease-in-out 1s infinite}@keyframes gloss{60%,100%{transform:translateX(100%)}}
+.save.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 40%,transparent);animation:none}.save.ok::after{display:none}.save ha-icon{--mdc-icon-size:18px}
+.duel{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:14px;align-items:end;margin:6px 0 4px}
+.side{display:flex;align-items:flex-end;gap:16px;padding:14px 16px;border-radius:18px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent)}.side.now{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--e) 30%,transparent)}.side.best{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 7%,transparent)}
+.stack2{display:flex;flex-direction:column-reverse;gap:2px;min-height:110px;justify-content:flex-start;width:46px}
+.stack2 i{display:block;height:7px;border-radius:50%/60%;background:linear-gradient(180deg,#ffe58a,#e0a92a 60%,#b07a12);box-shadow:0 1px 0 #8a5d0b,inset 0 1px 0 rgba(255,255,255,.6);animation:drop .55s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(.4s + var(--i) * 70ms)}
+.best .stack2 i{background:linear-gradient(180deg,#b8ffd9,#4fe0a6 60%,#1f9b68);box-shadow:0 1px 0 #157a50,inset 0 1px 0 rgba(255,255,255,.6)}
+@keyframes drop{from{transform:translateY(-60px);opacity:0}}
+.dt{display:flex;flex-direction:column;gap:2px;min-width:0}.dt span{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--secondary-text-color)}.dt b{font-size:30px;font-weight:850;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.now .dt b{color:var(--e)}.best .dt b{color:var(--ok)}.dt small{font-size:12px;color:var(--secondary-text-color)}
+.vs{align-self:center;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);font-size:12px;font-weight:900;color:var(--secondary-text-color)}
+.apps{display:grid;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--l)}
+.app{display:grid;grid-template-columns:26px minmax(90px,140px) minmax(0,1fr) 84px 118px;gap:10px;align-items:center;animation:rise .5s both;animation-delay:calc(.3s + var(--i) * 90ms)}.app ha-icon{--mdc-icon-size:22px;color:var(--h)}.app span{font-weight:750;font-size:13px;display:flex;flex-direction:column}.app span small{font-size:11px;font-weight:600;color:var(--secondary-text-color)}
+.ab{position:relative;height:12px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.ab i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;animation:grow 1s cubic-bezier(.2,.8,.2,1) both}.ab i.n{background:color-mix(in srgb,var(--e) 55%,transparent)}.ab i.b{background:var(--ok);height:5px;top:auto;animation-delay:.25s}
+.app b{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;color:var(--e)}.app em{font-style:normal;font-size:12px;font-weight:750;color:var(--ok);white-space:nowrap}
+.krt{font-style:normal;font-size:11.5px;font-weight:800;color:var(--e)}
+@media(max-width:720px){.curve{height:210px}.clab{font-size:10px;padding:3px 7px}.duel{grid-template-columns:1fr;gap:8px}.vs{display:none}.dt b{font-size:26px}.stack2{min-height:80px;width:38px}.app{grid-template-columns:22px minmax(0,1fr) 70px;row-gap:4px}.app .ab{grid-column:1/-1;order:5}.app em{grid-column:2/-1;text-align:right;margin-top:-4px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 
 .eo{--e:#ffc53d;--c:#b388ff;--lv:#ffc53d}.eo.lv-cheap{--lv:var(--ok)}.eo.lv-dear{--lv:var(--bad)}
