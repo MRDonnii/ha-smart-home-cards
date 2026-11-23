@@ -6,8 +6,9 @@
 // Money and kWh come from Home Assistant's long-term statistics: the grid meter (kWh) and its energy cost (kr, the
 // energy dashboard's cost sensor), and the charger's meter for the car (its share of the kr at the month's average price).
 import { keepScroll } from "../shared/keep-scroll.js";
+import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -95,7 +96,7 @@ class HAElectricityOverviewCard extends HTMLElement {
     this._render();
   }
 
-  _render() { if (this.shadowRoot && this._config) keepScroll(this, () => { this.shadowRoot.innerHTML = `<style>${STYLE}</style>${this._html()}`; this._liveAt = 0; this._live(); }); }
+  _render() { if (this.shadowRoot && this._config) keepScroll(this, () => { this.shadowRoot.innerHTML = `<style>${STYLE}</style>${this._html()}`; this._liveAt = 0; this._live(); countUp(this.shadowRoot); }); }
   // Live power without drawing the card again (the animations would start over every few seconds).
   _live() {
     if (Date.now() - (this._liveAt || 0) < 4000) return; this._liveAt = Date.now();
@@ -105,6 +106,21 @@ class HAElectricityOverviewCard extends HTMLElement {
     set("house", Number.isFinite(house) ? `${fmt(house, 1)} kW` : "—"); set("car", Number.isFinite(car) ? `${fmt(car, 1)} kW` : "—");
     const flow = r.querySelector(".flow"); if (flow) flow.style.setProperty("--spd", `${Math.max(0.6, 3.2 - Math.min(3, (house || 0) + (car || 0)) * 0.7)}s`);
     r.querySelector(".car-flow")?.classList.toggle("on", car > 0.05);
+    // Strømmen lige nu: ledningernes fart følger effekten, huset pulserer, bilens ring viser batteriet.
+    const grid = Number.isFinite(this._kw(c.grid_power)) ? this._kw(c.grid_power) : (house || 0) + (car || 0);
+    const spd = (kw) => `${Math.max(0.45, 3.4 - Math.min(11, kw) * 0.55).toFixed(2)}s`;
+    const fp = r.querySelector(".fl"); if (!fp) return;
+    fp.style.setProperty("--s1", spd(grid)); fp.style.setProperty("--s2", spd(car || 0)); fp.style.setProperty("--ps", `${Math.max(0.8, 3 - Math.min(4, house || 0) * 0.5).toFixed(2)}s`);
+    set("grid", Number.isFinite(grid) ? `${fmt(grid, 1)} kW` : "—"); set("house2", Number.isFinite(house) ? `${fmt(house, 1)} kW` : "—");
+    const charging = car > 0.05 || ["charging", "on"].includes(String(this._hass.states[c.car_status]?.state || "").toLowerCase());
+    const plugged = charging || this._hass.states[c.car_plugged]?.state === "on" || /connected|plugged|tilsluttet|ready|waiting/i.test(String(this._hass.states[c.charger_mode]?.state || "").replace(/disconnected/i, ""));
+    fp.classList.toggle("charging", charging); fp.classList.toggle("plugged", plugged); fp.classList.toggle("gridon", grid > 0.05);
+    set("car2", charging ? `${fmt(car, 1)} kW` : plugged ? "tilsluttet" : "");
+    const soc = this._num(c.car_battery); const range = this._num(c.car_range);
+    set("soc", Number.isFinite(soc) ? `${fmt(soc)} %${Number.isFinite(range) ? ` · ${fmt(range)} km` : ""}` : "—");
+    const sess = this._num(c.charger_session);
+    set("carstate", charging ? `Lader${Number.isFinite(sess) && sess > 0 ? ` · ${fmt(sess, 1)} kWh` : ""}` : plugged ? "Tilsluttet" : "Ikke tilsluttet");
+    const arc = r.querySelector("[data-live-arc]"); if (arc && Number.isFinite(soc)) { const C = 2 * Math.PI * 44; arc.setAttribute("stroke-dasharray", `${(C * Math.max(0, Math.min(100, soc)) / 100).toFixed(1)} ${C.toFixed(1)}`); }
   }
 
   _html() {
@@ -134,7 +150,7 @@ class HAElectricityOverviewCard extends HTMLElement {
   <section class="hero">
     <div class="aurora"></div>
     <div class="ring"><svg viewBox="0 0 150 150"><circle class="bg" cx="75" cy="75" r="${R}"/><circle class="arc" cx="75" cy="75" r="${R}" style="--len:${(C * ringPct / 100).toFixed(1)}" stroke-dasharray="${(C * ringPct / 100).toFixed(1)} ${C.toFixed(1)}"/></svg>
-      <div class="ring-in"><b>${fmt(pNow, 2)}</b><span>kr/kWh nu</span><small>billigere end ${fmt(cheaperThan)} % af døgnet</small></div></div>
+      <div class="ring-in"><b data-count="${pNow.toFixed(2)}" data-dec="2">${fmt(pNow, 2)}</b><span>kr/kWh nu</span><small>billigere end ${fmt(cheaperThan)} % af døgnet</small></div></div>
     <div class="id">
       <div class="eyebrow">${esc(c.title)}</div>
       <h2>${lvText}</h2>
@@ -149,10 +165,11 @@ class HAElectricityOverviewCard extends HTMLElement {
       </div>
     </div>
   </section>
+  ${this._flowHtml(pNow)}
   <div class="grid">
-    <section class="panel stat"><span>I dag</span><b class="e">${fmt(dNow.kr)} kr</b><small>${fmt(dNow.kwh, 1)} kWh${dNow.kwh > 0 ? ` · ${fmt(dNow.kr / dNow.kwh, 2)} kr/kWh i snit` : ""}${dNow.car > 0.1 ? ` · bil ${fmt(dNow.car, 1)} kWh` : ""}</small></section>
-    <section class="panel stat"><span>Denne måned</span><b class="h">${fmt(mNow?.kr)} kr</b><small>${fmt(mNow?.kwh)} kWh${Number.isFinite(proj) ? ` · ≈ ${fmt(proj)} kr for hele ${MONTHS[now.getMonth()]}` : ""}${prev ? ` · ${MONTHS[now.getMonth() - 1 < 0 ? 11 : now.getMonth() - 1]}: ${fmt(prev.kr)} kr` : ""}</small></section>
-    <section class="panel stat"><span>Betalt pr. kWh</span><b class="${mNow && mNow.avg <= tAvg ? "s" : "r"}">${fmt(mNow?.avg, 2)} kr</b><small>snit i ${MONTHS[now.getMonth()]}${mNow?.car > 0 ? ` · bilen ${fmt((mNow.car / mNow.kwh) * 100)} % af forbruget` : ""}</small></section>
+    <section class="panel stat"><span>I dag</span><b class="e" data-count="${Math.round(dNow.kr)}" data-suf=" kr">${fmt(dNow.kr)} kr</b><small>${fmt(dNow.kwh, 1)} kWh${dNow.kwh > 0 ? ` · ${fmt(dNow.kr / dNow.kwh, 2)} kr/kWh i snit` : ""}${dNow.car > 0.1 ? ` · bil ${fmt(dNow.car, 1)} kWh` : ""}</small></section>
+    <section class="panel stat"><span>Denne måned</span><b class="h" data-count="${Math.round(mNow?.kr || 0)}" data-suf=" kr">${fmt(mNow?.kr)} kr</b><small>${fmt(mNow?.kwh)} kWh${Number.isFinite(proj) ? ` · ≈ ${fmt(proj)} kr for hele ${MONTHS[now.getMonth()]}` : ""}${prev ? ` · ${MONTHS[now.getMonth() - 1 < 0 ? 11 : now.getMonth() - 1]}: ${fmt(prev.kr)} kr` : ""}</small></section>
+    <section class="panel stat"><span>Betalt pr. kWh</span><b class="${mNow && mNow.avg <= tAvg ? "s" : "r"}" data-count="${(mNow?.avg || 0).toFixed(2)}" data-dec="2" data-suf=" kr">${fmt(mNow?.avg, 2)} kr</b><small>snit i ${MONTHS[now.getMonth()]}${mNow?.car > 0 ? ` · bilen ${fmt((mNow.car / mNow.kwh) * 100)} % af forbruget` : ""}</small></section>
   </div>
   <section class="panel">
     <div class="head"><span class="hicon amber"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Prisen ${tomorrow.length ? "i dag og i morgen" : "i dag"}</h3><p>Time for time · grøn = billig, gul = normal, rød = dyr i forhold til dagens snit${win ? ` · de billigste ${c.window_hours} timer er markeret` : ""}</p></div>${win ? `<span class="fsum pos">${winTxt}</span>` : ""}</div>
@@ -164,6 +181,19 @@ class HAElectricityOverviewCard extends HTMLElement {
   </section>
 ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
 </div>`;
+  }
+
+  // Strømmen lige nu (Claude AI, 2026-11-24; bruger: "noget animation med billaderen"): elnettet → huset → bilen, med
+  // strøm der løber i ledningerne, et hus der pulserer efter forbruget og bilens batteri som en ring, der lyser, når den lader.
+  _flowHtml(pNow) {
+    const c = this._config; if (!c.house_power && !c.car_power && !c.grid_power) return "";
+    return `<section class="panel flowp"><div class="fl">
+      <div class="node gridn"><div class="orb"><ha-icon icon="mdi:transmission-tower"></ha-icon></div><b>${fmt(pNow, 2)} kr/kWh</b><span>Elnettet</span></div>
+      <div class="wire w1"><i></i><em data-live="grid">—</em></div>
+      <div class="node house"><div class="orb"><span class="ping"></span><span class="ping p2"></span><ha-icon icon="mdi:home-lightning-bolt"></ha-icon></div><b data-live="house2">—</b><span>Huset</span></div>
+      ${c.car_power || c.car_battery ? `<div class="wire w2"><i></i><em data-live="car2"></em></div>
+      <div class="node car"><div class="orb batt"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="arc" data-live-arc cx="50" cy="50" r="44" stroke-dasharray="0 999"/><circle class="sweep" cx="50" cy="50" r="44"/></svg><ha-icon icon="mdi:car-electric"></ha-icon><span class="bolt"><ha-icon icon="mdi:lightning-bolt"></ha-icon></span></div><b data-live="soc">—</b><span data-live="carstate">${esc(c.car_name || "Bilen")}</span></div>` : ""}
+    </div></section>`;
   }
 
   _priceBars(today, tomorrow, win, now, tAvg) {
@@ -243,7 +273,7 @@ const STYLE = `
 .ring .arc{fill:none;stroke:var(--ok);stroke-width:11;stroke-linecap:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--ok) 70%,transparent))}
 .ring-in{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.05}.ring-in b{font-size:32px;font-weight:850}.ring-in span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--secondary-text-color)}.ring-in small{margin-top:5px;font-size:12px;font-weight:800;color:var(--ok)}
 .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}
-.id h2{margin:2px 0 6px;font-size:36px;line-height:1.05;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent}
+.id h2{margin:2px 0 4px;padding-bottom:.08em;font-size:36px;line-height:1.15;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mood{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px;font-weight:750;color:color-mix(in srgb,var(--ok) 70%,var(--primary-text-color))}.mood i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.mood.bad{color:var(--bad)}.mood.bad i{background:var(--bad)}
 .chips{display:flex;flex-wrap:wrap;gap:7px}.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--l)}.chip ha-icon{--mdc-icon-size:16px;color:var(--secondary-text-color)}.chip.gas ha-icon{color:var(--g)}.chip.heat ha-icon{color:var(--h)}.chip.good ha-icon{color:var(--ok)}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -268,7 +298,31 @@ const STYLE = `
 .sv{display:grid;grid-template-columns:80px minmax(0,1fr) 90px 54px;gap:10px;align-items:center;padding:6px 8px;border-radius:10px}.sv.cur{background:color-mix(in srgb,var(--g) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 40%,transparent)}.sv span{font-weight:800}.sbar{height:18px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.sbar i{display:block;height:100%}.sbar i.pos{background:color-mix(in srgb,var(--ok) 70%,transparent)}.sbar i.neg{background:color-mix(in srgb,var(--bad) 70%,transparent)}.sv b{text-align:right}.sv b.pos{color:var(--ok)}.sv b.neg{color:var(--bad)}.sv em{font-style:normal;text-align:right;color:var(--secondary-text-color);font-size:12px}
 .kwh{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end}.kc{display:flex;flex-direction:column;align-items:center;gap:4px}.kp{position:relative;height:120px;width:70%}.kp i{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 2px 2px}.kp i.n{background:color-mix(in srgb,var(--h) 30%,transparent)}.kp i.m{left:22%;right:22%;background:var(--h)}.kc span{font-size:11px;color:var(--secondary-text-color);font-weight:700}
 .hicon.green{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
-@media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
+@media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px 16px}.id{min-width:0;max-width:100%}.id h2{font-size:30px}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
+
+.flowp{padding:22px 24px 18px;overflow:hidden}
+.fl{display:flex;align-items:flex-start;gap:0;--s1:3s;--s2:3s;--ps:2.4s}
+.node{flex:0 0 auto;width:130px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.node b{font-size:15px;font-weight:850;font-variant-numeric:tabular-nums;margin-top:6px}.node span{font-size:11.5px;font-weight:700;color:var(--secondary-text-color)}
+.orb{position:relative;width:86px;height:86px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--oc) 28%,transparent),color-mix(in srgb,var(--oc) 6%,transparent) 70%);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--oc) 45%,transparent),0 0 26px color-mix(in srgb,var(--oc) 25%,transparent)}
+.orb ha-icon{--mdc-icon-size:38px;color:var(--oc);position:relative;z-index:1}
+.gridn{--oc:var(--lv)}.house{--oc:var(--h)}.car{--oc:var(--c)}
+.ping{position:absolute;inset:0;border-radius:50%;border:2px solid var(--h);animation:ping var(--ps) cubic-bezier(.2,.6,.3,1) infinite}.ping.p2{animation-delay:calc(var(--ps) / 2)}@keyframes ping{from{transform:scale(.9);opacity:.9}to{transform:scale(1.45);opacity:0}}
+.wire{flex:1 1 auto;position:relative;height:8px;margin-top:39px;border-radius:4px;background:color-mix(in srgb,var(--primary-text-color) 7%,transparent);min-width:30px}
+.wire i{position:absolute;inset:0;border-radius:4px;background:radial-gradient(circle,var(--wc) 0 3px,transparent 3.6px) 0 50%/24px 8px repeat-x;opacity:.18}
+.wire.w1{--wc:var(--lv)}.wire.w2{--wc:var(--c)}
+.gridon .w1 i{opacity:1;filter:drop-shadow(0 0 5px var(--wc));animation:run var(--s1) linear infinite}
+.charging .w2 i{opacity:1;filter:drop-shadow(0 0 5px var(--wc));animation:run var(--s2) linear infinite}
+@keyframes run{to{background-position:24px 50%}}
+.wire em{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-style:normal;font-size:12.5px;font-weight:850;white-space:nowrap;color:color-mix(in srgb,var(--wc) 75%,var(--primary-text-color));font-variant-numeric:tabular-nums}
+.batt svg{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg)}
+.batt circle{fill:none;stroke-width:6}.batt .bg{stroke:color-mix(in srgb,var(--c) 14%,transparent)}.batt .arc{stroke:var(--c);stroke-linecap:round;transition:stroke-dasharray 1.2s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--c) 70%,transparent))}
+.batt .sweep{stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-dasharray:18 260;opacity:0;transform-origin:50px 50px}
+.charging .batt .sweep{opacity:.85;animation:spin 1.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.bolt{position:absolute;right:-2px;top:-2px;z-index:2;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--c);opacity:0;transform:scale(.6);transition:.4s}.bolt ha-icon{--mdc-icon-size:17px;color:#111}
+.charging .bolt{opacity:1;transform:scale(1);animation:blink 1.4s ease-in-out infinite}@keyframes blink{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 0%,transparent),0 0 18px var(--c)}}
+.plugged:not(.charging) .w2{background:color-mix(in srgb,var(--c) 22%,transparent)}
+@media(max-width:720px){.flowp{padding:18px 10px 14px}.node{width:92px}.orb{width:64px;height:64px}.orb ha-icon{--mdc-icon-size:28px}.wire{margin-top:28px;min-width:18px}.node b{font-size:13px}.wire em{font-size:11px}.bolt{width:22px;height:22px}.bolt ha-icon{--mdc-icon-size:13px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 
 .eo{--e:#ffc53d;--c:#b388ff;--lv:#ffc53d}.eo.lv-cheap{--lv:var(--ok)}.eo.lv-dear{--lv:var(--bad)}

@@ -4,8 +4,9 @@
 // statistics) → what the same heat would have cost on gas that month (m³ = kWh ÷ (kWh per m³ × boiler efficiency) ×
 // that month's all-in gas price + the gas side's fixed amounts) → minus what district heating cost (kWh × price + fixed).
 import { keepScroll } from "../shared/keep-scroll.js";
+import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.0.1";
+const VERSION = "1.1.0";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -130,7 +131,7 @@ class HAGasSavingsCard extends HTMLElement {
     this._render();
   }
 
-  _render() { if (this.shadowRoot && this._config) keepScroll(this, () => { this.shadowRoot.innerHTML = `<style>${STYLE}</style>${this._html()}`; }); }
+  _render() { if (this.shadowRoot && this._config) keepScroll(this, () => { this.shadowRoot.innerHTML = `<style>${STYLE}</style>${this._html()}`; countUp(this.shadowRoot); }); }
 
   _html() {
     const c = this._config;
@@ -171,10 +172,10 @@ class HAGasSavingsCard extends HTMLElement {
   <section class="hero">
     <div class="aurora"></div>
     <div class="ring"><svg viewBox="0 0 150 150"><circle class="bg" cx="75" cy="75" r="${R}"/><circle class="arc" cx="75" cy="75" r="${R}" stroke-dasharray="${(C * pct / 100).toFixed(1)} ${C.toFixed(1)}"/></svg>
-      <div class="ring-in"><b>${fmt(pct)}%</b><span>betalt hjem</span>${c.investment ? `<small>af ${fmt(c.investment)} kr</small>` : ""}</div></div>
+      <div class="ring-in"><b data-count="${Math.round(pct)}" data-suf="%">${fmt(pct)}%</b><span>betalt hjem</span>${c.investment ? `<small>af ${fmt(c.investment)} kr</small>` : ""}</div></div>
     <div class="id">
       <div class="eyebrow">${esc(c.title)}</div>
-      <h2>${fmt(saved)} kr sparet</h2>
+      <h2><span data-count="${Math.round(saved)}">${fmt(saved)}</span> kr sparet</h2>
       <div class="mood ${saved >= 0 ? "" : "bad"}"><i></i>${saved >= 0 ? "billigere end gas med samme varmeforbrug" : "dyrere end gas med samme varmeforbrug"} siden ${esc(c.switch_date || "")}</div>
       <div class="chips">
         <span class="chip gas"><ha-icon icon="mdi:fire"></ha-icon>Gas nu ${fmt(gasNow || gasAvg, 2)} kr/m³ · ${fmt(gasKwhHeat, 2)} kr/kWh varme${Number.isFinite(trend) ? ` · ${trend >= 0 ? "▲" : "▼"} ${fmt(Math.abs(trend), 1)} % på en måned` : ""}</span>
@@ -186,8 +187,8 @@ class HAGasSavingsCard extends HTMLElement {
     </div>
   </section>
   <div class="grid">
-    <section class="panel stat"><span>Gas ville have kostet</span><b class="g">${fmt(gasTot)} kr</b><small>${fmt(sum("m3"))} m³ gas · inkl. net, afgifter, abonnement${c.service_year ? " og service" : ""}</small></section>
-    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h">${fmt(heatTot)} kr</b><small>${fmt(sum("kwh"))} kWh · inkl. faste afgifter</small></section>
+    <section class="panel stat"><span>Gas ville have kostet</span><b class="g" data-count="${Math.round(gasTot)}" data-suf=" kr">${fmt(gasTot)} kr</b><small>${fmt(sum("m3"))} m³ gas · inkl. net, afgifter, abonnement${c.service_year ? " og service" : ""}</small></section>
+    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h" data-count="${Math.round(heatTot)}" data-suf=" kr">${fmt(heatTot)} kr</b><small>${fmt(sum("kwh"))} kWh · inkl. faste afgifter</small></section>
     <section class="panel stat"><span>Forskel</span><b class="${saved >= 0 ? "s" : "r"}">${saved >= 0 ? "+" : "−"}${fmt(Math.abs(saved))} kr</b><small>${gasTot > 0 ? `${fmt((saved / gasTot) * 100)} % ${saved >= 0 ? "billigere" : "dyrere"}` : ""}</small></section>
   </div>
   ${forecast.length ? `<section class="panel fc">
@@ -215,6 +216,7 @@ const STYLE = `
 .gs{--g:#ff8a3d;--h:#4cc9ff;--ok:var(--dashboard-success,#4fe0a6);--bad:var(--dashboard-danger,#ff667a);--s:var(--surface,var(--ha-card-background,var(--card-background-color,#141c27)));--l:color-mix(in srgb,var(--primary-text-color) 9%,transparent);display:grid;gap:14px;color:var(--primary-text-color)}
 .hero,.panel{position:relative;border-radius:24px;background:var(--s);border:1px solid var(--l);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--ok);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22));animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.ring .arc{animation:arc0 1.4s cubic-bezier(.2,.8,.2,1) both}@keyframes arc0{from{stroke-dasharray:0 999}}
 .hero{isolation:isolate;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center;padding:22px 24px;background:linear-gradient(135deg,color-mix(in srgb,var(--s) 90%,#000),var(--s))}
 .aurora{position:absolute;inset:-40%;z-index:-1;background:radial-gradient(38% 34% at 18% 35%,color-mix(in srgb,var(--ok) 22%,transparent),transparent 70%),radial-gradient(34% 30% at 78% 28%,color-mix(in srgb,var(--g) 20%,transparent),transparent 70%),radial-gradient(36% 36% at 60% 90%,color-mix(in srgb,var(--h) 16%,transparent),transparent 70%);filter:blur(10px);animation:au 24s ease-in-out infinite alternate}
 @keyframes au{50%{transform:translate(4%,-3%) rotate(8deg)}100%{transform:translate(-3%,4%) rotate(-6deg)}}
@@ -223,7 +225,7 @@ const STYLE = `
 .ring .arc{fill:none;stroke:var(--ok);stroke-width:11;stroke-linecap:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--ok) 70%,transparent))}
 .ring-in{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.05}.ring-in b{font-size:32px;font-weight:850}.ring-in span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--secondary-text-color)}.ring-in small{margin-top:5px;font-size:12px;font-weight:800;color:var(--ok)}
 .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}
-.id h2{margin:2px 0 6px;font-size:36px;line-height:1.05;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent}
+.id h2{margin:2px 0 4px;padding-bottom:.08em;font-size:36px;line-height:1.15;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mood{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px;font-weight:750;color:color-mix(in srgb,var(--ok) 70%,var(--primary-text-color))}.mood i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.mood.bad{color:var(--bad)}.mood.bad i{background:var(--bad)}
 .chips{display:flex;flex-wrap:wrap;gap:7px}.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--l)}.chip ha-icon{--mdc-icon-size:16px;color:var(--secondary-text-color)}.chip.gas ha-icon{color:var(--g)}.chip.heat ha-icon{color:var(--h)}.chip.good ha-icon{color:var(--ok)}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -248,7 +250,7 @@ const STYLE = `
 .sv{display:grid;grid-template-columns:80px minmax(0,1fr) 90px 54px;gap:10px;align-items:center;padding:6px 8px;border-radius:10px}.sv.cur{background:color-mix(in srgb,var(--g) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 40%,transparent)}.sv span{font-weight:800}.sbar{height:18px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.sbar i{display:block;height:100%}.sbar i.pos{background:color-mix(in srgb,var(--ok) 70%,transparent)}.sbar i.neg{background:color-mix(in srgb,var(--bad) 70%,transparent)}.sv b{text-align:right}.sv b.pos{color:var(--ok)}.sv b.neg{color:var(--bad)}.sv em{font-style:normal;text-align:right;color:var(--secondary-text-color);font-size:12px}
 .kwh{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end}.kc{display:flex;flex-direction:column;align-items:center;gap:4px}.kp{position:relative;height:120px;width:70%}.kp i{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 2px 2px}.kp i.n{background:color-mix(in srgb,var(--h) 30%,transparent)}.kp i.m{left:22%;right:22%;background:var(--h)}.kc span{font-size:11px;color:var(--secondary-text-color);font-weight:700}
 .hicon.green{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
-@media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
+@media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px 16px}.id{min-width:0;max-width:100%}.id h2{font-size:30px}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 `;
 
