@@ -308,6 +308,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-pet-nutrition-card",
+    "name": "HA Pet Nutrition Card",
+    "filename": "ha-pet-nutrition-card.js",
+    "category": "Home and people",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "ha-weather-card",
     "name": "HA Weather Card",
     "filename": "ha-weather-card.js",

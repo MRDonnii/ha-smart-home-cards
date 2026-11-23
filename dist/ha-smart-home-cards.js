@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.291 */
+/* MRDonnii Smart Home Cards v0.5.292 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -1206,7 +1206,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION60 = "0.4.6";
+  const VERSION61 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key2) => {
@@ -1624,12 +1624,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION60}`);
+  console.info(`HA POOL CARD v${VERSION61}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION60 = "0.3.5";
+  const VERSION61 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key2) => {
     try {
@@ -1862,7 +1862,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION60}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION61}`);
 })();
 
 // src/cards/shared/keep-scroll.js
@@ -7806,34 +7806,34 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const car = this._hass?.states?.[this._loc()]?.attributes || {};
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
-    const esc17 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc18 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
       const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
-      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc17(label)}</div>`;
+      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc18(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power2 = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
-      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc17(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc18(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
         Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}\u2013${money(station.day_range[1])} ${unit}/kWh` : null,
         Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
         ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`)
-      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc17(line)}</div>`).join("") : "");
+      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc18(line)}</div>`).join("") : "");
       const plugCount = /* @__PURE__ */ new Map();
       for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
-        const key2 = `${esc17(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
+        const key2 = `${esc18(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
         plugCount.set(key2, (plugCount.get(key2) || 0) + (Number(c2.count) || 1));
       }
       const plugs = [...plugCount].map(([key2, count2]) => `${count2 > 1 ? `${count2} \xD7 ` : ""}${key2}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
-        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc17(station.name || station.operator || "Ladested")}</div>`,
+        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc18(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc17(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power2, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc18(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power2, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
-        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc17(station.usage_cost)}</div>` : "",
-        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc17(station.feed)} (EU's AFIR-data)</div>` : "",
+        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc18(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc18(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
       ].filter(Boolean).join("")}</div>`;
       let marker;
@@ -27608,7 +27608,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION60 = "0.3.5";
+  const VERSION61 = "0.3.5";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS4 = [
@@ -27733,7 +27733,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION60}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION61}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -35724,15 +35724,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, room.mould, room.sun, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice, this._config.flow_advice_adjust, ...rooms.flatMap((room) => [room.mould, room.sun])].filter(isId2);
-    const esc17 = (v) => this._escape(v);
+    const esc18 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key2, icon6, label) => `<div class="g na" data-m="${key2}"><ha-icon icon="${icon6}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc17(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc18(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc17(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc17(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc18(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc18(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge sun" data-b="sun" title="Solen varmer rummet \u2013 m\xE5let er s\xE6nket midlertidigt"><ha-icon icon="mdi:weather-sunny"></ha-icon></span>
@@ -35756,10 +35756,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc17(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc18(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc17(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc17(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc18(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc18(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
           <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
@@ -35775,19 +35775,19 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc17(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc17(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc18(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc18(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc17(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc18(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc17(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc18(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="head-side"><div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
             <div class="flow curve" data-s="curve" ${isEnt(this._config.flow_advice) ? "" : "hidden"}><ha-icon icon="mdi:thermometer-auto"></ha-icon><div><span>Anbefalet freml\xF8b</span><strong data-s="curveText">${DASH3}</strong></div></div></div>
           </header>
@@ -36051,11 +36051,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
   // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
   _renderComfortTile(room, refs, model) {
-    const esc17 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
+    const esc18 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
     const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c2.tone] || "neutral";
     refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c2.tone}`;
     this._setText(refs.temp, this._format(model.current));
-    const meta = `<span class="cf-pill"><i></i>${esc17(c2.label)}</span><small>${esc17(c2.detail)}</small>`;
+    const meta = `<span class="cf-pill"><i></i>${esc18(c2.label)}</span><small>${esc18(c2.detail)}</small>`;
     if (refs.meta && refs.meta._h !== meta) {
       refs.meta._h = meta;
       refs.meta.innerHTML = meta;
@@ -36076,7 +36076,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (model.humidity !== void 0) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
       if (room.co2) chips.push([co2 !== void 0 && co2 >= 1e3 ? "bad" : "", "mdi:molecule-co2", co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`]);
       if (model.feels !== void 0) chips.push(["", "mdi:thermometer", `f\xF8les ${this._format(model.feels)}\xB0`]);
-      const html = chips.map(([cls, icon6, text2]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon6}"></ha-icon>${esc17(text2)}</span>`).join("");
+      const html = chips.map(([cls, icon6, text2]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon6}"></ha-icon>${esc18(text2)}</span>`).join("");
       const box = cf.querySelector(".cf-chips");
       if (box._h !== html) {
         box._h = html;
@@ -36103,7 +36103,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
-    const host = refs.host, esc17 = (v) => this._escape(v), st = (id) => this._entity(id), fmt7 = (v, digits = 1) => this._format(v, digits);
+    const host = refs.host, esc18 = (v) => this._escape(v), st = (id) => this._entity(id), fmt8 = (v, digits = 1) => this._format(v, digits);
     const f = (name) => host.querySelector(`[data-f="${name}"]`), p25 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p25(t.getHours())}:${p25(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
@@ -36132,25 +36132,25 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const observed = st(room.observed)?.state;
     this._setText(f("wxlabel"), observed || info.label);
-    const range = (x) => x && x.templow !== void 0 ? `${fmt7(x.templow)}\xB0\u2013${fmt7(x.temperature)}\xB0` : "";
+    const range = (x) => x && x.templow !== void 0 ? `${fmt8(x.templow)}\xB0\u2013${fmt8(x.temperature)}\xB0` : "";
     const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
-    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt7(Math.min(...lows))}\xB0\u2013${fmt7(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt8(Math.min(...lows))}\xB0\u2013${fmt8(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
     const chips = [];
-    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt7(model.feels)}\xB0`]);
-    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt7(model.humidity, 0)} %` : "Ude nu");
+    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt8(model.feels)}\xB0`]);
+    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt8(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
       const n = this._number(v);
       return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
     };
     const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
-    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt7(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt7(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
+    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt8(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt8(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
     const rain2 = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
-    if (rain2 !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt7(rain2 ?? rainFc)} mm`, rain2 !== void 0 && rainFc !== void 0 ? `prognose ${fmt7(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt7(d0.precipitation_probability, 0)} %` : ""]);
+    if (rain2 !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt8(rain2 ?? rainFc)} mm`, rain2 !== void 0 && rainFc !== void 0 ? `prognose ${fmt8(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt8(d0.precipitation_probability, 0)} %` : ""]);
     const dd = this._number(st(room.degree_days)?.state);
-    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt7(dd)}`]);
+    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt8(dd)}`]);
     const uv2 = this._number(a.uv_index);
-    if (uv2 !== void 0 && uv2 >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt7(uv2, 0)}`]);
-    const chipHtml = chips.map(([icon6, color, text2, sub2, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub2 ? ` title="${esc17(sub2)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon6}"></ha-icon></span>` : `<ha-icon icon="${icon6}"></ha-icon>`}${esc17(text2)}</span>`).join("");
+    if (uv2 !== void 0 && uv2 >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt8(uv2, 0)}`]);
+    const chipHtml = chips.map(([icon6, color, text2, sub2, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub2 ? ` title="${esc18(sub2)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon6}"></ha-icon></span>` : `<ha-icon icon="${icon6}"></ha-icon>`}${esc18(text2)}</span>`).join("");
     const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
       chipsEl._h = chipHtml;
@@ -36158,8 +36158,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi2 = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p25(t.getHours())}:00 \xB7 ${hi2.label} \xB7 ${fmt7(x.temperature)}\xB0 \xB7 ${fmt7(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt7(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi2.color}" title="${esc17(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi2.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      const title = `${p25(t.getHours())}:00 \xB7 ${hi2.label} \xB7 ${fmt8(x.temperature)}\xB0 \xB7 ${fmt8(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt8(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi2.color}" title="${esc18(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi2.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
     if (hoursEl && hoursEl._h !== hoursHtml2) {
@@ -36523,12 +36523,12 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Info lines that only appear when there is something to tell: mould risk from 70 % and rooms lowered for sun.
   _renderInfo(sm) {
     if (!sm?.info) return;
-    const rooms = this._config.rooms || [], esc17 = (v) => this._escape(v);
+    const rooms = this._config.rooms || [], esc18 = (v) => this._escape(v);
     const risky = rooms.map((room) => [room.name, this._mould(room)]).filter(([, v]) => v !== void 0 && v >= 70).sort((a, b) => b[1] - a[1]);
     const sunny = rooms.filter((room) => this._sunActive(room)).map((room) => room.name);
     const lines = [];
-    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen: ${risky.map(([n, v]) => `${esc17(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
-    if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc17(sunny.join(" og "))} \u2013 m\xE5let er s\xE6nket midlertidigt</span></div>`);
+    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen: ${risky.map(([n, v]) => `${esc18(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
+    if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc18(sunny.join(" og "))} \u2013 m\xE5let er s\xE6nket midlertidigt</span></div>`);
     const html = lines.join("");
     if (sm.info._h !== html) {
       sm.info._h = html;
@@ -37485,7 +37485,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   }
   return out.sort((a, b) => a.prio - b.prio);
 }
-function hoursHtml(hass, hourly = [], esc17 = (v) => v) {
+function hoursHtml(hass, hourly = [], esc18 = (v) => v) {
   const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
   const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
   const sunCache = /* @__PURE__ */ new Map();
@@ -37497,7 +37497,7 @@ function hoursHtml(hass, hourly = [], esc17 = (v) => v) {
   };
   return next.map((h, i) => {
     const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
-    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc17(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
+    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc18(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
   }).join("");
 }
 var INSIGHT_CSS = `
@@ -40646,7 +40646,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       }
       this._decorationType = item2.type;
     }
-    const esc17 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+    const esc18 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -40658,14 +40658,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc17(item2.value));
+    setText(".value", esc18(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state2, index) => {
       meter.children[index].className = `seg ${segClass(state2)}`;
     });
-    setText(".detail", esc17(item2.detail || " "));
+    setText(".detail", esc18(item2.detail || " "));
     this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
     if (item2.type === "heating" || item2.type === "ventilation") {
       const l = this.shadowRoot.querySelector(".label");
@@ -40682,8 +40682,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : q.awayOpen ? `${open} ${open > 1 ? "\xE5bne" : "\xE5ben"} \xB7 ingen hjemme` : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} ${open > 1 ? "\xE5bne" : "\xE5ben"}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc17(title)}">${inner}</span>`;
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic2, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic2}"></ha-icon><b>${esc17(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc18(title)}">${inner}</span>`;
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic2, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic2}"></ha-icon><b>${esc18(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -42496,8 +42496,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = this._km(p), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const esc17 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-    return `<button class="person" data-path="${esc17(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc17(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc17(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc17(status)}</strong><small>${esc17(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    return `<button class="person" data-path="${esc18(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc18(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc18(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc18(status)}</strong><small>${esc18(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
@@ -42505,7 +42505,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc17 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state2 = tracker?.state || person?.state || "unknown";
@@ -42523,15 +42523,15 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc17((p.name || "?").trim()[0] || "?");
+    const initial = esc18((p.name || "?").trim()[0] || "?");
     const ring = this._config.battery_style === "ring";
     const C2 = 2 * Math.PI * 15;
     const bat = battery === null ? "" : ring ? `<span class="bring${charging ? " chg" : ""}" title="Batteri ${Math.round(battery)} %${charging ? " \xB7 lader" : ""}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="${(battery / 100 * C2).toFixed(1)} ${C2.toFixed(1)}"></circle></svg><b>${Math.round(battery)}<small>%</small></b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>` : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`;
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc17(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc18(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc17(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc17(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc17(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc18(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc18(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc18(trip || place)}</span></span></small></span>
       ${bat}
     </button>`;
   }
@@ -42546,7 +42546,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc17 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -42560,14 +42560,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const spot = away ? this._place(p) : "";
       const where = home ? "" : away ? [spot, Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : ""].filter(Boolean).join(" \xB7 ") || "Ude" : this._valid(state2) ? state2 : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av2 = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc17((p.name || "?")[0])}</span>`;
+      const av2 = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc18((p.name || "?")[0])}</span>`;
       return { p, home, where, av: av2, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc17(x.p.navigation_path || "")}" title="${esc17(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc18(x.p.navigation_path || "")}" title="${esc18(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc17(x.name)}</b><small>${esc17(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc18(x.name)}</b><small>${esc18(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -42798,19 +42798,19 @@ function heatModel(card) {
   const duration2 = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
   const day2 = Number(a.dag);
   const inHeat = Number.isFinite(day2) && day2 >= 1 && day2 <= duration2;
-  const fmt7 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+  const fmt8 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
   const date2 = (v, shift = 0) => {
     if (!v) return "";
     const d = /* @__PURE__ */ new Date(`${String(v).slice(0, 10)}T12:00:00`);
     if (Number.isNaN(d.getTime())) return "";
     d.setDate(d.getDate() + shift);
-    return fmt7(d);
+    return fmt8(d);
   };
   const inDays = (n) => {
     const d = /* @__PURE__ */ new Date();
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() + n);
-    return fmt7(d);
+    return fmt8(d);
   };
   const phase = (d) => d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
   const phaseText = { bleed: "Bl\xF8dning", fertile: "Mest frugtbar", late: "Sidste del" };
@@ -42838,7 +42838,7 @@ function heatModel(card) {
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? "" : a.dage_til_naeste > 1 ? `L\xF8betid om ca. ${a.dage_til_naeste} dage` : a.dage_til_naeste === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu"
   };
 }
-function heatHtml(card, H3, esc17) {
+function heatHtml(card, H3, esc18) {
   if (!H3) return "";
   const cells = Array.from({ length: H3.duration }, (_, i) => {
     const d = i + 1;
@@ -42852,19 +42852,19 @@ function heatHtml(card, H3, esc17) {
   const days = (n) => n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`;
   return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
-      <p>${H3.inHeat ? `<b>${esc17(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
+      <p>${H3.inHeat ? `<b>${esc18(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
     ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc17(H3.start)}</b></div>` : ""}
-      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc17(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
-      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc17(H3.nextPhase.name)}</b><em>fra ${esc17(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
-      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc17(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
-      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc17(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
+      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc18(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc18(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc18(H3.nextPhase.name)}</b><em>fra ${esc18(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
+      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc18(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
+      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc18(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    ${card._heatForm ? heatFormHtml(card, H3, esc17) : `<div class="pp-actions">
+    ${card._heatForm ? heatFormHtml(card, H3, esc18) : `<div class="pp-actions">
       ${H3.script ? H3.inHeat ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>` : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
-      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc17(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
+      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc18(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
     </div>`}
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
@@ -42876,21 +42876,21 @@ var daysAgo = (n) => {
   d.setDate(d.getDate() - n);
   return isoDay2(d);
 };
-function heatFormHtml(card, H3, esc17) {
+function heatFormHtml(card, H3, esc18) {
   const f = card._heatForm;
   const today = daysAgo(0);
   const quick = [[0, "I dag"], [1, "I g\xE5r"], [2, "I forg\xE5rs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
   const note = H3.inHeat ? "Den nuv\xE6rende l\xF8betid i kalenderen bliver erstattet af den nye dato, og sk\xF8nnet for den n\xE6ste bliver regnet om." : "Den sidste l\xF8betid bliver i kalenderen som historik. Den nye bliver lagt ind, og sk\xF8nnet for den n\xE6ste bliver regnet om.";
   return `<div class="pp-heatform">
     <h4>${H3.inHeat ? "Hvorn\xE5r startede l\xF8betiden?" : "Hvorn\xE5r gik hun i l\xF8betid?"}</h4>
-    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc17(f.value)}" max="${today}"></div>
-    <p>${note}</p>${f.error ? `<p class="err">${esc17(f.error)}</p>` : ""}
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc18(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc18(f.error)}</p>` : ""}
     <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer \u2026" : "Gem"}</button>
       <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annull\xE9r</button></div></div>`;
 }
 function premiumHtml(card) {
   const c2 = card._config;
-  const esc17 = (v) => card._escape(v);
+  const esc18 = (v) => card._escape(v);
   const meals = c2.meals || [];
   const info = meals.map((meal, i) => {
     const skipped = card._on(meal.skip);
@@ -42920,19 +42920,19 @@ function premiumHtml(card) {
   const arcs = info.map((m, i) => `<circle class="pp-arc ${m.tone}" cx="60" cy="60" r="52" style="stroke:${MEAL_COLORS[m.tone]};stroke-dasharray:${seg.toFixed(2)} ${(C2 - seg).toFixed(2)};stroke-dashoffset:${(-(i * (seg + gap) + gap / 2)).toFixed(2)};--i:${i}"/>`).join("");
   const chips = [
     `<span class="pp-chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${done} af ${planned.length} m\xE5ltider</span>`,
-    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc17(next.meal.name)} ${esc17(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
+    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc18(next.meal.name)} ${esc18(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
     c2.water ? `<span class="pp-chip ${water ? "water" : "danger"}"><ha-icon icon="${water ? "mdi:water" : "mdi:water-off"}"></ha-icon>${water ? "Vand i sk\xE5len" : "Mangler vand"}</span>` : "",
     H3?.inHeat ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip"></ha-icon>L\xF8betid dag ${H3.day}/${H3.duration}</span>` : H3?.soon ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon>${H3.soon}</span>` : ""
   ].filter(Boolean).join("");
-  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct3(m.t)}%" data-info="${esc17(m.meal.status || "")}" title="${esc17(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc17(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
+  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct3(m.t)}%" data-info="${esc18(m.meal.status || "")}" title="${esc18(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc18(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
   const label = { done: "Givet", pending: "Afventer", missed: "Misset", skipped: "Springes over", disabled: "Sl\xE5et fra" };
   const mealCards = info.map((m) => `<article class="pp-meal ${m.tone}" style="--i:${m.i}">
-      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc17(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
-        <div><h4>${esc17(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc17(m.meal.status || "")}">${esc17(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
-        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc17(m.meal.enabled)}" aria-label="${esc17(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
+      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc18(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
+        <div><h4>${esc18(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc18(m.meal.status || "")}">${esc18(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
+        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc18(m.meal.enabled)}" aria-label="${esc18(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
       <div class="pp-meal-actions">
-        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc17(m.meal.feed_action)}" data-name="${esc17(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
-        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc17(m.meal.skip)}" data-name="${esc17(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
+        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc18(m.meal.feed_action)}" data-name="${esc18(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
+        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc18(m.meal.skip)}" data-name="${esc18(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
       </div></article>`).join("");
   const hours = [6, 9, 12, 15, 18, 21].map((h) => `<span style="left:${pct3(h * 60)}%">${String(h).padStart(2, "0")}</span>`).join("");
   return `<ha-card class="pp ${card._config.animation === false ? "still" : ""}${card._ppIntro ? "" : " intro"}">
@@ -42940,13 +42940,13 @@ function premiumHtml(card) {
     <div class="pp-aurora"></div>
     <div class="pp-paws">${[0, 1, 2, 3, 4, 5].map((i) => `<span style="--p:${i}">${pawSvg}</span>`).join("")}</div>
     <div class="pp-avatar"><svg class="pp-ring" viewBox="0 0 120 120"><circle class="pp-ring-bg" cx="60" cy="60" r="52"/>${arcs}</svg>
-      <div class="pp-face"><ha-icon icon="${esc17(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
-    <div class="pp-id"><span class="pp-eyebrow">${esc17(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc17(c2.pet_name || "K\xE6ledyr")}</h2>
-      <p class="pp-mood ${mood[1]}"><i></i>${esc17(mood[0])}</p><div class="pp-chips">${chips}</div></div>
+      <div class="pp-face"><ha-icon icon="${esc18(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
+    <div class="pp-id"><span class="pp-eyebrow">${esc18(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc18(c2.pet_name || "K\xE6ledyr")}</h2>
+      <p class="pp-mood ${mood[1]}"><i></i>${esc18(mood[0])}</p><div class="pp-chips">${chips}</div></div>
   </section>
   <div class="pp-grid">
     <section class="pp-panel pp-day" style="--d:1">
-      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc17(next.meal.name.toLowerCase())} kl. ${esc17(next.meal.time)}` : ""}</p></div>
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc18(next.meal.name.toLowerCase())} kl. ${esc18(next.meal.time)}` : ""}</p></div>
         ${c2.feeder_mode ? `<button class="pp-mode ${mode === "schedule" ? "on" : ""}" data-mode><ha-icon icon="${mode === "schedule" ? "mdi:calendar-check" : "mdi:hand-back-right"}"></ha-icon>${mode === "schedule" ? "Plan" : "Manuel"}</button>` : ""}</header>
       <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct3(now)}%"></span><span class="pp-now" style="left:${pct3(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
       <div class="pp-meals">${mealCards}</div>
@@ -42954,7 +42954,7 @@ function premiumHtml(card) {
     <section class="pp-panel pp-supply${c2.water ? "" : " food"}" style="--d:2">
       <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>${c2.water ? "Foder og vand" : "Foder"}</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent2)} % i beholderen`}</p></div></header>
       <div class="pp-supply-row">
-        <button class="pp-silo ${level}" data-info="${esc17(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
+        <button class="pp-silo ${level}" data-info="${esc18(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
           <span class="pp-silo-fill" style="height:${percent2}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent2)}<small>%</small></b></button>
         <div class="pp-stats">
           <div><small>I beholderen</small><b>${Number.isFinite(grams) ? `${card._format(grams)} g` : "\u2014"}</b></div>
@@ -42962,12 +42962,12 @@ function premiumHtml(card) {
           <div><small>Pr. dag</small><b>${Number.isFinite(daily) ? `${card._format(daily)} g` : "\u2014"}</b></div>
           ${c2.refill_action ? `<button class="pp-btn ghost" data-refill><ha-icon icon="mdi:refresh"></ha-icon>Fyldt op</button>` : ""}
         </div>
-        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc17(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
+        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc18(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
           <span class="pp-bowl-water"><i></i><i></i></span>
           <b>${water ? "Vand" : "Tom"}</b>${c2.water_battery ? `<small>${card._format(card._number(c2.water_battery))} % batteri</small>` : ""}</button>` : ""}
       </div>
     </section>
-    ${heatHtml(card, H3, esc17)}
+    ${heatHtml(card, H3, esc18)}
   </div>
 </ha-card>`;
 }
@@ -43399,11 +43399,325 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-pet-care-card", name: "HA Pet Care Card", description: "Samlet k\xE6ledyrs-, vand- og foderoversigt", preview: true });
 console.info(`%c HA PET CARE CARD %c v${VERSION31} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
+// src/cards/ha-pet-nutrition-card/ha-pet-nutrition-card.js
+var VERSION32 = "1.0.0";
+var GOALS = [
+  { key: "lose", match: /tab|lose/i, label: "Tabe sig", icon: "mdi:trending-down", factor: 1.2 },
+  { key: "keep", match: /hold|keep/i, label: "Holde v\xE6gten", icon: "mdi:scale-balance", factor: 1.4 },
+  { key: "active", match: /aktiv|active/i, label: "Aktiv", icon: "mdi:run-fast", factor: 1.6 }
+];
+var rer = (kg) => 70 * Math.pow(kg, 0.75);
+function goalOf(text2) {
+  return GOALS.find((g) => g.match.test(String(text2 || ""))) || GOALS[1];
+}
+function recommendedKcal(weight, goalWeight, goalText) {
+  if (!(weight > 5)) return NaN;
+  const g = goalOf(goalText);
+  const base = g.key === "lose" && goalWeight > 5 && goalWeight < weight ? goalWeight : weight;
+  return Math.round(rer(base) * g.factor / 10) * 10;
+}
+function feedingRow(kg, factor, kcalPer100, portionGrams, meals) {
+  const kcal = rer(kg) * factor;
+  const grams = kcal / kcalPer100 * 100;
+  return { kg, kcal: Math.round(kcal / 10) * 10, grams: Math.round(grams / 5) * 5, portions: Math.round(grams / portionGrams / Math.max(1, meals)) };
+}
+function ageMonths(birthday, now = /* @__PURE__ */ new Date()) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(birthday || ""));
+  if (!m) return NaN;
+  const b = new Date(+m[1], +m[2] - 1, +m[3]);
+  return (now.getFullYear() - b.getFullYear()) * 12 + now.getMonth() - b.getMonth() - (now.getDate() < b.getDate() ? 1 : 0);
+}
+function kcalFor(option, map, fallback) {
+  if (map && Number.isFinite(+map[option])) return +map[option];
+  const m = /\((\d{3})\s*(?:kcal)?\)/i.exec(String(option || ""));
+  return m ? +m[1] : fallback;
+}
+var fmt2 = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "\u2014";
+var esc7 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var HAPetNutritionCard = class extends HTMLElement {
+  static getStubConfig() {
+    return { name: "Hund", food: "input_select.dog_food", portions: "input_number.feeder_portions", portion_weight: 6, weight: "input_number.dog_weight" };
+  }
+  setConfig(config) {
+    if (!config?.food || !config?.portions) throw new Error("Kortet kr\xE6ver food (input_select) og portions (input_number)");
+    this._config = { name: "", portion_weight: 6, meals_count: 3, adult_from_months: 12, history_days: 90, table_from: 20, table_to: 36, table_step: 2, ...config };
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.addEventListener("click", (e) => this._click(e));
+    }
+    this._sig = "";
+    this._render();
+  }
+  set hass(h) {
+    this._hass = h;
+    const c2 = this._config || {};
+    const ids = [c2.food, c2.food_kcal_entity, c2.portions, typeof c2.portion_weight === "string" ? c2.portion_weight : "", c2.weight, c2.goal_weight, c2.goal, c2.birthday, c2.container, ...c2.meals || []].filter(Boolean);
+    const sig = JSON.stringify(ids.map((id) => h?.states?.[id]?.state));
+    if (sig !== this._sig) {
+      this._sig = sig;
+      this._render();
+    }
+    if (c2.weight && (!this._histAt || Date.now() - this._histAt > 36e5)) this._loadHistory();
+  }
+  getCardSize() {
+    return 12;
+  }
+  getGridOptions() {
+    return { rows: "auto", columns: 12, min_columns: 6 };
+  }
+  _s(id) {
+    return id ? this._hass?.states?.[id] : void 0;
+  }
+  _num(v) {
+    const n = typeof v === "string" && !/^[a-z_]+\./.test(v) ? parseFloat(v) : typeof v === "number" ? v : parseFloat(this._s(v)?.state);
+    return Number.isFinite(n) ? n : NaN;
+  }
+  async _loadHistory() {
+    this._histAt = Date.now();
+    const c2 = this._config;
+    try {
+      const start = new Date(Date.now() - c2.history_days * 864e5).toISOString();
+      const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start, entity_ids: [c2.weight], minimal_response: true, no_attributes: true });
+      const rows = res?.[c2.weight] || [];
+      this._hist = rows.map((r) => [r.lu != null ? r.lu * 1e3 : Date.parse(r.last_updated || r.last_changed), parseFloat(r.s ?? r.state)]).filter(([t, v]) => Number.isFinite(t) && v > 5);
+      this._render();
+    } catch {
+    }
+  }
+  _model() {
+    const c2 = this._config;
+    const food = this._s(c2.food)?.state || "";
+    const kcal100 = kcalFor(food, c2.food_kcal, this._num(c2.food_kcal_entity) || 385);
+    const portions = this._num(c2.portions);
+    const pw = this._num(c2.portion_weight) || 6;
+    const meals = (c2.meals || []).length ? c2.meals.filter((id) => this._s(id)?.state === "on").length : +c2.meals_count;
+    const gramsDay = portions * pw * meals;
+    const kcalDay = gramsDay * kcal100 / 100;
+    const weight = this._num(c2.weight);
+    const goalWeight = this._num(c2.goal_weight);
+    const goal = goalOf(this._s(c2.goal)?.state);
+    const rec = recommendedKcal(weight, goalWeight, goal.label);
+    const recGrams = rec / kcal100 * 100;
+    const recPortions = Number.isFinite(rec) && meals ? Math.round(recGrams / pw / meals) : NaN;
+    const diff = Number.isFinite(rec) ? Math.round((kcalDay / rec - 1) * 100) : NaN;
+    const tone3 = !Number.isFinite(diff) ? "idle" : Math.abs(diff) <= 5 ? "good" : Math.abs(diff) <= 15 ? "warn" : "danger";
+    const age = ageMonths(this._s(c2.birthday)?.state);
+    const container = this._num(c2.container);
+    const daysLeft = gramsDay > 0 && container >= 0 ? container / gramsDay : NaN;
+    const options = this._s(c2.food)?.attributes?.options || [];
+    return { food, kcal100, portions, pw, meals, gramsDay, kcalDay, weight, goalWeight, goal, rec, recGrams, recPortions, diff, tone: tone3, age, daysLeft, options };
+  }
+  _render() {
+    if (!this.shadowRoot || !this._config || !this._hass) return;
+    keepScroll(this, () => {
+      this.shadowRoot.innerHTML = `<style>${STYLE6}</style>${this._html(this._model())}`;
+    });
+  }
+  _html(m) {
+    const c2 = this._config;
+    const isPuppy = /hvalp|puppy|junior/i.test(m.food);
+    const switchNow = isPuppy && m.age >= c2.adult_from_months;
+    const R = 62, C2 = 2 * Math.PI * R;
+    const frac = Number.isFinite(m.rec) ? Math.min(m.kcalDay / m.rec, 1.5) / 1.5 : 0;
+    const mood = !Number.isFinite(m.diff) ? "Skriv v\xE6gten ind, s\xE5 regnes anbefalingen ud" : m.tone === "good" ? `Det passer \xB7 ${m.goal.label.toLowerCase()}` : m.diff > 0 ? `${m.diff} % for meget \xB7 ${m.goal.label.toLowerCase()}` : `${-m.diff} % for lidt \xB7 ${m.goal.label.toLowerCase()}`;
+    const toGoal = m.weight > 5 && m.goalWeight > 5 ? m.weight - m.goalWeight : NaN;
+    const hist = this._hist || [];
+    const groups = [["Hvalp", m.options.filter((o) => /hvalp|puppy|junior/i.test(o))], ["Voksen", m.options.filter((o) => !/hvalp|puppy|junior/i.test(o))]].filter(([, l]) => l.length);
+    const rows = [];
+    for (let kg = c2.table_from; kg <= c2.table_to; kg += c2.table_step) rows.push(feedingRow(kg, m.goal.factor, m.kcal100, m.pw, m.meals || 1));
+    const maxG = Math.max(...rows.map((r) => r.grams));
+    const near = (kg) => Number.isFinite(m.weight) && m.weight > 5 && Math.abs(m.weight - kg) < c2.table_step / 2;
+    const goalNear = (kg) => m.goal.key === "lose" && m.goalWeight > 5 && Math.abs(m.goalWeight - kg) < c2.table_step / 2;
+    return `<div class="pn ${m.tone}">
+  <section class="hero">
+    <div class="aurora"></div>
+    <div class="ring">
+      <svg viewBox="0 0 150 150"><circle class="bg" cx="75" cy="75" r="${R}"/>
+        <circle class="arc" cx="75" cy="75" r="${R}" stroke-dasharray="${(C2 * frac).toFixed(1)} ${C2.toFixed(1)}"/>
+        ${Number.isFinite(m.rec) ? `<line class="tick" x1="129" y1="75" x2="145" y2="75" transform="rotate(${(360 / 1.5).toFixed(1)} 75 75)"/>` : ""}</svg>
+      <div class="ring-in"><b>${fmt2(m.kcalDay)}</b><span>kcal/dag</span>${Number.isFinite(m.rec) ? `<small>m\xE5l ${fmt2(m.rec)}</small>` : ""}</div>
+    </div>
+    <div class="id">
+      <div class="eyebrow">Ern\xE6ring</div>
+      <h2>${esc7(c2.title || (c2.name ? `${c2.name}s foder` : "Foder"))}</h2>
+      <div class="mood"><i></i>${esc7(mood)}</div>
+      <div class="chips">
+        <span class="chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${esc7(m.food || "\u2014")}</span>
+        <span class="chip"><ha-icon icon="mdi:fire"></ha-icon>${fmt2(m.kcal100)} kcal/100 g</span>
+        <span class="chip"><ha-icon icon="mdi:bowl-mix"></ha-icon>${fmt2(m.gramsDay)} g/dag</span>
+        ${Number.isFinite(m.age) ? `<button class="chip" data-more="${esc7(c2.birthday)}"><ha-icon icon="mdi:cake-variant"></ha-icon>${m.age} mdr.</button>` : ""}
+        ${Number.isFinite(m.daysLeft) ? `<span class="chip ${m.daysLeft < 3 ? "danger" : ""}"><ha-icon icon="mdi:silo"></ha-icon>${m.daysLeft < 0.5 ? "Beholder tom" : `${fmt2(m.daysLeft)} dage i beholder`}</span>` : ""}
+      </div>
+    </div>
+  </section>
+  ${switchNow ? `<section class="banner"><ha-icon icon="mdi:swap-horizontal-bold"></ha-icon><div><b>Tid til voksenfoder</b><span>${m.age} m\xE5neder \u2013 udvokset ved ca. 12\u201315 mdr. Skift over en uge med 1:1 hvalpe- og voksenfoder, og v\xE6lg s\xE5 det nye foder herunder.</span></div></section>` : ""}
+  <div class="grid">
+    <section class="panel portions">
+      <div class="head"><span class="hicon"><ha-icon icon="mdi:bowl-mix"></ha-icon></span><div><h3>Portioner pr. m\xE5ltid</h3><p>${fmt2(m.pw)} g pr. portion \xB7 ${m.meals} m\xE5ltider</p></div></div>
+      <div class="stepper big"><button data-step="${esc7(c2.portions)}" data-d="-1" aria-label="F\xE6rre">\u2212</button><strong>${fmt2(m.portions)}</strong><button data-step="${esc7(c2.portions)}" data-d="1" aria-label="Flere">+</button></div>
+      <div class="bowls">${Array.from({ length: Math.max(1, m.meals) }, (_, i) => `<div class="bowl" style="--i:${i}"><span class="kib" style="--f:${Math.min(1, (m.portions || 0) / 25)}"></span><em>${fmt2(m.portions * m.pw)} g</em></div>`).join("")}</div>
+      ${Number.isFinite(m.recPortions) ? `<div class="rec ${m.recPortions === m.portions ? "ok" : ""}"><span>Anbefalet <b>${m.recPortions}</b> portioner</span>${m.recPortions !== m.portions ? `<button data-set="${esc7(c2.portions)}" data-v="${m.recPortions}">Brug</button>` : `<ha-icon icon="mdi:check-circle"></ha-icon>`}</div>` : ""}
+    </section>
+    <section class="panel weight">
+      <div class="head"><span class="hicon"><ha-icon icon="mdi:scale-bathroom"></ha-icon></span><div><h3>V\xE6gt</h3><p>${hist.length > 1 ? `Sidste ${c2.history_days} dage` : "Vej j\xE6vnligt \u2013 kurven bygges op"}</p></div></div>
+      <div class="stepper big"><button data-step="${esc7(c2.weight)}" data-d="-0.1" aria-label="Mindre">\u2212</button><strong>${m.weight > 5 ? `${fmt2(m.weight, 1)}<small> kg</small>` : "\u2014"}</strong><button data-step="${esc7(c2.weight)}" data-d="0.1" aria-label="Mere">+</button></div>
+      ${this._spark(hist, m.goalWeight)}
+      ${c2.goal_weight ? `<div class="goalrow"><span><ha-icon icon="mdi:flag-checkered"></ha-icon>M\xE5l</span><div class="stepper"><button data-step="${esc7(c2.goal_weight)}" data-d="-0.5">\u2212</button><strong>${m.goalWeight > 5 ? `${fmt2(m.goalWeight, 1)} kg` : "\u2014"}</strong><button data-step="${esc7(c2.goal_weight)}" data-d="0.5">+</button></div></div>
+      ${Number.isFinite(toGoal) ? `<p class="togo">${Math.abs(toGoal) < 0.25 ? "P\xE5 m\xE5lv\xE6gten \u{1F389}" : toGoal > 0 ? `${fmt2(toGoal, 1)} kg til m\xE5let` : `${fmt2(-toGoal, 1)} kg under m\xE5let`}</p>` : ""}` : ""}
+    </section>
+  </div>
+  <section class="panel choose">
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:food-drumstick"></ha-icon></span><div><h3>Foder og m\xE5l</h3><p>V\xE6lg foderet \u2013 kalorierne f\xF8lger med</p></div></div>
+    ${groups.map(([label, list]) => `<div class="group"><span class="glabel">${label}</span><div class="pills">${list.map((o) => `<button class="pill ${o === m.food ? "on" : ""}" data-select="${esc7(c2.food)}" data-option="${esc7(o)}"><b>${esc7(o.replace(/\s*\((?:voksen|adult)\)/i, ""))}</b><small>${fmt2(kcalFor(o, c2.food_kcal, NaN))} kcal</small></button>`).join("")}</div></div>`).join("")}
+    ${c2.goal ? `<div class="seg">${(this._s(c2.goal)?.attributes?.options || []).map((o) => {
+      const g = goalOf(o);
+      return `<button class="${o === this._s(c2.goal)?.state ? "on" : ""}" data-select="${esc7(c2.goal)}" data-option="${esc7(o)}"><ha-icon icon="${g.icon}"></ha-icon>${esc7(o)}</button>`;
+    }).join("")}</div>` : ""}
+  </section>
+  <section class="panel table">
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:table-heart"></ha-icon></span><div><h3>M\xE6ngde efter v\xE6gt</h3><p>${esc7(m.food)} \xB7 ${esc7(m.goal.label.toLowerCase())}${m.goal.key === "lose" ? " (v\xE6gten = m\xE5lv\xE6gten)" : ""}</p></div></div>
+    <div class="rows">${rows.map((r) => `<div class="row ${near(r.kg) ? "now" : ""} ${goalNear(r.kg) ? "target" : ""}">
+      <span class="kg">${r.kg} kg${near(r.kg) ? "<em>nu</em>" : goalNear(r.kg) ? "<em>m\xE5l</em>" : ""}</span>
+      <span class="bar"><i style="width:${(r.grams / maxG * 100).toFixed(1)}%"></i><b>${r.grams} g</b></span>
+      <span class="kcal">${fmt2(r.kcal)} kcal</span>
+      <span class="por">${r.portions}</span></div>`).join("")}</div>
+    <p class="foot">70 \xD7 kg<sup>0,75</sup> \xD7 ${String(m.goal.factor).replace(".", ",")} \xB7 portioner \xE0 ${fmt2(m.pw)} g \xD7 ${m.meals} m\xE5ltider. Tommelfingerregel \u2013 v\xE6gten afg\xF8r. Ribbenene skal kunne m\xE6rkes, og godbidder t\xE6ller med.</p>
+  </section>
+</div>`;
+  }
+  _spark(hist, goal) {
+    if (hist.length < 2) return `<div class="spark empty"><ha-icon icon="mdi:chart-line"></ha-icon></div>`;
+    const W2 = 300, H3 = 70, t0 = hist[0][0], t1 = hist[hist.length - 1][0] || t0 + 1;
+    const vals = hist.map(([, v]) => v).concat(goal > 5 ? [goal] : []);
+    const lo = Math.min(...vals) - 0.3, hi2 = Math.max(...vals) + 0.3;
+    const X2 = (t) => (t - t0) / Math.max(1, t1 - t0) * W2, Y = (v) => H3 - (v - lo) / (hi2 - lo) * (H3 - 8) - 4;
+    const pts = hist.map(([t, v]) => `${X2(t).toFixed(1)},${Y(v).toFixed(1)}`);
+    const line = `M${pts.join(" L")}`;
+    return `<svg class="spark" viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none"><defs><linearGradient id="pnspark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--pn-accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--pn-accent)" stop-opacity="0"/></linearGradient></defs>
+      ${goal > 5 ? `<line class="goal" x1="0" x2="${W2}" y1="${Y(goal).toFixed(1)}" y2="${Y(goal).toFixed(1)}"/>` : ""}
+      <path d="${line} L${W2},${H3} L0,${H3} Z" fill="url(#pnspark)"/><path class="ln" d="${line}"/>
+      <circle cx="${X2(hist[hist.length - 1][0]).toFixed(1)}" cy="${Y(hist[hist.length - 1][1]).toFixed(1)}" r="3.5"/></svg>`;
+  }
+  _click(e) {
+    const b = e.target.closest("button");
+    if (!b || !this._hass) return;
+    if (b.dataset.more) {
+      this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: b.dataset.more }, bubbles: true, composed: true }));
+      return;
+    }
+    if (b.dataset.select) {
+      this._hass.callService(b.dataset.select.split(".")[0], "select_option", { entity_id: b.dataset.select, option: b.dataset.option });
+      return;
+    }
+    const id = b.dataset.step || b.dataset.set;
+    if (!id) return;
+    const st = this._s(id);
+    const a = st?.attributes || {};
+    let v = b.dataset.set ? +b.dataset.v : (parseFloat(st?.state) || 0) + +b.dataset.d;
+    if (b.dataset.step && id === this._config.weight && !(parseFloat(st?.state) > 5)) v = 20;
+    if (Number.isFinite(+a.min)) v = Math.max(+a.min, v);
+    if (Number.isFinite(+a.max)) v = Math.min(+a.max, v);
+    v = Math.round(v * 10) / 10;
+    this._hass.callService(id.split(".")[0], "set_value", { entity_id: id, value: v });
+  }
+};
+var STYLE6 = `
+:host{display:block}
+.pn{--pn-accent:#ffb547;--pn-good:var(--dashboard-success,#4fe0a6);--pn-warn:#ffb547;--pn-danger:var(--dashboard-danger,#ff667a);--pn-blue:#4cc9ff;
+  --pn-surface:var(--surface,var(--ha-card-background,var(--card-background-color,#141c27)));--pn-line:color-mix(in srgb,var(--primary-text-color) 9%,transparent);
+  --tone:var(--pn-accent);display:grid;gap:14px;color:var(--primary-text-color)}
+.pn.good{--tone:var(--pn-good)}.pn.warn{--tone:var(--pn-warn)}.pn.danger{--tone:var(--pn-danger)}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero,.panel,.banner{position:relative;border-radius:24px;background:var(--pn-surface);border:1px solid var(--pn-line);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--pn-accent);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22));animation:pnRise .6s cubic-bezier(.2,.8,.2,1) both}
+.hero{isolation:isolate;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center;padding:22px 24px;border-left-color:var(--tone);background:linear-gradient(135deg,color-mix(in srgb,var(--pn-surface) 90%,#000),var(--pn-surface))}
+.aurora{position:absolute;inset:-40%;z-index:-1;background:radial-gradient(38% 34% at 18% 35%,color-mix(in srgb,var(--pn-accent) 26%,transparent),transparent 70%),radial-gradient(34% 30% at 78% 28%,color-mix(in srgb,var(--tone) 22%,transparent),transparent 70%),radial-gradient(36% 36% at 60% 88%,color-mix(in srgb,var(--pn-blue) 14%,transparent),transparent 70%);filter:blur(10px);animation:pnAurora 24s ease-in-out infinite alternate}
+@keyframes pnAurora{50%{transform:translate(4%,-3%) rotate(8deg)}100%{transform:translate(-3%,4%) rotate(-6deg)}}
+@keyframes pnRise{from{opacity:0;transform:translateY(8px)}}
+.ring{position:relative;width:150px;height:150px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .bg{fill:none;stroke:color-mix(in srgb,var(--primary-text-color) 8%,transparent);stroke-width:11}
+.ring .arc{fill:none;stroke:var(--tone);stroke-width:11;stroke-linecap:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--tone) 70%,transparent));transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1)}
+.ring .tick{stroke:var(--primary-text-color);stroke-width:3;stroke-linecap:round;opacity:.75}
+.ring-in{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.05}
+.ring-in b{font-size:34px;font-weight:850;letter-spacing:-.03em}.ring-in span{font-size:11px;font-weight:700;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:.08em}
+.ring-in small{margin-top:5px;font-size:12px;font-weight:800;color:var(--tone)}
+.id{min-width:0}.eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--pn-accent)}
+.id h2{margin:2px 0 6px;font-size:34px;line-height:1.05;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,color-mix(in srgb,var(--pn-accent) 80%,var(--primary-text-color)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mood{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px;font-weight:750;color:color-mix(in srgb,var(--tone) 70%,var(--primary-text-color))}
+.mood i{width:9px;height:9px;border-radius:50%;background:var(--tone);animation:pnPulse 2.6s ease-out infinite}
+@keyframes pnPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--tone) 55%,transparent)}70%,100%{box-shadow:0 0 0 9px transparent}}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--pn-line)}
+.chip ha-icon{--mdc-icon-size:16px;color:var(--pn-accent)}.chip.danger{border-color:color-mix(in srgb,var(--pn-danger) 50%,transparent);background:color-mix(in srgb,var(--pn-danger) 14%,transparent)}.chip.danger ha-icon{color:var(--pn-danger)}
+.banner{display:flex;gap:14px;align-items:center;padding:14px 18px;border-left-color:var(--pn-blue);background:linear-gradient(110deg,color-mix(in srgb,var(--pn-blue) 16%,var(--pn-surface)),var(--pn-surface) 70%)}
+.banner ha-icon{--mdc-icon-size:26px;color:var(--pn-blue);flex:none}.banner b{display:block;font-size:15px}.banner span{display:block;font-size:13px;color:var(--secondary-text-color);margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.panel{min-width:0;padding:18px}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.head>div{flex:1;min-width:0}
+.head h3{margin:0;font-size:16px;font-weight:800}.head p{margin:2px 0 0;font-size:12.5px;color:var(--secondary-text-color)}
+.hicon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--pn-accent) 15%,transparent);color:var(--pn-accent)}
+.weight .hicon{background:color-mix(in srgb,var(--pn-blue) 15%,transparent);color:var(--pn-blue)}.weight{border-left-color:var(--pn-blue)}
+.table .hicon{background:color-mix(in srgb,var(--pn-good) 15%,transparent);color:var(--pn-good)}.table{border-left-color:var(--pn-good)}
+.hicon ha-icon{--mdc-icon-size:21px}
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stepper button{width:40px;height:40px;border-radius:13px;border:1px solid var(--pn-line);background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);font-size:22px;font-weight:700;line-height:1;transition:transform .12s,background .2s}
+.stepper button:active{transform:scale(.92);background:color-mix(in srgb,var(--pn-accent) 22%,transparent)}
+.stepper strong{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.stepper.big button{width:52px;height:52px;border-radius:16px;font-size:26px}
+.stepper.big strong{font-size:44px;font-weight:850;letter-spacing:-.03em}.stepper.big strong small{font-size:18px;font-weight:700;color:var(--secondary-text-color)}
+.bowls{display:flex;gap:10px;margin:16px 0 12px}
+.bowl{flex:1;display:grid;justify-items:center;gap:6px}
+.bowl .kib{position:relative;width:100%;max-width:92px;height:30px;border-radius:6px 6px 40px 40px;background:linear-gradient(180deg,color-mix(in srgb,var(--primary-text-color) 14%,transparent),color-mix(in srgb,var(--primary-text-color) 6%,transparent));overflow:hidden;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.bowl .kib:before{content:"";position:absolute;left:8%;right:8%;bottom:0;height:calc(var(--f) * 100%);border-radius:50% 50% 30px 30px;background:radial-gradient(circle at 25% 35%,rgba(255,255,255,.3) 0 2px,transparent 3px) 0 0/11px 9px,linear-gradient(180deg,#e9a24a,#a8642a);transition:height .8s cubic-bezier(.2,.8,.2,1)}
+.bowl em{font-style:normal;font-size:12px;font-weight:800;color:var(--secondary-text-color)}
+.rec{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px 9px 14px;border-radius:14px;background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 35%,transparent);font-size:13.5px}
+.rec.ok{background:color-mix(in srgb,var(--pn-good) 12%,transparent);border-color:color-mix(in srgb,var(--pn-good) 35%,transparent)}.rec ha-icon{color:var(--pn-good)}
+.rec button{padding:7px 16px;border-radius:999px;border:0;background:var(--tone);color:#111;font-weight:850;font-size:13px}
+.spark{display:block;width:100%;height:70px;margin:14px 0 10px}
+.spark.empty{display:grid;place-items:center;border-radius:14px;border:1px dashed var(--pn-line);color:var(--secondary-text-color);opacity:.6}
+.spark .ln{fill:none;stroke:var(--pn-blue);stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.spark circle{fill:var(--pn-blue);filter:drop-shadow(0 0 5px var(--pn-blue))}
+.spark .goal{stroke:var(--pn-good);stroke-width:1.5;stroke-dasharray:5 5;vector-effect:non-scaling-stroke;opacity:.8}
+.weight{--pn-accent:var(--pn-blue)}
+.goalrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--pn-line)}
+.goalrow>span{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--secondary-text-color)}.goalrow ha-icon{--mdc-icon-size:18px;color:var(--pn-good)}
+.togo{margin:8px 0 0;text-align:right;font-size:13px;font-weight:800;color:var(--pn-good)}
+.group{margin-bottom:12px}.glabel{display:block;margin:0 0 7px 2px;font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--secondary-text-color)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 14px;border-radius:14px;border:1px solid var(--pn-line);background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);text-align:left;transition:all .2s}
+.pill b{font-size:13.5px;font-weight:750}.pill small{font-size:11.5px;color:var(--secondary-text-color);font-weight:700}
+.pill.on{border-color:var(--pn-accent);background:linear-gradient(140deg,color-mix(in srgb,var(--pn-accent) 26%,transparent),color-mix(in srgb,var(--pn-accent) 8%,transparent));box-shadow:0 6px 18px color-mix(in srgb,var(--pn-accent) 22%,transparent)}
+.pill.on small{color:color-mix(in srgb,var(--pn-accent) 80%,var(--primary-text-color))}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--pn-line)}
+.seg button{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 6px;border:0;border-radius:12px;background:none;font-size:13.5px;font-weight:750;color:var(--secondary-text-color);transition:all .25s}
+.seg button ha-icon{--mdc-icon-size:18px}.seg button.on{background:var(--pn-surface);color:var(--primary-text-color);box-shadow:0 4px 14px rgba(0,0,0,.25)}.seg button.on ha-icon{color:var(--pn-accent)}
+.rows{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:78px minmax(0,1fr) 86px 40px;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;font-variant-numeric:tabular-nums}
+.row .kg{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:6px}.row .kg em{font-style:normal;font-size:9.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:6px;background:var(--pn-blue);color:#0b1520}
+.row.target .kg em{background:var(--pn-good)}
+.row .bar{position:relative;height:24px;border-radius:8px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}
+.row .bar i{position:absolute;inset:0 auto 0 0;border-radius:8px;background:linear-gradient(90deg,color-mix(in srgb,var(--pn-good) 30%,transparent),color-mix(in srgb,var(--pn-good) 70%,transparent));animation:pnGrow .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pnGrow{from{width:0}}
+.row .bar b{position:relative;display:block;padding-left:9px;line-height:24px;font-size:12.5px;font-weight:800}
+.row .kcal{font-size:12.5px;color:var(--secondary-text-color);text-align:right;font-weight:700}
+.row .por{justify-self:end;min-width:34px;padding:4px 0;border-radius:10px;text-align:center;font-weight:850;font-size:14px;background:color-mix(in srgb,var(--pn-accent) 16%,transparent);color:color-mix(in srgb,var(--pn-accent) 85%,var(--primary-text-color))}
+.row.now{background:color-mix(in srgb,var(--pn-blue) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pn-blue) 40%,transparent)}
+.row.target{background:color-mix(in srgb,var(--pn-good) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pn-good) 40%,transparent)}
+.foot{margin:12px 2px 0;font-size:12px;line-height:1.5;color:var(--secondary-text-color)}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.mood,.chips{justify-content:center}.id h2{font-size:30px}}
+@media(max-width:420px){.row{grid-template-columns:62px minmax(0,1fr) 34px}.row .kcal{display:none}.seg button{font-size:12px;gap:4px}.seg button ha-icon{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+`;
+if (!customElements.get("ha-pet-nutrition-card")) customElements.define("ha-pet-nutrition-card", HAPetNutritionCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-pet-nutrition-card", name: "HA Pet Nutrition Card", description: "Foder, portioner, v\xE6gt og kalorier for en hund p\xE5 foderautomat", preview: false });
+console.info(`%c HA-PET-NUTRITION-CARD %c ${VERSION32} `, "color:#111;background:#ffb547;font-weight:700", "color:#ffb547;background:#111");
+
 // src/cards/ha-weather-card/ha-weather-card-assets.js
 window.HAWeatherCardAssets = Object.freeze({ "weather": { "clear-night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "clear-night_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMS45MiIgeTE9IjE4Ljc1IiB4Mj0iMzguNTIiIHkyPSI0Ny41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjUgMzIgMzI7IC0xNSAzMiAzMjsgNSAzMiAzMiIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni42NiwzNi4yQTE2LjY2LDE2LjY2LDAsMCwxLDI5Ljg4LDE5LjY1YTE2LjI5LDE2LjI5LDAsMCwxLC41NS00LjE1QTE2LjU2LDE2LjU2LDAsMSwwLDQ4LjUsMzYuMUM0Ny44OSwzNi4xNiw0Ny4yOCwzNi4yLDQ2LjY2LDM2LjJaIiBzdHJva2U9IiM3MmI5ZDUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii01IDMyIDMyOyAxNSAzMiAzMjsgLTUgMzIgMzIiIGR1cj0iMTBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "cloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTMgMDsgMyAwOyAtMyAwIiBkdXI9IjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "fog": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "fog_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyNy41IiB5MT0iNTAuMjEiIHgyPSIzNi41IiB5Mj0iNjUuNzkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeTE9IjQ0LjIxIiB5Mj0iNTkuNzkiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMTciIHkxPSI1OCIgeDI9IjQ3IiB5Mj0iNTgiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMTciIHkxPSI1MiIgeDI9IjQ3IiB5Mj0iNTIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTQgMDsgNCAwOyAtNCAwIiBkdXI9IjVzIiBiZWdpbj0iLTRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9saW5lPgo8L3N2Zz4K", "hail": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "hail_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4yNSIgeTE9IjQzLjciIHgyPSIyNC43NSIgeTI9IjQ2LjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjMwLjI1IiB5MT0iNDMuNyIgeDI9IjMxLjc1IiB5Mj0iNDYuMyIgeGxpbms6aHJlZj0iI2IiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIzNy4yNSIgeTE9IjQzLjciIHgyPSIzOC43NSIgeTI9IjQ2LjMiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8cGF0aCBkPSJNMjQsNDMuNUExLjUsMS41LDAsMSwwLDI1LjUsNDUsMS41LDEuNSwwLDAsMCwyNCw0My41WiIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTMxLDQzLjVBMS41LDEuNSwwLDEsMCwzMi41LDQ1LDEuNSwxLjUsMCwwLDAsMzEsNDMuNVoiIGZpbGw9InVybCgjYykiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDE4OyAtNCAxNCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOzE7MCIgZHVyPSIwLjZzIiBiZWdpbj0iLTAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BhdGg+Cgk8cGF0aCBkPSJNMzgsNDMuNUExLjUsMS41LDAsMSwwLDM5LjUsNDUsMS41LDEuNSwwLDAsMCwzOCw0My41WiIgZmlsbD0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTg7IC00IDE0IiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjE7MTswIiBkdXI9IjAuNnMiIGJlZ2luPSItMC4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "lightning-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjYuNzQiIHkxPSIzNy44OCIgeDI9IjM1Ljc2IiB5Mj0iNTMuNTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGxpbmUgeDE9IjI0LjM5IiB5MT0iNDMuMDMiIHgyPSIyMy42MSIgeTI9IjQ3Ljk3IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMzkiIHkxPSI0My4wMyIgeDI9IjMwLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuNHMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC40cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMzkiIHkxPSI0My4wMyIgeDI9IjM3LjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNkKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBiZWdpbj0iLTAuMnMiIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIwLjdzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC4ycyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8cG9seWdvbiBwb2ludHM9IjMwIDM2IDI2IDQ4IDMwIDQ4IDI4IDU4IDM4IDQ0IDMyIDQ0IDM2IDM2IDMwIDM2IiBzdHJva2U9IiNmNmE4MjMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjZSkiPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMTsgMTsgMTsgMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDE7IDE7IDAuMTsgMTsgMC4xOyAxIiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wb2x5Z29uPgo8L3N2Zz4K", "lightning-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMTMuNTgiIHkxPSIxNS41NyIgeDI9IjI0LjE1IiB5Mj0iMzMuODciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iIzg2YzNkYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1ZWFmY2YiLz4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0iZ3JhZGllbnRUcmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIxMCAxOS4yMiAyNC4yOTM7IC0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIyLjUzIiB5MT0iNDIuOTUiIHgyPSIyNS40NyIgeTI9IjQ4LjA1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImQiIHgxPSIyOS41MyIgeTE9IjQyLjk1IiB4Mj0iMzIuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImUiIHgxPSIzNi41MyIgeTE9IjQyLjk1IiB4Mj0iMzkuNDciIHkyPSI0OC4wNSIgeGxpbms6aHJlZj0iI2MiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImYiIHgxPSIyNi43NCIgeTE9IjM3Ljg4IiB4Mj0iMzUuNzYiIHkyPSI1My41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjdiMjNiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Zz4KCQk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9Ii0xMCAxOS4yMiAyNC4yOTM7IDEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MyIgZHVyPSIxMHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2IpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2UpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNmKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "lightning_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyMi41NiIgeTE9IjIxLjk2IiB4Mj0iMzkuMiIgeTI9IjUwLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNkZWVhZmIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjI2Ljc0IiB5MT0iMzcuODgiIHgyPSIzNS43NiIgeTI9IjUzLjUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2Y3YjIzYiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmN2IyM2IiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZjU5ZTBiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwb2x5Z29uIHBvaW50cz0iMzAgMzYgMjYgNDggMzAgNDggMjggNTggMzggNDQgMzIgNDQgMzYgMzYgMzAgMzYiIHN0cm9rZT0iI2Y2YTgyMyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIxOyAxOyAxOyAxOyAxOyAxOyAwLjE7IDE7IDAuMTsgMTsgMTsgMC4xOyAxOyAwLjE7IDEiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L3BvbHlnb24+Cjwvc3ZnPgo=", "not-available": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8cGF0aCBkPSJNMjYuMSwyNC4wOGEuODMuODMsMCwwLDEsLjE2LjU2VjM4LjEyYS41OS41OSwwLDAsMS0uNzIuNzFoLTEuMmEuNzUuNzUsMCwwLDEtLjY5LS4zNWwtNS4xNC03LjZhMTEuNjIsMTEuNjIsMCwwLDEtLjg1LTEuNWMtLjI4LS41Ny0uNDktMS4wNS0uNjQtMS40M3MtLjIzLS41OS0uMjMtLjZoLS4xM3MwLC4yMy4xMi42Ni4xNSwxLC4yMywxLjY0YTE4LDE4LDAsMCwxLC4xMSwxLjg4djYuNTlhLjc3Ljc3LDAsMCwxLS4xNi41Ni43OS43OSwwLDAsMS0uNTUuMTVIMTUuM2EuODUuODUsMCwwLDEtLjU3LS4xNS43Ni43NiwwLDAsMS0uMTctLjU2VjI0LjY0YS43OC43OCwwLDAsMSwuMTctLjU2Ljg1Ljg1LDAsMCwxLC41Ny0uMTVoMS4xOWEuODEuODEsMCwwLDEsLjcuMzNsNS4xLDcuNTZhMTMsMTMsMCwwLDEsLjg5LDEuNTZjLjI3LjU1LjQ4LDEsLjYzLDEuNDFzLjIzLjU5LjI0LjZoLjEzczAtLjI1LS4xMi0uNjctLjE1LTEtLjIzLTEuNjNhMTYuMTEsMTYuMTEsMCwwLDEtLjExLTEuOTRWMjQuNjRhLjgzLjgzLDAsMCwxLC4xNS0uNTYuODIuODIsMCwwLDEsLjU2LS4xNWgxLjExQS44Mi44MiwwLDAsMSwyNi4xLDI0LjA4WiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTMwLjQ3LDQwYTEsMSwwLDAsMS0uNTQuMTJIMjguNzZjLS4yNCwwLS40LS4wNS0uNDYtLjE0YS40My40MywwLDAsMSwwLS40NGw1LjU4LTE1YTEuMTYsMS4xNiwwLDAsMSwuMzMtLjQ2Ljk0Ljk0LDAsMCwxLC41My0uMTJIMzZjLjI0LDAsLjM5LjA1LjQ1LjE0YS41LjUsMCwwLDEsMCwuNDRsLTUuNTksMTVBMS4wNiwxLjA2LDAsMCwxLDMwLjQ3LDQwWiIgZmlsbD0iIzM3NDE1MSIvPgoJPHBhdGggZD0iTTQ4Ljg5LDM4LjgzSDQ3LjhhMi40LDIuNCwwLDAsMS0uOTEtLjEyLjc4Ljc4LDAsMCwxLS4zOS0uNTFsLTEtMi43SDM5Ljc0bC0xLDIuN2EuNzguNzgsMCwwLDEtLjM5LjUxLDIuNCwyLjQsMCwwLDEtLjkxLjEyaC0xcS0uNzMsMC0uNDgtLjY5bDUuMjUtMTMuNjVhMS4wNywxLjA3LDAsMCwxLC4zMy0uNDcsMSwxLDAsMCwxLC41NS0uMTFoMS4xMWExLjA2LDEuMDYsMCwwLDEsLjU3LjExLjkuOSwwLDAsMSwuMzIuNDVsNS4yNCwxMy42N1E0OS42MywzOC44Myw0OC44OSwzOC44M1ptLTYtMTEuMTNjLS4wOS0uNDMtLjE0LS43Ni0uMTctMWwwLS4zNmgtLjE1YTcuNzMsNy43MywwLDAsMS0uNDYsMi41NGwtMS42Miw0LjQ1SDQ0LjhMNDMuMiwyOC45QTEwLDEwLDAsMCwxLDQyLjg5LDI3LjdaIiBmaWxsPSIjMzc0MTUxIi8+Cjwvc3ZnPgo=", "partlycloudy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxNi41IiB5MT0iMTkuNjciIHgyPSIyMS41IiB5Mj0iMjguMzMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIxOSIgY3k9IjI0IiByPSI1IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0xOSwxNS42N1YxMi41bTAsMjNWMzIuMzNtNS44OS0xNC4yMiwyLjI0LTIuMjRNMTAuODcsMzIuMTNsMi4yNC0yLjI0bTAtMTEuNzgtMi4yNC0yLjI0TTI3LjEzLDMyLjEzbC0yLjI0LTIuMjRNNy41LDI0aDMuMTdNMzAuNSwyNEgyNy4zMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDE5IDI0OyAzNjAgMTkgMjQiIGR1cj0iNDVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSIvPgo8L3N2Zz4K", "partlycloudy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIxMy41OCIgeTE9IjE1LjU3IiB4Mj0iMjQuMTUiIHkyPSIzMy44NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJncmFkaWVudFRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjEwIDE5LjIyIDI0LjI5MzsgLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjIyLjU2IiB5MT0iMjEuOTYiIHgyPSIzOS4yIiB5Mj0iNTAuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZjNmN2ZlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2RlZWFmYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNMjkuMzMsMjYuNjhBMTAuNjEsMTAuNjEsMCwwLDEsMTguNjUsMTYuMTQsMTAuNSwxMC41LDAsMCwxLDE5LDEzLjUsMTAuNTQsMTAuNTQsMCwxLDAsMzAuNSwyNi42MSwxMS40OCwxMS40OCwwLDAsMSwyOS4zMywyNi42OFoiIHN0cm9rZT0iIzcyYjlkNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iLTEwIDE5LjIyIDI0LjI5MzsgMTAgMTkuMjIgMjQuMjkzOyAtMTAgMTkuMjIgMjQuMjkzIiBkdXI9IjEwcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KPC9zdmc+Cg==", "pouring": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "pouring_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMi41MyIgeTE9IjQyLjk1IiB4Mj0iMjUuNDciIHkyPSI0OC4wNSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjNDI4NmVlIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA5NTBiYyIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNTMiIHkxPSI0Mi45NSIgeDI9IjMyLjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzYuNTMiIHkxPSI0Mi45NSIgeDI9IjM5LjQ3IiB5Mj0iNDguMDUiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8bGluZSB4MT0iMjQuMzkiIHkxPSI0My4wMyIgeDI9IjIzLjYxIiB5Mj0iNDcuOTciIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzMS4zOSIgeTE9IjQzLjAzIiB4Mj0iMzAuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2MpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC40cyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjRzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KCTxsaW5lIHgxPSIzOC4zOSIgeTE9IjQzLjAzIiB4Mj0iMzcuNjEiIHkyPSI0Ny45NyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGJlZ2luPSItMC4ycyIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjAuN3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49Ii0wLjJzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMC43cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "smoke-particles": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMzAuMjUiIHkxPSIzOS40IiB4Mj0iMzMuMjUiIHkyPSI0NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNiOGJkYzYiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYTVhYWIyIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy41IiB5MT0iMjkuMSIgeDI9IjI4IiB5Mj0iMzYuOSIgeGxpbms6aHJlZj0iI2EiLz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImMiIHgxPSIzMy43NSIgeTE9IjE5LjgiIHgyPSIzOS43NSIgeTI9IjMwLjIiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMS43NSIgY3k9IjQyIiByPSIzIiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMjUuNzUiIGN5PSI0MiIgcj0iNC41IiBzdHJva2U9IiNhZmI0YmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAgMDsgMCAtMTc7IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsgMTsgMTsgMTsgMCIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiB2YWx1ZXM9IjM7IDQuNTsgNiIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJjeCIgdmFsdWVzPSIzMS43NTsgMjUuNzUiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2NpcmNsZT4KCTxjaXJjbGUgY3g9IjM2Ljc1IiBjeT0iNDIiIHI9IjYiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAzNi43NSIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgo8L3N2Zz4K", "smoke": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4yNSIgeTE9IjQ4LjQiIHgyPSIzMy4yNSIgeTI9IjUzLjYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYjhiZGM2Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2I4YmRjNiIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNhNWFhYjIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYyIgeDE9IjIzLjUiIHkxPSIzOC4xIiB4Mj0iMjgiIHkyPSI0NS45IiB4bGluazpocmVmPSIjYiIvPgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iZCIgeDE9IjMzLjc1IiB5MT0iMjguOCIgeDI9IjM5Ljc1IiB5Mj0iMzkuMiIgeGxpbms6aHJlZj0iI2IiLz4KCTwvZGVmcz4KCTxwYXRoIGQ9Ik00Ni41LDMxLjVsLS4zMiwwYTEwLjQ5LDEwLjQ5LDAsMCwwLTE5LjExLTgsNyw3LDAsMCwwLTEwLjU3LDYsNy4yMSw3LjIxLDAsMCwwLC4xLDEuMTRBNy41LDcuNSwwLDAsMCwxOCw0NS41YTQuMTksNC4xOSwwLDAsMCwuNSwwdjBoMjhhNyw3LDAsMCwwLDAtMTRaIiBzdHJva2U9IiNlNmVmZmMiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxjaXJjbGUgY3g9IjMxLjc1IiBjeT0iNTEiIHI9IjMiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNiKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cgk8Y2lyY2xlIGN4PSIyNS43NSIgY3k9IjUxIiByPSI0LjUiIHN0cm9rZT0iI2FmYjRiYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNjKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iMCAwOyAwIC0xNzsiIGR1cj0iM3MiIGJlZ2luPSItMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOyAxOyAxOyAxOyAwIiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9InIiIHZhbHVlcz0iMzsgNC41OyA2IiBkdXI9IjNzIiBiZWdpbj0iLTFzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9ImN4IiB2YWx1ZXM9IjMxLjc1OyAyNS43NSIgZHVyPSIzcyIgYmVnaW49Ii0xcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvY2lyY2xlPgoJPGNpcmNsZSBjeD0iMzYuNzUiIGN5PSI1MSIgcj0iNiIgc3Ryb2tlPSIjYWZiNGJjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2QpIj4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwIDA7IDAgLTE3OyIgZHVyPSIzcyIgYmVnaW49Ii0ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjA7IDE7IDE7IDE7IDAiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iciIgdmFsdWVzPSIzOyA0LjU7IDYiIGR1cj0iM3MiIGJlZ2luPSItMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iY3giIHZhbHVlcz0iMzEuNzU7IDM2Ljc1IiBkdXI9IjNzIiBiZWdpbj0iLTJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9jaXJjbGU+Cjwvc3ZnPgo=", "snowy-rainy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy-rainy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIyMy4xMiIgeTE9IjQzLjQ4IiB4Mj0iMjQuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMjMuMzEiIHkxPSI0NC4zIiB4Mj0iMjQuNjkiIHkyPSI0Ni43IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzQyODZlZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiM0Mjg2ZWUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDk1MGJjIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMC4zMSIgeTE9IjQ0LjMiIHgyPSIzMS42OSIgeTI9IjQ2LjciIHhsaW5rOmhyZWY9IiNmIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJoIiB4MT0iMzcuMzEiIHkxPSI0NC4zIiB4Mj0iMzguNjkiIHkyPSI0Ni43IiB4bGluazpocmVmPSIjZiIvPgoJPC9kZWZzPgoJPHBhdGggZD0iTTQ2LjUsMzEuNWwtLjMyLDBhMTAuNDksMTAuNDksMCwwLDAtMTkuMTEtOCw3LDcsMCwwLDAtMTAuNTcsNiw3LjIxLDcuMjEsMCwwLDAsLjEsMS4xNEE3LjUsNy41LDAsMCwwLDE4LDQ1LjVhNC4xOSw0LjE5LDAsMCwwLC41LDB2MGgyOGE3LDcsMCwwLDAsMC0xNFoiIHN0cm9rZT0iI2U2ZWZmYyIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjAuNSIgZmlsbD0idXJsKCNhKSIvPgoJPGc+CgkJPGNpcmNsZSBjeD0iMjQiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMjYuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMjQsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2MpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAyNCA0NTsgMzYwIDI0IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTJzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGc+CgkJPGNpcmNsZSBjeD0iMzgiIGN5PSI0NSIgcj0iMS4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZCkiLz4KCQk8cGF0aCBkPSJNNDAuMTcsNDYuMjVsLTEuMDktLjYzbS0yLjE2LTEuMjQtMS4wOS0uNjNNMzgsNDIuNXYxLjI1bTAsMy43NVY0Ni4yNW0tMS4wOC0uNjMtMS4wOS42M200LjM0LTIuNS0xLjA5LjYzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlPSJ1cmwoI2UpIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMSAtNjsgLTEgMTIiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIGFkZGl0aXZlPSJzdW0iIHZhbHVlcz0iMCAzOCA0NTsgMzYwIDM4IDQ1IiBkdXI9IjlzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMDsxOzE7MTswIiBiZWdpbj0iLTFzIiBkdXI9IjRzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9nPgoJPGxpbmUgeDE9IjI0LjA4IiB5MT0iNDUuMDEiIHgyPSIyMy45MiIgeTI9IjQ1Ljk5IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9InVybCgjZikiPgoJCTxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjEgLTU7IC0yIDEwIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzEuMDgiIHkxPSI0NS4wMSIgeDI9IjMwLjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNnKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIxIC01OyAtMiAxMCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJCTxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSItMC41cyIgdmFsdWVzPSIwOzE7MTswIiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2xpbmU+Cgk8bGluZSB4MT0iMzguMDgiIHkxPSI0NS4wMSIgeDI9IjM3LjkyIiB5Mj0iNDUuOTkiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZT0idXJsKCNoKSI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJ0cmFuc2xhdGUiIGJlZ2luPSItMXMiIHZhbHVlcz0iMSAtNTsgLTIgMTAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iLTFzIiB2YWx1ZXM9IjA7MTsxOzAiIGR1cj0iMS41cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvbGluZT4KPC9zdmc+Cg==", "snowy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "snowy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjIuNTYiIHkxPSIyMS45NiIgeDI9IjM5LjIiIHkyPSI1MC44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CgkJCTxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2YzZjdmZSIvPgoJCQk8c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNmM2Y3ZmUiLz4KCQkJPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZGVlYWZiIi8+CgkJPC9saW5lYXJHcmFkaWVudD4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIzMC4xMiIgeTE9IjQzLjQ4IiB4Mj0iMzEuODgiIHkyPSI0Ni41MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM4NmMzZGIiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjODZjM2RiIi8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYWZjZiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJjIiB4MT0iMjkuNjciIHkxPSI0Mi42OSIgeDI9IjMyLjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJkIiB4MT0iMjMuMTIiIHkxPSI0My40OCIgeDI9IjI0Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJlIiB4MT0iMjIuNjciIHkxPSI0Mi42OSIgeDI9IjI1LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJmIiB4MT0iMzcuMTIiIHkxPSI0My40OCIgeDI9IjM4Ljg4IiB5Mj0iNDYuNTIiIHhsaW5rOmhyZWY9IiNiIi8+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMzYuNjciIHkxPSI0Mi42OSIgeDI9IjM5LjMzIiB5Mj0iNDcuMzEiIHhsaW5rOmhyZWY9IiNiIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDYuNSwzMS41bC0uMzIsMGExMC40OSwxMC40OSwwLDAsMC0xOS4xMS04LDcsNywwLDAsMC0xMC41Nyw2LDcuMjEsNy4yMSwwLDAsMCwuMSwxLjE0QTcuNSw3LjUsMCwwLDAsMTgsNDUuNWE0LjE5LDQuMTksMCwwLDAsLjUsMHYwaDI4YTcsNywwLDAsMCwwLTE0WiIgc3Ryb2tlPSIjZTZlZmZjIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMC41IiBmaWxsPSJ1cmwoI2EpIi8+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzMSIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNiKSIvPgoJCTxwYXRoIGQ9Ik0zMy4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zMSw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjYykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSItMSAtNjsgMSAxMiIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDMxIDQ1OyAzNjAgMzEgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNkKSIvPgoJCTxwYXRoIGQ9Ik0yNi4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00yNCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZSkiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0ycyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDI0IDQ1OyAzNjAgMjQgNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMnMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIGN4PSIzOCIgY3k9IjQ1IiByPSIxLjI1IiBmaWxsPSJub25lIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZT0idXJsKCNmKSIvPgoJCTxwYXRoIGQ9Ik00MC4xNyw0Ni4yNWwtMS4wOS0uNjNtLTIuMTYtMS4yNC0xLjA5LS42M00zOCw0Mi41djEuMjVtMCwzLjc1VjQ2LjI1bS0xLjA4LS42My0xLjA5LjYzbTQuMzQtMi41LTEuMDkuNjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2U9InVybCgjZykiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIxIC02OyAtMSAxMiIgYmVnaW49Ii0xcyIgZHVyPSI0cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgYWRkaXRpdmU9InN1bSIgdmFsdWVzPSIwIDM4IDQ1OyAzNjAgMzggNDUiIGR1cj0iOXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwOzE7MTsxOzAiIGJlZ2luPSItMXMiIGR1cj0iNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+Cgk8L2c+Cjwvc3ZnPgo=", "sunny": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunny_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIyNi43NSIgeTE9IjIyLjkxIiB4Mj0iMzcuMjUiIHkyPSI0MS4wOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQk8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmYmJmMjQiLz4KCQkJPHN0b3Agb2Zmc2V0PSIwLjQ1IiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgoJCTwvbGluZWFyR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYSkiLz4KCTxwYXRoIGQ9Ik0zMiwxNS43MVY5LjVtMCw0NVY0OC4yOU00My41MiwyMC40OGw0LjM5LTQuMzlNMTYuMDksNDcuOTFsNC4zOS00LjM5bTAtMjMtNC4zOS00LjM5TTQ3LjkxLDQ3LjkxbC00LjM5LTQuMzlNMTUuNzEsMzJIOS41bTQ1LDBINDguMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZiYmYyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMyI+CgkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiBkdXI9IjQ1cyIgdmFsdWVzPSIwIDMyIDMyOyAzNjAgMzIgMzIiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIiB0eXBlPSJyb3RhdGUiLz4KCTwvcGF0aD4KPC9zdmc+Cg==", "sunrise": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgMzggMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "sunset": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+Cgk8ZGVmcz4KCQk8Y2xpcFBhdGggaWQ9ImEiPgoJCQk8cmVjdCB5PSI3LjUiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSIvPgoJCTwvY2xpcFBhdGg+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJiIiB4MT0iMjYuNzUiIHkxPSIyOS45MSIgeDI9IjM3LjI1IiB5Mj0iNDguMDkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmNTllMGIiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJPC9kZWZzPgoJPGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KCQk8Y2lyY2xlIGN4PSIzMiIgY3k9IjM5IiByPSIxMC41IiBzdHJva2U9IiNmOGFmMTgiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIGZpbGw9InVybCgjYikiLz4KCQk8cGF0aCBkPSJNMzIsMjIuNzFWMTYuNW0wLDQ1VjU1LjI5TTQzLjUyLDI3LjQ4bDQuMzktNC4zOU0xNi4wOSw1NC45MWw0LjM5LTQuMzltMC0yMy00LjM5LTQuMzlNNDcuOTEsNTQuOTFsLTQuMzktNC4zOU0xNS43MSwzOUg5LjVtNDUsMEg0OC4yOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIzIj4KCQkJPGFuaW1hdGVUcmFuc2Zvcm0gYXR0cmlidXRlTmFtZT0idHJhbnNmb3JtIiB0eXBlPSJyb3RhdGUiIHZhbHVlcz0iMCAzMiAzOTsgMzYwIDMyIDM5IiBkdXI9IjQ1cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCQk8L3BhdGg+Cgk8L2c+Cgk8cG9seWxpbmUgcG9pbnRzPSIxNiA0Mi41IDI3IDQyLjUgMzIgNDcgMzcgNDIuNSA0OCA0Mi41IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjwvc3ZnPgo=", "windy-variant": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy-variant_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K", "windy_night": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNjQgNjQiPgoJPGRlZnM+CgkJPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMjcuNTYiIHkxPSIxNy42NCIgeDI9IjM4LjI3IiB5Mj0iMzYuMTkiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KCQkJPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZDRkN2RkIi8+CgkJCTxzdG9wIG9mZnNldD0iMC40NSIgc3RvcC1jb2xvcj0iI2Q0ZDdkZCIvPgoJCQk8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNiZWMxYzYiLz4KCQk8L2xpbmVhckdyYWRpZW50PgoJCTxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDE9IjE5Ljk2IiB5MT0iMjkuMDMiIHgyPSIzMS4zNyIgeTI9IjQ4LjgiIHhsaW5rOmhyZWY9IiNhIi8+Cgk8L2RlZnM+Cgk8cGF0aCBkPSJNNDMuNjQsMjBhNSw1LDAsMSwxLDMuNjEsOC40NkgxMS43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMzUgMjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNhKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTU3OyA1NyIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KCTwvcGF0aD4KCTxwYXRoIGQ9Ik0yOS4xNCw0NGE1LDUsMCwxLDAsMy42MS04LjQ2aC0yMSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWRhc2hhcnJheT0iMjQgMTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZT0idXJsKCNiKSI+CgkJPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ic3Ryb2tlLWRhc2hvZmZzZXQiIHZhbHVlcz0iLTM5OyAzOSIgZHVyPSIycyIgYmVnaW49Ii0xLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgoJPC9wYXRoPgo8L3N2Zz4K" } });
 
 // src/cards/ha-weather-card/ha-weather-card.js
-var VERSION32 = "0.6.2";
+var VERSION33 = "0.6.2";
 var CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
   cloudy: "Overskyet",
@@ -44053,7 +44367,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA WEATHER CARD %c v${VERSION32} `,
+  `%c HA WEATHER CARD %c v${VERSION33} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#161b22"
 );
@@ -44061,9 +44375,9 @@ console.info(
 // src/cards/th-weather-card/th-weather-card.js
 init_chart_hover();
 var VWH_VER = "3.2.0";
-var fmt2 = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var fmt3 = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`;
-var esc7 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc8 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var DIR8 = ["N", "N\xD8", "\xD8", "S\xD8", "S", "SV", "V", "NV"];
 var P = {
   sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
@@ -44419,7 +44733,7 @@ var ThWeatherCard = class extends HTMLElement {
       const fc = this._castFc;
       if (!fc?.length) return null;
       const i = Math.min(fc.length - 1, Math.floor(x * fc.length)), f = fc[i];
-      return { x: (i + 0.5) / fc.length, text: `${hh4(f)} \xB7 ${fmt2(f.precipitation || 0, 1)} mm \xB7 ${Math.round(f.precipitation_probability || 0)} %` };
+      return { x: (i + 0.5) / fc.length, text: `${hh4(f)} \xB7 ${fmt3(f.precipitation || 0, 1)} mm \xB7 ${Math.round(f.precipitation_probability || 0)} %` };
     });
     this._ro = new ResizeObserver(() => {
       const w = this.$("hs").clientWidth;
@@ -44502,7 +44816,7 @@ var ThWeatherCard = class extends HTMLElement {
     const st = this.s(this.PX + "temperatur");
     this.set("loc", `Vejret nu${st?.attributes?.station ? " \xB7 " + st.attributes.station : ""}${st?.attributes?.m\u00E5lt ? " \xB7 m\xE5lt " + hhmm(new Date(st.attributes.m\u00E5lt)) : ""}`);
     const nw = this.d("varsler"), lyn = this.d("lyn_sidste_30_min");
-    this.set("chips", (nw > 0 ? `<span class="chip pl" style="--c:var(--coral)"><i></i>${nw} varsel${nw > 1 ? "er" : ""}</span>` : "") + (lyn > 0 ? `<span class="chip pl" style="--c:var(--amber)">${ico("flash", 12, 2)}${fmt2(lyn, 0)} lyn \xB7 30 min</span>` : "") + (!nw && !(lyn > 0) ? `<span class="chip" style="--c:var(--emer)">Ingen varsler</span>` : ""));
+    this.set("chips", (nw > 0 ? `<span class="chip pl" style="--c:var(--coral)"><i></i>${nw} varsel${nw > 1 ? "er" : ""}</span>` : "") + (lyn > 0 ? `<span class="chip pl" style="--c:var(--amber)">${ico("flash", 12, 2)}${fmt3(lyn, 0)} lyn \xB7 30 min</span>` : "") + (!nw && !(lyn > 0) ? `<span class="chip" style="--c:var(--emer)">Ingen varsler</span>` : ""));
     const ik = ic2 + (ic2 === "moon" || ic2 === "pmoon" ? Math.round(moonPhase() * 28) : "");
     if (this._ik !== ik) {
       this._ik = ik;
@@ -44510,7 +44824,7 @@ var ThWeatherCard = class extends HTMLElement {
     }
     if (Number.isFinite(temp) && temp !== this._tv) this.countTo(temp);
     this.set("cd", txt);
-    this.set("meta", `<span>F\xF8les som <b>${fmt2(feels, 1)}\xB0</b></span>${Number.isFinite(hi2) ? `<span class="hl"><span>H <b class="u">${Math.round(hi2)}\xB0</b></span><span>L <b class="d">${Math.round(lo)}\xB0</b></span></span>` : ""}
+    this.set("meta", `<span>F\xF8les som <b>${fmt3(feels, 1)}\xB0</b></span>${Number.isFinite(hi2) ? `<span class="hl"><span>H <b class="u">${Math.round(hi2)}\xB0</b></span><span>L <b class="d">${Math.round(lo)}\xB0</b></span></span>` : ""}
       ${Number.isFinite(ws) ? `<span>${beau(ws)} fra <b>${DIR8[Math.round(wb / 45) % 8]}</b></span>` : ""}`);
     this.sky(w.state, night, S);
     if (S && this._ck !== Math.floor(Date.now() / 6e4)) {
@@ -44528,10 +44842,10 @@ var ThWeatherCard = class extends HTMLElement {
     cancelAnimationFrame(this._raf);
     const step = (t) => {
       const k = Math.min(1, (t - t0) / 1400), e = 1 - Math.pow(1 - k, 4), x = from + (v - from) * e;
-      el.innerHTML = `${fmt2(x, 1)}<sup>\xB0</sup>`;
+      el.innerHTML = `${fmt3(x, 1)}<sup>\xB0</sup>`;
       if (k < 1) this._raf = requestAnimationFrame(step);
     };
-    if (document.hidden) el.innerHTML = `${fmt2(v, 1)}<sup>\xB0</sup>`;
+    if (document.hidden) el.innerHTML = `${fmt3(v, 1)}<sup>\xB0</sup>`;
     else this._raf = requestAnimationFrame(step);
   }
   sky(state2, night, S) {
@@ -44608,14 +44922,14 @@ var ThWeatherCard = class extends HTMLElement {
       const j = fc.findIndex((f, k) => k > 0 && (f.precipitation || 0) < 0.1);
       c2 = "var(--ice)";
       i = "rain";
-      t = `<b>Det regner nu${rnow > 0 ? ` \xB7 ${fmt2(rnow, 1)} mm/t` : ""}</b>&nbsp;${j > 0 ? `\u2013 ophold fra ca. kl. ${H3(fc[j])}` : "\u2013 forts\xE6tter de n\xE6ste timer"}`;
+      t = `<b>Det regner nu${rnow > 0 ? ` \xB7 ${fmt3(rnow, 1)} mm/t` : ""}</b>&nbsp;${j > 0 ? `\u2013 ophold fra ca. kl. ${H3(fc[j])}` : "\u2013 forts\xE6tter de n\xE6ste timer"}`;
     } else {
       const j = fc.findIndex((f) => (f.precipitation || 0) >= 0.2 || (f.precipitation_probability || 0) >= 60);
       if (j >= 0) {
         const mm = fc.slice(j, j + 4).reduce((s, f) => s + (f.precipitation || 0), 0);
         c2 = "var(--ice)";
         i = "drop";
-        t = `<b>Regn fra ca. kl. ${H3(fc[j])}</b>&nbsp;\u2013 omkring ${fmt2(mm, 1)} mm de f\xF8rste timer`;
+        t = `<b>Regn fra ca. kl. ${H3(fc[j])}</b>&nbsp;\u2013 omkring ${fmt3(mm, 1)} mm de f\xF8rste timer`;
       } else {
         const fr = fc.find((f) => f.temperature <= 0);
         t = `<b>T\xF8rvejr de n\xE6ste 12 timer</b>${fr ? `&nbsp;\u2013 frost fra ca. kl. ${H3(fr)}` : ""}`;
@@ -44625,7 +44939,7 @@ var ThWeatherCard = class extends HTMLElement {
         }
       }
     }
-    const sub2 = Number.isFinite(near) && !raining ? `<small>n\xE6rmeste byge ${fmt2(near, 0)} km</small>` : "";
+    const sub2 = Number.isFinite(near) && !raining ? `<small>n\xE6rmeste byge ${fmt3(near, 0)} km</small>` : "";
     el.style.setProperty("--c", c2);
     this.set("cast", `<span class="ic">${ico(i, 17, 1.8)}</span><span>${t}</span>${sub2 || bars}`);
   }
@@ -44636,18 +44950,18 @@ var ThWeatherCard = class extends HTMLElement {
     };
     const hum = this.pick(this.d("luftfugtighed"), a.humidity), pres = this.pick(this.d("lufttryk"), a.pressure), dew = this.pick(this.d("dugpunkt"), a.dew_point);
     const vis = this.pick(this.d("sigtbarhed"), a.visibility), uv2 = this.pick(a.uv_index, 0), gmax = this.d("kraftigste_vindstod_i_dag");
-    tx("wind", `${fmt2(ws, 1)}<small>m/s</small>`, `fra ${DIR8[Math.round(wb / 45) % 8]} \xB7 ${beau(ws).toLowerCase()}`);
+    tx("wind", `${fmt3(ws, 1)}<small>m/s</small>`, `fra ${DIR8[Math.round(wb / 45) % 8]} \xB7 ${beau(ws).toLowerCase()}`);
     const nd = this.$("w-ndl");
     if (nd) nd.style.transform = `rotate(${wb + 180}deg)`;
-    tx("gust", `${fmt2(gust, 1)}<small>m/s</small>`, Number.isFinite(gmax) ? `kraftigste i dag ${fmt2(gmax, 1)}` : beau(gust).toLowerCase());
+    tx("gust", `${fmt3(gust, 1)}<small>m/s</small>`, Number.isFinite(gmax) ? `kraftigste i dag ${fmt3(gmax, 1)}` : beau(gust).toLowerCase());
     this.$("t-gust").style.setProperty("--p", Math.min(100, gust / Math.max(15, gmax || 0) * 100) + "%");
-    tx("hum", `${fmt2(hum, 0)}<small>%</small>`, hum > 90 ? "meget fugtigt" : hum > 70 ? "fugtigt" : hum < 35 ? "t\xF8rt" : "behageligt");
+    tx("hum", `${fmt3(hum, 0)}<small>%</small>`, hum > 90 ? "meget fugtigt" : hum > 70 ? "fugtigt" : hum < 35 ? "t\xF8rt" : "behageligt");
     const hr = this.$("hum-r");
     if (hr) hr.style.strokeDashoffset = 106.8 * (1 - Math.min(1, hum / 100));
     const fc = (this._hourly || []).filter((f) => new Date(f.datetime) >= Date.now() - 36e5).slice(0, 24);
     if (fc.length) {
       const mx = Math.max(...fc.map((f) => f.precipitation_probability || 0)), mm = fc.reduce((s, f) => s + (f.precipitation || 0), 0);
-      tx("rain", `${Math.round(mx)}<small>%</small>`, mm > 0 ? `${fmt2(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
+      tx("rain", `${Math.round(mx)}<small>%</small>`, mm > 0 ? `${fmt3(mm, 1)} mm n\xE6ste d\xF8gn` : "t\xF8rt n\xE6ste d\xF8gn");
       const k = fc.map((f) => f.precipitation_probability || 0).join();
       const sp = this.$("rr-sp");
       this._rrFc = fc;
@@ -44658,7 +44972,7 @@ var ThWeatherCard = class extends HTMLElement {
       }
     }
     const tr = this._ptr;
-    tx("pres", `${fmt2(pres, 0)}<small>hPa</small>`, Number.isFinite(tr) ? `${tr > 0.5 ? "\u2197 stigende" : tr < -0.5 ? "\u2198 faldende" : "\u2192 stabilt"} ${tr > 0 ? "+" : ""}${fmt2(tr, 1)} / 3 t` : pres > 1020 ? "h\xF8jtryk" : pres < 1e3 ? "lavtryk" : "normalt");
+    tx("pres", `${fmt3(pres, 0)}<small>hPa</small>`, Number.isFinite(tr) ? `${tr > 0.5 ? "\u2197 stigende" : tr < -0.5 ? "\u2198 faldende" : "\u2192 stabilt"} ${tr > 0 ? "+" : ""}${fmt3(tr, 1)} / 3 t` : pres > 1020 ? "h\xF8jtryk" : pres < 1e3 ? "lavtryk" : "normalt");
     const pk = Math.max(0, Math.min(1, (pres - 970) / 80));
     const pa2 = this.$("p-arc");
     if (pa2) pa2.style.strokeDashoffset = 47.1 * (1 - pk);
@@ -44666,12 +44980,12 @@ var ThWeatherCard = class extends HTMLElement {
     if (pn) pn.style.transform = `rotate(${-90 + pk * 180}deg)`;
     this.pressureTrend();
     const spr = temp - dew;
-    tx("dew", `${fmt2(dew, 1)}<small>\xB0</small>`, Number.isFinite(spr) ? `${fmt2(spr, 1)}\xB0 spredning \xB7 ${spr < 1.5 ? "t\xE5ge/dug mulig" : spr < 4 ? "fugtig luft" : "t\xF8r luft"}` : "");
+    tx("dew", `${fmt3(dew, 1)}<small>\xB0</small>`, Number.isFinite(spr) ? `${fmt3(spr, 1)}\xB0 spredning \xB7 ${spr < 1.5 ? "t\xE5ge/dug mulig" : spr < 4 ? "fugtig luft" : "t\xF8r luft"}` : "");
     this.$("t-dew").style.setProperty("--p", Math.max(4, 100 - Math.min(100, spr / 12 * 100)) + "%");
-    tx("vis", `${fmt2(vis, vis < 10 ? 1 : 0)}<small>km</small>`, vis >= 20 ? "fremragende" : vis >= 10 ? "god" : vis >= 4 ? "moderat" : vis >= 1 ? "d\xE5rlig" : "t\xE5ge");
+    tx("vis", `${fmt3(vis, vis < 10 ? 1 : 0)}<small>km</small>`, vis >= 20 ? "fremragende" : vis >= 10 ? "god" : vis >= 4 ? "moderat" : vis >= 1 ? "d\xE5rlig" : "t\xE5ge");
     this.$("t-vis").style.setProperty("--p", Math.min(100, vis / 50 * 100) + "%");
     const fuv = Math.max(uv2, ...fc.map((f) => f.uv_index || 0));
-    tx("uv", `${fmt2(uv2, 1)}`, `${uv2 < 3 ? "lav" : uv2 < 6 ? "moderat" : uv2 < 8 ? "h\xF8j" : "meget h\xF8j"}${fuv > uv2 + 0.4 ? ` \xB7 op til ${fmt2(fuv, 1)}` : ""}`);
+    tx("uv", `${fmt3(uv2, 1)}`, `${uv2 < 3 ? "lav" : uv2 < 6 ? "moderat" : uv2 < 8 ? "h\xF8j" : "meget h\xF8j"}${fuv > uv2 + 0.4 ? ` \xB7 op til ${fmt3(fuv, 1)}` : ""}`);
     this.$("t-uv").style.setProperty("--p", Math.min(100, uv2 / 11 * 100) + "%");
   }
   /* ---------- varsler og detaljer ---------- */
@@ -44682,7 +44996,7 @@ var ThWeatherCard = class extends HTMLElement {
       const t = typeof w === "string" ? w : w.headline || w.title || w.event || w.overskrift || w.type || "Varsel";
       const d = typeof w === "string" ? "" : w.description || w.beskrivelse || "", n = Number(w.level ?? w.niveau ?? w.severity_level ?? 1) || 1;
       const til = w.expires || w.ends || w.slut || w.til;
-      return `<div class="wn" style="--c:${lvl(n)}">${ico("alert", 17, 1.8)}<div><b>${esc7(t)}</b>${esc7(String(d).slice(0, 180))}${til ? ` \xB7 til ${hhmm(new Date(til))}` : ""}</div></div>`;
+      return `<div class="wn" style="--c:${lvl(n)}">${ico("alert", 17, 1.8)}<div><b>${esc8(t)}</b>${esc8(String(d).slice(0, 180))}${til ? ` \xB7 til ${hhmm(new Date(til))}` : ""}</div></div>`;
     }).join(""));
   }
   dTabs() {
@@ -44707,7 +45021,7 @@ var ThWeatherCard = class extends HTMLElement {
     if (this._dtk !== tk) {
       this._dtk = tk;
       this._dk = null;
-      this.$("dtabs").innerHTML = tabs.map((t) => `<button data-t="${t.id}" class="${t.id === this._dtab ? "on" : ""}"><ha-icon icon="${t.icon}"></ha-icon>${esc7(t.label)}</button>`).join("");
+      this.$("dtabs").innerHTML = tabs.map((t) => `<button data-t="${t.id}" class="${t.id === this._dtab ? "on" : ""}"><ha-icon icon="${t.icon}"></ha-icon>${esc8(t.label)}</button>`).join("");
       this.$("dtabs").querySelectorAll("button").forEach((b) => b.onclick = () => {
         this._dtab = b.dataset.t;
         try {
@@ -44756,9 +45070,9 @@ var ThWeatherCard = class extends HTMLElement {
     const n = parseFloat(st.state);
     if (Number.isFinite(n) && String(+st.state) === String(n)) {
       const d = Math.abs(n) >= 100 || Number.isInteger(n) && !/°|mm|m\/s/.test(u2) ? 0 : 1;
-      return { v: fmt2(n, d), n, u: u2, a };
+      return { v: fmt3(n, d), n, u: u2, a };
     }
-    return { v: esc7(st.state), u: "", a };
+    return { v: esc8(st.state), u: "", a };
   }
   riskCol(p) {
     return p < 10 ? "var(--emer)" : p < 30 ? "var(--amber)" : p < 60 ? "var(--coral)" : "var(--red)";
@@ -44767,13 +45081,13 @@ var ThWeatherCard = class extends HTMLElement {
     const risk = /risiko/i.test(sec.title || "");
     let items = sec.items.map((it) => ({ it, x: this.val(it.entity) })).filter((o) => o.x);
     if (risk) items.sort((p, q) => (q.x.n ?? -1) - (p.x.n ?? -1));
-    if (!items.length) return `<div class="dsub">${esc7(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
+    if (!items.length) return `<div class="dsub">${esc8(sec.title)}</div><div class="dc" style="text-align:center;color:var(--mut)">Ingen data lige nu</div>`;
     const src = items.find((o) => o.x.a.station || o.x.a.kilde)?.x.a;
-    return `<div class="dsub">${esc7(sec.title)}<span>${esc7(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt2(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
+    return `<div class="dsub">${esc8(sec.title)}<span>${esc8(src?.station ? src.station + (src.afstand_km ? ` \xB7 ${fmt3(src.afstand_km, 0)} km` : "") : src?.kilde || "")}</span></div><div class="dg">${items.map(({ it, x }, i) => {
       const a = x.a, isR = (risk || x.u === "%" && /risiko/i.test(it.name)) && Number.isFinite(x.n), c2 = isR ? this.riskCol(x.n) : "";
-      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt2(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc7(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt2(+a.i_g\u00E5r, 1)}` : "");
-      return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc7(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc7(it.name)}</div>
-        <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc7(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
+      const extra = isR && a.tidspunkt && x.n >= 5 ? `mest sandsynligt kl. ${hhmm(new Date(a.tidspunkt))}` : a.niveau_cm != null ? `${fmt3(a.niveau_cm, 0)} cm` : a.h\u00E6ndelse ? esc8(a.h\u00E6ndelse) : x.sub || (a.i_g\u00E5r != null ? `i g\xE5r ${fmt3(+a.i_g\u00E5r, 1)}` : "");
+      return `<div class="dc ${isR && x.n >= 30 ? "hot" : ""}" style="animation-delay:${Math.min(i * 30, 600)}ms;${c2 ? "--c:" + c2 : ""}"><div class="n"><ha-icon icon="${esc8(it.icon || a.icon || "mdi:information-outline")}"></ha-icon>${esc8(it.name)}</div>
+        <b${c2 ? ` style="color:${c2}"` : ""}>${x.v}${x.u ? `<small>${esc8(x.u)}</small>` : ""}</b>${isR ? `<div class="rb"><i style="width:${Math.max(2, Math.min(100, x.n))}%"></i></div>` : ""}${extra ? `<em>${extra}</em>` : ""}</div>`;
     }).join("")}</div>`;
   }
   dRadar() {
@@ -44823,7 +45137,7 @@ var ThWeatherCard = class extends HTMLElement {
     this.set("rcells", items.map((it, i) => {
       const x = this.val(it.entity);
       const near = /naermeste_regn/.test(it.entity);
-      return `<div class="dc" style="animation-delay:${i * 40}ms"><div class="n"><ha-icon icon="${esc7(it.icon || "mdi:information-outline")}"></ha-icon>${esc7(it.name)}</div><b>${x ? `${x.v}${x.u ? `<small>${esc7(x.u)}</small>` : ""}` : near ? '<small style="margin:0">ingen inden for 30 km</small>' : "\u2013"}</b></div>`;
+      return `<div class="dc" style="animation-delay:${i * 40}ms"><div class="n"><ha-icon icon="${esc8(it.icon || "mdi:information-outline")}"></ha-icon>${esc8(it.name)}</div><b>${x ? `${x.v}${x.u ? `<small>${esc8(x.u)}</small>` : ""}` : near ? '<small style="margin:0">ingen inden for 30 km</small>' : "\u2013"}</b></div>`;
     }).join(""));
   }
   dPollen() {
@@ -44834,7 +45148,7 @@ var ThWeatherCard = class extends HTMLElement {
     return `<div class="dsub">Pollen \xB7 Google<span>i dag og de n\xE6ste dage</span></div><div class="pl">${rows.map(({ p, st }, i) => {
       const a = st.attributes, n = +a.index_value || 0, c2 = col(n);
       const fut = [["I morgen", a.tomorrow], ["Dag 3", a["day 3"]], ["Dag 4", a["day 4"]]].filter((f) => f[1] != null);
-      return `<div class="pr" style="--c:${c2};animation-delay:${i * 50}ms"><div><b>${esc7(p.name)}</b><small>${DA[String(st.state).toLowerCase()] || esc7(st.state)}${a.in_season === "True" || a.in_season === true ? " \xB7 i s\xE6son" : ""}</small></div>
+      return `<div class="pr" style="--c:${c2};animation-delay:${i * 50}ms"><div><b>${esc8(p.name)}</b><small>${DA[String(st.state).toLowerCase()] || esc8(st.state)}${a.in_season === "True" || a.in_season === true ? " \xB7 i s\xE6son" : ""}</small></div>
         <div class="pd">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= n ? "f" : ""}"></i>`).join("")}</div><div class="pf">${fut.map(([l, v]) => `<span style="--c:${col(+v)}"><i></i>${l}</span>`).join("")}</div></div>`;
     }).join("") || '<div class="dc">Ingen pollendata</div>'}</div>`;
   }
@@ -44915,7 +45229,7 @@ var ThWeatherCard = class extends HTMLElement {
       if (p > 0.04) {
         const h = Math.max(3, p / pmax * 24), bw = Math.min(18, cw * 0.42);
         g += `<rect x="${X2(i) - bw / 2}" y="${158 - h}" width="${bw}" height="${h}" rx="${Math.min(4, bw / 3)}" fill="url(#pb)" opacity="${0.45 + pp / 200}" class="gbar" style="animation-delay:${0.6 + i * 0.02}s"/>
-          <text x="${X2(i)}" y="${155 - h}" text-anchor="middle" font-size="8.5" fill="#8ed1ff" font-weight="600" class="fi">${p >= 1 ? fmt2(p, 0) : fmt2(p, 1)}</text>`;
+          <text x="${X2(i)}" y="${155 - h}" text-anchor="middle" font-size="8.5" fill="#8ed1ff" font-weight="600" class="fi">${p >= 1 ? fmt3(p, 0) : fmt3(p, 1)}</text>`;
       } else if (pp >= 30) g += `<text x="${X2(i)}" y="155" text-anchor="middle" font-size="8.5" fill="rgba(142,209,255,.7)" class="fi">${Math.round(pp)}%</text>`;
     });
     g += `<line x1="0" y1="158.5" x2="${W2}" y2="158.5" stroke="rgba(255,255,255,.07)"/>`;
@@ -44940,7 +45254,7 @@ var ThWeatherCard = class extends HTMLElement {
     sv2.innerHTML = g;
     this.$("hin").style.width = W2 + "px";
     const tot = fc.reduce((s, f) => s + (f.precipitation || 0), 0);
-    this.set("hsum", `${Math.round(mn)}\xB0 \u2013 ${Math.round(mx)}\xB0 \xB7 ${tot > 0.05 ? fmt2(tot, 1) + " mm nedb\xF8r" : "ingen nedb\xF8r"} \xB7 vind m/s`);
+    this.set("hsum", `${Math.round(mn)}\xB0 \u2013 ${Math.round(mx)}\xB0 \xB7 ${tot > 0.05 ? fmt3(tot, 1) + " mm nedb\xF8r" : "ingen nedb\xF8r"} \xB7 vind m/s`);
   }
   scrub(e) {
     const fc = this._fc;
@@ -44951,8 +45265,8 @@ var ThWeatherCard = class extends HTMLElement {
     hl.setAttribute("opacity", 1);
     const dt = new Date(f.datetime), tip = this.$("tip"), [txt] = cnd(f.condition, false);
     tip.innerHTML = `<div class="t"><span>${dt.toLocaleDateString("da-DK", { weekday: "short" })} kl. ${String(dt.getHours()).padStart(2, "0")}</span><span>${Math.round(f.temperature)}\xB0</span></div>${txt}<br>
-      F\xF8les som <b>${fmt2(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt2(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
-      Vind <b>${fmt2((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt2((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
+      F\xF8les som <b>${fmt3(f.apparent_temperature ?? f.temperature, 0)}\xB0</b><br>Nedb\xF8r <b>${fmt3(f.precipitation || 0, 1)} mm</b> \xB7 ${Math.round(f.precipitation_probability || 0)} %<br>
+      Vind <b>${fmt3((f.wind_speed || 0) / 3.6, 0)}</b> (st\xF8d ${fmt3((f.wind_gust_speed || 0) / 3.6, 0)}) m/s<br>Fugt <b>${Math.round(f.humidity ?? 0)} %</b>${f.cloud_coverage != null ? ` \xB7 skyer <b>${Math.round(f.cloud_coverage)} %</b>` : ""}`;
     const hs = this.$("hs"), sc = hs.scrollLeft, pad6 = parseFloat(getComputedStyle(hs).paddingLeft) || 0, tw = tip.offsetWidth;
     const lo = sc + 22 - pad6, hi2 = Math.max(lo, sc + hs.clientWidth - 22 - pad6 - tw);
     let L = (i + 1) * this._cw + 8;
@@ -44967,7 +45281,7 @@ if (!window.customCards.some((c2) => c2.type === "th-weather-card")) window.cust
 console.info(`%c TH-WEATHER %c ${VWH_VER} `, "background:#8ed1ff;color:#0b0d12;font-weight:700", "color:#8ed1ff");
 
 // src/cards/ha-weather-charts-card/ha-weather-charts-card.js
-var VERSION33 = "1.0.1";
+var VERSION34 = "1.0.1";
 var H2 = 36e5;
 var DAY = 24 * H2;
 var DAYS = ["s\xF8n", "man", "tir", "ons", "tor", "fre", "l\xF8r"];
@@ -45003,12 +45317,12 @@ var KEY = {
   humidity: "luftfugtighed"
 };
 var CHARTS = ["temperature", "precipitation", "wind", "clouds", "atmosphere", "water", "pressure", "month"];
-var esc8 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc9 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var num3 = (v) => {
   const n = typeof v === "number" ? v : parseFloat(v);
   return Number.isFinite(n) ? n : null;
 };
-var fmt3 = (v, d = 1) => v == null ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
+var fmt4 = (v, d = 1) => v == null ? "\u2013" : Number(v).toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d });
 var hh2 = (t) => String(new Date(t).getHours()).padStart(2, "0");
 function smoothPath2(pts) {
   let d = "";
@@ -45407,7 +45721,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
   _render() {
     if (!this.shadowRoot || !this._config) return;
     if (!this._built) {
-      this.shadowRoot.innerHTML = `<style>${STYLE6}</style><ha-card><div class="wrap">${this._config.title ? `<h2 class="t">${esc8(this._config.title)}</h2>` : ""}<div class="grid"></div></div></ha-card>`;
+      this.shadowRoot.innerHTML = `<style>${STYLE7}</style><ha-card><div class="wrap">${this._config.title ? `<h2 class="t">${esc9(this._config.title)}</h2>` : ""}<div class="grid"></div></div></ha-card>`;
       this.shadowRoot.querySelector(".grid").addEventListener("click", (e) => {
         const chip = e.target.closest("[data-chip]");
         if (!chip) return;
@@ -45488,11 +45802,11 @@ var HAWeatherChartsCard = class extends HTMLElement {
     let svg = "";
     if (L) for (const t of L.tk) {
       const y = L.Y(t).toFixed(1);
-      svg += `<line class="gl" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="yl" x="${x0 - 6}" y="${y}" dy="3.5" text-anchor="end">${fmt3(t, Math.abs(t) < 10 && t % 1 ? 1 : 0)}</text>`;
+      svg += `<line class="gl" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="yl" x="${x0 - 6}" y="${y}" dy="3.5" text-anchor="end">${fmt4(t, Math.abs(t) < 10 && t % 1 ? 1 : 0)}</text>`;
     }
     if (R) for (const t of R.tk) {
       const y = R.Y(t).toFixed(1);
-      svg += `<text class="yl" x="${x1 + 6}" y="${y}" dy="3.5">${fmt3(t, 0)}</text>`;
+      svg += `<text class="yl" x="${x1 + 6}" y="${y}" dy="3.5">${fmt4(t, 0)}</text>`;
     }
     const dayStart = new Date(from);
     dayStart.setHours(0, 0, 0, 0);
@@ -45562,7 +45876,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
     });
     if (heatH) ch.heat.forEach(([name, color, pts], r) => {
       const y = y1 + 24 + r * 13;
-      svg += `<text class="hl" x="${x0 - 6}" y="${y + 8.5}" text-anchor="end">${esc8(name)}</text>`;
+      svg += `<text class="hl" x="${x0 - 6}" y="${y + 8.5}" text-anchor="end">${esc9(name)}</text>`;
       const inPts = pts.filter((p) => p[0] >= from && p[0] <= to);
       const w = inPts.length > 1 ? Math.max(1, X2(inPts[1][0]) - X2(inPts[0][0])) : 6;
       for (const [t, v] of inPts) {
@@ -45577,9 +45891,9 @@ var HAWeatherChartsCard = class extends HTMLElement {
       svg += `<line class="now" x1="${x}" x2="${x}" y1="${y0 - 2}" y2="${y1}"/><text class="nowl" x="${x}" y="${y0 + 8}" text-anchor="middle">nu</text>`;
     }
     svg += `<line class="cross" x1="0" x2="0" y1="${y0}" y2="${y1}" style="display:none"/>`;
-    const legend = ch.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc8(key2)}|${esc8(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc8(s.name)}</button>`).join("");
+    const legend = ch.series.map((s) => `<button type="button" class="chip${hidden[s.name] ? " off" : ""}" data-chip="${esc9(key2)}|${esc9(s.name)}" style="--c:${s.color}"><i class="${s.type}${s.dash ? " dash" : ""}"></i>${esc9(s.name)}</button>`).join("");
     const empty = !L && !R;
-    return `<header><div><h3>${esc8(ch.title)}</h3><p>${esc8(ch.sub || "")}</p></div><span class="unit">${esc8(ch.unit)}${ch.right ? ` \xB7 ${esc8(ch.right.unit)}` : ""}</span></header>
+    return `<header><div><h3>${esc9(ch.title)}</h3><p>${esc9(ch.sub || "")}</p></div><span class="unit">${esc9(ch.unit)}${ch.right ? ` \xB7 ${esc9(ch.right.unit)}` : ""}</span></header>
       ${empty ? `<div class="empty">Ingen data endnu</div>` : `<svg viewBox="0 0 ${W2} ${Hh2}" width="${W2}" height="${Hh2}" data-x0="${x0}" data-x1="${x1}" data-from="${from}" data-to="${to}"><defs>${defs.join("")}</defs>${svg}</svg>`}
       <div class="tip" hidden></div><div class="legend">${legend}</div>`;
   }
@@ -45608,14 +45922,14 @@ var HAWeatherChartsCard = class extends HTMLElement {
         const d = (s.axis || "left") === "right" ? ch.right.d : ch.d;
         if (s.type === "band" || s.type === "range") {
           const p3 = near((s.band || s.range).map(([tt2, a, b]) => [tt2, a, b]));
-          return p3 ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt3(p3[1], d)}\u2013${fmt3(p3[2], d)} ${esc8(unit)}</b></span>` : "";
+          return p3 ? `<span style="--c:${s.color}"><i></i>${esc9(s.name)}<b>${fmt4(p3[1], d)}\u2013${fmt4(p3[2], d)} ${esc9(unit)}</b></span>` : "";
         }
         const p = near(s.points);
-        return p ? `<span style="--c:${s.color}"><i></i>${esc8(s.name)}<b>${fmt3(p[1], d)} ${esc8(unit)}</b></span>` : "";
+        return p ? `<span style="--c:${s.color}"><i></i>${esc9(s.name)}<b>${fmt4(p[1], d)} ${esc9(unit)}</b></span>` : "";
       }).filter(Boolean);
       for (const [name, color, pts] of ch.heat || []) {
         const p = near(pts);
-        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc8(name)} skyer<b>${fmt3(p[1], 0)} %</b></span>`);
+        if (p) rows.push(`<span style="--c:${color}"><i></i>${esc9(name)} skyer<b>${fmt4(p[1], 0)} %</b></span>`);
       }
       const when2 = new Date(t);
       const head = ch.days ? `${DAYS[when2.getDay()]} ${when2.getDate()}.${when2.getMonth() + 1}.` : `${DAYS[when2.getDay()]} ${when2.getDate()}. kl. ${hh2(t)}.${String(Math.round(when2.getMinutes() / 10) * 10 % 60).padStart(2, "0")}`;
@@ -45640,7 +45954,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
     panel.addEventListener("pointerleave", leave);
   }
 };
-var STYLE6 = `
+var STYLE7 = `
 :host{display:block;--wc-ink:var(--primary-text-color,#eef2f7);--wc-mut:var(--secondary-text-color,#94a3b8);--wc-line:color-mix(in srgb,var(--wc-ink) 9%,transparent)}
 *{box-sizing:border-box}
 ha-card{background:none;border:0;box-shadow:none}
@@ -45695,7 +46009,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === "ha-weather-charts-card")) {
   window.customCards.push({ type: "ha-weather-charts-card", name: "HA Weather Charts Card", description: "Vejrsidens grafer (DMI Vejr): m\xE5lt og prognose, usikkerhed, vind, skyer, vandstand, tryk og 30 dage." });
 }
-console.info(`%c HA-WEATHER-CHARTS-CARD %c ${VERSION33} `, "background:#38bdf8;color:#06121f;font-weight:700", "background:#1f2937;color:#fff");
+console.info(`%c HA-WEATHER-CHARTS-CARD %c ${VERSION34} `, "background:#38bdf8;color:#06121f;font-weight:700", "background:#1f2937;color:#fff");
 
 // src/cards/ha-home-room-overview-card/ha-card-list-editor.js
 var HACardListEditor10 = class extends HTMLElement {
@@ -46106,7 +46420,7 @@ try {
 } catch (_) {
 }
 var arr = (value) => Array.isArray(value) ? value : value == null || value === "" ? [] : [value];
-var esc9 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc10 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 var item = (value) => typeof value === "string" ? { entity: value } : { ...value || {} };
 function kelvinRgb(kelvin) {
@@ -46123,7 +46437,7 @@ function hsRgb(h, s) {
   };
   return [f(5), f(3), f(1)].map((v) => Math.round(v));
 }
-var STYLE7 = `
+var STYLE8 = `
 :host{display:block;container:roomcard / inline-size;color:var(--primary-text-color);font-family:var(--paper-font-body1_-_font-family,Inter,system-ui,sans-serif);--ok:var(--dashboard-success,var(--success-color,#00e676));--warn:var(--dashboard-warning,var(--warning-color,#ff8a00));--bad:var(--dashboard-danger,var(--error-color,#ff365e));--line:var(--dashboard-border-neutral,var(--divider-color,rgba(255,255,255,.2)));--muted:var(--secondary-text-color,#8898ad);--brand:var(--dashboard-accent,var(--primary-color,#00b8ff));--ease:cubic-bezier(.2,.8,.2,1)}
 *{box-sizing:border-box}button{font:inherit;color:inherit;margin:0}
 .shell{position:relative;overflow:hidden;padding:26px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-radius:30px;background:radial-gradient(110% 80% at 100% 0%,color-mix(in srgb,var(--brand) 11%,transparent),transparent 45%),radial-gradient(70% 60% at 0% 100%,color-mix(in srgb,var(--brand) 5%,transparent),transparent 60%),var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#14171c)));box-shadow:var(--dashboard-shadow-deep,0 20px 50px rgba(0,0,0,.3))}
@@ -46668,8 +46982,8 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _build() {
     const cols = clamp(Number(this.config.desktop_columns) || 4, 2, 6);
-    this.shadowRoot.innerHTML = `<style>${STYLE7}</style><section class="shell" style="--cols:${cols}">
-      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc9(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc9(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
+    this.shadowRoot.innerHTML = `<style>${STYLE8}</style><section class="shell" style="--cols:${cols}">
+      <header class="top"><div class="intro"><div class="eyebrow"><i class="live"></i>${esc10(this.config.eyebrow || "Hjemmet lige nu")}</div><h1>${esc10(this.config.title || "Alle rum")}</h1><div class="sub"></div></div>
       <div class="pills">${PILLS.map((p) => `<button class="pill" type="button" data-pill="${p.key}"${p.filter ? ` data-filter="${p.key}" aria-pressed="false" title="Fremh\xE6v rum"` : ' tabindex="-1"'}><span class="pi"><ha-icon icon="${p.icon}"></ha-icon></span><span><b>\u2013</b><small>${p.label}${p.key === "temp" ? "<em></em>" : ""}</small></span></button>`).join("")}</div></header>
       <div class="grid">${this._rooms.map((room) => this._tileHtml(room)).join("")}</div></section>`;
     const root = this.shadowRoot;
@@ -46689,16 +47003,16 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _tileHtml(room) {
     const id = `hro-g${room.index}`;
-    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc9(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
-    return `<article class="tile" style="--i:${room.index};--accent:${esc9(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc9(`\xC5bn ${room.name || "rum"}`)}">
+    const actions = room.actions.map((a, i) => `<button class="btn act${i >= 2 ? " opt" : ""}" type="button" data-a="${i}"><ha-icon icon="${esc10(a.icon || "mdi:gesture-tap")}"></ha-icon><span class="arm"></span></button>`).join("");
+    return `<article class="tile" style="--i:${room.index};--accent:${esc10(room.accent || "var(--brand)")}" role="button" tabindex="0" aria-label="${esc10(`\xC5bn ${room.name || "rum"}`)}">
       <div class="glow"></div>
       <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path class="area" fill="url(#${id})"/><polyline class="stroke"/></svg>
       <div class="in">
-        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc9(room.icon || "mdi:home-outline")}"></ha-icon></div>
-          <div class="ident"><div class="name">${esc9(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
+        <div class="head"><div class="badge"><span class="rings"><i></i><i></i></span><ha-icon icon="${esc10(room.icon || "mdi:home-outline")}"></ha-icon></div>
+          <div class="ident"><div class="name">${esc10(room.name || "Rum")}</div><div class="line"><i class="dot"></i><span class="lt"></span></div></div>
           <div class="clim"><div class="temp"><span class="tv">\u2013</span><span class="tu">\xB0</span><ha-icon class="trend"></ha-icon></div><div class="meta"><span class="hum"><ha-icon icon="mdi:water-percent"></ha-icon><b></b></span><span class="tgt"><ha-icon icon="mdi:thermostat"></ha-icon><b></b></span></div></div></div>
         <div class="chips"></div>
-        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc9(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
+        <div class="acts">${room.light ? `<button class="btn light" type="button"><span class="lf"></span><ha-icon icon="mdi:lightbulb-outline"></ha-icon><span class="ll">${esc10(room.light_name || "Lys")}</span><span class="lv"></span></button>` : ""}${actions}${room.room_off ? `<button class="btn off" type="button" aria-label="Sluk rummet" title="Sluk rummet (lys og medier)"><ha-icon icon="mdi:power"></ha-icon></button>` : ""}</div>
       </div></article>`;
   }
   _refs(el, room) {
@@ -47694,7 +48008,7 @@ window.customCards.push({
 });
 
 // src/cards/ha-house-mode-card/ha-house-mode-card.js
-var VERSION34 = "0.3.0";
+var VERSION35 = "0.3.0";
 var DEFAULT_ICONS = {
   Normal: "mdi:home",
   Stille: "mdi:volume-mute",
@@ -47869,13 +48183,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA HOUSE MODE CARD %c v${VERSION34} `,
+  `%c HA HOUSE MODE CARD %c v${VERSION35} `,
   "color:white;background:#c27a3f;font-weight:700",
   "color:#f5d3ab;background:#161b22"
 );
 
 // src/cards/ha-kid-tracker-card/ha-kid-tracker-card.js
-var VERSION35 = "0.5.0";
+var VERSION36 = "0.5.0";
 var HAKidTrackerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -48193,13 +48507,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KID TRACKER CARD %c v${VERSION35} `,
+  `%c HA KID TRACKER CARD %c v${VERSION36} `,
   "color:white;background:#357fc4;font-weight:700",
   "color:#69c4ff;background:#161b22"
 );
 
 // src/cards/smart-home-overview-card/smart-home-overview-card.js
-var VERSION36 = "1.0.1";
+var VERSION37 = "1.0.1";
 var DEFAULT_ENTITIES = {
   houseMode: "input_select.house_mode",
   guestOverride: "input_boolean.house_mode_guest_override",
@@ -48877,11 +49191,11 @@ var SmartHomeOverviewCardEditor = class extends HTMLElement {
 if (!customElements.get("smart-home-overview-card")) customElements.define("smart-home-overview-card", SmartHomeOverviewCard);
 if (!customElements.get("smart-home-overview-card-editor")) customElements.define("smart-home-overview-card-editor", SmartHomeOverviewCardEditor);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION36}`, preview: true });
-console.info(`SMART HOME OVERVIEW CARD ${VERSION36}`);
+window.customCards.push({ type: "smart-home-overview-card", name: "Smart Home Overview", description: `Konfigurerbar helhedsoversigt: hero med ur/vejr, alarm-ticker, energi/EV/pris/pool-n\xF8gletal, sikkerhed & varme, live kameragrid, familie-tilstedev\xE6relse og elpris-graf ${VERSION37}`, preview: true });
+console.info(`SMART HOME OVERVIEW CARD ${VERSION37}`);
 
 // src/cards/ha-alarm-center-card/ha-alarm-center-card.js
-var VERSION37 = "0.4.0";
+var VERSION38 = "0.4.0";
 var HAAlarmCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -49203,13 +49517,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA ALARM CENTER CARD %c v${VERSION37} `,
+  `%c HA ALARM CENTER CARD %c v${VERSION38} `,
   "color:white;background:#d9534f;font-weight:700",
   "color:#ff9d9d;background:#161b22"
 );
 
 // src/cards/ha-camera-hub-card/ha-camera-hub-card.js
-var VERSION38 = "0.7.0";
+var VERSION39 = "0.7.0";
 var EVENTS_REFRESH_MS = 30 * 1e3;
 var SYSTEM_TICK_MS = 30 * 1e3;
 var EVENTS_WINDOW_HOURS = 36;
@@ -50664,7 +50978,7 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CAMERA HUB CARD %c v${VERSION38} `,
+  `%c HA CAMERA HUB CARD %c v${VERSION39} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
@@ -52856,7 +53170,7 @@ if (!customElements.get("th-camera-card")) customElements.define("th-camera-card
 console.info(`%c TH-CAMERA %c ${VC_VER} `, "background:#e8c37e;color:#111;font-weight:700", "background:#222;color:#fff");
 
 // src/cards/ha-door-window-card/ha-door-window-card.js
-var VERSION39 = "0.4.0";
+var VERSION40 = "0.4.0";
 var HISTORY_REFRESH_MS = 5 * 60 * 1e3;
 var TICK_MS = 30 * 1e3;
 var LONG_OPEN_MS = 30 * 60 * 1e3;
@@ -53148,13 +53462,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA DOOR/WINDOW CARD %c v${VERSION39} `,
+  `%c HA DOOR/WINDOW CARD %c v${VERSION40} `,
   "color:#fff;background:#f59e0b;font-weight:700",
   "color:#f59e0b;background:#161b22"
 );
 
 // src/cards/ha-home-camera-card/ha-home-camera-card.js
-var VERSION40 = "0.8.12";
+var VERSION41 = "0.8.12";
 var SNAPSHOT_CACHE = window.__haHomeCameraSnapshotCache ||= /* @__PURE__ */ new Map();
 var DETECTION_TYPES = [
   { key: "smoke", label: "R\xF8galarm", icon: "mdi:smoke-detector-alert", cls: "danger", patterns: ["smoke alarm"] },
@@ -53978,7 +54292,7 @@ if (!customElements.get("ha-home-camera-card")) customElements.define("ha-home-c
 if (!customElements.get("ha-home-camera-card-editor")) customElements.define("ha-home-camera-card-editor", HaHomeCameraCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-camera-card", name: "HA Home Camera Card", description: "Responsive camera overview with automatic and manual camera selection", preview: true });
-console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION40} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
+console.info(`%c HA-HOME-CAMERA-CARD %c ${VERSION41} `, "color:#fff;background:#2563eb;font-weight:700", "color:#60a5fa;background:#0f172a");
 
 // src/shared/watch-pause.js
 var p22 = (n) => String(n).padStart(2, "0");
@@ -54865,7 +55179,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-security-center-card", name: "HA Security Center", description: `Security center ${SECURITY_CENTER_VERSION}` });
 
 // src/cards/ha-control-center-card/ha-control-center-card.js
-var VERSION41 = "0.3.0";
+var VERSION42 = "0.3.0";
 var HAControlCenterCard = class extends HTMLElement {
   constructor() {
     super();
@@ -55071,13 +55385,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA CONTROL CENTER CARD %c v${VERSION41} `,
+  `%c HA CONTROL CENTER CARD %c v${VERSION42} `,
   "color:white;background:#3f7fbf;font-weight:700",
   "color:#9dc8ff;background:#161b22"
 );
 
 // src/cards/ha-ai-usage-card/ha-ai-usage-card.js
-var VERSION42 = "0.4.1";
+var VERSION43 = "0.4.1";
 var HAAIUsageCard = class extends HTMLElement {
   constructor() {
     super();
@@ -55299,10 +55613,10 @@ var HAAIUsageCard = class extends HTMLElement {
 if (!customElements.get("ha-ai-usage-card")) customElements.define("ha-ai-usage-card", HAAIUsageCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-ai-usage-card", name: "HA AI Usage Card", description: "Samlet og animeret overblik over AI-forbrugsgr\xE6nser", preview: true });
-console.info(`%c HA AI USAGE CARD %c v${VERSION42} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
+console.info(`%c HA AI USAGE CARD %c v${VERSION43} `, "color:white;background:#357fc4;font-weight:700", "color:#69c4ff;background:#161b22");
 
 // src/cards/ha-settings-center-card/ha-settings-center-card.js
-var VERSION43 = "0.7.2";
+var VERSION44 = "0.7.2";
 var TABS = [
   ["home", "Hjem", "mdi:home-heart"],
   ["lighting", "Lysautomatik", "mdi:motion-sensor"],
@@ -56316,13 +56630,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA SETTINGS CENTER %c v${VERSION43} `,
+  `%c HA SETTINGS CENTER %c v${VERSION44} `,
   "color:#fff;background:#2563eb;font-weight:700",
   "color:#60a5fa;background:#0f172a"
 );
 
 // src/cards/ha-kiosk-server-card/ha-kiosk-server-card.js
-var VERSION44 = "0.2.0";
+var VERSION45 = "0.2.0";
 var HAKioskServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -56664,13 +56978,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA KIOSK SERVER CARD %c v${VERSION44} `,
+  `%c HA KIOSK SERVER CARD %c v${VERSION45} `,
   "color:white;background:#5a3ea8;font-weight:700",
   "color:#d3c6f5;background:#161b22"
 );
 
 // src/cards/ha-ops-status-card/ha-ops-status-card.js
-var VERSION45 = "0.3.0";
+var VERSION46 = "0.3.0";
 var BAD_STATES = ["off", "critical", "error", "unavailable"];
 var WARN_STATES = ["warn", "warning"];
 var HAOpsStatusCard = class extends HTMLElement {
@@ -56858,13 +57172,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA OPS STATUS CARD %c v${VERSION45} `,
+  `%c HA OPS STATUS CARD %c v${VERSION46} `,
   "color:white;background:#4f6d8f;font-weight:700",
   "color:#b8d0e8;background:#161b22"
 );
 
 // src/cards/ha-unraid-server-card/ha-unraid-server-card.js
-var VERSION46 = "0.2.0";
+var VERSION47 = "0.2.0";
 var HAUnraidServerCard = class extends HTMLElement {
   constructor() {
     super();
@@ -57149,13 +57463,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA UNRAID SERVER CARD %c v${VERSION46} `,
+  `%c HA UNRAID SERVER CARD %c v${VERSION47} `,
   "color:white;background:#f15a24;font-weight:700",
   "color:#ffcbb0;background:#161b22"
 );
 
 // src/cards/ha-tts-center-card/ha-tts-center-card.js
-var VERSION47 = "0.1.0";
+var VERSION48 = "0.1.0";
 var DAYS2 = [["mon", "Man"], ["tue", "Tir"], ["wed", "Ons"], ["thu", "Tor"], ["fri", "Fre"], ["sat", "L\xF8r"], ["sun", "S\xF8n"]];
 var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
   constructor() {
@@ -57319,10 +57633,10 @@ var HATtsCenterCard = class _HATtsCenterCard extends HTMLElement {
 if (!customElements.get("ha-tts-center-card")) customElements.define("ha-tts-center-card", HATtsCenterCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-tts-center-card", name: "HA TTS Center Card", description: "Samlet center til direkte og planlagte TTS-beskeder", preview: true });
-console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION47} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
+console.info(`%c HA-TTS-CENTER-CARD %c ${VERSION48} `, "color:#00131c;background:#16c7ff;font-weight:800", "color:#16c7ff;background:#102030");
 
 // src/cards/ha-light-automation-card/ha-light-automation-card.js
-var VERSION48 = "0.2.0";
+var VERSION49 = "0.2.0";
 var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
   constructor() {
     super();
@@ -57503,10 +57817,10 @@ var HALightAutomationCard = class _HALightAutomationCard extends HTMLElement {
 if (!customElements.get("ha-light-automation-card")) customElements.define("ha-light-automation-card", HALightAutomationCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-light-automation-card", name: "HA Light Automation Card", description: "Samlet styring af dagvindue og rumbaseret lysautomatik", preview: true });
-console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION48} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
+console.info(`%c HA-LIGHT-AUTOMATION-CARD %c ${VERSION49} `, "color:#1b1300;background:#ffc247;font-weight:800", "color:#ffc247;background:#102030");
 
 // src/cards/ha-family-calendar-card/ha-family-calendar-card.js
-var VERSION49 = "0.2.4";
+var VERSION50 = "0.2.4";
 var DAY2 = ["s\xF8ndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "l\xF8rdag"];
 var DAY_SHORT = ["S\xF8n", "Man", "Tir", "Ons", "Tor", "Fre", "L\xF8r"];
 var MONTH = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -57515,7 +57829,7 @@ var SUBJECTS = { MAT: "Matematik", DAN: "Dansk", IDR: "Idr\xE6t", ENG: "Engelsk"
 var WEATHER2 = { "clear-night": ["Klart", "mdi:weather-night"], cloudy: ["Overskyet", "mdi:weather-cloudy"], fog: ["T\xE5ge", "mdi:weather-fog"], hail: ["Hagl", "mdi:weather-hail"], lightning: ["Torden", "mdi:weather-lightning"], "lightning-rainy": ["Torden og regn", "mdi:weather-lightning-rainy"], partlycloudy: ["Let skyet", "mdi:weather-partly-cloudy"], pouring: ["Skybrud", "mdi:weather-pouring"], rainy: ["Regn", "mdi:weather-rainy"], snowy: ["Sne", "mdi:weather-snowy"], "snowy-rainy": ["Slud", "mdi:weather-snowy-rainy"], sunny: ["Sol", "mdi:weather-sunny"], windy: ["Bl\xE6st", "mdi:weather-windy"], "windy-variant": ["Bl\xE6st", "mdi:weather-windy-variant"], exceptional: ["Us\xE6dvanligt", "mdi:alert-circle-outline"] };
 var HOUR2 = 36e5;
 var STORE = "ha-family-calendar-card";
-var esc10 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc11 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var pad5 = (n) => String(n).padStart(2, "0");
 var hhmm2 = (d) => `${pad5(d.getHours())}.${pad5(d.getMinutes())}`;
 var dayKey = (d) => `${d.getFullYear()}-${pad5(d.getMonth() + 1)}-${pad5(d.getDate())}`;
@@ -57834,7 +58148,7 @@ ${LUX_KEYFRAMES}
 @media (min-width:701px){.wkday{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style><ha-card>
-<div class="top"><div><div class="eyebrow"><i></i>${esc10(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
+<div class="top"><div><div class="eyebrow"><i></i>${esc11(this._config.title || "Familiekalender")}</div><h2 data-date></h2></div>
 <div class="wx" data-wx role="button" tabindex="0" title="Vejret" hidden><ha-icon data-wxi></ha-icon><div><b data-wxt></b><span data-wxs></span></div></div></div>
 <div class="hero"><section class="panel"><h3 data-nxh>N\xE6ste</h3><div data-nx></div></section>
 <section class="panel tlp"><h3>I dag<em data-tlh></em></h3><div class="tl" data-tl></div><div class="sum" data-sum></div></section></div>
@@ -57910,7 +58224,7 @@ ${LUX_KEYFRAMES}
     const t = +now;
     const d = r.querySelector("[data-date]");
     const ds = `${DAY2[now.getDay()]} ${now.getDate()}. ${MONTH[now.getMonth()]}`;
-    d.innerHTML = `${esc10(ds[0].toUpperCase() + ds.slice(1))}<small>${esc10(this._config.subtitle || "")}</small>`;
+    d.innerHTML = `${esc11(ds[0].toUpperCase() + ds.slice(1))}<small>${esc11(this._config.subtitle || "")}</small>`;
     this._byId = /* @__PURE__ */ new Map();
     this._visible().forEach((e, i) => {
       e._id = e._id || `e${i}-${e.s}`;
@@ -57922,7 +58236,7 @@ ${LUX_KEYFRAMES}
     const body = r.querySelector("[data-body]");
     if (this._view === "school") body.innerHTML = this._schoolHtml(now);
     else if (this._loading && !this._events.length) body.innerHTML = '<div class="msg"><div><div class="spin"></div>Henter kalenderaftaler \u2026</div></div>';
-    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc10(this._error)}</div>`;
+    else if (this._error && !this._events.length) body.innerHTML = `<div class="msg">${esc11(this._error)}</div>`;
     else body.innerHTML = this._view === "week" ? this._weekHtml(t) : this._agendaHtml(t);
     const rg = r.querySelector("[data-range]");
     rg.textContent = this._view === "agenda" ? `Viser ${Math.max(14, Number(this._config.days) || 30)} dage frem` : this._view === "week" ? `Uge ${this._weekNo(this._week)}` : "Skoleskema denne uge";
@@ -57945,9 +58259,9 @@ ${LUX_KEYFRAMES}
       if (dayKey(new Date(e.s)) === today || e.allDay && e.s <= Date.now() && e.e > Date.now()) counts.set(e.calendar_entity, (counts.get(e.calendar_entity) || 0) + 1);
     });
     const groups = this._groups();
-    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc10(g)}">${esc10(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
+    const html = (groups.length > 1 ? `<button type="button" class="chip grp" data-grp="*">Alle</button>${groups.map((g) => `<button type="button" class="chip grp" data-grp="${esc11(g)}">${esc11(g)}</button>`).join("")}<span class="sep"></span>` : "") + this._config.calendars.filter((c2) => c2.entity).map((c2) => {
       const n = counts.get(c2.entity) || 0;
-      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc10(c2.entity)}" style="--c:${esc10(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc10(c2.name || c2.entity)}"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+      return `<button type="button" class="chip ${this._hidden.has(c2.entity) ? "off" : ""}" data-cal="${esc11(c2.entity)}" style="--c:${esc11(c2.color || "#22c9ff")}" title="${this._hidden.has(c2.entity) ? "Vis" : "Skjul"} ${esc11(c2.name || c2.entity)}"><ha-icon icon="${esc11(c2.icon || "mdi:calendar")}"></ha-icon>${esc11(c2.name || c2.entity)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
     }).join("");
     const box = this.shadowRoot.querySelector("[data-chips]");
     if (box._h !== html) {
@@ -57986,8 +58300,8 @@ ${LUX_KEYFRAMES}
     r.querySelector("[data-nxh]").innerHTML = live.length ? `<span style="color:var(--a)">\u25CF</span> Lige nu` : "N\xE6ste";
     const item2 = (e, isLive) => {
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon></span>
-      <span><b>${esc10(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY2[new Date(e.s).getDay()]}` : ""} \xB7 ${esc10(c2.name || "")}${e.location ? ` \xB7 ${esc10(e.location)}` : ""}</small></span>
+      return `<button type="button" class="nx ${isLive ? "live" : ""}" data-ev="${e._id}" style="--c:${esc11(c2.color || "#22c9ff")}"><span class="ic"><ha-icon icon="${esc11(c2.icon || "mdi:calendar")}"></ha-icon></span>
+      <span><b>${esc11(e.summary || "Uden titel")}</b><small>${isLive ? `<span class="cd" data-cd="${e.e}" data-end>${until(e.e - t).replace("om ", "slutter om ")}</span>` : `<span class="cd" data-cd="${e.s}">${until(e.s - t)}</span>`} \xB7 ${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}${dayKey(new Date(e.s)) !== dayKey(new Date(t)) ? ` ${DAY2[new Date(e.s).getDay()]}` : ""} \xB7 ${esc11(c2.name || "")}${e.location ? ` \xB7 ${esc11(e.location)}` : ""}</small></span>
       ${isLive ? `<span class="prog"><i data-prog="${e.s}|${e.e}" style="width:${Math.min(100, (t - e.s) / (e.e - e.s) * 100).toFixed(1)}%"></i></span>` : ""}</button>`;
     };
     r.querySelector("[data-nx]").innerHTML = [...live.map((e) => item2(e, true)), ...live.length ? next.map((e) => item2(e, false)) : next.map((e) => item2(e, false))].join("") || '<div class="empty-nx">Ingen flere aftaler i den viste periode \u{1F389}</div>';
@@ -58012,7 +58326,7 @@ ${LUX_KEYFRAMES}
       }
       lanes[l] = e.e;
       const c2 = this._cal(e.calendar_entity);
-      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc10(e.summary || "")}">${esc10(e.summary || "")}</button>`;
+      return `<button type="button" class="blk ${e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc11(c2.color || "#22c9ff")};left:${x(e.s)}%;width:max(8px,${(x(e.e) - x(e.s)).toFixed(2)}%);top:${l % 2 * 26}px" title="${esc11(e.summary || "")}">${esc11(e.summary || "")}</button>`;
     });
     const hrs = [];
     for (let h = h0; h <= h1; h += h1 - h0 > 12 ? 3 : 2) hrs.push(`<div class="hr" style="left:${x(d0 + h * HOUR2)}%"><span>${pad5(h)}</span></div>`);
@@ -58044,15 +58358,15 @@ ${LUX_KEYFRAMES}
       const isToday = +x.d === +today;
       const tomorrow = +x.d === +addDays(today, 1);
       return `<section class="day ${isToday ? "today" : ""}"><div class="dh"><strong>${x.d.getDate()}</strong><b>${DAY2[x.d.getDay()]}</b><span>${MONTH_SHORT[x.d.getMonth()]}</span>${isToday ? '<span class="tag">I dag</span>' : tomorrow ? '<span class="tag" style="opacity:.75">I morgen</span>' : ""}</div>
-        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("")}</div>` : ""}
+        ${x.all.length ? `<div class="alld">${x.all.map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc11(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc11(e.summary || "")}</button>`).join("")}</div>` : ""}
         ${x.timed.map((e) => this._evHtml(e, t)).join("")}</section>`;
     }).join("")}</div>`;
   }
   _evHtml(e, t) {
     const c2 = this._cal(e.calendar_entity);
     const live = this._on(e, t);
-    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
-      <span class="x"><b>${esc10(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon>${esc10(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur2(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc10(e.location)}</span>` : ""}</span></span></button>`;
+    return `<button type="button" class="ev ${live ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc11(c2.color || "#22c9ff")}"><span class="t">${hhmm2(new Date(e.s))}<small>${hhmm2(new Date(e.e))}</small></span><span class="ln"></span>
+      <span class="x"><b>${esc11(e.summary || "Uden titel")}${live ? '<span class="nu"><i></i>NU</span>' : ""}</b><span><span><ha-icon icon="${esc11(c2.icon || "mdi:calendar")}"></ha-icon>${esc11(c2.name || e.calendar_entity)}</span><span><ha-icon icon="mdi:timer-outline"></ha-icon>${dur2(e.e - e.s)}</span>${e.location ? `<span><ha-icon icon="mdi:map-marker-outline"></ha-icon>${esc11(e.location)}</span>` : ""}</span></span></button>`;
   }
   // A real week: hours down the side, each day a column, overlapping events side by side.
   _weekHtml(t) {
@@ -58111,7 +58425,7 @@ ${LUX_KEYFRAMES}
         const c2 = this._cal(e.calendar_entity);
         const top = Math.max(0, y(s));
         const h = Math.max(20, Math.min(H3, y(en2)) - top - 2);
-        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc10(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc10(e.summary || "")}</b>${h > 34 ? `<small>${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}</small>` : ""}</button>`;
+        return `<button type="button" class="blk ${this._on(e, t) ? "live" : e.e <= t ? "past" : ""}" data-ev="${e._id}" style="--c:${esc11(c2.color || "#22c9ff")};top:${top}px;height:${h}px;left:calc(${l / n * 100}% + 3px);width:calc(${100 / n}% - 6px)"><b>${esc11(e.summary || "")}</b>${h > 34 ? `<small>${hhmm2(new Date(e.s))}\u2013${hhmm2(new Date(e.e))}</small>` : ""}</button>`;
       }).join("");
       const grid = [...Array(h1 - h0)].map((_, i) => `<div class="gl" style="top:${i * PX}px"></div>`).join("");
       return `<div class="col ${dayKey(d) === today ? "today" : ""} ${extraCls}" style="height:${H3}px">${grid}${blocks}${dayKey(d) === today ? `<div class="now" data-now-wk="${ds}|${h0}|${PX}"></div>` : ""}</div>`;
@@ -58119,7 +58433,7 @@ ${LUX_KEYFRAMES}
     const allDay = (d) => {
       const ds = +d;
       const de = ds + 864e5;
-      return ev2.filter((e) => e.allDay && e.e > ds && e.s < de).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc10(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc10(e.summary || "")}</button>`).join("");
+      return ev2.filter((e) => e.allDay && e.e > ds && e.s < de).map((e) => `<button type="button" data-ev="${e._id}" style="--c:${esc11(this._cal(e.calendar_entity).color || "#22c9ff")}">${esc11(e.summary || "")}</button>`).join("");
     };
     const axis = `<div class="ax" style="height:${H3}px">${[...Array(h1 - h0)].map((_, i) => i ? `<span style="top:${i * PX}px">${pad5(h0 + i)}</span>` : "").join("")}</div>`;
     const desk = `<div class="wk"><div class="hd"></div>${days.map((d) => `<div class="hd ${dayKey(d) === today ? "today" : ""}">${DAY_SHORT[d.getDay()]}<b>${d.getDate()}</b></div>`).join("")}
@@ -58187,11 +58501,11 @@ ${LUX_KEYFRAMES}
     const root = host.attachShadow({ mode: "open" });
     const div = document.createElement("div");
     div.className = "sheet";
-    div.innerHTML = `<div class="box" style="--c:${esc10(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc10(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc10(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc10(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
-      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc10(when2[0].toUpperCase() + when2.slice(1))}</dd>
+    div.innerHTML = `<div class="box" style="--c:${esc11(c2.color || "#22c9ff")}"><div class="hd2"><span class="ic"><ha-icon icon="${esc11(c2.icon || "mdi:calendar")}"></ha-icon></span><div><div class="cal">${esc11(c2.name || e.calendar_entity)}${live ? ' \xB7 <span style="color:inherit">I GANG NU</span>' : ""}</div><h4>${esc11(e.summary || "Uden titel")}</h4></div><button type="button" class="x" data-close aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      <dl><dt><ha-icon icon="mdi:clock-outline"></ha-icon></dt><dd>${esc11(when2[0].toUpperCase() + when2.slice(1))}</dd>
       ${!e.allDay && e.s > Date.now() ? `<dt><ha-icon icon="mdi:timer-sand"></ha-icon></dt><dd>Starter ${until(e.s - Date.now())}</dd>` : ""}
-      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc10(e.location)}</dd>` : ""}
-      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc10(e.description)}</dd>` : ""}</dl>
+      ${e.location ? `<dt><ha-icon icon="mdi:map-marker-outline"></ha-icon></dt><dd>${esc11(e.location)}</dd>` : ""}
+      ${e.description ? `<dt><ha-icon icon="mdi:text"></ha-icon></dt><dd>${esc11(e.description)}</dd>` : ""}</dl>
       <button type="button" class="open" data-close>Luk</button></div>`;
     root.innerHTML = `<style>${SHEET_CSS}</style>`;
     root.appendChild(div);
@@ -58242,7 +58556,7 @@ ${LUX_KEYFRAMES}
         const lessons = list.filter((e) => dayKey(new Date(e.start)) === dayKey(d)).sort((a, b) => new Date(a.start) - new Date(b.start));
         return `<section class="school-day ${dayKey(d) === dayKey(now) ? "today" : ""}"><header>${DAY2[d.getDay()]} ${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}</header>${lessons.map((e) => this._lesson(e, t)).join("") || '<div style="color:var(--mut);font-size:12px">Ingen timer</div>'}</section>`;
       });
-      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc10(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
+      return `<div class="school-person"><div class="school-title" style="--c:${color}"><i></i>${esc11(name[0].toUpperCase() + name.slice(1))}</div><div class="school-grid">${days.join("")}</div></div>`;
     }).join("")}</div>`;
   }
   _lesson(e, t) {
@@ -58252,7 +58566,7 @@ ${LUX_KEYFRAMES}
     const en2 = new Date(e.end);
     const id = `l${+s}-${k}-${this._byId.size}`;
     this._byId.set(id, { _id: id, summary: SUBJECTS[k] || k, s: +s, e: +en2, allDay: false, location: e.location, description: teacher.join(",").trim() ? `L\xE6rer: ${teacher.join(",").trim()}` : "", calendar_entity: this._config.school_entity, _color: this._subjectColor(k), _name: this._lessonWho || "Skoleskema", _icon: "mdi:school-outline" });
-    return `<div class="lesson ${+s <= t && +en2 > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc10(SUBJECTS[k] || k)}</b><span>${hhmm2(s)}\u2013${hhmm2(en2)}${e.location ? ` \xB7 ${esc10(e.location)}` : ""}</span>${teacher.length ? `<small>${esc10(teacher.join(",").trim())}</small>` : ""}</div>`;
+    return `<div class="lesson ${+s <= t && +en2 > t ? "live" : ""}" data-ev="${id}" role="button" tabindex="0" style="--c:${this._subjectColor(k)}"><b>${esc11(SUBJECTS[k] || k)}</b><span>${hhmm2(s)}\u2013${hhmm2(en2)}${e.location ? ` \xB7 ${esc11(e.location)}` : ""}</span>${teacher.length ? `<small>${esc11(teacher.join(",").trim())}</small>` : ""}</div>`;
   }
   _subjectColor(code) {
     const fixed = { MAT: "#4f8cff", DAN: "#ff6b6b", IDR: "#3ecf8e", ENG: "#a86bff", MUS: "#ffb347", KRI: "#3fc6c6", "N/T": "#5ad1e6" };
@@ -58265,10 +58579,10 @@ ${LUX_KEYFRAMES}
 if (!customElements.get("ha-family-calendar-card")) customElements.define("ha-family-calendar-card", HAFamilyCalendarCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-family-calendar-card", name: "HA Family Calendar Card", description: "Familiekalender med nu/n\xE6ste, tidslinje, agenda, ugeskema, kalenderfiltre og skoleskema", preview: true });
-console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION49} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
+console.info(`%c HA-FAMILY-CALENDAR-CARD %c ${VERSION50} `, "color:#00131c;background:#22c9ff;font-weight:800", "color:#22c9ff;background:#102030");
 
 // src/cards/ha-waste-journey-card/ha-waste-journey-card.js
-var VERSION50 = "0.3.0";
+var VERSION51 = "0.3.0";
 var HORIZON = 28;
 var RING = 276.46;
 var DAY3 = 864e5;
@@ -58823,7 +59137,7 @@ var HAWasteJourneyCard = class _HAWasteJourneyCard extends HTMLElement {
 if (!customElements.get("ha-waste-journey-card")) customElements.define("ha-waste-journey-card", HAWasteJourneyCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-waste-journey-card", name: "HA Waste Journey Card", description: "Animeret affaldskalender med skraldebiler p\xE5 vej mod huset", preview: true });
-console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION50} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
+console.info(`%c HA-WASTE-JOURNEY-CARD %c ${VERSION51} `, "color:#06150e;background:#22c55e;font-weight:800", "color:#22c55e;background:#102030");
 
 // src/cards/ha-calefa-flow-card/ha-calefa-flow-card.js
 var CALEFA_FLOW_CARD_VERSION = "0.9.9";
@@ -61134,7 +61448,7 @@ if (!window.customCards.some((card) => card.type === "ha-calefa-flow-card")) {
 console.info(`%c HA CALEFA FLOW CARD %c v${CALEFA_FLOW_CARD_VERSION} `, "background:#087ea4;color:#fff;font-weight:700;padding:2px 5px", "background:#102631;color:#8fe7ff;padding:2px 5px");
 
 // src/cards/ha-home-front-layout-card/ha-home-front-layout-card.js
-var VERSION51 = "0.1.11";
+var VERSION52 = "0.1.11";
 var HaHomeDesktopLayoutCard2 = class extends HTMLElement {
   constructor() {
     super();
@@ -61587,10 +61901,10 @@ if (!customElements.get("ha-home-desktop-layout-card-front")) customElements.def
 if (!customElements.get("ha-home-desktop-layout-card-front-editor")) customElements.define("ha-home-desktop-layout-card-front-editor", HaHomeDesktopLayoutCardEditor2);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-home-desktop-layout-card-front", name: "HA Home Front Layout", description: "Forside med valg mellem kort og samlet flade", preview: false });
-console.info(`HA HOME FRONT LAYOUT v${VERSION51}`);
+console.info(`HA HOME FRONT LAYOUT v${VERSION52}`);
 
 // src/cards/ha-navbar-card/ha-navbar-card.js
-var VERSION52 = "0.11.0";
+var VERSION53 = "0.11.0";
 var PULSE_FARVER = ["--error-color", "--warning-color"];
 var NB_STOERRELSER = {
   max_width: "--nb-maxbredde",
@@ -62969,13 +63283,13 @@ window.customCards.push({
   preview: true
 });
 console.info(
-  `%c HA NAVBAR CARD %c v${VERSION52} `,
+  `%c HA NAVBAR CARD %c v${VERSION53} `,
   "color:#fff;background:#38bdf8;font-weight:700",
   "color:#38bdf8;background:#222"
 );
 
 // src/cards/ha-roborock-room-map-card/ha-roborock-room-map-card.js
-var VERSION53 = "0.1.6";
+var VERSION54 = "0.1.6";
 var TAG4 = "ha-roborock-room-map-card";
 var ROOM_PALETTE = {
   1: [240, 178, 122],
@@ -63131,7 +63445,7 @@ var WATER = {
   high: ["H\xF8j", "mdi:water-plus"]
 };
 var EMPTY_MODE = { smart: "Smart", light: "Let", balanced: "Balanceret", max: "Maks" };
-var esc11 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var esc12 = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 var human = (v) => {
   const s = String(v ?? "").replace(/_/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : "";
@@ -63960,8 +64274,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     const el = this.shadowRoot.querySelector(".map-msg");
     if (!el) return;
     let html = "";
-    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc11(this._roomsError)}</span>`;
-    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc11(this._mapError)}</span>`;
+    if (this._roomsState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Rummene kunne ikke hentes</b><span>${esc12(this._roomsError)}</span>`;
+    else if (this._mapState === "error") html = `<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><b>Kortet kunne ikke vises</b><span>${esc12(this._mapError)}</span>`;
     else if (!this._map && this._ent && !this._ent.map) html = `<ha-icon icon="mdi:map-outline"></ha-icon><b>Ingen kortentitet fundet</b><span>Angiv map: image.\u2026 i kortets konfiguration.</span>`;
     else if (!this._map) html = `<ha-icon icon="mdi:loading" class="spin"></ha-icon><b>Henter kort \u2026</b>`;
     el.innerHTML = html;
@@ -63983,8 +64297,8 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       if (!p || !room.mappable) return "";
       const n = this._sel.indexOf(room.id) + 1;
       const small = p.depth < 5 ? " small" : "";
-      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc11(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
-        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc11(room.name)}</span></button>`;
+      return `<button class="lbl${n ? " on" : ""}${small}" data-seg="${room.id}" style="left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%" aria-pressed="${n ? "true" : "false"}" aria-label="${esc12(room.name)}${n ? `, valgt som nummer ${n}` : ""}">
+        <span class="badge">${n ? `<b>${n}</b>` : `<ha-icon icon="mdi:plus"></ha-icon>`}</span><span class="name">${esc12(room.name)}</span></button>`;
     }).join("");
     requestAnimationFrame(() => this._layoutLabels());
   }
@@ -64061,7 +64375,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
   _seg(action, options, current2, labels, disabled) {
     return `<div class="seg" role="group">${options.map((o) => {
       const [label, icon6] = labels[o] || [human(o)];
-      return `<button data-a="${action}" data-v="${esc11(o)}" class="${o === current2 ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current2}">${icon6 ? `<ha-icon icon="${icon6}"></ha-icon>` : ""}<span>${esc11(label)}</span></button>`;
+      return `<button data-a="${action}" data-v="${esc12(o)}" class="${o === current2 ? "on" : ""}" ${disabled ? "disabled" : ""} aria-pressed="${o === current2}">${icon6 ? `<ha-icon icon="${icon6}"></ha-icon>` : ""}<span>${esc12(label)}</span></button>`;
     }).join("")}</div>`;
   }
   _renderPanel() {
@@ -64130,7 +64444,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
     }
     if (room && room !== "unknown" && room !== "unavailable") info.push(["mdi:map-marker-radius-outline", "Robotten er i", room]);
     const primary = active2 ? `<button class="primary" data-a="pause" ${offline ? "disabled" : ""}><ha-icon icon="mdi:pause"></ha-icon><span>Pause</span></button>` : paused2 ? `<button class="primary" data-a="resume" ${offline ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>Forts\xE6t</span></button>` : `<button class="primary" data-a="clean" ${!n || offline || !canSegments ? "disabled" : ""}><ha-icon icon="mdi:play"></ha-icon><span>${n ? `Reng\xF8r ${n} rum${this._repeat > 1 ? ` \xB7 ${this._repeat}\xD7` : ""}` : "V\xE6lg rum p\xE5 kortet"}</span></button>`;
-    const act = (a, icon6, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc11(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon6}"></ha-icon><span>${label}</span></button>`;
+    const act = (a, icon6, label, enabled, v) => `<button class="act" data-a="${a}" ${v ? `data-v="${esc12(v)}"` : ""} ${enabled ? "" : "disabled"}><ha-icon icon="${icon6}"></ha-icon><span>${label}</span></button>`;
     const actions = [
       this._supports(FEATURE.START) && act("all", "mdi:home-outline", "Hele hjemmet", !offline && !active2 && !paused2),
       this._supports(FEATURE.PAUSE) && (paused2 ? act("resume", "mdi:play", "Forts\xE6t", !offline) : act("pause", "mdi:pause", "Pause", !offline && active2)),
@@ -64145,29 +64459,29 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       let name = st.attributes.friendly_name || id;
       const dn = vac?.attributes?.friendly_name || this._deviceName;
       if (dn && name.startsWith(dn)) name = name.slice(dn.length).trim();
-      return `<button class="chip" data-a="routine" data-v="${esc11(id)}" ${offline || active2 ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc11(name)}</button>`;
+      return `<button class="chip" data-a="routine" data-v="${esc12(id)}" ${offline || active2 ? "disabled" : ""}><ha-icon icon="mdi:playlist-play"></ha-icon>${esc12(name)}</button>`;
     }).join("");
     panel.innerHTML = `
       <header class="head">
         <div class="id">
           <span class="bot ${dot}"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span>
-          <div><h2>${esc11(title)}</h2><p>${esc11(subtitle2)}</p></div>
+          <div><h2>${esc12(title)}</h2><p>${esc12(subtitle2)}</p></div>
         </div>
         ${Number.isFinite(battery) ? `<div class="batt ${battery < 20 ? "low" : ""}" title="Batteri"><ha-icon icon="${this._s(E2.battery) && docked ? "mdi:battery-charging" : "mdi:battery"}"></ha-icon><b>${Math.round(battery)} %</b></div>` : ""}
       </header>
-      <div class="status"><i class="dot ${dot}"></i><b>${esc11(STATUS_LABELS2[key2] || human(key2))}</b>${detail ? `<span>${esc11(detail)}</span>` : ""}</div>
-      ${alerts.map(([k, icon6, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon6}"></ha-icon><div><b>${esc11(t)}</b>${s ? `<span>${esc11(s)}</span>` : ""}</div></div>`).join("")}
-      ${info.length ? `<div class="info">${info.map(([icon6, l, v, x]) => `<div><ha-icon icon="${icon6}"></ha-icon><span>${esc11(l)}</span><b>${esc11(v)}</b>${x ? `<small>${esc11(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
+      <div class="status"><i class="dot ${dot}"></i><b>${esc12(STATUS_LABELS2[key2] || human(key2))}</b>${detail ? `<span>${esc12(detail)}</span>` : ""}</div>
+      ${alerts.map(([k, icon6, t, s]) => `<div class="alert ${k}"><ha-icon icon="${icon6}"></ha-icon><div><b>${esc12(t)}</b>${s ? `<span>${esc12(s)}</span>` : ""}</div></div>`).join("")}
+      ${info.length ? `<div class="info">${info.map(([icon6, l, v, x]) => `<div><ha-icon icon="${icon6}"></ha-icon><span>${esc12(l)}</span><b>${esc12(v)}</b>${x ? `<small>${esc12(x)}</small>` : ""}</div>`).join("")}</div>` : ""}
 
       <section class="box">
         <div class="box-head"><h3>Valgte rum (${n})</h3>${n ? `<button class="link" data-a="clear">Ryd valg</button>` : ""}</div>
         ${n ? `<ol class="order">${selRooms.map((r, i) => `<li>
-            <span class="num">${i + 1}</span><span class="rn">${esc11(r.name)}</span>
-            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc11(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc11(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc11(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            <span class="num">${i + 1}</span><span class="rn">${esc12(r.name)}</span>
+            <button class="ic" data-a="up" data-v="${r.id}" ${i === 0 ? "disabled" : ""} aria-label="Flyt ${esc12(r.name)} op"><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+            <button class="ic" data-a="down" data-v="${r.id}" ${i === n - 1 ? "disabled" : ""} aria-label="Flyt ${esc12(r.name)} ned"><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+            <button class="ic" data-a="toggle" data-v="${r.id}" aria-label="Frav\xE6lg ${esc12(r.name)}"><ha-icon icon="mdi:close"></ha-icon></button>
           </li>`).join("")}</ol>` : `<p class="empty">Tryk p\xE5 rummene p\xE5 kortet \u2013 eller herunder \u2013 i den r\xE6kkef\xF8lge, de skal reng\xF8res.</p>`}
-        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc11(r.name)}</button>`).join("")}</div>` : ""}
+        ${rest2.length ? `<div class="chips">${rest2.map((r) => `<button class="chip add" data-a="toggle" data-v="${r.id}"><ha-icon icon="mdi:plus"></ha-icon>${esc12(r.name)}</button>`).join("")}</div>` : ""}
       </section>
 
       <section class="box">
@@ -64181,7 +64495,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
         </div>
         ${primary}
         ${!canSegments ? `<p class="note">Robotten underst\xF8tter ikke rumreng\xF8ring via send_command.</p>` : ""}
-        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc11(this._flash.text)}</div>` : ""}
+        ${this._flash ? `<div class="toast ${this._flash.kind}" role="status">${esc12(this._flash.text)}</div>` : ""}
       </section>`;
     this.shadowRoot.querySelector(".acts").innerHTML = `
       <div class="actions">${actions.join("")}</div>
@@ -64335,7 +64649,7 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === TAG4)) {
   window.customCards.push({ type: TAG4, name: "HA Roborock Room Map Card", description: "V\xE6lg rum direkte p\xE5 Roborock-kortet og reng\xF8r dem i valgt r\xE6kkef\xF8lge", preview: false });
 }
-console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION53} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
+console.info(`%c HA ROBOROCK ROOM MAP %c v${VERSION54} `, "color:white;background:#138a86;font-weight:700", "color:#5fe3dc;background:#111827");
 
 // src/cards/ai-usage-dashboard-card/ai-usage-dashboard-card.js
 var ACCOUNTS = [
@@ -64524,7 +64838,7 @@ window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashb
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
 init_chart_hover();
-var VERSION54 = "1.2.0";
+var VERSION55 = "1.2.0";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -64584,13 +64898,13 @@ var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt7 = numberFormats.get(digits);
-  if (!fmt7) {
-    fmt7 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt7);
+  let fmt8 = numberFormats.get(digits);
+  if (!fmt8) {
+    fmt8 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt8);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt7.format(rounded === 0 ? 0 : rounded);
+  return fmt8.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -64766,7 +65080,7 @@ function statTime(value) {
   return typeof value === "number" ? value : Date.parse(value);
 }
 var icon2 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${name}"></ha-icon>`;
-var STYLE8 = `
+var STYLE9 = `
 :host{
   /* Alle tokens peger p\xE5 det aktive temas variabler; hex-v\xE6rdierne er kun fallback. */
   --energy-card:var(--dashboard-card-bg,var(--ha-card-background,var(--card-background-color,#111820)));
@@ -65448,7 +65762,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const houseDay = charger ? "Dagens husforbrug uden bil" : "Dagens husforbrug";
     const minis = 1 + ["house_energy_today", "charger_power", "house_power"].filter(has).length;
     this.shadowRoot.innerHTML = `
-<style>${STYLE8}</style>
+<style>${STYLE9}</style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--energy-blue)"/><stop offset="1" style="stop-color:var(--energy-cyan)"/></linearGradient>
@@ -66425,7 +66739,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG)) {
     preview: false
   });
 }
-console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION54} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
+console.info(`%c ELECTRICITY DASHBOARD %c v${VERSION55} `, "color:#04121f;background:#22d3ff;font-weight:700", "color:#bfefff;background:#0b1a30");
 
 // src/cards/ha-energy-center-card/defaults.js
 var DEFAULT_ENTITIES2 = {
@@ -66485,7 +66799,7 @@ var DEFAULT_CONFIG2 = {
 };
 
 // src/cards/ha-energy-center-card/styles.js
-var STYLE9 = `
+var STYLE10 = `
 :host{
   /* Alt hentes fra de aktive thtema-*-temaer; hex-v\xE6rdierne er kun fallback uden tema. */
   --ec-text:var(--primary-text-color,#e8eef8);
@@ -66968,7 +67282,7 @@ function normalize(stateObj, kind) {
   return { value: n === void 0 ? void 0 : n * factor, known: true };
 }
 var numberFormats2 = /* @__PURE__ */ new Map();
-function fmt4(value, digits = 1) {
+function fmt5(value, digits = 1) {
   if (!Number.isFinite(value)) return "\u2014";
   let f = numberFormats2.get(digits);
   if (!f) {
@@ -66981,22 +67295,22 @@ function fmt4(value, digits = 1) {
 function fmtPower2(watts) {
   if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
   const abs = Math.abs(watts);
-  if (abs >= 1e3) return { v: fmt4(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
-  return { v: fmt4(watts, abs < 10 ? 1 : 0), u: "W" };
+  if (abs >= 1e3) return { v: fmt5(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
+  return { v: fmt5(watts, abs < 10 ? 1 : 0), u: "W" };
 }
 function fmtEnergy2(kwh2) {
   if (!Number.isFinite(kwh2)) return { v: "\u2014", u: "kWh" };
   const abs = Math.abs(kwh2);
-  if (abs >= 1e4) return { v: fmt4(kwh2 / 1e3, 1), u: "MWh" };
-  if (abs < 1 && abs > 0) return { v: fmt4(kwh2 * 1e3, 0), u: "Wh" };
-  return { v: fmt4(kwh2, abs >= 100 ? 0 : 1), u: "kWh" };
+  if (abs >= 1e4) return { v: fmt5(kwh2 / 1e3, 1), u: "MWh" };
+  if (abs < 1 && abs > 0) return { v: fmt5(kwh2 * 1e3, 0), u: "Wh" };
+  return { v: fmt5(kwh2, abs >= 100 ? 0 : 1), u: "kWh" };
 }
 function fmtVolume(m3) {
   if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
-  if (Math.abs(m3) < 10) return { v: fmt4(m3 * 1e3, 0), u: "L" };
-  return { v: fmt4(m3, 1), u: "m\xB3" };
+  if (Math.abs(m3) < 10) return { v: fmt5(m3 * 1e3, 0), u: "L" };
+  return { v: fmt5(m3, 1), u: "m\xB3" };
 }
-var fmtKr = (v) => Number.isFinite(v) ? `${fmt4(v, 2)} kr` : "\u2014";
+var fmtKr = (v) => Number.isFinite(v) ? `${fmt5(v, 2)} kr` : "\u2014";
 function escapeHtml3(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -67241,7 +67555,7 @@ var BarChart = class {
     let grid = "";
     for (let v = 0; v <= hi2 + step / 2; v += step) {
       const pct7 = 100 - v / hi2 * 100;
-      y += `<span style="top:${pct7}%">${fmt4(v, d)}</span>`;
+      y += `<span style="top:${pct7}%">${fmt5(v, d)}</span>`;
       grid += `<i style="top:${pct7}%"></i>`;
     }
     this.$("y").innerHTML = y;
@@ -67298,7 +67612,7 @@ var BarChart = class {
     svg.removeAttribute("hidden");
     const dec = decimalsFor(step);
     let labels = "";
-    for (let v = lo; v <= hi2 + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi2 - lo) * 100}%">${fmt4(v, dec)}</span>`;
+    for (let v = lo; v <= hi2 + step / 2; v += step) labels += `<span style="top:${100 - (v - lo) / (hi2 - lo) * 100}%">${fmt5(v, dec)}</span>`;
     y2.innerHTML = labels;
     y2.hidden = false;
     this.host.classList.add("has-line");
@@ -67484,7 +67798,7 @@ var HistoryPanel = class {
     const has = values.some(Number.isFinite);
     const total = values.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     const unit = this._unit();
-    this.totalEl.textContent = has ? `${fmt4(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
+    this.totalEl.textContent = has ? `${fmt5(total, total >= 100 || unit === "L" ? 0 : 1)} ${unit}` : "\u2014";
     const costTotal = cost?.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
     this.costEl.textContent = cost && cost.some(Number.isFinite) ? fmtKr(costTotal) : "";
   }
@@ -67509,7 +67823,7 @@ var HistoryPanel = class {
     const c2 = this.current.cost?.[i];
     const unit = this._unit();
     const digits = unit === "L" ? 0 : v >= 100 ? 0 : v >= 10 ? 1 : 2;
-    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt4(v, digits) : "\u2014"}</em> ${unit}</span>`;
+    let html = `<b>${escapeHtml3(b.tip)}</b><span><em>${Number.isFinite(v) ? fmt5(v, digits) : "\u2014"}</em> ${unit}</span>`;
     if (Number.isFinite(c2)) html += `<span>${fmtKr(c2)}</span>`;
     const lv2 = this.current.line?.values[i];
     if (Number.isFinite(lv2)) html += `<span class="tip-line">${escapeHtml3(this.o.line.format(lv2))}</span>`;
@@ -67814,7 +68128,7 @@ var OverviewSection = class extends Section {
           key: "grid_price",
           label: "Timepris (kr/kWh)",
           values: (range) => hourlyPrices(card.stateObj("grid_price"), range.buckets),
-          format: (v) => `${fmt4(v, 2)} kr/kWh`
+          format: (v) => `${fmt5(v, 2)} kr/kWh`
         }
       }),
       new HistoryPanel(card, { key: "ov-el", title: "Elforbrug", icon: "mdi:flash", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "week" }),
@@ -67965,13 +68279,13 @@ var OverviewSection = class extends Section {
     this.value("hEl", fmtPower2(grid), true);
     this.value("hHeat", fmtPower2(heat), true);
     this.value("hEv", fmtPower2(ev2), true);
-    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt4(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("hWaterV", Number.isFinite(flowLpm) ? fmt5(flowLpm, flowLpm < 10 ? 1 : 0) : "\u2014", true);
     this.text("hWaterU", "L/min");
     const price = c2.num("grid_price");
-    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt4(price, 2)} kr/kWh` : "Ingen prisdata");
+    this.text("hElSub", Number.isFinite(price) ? `Pris nu ${fmt5(price, 2)} kr/kWh` : "Ingen prisdata");
     const sup = c2.num("heat_supply");
     const ret = c2.num("heat_return");
-    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt4(sup, 0)}\xB0 \xB7 retur ${fmt4(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
+    this.text("hHeatSub", Number.isFinite(sup) && Number.isFinite(ret) ? `Frem ${fmt5(sup, 0)}\xB0 \xB7 retur ${fmt5(ret, 0)}\xB0` : heat > 0 ? "Varmer" : "Ingen varmeeffekt");
     const wf = c2.waterFlowState(flowLpm);
     this.text("hWaterSub", wf.label);
     this.tone(this.refs.hWaterSub, wf.tone);
@@ -68166,11 +68480,11 @@ var PowerSection = class extends Section {
     const unm = c2.watts("unmeasured_power");
     this.value("main", fmtPower2(grid), true);
     const va = c2.num("grid_apparent");
-    this.text("mainVa", Number.isFinite(va) ? `${fmt4(va, 0)} VA` : "\u2014");
+    this.text("mainVa", Number.isFinite(va) ? `${fmt5(va, 0)} VA` : "\u2014");
     const price = c2.num("grid_price");
-    this.text("mainPrice", Number.isFinite(price) ? `${fmt4(price, 2)} kr/kWh` : "\u2014");
+    this.text("mainPrice", Number.isFinite(price) ? `${fmt5(price, 2)} kr/kWh` : "\u2014");
     const temp = c2.num("meter_temperature");
-    this.text("mainTemp", Number.isFinite(temp) ? `${fmt4(temp, 1)} \xB0C` : "\u2014");
+    this.text("mainTemp", Number.isFinite(temp) ? `${fmt5(temp, 1)} \xB0C` : "\u2014");
     const ret = fmtEnergy2(c2.kwh("grid_returned"));
     this.text("mainRet", `${ret.v} ${ret.u}`);
     this.value("mMeas", fmtPower2(meas));
@@ -68178,18 +68492,18 @@ var PowerSection = class extends Section {
     const pct7 = (v) => Number.isFinite(v) && grid > 0 ? v / grid * 100 : void 0;
     const measPct = pct7(meas);
     const unmPct = pct7(unm);
-    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
-    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
-    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt4(measPct, 0)} %` : "\u2014");
-    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt4(unmPct, 0)} %` : "\u2014");
+    this.text("mMeasPct", Number.isFinite(measPct) ? `${fmt5(measPct, 0)} %` : "\u2014");
+    this.text("mUnmPct", Number.isFinite(unmPct) ? `${fmt5(unmPct, 0)} %` : "\u2014");
+    this.text("acctMeasPct", Number.isFinite(measPct) ? `${fmt5(measPct, 0)} %` : "\u2014");
+    this.text("acctUnmPct", Number.isFinite(unmPct) ? `${fmt5(unmPct, 0)} %` : "\u2014");
     this.bar("acctMeas", grid > 0 && Number.isFinite(meas) ? Math.min(meas / grid, 1) : 0);
     this.bar("acctUnm", grid > 0 && Number.isFinite(unm) ? Math.min(unm / grid, 1) : 0);
     const tol = c2.config.accounting_tolerance_w;
     if (Number.isFinite(grid) && Number.isFinite(meas)) {
       const diff = meas + (Number.isFinite(unm) ? unm : 0) - grid;
-      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt4(diff, 0)} W`);
+      this.text("acctDiff", `${diff > 0 ? "+" : ""}${fmt5(diff, 0)} W`);
       const off = meas - grid > tol;
-      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt4(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
+      this.text("acctMsg", off ? `Kortlagt forbrug er ${fmt5(meas - grid, 0)} W h\xF8jere end hovedm\xE5leren` : "Regnskabet stemmer");
       this.tone("acct", off ? "warn" : "");
     } else {
       this.text("acctDiff", "\u2014");
@@ -68216,7 +68530,7 @@ var PowerSection = class extends Section {
       total += s.sum || 0;
       const p3 = fmtPower2(s.sum);
       this.text(`g${i}Val`, `${p3.v} ${p3.u}`);
-      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt4(s.sum / grid * 100, 0)} %` : "\u2014");
+      this.text(`g${i}Share`, Number.isFinite(s.sum) && grid > 0 ? `${fmt5(s.sum / grid * 100, 0)} %` : "\u2014");
       this.bar(`g${i}Bar`, (s.sum || 0) / max);
       const warn = this.refs[`g${i}Warn`];
       this.show(warn, s.missing > 0);
@@ -68226,7 +68540,7 @@ var PowerSection = class extends Section {
       }
     });
     const p = fmtPower2(total);
-    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt4(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
+    this.text("grpSum", `${p.v} ${p.u} m\xE5lt i ${sums.length} grupper${Number.isFinite(grid) && grid > 0 ? ` \xB7 ${fmt5(total / grid * 100, 0)} % af hovedm\xE5ler` : ""}`);
   }
   _updatePhases() {
     const c2 = this.card;
@@ -68239,15 +68553,15 @@ var PowerSection = class extends Section {
     phases.forEach((p, i) => {
       this.value(`ph${i}`, fmtPower2(c2.wattsOf(p.power)), true);
       const cur = currents[i];
-      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt4(cur, 2)} A` : "\u2014");
+      this.text(`ph${i}A`, Number.isFinite(cur) ? `${fmt5(cur, 2)} A` : "\u2014");
       const v = c2.numOf(p.voltage);
-      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt4(v, 1)} V` : "\u2014");
+      this.text(`ph${i}Vo`, Number.isFinite(v) ? `${fmt5(v, 1)} V` : "\u2014");
       const hz = c2.numOf(p.frequency);
-      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt4(hz, 2)} Hz` : "\u2014");
+      this.text(`ph${i}Hz`, Number.isFinite(hz) ? `${fmt5(hz, 2)} Hz` : "\u2014");
       const pf = c2.numOf(p.power_factor);
-      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt4(pf, 2) : "\u2014");
+      this.text(`ph${i}Pf`, Number.isFinite(pf) ? fmt5(pf, 2) : "\u2014");
       const va = c2.numOf(p.apparent);
-      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt4(va, 0)} VA` : "\u2014");
+      this.text(`ph${i}Va`, Number.isFinite(va) ? `${fmt5(va, 0)} VA` : "\u2014");
       this.bar(`ph${i}Bar`, Number.isFinite(cur) ? cur / maxI : 0);
       this.show(`ph${i}Flag`, Boolean(bal.flagged[i]));
       this.tone(`ph${i}`, bal.flagged[i] ? bal.tone : "");
@@ -68342,22 +68656,22 @@ var HeatSection = class extends Section {
     this.text("status", !Number.isFinite(w) ? "Ingen data" : w > 0 ? "Varmer" : "Ingen varmeeffekt");
     this.tone("status", w > 0 ? "heat" : "");
     const price = c2.num("heat_price");
-    this.text("priceV", Number.isFinite(price) ? fmt4(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt5(price, 2) : "\u2014");
     this.text("priceU", "kr/kWh");
-    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt4(c2.num(k), 1)} \xB0C` : "\u2014";
+    const deg = (k) => Number.isFinite(c2.num(k)) ? `${fmt5(c2.num(k), 1)} \xB0C` : "\u2014";
     this.text("sup", deg("heat_supply"));
     this.text("ret", deg("heat_return"));
     this.text("cool", deg("heat_cooling"));
     const flow = c2.num("heat_flow");
     const unit = c2.stateObj("heat_flow")?.attributes?.unit_of_measurement || "";
-    this.text("flow", Number.isFinite(flow) ? `${fmt4(flow, 0)} ${unit}` : "\u2014");
+    this.text("flow", Number.isFinite(flow) ? `${fmt5(flow, 0)} ${unit}` : "\u2014");
     this._updateToday();
   }
   _updateToday() {
     const c2 = this.card;
     this.value("today", fmtEnergy2(c2.today("heat_energy", "energy")));
     const cost = c2.today("heat_cost", "monetary");
-    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt5(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -68423,15 +68737,15 @@ var WaterSection = class extends Section {
     const c2 = this.card;
     this._arrange();
     const lpm = c2.flowLpm("water_flow");
-    this.text("flowV", Number.isFinite(lpm) ? fmt4(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
+    this.text("flowV", Number.isFinite(lpm) ? fmt5(lpm, lpm < 10 ? 1 : 0) : "\u2014", true);
     const st = c2.waterFlowState(lpm);
     this.text("status", st.label);
     this.tone("status", st.tone);
     const cost = c2.num("water_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt5(cost, 2) : "\u2014");
     this.text("costU", "kr");
     const price = c2.num("water_price");
-    this.text("priceV", Number.isFinite(price) ? fmt4(price, 2) : "\u2014");
+    this.text("priceV", Number.isFinite(price) ? fmt5(price, 2) : "\u2014");
     this.text("priceU", "kr/m\xB3");
     this._updateToday();
   }
@@ -68511,7 +68825,7 @@ var EvSection = class extends Section {
     this.value("month", fmtEnergy2(c2.kwh("ev_energy_month")));
     this.value("session", fmtEnergy2(c2.kwh("ev_session")));
     const cost = c2.num("ev_cost_today");
-    this.text("costV", Number.isFinite(cost) ? fmt4(cost, 2) : "\u2014");
+    this.text("costV", Number.isFinite(cost) ? fmt5(cost, 2) : "\u2014");
     this.text("costU", "kr");
   }
 };
@@ -68581,7 +68895,7 @@ function monthlyFromBills(bills) {
 }
 
 // src/cards/ha-electricity-bill-card/ha-electricity-bill-card.js
-var VERSION55 = "0.3.0";
+var VERSION56 = "0.3.0";
 var MONTHS3 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var MON = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var p24 = (n) => String(n).padStart(2, "0");
@@ -68656,7 +68970,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     }
   }
   _build() {
-    this.shadowRoot.innerHTML = `<style>${STYLE10}</style><ha-card>
+    this.shadowRoot.innerHTML = `<style>${STYLE11}</style><ha-card>
       <div class="head"><span class="badge"><ha-icon icon="mdi:receipt-text-clock-outline"></ha-icon></span><div><h2></h2><p data-provider></p></div></div>
       <div data-missing hidden class="missing"></div>
       <section data-hero class="hero"></section>
@@ -68990,7 +69304,7 @@ var HAElectricityBillCard = class _HAElectricityBillCard extends HTMLElement {
     return 10;
   }
 };
-var STYLE10 = `
+var STYLE11 = `
 :host{--eb-accent:#f59e0b;--eb-ok:#22c55e;--eb-warn:#f59e0b;--eb-bad:#ef4444;--eb-muted:var(--secondary-text-color);--eb-line:color-mix(in srgb,var(--primary-text-color) 10%,transparent);--eb-soft:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}
 ha-card{padding:18px;overflow:hidden}
 .head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
@@ -69048,7 +69362,7 @@ button,a.ghost{font:inherit;font-size:13px;font-weight:600;border-radius:10px;pa
 if (!customElements.get("ha-electricity-bill-card")) customElements.define("ha-electricity-bill-card", HAElectricityBillCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ha-electricity-bill-card", name: "HA Electricity Bill Card", description: "Elregninger mod HA's egen m\xE5ling, prognose for m\xE5neden og status for ny elaftale", preview: true });
-console.info(`%c HA-ELECTRICITY-BILL-CARD %c ${VERSION55} `, "color:#1b1205;background:#f59e0b;font-weight:800", "color:#f59e0b;background:#1b1205");
+console.info(`%c HA-ELECTRICITY-BILL-CARD %c ${VERSION56} `, "color:#1b1205;background:#f59e0b;font-weight:800", "color:#f59e0b;background:#1b1205");
 
 // src/cards/ha-energy-center-card/sections/bill.js
 var BillSection = class extends Section {
@@ -69072,7 +69386,7 @@ var BillSection = class extends Section {
 };
 
 // src/cards/ha-energy-center-card/ha-energy-center-card.js
-var VERSION56 = "0.4.0";
+var VERSION57 = "0.4.0";
 var CARD_TAG2 = "ha-energy-center-card";
 var TABS2 = [
   { key: "overview", label: "Oversigt", icon: "mdi:view-dashboard-outline", tone: "el", Section: OverviewSection },
@@ -69310,7 +69624,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     this._sections.clear();
     this._today.clear();
     this.shadowRoot.innerHTML = `
-<style>${STYLE9}</style>
+<style>${STYLE10}</style>
 <div class="shell">
   <header class="top">
     <div class="brand">
@@ -69450,7 +69764,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
       const row = this._dlgRows[i];
       const p3 = fmtPower2(w);
       row.v.textContent = Number.isFinite(w) ? `${p3.v} ${p3.u}` : "Ingen data";
-      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt4(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
+      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt5(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
       row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
       row.el.classList.toggle("off", !Number.isFinite(w));
       row.el.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);
@@ -69595,7 +69909,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG2)) {
     preview: false
   });
 }
-console.info(`%c ENERGY CENTER %c v${VERSION56} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
+console.info(`%c ENERGY CENTER %c v${VERSION57} `, "color:#0a101c;background:#4f8cff;font-weight:700", "color:#cfe0ff;background:#101828");
 
 // src/cards/ha-music-card/editor.js
 var SCHEMA = [
@@ -70465,7 +70779,7 @@ var MusicApi = class {
 };
 
 // src/cards/ha-music-card/views.js
-var esc12 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var esc13 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 function fmtTime(sec) {
   sec = Math.max(0, Math.floor(Number(sec) || 0));
   const h = Math.floor(sec / 3600);
@@ -70493,7 +70807,7 @@ function art(item2, cls = "art", large = false) {
   const src = large ? item2?.image_large || item2?.image : item2?.image;
   const ph2 = `<div class="${cls} art-ph" style="--h:${hue(item2?.name)}">${icon4(TYPE_ICON[item2?.media_type] || "musicNote")}</div>`;
   if (!src) return ph2;
-  return `<img class="${cls}" src="${esc12(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="${esc12(TYPE_ICON[item2?.media_type] || "musicNote")}">`;
+  return `<img class="${cls}" src="${esc13(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="${esc13(TYPE_ICON[item2?.media_type] || "musicNote")}">`;
 }
 function hue(name = "") {
   let h = 0;
@@ -70530,7 +70844,7 @@ function tile2(ctx, item2) {
       ${circle ? "" : `<button class="fab" data-play="${key2}" aria-label="Afspil">${icon4("play")}</button>`}
       <button class="more" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>
     </div>
-    <div class="t">${esc12(item2.name)}</div><div class="s">${esc12(subtitle(item2))}</div></div>`;
+    <div class="t">${esc13(item2.name)}</div><div class="s">${esc13(subtitle(item2))}</div></div>`;
 }
 function skeletonTiles(n = 6) {
   return Array.from({ length: n }, () => `<div class="sk-tile"><div class="sk"></div><div class="sk sk-line" style="width:80%"></div><div class="sk sk-line" style="width:55%"></div></div>`).join("");
@@ -70540,11 +70854,11 @@ function skeletonRows(n = 8) {
 }
 function shelf(ctx, title, items, moreAction = "") {
   if (!items?.length) return "";
-  return `<section class="shelf"><div class="shelf-h"><h2>${esc12(title)}</h2>${moreAction ? `<button data-nav="${esc12(moreAction)}">Vis alle</button>` : ""}</div>
+  return `<section class="shelf"><div class="shelf-h"><h2>${esc13(title)}</h2>${moreAction ? `<button data-nav="${esc13(moreAction)}">Vis alle</button>` : ""}</div>
     <div class="row">${items.map((i) => tile2(ctx, i)).join("")}</div></section>`;
 }
 function emptyState(ic2, title, text2 = "", action = "") {
-  return `<div class="empty">${icon4(ic2)}<b>${esc12(title)}</b>${text2 ? `<span>${esc12(text2)}</span>` : ""}${action}</div>`;
+  return `<div class="empty">${icon4(ic2)}<b>${esc13(title)}</b>${text2 ? `<span>${esc13(text2)}</span>` : ""}${action}</div>`;
 }
 function greeting(now = /* @__PURE__ */ new Date()) {
   const h = now.getHours();
@@ -70586,7 +70900,7 @@ function homeView(ctx, data) {
       html += `<div class="quick">${quick.map((item2) => {
         const key2 = ctx.reg(item2);
         const on = ctx.isCurrent(item2);
-        return `<div class="qt" role="button" tabindex="0" data-open="${key2}">${art(item2)}<div class="t">${esc12(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
+        return `<div class="qt" role="button" tabindex="0" data-open="${key2}">${art(item2)}<div class="t">${esc13(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
       }).join("")}</div>`;
     }
     html += shelf(ctx, "Dine playlister", data.playlists, "library:playlist");
@@ -70618,12 +70932,12 @@ function trackRow(ctx, item2, index, opts = {}) {
   const key2 = ctx.reg(item2);
   const on = ctx.isCurrent(item2);
   const withArt = opts.art !== false;
-  const num6 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc12(opts.label ?? index + 1)}</span>`}</div>`;
+  const num6 = opts.number === false ? "" : `<div class="n">${on ? eq(ctx.playing) : `<span>${esc13(opts.label ?? index + 1)}</span>`}</div>`;
   const playing = on && ctx.playing;
-  const sub2 = opts.sub == null ? (item2.artists || []).map((artist) => artist.uri ? `<button type="button" data-goto="${esc12(artist.uri)}" data-name="${esc12(artist.name)}">${esc12(artist.name)}</button>` : esc12(artist.name)).join(", ") : opts.subHtml ? opts.sub : esc12(opts.sub);
-  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${playing ? " playing" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key2}" data-idx="${index}" data-label="${esc12(opts.label ?? index + 1)}" data-uri="${esc12(item2.uri)}">
-    ${num6}<div class="main-c"><button type="button" class="track-play" aria-label="${playing ? "S\xE6t p\xE5 pause" : "Afspil"}: ${esc12(item2.name)}">${icon4("play", "track-play-icon")}${icon4("pause", "track-pause-icon")}</button>${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc12(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc12(item2.version)})</span>` : ""}</div>${sub2 ? `<div class="ts">${sub2}</div>` : ""}</div></div>
-    <div class="al">${esc12(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
+  const sub2 = opts.sub == null ? (item2.artists || []).map((artist) => artist.uri ? `<button type="button" data-goto="${esc13(artist.uri)}" data-name="${esc13(artist.name)}">${esc13(artist.name)}</button>` : esc13(artist.name)).join(", ") : opts.subHtml ? opts.sub : esc13(opts.sub);
+  return `<div class="tr${opts.number === false ? " nohead" : ""}${on ? " on" : ""}${playing ? " playing" : ""}${opts.cls ? ` ${opts.cls}` : ""}" data-track="${key2}" data-idx="${index}" data-label="${esc13(opts.label ?? index + 1)}" data-uri="${esc13(item2.uri)}">
+    ${num6}<div class="main-c"><button type="button" class="track-play" aria-label="${playing ? "S\xE6t p\xE5 pause" : "Afspil"}: ${esc13(item2.name)}">${icon4("play", "track-play-icon")}${icon4("pause", "track-pause-icon")}</button>${withArt ? art(item2) : ""}<div style="min-width:0"><div class="tt">${esc13(item2.name)}${item2.version ? ` <span style="color:var(--mc-dim)">(${esc13(item2.version)})</span>` : ""}</div>${sub2 ? `<div class="ts">${sub2}</div>` : ""}</div></div>
+    <div class="al">${esc13(opts.col3 ?? item2.album?.name ?? "")}</div><div class="d">${item2.duration ? fmtTime(item2.duration) : ""}</div>
     <button class="dots" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>`;
 }
 function trackHead() {
@@ -70641,9 +70955,9 @@ function libraryView(ctx, st) {
   else if (!st.items.length) body = emptyState(LIB_TYPES.find((t) => t[0] === st.type)?.[2] || "musicNote", st.filter ? "Ingen resultater" : `Ingen ${label.toLowerCase()} endnu`, st.filter ? `Intet matcher \u201C${st.filter}\u201D.` : st.fav ? "Du har ingen favoritter her endnu." : "");
   else if (st.type === "track") body = `${trackHead()}<div class="tracks" data-list>${libraryItems(ctx, st.type, st.items)}</div>`;
   else body = `<div class="grid" data-list>${libraryItems(ctx, st.type, st.items)}</div>`;
-  return `<div class="view lib"><div class="lib-head"><h1>${esc12(label)}</h1>
+  return `<div class="view lib"><div class="lib-head"><h1>${esc13(label)}</h1>
     <div class="chips">${LIB_TYPES.map(([t, l]) => `<button class="chip${t === st.type ? " on" : ""}" data-libtype="${t}">${l}</button>`).join("")}</div>
-    <div class="lib-tools"><label class="filter">${icon4("magnify")}<input data-filter placeholder="Filtr\xE9r ${esc12(label.toLowerCase())}" value="${esc12(st.filter || "")}" enterkeyhint="search"></label>
+    <div class="lib-tools"><label class="filter">${icon4("magnify")}<input data-filter placeholder="Filtr\xE9r ${esc13(label.toLowerCase())}" value="${esc13(st.filter || "")}" enterkeyhint="search"></label>
       <button class="chip${st.fav ? " on" : ""}" data-favfilter>${icon4(st.fav ? "heart" : "heartOutline")}Favoritter</button>
       <select class="sort" data-sort aria-label="Sort\xE9r">${SORTS.map(([v, l]) => `<option value="${v}"${v === st.sort ? " selected" : ""}>${l}</option>`).join("")}</select></div></div>
     ${body}<div class="sentinel" data-sentinel>${st.loading && st.items.length ? '<div class="sk" style="height:6px;width:120px;margin:16px auto"></div>' : ""}</div></div>`;
@@ -70661,7 +70975,7 @@ function searchView(ctx, st) {
   let html = `<div class="view search">`;
   if (!st.query) {
     if (st.recent?.length) {
-      html += `<h2 class="sec-h">Seneste s\xF8gninger</h2><div class="recent">${st.recent.map((q2, i) => `<span class="chip" role="button" tabindex="0" data-recent="${esc12(q2)}">${icon4("history")}${esc12(q2)}<button class="x" data-unrecent="${i}" aria-label="Fjern">${icon4("close")}</button></span>`).join("")}</div>`;
+      html += `<h2 class="sec-h">Seneste s\xF8gninger</h2><div class="recent">${st.recent.map((q2, i) => `<span class="chip" role="button" tabindex="0" data-recent="${esc13(q2)}">${icon4("history")}${esc13(q2)}<button class="x" data-unrecent="${i}" aria-label="Fjern">${icon4("close")}</button></span>`).join("")}</div>`;
     }
     html += `<h2 class="sec-h">Gennemse alt</h2><div class="browse">${BROWSE.map(([t, l, c2, ic2]) => `<button class="bt" style="background:${c2}" data-nav="library:${t}">${l}${icon4(ic2)}</button>`).join("")}</div>`;
     return `${html}</div>`;
@@ -70677,7 +70991,7 @@ function searchView(ctx, st) {
   const bkey = ctx.reg(best);
   html += `<div class="best"><div><h2 class="sec-h">Bedste resultat</h2>
     <div class="best-tile${best.media_type === "artist" ? " circle" : ""}" role="button" tabindex="0" data-open="${bkey}">${art(best, "art", true)}
-      <div><div class="t">${esc12(best.name)}</div><div class="s">${artistNames(best) ? `${esc12(artistNames(best))}` : ""}<span class="tag">${esc12(MEDIA_LABEL[best.media_type] || "")}</span></div></div>
+      <div><div class="t">${esc13(best.name)}</div><div class="s">${artistNames(best) ? `${esc13(artistNames(best))}` : ""}<span class="tag">${esc13(MEDIA_LABEL[best.media_type] || "")}</span></div></div>
       <button class="fab big" data-play="${bkey}" aria-label="Afspil">${icon4("play")}</button></div></div>`;
   html += r.tracks.length ? `<div><h2 class="sec-h">Numre</h2><div class="tracks cozy-list">${r.tracks.slice(0, 4).map((t, i) => trackRow(ctx, t, i, { number: false })).join("")}</div></div>` : "<div></div>";
   html += "</div>";
@@ -70697,13 +71011,13 @@ function detailView(ctx, st) {
   const isPodcast = item2.media_type === "podcast";
   const total = tracks.reduce((n, t) => n + (t.duration || 0), 0);
   const meta = [];
-  if (item2.artists?.length) meta.push(item2.artists.map((a) => a.uri ? `<button class="link" data-goto="${esc12(a.uri)}" data-name="${esc12(a.name)}">${esc12(a.name)}</button>` : `<b>${esc12(a.name)}</b>`).join(", "));
-  if (item2.owner) meta.push(`<b>${esc12(item2.owner)}</b>`);
-  if (item2.year) meta.push(esc12(item2.year));
+  if (item2.artists?.length) meta.push(item2.artists.map((a) => a.uri ? `<button class="link" data-goto="${esc13(a.uri)}" data-name="${esc13(a.name)}">${esc13(a.name)}</button>` : `<b>${esc13(a.name)}</b>`).join(", "));
+  if (item2.owner) meta.push(`<b>${esc13(item2.owner)}</b>`);
+  if (item2.year) meta.push(esc13(item2.year));
   if (tracks.length && !isArtist) meta.push(`${tracks.length} ${isPodcast ? "afsnit" : tracks.length === 1 ? "nummer" : "numre"}${total && !isPodcast ? `, ${fmtTotal(total)}` : ""}`);
   let html = `<div class="view hero-view detail"><div class="hero${isArtist ? " circle" : ""}">${art(item2, "art", true)}
-    <div style="min-width:0"><div class="kind">${esc12(MEDIA_LABEL[item2.media_type] || "")}</div><h1 class="${item2.name.length > 42 ? "long" : item2.name.length > 18 ? "mid" : ""}">${esc12(item2.name)}</h1>
-    <div class="meta">${meta.join(" <span>\u2022</span> ")}</div>${item2.description ? `<div class="desc">${esc12(item2.description.replace(/<[^>]+>/g, ""))}</div>` : ""}</div></div>
+    <div style="min-width:0"><div class="kind">${esc13(MEDIA_LABEL[item2.media_type] || "")}</div><h1 class="${item2.name.length > 42 ? "long" : item2.name.length > 18 ? "mid" : ""}">${esc13(item2.name)}</h1>
+    <div class="meta">${meta.join(" <span>\u2022</span> ")}</div>${item2.description ? `<div class="desc">${esc13(item2.description.replace(/<[^>]+>/g, ""))}</div>` : ""}</div></div>
     <div class="actions"><div class="actions-bg"></div><button class="fab big" data-play="${key2}" aria-label="Afspil">${icon4(ctx.isCurrent(item2) && ctx.playing ? "pause" : "play")}</button>
     ${isPodcast ? "" : `<button class="act" data-shuffleplay="${key2}" aria-label="Bland">${icon4("shuffleVariant")}</button>`}
     <button class="act${item2.favorite ? " on" : ""}" data-fav="${key2}" aria-label="Favorit">${icon4(item2.favorite ? "heart" : "heartOutline")}</button>
@@ -70742,46 +71056,46 @@ function queuePanel(ctx, st) {
 }
 function queueRow(ctx, item2, current2, editable) {
   const key2 = ctx.reg(item2);
-  return `<div class="qi${current2 ? " on" : ""}" role="button" tabindex="0" data-qplay="${esc12(item2.queue_item_id || "")}">${art(item2)}
-    <div class="tx"><div class="tt">${esc12(item2.name)}</div><div class="ts">${esc12(artistNames(item2) || MEDIA_LABEL[item2.media_type] || "")}</div></div>
+  return `<div class="qi${current2 ? " on" : ""}" role="button" tabindex="0" data-qplay="${esc13(item2.queue_item_id || "")}">${art(item2)}
+    <div class="tx"><div class="tt">${esc13(item2.name)}</div><div class="ts">${esc13(artistNames(item2) || MEDIA_LABEL[item2.media_type] || "")}</div></div>
     ${current2 ? eq(ctx.playing) : ""}
-    ${editable ? `<div class="qa"><button class="mini-btn" data-qact="move_queue_item_next" data-qid="${esc12(item2.queue_item_id)}" title="Spil som n\xE6ste" aria-label="Spil som n\xE6ste">${icon4("skipNextCircleOutline")}</button>
-      <button class="mini-btn" data-qact="move_queue_item_up" data-qid="${esc12(item2.queue_item_id)}" title="Flyt op" aria-label="Flyt op">${icon4("arrowUp")}</button>
-      <button class="mini-btn" data-qact="move_queue_item_down" data-qid="${esc12(item2.queue_item_id)}" title="Flyt ned" aria-label="Flyt ned">${icon4("arrowDown")}</button>
-      <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc12(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
+    ${editable ? `<div class="qa"><button class="mini-btn" data-qact="move_queue_item_next" data-qid="${esc13(item2.queue_item_id)}" title="Spil som n\xE6ste" aria-label="Spil som n\xE6ste">${icon4("skipNextCircleOutline")}</button>
+      <button class="mini-btn" data-qact="move_queue_item_up" data-qid="${esc13(item2.queue_item_id)}" title="Flyt op" aria-label="Flyt op">${icon4("arrowUp")}</button>
+      <button class="mini-btn" data-qact="move_queue_item_down" data-qid="${esc13(item2.queue_item_id)}" title="Flyt ned" aria-label="Flyt ned">${icon4("arrowDown")}</button>
+      <button class="mini-btn" data-qact="remove_queue_item" data-qid="${esc13(item2.queue_item_id)}" title="Fjern" aria-label="Fjern fra k\xF8">${icon4("close")}</button></div>` : `<button class="mini-btn" data-menu="${key2}" aria-label="Flere valg">${icon4("dotsHorizontal")}</button>`}</div>`;
 }
 function speakersPanel(ctx, sp) {
   const active2 = sp.players.find((p) => p.entity_id === sp.active);
   let html = "";
   if (active2) {
     const members = sp.players.filter((p) => p.groupedWithActive && p.entity_id !== active2.entity_id);
-    html += `<div class="sp-cur"><div class="lbl">Styrer nu</div><div class="nm">${icon4(active2.icon)}${esc12(active2.name)}${members.length ? ` <span style="color:var(--mc-dim);font-weight:700">+${members.length}</span>` : ""}</div>
-      <div class="sub">${esc12(active2.status)}</div>
+    html += `<div class="sp-cur"><div class="lbl">Styrer nu</div><div class="nm">${icon4(active2.icon)}${esc13(active2.name)}${members.length ? ` <span style="color:var(--mc-dim);font-weight:700">+${members.length}</span>` : ""}</div>
+      <div class="sub">${esc13(active2.status)}</div>
       ${members.length ? `<div class="sp-vol" style="padding:10px 0 0">${icon4("speakerMultiple")}<input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(sp.groupVolume * 100)}" data-gvol aria-label="Gruppevolumen" style="--p:${Math.round(sp.groupVolume * 100)}%"><span style="font-size:12px;color:var(--mc-dim);min-width:30px">Alle</span></div>` : ""}</div>`;
   }
-  html += `<div class="sub-h"><span>H\xF8jttalere</span></div><div class="sp-hint">Tryk p\xE5 en h\xF8jttaler for at styre den \xB7 ${icon4("plus")} spiller med p\xE5 ${esc12(active2?.name || "den valgte")}</div>`;
+  html += `<div class="sub-h"><span>H\xF8jttalere</span></div><div class="sp-hint">Tryk p\xE5 en h\xF8jttaler for at styre den \xB7 ${icon4("plus")} spiller med p\xE5 ${esc13(active2?.name || "den valgte")}</div>`;
   for (const p of sp.players) {
     const isActive = p.entity_id === sp.active;
     const canGroup = !isActive && p.canGroup && active2?.canGroup && !p.isGroup && !active2?.isGroup;
-    html += `<div class="sp${isActive ? " active" : ""}${p.groupedWithActive && !isActive ? " grouped" : ""}" data-sp="${esc12(p.entity_id)}">
-      <div class="sp-row"><button class="sp-main" data-select="${esc12(p.entity_id)}"><span class="sp-ic">${icon4(p.icon)}${p.playing ? eq(true) : ""}</span>
-        <span class="sp-tx"><div class="sp-nm">${esc12(p.name)}${p.isGroup ? '<span class="sp-badge">Gruppe</span>' : ""}</div><div class="sp-st">${esc12(p.status)}</div></span></button>
-        ${isActive ? "" : `<button class="grp${p.groupedWithActive ? " on" : ""}" data-group="${esc12(p.entity_id)}" ${canGroup ? "" : "disabled"} aria-label="${p.groupedWithActive ? "Fjern fra gruppen" : "Spil sammen med den valgte"}" title="${canGroup ? p.groupedWithActive ? "Fjern fra gruppen" : `Spil sammen med ${esc12(active2?.name || "")}` : "Kan ikke grupperes"}">${icon4(p.groupedWithActive ? "check" : "plus")}</button>`}</div>
-      ${p.available ? `<div class="sp-vol"><button class="mini-btn" data-mute="${esc12(p.entity_id)}" aria-label="Lydl\xF8s">${icon4(p.muted ? "volumeOff" : p.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
-        <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(p.volume * 100)}" data-vol="${esc12(p.entity_id)}" aria-label="Volumen ${esc12(p.name)}" style="--p:${Math.round(p.volume * 100)}%"></div>` : ""}
-      ${!isActive && sp.canTransfer && p.available && !p.groupedWithActive ? `<button class="pill sp-move" data-transfer="${esc12(p.entity_id)}">${icon4("swapHorizontal")}Flyt musikken hertil</button>` : ""}</div>`;
+    html += `<div class="sp${isActive ? " active" : ""}${p.groupedWithActive && !isActive ? " grouped" : ""}" data-sp="${esc13(p.entity_id)}">
+      <div class="sp-row"><button class="sp-main" data-select="${esc13(p.entity_id)}"><span class="sp-ic">${icon4(p.icon)}${p.playing ? eq(true) : ""}</span>
+        <span class="sp-tx"><div class="sp-nm">${esc13(p.name)}${p.isGroup ? '<span class="sp-badge">Gruppe</span>' : ""}</div><div class="sp-st">${esc13(p.status)}</div></span></button>
+        ${isActive ? "" : `<button class="grp${p.groupedWithActive ? " on" : ""}" data-group="${esc13(p.entity_id)}" ${canGroup ? "" : "disabled"} aria-label="${p.groupedWithActive ? "Fjern fra gruppen" : "Spil sammen med den valgte"}" title="${canGroup ? p.groupedWithActive ? "Fjern fra gruppen" : `Spil sammen med ${esc13(active2?.name || "")}` : "Kan ikke grupperes"}">${icon4(p.groupedWithActive ? "check" : "plus")}</button>`}</div>
+      ${p.available ? `<div class="sp-vol"><button class="mini-btn" data-mute="${esc13(p.entity_id)}" aria-label="Lydl\xF8s">${icon4(p.muted ? "volumeOff" : p.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
+        <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(p.volume * 100)}" data-vol="${esc13(p.entity_id)}" aria-label="Volumen ${esc13(p.name)}" style="--p:${Math.round(p.volume * 100)}%"></div>` : ""}
+      ${!isActive && sp.canTransfer && p.available && !p.groupedWithActive ? `<button class="pill sp-move" data-transfer="${esc13(p.entity_id)}">${icon4("swapHorizontal")}Flyt musikken hertil</button>` : ""}</div>`;
   }
   return html;
 }
 function nowPlayingArtists(np, cls) {
   const artists = (np.item?.artists || []).map((artist, index) => ({ artist, index })).filter(({ artist }) => artist?.name && artist?.uri);
-  if (artists.length) return artists.map(({ artist, index }) => `<button class="${cls}" data-npopen="artist" data-artist-index="${index}">${esc12(artist.name)}</button>`).join('<span class="artist-separator">, </span>');
-  return `<span class="${cls}">${esc12(np.artist || np.playerName || "")}</span>`;
+  if (artists.length) return artists.map(({ artist, index }) => `<button class="${cls}" data-npopen="artist" data-artist-index="${index}">${esc13(artist.name)}</button>`).join('<span class="artist-separator">, </span>');
+  return `<span class="${cls}">${esc13(np.artist || np.playerName || "")}</span>`;
 }
 function barHtml(np) {
   const key2 = np.key;
   return `<div class="np-left">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon4("musicNote")}</div>`}
-      <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc12(np.title)}</button><div class="np-artists">${nowPlayingArtists(np, "np-a")}</div>` : `<span class="np-t">Intet spiller</span><span class="np-a">${esc12(np.playerName || "V\xE6lg en h\xF8jttaler")}</span>`}</div>
+      <div class="np-tx">${np.title ? `<button class="np-t" data-npopen="album">${esc13(np.title)}</button><div class="np-artists">${nowPlayingArtists(np, "np-a")}</div>` : `<span class="np-t">Intet spiller</span><span class="np-a">${esc13(np.playerName || "V\xE6lg en h\xF8jttaler")}</span>`}</div>
       ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div>
     <div class="np-mid"><div class="ctrls">
       <button class="cb${np.shuffle ? " on" : ""}" data-cmd="shuffle" aria-label="Bland" ${np.live || !np.entity ? "disabled" : ""}>${icon4("shuffleVariant")}</button>
@@ -70791,20 +71105,20 @@ function barHtml(np) {
       <button class="cb${np.repeat !== "off" ? " on" : ""}" data-cmd="repeat" aria-label="Gentag" ${np.live || !np.entity ? "disabled" : ""}>${icon4(np.repeat === "one" ? "repeatOnce" : "repeat")}</button></div>
       <div class="seek"><span class="tm" data-pos>${np.live ? "" : fmtTime(np.position)}</span>${np.live ? '<span class="live">LIVE</span>' : `<input class="rng" type="range" min="0" max="${Math.max(1, Math.round(np.duration))}" step="1" value="${Math.round(np.position)}" data-seek aria-label="Spoleposition" ${np.duration ? "" : "disabled"}>`}<span class="tm" data-dur>${np.live ? "" : fmtTime(np.duration)}</span></div></div>
     <div class="np-right"><button class="cb${np.panel === "queue" ? " on act-p" : ""}" data-panel="queue" aria-label="K\xF8" title="K\xF8">${icon4("playlistPlay")}</button>
-      <button class="spk-btn" data-panel="speakers" title="H\xF8jttalere">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>
+      <button class="spk-btn" data-panel="speakers" title="H\xF8jttalere">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc13(np.speakerLabel)}</span></button>
       <div class="vol"><button class="cb" data-cmd="mute" aria-label="Lydl\xF8s">${icon4(np.muted ? "volumeOff" : np.volume < 0.35 ? "volumeLow" : "volumeHigh")}</button>
       <input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(np.volume * 100)}" data-npvol aria-label="Volumen"></div></div>`;
 }
 function miniHtml(np) {
   return `<div class="mini-in"><button class="mini-open" data-sheet="player">${np.title ? art(np.item || { image: np.image, media_type: "track" }) : `<div class="art art-ph">${icon4("musicNote")}</div>`}
-    <span class="np-tx"><span class="np-t">${esc12(np.title || "Intet spiller")}</span><span class="np-a">${np.groupCount || np.playing ? icon4(np.groupCount ? "speakerMultiple" : "speaker") + " " : ""}${esc12(np.title ? np.artist ? `${np.artist} \xB7 ${np.speakerLabel}` : np.speakerLabel : np.speakerLabel)}</span></span></button>
+    <span class="np-tx"><span class="np-t">${esc13(np.title || "Intet spiller")}</span><span class="np-a">${np.groupCount || np.playing ? icon4(np.groupCount ? "speakerMultiple" : "speaker") + " " : ""}${esc13(np.title ? np.artist ? `${np.artist} \xB7 ${np.speakerLabel}` : np.speakerLabel : np.speakerLabel)}</span></span></button>
     ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}
     <button class="cb" data-cmd="playpause" aria-label="${np.playing ? "Pause" : "Afspil"}">${icon4(np.playing ? "pause" : "play")}</button></div>
     <div class="mini-prog"><i data-miniprog style="width:${np.duration ? Math.min(100, np.position / np.duration * 100) : 0}%"></i></div>`;
 }
 function fullPlayerHtml(np) {
   return `<div class="fp">${np.title ? art(np.item || { image: np.image, image_large: np.imageLarge, media_type: "track" }, `fp-art art ${np.playing ? "playing" : "paused"}`, true) : `<div class="fp-art art art-ph">${icon4("musicNote")}</div>`}
-    <div><div class="fp-row"><div class="fp-tx"><button class="fp-t" data-npopen="album">${esc12(np.title || "Intet spiller")}</button><div class="fp-artists">${nowPlayingArtists(np, "fp-a")}</div></div>
+    <div><div class="fp-row"><div class="fp-tx"><button class="fp-t" data-npopen="album">${esc13(np.title || "Intet spiller")}</button><div class="fp-artists">${nowPlayingArtists(np, "fp-a")}</div></div>
       ${np.title && np.canFav ? `<button class="heart${np.favorite ? " on" : ""}" data-npfav aria-label="Favorit">${icon4(np.favorite ? "heart" : "heartOutline")}</button>` : ""}</div></div>
     <div class="fp-seek">${np.live ? '<div style="display:flex;justify-content:center;padding:8px 0"><span class="live">LIVE</span></div>' : `<input class="rng" type="range" min="0" max="${Math.max(1, Math.round(np.duration))}" step="1" value="${Math.round(np.position)}" data-seek aria-label="Spoleposition" ${np.duration ? "" : "disabled"}>
       <div class="fp-times"><span data-pos>${fmtTime(np.position)}</span><span data-dur>-${fmtTime(Math.max(0, np.duration - np.position))}</span></div>`}</div>
@@ -70814,12 +71128,12 @@ function fullPlayerHtml(np) {
       <button class="cb" data-cmd="next" aria-label="N\xE6ste" ${np.live ? "disabled" : ""}>${icon4("skipNext")}</button>
       <button class="cb sidebtn${np.repeat !== "off" ? " on" : ""}" data-cmd="repeat" aria-label="Gentag" ${np.live ? "disabled" : ""}>${icon4(np.repeat === "one" ? "repeatOnce" : "repeat")}</button></div>
     <div class="fp-vol"><button class="cb" data-cmd="mute" aria-label="Lydl\xF8s" style="color:inherit">${icon4(np.muted ? "volumeOff" : "volumeLow")}</button><input class="rng" type="range" min="0" max="100" step="1" value="${Math.round(np.volume * 100)}" data-npvol aria-label="Volumen">${icon4("volumeHigh")}</div>
-    <div class="fp-foot"><button class="spk-btn" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>
+    <div class="fp-foot"><button class="spk-btn" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc13(np.speakerLabel)}</span></button>
       <button class="round" style="background:rgba(255,255,255,.12)" data-sheet="queue" aria-label="K\xF8">${icon4("playlistPlay")}</button></div></div>`;
 }
 function menuHtml(item2, actions) {
-  return `<div class="menu-head">${art(item2)}<div style="min-width:0"><div class="t">${esc12(item2.name)}</div><div class="s">${esc12([MEDIA_LABEL[item2.media_type], artistNames(item2)].filter(Boolean).join(" \xB7 "))}</div></div></div>
-    ${actions.map((a) => `<button class="mi${a.sep ? " sep" : ""}" data-mact="${a.id}">${icon4(a.icon)}${esc12(a.label)}</button>`).join("")}`;
+  return `<div class="menu-head">${art(item2)}<div style="min-width:0"><div class="t">${esc13(item2.name)}</div><div class="s">${esc13([MEDIA_LABEL[item2.media_type], artistNames(item2)].filter(Boolean).join(" \xB7 "))}</div></div></div>
+    ${actions.map((a) => `<button class="mi${a.sep ? " sep" : ""}" data-mact="${a.id}">${icon4(a.icon)}${esc13(a.label)}</button>`).join("")}`;
 }
 
 // src/cards/ha-music-card/color.js
@@ -71351,7 +71665,7 @@ var HaMusicCard = class extends HTMLElement {
       }
       if (on === row.classList.contains("on") && !(on && n && n.querySelector(".eq")?.classList.contains("paused") === np.playing)) continue;
       row.classList.toggle("on", on);
-      if (n) n.innerHTML = on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc12(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`;
+      if (n) n.innerHTML = on ? `<span class="eq${np.playing ? "" : " paused"}"><i></i><i></i><i></i></span>` : `<span>${esc13(row.dataset.label || Number(row.dataset.idx) + 1)}</span>`;
     }
   }
   async _sampleAccent(url) {
@@ -71442,7 +71756,7 @@ var HaMusicCard = class extends HTMLElement {
       ${item2("home", "Hjem", "home", v.name === "home")}${item2("search", "S\xF8g", "magnify", v.name === "search")}</div>
       <div class="side-box grow"><div class="nav-label">Dit bibliotek</div>
       ${LIB_TYPES.map(([t, l, ic2]) => item2(`library:${t}`, l, ic2, v.name === "library" && v.type === t)).join("")}
-      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc12(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon4("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc12(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
+      ${pls.length ? `<div class="nav-label">Playlister</div>${pls.map((p) => `<button class="side-pl" data-open="${this._reg(p)}">${p.image ? `<img src="${esc13(p.image)}" alt="" loading="lazy" data-ph="playlistMusic">` : `<span class="ph art">${icon4("playlistMusic")}</span>`}<span style="min-width:0"><div class="t">${esc13(p.name)}</div><div class="s">Playliste</div></span></button>`).join("")}` : ""}</div>`;
   }
   _renderTabs() {
     const v = this._view;
@@ -71456,14 +71770,14 @@ var HaMusicCard = class extends HTMLElement {
     const back = `<button class="round" data-back aria-label="Tilbage" ${this._histIdx > 0 ? "" : "disabled"}>${icon4("chevronLeft")}</button>`;
     const fwd = narrow ? "" : `<button class="round" data-fwd aria-label="Frem" ${this._histIdx < this._hist.length - 1 ? "" : "disabled"}>${icon4("chevronRight")}</button>`;
     const title = v.name === "detail" ? v.item?.name : v.name === "library" ? LIB_TYPES.find((t) => t[0] === v.type)?.[1] : "";
-    const search = v.name === "search" ? `<label class="search-box">${icon4("magnify")}<input data-search type="text" inputmode="search" placeholder="Hvad vil du h\xF8re?" value="${esc12(v.query || "")}" autocomplete="off" enterkeyhint="search">${v.query ? `<button data-searchclear aria-label="Ryd">${icon4("close")}</button>` : ""}</label>` : "";
+    const search = v.name === "search" ? `<label class="search-box">${icon4("magnify")}<input data-search type="text" inputmode="search" placeholder="Hvad vil du h\xF8re?" value="${esc13(v.query || "")}" autocomplete="off" enterkeyhint="search">${v.query ? `<button data-searchclear aria-label="Ryd">${icon4("close")}</button>` : ""}</label>` : "";
     const showBack = !narrow || this._histIdx > 0;
-    this.$.top.innerHTML = `${showBack ? back : ""}${fwd}${search || `<div class="top-title">${esc12(title || "")}</div>`}${narrow && v.name !== "search" ? this._chipHtml() : ""}`;
+    this.$.top.innerHTML = `${showBack ? back : ""}${fwd}${search || `<div class="top-title">${esc13(title || "")}</div>`}${narrow && v.name !== "search" ? this._chipHtml() : ""}`;
     this._onContentScroll();
   }
   _chipHtml() {
     const np = this._np();
-    return `<button class="chip-player" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc12(np.speakerLabel)}</span></button>`;
+    return `<button class="chip-player" data-sheet="speakers">${icon4(np.groupCount ? "speakerMultiple" : "speaker")}<span>${esc13(np.speakerLabel)}</span></button>`;
   }
   _renderTopChip() {
     const chip = this.$.top.querySelector(".chip-player");
@@ -71899,9 +72213,9 @@ var HaMusicCard = class extends HTMLElement {
       const bg = np.imageLarge || np.image;
       if (this._dragging && sh.contains(this._dragging)) return;
       sh.dataset.kind = kind;
-      sh.innerHTML = `${bg ? `<div class="sheet-bg" style="background-image:url('${esc12(bg).replace(/'/g, "%27")}')"></div>` : '<div class="sheet-bg" style="background:var(--mc-np-bg,#222)"></div>'}
+      sh.innerHTML = `${bg ? `<div class="sheet-bg" style="background-image:url('${esc13(bg).replace(/'/g, "%27")}')"></div>` : '<div class="sheet-bg" style="background:var(--mc-np-bg,#222)"></div>'}
         <div class="sheet-h"><span class="grab"></span><button class="round" style="background:transparent" data-closesheet aria-label="Luk">${icon4("chevronDown")}</button>
-        <div class="ttl"><small>Afspiller p\xE5</small>${esc12(np.speakerLabel)}</div><button class="round" style="background:transparent" data-npmenu aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>
+        <div class="ttl"><small>Afspiller p\xE5</small>${esc13(np.speakerLabel)}</div><button class="round" style="background:transparent" data-npmenu aria-label="Flere valg">${icon4("dotsHorizontal")}</button></div>
         <div class="sheet-body">${fullPlayerHtml(np)}</div>`;
       this._syncRanges(np);
       return;
@@ -72696,23 +73010,23 @@ function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Dat
 
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
-var VERSION57 = "1.2.0";
+var VERSION58 = "1.2.0";
 var MONTHS4 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
 var KIND = { bill: "faktureret", measured: "m\xE5lt i HA", estimate: "ansl\xE5et" };
 var nf = (d = 0) => new Intl.NumberFormat("da-DK", { maximumFractionDigits: d, minimumFractionDigits: d });
-var fmt5 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf(d).format(n);
+var fmt6 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf(d).format(n);
 var pct5 = (a, b) => b > 0 && a != null ? (a - b) / b * 100 : null;
 var fmtPct2 = (p) => p == null ? "\u2013" : `${p > 0 ? "+" : p < 0 ? "\u2212" : ""}${nf(0).format(Math.abs(p))} %`;
-var esc13 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc14 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 function niceMax2(v) {
   if (!(v > 0)) return 100;
   const e = Math.pow(10, Math.floor(Math.log10(v)));
   for (const s of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (v <= s * e) return s * e;
   return 10 * e;
 }
-var STYLE11 = `
+var STYLE12 = `
 :host{
   --c-gas:var(--amber,#f59e0b);
   --c-fv:var(--deep-orange,#ef5350);
@@ -72797,7 +73111,7 @@ button:focus-visible{outline:2px solid var(--ec-accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
 var TEMPLATE = `
-<style>${STYLE11}</style>
+<style>${STYLE12}</style>
 <section class="shell" part="shell">
   <div class="top">
     <div class="brand">
@@ -72961,7 +73275,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       this._ref("kpis").innerHTML = "";
       this._ref("years").innerHTML = "";
       this._ref("legend").innerHTML = "";
-      chart.innerHTML = `<div class="state">${this._stats ? `Ingen regninger endnu i <b>${esc13(this.config.bills_entity)}</b>.` : "Henter \u2026"}</div>`;
+      chart.innerHTML = `<div class="state">${this._stats ? `Ingen regninger endnu i <b>${esc14(this.config.bills_entity)}</b>.` : "Henter \u2026"}</div>`;
       return;
     }
     if (!this._sel || ![...this._sel].some((y) => years.includes(y))) this._sel = new Set(years.slice(-3));
@@ -72996,10 +73310,10 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const dYtd = ytd && ytdPrev && ytdPrev.n === ytd.n ? pct5(ytd.v, ytdPrev.v) : null;
     const peak = last12.length ? last12.reduce((a, b) => b.v > a.v ? b : a) : null;
     const items = [];
-    items.push(`<div class="hero-item tone-el"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt5(ytd?.v)}</b><small>kr</small></span><span class="hi-sub ${tone3(dYtd)}">${dYtd != null ? `<span class="d">${fmtPct2(dYtd)}</span> mod samme periode sidste \xE5r` : ytd ? `${ytd.n} hele m\xE5neder` : "\u2013"}</span></div>`);
-    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt5(s12)}</b><small>kr</small></span><span class="hi-sub">${s12 != null ? `ca. ${fmt5(s12 / 12)} kr pr. m\xE5ned` : "Under 12 m\xE5neder"}</span></div>`);
-    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Hele ${cy - 1}</span><span class="hi-val num"><b>${fmt5(prevFull?.v)}</b><small>kr</small></span><span class="hi-sub">${prevFull ? `${prevFull.n} m\xE5neder${prevFull.measured + prevFull.estimate > 1 ? ` \xB7 ${fmt5((prevFull.measured + prevFull.estimate) / prevFull.v * 100)} % m\xE5lt/ansl\xE5et` : " \xB7 alt faktureret"}` : "\u2013"}</span></div>`);
-    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Dyreste m\xE5ned (12 mdr)</span><span class="hi-val num"><b>${fmt5(peak?.v)}</b><small>kr</small></span><span class="hi-sub">${peak ? `${MONTHS_LONG2[peak.m]} ${peak.y}` : "\u2013"}</span></div>`);
+    items.push(`<div class="hero-item tone-el"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt6(ytd?.v)}</b><small>kr</small></span><span class="hi-sub ${tone3(dYtd)}">${dYtd != null ? `<span class="d">${fmtPct2(dYtd)}</span> mod samme periode sidste \xE5r` : ytd ? `${ytd.n} hele m\xE5neder` : "\u2013"}</span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt6(s12)}</b><small>kr</small></span><span class="hi-sub">${s12 != null ? `ca. ${fmt6(s12 / 12)} kr pr. m\xE5ned` : "Under 12 m\xE5neder"}</span></div>`);
+    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Hele ${cy - 1}</span><span class="hi-val num"><b>${fmt6(prevFull?.v)}</b><small>kr</small></span><span class="hi-sub">${prevFull ? `${prevFull.n} m\xE5neder${prevFull.measured + prevFull.estimate > 1 ? ` \xB7 ${fmt6((prevFull.measured + prevFull.estimate) / prevFull.v * 100)} % m\xE5lt/ansl\xE5et` : " \xB7 alt faktureret"}` : "\u2013"}</span></div>`);
+    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Dyreste m\xE5ned (12 mdr)</span><span class="hi-val num"><b>${fmt6(peak?.v)}</b><small>kr</small></span><span class="hi-sub">${peak ? `${MONTHS_LONG2[peak.m]} ${peak.y}` : "\u2013"}</span></div>`);
     this._ref("kpis").innerHTML = items.join("");
   }
   _color(year) {
@@ -73075,7 +73389,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     for (let i = 0; i <= 4; i++) {
       const gv2 = max / 4 * i;
       const gy = y(gv2);
-      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt5(gv2)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt6(gv2)}</text>`;
     }
     s += `</g><g class="axis">`;
     for (let g = 0; g < groups; g++) {
@@ -73102,7 +73416,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
           if (hatch) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity="${k === "estimate" ? 0.5 : 0.35}"/>`;
           base += v;
         }
-        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(d.v)}</text>`;
+        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt6(d.v)}</text>`;
       });
       s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad6.l + gw * g).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     }
@@ -73126,25 +73440,25 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const { cmp, opts } = this._heat;
     this._ref("title").textContent = "Opvarmning i kr";
     this._ref("subtitle").textContent = "Naturgas og fjernvarme p\xE5 samme skala";
-    const kr0 = (v) => v == null ? "\u2013" : `${fmt5(v)} kr`;
-    const kr2 = (v) => v == null ? "\u2013" : `${fmt5(v, 2)} kr`;
+    const kr0 = (v) => v == null ? "\u2013" : `${fmt6(v)} kr`;
+    const kr2 = (v) => v == null ? "\u2013" : `${fmt6(v, 2)} kr`;
     const items = [];
-    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt5(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas alt inkl. <span class="d">${kr2(cmp.gasPerKwhEvida)}</span> \xB7 kun Norlys-delen ${kr2(cmp.gasPerKwh)}</span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">Pris pr. kWh varme</span><span class="hi-val num"><b>${fmt6(cmp.heatPerKwh, 2)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Naturgas alt inkl. <span class="d">${kr2(cmp.gasPerKwhEvida)}</span> \xB7 kun Norlys-delen ${kr2(cmp.gasPerKwh)}</span></div>`);
     const sm = cmp.same;
     if (sm) {
       const names2 = sm.months.map((k) => MONTHS4[Number(k.slice(5)) - 1]);
       const label = names2.length > 1 ? `${names2[0]}\u2013${names2[names2.length - 1]}` : names2[0];
       const d = pct5(sm.heat, sm.gas + sm.gasEvida);
-      items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt5(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r alt inkl. ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span> (Norlys-delen ${kr0(sm.gas)})</span></div>`);
+      items.push(`<div class="hero-item tone-el"><span class="hi-label">Samme m\xE5neder (${label})</span><span class="hi-val num"><b>${fmt6(sm.heat)}</b><small>kr fjernvarme ${sm.months[0].slice(0, 4)}</small></span><span class="hi-sub">Naturgas \xE5ret f\xF8r alt inkl. ${kr0(sm.gas + sm.gasEvida)} <span class="d">${fmtPct2(d)}</span> (Norlys-delen ${kr0(sm.gas)})</span></div>`);
     }
     const yr = cmp.year;
-    if (yr) items.push(`<div class="hero-item tone-ev"><span class="hi-label">Et helt \xE5r (varmen fra ${yr.gasYear})</span><span class="hi-val num"><b>${fmt5(yr.heatNow)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Fra feb. 2027: ${kr0(yr.heat2027)} \xB7 naturgassen kostede alt inkl. ${kr0(yr.gasBill + yr.gasEvida)} (Norlys ${kr0(yr.gasBill)} + Evida/afgifter ${kr0(yr.gasEvida)})</span></div>`);
+    if (yr) items.push(`<div class="hero-item tone-ev"><span class="hi-label">Et helt \xE5r (varmen fra ${yr.gasYear})</span><span class="hi-val num"><b>${fmt6(yr.heatNow)}</b><small>kr fjernvarme</small></span><span class="hi-sub">Fra feb. 2027: ${kr0(yr.heat2027)} \xB7 naturgassen kostede alt inkl. ${kr0(yr.gasBill + yr.gasEvida)} (Norlys ${kr0(yr.gasBill)} + Evida/afgifter ${kr0(yr.gasEvida)})</span></div>`);
     const ks = cmp.acontoMonths;
     if (ks.length) {
       const m = this._heat.months;
       const paid = ks.reduce((s, k) => s + m[k].aconto, 0), used = ks.reduce((s, k) => s + m[k].heatMeasured + m[k].heatEstimate, 0);
       const diff = paid - used;
-      items.push(`<div class="hero-item ${diff >= 0 ? "tone-ok" : "tone-bad"}"><span class="hi-label">A conto mod m\xE5lt (${ks.length} mdr)</span><span class="hi-val num"><b>${fmt5(Math.abs(diff))}</b><small>kr ${diff >= 0 ? "tilbage" : "efterbetaling"}</small></span><span class="hi-sub">Betalt ${kr0(paid)} \xB7 m\xE5lt ${kr0(used)} \u2013 ved \xE5rsopg\xF8relsen</span></div>`);
+      items.push(`<div class="hero-item ${diff >= 0 ? "tone-ok" : "tone-bad"}"><span class="hi-label">A conto mod m\xE5lt (${ks.length} mdr)</span><span class="hi-val num"><b>${fmt6(Math.abs(diff))}</b><small>kr ${diff >= 0 ? "tilbage" : "efterbetaling"}</small></span><span class="hi-sub">Betalt ${kr0(paid)} \xB7 m\xE5lt ${kr0(used)} \u2013 ved \xE5rsopg\xF8relsen</span></div>`);
     } else {
       items.push(`<div class="hero-item tone-muted"><span class="hi-label">A conto mod m\xE5lt</span><span class="hi-val num"><b>\u2013</b></span><span class="hi-sub">Ingen fjernvarmeregninger i Elregning endnu</span></div>`);
     }
@@ -73153,7 +73467,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     this._ref("years").hidden = true;
     this._drawChart();
     this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida + afgifter (beregnet)</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
-    this._ref("note").textContent = `Alle bel\xF8b er inkl. moms og alle afgifter og till\xE6g. Naturgas: Norlys-regningerne (gaspris, transmission, abonnement) + den del, Evida fakturerer selv fra maj 2023 \u2013 distribution, fast grundpris/kapacitet/m\xE5ler, n\xF8dforsyningstarif og statens energi-, CO2- og NOx-afgift \u2013 beregnet ud fra officielle satser for hver periode, indtil Evidas egne regninger er lagt ind (kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1, E.A.4.5.6 og E.A.7.20.6; Evida "Historiske tariffer" Evida Nord og tarifblad 01.01.2025; administrationsbidrag 2023\u201324 fra husets egen Evida-regning). Varmen = m\xB3 \xD7 ${fmt5(opts.kwhPerM3)} kWh \xD7 ${fmt5(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms + abonnement, m\xB2-bidrag og konverteringstill\xE6g pr. dag (2027-taksten fra 1. februar 2027; konverteringstill\xE6gget antaget u\xE6ndret). Dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion \u2013 HA har ingen udetemperatur fra f\xF8r 30.05.2026.`;
+    this._ref("note").textContent = `Alle bel\xF8b er inkl. moms og alle afgifter og till\xE6g. Naturgas: Norlys-regningerne (gaspris, transmission, abonnement) + den del, Evida fakturerer selv fra maj 2023 \u2013 distribution, fast grundpris/kapacitet/m\xE5ler, n\xF8dforsyningstarif og statens energi-, CO2- og NOx-afgift \u2013 beregnet ud fra officielle satser for hver periode, indtil Evidas egne regninger er lagt ind (kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1, E.A.4.5.6 og E.A.7.20.6; Evida "Historiske tariffer" Evida Nord og tarifblad 01.01.2025; administrationsbidrag 2023\u201324 fra husets egen Evida-regning). Varmen = m\xB3 \xD7 ${fmt6(opts.kwhPerM3)} kWh \xD7 ${fmt6(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms + abonnement, m\xB2-bidrag og konverteringstill\xE6g pr. dag (2027-taksten fra 1. februar 2027; konverteringstill\xE6gget antaget u\xE6ndret). Dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion \u2013 HA har ingen udetemperatur fra f\xF8r 30.05.2026.`;
   }
   _drawHeat(host) {
     const months = this._heat.months;
@@ -73190,7 +73504,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Opvarmning i kr"><defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs><g class="grid axis">`;
     for (let i = 0; i <= 4; i++) {
       const gv2 = max / 4 * i;
-      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${y(gv2)}" y2="${y(gv2)}"/><text x="${pad6.l - 8}" y="${y(gv2) + 4}" text-anchor="end">${fmt5(gv2)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${y(gv2)}" y2="${y(gv2)}"/><text x="${pad6.l - 8}" y="${y(gv2) + 4}" text-anchor="end">${fmt6(gv2)}</text>`;
     }
     s += `</g><g class="axis">`;
     const every = month ? Math.max(1, Math.ceil(groups.length / (w < 520 ? 7 : 14))) : 1;
@@ -73212,7 +73526,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
         base += v;
       }
       if (g.aconto > 0) s += `<line x1="${(x - 2).toFixed(1)}" x2="${(x + bw + 2).toFixed(1)}" y1="${y(g.aconto).toFixed(1)}" y2="${y(g.aconto).toFixed(1)}" stroke="var(--ec-text)" stroke-width="2"/>`;
-      if (!month) s += `<text class="vlabel" x="${(x + bw / 2).toFixed(1)}" y="${(y(g.v) - 6).toFixed(1)}" text-anchor="middle">${fmt5(g.v)}</text>`;
+      if (!month) s += `<text class="vlabel" x="${(x + bw / 2).toFixed(1)}" y="${(y(g.v) - 6).toFixed(1)}" text-anchor="middle">${fmt6(g.v)}</text>`;
       s += `<rect class="hit ${this._pinned === i ? "sel" : ""}" data-g="${i}" x="${(pad6.l + gw * i).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     });
     s += `</svg><div class="tip" hidden></div>`;
@@ -73221,8 +73535,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const show2 = (i) => {
       const g = groups[i];
       const title = month ? `${MONTHS_LONG2[Number(g.k.slice(5)) - 1]} ${g.k.slice(0, 4)}` : `${g.k}${g.partial ? " (indtil nu)" : ""}`;
-      const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt5(v)} kr</span></div>` : "";
-      tip.innerHTML = `<h4>${esc13(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", "Evida + afgifter (beregnet)", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
+      const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt6(v)} kr</span></div>` : "";
+      tip.innerHTML = `<h4>${esc14(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", "Evida + afgifter (beregnet)", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
       tip.hidden = false;
       const cx = pad6.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
       tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx - tw / 2))}px`;
@@ -73249,8 +73563,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       return;
     }
     const title = month ? MONTHS_LONG2[g] : `${rows[0].y}${rows[0].partial ? " (indtil nu)" : ""}`;
-    const kinds = (d) => Object.keys(KIND).filter((k) => d[k] > 0.5).map((k) => `${KIND[k]} ${fmt5(d[k])}`).join(" \xB7 ");
-    tip.innerHTML = `<h4>${esc13(title)}</h4>` + [...rows].reverse().map((d) => `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt5(d.v)} kr</span></div>${Object.keys(KIND).filter((k) => d[k] > 0.5).length > 1 || !(d.bill > 0.5) ? `<div class="kinds">${kinds(d)}</div>` : ""}`).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
+    const kinds = (d) => Object.keys(KIND).filter((k) => d[k] > 0.5).map((k) => `${KIND[k]} ${fmt6(d[k])}`).join(" \xB7 ");
+    tip.innerHTML = `<h4>${esc14(title)}</h4>` + [...rows].reverse().map((d) => `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt6(d.v)} kr</span></div>${Object.keys(KIND).filter((k) => d[k] > 0.5).length > 1 || !(d.bill > 0.5) ? `<div class="kinds">${kinds(d)}</div>` : ""}`).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
     tip.hidden = false;
     const cx = pad6.l + gw * g + gw / 2;
     const tw = tip.offsetWidth || 180;
@@ -73261,11 +73575,11 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
 if (!customElements.get(CARD_TAG3)) customElements.define(CARD_TAG3, HaElforbrugKrCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === CARD_TAG3)) {
-  window.customCards.push({ type: CARD_TAG3, name: "Elforbrug i kr", description: `Elforbruget i kroner m\xE5ned for m\xE5ned og \xE5r for \xE5r, fra regningerne og HA's m\xE5ling (v${VERSION57}).`, preview: false });
+  window.customCards.push({ type: CARD_TAG3, name: "Elforbrug i kr", description: `Elforbruget i kroner m\xE5ned for m\xE5ned og \xE5r for \xE5r, fra regningerne og HA's m\xE5ling (v${VERSION58}).`, preview: false });
 }
 
 // src/cards/huawei-solar-card/styles.js
-var STYLE12 = `
+var STYLE13 = `
 :host{--sun:#e9b85c;--home:#86c8ea;--bat:#6fd6a6;--grid:#a99cf0;--exp:#ee9b6c;--ev:#e690bb;--bad:#ef6b7b;
   --ink:var(--primary-text-color,#eceff5);--mut:color-mix(in srgb,var(--ink) 52%,transparent);--faint:color-mix(in srgb,var(--ink) 30%,transparent);
   --paper:var(--ha-card-background,var(--card-background-color,#12161f));--line:color-mix(in srgb,var(--ink) 8%,transparent);
@@ -73501,7 +73815,7 @@ var LABEL = {
 };
 var lbl = (v) => LABEL[v] || String(v ?? "\u2013").replaceAll("_", " ");
 var NS = "http://www.w3.org/2000/svg";
-var esc14 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc15 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var fmtW = (w) => {
   w = Math.abs(w || 0);
   return w >= 1e3 ? (w / 1e3).toFixed(2).replace(".", ",") + " kW" : Math.round(w) + " W";
@@ -73945,7 +74259,7 @@ var HuaweiSolarPopup = class extends HTMLElement {
       price: ["Elpris", "var(--sun)", "tag"],
       ev: ["Elbil\u2011lader", "var(--ev)", "ev"]
     }[this.kind] || ["Detaljer", "var(--sun)", "panel"];
-    this._root.innerHTML = `<style>${STYLE12}${POP_STYLE}</style><div class="bg"></div>
+    this._root.innerHTML = `<style>${STYLE13}${POP_STYLE}</style><div class="bg"></div>
       <div class="dlg" style="--c:${META[1]}" role="dialog" aria-label="${META[0]}">
         <div class="head"><div class="ib">${ic(META[2], 20)}</div><h2>${META[0]}</h2><button class="x" aria-label="Luk">\xD7</button></div>
         <div class="body" id="body"></div>
@@ -73999,18 +74313,18 @@ var HuaweiSolarPopup = class extends HTMLElement {
         break;
       case "inverter": {
         const alarm = c2.st("alarms");
-        h = `<div class="grid2">${cell("Status", esc14(c2.st("invStatus")), "var(--bat)")}${cell("Aktiv effekt", fmtW(d.inv))}${cell("Virkningsgrad", fmtN(c2.n("eff"), 1) + " %")}${cell("Alarmer", alarm === "None" ? "Ingen \u2713" : esc14(alarm), alarm === "None" ? "var(--bat)" : "var(--bad)")}
-          ${cell("Produceret i dag", fmtN(c2.n("invDay"), 2) + " kWh")}${cell("PV\u2011forbindelse", esc14(c2.st("pvConn")))}${cell("Startet i dag", c2.s("start") ? new Date(c2.st("start")).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }) : "\u2013")}${cell("Total produceret", kwh(c2.n("pvTot")) + " kWh")}</div>
-          <div class="note">${esc14(c2.st("invState"))}</div>
+        h = `<div class="grid2">${cell("Status", esc15(c2.st("invStatus")), "var(--bat)")}${cell("Aktiv effekt", fmtW(d.inv))}${cell("Virkningsgrad", fmtN(c2.n("eff"), 1) + " %")}${cell("Alarmer", alarm === "None" ? "Ingen \u2713" : esc15(alarm), alarm === "None" ? "var(--bat)" : "var(--bad)")}
+          ${cell("Produceret i dag", fmtN(c2.n("invDay"), 2) + " kWh")}${cell("PV\u2011forbindelse", esc15(c2.st("pvConn")))}${cell("Startet i dag", c2.s("start") ? new Date(c2.st("start")).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }) : "\u2013")}${cell("Total produceret", kwh(c2.n("pvTot")) + " kWh")}</div>
+          <div class="note">${esc15(c2.st("invState"))}</div>
           <div class="sec">Styring</div>
           ${this._num("derate", "Effektbegr\xE6nsning", `Maks. AC\u2011effekt fra inverteren. ${groupDigits(P2.max_power)} W = ingen begr\xE6nsning.`, "var(--sun)", 0, P2.max_power, 100)}
           ${this._sw("invSwitch", "Inverter t\xE6ndt", "Slukker du, stopper al solcelleproduktion indtil den t\xE6ndes igen.", "var(--sun)")}`;
         break;
       }
       case "battery":
-        h = `<div class="grid2">${cell("Ladestand", Math.round(d.soc) + " %", "var(--bat)")}${cell("Effekt", (d.bat > 25 ? "+" : d.bat < -25 ? "\u2212" : "") + fmtW(d.bat))}${cell("Status", esc14(c2.st("batStatus") === "Running" ? "K\xF8rer" : c2.st("batStatus")))}${cell("Driftsform", lbl(c2.st("mode")))}
+        h = `<div class="grid2">${cell("Ladestand", Math.round(d.soc) + " %", "var(--bat)")}${cell("Effekt", (d.bat > 25 ? "+" : d.bat < -25 ? "\u2212" : "") + fmtW(d.bat))}${cell("Status", esc15(c2.st("batStatus") === "Running" ? "K\xF8rer" : c2.st("batStatus")))}${cell("Driftsform", lbl(c2.st("mode")))}
           ${cell("Ladet i dag", fmtN(c2.n("chDay"), 1) + " kWh")}${cell("Afladet i dag", fmtN(c2.n("disDay"), 1) + " kWh")}${cell("Ladet i alt", kwh(c2.n("batTotCh")) + " kWh")}${cell("Afladet i alt", kwh(c2.n("batTotDis")) + " kWh")}
-          ${cell("Bussp\xE6nding", fmtN(c2.n("busV"), 0) + " V")}${cell("Tvangsopladning", c2.st("forc") === "Stopped" ? "Stoppet" : esc14(c2.st("forc")))}${cell("Min. / maks. SOC", fmtN(c2.n("eod"), 0) + " / " + fmtN(c2.n("eoc"), 0) + " %")}${cell("Opladning fra net", c2.st("gridCh") === "on" ? "Til" : "Fra")}</div>
+          ${cell("Bussp\xE6nding", fmtN(c2.n("busV"), 0) + " V")}${cell("Tvangsopladning", c2.st("forc") === "Stopped" ? "Stoppet" : esc15(c2.st("forc")))}${cell("Min. / maks. SOC", fmtN(c2.n("eod"), 0) + " / " + fmtN(c2.n("eoc"), 0) + " %")}${cell("Opladning fra net", c2.st("gridCh") === "on" ? "Til" : "Fra")}</div>
           <div class="sec">Sidste 24 timer</div>${leg}${chart("ph")}
           <button class="btn pri" id="toCtl" style="background:var(--bat);justify-self:start">\xC5bn styring</button>`;
         break;
@@ -74038,7 +74352,7 @@ var HuaweiSolarPopup = class extends HTMLElement {
         break;
       }
       case "ev":
-        h = `<div class="grid2">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--ev)" : "")}${cell("Temperatur", fmtN(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", kwh(d.evTot) + " kWh", "var(--ev)")}${P2.charger_model ? cell("Model", esc14(P2.charger_model)) : ""}</div>
+        h = `<div class="grid2">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--ev)" : "")}${cell("Temperatur", fmtN(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", kwh(d.evTot) + " kWh", "var(--ev)")}${P2.charger_model ? cell("Model", esc15(P2.charger_model)) : ""}</div>
           <div class="note"><b>Styring:</b> Huawei\u2011integrationen i Home Assistant kan i dag kun <i>afl\xE6se</i> laderen (energi og temperatur). Start/stop, ladestr\xF8m og sol\u2011ladning styres i FusionSolar\u2011appen.<br><br>
           Status \u201CLader\u201D vurderes ud fra, at den samlede ladede energi stiger.</div>`;
         break;
@@ -74285,10 +74599,10 @@ var Scene3D = {
           ${sign("pv", "solar", "var(--sun)", "panel", "Solceller")}${sign("home", "home", "var(--home)", "home", "Huset")}
           ${sign("bat", "battery", "var(--bat)", "battery", "Batteri")}${sign("grid", "grid", "var(--grid)", "grid", "Elnet")}${sign("ev", "ev", "var(--ev)", "ev", "Elbil")}
         </div>
-        <div class="hud"><div style="min-width:0"><div class="eb">${esc14(this._plant.name)} \xB7 live</div><div class="ttl" id="summary3">&nbsp;</div></div>
+        <div class="hud"><div style="min-width:0"><div class="eb">${esc15(this._plant.name)} \xB7 live</div><div class="ttl" id="summary3">&nbsp;</div></div>
           <div class="rt"><span class="wx" id="wx3"></span><span class="pill" id="live3"><span class="d"></span>Live</span></div></div>
         <div class="info">${it("x1", "i3pv", "I dag")}${it("x2", "i3use", "Forbrug")}${it("x3", "i3aut", "Selvforsynet")}${it("x4", "i3price", "Elpris")}${it("x5", "i3save", "Sparet")}</div>
-        <div class="foot"><span>${esc14(this._site.attribution)}</span><div class="btns3"><button id="b3top">Ovenfra</button><button id="b3tour">Rundtur</button></div></div>
+        <div class="foot"><span>${esc15(this._site.attribution)}</span><div class="btns3"><button id="b3top">Ovenfra</button><button id="b3tour">Rundtur</button></div></div>
       </div>
     </div>`;
   },
@@ -75375,7 +75689,7 @@ var HuaweiSolarCard = class extends HTMLElement {
       this._3d.ro.disconnect();
       this._3d = null;
     }
-    this._root.innerHTML = `<style>${STYLE12}${is3d ? STYLE3D : ""}</style><div class="wrap">${is3d ? this._sceneHTML() : ""}${main ? this._mainHTML() : ""}${side ? this._sideHTML() : ""}</div>`;
+    this._root.innerHTML = `<style>${STYLE13}${is3d ? STYLE3D : ""}</style><div class="wrap">${is3d ? this._sceneHTML() : ""}${main ? this._mainHTML() : ""}${side ? this._sideHTML() : ""}</div>`;
     this._flows = null;
     this._tw = {};
     this._pk = null;
@@ -75493,19 +75807,19 @@ var HuaweiSolarCard = class extends HTMLElement {
       </div>
     </div>`;
   }
-  tween(id, val, fmt7) {
+  tween(id, val, fmt8) {
     const el = this.$(id);
     if (!el) return;
     const from = this._tw[id] ?? 0;
     this._tw[id] = val;
     const t0 = performance.now();
     if (Math.abs(from - val) < 1e-6) {
-      el.textContent = fmt7(val);
+      el.textContent = fmt8(val);
       return;
     }
     const step = (t) => {
       const p = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - p, 4);
-      el.textContent = fmt7(from + (val - from) * e);
+      el.textContent = fmt8(from + (val - from) * e);
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -75528,7 +75842,7 @@ var HuaweiSolarCard = class extends HTMLElement {
   pill(id, text2, col) {
     const el = this.$(id);
     if (!el) return;
-    const t = `<span class="d"></span>${esc14(text2)}`;
+    const t = `<span class="d"></span>${esc15(text2)}`;
     if (el._h !== t) {
       el.innerHTML = t;
       el._h = t;
@@ -75703,7 +76017,7 @@ var HuaweiSolarCard = class extends HTMLElement {
     sb.classList.toggle("dis", bat < -25);
     sb.classList.toggle("idle", Math.abs(bat) < 25);
     this.html("batMeta", `<b>${bat > 25 ? "+" : bat < -25 ? "\u2212" : ""}${fmtW(bat)}</b>`);
-    this.html("batMeta2", `${esc14(lbl(this.st("mode")))} \xB7 gr\xE6nser ${fmtN(this.n("eod"), 0)}\u2013${fmtN(this.n("eoc"), 0)} % \xB7 ladet ${fmtN(this.n("chDay"), 1)} / afladet ${fmtN(this.n("disDay"), 1)} kWh`);
+    this.html("batMeta2", `${esc15(lbl(this.st("mode")))} \xB7 gr\xE6nser ${fmtN(this.n("eod"), 0)}\u2013${fmtN(this.n("eoc"), 0)} % \xB7 ladet ${fmtN(this.n("chDay"), 1)} / afladet ${fmtN(this.n("disDay"), 1)} kWh`);
     this.pill("batPill", d.offline ? "Offline" : Math.abs(bat) < 25 ? "Hviler" : bat > 0 ? "Lader" : "Aflader", d.offline ? "var(--bad)" : Math.abs(bat) < 25 ? "var(--mut)" : "var(--bat)");
     if (d.hasPrice) {
       this.txt("priceNow", fmtN(priceNow, 2));
@@ -76927,7 +77241,7 @@ var kw = (w) => {
   return a >= 1e3 ? [num5(a / 1e3, 2), "kW"] : [String(Math.round(a)), "W"];
 };
 var kwS = (w) => kw(w).join(" ");
-var esc15 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc16 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
 var hm3 = (d) => `${h2(d.getHours())}.${h2(d.getMinutes())}`;
 var IC = {
@@ -77046,7 +77360,7 @@ var ThEnergyCard = class extends HTMLElement {
     const e = this.$(id);
     if (e) e.style.width = clamp5(frac * 100, 0, 100) + "%";
   }
-  count(id, val, fmt7, unit = "") {
+  count(id, val, fmt8, unit = "") {
     const e = this.$(id);
     if (!e) return;
     this._cv = this._cv || {};
@@ -77054,12 +77368,12 @@ var ThEnergyCard = class extends HTMLElement {
     this._cv[id] = val;
     const t0 = performance.now(), u2 = unit ? `<span class="u">${unit}</span>` : "";
     if (Math.abs(from - val) < 1e-9) {
-      e.innerHTML = fmt7(val) + u2;
+      e.innerHTML = fmt8(val) + u2;
       return;
     }
     const step = (t) => {
       const p = Math.min(1, (t - t0) / 1300), k = 1 - Math.pow(1 - p, 4);
-      e.innerHTML = fmt7(from + (val - from) * k) + u2;
+      e.innerHTML = fmt8(from + (val - from) * k) + u2;
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -77143,7 +77457,7 @@ var ThEnergyCard = class extends HTMLElement {
 
       <section class="s hero c8" id="hero">
         <div class="aur" id="aur"><i></i><i></i><i></i></div>
-        <div class="hero-top"><div><div class="k">Energi${this.S.name ? ` \xB7 ${esc15(this.S.name)}` : ""}</div><div class="say" id="say">&nbsp;</div></div><span class="chip live" id="live"><span class="dot"></span>Live</span></div>
+        <div class="hero-top"><div><div class="k">Energi${this.S.name ? ` \xB7 ${esc16(this.S.name)}` : ""}</div><div class="say" id="say">&nbsp;</div></div><span class="chip live" id="live"><span class="dot"></span>Live</span></div>
         <div class="hero-grid">
           <div class="col">${ins("sun", "solar", "var(--gold)", "sun", "Solceller")}${ins("grid", "grid", "var(--vio)", "grid", "Elnet")}</div>
           <div class="ring" id="ring">
@@ -77564,7 +77878,7 @@ var ThEnergyCard = class extends HTMLElement {
     c2.style.setProperty("--c", d.off || d.fault ? "var(--red)" : "var(--emer)");
     this.set("invChip", `<span class="dot"></span>${d.off ? "Offline" : d.fault ? "Fejl" : "K\xF8rer normalt"}`);
     const r = (k, v) => `<div class="row"><span>${k}</span><b>${v}</b></div>`;
-    this.set("ctlRows", r("Inverter", `${esc15(this.st("invStatus"))} \xB7 ${kwS(d.inv)}`) + r("Driftsform", nm(this.st("mode"))) + r("Opladning fra elnet", this.st("gridCh") === "on" ? "Tilladt" : "Sl\xE5et fra") + (this.E.maxFeed ? r("Maks. salg til net", kwS(this.n("maxFeed"))) : "") + r("Alarmer", d.alarm === "None" ? "Ingen" : esc15(d.alarm)));
+    this.set("ctlRows", r("Inverter", `${esc16(this.st("invStatus"))} \xB7 ${kwS(d.inv)}`) + r("Driftsform", nm(this.st("mode"))) + r("Opladning fra elnet", this.st("gridCh") === "on" ? "Tilladt" : "Sl\xE5et fra") + (this.E.maxFeed ? r("Maks. salg til net", kwS(this.n("maxFeed"))) : "") + r("Alarmer", d.alarm === "None" ? "Ingen" : esc16(d.alarm)));
   }
   _totals(d) {
     const t = (k, v, u2) => `<div><small>${k}</small><b>${v}<em>${u2}</em></b></div>`, big = (v) => Math.round(v).toLocaleString("da-DK");
@@ -77704,10 +78018,10 @@ var ThEnergySheet = class extends HTMLElement {
     const c2 = this.c, d = c2.calc(), k = this.kind;
     const S = c2.S, kwh2 = c2.batKwh(), solarSub = [S.panels ? `${S.panels} paneler` : "", S.inverterModel || ""].filter(Boolean).join(" \xB7 ");
     const META = {
-      solar: ["Solceller", "var(--gold)", "sun", esc15(solarSub)],
+      solar: ["Solceller", "var(--gold)", "sun", esc16(solarSub)],
       grid: ["Elnet", "var(--vio)", "grid", "EMMA energistyring"],
       battery: ["Batteri", "var(--emer)", "battery", `${c2.layout.batteries}\xD7 LUNA2000 \xB7 ca. ${num5(kwh2, kwh2 % 1 ? 1 : 0)} kWh`],
-      ev: ["Elbil\u2011lader", "var(--rose)", "car", esc15(S.chargerModel || "")],
+      ev: ["Elbil\u2011lader", "var(--rose)", "car", esc16(S.chargerModel || "")],
       control: ["Styring", "var(--gold)", "gear", "\xC6ndringer sendes f\xF8rst, n\xE5r du trykker Anvend"]
     }[k] || ["Detaljer", "var(--gold)", "gear", ""];
     const cell = (l, v, col) => `<div class="cell"><small>${l}</small><b ${col ? `style="color:${col}"` : ""}>${v}</b></div>`;
@@ -77716,11 +78030,11 @@ var ThEnergySheet = class extends HTMLElement {
       const s1 = c2.n("pv1v") * c2.n("pv1a"), s2 = c2.n("pv2v") * c2.n("pv2a");
       body = `<div class="grid">${cell("Produktion nu", kwS(d.pv), "var(--gold)")}${cell("I dag", num5(d.pvDay, 1) + " kWh")}${cell("Denne time", num5(c2.n("hourY"), 2) + " kWh")}${cell("Peak i dag", kwS(c2.n("peak")))}</div>
       <div class="grp">Strenge</div><div class="grid">${cell("Streng 1", kwS(s1), "var(--gold)")}${cell("Streng 1 sp\xE6nding", `${Math.round(c2.n("pv1v"))} V \xB7 ${num5(c2.n("pv1a"), 2)} A`)}${cell("Streng 2", kwS(s2), "var(--gold)")}${cell("Streng 2 sp\xE6nding", `${Math.round(c2.n("pv2v"))} V \xB7 ${num5(c2.n("pv2a"), 2)} A`)}</div>
-      <div class="grp">Inverter</div><div class="grid">${cell("Status", esc15(c2.st("invStatus")), d.fault ? "var(--red)" : "var(--emer)")}${cell("Virkningsgrad", num5(c2.n("eff"), 1) + " %")}${cell("Alarmer", d.alarm === "None" ? "Ingen" : esc15(d.alarm))}${cell("AC\u2011effekt", kwS(d.inv))}</div>
-      <div class="note">${esc15(c2.st("invState"))}</div>`;
+      <div class="grp">Inverter</div><div class="grid">${cell("Status", esc16(c2.st("invStatus")), d.fault ? "var(--red)" : "var(--emer)")}${cell("Virkningsgrad", num5(c2.n("eff"), 1) + " %")}${cell("Alarmer", d.alarm === "None" ? "Ingen" : esc16(d.alarm))}${cell("AC\u2011effekt", kwS(d.inv))}</div>
+      <div class="note">${esc16(c2.st("invState"))}</div>`;
     } else if (k === "grid") body = `<div class="grid">${cell(d.grid > 0 ? "K\xF8ber nu" : "S\xE6lger nu", kwS(d.grid), d.grid > 0 ? "var(--vio)" : "var(--coral)")}${cell("K\xF8bt i dag", num5(d.imp, 1) + " kWh")}${cell("Solgt i dag", num5(d.exp, 1) + " kWh")}${c2.hasPrice ? cell("Elpris nu", num5(d.priceNow, 2) + " kr") : ""}
       ${cell("K\xF8bt i alt", Math.round(c2.n("impTot")).toLocaleString("da-DK") + " kWh")}${cell("Solgt i alt", Math.round(c2.n("expTot")).toLocaleString("da-DK") + " kWh")}${c2.E.co2 ? cell("CO\u2082 i nettet", Math.round(c2.n("co2")) + " g/kWh") : ""}</div>`;
-    else if (k === "battery") body = `<div class="grid">${cell("Ladestand", Math.round(d.soc) + " %", "var(--emer)")}${cell("Effekt", kwS(d.bat))}${cell("Status", c2.st("batStatus") === "Running" ? "K\xF8rer" : esc15(c2.st("batStatus")))}${cell("Driftsform", nm(c2.st("mode")))}
+    else if (k === "battery") body = `<div class="grid">${cell("Ladestand", Math.round(d.soc) + " %", "var(--emer)")}${cell("Effekt", kwS(d.bat))}${cell("Status", c2.st("batStatus") === "Running" ? "K\xF8rer" : esc16(c2.st("batStatus")))}${cell("Driftsform", nm(c2.st("mode")))}
       ${cell("Ladet i dag", num5(d.ch, 1) + " kWh")}${cell("Afladet i dag", num5(d.dis, 1) + " kWh")}${cell("Ladet i alt", Math.round(c2.n("batTotCh")).toLocaleString("da-DK") + " kWh")}${cell("Afladet i alt", Math.round(c2.n("batTotDis")).toLocaleString("da-DK") + " kWh")}</div>
       <button class="btn gold" id="toCtl">\xC5bn styring</button>`;
     else if (k === "ev") body = `<div class="grid">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--rose)" : "")}${cell("Temperatur", num5(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", Math.round(d.evTot).toLocaleString("da-DK") + " kWh", "var(--rose)")}${c2.hasPrice ? cell("Elpris nu", num5(d.priceNow, 2) + " kr") : ""}</div>
@@ -78150,10 +78464,10 @@ register("fb-energy-today-card", EnergyTodayCard, "Dagens str\xF8m i tal", "Sol,
 var MONTHS5 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG3 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var nf2 = (d = 0) => new Intl.NumberFormat("da-DK", { maximumFractionDigits: d, minimumFractionDigits: d });
-var fmt6 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf2(d).format(n);
+var fmt7 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf2(d).format(n);
 var pct6 = (a, b) => b > 0 && a != null ? (a - b) / b * 100 : null;
 var fmtPct3 = (p) => p == null ? "\u2013" : `${p > 0 ? "+" : p < 0 ? "\u2212" : ""}${nf2(0).format(Math.abs(p))} %`;
-var esc16 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc17 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 function buildSeries(rows) {
   const years = {};
   let latest = null;
@@ -78218,9 +78532,9 @@ function niceMax3(v) {
 
 // src/cards/ha-elforbrug-historik-card/ha-elforbrug-historik-card.js
 var CARD_TAG4 = "ha-elforbrug-historik-card";
-var VERSION58 = "1.0.0";
+var VERSION59 = "1.0.0";
 var PALETTE2 = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
-var STYLE13 = `
+var STYLE14 = `
 :host{
   --ec-text:var(--primary-text-color,#e8eef8);
   --ec-muted:var(--secondary-text-color,#8e9cb4);
@@ -78301,7 +78615,7 @@ button:focus-visible{outline:2px solid var(--ec-accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
 var TEMPLATE2 = `
-<style>${STYLE13}</style>
+<style>${STYLE14}</style>
 <section class="shell" part="shell">
   <div class="top">
     <div class="brand">
@@ -78407,7 +78721,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
       this._ref("kpis").innerHTML = "";
       this._ref("years").innerHTML = "";
       this._ref("note").textContent = "";
-      chart.innerHTML = !this.config.entity ? `<div class="state">V\xE6lg en energisensor (<b>entity</b>) i kortets ops\xE6tning.</div>` : `<div class="state">${this._error ? `Kunne ikke hente historikken (${esc16(this._error)}).` : `Ingen statistik endnu for <b>${esc16(this.config.entity)}</b>.`}</div>`;
+      chart.innerHTML = !this.config.entity ? `<div class="state">V\xE6lg en energisensor (<b>entity</b>) i kortets ops\xE6tning.</div>` : `<div class="state">${this._error ? `Kunne ikke hente historikken (${esc17(this._error)}).` : `Ingen statistik endnu for <b>${esc17(this.config.entity)}</b>.`}</div>`;
       return;
     }
     if (!this._sel) this._sel = new Set(years.slice(-3));
@@ -78423,11 +78737,11 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     const m = computeModel(this._series, now);
     const tone3 = (d) => d == null ? "tone-muted" : d > 3 ? "tone-bad" : d < -3 ? "tone-ok" : "tone-muted";
     const items = [];
-    items.push(`<div class="hero-item tone-el"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt6(m.last12)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.last12Delta)}"><span class="d">${fmtPct3(m.last12Delta)}</span> mod 12 mdr f\xF8r</span></div>`);
-    items.push(`<div class="hero-item tone-heat"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt6(m.ytd)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.ytdDelta)}">${m.ytdMonths ? `<span class="d">${fmtPct3(m.ytdDelta)}</span> mod samme ${m.ytdMonths} mdr sidste \xE5r` : "Ingen hele m\xE5neder endnu"}</span></div>`);
-    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Gennemsnit pr. m\xE5ned</span><span class="hi-val num"><b>${fmt6(m.avg12)}</b><small>kWh</small></span><span class="hi-sub">${m.peak ? `H\xF8jest: ${MONTHS_LONG3[m.peak.m]} ${m.peak.y} (${fmt6(m.peak.v)} kWh)` : ""}</span></div>`);
+    items.push(`<div class="hero-item tone-el"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt7(m.last12)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.last12Delta)}"><span class="d">${fmtPct3(m.last12Delta)}</span> mod 12 mdr f\xF8r</span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt7(m.ytd)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.ytdDelta)}">${m.ytdMonths ? `<span class="d">${fmtPct3(m.ytdDelta)}</span> mod samme ${m.ytdMonths} mdr sidste \xE5r` : "Ingen hele m\xE5neder endnu"}</span></div>`);
+    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Gennemsnit pr. m\xE5ned</span><span class="hi-val num"><b>${fmt7(m.avg12)}</b><small>kWh</small></span><span class="hi-sub">${m.peak ? `H\xF8jest: ${MONTHS_LONG3[m.peak.m]} ${m.peak.y} (${fmt7(m.peak.v)} kWh)` : ""}</span></div>`);
     const f = m.forecast;
-    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Forventet ${f ? MONTHS_LONG3[f.m] : "n\xE6ste m\xE5ned"}</span><span class="hi-val num"><b>${f ? "ca. " + fmt6(Math.round(f.value / 10) * 10) : "\u2013"}</b><small>kWh</small></span><span class="hi-sub">${f ? `${MONTHS5[f.m]} ${f.y - 1}: ${fmt6(f.base)} kWh \xB7 tendens ${fmtPct3((f.ratio - 1) * 100)}` : "For lidt data"}</span></div>`);
+    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Forventet ${f ? MONTHS_LONG3[f.m] : "n\xE6ste m\xE5ned"}</span><span class="hi-val num"><b>${f ? "ca. " + fmt7(Math.round(f.value / 10) * 10) : "\u2013"}</b><small>kWh</small></span><span class="hi-sub">${f ? `${MONTHS5[f.m]} ${f.y - 1}: ${fmt7(f.base)} kWh \xB7 tendens ${fmtPct3((f.ratio - 1) * 100)}` : "For lidt data"}</span></div>`);
     this._ref("kpis").innerHTML = items.join("");
   }
   _color(year) {
@@ -78492,7 +78806,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     for (let i = 0; i <= 4; i++) {
       const gv2 = max / 4 * i;
       const gy = y(gv2);
-      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt6(gv2)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt7(gv2)}</text>`;
     }
     s += `</g><g class="axis">`;
     for (let g = 0; g < groups; g++) {
@@ -78510,7 +78824,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
         const x = x0 + i * bw;
         s += `<rect class="bar" x="${x.toFixed(1)}" y="${y(d.v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${d.partial ? 0.55 : 1}"/>`;
         if (d.partial) s += `<rect x="${x.toFixed(1)}" y="${y(d.v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity=".35"/>`;
-        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt6(d.v)}</text>`;
+        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt7(d.v)}</text>`;
       });
       s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad6.l + gw * g).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     }
@@ -78538,9 +78852,9 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     }
     const title = month ? MONTHS_LONG3[g] : `${rows[0].y}${rows[0].partial ? ` (til og med ${MONTHS_LONG3[(/* @__PURE__ */ new Date()).getMonth() - 1] || "\u2014"})` : ""}`;
     const prevOf = (d) => month ? this._series.years[d.y - 1]?.[g] : this._series.years[d.y - 1] ? this._series.years[d.y - 1].reduce((s, x) => s + (x ?? 0), 0) : null;
-    tip.innerHTML = `<h4>${esc16(title)}</h4>` + [...rows].reverse().map((d) => {
+    tip.innerHTML = `<h4>${esc17(title)}</h4>` + [...rows].reverse().map((d) => {
       const dd = !d.partial && month ? pct(d.v, prevOf(d)) : null;
-      return `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt6(d.v)} kWh</span><span class="dd num">${dd == null ? "" : fmtPct3(dd)}</span></div>`;
+      return `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt7(d.v)} kWh</span><span class="dd num">${dd == null ? "" : fmtPct3(dd)}</span></div>`;
     }).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
     tip.hidden = false;
     const cx = pad6.l + gw * g + gw / 2;
@@ -78552,7 +78866,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
 if (!customElements.get(CARD_TAG4)) customElements.define(CARD_TAG4, HaElforbrugHistorikCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === CARD_TAG4)) {
-  window.customCards.push({ type: CARD_TAG4, name: "Elforbrug historik", description: `Elforbrug m\xE5ned for m\xE5ned og \xE5r for \xE5r (v${VERSION58}).`, preview: false });
+  window.customCards.push({ type: CARD_TAG4, name: "Elforbrug historik", description: `Elforbrug m\xE5ned for m\xE5ned og \xE5r for \xE5r (v${VERSION59}).`, preview: false });
 }
 
 // src/cards/th-home-card/styles.js
@@ -79009,7 +79323,7 @@ var ThHomeCard = class extends HTMLElement {
     history.pushState(null, "", p);
     window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
   }
-  count(id, val, fmt7, unit) {
+  count(id, val, fmt8, unit) {
     const e = this.$(id);
     if (!e) return;
     this._cv = this._cv || {};
@@ -79017,12 +79331,12 @@ var ThHomeCard = class extends HTMLElement {
     this._cv[id] = val;
     const t0 = performance.now(), u2 = unit ? `<small>${unit}</small>` : "";
     if (Math.abs(from - val) < 1e-9) {
-      e.innerHTML = fmt7(val) + u2;
+      e.innerHTML = fmt8(val) + u2;
       return;
     }
     const st = (t) => {
       const p = Math.min(1, (t - t0) / 1200), k = 1 - Math.pow(1 - p, 4);
-      e.innerHTML = fmt7(from + (val - from) * k) + u2;
+      e.innerHTML = fmt8(from + (val - from) * k) + u2;
       if (p < 1) requestAnimationFrame(st);
     };
     requestAnimationFrame(st);
@@ -80141,9 +80455,9 @@ var ThWeatherPageCard = class extends VBase {
       const x = attr ? parseFloat(a[attr]) : NaN;
       return Number.isFinite(x) ? vn(conv(x), d) : null;
     };
-    const sub2 = (key2, d, fmt7, attr) => {
+    const sub2 = (key2, d, fmt8, attr) => {
       const v = val(key2, d, attr);
-      return v === null ? "" : fmt7(v);
+      return v === null ? "" : fmt8(v);
     };
     const cells = [
       ["Solindstr\xE5ling", "sun", val("solar_radiation", 0), "W/m\xB2", sub2("solar_radiation_hour", 0, (v) => `snit sidste time ${v}`)],
@@ -80377,10 +80691,10 @@ var ThTechCard = class extends VBase {
       return `<div class="tk ${v < 10 ? "low" : ""}"><div class="tb"><i style="height:${Math.max(3, v || 0)}%;background:${col}"></i></div><b>${Number.isFinite(v) ? Math.round(v) + "%" : "\u2013"}</b>${l}</div>`;
     }).join("")}</div></div>`).join(""));
     const last = this.s(c2.ent.backup_last), next = this.s(c2.ent.backup_next);
-    const fmt7 = (s) => s && !["unknown", "unavailable"].includes(s.state) ? new Date(s.state).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "\u2013";
+    const fmt8 = (s) => s && !["unknown", "unavailable"].includes(s.state) ? new Date(s.state).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "\u2013";
     const ok = last && Date.now() - new Date(last.state) < 2 * 864e5;
-    this.set("bk", `<div class="cell"><div class="k">${vi("check", 14)}Seneste</div><b style="font-size:15px;color:${ok ? "var(--emer)" : "var(--coral)"}">${fmt7(last)}</b><em>${last ? this.ago(last.state) : ""}</em></div>
-      <div class="cell"><div class="k">${vi("backup", 14)}N\xE6ste</div><b style="font-size:15px">${fmt7(next)}</b><em>automatisk</em></div>`);
+    this.set("bk", `<div class="cell"><div class="k">${vi("check", 14)}Seneste</div><b style="font-size:15px;color:${ok ? "var(--emer)" : "var(--coral)"}">${fmt8(last)}</b><em>${last ? this.ago(last.state) : ""}</em></div>
+      <div class="cell"><div class="k">${vi("backup", 14)}N\xE6ste</div><b style="font-size:15px">${fmt8(next)}</b><em>automatisk</em></div>`);
   }
 };
 
@@ -80398,7 +80712,7 @@ for (const [type, , name, description] of CARDS)
 console.info(`%c TH-PAGES %c ${VP_VER} `, "background:#e8c37e;color:#111;font-weight:700", "background:#222;color:#fff");
 
 // src/cards/mr-weather-studio-card/mr-weather-studio-core.js
-var VERSION59 = "1.0.2";
+var VERSION60 = "1.0.2";
 var CONDITIONS = { sunny: ["Solrigt", "weather-sunny"], partlycloudy: ["Let skyet", "weather-partly-cloudy"], cloudy: ["Overskyet", "weather-cloudy"], "clear-night": ["Klar nat", "weather-night"], rainy: ["Regn", "weather-rainy"], pouring: ["Kraftig regn", "weather-pouring"], snowy: ["Sne", "weather-snowy"], "snowy-rainy": ["Slud", "weather-snowy-rainy"], fog: ["T\xE5ge", "weather-fog"], hail: ["Hagl", "weather-hail"], lightning: ["Torden", "weather-lightning"], "lightning-rainy": ["Torden og regn", "weather-lightning-rainy"], windy: ["Bl\xE6sende", "weather-windy"], "windy-variant": ["Bl\xE6sende og skyet", "weather-windy-variant"], exceptional: ["Us\xE6dvanligt vejr", "weather-sunny-alert"] };
 var E = (s) => String(s ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var N = (value) => typeof value !== "number" && typeof value !== "string" || String(value).trim() === "" || !Number.isFinite(Number(value)) ? null : Number(value);
@@ -80805,7 +81119,7 @@ var MRWeatherStudioCard = class extends HTMLElement {
       if (!id) return `<button class="detail-row" data-more="${E(this._c.weather_entity)}"><span>${label}</span><strong>${this._weatherDetail(suffix)}</strong></button>`;
       const s = this._sensor(suffix), source = s?.attributes?.kilde || s?.attributes?.station_name || "";
       return `<button class="detail-row" data-more="${E(id)}"><span>${label}${source ? `<small>${E(source)}</small>` : ""}</span><strong>${this._displaySensor(suffix)}</strong></button>`;
-    }).join("")}${key2 === "risk" ? '<p class="details-note">De ekstra risikoprognoser kan mangle, n\xE5r DMI begr\xE6nser sit API. \u201CAfventer data\u201D betyder ikke 0 % risiko.</p>' : key2 === "measurements" ? '<p class="details-note">Stationerne kan ligge et stykke fra huset. En stationsm\xE5ling og en lokal prognose kan derfor v\xE6re forskellige.</p>' : ""}</div></details>`).join("") + `<details class="details" data-details="about"><summary>${ICON2("information-outline")} S\xE5dan l\xE6ser du kortet</summary><div class="details-body"><p>Temperaturen lige nu bygger p\xE5 DMI-m\xE5linger, hvor de findes, ellers prognosen. Grafer og timefelter viser prognosen fremad. m/s beskriver vindens hastighed, og mm beskriver m\xE6ngden af regn.</p><p>DMI-varsler er officielle varsler for omr\xE5det. Regnrisikoen i timeprognosen er en sandsynlighed og er ikke det samme som et varsel. Dagstallene g\xE6lder kommunen og kan afvige fra det, der m\xE5les ved huset.</p><p>Data: DMI og MeteoAlarm. HARMONIE-prognose og UV leveres gennem Open-Meteo. Satellit: EUMETSAT. Vindkort: Windy/ECMWF.</p><p>MRDonnii Vejr Studio ${VERSION59}. Tryk p\xE5 m\xE5lingerne for flere oplysninger.</p></div></details>`;
+    }).join("")}${key2 === "risk" ? '<p class="details-note">De ekstra risikoprognoser kan mangle, n\xE5r DMI begr\xE6nser sit API. \u201CAfventer data\u201D betyder ikke 0 % risiko.</p>' : key2 === "measurements" ? '<p class="details-note">Stationerne kan ligge et stykke fra huset. En stationsm\xE5ling og en lokal prognose kan derfor v\xE6re forskellige.</p>' : ""}</div></details>`).join("") + `<details class="details" data-details="about"><summary>${ICON2("information-outline")} S\xE5dan l\xE6ser du kortet</summary><div class="details-body"><p>Temperaturen lige nu bygger p\xE5 DMI-m\xE5linger, hvor de findes, ellers prognosen. Grafer og timefelter viser prognosen fremad. m/s beskriver vindens hastighed, og mm beskriver m\xE6ngden af regn.</p><p>DMI-varsler er officielle varsler for omr\xE5det. Regnrisikoen i timeprognosen er en sandsynlighed og er ikke det samme som et varsel. Dagstallene g\xE6lder kommunen og kan afvige fra det, der m\xE5les ved huset.</p><p>Data: DMI og MeteoAlarm. HARMONIE-prognose og UV leveres gennem Open-Meteo. Satellit: EUMETSAT. Vindkort: Windy/ECMWF.</p><p>MRDonnii Vejr Studio ${VERSION60}. Tryk p\xE5 m\xE5lingerne for flere oplysninger.</p></div></details>`;
   }
   _render() {
     if (!this._c) return;
@@ -81141,9 +81455,9 @@ function onDashboardTick(fn, { interval = 1500 } = {}) {
   return () => subscribers.delete(fn);
 }
 function activatorHtml(title, lines) {
-  const esc17 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+  const esc18 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
   return `<style>:host{display:block}.note{border:1px dashed var(--divider-color,#888);border-radius:12px;padding:10px 12px;font:13px/1.45 var(--ha-font-family-body,system-ui,sans-serif);color:var(--secondary-text-color,#999)}.note b{color:var(--primary-text-color,#ddd)}</style>
-<div class="note"><b>${esc17(title)}</b>${lines.map((l) => `<br>${esc17(l)}`).join("")}</div>`;
+<div class="note"><b>${esc18(title)}</b>${lines.map((l) => `<br>${esc18(l)}`).join("")}</div>`;
 }
 function activatorCardClass({ title, lines, stub }) {
   return class extends HTMLElement {

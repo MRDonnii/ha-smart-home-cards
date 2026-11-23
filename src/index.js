@@ -45,6 +45,7 @@ import "./cards/ha-home-status-grid-card/ha-home-status-grid-card.js";
 import "./cards/ha-trueguard-status-card/ha-trueguard-status-card.js";
 import "./cards/ha-person-overview-card/ha-person-overview-card.js";
 import "./cards/ha-pet-care-card/ha-pet-care-card.js";
+import "./cards/ha-pet-nutrition-card/ha-pet-nutrition-card.js";
 import "./cards/ha-weather-card/ha-weather-card.js";
 import "./cards/th-weather-card/th-weather-card.js";
 import "./cards/ha-weather-charts-card/ha-weather-charts-card.js";
