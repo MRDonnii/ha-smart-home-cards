@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.295 */
+/* MRDonnii Smart Home Cards v0.5.296 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -64846,7 +64846,7 @@ window.customCards.push({ type: "ai-usage-dashboard-card", name: "AI Usage Dashb
 
 // src/cards/ha-electricity-dashboard-card/ha-electricity-dashboard-card.js
 init_chart_hover();
-var VERSION55 = "1.2.0";
+var VERSION55 = "1.3.0";
 var CARD_TAG = "ha-electricity-dashboard-card";
 var MINUTE_MS = 60 * 1e3;
 var HOUR_MS = 60 * MINUTE_MS;
@@ -65578,6 +65578,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     if (this._hass) this._update(true);
   }
   set hass(hass) {
+    if (!hass) return;
     const first = !this._hass;
     this._hass = hass;
     if (this._config) this._update(first);
@@ -65780,7 +65781,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   </defs>
 </svg>
 <div class="dash${charger ? "" : ` no-charger${has("house_power") ? "" : " no-house"}`}" data-ref="dash">
-  <header class="header">
+  ${c2.header === false ? "" : `<header class="header">
     <div class="brand">
       <div class="brand-mark">${icon2("mdi:chart-bar")}</div>
       <div><h1>${escapeHtml2(c2.title)}</h1><p>${escapeHtml2(c2.subtitle)}</p></div>
@@ -65790,7 +65791,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon2("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
       <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon2("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">\u2014</small></div></div>
     </div>
-  </header>
+  </header>`}
 
   <section class="card kpi kpi-price a-price clickable" data-entity="${escapeHtml2(this._id("price"))}" tabindex="0">
     <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon2("mdi:lightning-bolt")}<h3>Str\xF8mpris nu</h3></div>
@@ -66032,6 +66033,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
   }
   /* ---------- header ---------- */
   _updateHeader() {
+    if (!this._refs.hdrOnline) return;
     const connected = this._hass.connected !== false;
     this._toneClass(this._refs.hdrOnline, connected ? "green" : "red");
     this._text("hdrOnlineText", connected ? "Online" : "Offline");
@@ -73598,7 +73600,7 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG3)) {
 }
 
 // src/cards/ha-gas-savings-card/ha-gas-savings-card.js
-var VERSION59 = "1.0.0";
+var VERSION59 = "1.0.1";
 var MONTHS5 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var fmt7 = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "\u2014";
 var esc15 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
@@ -73629,6 +73631,7 @@ var HAGasSavingsCard = class extends HTMLElement {
     this._render();
   }
   set hass(h) {
+    if (!h) return;
     const first = !this._hass;
     this._hass = h;
     const c2 = this._config, sig = [c2.gas_price, c2.gas_price_months, c2.heat_price].map((id) => typeof id === "string" ? h.states[id]?.state : id).join("|");

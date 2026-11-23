@@ -26,6 +26,7 @@ billader-felter eller billader-andel i "Elforbrug lige nu", husforbruget hedder 
 type: custom:ha-electricity-dashboard-card
 title: Elpriser
 subtitle: Samlet overblik over strømpriser, forbrug og opladning
+header: true   # false skjuler kortets egen overskrift (fx under en fane-header)
 log_prefix: elpriser            # prefix på advarsler i browser-konsollen
 charger_max_power_kw: 11        # valgfri; ellers udledt af max_current × faser × 230 V
 entities:

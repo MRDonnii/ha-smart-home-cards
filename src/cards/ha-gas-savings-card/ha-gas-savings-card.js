@@ -5,7 +5,7 @@
 // that month's all-in gas price + the gas side's fixed amounts) → minus what district heating cost (kWh × price + fixed).
 import { keepScroll } from "../shared/keep-scroll.js";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -35,6 +35,7 @@ class HAGasSavingsCard extends HTMLElement {
     this._rows = null; this._at = 0; this._render();
   }
   set hass(h) {
+    if (!h) return; // local-conditional-card clears hass when it hides the card
     const first = !this._hass; this._hass = h;
     const c = this._config, sig = [c.gas_price, c.gas_price_months, c.heat_price].map((id) => (typeof id === "string" ? h.states[id]?.state : id)).join("|");
     if (!this._at || Date.now() - this._at > 900000) this._load();

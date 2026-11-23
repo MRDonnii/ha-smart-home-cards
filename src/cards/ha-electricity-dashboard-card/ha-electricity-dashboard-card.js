@@ -17,7 +17,7 @@
 
 import { chartHover } from "../../shared/chart-hover.js";
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const CARD_TAG = "ha-electricity-dashboard-card";
 
 /* ------------------------------------------------------------------------------------------
@@ -840,6 +840,7 @@ class HAElectricityDashboardCard extends HTMLElement {
   }
 
   set hass(hass) {
+    if (!hass) return; // a hiding conditional card may clear hass
     const first = !this._hass;
     this._hass = hass;
     if (this._config) this._update(first);
@@ -1074,7 +1075,7 @@ class HAElectricityDashboardCard extends HTMLElement {
   </defs>
 </svg>
 <div class="dash${charger ? "" : ` no-charger${has("house_power") ? "" : " no-house"}`}" data-ref="dash">
-  <header class="header">
+  ${c.header === false ? "" : `<header class="header">
     <div class="brand">
       <div class="brand-mark">${icon("mdi:chart-bar")}</div>
       <div><h1>${escapeHtml(c.title)}</h1><p>${escapeHtml(c.subtitle)}</p></div>
@@ -1084,7 +1085,7 @@ class HAElectricityDashboardCard extends HTMLElement {
       <div class="chip" data-ref="hdrOnline"><span class="dot"></span>${icon("mdi:home-assistant")}<div><b data-ref="hdrOnlineText">Online</b><small>Home Assistant</small></div></div>
       <div class="chip" data-ref="hdrSystem"><span class="dot"></span>${icon("mdi:shield-check-outline")}<div><b>System</b><small data-ref="hdrSystemText">—</small></div></div>
     </div>
-  </header>
+  </header>`}
 
   <section class="card kpi kpi-price a-price clickable" data-entity="${escapeHtml(this._id("price"))}" tabindex="0">
     <div class="card-head" style="--head-ic:var(--energy-yellow)">${icon("mdi:lightning-bolt")}<h3>Strømpris nu</h3></div>
@@ -1340,6 +1341,7 @@ class HAElectricityDashboardCard extends HTMLElement {
   /* ---------- header ---------- */
 
   _updateHeader() {
+    if (!this._refs.hdrOnline) return; // header: false
     const connected = this._hass.connected !== false;
     this._toneClass(this._refs.hdrOnline, connected ? "green" : "red");
     this._text("hdrOnlineText", connected ? "Online" : "Offline");
