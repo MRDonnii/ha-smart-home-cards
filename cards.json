@@ -595,6 +595,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-electricity-overview-card",
+    "name": "HA Electricity Overview Card",
+    "filename": "ha-electricity-overview-card.js",
+    "category": "Energy",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "huawei-solar-card",
     "name": "Huawei Solar Card",
     "filename": "huawei-solar-card.js",

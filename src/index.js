@@ -86,6 +86,7 @@ import "./cards/ha-electricity-bill-card/ha-electricity-bill-card.js";
 import "./cards/ha-music-card/ha-music-card.js";
 import "./cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js";
 import "./cards/ha-gas-savings-card/ha-gas-savings-card.js";
+import "./cards/ha-electricity-overview-card/ha-electricity-overview-card.js";
 import "./cards/huawei-solar-card/huawei-solar-card.js";
 import "./cards/th-energy-card/th-energy-card.js";
 import "./cards/th-energy-flow-card/th-energy-flow-card.js";

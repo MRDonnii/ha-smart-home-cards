@@ -1,13 +1,13 @@
 {
   "name": "ha-smart-home-cards",
-  "version": "0.5.296",
+  "version": "0.5.297",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "typecheck:hch5": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --jsx react-jsx --skipLibCheck src/cards/ha-hch5-live-card/source/card.tsx src/cards/ha-hch5-live-card/source/webui-css.d.ts",
-    "test": "npm run build && npm run check && node tests/smart-home-overview-num.test.mjs && node tests/hch5-bypass.test.mjs && node tests/hch5-frost-lock.test.mjs && node tests/hch5-afterheat-level.test.mjs && node tests/calefa-flow-card.test.mjs && node tests/th-tesla-dashboard-card.test.mjs && node tests/ready-schedule.test.mjs && node tests/air-quality-card.test.mjs && node tests/elregning-next-month.test.mjs && node tests/music-card.test.mjs && node tests/ha-elforbrug-historik-card.test.mjs && node tests/scroll-stack-card.test.mjs && node tests/dashboard-modules.test.mjs && node tests/energy-center-swipe.test.mjs && node tests/fb-energy-cards.test.mjs && node tests/mr-weather-studio-card.test.mjs && node tests/huawei-solar-card.test.mjs && node tests/th-energy-card.test.mjs && node tests/th-battery-card.test.mjs && node tests/th-energy-flow-card.test.mjs && node tests/th-home-card.test.mjs && node tests/th-pages.test.mjs && node tests/gas-savings-card.test.mjs && node tests/pet-nutrition-card.test.mjs && node tests/seasonal-decor.test.mjs && node tests/build-assets.test.mjs"
+    "test": "npm run build && npm run check && node tests/smart-home-overview-num.test.mjs && node tests/hch5-bypass.test.mjs && node tests/hch5-frost-lock.test.mjs && node tests/hch5-afterheat-level.test.mjs && node tests/calefa-flow-card.test.mjs && node tests/th-tesla-dashboard-card.test.mjs && node tests/ready-schedule.test.mjs && node tests/air-quality-card.test.mjs && node tests/elregning-next-month.test.mjs && node tests/music-card.test.mjs && node tests/ha-elforbrug-historik-card.test.mjs && node tests/scroll-stack-card.test.mjs && node tests/dashboard-modules.test.mjs && node tests/energy-center-swipe.test.mjs && node tests/fb-energy-cards.test.mjs && node tests/mr-weather-studio-card.test.mjs && node tests/huawei-solar-card.test.mjs && node tests/th-energy-card.test.mjs && node tests/th-battery-card.test.mjs && node tests/th-energy-flow-card.test.mjs && node tests/th-home-card.test.mjs && node tests/th-pages.test.mjs && node tests/gas-savings-card.test.mjs && node tests/electricity-overview-card.test.mjs && node tests/pet-nutrition-card.test.mjs && node tests/seasonal-decor.test.mjs && node tests/build-assets.test.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
