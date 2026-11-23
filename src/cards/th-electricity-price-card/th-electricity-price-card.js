@@ -159,6 +159,73 @@ dialog.adv::backdrop{background:rgba(4,8,14,.62);-webkit-backdrop-filter:blur(4p
 .adv .av{text-align:right;white-space:nowrap}.adv .av b{display:block;font-size:12.5px;font-weight:800;color:var(--c)}.adv .av small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
 .adv .tp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;font-size:11.5px;line-height:1.4;color:var(--mut);padding:1px 4px}.adv .tp svg{margin-top:1px;color:var(--c,var(--acc))}.adv .tp b{color:var(--ink);font-weight:700}
 .adv .af{font-size:10px;color:var(--mut);padding:0 4px;line-height:1.4}
+/* ---- Nyt popup-design (Claude AI, 2026-11-24) ---- */
+dialog.adv{width:min(620px,calc(100vw - 20px));max-height:min(820px,calc(100dvh - 36px))}
+.adv::after{content:"";position:absolute;inset:-30%;z-index:-1;pointer-events:none;background:radial-gradient(40% 30% at 15% 10%,color-mix(in srgb,var(--good) 14%,transparent),transparent 70%),radial-gradient(35% 28% at 90% 20%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 70%);animation:advau 16s ease-in-out infinite alternate}
+@keyframes advau{to{transform:translate(4%,3%) rotate(6deg)}}
+.adv .ah{padding:14px 12px 10px 16px}.adv .ah b{font-size:16px;letter-spacing:-.01em}
+.adv .ab{gap:10px;padding:0 14px 14px}
+.adv .sl{margin:8px 2px -2px}
+.nowc{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center;padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 16%,transparent),color-mix(in srgb,var(--c) 4%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 32%,transparent)}
+.gauge{position:relative;width:150px;height:118px}.gauge svg{width:150px;height:88px;overflow:visible}
+.gauge .gt{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent);stroke-width:9;stroke-linecap:round}
+.gauge .gv{fill:none;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 45%,transparent))}
+.gauge .nd{transform-origin:60px 62px;transform:rotate(var(--a));transition:transform 1s cubic-bezier(.3,1.4,.5,1)}.gauge .nd line{stroke:var(--ink);stroke-width:3;stroke-linecap:round}.gauge .nd circle{fill:var(--c);stroke:var(--ink);stroke-width:2}
+.gn{position:absolute;left:0;right:0;top:82px;text-align:center;line-height:1}.gn b{display:block;font-size:22px;font-weight:850;letter-spacing:-.02em}.gn small{font-size:9.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.gl{position:absolute;left:6px;right:6px;top:88px;display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;color:var(--mut)}
+.nt{min-width:0;display:flex;flex-direction:column;gap:6px}.nt b{font-size:17px;font-weight:800;letter-spacing:-.01em;color:color-mix(in srgb,var(--c) 70%,var(--ink))}.nt small{font-size:11.5px;line-height:1.4;color:var(--mut)}
+.cdc{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--ink) 7%,transparent);box-shadow:inset 0 0 0 1px var(--hair)}.cdc b{font-size:13px;font-weight:850;letter-spacing:.02em;color:var(--good);font-variant-numeric:tabular-nums}
+.cdc.go{color:var(--good);background:color-mix(in srgb,var(--good) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent);animation:glowp 2.4s ease-in-out infinite}@keyframes glowp{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--good) 45%,transparent),0 0 18px color-mix(in srgb,var(--good) 35%,transparent)}}
+.tl{position:relative;padding:4px 2px 0}
+.pins{position:relative;height:40px}.pin{position:absolute;bottom:calc(var(--l) * 22px);transform:translateX(-50%);width:24px;height:24px;border-radius:8px 8px 8px 2px;display:grid;place-items:center;color:#111;background:var(--warn);box-shadow:0 4px 12px -2px color-mix(in srgb,var(--warn) 60%,transparent)}
+.pin.go{background:var(--good);box-shadow:0 4px 12px -2px color-mix(in srgb,var(--good) 60%,transparent)}.pin::after{content:"";position:absolute;left:0;bottom:-6px;width:2px;height:calc(6px + var(--l) * 22px);background:currentColor;opacity:.0}
+.pin{animation:pinb 3s ease-in-out infinite;animation-delay:calc(var(--l) * .4s)}@keyframes pinb{50%{transform:translate(-50%,-3px)}}
+.rib{position:relative;height:56px;border-radius:12px;background:color-mix(in srgb,var(--ink) 4%,transparent);overflow:hidden}
+.rib i{position:absolute;bottom:0;border-radius:2px 2px 0 0;transform-origin:bottom}
+.rib .br{position:absolute;top:0;bottom:0;border-radius:10px;animation:brb 3s ease-in-out infinite}.rib .br{z-index:1}.rib .br.good{background:color-mix(in srgb,var(--good) 16%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--good) 55%,transparent)}.rib .br.bad{background:color-mix(in srgb,var(--bad) 13%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--bad) 45%,transparent);animation-delay:1.5s}@keyframes brb{50%{opacity:.5}}
+.rib .nowl{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ink);box-shadow:0 0 12px var(--ink);border-radius:2px;animation:bl 1.6s infinite}
+.evl{position:relative;height:6px;margin-top:4px}.evl i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--ev);box-shadow:0 0 8px color-mix(in srgb,var(--ev) 60%,transparent)}
+.tx{position:relative;height:16px;margin-top:4px}.tx span{position:absolute;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--mut)}
+.win2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.w2{position:relative;overflow:hidden;padding:11px 12px;border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 13%,transparent),color-mix(in srgb,var(--c) 3%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
+.w2 small{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--mut)}.w2 small svg{color:var(--c)}.w2 b{display:block;font-size:19px;font-weight:850;color:var(--c);margin-top:3px;letter-spacing:-.01em}.w2 span{display:block;font-size:11px;color:var(--mut);margin-top:1px}
+.w2 em{display:inline-block;margin-top:7px;font-style:normal;font-size:11px;font-weight:700;color:var(--mut)}.w2 em i{font-style:normal;font-weight:850;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.dvs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dv{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:18px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 11%,transparent),color-mix(in srgb,var(--ink) 3%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent)}
+.dv.car{grid-column:1/-1}
+.dvh{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.dvi{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.dvr{position:absolute;inset:0;width:46px;height:46px}.dvr circle{fill:none;stroke:var(--c);stroke-width:2;opacity:.55}
+.wait .dvr circle{stroke-dasharray:6 7;animation:dspin 9s linear infinite;transform-origin:24px 24px}@keyframes dspin{to{transform:rotate(360deg)}}
+.go .dvi{animation:gpulse 2.2s ease-out infinite}@keyframes gpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 55%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.run .dvr circle,.charging .dvr circle{stroke-dasharray:30 102;stroke-width:3;opacity:1;animation:dspin 1.4s linear infinite;transform-origin:24px 24px}
+.run .dvi svg:last-child{animation:drum 1.2s linear infinite}@keyframes drum{to{transform:rotate(360deg)}}
+.dvt{min-width:0}.dvt b{display:block;font-size:14px;font-weight:800}.dvt small{display:block;font-size:10.5px;color:var(--mut);margin-top:2px}
+.dvs{padding:4px 9px;border-radius:999px;font-size:10.5px;font-weight:850;letter-spacing:.04em;text-transform:uppercase;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.dvc{display:flex;flex-direction:column;gap:1px}.dvc span{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}.dvc b{font-size:28px;font-weight:850;letter-spacing:-.01em;color:var(--c);font-variant-numeric:tabular-nums;line-height:1.1}.dvc small{font-size:11px;color:var(--mut)}
+.wait .dvc b{text-shadow:0 0 18px color-mix(in srgb,var(--c) 40%,transparent)}
+.dvb{display:grid;gap:5px}.dvb>div{display:grid;grid-template-columns:40px minmax(0,1fr) 58px;gap:8px;align-items:center;font-size:11px}.dvb span{color:var(--mut);font-weight:700}.dvb b{text-align:right;font-weight:800}
+.bb{height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink) 6%,transparent);overflow:hidden}.bb i{display:block;height:100%;border-radius:4px}.bb i.n{background:var(--warn)}.bb i.b{background:var(--good)}
+.spar{position:absolute;right:10px;bottom:10px;display:none}
+.wait .spar{position:static;align-self:flex-start;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:850;color:#0b1a12;background:var(--good);box-shadow:0 6px 16px -4px color-mix(in srgb,var(--good) 60%,transparent)}
+.runbar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--c) 15%,transparent);overflow:hidden}.runbar i{display:block;width:35%;height:100%;border-radius:3px;background:var(--c);animation:runb 1.6s ease-in-out infinite}@keyframes runb{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.socb{position:relative;height:18px;border-radius:9px;background:color-mix(in srgb,var(--ev) 12%,transparent);overflow:hidden}.socb i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:linear-gradient(90deg,color-mix(in srgb,var(--ev) 60%,transparent),var(--ev))}.socb u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--ev) 35%,transparent) 0 5px,transparent 5px 10px)}
+.charging .socb i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:runb 1.8s linear infinite}
+.socb span{position:absolute;right:8px;top:0;bottom:0;display:flex;align-items:center;font-size:10.5px;font-weight:850}
+.tps{display:grid;gap:8px}.tp2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:14px;font-size:11.5px;line-height:1.45;color:var(--mut);background:color-mix(in srgb,var(--c) 7%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 22%,transparent)}.tp2>span{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}.tp2 b{color:var(--ink)}
+/* indgang: kun lige efter åbning */
+.adv.intro .nowc,.adv.intro .tl,.adv.intro .win2,.adv.intro .dv,.adv.intro .tp2{animation:advup .55s cubic-bezier(.16,1,.3,1) both}
+.adv.intro .tl{animation-delay:.08s}.adv.intro .win2{animation-delay:.14s}.adv.intro .dv{animation-delay:calc(.2s + var(--i) * .07s)}.adv.intro .tp2{animation-delay:calc(.45s + var(--i) * .06s)}
+@keyframes advup{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.adv.intro .gauge .gv{stroke-dasharray:100;animation:gdraw 1.2s cubic-bezier(.4,.1,.2,1) both}@keyframes gdraw{from{stroke-dashoffset:100}}
+.adv.intro .gauge .nd{animation:ndl 1.4s cubic-bezier(.3,1.5,.5,1) .2s both}@keyframes ndl{from{transform:rotate(-90deg)}}
+.adv.intro .rib i{animation:barin .7s cubic-bezier(.2,.8,.2,1) both}
+.adv.intro .pin{animation:pindrop .6s cubic-bezier(.3,1.6,.5,1) both,pinb 3s ease-in-out 1s infinite}@keyframes pindrop{from{transform:translate(-50%,-30px);opacity:0}}
+.adv.intro .bb i{animation:bbg .9s cubic-bezier(.2,.8,.2,1) .3s both}@keyframes bbg{from{width:0}}
+@media(max-width:560px){.nowc{grid-template-columns:1fr;justify-items:center;text-align:center}.cdc{align-self:center}.dvc b{font-size:26px}}
+@media(max-width:680px){.dvs-grid{grid-template-columns:1fr}}
+.dvt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(prefers-reduced-motion:reduce){.adv *{animation:none!important}}
 @keyframes barin{from{transform:scaleY(0)}}.pc>svg.still *,.days.still .day,.days.still b{animation:none!important;stroke-dashoffset:0}.pc>svg.still .fadein{opacity:1}
 .draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:drw 2s cubic-bezier(.65,0,.35,1) forwards}@keyframes drw{to{stroke-dashoffset:0}}
 .fadein{opacity:0;animation:fi 1.1s .3s forwards}@keyframes fi{to{opacity:1}}
@@ -363,10 +430,22 @@ class ThElectricityPriceCard extends HTMLElement {
     const adv = this.$('adv'), chip = this.$('chip'); if (!adv || this.cfg.advice === false || this._mode !== 'new') return;
     this._adv = true; chip.classList.add('open'); chip.setAttribute('aria-expanded', 'true');
     adv._v = null; this.renderAdvice();
+    // Indgangsanimationerne kører kun lige efter åbning (popuppen tegnes om hvert minut); nedtællingerne tikker hvert sekund.
+    adv.classList.add('intro'); clearTimeout(this._advIntro); this._advIntro = setTimeout(() => adv.classList.remove('intro'), 2600);
+    clearInterval(this._advTick); this.advTick(); this._advTick = setInterval(() => this.advTick(), 1000);
     if (!adv.open) { if (adv.showModal) adv.showModal(); else adv.setAttribute('open', ''); }
   }
+  advTick() {
+    const adv = this.shadowRoot?.getElementById("adv"); if (!adv?.open) return;
+    const t = Date.now();
+    adv.querySelectorAll("[data-at]").forEach((el) => {
+      const sec = Math.max(0, Math.round((Number(el.dataset.at) - t) / 1e3)), H2 = Math.floor(sec / 3600), M2 = Math.floor((sec % 3600) / 60), S2 = sec % 60;
+      const txt = sec <= 0 ? "nu" : `${String(H2).padStart(2, "0")}:${String(M2).padStart(2, "0")}:${String(S2).padStart(2, "0")}`;
+      if (el.textContent !== txt) el.textContent = txt;
+    });
+  }
   closeAdvice() {
-    this._adv = false;
+    this._adv = false; clearInterval(this._advTick);
     const adv = this.shadowRoot?.getElementById('adv'), chip = this.shadowRoot?.getElementById('chip');
     if (adv) { if (adv.open) { if (adv.close) adv.close(); else adv.removeAttribute('open'); } adv._v = null; }
     if (chip) { chip.classList.remove('open'); chip.setAttribute('aria-expanded', 'false'); }
@@ -402,29 +481,79 @@ class ThElectricityPriceCard extends HTMLElement {
     const sm = lvN === 0 ? ['Billig strøm lige nu', `${tn(cur)} kr/kWh er ${Math.abs(Math.round((rel - 1) * 100))} % under dagens snit – kør gerne de store forbrugere nu.${best && best.s - now > 9e5 && best.s <= now + 12 * 36e5 && best.avg < cur * .85 ? ` Billigst bliver det ${W(best.s)} (Ø ${tn(best.avg)} kr).` : ''}`]
       : lvN >= 2 ? [`${LEVEL_NAME[lvN]} lige nu`, `${tn(cur)} kr/kWh er ${Math.round((rel - 1) * 100)} % over dagens snit – udskyd det, du kan.${nb ? ` Billigst bliver det ${W(nb.s)} (Ø ${tn(nb.avg)} kr).` : ''}`]
       : ['Normal pris', `${tn(cur)} kr/kWh er ${pct(cur)} ift. dagens snit. ${soon ? `Kan det vente, er det op til ca. ${Math.round((1 - nb.avg / cur) * 100)} % billigere ved ${W(nb.s)}.` : 'Ingen markant billigere tid de næste timer – kør som du plejer.'}`];
-    let h = `<div class="sm" style="--c:${col}">${ti(lvN === 0 ? 'leaf' : lvN >= 2 ? 'peak' : 'clock', 22, 1.8)}<div>${sm[0]}<small>${sm[1]}</small></div></div>`;
-    if (best && worst) h += `<div class="win"><div class="w" style="--c:var(--good)"><small>Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}–${tt(new Date(best.e))}</b><span>Ø ${tn(best.avg)} kr · ${pct(best.avg)}${best.fc ? ' · prognose' : ''}</span></div>
-      <div class="w" style="--c:var(--bad)"><small>Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}–${tt(new Date(worst.e))}</b><span>Ø ${tn(worst.avg)} kr · ${pct(worst.avg)}${worst.fc ? ' · prognose' : ''}</span></div></div>`;
-    // enheder
-    const hrOk = hrs => (s, dur) => { if (!hrs) return true; const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5; return hrs[0] <= hrs[1] ? s >= a && s + dur <= b : s >= a || s + dur <= b; };
-    const cfgDev = Array.isArray(C.advice?.devices), devs = (cfgDev ? C.advice.devices : TEP_DEV).filter(d => cfgDev || this._h.states[d.entity] || this._h.states[d.running]);
-    let rows = '', waits = 0;
+    // ---- Nyt design (Claude AI, 2026-11-24; bruger: "redesigne den pop-up … rigtig lækker med noget animation og nogle flotte
+    // kort, som der viser flot, hvordan og hvornår man skal bruge strømmen, og hvor lang tid der er til, man skal gå i gang"):
+    // en måler for prisen lige nu, en 24-timers tidslinje med maskinernes starttider og bilens ladning, et kort pr. maskine
+    // med nedtælling (tikker hvert sekund, se advTick) og pris nu mod bedst, og tips som kort.
+    const cdTxt = (ts) => { const sec = Math.max(0, Math.round((ts - now) / 1e3)), H2 = Math.floor(sec / 3600), M2 = Math.floor((sec % 3600) / 60); return `${String(H2).padStart(2, "0")}:${String(M2).padStart(2, "0")}:00`; };
+    const t0 = now, t1 = now + 24 * 36e5, span = t1 - t0, X = (t) => Math.max(0, Math.min(100, ((t - t0) / span) * 100));
+    const view = all.filter((p) => p.e > t0 && p.t < t1), vals = view.map((p) => p.p), vmin = Math.min(...vals), vmax = Math.max(...vals);
+    const gpos = vmax > vmin ? Math.max(0, Math.min(1, (cur - vmin) / (vmax - vmin))) : 0.5;
+    const inBest = best && best.s <= now + 9e5;
+    let h = "";
+    // A) Lige nu: måler + besked + nedtælling til næste billige periode.
+    h += `<div class="nowc" style="--c:${col}">
+      <div class="gauge"><svg viewBox="0 0 120 70" aria-hidden="true"><defs><linearGradient id="tepg" x1="0" x2="1"><stop offset="0" stop-color="var(--good)"/><stop offset=".55" stop-color="var(--warn)"/><stop offset="1" stop-color="var(--bad)"/></linearGradient></defs>
+        <path class="gt" d="M10 62 A50 50 0 0 1 110 62"/><path class="gv" d="M10 62 A50 50 0 0 1 110 62" stroke="url(#tepg)" pathLength="100"/>
+        <g class="nd" style="--a:${(-90 + gpos * 180).toFixed(1)}deg"><line x1="60" y1="62" x2="60" y2="22"/><circle cx="60" cy="62" r="6"/></g></svg>
+        <div class="gn"><b>${tn(cur)}</b><small>kr/kWh</small></div><div class="gl"><span>${tn(vmin)}</span><span>${tn(vmax)}</span></div></div>
+      <div class="nt"><b>${sm[0]}</b><small>${sm[1]}</small>
+        ${best ? (inBest ? `<span class="cdc go">${ti("leaf", 14, 2)}Billigste timer er i gang nu · til ${tt(new Date(best.e))}</span>` : `<span class="cdc">${ti("clock", 14, 2)}Billigst om <b data-at="${best.s}">${cdTxt(best.s)}</b> · kl. ${W(best.s)}</span>`) : ""}</div></div>`;
+    // B) Tidslinje 24 t.
+    const hrOk = (hrs) => (s, dur) => {
+      if (!hrs) return true;
+      const d0 = new Date(s).setHours(0, 0, 0, 0), a = d0 + hrs[0] * 36e5, b = d0 + hrs[1] * 36e5;
+      return hrs[0] <= hrs[1] ? s >= a && s + dur <= b : s >= a || s + dur <= b;
+    };
+    const cfgDev = Array.isArray(C.advice?.devices), devs = (cfgDev ? C.advice.devices : TEP_DEV).filter((d) => cfgDev || this._h.states[d.entity] || this._h.states[d.running]);
+    const plans = [];
     for (const d of devs) {
-      const kwh = parseFloat(this.A(d.entity, 'kwh_pr_koersel')) || d.kwh || 1, min = parseFloat(this.A(d.entity, 'varighed_min')) || d.minutes || 120, dur = min * 6e4;
-      const ic = ti(TI[d.icon] ? d.icon : 'bolt', 19), nm = this.esc(d.name || d.entity), facts = `${tn(kwh, 1)} kWh · ${tm(min)}`;
-      if (d.running && this._h.states[d.running]?.state === 'on') { rows += `<div class="ar" style="--c:var(--acc)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>Kører nu</b><small>allerede i gang</small></div></div>`; continue; }
-      const base = this.avgOver(all, now, dur), cands = this.scan(all, dur, now, hrOk(d.hours)), bst = cands.reduce((m, c) => (!m || c.avg < m.avg - 1e-9 ? c : m), null);
-      if (!base || !bst) { rows += `<div class="ar" style="--c:var(--mut)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>–</b><small>priser mangler</small></div></div>`; continue; }
-      const nowOk = hrOk(d.hours)(now, dur), cNow = base.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
-      const wait = bst.s - now > 9e5 && (!nowOk || save >= Math.max(.3, cNow * .06));
-      if (wait) waits++;
-      rows += wait ? `<div class="ar" style="--c:var(--warn)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts} · nu ${tn(cNow)} kr</small></div><div class="av"><b>Vent til ${W(bst.s)}</b><small>${save > .05 ? `spar ${tn(save)} kr` : `${tn(cBest)} kr`}${bst.fc ? ' · prognose' : ''}</small></div></div>`
-        : `<div class="ar" style="--c:var(--good)"><div class="ai">${ic}</div><div class="at"><b>${nm}</b><small>${facts}</small></div><div class="av"><b>Kør nu</b><small>${tn(cNow)} kr</small></div></div>`;
+      const kwh = parseFloat(this.A(d.entity, "kwh_pr_koersel")) || d.kwh || 1, min = parseFloat(this.A(d.entity, "varighed_min")) || d.minutes || 120, dur = min * 6e4;
+      const base = { d, kwh, min, dur, icon: TI[d.icon] ? d.icon : "bolt", nm: this.esc(d.name || d.entity) };
+      if (d.running && this._h.states[d.running]?.state === "on") { plans.push({ ...base, st: "run" }); continue; }
+      const b0 = this.avgOver(all, now, dur), cands = this.scan(all, dur, now, hrOk(d.hours)), bst = cands.reduce((m, c) => !m || c.avg < m.avg - 1e-9 ? c : m, null);
+      if (!b0 || !bst) { plans.push({ ...base, st: "none" }); continue; }
+      const nowOk = hrOk(d.hours)(now, dur), cNow = b0.avg * kwh, cBest = bst.avg * kwh, save = cNow - cBest;
+      const wait = bst.s - now > 9e5 && (!nowOk || save >= Math.max(0.3, cNow * 0.06));
+      plans.push({ ...base, st: wait ? "wait" : "go", cNow, cBest, save, bst, nowOk, hrs: d.hours });
     }
-    if (ch) { const first = ch.blocks[0], lastB = ch.blocks[ch.blocks.length - 1], hold = this.holdText(ch);
-      rows += `<div class="ar" style="--c:${hold && !first ? 'var(--warn)' : 'var(--ev)'}"><div class="ai">${ti('car', 19)}</div><div class="at"><b>${this.esc(ch.name)}</b><small>${first ? `${tn(ch.kwh, 1)} kWh · ${tn(ch.cost)} kr · ${tt(new Date(first.t))}–${tt(new Date(lastB.e))}` : `ingen kvarterer under ${tn(ch.limit.price)} kr`}</small></div><div class="av"><b>${ch.charging ? 'Lader nu' : first ? 'Ladeplan' : 'Venter'}</b><small>${Number.isFinite(ch.save) && ch.save > .5 ? `spar ${tn(ch.save)} kr` : first ? 'følger billige timer' : 'over prisgrænsen'}</small></div>
-        ${this.holdRow(ch)}</div>`; }
-    if (rows) h += `<div class="sl">Dine enheder</div>${rows}`;
+    const waits = plans.filter((x) => x.st === "wait").length;
+    const pins = plans.filter((x) => x.st === "wait" || x.st === "go").map((x) => ({ x: X(x.st === "go" ? now : x.bst.s), w: X((x.st === "go" ? now : x.bst.s) + x.dur) - X(x.st === "go" ? now : x.bst.s), icon: x.icon, st: x.st }));
+    pins.sort((a, b) => a.x - b.x); const lanes = []; pins.forEach((p) => { let l = 0; while (lanes[l] != null && p.x - lanes[l] < 9) l++; lanes[l] = p.x; p.l = l; });
+    const lo = vmin - (vmax - vmin) * 0.35, hgt = (v) => Math.max(12, Math.min(100, ((v - lo) / (vmax - lo || 1)) * 100));
+    const ticks = []; for (let k = Math.ceil(t0 / 36e5) * 36e5; k < t1; k += 36e5) { const hr = new Date(k).getHours(); if (hr % 3 === 0) ticks.push(`<span style="left:${X(k).toFixed(2)}%">${String(hr).padStart(2, "0")}</span>`); }
+    const bracket = (w, cls) => (w ? `<div class="br ${cls}" style="left:${X(w.s).toFixed(2)}%;width:${(X(w.e) - X(w.s)).toFixed(2)}%"></div>` : "");
+    const chBlocks = ch ? ch.blocks.filter((b2) => b2.e > t0 && b2.t < t1).map((b2) => `<i style="left:${X(b2.t).toFixed(2)}%;width:${Math.max(0.6, X(b2.e) - X(b2.t)).toFixed(2)}%"></i>`).join("") : "";
+    h += `<div class="sl">De næste 24 timer</div><div class="tl">
+      ${pins.length ? "" : "<style>.tl .pins{height:6px}</style>"}<div class="pins">${pins.map((p) => `<span class="pin ${p.st}" style="left:${p.x.toFixed(2)}%;--l:${p.l}">${ti(p.icon, 13, 1.9)}</span>`).join("")}</div>
+      <div class="rib">${view.map((p) => `<i style="left:${X(p.t).toFixed(2)}%;width:${Math.max(0.2, X(p.e) - X(p.t)).toFixed(2)}%;height:${hgt(p.p).toFixed(0)}%;background:${LEVEL_COL[this.level(p.p)]}${p.f ? ";opacity:.55" : ""}"></i>`).join("")}${bracket(best, "good")}${bracket(worst, "bad")}<b class="nowl"></b></div>
+      ${chBlocks ? `<div class="evl">${chBlocks}</div>` : ""}
+      <div class="tx">${ticks.join("")}</div></div>`;
+    // C) Billigste / dyreste 3 timer med nedtælling.
+    if (best && worst) h += `<div class="win2">
+      <div class="w2" style="--c:var(--good)"><small>${ti("leaf", 13, 2)}Billigste 3 timer${this.dayWord(best.s, now)}</small><b>${tt(new Date(best.s))}–${tt(new Date(best.e))}</b><span>Ø ${tn(best.avg)} kr · ${pct(best.avg)}</span>${best.s > now ? `<em>om <i data-at="${best.s}">${cdTxt(best.s)}</i></em>` : "<em>i gang nu</em>"}</div>
+      <div class="w2" style="--c:var(--bad)"><small>${ti("peak", 13, 2)}Dyreste 3 timer${this.dayWord(worst.s, now)}</small><b>${tt(new Date(worst.s))}–${tt(new Date(worst.e))}</b><span>Ø ${tn(worst.avg)} kr · ${pct(worst.avg)}</span>${worst.s > now ? `<em>om <i data-at="${worst.s}">${cdTxt(worst.s)}</i></em>` : "<em>i gang nu</em>"}</div></div>`;
+    // D) Et kort pr. maskine.
+    const cards = plans.map((x, i) => {
+      const facts = `${tn(x.kwh, 1)} kWh · ${tm(x.min)}`, ic = ti(x.icon, 22, 1.7);
+      const head = (badge) => `<div class="dvh"><div class="dvi"><svg class="dvr" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21"/></svg>${ic}</div><div class="dvt"><b>${x.nm}</b><small>${facts}</small></div><span class="dvs">${badge}</span></div>`;
+      if (x.st === "run") return `<div class="dv run" style="--c:var(--acc);--i:${i}">${head("Kører")}<div class="dvc"><span>Kører nu</span><b>I gang</b></div><div class="runbar"><i></i></div></div>`;
+      if (x.st === "none") return `<div class="dv none" style="--c:var(--mut);--i:${i}">${head("–")}<div class="dvc"><span>Priser mangler</span></div></div>`;
+      const mx = Math.max(x.cNow, x.cBest, 0.01);
+      const cmp = `<div class="dvb"><div><span>Nu</span><div class="bb"><i class="n" style="width:${((x.cNow / mx) * 100).toFixed(1)}%"></i></div><b>${tn(x.cNow)} kr</b></div><div><span>${x.st === "go" ? "Bedst" : tt(new Date(x.bst.s))}</span><div class="bb"><i class="b" style="width:${((x.cBest / mx) * 100).toFixed(1)}%"></i></div><b>${tn(x.cBest)} kr</b></div></div>`;
+      if (x.st === "go") return `<div class="dv go" style="--c:var(--good);--i:${i}">${head("Start nu")}<div class="dvc"><span>Godt tidspunkt</span><b>Start nu</b><small>færdig ca. kl. ${tt(new Date(now + x.dur))}</small></div>${cmp}</div>`;
+      return `<div class="dv wait" style="--c:var(--warn);--i:${i}">${head("Vent")}<div class="dvc"><span>Start om</span><b data-at="${x.bst.s}">${cdTxt(x.bst.s)}</b><small>kl. ${W(x.bst.s)} · færdig ${tt(new Date(x.bst.e))}${x.bst.fc ? " · prognose" : ""}${!x.nowOk && x.hrs ? ` · må køre kl. ${String(x.hrs[0]).padStart(2, "0")}–${String(x.hrs[1]).padStart(2, "0")}` : ""}</small></div>${cmp}${x.save > 0.05 ? `<span class="spar">${ti("leaf", 12, 2.2)}spar ${tn(x.save)} kr</span>` : ""}</div>`;
+    });
+    if (ch) {
+      const first = ch.blocks[0], lastB = ch.blocks[ch.blocks.length - 1], hold = this.holdText(ch);
+      const soc = Number.isFinite(ch.soc) ? ch.soc : NaN, tg = Number.isFinite(ch.target) ? ch.target : NaN;
+      cards.push(`<div class="dv car${ch.charging ? " charging" : ""}" style="--c:${hold && !first ? "var(--warn)" : "var(--ev)"};--i:${cards.length}">
+        <div class="dvh"><div class="dvi"><svg class="dvr" viewBox="0 0 48 48"><circle cx="24" cy="24" r="21"/></svg>${ti("car", 22, 1.7)}</div><div class="dvt"><b>${this.esc(ch.name)}</b><small>${first ? `${tn(ch.kwh, 1)} kWh · ${tn(ch.cost)} kr` : `ingen kvarterer under ${tn(ch.limit?.price)} kr`}</small></div><span class="dvs">${ch.charging ? "Lader" : first ? "Plan" : "Venter"}</span></div>
+        <div class="dvc"><span>${ch.charging ? "Lader nu" : first ? "Lader om" : "Venter"}</span><b ${!ch.charging && first && first.t > now ? `data-at="${first.t}"` : ""}>${ch.charging ? "I gang" : first ? (first.t > now ? cdTxt(first.t) : "nu") : "–"}</b><small>${first ? `kl. ${tt(new Date(first.t))}–${tt(new Date(lastB.e))}${this.dayWord(first.t, now)}` : "over prisgrænsen"}${Number.isFinite(ch.save) && ch.save > 0.5 ? ` · spar ${tn(ch.save)} kr` : ""}</small></div>
+        ${Number.isFinite(soc) ? `<div class="socb"><i style="width:${Math.max(0, Math.min(100, soc))}%"></i>${Number.isFinite(tg) ? `<u style="left:${Math.max(0, Math.min(100, soc))}%;width:${Math.max(0, tg - soc)}%"></u>` : ""}<span>${Math.round(soc)} %${Number.isFinite(tg) ? ` → ${Math.round(tg)} %` : ""}</span></div>` : ""}
+        ${this.holdRow(ch)}</div>`);
+    }
+    if (cards.length) h += `<div class="sl">Dine enheder</div><div class="dvs-grid">${cards.join("")}</div>`;
     // huset
     const tips = [];
     if (worst && (worst.avg > mean * 1.15 || worst.avg > (best?.avg || 0) * 1.4)) tips.push(['peak', 'var(--bad)', `<b>Undgå ${tt(new Date(worst.s))}–${tt(new Date(worst.e))}${this.dayWord(worst.s, now)}</b> (${tn(worst.avg)} kr/kWh). Udskyd ovn, kogeplade, varmtvand og anden tung brug.`]);
@@ -432,7 +561,7 @@ class ThElectricityPriceCard extends HTMLElement {
     if (best && worst && (best.avg < mean * .9 || best.avg < worst.avg * .75)) tips.push(['heat', 'var(--acc)', `<b>Varme og varmtvand:</b> lad varmepumper, gulvvarme og varmtvandsbeholder varme op ${tt(new Date(best.s))}–${tt(new Date(best.e))}${this.dayWord(best.s, now)}, og skru ned i de dyre timer.`]);
     if (C.charge && !ch && best) tips.push(['car', 'var(--ev)', `<b>Elbil:</b> lad ${tt(new Date(best.s))}–${tt(new Date(best.e))}${this.dayWord(best.s, now)}, hvor strømmen er billigst – eller slå ladeplanen til.`]);
     if (waits) tips.push(['clock', 'var(--warn)', '<b>Udskudt start:</b> sæt maskinerne til at starte senere (eller lav en automation), så kører de selv, når strømmen er billigst.']);
-    h += `<div class="sl">Tip til huset</div>${tips.map(t => `<div class="tp" style="--c:${t[1]}">${ti(t[0], 16)}<div>${t[2]}</div></div>`).join('')}`;
+    h += `<div class="sl">Tip til huset</div><div class="tps">${tips.map((t, i) => `<div class="tp2" style="--c:${t[1]};--i:${i}"><span>${ti(t[0], 17)}</span><div>${t[2]}</div></div>`).join('')}</div>`;
     h += `<div class="af">Beregnet ud fra hver enheds typiske forbrug og kørselstid, fordelt jævnt over kørslen.${this.s(C.tomorrow)?.state === 'off' ? ' Morgendagens priser er ikke offentliggjort endnu (kommer typisk omkring kl. 13) – kom tilbage så for flere billige timer.' : ''}</div>`;
     put(frame(h, sub));
   }
