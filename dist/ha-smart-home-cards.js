@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.292 */
+/* MRDonnii Smart Home Cards v0.5.293 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -33942,7 +33942,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const comfortable = comfortEntity?.attributes?.is_comfortable;
     const valveValues = Object.values(this._object(climate?.attributes?.calibration_balance)).map((entry) => this._number(entry?.["valve%"] ?? entry?.valve ?? entry?.position)).filter((value) => value !== void 0);
     const valve = valveValues.length ? Math.max(...valveValues) : void 0;
-    const heating = climate?.attributes?.hvac_action === "heating" && !windowOpen && (valve === void 0 || valve > 0);
+    const heating = !windowOpen && (valve !== void 0 ? valve >= 3 : climate?.attributes?.hvac_action === "heating");
     const batteryValues = Object.entries(this._object(climate?.attributes?.batteries)).filter(([entityId2]) => entityId2.startsWith("climate.")).map(([, entry]) => this._number(entry?.battery) ?? this._number(this._entity(entry?.battery_id)?.state)).filter((value) => value !== void 0);
     const batteries = batteryValues.length ? batteryValues : [];
     const ac = room.ac ? this._acState(room) : void 0;

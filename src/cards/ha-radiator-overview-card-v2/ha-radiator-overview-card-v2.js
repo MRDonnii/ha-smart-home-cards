@@ -426,7 +426,10 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
       .map((entry) => this._number(entry?.["valve%"] ?? entry?.valve ?? entry?.position))
       .filter((value) => value !== undefined);
     const valve = valveValues.length ? Math.max(...valveValues) : undefined;
-    const heating = climate?.attributes?.hvac_action === "heating" && !windowOpen && (valve === undefined || valve > 0);
+    // An open valve means the radiator heats. Better Thermostat's MPC v2 keeps the valve open at the target
+    // (it holds the room there) while hvac_action already says "idle", so the valve decides when it is known
+    // (user, 2026-11-23: garage valve at 95 % but the card did not show the radiator heating).
+    const heating = !windowOpen && (valve !== undefined ? valve >= 3 : climate?.attributes?.hvac_action === "heating");
     const batteryValues = Object.entries(this._object(climate?.attributes?.batteries))
       .filter(([entityId]) => entityId.startsWith("climate."))
       // Better Thermostat's copy of a TRV battery is often "unavailable"; the TRV's own
